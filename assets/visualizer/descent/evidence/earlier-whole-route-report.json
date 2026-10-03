@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-03T17:57:40.794Z",
+  "date": "2026-10-03T17:26:07.294Z",
   "routeModules": {
     "soap-film": "present",
     "negative-temperature": "present",
@@ -17,13 +17,14 @@
       "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e"
     ],
     "js/descent-room-adapters.js": [
+      "e2bd6356014d9df9d9a7273b244f7060e7433974d84a6cddae0d967ffebb8eac",
       "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a"
     ],
     "js/soap-film-room.js": [
-      "13b9c4b7fb6042966e543f41e730b73da68938f255f6abdddeae639776a1640c"
+      "80f7dba464341f07a9c136ec9894d7a12e8794bfea5ba89e761bc6239e1e1dc6"
     ],
     "js/negative-temperature-room.js": [
-      "277dec7e9c65064004997bf9816b37119bf11893fa39bc7d0fabe3011f7aa2b0"
+      "3326c68e9c40ccc7fe0d27805bbd1e0e629b432c28e741a97b126a18ecf2109e"
     ],
     "js/hydrogen-exactly-room.js": [
       "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe"
@@ -32,31 +33,29 @@
       "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
     ],
     "js/soap-film-model.js": [
-      "d271f9f85e36bde577766a8373f197891466d9938f2a18088e8236ebb33716b7"
-    ],
-    "js/soap-film-geometry.js": [
-      "e5012a4269f44664b17987a31dc00c62792c56c72a9aa65160925aaee35dfbb5"
+      "d67369094cc16f9b7f4895cde6433dbfb3579ab94e05a3725ea0354285a1fa1a"
     ],
     "js/negative-temperature-model.js": [
-      "0414b0a52f08c8e81650e94d9de0f8beaf400ba2023d29b1cbdf587f198c0a67"
+      "5bc009e3430fff923b7ecb82e22ce1b5e0fab97ab5142827a2fa2d10282a3752"
     ],
     "js/negative-temperature-gpu.js": [
-      "cdc39aeb9c8829d5f3417ec1f97bd72c683f0fbb21f920918da83a06b619aa87"
+      "8f7241cdbdc7f94614d111811f2cebdac70a11fc11554e7ac9a189515663614d"
     ],
     "js/hydrogen-exactly-math.js": [
       "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a"
     ],
-    "js/qcd-lava-lamp-shaders.js": [
-      "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
+    "js/hydrogen-exactly-shaders.js": [
+      "4d730227aa5214dea20c8e6cca14a066e4a594226269b47b57dd8bd66652ff26",
+      "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8"
     ],
     "js/qcd-lava-lamp-math.js": [
       "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
     ],
-    "js/hydrogen-exactly-shaders.js": [
-      "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8"
+    "js/qcd-lava-lamp-shaders.js": [
+      "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
     ],
     "assets/visualizer/descent/drand-verifier-1.4.2.js": [
-      "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4"
+      "ceb94a257a56958df899496b05b1677eb44963819596f1edb8ce8b374ef0390b"
     ],
     "js/descent-bootstrap-room.js": [
       "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e"
@@ -65,7 +64,6 @@
   "checks": [
     "Live soap-film initialization, rgba16float render, diagnostics and readback",
     "Live negative-temperature initialization, rgba16float render, diagnostics and readback",
-    "Explicit Rydberg option uses its actual 47.6 nm scale and documented density color meaning",
     "Live hydrogen-exactly initialization, rgba16float render, diagnostics and readback",
     "Live qcd-lava-lamp initialization, rgba16float render, diagnostics and readback",
     "Largest adjacent room pair allocates together on this adapter; shared device remains usable after disposal",
@@ -86,7 +84,7 @@
     "Reload preserves pause and seed; bounded fixed-step replay restores a real room without advancing the piece clock",
     "A mismatched saved solver count is reported as a new seeded replay, not a restored GPU state",
     "Device loss releases rooms and reports restart semantics",
-    "Two whole fixture routes and sixteen switches retain one room, free tracked resources, and abort input/visibility listeners",
+    "Two whole fixture routes and sixteen switches retain one room and dispose all tracked buffers/targets",
     "Reduced motion starts still and Play explicitly begins stepping",
     "No WebGPU presents the labeled CPU-calculated still",
     "Absent route modules show their exact paths; interim GPU density matches its CPU model",
@@ -94,57 +92,47 @@
     "No unexpected script, shader or GPU validation errors"
   ],
   "screenshots": [
-    "/tmp/descent-publication-frozen/live-soap-film-startup.png",
-    "/tmp/descent-publication-frozen/live-negative-temperature-startup.png",
-    "/tmp/descent-publication-frozen/live-hydrogen-exactly-startup.png",
-    "/tmp/descent-publication-frozen/live-hydrogen-revival-option.png",
-    "/tmp/descent-publication-frozen/live-qcd-lava-lamp-startup.png",
-    "/tmp/descent-publication-frozen/real-route-1-soap-film-developing.png",
-    "/tmp/descent-publication-frozen/real-route-1-soap-film-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-1-soap-film-rupturing.png",
-    "/tmp/descent-publication-frozen/real-route-1-negative-temperature-developing.png",
-    "/tmp/descent-publication-frozen/real-route-1-negative-temperature-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-1-hydrogen-exactly-developing.png",
-    "/tmp/descent-publication-frozen/real-route-1-hydrogen-exactly-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-1-qcd-lava-lamp-developing.png",
-    "/tmp/descent-publication-frozen/real-route-1-qcd-lava-lamp-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-2-soap-film-developing.png",
-    "/tmp/descent-publication-frozen/real-route-2-soap-film-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-2-soap-film-rupturing.png",
-    "/tmp/descent-publication-frozen/real-route-2-negative-temperature-developing.png",
-    "/tmp/descent-publication-frozen/real-route-2-negative-temperature-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-2-hydrogen-exactly-developing.png",
-    "/tmp/descent-publication-frozen/real-route-2-hydrogen-exactly-dwell.png",
-    "/tmp/descent-publication-frozen/real-route-2-qcd-lava-lamp-developing.png",
-    "/tmp/descent-publication-frozen/real-route-2-qcd-lava-lamp-dwell.png",
-    "/tmp/descent-publication-frozen/live-dark-transition.png",
-    "/tmp/descent-publication-frozen/viewport-1440x900.png",
-    "/tmp/descent-publication-frozen/layout-soap-film-1440x900.png",
-    "/tmp/descent-publication-frozen/layout-negative-temperature-1440x900.png",
-    "/tmp/descent-publication-frozen/layout-hydrogen-exactly-1440x900.png",
-    "/tmp/descent-publication-frozen/layout-qcd-lava-lamp-1440x900.png",
-    "/tmp/descent-publication-frozen/viewport-390x844.png",
-    "/tmp/descent-publication-frozen/layout-soap-film-390x844.png",
-    "/tmp/descent-publication-frozen/layout-negative-temperature-390x844.png",
-    "/tmp/descent-publication-frozen/layout-hydrogen-exactly-390x844.png",
-    "/tmp/descent-publication-frozen/layout-qcd-lava-lamp-390x844.png",
-    "/tmp/descent-publication-frozen/viewport-844x390.png",
-    "/tmp/descent-publication-frozen/layout-soap-film-844x390.png",
-    "/tmp/descent-publication-frozen/layout-negative-temperature-844x390.png",
-    "/tmp/descent-publication-frozen/layout-hydrogen-exactly-844x390.png",
-    "/tmp/descent-publication-frozen/layout-qcd-lava-lamp-844x390.png",
-    "/tmp/descent-publication-frozen/device-loss.png",
-    "/tmp/descent-publication-frozen/fixture-route-1-soap-film.png",
-    "/tmp/descent-publication-frozen/fixture-route-1-negative-temperature.png",
-    "/tmp/descent-publication-frozen/fixture-route-1-hydrogen-exactly.png",
-    "/tmp/descent-publication-frozen/fixture-route-1-qcd-lava-lamp.png",
-    "/tmp/descent-publication-frozen/fixture-route-2-soap-film.png",
-    "/tmp/descent-publication-frozen/fixture-route-2-negative-temperature.png",
-    "/tmp/descent-publication-frozen/fixture-route-2-hydrogen-exactly.png",
-    "/tmp/descent-publication-frozen/fixture-route-2-qcd-lava-lamp.png",
-    "/tmp/descent-publication-frozen/fixture-editorial-transition.png",
-    "/tmp/descent-publication-frozen/no-webgpu-calculated-still.png",
-    "/tmp/descent-publication-frozen/missing-module-error.png"
+    "live-soap-film-startup.png",
+    "live-negative-temperature-startup.png",
+    "live-hydrogen-exactly-startup.png",
+    "live-qcd-lava-lamp-startup.png",
+    "real-route-1-soap-film-developing.png",
+    "real-route-1-soap-film-dwell.png",
+    "real-route-1-soap-film-rupturing.png",
+    "real-route-1-negative-temperature-developing.png",
+    "real-route-1-negative-temperature-dwell.png",
+    "real-route-1-hydrogen-exactly-developing.png",
+    "real-route-1-hydrogen-exactly-dwell.png",
+    "real-route-1-qcd-lava-lamp-developing.png",
+    "real-route-1-qcd-lava-lamp-dwell.png",
+    "real-route-2-soap-film-developing.png",
+    "real-route-2-soap-film-dwell.png",
+    "real-route-2-soap-film-rupturing.png",
+    "real-route-2-negative-temperature-developing.png",
+    "real-route-2-negative-temperature-dwell.png",
+    "real-route-2-hydrogen-exactly-developing.png",
+    "real-route-2-hydrogen-exactly-dwell.png",
+    "real-route-2-qcd-lava-lamp-developing.png",
+    "real-route-2-qcd-lava-lamp-dwell.png",
+    "live-dark-transition.png",
+    "viewport-1440x900.png",
+    "layout-soap-film-1440x900.png",
+    "layout-negative-temperature-1440x900.png",
+    "layout-hydrogen-exactly-1440x900.png",
+    "layout-qcd-lava-lamp-1440x900.png",
+    "viewport-390x844.png",
+    "layout-soap-film-390x844.png",
+    "layout-negative-temperature-390x844.png",
+    "layout-hydrogen-exactly-390x844.png",
+    "layout-qcd-lava-lamp-390x844.png",
+    "viewport-844x390.png",
+    "layout-soap-film-844x390.png",
+    "layout-negative-temperature-844x390.png",
+    "layout-hydrogen-exactly-844x390.png",
+    "layout-qcd-lava-lamp-844x390.png",
+    "device-loss.png",
+    "no-webgpu-calculated-still.png",
+    "missing-module-error.png"
   ],
   "performance": {
     "soap-film": {
@@ -173,7 +161,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -181,7 +169,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 378,
+        "renderCount": 373,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -197,12 +185,12 @@
         },
         "resources": {
           "room": {
-            "bytes": 2293872,
+            "bytes": 2293856,
             "unknownSizeAllocations": 0,
             "buffers": 4,
             "textures": 1,
             "querySets": 1,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 0
           },
@@ -216,7 +204,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             }
@@ -228,7 +216,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21.299999952316284,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -239,8 +227,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2,
+            "medianMs": 1,
+            "p95Ms": 1.2000000476837158,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -253,9 +241,9 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           }
@@ -286,7 +274,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -304,7 +292,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -315,7 +303,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -324,7 +312,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -344,12 +332,12 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 0.7000000476837158,
+        "lastGpuQueueMs": 1.100000023841858,
         "room": {
           "apiVersion": 1,
           "id": "soap-film",
@@ -363,22 +351,14 @@
             "https://cie.co.at/datatable/cie-standard-illuminant-d65",
             "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
           ],
-          "persistent": false,
-          "presentation": {
-            "shape": "square",
-            "aspectRatio": 1,
-            "geometry": "square computational domain; oval uses a full-domain coordinate map"
-          },
-          "stirCount": 0,
-          "heaterC": 34,
           "numericalStepCount": 0,
           "simulationTime": 0,
           "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
           "parameters": {
             "lengthMeters": 0.16,
             "dtSeconds": 0.04,
-            "viscosity": 0.000001,
-            "thermalDiffusivity": 0.0000012,
+            "viscosity": 1e-06,
+            "thermalDiffusivity": 1.2e-06,
             "gravity": 9.81,
             "expansionPerKelvin": 0.0002,
             "dragPerSecond": 1,
@@ -386,14 +366,13 @@
             "heatingKelvin": 12,
             "coolingPerSecond": 0.025,
             "evaporationNmPerSecond": 0.7,
-            "drainageSpeedMetersPerSecond": 0.000055,
+            "drainageSpeedMetersPerSecond": 5.5e-05,
             "drainageReferenceNm": 800,
             "ruptureNm": 18,
             "gammaNewtonPerMeter": 0.03,
             "densityKgPerM3": 1000,
             "ruptureSlowdown": 240,
             "restSeconds": 5,
-            "autoRenew": true,
             "viewingAngleDegrees": 18
           },
           "quality": "medium",
@@ -425,12 +404,12 @@
             "pressureResidualMetersInverseSecondsInverse": null,
             "pressureCycles": 0,
             "maxSpeedMetersPerSecond": 0,
-            "volumeM3": 1.7145111060446502e-8,
-            "filmVolumeM3": 1.7145111060446502e-8,
+            "volumeM3": 1.7145111060446502e-08,
+            "filmVolumeM3": 1.7145111060446502e-08,
             "rimVolumeM3": 0,
             "evaporatedM3": 0,
             "drainedM3": 0,
-            "replenishedM3": 1.7145111060446502e-8,
+            "replenishedM3": 1.7145111060446502e-08,
             "resetDiscardedM3": 0,
             "massBalanceErrorM3": 0,
             "hole": null
@@ -439,8 +418,8 @@
             "solverCPU": null,
             "opticalCompositeCPUEncode": {
               "medianMs": 0,
-              "p95Ms": 0,
-              "samples": 2
+              "p95Ms": 0.10000002384185791,
+              "samples": 3
             },
             "opticalCompositeGPU": null,
             "timestampQueries": true
@@ -454,21 +433,21 @@
         "simulationCallCpu": {
           "samples": 90,
           "medianMs": 0,
-          "p95Ms": 20.200000047683716
+          "p95Ms": 21.800000071525574
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
           "medianMs": 0.10000002384185791,
-          "p95Ms": 20.300000071525574
+          "p95Ms": 22.100000023841858
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 0.088207,
-          "p95Ms": 0.19433
+          "medianMs": 0.126082,
+          "p95Ms": 0.230913
         },
         "renderQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 0.5,
+          "medianMs": 0.5999999046325684,
           "p95Ms": 0.7000000476837158
         },
         "timestampSupported": true,
@@ -497,7 +476,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -505,7 +484,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 378,
+          "renderCount": 373,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -521,12 +500,12 @@
           },
           "resources": {
             "room": {
-              "bytes": 2293872,
+              "bytes": 2293856,
               "unknownSizeAllocations": 0,
               "buffers": 4,
               "textures": 1,
               "querySets": 1,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 0
             },
@@ -540,7 +519,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               }
@@ -552,7 +531,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21.299999952316284,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -563,8 +542,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2,
+              "medianMs": 1,
+              "p95Ms": 1.2000000476837158,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -577,9 +556,9 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             }
@@ -610,7 +589,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -628,7 +607,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -639,7 +618,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -648,7 +627,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -668,12 +647,12 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 0.7000000476837158,
+          "lastGpuQueueMs": 1.100000023841858,
           "room": {
             "apiVersion": 1,
             "id": "soap-film",
@@ -687,22 +666,14 @@
               "https://cie.co.at/datatable/cie-standard-illuminant-d65",
               "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
             ],
-            "persistent": false,
-            "presentation": {
-              "shape": "square",
-              "aspectRatio": 1,
-              "geometry": "square computational domain; oval uses a full-domain coordinate map"
-            },
-            "stirCount": 0,
-            "heaterC": 34,
             "numericalStepCount": 37,
             "simulationTime": 1.4800000000000006,
             "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
             "parameters": {
               "lengthMeters": 0.16,
               "dtSeconds": 0.04,
-              "viscosity": 0.000001,
-              "thermalDiffusivity": 0.0000012,
+              "viscosity": 1e-06,
+              "thermalDiffusivity": 1.2e-06,
               "gravity": 9.81,
               "expansionPerKelvin": 0.0002,
               "dragPerSecond": 1,
@@ -710,14 +681,13 @@
               "heatingKelvin": 12,
               "coolingPerSecond": 0.025,
               "evaporationNmPerSecond": 0.7,
-              "drainageSpeedMetersPerSecond": 0.000055,
+              "drainageSpeedMetersPerSecond": 5.5e-05,
               "drainageReferenceNm": 800,
               "ruptureNm": 18,
               "gammaNewtonPerMeter": 0.03,
               "densityKgPerM3": 1000,
               "ruptureSlowdown": 240,
               "restSeconds": 5,
-              "autoRenew": true,
               "viewingAngleDegrees": 18
             },
             "quality": "medium",
@@ -745,30 +715,30 @@
                 21.750255584716797,
                 35.30252456665039
               ],
-              "divergenceMaxPerSecond": 0.00003133191057713702,
+              "divergenceMaxPerSecond": 3.133191057713702e-05,
               "pressureResidualMetersInverseSecondsInverse": 0.05013309419155121,
               "pressureCycles": 1,
               "maxSpeedMetersPerSecond": 0.0004150059830863029,
-              "volumeM3": 1.7108018247860673e-8,
-              "filmVolumeM3": 1.7108018247860673e-8,
+              "volumeM3": 1.7108018247860673e-08,
+              "filmVolumeM3": 1.7108018247860673e-08,
               "rimVolumeM3": 0,
               "evaporatedM3": 1.7919999999974384e-11,
               "drainedM3": 1.917261083731428e-11,
-              "replenishedM3": 1.7145111060446502e-8,
+              "replenishedM3": 1.7145111060446502e-08,
               "resetDiscardedM3": 0,
               "massBalanceErrorM3": -2.0174854076468315e-16,
               "hole": null
             },
             "performance": {
               "solverCPU": {
-                "medianMs": 19.59999990463257,
-                "p95Ms": 20.700000047683716,
+                "medianMs": 21.399999976158142,
+                "p95Ms": 22,
                 "samples": 37
               },
               "opticalCompositeCPUEncode": {
                 "medianMs": 0,
-                "p95Ms": 0.09999990463256836,
-                "samples": 92
+                "p95Ms": 0.10000002384185791,
+                "samples": 93
               },
               "opticalCompositeGPU": null,
               "timestampQueries": true
@@ -793,16 +763,16 @@
             21.754487991333008,
             35.392845153808594
           ],
-          "divergenceMaxPerSecond": 0.000029352668207138777,
+          "divergenceMaxPerSecond": 2.9352668207138777e-05,
           "pressureResidualMetersInverseSecondsInverse": 0.04696426913142204,
           "pressureCycles": 1,
           "maxSpeedMetersPerSecond": 0.0005051371990703046,
-          "volumeM3": 1.70902569835186e-8,
-          "filmVolumeM3": 1.70902569835186e-8,
+          "volumeM3": 1.70902569835186e-08,
+          "filmVolumeM3": 1.70902569835186e-08,
           "rimVolumeM3": 0,
           "evaporatedM3": 2.6521599999962087e-11,
           "drainedM3": 2.833229544684291e-11,
-          "replenishedM3": 1.7145111060446502e-8,
+          "replenishedM3": 1.7145111060446502e-08,
           "resetDiscardedM3": 0,
           "massBalanceErrorM3": -1.8148109705352932e-16,
           "hole": null
@@ -836,7 +806,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -844,7 +814,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 381,
+        "renderCount": 375,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -879,7 +849,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -890,7 +860,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             }
@@ -902,7 +872,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21.299999952316284,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -913,8 +883,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2,
+            "medianMs": 1,
+            "p95Ms": 1.2000000476837158,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -927,16 +897,16 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "negative-temperature": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0,
+              "samples": 2,
+              "medianMs": 0.09999990463256836,
               "p95Ms": 0.09999990463256836,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
@@ -968,7 +938,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -986,7 +956,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -997,7 +967,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -1006,7 +976,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -1026,12 +996,12 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 0.8999999761581421,
+        "lastGpuQueueMs": 1,
         "room": {
           "apiVersion": 1,
           "id": "negative-temperature",
@@ -1063,8 +1033,7 @@
             "sweepDuration": 44,
             "withdrawalDuration": 16,
             "phraseDuration": 540,
-            "solverUnitsPerSecond": 3,
-            "standaloneStartTime": 48,
+            "solverUnitsPerSecond": 0.75,
             "damping": 0,
             "detectionRadius": 0.89,
             "detectionDensity": 0.08,
@@ -1085,7 +1054,7 @@
           "phase": "Quiet field",
           "temperatureStatus": "Temperature not estimated",
           "diagnosticAgeSteps": 0,
-          "diagnosticAgeSeconds": 0.05310000002384186,
+          "diagnosticAgeSeconds": 0.0495,
           "diagnostics": {
             "norm": 1105.9407927637399,
             "energy": 1150.012782088896,
@@ -1112,7 +1081,7 @@
             "temperatureStatus": "Temperature not estimated",
             "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
           },
-          "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/negative-temperature/"
+          "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/negative-temperature/"
         },
         "loopPending": false
       },
@@ -1124,18 +1093,18 @@
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.100000023841858,
-          "p95Ms": 1.2999999523162842
+          "medianMs": 0.5,
+          "p95Ms": 0.7000000476837158
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 0.160331,
-          "p95Ms": 0.167122
+          "medianMs": 0.210831,
+          "p95Ms": 0.298661
         },
         "renderQueueFenceLatency": {
           "samples": 90,
           "medianMs": 0.6000000238418579,
-          "p95Ms": 0.7000000476837158
+          "p95Ms": 0.8000000715255737
         },
         "timestampSupported": true,
         "snapshot": {
@@ -1163,7 +1132,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -1171,7 +1140,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 381,
+          "renderCount": 375,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -1206,7 +1175,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -1217,7 +1186,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               }
@@ -1229,7 +1198,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21.299999952316284,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -1240,8 +1209,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2,
+              "medianMs": 1,
+              "p95Ms": 1.2000000476837158,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -1254,16 +1223,16 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "negative-temperature": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0,
+                "samples": 2,
+                "medianMs": 0.09999990463256836,
                 "p95Ms": 0.09999990463256836,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
@@ -1295,7 +1264,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -1313,7 +1282,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -1324,7 +1293,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -1333,7 +1302,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -1353,18 +1322,18 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 0.8999999761581421,
+          "lastGpuQueueMs": 1,
           "room": {
             "apiVersion": 1,
             "id": "negative-temperature",
             "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-            "numericalStepCount": 450,
-            "simulationTime": 4.499999999999992,
+            "numericalStepCount": 112,
+            "simulationTime": 1.1200000000000008,
             "simulationUnits": "dimensionless: hbar = m = 1",
             "quality": "medium",
             "parameters": {
@@ -1390,8 +1359,7 @@
               "sweepDuration": 44,
               "withdrawalDuration": 16,
               "phraseDuration": 540,
-              "solverUnitsPerSecond": 3,
-              "standaloneStartTime": 48,
+              "solverUnitsPerSecond": 0.75,
               "damping": 0,
               "detectionRadius": 0.89,
               "detectionDensity": 0.08,
@@ -1411,8 +1379,8 @@
             "healingLengthCells": 2,
             "phase": "Quiet field",
             "temperatureStatus": "Temperature not estimated",
-            "diagnosticAgeSteps": 450,
-            "diagnosticAgeSeconds": 0.22710000002384187,
+            "diagnosticAgeSteps": 112,
+            "diagnosticAgeSeconds": 0.17459999990463257,
             "diagnostics": {
               "norm": 1105.9407927637399,
               "energy": 1150.012782088896,
@@ -1439,19 +1407,19 @@
               "temperatureStatus": "Temperature not estimated",
               "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
             },
-            "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/negative-temperature/"
+            "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/negative-temperature/"
           },
           "loopPending": false
         }
       },
       "readback": {
         "diagnostics": {
-          "norm": 1105.8679020500688,
-          "energy": 1149.8669475927557,
-          "kinetic": 25.68934094857441,
-          "interaction": 1062.9441158573486,
-          "potential": 61.23349078683268,
-          "edgeNormFraction": 2.3310687307660007e-12,
+          "norm": 1105.9216263311355,
+          "energy": 1149.9744421981504,
+          "kinetic": 25.72114826065992,
+          "interaction": 1062.7576674025743,
+          "potential": 61.49562653491637,
+          "edgeNormFraction": 2.026695034098961e-13,
           "positive": 0,
           "negative": 0,
           "circulation": 0,
@@ -1461,9 +1429,9 @@
           "componentSizes": [],
           "largestCluster": 0,
           "clustered": false,
-          "measuredStep": 450,
-          "measuredSimulationTime": 4.499999999999992,
-          "normDrift": -0.00006590833265940343,
+          "measuredStep": 112,
+          "measuredSimulationTime": 1.1200000000000008,
+          "normDrift": -1.733043281315627e-05,
           "conservativeEnergyDrift": null,
           "estimatedAnnihilations": 0,
           "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
@@ -1472,7 +1440,7 @@
           "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
         },
         "grid": 256,
-        "steps": 450
+        "steps": 112
       }
     },
     "hydrogen-exactly": {
@@ -1501,7 +1469,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -1509,7 +1477,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 383,
+        "renderCount": 376,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -1544,7 +1512,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -1555,7 +1523,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -1578,7 +1546,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21.299999952316284,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -1589,8 +1557,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2,
+            "medianMs": 1,
+            "p95Ms": 1.2999999523162842,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -1603,25 +1571,25 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "negative-temperature": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0,
+              "samples": 2,
+              "medianMs": 0.09999990463256836,
               "p95Ms": 0.09999990463256836,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "hydrogen-exactly": {
             "renderEncoding": {
-              "samples": 2,
-              "medianMs": 0.20000004768371582,
-              "p95Ms": 0.20000004768371582,
+              "samples": 1,
+              "medianMs": 0.10000002384185791,
+              "p95Ms": 0.10000002384185791,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           }
@@ -1652,7 +1620,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -1670,7 +1638,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -1681,7 +1649,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -1690,7 +1658,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -1710,18 +1678,18 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 2.8000000715255737,
+        "lastGpuQueueMs": 11,
         "room": {
           "apiVersion": 1,
           "id": "hydrogen-exactly",
           "title": "Hydrogen Exactly",
           "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-          "representativeScaleMeters": 1.32294302636e-9,
+          "representativeScaleMeters": 1.32294302636e-09,
           "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
           "sources": [
             "https://arxiv.org/html/quant-ph/9510029v1",
@@ -1872,18 +1840,18 @@
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.600000023841858,
+          "medianMs": 2,
           "p95Ms": 2.5
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 1.277605,
-          "p95Ms": 1.414353
+          "medianMs": 1.796014,
+          "p95Ms": 2.30059
         },
         "renderQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.7000000476837158,
-          "p95Ms": 2.399999976158142
+          "medianMs": 2.3000000715255737,
+          "p95Ms": 2.9000000953674316
         },
         "timestampSupported": true,
         "snapshot": {
@@ -1911,7 +1879,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -1919,7 +1887,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 387,
+          "renderCount": 376,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -1954,7 +1922,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -1965,7 +1933,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -1979,28 +1947,6 @@
                 "peakBytes": 1610784,
                 "created": 7,
                 "destroyed": 7
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
               }
             ]
           },
@@ -2010,7 +1956,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -2021,8 +1967,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2.3000000715255737,
+              "medianMs": 1,
+              "p95Ms": 1.2999999523162842,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -2035,25 +1981,25 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "negative-temperature": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0,
+                "samples": 2,
+                "medianMs": 0.09999990463256836,
                 "p95Ms": 0.09999990463256836,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "hydrogen-exactly": {
               "renderEncoding": {
-                "samples": 6,
-                "medianMs": 0,
-                "p95Ms": 0.20000004768371582,
+                "samples": 1,
+                "medianMs": 0.10000002384185791,
+                "p95Ms": 0.10000002384185791,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             }
@@ -2084,7 +2030,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -2102,7 +2048,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -2113,7 +2059,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2122,7 +2068,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -2142,18 +2088,18 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 5.700000047683716,
+          "lastGpuQueueMs": 11,
           "room": {
             "apiVersion": 1,
             "id": "hydrogen-exactly",
             "title": "Hydrogen Exactly",
             "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-            "representativeScaleMeters": 1.32294302636e-9,
+            "representativeScaleMeters": 1.32294302636e-09,
             "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
             "sources": [
               "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2301,12 +2247,12 @@
         "finite": true,
         "mass": 0.9968708093965688,
         "errors": [
-          4.183857472655404e-7,
-          8.173428965598204e-7,
-          8.032925648799835e-8,
-          3.9496351535366117e-7,
-          3.7924038871243546e-8,
-          0.0000023754240723140644
+          4.183857472655404e-07,
+          8.173428965598204e-07,
+          8.032925648799835e-08,
+          3.9496351535366117e-07,
+          3.7924038871243546e-08,
+          2.3754240723140644e-06
         ]
       }
     },
@@ -2336,7 +2282,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -2344,7 +2290,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 390,
+        "renderCount": 378,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -2379,7 +2325,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -2390,7 +2336,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -2412,28 +2358,6 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
               "peakBytes": 33555296,
               "created": 6,
               "destroyed": 6
@@ -2446,7 +2370,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -2457,8 +2381,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2.3000000715255737,
+            "medianMs": 1,
+            "p95Ms": 1.2999999523162842,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -2471,33 +2395,33 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "negative-temperature": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0,
+              "samples": 2,
+              "medianMs": 0.09999990463256836,
               "p95Ms": 0.09999990463256836,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "hydrogen-exactly": {
             "renderEncoding": {
-              "samples": 6,
-              "medianMs": 0,
-              "p95Ms": 0.20000004768371582,
+              "samples": 1,
+              "medianMs": 0.10000002384185791,
+              "p95Ms": 0.10000002384185791,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "qcd-lava-lamp": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.10000002384185791,
+              "samples": 2,
+              "medianMs": 0.19999992847442627,
+              "p95Ms": 0.19999992847442627,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           }
@@ -2528,7 +2452,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -2546,7 +2470,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -2557,7 +2481,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2566,7 +2490,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -2586,12 +2510,12 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 1.5,
+        "lastGpuQueueMs": 1.6999999284744263,
         "room": {
           "apiVersion": 1,
           "id": "qcd-lava-lamp",
@@ -2634,13 +2558,13 @@
             "beaconVerified": false,
             "crossDeviceReplay": "floating-point results may differ"
           },
-          "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+          "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
           "diagnosticAgeSeconds": 0,
           "diagnosticsAvailable": true,
           "numericalFault": null,
           "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
+          "unitarityError": 2.181529998779297e-05,
+          "determinantError": 3.0641000194009393e-05,
           "measuredSweep": 256,
           "chargeByCoolingDepth": [
             {
@@ -2715,18 +2639,18 @@
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 0.09999990463256836,
+          "medianMs": 0,
           "p95Ms": 0.20000004768371582
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 0.87457,
-          "p95Ms": 0.949401
+          "medianMs": 1.18144,
+          "p95Ms": 1.654559
         },
         "renderQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.3000000715255737,
-          "p95Ms": 1.5
+          "medianMs": 1.7000000476837158,
+          "p95Ms": 2.200000047683716
         },
         "timestampSupported": true,
         "snapshot": {
@@ -2754,7 +2678,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -2762,7 +2686,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 390,
+          "renderCount": 378,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -2797,7 +2721,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -2808,7 +2732,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -2830,28 +2754,6 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
                 "peakBytes": 33555296,
                 "created": 6,
                 "destroyed": 6
@@ -2864,7 +2766,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -2875,8 +2777,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2.3000000715255737,
+              "medianMs": 1,
+              "p95Ms": 1.2999999523162842,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -2889,33 +2791,33 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "negative-temperature": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0,
+                "samples": 2,
+                "medianMs": 0.09999990463256836,
                 "p95Ms": 0.09999990463256836,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "hydrogen-exactly": {
               "renderEncoding": {
-                "samples": 6,
-                "medianMs": 0,
-                "p95Ms": 0.20000004768371582,
+                "samples": 1,
+                "medianMs": 0.10000002384185791,
+                "p95Ms": 0.10000002384185791,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "qcd-lava-lamp": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.10000002384185791,
+                "samples": 2,
+                "medianMs": 0.19999992847442627,
+                "p95Ms": 0.19999992847442627,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             }
@@ -2946,7 +2848,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -2964,7 +2866,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -2975,7 +2877,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2984,7 +2886,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -3004,12 +2906,12 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 1.5,
+          "lastGpuQueueMs": 1.6999999284744263,
           "room": {
             "apiVersion": 1,
             "id": "qcd-lava-lamp",
@@ -3052,13 +2954,13 @@
               "beaconVerified": false,
               "crossDeviceReplay": "floating-point results may differ"
             },
-            "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+            "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
             "diagnosticAgeSeconds": 1.4999999999999996,
             "diagnosticsAvailable": true,
             "numericalFault": null,
             "averagePlaquette": 0.59294699709129,
-            "unitarityError": 0.00002181529998779297,
-            "determinantError": 0.000030641000194009393,
+            "unitarityError": 2.181529998779297e-05,
+            "determinantError": 3.0641000194009393e-05,
             "measuredSweep": 256,
             "chargeByCoolingDepth": [
               {
@@ -3113,9 +3015,9 @@
               "maxStorageBufferBindingSize": 134217728,
               "maxBufferSize": 268435456
             },
-            "lastSweepQueueWallMs": 4.199999928474426,
-            "sweepQueueWallMedianMs": 4.199999928474426,
-            "sweepQueueWallP95Ms": 5.300000071525574,
+            "lastSweepQueueWallMs": 5.299999952316284,
+            "sweepQueueWallMedianMs": 5.199999928474426,
+            "sweepQueueWallP95Ms": 5.299999952316284,
             "viewport": {
               "width": 1118,
               "height": 495,
@@ -3171,13 +3073,13 @@
             "beaconVerified": false,
             "crossDeviceReplay": "floating-point results may differ"
           },
-          "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+          "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
           "diagnosticAgeSeconds": 1.4999999999999996,
           "diagnosticsAvailable": true,
           "numericalFault": null,
           "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
+          "unitarityError": 2.181529998779297e-05,
+          "determinantError": 3.0641000194009393e-05,
           "measuredSweep": 256,
           "chargeByCoolingDepth": [
             {
@@ -3232,9 +3134,9 @@
             "maxStorageBufferBindingSize": 134217728,
             "maxBufferSize": 268435456
           },
-          "lastSweepQueueWallMs": 4.199999928474426,
-          "sweepQueueWallMedianMs": 4.199999928474426,
-          "sweepQueueWallP95Ms": 5.300000071525574,
+          "lastSweepQueueWallMs": 5.299999952316284,
+          "sweepQueueWallMedianMs": 5.199999928474426,
+          "sweepQueueWallP95Ms": 5.299999952316284,
           "viewport": {
             "width": 1118,
             "height": 495,
@@ -3274,7 +3176,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -3282,7 +3184,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 378,
+        "renderCount": 373,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -3298,12 +3200,12 @@
         },
         "resources": {
           "room": {
-            "bytes": 2293872,
+            "bytes": 2293856,
             "unknownSizeAllocations": 0,
             "buffers": 4,
             "textures": 1,
             "querySets": 1,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 0
           },
@@ -3317,7 +3219,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             }
@@ -3329,7 +3231,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21.299999952316284,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -3340,8 +3242,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2,
+            "medianMs": 1,
+            "p95Ms": 1.2000000476837158,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -3354,9 +3256,9 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           }
@@ -3387,7 +3289,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -3405,7 +3307,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -3416,7 +3318,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -3425,7 +3327,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -3445,12 +3347,12 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 0.7000000476837158,
+        "lastGpuQueueMs": 1.100000023841858,
         "room": {
           "apiVersion": 1,
           "id": "soap-film",
@@ -3464,22 +3366,14 @@
             "https://cie.co.at/datatable/cie-standard-illuminant-d65",
             "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
           ],
-          "persistent": false,
-          "presentation": {
-            "shape": "square",
-            "aspectRatio": 1,
-            "geometry": "square computational domain; oval uses a full-domain coordinate map"
-          },
-          "stirCount": 0,
-          "heaterC": 34,
           "numericalStepCount": 0,
           "simulationTime": 0,
           "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
           "parameters": {
             "lengthMeters": 0.16,
             "dtSeconds": 0.04,
-            "viscosity": 0.000001,
-            "thermalDiffusivity": 0.0000012,
+            "viscosity": 1e-06,
+            "thermalDiffusivity": 1.2e-06,
             "gravity": 9.81,
             "expansionPerKelvin": 0.0002,
             "dragPerSecond": 1,
@@ -3487,14 +3381,13 @@
             "heatingKelvin": 12,
             "coolingPerSecond": 0.025,
             "evaporationNmPerSecond": 0.7,
-            "drainageSpeedMetersPerSecond": 0.000055,
+            "drainageSpeedMetersPerSecond": 5.5e-05,
             "drainageReferenceNm": 800,
             "ruptureNm": 18,
             "gammaNewtonPerMeter": 0.03,
             "densityKgPerM3": 1000,
             "ruptureSlowdown": 240,
             "restSeconds": 5,
-            "autoRenew": true,
             "viewingAngleDegrees": 18
           },
           "quality": "medium",
@@ -3526,12 +3419,12 @@
             "pressureResidualMetersInverseSecondsInverse": null,
             "pressureCycles": 0,
             "maxSpeedMetersPerSecond": 0,
-            "volumeM3": 1.7145111060446502e-8,
-            "filmVolumeM3": 1.7145111060446502e-8,
+            "volumeM3": 1.7145111060446502e-08,
+            "filmVolumeM3": 1.7145111060446502e-08,
             "rimVolumeM3": 0,
             "evaporatedM3": 0,
             "drainedM3": 0,
-            "replenishedM3": 1.7145111060446502e-8,
+            "replenishedM3": 1.7145111060446502e-08,
             "resetDiscardedM3": 0,
             "massBalanceErrorM3": 0,
             "hole": null
@@ -3540,8 +3433,8 @@
             "solverCPU": null,
             "opticalCompositeCPUEncode": {
               "medianMs": 0,
-              "p95Ms": 0,
-              "samples": 2
+              "p95Ms": 0.10000002384185791,
+              "samples": 3
             },
             "opticalCompositeGPU": null,
             "timestampQueries": true
@@ -3555,21 +3448,21 @@
         "simulationCallCpu": {
           "samples": 90,
           "medianMs": 0,
-          "p95Ms": 20.200000047683716
+          "p95Ms": 21.800000071525574
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
           "medianMs": 0.10000002384185791,
-          "p95Ms": 20.300000071525574
+          "p95Ms": 22.100000023841858
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 0.088207,
-          "p95Ms": 0.19433
+          "medianMs": 0.126082,
+          "p95Ms": 0.230913
         },
         "renderQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 0.5,
+          "medianMs": 0.5999999046325684,
           "p95Ms": 0.7000000476837158
         },
         "timestampSupported": true,
@@ -3598,7 +3491,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -3606,7 +3499,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 378,
+          "renderCount": 373,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -3622,12 +3515,12 @@
           },
           "resources": {
             "room": {
-              "bytes": 2293872,
+              "bytes": 2293856,
               "unknownSizeAllocations": 0,
               "buffers": 4,
               "textures": 1,
               "querySets": 1,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 0
             },
@@ -3641,7 +3534,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               }
@@ -3653,7 +3546,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21.299999952316284,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -3664,8 +3557,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2,
+              "medianMs": 1,
+              "p95Ms": 1.2000000476837158,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -3678,9 +3571,9 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             }
@@ -3711,7 +3604,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -3729,7 +3622,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -3740,7 +3633,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -3749,7 +3642,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -3769,12 +3662,12 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 0.7000000476837158,
+          "lastGpuQueueMs": 1.100000023841858,
           "room": {
             "apiVersion": 1,
             "id": "soap-film",
@@ -3788,22 +3681,14 @@
               "https://cie.co.at/datatable/cie-standard-illuminant-d65",
               "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
             ],
-            "persistent": false,
-            "presentation": {
-              "shape": "square",
-              "aspectRatio": 1,
-              "geometry": "square computational domain; oval uses a full-domain coordinate map"
-            },
-            "stirCount": 0,
-            "heaterC": 34,
             "numericalStepCount": 37,
             "simulationTime": 1.4800000000000006,
             "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
             "parameters": {
               "lengthMeters": 0.16,
               "dtSeconds": 0.04,
-              "viscosity": 0.000001,
-              "thermalDiffusivity": 0.0000012,
+              "viscosity": 1e-06,
+              "thermalDiffusivity": 1.2e-06,
               "gravity": 9.81,
               "expansionPerKelvin": 0.0002,
               "dragPerSecond": 1,
@@ -3811,14 +3696,13 @@
               "heatingKelvin": 12,
               "coolingPerSecond": 0.025,
               "evaporationNmPerSecond": 0.7,
-              "drainageSpeedMetersPerSecond": 0.000055,
+              "drainageSpeedMetersPerSecond": 5.5e-05,
               "drainageReferenceNm": 800,
               "ruptureNm": 18,
               "gammaNewtonPerMeter": 0.03,
               "densityKgPerM3": 1000,
               "ruptureSlowdown": 240,
               "restSeconds": 5,
-              "autoRenew": true,
               "viewingAngleDegrees": 18
             },
             "quality": "medium",
@@ -3846,30 +3730,30 @@
                 21.750255584716797,
                 35.30252456665039
               ],
-              "divergenceMaxPerSecond": 0.00003133191057713702,
+              "divergenceMaxPerSecond": 3.133191057713702e-05,
               "pressureResidualMetersInverseSecondsInverse": 0.05013309419155121,
               "pressureCycles": 1,
               "maxSpeedMetersPerSecond": 0.0004150059830863029,
-              "volumeM3": 1.7108018247860673e-8,
-              "filmVolumeM3": 1.7108018247860673e-8,
+              "volumeM3": 1.7108018247860673e-08,
+              "filmVolumeM3": 1.7108018247860673e-08,
               "rimVolumeM3": 0,
               "evaporatedM3": 1.7919999999974384e-11,
               "drainedM3": 1.917261083731428e-11,
-              "replenishedM3": 1.7145111060446502e-8,
+              "replenishedM3": 1.7145111060446502e-08,
               "resetDiscardedM3": 0,
               "massBalanceErrorM3": -2.0174854076468315e-16,
               "hole": null
             },
             "performance": {
               "solverCPU": {
-                "medianMs": 19.59999990463257,
-                "p95Ms": 20.700000047683716,
+                "medianMs": 21.399999976158142,
+                "p95Ms": 22,
                 "samples": 37
               },
               "opticalCompositeCPUEncode": {
                 "medianMs": 0,
-                "p95Ms": 0.09999990463256836,
-                "samples": 92
+                "p95Ms": 0.10000002384185791,
+                "samples": 93
               },
               "opticalCompositeGPU": null,
               "timestampQueries": true
@@ -3894,16 +3778,16 @@
             21.754487991333008,
             35.392845153808594
           ],
-          "divergenceMaxPerSecond": 0.000029352668207138777,
+          "divergenceMaxPerSecond": 2.9352668207138777e-05,
           "pressureResidualMetersInverseSecondsInverse": 0.04696426913142204,
           "pressureCycles": 1,
           "maxSpeedMetersPerSecond": 0.0005051371990703046,
-          "volumeM3": 1.70902569835186e-8,
-          "filmVolumeM3": 1.70902569835186e-8,
+          "volumeM3": 1.70902569835186e-08,
+          "filmVolumeM3": 1.70902569835186e-08,
           "rimVolumeM3": 0,
           "evaporatedM3": 2.6521599999962087e-11,
           "drainedM3": 2.833229544684291e-11,
-          "replenishedM3": 1.7145111060446502e-8,
+          "replenishedM3": 1.7145111060446502e-08,
           "resetDiscardedM3": 0,
           "massBalanceErrorM3": -1.8148109705352932e-16,
           "hole": null
@@ -3937,7 +3821,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -3945,7 +3829,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 381,
+        "renderCount": 375,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -3980,7 +3864,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -3991,7 +3875,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             }
@@ -4003,7 +3887,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21.299999952316284,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -4014,8 +3898,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2,
+            "medianMs": 1,
+            "p95Ms": 1.2000000476837158,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -4028,16 +3912,16 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "negative-temperature": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0,
+              "samples": 2,
+              "medianMs": 0.09999990463256836,
               "p95Ms": 0.09999990463256836,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
@@ -4069,7 +3953,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -4087,7 +3971,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -4098,7 +3982,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4107,7 +3991,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -4127,12 +4011,12 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 0.8999999761581421,
+        "lastGpuQueueMs": 1,
         "room": {
           "apiVersion": 1,
           "id": "negative-temperature",
@@ -4164,8 +4048,7 @@
             "sweepDuration": 44,
             "withdrawalDuration": 16,
             "phraseDuration": 540,
-            "solverUnitsPerSecond": 3,
-            "standaloneStartTime": 48,
+            "solverUnitsPerSecond": 0.75,
             "damping": 0,
             "detectionRadius": 0.89,
             "detectionDensity": 0.08,
@@ -4186,7 +4069,7 @@
           "phase": "Quiet field",
           "temperatureStatus": "Temperature not estimated",
           "diagnosticAgeSteps": 0,
-          "diagnosticAgeSeconds": 0.05310000002384186,
+          "diagnosticAgeSeconds": 0.0495,
           "diagnostics": {
             "norm": 1105.9407927637399,
             "energy": 1150.012782088896,
@@ -4213,7 +4096,7 @@
             "temperatureStatus": "Temperature not estimated",
             "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
           },
-          "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/negative-temperature/"
+          "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/negative-temperature/"
         },
         "loopPending": false
       },
@@ -4225,18 +4108,18 @@
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.100000023841858,
-          "p95Ms": 1.2999999523162842
+          "medianMs": 0.5,
+          "p95Ms": 0.7000000476837158
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 0.160331,
-          "p95Ms": 0.167122
+          "medianMs": 0.210831,
+          "p95Ms": 0.298661
         },
         "renderQueueFenceLatency": {
           "samples": 90,
           "medianMs": 0.6000000238418579,
-          "p95Ms": 0.7000000476837158
+          "p95Ms": 0.8000000715255737
         },
         "timestampSupported": true,
         "snapshot": {
@@ -4264,7 +4147,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -4272,7 +4155,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 381,
+          "renderCount": 375,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -4307,7 +4190,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -4318,7 +4201,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               }
@@ -4330,7 +4213,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21.299999952316284,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -4341,8 +4224,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2,
+              "medianMs": 1,
+              "p95Ms": 1.2000000476837158,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -4355,16 +4238,16 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "negative-temperature": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0,
+                "samples": 2,
+                "medianMs": 0.09999990463256836,
                 "p95Ms": 0.09999990463256836,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
@@ -4396,7 +4279,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -4414,7 +4297,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -4425,7 +4308,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4434,7 +4317,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -4454,18 +4337,18 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 0.8999999761581421,
+          "lastGpuQueueMs": 1,
           "room": {
             "apiVersion": 1,
             "id": "negative-temperature",
             "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-            "numericalStepCount": 450,
-            "simulationTime": 4.499999999999992,
+            "numericalStepCount": 112,
+            "simulationTime": 1.1200000000000008,
             "simulationUnits": "dimensionless: hbar = m = 1",
             "quality": "medium",
             "parameters": {
@@ -4491,8 +4374,7 @@
               "sweepDuration": 44,
               "withdrawalDuration": 16,
               "phraseDuration": 540,
-              "solverUnitsPerSecond": 3,
-              "standaloneStartTime": 48,
+              "solverUnitsPerSecond": 0.75,
               "damping": 0,
               "detectionRadius": 0.89,
               "detectionDensity": 0.08,
@@ -4512,8 +4394,8 @@
             "healingLengthCells": 2,
             "phase": "Quiet field",
             "temperatureStatus": "Temperature not estimated",
-            "diagnosticAgeSteps": 450,
-            "diagnosticAgeSeconds": 0.22710000002384187,
+            "diagnosticAgeSteps": 112,
+            "diagnosticAgeSeconds": 0.17459999990463257,
             "diagnostics": {
               "norm": 1105.9407927637399,
               "energy": 1150.012782088896,
@@ -4540,19 +4422,19 @@
               "temperatureStatus": "Temperature not estimated",
               "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
             },
-            "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/negative-temperature/"
+            "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/negative-temperature/"
           },
           "loopPending": false
         }
       },
       "readback": {
         "diagnostics": {
-          "norm": 1105.8679020500688,
-          "energy": 1149.8669475927557,
-          "kinetic": 25.68934094857441,
-          "interaction": 1062.9441158573486,
-          "potential": 61.23349078683268,
-          "edgeNormFraction": 2.3310687307660007e-12,
+          "norm": 1105.9216263311355,
+          "energy": 1149.9744421981504,
+          "kinetic": 25.72114826065992,
+          "interaction": 1062.7576674025743,
+          "potential": 61.49562653491637,
+          "edgeNormFraction": 2.026695034098961e-13,
           "positive": 0,
           "negative": 0,
           "circulation": 0,
@@ -4562,9 +4444,9 @@
           "componentSizes": [],
           "largestCluster": 0,
           "clustered": false,
-          "measuredStep": 450,
-          "measuredSimulationTime": 4.499999999999992,
-          "normDrift": -0.00006590833265940343,
+          "measuredStep": 112,
+          "measuredSimulationTime": 1.1200000000000008,
+          "normDrift": -1.733043281315627e-05,
           "conservativeEnergyDrift": null,
           "estimatedAnnihilations": 0,
           "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
@@ -4573,7 +4455,7 @@
           "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
         },
         "grid": 256,
-        "steps": 450
+        "steps": 112
       }
     },
     "hydrogen-exactly": {
@@ -4602,7 +4484,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -4610,7 +4492,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 383,
+        "renderCount": 376,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -4645,7 +4527,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -4656,7 +4538,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -4679,7 +4561,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21.299999952316284,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -4690,8 +4572,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2,
+            "medianMs": 1,
+            "p95Ms": 1.2999999523162842,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -4704,25 +4586,25 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "negative-temperature": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0,
+              "samples": 2,
+              "medianMs": 0.09999990463256836,
               "p95Ms": 0.09999990463256836,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "hydrogen-exactly": {
             "renderEncoding": {
-              "samples": 2,
-              "medianMs": 0.20000004768371582,
-              "p95Ms": 0.20000004768371582,
+              "samples": 1,
+              "medianMs": 0.10000002384185791,
+              "p95Ms": 0.10000002384185791,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           }
@@ -4753,7 +4635,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -4771,7 +4653,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -4782,7 +4664,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4791,7 +4673,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -4811,18 +4693,18 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 2.8000000715255737,
+        "lastGpuQueueMs": 11,
         "room": {
           "apiVersion": 1,
           "id": "hydrogen-exactly",
           "title": "Hydrogen Exactly",
           "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-          "representativeScaleMeters": 1.32294302636e-9,
+          "representativeScaleMeters": 1.32294302636e-09,
           "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
           "sources": [
             "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4973,18 +4855,18 @@
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.600000023841858,
+          "medianMs": 2,
           "p95Ms": 2.5
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 1.277605,
-          "p95Ms": 1.414353
+          "medianMs": 1.796014,
+          "p95Ms": 2.30059
         },
         "renderQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.7000000476837158,
-          "p95Ms": 2.399999976158142
+          "medianMs": 2.3000000715255737,
+          "p95Ms": 2.9000000953674316
         },
         "timestampSupported": true,
         "snapshot": {
@@ -5012,7 +4894,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -5020,7 +4902,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 387,
+          "renderCount": 376,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -5055,7 +4937,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -5066,7 +4948,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -5080,28 +4962,6 @@
                 "peakBytes": 1610784,
                 "created": 7,
                 "destroyed": 7
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
               }
             ]
           },
@@ -5111,7 +4971,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -5122,8 +4982,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2.3000000715255737,
+              "medianMs": 1,
+              "p95Ms": 1.2999999523162842,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -5136,25 +4996,25 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "negative-temperature": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0,
+                "samples": 2,
+                "medianMs": 0.09999990463256836,
                 "p95Ms": 0.09999990463256836,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "hydrogen-exactly": {
               "renderEncoding": {
-                "samples": 6,
-                "medianMs": 0,
-                "p95Ms": 0.20000004768371582,
+                "samples": 1,
+                "medianMs": 0.10000002384185791,
+                "p95Ms": 0.10000002384185791,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             }
@@ -5185,7 +5045,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -5203,7 +5063,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -5214,7 +5074,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -5223,7 +5083,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -5243,18 +5103,18 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 5.700000047683716,
+          "lastGpuQueueMs": 11,
           "room": {
             "apiVersion": 1,
             "id": "hydrogen-exactly",
             "title": "Hydrogen Exactly",
             "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-            "representativeScaleMeters": 1.32294302636e-9,
+            "representativeScaleMeters": 1.32294302636e-09,
             "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
             "sources": [
               "https://arxiv.org/html/quant-ph/9510029v1",
@@ -5402,12 +5262,12 @@
         "finite": true,
         "mass": 0.9968708093965688,
         "errors": [
-          4.183857472655404e-7,
-          8.173428965598204e-7,
-          8.032925648799835e-8,
-          3.9496351535366117e-7,
-          3.7924038871243546e-8,
-          0.0000023754240723140644
+          4.183857472655404e-07,
+          8.173428965598204e-07,
+          8.032925648799835e-08,
+          3.9496351535366117e-07,
+          3.7924038871243546e-08,
+          2.3754240723140644e-06
         ]
       }
     },
@@ -5437,7 +5297,7 @@
           "cycle": 0,
           "age": 4,
           "extension": 0,
-          "total": 3.1166666666666605,
+          "total": 3.099999999999994,
           "phase": "watching"
         },
         "roomTicks": 0,
@@ -5445,7 +5305,7 @@
         "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
         "replayValidation": null,
         "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 390,
+        "renderCount": 378,
         "adapter": {
           "vendor": "apple",
           "architecture": "metal-3",
@@ -5480,7 +5340,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -5491,7 +5351,7 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 2293872,
+              "peakBytes": 2293856,
               "created": 6,
               "destroyed": 6
             },
@@ -5513,28 +5373,6 @@
               "buffers": 0,
               "textures": 0,
               "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
               "peakBytes": 33555296,
               "created": 6,
               "destroyed": 6
@@ -5547,7 +5385,7 @@
           "frameCpu": {
             "samples": 360,
             "medianMs": 0.10000002384185791,
-            "p95Ms": 21,
+            "p95Ms": 21.899999976158142,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           },
           "displayAndSubmit": {
@@ -5558,8 +5396,8 @@
           },
           "frameQueueCompletion": {
             "samples": 360,
-            "medianMs": 0.8999999761581421,
-            "p95Ms": 2.3000000715255737,
+            "medianMs": 1,
+            "p95Ms": 1.2999999523162842,
             "meaning": "CPU wall time; GPU execution is asynchronous"
           }
         },
@@ -5572,33 +5410,33 @@
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "simulationStep": {
-              "samples": 187,
+              "samples": 186,
               "medianMs": 0,
-              "p95Ms": 23.799999952316284,
+              "p95Ms": 24.700000047683716,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "negative-temperature": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0,
+              "samples": 2,
+              "medianMs": 0.09999990463256836,
               "p95Ms": 0.09999990463256836,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "hydrogen-exactly": {
             "renderEncoding": {
-              "samples": 6,
-              "medianMs": 0,
-              "p95Ms": 0.20000004768371582,
+              "samples": 1,
+              "medianMs": 0.10000002384185791,
+              "p95Ms": 0.10000002384185791,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
           "qcd-lava-lamp": {
             "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.10000002384185791,
+              "samples": 2,
+              "medianMs": 0.19999992847442627,
+              "p95Ms": 0.19999992847442627,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           }
@@ -5629,7 +5467,7 @@
                 "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
           },
           {
             "id": "negative-temperature",
@@ -5647,7 +5485,7 @@
                 "https://arxiv.org/abs/1801.06952"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
           },
           {
             "id": "hydrogen-exactly",
@@ -5658,7 +5496,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -5667,7 +5505,7 @@
                 "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
           },
           {
             "id": "qcd-lava-lamp",
@@ -5687,12 +5525,12 @@
                 "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
               ]
             },
-            "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+            "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
         "gpuQueuePending": false,
-        "lastGpuQueueMs": 1.5,
+        "lastGpuQueueMs": 1.6999999284744263,
         "room": {
           "apiVersion": 1,
           "id": "qcd-lava-lamp",
@@ -5735,13 +5573,13 @@
             "beaconVerified": false,
             "crossDeviceReplay": "floating-point results may differ"
           },
-          "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+          "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
           "diagnosticAgeSeconds": 0,
           "diagnosticsAvailable": true,
           "numericalFault": null,
           "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
+          "unitarityError": 2.181529998779297e-05,
+          "determinantError": 3.0641000194009393e-05,
           "measuredSweep": 256,
           "chargeByCoolingDepth": [
             {
@@ -5816,18 +5654,18 @@
         },
         "simulationQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 0.09999990463256836,
+          "medianMs": 0,
           "p95Ms": 0.20000004768371582
         },
         "roomRenderGpuTimestamps": {
           "samples": 90,
-          "medianMs": 0.87457,
-          "p95Ms": 0.949401
+          "medianMs": 1.18144,
+          "p95Ms": 1.654559
         },
         "renderQueueFenceLatency": {
           "samples": 90,
-          "medianMs": 1.3000000715255737,
-          "p95Ms": 1.5
+          "medianMs": 1.7000000476837158,
+          "p95Ms": 2.200000047683716
         },
         "timestampSupported": true,
         "snapshot": {
@@ -5855,7 +5693,7 @@
             "cycle": 0,
             "age": 4,
             "extension": 0,
-            "total": 3.1166666666666605,
+            "total": 3.099999999999994,
             "phase": "watching"
           },
           "roomTicks": 90,
@@ -5863,7 +5701,7 @@
           "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
           "replayValidation": null,
           "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 390,
+          "renderCount": 378,
           "adapter": {
             "vendor": "apple",
             "architecture": "metal-3",
@@ -5898,7 +5736,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -5909,7 +5747,7 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 2293872,
+                "peakBytes": 2293856,
                 "created": 6,
                 "destroyed": 6
               },
@@ -5931,28 +5769,6 @@
                 "buffers": 0,
                 "textures": 0,
                 "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
                 "peakBytes": 33555296,
                 "created": 6,
                 "destroyed": 6
@@ -5965,7 +5781,7 @@
             "frameCpu": {
               "samples": 360,
               "medianMs": 0.10000002384185791,
-              "p95Ms": 21,
+              "p95Ms": 21.899999976158142,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             },
             "displayAndSubmit": {
@@ -5976,8 +5792,8 @@
             },
             "frameQueueCompletion": {
               "samples": 360,
-              "medianMs": 0.8999999761581421,
-              "p95Ms": 2.3000000715255737,
+              "medianMs": 1,
+              "p95Ms": 1.2999999523162842,
               "meaning": "CPU wall time; GPU execution is asynchronous"
             }
           },
@@ -5990,33 +5806,33 @@
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               },
               "simulationStep": {
-                "samples": 187,
+                "samples": 186,
                 "medianMs": 0,
-                "p95Ms": 23.799999952316284,
+                "p95Ms": 24.700000047683716,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "negative-temperature": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0,
+                "samples": 2,
+                "medianMs": 0.09999990463256836,
                 "p95Ms": 0.09999990463256836,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "hydrogen-exactly": {
               "renderEncoding": {
-                "samples": 6,
-                "medianMs": 0,
-                "p95Ms": 0.20000004768371582,
+                "samples": 1,
+                "medianMs": 0.10000002384185791,
+                "p95Ms": 0.10000002384185791,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             },
             "qcd-lava-lamp": {
               "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.10000002384185791,
+                "samples": 2,
+                "medianMs": 0.19999992847442627,
+                "p95Ms": 0.19999992847442627,
                 "meaning": "CPU wall time; GPU execution is asynchronous"
               }
             }
@@ -6047,7 +5863,7 @@
                   "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/soap-film-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/soap-film-room.js?descent=1"
             },
             {
               "id": "negative-temperature",
@@ -6065,7 +5881,7 @@
                   "https://arxiv.org/abs/1801.06952"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/negative-temperature-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/negative-temperature-room.js?descent=1"
             },
             {
               "id": "hydrogen-exactly",
@@ -6076,7 +5892,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -6085,7 +5901,7 @@
                   "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/hydrogen-exactly-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/hydrogen-exactly-room.js?descent=1"
             },
             {
               "id": "qcd-lava-lamp",
@@ -6105,12 +5921,12 @@
                   "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
                 ]
               },
-              "url": "http://127.0.0.1:54347/js/qcd-lava-lamp-room.js?descent=1"
+              "url": "http://127.0.0.1:51731/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
           "gpuQueuePending": false,
-          "lastGpuQueueMs": 1.5,
+          "lastGpuQueueMs": 1.6999999284744263,
           "room": {
             "apiVersion": 1,
             "id": "qcd-lava-lamp",
@@ -6153,13 +5969,13 @@
               "beaconVerified": false,
               "crossDeviceReplay": "floating-point results may differ"
             },
-            "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+            "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
             "diagnosticAgeSeconds": 1.4999999999999996,
             "diagnosticsAvailable": true,
             "numericalFault": null,
             "averagePlaquette": 0.59294699709129,
-            "unitarityError": 0.00002181529998779297,
-            "determinantError": 0.000030641000194009393,
+            "unitarityError": 2.181529998779297e-05,
+            "determinantError": 3.0641000194009393e-05,
             "measuredSweep": 256,
             "chargeByCoolingDepth": [
               {
@@ -6214,9 +6030,9 @@
               "maxStorageBufferBindingSize": 134217728,
               "maxBufferSize": 268435456
             },
-            "lastSweepQueueWallMs": 4.199999928474426,
-            "sweepQueueWallMedianMs": 4.199999928474426,
-            "sweepQueueWallP95Ms": 5.300000071525574,
+            "lastSweepQueueWallMs": 5.299999952316284,
+            "sweepQueueWallMedianMs": 5.199999928474426,
+            "sweepQueueWallP95Ms": 5.299999952316284,
             "viewport": {
               "width": 1118,
               "height": 495,
@@ -6272,13 +6088,13 @@
             "beaconVerified": false,
             "crossDeviceReplay": "floating-point results may differ"
           },
-          "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+          "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
           "diagnosticAgeSeconds": 1.4999999999999996,
           "diagnosticsAvailable": true,
           "numericalFault": null,
           "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
+          "unitarityError": 2.181529998779297e-05,
+          "determinantError": 3.0641000194009393e-05,
           "measuredSweep": 256,
           "chargeByCoolingDepth": [
             {
@@ -6333,9 +6149,9 @@
             "maxStorageBufferBindingSize": 134217728,
             "maxBufferSize": 268435456
           },
-          "lastSweepQueueWallMs": 4.199999928474426,
-          "sweepQueueWallMedianMs": 4.199999928474426,
-          "sweepQueueWallP95Ms": 5.300000071525574,
+          "lastSweepQueueWallMs": 5.299999952316284,
+          "sweepQueueWallMedianMs": 5.199999928474426,
+          "sweepQueueWallP95Ms": 5.299999952316284,
           "viewport": {
             "width": 1118,
             "height": 495,
@@ -6347,176 +6163,11 @@
       }
     }
   },
-  "hydrogenVariant": {
-    "room": {
-      "apiVersion": 1,
-      "id": "hydrogen-exactly",
-      "title": "Hydrogen Exactly",
-      "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-      "representativeScaleMeters": 4.762594894896e-8,
-      "scaleMeaning": "n0^2 a0, characteristic circular radius",
-      "sources": [
-        "https://arxiv.org/html/quant-ph/9510029v1",
-        "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0",
-        "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
-        "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
-      ],
-      "numericalStepCount": 0,
-      "simulationTime": 0,
-      "simulationTimeUnits": "hbar/Eh (atomic time)",
-      "simulationTimeSeconds": 0,
-      "scoreSeconds": 0,
-      "mode": "revival",
-      "quality": "medium",
-      "seed": "970772acf036fcc7",
-      "seedProvenance": "Deterministic analytic initial coefficients; seed is recorded but unused. No random draws or beacon claim.",
-      "parameterValues": {
-        "states": [
-          {
-            "n": 24,
-            "l": 23,
-            "m": 23,
-            "c_real": 0.009445690479546336,
-            "c_imag": 0
-          },
-          {
-            "n": 25,
-            "l": 24,
-            "m": 24,
-            "c_real": 0.03206550448907532,
-            "c_imag": 0
-          },
-          {
-            "n": 26,
-            "l": 25,
-            "m": 25,
-            "c_real": 0.08716307817302536,
-            "c_imag": 0
-          },
-          {
-            "n": 27,
-            "l": 26,
-            "m": 26,
-            "c_real": 0.18972176489193018,
-            "c_imag": 0
-          },
-          {
-            "n": 28,
-            "l": 27,
-            "m": 27,
-            "c_real": 0.3306677712667664,
-            "c_imag": 0
-          },
-          {
-            "n": 29,
-            "l": 28,
-            "m": 28,
-            "c_real": 0.46148405015542415,
-            "c_imag": 0
-          },
-          {
-            "n": 30,
-            "l": 29,
-            "m": 29,
-            "c_real": 0.5157172259689131,
-            "c_imag": 0
-          },
-          {
-            "n": 31,
-            "l": 30,
-            "m": 30,
-            "c_real": 0.46148405015542415,
-            "c_imag": 0
-          },
-          {
-            "n": 32,
-            "l": 31,
-            "m": 31,
-            "c_real": 0.3306677712667664,
-            "c_imag": 0
-          },
-          {
-            "n": 33,
-            "l": 32,
-            "m": 32,
-            "c_real": 0.18972176489193018,
-            "c_imag": 0
-          },
-          {
-            "n": 34,
-            "l": 33,
-            "m": 33,
-            "c_real": 0.08716307817302536,
-            "c_imag": 0
-          },
-          {
-            "n": 35,
-            "l": 34,
-            "m": 34,
-            "c_real": 0.03206550448907532,
-            "c_imag": 0
-          },
-          {
-            "n": 36,
-            "l": 35,
-            "m": 35,
-            "c_real": 0.009445690479546336,
-            "c_imag": 0
-          }
-        ],
-        "n0": 30,
-        "sigma": 1.5,
-        "atomicUnitsPerDisplaySecond": 16964.600329384884,
-        "domainHalfSideA0": 1700,
-        "grid": 128,
-        "raySteps": 160,
-        "section": false,
-        "soft": false,
-        "overlay": 3,
-        "tilt": 0.92,
-        "contourLevelsScaledDensity": [
-          0.3,
-          0.9,
-          2.7,
-          8.1,
-          24.3,
-          72.9
-        ],
-        "colorEncoding": "density false color"
-      },
-      "analyticNorm": 1.0000000000000002,
-      "autocorrelation": 1.0000000000000004,
-      "rotationAdjustedOverlap": 1,
-      "bestRotationRadians": 0,
-      "diagnosticAgeSeconds": null,
-      "spatialCapturedMass": null,
-      "spatialMeasurementScoreSeconds": null,
-      "spatialMeasurementAgeSeconds": null,
-      "unavailableMeasurements": [
-        "Finite-grid captured mass requires debugReadback; analytic norm is not box mass."
-      ],
-      "wavelengths": [
-        {
-          "a": 29,
-          "b": 30,
-          "wavelengthNm": 1169047.5094677943,
-          "band": "infrared",
-          "linearRGB": null
-        }
-      ],
-      "precision": "JS f64 phase reduction and normalization; WGSL f32 evaluation; domain-scaled density and color in f16 presentation texture",
-      "allocatedVolumeBytes": 16777216,
-      "modelApproximation": "13 or 4 states, fixed infinite-mass nucleus, no relativity or radiative corrections",
-      "synchronization": "Local piece clock. Pauses freeze score. Restart replays t=0. No worldwide synchronization.",
-      "disposed": false
-    },
-    "scale": "47.6 nm. n0^2 a0, characteristic circular radius"
-  },
   "hostDisplayGpu": {
     "available": true,
     "samples": 60,
-    "medianMs": 0.897362,
-    "p95Ms": 1.088567,
+    "medianMs": 1.443603,
+    "p95Ms": 2.838124,
     "method": "GPU timestamps around final Reinhard/sRGB pass, includes editorial fade multiply"
   },
   "simultaneousAllocation": {
@@ -6565,22 +6216,14 @@
           "https://cie.co.at/datatable/cie-standard-illuminant-d65",
           "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
         ],
-        "persistent": false,
-        "presentation": {
-          "shape": "square",
-          "aspectRatio": 1,
-          "geometry": "square computational domain; oval uses a full-domain coordinate map"
-        },
-        "stirCount": 0,
-        "heaterC": 34,
         "numericalStepCount": 7660,
         "simulationTime": 169.96000000001277,
         "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
         "parameters": {
           "lengthMeters": 0.16,
           "dtSeconds": 0.04,
-          "viscosity": 0.000001,
-          "thermalDiffusivity": 0.0000012,
+          "viscosity": 1e-06,
+          "thermalDiffusivity": 1.2e-06,
           "gravity": 9.81,
           "expansionPerKelvin": 0.0002,
           "dragPerSecond": 1,
@@ -6588,14 +6231,13 @@
           "heatingKelvin": 12,
           "coolingPerSecond": 0.025,
           "evaporationNmPerSecond": 0.7,
-          "drainageSpeedMetersPerSecond": 0.000055,
+          "drainageSpeedMetersPerSecond": 5.5e-05,
           "drainageReferenceNm": 800,
           "ruptureNm": 18,
           "gammaNewtonPerMeter": 0.03,
           "densityKgPerM3": 1000,
           "ruptureSlowdown": 240,
           "restSeconds": 5,
-          "autoRenew": true,
           "viewingAngleDegrees": 18
         },
         "quality": "low",
@@ -6623,30 +6265,30 @@
             22.000898361206055,
             34.06449890136719
           ],
-          "divergenceMaxPerSecond": 0.000007264316082000732,
+          "divergenceMaxPerSecond": 7.264316082000732e-06,
           "pressureResidualMetersInverseSecondsInverse": 0.005811452865600586,
           "pressureCycles": 1,
           "maxSpeedMetersPerSecond": 0.008588473312556744,
-          "volumeM3": 1.314846070084274e-8,
-          "filmVolumeM3": 1.314846070084274e-8,
+          "volumeM3": 1.314846070084274e-08,
+          "filmVolumeM3": 1.314846070084274e-08,
           "rimVolumeM3": 0,
-          "evaporatedM3": 3.045683200000807e-9,
+          "evaporatedM3": 3.045683200000807e-09,
           "drainedM3": 9.510321680739638e-10,
-          "replenishedM3": 1.714518380212784e-8,
+          "replenishedM3": 1.714518380212784e-08,
           "resetDiscardedM3": 0,
           "massBalanceErrorM3": -7.733210329629781e-15,
           "hole": null
         },
         "performance": {
           "solverCPU": {
-            "medianMs": 8.900000095367432,
-            "p95Ms": 9.799999952316284,
+            "medianMs": 9.399999976158142,
+            "p95Ms": 10.300000071525574,
             "samples": 240
           },
           "opticalCompositeCPUEncode": {
-            "medianMs": 0.09999990463256836,
-            "p95Ms": 0.10000002384185791,
-            "samples": 4
+            "medianMs": 0,
+            "p95Ms": 0,
+            "samples": 2
           },
           "opticalCompositeGPU": null,
           "timestampQueries": true
@@ -6656,12 +6298,12 @@
       },
       "resources": {
         "room": {
-          "bytes": 2097264,
+          "bytes": 2097248,
           "unknownSizeAllocations": 0,
           "buffers": 4,
           "textures": 1,
           "querySets": 1,
-          "peakBytes": 2097264,
+          "peakBytes": 2097248,
           "created": 6,
           "destroyed": 0
         },
@@ -6675,7 +6317,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -6686,7 +6328,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -6700,28 +6342,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -6752,7 +6372,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -6763,7 +6383,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           }
@@ -6779,7 +6399,7 @@
         "simulationStep": {
           "samples": 360,
           "medianMs": 0,
-          "p95Ms": 9.700000047683716,
+          "p95Ms": 10.299999952316284,
           "meaning": "CPU wall time; GPU execution is asynchronous"
         }
       },
@@ -6789,7 +6409,7 @@
           "cycle": 0,
           "age": 183.00000000003777,
           "extension": 3.1666666666666603,
-          "total": 186.11666666670692,
+          "total": 186.10000000004024,
           "phase": "rest"
         },
         "room": null
@@ -6804,8 +6424,8 @@
         "apiVersion": 1,
         "id": "negative-temperature",
         "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-        "numericalStepCount": 51250,
-        "simulationTime": 512.5000000000816,
+        "numericalStepCount": 12812,
+        "simulationTime": 128.12000000001376,
         "simulationUnits": "dimensionless: hbar = m = 1",
         "quality": "low",
         "parameters": {
@@ -6831,8 +6451,7 @@
           "sweepDuration": 44,
           "withdrawalDuration": 16,
           "phraseDuration": 540,
-          "solverUnitsPerSecond": 3,
-          "standaloneStartTime": 48,
+          "solverUnitsPerSecond": 0.75,
           "damping": 0,
           "detectionRadius": 0.89,
           "detectionDensity": 0.08,
@@ -6850,60 +6469,60 @@
         "dx": 0.25,
         "healingLength": 0.5,
         "healingLengthCells": 2,
-        "phase": "Free evolution",
+        "phase": "Turbulent relaxation",
         "temperatureStatus": "Temperature not estimated",
         "diagnosticAgeSteps": 0,
-        "diagnosticAgeSeconds": 0.10969999992847443,
+        "diagnosticAgeSeconds": 0.1255,
         "diagnostics": {
-          "norm": 1093.8146545198397,
-          "energy": 1442.4609370841824,
-          "kinetic": 250.44872044073847,
-          "interaction": 1049.4858837823176,
-          "potential": 142.52633286112635,
-          "edgeNormFraction": 0.0004565294171943958,
+          "norm": 1103.2090743145834,
+          "energy": 1464.1577017216898,
+          "kinetic": 266.5729634496752,
+          "interaction": 1108.56383238429,
+          "potential": 89.02090588772468,
+          "edgeNormFraction": 6.11342182781124e-05,
           "positive": 4,
           "negative": 4,
           "circulation": 0,
           "circulationUnits": "quanta of 2 pi in the detected region",
           "vortices": [
             {
-              "x": -11.125,
-              "y": 3.875,
+              "x": -14.625,
+              "y": -5.375,
               "sign": 1
             },
             {
-              "x": 8.875,
-              "y": 4.625,
+              "x": -10.125,
+              "y": -5.375,
+              "sign": 1
+            },
+            {
+              "x": 10.125,
+              "y": -5.375,
               "sign": -1
             },
             {
-              "x": -4.375,
-              "y": 5.375,
-              "sign": 1
-            },
-            {
-              "x": 4.875,
-              "y": 5.375,
+              "x": 14.375,
+              "y": -5.125,
               "sign": -1
             },
             {
-              "x": 14.125,
-              "y": 5.625,
+              "x": -16.625,
+              "y": -1.875,
+              "sign": 1
+            },
+            {
+              "x": 16.875,
+              "y": -1.875,
               "sign": -1
             },
             {
-              "x": -12.375,
-              "y": 8.375,
+              "x": -13.125,
+              "y": -1.125,
               "sign": 1
             },
             {
-              "x": -5.125,
-              "y": 8.375,
-              "sign": 1
-            },
-            {
-              "x": 7.875,
-              "y": 9.625,
+              "x": 13.125,
+              "y": -1.125,
               "sign": -1
             }
           ],
@@ -6914,17 +6533,17 @@
           ],
           "largestCluster": 4,
           "clustered": true,
-          "measuredStep": 51250,
-          "measuredSimulationTime": 512.5000000000816,
-          "normDrift": -0.01096454559162885,
-          "conservativeEnergyDrift": -0.004076562668451689,
+          "measuredStep": 12812,
+          "measuredSimulationTime": 128.12000000001376,
+          "normDrift": -0.0024700404099661233,
+          "conservativeEnergyDrift": 0,
           "estimatedAnnihilations": 0,
           "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
           "temperature": null,
           "temperatureStatus": "Temperature not estimated",
           "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
         },
-        "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/negative-temperature/"
+        "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/negative-temperature/"
       },
       "resources": {
         "room": {
@@ -6947,7 +6566,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -6958,7 +6577,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -6972,28 +6591,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -7024,7 +6621,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7035,7 +6632,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -7046,7 +6643,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           }
@@ -7054,9 +6651,9 @@
       },
       "cpuCosts": {
         "renderEncoding": {
-          "samples": 9,
+          "samples": 6,
           "medianMs": 0,
-          "p95Ms": 0.10000002384185791,
+          "p95Ms": 0.09999990463256836,
           "meaning": "CPU wall time; GPU execution is asynchronous"
         },
         "simulationStep": {
@@ -7072,7 +6669,7 @@
           "cycle": 0,
           "age": 179.83333333336859,
           "extension": 0,
-          "total": 366.11666666666235,
+          "total": 366.0999999999957,
           "phase": "rest"
         },
         "room": null
@@ -7088,7 +6685,7 @@
         "id": "hydrogen-exactly",
         "title": "Hydrogen Exactly",
         "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-        "representativeScaleMeters": 1.32294302636e-9,
+        "representativeScaleMeters": 1.32294302636e-09,
         "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
         "sources": [
           "https://arxiv.org/html/quant-ph/9510029v1",
@@ -7097,10 +6694,10 @@
           "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
         ],
         "numericalStepCount": 10250,
-        "simulationTime": 12890.399999996163,
+        "simulationTime": 12889.999999996166,
         "simulationTimeUnits": "hbar/Eh (atomic time)",
-        "simulationTimeSeconds": 3.1180386523419296e-13,
-        "scoreSeconds": 537.0999999998402,
+        "simulationTimeSeconds": 3.1179418969688666e-13,
+        "scoreSeconds": 537.0833333331735,
         "mode": "spectral",
         "quality": "low",
         "seed": "970772acf036fcc7",
@@ -7157,12 +6754,12 @@
           "colorEncoding": "spectral-frequency false color"
         },
         "analyticNorm": 1,
-        "autocorrelation": 0.2655653673227586,
+        "autocorrelation": 0.2718450401588697,
         "rotationAdjustedOverlap": null,
         "bestRotationRadians": null,
         "diagnosticAgeSeconds": 0.14999999999986358,
-        "spatialCapturedMass": 0.9817877552122809,
-        "spatialMeasurementScoreSeconds": 537.0999999998402,
+        "spatialCapturedMass": 0.9818374947935808,
+        "spatialMeasurementScoreSeconds": 537.0833333331735,
         "spatialMeasurementAgeSeconds": 0,
         "unavailableMeasurements": [],
         "wavelengths": [
@@ -7248,7 +6845,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7259,7 +6856,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7273,28 +6870,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -7325,7 +6900,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7336,7 +6911,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -7347,7 +6922,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -7366,9 +6941,9 @@
       },
       "cpuCosts": {
         "renderEncoding": {
-          "samples": 11,
-          "medianMs": 0,
-          "p95Ms": 0.20000004768371582,
+          "samples": 4,
+          "medianMs": 0.10000002384185791,
+          "p95Ms": 0.10000002384185791,
           "meaning": "CPU wall time; GPU execution is asynchronous"
         },
         "simulationStep": {
@@ -7384,7 +6959,7 @@
           "cycle": 0,
           "age": 179.83333333336859,
           "extension": 0,
-          "total": 546.1166666664986,
+          "total": 546.099999999832,
           "phase": "rest"
         },
         "room": null
@@ -7437,13 +7012,13 @@
           "beaconVerified": false,
           "crossDeviceReplay": "floating-point results may differ"
         },
-        "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
+        "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
         "diagnosticAgeSeconds": 2.833333333335588,
         "diagnosticsAvailable": true,
         "numericalFault": null,
         "averagePlaquette": 0.5948707805691811,
-        "unitarityError": 0.000042438507080078125,
-        "determinantError": 0.00005990361387375742,
+        "unitarityError": 4.2438507080078125e-05,
+        "determinantError": 5.990361387375742e-05,
         "measuredSweep": 592,
         "chargeByCoolingDepth": [
           {
@@ -7603,9 +7178,9 @@
           "maxStorageBufferBindingSize": 134217728,
           "maxBufferSize": 268435456
         },
-        "lastSweepQueueWallMs": 1.2999999523162842,
-        "sweepQueueWallMedianMs": 1.3000000715255737,
-        "sweepQueueWallP95Ms": 1.5,
+        "lastSweepQueueWallMs": 3.700000047683716,
+        "sweepQueueWallMedianMs": 2.600000023841858,
+        "sweepQueueWallP95Ms": 4.400000095367432,
         "viewport": {
           "width": 1118,
           "height": 495,
@@ -7634,7 +7209,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7645,7 +7220,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7659,28 +7234,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -7711,7 +7264,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7722,7 +7275,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -7733,7 +7286,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -7763,7 +7316,7 @@
       },
       "cpuCosts": {
         "renderEncoding": {
-          "samples": 70,
+          "samples": 67,
           "medianMs": 0,
           "p95Ms": 0.10000002384185791,
           "meaning": "CPU wall time; GPU execution is asynchronous"
@@ -7781,7 +7334,7 @@
           "cycle": 0,
           "age": 179.83333333336859,
           "extension": 0.15,
-          "total": 726.1166666663349,
+          "total": 726.0999999996683,
           "phase": "rest"
         },
         "room": null
@@ -7805,22 +7358,14 @@
           "https://cie.co.at/datatable/cie-standard-illuminant-d65",
           "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
         ],
-        "persistent": false,
-        "presentation": {
-          "shape": "square",
-          "aspectRatio": 1,
-          "geometry": "square computational domain; oval uses a full-domain coordinate map"
-        },
-        "stirCount": 0,
-        "heaterC": 34,
         "numericalStepCount": 7666,
         "simulationTime": 170.68000000000848,
         "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
         "parameters": {
           "lengthMeters": 0.16,
           "dtSeconds": 0.04,
-          "viscosity": 0.000001,
-          "thermalDiffusivity": 0.0000012,
+          "viscosity": 1e-06,
+          "thermalDiffusivity": 1.2e-06,
           "gravity": 9.81,
           "expansionPerKelvin": 0.0002,
           "dragPerSecond": 1,
@@ -7828,14 +7373,13 @@
           "heatingKelvin": 12,
           "coolingPerSecond": 0.025,
           "evaporationNmPerSecond": 0.7,
-          "drainageSpeedMetersPerSecond": 0.000055,
+          "drainageSpeedMetersPerSecond": 5.5e-05,
           "drainageReferenceNm": 800,
           "ruptureNm": 18,
           "gammaNewtonPerMeter": 0.03,
           "densityKgPerM3": 1000,
           "ruptureSlowdown": 240,
           "restSeconds": 5,
-          "autoRenew": true,
           "viewingAngleDegrees": 18
         },
         "quality": "low",
@@ -7863,30 +7407,30 @@
             22.001955032348633,
             33.95393753051758
           ],
-          "divergenceMaxPerSecond": 7.450580596923828e-7,
+          "divergenceMaxPerSecond": 7.450580596923828e-07,
           "pressureResidualMetersInverseSecondsInverse": 0.0005960464477539062,
           "pressureCycles": 2,
           "maxSpeedMetersPerSecond": 0.007025826722383499,
-          "volumeM3": 1.307457855591476e-8,
-          "filmVolumeM3": 1.307457855591476e-8,
+          "volumeM3": 1.307457855591476e-08,
+          "filmVolumeM3": 1.307457855591476e-08,
           "rimVolumeM3": 0,
-          "evaporatedM3": 3.058585600000809e-9,
-          "drainedM3": 1.0120152041032926e-9,
-          "replenishedM3": 1.7145183804702758e-8,
+          "evaporatedM3": 3.058585600000809e-09,
+          "drainedM3": 1.0120152041032926e-09,
+          "replenishedM3": 1.7145183804702758e-08,
           "resetDiscardedM3": 0,
           "massBalanceErrorM3": -4.444683894428569e-15,
           "hole": null
         },
         "performance": {
           "solverCPU": {
-            "medianMs": 10.400000095367432,
-            "p95Ms": 10.700000047683716,
+            "medianMs": 12.399999976158142,
+            "p95Ms": 12.799999952316284,
             "samples": 240
           },
           "opticalCompositeCPUEncode": {
-            "medianMs": 0.09999990463256836,
-            "p95Ms": 0.10000002384185791,
-            "samples": 6
+            "medianMs": 0,
+            "p95Ms": 0,
+            "samples": 4
           },
           "opticalCompositeGPU": null,
           "timestampQueries": true
@@ -7896,12 +7440,12 @@
       },
       "resources": {
         "room": {
-          "bytes": 2097264,
+          "bytes": 2097248,
           "unknownSizeAllocations": 0,
           "buffers": 4,
           "textures": 1,
           "querySets": 1,
-          "peakBytes": 2097264,
+          "peakBytes": 2097248,
           "created": 6,
           "destroyed": 0
         },
@@ -7915,7 +7459,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7926,7 +7470,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -7940,28 +7484,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -7992,7 +7514,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8003,7 +7525,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8014,7 +7536,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8063,7 +7585,7 @@
         "simulationStep": {
           "samples": 360,
           "medianMs": 0,
-          "p95Ms": 10.700000047683716,
+          "p95Ms": 12.700000047683716,
           "meaning": "CPU wall time; GPU execution is asynchronous"
         }
       },
@@ -8073,7 +7595,7 @@
           "cycle": 1,
           "age": 183.68333333337165,
           "extension": 3.9666666666666575,
-          "total": 910.1166666661676,
+          "total": 910.0999999995009,
           "phase": "rest"
         },
         "room": null
@@ -8088,8 +7610,8 @@
         "apiVersion": 1,
         "id": "negative-temperature",
         "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-        "numericalStepCount": 51215,
-        "simulationTime": 512.150000000082,
+        "numericalStepCount": 12803,
+        "simulationTime": 128.03000000001379,
         "simulationUnits": "dimensionless: hbar = m = 1",
         "quality": "low",
         "parameters": {
@@ -8115,8 +7637,7 @@
           "sweepDuration": 44,
           "withdrawalDuration": 16,
           "phraseDuration": 540,
-          "solverUnitsPerSecond": 3,
-          "standaloneStartTime": 48,
+          "solverUnitsPerSecond": 0.75,
           "damping": 0,
           "detectionRadius": 0.89,
           "detectionDensity": 0.08,
@@ -8134,61 +7655,61 @@
         "dx": 0.25,
         "healingLength": 0.5,
         "healingLengthCells": 2,
-        "phase": "Free evolution",
+        "phase": "Turbulent relaxation",
         "temperatureStatus": "Temperature not estimated",
         "diagnosticAgeSteps": 0,
-        "diagnosticAgeSeconds": 0.1165,
+        "diagnosticAgeSeconds": 0.1175,
         "diagnostics": {
-          "norm": 1093.8000807919723,
-          "energy": 1442.4424307829186,
-          "kinetic": 249.5613826493972,
-          "interaction": 1050.1404621498361,
-          "potential": 142.7405859836851,
-          "edgeNormFraction": 0.0005181475790194419,
+          "norm": 1103.2156115943276,
+          "energy": 1464.169738168404,
+          "kinetic": 266.7282343209739,
+          "interaction": 1109.1377989849332,
+          "potential": 88.30370486249703,
+          "edgeNormFraction": 6.051918907632911e-05,
           "positive": 4,
           "negative": 4,
           "circulation": 0,
           "circulationUnits": "quanta of 2 pi in the detected region",
           "vortices": [
             {
-              "x": -11.125,
-              "y": 3.125,
-              "sign": 1
-            },
-            {
-              "x": 13.375,
-              "y": 3.375,
+              "x": 10.125,
+              "y": -5.625,
               "sign": -1
             },
             {
-              "x": -5.125,
-              "y": 4.875,
+              "x": -14.625,
+              "y": -5.375,
               "sign": 1
             },
             {
-              "x": 4.875,
-              "y": 5.625,
-              "sign": -1
-            },
-            {
-              "x": 9.125,
-              "y": 6.375,
-              "sign": -1
-            },
-            {
-              "x": -8.375,
-              "y": 8.125,
+              "x": -10.125,
+              "y": -5.375,
               "sign": 1
             },
             {
-              "x": 6.625,
-              "y": 9.875,
+              "x": 14.375,
+              "y": -5.125,
               "sign": -1
             },
             {
-              "x": -9.875,
-              "y": 10.875,
+              "x": -16.625,
+              "y": -1.875,
               "sign": 1
+            },
+            {
+              "x": 16.875,
+              "y": -1.875,
+              "sign": -1
+            },
+            {
+              "x": -13.125,
+              "y": -1.125,
+              "sign": 1
+            },
+            {
+              "x": 13.125,
+              "y": -0.875,
+              "sign": -1
             }
           ],
           "c2": 1,
@@ -8198,17 +7719,17 @@
           ],
           "largestCluster": 4,
           "clustered": true,
-          "measuredStep": 51215,
-          "measuredSimulationTime": 512.150000000082,
-          "normDrift": -0.010977799191003168,
-          "conservativeEnergyDrift": -0.004319651143476211,
+          "measuredStep": 12803,
+          "measuredSimulationTime": 128.03000000001379,
+          "normDrift": -0.002464205930717611,
+          "conservativeEnergyDrift": -0.0007933681174080442,
           "estimatedAnnihilations": 0,
           "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
           "temperature": null,
           "temperatureStatus": "Temperature not estimated",
           "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
         },
-        "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/negative-temperature/"
+        "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/negative-temperature/"
       },
       "resources": {
         "room": {
@@ -8231,7 +7752,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8242,7 +7763,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8256,28 +7777,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -8308,7 +7807,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8319,7 +7818,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8330,7 +7829,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8374,7 +7873,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           }
@@ -8382,9 +7881,9 @@
       },
       "cpuCosts": {
         "renderEncoding": {
-          "samples": 24,
+          "samples": 19,
           "medianMs": 0,
-          "p95Ms": 0.10000002384185791,
+          "p95Ms": 0.19999992847442627,
           "meaning": "CPU wall time; GPU execution is asynchronous"
         },
         "simulationStep": {
@@ -8398,9 +7897,9 @@
         "clock": {
           "index": 1,
           "cycle": 1,
-          "age": 179.71666666670183,
+          "age": 179.8166666667019,
           "extension": 0,
-          "total": 1090.116666666004,
+          "total": 1090.1999999993373,
           "phase": "rest"
         },
         "room": null
@@ -8409,14 +7908,14 @@
     {
       "route": 2,
       "id": "hydrogen-exactly",
-      "dwell": 170.71666666669466,
-      "roomTicks": 10243,
+      "dwell": 171.58333333336202,
+      "roomTicks": 10295,
       "room": {
         "apiVersion": 1,
         "id": "hydrogen-exactly",
         "title": "Hydrogen Exactly",
         "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-        "representativeScaleMeters": 1.32294302636e-9,
+        "representativeScaleMeters": 1.32294302636e-09,
         "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
         "sources": [
           "https://arxiv.org/html/quant-ph/9510029v1",
@@ -8424,11 +7923,11 @@
           "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
           "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
         ],
-        "numericalStepCount": 10243,
-        "simulationTime": 30266.399999980364,
+        "numericalStepCount": 10295,
+        "simulationTime": 30286.799999980343,
         "simulationTimeUnits": "hbar/Eh (atomic time)",
-        "simulationTimeSeconds": 7.321092058214535e-13,
-        "scoreSeconds": 1261.0999999991818,
+        "simulationTimeSeconds": 7.326026582240767e-13,
+        "scoreSeconds": 1261.949999999181,
         "mode": "spectral",
         "quality": "low",
         "seed": "203cbfab2aec73df",
@@ -8485,12 +7984,12 @@
           "colorEncoding": "spectral-frequency false color"
         },
         "analyticNorm": 1,
-        "autocorrelation": 0.19084286612636817,
+        "autocorrelation": 0.4201779374905824,
         "rotationAdjustedOverlap": null,
         "bestRotationRadians": null,
-        "diagnosticAgeSeconds": 0.03333333333330302,
-        "spatialCapturedMass": 0.9872308767808136,
-        "spatialMeasurementScoreSeconds": 1261.0999999991818,
+        "diagnosticAgeSeconds": 0.09999999999990905,
+        "spatialCapturedMass": 0.9932653231662698,
+        "spatialMeasurementScoreSeconds": 1261.949999999181,
         "spatialMeasurementAgeSeconds": 0,
         "unavailableMeasurements": [],
         "wavelengths": [
@@ -8566,7 +8065,7 @@
           "created": 6,
           "destroyed": 4
         },
-        "targetBytes": 4427280,
+        "targetBytes": 3199600,
         "liveRooms": 1,
         "retired": [
           {
@@ -8576,7 +8075,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8587,7 +8086,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8601,28 +8100,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -8653,7 +8130,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -8664,7 +8141,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8675,7 +8152,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8719,7 +8196,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -8738,7 +8215,7 @@
       },
       "cpuCosts": {
         "renderEncoding": {
-          "samples": 25,
+          "samples": 98,
           "medianMs": 0,
           "p95Ms": 0.10000002384185791,
           "meaning": "CPU wall time; GPU execution is asynchronous"
@@ -8754,9 +8231,9 @@
         "clock": {
           "index": 2,
           "cycle": 1,
-          "age": 179.71666666670183,
+          "age": 179.5833333333684,
           "extension": 0,
-          "total": 1270.1166666658403,
+          "total": 1269.9666666658404,
           "phase": "rest"
         },
         "room": null
@@ -8765,8 +8242,8 @@
     {
       "route": 2,
       "id": "qcd-lava-lamp",
-      "dwell": 170.71666666669466,
-      "roomTicks": 10243,
+      "dwell": 170.58333333336122,
+      "roomTicks": 10235,
       "room": {
         "apiVersion": 1,
         "id": "qcd-lava-lamp",
@@ -8783,7 +8260,7 @@
         "numericalStepCount": 597,
         "simulationTime": 597,
         "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-        "ambientSeconds": 170.71666666669466,
+        "ambientSeconds": 170.58333333336122,
         "parameters": {
           "group": "SU(3)",
           "beta": 6,
@@ -8809,13 +8286,13 @@
           "beaconVerified": false,
           "crossDeviceReplay": "floating-point results may differ"
         },
-        "assetBaseURL": "http://127.0.0.1:54347/assets/visualizer/qcd-lava-lamp/",
-        "diagnosticAgeSeconds": 2.7166666666688286,
+        "assetBaseURL": "http://127.0.0.1:51731/assets/visualizer/qcd-lava-lamp/",
+        "diagnosticAgeSeconds": 2.583333333335389,
         "diagnosticsAvailable": true,
         "numericalFault": null,
         "averagePlaquette": 0.5922604501683963,
-        "unitarityError": 0.00004279613494873047,
-        "determinantError": 0.000060622365708695725,
+        "unitarityError": 4.279613494873047e-05,
+        "determinantError": 6.0622365708695725e-05,
         "measuredSweep": 592,
         "chargeByCoolingDepth": [
           {
@@ -8964,7 +8441,7 @@
         ],
         "snapshotSpacingSweeps": 16,
         "independentSnapshots": false,
-        "frameInterpolation": 0.38809523809554697,
+        "frameInterpolation": 0.3690476190479127,
         "memory": {
           "roomBuffersBytes": 2556624,
           "volumeTextureBytes": 4096,
@@ -8975,12 +8452,12 @@
           "maxStorageBufferBindingSize": 134217728,
           "maxBufferSize": 268435456
         },
-        "lastSweepQueueWallMs": 1.2999999523162842,
-        "sweepQueueWallMedianMs": 1.3000000715255737,
-        "sweepQueueWallP95Ms": 2,
+        "lastSweepQueueWallMs": 2.4000000953674316,
+        "sweepQueueWallMedianMs": 2.600000023841858,
+        "sweepQueueWallP95Ms": 4.899999976158142,
         "viewport": {
-          "width": 1118,
-          "height": 495,
+          "width": 950,
+          "height": 421,
           "dpr": 1
         },
         "busy": false
@@ -8996,7 +8473,7 @@
           "created": 73,
           "destroyed": 46
         },
-        "targetBytes": 4427280,
+        "targetBytes": 3199600,
         "liveRooms": 1,
         "retired": [
           {
@@ -9006,7 +8483,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -9017,7 +8494,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -9031,28 +8508,6 @@
             "peakBytes": 1610784,
             "created": 7,
             "destroyed": 7
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
-          },
-          {
-            "id": "hydrogen-exactly",
-            "bytes": 0,
-            "unknownSizeAllocations": 0,
-            "buffers": 0,
-            "textures": 0,
-            "querySets": 0,
-            "peakBytes": 16777792,
-            "created": 2,
-            "destroyed": 2
           },
           {
             "id": "hydrogen-exactly",
@@ -9083,7 +8538,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2293872,
+            "peakBytes": 2293856,
             "created": 6,
             "destroyed": 6
           },
@@ -9094,7 +8549,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -9105,7 +8560,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -9149,7 +8604,7 @@
             "buffers": 0,
             "textures": 0,
             "querySets": 0,
-            "peakBytes": 2097264,
+            "peakBytes": 2097248,
             "created": 6,
             "destroyed": 6
           },
@@ -9179,7 +8634,7 @@
       },
       "cpuCosts": {
         "renderEncoding": {
-          "samples": 85,
+          "samples": 81,
           "medianMs": 0,
           "p95Ms": 0.10000002384185791,
           "meaning": "CPU wall time; GPU execution is asynchronous"
@@ -9195,9 +8650,9 @@
         "clock": {
           "index": 3,
           "cycle": 1,
-          "age": 179.71666666670183,
+          "age": 179.5833333333684,
           "extension": 0.15,
-          "total": 1450.1166666656766,
+          "total": 1449.9666666656767,
           "phase": "rest"
         },
         "room": null
@@ -9209,5 +8664,23 @@
     "hostTicks": 120,
     "maxProbeAbsoluteError": 0,
     "tolerance": 0.0001
-  }
+  },
+  "fixtureScreenshotNamesNotPublished": [
+    "fixture-route-1-soap-film.png",
+    "fixture-route-1-negative-temperature.png",
+    "fixture-route-1-hydrogen-exactly.png",
+    "fixture-route-1-qcd-lava-lamp.png",
+    "fixture-route-2-soap-film.png",
+    "fixture-route-2-negative-temperature.png",
+    "fixture-route-2-hydrogen-exactly.png",
+    "fixture-route-2-qcd-lava-lamp.png",
+    "fixture-editorial-transition.png"
+  ],
+  "origin": "Live Descent host on local HTTP, hardware WebGPU. Contract fixtures exist only in integration tests.",
+  "hardware": {
+    "chip": "Apple M1 Pro",
+    "chipSource": "Local macOS system_profiler SPDisplaysDataType",
+    "browserAdapter": "apple / metal-3, non-fallback"
+  },
+  "revisionNote": "The first hydrogen shader hash was used by the two full routes. A later renderer revision was served during later contexts. Analytic basis and evolution are unchanged; final/report.json verifies the newest renderer and Rydberg option."
 }

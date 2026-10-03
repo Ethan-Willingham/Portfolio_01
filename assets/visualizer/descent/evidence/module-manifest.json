@@ -1,7 +1,7 @@
 {
-  "description": "Exact served module bytes for both successful runs. Owned host files only are committed by Descent. Source-room changes belong to their agents.",
+  "description": "Exact served module bytes, source commits and report provenance. The publication run uses one fixed committed checkout; earlier shared-checkout runs are retained as historical evidence. Only owned host files are committed by Descent.",
   "runs": {
-    "whole-route": {
+    "earlier-whole-route": {
       "date": "2026-10-03T17:26:07.294Z",
       "checks": 28,
       "modules": {
@@ -131,9 +131,10 @@
           ],
           "lastCommittedChange": null
         }
-      }
+      },
+      "report": "earlier-whole-route-report.json"
     },
-    "final": {
+    "earlier-working-copy": {
       "date": "2026-10-03T17:41:17.827Z",
       "checks": 20,
       "modules": {
@@ -266,6 +267,159 @@
             "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e"
           ],
           "lastCommittedChange": null
+        }
+      },
+      "report": "final/report.json"
+    },
+    "publication": {
+      "date": "2026-10-03T17:57:40.794Z",
+      "checks": 29,
+      "report": "whole-route/report.json",
+      "testedCheckout": "58f454de6b1c97d92866d914a10e505ad537babb",
+      "modules": {
+        "js/descent.js": {
+          "servedSHA256": [
+            "ab128edec7a8c2b4a6b2199b51af463a27299a038151242d81a687ee147dff5b"
+          ],
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb",
+          "committedSHA256": "ab128edec7a8c2b4a6b2199b51af463a27299a038151242d81a687ee147dff5b",
+          "committedBytesWereTested": true
+        },
+        "js/descent-host.js": {
+          "servedSHA256": [
+            "6f41ffe0888924f76241dd4e0c0c1dc0c05d592ea077bf2340f6867212dd1cef"
+          ],
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb",
+          "committedSHA256": "6f41ffe0888924f76241dd4e0c0c1dc0c05d592ea077bf2340f6867212dd1cef",
+          "committedBytesWereTested": true
+        },
+        "js/descent-seed.js": {
+          "servedSHA256": [
+            "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e"
+          ],
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb",
+          "committedSHA256": "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e",
+          "committedBytesWereTested": true
+        },
+        "js/descent-room-adapters.js": {
+          "servedSHA256": [
+            "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a"
+          ],
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb",
+          "committedSHA256": "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a",
+          "committedBytesWereTested": true
+        },
+        "js/soap-film-room.js": {
+          "servedSHA256": [
+            "13b9c4b7fb6042966e543f41e730b73da68938f255f6abdddeae639776a1640c"
+          ],
+          "lastCommittedChange": "6a5de433d55c4ec770ab378759e6ed5cb4fde5bb",
+          "committedSHA256": "13b9c4b7fb6042966e543f41e730b73da68938f255f6abdddeae639776a1640c",
+          "committedBytesWereTested": true
+        },
+        "js/negative-temperature-room.js": {
+          "servedSHA256": [
+            "277dec7e9c65064004997bf9816b37119bf11893fa39bc7d0fabe3011f7aa2b0"
+          ],
+          "lastCommittedChange": "e43966600499757fdf75c3dd87d91cb53b09a4c9",
+          "committedSHA256": "277dec7e9c65064004997bf9816b37119bf11893fa39bc7d0fabe3011f7aa2b0",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-room.js": {
+          "servedSHA256": [
+            "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe"
+          ],
+          "lastCommittedChange": "07c73b4e1ed3f02f91b437472410c12d9638fdb2",
+          "committedSHA256": "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-room.js": {
+          "servedSHA256": [
+            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
+          ],
+          "lastCommittedChange": "af79a7e76f9d24045afd91571b983cd1b0f18e79",
+          "committedSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
+          "committedBytesWereTested": true
+        },
+        "js/soap-film-model.js": {
+          "servedSHA256": [
+            "d271f9f85e36bde577766a8373f197891466d9938f2a18088e8236ebb33716b7"
+          ],
+          "lastCommittedChange": "6a5de433d55c4ec770ab378759e6ed5cb4fde5bb",
+          "committedSHA256": "d271f9f85e36bde577766a8373f197891466d9938f2a18088e8236ebb33716b7",
+          "committedBytesWereTested": true
+        },
+        "js/soap-film-geometry.js": {
+          "servedSHA256": [
+            "e5012a4269f44664b17987a31dc00c62792c56c72a9aa65160925aaee35dfbb5"
+          ],
+          "lastCommittedChange": "6a5de433d55c4ec770ab378759e6ed5cb4fde5bb",
+          "committedSHA256": "e5012a4269f44664b17987a31dc00c62792c56c72a9aa65160925aaee35dfbb5",
+          "committedBytesWereTested": true
+        },
+        "js/negative-temperature-model.js": {
+          "servedSHA256": [
+            "0414b0a52f08c8e81650e94d9de0f8beaf400ba2023d29b1cbdf587f198c0a67"
+          ],
+          "lastCommittedChange": "e43966600499757fdf75c3dd87d91cb53b09a4c9",
+          "committedSHA256": "0414b0a52f08c8e81650e94d9de0f8beaf400ba2023d29b1cbdf587f198c0a67",
+          "committedBytesWereTested": true
+        },
+        "js/negative-temperature-gpu.js": {
+          "servedSHA256": [
+            "cdc39aeb9c8829d5f3417ec1f97bd72c683f0fbb21f920918da83a06b619aa87"
+          ],
+          "lastCommittedChange": "e43966600499757fdf75c3dd87d91cb53b09a4c9",
+          "committedSHA256": "cdc39aeb9c8829d5f3417ec1f97bd72c683f0fbb21f920918da83a06b619aa87",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-math.js": {
+          "servedSHA256": [
+            "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a"
+          ],
+          "lastCommittedChange": "8681961d5f6120feda289e441108c40c41740dae",
+          "committedSHA256": "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-shaders.js": {
+          "servedSHA256": [
+            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
+          ],
+          "lastCommittedChange": "af79a7e76f9d24045afd91571b983cd1b0f18e79",
+          "committedSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-math.js": {
+          "servedSHA256": [
+            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
+          ],
+          "lastCommittedChange": "294b75c84308d613c63cde93416d32334b7d6c4e",
+          "committedSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-shaders.js": {
+          "servedSHA256": [
+            "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8"
+          ],
+          "lastCommittedChange": "07c73b4e1ed3f02f91b437472410c12d9638fdb2",
+          "committedSHA256": "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8",
+          "committedBytesWereTested": true
+        },
+        "assets/visualizer/descent/drand-verifier-1.4.2.js": {
+          "servedSHA256": [
+            "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4"
+          ],
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb",
+          "committedSHA256": "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4",
+          "committedBytesWereTested": true
+        },
+        "js/descent-bootstrap-room.js": {
+          "servedSHA256": [
+            "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e"
+          ],
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb",
+          "committedSHA256": "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e",
+          "committedBytesWereTested": true
         }
       }
     }
