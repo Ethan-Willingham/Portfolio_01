@@ -32,6 +32,8 @@ wait, soak in warm water, pay, and become soft surface residents.
 New games start at noon with no soft residents or rocky visitors. The first
 rocky visitor falls after 90 seconds of play, 30 seconds before sunset, even
 during a mining trip. Later arrivals keep their surface-only schedule.
+Dev mode starts with at least three soft residents on separate dry town spots,
+including when enabled during play or after loading an existing save.
 Drag and toss softened residents, push them with the rig, or use the jets.
 Bounded muscle effort and local terrain
 grips move their soft bodies toward nearby destinations and up walls and ledges.

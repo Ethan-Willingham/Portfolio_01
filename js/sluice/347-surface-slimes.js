@@ -4,6 +4,7 @@
      Underground NPCs keep their independent, normally disabled switch. */
   var SURFACE_SLIME_STARTERS = 0;
   var surfaceSlimesSeeded = false;
+  var surfaceSlimeDevSeeded = false;
   var surfaceSlimeGuests = [];
   var surfaceSlimeHues = [133, 284, 190, 32, 333];
 
@@ -55,19 +56,38 @@
   }
 
   function surfaceSlimeSeed() {
-    if (surfaceSlimesSeeded || !ENABLE_JELLO || bathMode) return;
+    if (!ENABLE_JELLO || bathMode) return;
+    var devStart = devMode && !softPlayEnabled && !surfaceSlimeDevSeeded;
+    if (surfaceSlimesSeeded && !devStart) return;
+    var starters = surfaceSlimesSeeded ? 0 : SURFACE_SLIME_STARTERS;
     surfaceSlimesSeeded = true;
-    // Keep the first pair in view of the starting rig, with three more
-    // along the dry town approaches. Never fill a pond to place a resident.
+    if (devStart) {
+      surfaceSlimeDevSeeded = true;
+      var residents = 0;
+      for (var bi = 0; bi < jelloBodies.length; bi++) if (jelloBodies[bi].surfaceSlime) residents++;
+      starters = Math.max(starters, 3 - residents);
+    }
+    // Keep the first pair in view of the starting rig and the rest along
+    // dry town approaches. Never fill a pond to place a resident.
     var offsets = [-4, 4, -10, 15, 23];
-    for (var n = 0; n < SURFACE_SLIME_STARTERS; n++) {
-      var col = DECK_CENTER_COL + offsets[n];
+    for (var n = 0; n < starters; n++) {
+      var col = DECK_CENTER_COL + offsets[n], clear = false, x, y = SKY_ROWS * TILE - 38;
       for (var seek = 0; seek < 24; seek++) {
+        x = (col + 0.5) * TILE;
         if (tileAt(SKY_ROWS, col) && !tileAt(SKY_ROWS - 1, col) &&
-            tileAt(SKY_ROWS, col - 1) && tileAt(SKY_ROWS, col + 1)) break;
+            tileAt(SKY_ROWS, col - 1) && tileAt(SKY_ROWS, col + 1)) {
+          clear = !(x > player.x - 40 && x < player.x + PLAYER_W + 40 &&
+            y > player.y - 40 && y < player.y + PLAYER_H + 40);
+          for (var other = 0; clear && other < jelloBodies.length; other++) {
+            var b = jelloBodies[other];
+            if (Math.hypot(b.cx - x, b.cy - y) < 80) clear = false;
+          }
+          if (clear) break;
+        }
         col += offsets[n] < 0 ? -1 : 1;
       }
-      surfaceSlimeBuild((col + 0.5) * TILE, SKY_ROWS * TILE - 38,
+      if (!clear) continue;
+      surfaceSlimeBuild(x, y,
         { seed: 0.08 + n * 0.19, hue: surfaceSlimeHues[n] });
     }
   }

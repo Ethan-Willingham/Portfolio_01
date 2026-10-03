@@ -6,6 +6,7 @@
     bathServiceReset();
     skySlimeReset();
     surfaceSlimesSeeded = false;
+    surfaceSlimeDevSeeded = false;
     surfaceSlimeGuests.length = 0;
     siphonReset();
     liquidParticles = [];
