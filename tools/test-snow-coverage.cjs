@@ -193,4 +193,24 @@ catchLakes(1,false,0,0,.5);
 assert.equal(caught,33,'offscreen lakes receive the same fading supply as visible sky');
 catchLakes(1,false,0,0,0);
 assert.equal(caught,33,'catchment stops when the eased source finishes');
-console.log('PASS evolving whole-world rain/snow, both flight directions, no curtains, clearing, saves, budgets and jet settling');
+// Priming may fill the covered view. Storm ramps and newly exposed camera
+// regions must create new weather only beyond the visible viewport in play.
+for (const speeds of [[32,53,74],[480,645,810]]) {
+  s.cam.x=2000;s.cam.y=-900;s.screenW=960;s.screenH=600;
+  const field=s.particleWeatherState(),parts=[],births=[];
+  const spawn=(x,y,size,phase)=>{const p={x,y,size,phase};parts.push(p);births.push(p);return p;};
+  const tick=intensity=>s.particleWeatherField(field,s.particleWeatherRect(),parts,.002,5400,intensity,0,speeds,.11,spawn,noop);
+  s.introPhase='warmup';tick(.1);
+  assert.ok(births.some(p=>p.x>=s.cam.x&&p.x<s.cam.x+s.screenW&&p.y>=s.cam.y&&p.y<s.cam.y+s.screenH),
+    'covered scene primes weather throughout the view');
+  births.length=0;s.introPhase='done';tick(.8);
+  assert.ok(births.length>0,'a growing storm still supplies offscreen weather');
+  assert.ok(births.every(p=>p.x<s.cam.x||p.x>=s.cam.x+s.screenW||p.y<s.cam.y||p.y>=s.cam.y+s.screenH),
+    'a growing storm never spawns weather in front of the player');
+  births.length=0;s.cam.x+=1800;tick(.8);
+  assert.ok(births.length>0);
+  assert.ok(births.every(p=>p.x<s.cam.x||p.x>=s.cam.x+s.screenW||p.y<s.cam.y||p.y>=s.cam.y+s.screenH),
+    'new camera coverage never spawns visible weather');
+}
+delete s.introPhase;
+console.log('PASS evolving whole-world rain/snow, covered priming, no visible weather births, clearing, saves, budgets and jet settling');

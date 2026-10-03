@@ -345,6 +345,11 @@
     if (pond.rainFed) return true;
     var need = surfacePondNeed(pond);
     if (liquidCount + need > LIQUID_MAX_PARTICLES) return false;
+    if (typeof coverStoredMaterial === 'function' && (pond.cR + 1) * TILE > cam.x &&
+        pond.cL * TILE < cam.x + screenW && (SKY_ROWS + (pond.d || 1)) * TILE > cam.y &&
+        SKY_ROWS * TILE < cam.y + screenH) {
+      coverStoredMaterial(Math.max(cam.x, pond.cL * TILE), Math.max(cam.y, SKY_ROWS * TILE));
+    }
     var wo = liquidSurfaceOriginForType('water');
     var step = LIQUID_CELL * LIQUID_PDELTA;     // rest spacing, density = 1/PDELTA^2
     // v24.115 — inset the lattice from the walls/floor by the collide probe

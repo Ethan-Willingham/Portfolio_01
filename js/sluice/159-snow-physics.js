@@ -389,7 +389,7 @@
     for (var key in rain.waterCells) if (rain.waterCells[key] >= 10) return true;
     return false;
   }
-  function snowScan(dt, maintenanceDt, deferBed) {
+  function snowScan(dt, maintenanceDt, deferBed, restoreScene) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
     // Snapshots refresh only weather landing, storage and thaw bookkeeping.
@@ -402,7 +402,7 @@
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
-      if (maintenanceDt && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
+      if ((maintenanceDt || restoreScene) && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
       // Physical snow stays in the contact solver in flight and on land.
       // GPU readback is only for maintenance, never a motion-mode switch.
       if (thaw && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
@@ -410,11 +410,12 @@
     }
     snow.active = active;
     var budget = Math.min(600, snowActiveCap() - active, LIQUID_MAX_PARTICLES - liquidCount - 4096);
-    for (var j = maintenanceDt ? snow.parked.length - 4 : -1; j >= 0; j -= 4) {
+    for (var j = maintenanceDt || restoreScene ? snow.parked.length - 4 : -1; j >= 0; j -= 4) {
       var px = snow.parked[j], py = snow.parked[j + 1], remove = false;
       if (thaw && Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
         rain.parked.push(px, py); snow.melted++; remove = true;
       } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
+        if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
         if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
           budget--; snow.active++; remove = true;
         }

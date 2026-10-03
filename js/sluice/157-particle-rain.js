@@ -179,6 +179,7 @@
       if (budget <= 0) continue;
       if (px < x0 || px > x1 || py < y0 || py > y1) continue;
       if (liquidWorldSolidAt(px, py)) continue;
+      if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
       if (addLiquidParticle(0, px, py, 0, 0, RAIN_ORIGIN) < 0) break;
       rain.parked[j] = rain.parked[rain.parked.length - 2];
       rain.parked[j + 1] = rain.parked[rain.parked.length - 1];

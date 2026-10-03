@@ -750,6 +750,8 @@
     teleportFx = { srcX: srcX, srcY: srcY, destX: player.x + PLAYER_W / 2, destY: player.y + PLAYER_H / 2, t: 0.8, maxT: 0.8 };
     sfxPlay('teleport');
     showMsg('Teleported to surface');
+    cam.snap = true;
+    prepareRecoveryScene();
   }
 
   // ============================================================

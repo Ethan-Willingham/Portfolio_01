@@ -104,13 +104,14 @@
         // entire intersecting bin would bounce its outside edge in and out.
         for (var j = data.length - 3; j >= 0 && budget > 0; j -= 3) {
           var px = data[j + 1], py = data[j + 2];
-          if (worldRainEnabled && !bathMode && data[j] === 0 && Math.random() < 0.85 && rainSoakAt(px, py, false)) {
+          if (dt > 0 && worldRainEnabled && !bathMode && data[j] === 0 && Math.random() < 0.85 && rainSoakAt(px, py, false)) {
             var tail = data.length - 3;
             data[j] = data[tail]; data[j + 1] = data[tail + 1]; data[j + 2] = data[tail + 2];
             data.length -= 3; continue;
           }
           if (px < x0 || px > x1 || py < y0 || py > y1) continue;
           if (bathMode && typeof bathArrivalHolds === 'function' && bathArrivalHolds(px, py)) continue;
+          if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
           if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
           var end = data.length - 3;
           data[j] = data[end]; data[j + 1] = data[end + 1]; data[j + 2] = data[end + 2];
