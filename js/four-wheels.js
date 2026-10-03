@@ -17,26 +17,23 @@
     hairDark: '#48392d', hair: '#6d5040', hairLight: '#927054'
   };
   const STORAGE = 'four-wheels-course-v1';
-  let canSave = true, savedRun = null, parkedRun = null;
+  let canSave = true, parkedRun = null;
   const best = { peak: 0, completed: false, time: null, falls: null };
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE) || 'null');
     if ([1,2,Course.VERSION].includes(saved?.version)) {
       if (Number.isFinite(saved.best?.peak) && saved.best.peak >= 0 && saved.best.peak <= 20000) best.peak = saved.best.peak;
       if ([2,Course.VERSION].includes(saved.version)&&saved.best?.completed === true && Number.isFinite(saved.best.time) && saved.best.time > 0 && Number.isInteger(saved.best.falls) && saved.best.falls >= 0) Object.assign(best, { completed: true, time: saved.best.time, falls: saved.best.falls });
-      savedRun = saved.run;
     }
   } catch { canSave = false; }
   let levelIndex = 0, world = new World(Course.build()), phase = 'ready', floor;
-  let resumed = !!savedRun && Course.restore(world, savedRun), saveTime = 0, confirmReturn = 'ready';
+  let resumed = false, saveTime = 0, confirmReturn = 'ready';
   best.peak = Math.min(best.peak, world.level.totalDistance);
-  if (resumed) best.peak = Math.max(best.peak, world.peak);
-  savedRun = null;
   const feet = value => Math.floor(value / Course.UNITS_PER_FOOT).toLocaleString('en-US') + ' ft';
   function save() {
     if (!world.practice) best.peak = Math.max(best.peak, world.peak);
-    const run = world.practice ? parkedRun : world.status === 'won' ? null : Course.snapshot(world);
-    try { localStorage.setItem(STORAGE, JSON.stringify({ version: Course.VERSION, best, run })); canSave=true; }
+    // Only records persist. Practice parks the current run in memory for this visit.
+    try { localStorage.setItem(STORAGE, JSON.stringify({ version: Course.VERSION, best })); canSave=true; }
     catch { canSave = false; }
     saveTime = 0;
   }
@@ -223,11 +220,15 @@
     phase='ready';particles=[];screenShake=0;toastLife=0;
     $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
     floor=makeFloor(world.level);
-    overlay(world.practice?'Practice':null,'All Four Wheels',continuing?'Your run is saved. Keep going.':'Get the cart to the end. Take your time.',continuing?'Continue':'Play',world.practice?'Return to run':null);
+    overlay(world.practice?'Practice':null,'All Four Wheels',continuing?'Your run is parked. Keep going.':'Get the cart to the end. Take your time.',continuing?'Continue':'Play',world.practice?'Return to run':null);
     updateUI();draw();sound.stop();
     $('start').focus({preventScroll:true});
   }
   function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice,world.wheelMode)); if(!practice)save(); }
+  function newVisit() {
+    parkedRun=null;followCart=true;cameraLabel();
+    prepare(new World(Course.build()));save();
+  }
   function returnToRun() {
     const w=new World(Course.build());
     const loaded=parkedRun&&Course.restore(w,parkedRun);parkedRun=null;
@@ -485,11 +486,15 @@
   window.addEventListener('pagehide', () => { pause(); save(); clearInput(); sound.stop(); });
   window.addEventListener('resize', () => { if (touches.size) clearInput(); });
   window.addEventListener('orientationchange', clearInput);
-  window.addEventListener('pageshow', clearInput);
+  window.addEventListener('pageshow', e => {
+    clearInput();
+    // Back/forward cache restores the existing JavaScript world without a reload.
+    if(e.persisted)newVisit();
+  });
   window.visualViewport?.addEventListener('resize', clearInput);
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
-  refreshSound(); prepare(world,resumed);
+  refreshSound(); prepare(world);save();
   const viewResize = new ResizeObserver(resizeView);
   viewResize.observe($('stage')); viewResize.observe($('touch'));
   // Canvas text caches are rebuilt when the site's own mono font arrives.
