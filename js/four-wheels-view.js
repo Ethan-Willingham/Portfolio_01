@@ -145,7 +145,7 @@
     if(!Physics||!Stock)throw new Error('The cart view needs the cart simulation.');
     const {BODY,WHEELS,CASTER,CHECKPOINT_RADIUS,casterPose,casterCorners,corners,ROOM}=Physics;
     const swatches=[P.coral,P.blue,P.gold,P.sage,P.clay,P.purple];
-    const colors=new Map(),tints=new Map(),textures=new Map(),models=new WeakMap();let cacheEpoch=0;
+    const colors=new Map(),tints=new Map(),textures=new Map(),treeSprites=new Map(),models=new WeakMap();let cacheEpoch=0;
     function rgb(color) {
       if(!colors.has(color)) {
         const c=document.createElement('canvas');c.width=c.height=1;
@@ -1053,6 +1053,67 @@
         if(background.rocks.size>24)background.rocks.delete(background.rocks.keys().next().value);
       }
     }
+    function courseTree(scene,p) {
+      // Grow each evergreen once, then keep its detailed pixel art in the
+      // scenery cache. Tree randomness never touches the simulation's seed.
+      const key=p.x+','+p.y,old=treeSprites.get(key);
+      if(old){scene.push(old.bounds,old.draw,old.bias);return;}
+      const seed=Math.round(p.x*7+p.y*11),random=n=>hash(seed,n),size=.85+random(1)*.3;
+      const base=-90,height=(100+random(2)*24)*size,radius=(26+random(3)*7)*size;
+      const lean={x:(random(4)-.5)*8,y:(random(5)-.5)*8},model=new Scene();
+      const at=(x,y,z)=>({x:p.x+x+lean.x*(z-base)/height,y:p.y+y+lean.y*(z-base)/height,z});
+      const moss=blend(P.pine,P.dark,.5),bark=blend(P.hair,P.clay,.16);
+      const ground=Array.from({length:18},(_,i)=>{const a=i*Math.PI/9,r=radius*(.56+random(10+i)*.16);return at(Math.cos(a)*r,Math.sin(a)*r,base-1);});
+      model.flat(ground,moss,.65);
+      model.flat(circle(at(3,4,base),radius*.56,radius*.4,0,20),P.dark,.3);
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3+random(31),r=(9+random(32+i)*8)*size;
+        model.tube(at(Math.cos(a)*r,Math.sin(a)*r,base),at(0,0,base+7),.7*size,2.3*size,bark,5);
+      }
+      model.tube(at(0,0,base),at(0,0,base+height-6),3.2*size,.5*size,bark,7);
+      for(let i=0;i<8;i++){
+        const z=base+4+i*3.1*size;
+        model.wire(at(1.8*size,.5*size,z),at(1.4*size,1.4*size,z+2.5*size),i%3?P.hairDark:P.hairLight,1,.65);
+      }
+      const tiers=8,count=14,phase=random(40)*Math.PI*2;
+      for(let tier=0;tier<tiers;tier++){
+        const t=tier/(tiers-1),z=base+height*(.23+t*.65),r=radius*(1-t*.83),rise=height*(.19-t*.06);
+        const twist=phase+tier*.43,center=at((random(50+tier)-.5)*4,(random(60+tier)-.5)*4,z+rise);
+        const ring=Array.from({length:count},(_,i)=>{
+          const a=i*Math.PI*2/count+twist,reach=r*(.8+random(100+tier*count+i)*.28);
+          return {a,tip:at(Math.cos(a)*reach,Math.sin(a)*reach,z+(random(220+tier*count+i)-.5)*6*size),shoulder:at(Math.cos(a)*reach*.58,Math.sin(a)*reach*.58,z+rise*.62)};
+        });
+        for(let i=0;i<count;i++){
+          const a=ring[i],b=ring[(i+1)%count],lit=clamp(.5-Math.cos(a.a)*.22+Math.sin(a.a)*.48,0,1);
+          const green=blend(blend(P.pine,P.dark,(1-t)*.14),P.sage,.06+lit*.38+random(340+tier*count+i)*.08);
+          model.face([center,a.shoulder,b.shoulder],green);
+          model.face([a.shoulder,a.tip,b.tip,b.shoulder],green);
+          // Dark hanging needles give every bough a broken, drooping edge.
+          model.flat([a.tip,add(a.tip,0,0,-3*size),b.tip],blend(P.pine,P.dark,.3));
+          if(tier<3)model.wire(at(0,0,z+rise*.18),a.tip,blend(bark,P.pine,.4),1,.7);
+          for(let j=0;j<4;j++){
+            const n=500+tier*count*4+i*4+j,u=.28+random(n)*.69,angle=a.a+(random(n+900)-.5)*Math.PI*2/count;
+            const surface=u<.58?1-u*.38/.58:.62*(1-u)/.42;
+            const reach=r*u,c=at(Math.cos(angle)*reach,Math.sin(angle)*reach,z+rise*surface+(random(n+1800)*2+.3)*size);
+            const leaf=shade(green,normalize({x:Math.cos(angle)*.55,y:Math.sin(angle)*.55,z:.8}));
+            const length=(2.2+random(n+2700)*2.8)*size,needle=blend(leaf,lit>.6?P.sage:P.dark,.08+random(n+3600)*.17);
+            const tip=add(c,Math.cos(angle)*length,Math.sin(angle)*length,-size);
+            model.wire(c,tip,needle,1);
+            for(const side of [-1,1])model.wire(add(c,Math.cos(angle+side*.85)*length*.7,Math.sin(angle+side*.85)*length*.7,size*.7),tip,needle,1);
+          }
+        }
+      }
+      model.wire(at(0,0,base+height*.9),at(0,0,base+height),P.sage,1);
+      const points=model.commands.flatMap(c=>c.mesh.points),screen=points.map(q=>project(q));
+      const x=Math.floor(Math.min(...screen.map(q=>q.x)))-2,y=Math.floor(Math.min(...screen.map(q=>q.y)))-2;
+      const image=document.createElement('canvas');image.width=Math.ceil(Math.max(...screen.map(q=>q.x)))-x+3;image.height=Math.ceil(Math.max(...screen.map(q=>q.y)))-y+3;
+      model.flush(image.getContext('2d'),{x:CAMERA.x-x,y:CAMERA.y-y});
+      const bounds=quad(x,y,image.width,image.height).map(q=>unproject(q));
+      const bias=depth(at(0,0,base+height*.45))-bounds.reduce((sum,q)=>sum+depth(q),0)/bounds.length;
+      const draw=(g,origin)=>g.drawImage(image,x+origin.x-CAMERA.x,y+origin.y-CAMERA.y);
+      if(treeSprites.size>=32)treeSprites.delete(treeSprites.keys().next().value);
+      treeSprites.set(key,{bounds,draw,bias});scene.push(bounds,draw,bias);
+    }
     function courseModels(scene,w,visible,mode='all') {
       const tr=(x,y,z)=>({x,y,z:z+Terrain.height(w.level,{x,y})});
       if(mode!=='dynamic'){
@@ -1103,10 +1164,6 @@
         if(c.connected)for(const key of c.path){const x=key%w.stock.cols*4,y=Math.floor(key/w.stock.cols)*4;scene.flat(quad(x+1,y+1,2,2,.2),P.blue,.65);}
       }
       }
-      if(mode!=='dynamic')for(const p of w.level.decor)if(visible(p,100)){
-        scene.box(tr,p.x-2,p.y-2,-30,4,4,22,P.hairDark,P.hair);
-        for(let z=-13;z<8;z+=6){const r=16-(z+13)*.3;scene.face([{x:p.x-r,y:p.y-r,z},{x:p.x+r,y:p.y-r,z},{x:p.x,y:p.y,z:z+15}],P.pine);scene.face([{x:p.x+r,y:p.y-r,z},{x:p.x+r,y:p.y+r,z},{x:p.x,y:p.y,z:z+15}],P.sage);scene.face([{x:p.x+r,y:p.y+r,z},{x:p.x-r,y:p.y+r,z},{x:p.x,y:p.y,z:z+15}],P.pine);}
-      }
     }
     function drawCourse(g,w,background,options) {
       terrainLevel=w.level;
@@ -1114,6 +1171,18 @@
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
       if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
       for(const h of w.level.hazards)if(visible(h,350)){groundPoly(g,circle({...h,z:-50},h.rx,h.ry),blend(P.blue,P.dark,.22));for(let i=0;i<22;i++){const a=i*2.399,p={x:h.x+Math.cos(a)*h.rx*.75,y:h.y+Math.sin(a)*h.ry*.75,z:-49};groundLine(g,p,{x:p.x+14,y:p.y-4,z:-49},P.light,1,.25);}}
+      if(!background.trees||background.treesEpoch!==cacheEpoch){
+        background.trees=new Scene(1,true);background.treesEpoch=cacheEpoch;
+        for(const p of w.level.decor)if(p.kind==='tree')courseTree(background.trees,p);
+        background.trees.commands.sort((a,b)=>a.depth-b.depth);
+      }
+      // The lower-ground trees sit behind the elevated track. Drawing them
+      // before its floor and cliffs keeps their roots out of the driving lane.
+      for(const command of background.trees.commands){
+        const b=command.bounds;
+        if(camera.x+b.right*camera.scale<0||camera.x+b.left*camera.scale>width||camera.y+b.bottom*camera.scale<0||camera.y+b.top*camera.scale>height)continue;
+        command.draw(g,CAMERA);
+      }
       courseRocks(g,w,background,camera,options.follow!==false);
       if(options.follow===false){
         let map=background.floorMap;

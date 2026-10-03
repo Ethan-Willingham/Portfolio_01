@@ -261,8 +261,13 @@ strata, short fractures and a shadow at the foot. The same vertical subdivisions
 and details draw in front of a falling cart at their actual depth.
 Guardrail posts and beams follow the road height. The camera follows ground
 elevation and part of a jump arc, retaining the lip in view during a drop. Floor polygons, support, rails, spills, shadows,
-markers and overlays share the projection. The art is drawn locally and the game
-has no runtime art requests or third-party engine.
+markers and overlays share the projection. The roadside evergreens have
+irregular layered boughs, directional shading, needle fans, bark and exposed
+roots on the lower ground. Each tree uses a
+coordinate-derived seed and is drawn once into a transparent pixel sprite in
+the static scenery cache, behind the elevated road and cliffs. The art is drawn
+locally and the game has no runtime art requests or third-party engine.
+Tree sprites share a 32-entry cache across restarted runs and font refreshes.
 
 The canvas fills the entire browser viewport from page load, with no reserved
 header, footer, border or page scrolling. Distance, best and the current section
