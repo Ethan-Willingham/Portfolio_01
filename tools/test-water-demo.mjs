@@ -39,14 +39,21 @@ const server = createServer((request, response) => {
 let chrome, socket, sequence = 0;
 const pending = new Map(), errors = [];
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-function cleanup() {
+async function cleanup() {
   try { socket?.close(); } catch {}
-  chrome?.kill(); server.close();
+  server.close();
+  if (chrome && chrome.exitCode === null && chrome.signalCode === null) {
+    const exited = new Promise(resolve => chrome.once('exit', resolve));
+    chrome.kill();
+    const force = setTimeout(() => chrome.kill('SIGKILL'), 2000);
+    await exited;
+    clearTimeout(force);
+  }
   for (const p of pending.values()) clearTimeout(p.timer);
-  fs.rmSync(profile, { recursive: true, force: true });
+  fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
-process.on('SIGINT', () => { cleanup(); process.exit(130); });
-process.on('SIGTERM', () => { cleanup(); process.exit(143); });
+process.on('SIGINT', async () => { await cleanup(); process.exit(130); });
+process.on('SIGTERM', async () => { await cleanup(); process.exit(143); });
 function send(method, params = {}) {
   return new Promise((resolve, reject) => {
     const id = ++sequence, timer = setTimeout(() => { pending.delete(id); reject(new Error('CDP timeout: ' + method)); }, 30000);
@@ -101,9 +108,31 @@ try {
   if (process.env.PREVIEW_ONLY === '1') process.exitCode = 0;
   else {
     assert.ok(await evaluate('__toy.stats().waterState === "on" && __toy.stats().smoke'), 'water and smoke boot on hardware graphics');
+    assert.ok(await evaluate('__toy.stats().waterLook === "rainbow" && __toy.stats().rainbow.ready && __toy.stats().rainbow.active && __toy.stats().rainbow.frames > 0'), 'rainbow transport and finish render on the GPU by default');
+    assert.ok(await evaluate('!document.getElementById("toy-rainbow-water").hidden && LiquidWGPU.last.renderCanvas.hidden'), 'the rainbow finish replaces the raw water layer');
+    await evaluate(`document.querySelector('[data-preset="waterLook:default"]').click()`); await sleep(200);
+    assert.ok(await evaluate('!__toy.stats().rainbow.active && document.getElementById("toy-rainbow-water").hidden && !LiquidWGPU.last.renderCanvas.hidden'), 'normal water restores its original canvas');
+    await evaluate(`document.querySelector('[data-preset="waterLook:rainbow"]').click()`); await sleep(300);
+    assert.ok(await evaluate('__toy.stats().rainbow.active && !document.getElementById("toy-rainbow-water").hidden'), 'rainbow can be selected again');
+    const pool = await evaluate(`(() => {
+      const bounds = document.getElementById('toy-stage').getBoundingClientRect();
+      return { x:bounds.x+bounds.width*.3, y:bounds.y+bounds.height*.34, radius:bounds.width*.065 };
+    })()`);
+    await send('Input.dispatchMouseEvent', { type:'mouseMoved',x:pool.x+pool.radius,y:pool.y });
+    await send('Input.dispatchMouseEvent', { type:'mousePressed',button:'left',buttons:1,clickCount:1,x:pool.x+pool.radius,y:pool.y });
+    for (let step=0;step<40;step++) {
+      const angle = step/40*Math.PI*4;
+      await send('Input.dispatchMouseEvent', { type:'mouseMoved',buttons:1,x:pool.x+Math.cos(angle)*pool.radius,y:pool.y+Math.sin(angle)*pool.radius*.35 });
+      await sleep(30);
+    }
+    await send('Input.dispatchMouseEvent', { type:'mouseReleased',button:'left',buttons:0,clickCount:1,x:pool.x+pool.radius,y:pool.y });
+    await sleep(1500); await screenshot('rainbow-stirred');
+    assert.ok(await evaluate('__toy.stats().rainbow.active && __toy.stats().waterState === "on"'), 'stirring keeps the water finish and solver active');
     await evaluate('__toy.pause(true)');
+    const finishFrames = await evaluate('__toy.stats().rainbow.frames');
     const before = await evaluate('__toy.bodies().map(b => [b.cx,b.cy])'); await sleep(300);
     assert.deepEqual(await evaluate('__toy.bodies().map(b => [b.cx,b.cy])'), before, 'pause freezes bodies');
+    assert.equal(await evaluate('__toy.stats().rainbow.frames'), finishFrames, 'pause freezes the rainbow finish');
     await evaluate('document.getElementById("toy-resume").click()');
     assert.equal(await evaluate('__toy.stats().paused'), false, 'resume button works');
     for (const scene of ['falls', 'zerog', 'chimney', 'spa', 'rig']) {
@@ -157,6 +186,8 @@ try {
       await screenshot('fullscreen-'+w+'x'+h);
     }
     await evaluate('document.getElementById("toy-fullscreen").click()');
+    await inside('liquidWGPU.renderActive = false; updateLiquidToy(1/60);');
+    assert.ok(await evaluate('__toy.stats().waterState === "off" && !__toy.stats().rainbow.active && document.getElementById("toy-rainbow-water").hidden'), 'a water backend failure also hides the rainbow finish');
     await send('Page.addScriptToEvaluateOnNewDocument', { source: `
       Object.defineProperty(navigator, 'gpu', { value: undefined });
       const originalContext = HTMLCanvasElement.prototype.getContext;
@@ -172,4 +203,4 @@ try {
     assert.equal(errors.length, 0, 'no runtime errors across scenes, controls and sizes');
     console.log('PASS: physics demo browser regression');
   }
-} finally { cleanup(); }
+} finally { await cleanup(); }
