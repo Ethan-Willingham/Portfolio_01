@@ -1,5 +1,5 @@
 import * as M from './hydrogen-exactly-math.js?v=2';
-import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js?v=2';
+import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js?v=3';
 
 export const roomInfo = {
   apiVersion: 1, id: 'hydrogen-exactly', title: 'Hydrogen Exactly', model: M.MODEL,
@@ -101,13 +101,23 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
       pass.setPipeline(renderPipeline); pass.setBindGroup(0, renderBinding); pass.draw(3); pass.end();
     },
     setMode(value) { if (!['revival', 'spectral'].includes(value)) throw new Error('Unknown hydrogen mode.'); mode = value; overlay = value === 'spectral' ? 1 : 3; score = 0; time = 0; diagnosticTime = -1; dirty = true; lastMeasurement = null; update(); },
-    setPresentation(value = {}) { if (value.section !== undefined) section = !!value.section; if (value.soft !== undefined) soft = !!value.soft; if (value.overlay !== undefined) overlay = +value.overlay; if (value.tilt !== undefined) tilt = +value.tilt; if (value.tint) tint = [...value.tint]; dirty = true; update(); },
+    setPresentation(value = {}) {
+      for (const key of ['yaw', 'tilt']) if (value[key] !== undefined && !Number.isFinite(value[key])) throw new Error('Camera angles must be finite.');
+      if (value.section !== undefined) section = !!value.section;
+      if (value.soft !== undefined) soft = !!value.soft;
+      if (value.yaw !== undefined) yaw = value.yaw;
+      if (value.tilt !== undefined) tilt = value.tilt;
+      // Camera changes reuse the computed field, including measured box mass.
+      if (value.overlay !== undefined) { overlay = +value.overlay; dirty = true; }
+      if (value.tint) { tint = [...value.tint]; dirty = true; }
+      update();
+    },
     setQuality(value) { if (!tiers[value]) throw new Error('Unknown quality.'); quality = value; grid = Math.min(tiers[value][0], device.limits.maxTextureDimension3D); raySteps = tiers[value][1]; allocate(); update(); },
     snapshot() {
       return {
         ...roomInfo, numericalStepCount: steps, simulationTime: time, simulationTimeUnits: 'hbar/Eh (atomic time)', simulationTimeSeconds: time * M.ATOMIC_TIME,
         scoreSeconds: score, mode, quality, seed: seed || null, seedProvenance: 'Deterministic analytic initial coefficients; seed is recorded but unused. No random draws or beacon claim.',
-        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, contourLevelsScaledDensity: [0.3, 0.9, 2.7, 8.1, 24.3, 72.9], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
+        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, yaw, portraitTiltOffsetRadians: -0.32, contourLevelsScaledDensity: [0.3, 0.9, 2.7, 8.1, 24.3, 72.9], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
         representativeScaleMeters: M.scaleFor(mode), scaleMeaning: mode === 'revival' ? 'n0^2 a0, characteristic circular radius' : 'n_max^2 a0, characteristic extent of the highest n=5 basis state',
         analyticNorm: M.statesFor(mode).reduce((s, j) => s + j.c_real ** 2 + j.c_imag ** 2, 0),
         autocorrelation: M.autocorrelation(M.statesFor(mode), time), rotationAdjustedOverlap: fidelity.fidelity, bestRotationRadians: fidelity.rotation,
