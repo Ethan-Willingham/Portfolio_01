@@ -21,6 +21,9 @@ caches scenery at display resolution and avoids unchanged UI writes;
 `assets/hunting/source-v9/ASSET_BRIEF.md` records production and visual review.
 Version 12 adds live crosshair yardage. Its interface brief and range contract
 are in `hunting-style/RANGEFINDER.md`.
+Version 13 repairs the distorted weed cluster and abrupt distant woodland join
+in the center scope view. Its registered repaint, full prompts and matched
+review are in `assets/hunting/source-v13/ASSET_BRIEF.md`.
 Animals, Cypress scenery and the remaining interface await their own passes.
 
 ## Sources
@@ -37,7 +40,9 @@ Animals, Cypress scenery and the remaining interface await their own passes.
 - `assets/hunting/source-v2/`, `source-v3/`, `source-v4/`: masters and full prompts.
 - `assets/hunting/*-v8.webp`, `source-v8/`: painted scene layers, masters and review.
 - `assets/hunting/detail-v9/`, `source-v9/`: registered scope tiles, native masters and prompts.
-- `assets/hunting/birch-detail-v9.json`: tile placement, density and source fingerprints.
+- `assets/hunting/source-v13/`: registered center-field repair, references and prompts.
+- `assets/hunting/detail-v13/`: four repaired tiles; ten unchanged tiles reuse version 9.
+- `assets/hunting/birch-detail-v13.json`: current tile placement, density and repair fingerprints.
 - `tools/build-hunting-detail.cjs`: feathered tile exports and the compact terrain overview.
 - `tools/build-hunting-scene.cjs`: original sky, stand and terrain export verification.
 - `tools/build-hunting-art.cjs`: repeatable asset normalization, requires Sharp.
@@ -221,11 +226,13 @@ node --check js/hunting-game.js
 node tools/test-hunting-campaign.cjs
 NODE_PATH=/path/to/node_modules node tools/build-hunting-scene.cjs --check
 NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs --check
+NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs --version 9 --check
 node tools/hunting-art-reference.cjs --check
 NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs --benchmark
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs --range-webkit
+NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs --scenery-review
 ```
 
 Campaign checks cover save compatibility, deer unlocks and retained historical
@@ -263,5 +270,7 @@ landscape layouts for overflow and usable controls.
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v12-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v13-qa`. The scenery review records
+the reported center-field view and the repair's left, right and lower edges
+at native Retina resolution. Never launch the owner's
 personal Chrome with headless or debugging flags.

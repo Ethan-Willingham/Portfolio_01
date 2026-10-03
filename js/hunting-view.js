@@ -43,13 +43,13 @@
   }
   function noise(n) { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); }
   async function loadArt() {
-    const detailPromise = fetch('assets/hunting/birch-detail-v9.json?v=9').then(response => {
+    const detailPromise = fetch('assets/hunting/birch-detail-v13.json?v=13').then(response => {
       if (!response.ok) throw new Error('Could not load the field detail map.');
       return response.json();
     });
     const animals = ['boar', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)];
     const files = Object.fromEntries(animals.map(name => [name, name + (name.startsWith('deer-') ? '-v4.png?v=4' : '-v3.png?v=4')]));
-    Object.assign(files, { 'birch-terrain': 'birch-terrain-v9.webp?v=9', 'birch-underpaint': 'birch-terrain-v8.webp?v=8', 'birch-sky': 'birch-sky-v8.webp?v=8', 'lookout-stand': 'lookout-stand-v8.webp?v=8' });
+    Object.assign(files, { 'birch-terrain': 'birch-terrain-v13.webp?v=13', 'birch-underpaint': 'birch-terrain-v8.webp?v=8', 'birch-sky': 'birch-sky-v8.webp?v=8', 'lookout-stand': 'lookout-stand-v8.webp?v=8' });
     const [pairs, scene] = await Promise.all([Promise.all(Object.entries(files).map(([name, file]) => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve([name, img]);
@@ -144,7 +144,7 @@
         this.trimDetail(); if (this.onArtReady) this.onArtReady();
       };
       image.onerror = () => { tile.state = 'error'; if (this.onArtReady) this.onArtReady(); };
-      image.src = tile.file + '?v=9';
+      image.src = tile.file + '?v=' + this.scene.version;
     }
     trimDetail() {
       const resident = [...this.detailTiles.values()].filter(tile => tile.image);

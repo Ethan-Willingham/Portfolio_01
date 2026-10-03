@@ -141,7 +141,8 @@ labels stay real text. Reuse the existing watching, time and shooting flow.
 Birch Clearing now uses the first painted scene, with separate sky, transparent
 landscape and close wooden hunting-stand layers. Original sky and stand masters
 live in `assets/hunting/source-v8/`; current terrain detail, prompts and review
-live in `assets/hunting/source-v9/`. `tools/build-hunting-scene.cjs` and
+live in `assets/hunting/source-v9/`. The version 13 center-field repair and its
+matched scope review live in `assets/hunting/source-v13/`. `tools/build-hunting-scene.cjs` and
 `tools/build-hunting-detail.cjs` export smooth WebP imagery without the old
 palette or binary-alpha conversion. The logical
 projection stays at 640 by 360; display rendering uses the viewport and device
@@ -154,6 +155,16 @@ painted tiles in the scope. Each tile contains new native detail for a small
 registered crop, giving the terrain about 6183 by 3481 pixels of effective
 density. Only intersecting scope tiles are drawn, with at most six decoded
 images retained. Do not replace this with an enlargement of the overview.
+
+Owner correction, 2026-10-03: distant vegetation must have coherent natural
+forms when inspected through the scope. Do not mistake uniformly busy texture
+for detail. Version 13 removes the hooked, oversized center-field weed cluster
+and repairs an abrupt ridge join with one registered painting edit spanning
+four tiles. The builder flattens that repair into the existing tile grid, so
+the renderer still draws 14 tiles, retaining at most six images. Match plant
+scale to distance and inspect the actual scoped view before accepting an edit.
+The current manifest is `birch-detail-v13.json`; default detail builds target
+version 13, with `--version 9` available for the original exports.
 
 Version 11 samples these same sources into reusable canvases at the actual
 display resolution. Scope canvases include a guard area for small camera

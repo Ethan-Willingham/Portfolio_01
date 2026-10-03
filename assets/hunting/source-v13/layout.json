@@ -1,0 +1,246 @@
+{
+  "source": "assets/hunting/source-v8/terrain.png",
+  "width": 1672,
+  "height": 941,
+  "overlap": [
+    16,
+    9
+  ],
+  "tiles": [
+    {
+      "id": "terrain-0-0",
+      "row": 0,
+      "col": 0,
+      "input": "assets/hunting/source-v9/inputs/terrain-0-0.png",
+      "rect": [
+        -0.009569377990430622,
+        -0.009564293304994687,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": true,
+      "master": "assets/hunting/source-v9/tiles/terrain-0-0.png",
+      "file": "assets/hunting/detail-v9/terrain-0-0.webp"
+    },
+    {
+      "id": "terrain-0-1",
+      "row": 0,
+      "col": 1,
+      "input": "assets/hunting/source-v9/inputs/terrain-0-1.png",
+      "rect": [
+        0.24043062200956938,
+        -0.009564293304994687,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": true,
+      "master": "assets/hunting/source-v9/tiles/terrain-0-1.png",
+      "file": "assets/hunting/detail-v9/terrain-0-1.webp"
+    },
+    {
+      "id": "terrain-1-0",
+      "row": 1,
+      "col": 0,
+      "input": "assets/hunting/source-v9/inputs/terrain-1-0.png",
+      "rect": [
+        -0.009569377990430622,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": true,
+      "master": "assets/hunting/source-v9/tiles/terrain-1-0.png",
+      "file": "assets/hunting/detail-v9/terrain-1-0.webp"
+    },
+    {
+      "id": "terrain-1-1",
+      "row": 1,
+      "col": 1,
+      "input": "assets/hunting/source-v9/inputs/terrain-1-1.png",
+      "rect": [
+        0.24043062200956938,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": true,
+      "master": "assets/hunting/source-v9/tiles/terrain-1-1.png",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-1-2",
+      "row": 1,
+      "col": 2,
+      "input": "assets/hunting/source-v9/inputs/terrain-1-2.png",
+      "rect": [
+        0.4904306220095694,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": true,
+      "master": "assets/hunting/source-v9/tiles/terrain-1-2.png",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-1-3",
+      "row": 1,
+      "col": 3,
+      "input": "assets/hunting/source-v9/inputs/terrain-1-3.png",
+      "rect": [
+        0.7404306220095693,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": true,
+      "master": "assets/hunting/source-v9/tiles/terrain-1-3.png",
+      "file": "assets/hunting/detail-v9/terrain-1-3.webp"
+    },
+    {
+      "id": "terrain-2-0",
+      "row": 2,
+      "col": 0,
+      "input": "assets/hunting/source-v9/inputs/terrain-2-0.png",
+      "rect": [
+        -0.009569377990430622,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-2-0.png",
+      "file": "assets/hunting/detail-v9/terrain-2-0.webp"
+    },
+    {
+      "id": "terrain-2-1",
+      "row": 2,
+      "col": 1,
+      "input": "assets/hunting/source-v9/inputs/terrain-2-1.png",
+      "rect": [
+        0.24043062200956938,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-2-1.png",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-2-2",
+      "row": 2,
+      "col": 2,
+      "input": "assets/hunting/source-v9/inputs/terrain-2-2.png",
+      "rect": [
+        0.4904306220095694,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-2-2.png",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-2-3",
+      "row": 2,
+      "col": 3,
+      "input": "assets/hunting/source-v9/inputs/terrain-2-3.png",
+      "rect": [
+        0.7404306220095693,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-2-3.png",
+      "file": "assets/hunting/detail-v9/terrain-2-3.webp"
+    },
+    {
+      "id": "terrain-3-0",
+      "row": 3,
+      "col": 0,
+      "input": "assets/hunting/source-v9/inputs/terrain-3-0.png",
+      "rect": [
+        -0.009569377990430622,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-3-0.png",
+      "file": "assets/hunting/detail-v9/terrain-3-0.webp"
+    },
+    {
+      "id": "terrain-3-1",
+      "row": 3,
+      "col": 1,
+      "input": "assets/hunting/source-v9/inputs/terrain-3-1.png",
+      "rect": [
+        0.24043062200956938,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-3-1.png",
+      "file": "assets/hunting/detail-v9/terrain-3-1.webp"
+    },
+    {
+      "id": "terrain-3-2",
+      "row": 3,
+      "col": 2,
+      "input": "assets/hunting/source-v9/inputs/terrain-3-2.png",
+      "rect": [
+        0.4904306220095694,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-3-2.png",
+      "file": "assets/hunting/detail-v9/terrain-3-2.webp"
+    },
+    {
+      "id": "terrain-3-3",
+      "row": 3,
+      "col": 3,
+      "input": "assets/hunting/source-v9/inputs/terrain-3-3.png",
+      "rect": [
+        0.7404306220095693,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "transparent": false,
+      "master": "assets/hunting/source-v9/tiles/terrain-3-3.png",
+      "file": "assets/hunting/detail-v9/terrain-3-3.webp"
+    }
+  ],
+  "repairs": [
+    {
+      "id": "center-repair",
+      "input": "assets/hunting/source-v13/inputs/center-before.png",
+      "master": "assets/hunting/source-v13/tiles/terrain-center-repair.png",
+      "density_input_size": [
+        450,
+        253
+      ],
+      "rect": [
+        0.3827751196172249,
+        0.37194473963868224,
+        0.26913875598086123,
+        0.2688629117959617
+      ]
+    }
+  ]
+}

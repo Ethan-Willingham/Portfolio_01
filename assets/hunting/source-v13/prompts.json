@@ -1,0 +1,79 @@
+{
+  "version": 13,
+  "date": "2026-10-03",
+  "tool": "built-in image_gen.imagegen",
+  "catalog_schema_version": 1,
+  "source": "assets/hunting/source-v13/inputs/center-before.png",
+  "source_registration": {
+    "original_source": "assets/hunting/source-v8/terrain.png",
+    "original_rect_pixels": [
+      640,
+      350,
+      450,
+      253
+    ],
+    "input_dimensions": [
+      1672,
+      941
+    ],
+    "description": "Native-density composite of existing v9 runtime tiles over v8 underpaint, cropped across old tile boundaries and smoothly sampled."
+  },
+  "painting_references": [
+    {
+      "id": "salisbury",
+      "source": "assets/images/Salisbury Cathedral from Lower Marsh Close - John Constable - oil on canvas.jpg",
+      "study": "inputs/constable-tree-study.jpg",
+      "study_rect_pixels": [
+        190,
+        520,
+        1510,
+        1820
+      ],
+      "sha256": "db6123b6dcf2c6beabeff8a622e46409a045ddd8e26fafda99c9077ede270d69"
+    },
+    {
+      "id": "veteran",
+      "source": "assets/images/The Veteran in a New Field - Winslow Homer.jpg",
+      "sha256": "e96c237ce0074919c78fb9373713baff42b6a4363572a9f2426c17f31ae1c49d"
+    },
+    {
+      "id": "optevoz",
+      "source": "assets/images/The Hamlet of Optevoz - Charles-François Daubigny.jpg",
+      "sha256": "e135677154b3510cb0eae46d00b6f9cce0513aef494920c5fd064c1bde3be308"
+    }
+  ],
+  "generations": [
+    {
+      "attempt": 1,
+      "selected": false,
+      "prompt": "Use case: precise-object-edit, naturalistic oil-painted game scenery repair.\nImage 1 is the exact registered scenery PATCH TO EDIT, 1672 by 941, not a whole landscape. Image 2, John Constable's Salisbury Cathedral from Lower Marsh Close, is a reference for believable broad tree masses, tapering branches, selective oil brushwork and atmospheric woodland. Image 3, Winslow Homer's The Veteran in a New Field, is only a reference for purposeful fine stems and blades. Do not import their buildings, people, cattle, wheat crop, frames or signatures.\n\nCorrect the artificial-looking vegetation in image 1 while preserving this exact crop, perspective, light, grass/shadow bands, color balance and locations of existing tree and shrub groups. Keep the tall single tree at about 48% across in place. Its canopy must have a coherent deciduous crown and slender tapering branches attached to a real trunk, with occasional sky openings, believable grouped small leaves and restrained warm highlights. The smaller trees at the left and shrubs at the right must also have coherent botanical forms. Replace the tangled angular oversized plants directly beneath the tall tree (about x 45-60%, y 39-49%) with low meadow grass and a few slender upright stalks and small seed heads at the correct distant scale. No giant broad leaves, hooked black zigzags, floating fragments or repeated stamped shapes.\n\nThe blue distant woodland behind the trees must become softly grouped low-contrast tree crowns, with quiet blue-green atmospheric distance, not a crystalline mountain, polygonal rock wall, marbled fabric or uniformly sharpened leaf noise. Smooth the unnatural vertical step in the ridge at x about 40% into the connected distant woodland. Preserve the ridge's left and right endpoint heights, the overall open sky area, the nearby tree locations and ground contact. Keep about the outer 8% of the image visually compatible with the existing crop so this patch blends with neighboring scenery. The sky openings above the distant woodland remain genuinely transparent. Preserve the existing transparent perimeter and alpha; never paint a blue sky or an opaque background into them.\n\nIn the meadow, keep the broad horizontal sunlight and olive-green shade bands in exactly their current positions, with warm clear daylight and small natural grass tufts. Paint a few clear fine blades and stems that follow the same direction, allowing quiet flat passages between groups. Use selective edges and deliberate marks, rather than coating everything in busy random texture. Preserve the small path entering the lower right, and all existing large shapes. Keep the natural pale greens, ochres and distant slate blues of image 1, with the same brightness. Do not darken, desaturate, add a sepia wash, brighten the whole image or change the season.\n\nOutput exactly this wide 16:9 registered crop at native high resolution with genuinely improved coherent forms. No camera move, zoom, new composition, animals, buildings, stand, weapon, scope, reticle, text, UI or border. This is a transparent scenery overlay for a fixed hunting map.",
+      "transparent_background": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-c93b3475-826d-4420-8ab5-c6656bb00e0c.png"
+    },
+    {
+      "attempt": 2,
+      "selected": true,
+      "prompt": "Precise image edit, second correction for a hunting game's oil-painted scenery.\nImage 1 is the registered edit target. Image 2 (Constable's Salisbury Cathedral) supplies the intended naturalistic painting treatment; image 3 (Homer's Veteran in a New Field) supplies purposeful blades and stems only.\n\nThe target's vegetation is badly formed. This needs a substantial repaint of vegetation, not sharpening, an upscale, a light retouch or more of the same texture. Keep the wide crop, warm light, terrain bands, grass colors, existing large tree positions and transparency. Preserve compatibility with the outermost 8% of the target. Within the interior, REPLACE the existing busy shapes.\n\n1. Completely REMOVE the tall angular black and tan weed cluster directly below the single tall central tree, around x45%-60% and y39%-49%. Paint simple LOW fine meadow grass there, with its ordinary small blades rooted to the ground. Do not leave even one of the original hooked, twisted oversized leaf shapes. This part of the meadow is distant, so seed heads must be tiny and the area should read as open grass, not giant weeds.\n2. REPAINT the blue distant woodland as a quiet haze of grouped low, rounded treetops. Use broad softly blended blue-gray and sage shapes with sparse selective broken edges. Erase the existing crystalline mosaic texture completely. There must be no rocky cliff face, leaf-shaped tessellation, zigzag squiggles or uniformly busy marks. Join the artificial vertical ridge step around x40% into one continuous natural woodland profile, while meeting its old heights at the left and right image edges.\n3. REPAINT the tall tree around x48% as a structurally convincing deciduous tree, using Constable's grouped tonal masses and visible tapering trunk with connected branching. Main crown stays at the existing place and height. Build broad irregular foliage masses with meaningful dark interior and lit outer edges. Sparse small leaf accents on top of those masses, never hundreds of repeated olive blobs. Apply the same broad brush-built believable forms to the left trees and right shrubs.\n4. Simplify the grass texture to natural small tufts and quiet horizontal passages with a few slender highlights and distinct grounded stalks. All plants must decrease in visible size toward the treeline. Preserve the existing light and shade bands and small path at lower right.\n\nOriginal bright daylight exposure and olive/ochre/slate palette must remain. Preserve existing sky alpha, including the transparent area above the woodland and existing padded boundaries. Do not add an opaque sky, a backdrop color, a checkerboard or a frame. Preserve the exact 16:9 crop and physical positions of the large scene elements. Genuine coherent repaint at native high resolution. No new scene, no animals, no people, no cathedral or other building, no wheat crop, no reticle, UI, weapon, stand or lettering. Naturalistic oil-paint marks and atmospheric perspective from Constable, with deliberately quiet distant shapes.",
+      "transparent_background": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-1219b1e1-abed-434b-a3bb-a3512c84cf83.png"
+    },
+    {
+      "attempt": 3,
+      "selected": false,
+      "prompt": "Edit image 1, the wide transparent game scenery patch. The grass beneath the central tree has been repaired already: preserve all meadow grass, the path, sunlight bands and ground below y38% exactly. Now repaint ONLY the distant woodland and trees across the upper part of the patch, with a much more natural oil-paint treatment.\n\nImage 2 is a close tree study cropped directly from John Constable's Salisbury Cathedral. It is the primary STYLE reference: coherent tree anatomy, broad masses of translucent foliage, connected tapered branches, a small number of deliberate broken paint accents, and quiet paint passages. Image 3, Daubigny's Hamlet of Optevoz, supplies the broad atmospheric distance treatment only. No building, person, river or scene subject from either reference belongs in the result.\n\nThe existing tree crowns and blue ridge in image 1 are made of nonsensical repeated angular fragments. COMPLETELY replace that texture. This is not a sharpening or detail-enhancement request. The tall tree around x48% should become a believable mature oak in the same physical location and approximately the same outer extent: real trunk separating into a few visible irregular tapered branches, rounded asymmetrical canopy masses with open spaces, leafy outer sprigs growing out of branch ends. Use broad muted olive paint shapes, gentle transitions, sparse small green/gold accents and clearly attached twigs. Do not retain the current glossy lumpy leaf mosaic. Repaint the smaller trees and shrubs with the same coherent structure and grouped natural crowns.\n\nThe woodland ridge behind these trees is far away. Repaint it as a continuous softly receding blue-gray wooded hill with several large subtle masses, tiny softly suggested crowns at its top, and almost no sharp internal marks. There must be absolutely no crystalline rock pattern, marbled surface, crisscross squiggles, repetitious leaf-shaped marks, jagged shard texture, weird mountain peaks or extruded cliff faces. Its center should be significantly QUIETER and SIMPLER than the old noisy ridge. Meet the original ridge color and height at the outermost 8% left and right image edges for blending.\n\nKeep the exact crop, existing wide 16:9 aspect, all main tree locations, horizon relationship and transparent sky openings above the trees. Preserve genuine alpha. Empty sky remains empty transparent, never a painted blue sky or an opaque background. Tree bases retain their current ground locations. Keep the original bright daylight exposure and olive/ochre/slate colors; the darkness of reference paintings is not an exposure target. No dimming, sepia, new shadows, whole-image recoloring, blur on the meadow, change of season, border, words, reticle, weapon, stand, animals or buildings. Repaint the woodland with visibly different, coherent natural forms and restrained oil brushwork. Keep already fixed open meadow intact.",
+      "transparent_background": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-2a00bfbd-e237-438a-a7ca-68aa2036dcd5.png"
+    },
+    {
+      "attempt": 4,
+      "selected": false,
+      "prompt": "Reconstruct the vegetation in this precise 16:9 transparent hunting-game crop. Image 1 is a LOCATION AND COLOR GUIDE, not a texture to copy. Its trees and hills have artificial tessellated shapes. Paint fresh natural forms for those parts. Image 2 is the authentic Constable oil-paint tree study: use its connected branches and broad organic foliage masses. Image 3 is authentic Daubigny: use its quiet receding blue land.\n\nSpecific composition to retain: empty transparent sky fills the top roughly 20%. A low distant blue-gray wooded ridge runs left to right below it, with its edge around 23% height at left, 26% near x36%, 20% at right. In front of it is a tall deciduous tree centered at x48%, with its crown top about y15% and its trunk base at y36%. Low olive-green trees group at x9-38%, with bases at y42%. Low shrubs at x68% and x90%, bases near y41%. The rest is sunlit green-and-ochre meadow with horizontal alternating light and shade bands and a faint dirt path at lower right. Exact crop and relative scale match image1. Keep the outer 8% left/right/bottom compatible for a seamless overlay.\n\nPAINT THIS NEW VEGETATION:\nA real mature deciduous tree with slender brown tapered trunk, five or six naturally forking branches, a loosely rounded asymmetrical crown formed by several broad airy masses of real small leaves. Mostly grouped shapes with soft paint passages inside, a few individual sprigs at the edges. Botanically coherent, detailed where it matters, with clear branch-to-leaf attachment. Natural olive and pale yellow-green canopy in bright sunshine. Smaller trees and bushes have the same realistic leaf scale and branching.\nBehind it, a QUIET distant forest: smooth blue-green atmospheric forms, softly suggested round little tree crowns at the skyline, broad blue-gray shaded passages. No sharp internal pattern at all. Show atmospheric distance through simplified soft forms. Think a far wooded hillside seen through clear air, not rocks or mountains. Use large subtle tonal strokes rather than a dense web of strokes.\nBeneath the tall tree is simply low open grass. The tall warped weed cluster at x45%-60% y39%-49% is removed completely and replaced by normal short fine meadow grass. Across the lower meadow, broad coherent paint passages and a few natural grass blades, with plant size decreasing toward the trees. No repeated interlocking shapes, crystals, giant leaves or random tiny flourishes.\n\nStyle: an observed real temperate meadow painted in naturalistic oil, with Constable's purposeful grouped foliage, readable tree anatomy and selective brush accents. Avoid copying the artificial texture of the guide. Light and color: retain the guide's bright sun, warm ochre highlights, olive green shade and pale slate-blue distance. Do not reproduce the references' dark exposure. The result must read as a believable peaceful level-one field even when viewed closely. Keep all sky openings truly transparent, with alpha at exactly the same image boundaries. No opaque background, blue sky, people, buildings, animals, wheat crop, border, scope, reticle, UI or text. New coherent painted forms, exact registered crop.",
+      "transparent_background": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-3a35e9a6-ddce-41a4-a31d-b882852b7acd.png"
+    }
+  ],
+  "selected_master": "assets/hunting/source-v13/tiles/terrain-center-repair.png",
+  "selection_review": "Attempt 1 retained distorted weeds. Attempt 2 removes the hooked weed cluster and joins the abrupt ridge step while retaining ground and tree placement. Attempts 3 and 4 move tree bases and alter the surrounding meadow too much; rejected. Only attempt 2 is integrated.",
+  "input_sha256": "8b8b377d3c91a7715c6de55c44dfeeed35f514378ed5b03542dcfafddf63aa4c",
+  "selected_master_sha256": "bbfc10ccebb5d4e2e2fcb91ba04054b62a0e94a2fd10e15df2af8e3bb52ffb6f"
+}
