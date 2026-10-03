@@ -694,8 +694,8 @@
     var rigOX = player.renderX + shakeX;
     var rigOY = player.renderY + shakeY;
 
-    // Main body pass. Translate uses the smoothed render position so
-    // corner-correction snaps ease in instead of teleporting the sprite.
+    // Main body pass. The render position follows the solved contact position
+    // so the shared inset hull never runs ahead of the visible miner.
     // The drill assembly below renders AFTER this pass pops the mirrored
     // frame, so it can use true world-space angles without having to
     // compensate for the horizontal flip.
@@ -707,9 +707,7 @@
     // player.dir without going through the mirrored frame at all.
     // Drilling angles stay in true world space, while idle/thrust poses add
     // the chassis bank so the arm remains physically bolted to the rig.
-    // Drill pivot anchored to renderX/Y so the drill stays attached to
-    // the visible sprite during corner-correction snaps (the body inside
-    // drawPlayer was already translated to renderX/Y above).
+    // Anchor the drill to the same solved pose used by the body above.
     var pivotLocalX = player.dir > 0 ? PLAYER_W - 4.2 : 4.2;
     var pivotLocalY = 15.2;
 
@@ -1170,4 +1168,3 @@
 
     ctx.restore();
   }
-

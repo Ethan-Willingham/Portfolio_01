@@ -64,9 +64,8 @@ function localPoints(dip) {
   });
 }
 let sampleCount = 0;
-// Even the strongest ordinary squash has scale 0.82 on its shorter axis.
-// A 0.4 local inset therefore retains at least 0.3 world pixels for shake.
-const margin = 0.4;
+// Reserve paint around the hull for drill shake and event-driven tremor.
+const margin = 0.8;
 for (let k = 0; k <= 27; k++) {
   const dip = k / 20, pts = localPoints(dip);
   for (let i = 0; i < pts.length; i++) {
@@ -128,6 +127,7 @@ for (const dir of [-1, 1]) for (const dip of [0, 0.5, 1.35])
       assert(w.rigHullContains(h, cx, cy), 'interior stays inside under pose');
       assert(w.rigHullQuery(h, cx, cy).distance < 0, 'interior signed distance');
       for (let i = 0; i < h.n; i++) {
+        if (i !== h.n - 2) assert(h.ny[i] < 0, 'every non-base face guides material upward');
         const j = (i + 1) % h.n;
         const x = (h.x[i] + h.x[j]) / 2, y = (h.y[i] + h.y[j]) / 2;
         assert(w.rigHullContains(h, x - h.nx[i] * 0.1, y - h.ny[i] * 0.1), 'normal points out');
@@ -135,6 +135,23 @@ for (const dir of [-1, 1]) for (const dip of [0, 0.5, 1.35])
         const q = w.rigHullQuery(h, x + h.nx[i] * 0.25, y + h.ny[i] * 0.25);
         assert(Math.abs(q.distance - 0.25) < 1e-9, 'nearest face distance');
       }
+      // Contact stays within the body users see even when the paint shakes.
+      // Invert the exact draw transform to query the filled production art.
+      for (const shakeX of [-0.55, 0.55]) for (const shakeY of [-0.3, 0.3])
+        for (const tremor of [-0.00825, 0.00825]) {
+          const co = Math.cos(tilt + tremor), si = Math.sin(tilt + tremor);
+          for (let i = 0; i < h.n; i++) {
+            const j = (i + 1) % h.n;
+            for (let k = 0; k <= 24; k++) {
+              const u = k / 24;
+              const dx = h.x[i] + (h.x[j] - h.x[i]) * u - w.player.x - shakeX - 11;
+              const dy = h.y[i] + (h.y[j] - h.y[i]) * u - w.player.y - shakeY - 26 * 0.56;
+              const rx = 11 + dx * co + dy * si, ry = 26 * 0.56 - dx * si + dy * co;
+              const lx = 11 + (rx - 11) / sx * dir, ly = 26 + (ry - 26) / sy;
+              assert(painted(lx, ly, dip), 'contact stays inside visibly shaken body');
+            }
+          }
+        }
       poses++;
     }
 console.log('PASS: ' + sampleCount + ' painted boundary probes, 28 suspension offsets, ' + poses + ' draw poses, convexity, normals and signed distance.');

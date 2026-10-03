@@ -116,6 +116,7 @@ try {
 
   await game(`window.__runContactCase = function(spec) {
     var nativeRandom = Math.random, nativeNow = performance.now, clock = 100000, randomState = 314159265;
+    var nativeProject = softContactProject;
     Math.random = function() { randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0; return randomState / 4294967296; };
     performance.now = function() { return clock; };
     var deterministicClock = performance.now() === clock;
@@ -178,7 +179,7 @@ try {
       player.onJello = false; player.renderX = player.x; player.renderY = player.y;
       var result = { name: spec.name, mode: spec.experimental ? 'contact' : 'baseline', fps: spec.fps,
         requestedSpeed: spec.speed, deterministicClock: deterministicClock,
-        finite: true, alive: true, maxRigJump: 0, maxNodeJump: 0, maxCenterJump: 0,
+        finite: true, alive: true, maxRigJump: 0, maxNodeJump: 0, maxCenterJump: 0, maxRenderGap: 0,
         maxPenetration: 0, maxSkinInsideHull: 0, maxVisualPenetration: 0,
         maxSolvedPenetration: 0, maxSolvedSkinInsideHull: 0,
         maxPendingPenetration: 0, maxPendingSkinInsideHull: 0, maxPendingPenetrationExcess: 0,
@@ -186,7 +187,8 @@ try {
         maxSevereInvertedTriangles: 0, minTriangleDet: 1,
         maxRingCrossings: 0, minAreaRatio: 1, maxAreaRatio: 1,
         minHeight: initialHeight, maxHeight: initialHeight, maxRigUpSpeed: 0,
-        groundedFrames: 0, contactFrames: 0, maxReportedContact: 0,
+        groundedFrames: 0, contactFrames: 0, maxReportedContact: 0, maxBodyRise: 0,
+        rampContactCalls: 0, maxRampRisePerSolve: 0, rampUpwardVelocityCalls: 0,
         selfContactCorrections: 0, firstSelfContact: null,
         firstContactTime: null, firstContactVy: null, peakBodyRealSpeed: 0,
         zeroStepFrames: 0, zeroStepPendingFrames: 0, supportLostOnZeroStep: 0,
@@ -202,6 +204,15 @@ try {
       result.material = materialState();
       var initialMaterial = JSON.stringify(result.material);
       result.materialUnchangedFrames = 0; result.firstMaterialChange = null;
+      softContactProject = function(body, a, c, t, nx, ny, depth, sy, h, f) {
+        var driveRamp = !drop && !passive && f.rig.vx * direction > 25 && nx * direction < -0.2 && ny > 0.2;
+        var beforeA = body.py[a], beforeC = body.py[c];
+        nativeProject(body, a, c, t, nx, ny, depth, sy, h, f);
+        if (!driveRamp) return;
+        result.rampContactCalls++;
+        result.maxRampRisePerSolve = Math.max(result.maxRampRisePerSolve, beforeA - body.py[a], beforeC - body.py[c]);
+        if (body.py[a] - body.oy[a] < -0.0001 || body.py[c] - body.oy[c] < -0.0001) result.rampUpwardVelocityCalls++;
+      };
       for (var frame = 0; frame < Math.ceil(spec.fps * duration); frame++) {
         var elapsed = frame * dt; clock += dt * 1000;
         if (spec.pause && frame === Math.round(spec.fps * 0.75)) {
@@ -223,6 +234,8 @@ try {
         var supportBodyBefore = typeof softContactSupport !== 'undefined' && !!softContactSupport;
         var feetBefore = rigContactHull().b;
         update(dt); surfaceSlimeTick(dt); updateJello(dt);
+        result.maxRenderGap = Math.max(result.maxRenderGap, Math.hypot(player.renderX - player.x, player.renderY - player.y));
+        result.maxBodyRise = Math.max(result.maxBodyRise, initialY - b.cy);
         if (SOFT_CONTACT && jelloFrameNo !== physicsFrameBefore && softContactReport.selfContacts > 0) {
           result.selfContactCorrections += softContactReport.selfContacts;
           if (result.firstSelfContact === null) result.firstSelfContact = { time: elapsed, frame: frame, count: softContactReport.selfContacts };
@@ -340,6 +353,7 @@ try {
       return result;
     } finally {
       Math.random = nativeRandom; performance.now = nativeNow;
+      softContactProject = nativeProject;
       keys.ArrowLeft = keys.ArrowRight = false;
     }
     function ringArea(body) {
@@ -523,6 +537,10 @@ try {
   check('no body ends underneath the floor', results.every(result => result.final.cy <= results[0].initial.cy + 80));
   check('experimental contacts were exercised', results.filter(result => result.mode === 'contact').some(result => result.maxReportedContact > 0));
   const experimental = results.filter(result => result.mode === 'contact');
+  check('experimental drawn rig stays aligned with its solved hull after complete updates', experimental.every(result => result.maxRenderGap < 0.001));
+  const drives = experimental.filter(result => result.name.startsWith('push-'));
+  check('horizontal drives use real slope contacts that lift skin and leave upward material velocity',
+    drives.every(result => result.rampContactCalls > 0 && result.maxRampRisePerSolve > 0.01 && result.rampUpwardVelocityCalls > 0));
   check('solved experimental rig and skin penetration stay below two pixels', experimental.every(result => result.maxSolvedPenetration < 2 && result.maxSolvedSkinInsideHull < 2));
   check('between-tick penetration stays within pending travel plus two pixels', experimental.every(result => result.maxPendingPenetrationExcess < 2));
   check('experimental rendered rig and skin penetration stay below two pixels', experimental.every(result => result.maxVisualPenetration < 2));

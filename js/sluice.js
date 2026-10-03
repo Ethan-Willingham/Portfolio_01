@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.162';
+  var GAME_VERSION = 'v28.163';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -10269,21 +10269,17 @@
     tune: bombTune
   };
   /* ---- Shared rig contact silhouette ---- */
-  // An inset cab crown joins a flat track base. Small attachments (pipe,
+  // A narrow rounded crown joins a wide flat track base. Small attachments (pipe,
   // lamp and moving drill) do not enlarge the body contact surface.
-  // Curve chords stay inside the painted cab, including at the shoulders.
-  var RIG_HULL_LOCAL = [4.2, 18.5, 5.5, 10.5];
-  for (var rigCurveI = 1; rigCurveI <= 5; rigCurveI++) {
-    var rigCurveT = rigCurveI / 5, rigCurveU = 1 - rigCurveT;
-    RIG_HULL_LOCAL.push(rigCurveU * rigCurveU * 5.5 + 2 * rigCurveU * rigCurveT * 9.0 + rigCurveT * rigCurveT * 13.7,
-      rigCurveU * rigCurveU * 10.5 + 2 * rigCurveU * rigCurveT * 6.1 + rigCurveT * rigCurveT * 6.3);
+  // The smaller crown leaves room for continuously rising sides inside the
+  // painted cab. Every side normal lifts material; there is no vertical skirt.
+  var RIG_HULL_LOCAL = [];
+  for (var rigCurveI = 0; rigCurveI <= 9; rigCurveI++) {
+    var rigCurveAngle = (150 - rigCurveI * 120 / 9) * Math.PI / 180;
+    RIG_HULL_LOCAL.push(11 + Math.cos(rigCurveAngle) * 3.2,
+      16 - Math.sin(rigCurveAngle) * 3.2);
   }
-  for (rigCurveI = 1; rigCurveI <= 3; rigCurveI++) {
-    rigCurveT = rigCurveI / 3; rigCurveU = 1 - rigCurveT;
-    RIG_HULL_LOCAL.push(rigCurveU * rigCurveU * 13.7 + 2 * rigCurveU * rigCurveT * 16.5 + rigCurveT * rigCurveT * 17.7,
-      rigCurveU * rigCurveU * 6.3 + 2 * rigCurveU * rigCurveT * 7.5 + rigCurveT * rigCurveT * 10.6);
-  }
-  RIG_HULL_LOCAL.push(17.2, 24.4, 4.2, 24.4);
+  RIG_HULL_LOCAL.push(19.0, 24.0, 3.0, 24.0);
   var rigHullCache = { n: RIG_HULL_LOCAL.length / 2, x: new Float64Array(12), y: new Float64Array(12),
     nx: new Float64Array(12), ny: new Float64Array(12) };
   var rigHullResult = { distance: 0, x: 0, y: 0, nx: 0, ny: 0 };
@@ -21943,10 +21939,8 @@
       // Airborne sibling of the ceiling-slip below. When horizontal motion
       // is blocked by a tile, try a tiny vertical nudge (max 3px) to slip
       // past the corner — Celeste/Mario imperceptible range. Direction
-      // biased by current vy. Smoothness comes from the renderX/Y lerp
-      // (applied later in the update) — the snap happens for collision
-      // purposes but the sprite eases over a few frames so the eye sees
-      // a continuous motion. Edge-only squash adds a tactile thump per
+      // biased by current vy. The body follows the corrected contact pose.
+      // Edge-only squash adds a tactile thump per
       // contact chain (not every frame, so contact spans don't sit
       // permanently squashed).
       var SIDE_NUDGE_MAX = 3;
@@ -22264,26 +22258,6 @@
       if (player.squash < 0) player.squash = 0;
     }
 
-    // ----- Render-position smoothing -----
-    // Sprite trails the logical position with a quick exponential lerp.
-    // Corner-correction snaps (3-8px) become visually smooth — the rig
-    // catches up over ~5 frames instead of teleporting. Big deltas
-    // (respawn, rover dismount, etc.) snap directly so the sprite doesn't
-    // streak across the world. The lag at normal motion (~3px/frame) is
-    // sub-pixel and imperceptible.
-    var RENDER_LERP_RATE = 22;       // higher = catches up faster
-    var RENDER_SNAP_THRESHOLD = 48;  // px — beyond this, snap (teleport)
-    var rdx = player.x - player.renderX;
-    var rdy = player.y - player.renderY;
-    if (Math.abs(rdx) > RENDER_SNAP_THRESHOLD || Math.abs(rdy) > RENDER_SNAP_THRESHOLD) {
-      player.renderX = player.x;
-      player.renderY = player.y;
-    } else {
-      var k = 1 - Math.exp(-RENDER_LERP_RATE * dt);
-      player.renderX += rdx * k;
-      player.renderY += rdy * k;
-    }
-
     // ====== UPDATE: Drill trigger ======
     // Each direction probes the tile in front of the rig and routes through
     // getTileObj(). Down/left/right are the usual dig directions; the
@@ -22338,8 +22312,7 @@
           resetFlightBank();
           player.dir = -1;
           // Row-snap so the AABB sits cleanly inside the row of the
-          // target tile. Renders smoothly via the renderX/Y lerp; up to
-          // ~13px snap is invisible by the time the rig's drawn.
+          // target tile. The visible body follows the corrected contact pose.
           var snapY_l = pr2 * TILE + (TILE - PLAYER_H);
           if (Math.abs(snapY_l - player.y) <= TILE * 0.4 &&
               !solidAt(player.x, snapY_l, PLAYER_W, PLAYER_H)) {
@@ -22428,6 +22401,11 @@
       layerBanner.t -= dt;
       if (layerBanner.t <= 0) layerBanner = null;
     }
+
+    // Keep the visible body on its final contact position, including drill
+    // row snaps. A trailing sprite exposes an invisible bumper during travel.
+    player.renderX = player.x;
+    player.renderY = player.y;
 
     // (msgTimer is now ticked in loop() so it keeps counting down even
     //  while the shop is open or the game is over.)
@@ -22535,7 +22513,6 @@
     if (cam.x < 0) cam.x = 0;
     if (cam.x > COLS * TILE - screenW) cam.x = COLS * TILE - screenW;
   }
-
   // ====== COMBAT ======
   // First combat slice (EXPANSION_PLAN P3 + a slice of P4): enemy ground
   // turrets that sit in the No Man's Zones, plus a DEFAULT auto-turret mounted
@@ -51674,8 +51651,8 @@
     var rigOX = player.renderX + shakeX;
     var rigOY = player.renderY + shakeY;
 
-    // Main body pass. Translate uses the smoothed render position so
-    // corner-correction snaps ease in instead of teleporting the sprite.
+    // Main body pass. The render position follows the solved contact position
+    // so the shared inset hull never runs ahead of the visible miner.
     // The drill assembly below renders AFTER this pass pops the mirrored
     // frame, so it can use true world-space angles without having to
     // compensate for the horizontal flip.
@@ -51687,9 +51664,7 @@
     // player.dir without going through the mirrored frame at all.
     // Drilling angles stay in true world space, while idle/thrust poses add
     // the chassis bank so the arm remains physically bolted to the rig.
-    // Drill pivot anchored to renderX/Y so the drill stays attached to
-    // the visible sprite during corner-correction snaps (the body inside
-    // drawPlayer was already translated to renderX/Y above).
+    // Anchor the drill to the same solved pose used by the body above.
     var pivotLocalX = player.dir > 0 ? PLAYER_W - 4.2 : 4.2;
     var pivotLocalY = 15.2;
 
@@ -52150,7 +52125,6 @@
 
     ctx.restore();
   }
-
   // ===== Rover-balloon visuals =====
   // Three-part composition:
   //   drawRoverTrail() — reentry flame streak BEHIND/ABOVE the rig at high
@@ -71712,10 +71686,11 @@
     f.support = false;
     // Sample the rounded hull and flat track base. Forces distribute to the
     // actual skin edge's two material nodes.
-    for (var pass = 0; pass < 4; pass++) {
+    for (var pass = 0; pass < 6; pass++) {
       for (var bi = 0; bi < count; bi++) {
         var b = active[bi];
         if (!softContactBody(b) || b.frozen) continue;
+        var bodyContacts = softContactReport.contacts;
         softContactSkin(b);
         jelloRingBBox(b);
         var hull = rigContactHull(rig.x, rig.y);
@@ -71735,7 +71710,7 @@
           hull = rigContactHull(rig.x, rig.y);
           var next = (side + 1) % hullN;
           var samples = Math.max(1, Math.ceil(Math.hypot(hull.x[next] - hull.x[side],
-            hull.y[next] - hull.y[side]) / 3));
+            hull.y[next] - hull.y[side]) / 1.5));
           for (var sample = 0; sample < samples; sample++) {
             var u = sample / samples;
             // Contact moves the rig during this sweep. Refresh its translated
@@ -71744,8 +71719,11 @@
             var sx = hull.x[side] + (hull.x[next] - hull.x[side]) * u;
             var sy = hull.y[side] + (hull.y[next] - hull.y[side]) * u;
             if (!jelloPointInRing(b, sx, sy)) continue;
-            softContactSolve(b, sx, sy, realH, f);
+            softContactSolve(b, sx, sy, hull.nx[side], hull.ny[side], realH, f);
           }
+        }
+        if (softContactReport.contacts === bodyContacts) {
+          softContactEnclosedEscape(b, rigContactHull(rig.x, rig.y), realH, f);
         }
         // Contact and the baseline's orientation constraint must converge
         // together. Leaving contact as the final mover can mirror a thin
@@ -71759,21 +71737,118 @@
     }
   }
 
-  function softContactSolve(b, sx, sy, dt, f) {
-    var best = Infinity, a = 0, c = 0, t = 0, qx = 0, qy = 0;
+  function softContactSolve(b, sx, sy, nx, ny, dt, f) {
+    // The rig face defines its contact normal. Find the skin just behind
+    // that face, toward the rig, so an inclined bumper lifts the contacted
+    // material rather than inheriting a vertical slime wall's horizontal
+    // normal. The exit keeps forces on its actual two material nodes.
+    var near = jelloNearestOnRing(b, sx, sy);
+    // An immersed back face is not another contact patch. For example, a
+    // track sample beside the slime's underside must not cast through its
+    // full height and create a landing while the rig drives into its side.
+    if ((near.x - sx) * nx + (near.y - sy) * ny >= 0) return;
+    var dx = -nx, dy = -ny, best = Infinity, a = 0, c = 0, t = 0;
     for (var k = 0; k < b.ringN; k++) {
       var i = b.ring[k], j = b.ring[(k + 1) % b.ringN];
       var ex = b.px[j] - b.px[i], ey = b.py[j] - b.py[i];
-      var den = ex * ex + ey * ey;
-      var u = den > 1e-10 ? skySlimeClamp(((sx - b.px[i]) * ex + (sy - b.py[i]) * ey) / den, 0, 1) : 0;
-      var x = b.px[i] + ex * u, y = b.py[i] + ey * u;
-      var d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
-      if (d2 < best) { best = d2; a = i; c = j; t = u; qx = x; qy = y; }
+      var den = dx * ey - dy * ex;
+      if (Math.abs(den) < 1e-10) continue;
+      var ax = b.px[i] - sx, ay = b.py[i] - sy;
+      var distance = (ax * ey - ay * ex) / den;
+      var u = (ax * dy - ay * dx) / den;
+      if (distance < 0 || distance >= best || u < 0 || u > 1) continue;
+      var x = sx + dx * distance, y = sy + dy * distance;
+      // A ray touching a folded skin vertex can remain inside the body.
+      // Only a real exit is a contacted surface.
+      if (jelloPointInRing(b, x + dx * 0.001, y + dy * 0.001)) continue;
+      best = distance; a = i; c = j; t = u;
     }
-    var depth = Math.sqrt(best);
-    if (!(depth > 0.000001)) return;
-    var nx = (qx - sx) / depth, ny = (qy - sy) / depth;
-    softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f);
+    if (!(best > 0.000001) || !isFinite(best)) return;
+    // At a track corner, a nearby slanted skin can sit slightly behind the
+    // track normal while its inward ray misses that skin and reaches the far
+    // roof. Only an exit within the rig is a patch entering this face.
+    var skinX = sx + dx * best, skinY = sy + dy * best;
+    if (rigHullQuery(rigContactHull(f.rig.x, f.rig.y), skinX, skinY).distance > 0.001) return;
+    softContactProject(b, a, c, t, -nx, -ny, best, sy, dt, f);
+  }
+
+  // A saved pose or an enclosing skin can bury the entire hull without a
+  // boundary patch entering it. Normal face contacts do not apply there.
+  // Only that enclosed pose gets one outer escape-plane constraint.
+  function softContactEnclosedEscape(b, hull, dt, f) {
+    for (var side = 0; side < hull.n; side++) {
+      if (!jelloPointInRing(b, hull.x[side], hull.y[side])) return;
+    }
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k], q = b.ring[(k + 1) % b.ringN];
+      var ax = b.px[p], ay = b.py[p], ex = b.px[q] - ax, ey = b.py[q] - ay;
+      if (Math.max(ax, b.px[q]) < hull.l || Math.min(ax, b.px[q]) > hull.r ||
+          Math.max(ay, b.py[q]) < hull.t || Math.min(ay, b.py[q]) > hull.b) continue;
+      // An indent can cross a hull edge between its contained vertices.
+      // Reject both a proper crossing and a collinear touching segment.
+      for (side = 0; side < hull.n; side++) {
+        var next = (side + 1) % hull.n;
+        var hx = hull.x[next] - hull.x[side], hy = hull.y[next] - hull.y[side];
+        var dx = hull.x[side] - ax, dy = hull.y[side] - ay, den = ex * hy - ey * hx;
+        if (Math.abs(den) > 1e-10) {
+          var u = (dx * hy - dy * hx) / den, v = (dx * ey - dy * ex) / den;
+          if (u >= 0 && u <= 1 && v >= 0 && v <= 1) return;
+        } else if (Math.abs(dx * ey - dy * ex) < 1e-10) {
+          var length2 = ex * ex + ey * ey;
+          if (length2 < 1e-10) continue;
+          var u0 = (dx * ex + dy * ey) / length2;
+          var u1 = u0 + (hx * ex + hy * ey) / length2;
+          if (Math.max(u0, u1) >= 0 && Math.min(u0, u1) <= 1) return;
+        }
+      }
+    }
+    var area = 0, origin = b.ring[0];
+    for (k = 0; k < b.ringN; k++) {
+      p = b.ring[k]; q = b.ring[(k + 1) % b.ringN];
+      area += (b.px[p] - b.px[origin]) * (b.py[q] - b.py[origin]) -
+        (b.py[p] - b.py[origin]) * (b.px[q] - b.px[origin]);
+    }
+    if (Math.abs(area) < 1e-8) return;
+    var winding = area < 0 ? -1 : 1, best = Infinity;
+    var edgeA = 0, edgeC = 0, edgeT = 0, normalX = 0, normalY = 0, skinY = 0;
+    for (k = 0; k < b.ringN; k++) {
+      p = b.ring[k]; q = b.ring[(k + 1) % b.ringN];
+      ax = b.px[p]; ay = b.py[p]; ex = b.px[q] - ax; ey = b.py[q] - ay;
+      var length = Math.hypot(ex, ey);
+      if (length < 1e-6) continue;
+      var nx = ey / length * winding, ny = -ex / length * winding;
+      // A floor-blocked escape cannot translate the rig through this plane.
+      // The available axes retain exactly the projector's terrain masks.
+      var canX = !solidAt(f.rig.x + nx * 0.5, f.rig.y, PLAYER_W, PLAYER_H);
+      var canY = !solidAt(f.rig.x, f.rig.y + ny * 0.5, PLAYER_W, PLAYER_H);
+      var available = nx * nx * canX + ny * ny * canY;
+      if (available < 1e-8) continue;
+      var plane = ax * nx + ay * ny, back = Infinity, front = -Infinity, support = 0;
+      for (side = 0; side < hull.n; side++) {
+        var projection = hull.x[side] * nx + hull.y[side] * ny;
+        if (projection < back) { back = projection; support = side; }
+        front = Math.max(front, projection);
+      }
+      var depth = plane - back;
+      if (front > plane + 0.000001 || !(depth > 0.000001) || depth >= best) continue;
+      // A small recoil can clear the immediate floor mask while the complete
+      // escape still points through it. Check the whole minimum translation
+      // without moving the rig, using the same two-pixel terrain sweep.
+      var travelX = nx * canX * depth / available, travelY = ny * canY * depth / available;
+      var sweep = Math.max(1, Math.ceil(Math.max(Math.abs(travelX), Math.abs(travelY)) / 2));
+      var blocked = false;
+      for (var step = 1; step <= sweep; step++) {
+        if (solidAt(f.rig.x + travelX * step / sweep, f.rig.y + travelY * step / sweep,
+            PLAYER_W, PLAYER_H)) { blocked = true; break; }
+      }
+      if (blocked) continue;
+      var t = skySlimeClamp(((hull.x[support] - ax) * ex + (hull.y[support] - ay) * ey) /
+        (length * length), 0, 1);
+      best = depth; edgeA = p; edgeC = q; edgeT = t;
+      normalX = nx; normalY = ny; skinY = ay + ey * t;
+    }
+    if (isFinite(best)) softContactProject(b, edgeA, edgeC, edgeT,
+      normalX, normalY, best, skinY, dt, f);
   }
 
   function softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f) {
@@ -71808,6 +71883,7 @@
     if (ny < -0.5 && sy > rig.y + PLAYER_H * 0.65) { f.support = true; f.supportBody = b; }
     if (!f.hit && ny < -0.5 && f.vy > 120) recordLandingImpact(f.vy, sy, 'jello', 1);
     f.hit = true;
+    b._softRigContactFrame = jelloFrameNo;
     if (-(rvx * nx + rvy * ny) > 35 || Math.abs(f.vx) > 25) b._plyMs = performance.now();
     b.sleeping = false; b.sleepFrames = 0;
     if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
@@ -71838,8 +71914,8 @@
     }
     softContactSupport = f.support ? f.supportBody : null;
     if (f.hit) { player.jelloImpactVy = 0; player.jelloCarryVx = 0; }
-    // Match the existing 120 Hz skin interpolation at every trial frame.
-    // Drawing never changes collision positions or feeds motion into the solve.
+    // Keep the painted rig aligned with the same current hull used by contact.
+    // The gel retains its independent skin interpolation.
     softContactDraw = { x: f.previousX, y: f.previousY, endX: player.x, endY: player.y };
     softContactInterpolate();
     softContactFrame = null;
@@ -71847,9 +71923,8 @@
 
   function softContactInterpolate() {
     if (!softContactDraw) return;
-    var d = softContactDraw, alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1);
-    player.renderX = d.x + (d.endX - d.x) * alpha;
-    player.renderY = d.y + (d.endY - d.y) * alpha;
+    player.renderX = player.x;
+    player.renderY = player.y;
   }
 
   // Display frames can outnumber gel ticks. Retain a real supporting contact
@@ -74651,7 +74726,8 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed ||
+        b._softRigContactFrame === jelloFrameNo) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);
@@ -74659,7 +74735,8 @@
     }
     // The solver ticks at 120 Hz. Display its two latest poses one tick behind
     // real time, so 144 Hz and variable-rate screens never repeat a skin frame.
-    // Physics, contacts, grabs, saves and water continue to use the live body.
+    // Rig contacts draw the current skin so it meets the current rig hull.
+    // Physics, grabs, saves and water continue to use the live body.
     var alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1), x = 0, y = 0;
     view.bboxL = view.bboxT = Infinity; view.bboxR = view.bboxB = -Infinity;
     for (var p = 0; p < b.n; p++) {

@@ -27,7 +27,10 @@ const servedSource = liquidSource.replace(marker, marker + `
     writeSimParams:writeSimParams, runCollide:runCollide, readbackBuffer:readbackBuffer,
     shader:WGSL_GAME_PARAMS, base:GS_RIG_BASE, lanes:GS_PARAM_LANES,
     slots:GS_FRAME_SLOTS, fallback:DEFAULT_RIG_HULL,
-    waterRadius:LIQUID_COLLIDE_RADIUS, snowRadius:LIQUID_CELL_DEFAULT/Math.sqrt(LIQUID_SNOW_DENSITY)*0.5 };
+    waterRadius:LIQUID_COLLIDE_RADIUS, snowRadius:LIQUID_CELL_DEFAULT/Math.sqrt(LIQUID_SNOW_DENSITY)*0.5,
+    buildGridPipelines:buildGridPipelines, buildGrid:buildGrid,
+    prepareSnowGrains:prepareSnowGrains, runSnowGrains:runSnowGrains,
+    denseGrid:function(){LIQUID_SPARSE=0;} };
 `);
 new vm.Script(servedSource);
 
@@ -36,19 +39,23 @@ async function runGPU() {
   function check(value, message) { checks++; if (!value) throw new Error(message); }
   const near = (a, b, message, tolerance = 0.0002) => check(Math.abs(a - b) <= tolerance, message + ': ' + a + ' versus ' + b);
   const api = window.__rigGPU;
-  check(JSON.stringify(api.fallback) === JSON.stringify(RIG_HULL_LOCAL), 'standalone fallback matches shared local hull');
+  check(api.fallback.length === RIG_HULL_LOCAL.length, 'standalone fallback vertex count');
+  api.fallback.forEach((v, i) => near(v, RIG_HULL_LOCAL[i], 'standalone fallback matches shared local hull', 1e-12));
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
   check(adapter, 'WebGPU adapter available');
   const device = await adapter.requestDevice({ requiredLimits: { maxStorageBuffersPerShaderStage: adapter.limits.maxStorageBuffersPerShaderStage } });
   const errors = [];
-  let destroying = false, current;
+  let destroying = false, current, floorActive = false;
   device.addEventListener('uncapturederror', e => errors.push(e.error.message));
   device.lost.then(info => { if (!destroying) errors.push(info.message); });
   const capacity = 64;
   const instance = { device, queue: device.queue, maxParticles: capacity, g2pReady: true,
     stepDt: 1 / 120, frameEncoder: null, terrainMaskWords: 0,
     liquid: { getGameState: () => ({ player: current, guests: [] }),
-      fillTerrainSolid(col, row, w, h, target) { target.fill(0); } } };
+      fillTerrainSolid(col, row, w, h, target) {
+        target.fill(0);
+        if (floorActive) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) target[y * w + x] = +(row + y >= 4);
+      } } };
   let queryInput, queryOutput;
   try {
     device.pushErrorScope('validation');
@@ -201,14 +208,94 @@ async function runGPU() {
       }
       rows.push({ dir, transformed, material, particles: seeds.length }); collisionCases++;
     }
+    // A real settled shallow bed, using production snow prediction, neighbor
+    // indexing, grain contact and terrain/rig projection on every tick.
+    // Both shapes receive identical seeds, floor, drive speed and tick order.
+    const oldLocal = [4.2,18.5,5.5,10.5,6.948000000000001,8.924000000000003,8.492,7.716,10.132,6.876,
+      11.868,6.404,13.7,6.3,15.388888888888891,7.311111111111112,16.72222222222222,8.744444444444444,
+      17.7,10.6,17.2,24.4,4.2,24.4];
+    function worldHull(local, x, y, dir) {
+      const h = { n: local.length / 2, x: [], y: [], nx: [], ny: [] };
+      for (let i = 0; i < h.n; i++) { h.x.push(x + (dir < 0 ? 22 - local[i * 2] : local[i * 2])); h.y.push(y + local[i * 2 + 1]); }
+      for (let i = 0; i < h.n; i++) {
+        const j = (i + 1) % h.n, ex = h.x[j] - h.x[i], ey = h.y[j] - h.y[i], len = Math.hypot(ex, ey);
+        h.nx.push(ey / len * dir); h.ny.push(-ex / len * dir);
+      }
+      h.l = Math.min(...h.x); h.r = Math.max(...h.x); h.t = Math.min(...h.y); h.b = Math.max(...h.y); return h;
+    }
+    floorActive = true; api.uploadTerrainMask(instance);
+    instance.cellSize = 2.5; instance.grid = { w: 64, h: 64, cells: 4096 };
+    instance.liquid.getSnowAir = () => ({ active: false, wind: -12 * Math.sin(127 * 0.006), clock: 0 });
+    api.denseGrid(); api.buildGridPipelines(instance);
+    const grainDt = 1 / 480, diameter = api.snowRadius * 2, rampRows = [];
+    u[1] = u[2] = 64; u[3] = u[4] = 0; u[5] = 4096; f[7] = 0.4;
+    for (const dir of [-1, 1]) for (const label of ['near-vertical', 'rising-wedge']) {
+      const local = label === 'near-vertical' ? oldLocal : RIG_HULL_LOCAL;
+      const pos = new Float32Array(capacity * 4), aux = new Float32Array(capacity * 4), affine = new Float32Array(capacity * 4), flag = new Uint32Array(capacity);
+      let count = 0;
+      for (let row = 0; row < 3; row++) for (let col = 0; col < 18; col++) {
+        const x = 99 + dir * (12 + col * diameter), y = 128 - api.snowRadius - row * diameter;
+        pos.set([x, y, 0, 0], count * 4); aux.set([3.2, 0, x, y], count * 4);
+        affine.set([0, 0, 0, 0.6], count * 4); flag[count] = 65 | (29 << 8); count++;
+      }
+      instance.uploadedCount = count; u[0] = count; instance.queue.writeBuffer(instance.paramsBuf, 0, u);
+      for (const [key, data] of Object.entries({ pos, aux, affine, flag })) instance.queue.writeBuffer(instance.buf[key], 0, data);
+      current = { active: false }; api.writeGameParams(instance, 1); api.prepareSnowGrains(instance, grainDt);
+      async function tick() {
+        const encoder = device.createCommandEncoder({ label: 'rig-ramp.grain-tick' }); instance.frameEncoder = encoder;
+        try {
+          api.runSnowGrains(instance, 'predict', 0, false, true);
+          api.buildGrid(instance, true, true);
+          api.runSnowGrains(instance, 'contacts', 0, true, true);
+          api.runSnowGrains(instance, 'shield', 0, false, false);
+          instance.queue.submit([encoder.finish()]);
+        } finally { instance.frameEncoder = null; }
+      }
+      device.pushErrorScope('validation');
+      for (let frame = 0; frame < 240; frame++) await tick();
+      const settled = new Float32Array(await api.readbackBuffer(instance, instance.buf.pos, count * 16));
+      let settledMaxSpeed = 0;
+      for (let i = 0; i < count; i++) settledMaxSpeed = Math.max(settledMaxSpeed, Math.hypot(settled[i * 4 + 2], settled[i * 4 + 3]));
+      check(settledMaxSpeed < 8, 'shallow bed settles before drive: ' + settledMaxSpeed);
+      let peakMeanRise = 0, peakRise = 0, minVY = 0, upwardContacts = 0, maxHullOverlap = 0;
+      for (let frame = 1; frame <= 120; frame++) {
+        current = { active: true, x: 88 + dir * 150 * frame * grainDt, y: 102, dir, vx: dir * 150, vy: 0 };
+        current.hull = worldHull(local, current.x, current.y, dir); api.writeGameParams(instance, 1);
+        await tick();
+        const state = new Float32Array(await api.readbackBuffer(instance, instance.buf.pos, count * 16));
+        let sumRise = 0;
+        for (let i = 0; i < count; i++) {
+          const x = state[i * 4], y = state[i * 4 + 1], vx = state[i * 4 + 2], vy = state[i * 4 + 3];
+          check([x, y, vx, vy].every(Number.isFinite), 'finite rising snow');
+          check(y + api.snowRadius <= 128.0001, 'snow does not cross the real terrain floor');
+          const q = rigHullQuery(current.hull, x, y);
+          maxHullOverlap = Math.max(maxHullOverlap, -q.distance);
+          check(q.distance >= api.snowRadius + 0.15 - 0.0001, 'snow grain disks stay outside the actual rig hull');
+          if (q.distance < api.snowRadius + 0.35 && q.ny < -0.05 && vy < -5) upwardContacts++;
+          const rise = Math.max(0, settled[i * 4 + 1] - y);
+          sumRise += rise; peakRise = Math.max(peakRise, rise); minVY = Math.min(minVY, vy);
+        }
+        peakMeanRise = Math.max(peakMeanRise, sumRise / count);
+      }
+      const rampError = await device.popErrorScope(); check(!rampError, 'ramp dispatch validation: ' + rampError?.message);
+      rampRows.push({ dir, shape: label, count, settledMaxSpeed, peakMeanRise, peakRise, minVY, upwardContacts, maxHullOverlap });
+    }
+    for (const dir of [-1, 1]) {
+      const baseline = rampRows.find(r => r.dir === dir && r.shape === 'near-vertical');
+      const wedge = rampRows.find(r => r.dir === dir && r.shape === 'rising-wedge');
+      check(wedge.upwardContacts > 20 && wedge.minVY < -10, 'driving ' + dir + ' imparts upward normal velocity');
+      check(wedge.peakRise > 2 && wedge.peakMeanRise > baseline.peakMeanRise + 0.25,
+        'driving ' + dir + ' raises shallow snow more than the previous skirt: ' + JSON.stringify({ baseline, wedge }));
+    }
     await device.queue.onSubmittedWorkDone();
     check(!errors.length, 'no GPU errors: ' + errors.join('; '));
     return { pass: true, checks, queryPoses, querySamples, collisionCases, particlesChecked, rows, gpuErrors: errors,
-      adapter: adapter.info?.description || null,
-      limitation: 'Direct post-G2P production collision dispatch, with empty terrain and no guests; full-game boot is checked separately.' };
+      adapter: adapter.info?.description || null, rampRows,
+      limitation: 'Direct production contact dispatch plus settled shallow snow prediction/grid/grain contacts and rigid driving against a real terrain floor; no full-game presentation or weather claim.' };
   } finally {
     for (const b of Object.values(instance.buf || {})) b.destroy();
     instance.paramsBuf?.destroy(); instance.simParamsBuf?.destroy();
+    instance.snowGrainParams?.destroy(); instance.snowAirTexture?.destroy(); instance.snowProjectedAir?.destroy();
     for (const b of instance.gameParamsBufs || []) b.destroy();
     queryInput?.destroy(); queryOutput?.destroy(); destroying = true; device.destroy();
   }

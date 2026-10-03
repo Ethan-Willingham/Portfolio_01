@@ -54,7 +54,8 @@ for (const dir of [-1, 1]) for (const speed of [0, 2, 160, 500]) {
   }
   if (speed) {
     const front = edgePoint(9, 0.4);
-    checkNormalTransfer(front, 0, 0, 'advancing lower side');
+    const lifted = checkNormalTransfer(front, 0, 0, 'advancing lower side');
+    assert(lifted[2] * dir > 0 && lifted[3] < 0, 'lower ramp lifts material in either direction');
     const crown = edgePoint(7, 0.25), tx = -crown.ny, ty = crown.nx;
     const vx = tx * 35 - crown.nx * 40, vy = ty * 35 - crown.ny * 40;
     const p = checkNormalTransfer(crown, vx, vy, 'glancing curved crown');

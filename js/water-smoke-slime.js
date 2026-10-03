@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.1'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.3'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -9810,10 +9810,11 @@
     f.support = false;
     // Sample the rounded hull and flat track base. Forces distribute to the
     // actual skin edge's two material nodes.
-    for (var pass = 0; pass < 4; pass++) {
+    for (var pass = 0; pass < 6; pass++) {
       for (var bi = 0; bi < count; bi++) {
         var b = active[bi];
         if (!softContactBody(b) || b.frozen) continue;
+        var bodyContacts = softContactReport.contacts;
         softContactSkin(b);
         jelloRingBBox(b);
         var hull = rigContactHull(rig.x, rig.y);
@@ -9833,7 +9834,7 @@
           hull = rigContactHull(rig.x, rig.y);
           var next = (side + 1) % hullN;
           var samples = Math.max(1, Math.ceil(Math.hypot(hull.x[next] - hull.x[side],
-            hull.y[next] - hull.y[side]) / 3));
+            hull.y[next] - hull.y[side]) / 1.5));
           for (var sample = 0; sample < samples; sample++) {
             var u = sample / samples;
             // Contact moves the rig during this sweep. Refresh its translated
@@ -9842,8 +9843,11 @@
             var sx = hull.x[side] + (hull.x[next] - hull.x[side]) * u;
             var sy = hull.y[side] + (hull.y[next] - hull.y[side]) * u;
             if (!jelloPointInRing(b, sx, sy)) continue;
-            softContactSolve(b, sx, sy, realH, f);
+            softContactSolve(b, sx, sy, hull.nx[side], hull.ny[side], realH, f);
           }
+        }
+        if (softContactReport.contacts === bodyContacts) {
+          softContactEnclosedEscape(b, rigContactHull(rig.x, rig.y), realH, f);
         }
         // Contact and the baseline's orientation constraint must converge
         // together. Leaving contact as the final mover can mirror a thin
@@ -9857,21 +9861,118 @@
     }
   }
 
-  function softContactSolve(b, sx, sy, dt, f) {
-    var best = Infinity, a = 0, c = 0, t = 0, qx = 0, qy = 0;
+  function softContactSolve(b, sx, sy, nx, ny, dt, f) {
+    // The rig face defines its contact normal. Find the skin just behind
+    // that face, toward the rig, so an inclined bumper lifts the contacted
+    // material rather than inheriting a vertical slime wall's horizontal
+    // normal. The exit keeps forces on its actual two material nodes.
+    var near = jelloNearestOnRing(b, sx, sy);
+    // An immersed back face is not another contact patch. For example, a
+    // track sample beside the slime's underside must not cast through its
+    // full height and create a landing while the rig drives into its side.
+    if ((near.x - sx) * nx + (near.y - sy) * ny >= 0) return;
+    var dx = -nx, dy = -ny, best = Infinity, a = 0, c = 0, t = 0;
     for (var k = 0; k < b.ringN; k++) {
       var i = b.ring[k], j = b.ring[(k + 1) % b.ringN];
       var ex = b.px[j] - b.px[i], ey = b.py[j] - b.py[i];
-      var den = ex * ex + ey * ey;
-      var u = den > 1e-10 ? skySlimeClamp(((sx - b.px[i]) * ex + (sy - b.py[i]) * ey) / den, 0, 1) : 0;
-      var x = b.px[i] + ex * u, y = b.py[i] + ey * u;
-      var d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
-      if (d2 < best) { best = d2; a = i; c = j; t = u; qx = x; qy = y; }
+      var den = dx * ey - dy * ex;
+      if (Math.abs(den) < 1e-10) continue;
+      var ax = b.px[i] - sx, ay = b.py[i] - sy;
+      var distance = (ax * ey - ay * ex) / den;
+      var u = (ax * dy - ay * dx) / den;
+      if (distance < 0 || distance >= best || u < 0 || u > 1) continue;
+      var x = sx + dx * distance, y = sy + dy * distance;
+      // A ray touching a folded skin vertex can remain inside the body.
+      // Only a real exit is a contacted surface.
+      if (jelloPointInRing(b, x + dx * 0.001, y + dy * 0.001)) continue;
+      best = distance; a = i; c = j; t = u;
     }
-    var depth = Math.sqrt(best);
-    if (!(depth > 0.000001)) return;
-    var nx = (qx - sx) / depth, ny = (qy - sy) / depth;
-    softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f);
+    if (!(best > 0.000001) || !isFinite(best)) return;
+    // At a track corner, a nearby slanted skin can sit slightly behind the
+    // track normal while its inward ray misses that skin and reaches the far
+    // roof. Only an exit within the rig is a patch entering this face.
+    var skinX = sx + dx * best, skinY = sy + dy * best;
+    if (rigHullQuery(rigContactHull(f.rig.x, f.rig.y), skinX, skinY).distance > 0.001) return;
+    softContactProject(b, a, c, t, -nx, -ny, best, sy, dt, f);
+  }
+
+  // A saved pose or an enclosing skin can bury the entire hull without a
+  // boundary patch entering it. Normal face contacts do not apply there.
+  // Only that enclosed pose gets one outer escape-plane constraint.
+  function softContactEnclosedEscape(b, hull, dt, f) {
+    for (var side = 0; side < hull.n; side++) {
+      if (!jelloPointInRing(b, hull.x[side], hull.y[side])) return;
+    }
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k], q = b.ring[(k + 1) % b.ringN];
+      var ax = b.px[p], ay = b.py[p], ex = b.px[q] - ax, ey = b.py[q] - ay;
+      if (Math.max(ax, b.px[q]) < hull.l || Math.min(ax, b.px[q]) > hull.r ||
+          Math.max(ay, b.py[q]) < hull.t || Math.min(ay, b.py[q]) > hull.b) continue;
+      // An indent can cross a hull edge between its contained vertices.
+      // Reject both a proper crossing and a collinear touching segment.
+      for (side = 0; side < hull.n; side++) {
+        var next = (side + 1) % hull.n;
+        var hx = hull.x[next] - hull.x[side], hy = hull.y[next] - hull.y[side];
+        var dx = hull.x[side] - ax, dy = hull.y[side] - ay, den = ex * hy - ey * hx;
+        if (Math.abs(den) > 1e-10) {
+          var u = (dx * hy - dy * hx) / den, v = (dx * ey - dy * ex) / den;
+          if (u >= 0 && u <= 1 && v >= 0 && v <= 1) return;
+        } else if (Math.abs(dx * ey - dy * ex) < 1e-10) {
+          var length2 = ex * ex + ey * ey;
+          if (length2 < 1e-10) continue;
+          var u0 = (dx * ex + dy * ey) / length2;
+          var u1 = u0 + (hx * ex + hy * ey) / length2;
+          if (Math.max(u0, u1) >= 0 && Math.min(u0, u1) <= 1) return;
+        }
+      }
+    }
+    var area = 0, origin = b.ring[0];
+    for (k = 0; k < b.ringN; k++) {
+      p = b.ring[k]; q = b.ring[(k + 1) % b.ringN];
+      area += (b.px[p] - b.px[origin]) * (b.py[q] - b.py[origin]) -
+        (b.py[p] - b.py[origin]) * (b.px[q] - b.px[origin]);
+    }
+    if (Math.abs(area) < 1e-8) return;
+    var winding = area < 0 ? -1 : 1, best = Infinity;
+    var edgeA = 0, edgeC = 0, edgeT = 0, normalX = 0, normalY = 0, skinY = 0;
+    for (k = 0; k < b.ringN; k++) {
+      p = b.ring[k]; q = b.ring[(k + 1) % b.ringN];
+      ax = b.px[p]; ay = b.py[p]; ex = b.px[q] - ax; ey = b.py[q] - ay;
+      var length = Math.hypot(ex, ey);
+      if (length < 1e-6) continue;
+      var nx = ey / length * winding, ny = -ex / length * winding;
+      // A floor-blocked escape cannot translate the rig through this plane.
+      // The available axes retain exactly the projector's terrain masks.
+      var canX = !solidAt(f.rig.x + nx * 0.5, f.rig.y, PLAYER_W, PLAYER_H);
+      var canY = !solidAt(f.rig.x, f.rig.y + ny * 0.5, PLAYER_W, PLAYER_H);
+      var available = nx * nx * canX + ny * ny * canY;
+      if (available < 1e-8) continue;
+      var plane = ax * nx + ay * ny, back = Infinity, front = -Infinity, support = 0;
+      for (side = 0; side < hull.n; side++) {
+        var projection = hull.x[side] * nx + hull.y[side] * ny;
+        if (projection < back) { back = projection; support = side; }
+        front = Math.max(front, projection);
+      }
+      var depth = plane - back;
+      if (front > plane + 0.000001 || !(depth > 0.000001) || depth >= best) continue;
+      // A small recoil can clear the immediate floor mask while the complete
+      // escape still points through it. Check the whole minimum translation
+      // without moving the rig, using the same two-pixel terrain sweep.
+      var travelX = nx * canX * depth / available, travelY = ny * canY * depth / available;
+      var sweep = Math.max(1, Math.ceil(Math.max(Math.abs(travelX), Math.abs(travelY)) / 2));
+      var blocked = false;
+      for (var step = 1; step <= sweep; step++) {
+        if (solidAt(f.rig.x + travelX * step / sweep, f.rig.y + travelY * step / sweep,
+            PLAYER_W, PLAYER_H)) { blocked = true; break; }
+      }
+      if (blocked) continue;
+      var t = skySlimeClamp(((hull.x[support] - ax) * ex + (hull.y[support] - ay) * ey) /
+        (length * length), 0, 1);
+      best = depth; edgeA = p; edgeC = q; edgeT = t;
+      normalX = nx; normalY = ny; skinY = ay + ey * t;
+    }
+    if (isFinite(best)) softContactProject(b, edgeA, edgeC, edgeT,
+      normalX, normalY, best, skinY, dt, f);
   }
 
   function softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f) {
@@ -9906,6 +10007,7 @@
     if (ny < -0.5 && sy > rig.y + PLAYER_H * 0.65) { f.support = true; f.supportBody = b; }
     if (!f.hit && ny < -0.5 && f.vy > 120) recordLandingImpact(f.vy, sy, 'jello', 1);
     f.hit = true;
+    b._softRigContactFrame = jelloFrameNo;
     if (-(rvx * nx + rvy * ny) > 35 || Math.abs(f.vx) > 25) b._plyMs = performance.now();
     b.sleeping = false; b.sleepFrames = 0;
     if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
@@ -9936,8 +10038,8 @@
     }
     softContactSupport = f.support ? f.supportBody : null;
     if (f.hit) { player.jelloImpactVy = 0; player.jelloCarryVx = 0; }
-    // Match the existing 120 Hz skin interpolation at every trial frame.
-    // Drawing never changes collision positions or feeds motion into the solve.
+    // Keep the painted rig aligned with the same current hull used by contact.
+    // The gel retains its independent skin interpolation.
     softContactDraw = { x: f.previousX, y: f.previousY, endX: player.x, endY: player.y };
     softContactInterpolate();
     softContactFrame = null;
@@ -9945,9 +10047,8 @@
 
   function softContactInterpolate() {
     if (!softContactDraw) return;
-    var d = softContactDraw, alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1);
-    player.renderX = d.x + (d.endX - d.x) * alpha;
-    player.renderY = d.y + (d.endY - d.y) * alpha;
+    player.renderX = player.x;
+    player.renderY = player.y;
   }
 
   // Display frames can outnumber gel ticks. Retain a real supporting contact
@@ -10812,7 +10913,8 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed ||
+        b._softRigContactFrame === jelloFrameNo) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);
@@ -10820,7 +10922,8 @@
     }
     // The solver ticks at 120 Hz. Display its two latest poses one tick behind
     // real time, so 144 Hz and variable-rate screens never repeat a skin frame.
-    // Physics, contacts, grabs, saves and water continue to use the live body.
+    // Rig contacts draw the current skin so it meets the current rig hull.
+    // Physics, grabs, saves and water continue to use the live body.
     var alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1), x = 0, y = 0;
     view.bboxL = view.bboxT = Infinity; view.bboxR = view.bboxB = -Infinity;
     for (var p = 0; p < b.n; p++) {

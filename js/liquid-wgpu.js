@@ -538,7 +538,7 @@
   // Standalone solver fixtures can supply a player without the game's hull.
   // This inset reference mirrors 069-rig-hull.js; live play uploads its fully
   // transformed outline, including facing, squash, bank and suspension.
-  var DEFAULT_RIG_HULL = [4.2,18.5,5.5,10.5,6.948000000000001,8.924000000000003,8.492,7.716,10.132,6.876,11.868,6.404,13.7,6.3,15.388888888888891,7.311111111111112,16.72222222222222,8.744444444444444,17.7,10.6,17.2,24.4,4.2,24.4];
+  var DEFAULT_RIG_HULL = [8.228718707889795,14.4,8.672404346966244,13.804026758820052,9.241571270173422,13.326439003478603,9.90553554135786,12.992983613485093,10.628502674799265,12.821637255225783,11.371497325200737,12.821637255225783,12.09446445864214,12.992983613485093,12.75842872982658,13.326439003478603,13.327595653033756,13.804026758820052,13.771281292110205,14.4,19,24,3,24];
   // v26.13 — one immutable GameParams uniform per fixed water substep.
   // A single buffer cannot be rewritten between command buffers that are
   // batched into one queue.submit: every pass would see the final write.

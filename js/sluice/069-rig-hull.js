@@ -1,19 +1,15 @@
   /* ---- Shared rig contact silhouette ---- */
-  // An inset cab crown joins a flat track base. Small attachments (pipe,
+  // A narrow rounded crown joins a wide flat track base. Small attachments (pipe,
   // lamp and moving drill) do not enlarge the body contact surface.
-  // Curve chords stay inside the painted cab, including at the shoulders.
-  var RIG_HULL_LOCAL = [4.2, 18.5, 5.5, 10.5];
-  for (var rigCurveI = 1; rigCurveI <= 5; rigCurveI++) {
-    var rigCurveT = rigCurveI / 5, rigCurveU = 1 - rigCurveT;
-    RIG_HULL_LOCAL.push(rigCurveU * rigCurveU * 5.5 + 2 * rigCurveU * rigCurveT * 9.0 + rigCurveT * rigCurveT * 13.7,
-      rigCurveU * rigCurveU * 10.5 + 2 * rigCurveU * rigCurveT * 6.1 + rigCurveT * rigCurveT * 6.3);
+  // The smaller crown leaves room for continuously rising sides inside the
+  // painted cab. Every side normal lifts material; there is no vertical skirt.
+  var RIG_HULL_LOCAL = [];
+  for (var rigCurveI = 0; rigCurveI <= 9; rigCurveI++) {
+    var rigCurveAngle = (150 - rigCurveI * 120 / 9) * Math.PI / 180;
+    RIG_HULL_LOCAL.push(11 + Math.cos(rigCurveAngle) * 3.2,
+      16 - Math.sin(rigCurveAngle) * 3.2);
   }
-  for (rigCurveI = 1; rigCurveI <= 3; rigCurveI++) {
-    rigCurveT = rigCurveI / 3; rigCurveU = 1 - rigCurveT;
-    RIG_HULL_LOCAL.push(rigCurveU * rigCurveU * 13.7 + 2 * rigCurveU * rigCurveT * 16.5 + rigCurveT * rigCurveT * 17.7,
-      rigCurveU * rigCurveU * 6.3 + 2 * rigCurveU * rigCurveT * 7.5 + rigCurveT * rigCurveT * 10.6);
-  }
-  RIG_HULL_LOCAL.push(17.2, 24.4, 4.2, 24.4);
+  RIG_HULL_LOCAL.push(19.0, 24.0, 3.0, 24.0);
   var rigHullCache = { n: RIG_HULL_LOCAL.length / 2, x: new Float64Array(12), y: new Float64Array(12),
     nx: new Float64Array(12), ny: new Float64Array(12) };
   var rigHullResult = { distance: 0, x: 0, y: 0, nx: 0, ny: 0 };
