@@ -294,18 +294,29 @@
         hw: 7, hh: 7, vx: t.vx, vy: t.vy, pts: null });
     }
   }
+  function bathToolDrawRail(c, b) {
+    // This fixed rail is part of the room even when the working head is stowed.
+    c.save();
+    c.fillStyle = BLD.outline; c.fillRect(b.left - 14, b.top - 17, b.right - b.left + 28, 18);
+    c.fillStyle = BLD.metalDark; c.fillRect(b.left - 12, b.top - 15, b.right - b.left + 24, 12);
+    c.fillStyle = BLD.metalBase; c.fillRect(b.left - 12, b.top - 15, b.right - b.left + 24, 3);
+    c.fillStyle = hearthArtColor(BLD.metalLight, 0.55); c.fillRect(b.left - 12, b.top - 15, b.right - b.left + 24, 1);
+    for (var x = b.left; x < b.right; x += 128) {
+      c.fillStyle = BLD.metalBase; c.fillRect(x - 4, b.top - 19, 8, 18);
+      hearthIronBolt(c, x, b.top - 10, 1.8);
+    }
+    c.restore();
+  }
   function bathToolDraw(c, preview) {
     var t = preview || bathTool;
     if (!t.mode) return;
     var b = bathToolBounds(), rope = t.rope;
     c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
-    c.fillStyle = BLD.outline; c.fillRect(b.left - 14, b.top - 17, b.right - b.left + 28, 18);
-    c.fillStyle = BLD.metalBase; c.fillRect(b.left - 12, b.top - 15, b.right - b.left + 24, 12);
-    c.fillStyle = BLD.metalPale; c.fillRect(b.left - 12, b.top - 15, b.right - b.left + 24, 2);
-    for (var x = b.left; x < b.right; x += 64) { c.fillStyle = BLD.outline; c.fillRect(x, b.top - 12, 3, 3); }
+    if (preview) bathToolDrawRail(c, b);
     c.fillStyle = BLD.outline; c.fillRect(t.railX - 23, b.top - 21, 46, 31);
     c.fillStyle = BLD.goldDark; c.fillRect(t.railX - 20, b.top - 18, 40, 25);
-    c.fillStyle = BLD.goldPale; c.fillRect(t.railX - 19, b.top - 18, 38, 2);
+    c.fillStyle = BLD.goldBase; c.fillRect(t.railX - 19, b.top - 18, 38, 3);
+    c.fillStyle = BLD.goldBright; c.fillRect(t.railX - 19, b.top - 18, 35, 1);
     for (var side = -1; side <= 1; side += 2) {
       c.fillStyle = BLD.metalDark; c.beginPath(); c.arc(t.railX + side * 14, b.top - 10, 7, 0, Math.PI * 2); c.fill();
       c.fillStyle = BLD.metalPale; c.beginPath(); c.arc(t.railX + side * 14, b.top - 10, 2, 0, Math.PI * 2); c.fill();
@@ -314,7 +325,7 @@
       c.beginPath(); c.moveTo(rope[0].x, rope[0].y);
       for (var i = 1; i < rope.length; i++) c.lineTo(rope[i].x, rope[i].y);
       c.strokeStyle = BLD.outline; c.lineWidth = t.mode === 'hose' ? 12 : 6; c.stroke();
-      c.strokeStyle = t.mode === 'hose' ? BLD.woodDark : BLD.metalPale;
+      c.strokeStyle = t.mode === 'hose' ? BLD.woodDark : BLD.metalBase;
       c.lineWidth = t.mode === 'hose' ? 8 : 3; c.stroke();
       if (t.mode === 'hose') { c.strokeStyle = BLD.goldDark; c.lineWidth = 2; c.stroke(); }
       else for (var i = 1; i < rope.length; i++) {
@@ -328,8 +339,9 @@
     }
     c.translate(t.x, t.y); c.rotate(-t.tilt);
     c.fillStyle = BLD.outline; c.fillRect(-15, -13, 30, 26);
-    c.fillStyle = BLD.metalBase; c.fillRect(-12, -11, 24, 22);
-    c.fillStyle = BLD.metalPale; c.fillRect(-11, -11, 22, 3);
+    c.fillStyle = BLD.metalDark; c.fillRect(-12, -11, 24, 22);
+    c.fillStyle = BLD.metalBase; c.fillRect(-11, -11, 22, 3);
+    c.fillStyle = BLD.metalLight; c.fillRect(-11, -11, 20, 1);
     c.fillStyle = BLD.goldBase; c.fillRect(-8, -3, 16, 7);
     if (t.mode === 'claw') {
       var spread = 16 + t.jaw * 18;

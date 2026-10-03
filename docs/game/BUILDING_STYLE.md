@@ -427,3 +427,19 @@ crank whose rotation accompanies teeth travelling across the real bed. Pale ash
 sifts through the base slots while remaining fuel moves under contact impulses.
 Steam comes from actual evaporation above the water, with transparent wisps and
 small condensation parcels. Use no opaque smoke columns above a cold bath.
+
+## 22. Bathhouse interior (v28.151)
+
+The upper room is one timber installation around the existing copper basin.
+Quiet horizontal boards sit behind pegged posts, a shallow roof truss and a
+carved lintel. The bilingual nameboard fits into that lintel. Two rounded
+amber lanterns share the exterior's iron caps and ribs; their light uses a
+cached soft falloff without visible rings. Brass supply pipework mounts to
+the left post, with a short curved outlet at the conserved emitter.
+
+The permanent hoist rail bolts to the upper beam. Dark iron, narrow lit edges
+and worn brass fittings keep its trolley, chain and hose in the same material
+family. All trim follows the basin and tool coordinates. Short landscape
+screens crop the upper roof, while keeping the same nameboard and lanterns.
+The water boundary, copper rim, guest landing and furnace retain their geometry.
+Warm the complete wall alongside the basin and working tools during loading.
