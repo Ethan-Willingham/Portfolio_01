@@ -298,7 +298,7 @@
     previous = time; advance(elapsed); raf = requestAnimationFrame(frame);
   }
   HuntingView.loadArt().then(loaded => {
-    art = loaded; view = new HuntingView.View(canvas, art.sprites);
+    art = loaded; view = new HuntingView.View(canvas, art.sprites, art.scene); view.onArtReady = () => draw();
     beginField(); setPhase('running'); fitCanvas(); renderOptions(); raf = requestAnimationFrame(frame);
   }).catch(error => {
     $('overlay-title').textContent = 'The field did not load'; $('overlay-text').textContent = error.message + ' Reload to try again.';

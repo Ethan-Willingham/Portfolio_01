@@ -8,6 +8,41 @@ are asset history. Their pixel-art prompts and normalization settings do not
 define the new painterly target. The first scenery brief is
 `hunting-style/FIRST_MAP.md`.
 
+## Version 9, native scenery detail and clearer dawn
+
+The owner found the first scene too dark at 06:47 and blurry in the 6x scope.
+Fourteen overlapping crops of its terrain were edited with the built-in
+imagegen tool. Each original 450 by 253 crop now has a native 1672 by 941
+painting with fine leaves, bark, grasses, seed heads and soil marks, guided by
+Constable's `salisbury` reference. Original geometry and transparent sky gaps
+remain registered to the version 8 underpainting.
+
+- `assets/hunting/source-v9/inputs/`: exact input crops, including alpha.
+- `assets/hunting/source-v9/tiles/`: native generated masters.
+- `assets/hunting/source-v9/prompts.json`: all 14 edit prompts and tool provenance.
+- `assets/hunting/source-v9/layout.json`: normalized crop placement.
+- `assets/hunting/source-v9/ASSET_BRIEF.md`: references, export contract and review.
+- `assets/hunting/source-v9/review/`: actual wide, scope, night and phone captures.
+- `assets/hunting/detail-v9/`: feathered 1664 by 936 runtime tiles.
+- `assets/hunting/birch-terrain-v9.webp`: 2048 by 1152 wide overview.
+- `assets/hunting/birch-detail-v9.json`: source hashes, placement and native density.
+
+Rebuild with `NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs`.
+Its `--check` verifies all native masters, runtime dimensions and fingerprints.
+It performs registration, smooth downsampling and edge compositing. It does not
+synthesize painted content or enlarge the old source to invent detail.
+
+The 6x lens loads only intersecting tiles and retains at most six decoded images
+and lighting buffers. Center field tiles warm after entry. The original terrain
+supplies an immediate fallback while a requested tile loads. The 2048 overview
+is used for the wide view, rather than sampled as the detail source.
+
+The dawn curve reaches clear light sooner, preserves saturation and reduces
+the cool and brown overlay. At 06:47, the sampled open field is about 23 percent
+brighter than version 8 in matched captures. The clock, saved time, live sun and
+night transition still work. Version 8 sky and wooden stand remain active.
+Animals and the rest of the game still await separate painting passes.
+
 ## Version 8, painted first scene
 
 Birch Clearing uses an original oil-painted meadow, separate clouded sky and a
@@ -30,8 +65,9 @@ for historical assets. Existing deer and boar still use their established masks;
 this scene pass does not turn those sprites into the final animal style.
 
 The display canvas follows viewport resolution and device pixel ratio, capped at
-4x the logical dimensions. The 6x scope samples the native scene layers rather
-than a small overview bitmap. Clock-dependent layer buffers adjust brightness,
+4x the logical dimensions. The original 6x scope sampled those scene layers
+directly; version 9 replaces terrain magnification with finer registered tiles.
+Clock-dependent layer buffers adjust brightness,
 color temperature and broad meadow light while retaining paint relationships.
 The close stand stays out of the magnified view. Cypress retains its procedural
 landscape and shares the new stand foreground.

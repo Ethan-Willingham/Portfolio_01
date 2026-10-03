@@ -12,10 +12,11 @@ shop, walking, stand interaction and tracking screens with that direct loop.
 On 2026-10-03 the owner directed every visual part of the game to follow the
 14 paintings on `gallery.html`. Before any visual work, read
 `hunting-style/README.md` and assemble the appropriate reference packet.
-Version 8 implements Birch Clearing as the first oil-painted scene, with an
+Birch Clearing uses an oil-painted scene, with an
 open meadow, clouded sky and a visible wooden hunting stand. The owner asked
 for a calm, easy level-one feeling. `hunting-style/FIRST_MAP.md` records its
-composition and `assets/hunting/source-v8/ASSET_BRIEF.md` records production.
+composition. Version 9 adds native scope detail and clearer dawn light;
+`assets/hunting/source-v9/ASSET_BRIEF.md` records production and visual review.
 Animals, Cypress scenery and the remaining interface await their own passes.
 
 ## Sources
@@ -31,7 +32,10 @@ Animals, Cypress scenery and the remaining interface await their own passes.
 - `assets/hunting/deer-[1-5]-v4.png`: five four-legged whitetail buck sprites.
 - `assets/hunting/source-v2/`, `source-v3/`, `source-v4/`: masters and full prompts.
 - `assets/hunting/*-v8.webp`, `source-v8/`: painted scene layers, masters and review.
-- `tools/build-hunting-scene.cjs`: smooth scene export and transparency verification.
+- `assets/hunting/detail-v9/`, `source-v9/`: registered scope tiles, native masters and prompts.
+- `assets/hunting/birch-detail-v9.json`: tile placement, density and source fingerprints.
+- `tools/build-hunting-detail.cjs`: feathered tile exports and the compact terrain overview.
+- `tools/build-hunting-scene.cjs`: original sky, stand and terrain export verification.
 - `tools/build-hunting-art.cjs`: repeatable asset normalization, requires Sharp.
 - `assets/hunting/source/*.aseprite`: original Unity art, retained as history.
 - `tools/export-hunting-art.mjs`: legacy Aseprite export.
@@ -199,6 +203,8 @@ node --check js/hunting-view.js
 node --check js/hunting-game.js
 node tools/test-hunting-campaign.cjs
 NODE_PATH=/path/to/node_modules node tools/build-hunting-scene.cjs --check
+NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs --check
+node tools/hunting-art-reference.cjs --check
 NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 ```
@@ -216,7 +222,10 @@ soft acceleration, diagonal speed, zoom and re-entry continuity, scope lens
 bounds, touch aiming and pan release, pause, focus loss, held-input
 cleanup after a focus change, stalled frames, pending recoveries, fullscreen,
 records and reload. Scene checks verify native painted layers, display resolution
-and live sun movement; captures cover dawn, noon, dusk and night. Closing More
+and live sun movement. Four scenery targets verify loaded 6x detail, six-image
+cache limits and native density; a Retina capture verifies the 2560 by 1440
+display cap. The 06:47 field retains at least 88 percent of its midday luminance.
+Captures cover dawn, noon, dusk and night. Closing More
 offscreen keeps the field paused. The checks
 also inspect desktop, portrait, narrow-phone and
 landscape layouts for overflow and usable controls.
@@ -224,5 +233,5 @@ landscape layouts for overflow and usable controls.
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v8-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v9-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.
