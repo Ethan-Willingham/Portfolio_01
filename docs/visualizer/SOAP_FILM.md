@@ -1,13 +1,11 @@
-# Soap film
+# Soap film room
 
-Open [the live comparison prototype](https://ethanwillingham.com/soap-film-lab.html).
-The page starts silently. Pause, Clear, temperature, Instruments and Fullscreen
-are its outer controls. Reduced motion starts with an actual still state and Play.
-No source files outside the soap-film prefix are needed or changed.
+Shared fluid and optical implementation for [Descent](../../descent-lab.html).
+The separate soap-film post was deleted at the owner’s request on October 3, 2026.
 
-## Persistent oval and interaction
+## Optional persistent mode and interaction
 
-The standalone page now shows a horizontal ellipse with width / height equal
+The optional oval presentation has width / height equal
 to the golden ratio, (1 + sqrt(5)) / 2 = 1.61803398875. It uses the whole
 computational field, mapped from a square to a disk and then scaled to an ellipse:
 
@@ -20,21 +18,18 @@ The renderer and pointer mapping use the matching analytic inverse. This is
 a presentation map of the square flow, not a simulation on a physical elliptical
 mesh. It preserves every part of the field, including the heated lower wall.
 The dimensions and measured fluid volume refer to the computational square.
-The computed fallback uses the same optical lookup and map, without animation.
 
-The standalone uses a closed film: evaporation and drainage coefficients are
-zero, rupture is disabled, and autoRenew is false. There is no clock-triggered
-clearing, automatic replenishment, lifetime threshold or fade to a new film.
-Clear restores the seeded initial thickness and velocity, resets the clock and
-ledger, and retains temperature, playback speed and manual pause. The explicit
-Clear with settings button also recreates the model with the selected seed/grid.
-Default createRoom calls retain the original square, draining and cycling film
-for existing hosts; persistent and presentation are optional initialization fields.
+Setting persistent: true creates a closed film: evaporation and drainage
+coefficients are zero, rupture is disabled, and autoRenew is false. restart
+restores the seeded initial thickness and velocity, resets the clock and ledger,
+and retains the configured temperature. Default createRoom calls use the square,
+draining and cycling film consumed by Descent. persistent and presentation are
+optional initialization fields.
 
-The visible temperature slider sets a nominal lower-edge temperature from 0 to
-60 °C, initially 34 °C. Cooler and Warmer change it by 2 °C. The reference remains
+setTemperatureC sets the nominal lower-edge temperature from 0 to 60 °C,
+initially 34 °C. The reference remains
 22 °C; the declared lateral boundary modulation still applies to the difference
-between heater and reference. Moving the control also changes the existing lower
+between heater and reference. Changing it also changes the existing lower
 thermal layer by delta T exp(-(1-y/L)/0.12), allowing an immediate heat input
 without renewing or recoloring the thickness field. Temperature continues through
 the existing buoyancy, advection, diffusion and cooling equations.
@@ -50,12 +45,6 @@ the entire velocity field is scaled uniformly, preserving its divergence and
 closed boundaries. This is a documented interaction bound. Normal advection
 moves the interference bands.
 
-Pointer capture supports strokes beyond the oval and releases on pointerup,
-pointercancel or lost capture. Only the clipped oval suppresses native touch
-scrolling. Arrow keys stir the selected sample, and Enter starts an eddy.
-Input while paused queues momentum without advancing the model clock.
-Touch interaction, temperature and Clear preserve a deliberate pause.
-
 ## Geometry and equations
 
 The computational apparatus is a flat square, 0.16 m on each side, vertical in gravity. Screen
@@ -65,7 +54,7 @@ thermal convection in a chosen geometry, not Rayleigh-Taylor instability.
 used a half-bubble heated at its equator. This model does not reproduce that
 curvature or claim experimental calibration.
 
-The original cycling room's reduced model is shown below. The standalone uses
+The cycling room's reduced model is shown below. Optional persistent mode uses
 the same momentum and temperature equations, with E = v_d = 0 and user impulses.
 
 ```text
@@ -163,22 +152,15 @@ quantitative thin-film solver.
 
 The stable substep obeys explicit diffusion and an advective CFL bound. A
 0.04-second ambient increment is split into as many stable substeps as needed.
-The standalone loop renders independently, with at most two increments per
-call, or one when cost rises. Its pending ambient backlog is capped at 0.12 s;
-dropped ambient debt is reported. While caught up, one room-input second is one
-model second. The standalone host defaults to 3× playback, passing three model
-seconds per wall second, with 1×, 2× and 4× also available in Instruments.
-Changing playback speed preserves the current state and stable solver steps.
-Under load the piece plays slower in wall time. Hidden and
-offscreen states perform no simulation or rendering, and a manual pause survives
-those changes.
+step permits at most two increments per call, or one when the host lowers its
+work budget. Its pending ambient backlog is capped at 0.12 s; dropped ambient
+debt is reported. While caught up, one room-input second is one model second.
+The host controls playback, rendering, viewport sizing and suspension.
 
-The standalone uses a 128² CPU flow and temperature grid with a separate
-512² GPU thickness grid by default. Detail selects 256², 512² or 1024² thickness;
-the flow stays at 128². Thickness is passive in this model, so it can be advected
-on a finer mesh without feeding back into the momentum equation. The fine grid
-starts from the analytic initial thickness evaluated at its own cell centers.
-It carries 16 times as many thickness samples as the previous 128² default.
+Thickness is passive in this model, so the optional thicknessResolution field
+can enable a finer GPU mesh without feeding back into momentum. It requires
+persistent: true. The fine grid starts from the analytic initial thickness
+evaluated at its own cell centers.
 
 The GPU implements the same closed FCT transport, face correction limits and
 SSPRK2 combination as the CPU reference. Each 0.04 s ambient increment advances
@@ -191,25 +173,14 @@ maximum coarse face speed. The GPU state and arithmetic are Float32.
 Thickness readbacks refresh about every 0.25 model seconds, plus mapping latency.
 Snapshot and pointer sample report that diagnostic age. They read thickness
 directly rather than estimating it from displayed RGB. A generation check prevents
-an older pending readback from overwriting a film just reset with Clear.
+an older pending readback from overwriting a film just reset with restart.
 
-The room module retains CPU medium (256²) as its default for other hosts.
-Fine transport requires persistent: true and the optional thicknessResolution
-initialization argument. CPU-only hosts retain reduceQuality's conservative
-four-cell averaging and velocity projection. Fine standalone detail does not
-silently change after selection. The host may lower its per-frame work budget
-when CPU p95 exceeds 26 ms, slowing wall playback without changing coefficients.
-The standalone stage fills the available viewport below a compact heading,
-with the playback and temperature controls visible at the bottom. Its oval uses
-96% of the available width, capped by the stage height minus 64 CSS pixels
-reserved for labels, and retains the golden ratio on every viewport.
-Pointer sampling uses the same geometry and inverse map. The optional render
-argument filmFill sets normalized x/y limits; omitting it retains the room's
-original 82% width / 84% height framing for existing hosts.
-Canvas DPR is capped at 2 and by the device texture dimension limit. The CPU
-flow uses Float32 state arrays with JavaScript Float64 arithmetic. Thickness
-transport, optics and the display composite run in WebGPU. A 1024² detail option
-is available; it does not mean the flow grid has 1024 cells per side.
+The room defaults to CPU medium (256²); low is 128² and high is 512².
+reduceQuality conservatively averages four thickness cells and restricts and
+projects the velocity field. A fine GPU grid cannot be reduced with that method.
+The optional render argument filmFill sets normalized x/y limits; omitting it
+uses 82% width / 84% height framing. The CPU uses Float32 arrays with JavaScript
+Float64 arithmetic. Optional thickness transport and optics use WebGPU.
 
 ## Optics and presentation
 
@@ -251,17 +222,8 @@ the true value. Tested runs stay inside that range.
 The optical room desaturates out-of-gamut negative channels toward their
 computed luminance until all channels are nonnegative, then outputs linear
 radiance to rgba16float. Its default exposure remains 12 for existing hosts.
-The standalone uses exposure 8 and a display color-richness factor of 1.6,
-adjustable from 1 to 2 in Instruments. The host grades the linear color as
-max(0, Y + richness * (RGB - Y)), where Y is linear sRGB luminance. This is an
-explicit artistic display adjustment after the spectral calculation; diagnostic
-values and the scientific lookup are unaffected.
-
-The host maps the peak channel P through 1 - exp(-P) and multiplies every
-channel by (1 - exp(-P)) / P, then encodes sRGB once. Using the same scale for
-all channels retains their linear RGB ratios; the previous independent channel
-compression flattened bright color differences. Black remains black. There is
-no bloom, invented hue ramp, luminance lift for black film or model-driving dither.
+The host owns tone mapping and display encoding. The shared room supplies no
+color-richness control, final display pass or standalone canvas.
 The frame has a dim neutral apparatus reflection. After renewal the illumination
 shutter opens over six model seconds with smoothstep, without altering h. This
 presentation fade is separate from physical state and mass accounting. It is
@@ -334,8 +296,8 @@ console.log(room.snapshot());
 room.dispose();
 ```
 
-The complete canvas host is js/soap-film.js. Extra standalone controls use
-sampleAt, setViewingAngle, restart and budget/restriction methods; these do not
+Descent supplies the canvas host. Optional methods include sampleAt,
+setViewingAngle, restart and budget/restriction methods; these do not
 replace any required interface member. Snapshot reports diagnostic age,
 parameters, current and requested quality, exact numerical substep count, model
 time and units, seed provenance and measured timings. debugReadback refreshes
@@ -346,11 +308,9 @@ host can omit it, in which case GPU timings are unavailable. No room buffer is
 mapped behind a host that is still constructing an encoder.
 
 No WebGPU device, insufficient required limits, failed asset fetch or shader
-compilation causes a documented initialization error. The standalone host catches
-it and shows an explicitly labelled computed initial-state still. Device loss
-stops work and shows that still. This fallback is a spectral calculation, not
-a substitute animated solver. All needed data are local; after initialization,
-a lost network connection does not stop the live model.
+compilation causes a documented initialization error for the host to handle.
+All needed data are local; after initialization a lost network connection does
+not stop the live model.
 
 ## Verification
 
@@ -359,13 +319,14 @@ Run from the repository root:
 ```sh
 node tools/test-soap-film-optics.mjs
 node tools/test-soap-film-numerics.mjs --long
-NODE_PATH=/path/to/bundled/node_modules SOAP_LONG=1 node tools/test-soap-film-browser.cjs
+NODE_PATH=/path/to/bundled/node_modules node tools/test-soap-film-material.cjs
+node tools/test-descent-contract.mjs
 ```
 
-The browser harness serves the checkout over HTTP and owns the exact process
+The material reference harness serves the checkout over HTTP and owns the exact process
 launched through /Users/ethan/.local/bin/agent-chrome-for-testing. Both it and
 the server close in finally. It never launches the owner's personal Chrome.
-Set SOAP_ARTIFACTS to choose the screenshot/report directory. Set SOAP_REPORT
+Set SOAP_ARTIFACTS to choose its report directory. Set SOAP_REPORT
 for the numerical JSON. The accelerated phrase test uses the same sequence of
 0.04 s increments at faster wall-clock pacing; coefficients stay unchanged.
 
@@ -427,133 +388,18 @@ with a relative ledger error of about 9.90e-8. Its first rupture was at 186.36 s
 showing that the lifetime is sensitive to discretization. These are numerical
 film lifetimes under a selected criterion, not laboratory predictions.
 
-Desktop 1440 × 900, portrait 390 × 844, and landscape 844 × 390 were visually
-inspected. The browser checks passed keyboard pause/play, manual pause through
-hidden/offscreen suspension, Instruments, angle changes, real fullscreen, resize,
-20 px phone gutters, 44 px controls, touch sampling, reduced-motion startup,
-repeatable seed initialization, network loss after load, missing WebGPU and
-explicit device loss. No script, shader or WebGPU validation errors were captured.
-Automatic reduction's state transfer was tested directly; the thresholds are
-cost-dependent and do not promise a particular update rate on every device.
+The retained [numerical report](../../assets/visualizer/soap-film/checks/numerics.json)
+and [three-phrase report](../../assets/visualizer/soap-film/checks/phrases.json)
+record conservation, convergence and cycling-room validation. Descent maintains
+its own browser and route evidence.
 
-Saved evidence:
-[startup](../../assets/visualizer/soap-film/checks/startup.png),
-[developing convection](../../assets/visualizer/soap-film/checks/developing.png),
-[thinning](../../assets/visualizer/soap-film/checks/thinning.png),
-[rupture](../../assets/visualizer/soap-film/checks/rupture.png),
-[portrait](../../assets/visualizer/soap-film/checks/portrait.png),
-[landscape](../../assets/visualizer/soap-film/checks/landscape.png), and
-[fallback](../../assets/visualizer/soap-film/checks/fallback.png).
-The machine-readable [numerical report](../../assets/visualizer/soap-film/checks/numerics.json),
-[browser report](../../assets/visualizer/soap-film/checks/browser.json) and
-[three-phrase report](../../assets/visualizer/soap-film/checks/phrases.json)
-retain parameters, diagnostic ages, seeds, grids, counters and timings.
-
-### Faster playback and larger default view, October 3, 2026
-
-The updated standalone starts at 128² and requests 3× playback. On the same
-Apple hardware adapter, the browser measured 2.99 model seconds per wall second
-over a three-second sample of developed flow, versus 1.01 at the 1× setting.
-Solver increments remain 0.04 model seconds with the same stable substeps and
-physical coefficients. The speed control acts immediately without renewal or
-changing manual pause.
-
-At 1440 × 900 the stage is now 1358 × 729 CSS pixels, and the square film has
-a 665 px side rather than 462 px, about 2.07 times its original visible area.
-The default controls fit within the viewport at 1440 × 900, 390 × 844 and
-844 × 390. Portrait retains the site's 20 px gutter. All original browser
-interaction and fallback checks passed, with no captured script or WebGPU errors.
-The enlarged GPU composite measured 0.220 ms median / 0.275 ms p95 over 93
-timestamp samples. CPU solver increments measured 9.1 / 9.4 ms at 128².
-The independent GPU optical reference still differs from the CPU calculation by
-at most 5.08e-5 linear RGB, below the 1e-4 tolerance.
-
-Updated evidence: [default view](../../assets/visualizer/soap-film/checks-v2/startup.png),
-[developed film](../../assets/visualizer/soap-film/checks-v2/developing.png),
-[portrait](../../assets/visualizer/soap-film/checks-v2/390x844.png),
-[landscape](../../assets/visualizer/soap-film/checks-v2/844x390.png), and
-[browser report](../../assets/visualizer/soap-film/checks-v2/report.json).
-The fluid and optical equations are unchanged; the earlier numerical and
-three-phrase results remain the model validation record.
-
-### Golden-ratio oval, touch and persistence, October 3, 2026
-
-The oval is 1076 × 665 CSS pixels at a 1440 × 900 viewport. Mouse strokes and
-native touch strokes move the actual velocity field; the browser fixture changed
-the thickness by about 50 nm RMS after one model second of advection, without
-adding or removing liquid. Temperature changes, Cooler/Warmer, Clear, reduced
-motion, manual pause, fullscreen, resize, seed replay and device loss passed.
-Both the original square and new oval GPU references match independently
-integrated CPU reflection within 5.91e-5 linear RGB, below the 1e-4 tolerance.
-The square-to-oval round trip differs by at most 4.44e-16 normalized units.
-
-A 32² persistent run lasted 600 model seconds and 15,000 solver increments
-without a rupture, renewal or removed fluid. Relative mass error was 3.36e-7,
-below the 2e-4 long-run tolerance; remaining thickness was 429 to 752 nm.
-A separate 12 nm fixture remains intact in persistent mode, while the default
-cycling room ruptures and renews, verifying compatibility. Eighty successive
-stir impulses left maximum divergence 1.12e-6 s⁻¹, below 2e-5, and the selected
-0.025 m/s face-speed bound held. Heater settings of 10 and 50 °C produced
-different temperature and velocity fields without resetting thickness.
-
-Updated [browser report](../../assets/visualizer/soap-film/checks-v3/report.json),
-[numerical report](../../assets/visualizer/soap-film/checks-v3/numerics.json),
-[default oval](../../assets/visualizer/soap-film/checks-v3/startup.png),
-[stirred film](../../assets/visualizer/soap-film/checks-v3/stirred.png),
-[portrait](../../assets/visualizer/soap-film/checks-v3/390x844.png), and
-[landscape](../../assets/visualizer/soap-film/checks-v3/844x390.png)
-record the earlier 128² experience. The earlier drain and rupture evidence describes
-the optional cycling room.
-
-### Higher detail and richer display, October 3, 2026
-
-The default thickness grid is now 512², with 128² CPU flow, full DPR 2 rendering
-on Retina screens, and an optional 1024² thickness selection. Default, reduced
-motion, native touch, temperature, Clear, seed replay, fullscreen, hidden/offscreen
-suspension, offline use, missing WebGPU and device loss passed in Chrome for
-Testing on the Apple Metal 3 hardware adapter. Desktop 1440 × 900, portrait
-390 × 844, landscape 844 × 390 and DPR 2 portrait screenshots were inspected.
-No script, shader or WebGPU validation errors were captured. A separate
-DPR 2 desktop capture verified a 2716 × 1458 canvas, aligned instrument ranges
-and the 2048 × 1266 fallback image.
-
-At developed flow, 3× playback advanced 8.999999999998 model seconds in
-3.0078 wall seconds (2.992×), versus 0.9995× at the 1× setting. CPU flow plus
-GPU command encoding measured 6.0 ms median / 6.2 ms p95 per 0.04 s increment.
-The 1358 × 729 pixel optical pass measured 0.293 / 0.303 ms and final display
-0.398 / 0.408 ms over 93 GPU timestamp samples. These render timings are DPR 1;
-DPR 2 was checked for correct sizing and appearance, not benchmarked separately.
-At 63.24 model seconds the developed 512² film retained positive thickness
-and its initial cycle, with -8.36e-6 relative mass error (tolerance 2e-4).
-The material fixture's encoding cost is CPU time, and its total batch time
-includes the final GPU readback rather than representing a compute timestamp.
-
-The independent closed FCT fixture compared 100 GPU transport increments with
-the CPU reference, both at matching 32² grids and with 16² flow prolonged to
-32² thickness. Maximum discrepancies were 0.000366 and 0.000305 nm (tolerance
-0.02 nm). Relative mass errors were -1.62e-8 and 3.73e-9. The 512² fixture
-ran 120 increments with -9.45e-8 relative volume change; an eight-increment
-1024² fixture changed volume by -1.95e-8 (tolerance 1e-5). All retained positive,
-finite thickness. Pending-readback Clear and the actual reset GPU buffer passed.
-
-The physical optical GPU reference remains within 5.91e-5 linear RGB of the
-independently integrated CPU calculation (tolerance 1e-4). The actual new display
-shader differs from its CPU color grade by at most 0.001887 in normalized sRGB,
-within one 8-bit quantization step. The unchanged CPU numerical checks passed
-closed conservation, projection, buoyancy, convergence, interaction and the
-600-second persistent run. The new GPU coupling is not claimed to have the
-same long-time trajectory as the previous single-grid CPU film.
-
-Saved [material and display reference](../../assets/visualizer/soap-film/checks-v4/material-report.json),
-[browser report](../../assets/visualizer/soap-film/checks-v4/report.json),
-[CPU numerical checks](../../assets/visualizer/soap-film/checks-v4/numerics.json),
-[developed film](../../assets/visualizer/soap-film/checks-v4/developing.png),
-[stirred film](../../assets/visualizer/soap-film/checks-v4/stirred.png),
-[Retina desktop](../../assets/visualizer/soap-film/checks-v4/retina-desktop.png),
-[Retina portrait](../../assets/visualizer/soap-film/checks-v4/retina-mobile.png), and
-[landscape](../../assets/visualizer/soap-film/checks-v4/844x390.png)
-record this version. The computed initial-state fallback was regenerated at
-2048 × 1266 using the same optical data, geometry and default display grade.
+The [GPU thickness reference](../../assets/visualizer/soap-film/checks/material-report.json)
+compares 100 closed FCT increments against the CPU reference at matching 32²
+grids and with 16² flow prolonged to 32² thickness. Maximum discrepancies are
+below 0.02 nm, with relative mass error below 1e-5. Larger 512² and 1024² fixtures
+check positive, finite thickness and conservation. A pending readback must not
+overwrite state after restart. These checks validate the optional transport;
+they do not establish identical long-time trajectories across resolutions.
 
 ### Remaining limits
 

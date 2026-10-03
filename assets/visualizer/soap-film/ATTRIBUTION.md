@@ -15,11 +15,9 @@ Both original datasets and their unmodified metadata are included here. Their
 metadata declares Creative Commons Attribution-ShareAlike 4.0 International:
 https://creativecommons.org/licenses/by-sa/4.0/
 
-The derived linear-lut.bin, lut.json, optical-checkpoints.json and still.webp
+The derived linear-lut.bin, lut.json and optical-checkpoints.json
 are distributed under the same CC BY-SA 4.0 license. The lookup is a new
 calculation of lossless air-film-air reflection, not a CIE measurement of a soap
 solution. Build it with node tools/test-soap-film-optics.mjs --bake.
 The checkpoints came from the supplied research calculation, and agree with the
-independent implementation in js/soap-film-optics.js. The still is the initial
-thickness field, reflected D65 at 18 degrees, exposure 12, exponential tone
-mapping, then sRGB encoding. No photograph or recorded movie is used.
+independent implementation in js/soap-film-optics.js.

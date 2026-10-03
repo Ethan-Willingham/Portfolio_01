@@ -35,10 +35,10 @@
     {
       "n": 512,
       "steps": 120,
-      "wallMilliseconds": 209.5,
+      "wallMilliseconds": 79.60000002384186,
       "cpuEncode": {
         "medianMs": 0.2999999523162842,
-        "p95Ms": 0.6000000238418579,
+        "p95Ms": 0.8000000715255737,
         "samples": 120
       },
       "thicknessRangeNm": [
@@ -50,9 +50,9 @@
     {
       "n": 1024,
       "steps": 8,
-      "wallMilliseconds": 101.60000002384186,
+      "wallMilliseconds": 47,
       "cpuEncode": {
-        "medianMs": 0.20000004768371582,
+        "medianMs": 0.2999999523162842,
         "p95Ms": 0.40000009536743164,
         "samples": 8
       },
@@ -63,7 +63,6 @@
       "volumeErrorRelative": -1.951866609442504e-8
     }
   ],
-  "displayMaxError": 0.0018866625720995733,
   "errors": [],
   "pass": true
 }
