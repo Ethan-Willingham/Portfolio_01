@@ -55,12 +55,74 @@ struct Out { @builtin(position) p:vec4<f32>, @location(0) uv:vec2<f32> }
 @vertex fn vertex(@builtin(vertex_index) i:u32)->Out{var p=array<vec2<f32>,3>(vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));var o:Out;o.p=vec4(p[i],0.,1.);o.uv=p[i];return o;}
 fn rot(p:vec3<f32>)->vec3<f32>{let a=view.clock.y;let c=cos(a);let s=sin(a);let b=-.22;let v=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);return vec3(v.x,cos(b)*v.y-sin(b)*v.z,sin(b)*v.y+cos(b)*v.z);}
 fn q(p:vec3<f32>)->f32{return textureSampleLevel(volume,samp,p+.5,0.).x;}
-@fragment fn fragment(o:Out)->@location(0) vec4<f32>{let aspect=view.dims.x/view.dims.y;let uv=o.uv*vec2(aspect,1.);let origin=rot(vec3(0.,0.,2.6));let direction=rot(normalize(vec3(uv*.76,-2.6)));let inv=1./direction;let t0=(-vec3(.5)-origin)*inv;let t1=(vec3(.5)-origin)*inv;let low=min(t0,t1);let high=max(t0,t1);let near=max(max(low.x,low.y),low.z);let far=min(min(high.x,high.y),high.z);var color=vec3(.004,.008,.006);if(far>near&&far>0.){var radiance=vec3(0.);var trans=1.;let steps=80.;let ds=(far-max(near,0.))/steps;for(var i=0u;i<80u;i++){let p=origin+direction*(max(near,0.)+(f32(i)+.5)*ds);let value=q(p);let mag=abs(value);let edge=smoothstep(0.,.06,min(min(.5-abs(p.x),.5-abs(p.y)),.5-abs(p.z)));let density=smoothstep(.85,2.8,mag)*edge;let opacity=1.-exp(-density*ds*12.);if(opacity>.001){let e=1./view.dims.z*.5;let gradient=vec3(abs(q(p+vec3(e,0.,0.)))-abs(q(p-vec3(e,0.,0.))),abs(q(p+vec3(0.,e,0.)))-abs(q(p-vec3(0.,e,0.))),abs(q(p+vec3(0.,0.,e)))-abs(q(p-vec3(0.,0.,e))));let normal=gradient/max(length(gradient),.0001);let light=.38+.5*max(0.,dot(-normal,normalize(vec3(-.4,.8,1.))));let rim=pow(1.-abs(dot(normal,direction)),3.)*.16;let tint=select(vec3(.24,.52,.62),vec3(.69,.27,.17),value>0.);let highlight=smoothstep(1.8,4.4,mag);radiance+=trans*opacity*(tint*(light+rim)*1.45+vec3(.5,.42,.30)*highlight*.40);trans*=1.-opacity;if(trans<.018){break;}}}color=radiance+color*trans;}return vec4(color*view.dims.w,1.);}
+// Contours of the measured RMS-normalized charge, with no synthetic detail.
+fn density(p:vec3<f32>)->f32{
+  let boundary=min(min(.5-abs(p.x),.5-abs(p.y)),.5-abs(p.z));
+  return abs(q(p))*smoothstep(0.,.025,boundary);
+}
+fn shade(p:vec3<f32>,direction:vec3<f32>)->vec3<f32>{
+  let e=.5/view.dims.z;
+  let gradient=vec3(density(p+vec3(e,0.,0.))-density(p-vec3(e,0.,0.)),
+                    density(p+vec3(0.,e,0.))-density(p-vec3(0.,e,0.)),
+                    density(p+vec3(0.,0.,e))-density(p-vec3(0.,0.,e)));
+  let normal=-gradient/max(length(gradient),.00001);
+  let light=normalize(rot(vec3(-.6,.9,1.4)));
+  let diffuse=max(0.,dot(normal,light));
+  let halfVector=normalize(light-direction);
+  let specular=pow(max(0.,dot(normal,halfVector)),36.);
+  let rim=pow(1.-abs(dot(normal,direction)),3.);
+  let tint=select(vec3(.24,.52,.62),vec3(.69,.27,.17),q(p)>0.);
+  return tint*(.25+.85*diffuse+.12*rim)+vec3(.65,.59,.48)*specular*.45;
+}
+@fragment fn fragment(o:Out)->@location(0) vec4<f32>{
+  let aspect=view.dims.x/view.dims.y;
+  // Fit the whole volume on narrow screens without stretching its geometry.
+  let uv=o.uv*vec2(aspect,1.)/min(aspect,1.);
+  let origin=rot(vec3(0.,0.,2.6));
+  let direction=rot(normalize(vec3(uv*.68,-2.6)));
+  let inv=1./direction;
+  let t0=(-vec3(.5)-origin)*inv;
+  let t1=(vec3(.5)-origin)*inv;
+  let low=min(t0,t1);let high=max(t0,t1);
+  let near=max(max(low.x,low.y),low.z);let far=min(min(high.x,high.y),high.z);
+  var color=vec3(.004,.008,.006);
+  if(far>near&&far>0.){
+    let start=max(near,0.);
+    let ds=(far-start)/128.;
+    var radiance=vec3(0.);var trans=1.;var previous=0.;
+    // Entering the 1.1-RMS contour marks a charge structure. Refine the
+    // crossing within its ray interval for a clean silhouette.
+    for(var i=0u;i<=128u;i++){
+      let t=start+f32(i)*ds;
+      let value=density(origin+direction*t);
+      if(previous<1.1&&value>=1.1){
+        var left=max(start,t-ds);var right=t;
+        for(var j=0u;j<5u;j++){
+          let middle=(left+right)*.5;
+          if(density(origin+direction*middle)>=1.1){right=middle;}else{left=middle;}
+        }
+        let p=origin+direction*((left+right)*.5);
+        let opacity=.80;
+        radiance+=trans*opacity*shade(p,direction);
+        trans*=1.-opacity;
+        if(trans<.015){break;}
+      }
+      previous=value;
+    }
+    color=radiance+color*trans;
+  }
+  return vec4(color*view.dims.w,1.);
+}
 `;
 export const displayShader=/* wgsl */`
 @group(0) @binding(0) var scene:texture_2d<f32>;
 @group(0) @binding(1) var samp:sampler;
 struct Out{@builtin(position) p:vec4<f32>,@location(0) uv:vec2<f32>}
 @vertex fn vertex(@builtin(vertex_index) i:u32)->Out{var p=array<vec2<f32>,3>(vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));var o:Out;o.p=vec4(p[i],0.,1.);o.uv=p[i]*vec2(.5,-.5)+.5;return o;}
-@fragment fn fragment(o:Out)->@location(0) vec4<f32>{let pixel=1./vec2<f32>(textureDimensions(scene));var c=textureSample(scene,samp,o.uv).rgb;var bloom=vec3(0.);for(var x=-1;x<=1;x++){for(var y=-1;y<=1;y++){bloom+=max(vec3(0.),textureSample(scene,samp,o.uv+vec2(f32(x),f32(y))*pixel*4.).rgb-.55);}}c+=bloom*.012;let mapped=c/(1.+c);let srgb=select(mapped*12.92,1.055*pow(max(mapped,vec3(0.)),vec3(1./2.4))-.055,mapped>vec3(.0031308));return vec4(srgb,1.);}
+@fragment fn fragment(o:Out)->@location(0) vec4<f32>{
+  let c=textureSample(scene,samp,o.uv).rgb;
+  let mapped=c/(1.+c);
+  let srgb=select(mapped*12.92,1.055*pow(max(mapped,vec3(0.)),vec3(1./2.4))-.055,mapped>vec3(.0031308));
+  return vec4(srgb,1.);
+}
 `;
