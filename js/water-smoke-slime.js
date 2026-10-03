@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.0'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.1'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -918,6 +918,8 @@
           }
           applyGravity();
           applyTimescale();
+          if (window.RainbowWater) rainbowWater = window.RainbowWater.create(liquidWGPU, { width:worldW,height:worldH });
+          presetApplyWaterLook(PRESET_ACTIVE.waterLook);
         } else {
           waterState = 'off';
           clearLiquid();
@@ -935,12 +937,14 @@
   var liquidPendingDt = 0;
   var liquidSimSkipFrames = 0;
   var liquidIdleDrawFrames = 0;
+  var rainbowWater = null;
 
   function updateLiquidToy(dt) {
     if (!liquidWGPU) return;
     if (waterState === 'on' && (!liquidWGPU.simActive || !liquidWGPU.renderActive)) {
       waterState = 'off';
       clearLiquid();
+      if (rainbowWater) rainbowWater.setEnabled(false);
       if (liquidWGPU.renderCanvas) liquidWGPU.renderCanvas.hidden = true;
       onEnginesSettled();
       return;
@@ -970,7 +974,11 @@
   }
 
   function drawLiquidToy() {
-    if (!liquidWGPU || !liquidWGPU.renderActive) return;
+    if (!liquidWGPU || !liquidWGPU.renderActive) {
+      if (rainbowWater) rainbowWater.setEnabled(false);
+      return;
+    }
+    if (rainbowWater) rainbowWater.setEnabled(PRESET_ACTIVE.waterLook === 'rainbow' && !debugParticles && liquidCount > 0);
     if (liquidCount > 0) {
       liquidWGPU.draw();
       liquidIdleDrawFrames = 10;
@@ -978,6 +986,7 @@
       liquidWGPU.draw();
       liquidIdleDrawFrames--;
     }
+    if (rainbowWater && liquidCount > 0) rainbowWater.draw(presetClock);
   }
 
   // ---- Spawning ---------------------------------------------------------
@@ -11638,7 +11647,7 @@
    * overrides apply at read time in emittersTick, per-body slime fields
    * re-stamp each presetTick, and water levers persist in the engine.
    * -------------------------------------------------------------------- */
-  var PRESET_ACTIVE = { water: 'default', waterLook: 'default',
+  var PRESET_ACTIVE = { water: 'default', waterLook: 'rainbow',
                         smoke: 'copperhead', smokeScale: 'default',
                         slime: 'default', slimeLook: 'default' };
   // v4.29 second layer: each system gains an independent stackable row.
@@ -11713,6 +11722,8 @@
   };
   // The pure-look layer (v4.29): appearance only, stacks over any material.
   var WATER_LOOKS = {
+    rainbow:{ WATER_R:.24,WATER_G:.24,WATER_B:.24,WATER_ALPHA:.92,
+              WATER_FOAM_R:1,WATER_FOAM_G:1,WATER_FOAM_B:1 },
     pearl:  { WATER_R: 0.78, WATER_G: 0.80, WATER_B: 0.84, WATER_ALPHA: 0.97,
               WATER_FOAM_R: 0.98, WATER_FOAM_G: 0.90, WATER_FOAM_B: 1.0,
               SURFACE_SOFT: 1.1, WATER_PARTICLE_SIZE: 2.2 },
@@ -11735,6 +11746,7 @@
     if (m) pushRender(m);
   }
   function presetApplyWaterLook(name) {
+    if (rainbowWater) rainbowWater.setEnabled(name === 'rainbow' && !debugParticles && liquidCount > 0);
     if (name === 'default') { presetWaterRenderBase(); return; }
     var L = WATER_LOOKS[name];
     if (!L) return;
@@ -11967,7 +11979,7 @@
   /* ---- chips ---- */
   var PRESET_GROUPS = [
     { sys: 'water', label: 'water', names: ['default', 'blacklight', 'magma', 'freeze', 'tide', 'boil', 'syrup', 'geyser'] },
-    { sys: 'waterLook', label: 'water look', names: ['default', 'pearl', 'abyss', 'toxic', 'wine', 'chrome', 'candy'] },
+    { sys: 'waterLook', label: 'water look', names: ['rainbow', 'default', 'pearl', 'abyss', 'toxic', 'wine', 'chrome', 'candy'] },
     { sys: 'smoke', label: 'smoke', names: window.SmokePresets.recipes.map(function (p) { return p.id; }) },
     { sys: 'smokeScale', label: 'smoke size', names: ['default', 'billow', 'tower', 'flood', 'chill', 'frenzy'] },
     { sys: 'slime', label: 'slime', names: ['default', 'soft', 'firm'] },
@@ -12271,6 +12283,7 @@
   }
 
   function scene(name) {
+    if (rainbowWater) rainbowWater.reset();
     currentScene = name;
     clearWorldAll();
     var W = worldW, H = worldH, S = Math.min(W, H);
@@ -12670,7 +12683,8 @@
           fps: Math.round(fpsEMA), waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
           scene: currentScene, tool: tool, paused: userPaused,
-          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles
+          waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,
+          waterLook: PRESET_ACTIVE.waterLook, rainbow: rainbowWater ? rainbowWater.stats() : null
         };
       },
       smokePreset: function () {
