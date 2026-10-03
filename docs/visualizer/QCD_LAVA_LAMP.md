@@ -12,7 +12,7 @@ Built October 3, 2026. The page is `qcd-lava-lamp-lab.html`, a comparison protot
 - `tools/test-qcd-lava-lamp-numerics.mjs`, `tools/test-qcd-lava-lamp-browser.cjs`: numerical and browser harnesses.
 - `assets/visualizer/qcd-lava-lamp/`: actual simulation screenshots, saved fallback, provenance and machine-readable checks.
 
-Serve the repository through HTTP on localhost. Open `/qcd-lava-lamp-lab.html`. A secure context and WebGPU are required for live sampling. `?quality=low|medium|high&seed=5eedc0de1234abcd` selects 8^4, 12^4 or 16^4 and a 64-bit hexadecimal seed. Medium defaults to 12^4 after measuring all three sizes. Restart applies the chosen seed and size, preserving manual pause.
+Serve the repository through HTTP on localhost. Open `/qcd-lava-lamp-lab.html`. A secure context and WebGPU are required for live sampling. `?quality=low|medium|high&seed=5eedc0de1234abcd` selects 12^4, 16^4 or 24^4 and a 64-bit hexadecimal seed. Medium defaults to 16^4; high uses 24^4 after checking adapter limits. Restart applies the chosen seed and size, preserving manual pause.
 
 ```sh
 node tools/test-qcd-lava-lamp-numerics.mjs --spike
@@ -81,6 +81,19 @@ Q = sum over all four-dimensional sites of q(x).
 
 The factor eight in the second equality comes from antisymmetric index pairs and cyclic trace. This is the unimproved one-plaquette clover estimator. It has finite-spacing errors. The rendered 3D slice is never substituted for full 4D Q, and no rounded sector or instanton count is shown.
 
+### Clover action density
+
+The same six Hermitian, traceless fields also give
+
+```text
+E(x) = sum_(mu<nu) Tr(Fhat_mu_nu squared)
+     = sum_(mu<nu) sum_(i,j) abs(Fhat_mu_nu[i,j]) squared.
+```
+
+E is nonnegative and invariant under local gauge transformations. It is a dimensionless clover action-density proxy, without beta or physical units, rather than the exact local Wilson plaquette action or a calibrated Minkowski energy density. The flux fixture below has E(x)=4 sin(f) squared at every site. Identity gives E=0; gauge-transformed flux agrees pointwise.
+
+Four E maps are retained alongside the four q maps. Each depth has separately measured mean, RMS and peak E. The default volume integrates excess E/RMS above 0.75, with sign tint from q, while preserving charge contours as sharper cores. An action-only view shows E in gold; a charge-only view removes the surrounding E cloud. Volume opacity, colors and lighting are presentation choices. They never feed back into the lattice or the full 4D measurements.
+
 ### Nontrivial periodic fixture
 
 This fixture is used only in tests. Embed quantized Abelian fluxes in `diag(exp(i theta), exp(-i theta), 1)`. For f = 2 pi k/L^2 in the 01 plane use `U0 = exp(-i f x1 H)` and `U1 = exp(i f L x0 H)` only at x1 = L-1; other U1 links are identity. H is diag(1,-1,0). Repeat in the 23 plane. Quantization makes the seam plaquettes match the bulk across both periodic boundaries. This is a periodic torus construction, not a truncated single instanton.
@@ -98,47 +111,47 @@ For k01=k23=1, CPU Q is 1.8992824071 at 4^4 and 1.9935827281 at 8^4, converging 
 
 The live sampler has a separate link field. Every 16 sampling sweeps, copy it to a cooling buffer. One Wilson cooling sweep greedily maximizes each subgroup's local staple weight using T=I. Measure that same source snapshot at 0, 2, 4 and 8 sweeps, storing four complete density maps. Lowering depth selects a retained shallower map; it never attempts to undo cooling or inject texture noise. CPU action decreases across eight cooling sweeps.
 
-The browser targets two Markov sweeps per ambient second, with at most one pending sampling submission. Busy hardware reduces the achieved count. Quality is an explicit lattice selection; the governor does not silently change beta or the lattice. Fixed 1/60 ambient steps drive the scan at ten seconds per lattice plane. A 12-plane scan lasts 120 ambient seconds. The optional 127-second depth breath interpolates the retained maps. Scan, sampling, camera and presentation clocks are distinct from physical Minkowski time. No topological event is scheduled.
+The browser targets two Markov sweeps per ambient second, with at most one pending sampling submission. Busy hardware reduces the achieved count. Quality is an explicit lattice selection; the governor does not silently change beta or the lattice. Fixed 1/60 ambient steps drive the scan at four seconds per lattice plane by default, with two, four and ten seconds selectable. A default 16-plane scan lasts 64 ambient seconds. The default 80-second smoothing breath varies between two and eight cooling sweeps, starting at four, and interpolates retained maps. Selecting a fixed depth stops that breath. Dragging or touching rotates the camera. Scan, sampling, camera and presentation clocks are distinct from physical Minkowski time. No topological event is scheduled.
 
 Wilson cooling can erase small structures. [Improved field-strength operators](https://arxiv.org/abs/hep-lat/0203008) combine larger clovers to reduce discretization errors; [Wilson flow](https://arxiv.org/abs/1006.4518) supplies a continuous smoothing scale. Neither is implemented here. They would need new staple/force operators, integration and normalization checks. The current cooling and operator cannot reproduce the improved 25-sweep treatment in the [reference visualization](https://arxiv.org/html/1903.08308v1), which uses a 24^3 x 36 SU(3) box. Beta 6.0 does not assign our box a physical spacing.
 
 The slice interpolates neighboring planes along coordinate zero and uses hardware trilinear interpolation within the measured 3D density map. Previous and current snapshots crossfade for seven seconds, each normalized by its own measured RMS. Warm and blue are arbitrary sign encodings, not spectra.
 
-The display traces contours where the absolute interpolated charge is 1.1 times the measured RMS. A ray uses 128 intervals and five bisections to locate each entering contour, then composites that surface with opacity 0.8. Central-difference normals, a fixed light and restrained specular highlights give the surfaces depth. A thin boundary fade closes contours at the edge of the displayed periodic box. This presentation gives the coarse lattice clear silhouettes; it does not create sub-lattice detail or change the charge measurements. No synthetic instantons, texture noise, fluid warp or image feedback drive it.
+The default display combines a measured clover action volume with contours where the absolute interpolated charge is 0.85 times the measured RMS. A ray uses 128 intervals and five bisections to locate each entering contour, then composites that surface with opacity 0.65 (0.8 in the charge-only view). Central-difference normals, a fixed light and restrained specular highlights give the surfaces depth. A thin boundary fade closes contours at the edge of the displayed periodic box. This presentation gives the coarse lattice clear silhouettes; it does not create sub-lattice detail or change the charge measurements. No synthetic instantons, texture noise, fluid warp or image feedback drive it.
 
 The room writes linear radiance to rgba16float and applies exposure linearly. The standalone host maps `c/(1+c)` once before sRGB encoding, without bloom. Its enlarged view occupies nearly the full page width and 690 CSS pixels at 1440 x 900. The render target caps DPR at 2, dimensions at 2560 pixels and total area at 4 Mi pixels. The camera fits the volume to the shorter viewport axis so portrait views retain the whole field. Observable values are calculated from lattice state before presentation filtering. RMS scaling makes a weak cooled field visible; it does not imply preserved physical amplitude. Instruments expose the RMS, peak and Q curve through the room snapshot. There is no photosensitivity certification claim.
 
 ## Memory budget
 
-The adapter reported 128 MiB per storage binding and 256 MiB per buffer. No API reports total available VRAM. The solver caps lattices at 16^4 and accounts for separate buffers before choosing its schedule.
+The adapter reported 128 MiB per storage binding and 256 MiB per buffer. No API reports total available VRAM. The solver caps lattices at 24^4 and accounts for separate buffers before choosing its schedule.
 
 | Allocation, SU(3) at 16^4 | Bytes | MiB |
 | --- | ---: | ---: |
 | Live unsmoothed links | 18,874,368 | 18 |
 | Cooling links | 18,874,368 | 18 |
-| Four current charge maps | 1,048,576 | 1 |
-| Four previous charge maps | 1,048,576 | 1 |
+| Four current charge and action maps | 2,097,152 | 2 |
+| Four previous charge and action maps | 2,097,152 | 2 |
 | Live per-site diagnostics | 1,048,576 | 1 |
-| Solver and view uniforms | 720 | 0.00069 |
+| Solver and view uniforms | 768 | 0.00073 |
 | 16^3 rgba16float slice | 32,768 | 0.03125 |
-| Ordinary transient diagnostic readback | 2,097,152 | 2 |
-| Optional debug link and charge readback | 19,922,944 | 19 |
+| Ordinary transient diagnostic readback | 3,145,728 | 3 |
+| Optional debug link, charge and action readback | 20,971,520 | 20 |
 
-Readback buffers are destroyed after mapping. Debug arrays also consume JS heap, which is not included in GPU totals. The host owns its HDR target, swap chain and any presentation resources; a 2560 x 1264 HDR target adds 25,886,720 bytes. Low and medium persistent solver buffers are 2,556,544 and 12,939,904 bytes before the room view and volume texture.
+Readback buffers are destroyed after mapping. Debug arrays also consume JS heap, which is not included in GPU totals. The host owns its HDR target, swap chain and any presentation resources; a 2560 x 1264 HDR target adds 25,886,720 bytes. Persistent solver buffers at 12^4, 16^4 and 24^4 are 13,603,456, 42,992,256 and 217,645,696 bytes, before the room view and volume texture. The largest SU(3) link binding is 95,551,488 bytes, below the tested 128 MiB binding limit. High requires about 208 MiB of persistent solver storage, plus host targets and transient reads.
 
 ## Verification and measured results
 
 Machine-readable evidence is in `cpu-verification.json` and `verification.json` beside the screenshots. The final browser run used Chrome for Testing on an Apple Metal-3 hardware adapter, reported non-fallback. The browser did not identify an Apple chip model. Times below are GPU timestamps, except the readback/reduction row, which includes queue and CPU wall time. They are observations from this run, not budgets guaranteed on other machines. Shader compilation and initialization are excluded.
 
-| Phase | 8^4 median / p95 ms | 12^4 median / p95 ms | 16^4 median / p95 ms |
+| Phase | 12^4 median / p95 ms | 16^4 median / p95 ms | 24^4 median / p95 ms |
 | --- | ---: | ---: | ---: |
-| SU(3) heatbath sweep | 0.861 / 0.945 | 3.301 / 3.650 | 16.907 / 25.918 |
-| One cooling sweep | 0.704 / 1.016 | 3.018 / 3.313 | 17.273 / 23.608 |
-| Full 4D clover charge | 0.328 / 0.340 | 1.424 / 1.641 | 4.464 / 14.468 |
-| Live plaquette and constraints | 0.117 / 0.122 | 0.422 / 0.433 | 1.175 / 1.335 |
-| Four-depth readback and CPU sum | 0.700 / 5.900 | 1.500 / 2.500 | 3.700 / 7.400 |
+| SU(3) heatbath sweep | 3.418 / 8.836 | 11.405 / 17.279 | 63.213 / 69.802 |
+| One cooling sweep | 3.350 / 8.381 | 11.613 / 17.337 | 60.653 / 65.437 |
+| Full 4D clover charge and action | 1.436 / 6.640 | 5.232 / 11.455 | 26.413 / 43.149 |
+| Live plaquette and constraints | 0.422 / 2.005 | 1.181 / 5.985 | 7.329 / 15.036 |
+| Eight-map readback and CPU sum | 3.500 / 7.000 | 7.100 / 16.500 | 18.200 / 31.600 |
 
-There are 16 isolated measurements per solver phase. The updated 12^4 contour rendering at 2560 x 1264 took 6.212 / 9.234 ms over 32 GPU measurements; whole submitted render wall time was 6.900 / 9.900 ms. Slice assembly was 0.0069 / 0.0483 ms. The standalone final tone-map pass is outside that room benchmark. Its costs are not included in the volume-only timestamp. This run showed more variable 16^4 costs, so the default remains 12^4.
+There are 16 isolated measurements per solver phase. The 16^4 combined action-volume and charge-core renderer at 2560 x 1264 took 9.517 / 12.593 ms over 32 GPU measurements. The standalone tone-map pass is outside that room benchmark. Solver timing varied while other browser checks ran concurrently; these results are observations, not guarantees. The larger 24^4 box is optional because it takes about 63.2 ms per measured sweep.
 
 Numerical checks include:
 
@@ -146,7 +159,7 @@ Numerical checks include:
 - Staple/full-action changes: CPU errors below 8e-13, tolerance 2e-10.
 - Sequential/checkerboard scheduling: identical CPU fields at one sweep.
 - Heatbath moments: 80,000 draws each at alpha 0, 0.1, 1, 6 and 20 agree with quadrature within 0.006. Haar SU(3) entries have mean squared modulus near 1/3.
-- CPU/GPU one-sweep SU(3) link comparison: maximum component error 3.25e-6 and RMS 2.57e-7; test tolerance 2e-4. Charge differences are below 6e-9 across both groups, tolerance 2e-7. These compare a small 4^4 case with identical streams.
+- CPU/GPU one-sweep SU(3) link comparison: maximum component error 3.25e-6 and RMS 2.57e-7; test tolerance 2e-4. Charge differences are below 6e-9 across both groups, tolerance 2e-7. Clover action-density differences are below 1.1e-6, tolerance 2e-5. These compare a small 4^4 case with identical streams.
 - GPU periodic flux Q: 1.8992822766 versus 1.8992824071 expected. Pointwise gauge-invariance error below 3e-9. CPU normalization converges from 4^4 to 8^4.
 - CPU/GPU cooling comparison: maximum component error below 9e-7, tolerance 2e-4. CPU Wilson action is non-increasing across eight sweeps.
 - Same-device seed replay: identical links after restarting at the same integer step count.
@@ -155,7 +168,7 @@ Cold and Haar-hot SU(3) starts were followed for 384 sweeps at 8^4 and 16^4. Pla
 
 Samples 16 sweeps apart retain measurable correlations. Short plaquette lag-one estimates range from about -0.02 to 0.34 in the cold/hot checks, with insufficient statistics for a reliable integrated autocorrelation time. Instruments keep a live history and label snapshots as potentially correlated. They never claim independent samples.
 
-The visual run covers 240 ambient seconds at 12^4: two complete scan cycles and almost two depth breaths. It uses the normal 1/60 step sequence at accelerated wall pacing, reaching 736 sampling sweeps including burn-in. Maximum measured unitarity and determinant errors were about 5.3e-5 and 7.7e-5. Startup, developing, payoff and longer-run screenshots preserve actual output and checkpoint metadata. This is not evidence for a continuum instanton sector.
+The visual run covers 240 ambient seconds at 16^4, more than three complete default scans and three depth breaths. It uses the normal 1/60 step sequence at accelerated wall pacing, reaching 736 sampling sweeps including burn-in. Recorded group errors remain below the 0.001 operational halt threshold; exact checkpoint values are in verification.json. Startup, developing, payoff and longer-run screenshots preserve actual output and checkpoint metadata. This is not evidence for a continuum instanton sector.
 
 Browser tests inspect 1440 x 900, 390 x 844 and 844 x 390, and exercise keyboard pause, native/pseudo fullscreen, resize, touch targets, manual pause across visibility changes, offscreen suspension, reduced-motion still startup, offline sampling and missing WebGPU. Reduced motion still computes initialization but never starts the ambient animation until Play. The saved fallback has separately recorded origin. All harnessed JS, shader and validation checks pass. Safari, real mobile GPU performance and actual OS device-loss injection remain untested; the host catches reported device loss and pending work errors.
 
@@ -178,7 +191,7 @@ room.render({ encoder, targetView: hostHDRView, width: 1280, height: 620, exposu
 // The host can add its own tone mapping here, then submits once.
 device.queue.submit([encoder.finish()]);
 console.log(room.snapshot());
-// A slow correctness read exposes all live links and all four density maps.
+// A slow correctness read exposes all live links and all four charge maps and four action-density maps.
 const state = await room.debugReadback();
 room.dispose(); // Only room-owned resources are released.
 ```
