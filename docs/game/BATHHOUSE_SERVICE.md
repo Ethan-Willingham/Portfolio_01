@@ -421,7 +421,11 @@ linear momentum. There is no minimum launch, automatic aim, catch radius, or
 aerial boost. Player gravity and flight controls are unchanged. Speed and
 contact height control the shot: get underneath to lift, strike level to drive
 sideways, and hit from above to spike. Sideways drag during play slows the
-resulting shot without imposing a speed limit. A ground pop followed by a timed
+resulting shot without imposing a speed limit. Since v28.170, a drive hit on a resting, grounded guest turns some sideways
+rebound upward. The guest keeps its outgoing speed, the rig receives the unused
+horizontal momentum, and the floor carries the vertical reaction. The response
+uses at most the incoming pair's kinetic energy. Lift scales with the actual
+impact; there is no fixed launch speed. A ground pop followed by a timed
 jet can chain aerials. The fixed drive/jet browser test checks consecutive aerial
 touches. Its separate shallow angle impact checks now leave at 276 to 298 px/s
 sideways, close to flight cruise.

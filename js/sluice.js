@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.169';
+  var GAME_VERSION = 'v28.170';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -75132,6 +75132,7 @@
   var SKY_SLIME_RIG_SIDE_YIELD = 130;
   var SKY_SLIME_RIG_FRICTION = 0.04;
   var SKY_SLIME_ROOF_FRICTION = 0.16;
+  var SKY_SLIME_GROUND_POP_LIFT = 2.15;
   var SKY_SLIME_JET_RANGE = 160;
   var SKY_SLIME_JET_SPREAD = 0.46;
   var SKY_SLIME_JET_COUPLING = 1.4; // pressure includes gas deflected back off the crust
@@ -75500,6 +75501,10 @@
     if (isFinite(player.renderY)) player.renderY += moveY;
     var relative = (s.vx - rvx) * nx + (s.vy - rvy) * ny;
     if (relative >= 0) return;
+    var groundPop = ny < -0.1 && Math.abs(nx) > 0.5 && relative < -75 &&
+      s._ground && Math.abs(s.vy) < 12 && player.onGround && !player.onJello &&
+      Math.abs(rvy) < 12 && solidAt(rx, ry + 1, PLAYER_W, PLAYER_H);
+    var incomingEnergy = mass * (s.vx * s.vx + s.vy * s.vy) + 6 * (rvx * rvx + rvy * rvy);
     // The bumper yields under a hard sideways load. Gentle touches and
     // square roof strikes keep their spring; fast glances lose rebound.
     // Smooth compression response keeps stronger hits stronger. It changes
@@ -75559,6 +75564,26 @@
     s.vx += friction * tx * bx; s.vy += friction * ty * by;
     s.spin -= friction / (0.4 * mass * s.r);
     player.vx -= friction * tx * rxMass; player.vy -= friction * ty * ryMass;
+    // A first grounded drive touch redirects part of the sideways rebound
+    // up the armor. Keep the guest's speed, return its horizontal momentum
+    // to the rig, and spend only energy left by the damped contact.
+    if (groundPop && s.vy < 0 && s.vx * rvx > 0) {
+      var speed2 = s.vx * s.vx + s.vy * s.vy;
+      var popY = Math.min(s.vy, -Math.min(-s.vy * SKY_SLIME_GROUND_POP_LIFT, Math.sqrt(speed2) * 0.60));
+      var lowY = s.vy, highY = Math.min(lowY, popY), popX = s.vx;
+      var rigAfterX = rvx + rigDVX - friction * tx * rxMass;
+      var rigAfterY = rvy + rigDVY - friction * ty * ryMass;
+      for (var popPass = 0; popPass < 10; popPass++) {
+        popX = (s.vx < 0 ? -1 : 1) * Math.sqrt(Math.max(0, speed2 - popY * popY));
+        var rigPopX = rigAfterX - (popX - s.vx) * mass * rxMass;
+        if (mass * speed2 + 6 * (rigPopX * rigPopX + rigAfterY * rigAfterY) <= incomingEnergy) lowY = popY;
+        else highY = popY;
+        popY = (lowY + highY) * 0.5;
+      }
+      popX = (s.vx < 0 ? -1 : 1) * Math.sqrt(Math.max(0, speed2 - lowY * lowY));
+      player.vx -= (popX - s.vx) * mass * rxMass;
+      s.vx = popX; s.vy = lowY;
+    }
     if (ny > 0.6) player.onGround = resting && Math.abs(s.vy) < 8 && Math.abs(player.vy) < 8;
     if (s.playing || Math.hypot(rvx, rvy) > 8) skySlimePlayContact(s);
     else { s._interactT = 2.5; s.hopIn = Math.max(s.hopIn, 1.5); }
