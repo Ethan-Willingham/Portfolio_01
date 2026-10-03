@@ -224,9 +224,9 @@
 
   var MARKS = [
     { lon: -93.2570, lat: 44.9806, name: 'St. Anthony Falls + the 1876 dike', group: null,
-      blurb: 'The only major waterfall on the Mississippi, artificial since 1880. Under the river just upstream sits the concrete dike the Army Corps finished in 1876, up to 40 feet deep and 1,850 feet across, built after the Eastman tunnel collapse nearly unzipped the falls.' },
+      blurb: 'The falls flow over a constructed apron. Upstream, a buried concrete cutoff wall blocks erosion beneath the limestone. The Army Corps completed the wall in 1876 after the Eastman tunnel collapse.' },
     { lon: -93.25458, lat: 44.97141, name: 'The 511 Building', group: 'comms',
-      blurb: 'The metro\'s carrier hotel: the old warehouse at 511 11th Ave S where the region\'s networks physically interconnect. MICE, the Midwest Internet Cooperative Exchange, peers 158 networks here (Cologix MIN1, per PeeringDB). If your packet crosses town, odds are it passes through this building.' }
+      blurb: 'A carrier hotel at 511 11th Avenue South, where telecommunications providers connect their networks. Cologix MIN1 hosts MICE, the Midwest Internet Cooperative Exchange.' }
   ];
 
   // ---- mercator ----
@@ -730,34 +730,34 @@
   // ---- the inspector ----
   var SEL = null;
   var FACTS = {
-    'Metro': 'The one that started it all: opened 1938 at Pig\'s Eye as the first major-metro sewage plant on the Mississippi. Today it treats about 225 million gallons a day, roughly half the wastewater the whole state produces, for a service population over two million.',
-    'Blue Lake': 'One of the regional system\'s two big southwest plants, serving the Minnesota River side of the metro.',
-    'Seneca': 'Treats the Minnesota River valley\'s share of the metro\'s flow, tucked below the bluffs in Eagan.',
-    'Monticello Nuclear Generating Plant': 'A single boiling-water reactor on the Mississippi upstream of the cities, running since 1971. The river water that cools it flows on down through both downtowns.',
-    'Prairie Island Nuclear Generating Plant': 'Two pressurized-water reactors downstream near Red Wing. Its spent fuel is stored on site, next to the Prairie Island Indian Community, some homes within 600 yards.',
-    'Allen S. King Power Plant': 'The tall stack on the St. Croix at Bayport. One of the last big coal units in the metro.',
-    'Covanta Hennepin Energy': 'The downtown garbage burner: Hennepin County trash goes in, about 39 megawatts come out, a block from the ballpark.',
-    'High Bridge Power Plant': 'St. Paul\'s riverside plant at the High Bridge, burning gas to cover the city\'s peaks.',
-    'Riverside Generating Plant': 'North Minneapolis\'s big gas plant on the river bend, a coal site for a century before conversion.',
-    'Minneapolis Water Treatment Plant': 'Where Minneapolis drinks from: river water drawn upstream in Fridley, softened, filtered, and pushed into the city\'s mains.',
-    'McCarrons Water Treatment Plant': 'St. Paul Regional Water\'s plant. The east metro\'s taps start here.',
-    'Minnesota Gateway Data Center': 'The data-center floors of the 511 Building, the metro\'s main carrier hotel.'
+    'Metro': 'Opened in 1938 near Pig\'s Eye Lake. The Met Council reports an average flow of 172 million gallons a day and a service population of 1.8 million.',
+    'Blue Lake': 'A regional wastewater treatment plant serving the southwest metro along the Minnesota River.',
+    'Seneca': 'A regional wastewater treatment plant in Eagan, serving part of the Minnesota River valley.',
+    'Monticello Nuclear Generating Plant': 'A boiling-water nuclear reactor on the Mississippi upstream of the Twin Cities.',
+    'Prairie Island Nuclear Generating Plant': 'Two pressurized-water nuclear reactors near Red Wing, beside the Prairie Island Indian Community. Spent fuel is stored on site.',
+    'Allen S. King Power Plant': 'A coal-fired plant on the St. Croix River at Bayport.',
+    'Covanta Hennepin Energy': 'The Hennepin Energy Recovery Center near Target Field burns municipal waste to generate electricity and supply heat.',
+    'High Bridge Power Plant': 'A natural-gas power plant beside St. Paul\'s High Bridge.',
+    'Riverside Generating Plant': 'A natural-gas power plant in north Minneapolis, converted from coal.',
+    'Minneapolis Water Treatment Plant': 'Treats Mississippi River water drawn upstream in Fridley before it enters Minneapolis\'s water mains.',
+    'McCarrons Water Treatment Plant': 'Treats drinking water for Saint Paul Regional Water Services customers.',
+    'Minnesota Gateway Data Center': 'Data-center space in the 511 Building, where telecommunications networks connect.'
   };
   var KINDBLURB = {
-    tplant: 'A regional wastewater treatment plant: everything flushed in its sewershed ends up here, gets cleaned, and returns to the river.',
-    tplantGhost: 'A treatment plant that closed when the regional system consolidated. Its ground remembers.',
-    ww: 'A drinking-water treatment plant: the clean half of the water cycle, upstream of every tap it serves.',
-    dc: 'A data center: one of the buildings where the metro\'s fiber physically terminates and networks exchange traffic.',
-    sub: 'A substation: where transmission voltage steps down toward neighborhood feeders.',
-    inlet: 'A storm inlet: the grate at the curb. Everything that goes down it reaches a lake or the river with no treatment plant in between.',
-    hydrant: 'A fire hydrant: the water distribution network surfacing. The mains it taps are not published, but every hydrant marks where they run.',
-    tower: 'A water tower: elevated storage that holds the system\'s pressure steady, and its only presence on the skyline.',
-    gas: 'A gas transmission main: the high-pressure lines that feed the city gate stations. The distribution mains under your street stay unpublished.',
-    bstream: 'A buried watercourse: a creek or stream running underground in a storm tunnel or culvert. Some were open water before the city grew over them.',
-    dam: 'A dam or lock on the river: where the falls were tamed and the barges are lifted.',
-    exch: 'A telephone exchange: the older copper central offices, the fiber era\'s inheritance from the phone network.',
-    well: 'A drilled well, logged in the state\'s County Well Index. Its depth records how far down the usable ground goes here.',
-    pplant: { nuclear: 'Splits uranium to boil water.', coal: 'Burns coal, the old backbone.', gas: 'Burns natural gas, the system\'s flexible middle.', oil: 'An oil or dual-fuel peaker, run when demand spikes.', hydro: 'Spins on falling river water, the oldest power here.', waste: 'Burns garbage and sells the heat.', solar: 'A solar array.', wind: 'A wind site.', biomass: 'Burns plant matter.', battery: 'A grid battery.' }
+    tplant: 'Treats wastewater collected from its service area before discharging it to the river.',
+    tplantGhost: 'A former wastewater treatment plant, closed as the regional system changed.',
+    ww: 'Treats water for the public drinking-water supply.',
+    dc: 'A building that houses computing and network equipment. Some also provide connections between network operators.',
+    sub: 'Equipment that switches power and changes voltage between parts of the grid.',
+    inlet: 'Collects street runoff for the storm drain system, which generally discharges toward lakes and rivers without sewage treatment.',
+    hydrant: 'A connection to a drinking-water main that firefighters can use. The main itself is not shown on this map.',
+    tower: 'Elevated water storage that helps maintain pressure and meet changes in demand.',
+    gas: 'A high-pressure pipeline supplying gas to local distribution systems. Street distribution mains are not shown here.',
+    bstream: 'A watercourse mapped as an underground channel or culvert. Some carried open streams before development.',
+    dam: 'A river structure that controls water levels, or a lock that moves boats between different levels.',
+    exch: 'A central office from the telephone network, where subscriber lines connect to switching equipment.',
+    well: 'A drilled well recorded in Minnesota\'s County Well Index. Depth and aquifer information come from its well log.',
+    pplant: { nuclear: 'Uses nuclear fission to produce steam for electricity generation.', coal: 'Burns coal to generate electricity.', gas: 'Burns natural gas to generate electricity.', oil: 'An oil or dual-fuel generating plant.', hydro: 'Generates electricity from flowing water.', waste: 'Burns municipal waste for energy.', solar: 'A solar array.', wind: 'A wind generating site.', biomass: 'Uses plant material as fuel.', battery: 'Stores electricity for later use.' }
   };
   function mwText(mw) { return mw ? (mw >= 1000 ? (mw / 1000).toFixed(1) + ' GW' : Math.round(mw) + ' MW') : null; }
   var pinned = false;   // true when opened by a tap/click; hover-opened cards auto-close
@@ -798,22 +798,22 @@
     if (on.elec && L.grid) {
       out.push({ segs: L.grid.k345, meta: { name: '345 kV transmission line', kindLabel: 'Electric · backbone', color: LS.kv345.c, w: LS.kv345.w, img: 'line-hv', blurb: 'The metro\'s highest-voltage tier: the long-haul lines that move bulk power between plants and the region.' } });
       out.push({ segs: L.grid.k200, meta: { name: '230 kV transmission line', kindLabel: 'Electric', color: LS.kv200.c, w: LS.kv200.w, img: 'line-hv', blurb: 'Heavy regional transmission.' } });
-      out.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'Electric', color: LS.kv100.c, w: LS.kv100.w, img: 'line-hv', blurb: 'The workhorse tier that rings the cities and feeds the big substations.' } });
+      out.push({ segs: L.grid.k100, meta: { name: '115 to 161 kV transmission line', kindLabel: 'Electric', color: LS.kv100.c, w: LS.kv100.w, img: 'line-hv', blurb: 'Regional transmission supplying substations around the cities.' } });
       out.push({ segs: L.grid.low, meta: { name: 'Sub-100 kV line', kindLabel: 'Electric', color: LS.kvLow.c, w: LS.kvLow.w, img: 'line-hv', blurb: 'Lower-voltage subtransmission, the step before neighborhood feeders.' } });
       if (view.z > 10.4 && L.powerminor) out.push({ segs: L.powerminor, meta: { name: 'Distribution feeder', kindLabel: 'Electric · local', color: LS.minor.c, w: LS.minor.w, img: 'line-dist', blurb: 'A local feeder on its way to the poles and pad transformers. OSM maps only some of these; the full street-level grid is Xcel\'s and is not public.' } });
     }
     if (on.san && L.interceptors) {
-      out.push({ segs: L.interceptors.f, meta: { name: 'Forcemain interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, dash: [8, 4], blurb: 'A pressurized sewer: where gravity runs out, lift-station pumps shove the flow uphill through these.' } });
+      out.push({ segs: L.interceptors.f, meta: { name: 'Forcemain interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, dash: [8, 4], blurb: 'A pressurized sewer carrying wastewater pumped from a lift station.' } });
       out.push({ segs: L.interceptors.s, meta: { name: 'Siphon crossing', kindLabel: 'Sanitary sewer', color: LS.siphon.c, w: LS.siphon.w, dash: [2, 3], blurb: 'An inverted siphon: the pipe dives under a river or obstacle and pressure pushes the flow up the far side.' } });
-      out.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, blurb: 'The default sewer: a tunnel laid on a steady downhill grade, flowing to the plant on slope alone. These are the regional trunk lines; the smaller street mains that feed them are not published.' } });
-      out.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'Sanitary sewer · ghost', color: LS.ghost.c, w: LS.ghost.w, dash: [3, 4], blurb: 'A retired line, abandoned or removed as the regional system was rebuilt. Drawn as a ghost.' } });
+      out.push({ segs: L.interceptors.g, meta: { name: 'Gravity interceptor', kindLabel: 'Sanitary sewer', color: LS.sewer.c, w: LS.sewer.w, blurb: 'A regional sewer pipe or tunnel that carries wastewater downhill by gravity. Smaller city pipes feed into it; those are not shown here.' } });
+      out.push({ segs: L.interceptors.ghost, meta: { name: 'Abandoned interceptor', kindLabel: 'Sanitary sewer · abandoned', color: LS.ghost.c, w: LS.ghost.w, dash: [3, 4], blurb: 'A regional sewer line recorded as abandoned or removed.' } });
     }
     if (on.gas && L.pipes) out.push({ segs: L.pipes.filter(function (s) { return s.p.k === 'g'; }), meta: { name: 'Gas transmission main', kindLabel: 'Gas · transmission', color: C.gas, w: 1.8, img: 'gas', blurb: KINDBLURB.gas } });
     if (on.bstreams && L.bstream) out.push({ segs: L.bstream, meta: { name: 'Buried watercourse', kindLabel: 'Storm · buried creek', color: C.bstream, w: 1.7, dash: [6, 4], blurb: KINDBLURB.bstream } });
     if (on.pavement && L.pave) {
-      out.push({ segs: L.pave.filter(function (s) { return s.p.pci < 40; }), meta: { name: 'Street in poor condition', kindLabel: 'Pavement · PCI under 40', color: '#b8796d', w: 1.5, blurb: 'A Minneapolis street scored poor on the Pavement Condition Index (0 to 100). The city prioritizes repaving by this score; frost heave is the slow enemy.' } });
+      out.push({ segs: L.pave.filter(function (s) { return s.p.pci < 40; }), meta: { name: 'Street in poor condition', kindLabel: 'Pavement · PCI under 40', color: '#b8796d', w: 1.5, blurb: 'A Minneapolis street with a Pavement Condition Index below 40 on the city\'s 0-to-100 scale.' } });
       out.push({ segs: L.pave.filter(function (s) { return s.p.pci >= 40 && s.p.pci < 70; }), meta: { name: 'Street in fair condition', kindLabel: 'Pavement · PCI 40 to 70', color: '#dfc288', w: 1.5, blurb: 'A Minneapolis street scored fair on the Pavement Condition Index.' } });
-      out.push({ segs: L.pave.filter(function (s) { return s.p.pci >= 70; }), meta: { name: 'Street in good condition', kindLabel: 'Pavement · PCI 70+', color: '#9ec79a', w: 1.5, blurb: 'A Minneapolis street scored good on the Pavement Condition Index, recently built or resurfaced.' } });
+      out.push({ segs: L.pave.filter(function (s) { return s.p.pci >= 70; }), meta: { name: 'Street in good condition', kindLabel: 'Pavement · PCI 70+', color: '#9ec79a', w: 1.5, blurb: 'A Minneapolis street with a Pavement Condition Index of 70 or higher.' } });
     }
     return out;
   }
@@ -916,7 +916,7 @@
         L.bdepth.forEach(function (pt) { bdepthMap.set(Math.floor(lonOf(pt.x) / 0.004) + ',' + Math.floor(latOf(pt.y) / 0.004), pt.p.ft); });
       }
       var ft = bdepthMap.get(Math.floor(lon / 0.004) + ',' + Math.floor(lat / 0.004));
-      if (ft != null) return { kind: 'bdepth', kindLabel: 'Depth to bedrock', color: ft < 50 ? '#dfc288' : ft < 150 ? '#cf9f78' : ft < 300 ? '#b8796d' : '#b79bc4', name: 'About ' + ft + ' ft to rock', facts: [], blurb: 'The median depth to bedrock here, from the wells drilled nearby. Shallow near the river and the falls where the rock nears the surface, deep under the thick glacial till.' };
+      if (ft != null) return { kind: 'bdepth', kindLabel: 'Depth to bedrock', color: ft < 50 ? '#dfc288' : ft < 150 ? '#cf9f78' : ft < 300 ? '#b8796d' : '#b79bc4', name: 'About ' + ft + ' ft to rock', facts: [], blurb: 'The median depth to bedrock from nearby well logs, grouped into a grid cell. This is an estimate between wells, not a measurement at this exact point.' };
     }
     if (on.bedrock && L.bedrock) {
       for (var i = 0; i < L.bedrock.length; i++) {
@@ -926,7 +926,7 @@
         for (var a = 0, j = n - 1; a < n; j = a++) {
           if ((ys[a] > wy) !== (ys[j] > wy) && wx < (xs[j] - xs[a]) * (wy - ys[a]) / (ys[j] - ys[a]) + xs[a]) cross++;
         }
-        if (cross % 2 === 1) return { kind: 'bedrock', kindLabel: 'Bedrock at the surface', color: (seg.p.u || '').charAt(0) === 'C' ? '#dfc288' : '#b79bc4', name: seg.p.d || seg.p.u || 'Bedrock unit', facts: seg.p.u ? [['unit', seg.p.u]] : [], blurb: 'The rock unit that sits at the top of bedrock here, under the glacial soil. Cambrian layers are the older sandstones; Ordovician are the younger limestones and the St. Peter sandstone the sewers tunnel through.' };
+        if (cross % 2 === 1) return { kind: 'bedrock', kindLabel: 'Uppermost bedrock', color: (seg.p.u || '').charAt(0) === 'C' ? '#dfc288' : '#b79bc4', name: seg.p.d || seg.p.u || 'Bedrock unit', facts: seg.p.u ? [['unit', seg.p.u]] : [], blurb: 'The mapped rock formation beneath the soil here. Local Ordovician formations include the Platteville limestone and the St. Peter Sandstone used for some sewer tunnels.' };
       }
     }
     return null;
@@ -1086,7 +1086,7 @@
     if (started) return; started = true;
     ensureActive();  // pull the default-on granular layers alongside the core set
     fetch('assets/map/img/credits.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (c) { if (c) CREDITS = c; }).catch(function () {});
-    if (STATUS) STATUS.textContent = 'loading the real lines…';
+    if (STATUS) STATUS.textContent = 'Loading map data…';
     function grab(url) {
       return fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.json(); }).catch(function () { return null; });
     }
@@ -1133,7 +1133,7 @@
       if (STATUS) STATUS.hidden = true;
       requestDraw();
     }).catch(function () {
-      if (STATUS) STATUS.textContent = 'The map data could not load. The reading above still works.';
+      if (STATUS) STATUS.textContent = 'Map data could not load. The article is below.';
     });
   }
   if ('IntersectionObserver' in window) {
