@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.147';
+  var GAME_VERSION = 'v28.148';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -40759,14 +40759,14 @@
     return {cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY};
   }
 
-  // Spruce: a slender leader, staggered woody boughs and hanging needle fans.
-  // Unequal branch lengths leave air between tiers without Christmas triangles.
+  // Mature crowns add branchlets as they grow. Needle fans stay small in
+  // world pixels, so tall trees have more structure and a continuous crown.
   function treesBakeSpruce(hTiles, seed) {
-    var h = Math.round(hTiles * TILE), w = Math.round(h * (.39 + treesHash(seed * 17) * .25)) | 1;
+    var h = Math.round(hTiles * TILE), w = Math.round(22 + h * (.27 + treesHash(seed * 17) * .09)) | 1;
     var s = treesMakeSprite(w + 10, h + 6), g = s.g;
-    var cx = (s.w / 2) | 0, baseY = h + 3;
-    var tw = h > 135 ? 4 : h < 75 ? 2 : 3, top = 4;
-    var bend = (treesHash(seed * 23) - .5) * w * .14, forkY = h * .53;
+    var cx = (s.w / 2) | 0, baseY = h + 3, top = 5;
+    var tw = h > 135 ? 4 : 3;
+    var bend = (treesHash(seed * 23) - .5) * w * .13, forkY = h * .53;
     var leaderX = cx + bend * 1.5;
     treesTwig(g, cx - 1, baseY - tw - 1, cx + bend - 1, forkY, tw + 2, BLD.outline);
     treesTwig(g, cx + bend - 1, forkY, leaderX - 1, top, tw + 1, BLD.outline);
@@ -40774,80 +40774,95 @@
     treesTwig(g, cx + bend, forkY, leaderX, top + 2, Math.max(1, tw - 1), BLD.woodDark);
     treesTwig(g, cx, baseY - 3, cx + bend, forkY, 1, BLD.woodBase);
     g.fillStyle = BLD.woodDark; g.fillRect(cx - 2, baseY - 2, tw + 4, 2);
-    var sprays = [], boughs = 4 + Math.floor(hTiles * .7 + treesHash(seed * 29) * 2);
-    var crownEnd = .68 + treesHash(seed * 37) * .15;
-    var fullness = .76 + treesHash(seed * 43) * .24;
+    var sprays = [], boughs = Math.round(h * .087) + (treesHash(seed * 29) > .55 ? 1 : 0);
+    var crownEnd = .82 + treesHash(seed * 37) * .07;
+    var fullness = .75 + treesHash(seed * 43) * .35;
     var favoredSide = treesHash(seed * 53) < .5 ? -1 : 1;
     for (var b = boughs - 1; b >= 0; b--) {
-      var p = (b + 1) / boughs;
-      var by = top + h * (.09 + p * (crownEnd - .09));
+      var p = (b + 1) / boughs, by = top + h * (.07 + p * (crownEnd - .07));
       for (var side = -1; side <= 1; side += 2) {
         var salt = seed * 47 + b * 103 + side * 19;
-        var len = w * .40 * (.14 + Math.pow(p, fullness) * .86) * (.64 + treesHash(salt) * .36);
-        len *= side === favoredSide ? 1.04 : .80;
-        // Some boughs are sparse or weather-shortened, leaving a different
-        // opening in each crown rather than paired, evenly spaced tiers.
-        var sparse = b > 0 && b < boughs - 1 && treesHash(salt + 11) < .18;
-        if (sparse) len *= .52;
-        var y0 = by + (treesHash(salt + 3) - .5) * h * .085;
+        var len = w * .42 * (.14 + Math.pow(p, fullness) * .86) * (.75 + treesHash(salt) * .25);
+        len *= side === favoredSide ? 1 : .85;
+        var sparse = b > 2 && b < boughs - 2 && treesHash(salt + 11) < .10;
+        if (sparse) len *= .58;
+        var y0 = by + (treesHash(salt + 3) - .5) * 5;
         var rootX = cx + bend * Math.min(1.5, (baseY - y0) / (baseY - forkY));
-        var tx = rootX + side * len, ty = y0 + h * (.008 + treesHash(salt + 7) * .02);
-        treesTwig(g, rootX, y0 - h * .035, tx, ty, 2, BLD.outline);
-        treesTwig(g, rootX, y0 - h * .035, tx, ty, 1, BLD.woodDark);
-        // Each branch carries two or three distinct, drooping needle sprays.
-        var fans = sparse ? 2 : 2 + (treesHash(salt + 13) > .35 ? 1 : 0);
+        var ty = y0 + 1 + treesHash(salt + 7) * 3;
+        treesTwig(g, rootX, y0 - 3, rootX + side * len, ty, 2, BLD.outline);
+        treesTwig(g, rootX, y0 - 3, rootX + side * len, ty, 1, BLD.woodDark);
+        var fans = Math.max(2, Math.ceil(len / 5));
         for (var f = 0; f < fans; f++) {
-          var t = .22 + f * .62 / (fans - 1), spread = .83 + treesHash(salt + f * 31) * .23;
-          sprays.push({x:rootX + side * len * t, y:y0 - h * .02 + f * h * .009,
-            rx:Math.max(3, len * (.39 - f * .05) * spread),
-            ry:h * (.039 + treesHash(salt + f * 61) * .018) * (1 - f * .12),
-            tilt:side * (.12 + treesHash(salt + 17) * .22)});
+          var t = .15 + f * .79 / (fans - 1);
+          var x = rootX + side * len * t, y = y0 - 3 + (ty - y0 + 3) * t;
+          var drop = 2 + treesHash(salt + f * 31) * 4;
+          treesTwig(g, x, y, x + side * 2, y + drop, 1, BLD.woodDark);
+          sprays.push({x:x + side, y:y + drop * .35,
+            rx:4 + treesHash(salt + f * 61) * 3,
+            ry:3.5 + treesHash(salt + f * 71) * 2, tilt:side * .25});
+          if (f % 2 === 0 && !sparse) {
+            sprays.push({x:x - side * 2, y:y - 3,
+              rx:3.5, ry:3, tilt:-side * .22});
+          }
         }
       }
     }
-    sprays.push({x:leaderX, y:top + h * .055, rx:w * .095, ry:h * .055, tilt:-.12});
+    sprays.push({x:leaderX, y:top + 5, rx:3, ry:5, tilt:-.12});
     treesPaintSprays(s, sprays, seed, true);
     return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
   }
 
-  // Birch: crooked pale trunk, visible forks and an open, uneven crown.
-  // Smaller leaf groups use the same shape vocabulary as the woody scrub.
+  // Fine leafy side shoots along a woody limb. Twig spacing and leaf size
+  // stay near a few world pixels while bigger limbs carry more shoots.
+  function treesBirchBranchlets(g, sprays, x0, y0, x1, y1, seed) {
+    var length = Math.hypot(x1 - x0, y1 - y0), shoots = Math.max(3, Math.ceil(length / 6));
+    for (var i = 0; i < shoots; i++) {
+      var salt = seed + i * 71, t = .25 + i * .75 / (shoots - 1);
+      var bx = x0 + (x1 - x0) * t, by = y0 + (y1 - y0) * t;
+      var side = i % 2 ? -1 : 1;
+      var tx = bx + side * (3 + treesHash(salt) * 5), ty = by - 3 - treesHash(salt + 9) * 5;
+      treesTwig(g, bx, by, tx, ty, 1, BLD.woodDark);
+      sprays.push({x:tx, y:ty + 1, rx:4.5 + treesHash(salt + 13) * 2.5,
+        ry:3 + treesHash(salt + 17) * 1.5, tilt:side * -.22});
+      if (i % 3 !== 1) {
+        sprays.push({x:bx + side * 2, y:by - 1,
+          rx:3.5 + treesHash(salt + 23) * 1.5, ry:3, tilt:side * .18});
+      }
+    }
+  }
+
+  // Mature birches divide into many fine twigs through a compact, irregular
+  // crown. Taller trees add limbs and leaf clusters, with exposed pale forks.
   function treesBakeBirch(hTiles, seed) {
-    var h = Math.round(hTiles * TILE), w = Math.round(h * (.48 + treesHash(seed * 17) * .28)) | 1;
-    var s = treesMakeSprite(w + 10, h + 6), g = s.g;
-    var cx = (s.w / 2) | 0, baseY = h + 3, tw = h > 80 ? 4 : 3;
-    var kink = (treesHash(seed * 19) - .5) * w * .14;
-    var forkX = cx + kink, forkY = h * (.55 + treesHash(seed * 23) * .17);
+    var h = Math.round(hTiles * TILE), w = Math.round(24 + h * (.33 + treesHash(seed * 17) * .11)) | 1;
+    var s = treesMakeSprite(w + 12, h + 6), g = s.g;
+    var cx = (s.w / 2) | 0, baseY = h + 3, tw = h > 125 ? 4 : 3;
+    var kink = (treesHash(seed * 19) - .5) * w * .17;
+    var forkX = cx + kink, forkY = h * (.60 + treesHash(seed * 23) * .10);
     treesTwig(g, cx - 1, baseY - tw, forkX - 1, forkY, tw + 2, BLD.outline);
     treesTwig(g, cx, baseY - tw, forkX, forkY, tw, TREES_BARK_PALE);
     treesTwig(g, cx + tw - 1, baseY - tw, forkX + tw - 1, forkY, 1, BLD.woodDark);
     g.fillStyle = BLD.woodDark; g.fillRect(cx - 2, baseY - 1, tw + 4, 1);
-    var leaderX = cx + kink * 1.8, leaderY = 3 + h * .11;
+    var leaderX = cx + kink * 1.8, leaderY = 12;
     treesTwig(g, forkX - 1, forkY, leaderX - 1, leaderY, 3, BLD.outline);
     treesTwig(g, forkX, forkY, leaderX, leaderY, 2, TREES_BARK_PALE);
-    var sprays = [], crowns = 5 + Math.floor(treesHash(seed * 29) * 4);
-    var sideBias = (treesHash(seed * 31) - .5) * w * .14;
-    var crownDepth = .37 + treesHash(seed * 37) * .18;
-    for (var b = crowns - 1; b >= 0; b--) {
-      var salt = seed * 41 + b * 137, p = b / (crowns - 1);
-      var side = b % 2 ? -1 : 1;
-      var ty = 3 + h * (.14 + p * crownDepth + (treesHash(salt + 9) - .5) * .065);
-      var by = ty + (forkY - ty) * .34, branchRootY = Math.min(forkY, by + h * .08);
+    var sprays = [], limbs = 6 + Math.floor((h - 95) / 16) + Math.floor(treesHash(seed * 29) * 2);
+    var sideBias = (treesHash(seed * 31) - .5) * w * .10;
+    var crownDepth = .43 + treesHash(seed * 37) * .07;
+    for (var b = limbs - 1; b >= 0; b--) {
+      var salt = seed * 41 + b * 137, p = b / (limbs - 1), side = b % 2 ? -1 : 1;
+      var ty = Math.max(14, 8 + h * (.09 + p * crownDepth) + (treesHash(salt + 9) - .5) * 7);
+      var branchRootY = Math.min(forkY, ty + 13 + h * .12);
       var branchRootX = forkX + (leaderX - forkX) * (forkY - branchRootY) / (forkY - leaderY);
-      var tx = cx + sideBias + side * w * (.12 + treesHash(salt) * .18) * (.55 + p * .45);
-      var bx = branchRootX + (tx - branchRootX) * .45;
-      treesTwig(g, branchRootX, branchRootY, bx, by, 3, BLD.outline);
-      treesTwig(g, bx, by, tx, ty, 2, BLD.outline);
+      var tx = cx + sideBias + side * w * (.16 + Math.sin(p * Math.PI * .8) * .18) * (.82 + treesHash(salt) * .18);
+      var bx = branchRootX + (tx - branchRootX) * .50, by = branchRootY + (ty - branchRootY) * .45;
+      treesTwig(g, branchRootX - 1, branchRootY, bx - 1, by, 3, BLD.outline);
+      treesTwig(g, bx - 1, by, tx - 1, ty, 2, BLD.outline);
       treesTwig(g, branchRootX, branchRootY, bx, by, 2, TREES_BARK_PALE);
-      treesTwig(g, bx, by, tx, ty, 1, TREES_BARK_PALE);
-      var rx = w * (.13 + treesHash(salt + 13) * .065), ry = h * (.055 + treesHash(salt + 17) * .027);
-      sprays.push({x:tx, y:ty, rx:rx, ry:ry, tilt:side * (.08 + treesHash(salt + 19) * .13)});
-      if (b % 3 !== seed % 3) {
-        sprays.push({x:tx - side * rx * .54, y:ty + ry * .92,
-          rx:rx * .62, ry:ry * .54, tilt:-side * .16});
-      }
+      treesTwig(g, bx, by, tx, ty, 1, BLD.woodDark);
+      treesBirchBranchlets(g, sprays, bx, by, tx, ty, salt);
     }
-    sprays.push({x:leaderX, y:leaderY + h * .02, rx:w * .12, ry:h * .06, tilt:-.10});
+    treesBirchBranchlets(g, sprays, forkX, forkY - h * .20, leaderX, leaderY, seed * 83);
     for (var y = Math.round(forkY + 6); y < baseY - 4; y += 7) {
       var tx = cx + kink * (baseY - y) / (baseY - forkY);
       g.fillStyle = BLD.woodDeep;
@@ -41591,6 +41606,10 @@
     var cleftLean = (treesHash(seed * 67 + 9) - .5) * .28;
     var crown = .13 + treesHash(seed * 71 + 11) * .13;
     var hasCrack = treesHash(seed * 73 + 13) < .62;
+    var bedY = .42 + treesHash(seed * 97 + 19) * .21;
+    var bedLean = (treesHash(seed * 101 + 23) - .5) * .24;
+    var bedStart = .16 + treesHash(seed * 103 + 29) * .16;
+    var bedEnd = .63 + treesHash(seed * 107 + 31) * .19;
     var palette = surfaceBoulderColors(), tone = treesHash(seed * 79 + 17) < .3 ? 1 : 0;
     var moss = surfaceBoulderMix(BLD.stoneBase, TREES_GREEN_DARK, .24);
     var mask = new Uint8Array(s.w * s.h), x, y, i;
@@ -41609,6 +41628,28 @@
         for (x = Math.ceil(cuts[i]); x <= Math.floor(cuts[i + 1]); x++) mask[(y + 3) * s.w + x] = 1;
       }
     }
+    // A shallow crown chip and a nick in the right shoulder interrupt long
+    // clean edges. Re-outline the changed mask rather than stamping dark dots.
+    var chips = [], chipX = Math.round(3 + w * (.28 + treesHash(seed * 109 + 37) * .34));
+    for (y = 3; y < h * .61 + 3; y++) {
+      if (!mask[y * s.w + chipX]) continue;
+      if (mask[(y + 1) * s.w + chipX] && mask[(y + 1) * s.w + chipX + 1]) {
+        mask[y * s.w + chipX] = 0;
+        if (mask[y * s.w + chipX + 1]) mask[y * s.w + chipX + 1] = 0;
+        chips.push([chipX, y + 1, 2]);
+      }
+      break;
+    }
+    var chipY = Math.round(3 + h * (.35 + treesHash(seed * 113 + 41) * .29));
+    for (x = w + 3; x > w * .55 + 3; x--) {
+      if (!mask[chipY * s.w + x]) continue;
+      if (mask[chipY * s.w + x - 1] && mask[(chipY + 1) * s.w + x - 1]) {
+        mask[chipY * s.w + x] = 0;
+        if (mask[(chipY + 1) * s.w + x]) mask[(chipY + 1) * s.w + x] = 0;
+        chips.push([x - 1, chipY, 1]);
+      }
+      break;
+    }
     for (y = 1; y < s.h - 1; y++) for (x = 1; x < s.w - 1; x++) {
       var at = y * s.w + x;
       if (!mask[at]) {
@@ -41623,11 +41664,16 @@
       var shaded = nx > split + ny * splitLean;
       if (ny > .94 - nx * .03) shaded = true;
       var lit = !shaded && ny < crown + nx * .14 && nx < split - .10;
-      g.fillStyle = palette[tone + (shaded ? 1 : (lit ? 3 : 2))];
+      var bed = ny - (bedY + nx * bedLean + (nx > .48 ? .035 : 0));
+      var ledge = !lit && nx > bedStart && nx < bedEnd && bed > 0 && bed < .065;
+      g.fillStyle = palette[tone + (shaded || ledge ? 1 : (lit ? 3 : 2))];
       g.fillRect(x, y, 1, 1);
-      // A short, bent hairline and one small split at its foot. Keep most
-      // of the face quiet; these are weathered rocks, not faceted jewels.
+      // The cleft has a narrow lit lip on its upper-left side. Its short
+      // branching foot remains a seam rather than a dark painted panel.
       var crackX = Math.round(3 + w * (cleft + ny * cleftLean)) + (ny > .44 ? 1 : 0);
+      if (hasCrack && ny > .30 && ny < .61 && x === crackX - 1 && mask[at + 1]) {
+        g.fillStyle = palette[tone + 3]; g.fillRect(x, y, 1, 1);
+      }
       if (hasCrack && ny > .30 && ny < .63 &&
           (x === crackX || (ny > .56 && ny < .62 && x === crackX - 1))) {
         g.fillStyle = palette[tone]; g.fillRect(x, y, 1, 1);
@@ -41640,6 +41686,54 @@
       if (seed % 2 && ny > .86 && nx > .14 && nx < .31 - (ny > .93 ? .05 : 0)) {
         g.fillStyle = moss; g.fillRect(x, y, 1, 1);
       }
+    }
+    // Masked detail stays crisp and connected, including on the small slabs.
+    function stonePixel(px, py, step, edge) {
+      px = Math.round(px); py = Math.round(py);
+      var at = py * s.w + px;
+      if (px < 1 || px >= s.w - 1 || py < 1 || py >= s.h - 1 || !mask[at]) return;
+      if (!edge && (!mask[at - 1] || !mask[at + 1] || !mask[at - s.w] || !mask[at + s.w])) return;
+      g.fillStyle = palette[tone + step]; g.fillRect(px, py, 1, 1);
+    }
+    // A broken bedding edge describes the thin fracture plane. A second
+    // shorter layer appears on broad slabs, with calm untouched face between.
+    var layers = kind === 1 || kind === 4 ? 2 : 1;
+    for (var layer = 0; layer < layers; layer++) {
+      var left = Math.round(3 + w * (bedStart + layer * .10));
+      var right = Math.round(3 + w * (bedEnd - layer * .09));
+      for (x = left; x <= right; x++) {
+        var nx = (x - 3) / w;
+        var seamY = Math.round(3 + h * (bedY + nx * bedLean + (nx > .48 ? .035 : 0) + layer * .18));
+        stonePixel(x, seamY, 1, false);
+        if (x < right - 2 && x > left + 1) stonePixel(x, seamY - 1, 3, false);
+        if (layer === 0 && x > right - 5) stonePixel(x, seamY + 1, 1, false);
+      }
+    }
+    // Mineral inclusions grow as a few connected grains beside the
+    // bedding, never as isolated random specks scattered across every face.
+    var grains = Math.min(5, 2 + Math.floor(w * h / 300));
+    for (var grain = 0; grain < grains; grain++) {
+      var grainX = Math.round(3 + w * (bedStart + .05 + grain / grains * (bedEnd - bedStart - .09)));
+      var grainNX = (grainX - 3) / w;
+      var grainY = Math.round(3 + h * (bedY + grainNX * bedLean) +
+        (grain % 2 ? 4 : -4) + (treesHash(seed * 127 + grain * 43) < .5 ? -1 : 1));
+      var grainAt = grainY * s.w + grainX;
+      if (grainX < 2 || grainY < 2 || grainX >= s.w - 4 || grainY >= s.h - 3 ||
+          !mask[grainAt - s.w] || !mask[grainAt - 1] || !mask[grainAt + 3] ||
+          !mask[grainAt + s.w] || !mask[grainAt + s.w + 2]) continue;
+      var grainW = treesHash(seed * 131 + grain * 47) < .45 ? 3 : 2;
+      for (var gx = 0; gx < grainW; gx++) {
+        stonePixel(grainX + gx, grainY, 3, false);
+      }
+      stonePixel(grainX, grainY + 1, 1, false);
+      stonePixel(grainX + 1, grainY + 1, 1, false);
+    }
+    for (var chip = 0; chip < chips.length; chip++) {
+      var ch = chips[chip];
+      stonePixel(ch[0], ch[1], 1, true);
+      stonePixel(ch[0] + (ch[2] === 2 ? 1 : -1), ch[1], 1, true);
+      stonePixel(ch[0] - 1, ch[1] - 1, 3, true);
+      stonePixel(ch[0] - 2, ch[1] - 1, 3, true);
     }
     return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY,
       base:palette[tone + 2], shade:palette[tone + 1] };

@@ -66,6 +66,10 @@
     var cleftLean = (treesHash(seed * 67 + 9) - .5) * .28;
     var crown = .13 + treesHash(seed * 71 + 11) * .13;
     var hasCrack = treesHash(seed * 73 + 13) < .62;
+    var bedY = .42 + treesHash(seed * 97 + 19) * .21;
+    var bedLean = (treesHash(seed * 101 + 23) - .5) * .24;
+    var bedStart = .16 + treesHash(seed * 103 + 29) * .16;
+    var bedEnd = .63 + treesHash(seed * 107 + 31) * .19;
     var palette = surfaceBoulderColors(), tone = treesHash(seed * 79 + 17) < .3 ? 1 : 0;
     var moss = surfaceBoulderMix(BLD.stoneBase, TREES_GREEN_DARK, .24);
     var mask = new Uint8Array(s.w * s.h), x, y, i;
@@ -84,6 +88,28 @@
         for (x = Math.ceil(cuts[i]); x <= Math.floor(cuts[i + 1]); x++) mask[(y + 3) * s.w + x] = 1;
       }
     }
+    // A shallow crown chip and a nick in the right shoulder interrupt long
+    // clean edges. Re-outline the changed mask rather than stamping dark dots.
+    var chips = [], chipX = Math.round(3 + w * (.28 + treesHash(seed * 109 + 37) * .34));
+    for (y = 3; y < h * .61 + 3; y++) {
+      if (!mask[y * s.w + chipX]) continue;
+      if (mask[(y + 1) * s.w + chipX] && mask[(y + 1) * s.w + chipX + 1]) {
+        mask[y * s.w + chipX] = 0;
+        if (mask[y * s.w + chipX + 1]) mask[y * s.w + chipX + 1] = 0;
+        chips.push([chipX, y + 1, 2]);
+      }
+      break;
+    }
+    var chipY = Math.round(3 + h * (.35 + treesHash(seed * 113 + 41) * .29));
+    for (x = w + 3; x > w * .55 + 3; x--) {
+      if (!mask[chipY * s.w + x]) continue;
+      if (mask[chipY * s.w + x - 1] && mask[(chipY + 1) * s.w + x - 1]) {
+        mask[chipY * s.w + x] = 0;
+        if (mask[(chipY + 1) * s.w + x]) mask[(chipY + 1) * s.w + x] = 0;
+        chips.push([x - 1, chipY, 1]);
+      }
+      break;
+    }
     for (y = 1; y < s.h - 1; y++) for (x = 1; x < s.w - 1; x++) {
       var at = y * s.w + x;
       if (!mask[at]) {
@@ -98,11 +124,16 @@
       var shaded = nx > split + ny * splitLean;
       if (ny > .94 - nx * .03) shaded = true;
       var lit = !shaded && ny < crown + nx * .14 && nx < split - .10;
-      g.fillStyle = palette[tone + (shaded ? 1 : (lit ? 3 : 2))];
+      var bed = ny - (bedY + nx * bedLean + (nx > .48 ? .035 : 0));
+      var ledge = !lit && nx > bedStart && nx < bedEnd && bed > 0 && bed < .065;
+      g.fillStyle = palette[tone + (shaded || ledge ? 1 : (lit ? 3 : 2))];
       g.fillRect(x, y, 1, 1);
-      // A short, bent hairline and one small split at its foot. Keep most
-      // of the face quiet; these are weathered rocks, not faceted jewels.
+      // The cleft has a narrow lit lip on its upper-left side. Its short
+      // branching foot remains a seam rather than a dark painted panel.
       var crackX = Math.round(3 + w * (cleft + ny * cleftLean)) + (ny > .44 ? 1 : 0);
+      if (hasCrack && ny > .30 && ny < .61 && x === crackX - 1 && mask[at + 1]) {
+        g.fillStyle = palette[tone + 3]; g.fillRect(x, y, 1, 1);
+      }
       if (hasCrack && ny > .30 && ny < .63 &&
           (x === crackX || (ny > .56 && ny < .62 && x === crackX - 1))) {
         g.fillStyle = palette[tone]; g.fillRect(x, y, 1, 1);
@@ -115,6 +146,54 @@
       if (seed % 2 && ny > .86 && nx > .14 && nx < .31 - (ny > .93 ? .05 : 0)) {
         g.fillStyle = moss; g.fillRect(x, y, 1, 1);
       }
+    }
+    // Masked detail stays crisp and connected, including on the small slabs.
+    function stonePixel(px, py, step, edge) {
+      px = Math.round(px); py = Math.round(py);
+      var at = py * s.w + px;
+      if (px < 1 || px >= s.w - 1 || py < 1 || py >= s.h - 1 || !mask[at]) return;
+      if (!edge && (!mask[at - 1] || !mask[at + 1] || !mask[at - s.w] || !mask[at + s.w])) return;
+      g.fillStyle = palette[tone + step]; g.fillRect(px, py, 1, 1);
+    }
+    // A broken bedding edge describes the thin fracture plane. A second
+    // shorter layer appears on broad slabs, with calm untouched face between.
+    var layers = kind === 1 || kind === 4 ? 2 : 1;
+    for (var layer = 0; layer < layers; layer++) {
+      var left = Math.round(3 + w * (bedStart + layer * .10));
+      var right = Math.round(3 + w * (bedEnd - layer * .09));
+      for (x = left; x <= right; x++) {
+        var nx = (x - 3) / w;
+        var seamY = Math.round(3 + h * (bedY + nx * bedLean + (nx > .48 ? .035 : 0) + layer * .18));
+        stonePixel(x, seamY, 1, false);
+        if (x < right - 2 && x > left + 1) stonePixel(x, seamY - 1, 3, false);
+        if (layer === 0 && x > right - 5) stonePixel(x, seamY + 1, 1, false);
+      }
+    }
+    // Mineral inclusions grow as a few connected grains beside the
+    // bedding, never as isolated random specks scattered across every face.
+    var grains = Math.min(5, 2 + Math.floor(w * h / 300));
+    for (var grain = 0; grain < grains; grain++) {
+      var grainX = Math.round(3 + w * (bedStart + .05 + grain / grains * (bedEnd - bedStart - .09)));
+      var grainNX = (grainX - 3) / w;
+      var grainY = Math.round(3 + h * (bedY + grainNX * bedLean) +
+        (grain % 2 ? 4 : -4) + (treesHash(seed * 127 + grain * 43) < .5 ? -1 : 1));
+      var grainAt = grainY * s.w + grainX;
+      if (grainX < 2 || grainY < 2 || grainX >= s.w - 4 || grainY >= s.h - 3 ||
+          !mask[grainAt - s.w] || !mask[grainAt - 1] || !mask[grainAt + 3] ||
+          !mask[grainAt + s.w] || !mask[grainAt + s.w + 2]) continue;
+      var grainW = treesHash(seed * 131 + grain * 47) < .45 ? 3 : 2;
+      for (var gx = 0; gx < grainW; gx++) {
+        stonePixel(grainX + gx, grainY, 3, false);
+      }
+      stonePixel(grainX, grainY + 1, 1, false);
+      stonePixel(grainX + 1, grainY + 1, 1, false);
+    }
+    for (var chip = 0; chip < chips.length; chip++) {
+      var ch = chips[chip];
+      stonePixel(ch[0], ch[1], 1, true);
+      stonePixel(ch[0] + (ch[2] === 2 ? 1 : -1), ch[1], 1, true);
+      stonePixel(ch[0] - 1, ch[1] - 1, 3, true);
+      stonePixel(ch[0] - 2, ch[1] - 1, 3, true);
     }
     return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY,
       base:palette[tone + 2], shade:palette[tone + 1] };
