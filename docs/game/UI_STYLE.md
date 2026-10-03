@@ -95,6 +95,17 @@ visible beyond the copper rim until it reaches the floor and drains away.
 > canvas menus retain their stencil titles on plain gunmetal frames. Brass
 > remains on progress, actions and selected controls.
 
+> **Viewport and console finish (owner instruction, 2026-10-03).** A narrow
+> steel rim and dark inner gasket surround the playable view. The bottom
+> console joins that rim with a folded metal lip, recessed dark instruments,
+> chamfered end plates and restrained ventilation slots on wide screens.
+> The cargo hatch uses a complete responsive rim. Pause, fullscreen, Items
+> and scoop controls share quiet steel keys with 44px targets; version and
+> FPS sit beside Pause in neutral text. Keep the existing six readings,
+> warnings, reading geometry and
+> cached rendering. This supersedes the decorative brass console seam and
+> underlined maker stamp in the earlier character amendment.
+
 
 > **Theme note (2026-05-28):** "Frontier Soviet" is the *current* skin, not a permanent contract. Sluice is heading toward a paid Steam release and the theme may be revisited for that build, so treat the palette and the Cyrillic / red-star / propaganda motifs as the present look to match, not as fixed law. The structural principles here (UI-is-in-world, the outline and palette discipline, diegetic walk-up shops, animation restraint) carry across any re-theme; the Soviet hexes and iconography are replaceable. Heads up too: parts of this doc spec work that was never built (per-tier sprites, oil depot, space station) or describe the removed win screen, so check a section against the live game before trusting it.
 

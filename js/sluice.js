@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.169';
+  var GAME_VERSION = 'v28.170';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -18292,9 +18292,8 @@
     ctx.restore();
   }
   function siphonDrawButton(x, y, w, h, label, action, active) {
-    ctx.fillStyle = active ? UIT_PANEL_SEL : UIMAT_PLATE_BASE; ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = active ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-    ctx.fillStyle = active ? UIT_GOLD : UIT_TEXT; ctx.font = 'bold 11px ' + UI_FONT;
+    drawConsoleKey(x, y, w, h, active);
+    ctx.fillStyle = active ? UIT_GOLD : UIT_BODY; ctx.font = 'bold 11px ' + UI_FONT;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + w / 2, y + h / 2);
     siphonButtons.push({ x: x, y: y, w: w, h: h, action: action });
   }
@@ -18309,25 +18308,25 @@
     }
     w = Math.min(w, viewW - 28);
     var expanded = siphon.equipped || siphon.dump || siphon.noticeT > 0 || siphonTotal() > 0 || siphon.passenger;
-    var h = expanded ? 126 : 42;
+    var h = expanded ? 126 : 46;
     var y = Math.max(56, bottom - h);
     ctx.save();
     if (!expanded) {
-      siphonDrawButton(x, y, 126, 40, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
+      siphonDrawButton(x, y, 126, 44, isMobile ? 'SCOOP' : 'F  SCOOP', 'equip', false);
       ctx.restore(); return;
     }
     ctx.fillStyle = UIT_PANEL; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
     ctx.strokeStyle = UIMAT_PLATE_HIGHLIGHT; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
     var bw = Math.floor((w - 16) / 3);
-    siphonDrawButton(x + 4, y + 4, bw, 36, isMobile ? 'SCOOP' : 'F SCOOP', 'equip', siphon.equipped && siphon.mode === 'suck');
-    siphonDrawButton(x + 8 + bw, y + 4, bw, 36, 'DUMP', 'mode', !!siphon.dump);
-    siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 36, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
+    siphonDrawButton(x + 4, y + 4, bw, 44, isMobile ? 'SCOOP' : 'F SCOOP', 'equip', siphon.equipped && siphon.mode === 'suck');
+    siphonDrawButton(x + 8 + bw, y + 4, bw, 44, 'DUMP', 'mode', !!siphon.dump);
+    siphonDrawButton(x + 12 + bw * 2, y + 4, bw, 44, isMobile ? 'TANK' : 'R  TANK', 'cycle', false);
     var total = siphonTotal(), info = liquidCatalog[siphon.selected];
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.font = '11px ' + UI_FONT;
     ctx.fillStyle = UIT_TEXT;
-    ctx.fillText(info.name + '  ' + Math.round(siphon.tank[siphon.selected] / 100) + ' L', x + 10, y + 57);
+    ctx.fillText(info.name + '  ' + Math.round(siphon.tank[siphon.selected] / 100) + ' L', x + 10, y + 60);
     ctx.textAlign = 'right'; ctx.fillStyle = UIT_DIM;
-    ctx.fillText(Math.round(total / 100) + '/160 L', x + w - 10, y + 57);
+    ctx.fillText(Math.round(total / 100) + '/160 L', x + w - 10, y + 60);
     ctx.fillStyle = UIT_INSET; ctx.fillRect(x + 10, y + 65, w - 20, 8);
     var barX = x + 10;
     for (var type = 0; type < liquidCatalog.length; type++) {
@@ -34456,6 +34455,7 @@
   }
 
   function render() {
+    syncViewportKeys();
     if (UI_NEW && gameOver && !deathSceneCapture) { drawDeathFrame(); return; }
     hearthOverlayHide();
     if (hearthFireGPU) hearthFireGPU.hide();
@@ -52607,14 +52607,15 @@
     for (var i = 0; i < cargo.length; i++) value += cargoUnitValue(cargo[i]);
     var hover = consoleCargoHovered();
     var open = typeof cargoManifestOpen !== 'undefined' && cargoManifestOpen;
-    // A raised hatch makes this instrument visibly operable. It is the one
-    // console reading that opens a view, so it earns the brass label and edge.
-    ctx.fillStyle = hover || open ? UIT_PANEL_SEL : UIT_PANEL;
+    // The cargo hatch is the operable part of the instrument bed. Its whole
+    // rim responds to focus, rather than using a decorative gold header rule.
+    ctx.fillStyle = hover || open ? UIT_GOLD : UIT_EDGE;
     ctx.fillRect(bx - 3, by - 2, bw + 6, bh + 3);
-    ctx.fillStyle = hover || open ? UIT_GOLD : UIMAT_WELD;
-    ctx.fillRect(bx - 3, by - 2, bw + 6, 1);
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
-    ctx.fillRect(bx - 3, by + bh, bw + 6, 1);
+    var face = ctx.createLinearGradient(0, by, 0, by + bh);
+    face.addColorStop(0, hover || open ? UIT_PANEL_SEL : UIMAT_BAY_RECESS);
+    face.addColorStop(1, UIT_PANEL);
+    ctx.fillStyle = face;
+    ctx.fillRect(bx - 2, by - 1, bw + 4, bh + 1);
     consoleText('CARGO', bx, by + 11, 11, UIT_GOLD);
     consoleText('>', bx + bw - 1, by + 11, 12, UIT_GOLD, 'right');
     consoleValue('' + used, '/ ' + capacity, bx, by, bw, bh, full ? UIT_GOLD : UIT_TEXT);
@@ -53074,7 +53075,6 @@
     srDrawFinale();
     ctx.restore();
   }
-
   // ========================================================================
   // SHOP ARCHITECTURE  (USE_NEW_SHOP_UI feature flag)
   // ========================================================================
@@ -61437,14 +61437,21 @@
     itemWheel.pointerId = null;
     itemWheel.hover = -1;
   }
+  function drawConsoleKey(x, y, w, h, active) {
+    ctx.save();
+    ctx.fillStyle = active ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT;
+    roundRect(ctx, x, y, w, h, 3, true);
+    var face = ctx.createLinearGradient(0, y, 0, y + h);
+    face.addColorStop(0, UIT_PANEL_SEL); face.addColorStop(1, UIT_PANEL);
+    ctx.fillStyle = face;
+    roundRect(ctx, x + 1, y + 1, w - 2, h - 2, 2, true);
+    ctx.fillStyle = UIT_INSET; ctx.fillRect(x + 3, y + h - 3, w - 6, 2);
+    ctx.restore();
+  }
   function drawItemWheelButton() {
     var r = itemWheelButtonRect();
     ctx.save();
-    ctx.fillStyle = itemWheel.open ? UIT_PANEL_SEL : UIT_PANEL;
-    ctx.fillRect(r.x, r.y, r.w, r.h);
-    ctx.strokeStyle = itemWheel.open ? UIT_GOLD : UIMAT_PLATE_HIGHLIGHT;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+    drawConsoleKey(r.x, r.y, r.w, r.h, itemWheel.open);
     consoleText('ITEMS', r.x + r.w / 2, r.y + 14, 11, UIT_DIM, 'center');
     var total = teleporters + balloons + bombsSmall + bombsLarge;
     consoleText('' + total, r.x + r.w / 2, r.y + 35, 18, total > 0 ? UIT_TEXT : UIT_DIM, 'center', true);
@@ -62007,37 +62014,70 @@
     else if (bay.id === 'depth')   drawDepthDisplay(bx, by, bw, bh);
   }
 
+  // Folded end plates share the viewport rim's steel and dark gasket. The
+  // shallow chamfer and ventilation slots are static, cached material detail.
+  function drawConsoleMount(w, y, h, marked) {
+    if (w < 32) return;
+    var face = ctx.createLinearGradient(0, y, 0, y + h);
+    face.addColorStop(0, UIMAT_PLATE_BASE);
+    face.addColorStop(1, UIMAT_PLATE_SHADOW);
+    ctx.beginPath();
+    ctx.moveTo(4, y + 5); ctx.lineTo(w - 18, y + 5);
+    ctx.lineTo(w - 4, y + 13); ctx.lineTo(w - 4, y + h - 12);
+    ctx.lineTo(w - 14, y + h - 5); ctx.lineTo(4, y + h - 5);
+    ctx.closePath(); ctx.fillStyle = face; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = UIT_EDGE; ctx.stroke();
+    if (!marked && w >= 64) {
+      var slotW = Math.min(44, w - 32), slotX = Math.round((w - slotW) / 2);
+      for (var v = 0; v < 4; v++) {
+        var sy = Math.round(y + h / 2 - 11 + v * 6);
+        ctx.fillStyle = UIT_EDGE; ctx.fillRect(slotX, sy, slotW, 3);
+        ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT; ctx.fillRect(slotX, sy + 3, slotW, 1);
+      }
+    }
+  }
+
   // Draws the static console structure onto `ctx` (the caller points ctx at
   // the offscreen cache) and records each bay's rect for the live pass.
   function drawConsoleFrameContent(R) {
     consoleBayLayout.length = 0;
-    // A folded steel housing with a narrow brass seam and a glass instrument
-    // bed. All wear is deterministic and cached; it never shimmers in play.
-    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    // One folded housing, with a recessed instrument bed and a solid lower
+    // sill. The metal lip carries depth without ornamental brass rules.
+    var shell = ctx.createLinearGradient(0, R.y, 0, R.y + R.h);
+    shell.addColorStop(0, UIMAT_PLATE_BASE);
+    shell.addColorStop(0.18, UIMAT_PLATE_SHADOW);
+    shell.addColorStop(1, UIT_PANEL);
+    ctx.fillStyle = shell;
     ctx.fillRect(0, R.y, R.viewW, R.h);
-    ctx.fillStyle = UIMAT_PLATE_BASE;
-    ctx.fillRect(R.x, R.y, R.w, R.h);
     ctx.fillStyle = UI_OUTLINE;
-    ctx.fillRect(0, R.y, R.viewW, 2);
-    ctx.fillRect(0, R.y + R.h - 2, R.viewW, 2);
-    ctx.fillStyle = UIMAT_WELD;
-    ctx.fillRect(R.x + 2, R.y + 2, R.w - 4, 1);
-    ctx.fillStyle = UIT_GOLD;
-    ctx.fillRect(R.bodyX + 2, R.y + 3, R.bodyW - 4, 1);
-    ctx.fillStyle = UIT_INSET;
-    ctx.fillRect(R.bodyX, R.y + 5, R.bodyW, R.h - 10);
+    ctx.fillRect(0, R.y, R.viewW, 1);
     ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-    ctx.fillRect(R.bodyX, R.y + R.h - 5, R.bodyW, 1);
-    ctx.fillStyle = 'rgba(201,199,184,0.04)';
-    for (var wi = 0; wi < 9; wi++) {
-      var sx = R.x + 14 + ((wi * 113 + 19) % Math.max(1, Math.floor(R.w - 40)));
-      ctx.fillRect(sx, R.y + R.h - 3, Math.min(9, R.x + R.w - sx), 1);
-    }
-    // Wide screens have a small maker's stamp on the left mounting wing.
+    ctx.fillRect(0, R.y + 1, R.viewW, 2);
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    ctx.fillRect(0, R.y + 3, R.viewW, 2);
+    drawConsoleMount(R.x, R.y, R.h, R.x >= 112);
+    ctx.save(); ctx.translate(R.viewW, 0); ctx.scale(-1, 1);
+    drawConsoleMount(Math.max(0, R.viewW - R.x - R.w), R.y, R.h, false);
+    ctx.restore();
+    ctx.fillStyle = UIMAT_PLATE_BASE;
+    roundRect(ctx, R.x, R.y + 3, R.w, R.h - 6, 4, true);
+    ctx.fillStyle = UIT_EDGE;
+    roundRect(ctx, R.bodyX - 1, R.y + 5, R.bodyW + 2, R.h - 10, 3, true);
+    var glass = ctx.createLinearGradient(0, R.y + 6, 0, R.y + R.h - 6);
+    glass.addColorStop(0, UIT_INSET_DK); glass.addColorStop(1, UIT_INSET);
+    ctx.fillStyle = glass;
+    roundRect(ctx, R.bodyX, R.y + 6, R.bodyW, R.h - 12, 2, true);
+    ctx.fillStyle = UIMAT_PLATE_SHADOW;
+    ctx.fillRect(0, R.y + R.h - 3, R.viewW, 2);
+    ctx.fillStyle = UIT_EDGE;
+    ctx.fillRect(0, R.y + R.h - 1, R.viewW, 1);
+    // Painted maker's mark sits directly on the left end plate.
     if (R.x >= 112) {
-      consoleText('SLUICE', R.x / 2, R.y + R.h / 2 + 4, 12, UIT_DIM, 'center', true);
-      ctx.fillStyle = UIMAT_PLATE_HIGHLIGHT;
-      ctx.fillRect(R.x / 2 - 21, R.y + R.h / 2 + 13, 42, 1);
+      ctx.save(); ctx.globalAlpha = 0.7;
+      ctx.font = '700 14px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = UIT_BODY;
+      ctx.fillText('SLUICE', Math.round(R.x / 2), Math.round(R.y + R.h / 2 + 5));
+      ctx.restore();
     }
     if (consoleCapStyleId !== 7) {
       drawConsoleCap(R.x, R.y, R.capW, R.h, 'left');
@@ -62098,7 +62138,6 @@
     drawConsoleFrameContent(R);
     ctx = oldCtx;
   }
-
   // ---- Instrument cache (v25.31) ----
   // The static console FRAME has been cached since v11; the live instruments
   // still repainted every frame (harness-ranked #1 CPU bucket in every scene:
@@ -62207,24 +62246,35 @@
     ctx.restore();
   }
 
+  var viewportKeysHost = null, viewportPanelOpen = null;
+  function syncViewportKeys() {
+    var open = !!(gamePaused || gameOver || ledgerOpen || cargoManifestOpen ||
+      shopOpen || (shopState && shopState !== 'closed') || ukModal || seamCreditsOn);
+    if (!viewportKeysHost) viewportKeysHost = document.getElementById('game-canvas').closest('.game-wrapper');
+    if (viewportKeysHost && viewportPanelOpen !== open) {
+      viewportPanelOpen = open;
+      viewportKeysHost.classList.toggle('gm-panel-open', open);
+    }
+  }
+
   // v11.27 — small persistent FPS + version display in top-left.
   // Tucked in stencil paint so it blends with the rest of the UI.
   function drawTopLeftDebug() {
-    if (!UI_NEW) return;
+    if (!UI_NEW || viewportPanelOpen) return;
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
     var v = GAME_VERSION || '';
     var fps = (perfFps || 0) + ' FPS';
-    // v23.64 — seat the version + FPS on a dark translucent plate so they stay
-    // legible over the bright sky as well as the dark underground (was dim amber
-    // on bare canvas, which washed out against the blue). Matches the dpad disc
-    // / perf-panel backdrops; text bumped to near-opaque amber.
-    var plateW = Math.max(stencilTextWidth(v, 1), stencilTextWidth(fps, 1)) + 8;
-    ctx.fillStyle = 'rgba(8,10,14,0.62)';
-    roundRect(ctx, 4, 3, plateW, 22, 3, true);
-    drawStencilText(v, 8, 6, 1, 'rgba(238,202,104,0.96)');
-    drawStencilText(fps, 8, 16, 1, 'rgba(238,202,104,0.96)');
+    // Status sits beside the pause key in the same housing and text palette.
+    ctx.font = '400 11px ' + UI_FONT;
+    var plateW = Math.ceil(Math.max(ctx.measureText(v).width, ctx.measureText(fps).width)) + 16;
+    ctx.fillStyle = UIT_EDGE;
+    roundRect(ctx, 60, 10, plateW, 44, 3, true);
+    ctx.fillStyle = UIT_PANEL;
+    roundRect(ctx, 61, 11, plateW - 2, 42, 2, true);
+    consoleText(v, 68, 27, 11, UIT_BODY);
+    consoleText(fps, 68, 44, 11, UIT_DIM);
     ctx.restore();
   }
 
@@ -63079,7 +63129,6 @@
       }
     }
   }
-
   // ----- Performance overlay (dev mode only) -----
   // v23.42: peak airborne |vx| observed this session (EXPANSION_PLAN P0.1
   // flight-speed measurement; persists until reload).
