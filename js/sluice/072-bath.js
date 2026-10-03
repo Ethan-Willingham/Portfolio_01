@@ -399,6 +399,8 @@
         siphonStop();
         bathCamPin();
         bathArrivalBegin();
+        // Restore the saved tub behind the cover, without the old staged fill.
+        bathArrivalReset();
         mineralLiquidTick(0);
       } else {
         hearthCancelDrag(); hearthClearBoilerHover();
@@ -407,8 +409,11 @@
         bathScalePop();
         bathSteamPop();
         bathGuestColliders.length = 0;   // no stale fluid boundaries outside
+        cam.snap = true;
       }
       bathLayerVis(toInside);
+      beginSceneLoading(toInside ? 'Entering bathhouse' : 'Returning outside');
+      if (!gameRafId) gameRafId = requestAnimationFrame(loop);
       el.style.opacity = '0';
       setTimeout(function () { if (ticket === bathTransitionSerial) bathFading = false; }, 240);
     }, 240);

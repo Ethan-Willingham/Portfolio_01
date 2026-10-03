@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.159';
+  var GAME_VERSION = 'v28.160';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -5413,6 +5413,29 @@
     return ready;
   }
 
+  // Residency normally trickles in on maintenance clocks. Drain those batches
+  // under the cover, without advancing weather, thaw, drainage or the clock.
+  // A quiet pass means every nearby particle that fits is already drawable.
+  function prepareSceneMaterials() {
+    var seq = liquidMutationSeq;
+    mineralLiquidClock = 0;
+    mineralLiquidTick(0);
+    if (!bathMode && worldRainEnabled && !PERF_DISABLE_WATER && !PERF_DISABLE_WEATHER && weatherTune.enabled) {
+      rainScan(0);
+      if (worldSnowEnabled) snowScan(0, 0, true, true);
+      updateParticleRain(0);
+    }
+    return seq === liquidMutationSeq;
+  }
+
+  // Fast travel or a dense returning pile can outrun the padded streamer.
+  // Hide its first visible restoration before adding anything to that view.
+  function coverStoredMaterial(x, y) {
+    if (introPhase !== 'done' || x < cam.x || x >= cam.x + screenW || y < cam.y || y >= cam.y + screenH) return;
+    beginSceneLoading(bathMode ? 'Preparing bath water' : 'Preparing nearby water and snow');
+    if (!gameRafId && (gamePaused || mobileLandscapeBlocked)) gameRafId = requestAnimationFrame(loop);
+  }
+
   // Called instead of gameplay, including while a focus pause is pending.
   // No rig physics, input, hazards, economy, autosave or clock ticks run here.
   function renderLoadingScene() {
@@ -5427,6 +5450,7 @@
       // dt used to leave the first actual smoke simulation to the player's turn.
       updateSmoke(1 / 60);
       updateSurfacePondStreaming();
+      var materialsReady = prepareSceneMaterials();
       updateLiquids(1 / 60);
       terrainWarmupFrames = 1;
       terrainChunkPendingThisFrame = 0;
@@ -5442,7 +5466,7 @@
       colourPlanetSurface(buildPlanetSurface(canvas.width, canvas.height));
       prepareMoonPhaseDisc();
       introWarmupFramesRun++;
-      var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
+      var ready = materialsReady && gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
       introSettledFrames = ready ? introSettledFrames + 1 : 0;
       if (ready && !gameLoadingFirstReadyAt) gameLoadingFirstReadyAt = performance.now();
       gameLoadingStableFrames = ready && performance.now() - warmStart <= 8 ? gameLoadingStableFrames + 1 : 0;
@@ -5484,24 +5508,13 @@
     else reveal();
   }
 
-  // A distant recovery can evict every destination chunk. Cached recoveries
-  // stay instant; cold ones get the same short scene warmup as arrival.
+  // Recovery and teleport destinations need the same material gate as boot.
   function prepareRecoveryScene() {
     if (introPhase !== 'done') return;
     updateCamera();
-    var r0 = Math.floor((Math.max(0, Math.floor(cam.y / TILE)) - 1) / TERRAIN_CHUNK_TILES);
-    var r1 = Math.floor((Math.min(TOTAL_ROWS - 1, Math.floor((cam.y + screenH) / TILE)) + 1) / TERRAIN_CHUNK_TILES);
-    var c0 = Math.floor((Math.max(0, Math.floor(cam.x / TILE)) - 1) / TERRAIN_CHUNK_TILES);
-    var c1 = Math.floor((Math.min(COLS - 1, Math.floor((cam.x + screenW) / TILE)) + 1) / TERRAIN_CHUNK_TILES);
-    for (var r = r0; r <= r1; r++) {
-      for (var c = c0; c <= c1; c++) {
-        var chunk = terrainChunkCache[terrainChunkKey(r, c)];
-        if (!chunk || !chunk.ready || chunk.dirty || Math.abs(chunk.scale - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) {
-          beginSceneLoading('Returning to town');
-          return;
-        }
-      }
-    }
+    // A cached town can still have all of its water and snow parked elsewhere.
+    // Recoveries need the material gate even when its terrain remains warm.
+    beginSceneLoading('Returning to town');
   }
   /* ---- Shader warm-up: compile first-use Canvas GPU programs while loading ----
      Chrome's GPU raster builds a shader program the first time any canvas on
@@ -9325,6 +9338,8 @@
     teleportFx = { srcX: srcX, srcY: srcY, destX: player.x + PLAYER_W / 2, destY: player.y + PLAYER_H / 2, t: 0.8, maxT: 0.8 };
     sfxPlay('teleport');
     showMsg('Teleported to surface');
+    cam.snap = true;
+    prepareRecoveryScene();
   }
 
   // ============================================================
@@ -10600,6 +10615,11 @@
     if (pond.rainFed) return true;
     var need = surfacePondNeed(pond);
     if (liquidCount + need > LIQUID_MAX_PARTICLES) return false;
+    if (typeof coverStoredMaterial === 'function' && (pond.cR + 1) * TILE > cam.x &&
+        pond.cL * TILE < cam.x + screenW && (SKY_ROWS + (pond.d || 1)) * TILE > cam.y &&
+        SKY_ROWS * TILE < cam.y + screenH) {
+      coverStoredMaterial(Math.max(cam.x, pond.cL * TILE), Math.max(cam.y, SKY_ROWS * TILE));
+    }
     var wo = liquidSurfaceOriginForType('water');
     var step = LIQUID_CELL * LIQUID_PDELTA;     // rest spacing, density = 1/PDELTA^2
     // v24.115 — inset the lattice from the walls/floor by the collide probe
@@ -14264,6 +14284,8 @@
         siphonStop();
         bathCamPin();
         bathArrivalBegin();
+        // Restore the saved tub behind the cover, without the old staged fill.
+        bathArrivalReset();
         mineralLiquidTick(0);
       } else {
         hearthCancelDrag(); hearthClearBoilerHover();
@@ -14272,8 +14294,11 @@
         bathScalePop();
         bathSteamPop();
         bathGuestColliders.length = 0;   // no stale fluid boundaries outside
+        cam.snap = true;
       }
       bathLayerVis(toInside);
+      beginSceneLoading(toInside ? 'Entering bathhouse' : 'Returning outside');
+      if (!gameRafId) gameRafId = requestAnimationFrame(loop);
       el.style.opacity = '0';
       setTimeout(function () { if (ticket === bathTransitionSerial) bathFading = false; }, 240);
     }, 240);
@@ -15786,13 +15811,14 @@
         // entire intersecting bin would bounce its outside edge in and out.
         for (var j = data.length - 3; j >= 0 && budget > 0; j -= 3) {
           var px = data[j + 1], py = data[j + 2];
-          if (worldRainEnabled && !bathMode && data[j] === 0 && Math.random() < 0.85 && rainSoakAt(px, py, false)) {
+          if (dt > 0 && worldRainEnabled && !bathMode && data[j] === 0 && Math.random() < 0.85 && rainSoakAt(px, py, false)) {
             var tail = data.length - 3;
             data[j] = data[tail]; data[j + 1] = data[tail + 1]; data[j + 2] = data[tail + 2];
             data.length -= 3; continue;
           }
           if (px < x0 || px > x1 || py < y0 || py > y1) continue;
           if (bathMode && typeof bathArrivalHolds === 'function' && bathArrivalHolds(px, py)) continue;
+          if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
           if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
           var end = data.length - 3;
           data[j] = data[end]; data[j + 1] = data[end + 1]; data[j + 2] = data[end + 2];
@@ -38222,6 +38248,13 @@
         if (speed < 100) { x -= Math.cos(state.time * (1.4 + size) + phase) * (13 + size * 16) / (1.4 + size); y -= Math.cos(state.time * 1.7 + phase) * 9 / 1.7; }
         if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) continue;
         if (state.seen[key] || active[key]) { seen[key] = 1; continue; }
+        // Prime the whole scene under its cover. During play, new weather
+        // enters from beyond the view instead of appearing beside the rig as
+        // intensity rises or the camera exposes a new part of the field.
+        if (typeof introPhase !== 'undefined' && introPhase === 'done' &&
+            x >= cam.x && x < cam.x + screenW && y >= cam.y && y < cam.y + screenH) {
+          seen[key] = 1; continue;
+        }
         var born = spawn(x, y, size, phase);
         if (born) { born.weatherKey = key; born.weatherRank = rank; seen[key] = 1; }
       }
@@ -38563,6 +38596,7 @@
       if (budget <= 0) continue;
       if (px < x0 || px > x1 || py < y0 || py > y1) continue;
       if (liquidWorldSolidAt(px, py)) continue;
+      if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
       if (addLiquidParticle(0, px, py, 0, 0, RAIN_ORIGIN) < 0) break;
       rain.parked[j] = rain.parked[rain.parked.length - 2];
       rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
@@ -39810,7 +39844,7 @@
     for (var key in rain.waterCells) if (rain.waterCells[key] >= 10) return true;
     return false;
   }
-  function snowScan(dt, maintenanceDt, deferBed) {
+  function snowScan(dt, maintenanceDt, deferBed, restoreScene) {
     if (maintenanceDt === undefined) maintenanceDt = dt;
     liquidToolSync();
     // Snapshots refresh only weather landing, storage and thaw bookkeeping.
@@ -39823,7 +39857,7 @@
     for (var i = liquidCount - 1; i >= 0; i--) {
       if (liquidType[i] !== 5) continue;
       var x = liquidX[i], y = liquidY[i];
-      if (maintenanceDt && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
+      if ((maintenanceDt || restoreScene) && !snowVisible(x, y) && snowStore(x, y, liquidVX[i], liquidVY[i])) { removeLiquidParticle(i); continue; }
       // Physical snow stays in the contact solver in flight and on land.
       // GPU readback is only for maintenance, never a motion-mode switch.
       if (thaw && Math.random() < 1 - Math.exp(-snowHeat(x, y) * maintenanceDt) && snowMeltParticle(i)) continue;
@@ -39831,11 +39865,12 @@
     }
     snow.active = active;
     var budget = Math.min(600, snowActiveCap() - active, LIQUID_MAX_PARTICLES - liquidCount - 4096);
-    for (var j = maintenanceDt ? snow.parked.length - 4 : -1; j >= 0; j -= 4) {
+    for (var j = maintenanceDt || restoreScene ? snow.parked.length - 4 : -1; j >= 0; j -= 4) {
       var px = snow.parked[j], py = snow.parked[j + 1], remove = false;
       if (thaw && Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
         rain.parked.push(px, py); snow.melted++; remove = true;
       } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
+        if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
         if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
           budget--; snow.active++; remove = true;
         }

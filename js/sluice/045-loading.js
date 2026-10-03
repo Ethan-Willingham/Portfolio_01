@@ -318,6 +318,29 @@
     return ready;
   }
 
+  // Residency normally trickles in on maintenance clocks. Drain those batches
+  // under the cover, without advancing weather, thaw, drainage or the clock.
+  // A quiet pass means every nearby particle that fits is already drawable.
+  function prepareSceneMaterials() {
+    var seq = liquidMutationSeq;
+    mineralLiquidClock = 0;
+    mineralLiquidTick(0);
+    if (!bathMode && worldRainEnabled && !PERF_DISABLE_WATER && !PERF_DISABLE_WEATHER && weatherTune.enabled) {
+      rainScan(0);
+      if (worldSnowEnabled) snowScan(0, 0, true, true);
+      updateParticleRain(0);
+    }
+    return seq === liquidMutationSeq;
+  }
+
+  // Fast travel or a dense returning pile can outrun the padded streamer.
+  // Hide its first visible restoration before adding anything to that view.
+  function coverStoredMaterial(x, y) {
+    if (introPhase !== 'done' || x < cam.x || x >= cam.x + screenW || y < cam.y || y >= cam.y + screenH) return;
+    beginSceneLoading(bathMode ? 'Preparing bath water' : 'Preparing nearby water and snow');
+    if (!gameRafId && (gamePaused || mobileLandscapeBlocked)) gameRafId = requestAnimationFrame(loop);
+  }
+
   // Called instead of gameplay, including while a focus pause is pending.
   // No rig physics, input, hazards, economy, autosave or clock ticks run here.
   function renderLoadingScene() {
@@ -332,6 +355,7 @@
       // dt used to leave the first actual smoke simulation to the player's turn.
       updateSmoke(1 / 60);
       updateSurfacePondStreaming();
+      var materialsReady = prepareSceneMaterials();
       updateLiquids(1 / 60);
       terrainWarmupFrames = 1;
       terrainChunkPendingThisFrame = 0;
@@ -347,7 +371,7 @@
       colourPlanetSurface(buildPlanetSurface(canvas.width, canvas.height));
       prepareMoonPhaseDisc();
       introWarmupFramesRun++;
-      var ready = gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
+      var ready = materialsReady && gameLoadingAssetsReady && terrainChunkPendingThisFrame === 0 && loadingCloudsReady();
       introSettledFrames = ready ? introSettledFrames + 1 : 0;
       if (ready && !gameLoadingFirstReadyAt) gameLoadingFirstReadyAt = performance.now();
       gameLoadingStableFrames = ready && performance.now() - warmStart <= 8 ? gameLoadingStableFrames + 1 : 0;
@@ -389,22 +413,11 @@
     else reveal();
   }
 
-  // A distant recovery can evict every destination chunk. Cached recoveries
-  // stay instant; cold ones get the same short scene warmup as arrival.
+  // Recovery and teleport destinations need the same material gate as boot.
   function prepareRecoveryScene() {
     if (introPhase !== 'done') return;
     updateCamera();
-    var r0 = Math.floor((Math.max(0, Math.floor(cam.y / TILE)) - 1) / TERRAIN_CHUNK_TILES);
-    var r1 = Math.floor((Math.min(TOTAL_ROWS - 1, Math.floor((cam.y + screenH) / TILE)) + 1) / TERRAIN_CHUNK_TILES);
-    var c0 = Math.floor((Math.max(0, Math.floor(cam.x / TILE)) - 1) / TERRAIN_CHUNK_TILES);
-    var c1 = Math.floor((Math.min(COLS - 1, Math.floor((cam.x + screenW) / TILE)) + 1) / TERRAIN_CHUNK_TILES);
-    for (var r = r0; r <= r1; r++) {
-      for (var c = c0; c <= c1; c++) {
-        var chunk = terrainChunkCache[terrainChunkKey(r, c)];
-        if (!chunk || !chunk.ready || chunk.dirty || Math.abs(chunk.scale - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) {
-          beginSceneLoading('Returning to town');
-          return;
-        }
-      }
-    }
+    // A cached town can still have all of its water and snow parked elsewhere.
+    // Recoveries need the material gate even when its terrain remains warm.
+    beginSceneLoading('Returning to town');
   }

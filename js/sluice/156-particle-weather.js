@@ -50,6 +50,13 @@
         if (speed < 100) { x -= Math.cos(state.time * (1.4 + size) + phase) * (13 + size * 16) / (1.4 + size); y -= Math.cos(state.time * 1.7 + phase) * 9 / 1.7; }
         if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) continue;
         if (state.seen[key] || active[key]) { seen[key] = 1; continue; }
+        // Prime the whole scene under its cover. During play, new weather
+        // enters from beyond the view instead of appearing beside the rig as
+        // intensity rises or the camera exposes a new part of the field.
+        if (typeof introPhase !== 'undefined' && introPhase === 'done' &&
+            x >= cam.x && x < cam.x + screenW && y >= cam.y && y < cam.y + screenH) {
+          seen[key] = 1; continue;
+        }
         var born = spawn(x, y, size, phase);
         if (born) { born.weatherKey = key; born.weatherRank = rank; seen[key] = 1; }
       }
