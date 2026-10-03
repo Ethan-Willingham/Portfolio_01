@@ -490,8 +490,10 @@
       const force = push * (push >= 0 ? (this.level.campaign?110:78) : (this.level.campaign?80:50))*traction;
       b.vx += Math.cos(b.a) * force * dt; b.vy += Math.sin(b.a) * force * dt;
       const steering=this.level.campaign?1/(1+4*((b.pitch||0)**2+(b.rollTilt||0)**2)):1;
-      b.omega += turn * 8.8 * traction * steering * dt;
-      b.omega *= Math.exp(-(this.level.campaign?4.2*traction:4.2) * dt);
+      // A stronger handle force couple starts a turn sooner. Planted-foot yaw
+      // damping while steering catches countersteer without changing coasting.
+      b.omega += turn * (this.level.campaign?15.4:8.8) * traction * steering * dt;
+      b.omega *= Math.exp(-(this.level.campaign?(4.2+Math.abs(turn))*traction:4.2) * dt);
       const speed = Math.hypot(b.vx, b.vy);
       const brake = clamp(input.brake || 0, 0, 1);
       const drag = .34 * resistance;

@@ -105,6 +105,13 @@ stance is about 16 behind. Steering applies a force couple without rotating the
 existing velocity vector. Push and pull apply force along the heading. Brake
 acts on the actual velocity.
 
+The live course uses a stronger handle force couple for quicker turn onset and
+more planted-foot yaw damping while steering to catch countersteer. Both scale
+with footing; pitch and roll still reduce steering leverage. Speed adds no
+steering multiplier. Existing travel direction changes through push, the
+shopper's arms and tire reactions, so fast corners still carry sideways momentum.
+The four casters retain their swivel inertia and each tire's surface grip.
+
 The shopper is a separate spring mass. Legs support the pelvis on local ground,
 while arms exchange impulses with the moving handle. Elbows bend before the
 maximum reach becomes a unilateral tether. Knees crouch as the handle drops.
@@ -368,6 +375,7 @@ Run `node --check` on all seven live scripts and the legacy fixture, then:
 ```sh
 node tools/test-four-wheels.cjs
 node tools/test-four-wheels-wheel-modes.cjs
+node tools/test-four-wheels-handling.cjs
 node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
 node tools/test-four-wheels-journey.cjs
