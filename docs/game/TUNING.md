@@ -1171,15 +1171,20 @@ The two shortest bands use separate juvenile builders. Young spruces retain
 low branches with rising needle shoots, varied branch counts and uneven gaps.
 Birch saplings have thin warm stems, optional low forks and small leaf pairs
 along their side shoots; the older juvenile band adds a pale lower stem.
-Needle and leaf clusters stay a few world pixels across rather than scaling
-down the mature crown. Taller trees keep the mature branching and bark.
+Needle and leaf clusters stay a few world pixels across. Mature spruces add
+closely spaced boughs and fine hanging branchlets through a continuous crown.
+Mature birches divide into more woody limbs with small leafy side shoots and
+exposed pale forks. Taller trees gain branches and foliage groups while their
+individual clusters stay small; canopy width grows more slowly than height.
 
 `166-render-surface-boulders.js` adds sparse cached stones in clearings. Eight
 angular profile families vary their dimensions, crown, shoulders and facets
 by world column, about 24 to 54 world px wide and 11 to 30 px tall. A compressed
 slice of the station's stone ramp keeps the face, flank and upper-left light
-close in value, with short quiet fissures and occasional muted moss. Each
-column's sprite is baked once and reused on rebuild. Boulders are scenery behind the rig, with
+close in value. Short paired bedding seams, thin stepped fracture ledges,
+connected mineral-grain clusters, narrow cleft lips and shallow crown and
+shoulder chips add detail within that ramp. Occasional muted moss stays near
+the roots. Each column's sprite is baked once and reused on rebuild. Boulders are scenery behind the rig, with
 no collision. They avoid trees, ponds and the station compound. Excavating
 any tile beneath a boulder starts a quiet 1.05-second collapse: a 0.16-second
 lean toward the gap, then three cached stone fragments, four small chips and
