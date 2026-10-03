@@ -640,6 +640,7 @@
   }
 
   function render() {
+    if (UI_NEW && gameOver && !deathSceneCapture) { drawDeathFrame(); return; }
     hearthOverlayHide();
     if (hearthFireGPU) hearthFireGPU.hide();
     var _renderT0 = performance.now();
@@ -656,7 +657,7 @@
     // Combat screenshake: a tiny world-space offset (trauma-based, subtle,
     // reduced-motion-gated; defined in 085-combat.js). Applied to the world
     // transform only, so the HUD + native-space night sky stay steady.
-    var _shk = (typeof combatShakeOffset === 'function') ? combatShakeOffset() : { x: 0, y: 0 };
+    var _shk = !deathSceneCapture && (typeof combatShakeOffset === 'function') ? combatShakeOffset() : { x: 0, y: 0 };
     ctx.setTransform(ws, 0, 0, ws, -(cam.x - _shk.x) * ws, -(cam.y - _shk.y) * ws);
     // imageSmoothingEnabled true keeps gradients smooth
     ctx.imageSmoothingEnabled = true;
@@ -1087,7 +1088,7 @@
 
     // ---- Player ground shadow (drawn BEFORE jello so the gel covers it,
     //      instead of the shadow showing through the translucent gel) ----
-    try { drawPlayerShadow(); } catch (e) {}
+    if (!deathSceneCapture) { try { drawPlayerShadow(); } catch (e) {} }
 
     // ---- Jello soft bodies (drawn behind the rig so the rig stays read) ----
     var _rJl = performance.now();
@@ -1099,7 +1100,7 @@
 
     // ---- Player ----
     var _rPl = performance.now();
-    drawPlayer();
+    if (!deathSceneCapture) drawPlayer();
     skySlimeDraw();
     siphonDraw();
     perfMark('render.player', _rPl);
@@ -1275,7 +1276,7 @@
     // the rig. Drawn UNDER the HUD so the bars stay readable, but OVER
     // the world. Two layers: a soft red wash + a vignette gradient that
     // darkens the edges — the same "you took damage" cue you see in shooters.
-    if (damageFlashT > 0 &&
+    if (!deathSceneCapture && damageFlashT > 0 &&
         !(typeof window !== 'undefined' && window.SluiceOptions &&
           (window.SluiceOptions.damageFlash === false || window.SluiceOptions.lowFlash === true))) {
       // Player options (052-options.js): damage-flash toggle + photosensitive
@@ -1345,11 +1346,11 @@
     if (!ledgerOpen && !cargoManifestOpen && typeof drawRadioMsg === 'function') drawRadioMsg();
 
     // Recovery summary (UI_NEW only). Always on top.
-    if (UI_NEW && gameOver) {
+    if (UI_NEW && gameOver && !deathSceneCapture) {
       drawDeathScreen(lastFrameDt || 1 / 60);
     }
     // Hide recovery after respawn and host the death screenshot lever.
-    syncDeathScreen();
+    if (!deathSceneCapture) syncDeathScreen();
 
     // Great Seam extraction crescendo + EXPEDITION COMPLETE plate (295).
     // Self-gates on its own state, same dispatch model as drawDeathScreen.
