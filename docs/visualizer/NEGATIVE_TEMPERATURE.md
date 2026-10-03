@@ -102,9 +102,13 @@ Earlier parameter trials are retained in this assets directory. `initial-fast-ru
 
 ## Rendering and operation
 
-The room draws the unmodified field into a full-size rgba16float target as linear radiance. The ellipse fits both viewport axes with a 10% margin. The standalone wrapper permits 1400px width and the desktop stage uses 68vh, bounded by 380px and 780px. This makes the visible cloud about 70% larger in the desktop reference view. Density uses a saturating transfer 1.8 [1 - exp(-1.7 rho)] with a smooth display floor between rho = 0.015 and 0.08. This reduces the visual prominence of weak sound outside the cloud and deepens low-density cores. A small four-neighbor contribution is spatial bloom. There is no feedback, trail buffer, fabricated noise, or tracer advection.
+The room draws the field into a full-size rgba16float target as linear radiance. The ellipse fits both viewport axes with a 10% margin. The standalone wrapper permits 1400px width and the desktop stage uses 68vh, bounded by 380px and 780px. This makes the visible cloud about 70% larger in the desktop reference view.
 
-Phase is a cyclic OKLab wheel at constant lightness 0.77, chroma 0.045 by default (original captures used 0.022) and 0.12 in the phase instrument. It encodes phase rather than emitted spectral light. The velocity view computes Im(conj(psi) grad psi) / rho with centered differences, suppressing arrows below rho = 0.08. No integration through a core singularity is attempted. Optional sign rings use measured core positions and do not affect the wave equation.
+The v5 display reconstructs complex psi with Catmull-Rom bicubic interpolation, then computes rho = |psi| squared. The previous independent interpolation of sampled density filled subcell vortex zeros where neighboring complex amplitudes canceled. Bicubic reconstruction is a display approximation and can overshoot; it does not add simulated cells or change the evolved field. Luminosity now uses 1.6 rho^1.25 with a smooth display floor between rho = 0.015 and 0.045. This retains more contrast in sound and density changes than the previous saturating transfer. Spatial bloom has been removed.
+
+The default view draws equal-density contours at rho = 0.035 + 0.1 k, with screen-pixel antialiasing and a physical density-slope mask that suppresses flat-field noise. Lines darken the underlying color by at most 36%. They are an instrument applied to reconstructed density, not additional wave structure. Phase and velocity views omit the contours. There is no feedback, trail buffer, fabricated noise, or tracer advection.
+
+Phase is a cyclic OKLab wheel at constant lightness 0.77, chroma 0.075 by default (v4 used 0.045, original captures used 0.022) and 0.12 in the phase instrument. It encodes phase rather than emitted spectral light. The velocity view computes Im(conj(psi) grad psi) / rho with centered differences, suppressing arrows below rho = 0.08. No integration through a core singularity is attempted. Optional sign rings use measured core positions and do not affect the wave equation.
 
 The standalone host tone maps once with linear Reinhard, then performs sRGB transfer for its unorm canvas. The room itself never tone maps and applies exposure as a linear multiplier. A readback test finds exactly a factor of two when exposure doubles. Beyond the simulated square, the scene is background; edge pixels are not extruded or tiled.
 
@@ -161,13 +165,14 @@ Tests run October 3, 2026, on Apple M1 Pro with the native Metal WebGPU adapter 
 
 The CPU loss test uses `dpsi/dt = -gamma psi` as an isolated optional particle-loss term; it does not claim to test a thermal dissipative GPE. Real playback sets that coefficient to zero. Nonfinite input is rejected by a separate assertion.
 
-The current [solver record](../../assets/visualizer/negative-temperature/resolution-validation.json) and separate [render and ownership record](../../assets/visualizer/negative-temperature/render-resolution-validation.json) give:
+The [solver record](../../assets/visualizer/negative-temperature/resolution-validation.json), earlier [render and ownership record](../../assets/visualizer/negative-temperature/render-resolution-validation.json), and current [v5 rendering record](../../assets/visualizer/negative-temperature/sharpness-validation.json) give:
 
 | Operation | Median / p95 | Measurement |
 | --- | ---: | --- |
 | One forward 2D FFT, 512 grid | 0.80 / 1.50 ms | Single transform, queue completion |
 | Full GPE step, 512 grid | 0.70 / 0.813 ms | Eight-step batches, time divided by eight |
-| Room render, 2716 by 1224 rgba16float | 0.90 / 2.20 ms | Single render, queue completion |
+| v5 room render, 2716 by 1224 rgba16float | 1.80 / 2.40 ms | Single render, queue completion |
+| Earlier v4 room render, same dimensions | 0.90 / 2.20 ms | Single render, queue completion |
 
 Historical 256-grid measurements are retained for comparison:
 
@@ -194,9 +199,12 @@ NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-protocol.cj
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-opening.cjs
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-resolution.cjs
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-loading.cjs
+NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-sharpness.cjs
 ```
 
 The browser harness owns its HTTP server and the exact browser child, launched through `/Users/ethan/.local/bin/agent-chrome-for-testing`, and closes both in finally. It does not launch the personal Chrome app or use broad process cleanup. The protocol harness repeats the padded-box check. `NT_STEPS` can shorten the browser recording while preserving the solver sequence; its default is three full phrases at the current timestep. The browser harness retains explicit 256-grid numerical comparisons as historical regressions; the resolution harness checks the current default. Adding `--render-only` to the resolution command skips the long physical runs and repeats rendering, exposure and shared-device ownership checks. Historical results remain in [validation-full.json](../../assets/visualizer/negative-temperature/validation-full.json), [validation.json](../../assets/visualizer/negative-temperature/validation.json), [cpu-validation.json](../../assets/visualizer/negative-temperature/cpu-validation.json), and protocol-run.json.
+
+The sharpness harness draws the same time-150 complex field through the retained v4 reference shader and the v5 shader, using the same bound buffers, dimensions, exposure, and single host tone mapper. The complete field hash remains `102785c0bcf51bae88438cdfd237cf8d22466827e7badaa3ace593ceef89be99` before and after both draws. It captures [v4](../../assets/visualizer/negative-temperature/sharpness-before-v4.png), [v5](../../assets/visualizer/negative-temperature/sharpness-after-v5.png), and the [current page](../../assets/visualizer/negative-temperature/sharpness-page-v5.png). The v5 test confirms a 2/2/2 linear exposure ratio, native Chrome and WebKit startup, live advancement, both mobile orientations without horizontal overflow, and at least 2x canvas resolution. All collected browser and GPU errors are empty. It does not claim to add numerical resolution; the physical 512 grid and timestep remain unchanged.
 
 ## Owned files
 
@@ -206,7 +214,7 @@ The browser harness owns its HTTP server and the exact browser child, launched t
 - `js/negative-temperature-diagnostics-worker.js`
 - `js/negative-temperature-loading.js`
 - `tools/test-negative-temperature-numerics.mjs`, `tools/test-negative-temperature-browser.cjs`, `tools/test-negative-temperature-protocol.cjs`, `tools/test-negative-temperature-opening.cjs`, `tools/test-negative-temperature-resolution.cjs`
-- `tools/test-negative-temperature-loading.cjs`
+- `tools/test-negative-temperature-loading.cjs`, `tools/test-negative-temperature-sharpness.cjs`, `tools/negative-temperature-render-v4.wgsl`
 - `assets/visualizer/negative-temperature/` screenshots, still fallback and diagnostic records
 - `docs/visualizer/NEGATIVE_TEMPERATURE.md`
 

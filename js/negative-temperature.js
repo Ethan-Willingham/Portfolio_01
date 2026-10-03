@@ -1,4 +1,4 @@
-import { createRoom, viewHalfSpan } from './negative-temperature-room.js?v=4';
+import { createRoom, viewHalfSpan } from './negative-temperature-room.js?v=5';
 import { DEFAULT_SEED } from './negative-temperature-model.js?v=4';
 import { withDeadline } from './negative-temperature-loading.js?v=4';
 

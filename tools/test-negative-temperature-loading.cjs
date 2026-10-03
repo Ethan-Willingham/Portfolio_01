@@ -80,12 +80,12 @@ async function ready(test) {
       assert.equal(state.hash, first.hash, 'Worker fallback must not change the simulated field.');
       await test.page.close();
     }
-    const missing = await open(browser, 'Module fetch failure and reload recovery', page => page.route('**/js/negative-temperature-room.js?v=4', route => route.abort()));
+    const missing = await open(browser, 'Module fetch failure and reload recovery', page => page.route('**/js/negative-temperature-room.js?*', route => route.abort()));
     await missing.page.waitForFunction(() => document.getElementById('nt-piece').getAttribute('aria-busy') === 'false');
     assert.ok(await missing.page.locator('#nt-fallback').isVisible());
     assert.equal(await missing.page.locator('#nt-restart').textContent(), 'Reload');
     assert.ok(await missing.page.locator('#nt-restart').isEnabled());
-    await missing.page.unroute('**/js/negative-temperature-room.js?v=4');
+    await missing.page.unroute('**/js/negative-temperature-room.js?*');
     await missing.page.locator('#nt-restart').click();
     await ready(missing); await missing.page.close();
     const gpu = await open(browser, 'Unanswered GPU request', page => page.addInitScript(() => {

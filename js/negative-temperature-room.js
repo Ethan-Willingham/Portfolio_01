@@ -21,7 +21,19 @@ struct Vertex { @builtin(position) pos:vec4f, @location(0) uv:vec2f };
   var o:Vertex;o.pos=vec4f(xy[i],0.,1.);o.uv=xy[i];return o;
 }
 fn at(ij:vec2i)->vec2f{let n=i32(v.n);if(any(ij<vec2i(0))||any(ij>=vec2i(n))){return vec2f(0.);}return psi[u32(ij.y*n+ij.x)];}
-fn density(ij:vec2i)->f32{let a=at(ij);return dot(a,a);}
+// Reconstruct the complex field before taking its magnitude. Averaging density
+// separately fills subcell zeros where neighboring complex samples cancel.
+fn cubic(a:vec2f,b:vec2f,c:vec2f,d:vec2f,t:f32)->vec2f{
+  return b+.5*t*(c-a+t*(2.*a-5.*b+4.*c-d+t*(3.*(b-c)+d-a)));
+}
+fn field(grid:vec2f)->vec2f{
+  let ij=vec2i(floor(grid));let f=fract(grid);
+  let a=cubic(at(ij+vec2i(-1,-1)),at(ij+vec2i(0,-1)),at(ij+vec2i(1,-1)),at(ij+vec2i(2,-1)),f.x);
+  let b=cubic(at(ij+vec2i(-1,0)),at(ij),at(ij+vec2i(1,0)),at(ij+vec2i(2,0)),f.x);
+  let c=cubic(at(ij+vec2i(-1,1)),at(ij+vec2i(0,1)),at(ij+vec2i(1,1)),at(ij+vec2i(2,1)),f.x);
+  let d=cubic(at(ij+vec2i(-1,2)),at(ij+vec2i(0,2)),at(ij+vec2i(1,2)),at(ij+vec2i(2,2)),f.x);
+  return cubic(a,b,c,d,f.y);
+}
 fn lab(l:f32,a:f32,b:f32)->vec3f{
   let z=vec3f(l+.3963377774*a+.2158037573*b,l-.1055613458*a-.0638541728*b,l-.0894841775*a-1.291485548*b);
   let q=z*z*z;return max(vec3f(0.),vec3f(4.0767416621*q.x-3.3077115913*q.y+.2309699292*q.z,-1.2684380046*q.x+2.6097574011*q.y-.3413193965*q.z,-.0041960863*q.x-.7034186147*q.y+1.707614701*q.z));
@@ -29,15 +41,20 @@ fn lab(l:f32,a:f32,b:f32)->vec3f{
 @fragment fn fragment(o:Vertex)->@location(0) vec4f{
   let xy=o.uv* v.size/min(v.size.x,v.size.y)*v.span;
   let grid=(xy/v.side+.5)*v.n;
-  let ij=vec2i(floor(grid));let f=fract(grid);
-  let a=mix(mix(at(ij),at(ij+vec2i(1,0)),f.x),mix(at(ij+vec2i(0,1)),at(ij+vec2i(1,1)),f.x),f.y);
-  let rho=mix(mix(density(ij),density(ij+vec2i(1,0)),f.x),mix(density(ij+vec2i(0,1)),density(ij+vec2i(1,1)),f.x),f.y);
+  let ij=vec2i(floor(grid));let a=field(grid);let rho=dot(a,a);
   let phase=atan2(a.y,a.x);
-  let chroma=select(.045,.12,v.mode>0.5&&v.mode<1.5);
+  let chroma=select(.075,.12,v.mode>0.5&&v.mode<1.5);
   let color=lab(.77,chroma*cos(phase),chroma*sin(phase));
-  let luminosity=1.8*(1.-exp(-1.7*max(rho,0.)))*smoothstep(.015,.08,rho);
-  let bloom=(density(ij+vec2i(3,0))+density(ij-vec2i(3,0))+density(ij+vec2i(0,3))+density(ij-vec2i(0,3)))*.002;
-  var scene=vec3f(.004,.007,.006)+color*luminosity+vec3f(bloom*.75,bloom,bloom*.95);
+  let luminosity=1.6*pow(rho,1.25)*smoothstep(.015,.045,rho);
+  var scene=vec3f(.004,.007,.006)+color*luminosity;
+  // Equal-density contours, spaced by 0.1 in model density, with screen-pixel
+  // antialiasing. The slope mask suppresses contour noise in a flat field.
+  let pixelSlope=fwidth(rho);
+  let densitySlope=pixelSlope*min(v.size.x,v.size.y)/(2.*v.span);
+  let distance=abs(fract((rho-.035)/.1+.5)-.5)*.1;
+  let stroke=max(pixelSlope*.55,.000001);
+  let contour=(1.-smoothstep(stroke,stroke*1.8,distance))*smoothstep(.025,.07,densitySlope)*smoothstep(.06,.12,rho);
+  if(v.mode<.5){scene*=1.-.36*contour;}
   if(v.mode>1.5 && rho>.08){
     // j = Im(conj(psi) grad psi); safe v = j/rho, no tracers.
     let gradx=(at(ij+vec2i(1,0))-at(ij-vec2i(1,0)))*v.n/(2.*v.side);
