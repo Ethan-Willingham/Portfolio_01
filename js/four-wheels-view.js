@@ -4,6 +4,7 @@
  */
 (function (root) {
   'use strict';
+  const sourceURL=typeof document!=='undefined'?document.currentScript?.src:null;
   const TerrainModule=typeof module!=='undefined'&&module.exports?require('./four-wheels-terrain.js'):root.CartTerrain;
   // A roughly 52-degree pitch opens the basket and floor while retaining height.
   const CAMERA = Object.freeze({ width:720, height:580, x:290, y:24, horizontal:.84, vertical:.66, elevation:.74 });
@@ -20,7 +21,7 @@
   const subtract = (a,b) => ({x:a.x-b.x,y:a.y-b.y,z:(a.z||0)-(b.z||0)});
   const normalize = p => {const n=Math.hypot(p.x,p.y,p.z)||1;return {x:p.x/n,y:p.y/n,z:p.z/n};};
   function local(b,x,y,z=0) {
-    if(b.comHeight)return TerrainModule.kinematics(b,x,y,z).p;
+    if(b.comHeight)return TerrainModule.position(b,x,y,z);
     const c=Math.cos(b.a||0),s=Math.sin(b.a||0);
     if(b.pitch||b.rollTilt){const cp=Math.cos(b.pitch||0),sp=Math.sin(b.pitch||0),cr=Math.cos(b.rollTilt||0),sr=Math.sin(b.rollTilt||0),xx=x*cp+z*sp,zz=z*cp-x*sp;z=zz*cr+y*sr;y=y*cr-zz*sr;x=xx;}
     return {x:b.x+x*c-y*s,y:b.y+x*s+y*c,z:(b.z||0)+z};
@@ -125,6 +126,31 @@
     [[0,3,2,1],[0,0,-1]],[[4,5,6,7],[0,0,1]],[[0,4,7,3],[-1,0,0]],
     [[1,2,6,5],[1,0,0]],[[0,1,5,4],[0,-1,0]],[[3,7,6,2],[0,1,0]]
   ];
+  function createMotionInterpolator(){
+    let source=null,previous=null,result=null;
+    const angles=new Set(['a','phase']),bodyFields=['x','y','z','a','pitch','rollTilt'],shopperFields=['x','y','z','leanX','leanY','crouch'],gaitFields=['phase','stride','forward','sideways','leanX','leanY'];
+    function capture(w){
+      if(source!==w){source=w;previous={body:{},wheels:w.wheels.map(()=>({})),gait:{},shopper:{},nodes:[]};result=Object.create(w);result.body={};result.wheels=w.wheels.map(()=>({}));result.gait={};result.shopper={};}
+      previous.ragdoll=w.ragdoll;
+      if(w.ragdoll)w.ragdoll.nodes.forEach((node,i)=>Object.assign(previous.nodes[i]||= {},node));
+      Object.assign(previous.body,w.body);Object.assign(previous.gait,w.gait);Object.assign(previous.shopper,w.shopper);w.wheels.forEach((q,i)=>Object.assign(previous.wheels[i],q));
+    }
+    function mix(out,before,now,fields,t){Object.assign(out,now);for(const key of fields){if(!Number.isFinite(before[key])||!Number.isFinite(now[key]))continue;let d=now[key]-before[key];if(angles.has(key))d=Math.atan2(Math.sin(d),Math.cos(d));out[key]=before[key]+d*t;}}
+    function sample(w,t){
+      if(source!==w||Math.hypot(w.body.x-previous.body.x,w.body.y-previous.body.y)>60){capture(w);return w;}
+      t=clamp(t,0,1);mix(result.body,previous.body,w.body,bodyFields,t);mix(result.gait,previous.gait,w.gait,gaitFields,t);mix(result.shopper,previous.shopper,w.shopper,shopperFields,t);
+      w.wheels.forEach((q,i)=>mix(result.wheels[i],previous.wheels[i],q,['a','roll'],t));
+      if(w.ragdoll&&previous.ragdoll===w.ragdoll){
+        if(!result.ragdoll||result.ragdoll===w.ragdoll)result.ragdoll={nodes:w.ragdoll.nodes.map(()=>({}))};
+        const nodes=result.ragdoll.nodes;Object.assign(result.ragdoll,w.ragdoll);result.ragdoll.nodes=nodes;
+        w.ragdoll.nodes.forEach((node,i)=>mix(nodes[i]||= {},previous.nodes[i],node,['x','y','z'],t));
+      }else result.ragdoll=w.ragdoll;
+      const b=result.body,old=TerrainModule.attitude(previous.body),now=TerrainModule.attitude(w.body),sign=old.w*now.w+old.x*now.x+old.y*now.y+old.z*now.z<0?-1:1;
+      let n=0;for(const key of ['w','x','y','z']){b['q'+key]=old[key]+(now[key]*sign-old[key])*t;n+=b['q'+key]**2;}n=Math.sqrt(n)||1;for(const key of ['w','x','y','z'])b['q'+key]/=n;
+      b.tiltPitch=b.pitch;b.tiltRoll=b.rollTilt;return result;
+    }
+    return {capture,sample};
+  }
   function exposedEdges(level,Course) {
     const edges=[],seen=new Set(),cross2=(a,b)=>a.x*b.y-a.y*b.x;
     // Split at polygon intersections before testing support. Fixed-length
@@ -162,23 +188,58 @@
     }
     return edges;
   }
-  function create(P) {
+  function create(P,options={}) {
     const Physics=root.CartPhysics,Stock=root.CartStock,Terrain=TerrainModule;
     let terrainLevel=null;
     const onGround=p=>({...p,z:terrainLevel?Terrain.height(terrainLevel,p):(p.z||0),surface:!!terrainLevel});
     if(!Physics||!Stock)throw new Error('The cart view needs the cart simulation.');
     const {BODY,WHEELS,CASTER,CHECKPOINT_RADIUS,casterPose,casterCorners,corners,ROOM}=Physics;
     const swatches=[P.coral,P.blue,P.gold,P.sage,P.clay,P.purple];
-    const colors=new Map(),tints=new Map(),textures=new Map(),treeSprites=new Map(),models=new WeakMap();let cacheEpoch=0;
+    const colors=new Map(),tints=new Map(),textures=new Map(),treeSprites=new Map(),models=new WeakMap(),spillPaths=new WeakMap();let cacheEpoch=0,colorContext,raster;
+    let sceneryWorker=null,workerFailed=false,workerBackground=null,workerGeneration=0,workerJob=null;
+    const sceneryJobs=new Map();
+    const trimTiles=(cache,limit)=>{while(cache.size>limit){const key=cache.keys().next().value;cache.get(key).canvas?.close?.();cache.delete(key);}};
+    function failWorker(){sceneryWorker?.terminate();sceneryWorker=null;workerFailed=true;workerJob=null;sceneryJobs.clear();options.onSceneryReady?.();}
+    function startScenery(background,level){
+      if(!background.async||workerFailed||!sourceURL||typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined')return false;
+      try{
+        if(!sceneryWorker){
+          const url=new URL('four-wheels-scenery-worker.js',sourceURL);url.search=new URL(sourceURL).search;
+          sceneryWorker=new Worker(url);sceneryWorker.onerror=event=>{event.preventDefault();failWorker();};
+          sceneryWorker.onmessage=({data})=>{
+            if(data.generation!==workerGeneration){data.bitmap?.close();return;}
+            if(data.error){failWorker();return;}
+            workerJob=null;
+            const cache=data.kind==='floor'?workerBackground.tiles:workerBackground.rocks,tile=cache.get(data.key);
+            if(tile){tile.canvas?.close?.();tile.canvas=data.bitmap;tile.ready=true;}else data.bitmap.close();
+            pumpScenery();options.onSceneryReady?.();
+          };
+        }
+        if(workerBackground!==background){workerBackground=background;workerGeneration++;workerJob=null;sceneryJobs.clear();sceneryWorker.postMessage({kind:'init',generation:workerGeneration,level,palette:P});}
+        sceneryJobs.clear();return true;
+      }catch{failWorker();return false;}
+    }
+    function queueScenery(kind,key,x,y){const id=kind+':'+key;if(workerJob!==id)sceneryJobs.set(id,{kind,key,x,y,generation:workerGeneration});}
+    function pumpScenery(){if(workerJob||!sceneryWorker||!sceneryJobs.size)return;const [id,job]=sceneryJobs.entries().next().value;sceneryJobs.delete(id);workerJob=id;sceneryWorker.postMessage(job);}
     function rgb(color) {
       if(!colors.has(color)) {
-        const c=document.createElement('canvas');c.width=c.height=1;
-        const g=c.getContext('2d');g.fillStyle=color;g.fillRect(0,0,1,1);colors.set(color,[...g.getImageData(0,0,1,1).data].slice(0,3));
+        // Palette hex and our generated rgb tints need no GPU readback. Keep
+        // one software canvas for other CSS colors rather than one per tint.
+        const hex=/^#([\da-f]{6}|[\da-f]{3})$/i.exec(color),decimal=/^rgb\((\d+),(\d+),(\d+)\)$/.exec(color);
+        if(hex){const value=hex[1].length===3?hex[1].split('').map(v=>v+v).join(''):hex[1],n=parseInt(value,16);colors.set(color,[n>>16,(n>>8)&255,n&255]);}
+        else if(decimal)colors.set(color,decimal.slice(1).map(Number));
+        else{
+          if(!colorContext){const c=document.createElement('canvas');c.width=c.height=1;colorContext=c.getContext('2d',{willReadFrequently:true});}
+          colorContext.clearRect(0,0,1,1);colorContext.fillStyle=color;colorContext.fillRect(0,0,1,1);colors.set(color,[...colorContext.getImageData(0,0,1,1).data].slice(0,3));
+        }
       }
       return colors.get(color);
     }
     function blend(a,b,t) {
-      const key=a+'|'+b+'|'+Math.round(t*64);
+      // A cache bucket always has the same color, regardless of which tile or
+      // thread reaches it first. This also prevents seams after worker uploads.
+      t=Math.round(t*64)/64;
+      const key=a+'|'+b+'|'+t;
       if(!tints.has(key)){const x=rgb(a),y=rgb(b);tints.set(key,'rgb('+x.map((v,i)=>Math.round(v+(y[i]-v)*t)).join(',')+')');}
       return tints.get(key);
     }
@@ -252,21 +313,63 @@
         const commands=this.commands.filter(q=>q.mesh),points=commands.flatMap(q=>q.mesh.points),screen=points.map(p=>project(p));
         const x=Math.floor(Math.min(...screen.map(p=>p.x)))-3,y=Math.floor(Math.min(...screen.map(p=>p.y)))-3,width=Math.ceil(Math.max(...screen.map(p=>p.x)))-x+4,height=Math.ceil(Math.max(...screen.map(p=>p.y)))-y+4;
         if(width>400||height>400)return this.commands.forEach(q=>scene.commands.push(q));
-        const tile=document.createElement('canvas');tile.width=width;tile.height=height;const g=tile.getContext('2d'),im=g.createImageData(width,height),zbuffer=new Float32Array(width*height);zbuffer.fill(-Infinity);
-        const pixel=(px,py,z,color,alpha,write)=>{if(px<0||py<0||px>=width||py>=height)return;const key=py*width+px;if(z<zbuffer[key]-.045)return;const k=key*4,c=rgb(color),a=im.data[k+3]/255,out=alpha+a*(1-alpha);for(let j=0;j<3;j++)im.data[k+j]=(c[j]*alpha+im.data[k+j]*a*(1-alpha))/out;im.data[k+3]=out*255;if(write)zbuffer[key]=z;};
-        const vertex=p=>({...project(p),d:depth(p)});
-        const triangle=(a,b,c,color,alpha,write)=>{const denominator=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);if(Math.abs(denominator)<.001)return;
-          const left=Math.max(0,Math.floor(Math.min(a.x,b.x,c.x)-x)),right=Math.min(width-1,Math.ceil(Math.max(a.x,b.x,c.x)-x)),top=Math.max(0,Math.floor(Math.min(a.y,b.y,c.y)-y)),bottom=Math.min(height-1,Math.ceil(Math.max(a.y,b.y,c.y)-y));
-          for(let py=top;py<=bottom;py++)for(let px=left;px<=right;px++){const X=x+px+.5,Y=y+py+.5,u=((b.y-c.y)*(X-c.x)+(c.x-b.x)*(Y-c.y))/denominator,v=((c.y-a.y)*(X-c.x)+(a.x-c.x)*(Y-c.y))/denominator,t=1-u-v;if(u>=-1e-7&&v>=-1e-7&&t>=-1e-7)pixel(px,py,u*a.d+v*b.d+t*c.d,color,alpha,write);}
-        };
-        const paint=(q,write)=>{const m=q.mesh,v=m.points.map(vertex);if(m.kind==='face'){for(let i=1;i<v.length-1;i++)triangle(v[0],v[i],v[i+1],m.color,m.alpha,write);}else{const a=v[0],b=v[1],steps=Math.max(1,Math.ceil(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))));for(let i=0;i<=steps;i++){const t=i/steps;pixel(Math.round(a.x+(b.x-a.x)*t-x),Math.round(a.y+(b.y-a.y)*t-y),a.d+(b.d-a.d)*t,m.color,m.alpha,write);}}};
-        for(const q of commands)if(q.mesh.alpha>=.99)paint(q,true);
-        commands.sort((a,b)=>a.depth-b.depth);for(const q of commands)if(q.mesh.alpha<.99)paint(q,false);
-        g.putImageData(im,0,0);scene.push(points,(target,origin)=>{target.drawImage(tile,x+(origin.x-CAMERA.x),y+(origin.y-CAMERA.y));});
+        // Rasterize when this command is painted, then reuse the same surface
+        // and buffers. Each Scene still owns its geometry and can be redrawn.
+        scene.push(points,(target,origin)=>{
+          if(!raster||raster.tile.width<width||raster.tile.height<height){
+            const tile=document.createElement('canvas');tile.width=2**Math.ceil(Math.log2(Math.max(64,width,raster?.tile.width||0)));tile.height=2**Math.ceil(Math.log2(Math.max(64,height,raster?.tile.height||0)));
+            const g=tile.getContext('2d');raster={tile,g,im:g.createImageData(tile.width,tile.height),zbuffer:new Float32Array(tile.width*tile.height)};
+          }
+          const {tile,g,im,zbuffer}=raster,stride=tile.width,data=im.data;data.fill(0);zbuffer.fill(-Infinity);
+          const pixel=(px,py,z,c,alpha,write)=>{if(px<0||py<0||px>=width||py>=height)return;const key=py*stride+px;if(z<zbuffer[key]-.045)return;const k=key*4;
+            if(alpha===1){data[k]=c[0];data[k+1]=c[1];data[k+2]=c[2];data[k+3]=255;}
+            else{const a=data[k+3]/255,out=alpha+a*(1-alpha);for(let j=0;j<3;j++)data[k+j]=(c[j]*alpha+data[k+j]*a*(1-alpha))/out;data[k+3]=out*255;}
+            if(write)zbuffer[key]=z;
+          };
+          const vertex=p=>({x:CAMERA.x+(p.x-p.y)*CAMERA.horizontal,y:CAMERA.y+(p.x+p.y)*CAMERA.vertical-(p.z||0)*CAMERA.elevation,d:depth(p)});
+          const triangle=(a,b,c,color,alpha,write)=>{const denominator=(b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);if(Math.abs(denominator)<.001)return;
+            const left=Math.max(0,Math.floor(Math.min(a.x,b.x,c.x)-x)),right=Math.min(width-1,Math.ceil(Math.max(a.x,b.x,c.x)-x)),top=Math.max(0,Math.floor(Math.min(a.y,b.y,c.y)-y)),bottom=Math.min(height-1,Math.ceil(Math.max(a.y,b.y,c.y)-y));
+            const ux=(b.y-c.y)/denominator,vx=(c.y-a.y)/denominator,tx=-ux-vx;
+            // Clip each scanline to the three barycentric half planes. Thin
+            // basket tubes no longer test every pixel in their bounding box.
+            for(let py=top;py<=bottom;py++){
+              const X=x+.5,Y=y+py+.5,u=((b.y-c.y)*(X-c.x)+(c.x-b.x)*(Y-c.y))/denominator,v=((c.y-a.y)*(X-c.x)+(a.x-c.x)*(Y-c.y))/denominator,t=1-u-v;
+              let low=left,high=right;
+              if(ux>0)low=Math.max(low,Math.ceil((-1e-7-u)/ux));else if(ux<0)high=Math.min(high,Math.floor((-1e-7-u)/ux));else if(u< -1e-7)continue;
+              if(vx>0)low=Math.max(low,Math.ceil((-1e-7-v)/vx));else if(vx<0)high=Math.min(high,Math.floor((-1e-7-v)/vx));else if(v< -1e-7)continue;
+              if(tx>0)low=Math.max(low,Math.ceil((-1e-7-t)/tx));else if(tx<0)high=Math.min(high,Math.floor((-1e-7-t)/tx));else if(t< -1e-7)continue;
+              for(let px=low;px<=high;px++){const U=u+ux*px,V=v+vx*px;pixel(px,py,U*a.d+V*b.d+(1-U-V)*c.d,color,alpha,write);}
+            }
+          };
+          const paint=(q,write)=>{const m=q.mesh,v=m.points.map(vertex),color=rgb(m.color);if(m.kind==='face'){for(let i=1;i<v.length-1;i++)triangle(v[0],v[i],v[i+1],color,m.alpha,write);}else{const a=v[0],b=v[1],steps=Math.max(1,Math.ceil(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))));for(let i=0;i<=steps;i++){const t=i/steps;pixel(Math.round(a.x+(b.x-a.x)*t-x),Math.round(a.y+(b.y-a.y)*t-y),a.d+(b.d-a.d)*t,color,m.alpha,write);}}};
+          for(const q of commands)if(q.mesh.alpha>=.99)paint(q,true);
+          commands.sort((a,b)=>a.depth-b.depth);for(const q of commands)if(q.mesh.alpha<.99)paint(q,false);
+          g.putImageData(im,0,0);target.drawImage(tile,0,0,width,height,x+(origin.x-CAMERA.x),y+(origin.y-CAMERA.y),width,height);
+        });
       }
-      flush(g,origin=CAMERA) {
+      flush(g,origin=CAMERA,rasters=null) {
         this.commands.sort((a,b)=>a.depth-b.depth||a.order-b.order);
-        for(const command of this.commands)command.draw(g,origin);
+        const transform=rasters?g.getTransform():null,signature=rasters?[cacheEpoch,transform.a,transform.d,transform.e,transform.f,g.canvas.width,g.canvas.height].join('|'):null;
+        for(let i=0;i<this.commands.length;i++){
+          const command=this.commands[i];
+          if(!rasters||!command.original){command.draw(g,origin);continue;}
+          let end=i+1;while(end<this.commands.length&&this.commands[end].original)end++;
+          const last=this.commands[end-1].original;let cached=rasters.get(command.original);
+          if(!cached||cached.last!==last||cached.count!==end-i||cached.signature!==signature||cached.originals.some((q,j)=>q!==this.commands[i+j].original)){
+            let left=Infinity,top=Infinity,right=-Infinity,bottom=-Infinity;
+            for(let j=i;j<end;j++){const b=this.commands[j].bounds;left=Math.min(left,b.left);right=Math.max(right,b.right);top=Math.min(top,b.top);bottom=Math.max(bottom,b.bottom);}
+            const x=Math.max(0,Math.floor(transform.e+left*transform.a)),y=Math.max(0,Math.floor(transform.f+top*transform.d)),w=Math.max(0,Math.min(g.canvas.width,Math.ceil(transform.e+right*transform.a))-x),h=Math.max(0,Math.min(g.canvas.height,Math.ceil(transform.f+bottom*transform.d))-y);
+            let tile=null;
+            if(w&&h){tile=document.createElement('canvas');tile.width=w;tile.height=h;const target=tile.getContext('2d');target.imageSmoothingEnabled=false;target.setTransform(transform.a,0,0,transform.d,transform.e-x,transform.f-y);for(let j=i;j<end;j++)this.commands[j].draw(target,origin);}
+            rasters.pixels=(rasters.pixels||0)-(cached?.tile?cached.tile.width*cached.tile.height:0)+(tile?tile.width*tile.height:0);
+            cached={tile,x,y,last,count:end-i,signature,originals:this.commands.slice(i,end).map(q=>q.original)};rasters.set(command.original,cached);
+          }
+          // Cache only consecutive commands in the sorted scene. Moving doors,
+          // the cart and particles retain their exact place between these runs.
+          if(cached.tile){g.save();g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.drawImage(cached.tile,cached.x,cached.y);g.restore();}
+          rasters.delete(command.original);rasters.set(command.original,cached);
+          while(rasters.size>96||rasters.pixels>4*1024*1024){const key=rasters.keys().next().value,old=rasters.get(key);rasters.pixels-=old.tile?old.tile.width*old.tile.height:0;rasters.delete(key);}i=end-1;
+        }
         g.globalAlpha=1;
       }
       visibleCommands({left,top,right,bottom}) {
@@ -292,7 +395,7 @@
       const values=[cacheEpoch,...fields.map(k=>object[k]),...extra],old=models.get(object);
       let model=old?.scene;
       if(!old||values.length!==old.values.length||values.some((v,i)=>v!==old.values[i])){model=new Scene(1,true);build(model,object);models.set(object,{values,scene:model});}
-      for(const command of model.commands)scene.commands.push({...command,order:scene.sequence++});
+      for(const command of model.commands)scene.commands.push({...command,original:command,order:scene.sequence++});
     }
     function groundPoly(g,points,color,alpha=1) {
       g.globalAlpha=alpha;poly(g,points.map(p=>project(p)),color);g.globalAlpha=1;
@@ -405,8 +508,8 @@
         }
       }
     }
-    function makeFloor(level,transparent=false) {
-      if(level.campaign)return {course:true,tiles:new Map(),rocks:new Map()};
+    function makeFloor(level,transparent=false,async=false) {
+      if(level.campaign)return {course:true,async,tiles:new Map(),rocks:new Map(),floorPresence:new Map()};
       if(level.connected)return {rooms:level.rooms.map(r=>({room:r,canvas:makeFloor(r,true)}))};
       const c=document.createElement('canvas');c.width=CAMERA.width;c.height=CAMERA.height;const g=c.getContext('2d');
       const matte=blend(P.hairDark,P.edge,.48);if(!transparent)rect(g,0,0,c.width,c.height,matte);
@@ -717,23 +820,33 @@
     }
     function drawCart(g,b,wheels,gait,origin=CAMERA) {const scene=new Scene();cart(scene,b,wheels,gait);scene.flush(g,origin);}
     function drawShelf(g,s) {const scene=new Scene();shelf(scene,s);for(const p of s.stockItems)if(p.state==='shelf')product(scene,p);scene.flush(g);}
-    function spills(g,stock) {
+    function spills(g,stock,visible=stock.world._visible) {
+      let paths=spillPaths.get(stock);if(!paths){paths=new Map();spillPaths.set(stock,paths);}
       for(const liquid of stock.liquids.values())for(const [key,volume]of liquid.cells) {
         const x=key%stock.cols*Stock.CELL,y=Math.floor(key/stock.cols)*Stock.CELL;
-        if(stock.world._visible&&(!stock.world._visible({x,y},130)||!stock.world._visible({x,y,z:Terrain.height(stock.world.level,{x,y})},12)))continue;
+        if(visible&&(!visible({x,y},130)||!visible({x,y,z:Terrain.height(stock.world.level,{x,y})},12)))continue;
+        let cell=paths.get(key);
+        if(!cell){
+          const corners=quad(x,y,4,4).map(onGround).map(p=>project(p)),a=project(onGround({x,y:y+1})),b=project(onGround({x:x+4,y}));
+          cell={face:polygonPath(corners),edges:corners.map((p,i)=>linePath(p,corners[(i+1)%4],1)),ripple:linePath(a,b,1)};paths.set(key,cell);
+        }
+        const fill=(path,color,alpha)=>{g.globalAlpha=alpha;g.fillStyle=color;g.fill(path);};
         if(liquid.kind==='water') {
-          groundPoly(g,quad(x,y,4,4).map(onGround),P.blue,clamp(volume*.2,.018,.13));
+          fill(cell.face,P.blue,clamp(volume*.2,.018,.13));
           if(volume>.055) {
             const dry=k=>(liquid.cells.get(k)||0)<=.055;
-            if(dry(key+1))groundLine(g,{x:x+4,y},{x:x+4,y:y+4},P.steelShade,1,.4);
-            if(dry(key+stock.cols))groundLine(g,{x,y:y+4},{x:x+4,y:y+4},P.steelShade,1,.4);
-            if(dry(key-stock.cols))groundLine(g,{x,y},{x:x+4,y},P.light,1,.75);
-            if(dry(key-1))groundLine(g,{x,y},{x,y:y+4},P.light,1,.75);
-            if(volume>.13&&hash(key,7)>.83)groundLine(g,{x,y:y+1},{x:x+4,y},P.light,1,.7);
+            if(dry(key+1))fill(cell.edges[1],P.steelShade,.4);
+            if(dry(key+stock.cols))fill(cell.edges[2],P.steelShade,.4);
+            if(dry(key-stock.cols))fill(cell.edges[0],P.light,.75);
+            if(dry(key-1))fill(cell.edges[3],P.light,.75);
+            if(volume>.13&&hash(key,7)>.83)fill(cell.ripple,P.light,.7);
           }
-        }else groundPoly(g,quad(x,y,4,4).map(onGround),spillColor(liquid.kind),clamp(volume*1.4,.025,.65));
+        }else fill(cell.face,spillColor(liquid.kind),clamp(volume*1.4,.025,.65));
       }
-      for(const smear of stock.smears)if(!stock.world._visible||stock.world._visible(smear,100))groundLocal(g,onGround(smear),-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind),smear.alpha*(smear.kind==='water'?.45:1));
+      g.globalAlpha=1;
+      // Old wet tracks can cover a long run; keep their derived art bounded.
+      if(paths.size>4096)spillPaths.delete(stock);
+      for(const smear of stock.smears)if(!visible||visible(smear,100))groundLocal(g,onGround(smear),-2,-.7,4,1.5,smear.kind==='water'?P.steelLight:spillColor(smear.kind),smear.alpha*(smear.kind==='water'?.45:1));
     }
     function routes(g,w) {
       for(const p of w.level.portals||[]) {
@@ -776,8 +889,8 @@
       if((!w.fall||w.fall.shopperOnly)&&(!w.level.campaign||w.isFloor(b)&&!w.edge.risk)){const height=Math.max(0,(b.z||0)-(w.ground?.lastHeight||0));groundPoly(g,circle(onGround(local(b,14,0)),23+height*.04,12+height*.02).map(onGround),P.dark,.12*Math.exp(-height/40));
       groundPoly(g,circle(onGround(w.shopper||local(b,-16,1)),6,5).map(onGround),P.dark,.22);
       groundPoly(g,Stock.hull([local(b,-20,-5),local(b,-12,5),local(b,4,13),local(b,-4,2)]).map(onGround),P.dark,.09);}
-      for(let i=0;i<4;i++){const tire=Physics.casterPoint(b,w.wheels[i],i,0,0,4),floor=w.level.campaign?w.floorAt(tire):{height:0};if(floor){const height=Math.max(0,tire.z-floor.height-4);groundPoly(g,circle({...tire,z:floor.height},4+height*.018,2.8+height*.012),P.dark,.27*Math.exp(-height/24));}}
-      if(w.shopper){const p=w.shopper,floor=w.floorAt(p);if(floor)groundPoly(g,circle({...p,z:floor.height},5,3.5),P.dark,.2*Math.exp(-Math.max(0,p.z-floor.height-18)/24));}
+      for(let i=0;i<4;i++){const tire=Physics.casterPoint(b,w.wheels[i],i,0,0,4),floor=w.level.campaign?w.floorAt(tire,false):{height:0};if(floor){const height=Math.max(0,tire.z-floor.height-4);groundPoly(g,circle({...tire,z:floor.height},4+height*.018,2.8+height*.012),P.dark,.27*Math.exp(-height/24));}}
+      if(w.shopper){const p=w.shopper,floor=w.floorAt(p,false);if(floor)groundPoly(g,circle({...p,z:floor.height},5,3.5),P.dark,.2*Math.exp(-Math.max(0,p.z-floor.height-18)/24));}
       for(const o of w.objects)if(!o.gone&&!o.falling)groundPoly(g,circle(add(o,3,3),o.kind==='box'?10:7,o.kind==='box'?8:5),P.dark,.18);
       for(const p of w.stock.items)if((!w._visible||w._visible(p))&&p.state!=='shelf'&&!p.broken&&p.kind!=='shard')groundPoly(g,circle(add(p,1,1,-p.z),Math.max(2,p.length),p.width),P.dark,.13);
       g.restore();delete w._shadowClipped;
@@ -1056,10 +1169,17 @@
       }
     }
     function courseTile(w,background,x,y) {
-      const key=x+','+y;if(background.tiles.has(key)){const tile=background.tiles.get(key);background.tiles.delete(key);background.tiles.set(key,tile);return tile;}
+      const key=x+','+y;if(background.tiles.has(key)){const tile=background.tiles.get(key);if(tile.ready===false){if(background.working){background.pending++;queueScenery('floor',key,x,y);}else{background.tiles.delete(key);return courseTile(w,background,x,y);}}background.tiles.delete(key);background.tiles.set(key,tile);return tile;}
       const Course=root.CartCourse,size=256,area=quad(x*size,y*size,size,size),q=area.map(p=>project(p)),left=Math.floor(Math.min(...q.map(p=>p.x)))-5,top=Math.floor(Math.min(...q.map(p=>p.y)))-140;
       const c=document.createElement('canvas');c.width=Math.ceil(Math.max(...q.map(p=>p.x))-left)+8;c.height=Math.ceil(Math.max(...q.map(p=>p.y))-top)+12;
       const g=c.getContext('2d');g.translate(-left,-top);
+      if(background.working){
+        // A cheap complete floor stays visible until the identical detailed
+        // tile arrives. Physics always samples the full terrain on this thread.
+        const areas=Course.query(w.level.floorAreas,w.level.floorGrid,{x:(x+.5)*size,y:(y+.5)*size},184).sort((a,b)=>(a.kind==='grass'?0:a.kind==='tile'?2:1)-(b.kind==='grass'?0:b.kind==='tile'?2:1));
+        for(const a of areas){const p=clipPolygon(clipPolygon(clipPolygon(clipPolygon(a.poly,'x',x*size,1),'x',(x+1)*size,-1),'y',y*size,1),'y',(y+1)*size,-1);if(p.length>=3)groundPoly(g,p.map(onGround),a.kind==='grass'?P.pine:a.kind==='tile'?P.cream:a.kind==='dirt'?P.clay:P.steelShade);}
+        const tile={canvas:c,x:left,y:top,ready:false};background.tiles.set(key,tile);trimTiles(background.tiles,32);background.pending++;queueScenery('floor',key,x,y);return tile;
+      }
       const tileBounds={x:x*size,y:y*size,w:size,h:size},surfaceTints=new Map();
       const legs=w.level.legs.filter(l=>Math.max(l.a.x,l.b.x)+l.width>x*size&&Math.min(l.a.x,l.b.x)-l.width<(x+1)*size&&Math.max(l.a.y,l.b.y)+l.width>y*size&&Math.min(l.a.y,l.b.y)-l.width<(y+1)*size);
       const roadAt=(p,kind)=>{let best=null;for(const l of legs)if(l.surface===kind){const q=Course.nearest(p,l.a,l.b);if(!best||q.d<best.d)best={...q,leg:l};}return best;};
@@ -1095,7 +1215,7 @@
       const bumps=w.level.terrain.bumps;
       for(const u of bumps.centers)for(let v=-bumps.width/2;v<bumps.width/2;v+=10){const b={x:bumps.x,y:bumps.y,a:bumps.a};mesh(g,[local(b,u-5,v),local(b,u+5,v),local(b,u+5,v+10),local(b,u-5,v+10)],Math.floor(v/10)%2?P.gold:P.dark,{x:x*size,y:y*size,w:size,h:size},true);}
       for(let yy=y*size;yy<(y+1)*size;yy+=8)for(let xx=x*size;xx<(x+1)*size;xx+=8){
-        const h=hash(xx,yy),p=onGround({x:xx+h*6,y:yy+hash(yy,xx)*6}),surface=Course.sample(w.level,p);if(!surface)continue;const a=project(p);
+        const h=hash(xx,yy),p=onGround({x:xx+h*6,y:yy+hash(yy,xx)*6}),surface=Course.sample(w.level,p,false);if(!surface)continue;const a=project(p);
         if(surface.kind==='grass'){
           if(h>.57){line(g,a,{x:a.x-2,y:a.y-3},h>.82?P.sage:P.pine,1);line(g,a,{x:a.x+2,y:a.y-2},P.pine,1);}
           if(h>.965){rect(g,a.x,a.y-3,2,1,P.cream);rect(g,a.x+1,a.y-2,1,1,P.gold);}
@@ -1133,7 +1253,13 @@
       }
       for(const f of [w.level.terrain.boost,w.level.terrain.ramp]){for(let u=10;u<f.length;u+=15){const p=onGround(local(f,u,0));if(p.x<x*size||p.x>=(x+1)*size||p.y<y*size||p.y>=(y+1)*size)continue;groundArrow(g,{...p,a:f.a},8,f===w.level.terrain.boost?P.hairDark:P.gold,.95);}}
       slopePaint(g,w,{x:x*size,y:y*size,w:size,h:size});
-      const tile={canvas:c,x:left,y:top};background.tiles.set(key,tile);if(background.tiles.size>32)background.tiles.delete(background.tiles.keys().next().value);return tile;
+      const tile={canvas:c,x:left,y:top};background.tiles.set(key,tile);trimTiles(background.tiles,32);return tile;
+    }
+    function rockTile(w,x,y){
+      const size=512,tile=document.createElement('canvas');tile.width=tile.height=size;
+      const target=tile.getContext('2d');target.translate(-x*size,-y*size);
+      const visible=(p,r)=>{const q=project(p);return q.x>=x*size-r&&q.x<=(x+1)*size+r&&q.y>=y*size-r&&q.y<=(y+1)*size+r;};
+      const scene=new Scene();cliffFaces(scene,w,visible,'below');scene.flush(target);return tile;
     }
     function courseRocks(g,w,background,camera,follow) {
       // The lower cliffs never move or interleave with the cart. Rasterize them
@@ -1150,15 +1276,11 @@
       const size=512,left=-camera.x/camera.scale,top=-camera.y/camera.scale,right=left+g.canvas.width/camera.scale,bottom=top+g.canvas.height/camera.scale;
       for(let y=Math.floor(top/size);y<=Math.floor(bottom/size);y++)for(let x=Math.floor(left/size);x<=Math.floor(right/size);x++){
         const key=x+','+y;let tile=background.rocks.get(key);
-        if(!tile){
-          tile=document.createElement('canvas');tile.width=tile.height=size;
-          const target=tile.getContext('2d');target.translate(-x*size,-y*size);
-          const visible=(p,r)=>{const q=project(p);return q.x>=x*size-r&&q.x<=(x+1)*size+r&&q.y>=y*size-r&&q.y<=(y+1)*size+r;};
-          const scene=new Scene();cliffFaces(scene,w,visible,'below');scene.flush(target);
-        }
+        if(!tile||tile.ready===false&&!background.working)tile=background.working?{canvas:null,ready:false}:{canvas:rockTile(w,x,y),ready:true};
+        if(tile.ready===false){background.pending++;queueScenery('rock',key,x,y);}
         background.rocks.delete(key);background.rocks.set(key,tile);
-        g.drawImage(tile,x*size,y*size);
-        if(background.rocks.size>24)background.rocks.delete(background.rocks.keys().next().value);
+        if(tile.canvas)g.drawImage(tile.canvas,x*size,y*size);
+        trimTiles(background.rocks,24);
       }
     }
     function courseTree(scene,p) {
@@ -1275,6 +1397,8 @@
     }
     function drawCourse(g,w,background,options) {
       terrainLevel=w.level;
+      background.pending=0;
+      background.working=!options.preview&&options.follow!==false&&startScenery(background,w.level);
       const Course=root.CartCourse,width=g.canvas.width,height=g.canvas.height,camera=connectedCamera(width,height,w,options.follow!==false,options.focusY),visible=(p,r=100)=>{const q=project(p);return camera.x+q.x*camera.scale>-r&&camera.x+q.x*camera.scale<width+r&&camera.y+q.y*camera.scale>-r&&camera.y+q.y*camera.scale<height+r;};w._visible=visible;
       g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
       if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
@@ -1303,9 +1427,9 @@
       }
       else{
         const corners=[{x:-80,y:-80},{x:width+80,y:-80},{x:width+80,y:height+80},{x:-80,y:height+80}].map(p=>unproject({x:(p.x-camera.x)/camera.scale,y:(p.y-camera.y)/camera.scale})),b=Course.bounds(corners);
-        for(let y=Math.max(0,Math.floor(b.top/256));y<=Math.min(Math.floor(w.level.bounds.bottom/256),Math.floor(b.bottom/256));y++)for(let x=Math.max(0,Math.floor(b.left/256));x<=Math.min(Math.floor(w.level.bounds.right/256),Math.floor(b.right/256));x++){if(!Course.query(w.level.floorAreas,w.level.floorGrid,{x:(x+.5)*256,y:(y+.5)*256},184).length)continue;const tile=courseTile(w,background,x,y);g.drawImage(tile.canvas,tile.x,tile.y);}
+        for(let y=Math.max(0,Math.floor(b.top/256));y<=Math.min(Math.floor(w.level.bounds.bottom/256),Math.floor(b.bottom/256));y++)for(let x=Math.max(0,Math.floor(b.left/256));x<=Math.min(Math.floor(w.level.bounds.right/256),Math.floor(b.right/256));x++){const key=x+','+y;if(!background.floorPresence.has(key))background.floorPresence.set(key,!!Course.query(w.level.floorAreas,w.level.floorGrid,{x:(x+.5)*256,y:(y+.5)*256},184).length);if(!background.floorPresence.get(key))continue;const tile=courseTile(w,background,x,y);g.drawImage(tile.canvas,tile.x,tile.y);}
       }
-      spills(g,w.stock);shadows(g,w);
+      spills(g,w.stock,visible);shadows(g,w);
       for(const t of w.tracks)if(visible(t))groundLocal(g,onGround(t),-2,-1,4,1,P.hairDark,t.life/3*.25);
       if(options.follow===false)for(const l of w.level.legs)if(l.length>90){const p={...onGround({x:(l.a.x+l.b.x)/2,y:(l.a.y+l.b.y)/2}),a:Math.atan2(l.b.y-l.a.y,l.b.x-l.a.x)};if(visible(p))groundArrow(g,p,20,P.cream,.8);}
       const start=w.level.sections[0].start;
@@ -1313,7 +1437,9 @@
       const f=w.level.finish;if(visible({...f,z:Terrain.height(w.level,f)},160))for(let y=-60;y<60;y+=15)for(let x=-15;x<30;x+=15)groundPoly(g,quad(f.x+x,f.y+y,15,15).map(onGround),(Math.round((x+y)/15)%2)?P.light:P.dark);
       const target=w.level.gates[w.gate];if(target){groundRing(g,onGround(target),20,target.visible?P.light:P.gold,2,.8);const p=project(onGround(target));text(g,w.gate===w.level.gates.length-1?'FINISH':target.visible?String(target.room+1).padStart(2,'0'):'GO',p.x,p.y+3,P.hairDark,8,'center');}
       if(!options.preview)trickFloor(g,w,options);
-      if(!background.scenery||background.sceneryEpoch!==cacheEpoch){background.scenery=new Scene(1,true);background.sceneryEpoch=cacheEpoch;courseModels(background.scenery,w,()=>true,'static');}
+      if(!background.scenery||background.sceneryEpoch!==cacheEpoch){
+        background.scenery=new Scene(1,true);background.sceneryEpoch=cacheEpoch;courseModels(background.scenery,w,()=>true,'static');
+      }
       const scene=new Scene(),left=-camera.x/camera.scale,top=-camera.y/camera.scale,right=left+width/camera.scale,bottom=top+height/camera.scale;
       if(options.follow===false){
         // At overview scale fixed scenery is a backdrop; keep the live cart,
@@ -1334,10 +1460,12 @@
       for(const p of w.stock.items)if(!p.broken&&visible(p))cachedModel(scene,p,productFields,product,p.state==='shelf'?[p.shelf,...shelfFields.map(k=>p.shelf[k])]:[]);
       for(const o of w.objects)if(!o.gone&&visible(o))prop(scene,o);
       cart(scene,{...w.body,shopper:w.shopper,ragdoll:w.ragdoll},w.wheels,w.gait);
-      for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));scene.flush(g);
+      for(const p of options.particles||[])if(visible(p))scene.flat(quad(p.x,p.y,p.w,p.h,p.z),p.color,clamp(p.life,0,1));
+      scene.flush(g,CAMERA,options.follow===false?(background.commandRasters||=new Map()):null);
       if(w.fall?.kind==='lake'&&w.fall.impactTime!==null){const t=w.fall.impactTime;groundRing(g,{...w.body,z:-50},12+t*32,P.light,2,1-t);groundRing(g,{...w.body,z:-50},7+t*22,P.blue,2,.65-t*.5);}
       if(!w.fall){const speed=Math.hypot(w.body.vx,w.body.vy);if(speed>8)groundArrow(g,{...onGround({x:w.body.x+w.body.vx*.5,y:w.body.y+w.body.vy*.5}),a:Math.atan2(w.body.vy,w.body.vx)},10,P.light,.65);w.wheels.forEach((q,i)=>{if(w.edge.risk>0&&!w.ground.airborne&&w.unsupported?.[i])groundRing(g,Physics.casterPoint(w.body,q,i,0,0,1),5,P.red,2);});}
       boundaries(g,w);g.restore();delete w._visible;terrainLevel=null;
+      if(background.working)pumpScenery();
       if(target&&!options.preview&&options.follow!==false){const p=project({...target,z:w.level.campaign?Terrain.height(w.level,target):target.z}),tx=camera.x+p.x*camera.scale,ty=camera.y+p.y*camera.scale;if(tx<25||tx>width-25||ty<25||ty>height-25){const dx=tx-width/2,dy=ty-height*.54,t=Math.min((width/2-30)/Math.max(1,Math.abs(dx)),(height*.45-30)/Math.max(1,Math.abs(dy))),x=clamp(width/2+dx*t,25,width-25),y=clamp(height*.54+dy*t,25,height-25);oval(g,x,y,13,13,P.hairDark);oval(g,x,y,11,11,P.gold);text(g,'GO',x,y+3,P.hairDark,8,'center');}}
     }
     function illustration(g,wheelMode='all-swivel') {
@@ -1381,8 +1509,9 @@
       }
       g.restore();
     }
-    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
+    function renderSceneryTile(level,kind,x,y){terrainLevel=level;try{return kind==='floor'?courseTile({level},makeFloor(level),x,y).canvas:rockTile({level},x,y);}finally{terrainLevel=null;}}
+    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,renderSceneryTile,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
   }
-  const api={CAMERA,project,unproject,depth,local,exposedEdges,slopeMarkers,create};
+  const api={CAMERA,project,unproject,depth,local,exposedEdges,slopeMarkers,create,createMotionInterpolator};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartView=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

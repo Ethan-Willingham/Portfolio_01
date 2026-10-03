@@ -40,7 +40,15 @@
     out.push({x:points.at(-1)[0],y:points.at(-1)[1]});return out;
   }
   function index(shapes,cell=CELL){const grid=new Map();shapes.forEach((s,i)=>{const b=s.bounds||bounds(s.poly);s.bounds=b;for(let y=Math.floor(b.top/cell);y<=Math.floor(b.bottom/cell);y++)for(let x=Math.floor(b.left/cell);x<=Math.floor(b.right/cell);x++){const key=x+','+y,bin=grid.get(key)||[];bin.push(i);grid.set(key,bin);}});return grid;}
-  function query(shapes,grid,p,r=0){const ids=new Set();for(let y=Math.floor((p.y-r)/CELL);y<=Math.floor((p.y+r)/CELL);y++)for(let x=Math.floor((p.x-r)/CELL);x<=Math.floor((p.x+r)/CELL);x++)for(const i of grid.get(x+','+y)||[])ids.add(i);return [...ids].map(i=>shapes[i]);}
+  const queryRanges=new WeakMap();
+  function query(shapes,grid,p,r=0){
+    const left=Math.floor((p.x-r)/CELL),right=Math.floor((p.x+r)/CELL),top=Math.floor((p.y-r)/CELL),bottom=Math.floor((p.y+r)/CELL),key=[left,right,top,bottom].join(',');
+    let cache=queryRanges.get(grid);if(!cache){cache=new Map();queryRanges.set(grid,cache);}
+    let ids=cache.get(key);
+    if(!ids){const unique=new Set();for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++)for(const i of grid.get(x+','+y)||[])unique.add(i);ids=[...unique];cache.set(key,ids);if(cache.size>128)cache.delete(cache.keys().next().value);}
+    // Return a fresh list: callers sort floor areas or append a moving shutter.
+    return ids.map(i=>shapes[i]);
+  }
   function wall(poly,kind='rail',chapter=0){const b=bounds(poly);return {poly,bounds:b,x:b.left,y:b.top,w:b.right-b.left,h:b.bottom-b.top,side:kind,chapter};}
   function storeWalls(store){
     const out=[];

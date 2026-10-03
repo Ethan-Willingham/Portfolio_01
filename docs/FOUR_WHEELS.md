@@ -91,6 +91,8 @@ and reloads. Wet tires can paint a connecting trail if the vase lands to one sid
 - `js/four-wheels-tricks.js`: legacy timed-game regression fixture, not loaded by the live game.
 - `js/four-wheels-physics.js`: cart, four caster constraints, contacts and fixed steps.
 - `js/four-wheels-view.js`: shared isometric camera, pixel rasterizer and 3D models.
+- `js/four-wheels-scenery-worker.js`: background rasterization of immutable floor
+  and lower cliff tiles, using the same renderer and palette as the main thread.
 - `js/four-wheels-audio.js`: surface-aware wheel Foley, material impacts and audio lifecycle.
 - `js/four-wheels.js`: input, lifecycle, saved run, records and UI.
 
@@ -404,11 +406,33 @@ loads the parked challenge.
 
 ## Verification and release
 
+The visible cart, shopper, casters and camera interpolate between the last two
+120 Hz physics poses. Heading and gait take the short path across angle wraps;
+tilt uses normalized quaternion interpolation, and released shopper joints
+interpolate their own positions. Falls snap to their catch instead
+of interpolating across the course. Rendering cannot alter physics or saves.
+Wall elevation and spatial query candidates reuse immutable geometry; moving
+wall bounds still invalidate their elevation. Tire and ground contacts keep
+sampling their actual coordinates.
+
+Supported browsers render new floor and lower cliff tiles in one scenery worker.
+Only one tile request is in flight, with queued requests following the current
+viewport. A simple floor appears until its detailed bitmap is ready. Course
+changes discard stale replies, and eviction closes transferred bitmaps. A
+missing or failed worker uses the synchronous renderer. Fonts and preview art
+remain on the main thread. All worker imports share the page's cache version.
+The cart reuses its pixel and depth buffers and clips triangle scanlines before
+testing pixels. Palette parsing avoids GPU readbacks, and tint cache buckets
+have deterministic colors on both threads. Wet cells reuse projected paths.
+
 The renderer caches immutable scenery and lower cliff tiles. Shelves and stock
 reuse projected pixel paths until their pose, appearance or supporting shelf
 changes. Font readiness invalidates labels. Floor tiles use a 32-entry cache,
 lower cliffs use at most 24 tiles, and the overview caches three viewport-sized
-layers beneath the live cart, stock, doors and relay.
+layers beneath the live cart, stock, doors and relay. The overview also caches
+up to 96 cropped runs of unchanged model commands, limited to four million
+pixels. Every moving door, particle and cart retains its sorted position between
+those runs.
 Spills outside the camera skip drawing. Point contacts use a finer polygon index
 with the same floor precedence; liquid cells cache exact support and height.
 Moving tires still sample their actual coordinates and physics still runs at
@@ -422,6 +446,7 @@ node tools/test-four-wheels-wheel-modes.cjs
 node tools/test-four-wheels-handling.cjs
 node tools/test-four-wheels-stock.cjs
 node tools/test-four-wheels-view.cjs
+node tools/test-four-wheels-motion.cjs
 node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
 node tools/test-four-wheels-terrain.cjs
@@ -437,6 +462,8 @@ NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-performance.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-performance.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-render-cache.cjs
+CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-render-cache.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 MOBILE_ONLY=1 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
 MOBILE_ONLY=1 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
@@ -448,8 +475,11 @@ crowded stores and spills on desktop and landscape phone viewports. It checks
 frame work against a 16.7 ms budget, cache limits, overview reuse and exact fresh
 renders after shelf movement, changed stock, release and font refresh. Set
 `CART_FRAME_BUDGET` to the machine's intended budget when comparing slower test
-hardware. `CART_COMPARE_REF=<git ref>` also measures that release and requires
-at least a 30 percent reduction in mean shop and relay frame work. Run this
+hardware. Individual frames must also stay below 33.4 ms, adjustable with
+`CART_STALL_BUDGET`, so a good average cannot hide terrain hitches.
+`CART_COMPARE_REF=<git ref>` also measures that release and requires
+at least a 25 percent reduction in mean frame work across the three driving
+scenes and a 75 percent reduction in their worst hitch. Run this
 suite alone so competing test processes do not skew frame measurements.
 The audio suite renders real stereo PCM to check material spectra, every effect,
 surface blending, tire motion, footfalls, shutter movement, distance attenuation,

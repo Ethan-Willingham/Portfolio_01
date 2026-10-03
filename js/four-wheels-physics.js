@@ -259,7 +259,14 @@
     }
     floorAt(p,gradient=true){return this.level.campaign?Course.sample(this.level,p,gradient):this.isFloor(p)?{height:0,gx:0,gy:0}:null;}
     catchPose(){return Course.catchPose(this);}
-    wallOverlaps(rect,z,height){if(!this.level.campaign)return true;const floor=this.floorAt({x:rect.x+rect.w/2,y:rect.y+rect.h/2},false),base=floor?.height||0;return z+height>(rect.bottom??base)-.5&&z<(rect.top??base+(rect.side==='store'?40:22))+.5;}
+    wallFloor(rect){
+      if(!this.level.campaign)return 0;
+      this.wallFloors||=new WeakMap();const old=this.wallFloors.get(rect);
+      if(old&&old.x===rect.x&&old.y===rect.y&&old.w===rect.w&&old.h===rect.h)return old.height;
+      const height=this.floorAt({x:rect.x+rect.w/2,y:rect.y+rect.h/2},false)?.height??0;
+      this.wallFloors.set(rect,{x:rect.x,y:rect.y,w:rect.w,h:rect.h,height});return height;
+    }
+    wallOverlaps(rect,z,height){if(!this.level.campaign)return true;const base=rect.bottom!==undefined&&rect.top!==undefined?0:this.wallFloor(rect);return z+height>(rect.bottom??base)-.5&&z<(rect.top??base+(rect.side==='store'?40:22))+.5;}
     isFloor(p) {
       if(this.level.campaign)return Course.supports(this.level,p);
       const areas=this.level.floorAreas||[{x:8,y:8,w:464,h:284}];
@@ -528,7 +535,7 @@
       this.integrateProps(dt);
       for (let pass = 0; pass < 4; pass++) {
         for (const rect of this.walls) {
-          const floor=this.level.campaign?this.floorAt({x:rect.x+rect.w/2,y:rect.y+rect.h/2},false)?.height??0:0,top=floor+(rect.side==='rail'?22:40),bottom=rect.side==='shutter'?floor+(this.circuit?.lift||0)*62:floor;
+          const floor=this.wallFloor(rect),top=floor+(rect.side==='rail'?22:40),bottom=rect.side==='shutter'?floor+(this.circuit?.lift||0)*62:floor;
           const shape=this.level.campaign?cartHull(b,bottom,rect.side==='shutter'?bottom+42:top):null,contact=this.level.campaign?(shape.length>=3?Stock.polygonContact(shape,rect.poly):null):(this.wallOverlaps(rect,b.z||0,23)?boxContact(b,rect):null);
           if(contact&&shape)contact.cartZ=contactHeight(shape,contact);
           const hits = [contact];

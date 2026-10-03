@@ -78,6 +78,18 @@
     return {p:{x:b.x+(b.comX||0)*c+X*c-Y*s,y:b.y+(b.comX||0)*s+X*s+Y*c,z:(b.z||0)+(b.comHeight||0)+Z},
       pitch:{x:c*Z,y:s*Z,z:-X},roll:{x:s*Z,y:-c*Z,z:Y},yaw:{x:-X*s-Y*c,y:X*c-Y*s,z:0}};
   }
+  const positionBases=new WeakMap();
+  function position(b,x,y,z=0){
+    // Rendering needs a position, not three contact Jacobians at every vertex.
+    // Cache heading and attitude for the many vertices of this exact body pose.
+    let basis=positionBases.get(b);
+    if(!basis||basis.a!==b.a||basis.pitch!==b.pitch||basis.roll!==b.rollTilt||basis.qw!==b.qw||basis.qx!==b.qx||basis.qy!==b.qy||basis.qz!==b.qz||basis.tiltPitch!==b.tiltPitch||basis.tiltRoll!==b.tiltRoll){
+      basis={a:b.a,pitch:b.pitch,roll:b.rollTilt,qw:b.qw,qx:b.qx,qy:b.qy,qz:b.qz,tiltPitch:b.tiltPitch,tiltRoll:b.tiltRoll,c:Math.cos(b.a),s:Math.sin(b.a),q:attitude(b)};positionBases.set(b,basis);
+    }
+    const {c,s,q}=basis; x-=b.comX||0;z-=b.comHeight||0;
+    const tx=2*(q.y*z-q.z*y),ty=2*(q.z*x-q.x*z),tz=2*(q.x*y-q.y*x),X=x+q.w*tx+q.y*tz-q.z*ty,Y=y+q.w*ty+q.z*tx-q.x*tz,Z=z+q.w*tz+q.x*ty-q.y*tx;
+    return {x:b.x+(b.comX||0)*c+X*c-Y*s,y:b.y+(b.comX||0)*s+X*s+Y*c,z:(b.z||0)+(b.comHeight||0)+Z};
+  }
   function localVector(b,v){const c=Math.cos(b.a),s=Math.sin(b.a),q=attitude(b);return rotate({w:q.w,x:-q.x,y:-q.y,z:-q.z},{x:c*v.x+s*v.y,y:-s*v.x+c*v.y,z:v.z});}
   function contactAt(b,p,n){
     const v=localVector(b,{x:p.x-b.x-(b.comX||0)*Math.cos(b.a),y:p.y-b.y-(b.comX||0)*Math.sin(b.a),z:p.z-(b.z+b.comHeight)}),k=kinematics(b,v.x+(b.comX||0),v.y,v.z+b.comHeight);
@@ -328,6 +340,6 @@
     if(!c.powered&&c.charge>=.3){c.powered=true;w.emit('circuit',{x:919,y:290});}
     if(c.powered)c.lift=Math.min(1,c.lift+dt*.8);
   }
-  const api={G,PITCH_INERTIA,ROLL_INERTIA,attitude,rotate,storeAttitude,contactAt,pointImpulse,velocity,initShopper,validRagdoll,configure,height,sample,coordinates,inStrip,kinematics,init,advance,recover,circuitStep,circuitConnection};
+  const api={G,PITCH_INERTIA,ROLL_INERTIA,attitude,rotate,storeAttitude,contactAt,pointImpulse,velocity,initShopper,validRagdoll,configure,height,sample,coordinates,inStrip,kinematics,position,init,advance,recover,circuitStep,circuitConnection};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartTerrain=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

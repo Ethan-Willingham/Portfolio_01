@@ -104,11 +104,14 @@
 
   // Rendering owns the isometric camera; input and fixed-step physics never
   // use screen coordinates. The same renderer draws play, previews and art.
-  const view = CartView.create(P);
+  let sceneryRaf=0;
+  const view = CartView.create(P,{onSceneryReady:()=>{if(phase!=='running'&&!sceneryRaf)sceneryRaf=requestAnimationFrame(()=>{sceneryRaf=0;draw();});}});
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
-  const { makeFloor } = view;
+  const makeFloor = level => view.makeFloor(level,false,true);
+  const motion=CartView.createMotionInterpolator();
   let narrowCamera = false, followCart = true, touchFocusY = .54;
-  function draw(g = ctx, w = world, background = floor, preview = false) {
+  function draw(g = ctx, w = world, background = floor, preview = false, alpha = null) {
+    if(alpha!==null)w=motion.sample(w,alpha);
     view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview ? .54 : touchFocusY});
   }
   function cameraLabel() {
@@ -237,7 +240,7 @@
   function run() {
     phase='running';clearInput();$('overlay').hidden=true;
     canvas.focus({preventScroll:true});sound.prepare().then(ready => { if (ready && phase === 'running' && !document.hidden) sound.update(world, controls()); });last=performance.now();accumulator=0;uiTime=0;
-    updateUI();if(!raf)raf=requestAnimationFrame(frame);
+    motion.capture(world);updateUI();if(!raf)raf=requestAnimationFrame(frame);
   }
   function pause() {
     if(phase!=='running')return;
@@ -267,8 +270,9 @@
   function frame(now) {
     raf=0;if(phase!=='running')return;
     const dt=Math.min((now-last)/1000,.1);last=now;accumulator+=dt;
-    while(accumulator>=1/120&&phase==='running'){world.step(1/120,controls());events();tickEffects(1/120);accumulator-=1/120;}
-    draw();if(phase==='running')sound.update(world, controls(), dt);
+    const input=controls();
+    while(accumulator>=1/120&&phase==='running'){motion.capture(world);world.step(1/120,input);events();tickEffects(1/120);accumulator-=1/120;}
+    draw(ctx,world,floor,false,phase==='running'?accumulator*120:null);if(phase==='running')sound.update(world, input, dt);
     uiTime+=dt;saveTime+=dt;if(uiTime>.1||phase!=='running'){uiTime=0;updateUI();}if(saveTime>2)save();
     if(phase==='running')raf=requestAnimationFrame(frame);
   }
