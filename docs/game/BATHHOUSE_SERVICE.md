@@ -426,13 +426,20 @@ The full-game soil test gives about 63 pixels for the miner and 37 for the
 guest, roughly 2.5 times the previous landing heights.
 Small landing contacts settle;
 a resting guest counts as foot support, and normal jets can lift off it.
-The swept collision path includes position corrections without treating them
-as velocity on the next frame. Drawing receives only the small separation
-offset, preserving the miner's existing motion smoothing. The previous full
-sprite snap on every touch caused visible stutter during dribbling.
+Since v28.143, each impact changes the remaining swept path within the same
+frame. Landing on a falling guest accelerates the guest and slows the miner;
+its ground rebound can then pass back through the miner in successive contacts.
+Terrain support is checked at the current contact pose, and new recoil motion
+stops against walls and ceilings. The swept collision path includes position
+corrections without treating them as velocity on the next frame. Drawing receives
+the separation and remaining recoil movement while preserving its existing lag.
+The previous full sprite snap on every touch caused visible stutter during
+dribbling.
 Landing, repeat bounces at several offsets, resting, and takeoff checks run
 at 30, 60, and 144 Hz; the browser
 dribble check also limits contact-induced sprite jumps to less than one pixel.
+`node tools/test-slime-transfer.cjs` checks airborne momentum, remaining-frame
+displacement, the falling guest's ground return, and recoil boundaries.
 
 Live jets now apply pressure to sky guests. Eleven rays from each of the two
 banked nozzles cover a spreading cone up to 160 pixels long. Pressure follows

@@ -400,16 +400,17 @@
     var share = depth / (invMass + invRig);
     if (skySlimeTerrainBlocked(s, s.x + nx * share * invMass, s.y)) bx = 0;
     if (skySlimeTerrainBlocked(s, s.x, s.y + ny * share * invMass)) by = 0;
-    if (solidAt(player.x - nx * share * invRig, player.y, PLAYER_W, PLAYER_H)) rxMass = 0;
-    if (solidAt(player.x, player.y - ny * share * invRig, PLAYER_W, PLAYER_H)) ryMass = 0;
-    if (ny < 0 && rvy >= -1 && player.onGround && !player.onJello) ryMass = 0;
+    if (solidAt(rx - nx * share * invRig, ry, PLAYER_W, PLAYER_H)) rxMass = 0;
+    if (solidAt(rx, ry - ny * share * invRig, PLAYER_W, PLAYER_H)) ryMass = 0;
+    if (ny < 0 && rvy >= -1 && player.onGround && !player.onJello &&
+        solidAt(rx, ry + 1, PLAYER_W, PLAYER_H)) ryMass = 0;
     var mobility = nx * nx * (bx + rxMass) + ny * ny * (by + ryMass);
     if (mobility < 0.000001) return;
     var correction = depth / mobility;
     var moveX = -nx * correction * rxMass, moveY = -ny * correction * ryMass;
     // The two axis probes can each clear a corner while the diagonal does
     // not. Keep terrain authoritative in that rare fully wedged contact.
-    if (solidAt(player.x + moveX, player.y + moveY, PLAYER_W, PLAYER_H)) {
+    if (solidAt(rx + moveX, ry + moveY, PLAYER_W, PLAYER_H)) {
       rxMass = ryMass = 0;
       mobility = nx * nx * bx + ny * ny * by;
       if (mobility < 0.000001) return;
@@ -680,6 +681,8 @@
     if (Math.hypot(rigX - previous.x, rigY - previous.y) > Math.max(100, dt * 1000)) previous = { x: rigX, y: rigY };
     var rigVX = (rigX - previous.x) / dt, rigVY = (rigY - previous.y) / dt;
     var impulseVX = player.vx || 0, impulseVY = player.vy || 0;
+    var renderX = player.renderX, renderY = player.renderY;
+    var rigTouched = false;
     var jet = skySlimeJetFrame();
     for (var i = 0; i < skySlimes.length; i++) {
       var s = skySlimes[i];
@@ -704,14 +707,35 @@
         if (s._trail[ti].life <= 0) s._trail.splice(ti, 1);
       }
     }
+    // Replay the predicted frame from its start, then let each collision
+    // change the remaining trajectory. Keeping the original falling path
+    // after recoil made the miner keep pressing on a ball already in flight.
+    player.x = previous.x; player.y = previous.y;
     for (var step = 0; step < steps; step++) {
-      var kRig = (step + 1) / steps;
-      var pathX = previous.x + (rigX - previous.x) * kRig;
-      var pathY = previous.y + (rigY - previous.y) * kRig;
-      // Carry collision separation through the rest of this swept path.
-      // Store the corrected endpoint below, so it adds no next-frame speed.
-      skySlimeJetStep(jet, h, pathX - rigX + (player.x - rigX),
-        pathY - rigY + (player.y - rigY), rigVX, rigVY);
+      for (var axis = 0; axis < 2; axis++) {
+        var travel = ((axis ? rigVY : rigVX) + ((axis ? player.vy : player.vx) || 0) -
+          (axis ? impulseVY : impulseVX)) * h;
+        var travelX = axis ? 0 : travel, travelY = axis ? travel : 0;
+        // update() already handled terrain on the original path. After a
+        // ball changes that path, sweep the new motion against terrain too.
+        if (rigTouched && solidAt(player.x + travelX, player.y + travelY, PLAYER_W, PLAYER_H)) {
+          var lo = 0, hi = 1;
+          for (var sweep = 0; sweep < 10; sweep++) {
+            var mid = (lo + hi) * 0.5;
+            if (solidAt(player.x + travelX * mid, player.y + travelY * mid, PLAYER_W, PLAYER_H)) hi = mid;
+            else lo = mid;
+          }
+          travelX *= lo; travelY *= lo;
+          if (axis) {
+            player.vy = 0; impulseVY = rigVY;
+            player.onGround = travel > 0;
+            player.onCeiling = travel < 0;
+          } else { player.vx = 0; impulseVX = rigVX; }
+        }
+        player.x += travelX; player.y += travelY;
+      }
+      skySlimeJetStep(jet, h, player.x - rigX, player.y - rigY,
+        rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
       for (var si = 0; si < skySlimes.length; si++) {
         var b = skySlimes[si];
         b.age += h; b._impactT = Math.max(0, b._impactT - h);
@@ -750,8 +774,11 @@
         b.vx = skySlimeClamp(b.vx, -1000, 1000);
         b.x += b.vx * h; b.y += b.vy * h;
         skySlimeTerrain(b);
-        skySlimePlayer(b, pathX + (player.x - rigX), pathY + (player.y - rigY),
+        var contactX = player.x, contactY = player.y, contactVX = player.vx, contactVY = player.vy;
+        skySlimePlayer(b, player.x, player.y,
           rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
+        if (player.x !== contactX || player.y !== contactY ||
+            player.vx !== contactVX || player.vy !== contactVY) rigTouched = true;
         if (typeof surfaceSlimeRockContact === 'function') surfaceSlimeRockContact(b, h);
         skySlimeTerrain(b);
         if (b._ground && Math.abs(b.vy) < 12) {
@@ -771,6 +798,11 @@
       skySlimeBodies();
       for (var contact = 0; contact < skySlimes.length; contact++) skySlimeTerrain(skySlimes[contact]);
     }
+    if (!rigTouched) { player.x = rigX; player.y = rigY; }
+    // Preserve the sprite's existing lag through both separation and the
+    // remaining recoil movement, without snapping it to the logical rig.
+    if (isFinite(renderX)) player.renderX = renderX + player.x - rigX;
+    if (isFinite(renderY)) player.renderY = renderY + player.y - rigY;
     skySlimeRigLast = { x: player.x, y: player.y };
   }
 

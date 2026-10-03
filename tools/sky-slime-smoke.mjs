@@ -192,6 +192,48 @@ try {
   check('normal jets lift off a resting guest',landings.every(l=>l.takeoff>20&&l.airborne));
   await screenshot('landing-rest');
   await game('player.lastMoveU=false;player.thrusting=false;player.thrustSpool=player.jetForce=0;clearRocketPlume()');
+  // The real flight update must preserve the falling-ball ground relay,
+  // including its remainder-frame recoil, on desktop and landscape touch.
+  const fallingSource=`(function(){
+    var results=[],originalContact=skySlimePlayer,originalTerrain=skySlimeTerrain;
+    try {
+      for(var fps of [30,60,144]){
+        skySlimeReset();skySlimeNext=100000;ENABLE_BATH=false;
+        var x=(DECK_LEFT_COL-4)*TILE,floor=SKY_ROWS*TILE,events=[],peak=0,overlap=0;
+        Object.assign(player,{x:x-PLAYER_W/2,y:floor-152,vx:0,vy:400,
+          renderX:x-PLAYER_W/2,renderY:floor-146,onGround:false,onJello:false,
+          thrustSpool:0,jetForce:0,jetPulse:0,drillGlideT:0,fuel:100,hull:100,
+          lastMoveU:false,lastMoveR:false,lastMoveL:false});
+        skySlimeRigLast={x:player.x,y:player.y};
+        var b=skySlimeFresh(x,floor-82);Object.assign(b,{r:25,spin:0,entry:0,vy:180,playing:true});
+        skySlimes.push(b);
+        skySlimePlayer=function(s,rx,ry,vx,vy){
+          var before=s.vy;originalContact(s,rx,ry,vx,vy);
+          if(s.vy-before>40)events.push({type:'rig',ballBefore:before,ballAfter:s.vy,rig:player.vy});
+        };
+        skySlimeTerrain=function(s){
+          var before=s.vy;originalTerrain(s);
+          if(before>40&&s.vy< -20)events.push({type:'floor'});
+        };
+        for(var frame=0;frame<Math.ceil(fps*.85);frame++){
+          update(1/fps);skySlimeTick(1/fps);
+          var c=skySlimeRigContact(b,player.x,player.y);
+          overlap=Math.max(overlap,c?c.depth:0);peak=Math.max(peak,-player.vy);
+          if(b.y+b.r>floor+.01||solidAt(player.x,player.y,PLAYER_W,PLAYER_H))throw Error('falling relay entered terrain');
+        }
+        results.push({fps:fps,events:events,peak:peak,overlap:overlap});
+      }
+      updateCamera();render();return results;
+    } finally {skySlimePlayer=originalContact;skySlimeTerrain=originalTerrain;}
+  })()`;
+  function checkFalling(label,results){
+    console.log(label,results);
+    check(label,results.every(r=>r.overlap<.05&&r.peak>250&&
+      r.events.slice(0,5).map(e=>e.type).join(',')==='rig,floor,rig,floor,rig'&&
+      r.events[0].ballBefore>0&&r.events[0].rig>0&&r.events[4].rig< -250));
+  }
+  checkFalling('desktop falling-ball relay',await game(fallingSource));
+  await screenshot('falling-relay');
   check('frozen flight clears stored thrust',await game(`(function(){
     var old=shopOpen;try{shopOpen=true;player.jetForce=880;update(1/60);return player.jetForce===0;}
     finally{shopOpen=old;}
@@ -227,6 +269,19 @@ try {
   await screenshot('water-bob');
   check('real pool arrests the plunge and supports the ball',water.maxWet>.65&&water.maxY<water.floor-25&&water.y<water.surface+45&&Math.abs(water.vy)<55);
   check('visitor interaction preserves liquid mass',water.count===before);
+  await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
+  await send('Emulation.setDeviceMetricsOverride',{width:844,height:390,deviceScaleFactor:1,mobile:true,
+    screenOrientation:{type:'landscapePrimary',angle:90}});
+  await send('Page.navigate',{url:`http://127.0.0.1:${port}/grand-motherload.html?nosave=1&nopause=1&tod=0.35`});
+  for(let i=0;i<300;i++){if(await ev(`typeof __bathTest==='function' && __bathTest("introPhase === 'done'")`))break;await sleep(100);}
+  check('landscape touch boot is playable',await game("introPhase === 'done' && isMobile && !mobileLandscapeBlocked"));
+  await game('cancelAnimationFrame(gameRafId);gameRafId=0;devMode=false');
+  checkFalling('landscape touch falling-ball relay',await game(fallingSource));
+  await screenshot('falling-relay-mobile');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true,
+    screenOrientation:{type:'portraitPrimary',angle:0}});
+  await sleep(150);
+  check('portrait keeps the landscape gate',await game('mobileLandscapeBlocked && gameRafId===0'));
   check('no runtime or shader errors',errors.length===0);
   console.log('Screenshots: '+out);
 } finally {if(errors.length)console.error(JSON.stringify(errors));cleanup();}
