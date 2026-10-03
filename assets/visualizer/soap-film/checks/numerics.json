@@ -1,0 +1,98 @@
+{
+  "closed": {
+    "relativeMassError": 2.220446049250313e-16,
+    "minNm": 154.00445921796694,
+    "maxNm": 1115.3840960193609,
+    "steps": 1000
+  },
+  "closedFullSolver": {
+    "relativeMassError": 1.4414389943824857e-7,
+    "thicknessRangeNm": [
+      599.9903564453125,
+      600.0121459960938
+    ],
+    "seconds": 8
+  },
+  "projection": 7.436031447278363e-7,
+  "buoyancy": {
+    "meanLowerCenterV": -0.000004253991876083963,
+    "direction": "up, negative screen y"
+  },
+  "dt": {
+    "rmsNm40vs20": 0.0023602953629401845,
+    "rmsNm20vs10": 0.001145164690669018
+  },
+  "grid": {
+    "rmsNm32vs64": 1.5480159641574254,
+    "rmsNm64vs128": 1.1167953368908459
+  },
+  "precisionRmsNm": 0.0005362042291594519,
+  "long": {
+    "n": 64,
+    "wallSeconds": 23.01667725,
+    "events": [
+      {
+        "state": "rupturing",
+        "time": 186.3599999999972,
+        "cycle": 1,
+        "minNm": 17.990192413330078
+      },
+      {
+        "state": "rest",
+        "time": 191.3599999999962,
+        "cycle": 1
+      },
+      {
+        "state": "rupturing",
+        "time": 382.64000000004813,
+        "cycle": 2,
+        "minNm": 17.987823486328125
+      },
+      {
+        "state": "rest",
+        "time": 387.6400000000507,
+        "cycle": 2
+      },
+      {
+        "state": "rupturing",
+        "time": 579.4400000000529,
+        "cycle": 3,
+        "minNm": 17.97583770751953
+      },
+      {
+        "state": "rest",
+        "time": 584.4400000000484,
+        "cycle": 3
+      }
+    ],
+    "diagnostics": {
+      "step": 13986,
+      "time": 589.4400000000438,
+      "state": "intact",
+      "cycle": 4,
+      "thicknessRangeNm": [
+        154.5904541015625,
+        1114.7503662109375
+      ],
+      "temperatureRangeC": [
+        21.741886138916016,
+        33.25221252441406
+      ],
+      "divergenceMaxPerSecond": 0,
+      "pressureResidualMetersInverseSecondsInverse": null,
+      "pressureCycles": 0,
+      "maxSpeedMetersPerSecond": 0,
+      "volumeM3": 1.7145429964065554e-8,
+      "filmVolumeM3": 1.7145429964065554e-8,
+      "rimVolumeM3": 0,
+      "evaporatedM3": 1.0025164800002276e-8,
+      "drainedM3": 2.987883241361166e-9,
+      "replenishedM3": 6.858171990346908e-8,
+      "resetDiscardedM3": 3.842323510785103e-8,
+      "massBalanceErrorM3": -6.79018905115017e-15,
+      "hole": null
+    },
+    "medianMs": 1.6352079999996931,
+    "p95Ms": 1.9199999999982538
+  }
+}

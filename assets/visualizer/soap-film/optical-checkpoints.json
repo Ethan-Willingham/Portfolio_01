@@ -1,0 +1,220 @@
+{
+  "status": "derived reference calculation, not measurement",
+  "model": "lossless air-film-air, normal incidence, nondispersive film",
+  "n_air": 1.0,
+  "n_film": 1.333,
+  "wavelength_range_nm": [
+    360,
+    830
+  ],
+  "wavelength_step_nm": 1,
+  "quadrature": "rectangle sum with 1 nm spacing and equal endpoint weights",
+  "illumination": "official CIE D65",
+  "observer": "official CIE 1931 2 degree",
+  "XYZ_normalization": "perfect unit-reflectance surface has Y=1",
+  "XYZ_to_linear_sRGB_matrix": [
+    [
+      3.2404542,
+      -1.5371385,
+      -0.4985314
+    ],
+    [
+      -0.969266,
+      1.8760108,
+      0.041556
+    ],
+    [
+      0.0556434,
+      -0.2040259,
+      1.0572252
+    ]
+  ],
+  "display_mapping": "none; linear RGB can be negative or out of gamut",
+  "license": "CIE inputs CC BY-SA 4.0; derived table distributed under CC BY-SA 4.0",
+  "source_dois": [
+    "10.25039/CIE.DS.xvudnb9b",
+    "10.25039/CIE.DS.hjfjmt59"
+  ],
+  "rows": [
+    {
+      "thickness_nm": 0,
+      "XYZ_D65": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "linear_srgb_unclipped": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "min_spectral_reflectance": 0.0,
+      "max_spectral_reflectance": 0.0
+    },
+    {
+      "thickness_nm": 10,
+      "XYZ_D65": [
+        0.0018273498081409019,
+        0.0019350159924192399,
+        0.003104039052194524
+      ],
+      "linear_srgb_unclipped": [
+        0.0013995948462508481,
+        0.0019879143076667084,
+        0.0029885548847107452
+      ],
+      "min_spectral_reflectance": 0.0008610191440906222,
+      "max_spectral_reflectance": 0.004493728164451977
+    },
+    {
+      "thickness_nm": 25,
+      "XYZ_D65": [
+        0.010827093090622962,
+        0.011489824102333217,
+        0.018005354930998335
+      ],
+      "linear_srgb_unclipped": [
+        0.008447013492128326,
+        0.011808931424014233,
+        0.01729394953635424
+      ],
+      "min_spectral_reflectance": 0.0052628032279146445,
+      "max_spectral_reflectance": 0.02498988474323685
+    },
+    {
+      "thickness_nm": 50,
+      "XYZ_D65": [
+        0.03601081937166049,
+        0.03844553119714201,
+        0.05560577882190698
+      ],
+      "linear_srgb_unclipped": [
+        0.02987407795808487,
+        0.03953092263320662,
+        0.05294771095929645
+      ],
+      "min_spectral_reflectance": 0.019457962672437344,
+      "max_spectral_reflectance": 0.0667966562120023
+    },
+    {
+      "thickness_nm": 100,
+      "XYZ_D65": [
+        0.07151141322663658,
+        0.0771041353399149,
+        0.07891207868586463
+      ],
+      "linear_srgb_unclipped": [
+        0.07386957533382202,
+        0.0786138795116827,
+        0.07167573573536605
+      ],
+      "min_spectral_reflectance": 0.04304102108524358,
+      "max_spectral_reflectance": 0.0782709788783513
+    },
+    {
+      "thickness_nm": 150,
+      "XYZ_D65": [
+        0.04622134561578495,
+        0.04701931957726383,
+        0.013536807357475353
+      ],
+      "linear_srgb_unclipped": [
+        0.07075442364085348,
+        0.04397050812251622,
+        0.007290207694366847
+      ],
+      "min_spectral_reflectance": 5.238142454238355e-08,
+      "max_spectral_reflectance": 0.07827099281668519
+    },
+    {
+      "thickness_nm": 200,
+      "XYZ_D65": [
+        0.012200693339002094,
+        0.00517471686138196,
+        0.025509539777408746
+      ],
+      "linear_srgb_unclipped": [
+        0.018864224880464707,
+        -0.0010578180760365458,
+        0.026592440087929714
+      ],
+      "min_spectral_reflectance": 1.1800562806576959e-07,
+      "max_spectral_reflectance": 0.07801718357451083
+    },
+    {
+      "thickness_nm": 300,
+      "XYZ_D65": [
+        0.05262556317874021,
+        0.06870973435402307,
+        0.041451018734748664
+      ],
+      "linear_srgb_unclipped": [
+        0.04424971482831208,
+        0.0796145731278147,
+        0.03273276144388784
+      ],
+      "min_spectral_reflectance": 5.238142454238355e-08,
+      "max_spectral_reflectance": 0.07827077836694465
+    },
+    {
+      "thickness_nm": 500,
+      "XYZ_D65": [
+        0.032606925449471164,
+        0.056480308658841946,
+        0.017433194243623634
+      ],
+      "linear_srgb_unclipped": [
+        0.010152196857690771,
+        0.07507733864860192,
+        0.008721726660010927
+      ],
+      "min_spectral_reflectance": 1.8838299721439634e-06,
+      "max_spectral_reflectance": 0.07827037734498421
+    },
+    {
+      "thickness_nm": 800,
+      "XYZ_D65": [
+        0.04942014612143642,
+        0.03656152586082101,
+        0.047497772009777395
+      ],
+      "linear_srgb_unclipped": [
+        0.0802644602674936,
+        0.02266236744247763,
+        0.04550624825215756
+      ],
+      "min_spectral_reflectance": 6.631595800250126e-08,
+      "max_spectral_reflectance": 0.07827087717506355
+    },
+    {
+      "thickness_nm": 1200,
+      "XYZ_D65": [
+        0.03940038949079427,
+        0.03958316198967648,
+        0.03924264871787987
+      ],
+      "linear_srgb_unclipped": [
+        0.047266662755978975,
+        0.037699748980718574,
+        0.03560469852209282
+      ],
+      "min_spectral_reflectance": 1.6051833550123548e-07,
+      "max_spectral_reflectance": 0.07827087717506355
+    },
+    {
+      "thickness_nm": 2000,
+      "XYZ_D65": [
+        0.0380873127655409,
+        0.03979121747469849,
+        0.04409626796208296
+      ],
+      "linear_srgb_unclipped": [
+        0.040272206073666425,
+        0.03956448094411065,
+        0.04062055433723376
+      ],
+      "min_spectral_reflectance": 5.773445870616328e-06,
+      "max_spectral_reflectance": 0.07827065181137327
+    }
+  ]
+}

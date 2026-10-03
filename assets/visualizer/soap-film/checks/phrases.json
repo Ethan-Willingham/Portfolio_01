@@ -1,0 +1,132 @@
+{
+  "apiVersion": 1,
+  "id": "soap-film",
+  "title": "Soap film",
+  "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
+  "representativeScaleMeters": 0.16,
+  "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
+  "sources": [
+    "https://doi.org/10.1103/PhysRevLett.100.144501",
+    "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
+    "https://cie.co.at/datatable/cie-standard-illuminant-d65",
+    "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
+  ],
+  "numericalStepCount": 24187,
+  "simulationTime": 545.9999999998156,
+  "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
+  "parameters": {
+    "lengthMeters": 0.16,
+    "dtSeconds": 0.04,
+    "viscosity": 0.000001,
+    "thermalDiffusivity": 0.0000012,
+    "gravity": 9.81,
+    "expansionPerKelvin": 0.0002,
+    "dragPerSecond": 1,
+    "ambientC": 22,
+    "heatingKelvin": 12,
+    "coolingPerSecond": 0.025,
+    "evaporationNmPerSecond": 0.7,
+    "drainageSpeedMetersPerSecond": 0.000055,
+    "drainageReferenceNm": 800,
+    "ruptureNm": 18,
+    "gammaNewtonPerMeter": 0.03,
+    "densityKgPerM3": 1000,
+    "ruptureSlowdown": 240,
+    "restSeconds": 5,
+    "viewingAngleDegrees": 18
+  },
+  "quality": "low",
+  "requestedQuality": "low",
+  "adaptiveReductions": 0,
+  "workBudget": 2,
+  "droppedAmbientSeconds": 0,
+  "grid": [
+    128,
+    128
+  ],
+  "seed": "51a9f17c",
+  "seedProvenance": "offline deterministic hexadecimal seed; no random forcing or external beacon",
+  "diagnosticAgeSeconds": 0,
+  "diagnostics": {
+    "step": 24187,
+    "time": 545.9999999998156,
+    "state": "intact",
+    "cycle": 4,
+    "thicknessRangeNm": [
+      147.68992614746094,
+      1116.3160400390625
+    ],
+    "temperatureRangeC": [
+      21.745986938476562,
+      34.12080383300781
+    ],
+    "divergenceMaxPerSecond": 0.000008978531695902348,
+    "pressureResidualMetersInverseSecondsInverse": 0.007182825356721878,
+    "pressureCycles": 1,
+    "maxSpeedMetersPerSecond": 0.00026364129735156894,
+    "volumeM3": 1.7125923927617074e-8,
+    "filmVolumeM3": 1.7125923927617074e-8,
+    "rimVolumeM3": 0,
+    "evaporatedM3": 9.243136000002477e-9,
+    "drainedM3": 2.82316388481642e-9,
+    "replenishedM3": 6.858073521838189e-8,
+    "resetDiscardedM3": 3.938844445416616e-8,
+    "massBalanceErrorM3": -6.695177975585075e-14,
+    "hole": null
+  },
+  "performance": {
+    "solverCPU": {
+      "medianMs": 0,
+      "p95Ms": 4.799999952316284,
+      "samples": 240
+    },
+    "opticalCompositeCPUEncode": {
+      "medianMs": 0,
+      "p95Ms": 0.10000002384185791,
+      "samples": 175
+    },
+    "opticalCompositeGPU": {
+      "medianMs": 1.399229,
+      "p95Ms": 1.813973,
+      "samples": 3
+    },
+    "timestampQueries": true
+  },
+  "elapsedConvention": "one ambient second equals one model second while caught up; bounded work can slow wall-clock playback",
+  "precision": "Float32 state, JavaScript Float64 arithmetic",
+  "events": [
+    {
+      "state": "rupturing",
+      "time": 171.72000000001154,
+      "cycle": 1,
+      "minNm": 17.997055053710938
+    },
+    {
+      "state": "rest",
+      "time": 176.80000000001053,
+      "cycle": 1
+    },
+    {
+      "state": "rupturing",
+      "time": 353.4799999999515,
+      "cycle": 2,
+      "minNm": 17.98099136352539
+    },
+    {
+      "state": "rest",
+      "time": 358.5599999999541,
+      "cycle": 2
+    },
+    {
+      "state": "rupturing",
+      "time": 535.4399999998252,
+      "cycle": 3,
+      "minNm": 17.99795150756836
+    },
+    {
+      "state": "rest",
+      "time": 540.4799999998206,
+      "cycle": 3
+    }
+  ]
+}

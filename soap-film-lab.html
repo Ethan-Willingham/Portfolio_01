@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#303931">
+<title>Soap film</title>
+<meta property="og:title" content="Soap film">
+<meta name="description" content="A heated film drains, folds its interference colors into rising plumes, and opens a hole when it becomes too thin. A live reduced physics model.">
+<meta property="og:url" content="https://ethanwillingham.com/soap-film-lab.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="soap-film.css?v=1">
+<script type="module" src="js/soap-film.js?v=1"></script>
+</head>
+<body class="sf-page">
+<div class="site-wrapper">
+<nav class="sf-nav" aria-label="Site"><a href="/">Ethan Willingham</a><span>Physics lab / 03</span></nav>
+<main>
+<header class="u-hero sf-hero"><p class="u-eyebrow">Light through a thin layer</p><h1 class="u-title">Soap film</h1></header>
+<section class="sf-demo" id="sf-demo" aria-label="Live soap-film visualizer" aria-busy="true">
+<div class="sf-view" id="sf-view">
+<canvas id="sf-canvas" tabindex="0" aria-label="Reflected interference colors of a square film. Space pauses. F opens fullscreen."></canvas>
+<img id="sf-still" src="assets/visualizer/soap-film/still.webp" alt="Computed interference bands in the initial film, thicker at the bottom." hidden>
+<div class="sf-topline"><span>Air / film / air</span><span>D65 reflected light</span></div>
+<p id="sf-status" role="status">Preparing the film</p>
+<div class="sf-bottomline"><span id="sf-phase">Warming</span><output id="sf-sample">Center sample</output></div>
+</div>
+<div class="sf-toolbar" role="group" aria-label="Playback">
+<button id="sf-play" type="button" disabled>Pause</button>
+<button id="sf-instruments-toggle" type="button" aria-expanded="false" aria-controls="sf-instruments">Instruments</button>
+<button id="sf-restart" type="button" disabled>Restart</button>
+<button id="sf-fullscreen" type="button">Fullscreen</button>
+</div>
+<div class="sf-instruments" id="sf-instruments" hidden>
+<div class="sf-settings">
+<label>Grid <select id="sf-quality"><option value="low">128 × 128</option><option value="medium" selected>256 × 256</option><option value="high">512 × 512</option></select></label>
+<label>View angle <input type="range" id="sf-angle" min="0" max="60" value="18"><output id="sf-angle-value">18°</output></label>
+<label>Replay seed <input id="sf-seed" value="51a9f17c" pattern="[0-9a-fA-F]{1,32}" maxlength="32" spellcheck="false"></label>
+<button id="sf-apply" type="button">Renew with settings</button>
+</div>
+<dl id="sf-readings"></dl>
+<p class="sf-instrument-note">The square frame is 16 cm across. Gravity points down; warm liquid rises. Model seconds track the solver, and may run slower on a busy device. Hole expansion is replayed 240 times slower. Touch the film to move the sample; it starts at the center.</p>
+</div>
+</section>
+<div class="sf-caption"><span id="sf-runtime">Depth-averaged convection</span><span>Silent, self-running</span></div>
+<div class="post-body sf-copy">
+<p>A soap film’s colors tell you how thick it is. Light reflected from its two surfaces cancels at some wavelengths and adds at others. Here those colors come from the film’s thickness, the CIE color tables and daylight illumination. Heat enters at the lower edge. Liquid rises, cools and falls while gravity drains the film into the bottom of its frame.</p>
+<details class="sf-notes"><summary>What this model leaves out</summary><p>This is a flat, depth-averaged fluid carrying a thickness field. It includes thermal buoyancy, viscosity, air drag, evaporation and conservative drainage. Real soap films also have surfactant transport, surface stresses, capillarity and molecular stabilization. Those effects are absent. The minimum-thickness rule for opening a hole is an assumed failure criterion; a real black film can remain intact. After a short rest, the apparatus supplies a fresh film.</p><p>The 2008 experiment below heated a curved half-bubble at its equator. This square frame uses a different geometry. Its rising plumes are thermal convection; this is not a Rayleigh-Taylor experiment.</p><p><a href="docs/visualizer/SOAP_FILM.md">Equations, coefficients, numerical checks and room interface</a></p></details>
+<p class="sf-sources">Sources: <a href="https://doi.org/10.1103/PhysRevLett.100.144501">Seychelles et al., 2008</a> · <a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer">CIE observer</a> · <a href="https://cie.co.at/datatable/cie-standard-illuminant-d65">D65 daylight</a> · <a href="https://pages.nist.gov/SCATMECH/code/filmtran.cpp">NIST thin-film optics</a></p>
+</div>
+</main>
+<footer class="sf-footer"><a href="/">Back to the portfolio</a><span>A comparison prototype</span></footer>
+</div>
+</body>
+</html>
