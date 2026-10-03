@@ -13,6 +13,13 @@ struct Sample { psi: vec2<f32>, density: f32, signedTerm: f32, color: vec3<f32> 
 fn multiply(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
   return vec2<f32>(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x);
 }
+// Arbitrary linear-RGB density palette, independent of spectral wavelengths.
+fn densityColor(rho: f32) -> vec3<f32> {
+  let t=clamp(log2(max(rho,0.3)/0.3)/6.0,0.0,1.0)*4.0;
+  let palette=array<vec3<f32>,5>(vec3<f32>(0.015,0.65,0.52),vec3<f32>(0.025,0.45,1.0),vec3<f32>(0.48,0.035,1.0),vec3<f32>(1.0,0.025,0.22),vec3<f32>(1.0,0.58,0.025));
+  let i=min(u32(t),3u);
+  return mix(palette[i],palette[i+1u],fract(min(t,3.99999)));
+}
 fn evaluate(p: vec3<f32>) -> Sample {
   let r = length(p);
   let s = length(p.xy);
@@ -58,6 +65,7 @@ fn evaluate(p: vec3<f32>) -> Sample {
   result.density = dot(psi, psi);
   result.signedTerm = 0.0;
   result.color = u.tint.rgb;
+  if (u.domain.w > 2.5) { result.color=densityColor(result.density*u.domain.y*u.domain.y*u.domain.y); }
   if (u.domain.z > 0.5) {
     var weighted = vec3<f32>(0.0);
     var weight = 0.0;
@@ -74,7 +82,7 @@ fn evaluate(p: vec3<f32>) -> Sample {
     if (u.domain.w > 0.5 && u.domain.w < 1.5) {
       result.color = 0.28*u.tint.rgb + 0.95*weighted/max(weight,1e-20);
     }
-    if (u.domain.w > 1.5) {
+    if (u.domain.w > 1.5 && u.domain.w < 2.5) {
       let strength = clamp(abs(result.signedTerm)/max(result.density,1e-20),0.0,1.0);
       let signColor = select(u.tint.bgr * 0.6, u.colors[0].rgb, result.signedTerm >= 0.0);
       result.color = mix(u.tint.rgb,signColor,strength);
@@ -109,15 +117,28 @@ export const RENDER = EVALUATOR + /* wgsl */ `
 @group(0) @binding(1) var field: texture_3d<f32>;
 @group(0) @binding(2) var smoothSampler: sampler;
 struct Vertex { @builtin(position) position: vec4<f32>, @location(0) uv: vec2<f32> };
+fn fieldAt(p:vec3<f32>) -> vec4<f32> {
+  if (any(abs(p)>=vec3<f32>(1.0))) { return vec4<f32>(0.0); }
+  return textureSampleLevel(field,smoothSampler,p*0.5+0.5,0.0);
+}
+fn densityNormal(p:vec3<f32>) -> vec3<f32> {
+  let h=1.0/u.domain.x;
+  let dx=vec3<f32>(h,0.0,0.0); let dy=vec3<f32>(0.0,h,0.0); let dz=vec3<f32>(0.0,0.0,h);
+  let g=vec3<f32>(fieldAt(p+dx).a-fieldAt(p-dx).a,fieldAt(p+dy).a-fieldAt(p-dy).a,fieldAt(p+dz).a-fieldAt(p-dz).a);
+  return -g/max(length(g),1e-8);
+}
 @vertex fn vertex(@builtin(vertex_index) i: u32) -> Vertex {
   let p = array<vec2<f32>,3>(vec2<f32>(-1.0,-1.0),vec2<f32>(3.0,-1.0),vec2<f32>(-1.0,3.0));
   var v: Vertex; v.position=vec4<f32>(p[i],0.0,1.0); v.uv=p[i]; return v;
 }
 @fragment fn fragment(v: Vertex) -> @location(0) vec4<f32> {
   let aspect=u.view.x/u.view.y;
-  let xy=v.uv*1.45*vec2<f32>(max(aspect,1.0),max(1.0/aspect,1.0));
+  // Frame the occupied orbit rather than the entire finite integration box.
+  let portrait=aspect<1.0 && u.view.w<0.5;
+  var xy=v.uv*select(0.78,0.51,portrait)*vec2<f32>(max(aspect,1.0),max(1.0/aspect,1.0));
+  if (aspect<1.0 && u.view.w<0.5) { xy=vec2<f32>(xy.y,-xy.x); }
   let yaw=u.camera.x;
-  let tilt=u.view.z;
+  let tilt=select(u.view.z,0.6,portrait);
   let right=vec3<f32>(cos(yaw),sin(yaw),0.0);
   let up=vec3<f32>(-sin(yaw)*sin(tilt),cos(yaw)*sin(tilt),cos(tilt));
   let forward=cross(right,up);
@@ -127,8 +148,8 @@ struct Vertex { @builtin(position) position: vec4<f32>, @location(0) uv: vec2<f3
     let p=select(vec3<f32>(xy*u.domain.y,0.0),vec3<f32>(xy.x*u.domain.y,0.0,xy.y*u.domain.y),u.domain.z>0.5);
     let sample=evaluate(p);
     let rho=sample.density*u.domain.y*u.domain.y*u.domain.y;
-    radiance=sample.color*(1.0-exp(-rho*0.075))*1.4;
-  } else {
+    radiance=sample.color*smoothstep(0.18,0.35,rho)*(1.0-exp(-rho*0.10))*3.2;
+  } else if (u.view.w < -0.5) {
     let origin=right*xy.x+up*xy.y;
     let steps=u32(u.camera.y);
     let ds=3.4641016/f32(steps);
@@ -141,9 +162,56 @@ struct Vertex { @builtin(position) position: vec4<f32>, @location(0) uv: vec2<f3
         let displayDensity=select(pow(max(sample.a,0.0),1.4),sample.a,u.domain.z>0.5);
         let opacity=1.0-exp(-displayDensity*ds*u.camera.w);
         let color=sample.rgb/max(sample.a,1e-8);
-        radiance+=transmission*opacity*color*1.55;
+        radiance+=transmission*opacity*color*2.6;
         transmission*=1.0-opacity;
       }
+    }
+  } else {
+    // Six level sets of the sampled positive density, with refined crossings.
+    // Surface lighting is a display aid; no density, phase or mass is altered.
+    let origin=right*xy.x+up*xy.y;
+    let safeForward=select(vec3<f32>(1e-8),forward,abs(forward)>vec3<f32>(1e-8));
+    let boxA=(-vec3<f32>(1.0)-origin)/safeForward;
+    let boxB=(vec3<f32>(1.0)-origin)/safeForward;
+    let near=max(max(min(boxA.x,boxB.x),min(boxA.y,boxB.y)),min(boxA.z,boxB.z));
+    let far=min(min(max(boxA.x,boxB.x),max(boxA.y,boxB.y)),max(boxA.z,boxB.z));
+    if (far<=near) { return vec4<f32>(0.0,0.0,0.0,1.0); }
+    let steps=u32(ceil((far-near)*u.camera.y/3.4641016));
+    let ds=(far-near)/f32(steps);
+    var previousP=origin+forward*near;
+    var previous=fieldAt(previousP).a;
+    var highestLevel=0u;
+    let levels=array<f32,6>(0.3,0.9,2.7,8.1,24.3,72.9);
+    for (var i=1u; i<=steps; i++) {
+      let p=origin+forward*(near+f32(i)*ds);
+      let current=fieldAt(p).a;
+      if (highestLevel<6u && current>=levels[min(highestLevel,5u)]) {
+        var nextLevel=highestLevel+1u;
+        for (var j=nextLevel; j<6u; j++) {
+          if (current<levels[j]) { break; }
+          nextLevel=j+1u;
+        }
+        let levelIndex=nextLevel-1u;
+        let level=levels[levelIndex];
+        var lo=previousP; var hi=p;
+        for (var k=0u; k<5u; k++) {
+          let middle=(lo+hi)*0.5;
+          if ((fieldAt(middle).a<level)==(previous<level)) { lo=middle; } else { hi=middle; }
+        }
+        let hit=(lo+hi)*0.5;
+        let sample=fieldAt(hit);
+        let color=sample.rgb/max(sample.a,1e-8);
+        let normal=densityNormal(hit);
+        let facing=abs(dot(normal,forward));
+        let light=normalize(-forward+0.55*up-0.35*right);
+        let shade=0.36+0.64*abs(dot(normal,light));
+        let rim=pow(1.0-facing,3.0);
+        // Reveal the highest density contour reached by this view ray.
+        // Avoid mixing complementary bands into a washed-out neutral cloud.
+        highestLevel=nextLevel;
+        radiance=color*(2.8*shade+0.8*rim);
+      }
+      previous=current; previousP=p;
     }
   }
   return vec4<f32>(radiance*u.camera.z,1.0);

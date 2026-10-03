@@ -150,30 +150,51 @@ times the local display color. Scaling avoids underflow of physical high-n
 densities in f16. Complex amplitudes and physical diagnostics are evaluated in
 f32 before storage. No f16 coefficients, basis states or phases are used.
 
-The volume samples this texture trilinearly. It uses a stationary orthographic
-camera, fixed midpoint ray quadrature and a synthetic absorption/emission
-transfer. For the circular view alpha = 1-exp(-0.14 rhoScaled^1.4 ds); for the
-spectral view alpha = 1-exp(-0.26 rhoScaled ds). The 1.4 power is a documented
-display contrast curve. It does not enter norm, phases, mass, or overlap.
-Emission is front-to-back composited in linear color. The host adds its token
-background, applies Reinhard mapping once, and converts once to sRGB.
-Exposure multiplies linear room radiance. There is no bloom, temporal trail,
-noise, dither, fluid warp, or animated camera driving the model.
+The default view draws six density contours from this trilinearly sampled
+texture, at rhoScaled = 0.3, 0.9, 2.7, 8.1, 24.3 and 72.9. Newly reached higher
+contours along each ray are refined by five bisections. The highest level reached
+is shown, with its first surface normal estimated by centered voxel differences.
+This reveals nested bands without mixing their colors into a pale cloud.
+The contour thresholds omit faint tails from the image, not from the field or
+captured-mass calculation. Surface illumination is a display aid, not light
+emitted by the atom. Ray steps can miss a thin contour and the grid can soften
+or displace a boundary; these are presentation errors.
+
+The circular packet defaults to density false color. A linear-RGB palette goes
+from teal through blue, violet and pink to gold, using
+t = clamp(log2(max(rhoScaled,0.3)/0.3)/6,0,1). These hues encode density alone;
+they are arbitrary colors and do not represent visible Rydberg beats. Neutral
+density remains selectable. Low-n mode defaults to the CIE frequency encoding.
+
+The optional soft volume retains midpoint ray quadrature and synthetic
+absorption/emission: alpha = 1-exp(-0.14 rhoScaled^1.4 ds) for the circular view,
+and 1-exp(-0.26 rhoScaled ds) for the spectral view. Emission is multiplied by
+2.6 and composited front to back. None of these display mappings enter norm,
+phases, mass, or overlap. All views use linear color. The host adds its token
+background, applies Reinhard mapping once, and converts once to sRGB. Exposure
+multiplies linear room radiance. There is no bloom, temporal trail, noise,
+dither, fluid warp, or animated camera driving the model.
 
 The 2D view evaluates complex psi directly in the fragment shader, without
 volume interpolation: xy equatorial plane for the circular packet, xz plane
-for the spectral state. Brightness is 1.4(1-exp(-0.075 rhoScaled)). Analytic nodes
+for the spectral state. Brightness is
+3.2 smoothstep(0.18,0.35,rhoScaled)(1-exp(-0.10 rhoScaled)). Analytic nodes
 are dark. The volume's interpolation and finite pixels/rays can soften them;
 no filament is presented as positive probability at a node.
 
-| Quality | Grid | Ray samples | Volume bytes |
+| Quality | Grid | Maximum ray samples | Volume bytes |
 | --- | --- | --- | --- |
-| Low | 64 cubed | 64 | 2,097,152 |
-| Medium (default) | 128 cubed | 96 | 16,777,216 |
-| High | 160 cubed | 128 | 32,768,000 |
+| Low | 64 cubed | 96 | 2,097,152 |
+| Medium (default) | 128 cubed | 160 | 16,777,216 |
+| High | 160 cubed | 224 | 32,768,000 |
 
 The host additionally owns a full-size rgba16float scene target. DPR is capped
-at 1.5 and the long render dimension at 1400 pixels. Device limits, adapter and
+at 2 and the long render dimension at 1800 pixels. The page uses the available
+width, a compact header, and a stage sized to leave playback controls in view.
+The orthographic camera frames the occupied orbit rather than the full render
+box. Portrait volume views rotate the projection by 90 degrees and use a
+0.6-radian tilt to keep the full orbit within the narrow canvas; the box and
+density diagnostics are unchanged. Device limits, adapter and
 shader validation are checked. Optional timestamp-query support is recorded;
 the current benchmark uses queue completion rather than timestamp queries.
 The fixed local clock ticks at 30 Hz, with at most two ticks per animation
@@ -252,8 +273,8 @@ gitignored research/visualizer/hydrogen-exactly-results directory.
 
 Measured on October 3, 2026, Apple M1 Pro, hardware Apple Metal-3 WebGPU adapter
 (isFallbackAdapter false), Chrome for Testing 148.0.7778.96. A 24-sample benchmark
-after three warmups at 128 cubed and 1138 by 522 pixels measured compute median
-2.8 ms / p95 2.9 ms, render median 1.8 ms / p95 1.9 ms.
+after three warmups at 128 cubed and 1358 by 684 pixels measured compute median
+5.1 ms / p95 6.9 ms, contour render median 3.7 ms / p95 5.5 ms.
 These are GPU queue-completion latencies
 including submit/wait overhead, not pure shader timestamps or a claim about
 other devices. Simulation and rendering are timed separately. The final run's
@@ -306,6 +327,10 @@ spectral volume and analytic-section screenshots were inspected. One complete
 orbit was observed at normal pace, followed by a 64x run spanning more than
 1200 display seconds across several revival phrases, using the same energies.
 No script, shader or GPU validation errors remained in the passing run.
+Presentation checks additionally verify that the large canvas and playback
+controls fit the initial viewport, DPR 2 remains sharp, and switching contours,
+soft volume, analytic section and density colors leaves GPU probes and captured
+mass exactly unchanged at the same score.
 
 Limitations: no demonstrated knotted nodes, Bohmian tracers, fine structure,
 Lamb shifts, spontaneous emission, or global synchronization.

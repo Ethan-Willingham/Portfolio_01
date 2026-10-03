@@ -1,5 +1,5 @@
-import * as M from './hydrogen-exactly-math.js';
-import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js';
+import * as M from './hydrogen-exactly-math.js?v=2';
+import { COMPUTE, PROBES, RENDER } from './hydrogen-exactly-shaders.js?v=2';
 
 export const roomInfo = {
   apiVersion: 1, id: 'hydrogen-exactly', title: 'Hydrogen Exactly', model: M.MODEL,
@@ -8,7 +8,7 @@ export const roomInfo = {
   sources: ['https://arxiv.org/html/quant-ph/9510029v1', 'https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0', 'https://physics.nist.gov/cgi-bin/cuu/Value?ryd', 'https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer']
 };
 export class HydrogenInitializationError extends Error { constructor(message) { super(message); this.name = 'HydrogenInitializationError'; } }
-const tiers = { low: [64, 64], medium: [128, 96], high: [160, 128] };
+const tiers = { low: [64, 96], medium: [128, 160], high: [160, 224] };
 const half = v => {
   const sign = (v & 0x8000) ? -1 : 1, e = (v >> 10) & 31, m = v & 1023;
   return sign * (e ? (e === 31 ? (m ? NaN : Infinity) : 2 ** (e - 15) * (1 + m / 1024)) : 2 ** -14 * m / 1024);
@@ -24,7 +24,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
   if (!response.ok) throw new HydrogenInitializationError('The bundled CIE observer table could not be loaded.');
   const cie = M.parseCIE(await response.text());
   const colors = M.spectralPairs(M.SPECTRAL, cie);
-  let mode = 'revival', overlay = 0, section = false, tilt = 0.92, yaw = 0.1;
+  let mode = 'revival', overlay = 3, section = false, soft = false, tilt = 0.92, yaw = 0.1;
   let grid = Math.min(tiers[quality][0], device.limits.maxTextureDimension3D), raySteps = tiers[quality][1];
   let width = 1, height = 1, time = 0, score = 0, steps = 0, disposed = false, field, renderBinding, computeBinding;
   let dirty = true, tint = [0.72, 0.61, 0.39], diagnosticTime = -1, fidelity = { fidelity: 1, rotation: 0 };
@@ -63,7 +63,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     const states = M.statesFor(mode), phases = M.phases(states, time), side = M.domainFor(mode);
     data.fill(0);
     data.set([grid, side, mode === 'spectral' ? 1 : 0, overlay], 0);
-    data.set([width, height, tilt, section ? 1 : 0], 4);
+    data.set([width, height, tilt, section ? 1 : (soft ? -1 : 0)], 4);
     data.set([yaw, raySteps, exposure, mode === 'revival' ? 0.14 : 0.26], 8);
     data.set([...tint, 0], 12);
     states.forEach((s, i) => {
@@ -100,14 +100,14 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
       const pass = encoder.beginRenderPass({ colorAttachments: [{ view: targetView, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
       pass.setPipeline(renderPipeline); pass.setBindGroup(0, renderBinding); pass.draw(3); pass.end();
     },
-    setMode(value) { if (!['revival', 'spectral'].includes(value)) throw new Error('Unknown hydrogen mode.'); mode = value; overlay = value === 'spectral' ? 1 : 0; score = 0; time = 0; diagnosticTime = -1; dirty = true; lastMeasurement = null; update(); },
-    setPresentation(value = {}) { if (value.section !== undefined) section = !!value.section; if (value.overlay !== undefined) overlay = +value.overlay; if (value.tilt !== undefined) tilt = +value.tilt; if (value.tint) tint = [...value.tint]; dirty = true; update(); },
+    setMode(value) { if (!['revival', 'spectral'].includes(value)) throw new Error('Unknown hydrogen mode.'); mode = value; overlay = value === 'spectral' ? 1 : 3; score = 0; time = 0; diagnosticTime = -1; dirty = true; lastMeasurement = null; update(); },
+    setPresentation(value = {}) { if (value.section !== undefined) section = !!value.section; if (value.soft !== undefined) soft = !!value.soft; if (value.overlay !== undefined) overlay = +value.overlay; if (value.tilt !== undefined) tilt = +value.tilt; if (value.tint) tint = [...value.tint]; dirty = true; update(); },
     setQuality(value) { if (!tiers[value]) throw new Error('Unknown quality.'); quality = value; grid = Math.min(tiers[value][0], device.limits.maxTextureDimension3D); raySteps = tiers[value][1]; allocate(); update(); },
     snapshot() {
       return {
         ...roomInfo, numericalStepCount: steps, simulationTime: time, simulationTimeUnits: 'hbar/Eh (atomic time)', simulationTimeSeconds: time * M.ATOMIC_TIME,
         scoreSeconds: score, mode, quality, seed: seed || null, seedProvenance: 'Deterministic analytic initial coefficients; seed is recorded but unused. No random draws or beacon claim.',
-        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, overlay, tilt },
+        parameterValues: { states: M.statesFor(mode), n0: mode === 'revival' ? 30 : null, sigma: mode === 'revival' ? 1.5 : null, atomicUnitsPerDisplaySecond: mode === 'revival' ? M.TCL / 10 : 24, domainHalfSideA0: M.domainFor(mode), grid, raySteps, section, soft, overlay, tilt, contourLevelsScaledDensity: [0.3, 0.9, 2.7, 8.1, 24.3, 72.9], colorEncoding: ['neutral density', 'spectral-frequency false color', 'signed 2p / 3s diagnostic', 'density false color'][overlay] },
         representativeScaleMeters: M.scaleFor(mode), scaleMeaning: mode === 'revival' ? 'n0^2 a0, characteristic circular radius' : 'n_max^2 a0, characteristic extent of the highest n=5 basis state',
         analyticNorm: M.statesFor(mode).reduce((s, j) => s + j.c_real ** 2 + j.c_imag ** 2, 0),
         autocorrelation: M.autocorrelation(M.statesFor(mode), time), rotationAdjustedOverlap: fidelity.fidelity, bestRotationRadians: fidelity.rotation,

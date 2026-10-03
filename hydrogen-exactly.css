@@ -1,9 +1,10 @@
-.hx-page .site-wrapper { max-width: 1140px; }
-.hx-hero { margin: 0 0 1.5rem; padding: 0; }
-.hx-hero .u-title { font-size: clamp(2.8rem, 8vw, 5.4rem); margin: .25rem 0; }
-.hx-hero .u-eyebrow { margin: 0; }
+.hx-page .site-wrapper { max-width: 1800px; padding-top: 18px; }
+.hx-page .post-back { padding: 4px 0; margin-bottom: 8px; min-height: 44px; }
+.hx-hero { margin: 0 0 16px; padding: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.hx-hero .u-title { font-size: clamp(2.2rem, 4vw, 3.2rem); margin: .15rem 0 0; }
+.hx-hero .u-eyebrow { margin: 0; order: 1; }
 .hx-demo { position: relative; border: 1px solid var(--rule); background: var(--bg-raised); }
-.hx-stage { position: relative; height: clamp(350px, 58vh, 660px); min-height: 200px; overflow: hidden; }
+.hx-stage { position: relative; height: clamp(350px, calc(100svh - 216px), 1000px); min-height: 200px; overflow: hidden; }
 #hx-canvas, #hx-still { display: block; width: 100%; height: 100%; }
 #hx-canvas { visibility: hidden; }
 #hx-still { position: absolute; inset: 0; object-fit: contain; }
@@ -50,7 +51,9 @@
 .hx-demo:fullscreen .hx-readouts, .hx-pseudo-fullscreen .hx-readouts { grid-template-columns: 1fr 1fr; }
 .hx-demo :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 650px) {
-  .hx-stage { height: 410px; }
+  .hx-page .site-wrapper { padding-top: 12px; }
+  .hx-hero .u-eyebrow { display: none; }
+  .hx-stage { height: max(380px, calc(100svh - 196px)); }
   .hx-stage-heading { left: 16px; top: 16px; }
   .hx-caption { left: 16px; right: 16px; bottom: 16px; flex-direction: column; gap: 3px; font-size: .62rem; }
   .hx-toolbar.pillbar { padding: 8px; gap: 6px; }
@@ -65,7 +68,11 @@
   .hx-status { left: 16px; right: 16px; bottom: 68px; }
 }
 @media (max-height: 500px) and (min-width: 651px) {
-  .hx-hero .u-title { font-size: 3rem; }
-  .hx-stage { height: 280px; }
+  .hx-page .site-wrapper { padding-top: 8px; }
+  .hx-page .post-back { margin-bottom: 4px; }
+  .hx-hero { margin-bottom: 8px; }
+  .hx-hero .u-title { font-size: 2rem; }
+  .hx-hero .u-eyebrow { display: none; }
+  .hx-stage { height: max(200px, calc(100svh - 170px)); }
 }
 @media (prefers-reduced-motion: reduce) { .hx-page { scroll-behavior: auto; } }

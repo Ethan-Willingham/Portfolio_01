@@ -116,12 +116,18 @@ check('f16 display-density rounding before storage choice', () => {
 // Honest offline still: direct CPU equatorial section, same density/exposure mapping.
 function crc32(buffer) { let c = 0xffffffff; for (const b of buffer) { c ^= b; for (let i = 0; i < 8; i++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); } return (c ^ 0xffffffff) >>> 0; }
 function chunk(type, data) { const t = Buffer.from(type), length = Buffer.alloc(4), checksum = Buffer.alloc(4); length.writeUInt32BE(data.length); checksum.writeUInt32BE(crc32(Buffer.concat([t, data]))); return Buffer.concat([length, t, data, checksum]); }
-const n = 512, pixels = Buffer.alloc((n * 4 + 1) * n), tint = [.6584, .552, .3515];
+const n = 768, pixels = Buffer.alloc((n * 4 + 1) * n);
+const densityPalette = [[.015,.65,.52],[.025,.45,1],[.48,.035,1],[1,.025,.22],[1,.58,.025]];
+function densityColor(rho) {
+  const t = Math.min(4, Math.max(0, Math.log2(Math.max(rho,.3)/.3)/6*4)), i = Math.min(3, Math.floor(t)), f = Math.min(t,3.99999)%1;
+  return densityPalette[i].map((v,k) => v*(1-f)+densityPalette[i+1][k]*f);
+}
 const srgb = v => (v <= .0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - .055);
 for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-  const rho = M.wavefunction(M.REVIVAL, (2 * (x + .5) / n - 1) * 1.45 * 1700, (1 - 2 * (y + .5) / n) * 1.45 * 1700, 0, 0).rho * 1700 ** 3;
+  const rho = M.wavefunction(M.REVIVAL, (2 * (x + .5) / n - 1) * .78 * 1700, (1 - 2 * (y + .5) / n) * .78 * 1700, 0, 0).rho * 1700 ** 3;
+  const t = Math.min(1,Math.max(0,(rho-.18)/.17)), cutoff = t*t*(3-2*t), color = densityColor(rho);
   const offset = y * (n * 4 + 1) + 1 + x * 4;
-  for (let k = 0; k < 3; k++) { const v = tint[k] * (1 - Math.exp(-rho * .075)) * 1.4 + [.013, .017, .014][k]; pixels[offset + k] = Math.round(255 * srgb(v / (1 + v))); }
+  for (let k = 0; k < 3; k++) { const v = color[k] * cutoff * (1 - Math.exp(-rho * .10)) * 3.2 + [.013, .017, .014][k]; pixels[offset + k] = Math.round(255 * srgb(v / (1 + v))); }
   pixels[offset + 3] = 255;
 }
 const header = Buffer.alloc(13); header.writeUInt32BE(n, 0); header.writeUInt32BE(n, 4); header[8] = 8; header[9] = 6;
