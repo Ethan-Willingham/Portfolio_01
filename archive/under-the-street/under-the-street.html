@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>What's Under a Twin Cities Street</title>
-  <meta name="description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and a guide to each system.">
+  <meta name="description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and explanations of each system.">
   <meta property="og:title" content="What's Under a Twin Cities Street">
-  <meta property="og:description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and a guide to each system.">
+  <meta property="og:description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and explanations of each system.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/under-the-street/under-the-street.html">
@@ -32,8 +32,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/style.css">
   <style>
-  /* Systems guide and public-data explorer. Colors use the shared palette;
-     article navigation follows systems rather than a fixed burial order. */
+  /* Public infrastructure maps and article. Colors use the shared palette. */
   :root {
     --measure: 760px;
     /* the dig-paint code, capped to the site's categorical band */
@@ -48,24 +47,11 @@
   html { overflow-x: hidden; overscroll-behavior-x: none; }
   body { overflow-x: clip; }
 
-  .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto 0.4rem; padding: 1.1rem var(--gutter, 1.5rem) 0; }
-  .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
-
   .reading-progress { position: fixed; top: 0; left: 0; width: 0%; height: 2px; background: var(--accent); z-index: 1000; transition: width 90ms linear; pointer-events: none; }
   @media (max-width: 700px) { .reading-progress { display: none; } }
 
-  /* ---------------- layout: rail + column ---------------- */
-  .descent { max-width: calc(var(--measure) + 14rem); margin: 0 auto; padding: 0 var(--gutter, 1.5rem); display: grid; grid-template-columns: 5.2rem minmax(0, 1fr); gap: 0 2.2rem; }
-  .descent > .col { grid-column: 2; max-width: var(--measure); min-width: 0; }
-
-  /* section navigation (desktop only) */
-  .rail { grid-column: 1; grid-row: 1 / span 99; position: relative; }
-  .rail-inner { position: sticky; top: 4.5rem; display: flex; flex-direction: column; gap: 0; padding: 0.4rem 0 0.6rem; border-left: 1px solid var(--rule); }
-  .rail-stop { display: block; padding: 0.52rem 0 0.52rem 0.85rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-faint); text-decoration: none; border-left: 2px solid transparent; margin-left: -1.5px; line-height: 1.3; }
-  .rail-stop b { display: block; font-weight: 400; color: var(--text-dim); font-size: 0.74rem; }
-  .rail-stop.is-here { border-left-color: var(--stopc, var(--accent)); }
-  .rail-stop.is-here b { color: var(--stopc, var(--accent)); }
-  @media (max-width: 980px) { .descent { display: block; padding: 0 var(--gutter, 1.5rem); } .rail { display: none; } .descent > .col { max-width: var(--measure); margin: 0 auto; } }
+  .descent { max-width: calc(var(--measure) + 2 * var(--gutter, 1.5rem)); margin: 0 auto; padding: 0 var(--gutter, 1.5rem); }
+  .descent > .col { max-width: var(--measure); min-width: 0; margin-inline: auto; }
 
   /* ---------------- hero ---------------- */
   .u-hero { margin-top: 1.6rem; }
@@ -110,35 +96,20 @@
   /* sources */
   .srcs { margin: 4rem 0 2rem; }
   </style>
-  <link rel="stylesheet" href="under-map.css?v=20261003-3">
+  <link rel="stylesheet" href="under-map.css?v=20261003-5">
 </head>
 <body>
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" aria-hidden="true"></div>
 
-  <nav class="top-nav"><a class="post-back" href="/"><span class="pb-label">Home</span></a></nav>
-
   <div class="descent">
-    <aside class="rail" aria-label="In this guide">
-      <div class="rail-inner" id="rail">
-        <a class="rail-stop" href="#street" data-for="street" style="--stopc:var(--accent)"><b>The guide</b>overview</a>
-        <a class="rail-stop" href="#water" data-for="water" style="--stopc:var(--mark-water)"><b>Water</b>river to tap</a>
-        <a class="rail-stop" href="#comms" data-for="comms" style="--stopc:var(--mark-comms)"><b>Internet</b>networks</a>
-        <a class="rail-stop" href="#gas" data-for="gas" style="--stopc:var(--mark-gas)"><b>Gas and heat</b>mains</a>
-        <a class="rail-stop" href="#power" data-for="power" style="--stopc:var(--mark-elec)"><b>Power</b>lines and cables</a>
-        <a class="rail-stop" href="#storm" data-for="storm" style="--stopc:var(--mark-storm)"><b>Stormwater</b>creeks and drains</a>
-        <a class="rail-stop" href="#sewer" data-for="sewer" style="--stopc:var(--mark-sewer)"><b>Sewage</b>interceptors</a>
-        <a class="rail-stop" href="#rock" data-for="rock" style="--stopc:var(--mark-rock)"><b>The falls</b>limestone and sand</a>
-      </div>
-    </aside>
-
     <div class="col">
 
       <header class="u-hero">
-        <p class="u-eyebrow">Field guide · Minneapolis and St. Paul</p>
+        <p class="u-eyebrow">Minneapolis and St. Paul</p>
         <h1 class="u-title">What's Under a Twin Cities Street</h1>
         <p class="u-dek">Bassett Creek runs under downtown Minneapolis. The water, drains, gas pipes and cables around it belong to different systems.</p>
-        <p class="u-meta">A field guide <span class="u-sep">/</span> <b>27 primary sources</b> <span class="u-sep">/</span> 8 min read</p><p class="u-entry-links"><a href="#undermap">Explore the map</a><a href="#street">Read the guide</a></p>
+        <p class="u-meta"><b>27 primary sources</b> <span class="u-sep">/</span> 8 min read</p><p class="u-entry-links"><a href="#undermap">Explore the map</a><a href="#street">Read the article</a></p>
       </header>
 
 <section class="ummap" id="undermap" aria-labelledby="um-title">
@@ -146,7 +117,7 @@
     <header class="um-head">
       <div>
         <h2 id="um-title">Explore the systems</h2>
-        <p class="um-summary">Public records for Minneapolis, St. Paul and the surrounding region.</p>
+        <p class="um-summary">Public records</p>
       </div>
       <a class="um-source-link" href="#map-data">Source data</a>
     </header>
@@ -162,11 +133,6 @@
       <button type="button" data-um-topic="ground" aria-pressed="false">Ground<span class="um-topic-count" aria-hidden="true"></span></button>
     </nav>
 
-    <div class="um-topic-copy">
-      <h3>Start with a place</h3>
-      <p>Choose a stop to see the system it belongs to, the published records and a photograph when one is available.</p>
-    </div>
-
     <div class="um-location-controls">
       <label class="um-city-jump" for="um-city"><span>Go to a city</span><select id="um-city"><option value="metro">Twin Cities region</option><option value="minneapolis">Minneapolis</option><option value="saintPaul">Saint Paul</option><option value="bloomington">Bloomington</option><option value="eagan">Eagan</option><option value="maplewood">Maplewood</option><option value="westSaintPaul">West Saint Paul</option></select></label>
       <form class="um-address-form" aria-label="Find an address on the map">
@@ -181,6 +147,10 @@
 
     <details class="um-layers">
       <summary>Map details <small>Layers and legend</small></summary>
+      <div class="um-topic-copy">
+        <h3>Start with a place</h3>
+        <p>Choose a stop to see the system it belongs to, the published records and a photograph when one is available.</p>
+      </div>
       <div class="um-inactive" hidden><button type="button" data-um-inactive aria-pressed="false">Include inactive records</button><p>Show reported former, removed, planned or offline assets alongside operating records.</p></div>
       <div class="um-layer-list" aria-label="Optional map layers"></div>
       <div class="um-legend" aria-label="Map legend"></div>
@@ -206,7 +176,7 @@
       </div>
 
       <div class="um-stage">
-        <canvas tabindex="0" aria-label="Map of public Twin Cities infrastructure records" aria-describedby="maphelp"></canvas>
+        <canvas tabindex="0" aria-label="Map of public Twin Cities infrastructure records" aria-describedby="maphelp mapkeys"></canvas>
         <p class="um-status" role="status">This map needs JavaScript. The article and sources are below.</p>
         <div class="um-tooltip" hidden aria-hidden="true"></div>
 
@@ -231,13 +201,12 @@
       <div class="um-photo-full"></div>
     </dialog>
 
-    <div class="um-help">
-      <p id="maphelp">Choose a place, or use the map. Arrow keys move the map; + and - zoom; 0 resets. Enter inspects the map center. On a phone, scroll normally or turn on map dragging.</p>
-      <button type="button" data-um-interact aria-pressed="false">Enable map dragging</button>
-    </div>
-
+    <div class="um-footer">
+    <p id="maphelp">Choose a place, or select a record on the map.</p>
     <details class="um-navigation">
-      <summary>Move the map without dragging</summary>
+      <summary>Map controls</summary>
+      <div class="um-help"><button type="button" data-um-interact aria-pressed="false">Enable map dragging</button></div>
+      <p id="mapkeys">Arrow keys move the map; + and - zoom; 0 resets. Enter inspects the map center.</p>
       <div class="um-pan-controls" aria-label="Move the map">
         <button type="button" data-um-pan="n">North</button>
         <button type="button" data-um-pan="w">West</button>
@@ -259,6 +228,7 @@
       <div class="um-datasets" aria-label="Published datasets and downloadable map data"></div>
       <p class="um-source-foot">Street centerlines: <a href="https://www.arcgis.com/home/item.html?id=515028a0cb3a42e0b6470b2af035121c">MnGeo and participating counties</a>. Community-mapped facilities: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors, ODbL</a>. Aerial imagery: <a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USGS / USDA</a> and <a href="https://www.mngeo.state.mn.us/chouse/wms/geo_image_server.html">MnGeo</a>. Photograph credits appear beside each photograph. <a href="assets/map/datasets.json" download>Download the full source manifest</a>.</p>
     </details>
+    </div>
   </div>
 </section>
 
@@ -401,24 +371,6 @@
   </div>
 
   <script>
-    // Section navigation: highlight the section currently in view (desktop only).
-    (function () {
-      var rail = document.getElementById('rail');
-      if (!rail || !('IntersectionObserver' in window)) return;
-      var stops = {};
-      rail.querySelectorAll('.rail-stop').forEach(function (a) { stops[a.getAttribute('data-for')] = a; });
-      var current = null;
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) {
-            if (current) current.classList.remove('is-here');
-            current = stops[e.target.id];
-            if (current) current.classList.add('is-here');
-          }
-        });
-      }, { rootMargin: '-20% 0px -60% 0px' });
-      document.querySelectorAll('.layer').forEach(function (s) { io.observe(s); });
-    })();
     // Reading progress bar.
     (function () {
       var bar = document.querySelector('.reading-progress');
@@ -436,7 +388,7 @@
     })();
   </script>
   <script src="under-data.js?v=20261003-3" defer></script>
-  <script src="under-map.js?v=20261003-4" defer></script>
+  <script src="under-map.js?v=20261003-5" defer></script>
   <script src="under-locate.js?v=20261003-3" defer></script>
   <script src="/js/backtotop.js"></script>
 

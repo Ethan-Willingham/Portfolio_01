@@ -5,7 +5,7 @@
   var CANVAS=HOST.querySelector('canvas'),STAGE=HOST.querySelector('.um-stage'),PANEL=HOST.querySelector('.um-panel');
   var STATUS=HOST.querySelector('.um-status'),SCALE=HOST.querySelector('.um-scale'),TOOLTIP=HOST.querySelector('.um-tooltip');
   var RESULTS=HOST.querySelector('.um-results'),SEARCH=HOST.querySelector('.um-search input'),ctx=CANVAS.getContext('2d');
-  var ROOT='assets/map/',VERSION='20261003-4',W=0,H=0,DPR=1,raf=null,started=false,topic='tour',scope='all';
+  var ROOT='assets/map/',VERSION='20261003-5',W=0,H=0,DPR=1,raf=null,started=false,topic='tour',scope='all';
   var showInactive=false,sourceScope='current',catalogLoading=false,catalogError=false;
   var selection=null,hovered=null,addressPin=null,media={photos:[],types:{}},manifest=null,visibleLimit=30,resultItems=[],data={};
   var fmt=new Intl.NumberFormat('en-US'),MINZ=9,MAXZ=18,view={x:mx(-93.19),y:my(44.985),z:10.6};
@@ -206,7 +206,8 @@
   }
   function photoAsset(file){return /^assets\/map\//.test(file||'')?file+(file.indexOf('?')>=0?'&':'?')+'v='+VERSION:file;}
   function photoHTML(p){if(!p)return '';var src=photoAsset(p.src||''),webp=photoAsset(p.webp||''),w=p.width||800,h=p.height||500;return '<figure class="um-pimg'+(h>w?' is-portrait':'')+'"><picture>'+(webp?'<source type="image/webp" srcset="'+esc(webp)+'">':'')+'<img src="'+esc(src)+'" width="'+w+'" height="'+h+'" alt="'+esc(p.alt||p.title)+'" loading="lazy"></picture><button type="button" class="um-photo-open">View photograph</button><figcaption>'+esc(p.caption||p.title)+' <a href="'+safeLink(p.sourceUrl)+'" target="_blank" rel="noopener">'+esc(p.creator)+'</a> · <a href="'+safeLink(p.licenseUrl||p.sourceUrl)+'" target="_blank" rel="noopener">'+esc(p.license)+'</a></figcaption></figure>';}
-  function showMap(){STAGE.scrollIntoView({block:'center',behavior:reduced?'instant':'smooth'});CANVAS.focus({preventScroll:true});}
+  function compactLayout(){return matchMedia('(min-width: 761px) and (min-height: 600px)').matches;}
+  function showMap(){var compact=compactLayout()&&!document.fullscreenElement&&!expanded;if(compact)shell.scrollTop=0;(compact?HOST:STAGE).scrollIntoView({block:compact?'start':'center',behavior:reduced?'instant':'smooth'});CANVAS.focus({preventScroll:true});}
   function openPanel(f,focus){
     var updating=selection&&selection.id===f.id&&!PANEL.hidden,scrollTop=updating?PANEL.scrollTop:0,active=document.activeElement,focusKey=null,openDetails=updating?Array.from(PANEL.querySelectorAll('details[open]')).map(function(d){return d.className;}):[];
     if(updating&&PANEL.contains(active))focusKey=active.dataset.pa?'[data-pa="'+active.dataset.pa+'"]':active.classList.contains('um-pback')?'.um-pback':active.dataset.related?'[data-related]':active.classList.contains('um-photo-open')?'.um-photo-open':active.dataset.unit?'[data-unit="'+active.dataset.unit+'"]':active.tagName==='SUMMARY'?'.'+active.parentElement.className+' > summary':active.tagName==='A'?{href:active.getAttribute('href')}:null;
@@ -225,7 +226,7 @@
     var extra=extraRows.length?'<details class="um-record-details"><summary>More record details ('+extraRows.length+')</summary><dl class="um-facts">'+factRows(extraRows)+'</dl></details>':'';
     PANEL.innerHTML='<button class="um-pback" type="button">Back to places</button>'+photoHTML(photo)+'<p class="um-pk" style="--pk:'+(f.color||(layers[f.layer]||{}).color||C.cream)+'">'+esc(info.label)+'</p><h3 class="um-ptitle">'+esc(f.name)+'</h3><dl class="um-facts">'+factRows(primaryRows)+'</dl><p class="um-pblurb">'+esc(f.blurb||info.description)+'</p>'+(meta?'<p class="um-record-note">'+esc(meta.caveat||meta.notes||(meta.source&&meta.source.caveats||[]).slice(0,2).join(' '))+'</p>':'')+extra+'<div class="um-links">'+links+'</div><div class="um-pact"><button type="button" data-pa="closer">Zoom to place</button><button type="button" data-pa="aerial">Aerial photo</button><button type="button" data-pa="share">Copy map link</button></div><p class="um-coords">'+latOf(f.y).toFixed(5)+', '+lonOf(f.x).toFixed(5)+'</p>';
     PANEL.hidden=false;HOST.querySelector('.um-browser').dataset.inspecting='true';
-    var actions=PANEL.querySelector('.um-pact');PANEL.querySelector('.um-ptitle').after(actions);
+    var actions=PANEL.querySelector('.um-pact');PANEL.querySelector('.um-ptitle').after(actions);var picture=PANEL.querySelector('.um-pimg');if(picture)actions.after(picture);
     PANEL.querySelector('.um-pback').addEventListener('click',function(){closePanel(true);});
     PANEL.querySelector('[data-pa="closer"]').addEventListener('click',function(){flyTo(f.x,f.y,f.z||15.5);showMap();});
     PANEL.querySelector('[data-pa="aerial"]').addEventListener('click',function(){setBase(true);flyTo(f.x,f.y,f.z?Math.max(15.5,f.z):16);showMap();});
@@ -234,9 +235,9 @@
     if(f.layer==='powerplants'&&f.p.units&&f.p.units.length){var unitDetails=document.createElement('details');unitDetails.className='um-unit-details';unitDetails.innerHTML='<summary>Generating units and history ('+f.p.units.length+')</summary><p>August 2026 EIA inventory. Operating, planned and retired units are listed separately in each record.</p><div class="um-unit-list">'+f.p.units.map(function(u,i){return '<button type="button" data-unit="'+i+'"><b>Generator '+esc(u.g)+'</b><span>'+esc(u.status||u.stage)+' · '+esc(u.mw)+' MW nameplate</span></button>';}).join('')+'</div>';PANEL.querySelector('.um-links').before(unitDetails);unitDetails.querySelectorAll('[data-unit]').forEach(function(b){b.addEventListener('click',function(){var u=f.p.units[+b.dataset.unit],unit={id:'generators-'+f.p.i+'-'+u.g,layer:'generators',kind:'point',x:f.x,y:f.y,p:Object.assign({i:f.p.i,name:f.p.name,operator:f.p.operator},u)};unit.name=featureName(unit);unit.type=featureType(unit);layers.generators.on=true;if(!allowed(unit))showInactive=true;HOST.querySelector('[data-um-inactive]').setAttribute('aria-pressed',String(showInactive));updateLayers();updateLegend();ensure('generators');lastSelected=unit.id;openPanel(unit,true);});});}
     var photoButton=PANEL.querySelector('.um-photo-open');if(photoButton)photoButton.addEventListener('click',function(){var dialog=HOST.querySelector('.um-photo-dialog');dialog.querySelector('.um-photo-full').innerHTML=photoHTML(photo).replace(/<button[^>]*class="um-photo-open"[^>]*>.*?<\/button>/,'');dialog.querySelector('h3').textContent=photo.title;dialog.showModal();});
     openDetails.forEach(function(c){var d=PANEL.querySelector('details.'+c);if(d)d.open=true;});
-    PANEL.scrollTop=scrollTop;var oldFocus=focusKey&&(typeof focusKey==='string'?PANEL.querySelector(focusKey):Array.from(PANEL.querySelectorAll('a')).find(function(a){return a.getAttribute('href')===focusKey.href;}));if(oldFocus)oldFocus.focus({preventScroll:true});else if(focus){PANEL.querySelector('.um-pback').focus({preventScroll:true});if(matchMedia('(max-width: 960px)').matches)PANEL.scrollIntoView({block:'start',behavior:reduced?'instant':'smooth'});}requestDraw();writeHash();
+    PANEL.scrollTop=scrollTop;var oldFocus=focusKey&&(typeof focusKey==='string'?PANEL.querySelector(focusKey):Array.from(PANEL.querySelectorAll('a')).find(function(a){return a.getAttribute('href')===focusKey.href;}));if(oldFocus)oldFocus.focus({preventScroll:true});else if(focus){PANEL.querySelector('.um-pback').focus({preventScroll:true});if(!compactLayout())PANEL.scrollIntoView({block:'start',behavior:reduced?'instant':'smooth'});}requestDraw();writeHash();
   }
-  function closePanel(focus){PANEL.hidden=true;HOST.querySelector('.um-browser').dataset.inspecting='false';selection=null;renderResults();requestDraw();writeHash();if(focus){var last=RESULTS.querySelector('[data-id="'+esc(lastSelected||'')+'"]');(lastFocusControl===CANVAS?CANVAS:last||lastFocusControl&&lastFocusControl.isConnected&&lastFocusControl||SEARCH).focus({preventScroll:true});if(lastFocusControl===CANVAS&&matchMedia('(max-width: 960px)').matches)showMap();}}
+  function closePanel(focus){PANEL.hidden=true;HOST.querySelector('.um-browser').dataset.inspecting='false';selection=null;renderResults();requestDraw();writeHash();if(focus){var last=RESULTS.querySelector('[data-id="'+esc(lastSelected||'')+'"]');(lastFocusControl===CANVAS?CANVAS:last||lastFocusControl&&lastFocusControl.isConnected&&lastFocusControl||SEARCH).focus({preventScroll:true});if(lastFocusControl===CANVAS&&!compactLayout())showMap();}}
   var lastSelected=null,lastFocusControl=null;
 
   var SAT = { on: false, failed:false, cache: new Map(), maxTiles: 96 };
@@ -427,7 +428,7 @@
   function renderSources(){
     if(!manifest)return;
     var all=manifest.datasets||[],mapped=Object.keys(layers).map(function(id){return layers[id].file;}).concat(['counties.json','water.json','roads-context.json','data/context-streets.json.gz']),selected=topics[topic].layers.map(function(id){return layers[id].file;}),query=(HOST.querySelector('.um-source-search input').value||'').trim().toLowerCase();
-    HOST.querySelector('.um-summary').textContent=Object.keys(layers).length+' map layers · Public records for the Twin Cities region';
+    HOST.querySelector('.um-summary').textContent=Object.keys(layers).length+' map layers · Public records';
     HOST.querySelectorAll('[data-um-topic]').forEach(function(b){var key=b.dataset.umTopic,n=key==='tour'?tour.length:topics[key].layers.length;b.querySelector('.um-topic-count').textContent=n;b.setAttribute('aria-label',b.firstChild.textContent.trim()+', '+n+(key==='tour'?' places':' layers'));});
     var list=all.filter(function(m){
       var current=mapped.indexOf(m.file)>=0,match=sourceScope==='earlier'?!current&&m.legacy:sourceScope==='all'?true:topic==='tour'?current:selected.indexOf(m.file)>=0;
@@ -469,7 +470,7 @@
   }
   function resize(){
     var left=HOST.parentElement.getBoundingClientRect().left;HOST.style.marginLeft=-left+'px';HOST.style.width=document.documentElement.clientWidth+'px';DPR=Math.min(devicePixelRatio||1,2);var r=STAGE.getBoundingClientRect();W=Math.round(r.width);H=Math.round(r.height);CANVAS.width=W*DPR;CANVAS.height=H*DPR;CANVAS.style.width=W+'px';CANVAS.style.height=H+'px';
-    if(!fitted&&W){HOME.z=Math.max(MINZ,Math.min(11.3,Math.log2(W/((mx(-92.72)-mx(-93.72))*256))));if(!savedView)view.z=HOME.z;fitted=true;}requestDraw();if(started){activeIds().forEach(loadViewportTiles);loadStreets();renderResults();}
+    if(!fitted&&W&&H){HOME.z=Math.max(MINZ,Math.min(11.3,Math.log2(W/((mx(-92.72)-mx(-93.72))*256)),Math.log2(Math.max(1,H-64)/((my(44.86)-my(45.11))*256))));if(!savedView)view.z=HOME.z;fitted=true;}requestDraw();if(started){activeIds().forEach(loadViewportTiles);loadStreets();renderResults();}
   }
   var interacting=false,pointers=new Map(),pinch=null,down=null;
   function setInteracting(on){interacting=!!on;STAGE.classList.toggle('is-interacting',interacting);var b=HOST.querySelector('[data-um-interact]');b.setAttribute('aria-pressed',String(interacting));b.textContent=interacting?'Stop map dragging':'Enable map dragging';pointers.clear();pinch=null;}
@@ -521,7 +522,7 @@
   function restoreFeature(){
     if(!requestedFeature)return;var all=topic==='tour'?tour:activeIds().reduce(function(a,id){return a.concat(data[id]&&data[id].features||[]);},[]),f=all.find(function(f){return f.id===requestedFeature;});
     if(!f&&requestedFeature.indexOf('depth-')===0&&data.depth&&data.depth.raster){var parts=requestedFeature.split('-'),r=data.depth.raster,row=+parts[1],col=+parts[2];if(row>=0&&row<r.height&&col>=0&&col<r.width){var ft=r.values[row*r.width+col],b=rasterBounds(r);if(ft!=null)f={id:requestedFeature,layer:'depth',kind:'point',type:'bdepth',x:b[0]+(col+.5)/r.width*(b[2]-b[0]),y:b[1]+(row+.5)/r.height*(b[3]-b[1]),p:{},name:'About '+fmt.format(ft)+' ft to bedrock',facts:[['Modeled depth',ft+' ft'],['Model','MGS D-03, 2025'],['Display cell','About 400 ft across (120 m)'],['Meaning','Regional estimate, rounded to feet']],blurb:'This regional depth model estimates the thickness of Quaternary deposits above bedrock. It is resampled from the native 30-m model. Blank areas have no modeled depth in this export. A rounded value of zero does not establish exposed rock at a property. Utility depth, fill and groundwater level are separate.'};}}
-    if(f){if(!allowed(f)){showInactive=true;var inactive=HOST.querySelector('[data-um-inactive]');inactive.setAttribute('aria-pressed','true');updateLegend();}requestedFeature=null;restoring=false;lastSelected=f.id;openPanel(f,false);(matchMedia('(max-width: 960px)').matches?PANEL:HOST).scrollIntoView({block:'start',behavior:'instant'});PANEL.querySelector('.um-pback').focus({preventScroll:true});}
+    if(f){if(!allowed(f)){showInactive=true;var inactive=HOST.querySelector('[data-um-inactive]');inactive.setAttribute('aria-pressed','true');updateLegend();}requestedFeature=null;restoring=false;lastSelected=f.id;openPanel(f,false);(!compactLayout()?PANEL:HOST).scrollIntoView({block:'start',behavior:'instant'});PANEL.querySelector('.um-pback').focus({preventScroll:true});}
   }
   function loadManifest(){
     if(catalogLoading)return;catalogLoading=true;catalogError=false;

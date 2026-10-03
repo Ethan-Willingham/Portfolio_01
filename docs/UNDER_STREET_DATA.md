@@ -357,6 +357,16 @@ coordinates, retained bounds, raster dimensions and values, photo metadata and
 nearby facility identities for manual review. Neither check establishes survey
 accuracy or present operations independently of the cited sources.
 
+The article has a centered reading column without the former left navigation.
+At widths of at least 761 CSS pixels and heights of at least 600 pixels, the map
+uses a viewport-sized frame. The browser chrome remains outside that viewport;
+fullscreen is optional. Place lists and record details scroll inside the frame.
+Record titles and actions precede photographs. Topic explanations, layer switches,
+keyboard instructions and source downloads open through disclosures. Phones and
+short landscape windows retain the stacked map and article layout.
+The fit checks exercise all eight topics at 1440 by 800 and the opening and Ground
+views at 1512 by 850, 1280 by 720, 1024 by 768, 820 by 720 and 780 by 740.
+
 The browser checks use Playwright and an owned Chrome for Testing process:
 
 ```sh

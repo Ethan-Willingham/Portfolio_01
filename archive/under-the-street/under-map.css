@@ -329,6 +329,11 @@
 #undermap .um-pan-controls button:hover { border-color: var(--text-faint); }
 #undermap .um-data { border-top: 1px solid var(--rule); padding: 0.45rem 1.5rem; scroll-margin-top: 1rem; }
 #undermap .um-data > summary { font-weight: 600; }
+#undermap .um-footer { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 1.5rem; padding: 0.35rem 1.5rem; border-top: 1px solid var(--rule); }
+#undermap .um-footer > details { margin: 0; padding: 0; border-top: none; }
+#undermap .um-footer > details[open] { flex-basis: 100%; }
+#undermap .um-footer > p { flex: 1 1 20rem; align-self: center; margin: 0; color: var(--text-faint); font-size: 0.82rem; line-height: 1.5; }
+#undermap .um-navigation .um-help { padding: 0.3rem 0; }
 #undermap .um-data > p { max-width: 100ch; margin: 0.55rem 0 1rem; font-size: 0.9rem; color: var(--text-dim); line-height: 1.6; }
 #undermap .um-datasets { max-width: 100%; overflow-x: auto; padding-bottom: 0.5rem; scrollbar-width: thin; }
 #undermap .um-datasets table { width: 100%; border-collapse: collapse; font-size: 0.85rem; line-height: 1.5; }
@@ -396,7 +401,20 @@
 #undermap .um-unit-list button:focus-visible { outline-offset: -2px; }
 #undermap .um-unit-list b { display: block; color: var(--text); font: 500 0.82rem/1.5 var(--font-mono); }
 #undermap .um-unit-list span { display: block; margin-top: 0.25rem; color: var(--text-faint); font-size: 0.8rem; line-height: 1.4; }
-@media (min-width: 961px) {
+@media (min-width: 761px) and (min-height: 600px) {
+  #undermap .um-shell { display: flex; flex-direction: column; height: min(900px, calc(100vh - 3rem)); height: min(900px, calc(100svh - 3rem)); overflow-y: auto; }
+  #undermap .um-shell > :not(.um-explorer) { flex: none; }
+  #undermap .um-head { padding: 0.75rem 1rem 0.5rem; }
+  #undermap .um-head > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.3rem 0.85rem; }
+  #undermap .um-head p { margin: 0; }
+  #undermap .um-topics { padding: 0 1rem 0.55rem; }
+  #undermap .um-location-controls { padding: 0.3rem 1rem 0.6rem; }
+  #undermap .um-layers { margin: 0 1rem 0.3rem; }
+  #undermap .um-layers .um-topic-copy { padding: 0.5rem 0; }
+  #undermap .um-explorer { flex: 1 0 240px; min-height: 240px; grid-template-rows: minmax(0, 1fr); }
+  #undermap :is(.um-stage, .um-browser) { height: 100%; min-height: 0; }
+  #undermap .um-help { padding: 0.4rem 1rem; }
+  #undermap .um-footer { padding-inline: 1rem; }
   #undermap .um-shell:fullscreen, #undermap .um-shell.is-expanded { display: flex; flex-direction: column; }
   #undermap .um-shell:fullscreen > :not(.um-explorer), #undermap .um-shell.is-expanded > :not(.um-explorer) { flex: none; }
   #undermap .um-shell:fullscreen .um-explorer, #undermap .um-shell.is-expanded .um-explorer { flex: 1 0 320px; min-height: 320px; }
@@ -405,7 +423,7 @@
 @media (max-width: 1180px) {
   #undermap .um-topics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@media (max-width: 960px) {
+@media (max-width: 760px), (max-height: 599px) {
   #undermap .um-location-controls { grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
   #undermap .um-address-form { display: block; }
   #undermap .um-address-form > label { display: block; margin-bottom: 0.4rem; }
@@ -424,6 +442,13 @@
   #undermap .um-facts { max-width: 32rem; }
   #undermap .um-pact { max-width: 28rem; }
   #undermap .um-shell:fullscreen, #undermap .um-shell.is-expanded { --um-map-height: clamp(240px, 45dvh, 450px); }
+}
+@media (min-width: 761px) and (max-width: 960px) and (min-height: 600px) {
+  #undermap { --um-panel-width: 260px; }
+  #undermap .um-location-controls { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 1rem; align-items: start; }
+  #undermap .um-city-jump, #undermap .um-address-form { display: block; }
+  #undermap .um-city-jump > span, #undermap .um-address-form > label { display: block; margin-bottom: 0.3rem; }
+  #undermap .um-city-jump select { width: 100%; max-width: none; }
 }
 @media (max-width: 700px) {
   #undermap { margin-block: 1.75rem 1.2rem; }
@@ -448,6 +473,7 @@
   #undermap .um-help { padding: 0.8rem 1rem; font-size: 0.82rem; }
   #undermap .um-navigation { padding-inline: 1rem; }
   #undermap .um-data { padding-inline: 1rem; }
+  #undermap .um-footer { padding-inline: 1rem; }
   #undermap .um-map-key { padding-inline: 1rem; }
   #undermap :is(.um-layers, .um-data) > summary { gap: 0.6rem; font-size: 0.86rem; }
   #undermap :is(.um-layers, .um-data) > summary small { font-size: 0.75rem; }
@@ -468,8 +494,8 @@
   #undermap *, #undermap *::before, #undermap *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 @media print {
-  #undermap .um-shell { width: 100%; border: 1px solid #888; background: #fff; color: #111; }
-  #undermap :is(.um-topics, .um-location-controls, .um-address-output, .um-layers, .um-browser, .um-stage, .um-help, .um-navigation) { display: none; }
+  #undermap .um-shell { display: block; width: 100%; height: auto; overflow: visible; border: 1px solid #888; background: #fff; color: #111; }
+  #undermap :is(.um-topics, .um-location-controls, .um-address-output, .um-layers, .um-browser, .um-stage, .um-help, .um-navigation, #maphelp) { display: none; }
   #undermap .um-head { padding: 1rem; }
   #undermap .um-head h2, #undermap .um-head p, #undermap .um-source-link { color: #111; }
 }

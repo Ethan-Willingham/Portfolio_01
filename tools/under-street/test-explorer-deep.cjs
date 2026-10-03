@@ -100,7 +100,8 @@ let url;
     const direct=await directContext.newPage();direct.on('pageerror',e=>errors.push(e.message));
     await direct.goto(url+'/archive/under-the-street/under-the-street.html'+hash);
     await direct.waitForFunction(id=>window.__mapAudit?.state().selected===id,pin.id);
-    const target=direct.locator(size.width<=960?'.um-panel':'#undermap'),landing=await target.boundingBox();
+    const compact=size.width>=761&&size.height>=600;
+    const target=direct.locator(compact?'#undermap':'.um-panel'),landing=await target.boundingBox();
     assert.ok(landing.y>=-2&&landing.y<90,'Shared record lands on its details at '+size.width);
     assert.equal(await direct.evaluate(()=>document.activeElement.className),'um-pback','Shared record focuses its Back control');
     await direct.locator('[data-pa="closer"]').click();
@@ -113,7 +114,7 @@ let url;
     assert.ok(reloadLanding.y>=-2&&reloadLanding.y<90,'Refreshing a shared record keeps its Back control visible at '+size.width);
     assert.equal(await direct.evaluate(()=>document.activeElement.className),'um-pback');
     await direct.locator('[data-pa="closer"]').click();
-    if(size.width<=960){await direct.keyboard.press('Enter');await direct.waitForFunction(()=>!document.querySelector('.um-panel').hidden);const inspector=await direct.locator('.um-panel').boundingBox();assert.ok(inspector.y>=-2&&inspector.y<90,'Keyboard map inspection brings inline details into view');await direct.locator('.um-pback').click();const backMap=await direct.locator('.um-stage').boundingBox();assert.ok(backMap.y>=-2&&backMap.y+backMap.height<=size.height+2,'Back restores the visible map');assert.equal(await direct.evaluate(()=>document.activeElement.tagName),'CANVAS');}
+    if(!compact){await direct.keyboard.press('Enter');await direct.waitForFunction(()=>!document.querySelector('.um-panel').hidden);const inspector=await direct.locator('.um-panel').boundingBox();assert.ok(inspector.y>=-2&&inspector.y<90,'Keyboard map inspection brings inline details into view');await direct.locator('.um-pback').click();const backMap=await direct.locator('.um-stage').boundingBox();assert.ok(backMap.y>=-2&&backMap.y+backMap.height<=size.height+2,'Back restores the visible map');assert.equal(await direct.evaluate(()=>document.activeElement.tagName),'CANVAS');}
     await directContext.close();
   }
   const mapContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),mapLink=await mapContext.newPage();

@@ -43,19 +43,33 @@ async function pageFor(size,hash='') {
   return {page,context};
 }
 let url;
+async function assertViewportFit(page,size) {
+  if(size.width<761||size.height<600)return;
+  const frame=await page.locator('.um-shell').evaluate(n=>({height:n.getBoundingClientRect().height,overflow:n.scrollHeight-n.clientHeight}));
+  const stage=await page.locator('.um-stage').boundingBox();
+  assert.ok(frame.height<=size.height-40,'Demo fits a normal browser viewport '+JSON.stringify(size));
+  assert.ok(frame.overflow<=2,'Closed demo needs no internal frame scroll '+JSON.stringify(size));
+  assert.ok(stage.height>=239,'Map remains usable in the compact frame');
+  assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false,'Viewport fit does not require fullscreen');
+}
 (async()=>{try {
   await new Promise(r=>server.listen(0,'127.0.0.1',r));url='http://127.0.0.1:'+server.address().port;
   browser=await chromium.launch(launchOptions);
-  const {page,context}=await pageFor({width:1440,height:1000});
+  const desktop={width:1440,height:800}, {page,context}=await pageFor(desktop);
   await page.waitForFunction(()=>__mapAudit.state().data.contextRoads);
   const initial=await page.evaluate(()=>__mapAudit.state());
   assert.equal(initial.topic,'tour');assert.equal(initial.selected,null);
   assert.ok(!initial.data.services&&!initial.data.interceptors,'opening the map does not fetch all systems');
   assert.equal(await page.locator('.um-topics button').count(),8);
+  assert.equal(await page.locator('.rail,.top-nav').count(),0,'Removed article navigation stays removed');
+  assert.doesNotMatch(await page.locator('.u-hero').textContent(),/field guide/i);
+  await assertViewportFit(page,desktop);
   await page.locator('#undermap').screenshot({path:path.join(output,'desktop-start.png')});
   await page.locator('[data-id="511"]').click();
   assert.match(await page.locator('.um-ptitle').textContent(),/511/);
   await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.complete);
+  const title=await page.locator('.um-ptitle').boundingBox(),photo=await page.locator('.um-pimg').boundingBox();
+  assert.ok(title.y+title.height<=photo.y,'Record identity appears before its photograph');
   await page.locator('#undermap').screenshot({path:path.join(output,'desktop-place.png')});
   const box=await page.locator('canvas').boundingBox();
   await page.mouse.move(box.x+box.width/2+60,box.y+box.height/2+60);
@@ -66,6 +80,7 @@ let url;
     await page.locator('[data-um-topic="'+topic+'"]').click();
     await page.waitForFunction(()=>Object.values(__mapAudit.state().data).every(d=>!d.loading&&!d.pending));
     assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,topic);
+    await assertViewportFit(page,desktop);
     await page.locator('#undermap').screenshot({path:path.join(output,topic+'.png')});
   }
   const loaded=await page.evaluate(()=>__mapAudit.state());console.log('Loaded systems:',JSON.stringify(loaded.data));
@@ -86,8 +101,15 @@ let url;
   assert.match(depthHit.name,/ft to bedrock/);
   const timings=await page.evaluate(()=>__mapAudit.performance());console.log('Map draw ms:',timings.map(n=>n.toFixed(2)).join(', '));
   await context.close();
-  for(const size of [{width:1024,height:768},{width:820,height:720},{width:390,height:844},{width:320,height:568},{width:844,height:390}]) {
+  for(const size of [{width:1512,height:850},{width:1280,height:720},{width:1024,height:768},{width:820,height:720},{width:780,height:740},{width:390,height:844},{width:320,height:568},{width:844,height:390}]) {
     const {page,context}=await pageFor(size);
+    await assertViewportFit(page,size);
+    if(size.width>=761&&size.height>=600){
+      const column=await page.locator('.descent > .col').boundingBox();assert.ok(Math.abs(column.x+column.width/2-size.width/2)<1,'Article remains centered');
+      await page.locator('[data-um-topic="ground"]').click();await page.waitForFunction(()=>Object.values(__mapAudit.state().data).every(d=>!d.loading&&!d.pending));
+      await assertViewportFit(page,size);
+      await page.locator('[data-um-topic="tour"]').click();
+    }
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no page overflow '+JSON.stringify(size));
     const targets=await page.locator('#undermap button:visible').evaluateAll(bs=>bs.filter(b=>{const r=b.getBoundingClientRect();return r.width<43.5||r.height<43.5;}).map(b=>b.outerHTML));
     assert.deepEqual(targets,[],'44px visible controls '+JSON.stringify(size));
@@ -95,6 +117,10 @@ let url;
     assert.ok(Math.abs(dims.width-stage.width)<2,'canvas uses CSS pixels at all device scales');
     if(size.width<600)assert.match(await page.locator('canvas').evaluate(c=>getComputedStyle(c).touchAction),/pan-y/,'page scroll works over the map');
     await page.locator('[data-id="highland"]').click();
+    if(size.width>=761&&size.height>=600){
+      const inspector=await page.locator('.um-panel').evaluate(n=>({height:n.clientHeight,content:n.scrollHeight}));assert.ok(inspector.content>inspector.height,'Record details scroll inside the frame');
+      await page.locator('[data-pa="closer"]').click();const frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Map action keeps the entire demo visible');
+    }
     await page.locator('#undermap').screenshot({path:path.join(output,'place-'+size.width+'x'+size.height+'.png')});
     await page.locator('.um-data').evaluate(d=>d.open=true);
     await page.locator('[data-um-source-scope="all"]').click();
@@ -113,7 +139,7 @@ let url;
   }
   console.log('Page errors:',errors);console.log('Local failures:',localFailures);
   assert.deepEqual(errors,[]);assert.deepEqual(localFailures,[]);
-  console.log('PASS topic loading, source links, selection persistence, tile deep links, depth, responsive layouts, touch targets and compact source disclosures');
+  console.log('PASS topic loading, source links, selection persistence, tile deep links, depth, laptop viewport fit, centered article, responsive layouts, touch targets and compact source disclosures');
 } finally {
   if(browser)await browser.close();await new Promise(r=>server.close(r));
 }})().catch(e=>{console.error(e);process.exitCode=1;});
