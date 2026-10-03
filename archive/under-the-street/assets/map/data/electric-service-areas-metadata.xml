@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>MnGeo</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                		
+        
+        <rpPosName>GIS Data Specialist</rpPosName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntPhone>
+                                				
+                
+                <voiceNum>651-201-2499</voiceNum>
+                                			
+            
+            </cntPhone>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>600 N Robert St, Suite 2800</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55146</postCode>
+                                				
+                
+                <eMailAdd>commons.mngeo@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20260528</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distributor>
+                        			
+            
+            <distorCont>
+                                				
+                
+                <rpIndName>MnGeo</rpIndName>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <rpPosName>GIS Data Specialist</rpPosName>
+                                				
+                
+                <rpCntInfo>
+                                        					
+                    
+                    <cntPhone>
+                                                						
+                        
+                        <voiceNum>651-201-2499</voiceNum>
+                                                					
+                    
+                    </cntPhone>
+                                        					
+                    
+                    <cntAddress addressType="both">
+                                                						
+                        
+                        <delPoint>600 N Robert St, Suite 2800</delPoint>
+                                                						
+                        
+                        <city>St. Paul</city>
+                                                						
+                        
+                        <adminArea>MN</adminArea>
+                                                						
+                        
+                        <postCode>55146</postCode>
+                                                						
+                        
+                        <eMailAdd>commons.mngeo@state.mn.us</eMailAdd>
+                                                					
+                    
+                    </cntAddress>
+                                        				
+                
+                </rpCntInfo>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="005">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </distorCont>
+                        			
+            
+            <distorOrdPrc>
+                                				
+                
+                <ordInstr>This data set (several GIS formats and a web map) is distributed on the internet by clicking below after Online Linkage.
+
+Interactive online map:  https://www.mngeo.state.mn.us/eusa/ </ordInstr>
+                                			
+            
+            </distorOrdPrc>
+                        			
+            
+            <distorFormat>
+                                				
+                
+                <formatName>Files Geodatabase (gdb)</formatName>
+                                			
+            
+            </distorFormat>
+                        		
+        
+        </distributor>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_mngeo/util_eusa/FeatureServer</linkage>
+                                			
+                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                        		
+            
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/518/util_eusa.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>Electric Utility Service Areas, Minnesota, January 2026</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2026-01-06</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>This dataset shows electric utility service area boundaries for the State of Minnesota. The original source data were lines hand-drawn on county highway maps. The maps were scanned and georeferenced to serve as a background for on-screen digitizing. The utilities were then given an opportunity to review and correct the service areas. Changes filed with the Public Utilities Commission (eDockets) were also reviewed to update the areas.&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/518/util_eusa.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/518/util_eusa.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/518/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>The purpose of the project was to convert existing electric utility service area boundaries from paper to digital format in order to provide a statewide view of the service areas. Public Utility Commission eDocket filings are now used to maintain this dataset.
+
+Other goals and objectives:
+1. Create a consistent, state-wide GIS dataset of EUSA, as vetted by the utilities
+2. Achieve a positional accuracy of 1:24,000 (+/- 60 feet)
+3. Identify (and eventually resolve) service area boundary issues
+4. Create a cost-effective process for tracking and updates
+5. Make data easily accessible</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="001">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Christian Noyce</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Public Utilities Commission</rpOrgName>
+                        			
+            
+            <rpPosName>Research Analysis Specialist</rpPosName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntPhone>
+                                        					
+                    
+                    <voiceNum>651-201-2215</voiceNum>
+                                        				
+                
+                </cntPhone>
+                                				
+                
+                <cntAddress addressType="postal">
+                                        					
+                    
+                    <delPoint>395 John Ireland Blvd, Mail Stop 450</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55155</postCode>
+                                        					
+                    
+                    <eMailAdd>Maps.PUC@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="010">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <graphOver>
+                        			
+            
+            <bgFileName>https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_mngeo/util_eusa/metadata/preview.jpg</bgFileName>
+                        			
+            
+            <bgFileDesc>Detail from online map at: https://www.mngeo.state.mn.us/eusa/</bgFileDesc>
+                        		
+        
+        </graphOver>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota, MN</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>utilitiesCommunication, boundaries, electric utility service area, electrical utility, electric utilities, electrical utilities</keyword>
+                        			
+            
+            <thesaName>
+                                				
+                
+                <resTitle>ISO 19115 Topic Category</resTitle>
+                                			
+            
+            </thesaName>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>utilitiesCommunication</keyword>
+            <keyword>boundaries</keyword>
+            <keyword>electric utility service area</keyword>
+            <keyword>electrical utility</keyword>
+            <keyword>electric utilities</keyword>
+            <keyword>electrical utilities</keyword>
+            <keyword>Minnesota</keyword>
+            <keyword>MN</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <Consts>
+                                				
+                
+                <useLimit>See Disclaimer field for complete use conditions.</useLimit>
+                                			
+            
+            </Consts>
+                        		
+        
+        </resConst>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>1. MN Dept. of Commerce and the State of Minnesota:
+
+DISCLAIMER OF LIABILITY:  With respect to documents and information on this page, neither the State of Minnesota, the Minnesota Department of Commerce, nor their employees and contractors make any warranty, express or implied, including warranties of merchantability and fitness for a particular purpose with respect to the data available on this page. Additionally, the State of Minnesota, the Minnesota Department of Commerce and their employees and contractors assume no legal liability for the accuracy, completeness, or usefulness of any information, apparatus, product, data, or process disclosed herein and do not represent that use of such information, apparatus, product, data, or process would not infringe on privately owned rights.
+
+2.  MnGeo's data disclaimer: https://mn.gov/mngeo/gis-data-and-maps/disclaimer.jsp</useLimit>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <aggrInfo>
+                        			
+            
+            <aggrDSName>
+                                				
+                
+                <resTitle>1. Electrical Utility Service Area Boundaries (lines) - tracks corrections.
+2. Electrical Utility Service Area Dockets (areas) - service area changes filed with PUC (not complete).
+3. Electrical Utility Service Area Exceptions (points and areas) - service area exceptions as provided by utilities. 
+Exceptions are areas where a utility is serving customers in another utility's service area. Some utilities chose to provide exceptions as part of the boundary review process. There were no requirements to gather them as a statewide data layer.
+
+For other public utility and telecommunications infrastructure geospatial data for Minnesota, see:  https://www.mngeo.state.mn.us/chouse/utilities_telecommunication.html</resTitle>
+                                			
+            
+            </aggrDSName>
+                        			
+            
+            <assocType>
+                                				
+                
+                <AscTypeCd value="001">
+				</AscTypeCd>
+                                			
+            
+            </assocType>
+                        		
+        
+        </aggrInfo>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.23</westBL>
+                                        					
+                    
+                    <eastBL>-89.53</eastBL>
+                                        					
+                    
+                    <northBL>49.37</northBL>
+                                        					
+                    
+                    <southBL>43.5</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>The dataset includes service boundary changes through the Time Period of Content date.</exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2026-01-06</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Minnesota</suppInfo>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                		
+        
+        <report type="DQQuanAttAcc">
+                        			
+            
+            <measDesc>Map attributes were checked after digitizing by visual comparisons with the original printed map. Each utility was given an opportunity to review their information. The MMUA_NAME and FULL_NAME fields are consistent with the 2010 Minnesota Municipal Utility Association (MMUA) Directory. Summaries were used to review most major attributes.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQConcConsis">
+                        			
+            
+            <measDesc>EUSA_Topology Properties:
+Boundaries - Must Be Covered By Boundary Of - Service_Areas
+Boundaries - Must Not Have Dangles
+Service_Areas - Must Not Overlap
+Service_Areas - Must Not Have Gaps</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQCompOm">
+                        			
+            
+            <measDesc>The dataset represents the official service area boundaries for the State of Minnesota. Future changes will involve:
+1.  Ongoing maintenance as boundaries change over time.
+2.  Further adjustments to fix any remaining gaps or overlaps between service territories.
+All changes will go through the Public Utility Commission's official electronic docket process.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Overall it is the same as the county highway maps and base map layers which were originally used to locate boundary lines. The accuracy of the boundary linework hand-drawn on the paper maps is approximately +/- 350 feet. When complicated boundaries were encountered, they were typically simplified by the vendor doing the update.
+
+As boundaries are updated digitally using more detailed and accurate base information, the goal is to achieve an accuracy of +/- 60 feet.
+
+The gaps and overlaps in the dataset result from utilities submitting boundary changes individually without working with the adjacent utility.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="vertical" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>not applicable</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <dataLineage>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>The origins of the dataset are the electric utility service area boundaries that had been hand-drawn on Minnesota Department of Transportation county highway maps on file with the Minnesota Department of Commerce in 2004. The maps were scanned, geo-referenced and digitized on-screen. After the GIS dataset was created, the utilities were given several opportunities to update and improve the positional quality of the service areas. In 2013, the Public Utilities Commission requested that utilities submit the final changes by June 1, 2013. Those corrections were completed and the Commission made a determination that the dataset represented the official service area boundaries for the State of Minnesota on April 1, 2014 (Docket 12-957).
+
+There were a number of key steps:
+
+----- 2004 ----- 
+The electric utility service area boundaries had been hand-drawn on county highway maps. The map scale is 1:63,360 for counties outside the Twin Cities metropolitan area, and 1:48,000 for counties within the metro area. Each map was scanned and converted to TIF and JPEG formats at 200 and 400 pixels-per-inch (PPI) by Historical Information Gatherers, Inc.
+
+MnGeo staff  geo-referenced the 400 DPI JPEG images using ArcMap 8.2 software. Electric utility service area boundaries were on-screen digitized using the images in the background as reference. Each polygon was coded with the name of the utility. The information was in Esri coverage and shapefile format at the end of this step. 
+
+When boundary lines followed public land survey (PLS), roads, lakeshores or other reference lines, the lines were snapped to the appropriate reference GIS layer: 
+- DNR PLS40: https://gisdata.mn.gov/dataset/plan-mndnr-public-land-survey
+- Mn/DOT BaseMap layers for roads, railroads, lakes, rivers (and possibly others)
+
+----- 2005 ----- 
+Converted data to personal geodatabase format using ArcGIS 9.1. This was done since the geodatabase format supports COGO (traverse), transactions and versioning. 
+
+The geodatabase is composed of two feature data sets and one table: 1. EUSA, 2. PLS and 3. Docket_Table. 
+
+1. EUSA feature data set has three components: 
+Boundaries - a feature class of service area boundaries 
+Service_Areas - a feature class of service areas as described in this metadata record. 
+EUSA_Topology - The topology relationship between Boundaries and Service_Areas (see EUSA_Topology Properties below). 
+
+2. PLS (Public Land Survey) feature data set contains the 87 feature classes (1 feature class for each of Minnesota's 87 counties) of Department of Natural Resources PLS 40, quarter-quarter section dataset, documented at: https://gisdata.mn.gov/dataset/plan-mndnr-public-land-survey 
+
+3. Docket_Table - This table contains the docket information from the original maps which were scanned. 
+
+EUSA_Topology Properties: 
+Boundaries - Must Be Covered By Boundary Of - Service_Areas 
+Boundaries - Must Not Have Dangles 
+Service_Areas - Must Not Overlap 
+Service_Areas - Must Not Have Gaps 
+
+----- 2006-2009 ----- 
+Assessed utilities' mapping capabilities.
+Delivered review materials to each utility in a format appropriate for their mapping capabilities (GIS, CAD, PDF or paper maps).
+Requested that utilities review their boundaries with the adjoining utility and indicate whether they agreed or disagreed.
+Adjusted boundaries based on corrections received from the utilities.
+
+----- 2010 ----- 
+Adjusted electric utility service areas based on corrections received from the utilities. A boundary table was created which tracked utility agreement/disagreement with an adjoining utility. New corrections were cataloged. Technical assistance was provided to the utilities to help them through the process of submitting their changes. New maps were created and distributed to the utilities.
+
+----- September 2012 ----- 
+Continued to adjust service areas based on materials received from the utilities. In preparation for the public release, PUC announced that the Commission would make a determination on the boundaries.
+
+A website was created: https://www.mngeo.state.mn.us/eusa. The website has the ability to link to PUC's eDockets system from the dockets layer (years: 1999-2010) or the docket table (years: 1976-2005).
+
+Working from smallest to larger, gaps and overlaps were reviewed for elimination. Errors under the accuracy (+-40 feet) of the data were typically removed and boundaries changed to the corrected boundary. Larger errors were sometimes repaired if no visible structures were affected and the boundaries were in general agreement.
+
+The gaps and overlaps were created by utilities correcting boundaries independently. Sometimes these areas are legitimate disagreements but others could be quickly resolved if the utilities reviewed each other's boundaries.
+
+----- 2013 ----- 
+Continued to adjust service areas based on materials received from the utilities earlier in the year. The Public Utilities Commission requested that the utilities submit their final corrections by June 1, 2013.
+
+----- 2014 ----- 
+Continued to adjust service areas based on materials received from the utilities. The corrections were submitted to the Public Utilities Commission to make a determination on the data. As of April 1, 2014, the data represents the official service territory boundaries for the State of Minnesota.
+
+----- Early 2016 -----
+Service area boundaries were adjusted to reflect:
+1. Changes approved by the Public Utilities Commission through 12/1/15
+2. The transfer of Alliant Energy's service territory to twelve cooperatives that are members of the Southern Minnesota Energy Cooperative:  Brown County, BENCO, Federated REA, Freeborn-Mower, Minnesota Valley, Nobles, People's, Redwood, Sioux Valley, South Central, Steele-Waseca, and Tri-County. The new boundaries follow either existing boundaries or quarter-quarter section boundaries.
+
+----- 2018, 2020 and 2021 -----
+Service area boundaries were adjusted to reflect changes approved by the Public Utilities Commission.
+
+----- June 2022 -----
+One utility service name was updated to reflect a 2017 merger that had been missed: Tri-County Electric Coop changed to MiEnergy Cooperative
+
+----- 2022, 2023, 2024, 2025 and  2026-----
+Service area boundaries were adjusted to reflect changes approved by the Public Utilities Commission.</stepDesc>
+                                			
+            
+            </prcStep>
+                        			
+            
+            <dataSource>
+                                				
+                
+                <srcScale>
+                                        					
+                    
+                    <rfDenom>24000</rfDenom>
+                                        				
+                
+                </srcScale>
+                                			
+            
+            </dataSource>
+                        		
+        
+        </dataLineage>
+                	
+    
+    </dqInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>https://mn.gov/mngeo/gis-data-and-maps/standards/mgmg/</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <detailed>
+                        			
+            
+            <enttyp>
+                                				
+                
+                <enttypl>EUSA</enttypl>
+                                			
+            
+            </enttyp>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ABBREV</attrlabl>
+                                				
+                
+                <attrdef>Utility name abbreviation</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Utility Type</attrlabl>
+                                				
+                
+                <attrdef>Type of utility</attrdef>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Municipal</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Cooperative</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Investor Owned</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Street Name</attrlabl>
+                                				
+                
+                <attrdef>Street name or P.O. Box where utility company is located</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>City Name</attrlabl>
+                                				
+                
+                <attrdef>City where utility company is located</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>State Name</attrlabl>
+                                				
+                
+                <attrdef>State where utility company is located</attrdef>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>MN</edomv>
+                                                						
+                        
+                        <edomvd>Minnesota</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>IA</edomv>
+                                                						
+                        
+                        <edomvd>Iowa</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>SD</edomv>
+                                                						
+                        
+                        <edomvd>South Dakota</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>WI</edomv>
+                                                						
+                        
+                        <edomvd>Wisconsin</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>NULL</edomv>
+                                                						
+                        
+                        <edomvd>Joint service area</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>zip</attrlabl>
+                                				
+                
+                <attrdef>Zip code for the city where the utility company is located</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Phone Number</attrlabl>
+                                				
+                
+                <attrdef>Utility phone number</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Website</attrlabl>
+                                				
+                
+                <attrdef>Utility website</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Email</attrlabl>
+                                				
+                
+                <attrdef>Utility contact email</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Utility Name</attrlabl>
+                                				
+                
+                <attrdef>Full name of the utility</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Minnesota Utility ID</attrlabl>
+                                				
+                
+                <attrdef>Minnesota Utility ID number</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Federal Utility ID</attrlabl>
+                                				
+                
+                <attrdef>Federal Utility ID number</attrdef>
+                                			
+            
+            </attr>
+                        		
+        
+        </detailed>
+                	
+    
+    </eainfo>
+        	
+    
+    <Esri>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                	
+    
+    </Esri>
+        
+
+</metadata>

@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>Jamie Schulz</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota DNR - Fisheries</rpOrgName>
+                		
+        
+        <rpPosName>GIS Data Contact</rpPosName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntPhone>
+                                				
+                
+                <voiceNum>507-206-2830</voiceNum>
+                                			
+            
+            </cntPhone>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>3555 9th St. NW Suite 350</delPoint>
+                                				
+                
+                <city>Rochester</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55901</postCode>
+                                				
+                
+                <eMailAdd>jamie.schulz@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20190321</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distributor>
+                        			
+            
+            <distorCont>
+                                				
+                
+                <rpIndName>Zeb Thomas</rpIndName>
+                                				
+                
+                <rpOrgName>Minnesota Department of Natural Resources</rpOrgName>
+                                				
+                
+                <rpPosName>GIS Data Systems Coordinator</rpPosName>
+                                				
+                
+                <rpCntInfo>
+                                        					
+                    
+                    <cntPhone>
+                                                						
+                        
+                        <voiceNum>651-259-5637</voiceNum>
+                                                					
+                    
+                    </cntPhone>
+                                        					
+                    
+                    <cntAddress addressType="both">
+                                                						
+                        
+                        <delPoint>500 Lafayette Rd</delPoint>
+                                                						
+                        
+                        <city>Saint Paul</city>
+                                                						
+                        
+                        <adminArea>MN</adminArea>
+                                                						
+                        
+                        <postCode>55155</postCode>
+                                                						
+                        
+                        <eMailAdd>zeb.thomas@state.mn.us</eMailAdd>
+                                                					
+                    
+                    </cntAddress>
+                                        				
+                
+                </rpCntInfo>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="005">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </distorCont>
+                        			
+            
+            <distorOrdPrc>
+                                				
+                
+                <ordInstr>Please visit the download page for this dataset on the Minnesota Geospatial Commons website using the web link below (Online Linkage).</ordInstr>
+                                			
+            
+            </distorOrdPrc>
+                        			
+            
+            <distorFormat>
+                                				
+                
+                <formatName>Shapefile</formatName>
+                                			
+            
+            </distorFormat>
+                        		
+        
+        </distributor>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_dnr/water_dnr_hydrography/FeatureServer</linkage>
+                                			
+                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                        		
+        
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>DNR Hydrography Dataset</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2012-09-20</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>DNR Division of Fish &amp; Wildlife - Fisheries Unit</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Department of Natural Resources (DNR)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>The &lt;b&gt;DNR Hydrography Dataset&lt;/b&gt; is the centralized SDE data storage for master versions of DNR hydrographic spatial features (effective 2012).  It includes the authoritative versions of the following &lt;u&gt;statewide feature classes&lt;/u&gt;: &lt;ul&gt;
+&lt;li&gt;&lt;b&gt;DNR Hydrography - DNR Watersheds - Level 08 - All Catchments (polygons)&lt;/b&gt; https://gis.data.mn.gov/maps/9152888e541347428ce4ca6a718c8fd0/about &lt;/li&gt;
+&lt;li&gt;&lt;a href='dnr_hydrography_all_water_features.html' rel='nofollow ugc'&gt;DNR Hydrography - All Water Features (polygons)&lt;/a&gt; &lt;/li&gt;
+&lt;li&gt;&lt;b&gt; DNR Hydrography - Public Waters Basins (polygons)&lt;/b&gt; https://gis.data.mn.gov/maps/8159243e8b024922b3a2ea19b0c899dd/about &lt;/li&gt;
+&lt;li&gt;&lt;b&gt; DNR Hydrography - Stream Routes with Kittle Numbers and Mile Measures (measured polyline routes)&lt;/b&gt; https://gis.data.mn.gov/datasets/minnesota::stream-routes-with-kittle-numbers-and-mile-measures-1/about &lt;/li&gt;
+&lt;li&gt;&lt;b&gt;DNR Hydrography - Hydrologic Points of Interest (HPOI) (points)&lt;/b&gt;&lt;/a&gt;&lt;i&gt; - in development&lt;/i&gt;&lt;/li&gt;&lt;/ul&gt;
+&lt;p&gt;The DNR Hydrography Dataset is a collection of the "best available" DNR spatial features representing MN surficial hydrology. These features originate from multiple sources representing a range of scales and accuracies. All feature classes are (will eventually be) topologically related and will function as an integrated set of statewide features. Most DNR hydro-related layers are (will eventually be) derived from this central data storage so that master features may be edited once and then remain synchronized among all derived layers.
+
+&lt;b&gt;NOTE:&lt;/b&gt; The DNR Hydrography dataset replaces the older DNR 24K and DNR 100K data layers, including those derived layers listed below.  &lt;u&gt;Users should discontinue use of these older layers.&lt;/u&gt;
+&lt;p&gt;100K: &lt;i&gt; dnr_100k_hydro_area_features, dnr_100k_hydro_stream_centerlines, lake_dnrpy2, wetl_dnrpy2, strm_usgsln2&lt;/i&gt;
+24K: &lt;i&gt; dnr_24k_lakes_and_open_water, dnr_24k_rivers_and_streams, dnr_24k_perennial_stream, lake_openwpy3, strm_baseln3, strm_pwiln3&lt;/i&gt;&lt;/p&gt;&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/899/water_dnr_hydrography.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;</idAbs>
+                		
+        
+        <idPurp>To provide a comprehensive, statewide hydrography layer which serves as the base GIS layer for all DNR business needs, including mapping, analysis, reporting, statuatory responsibilities, etc.   Examples of uses are regional hydrographic modeling/analysis, basemapping, limnological studies, and linkage to Fisheries data.</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="001">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Jamie Schulz</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota DNR - Fisheries</rpOrgName>
+                        			
+            
+            <rpPosName>GIS Data Contact</rpPosName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntPhone>
+                                        					
+                    
+                    <voiceNum>507-206-2830</voiceNum>
+                                        				
+                
+                </cntPhone>
+                                				
+                
+                <cntAddress addressType="mailling and physical">
+                                        					
+                    
+                    <delPoint>3555 9th St. NW Suite 350</delPoint>
+                                        					
+                    
+                    <city>Rochester</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55901</postCode>
+                                        					
+                    
+                    <eMailAdd>jamie.schulz@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="009">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota, border waters</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>Hydrography, Water, Lakes, Wetlands, inlandWaters, surficial hydrology, streams, rivers, hydrologic points of interest</keyword>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>Hydrography</keyword>
+            <keyword>Water</keyword>
+            <keyword>Lakes</keyword>
+            <keyword>Wetlands</keyword>
+            <keyword>inlandWaters</keyword>
+            <keyword>surficial hydrology</keyword>
+            <keyword>streams</keyword>
+            <keyword>rivers</keyword>
+            <keyword>hydrologic points of interest</keyword>
+            <keyword>Minnesota</keyword>
+            <keyword>border waters</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>The Minnesota Department of Natural Resources General Geographic Data License Agreement is online: http://www.dnr.state.mn.us/sitetools/data_software_license.html</useLimit>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <aggrInfo>
+                        			
+            
+            <aggrDSName>
+                                				
+                
+                <resTitle>See Abstract (above)</resTitle>
+                                			
+            
+            </aggrDSName>
+                        			
+            
+            <assocType>
+                                				
+                
+                <AscTypeCd value="001">
+				</AscTypeCd>
+                                			
+            
+            </assocType>
+                        		
+        
+        </aggrInfo>
+                		
+        
+        <spatRpType>
+                        			
+            
+            <SpatRepTypCd value="001">
+			</SpatRepTypCd>
+                        		
+        
+        </spatRpType>
+                		
+        
+        <envirDesc>Shapefile</envirDesc>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.23</westBL>
+                                        					
+                    
+                    <eastBL>-89.53</eastBL>
+                                        					
+                    
+                    <northBL>49.37</northBL>
+                                        					
+                    
+                    <southBL>43.5</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>Time Period of Content date indicates the date which the user can be confident of accuracy and completeness of the dataset. Re-delineations and edits are frequent and occur as needed.  See the attributes of individual feature classes for descriptions and dates of edits. Data updates and changes are reviewed and addressed by the DNR Geospatial Water Resources Team Data Stewards.  The Geospatial Water Resources Team page can be found here: https://www.dnr.state.mn.us/watersheds/wrt.html.</exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2021-07-15</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Statewide</suppInfo>
+                	
+    
+        <resConst>
+            <Consts>
+                <useLimit>None</useLimit>
+            </Consts>
+        </resConst>
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                		
+        
+        <report type="DQCompOm">
+                        			
+            
+            <measDesc>Data exist statewide.  </measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Horizontal positional accuracy is based on accuracy of the native datasets. Some features have been re-delineated by on-screen digitizing using DOQs and FSA imagery at scales of ~ 1:2000 - 1:5000.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="vertical" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>N/A</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <dataLineage>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>See LINEAGE of individual feature classes.
+
+Source Scale: Source layer wetl_dnrpy2:  100000
+</stepDesc>
+                                			
+            
+            </prcStep>
+                        		
+        
+        </dataLineage>
+                	
+    
+    </dqInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>http://www.mngeo.state.mn.us/committee/standards/mgmg/metadata.htm</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <overview>
+                        			
+            
+            <eaover>See ATTRIBUTES of individual feature classes.</eaover>
+                        		
+        
+        </overview>
+                	
+    
+    </eainfo>
+        	
+    
+    <Esri>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                	
+    
+    </Esri>
+        
+
+</metadata>

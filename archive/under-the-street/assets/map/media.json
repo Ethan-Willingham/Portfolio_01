@@ -1,0 +1,2361 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-02",
+  "photoPolicy": "Only exact verified subjects may match mapped features. Illustrative photographs have no feature match and must be labeled as type examples.",
+  "photos": [
+    {
+      "id": "511",
+      "title": "The 511 Building",
+      "match": {
+        "names": [
+          "The 511 Building",
+          "511 Building",
+          "Minnesota Gateway Data Center",
+          "Minnesota Technology Center",
+          "Cologix MIN1"
+        ],
+        "near": [
+          -93.25458,
+          44.97141
+        ],
+        "radiusM": 65,
+        "kinds": [
+          "dc",
+          "carrierhotel"
+        ]
+      },
+      "alt": "The exterior and entrance of the 511 Building in Minneapolis.",
+      "caption": "The 511 Building at 511 11th Avenue South, photographed in July 2013.",
+      "wikipedia": "https://en.wikipedia.org/wiki/511_Building_(Minneapolis)",
+      "src": "assets/map/img/511.jpg",
+      "webp": "assets/map/img/511.webp",
+      "width": 960,
+      "height": 550,
+      "creator": "Gobonobo",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:511_Building_(Minneapolis).JPG",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bc/511_Building_%28Minneapolis%29.JPG",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "falls",
+      "title": "Saint Anthony Falls",
+      "match": {
+        "names": [
+          "St. Anthony Falls + the 1876 dike",
+          "Saint Anthony Falls",
+          "St. Anthony Falls"
+        ],
+        "near": [
+          -93.257,
+          44.9806
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "cutoffwall"
+        ]
+      },
+      "alt": "Aerial view of Saint Anthony Falls and the surrounding Mississippi River in Minneapolis.",
+      "caption": "Saint Anthony Falls from above. The buried cutoff wall discussed here is below the river and is not visible in this photograph.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Saint_Anthony_Falls",
+      "src": "assets/map/img/falls.jpg",
+      "webp": "assets/map/img/falls.webp",
+      "width": 452,
+      "height": 319,
+      "creator": "National Park Service (photographer not identified)",
+      "license": "Public domain",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Saint_Anthony_Falls_aerial.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/0/06/Saint_Anthony_Falls_aerial.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "creditNote": "Commons records Mulad as the original Wikipedia uploader, not the photographer. The photograph originated on the National Park Service website.",
+      "dateNote": "The 2004 date on Commons is the original upload date. The photograph date is not identified."
+    },
+    {
+      "id": "pp-monticello",
+      "title": "Monticello Nuclear Generating Plant",
+      "match": {
+        "names": [
+          "Monticello Nuclear Generating Plant",
+          "Monticello Nuclear Generating Station",
+          "Monticello",
+          "Monticello Nuclear Facility"
+        ],
+        "near": [
+          -93.8426,
+          45.33094
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "nuclearplant"
+        ]
+      },
+      "alt": "Reactor buildings at the Monticello Nuclear Generating Plant.",
+      "caption": "Monticello Nuclear Generating Plant, photographed by the Nuclear Regulatory Commission in September 2009.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Monticello_Nuclear_Generating_Plant",
+      "src": "assets/map/img/pp-monticello.jpg",
+      "webp": "assets/map/img/pp-monticello.webp",
+      "width": 960,
+      "height": 653,
+      "creator": "U.S. Nuclear Regulatory Commission",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Monticello_Nuclear_Generating_Plant,_Unit_1_(8613623282).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/70/Monticello_Nuclear_Generating_Plant%2C_Unit_1_%288613623282%29.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identitySources": [
+        {
+          "url": "https://www.eia.gov/electricity/data/eia860m/xls/august_generator2026.xlsx",
+          "verifiedAt": "2026-10-03",
+          "claim": "August 2026 EIA-860M plant 1922 reports the exact name Monticello Nuclear Facility, with matching site geography and Northern States Power Co - Minnesota as operator. Federal site coordinates can differ from the pictured building center."
+        }
+      ]
+    },
+    {
+      "id": "pp-prairie",
+      "title": "Prairie Island Nuclear Generating Plant",
+      "match": {
+        "names": [
+          "Prairie Island Nuclear Generating Plant",
+          "Prairie Island Nuclear Power Plant",
+          "Prairie Island"
+        ],
+        "near": [
+          -92.63536,
+          44.62129
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "nuclearplant"
+        ]
+      },
+      "alt": "Prairie Island nuclear plant beside the Mississippi River.",
+      "caption": "Prairie Island Nuclear Generating Plant, photographed in May 2024.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Prairie_Island_Nuclear_Power_Plant",
+      "src": "assets/map/img/pp-prairie.jpg",
+      "webp": "assets/map/img/pp-prairie.webp",
+      "width": 960,
+      "height": 597,
+      "creator": "Wikideas1",
+      "license": "CC0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Prairie_Island_Nuclear_Generating_Plant.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Prairie_Island_Nuclear_Generating_Plant.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "pp-sherco",
+      "title": "Sherburne County Generating Station",
+      "match": {
+        "names": [
+          "Sherco Power",
+          "Sherco",
+          "Sherburne County Generating Station",
+          "Sherburne County"
+        ],
+        "near": [
+          -93.89179,
+          45.37966
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "coalplant"
+        ]
+      },
+      "alt": "Cooling towers and plant buildings at Sherburne County Generating Station.",
+      "caption": "Sherburne County Generating Station near Becker, photographed in January 2016.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sherburne_County_Generating_Station",
+      "src": "assets/map/img/pp-sherco.jpg",
+      "webp": "assets/map/img/pp-sherco.webp",
+      "width": 960,
+      "height": 1188,
+      "creator": "Tony Webster",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:SherCo_-_Sherburne_County_Generating_Station_(24736994163).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9c/SherCo_-_Sherburne_County_Generating_Station_%2824736994163%29.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identitySources": [
+        {
+          "url": "https://www.eia.gov/electricity/data/eia860m/xls/august_generator2026.xlsx",
+          "verifiedAt": "2026-10-03",
+          "claim": "August 2026 EIA-860M plant 6090 reports the exact name Sherburne County, with matching site geography and Northern States Power Co - Minnesota as operator. Federal site coordinates can differ from the pictured building center."
+        }
+      ]
+    },
+    {
+      "id": "pp-herc",
+      "title": "Hennepin Energy Recovery Center",
+      "match": {
+        "names": [
+          "Covanta Hennepin Energy",
+          "Hennepin Energy Recovery Center",
+          "HERC"
+        ],
+        "near": [
+          -93.28032,
+          44.98285
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "wasteplant"
+        ]
+      },
+      "alt": "Hennepin Energy Recovery Center with Target Field behind it.",
+      "caption": "Hennepin Energy Recovery Center, photographed in April 2024.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Hennepin_Energy_Recovery_Center",
+      "src": "assets/map/img/pp-herc.jpg",
+      "webp": "assets/map/img/pp-herc.webp",
+      "width": 960,
+      "height": 540,
+      "creator": "Eóin",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hennepin_Energy_Recovery_Center.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Hennepin_Energy_Recovery_Center.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "pp-king",
+      "title": "Allen S. King Power Plant",
+      "match": {
+        "names": [
+          "Allen S. King Power Plant",
+          "Allen S King",
+          "Allen S. King Generating Station"
+        ],
+        "near": [
+          -92.7804,
+          45.03208
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "coalplant"
+        ]
+      },
+      "alt": "Allen S. King Power Plant beside the Saint Croix River.",
+      "caption": "Allen S. King Power Plant in Oak Park Heights, photographed in August 2024.",
+      "src": "assets/map/img/pp-king.jpg",
+      "webp": "assets/map/img/pp-king.webp",
+      "width": 960,
+      "height": 818,
+      "creator": "Wikideas1",
+      "license": "CC0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:XCEL_Energy_Allen_S_King_power_plant.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/23/XCEL_Energy_Allen_S_King_power_plant.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "dam-coon",
+      "title": "Coon Rapids Dam",
+      "match": {
+        "names": [
+          "Coon Rapids Dam"
+        ],
+        "near": [
+          -93.31161,
+          45.14375
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "dam"
+        ]
+      },
+      "alt": "Coon Rapids Dam across the Mississippi River.",
+      "caption": "Coon Rapids Dam, viewed from its north side in June 2004.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Coon_Rapids_Dam",
+      "src": "assets/map/img/dam-coon.jpg",
+      "webp": "assets/map/img/dam-coon.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "Ronfar623 on en.wikipedia",
+      "license": "CC BY 1.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/1.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Coon_Rapids_River_Dam_-_Coon_Rapids,_Minnesota.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bb/Coon_Rapids_River_Dam_-_Coon_Rapids%2C_Minnesota.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "dam-ford",
+      "title": "Lock and Dam No. 1",
+      "match": {
+        "names": [
+          "Lock and Dam No. 1",
+          "Lock and Dam 1",
+          "Ford Dam"
+        ],
+        "near": [
+          -93.20266,
+          44.91472
+        ],
+        "radiusM": 70,
+        "kinds": [
+          "dam",
+          "lock"
+        ]
+      },
+      "alt": "Lock and Dam No. 1 below the Ford Bridge on the Mississippi River.",
+      "caption": "Lock and Dam No. 1 between Minneapolis and Saint Paul, photographed in June 2006.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Lock_and_Dam_No._1",
+      "src": "assets/map/img/dam-ford.jpg",
+      "webp": "assets/map/img/dam-ford.webp",
+      "width": 960,
+      "height": 639,
+      "creator": "Mike Hicks",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lock_and_Dam_No_1.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Lock_and_Dam_No_1.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "tower-witchhat",
+      "title": "Prospect Park Water Tower",
+      "match": {
+        "names": [
+          "Witch's Hat Tower",
+          "Witch's Hat Water Tower",
+          "Prospect Park Water Tower"
+        ],
+        "near": [
+          -93.21267,
+          44.96867
+        ],
+        "radiusM": 55,
+        "kinds": [
+          "tower"
+        ]
+      },
+      "alt": "Prospect Park Water Tower seen through trees from below.",
+      "caption": "Prospect Park Water Tower, also called the Witch's Hat, photographed in June 2006. Its water service ended in 1952.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Prospect_Park_Water_Tower",
+      "src": "assets/map/img/tower-witchhat.jpg",
+      "webp": "assets/map/img/tower-witchhat.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "Michael Hicks",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Prospect_Park_Water_Tower.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/6/62/Prospect_Park_Water_Tower.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identityStatus": "Historic tower; no longer used for water storage.",
+      "identitySources": [
+        {
+          "url": "https://www.minneapolisparks.org/parks-destinations/historical_sites/tower_hill_park/",
+          "verifiedAt": "2026-10-03",
+          "claim": "Current or historical water-storage status."
+        }
+      ]
+    },
+    {
+      "id": "tower-highland",
+      "title": "Highland Park Water Tower",
+      "match": {
+        "names": [
+          "Highland Park Water Tower"
+        ],
+        "near": [
+          -93.16661,
+          44.91766
+        ],
+        "radiusM": 55,
+        "kinds": [
+          "tower"
+        ]
+      },
+      "alt": "The stone Highland Park Water Tower in Saint Paul.",
+      "caption": "Highland Park Water Tower in Saint Paul, photographed in December 2006. SPRWS identifies the historic tower as no longer in service.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Highland_Park_Tower",
+      "src": "assets/map/img/tower-highland.jpg",
+      "webp": "assets/map/img/tower-highland.webp",
+      "width": 604,
+      "height": 1200,
+      "creator": "Elkman",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Highland_Park_Water_Tower_2.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Highland_Park_Water_Tower_2.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identityStatus": "Historic tower; no longer used for water storage.",
+      "identitySources": [
+        {
+          "url": "https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower",
+          "verifiedAt": "2026-10-03",
+          "claim": "Current or historical water-storage status."
+        }
+      ]
+    },
+    {
+      "id": "pp-highbridge",
+      "title": "High Bridge Power Plant",
+      "match": {
+        "names": [
+          "High Bridge Power Plant",
+          "High Bridge"
+        ],
+        "near": [
+          -93.10954,
+          44.93278
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "gasplant"
+        ]
+      },
+      "alt": "The High Bridge Power Plant on the Mississippi River in Saint Paul.",
+      "caption": "High Bridge Power Plant in Saint Paul, photographed in June 2024 from across the river.",
+      "src": "assets/map/img/pp-highbridge.jpg",
+      "webp": "assets/map/img/pp-highbridge.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "Gobonobo",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:High_Bridge_Power_Plant.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/c/ce/High_Bridge_Power_Plant.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "dateNote": "Camera EXIF records June 29, 2024. Object and camera coordinates are separate on Commons."
+    },
+    {
+      "id": "water-fridley",
+      "title": "Minneapolis Fridley water treatment plant",
+      "match": {
+        "names": [
+          "Minneapolis Water Treatment Plant",
+          "Minneapolis Fridley water treatment plant",
+          "Fridley water treatment plant"
+        ],
+        "near": [
+          -93.27868,
+          45.04322
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "ww"
+        ]
+      },
+      "alt": "A brick building and tank at the Minneapolis water works in Fridley.",
+      "caption": "Minneapolis water works at the Fridley campus, photographed in May 2017. This is the Fridley site, separate from the Columbia Heights filtration plant.",
+      "identitySources": [
+        "https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/",
+        "https://www.health.mn.gov/communities/environment/water/waterline/featurestories/mplsultrafiltration.htm"
+      ],
+      "src": "assets/map/img/water-fridley.jpg",
+      "webp": "assets/map/img/water-fridley.webp",
+      "width": 960,
+      "height": 549,
+      "creator": "Group29",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Minneapolis_Water_Works_Fridley_MN_2017.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/1/13/Minneapolis_Water_Works_Fridley_MN_2017.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "tower-kenwood",
+      "title": "Kenwood Park Water Tower",
+      "match": {
+        "names": [
+          "Kenwood Park Water Tower",
+          "Kenwood Water Tower"
+        ],
+        "near": [
+          -93.30669,
+          44.96747
+        ],
+        "radiusM": 55,
+        "kinds": [
+          "tower"
+        ]
+      },
+      "alt": "Kenwood Water Tower, a tall brick tower with a green pointed roof.",
+      "caption": "Kenwood Park Water Tower, photographed in September 2024. It no longer stores water.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Kenwood_Park_Water_Tower",
+      "src": "assets/map/img/tower-kenwood.jpg",
+      "webp": "assets/map/img/tower-kenwood.webp",
+      "width": 858,
+      "height": 1200,
+      "creator": "McGhiever",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Kenwood_Water_Tower.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Kenwood_Water_Tower.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identityStatus": "Historic tower; no longer used for water storage.",
+      "identitySources": [
+        {
+          "url": "https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/mplsdist.html",
+          "verifiedAt": "2026-10-03",
+          "claim": "Current or historical water-storage status."
+        }
+      ]
+    },
+    {
+      "id": "tower-washburn",
+      "title": "Washburn Park Water Tower",
+      "match": {
+        "names": [
+          "Washburn Park Water Tower"
+        ],
+        "near": [
+          -93.28428,
+          44.91075
+        ],
+        "radiusM": 55,
+        "kinds": [
+          "tower"
+        ]
+      },
+      "alt": "The decorated stone Washburn Park Water Tower in Minneapolis.",
+      "caption": "Washburn Park Water Tower, photographed in September 2015. The City of Minneapolis identifies it as a historic landmark that is no longer in use.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Washburn_Park_Water_Tower",
+      "src": "assets/map/img/tower-washburn.jpg",
+      "webp": "assets/map/img/tower-washburn.webp",
+      "width": 960,
+      "height": 1185,
+      "creator": "McGhiever",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Washburn_Park_Water_Tower_02.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Washburn_Park_Water_Tower_02.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identityStatus": "Historic tower; no longer used for water storage.",
+      "identitySources": [
+        {
+          "url": "https://www.minneapolismn.gov/government/projects/washburn-water-tower/",
+          "verifiedAt": "2026-10-03",
+          "claim": "Current or historical water-storage status."
+        }
+      ]
+    },
+    {
+      "id": "pp-southeast",
+      "title": "Southeast Steam Plant",
+      "match": {
+        "names": [
+          "Southeast Steam Plant"
+        ],
+        "near": [
+          -93.24965,
+          44.98077
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "coalplant",
+          "gasplant",
+          "districtheat"
+        ]
+      },
+      "alt": "Southeast Steam Plant and its three tall stacks beside the Mississippi River.",
+      "caption": "Southeast Steam Plant on the east bank of the Mississippi River, photographed in September 2023.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Southeast_Steam_Plant",
+      "identitySources": [
+        "https://campusmaps.umn.edu/southeast-steam-plant"
+      ],
+      "src": "assets/map/img/pp-southeast.jpg",
+      "webp": "assets/map/img/pp-southeast.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "Bobak Ha'Eri",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:2023-0902-Southeast_Steam_Plant.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/be/2023-0902-Southeast_Steam_Plant.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "dam-upper-stanthony",
+      "title": "Upper Saint Anthony Falls Lock and Dam",
+      "match": {
+        "names": [
+          "Upper Saint Anthony Falls Lock and Dam",
+          "Upper St. Anthony Falls Lock and Dam",
+          "Upper St Anthony Falls Lock and Dam"
+        ],
+        "near": [
+          -93.25739,
+          44.981
+        ],
+        "radiusM": 75,
+        "kinds": [
+          "dam",
+          "lock"
+        ]
+      },
+      "alt": "Aerial view of the upper lock and dam at Saint Anthony Falls.",
+      "caption": "Upper Saint Anthony Falls Lock and Dam, photographed from above in July 2020.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Saint_Anthony_Falls",
+      "src": "assets/map/img/dam-upper-stanthony.jpg",
+      "webp": "assets/map/img/dam-upper-stanthony.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "August Schwerdfeger",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Upper_St._Anthony_Falls_2020-07-11.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Upper_St._Anthony_Falls_2020-07-11.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "dam-lower-stanthony",
+      "title": "Lower Saint Anthony Falls Lock and Dam",
+      "match": {
+        "names": [
+          "Lower Saint Anthony Falls Lock and Dam",
+          "Lower St. Anthony Falls Lock and Dam",
+          "Lower St Anthony Falls Lock and Dam"
+        ],
+        "near": [
+          -93.2469,
+          44.97863
+        ],
+        "radiusM": 75,
+        "kinds": [
+          "dam",
+          "lock"
+        ]
+      },
+      "alt": "Aerial view of Lower Saint Anthony Falls Lock and Dam beneath the river bridges.",
+      "caption": "Lower Saint Anthony Falls Lock and Dam, photographed from above in March 2021.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Saint_Anthony_Falls",
+      "src": "assets/map/img/dam-lower-stanthony.jpg",
+      "webp": "assets/map/img/dam-lower-stanthony.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "August Schwerdfeger",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lower_St._Anthony_Falls_Lock_and_Dam_2021-03-14_-_1.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Lower_St._Anthony_Falls_Lock_and_Dam_2021-03-14_-_1.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "bassett-outlet",
+      "title": "Old Bassett Creek tunnel outlet",
+      "match": {
+        "names": [
+          "Old Bassett Creek tunnel outlet",
+          "Old Bassett Creek outlet",
+          "Bassett Creek old tunnel outlet"
+        ],
+        "near": [
+          -93.27351,
+          44.99035
+        ],
+        "radiusM": 80,
+        "kinds": [
+          "bstream"
+        ]
+      },
+      "alt": "The old Bassett Creek tunnel outlet opens onto the Mississippi River below a small footbridge.",
+      "caption": "The old Bassett Creek tunnel outlet below Plymouth Avenue, photographed from a kayak in September 2008. This is separate from the newer outlet below Saint Anthony Falls.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)",
+      "identitySources": [
+        "https://www.mwmo.org/projects/old-bassett-creek-tunnel/",
+        "https://www.mwmo.org/monitoring-and-reports/water-quality-monitoring/stormwater-monitoring/"
+      ],
+      "src": "assets/map/img/bassett-outlet.jpg",
+      "webp": "assets/map/img/bassett-outlet.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "edkohler",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bassett_Creek_outlet_to_the_Mississippi_River,_September_2008.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a8/Bassett_Creek_outlet_to_the_Mississippi_River%2C_September_2008.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "coordinateNote": "Approximate tour anchor derived from the DNR mapped Bassett Creek stream endpoint at the river connector. It is not a surveyed tunnel location."
+    },
+    {
+      "id": "tower-osseo",
+      "title": "Osseo Water Tower",
+      "match": {
+        "names": [
+          "Osseo Water Tower"
+        ],
+        "near": [
+          -93.40283,
+          45.12052
+        ],
+        "radiusM": 50,
+        "kinds": [
+          "tower"
+        ]
+      },
+      "alt": "The historic steel Osseo Water Tower stands on narrow legs.",
+      "caption": "Osseo Water Tower at 25 4th Street, photographed in May 2018.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Osseo_Water_Tower",
+      "src": "assets/map/img/tower-osseo.jpg",
+      "webp": "assets/map/img/tower-osseo.webp",
+      "width": 960,
+      "height": 1132,
+      "creator": "McGhiever",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Osseo_Water_Tower.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Osseo_Water_Tower.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "pp-hennepin",
+      "title": "Hennepin Island Hydroelectric Plant",
+      "match": {
+        "names": [
+          "Hennepin Island Hydroelectric Plant",
+          "Hennepin Island"
+        ],
+        "near": [
+          -93.25415,
+          44.98222
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "hydroplant"
+        ]
+      },
+      "alt": "Hennepin Island Hydroelectric Plant and its tailrace, seen from the Stone Arch Bridge.",
+      "caption": "Hennepin Island Hydroelectric Plant and tailrace, photographed from the Stone Arch Bridge in April 2019.",
+      "wikipedia": "https://en.wikipedia.org/wiki/Hennepin_Island_Hydroelectric_Plant",
+      "src": "assets/map/img/pp-hennepin.jpg",
+      "webp": "assets/map/img/pp-hennepin.webp",
+      "width": 960,
+      "height": 746,
+      "creator": "BudKey",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hennepin_Island_Hydroelectric_Plant.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/79/Hennepin_Island_Hydroelectric_Plant.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "pp-blackdog",
+      "title": "Black Dog Power Plant",
+      "match": {
+        "names": [
+          "Black Dog Power Plant",
+          "Black Dog Plant",
+          "Black Dog"
+        ],
+        "near": [
+          -93.24938,
+          44.81204
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "gasplant",
+          "coalplant"
+        ]
+      },
+      "alt": "Black Dog Power Plant on the Minnesota River in Burnsville.",
+      "caption": "Black Dog Power Plant in Burnsville. The photograph records the plant site, not the current operating status of each unit.",
+      "src": "assets/map/img/pp-blackdog.jpg",
+      "webp": "assets/map/img/pp-blackdog.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "Stevep001",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Black_Dog_Power_Plant.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Black_Dog_Power_Plant.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "dateNote": "The Commons upload is dated July 26, 2022. The photograph capture date is not identified."
+    },
+    {
+      "id": "district-stpaul",
+      "title": "District Energy Saint Paul",
+      "match": {
+        "names": [
+          "District Energy Saint Paul",
+          "District Energy St. Paul",
+          "District Energy St Paul"
+        ],
+        "near": [
+          -93.0963,
+          44.9432
+        ],
+        "radiusM": 80,
+        "kinds": [
+          "districtheat"
+        ]
+      },
+      "alt": "District Energy Saint Paul building at 76 West Kellogg Boulevard.",
+      "caption": "District Energy Saint Paul at 76 West Kellogg Boulevard, photographed in July 2020.",
+      "identitySources": [
+        "https://www.districtenergy.com/"
+      ],
+      "src": "assets/map/img/district-stpaul.jpg",
+      "webp": "assets/map/img/district-stpaul.webp",
+      "width": 960,
+      "height": 628,
+      "creator": "McGhiever",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:District_Energy_St._Paul.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/41/District_Energy_St._Paul.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "tower-lindstrom",
+      "title": "Lindstrom Swedish Coffee Pot Water Tower",
+      "match": {
+        "names": [
+          "Swedish Coffee Pot Water Tower",
+          "Lindstrom Swedish Coffee Pot Water Tower"
+        ],
+        "near": [
+          -92.84583,
+          45.39015
+        ],
+        "radiusM": 55,
+        "kinds": [
+          "tower"
+        ]
+      },
+      "alt": "The painted Swedish coffee pot water tower in Lindstrom.",
+      "caption": "The historic Swedish Coffee Pot Water Tower in Lindstrom, photographed in February 2016. A new water tower replaced it in 1992.",
+      "src": "assets/map/img/tower-lindstrom.jpg",
+      "webp": "assets/map/img/tower-lindstrom.webp",
+      "width": 960,
+      "height": 643,
+      "creator": "Tony Webster",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:V%C3%A4lkommen_till_Lindstr%C3%B6m_-_Swedish_Coffee_Pot_Water_Tower_(24721592494).jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/e/ee/V%C3%A4lkommen_till_Lindstr%C3%B6m_-_Swedish_Coffee_Pot_Water_Tower_%2824721592494%29.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "identityStatus": "Historic water tower converted into a coffee-pot landmark after replacement in 1992.",
+      "identitySources": [
+        {
+          "url": "https://www.cityoflindstrom.us/1429/Kaffe-Kanna-Park-Coffee-Pot-Water-Tower",
+          "verifiedAt": "2026-10-03",
+          "claim": "Replacement and landmark conversion."
+        }
+      ]
+    },
+    {
+      "id": "line-hv",
+      "title": "Transmission lines in Oregon",
+      "match": {
+        "names": [],
+        "kinds": []
+      },
+      "illustrative": true,
+      "alt": "High voltage transmission towers beside U.S. Route 197 in Oregon.",
+      "caption": "Type example: transmission lines in Oregon near the Celilo Converter Station, photographed in April 2007.",
+      "src": "assets/map/img/line-hv.jpg",
+      "webp": "assets/map/img/line-hv.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "Stefan Andrej Shambora (St_A_Sh)",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:High_voltage_transmission_towers_and_lines.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b4/High_voltage_transmission_towers_and_lines.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "line-dist",
+      "title": "Distribution pole in British Columbia",
+      "match": {
+        "names": [],
+        "kinds": []
+      },
+      "illustrative": true,
+      "alt": "Three-phase electric distribution equipment on a pole in Port Edward, British Columbia.",
+      "caption": "Type example: an electric distribution pole in Port Edward, British Columbia, photographed in December 2025.",
+      "src": "assets/map/img/line-dist.jpg",
+      "webp": "assets/map/img/line-dist.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "WindBorneListener",
+      "license": "CC0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Three-phase_overhead_distribution_pole.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Three-phase_overhead_distribution_pole.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "gas",
+      "title": "Gas pipeline construction in Finland",
+      "match": {
+        "names": [],
+        "kinds": []
+      },
+      "illustrative": true,
+      "alt": "A natural gas pipeline being placed in a trench in Finland.",
+      "caption": "Type example: natural gas pipeline construction in Finland. The source description dates the scene to 2007.",
+      "src": "assets/map/img/gas.jpg",
+      "webp": "assets/map/img/gas.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "Jukka Isokoski",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Constructing_natural_gas_pipe,_Finland.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/2/25/Constructing_natural_gas_pipe%2C_Finland.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring.",
+      "dateNote": "Commons description says Finland, 2007; its Date field and original upload record say September 13, 2011. The capture date is not independently verified."
+    },
+    {
+      "id": "substation",
+      "title": "Substation transformer in Finland",
+      "match": {
+        "names": [],
+        "kinds": []
+      },
+      "illustrative": true,
+      "alt": "An electrical transformer at the Muurame substation in Finland.",
+      "caption": "Type example: a transformer at Muurame substation in Finland, photographed in July 2025.",
+      "src": "assets/map/img/substation.jpg",
+      "webp": "assets/map/img/substation.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "Antti Leppänen",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Muurame_electrical_substation_transformer.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c4/Muurame_electrical_substation_transformer.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "hydrant",
+      "title": "Fire hydrant in Utah",
+      "match": {
+        "names": [],
+        "kinds": []
+      },
+      "illustrative": true,
+      "alt": "A fire hydrant in American Fork, Utah.",
+      "caption": "Type example: a fire hydrant in American Fork, Utah, photographed in August 2016.",
+      "src": "assets/map/img/hydrant.jpg",
+      "webp": "assets/map/img/hydrant.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "An Errant Knight",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fire_hydrant,_American_Fork,_Utah,_Aug_16.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/53/Fire_hydrant%2C_American_Fork%2C_Utah%2C_Aug_16.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "hydrant-minneapolis",
+      "title": "Fire hydrant in Minneapolis",
+      "match": {
+        "names": [],
+        "kinds": []
+      },
+      "illustrative": true,
+      "alt": "A Minneapolis fire hydrant beside construction barriers.",
+      "caption": "Type example: a Minneapolis fire hydrant, photographed in December 2007. Its exact street location has not been verified.",
+      "src": "assets/map/img/hydrant-minneapolis.jpg",
+      "webp": "assets/map/img/hydrant-minneapolis.webp",
+      "width": 960,
+      "height": 720,
+      "creator": "Susan G. Lesch",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fire_hydrant-Minneapolis-20071218.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Fire_hydrant-Minneapolis-20071218.jpg",
+      "edits": "Resized; JPEG and WebP copies. No recoloring."
+    },
+    {
+      "id": "aerial-ww-blue-lake",
+      "title": "Blue Lake Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Blue Lake",
+          "Blue Lake Water Resource Recovery Facility"
+        ],
+        "near": [
+          -93.43103,
+          44.79859
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Blue Lake Water Resource Recovery Facility.",
+      "caption": "Blue Lake Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Blue-Lake.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-blue-lake.jpg",
+      "webp": "assets/map/img/aerial-ww-blue-lake.webp",
+      "width": 737,
+      "height": 491,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23625/15757",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23626/15757",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23627/15757",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23625/15758",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23626/15758",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23627/15758",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23625/15759",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23626/15759",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23627/15759",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23625/15760",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23626/15760",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23627/15760"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 1250
+    },
+    {
+      "id": "aerial-ww-eagles-point",
+      "title": "Eagles Point Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Eagles Point",
+          "Eagles Point Water Resource Recovery Facility"
+        ],
+        "near": [
+          -92.91871,
+          44.78651
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Eagles Point Water Resource Recovery Facility.",
+      "caption": "Eagles Point Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Eagles-Point.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-eagles-point.jpg",
+      "webp": "assets/map/img/aerial-ww-eagles-point.webp",
+      "width": 442,
+      "height": 295,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23629/15851",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23630/15851",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23629/15852",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23630/15852",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23629/15853",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23630/15853"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-ww-east-bethel",
+      "title": "East Bethel Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "East Bethel",
+          "East Bethel Water Resource Recovery Facility"
+        ],
+        "near": [
+          -93.24098,
+          45.3047
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of East Bethel Water Resource Recovery Facility.",
+      "caption": "East Bethel Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/East-Bethel.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-east-bethel.jpg",
+      "webp": "assets/map/img/aerial-ww-east-bethel.webp",
+      "width": 446,
+      "height": 297,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23495/15793",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23496/15793",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23495/15794",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23496/15794"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-ww-empire",
+      "title": "Empire Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Empire",
+          "Empire Water Resource Recovery Facility"
+        ],
+        "near": [
+          -93.10431,
+          44.66536
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Empire Water Resource Recovery Facility.",
+      "caption": "Empire Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Empire.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-empire.jpg",
+      "webp": "assets/map/img/aerial-ww-empire.webp",
+      "width": 441,
+      "height": 294,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23660/15818",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23661/15818",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23660/15819",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23661/15819"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-ww-hastings",
+      "title": "Hastings Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Hastings",
+          "Hastings Water Resource Recovery Facility"
+        ],
+        "near": [
+          -92.8466,
+          44.74467
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Hastings Water Resource Recovery Facility.",
+      "caption": "Hastings Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Hastings.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-hastings.jpg",
+      "webp": "assets/map/img/aerial-ww-hastings.webp",
+      "width": 442,
+      "height": 295,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23639/15864",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23640/15864",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23641/15864",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23639/15865",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23640/15865",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23641/15865",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23639/15866",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23640/15866",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23641/15866"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-ww-metro",
+      "title": "Metropolitan Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Metro",
+          "Metropolitan Water Resource Recovery Facility",
+          "Metropolitan Wastewater Treatment Plant",
+          "Metropolitan Treatment Plant"
+        ],
+        "near": [
+          -93.04547,
+          44.92526
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Metropolitan Water Resource Recovery Facility.",
+      "caption": "Metropolitan Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-metro.jpg",
+      "webp": "assets/map/img/aerial-ww-metro.webp",
+      "width": 960,
+      "height": 640,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23592/15827",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23593/15827",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23594/15827",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23595/15827",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23592/15828",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23593/15828",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23594/15828",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23595/15828",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23592/15829",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23593/15829",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23594/15829",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23595/15829",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23592/15830",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23593/15830",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23594/15830",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23595/15830",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23592/15831",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23593/15831",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23594/15831",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23595/15831"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 1900
+    },
+    {
+      "id": "aerial-ww-rogers",
+      "title": "Rogers Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Rogers",
+          "Rogers Water Resource Recovery Facility"
+        ],
+        "near": [
+          -93.56215,
+          45.20047
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Rogers Water Resource Recovery Facility.",
+      "caption": "Rogers Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Rogers.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-rogers.jpg",
+      "webp": "assets/map/img/aerial-ww-rogers.webp",
+      "width": 446,
+      "height": 297,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23522/15734",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23523/15734",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23522/15735",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23523/15735",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23522/15736",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23523/15736"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-ww-seneca",
+      "title": "Seneca Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "Seneca",
+          "Seneca Water Resource Recovery Facility"
+        ],
+        "near": [
+          -93.20922,
+          44.82767
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of Seneca Water Resource Recovery Facility.",
+      "caption": "Seneca Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Seneca.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-seneca.jpg",
+      "webp": "assets/map/img/aerial-ww-seneca.webp",
+      "width": 443,
+      "height": 295,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23618/15798",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23619/15798",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23618/15799",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23619/15799",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23618/15800",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23619/15800"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-ww-st-croix-valley",
+      "title": "St. Croix Valley Water Resource Recovery Facility",
+      "match": {
+        "names": [
+          "St Croix Valley",
+          "St. Croix Valley Water Resource Recovery Facility",
+          "St. Croix Valley"
+        ],
+        "near": [
+          -92.79139,
+          45.03824
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "tplant"
+        ]
+      },
+      "alt": "Aerial photograph of St. Croix Valley Water Resource Recovery Facility.",
+      "caption": "St. Croix Valley Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/St-Croix.aspx"
+      ],
+      "src": "assets/map/img/aerial-ww-st-croix-valley.jpg",
+      "webp": "assets/map/img/aerial-ww-st-croix-valley.webp",
+      "width": 444,
+      "height": 296,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23564/15874",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23565/15874",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23564/15875",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23565/15875",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23564/15876",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23565/15876"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 750
+    },
+    {
+      "id": "aerial-water-columbiaheights",
+      "title": "Minneapolis Columbia Heights filtration plant",
+      "match": {
+        "names": [
+          "Minneapolis Water Works",
+          "Minneapolis Columbia Heights filtration plant"
+        ],
+        "near": [
+          -93.23399,
+          45.05274
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "ww"
+        ]
+      },
+      "alt": "Aerial photograph of Minneapolis Columbia Heights filtration plant.",
+      "caption": "Minneapolis Columbia Heights filtration plant from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://www.health.mn.gov/communities/environment/water/waterline/featurestories/mplsultrafiltration.htm"
+      ],
+      "src": "assets/map/img/aerial-water-columbiaheights.jpg",
+      "webp": "assets/map/img/aerial-water-columbiaheights.webp",
+      "width": 403,
+      "height": 269,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23560/15794",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23561/15794",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23560/15795",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23561/15795",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23560/15796",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23561/15796"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 680
+    },
+    {
+      "id": "aerial-water-mccarrons",
+      "title": "McCarrons water treatment plant",
+      "match": {
+        "names": [
+          "McCarrons Water Treatment Plant",
+          "McCarrons water treatment plant"
+        ],
+        "near": [
+          -93.1007,
+          44.99649
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "ww"
+        ]
+      },
+      "alt": "Aerial photograph of McCarrons water treatment plant.",
+      "caption": "McCarrons water treatment plant from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "identitySources": [
+        "https://www.stpaul.gov/sites/default/files/2024-04/WaterQualityReport_0.pdf"
+      ],
+      "src": "assets/map/img/aerial-water-mccarrons.jpg",
+      "webp": "assets/map/img/aerial-water-mccarrons.webp",
+      "width": 414,
+      "height": 276,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23575/15818",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23576/15818",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23575/15819",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23576/15819",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23575/15820",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23576/15820"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 700
+    },
+    {
+      "id": "aerial-water-bloomington",
+      "title": "Bloomington water treatment plant",
+      "match": {
+        "names": [
+          "Bloomington Water Treatment Plant",
+          "Bloomington water treatment plant"
+        ],
+        "near": [
+          -93.34846,
+          44.83523
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "ww"
+        ]
+      },
+      "alt": "Aerial photograph of Bloomington water treatment plant.",
+      "caption": "Bloomington water treatment plant from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "src": "assets/map/img/aerial-water-bloomington.jpg",
+      "webp": "assets/map/img/aerial-water-bloomington.webp",
+      "width": 354,
+      "height": 236,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23616/15773",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23617/15773",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23616/15774",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23617/15774",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23616/15775",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23617/15775"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 600
+    },
+    {
+      "id": "aerial-pp-riverside",
+      "title": "Riverside Generating Plant",
+      "match": {
+        "names": [
+          "Riverside Generating Plant",
+          "Riverside",
+          "Riverside (MN)"
+        ],
+        "near": [
+          -93.27584,
+          45.02301
+        ],
+        "radiusM": 100,
+        "kinds": [
+          "pplant",
+          "gasplant"
+        ]
+      },
+      "alt": "Aerial photograph of Riverside Generating Plant.",
+      "caption": "Riverside Generating Plant from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied.",
+      "src": "assets/map/img/aerial-pp-riverside.jpg",
+      "webp": "assets/map/img/aerial-pp-riverside.webp",
+      "width": 563,
+      "height": 375,
+      "creator": "USDA / USGS, The National Map",
+      "license": "Public domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "sourceUrl": "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer",
+      "downloadUrls": [
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23568/15786",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23569/15786",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23568/15787",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23569/15787",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23568/15788",
+        "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/23569/15788"
+      ],
+      "edits": "Georeferenced tile mosaic cropped around the named facility; resized without enlargement. No recoloring.",
+      "imageryDateNote": "CONUS NAIP source mosaic: 2017 to 2021. Service refresh: June 2024. Individual frame date unavailable.",
+      "footprintWidthM": 950,
+      "identitySources": [
+        {
+          "url": "https://www.eia.gov/electricity/data/eia860m/xls/august_generator2026.xlsx",
+          "verifiedAt": "2026-10-03",
+          "claim": "August 2026 EIA-860M plant 1927 reports the exact name Riverside (MN), with matching site geography and Northern States Power Co - Minnesota as operator. Federal site coordinates can differ from the pictured building center."
+        }
+      ]
+    }
+  ],
+  "types": {
+    "pplant": {
+      "label": "Power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Power_station",
+      "description": "A power plant converts an energy source into electricity. The mapped fuel or technology describes the facility; it does not establish the operating status of every unit."
+    },
+    "nuclearplant": {
+      "label": "Nuclear power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Nuclear_power_plant",
+      "description": "Nuclear fission releases heat. The plant uses that heat to make steam and turn a turbine connected to a generator."
+    },
+    "pplant-nuclear": {
+      "label": "Nuclear power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Nuclear_power_plant",
+      "description": "Nuclear fission releases heat. The plant uses that heat to make steam and turn a turbine connected to a generator."
+    },
+    "coalplant": {
+      "label": "Coal power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Coal-fired_power_station",
+      "description": "Burning coal heats water into steam. The steam turns turbines that drive electric generators."
+    },
+    "pplant-coal": {
+      "label": "Coal power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Coal-fired_power_station",
+      "description": "Burning coal heats water into steam. The steam turns turbines that drive electric generators."
+    },
+    "gasplant": {
+      "label": "Gas power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Gas-fired_power_plant",
+      "description": "Natural gas supplies heat for an electric generator. Some plants combine a gas turbine with a steam turbine that uses heat from its exhaust."
+    },
+    "pplant-gas": {
+      "label": "Gas power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Gas-fired_power_plant",
+      "description": "Natural gas supplies heat for an electric generator. Some plants combine a gas turbine with a steam turbine that uses heat from its exhaust."
+    },
+    "oilplant": {
+      "label": "Oil power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Thermal_power_station",
+      "description": "Oil fuels an engine or supplies heat for an electric generator. The mapped fuel label alone does not show how often the unit runs."
+    },
+    "pplant-oil": {
+      "label": "Oil power plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Thermal_power_station",
+      "description": "Oil fuels an engine or supplies heat for an electric generator. The mapped fuel label alone does not show how often the unit runs."
+    },
+    "hydroplant": {
+      "label": "Hydroelectric plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Hydroelectricity",
+      "description": "Moving water turns turbines connected to generators. A dam, channel or drop in elevation supplies the difference in water level that drives the flow."
+    },
+    "pplant-hydro": {
+      "label": "Hydroelectric plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Hydroelectricity",
+      "description": "Moving water turns turbines connected to generators. A dam, channel or drop in elevation supplies the difference in water level that drives the flow."
+    },
+    "wasteplant": {
+      "label": "Waste-to-energy plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Waste-to-energy_plant",
+      "description": "Burning waste supplies heat to produce steam. That steam can generate electricity or deliver heat to nearby buildings."
+    },
+    "pplant-waste": {
+      "label": "Waste-to-energy plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Waste-to-energy_plant",
+      "description": "Burning waste supplies heat to produce steam. That steam can generate electricity or deliver heat to nearby buildings."
+    },
+    "solarplant": {
+      "label": "Solar generation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Solar_power",
+      "description": "Solar generation converts sunlight into electricity. Rooftop arrays and utility plants differ in scale but use the same resource."
+    },
+    "pplant-solar": {
+      "label": "Solar generation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Solar_power",
+      "description": "Solar generation converts sunlight into electricity. Rooftop arrays and utility plants differ in scale but use the same resource."
+    },
+    "windplant": {
+      "label": "Wind generation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Wind_farm",
+      "description": "Wind turns the rotors of turbines connected to generators. Several turbines can supply a shared electrical connection."
+    },
+    "pplant-wind": {
+      "label": "Wind generation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Wind_farm",
+      "description": "Wind turns the rotors of turbines connected to generators. Several turbines can supply a shared electrical connection."
+    },
+    "biomassplant": {
+      "label": "Biomass generation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Biomass_(energy)",
+      "description": "Biological material supplies fuel or gas for energy production. The feedstock and conversion process vary between facilities."
+    },
+    "pplant-biomass": {
+      "label": "Biomass generation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Biomass_(energy)",
+      "description": "Biological material supplies fuel or gas for energy production. The feedstock and conversion process vary between facilities."
+    },
+    "batteryplant": {
+      "label": "Battery energy storage",
+      "wikipedia": "https://en.wikipedia.org/wiki/Battery_storage_power_station",
+      "description": "A battery system stores electricity and releases it later. Storage shifts energy in time rather than producing fuel or sunlight."
+    },
+    "pplant-battery": {
+      "label": "Battery energy storage",
+      "wikipedia": "https://en.wikipedia.org/wiki/Battery_storage_power_station",
+      "description": "A battery system stores electricity and releases it later. Storage shifts energy in time rather than producing fuel or sunlight."
+    },
+    "sub": {
+      "label": "Electrical substation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Electrical_substation",
+      "description": "A substation switches circuits, changes voltage or performs both jobs. Transformers and protective equipment connect parts of the electric grid.",
+      "illustrativePhoto": "substation"
+    },
+    "substation": {
+      "label": "Electrical substation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Electrical_substation",
+      "description": "A substation switches circuits, changes voltage or performs both jobs. Transformers and protective equipment connect parts of the electric grid.",
+      "illustrativePhoto": "substation"
+    },
+    "transmission": {
+      "label": "Electric transmission",
+      "wikipedia": "https://en.wikipedia.org/wiki/Electric_power_transmission",
+      "description": "Transmission lines carry electricity over longer distances between generators, substations and large demand centers. Their high voltage reduces current for a given amount of power.",
+      "illustrativePhoto": "line-hv"
+    },
+    "power": {
+      "label": "Electric transmission",
+      "wikipedia": "https://en.wikipedia.org/wiki/Electric_power_transmission",
+      "description": "Transmission lines carry electricity over longer distances between generators, substations and large demand centers. Their high voltage reduces current for a given amount of power.",
+      "illustrativePhoto": "line-hv"
+    },
+    "distribution": {
+      "label": "Electric distribution",
+      "wikipedia": "https://en.wikipedia.org/wiki/Electric_power_distribution",
+      "description": "Distribution circuits carry electricity from substations toward customers. Local transformers reduce the voltage for buildings and equipment.",
+      "illustrativePhoto": "line-dist"
+    },
+    "powerminor": {
+      "label": "Electric distribution",
+      "wikipedia": "https://en.wikipedia.org/wiki/Electric_power_distribution",
+      "description": "Distribution circuits carry electricity from substations toward customers. Local transformers reduce the voltage for buildings and equipment.",
+      "illustrativePhoto": "line-dist"
+    },
+    "transformer": {
+      "label": "Transformer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Transformer",
+      "description": "A transformer uses electromagnetic induction to change alternating-current voltage. It does not change the frequency of the power."
+    },
+    "cogeneration": {
+      "label": "Combined heat and power",
+      "wikipedia": "https://en.wikipedia.org/wiki/Cogeneration",
+      "description": "One energy process supplies both useful heat and electricity. A heating network can deliver the recovered heat to nearby buildings."
+    },
+    "ww": {
+      "label": "Drinking-water treatment plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_purification",
+      "description": "A drinking-water plant removes contaminants and prepares water for distribution. Its processes depend on the source water and the utility."
+    },
+    "waterworks": {
+      "label": "Drinking-water treatment plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_purification",
+      "description": "A drinking-water plant removes contaminants and prepares water for distribution. Its processes depend on the source water and the utility."
+    },
+    "watermain": {
+      "label": "Water main",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A water main is part of the pressurized network that distributes drinking water. Smaller service connections take water from the main into individual properties."
+    },
+    "watermains": {
+      "label": "Water main",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A water main is part of the pressurized network that distributes drinking water. Smaller service connections take water from the main into individual properties."
+    },
+    "waterSupply": {
+      "label": "Water main",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A water main is part of the pressurized network that distributes drinking water. Smaller service connections take water from the main into individual properties."
+    },
+    "waterSupplyNetwork": {
+      "label": "Water main",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A water main is part of the pressurized network that distributes drinking water. Smaller service connections take water from the main into individual properties."
+    },
+    "tower": {
+      "label": "Water tower",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_tower",
+      "description": "An elevated tank stores water above the surrounding network. Its height supplies pressure, while stored water helps balance changes in demand. Historic towers can remain standing after water storage ends."
+    },
+    "watertower": {
+      "label": "Water tower",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_tower",
+      "description": "An elevated tank stores water above the surrounding network. Its height supplies pressure, while stored water helps balance changes in demand. Historic towers can remain standing after water storage ends."
+    },
+    "hydrant": {
+      "label": "Fire hydrant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Fire_hydrant",
+      "description": "A hydrant gives firefighters a connection to the water network. Its position does not show the exact route or size of the buried water main.",
+      "illustrativePhoto": "hydrant-minneapolis"
+    },
+    "waterService": {
+      "label": "Water service line",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A service line connects a property to the drinking-water main. A material inventory may describe the public and private portions separately."
+    },
+    "waterservice": {
+      "label": "Water service line",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A service line connects a property to the drinking-water main. A material inventory may describe the public and private portions separately."
+    },
+    "serviceline": {
+      "label": "Water service line",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A service line connects a property to the drinking-water main. A material inventory may describe the public and private portions separately."
+    },
+    "service": {
+      "label": "Water service line",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "A service line connects a property to the drinking-water main. A material inventory may describe the public and private portions separately."
+    },
+    "waterService-lead": {
+      "label": "Lead service line",
+      "wikipedia": "https://en.wikipedia.org/wiki/Lead_service_line",
+      "description": "A lead service line is a drinking-water connection made partly or entirely of lead. The inventory describes a recorded material, not a water sample or a complete plumbing inspection."
+    },
+    "leadservice": {
+      "label": "Lead service line",
+      "wikipedia": "https://en.wikipedia.org/wiki/Lead_service_line",
+      "description": "A lead service line is a drinking-water connection made partly or entirely of lead. The inventory describes a recorded material, not a water sample or a complete plumbing inspection."
+    },
+    "waterService-galvanized": {
+      "label": "Galvanized service pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Galvanization",
+      "description": "Galvanized steel pipe has a protective zinc coating. An inventory can distinguish the material from the separate question of whether replacement is required."
+    },
+    "galvanizedservice": {
+      "label": "Galvanized service pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Galvanization",
+      "description": "Galvanized steel pipe has a protective zinc coating. An inventory can distinguish the material from the separate question of whether replacement is required."
+    },
+    "waterService-copper": {
+      "label": "Copper service pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Copper_tubing",
+      "description": "Copper tubing can connect a property to the drinking-water main. The recorded service material does not describe every pipe and fitting inside the building."
+    },
+    "copperservice": {
+      "label": "Copper service pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Copper_tubing",
+      "description": "Copper tubing can connect a property to the drinking-water main. The recorded service material does not describe every pipe and fitting inside the building."
+    },
+    "waterService-plastic": {
+      "label": "Plastic service pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Plastic_pipework",
+      "description": "Plastic pipe can form a drinking-water service connection. The material category may include different polymers and does not by itself identify the exact product."
+    },
+    "plasticservice": {
+      "label": "Plastic service pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Plastic_pipework",
+      "description": "Plastic pipe can form a drinking-water service connection. The material category may include different polymers and does not by itself identify the exact product."
+    },
+    "waterService-unknown": {
+      "label": "Unknown service material",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "Unknown means that the published inventory does not establish the service material. It does not mean that the line is made of lead."
+    },
+    "unknownservice": {
+      "label": "Unknown service material",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_supply_network",
+      "description": "Unknown means that the published inventory does not establish the service material. It does not mean that the line is made of lead."
+    },
+    "ductileIron": {
+      "label": "Ductile iron pipe",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ductile_iron_pipe",
+      "description": "Ductile iron pipe carries pressurized water in many distribution networks. Pipe material and age alone do not establish its present condition."
+    },
+    "pressure": {
+      "label": "Pressure regulator",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pressure_regulator",
+      "description": "A regulator controls pressure downstream of a valve. Water utilities use pressure control to serve areas at different elevations or operating pressures."
+    },
+    "watermeter": {
+      "label": "Water meter",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_metering",
+      "description": "A water meter measures water supplied to a property or a part of the network. It supports billing, demand measurement or leakage investigation."
+    },
+    "tplant": {
+      "label": "Wastewater treatment plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sewage_treatment",
+      "description": "A wastewater plant removes pollutants before water returns to the environment. Screens, settling tanks and biological treatment perform different parts of that work."
+    },
+    "wastewaterplant": {
+      "label": "Wastewater treatment plant",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sewage_treatment",
+      "description": "A wastewater plant removes pollutants before water returns to the environment. Screens, settling tanks and biological treatment perform different parts of that work."
+    },
+    "tplantGhost": {
+      "label": "Former wastewater treatment site",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sewage_treatment",
+      "description": "This record marks a former treatment site. A historical point does not establish that its old buildings, tanks or pipes remain in place."
+    },
+    "san": {
+      "label": "Sanitary sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sanitary_sewer",
+      "description": "A sanitary sewer carries wastewater from buildings toward treatment. It is intended for sewage rather than runoff from streets and roofs."
+    },
+    "sanitary": {
+      "label": "Sanitary sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sanitary_sewer",
+      "description": "A sanitary sewer carries wastewater from buildings toward treatment. It is intended for sewage rather than runoff from streets and roofs."
+    },
+    "sanitarysewer": {
+      "label": "Sanitary sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sanitary_sewer",
+      "description": "A sanitary sewer carries wastewater from buildings toward treatment. It is intended for sewage rather than runoff from streets and roofs."
+    },
+    "interceptor": {
+      "label": "Interceptor sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sanitary_sewer",
+      "description": "An interceptor collects flow from smaller sewers and carries it toward a treatment plant. It forms part of the regional wastewater network."
+    },
+    "gravity": {
+      "label": "Gravity sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Gravity_sewer",
+      "description": "A gravity sewer carries wastewater downhill without a pump along that segment. Its slope and elevation connect it to the surrounding network."
+    },
+    "gravitysewer": {
+      "label": "Gravity sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Gravity_sewer",
+      "description": "A gravity sewer carries wastewater downhill without a pump along that segment. Its slope and elevation connect it to the surrounding network."
+    },
+    "forcemain": {
+      "label": "Sewer force main",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sanitary_sewer#Force_mains",
+      "description": "A force main carries wastewater under pressure from a pumping station. Pressure lets it cross terrain that a continuously descending gravity pipe cannot follow."
+    },
+    "forceMain": {
+      "label": "Sewer force main",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sanitary_sewer#Force_mains",
+      "description": "A force main carries wastewater under pressure from a pumping station. Pressure lets it cross terrain that a continuously descending gravity pipe cannot follow."
+    },
+    "siphon": {
+      "label": "Inverted sewer siphon",
+      "wikipedia": "https://en.wikipedia.org/wiki/Siphon#Inverted_siphon",
+      "description": "An inverted siphon dips beneath an obstacle and then rises again. The closed pipe flows full under pressure from the difference in water level between its ends."
+    },
+    "invertedSiphon": {
+      "label": "Inverted sewer siphon",
+      "wikipedia": "https://en.wikipedia.org/wiki/Siphon#Inverted_siphon",
+      "description": "An inverted siphon dips beneath an obstacle and then rises again. The closed pipe flows full under pressure from the difference in water level between its ends."
+    },
+    "lift": {
+      "label": "Wastewater pumping station",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pumping_station",
+      "description": "A wastewater pumping station lifts flow to a higher elevation. The connected force main carries that pressurized flow onward."
+    },
+    "sewagepump": {
+      "label": "Wastewater pumping station",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pumping_station",
+      "description": "A wastewater pumping station lifts flow to a higher elevation. The connected force main carries that pressurized flow onward."
+    },
+    "pumping": {
+      "label": "Wastewater pumping station",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pumping_station",
+      "description": "A wastewater pumping station lifts flow to a higher elevation. The connected force main carries that pressurized flow onward."
+    },
+    "meter": {
+      "label": "Sewer flow meter",
+      "wikipedia": "https://en.wikipedia.org/wiki/Flow_measurement",
+      "description": "A sewer flow meter measures flow through part of the wastewater network. The measurement can help operators account for contributions and investigate changes in flow."
+    },
+    "flowmeter": {
+      "label": "Sewer flow meter",
+      "wikipedia": "https://en.wikipedia.org/wiki/Flow_measurement",
+      "description": "A sewer flow meter measures flow through part of the wastewater network. The measurement can help operators account for contributions and investigate changes in flow."
+    },
+    "combinedsewer": {
+      "label": "Combined sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Combined_sewer",
+      "description": "A combined sewer carries sewage and stormwater in the same pipe. Heavy rain can exceed the capacity of a combined system."
+    },
+    "manhole": {
+      "label": "Manhole",
+      "wikipedia": "https://en.wikipedia.org/wiki/Manhole",
+      "description": "A manhole provides access to buried infrastructure for inspection and maintenance. Its surface cover does not reveal every connected pipe."
+    },
+    "storm": {
+      "label": "Storm sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "A storm sewer carries runoff from streets, roofs and other surfaces. It belongs to a drainage network whose outlets and treatment differ from those of a sanitary sewer."
+    },
+    "stormmain": {
+      "label": "Storm sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "A storm sewer carries runoff from streets, roofs and other surfaces. It belongs to a drainage network whose outlets and treatment differ from those of a sanitary sewer."
+    },
+    "stormsewer": {
+      "label": "Storm sewer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "A storm sewer carries runoff from streets, roofs and other surfaces. It belongs to a drainage network whose outlets and treatment differ from those of a sanitary sewer."
+    },
+    "inlet": {
+      "label": "Storm drain inlet",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "An inlet admits surface runoff into the drainage system. A catch basin can also collect sediment below the outlet pipe."
+    },
+    "catchbasin": {
+      "label": "Storm drain inlet",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "An inlet admits surface runoff into the drainage system. A catch basin can also collect sediment below the outlet pipe."
+    },
+    "storminlet": {
+      "label": "Storm drain inlet",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "An inlet admits surface runoff into the drainage system. A catch basin can also collect sediment below the outlet pipe."
+    },
+    "culvert": {
+      "label": "Culvert",
+      "wikipedia": "https://en.wikipedia.org/wiki/Culvert",
+      "description": "A culvert carries water beneath a road, railway or other obstruction. Its opening can be a round pipe, a box or another enclosed channel."
+    },
+    "bstream": {
+      "label": "Buried creek",
+      "wikipedia": "https://en.wikipedia.org/wiki/Underground_river",
+      "description": "A buried creek follows a channel or conduit below the surface. Historical mapped reaches can document a former watercourse without locating every surviving pipe."
+    },
+    "buriedstream": {
+      "label": "Buried creek",
+      "wikipedia": "https://en.wikipedia.org/wiki/Underground_river",
+      "description": "A buried creek follows a channel or conduit below the surface. Historical mapped reaches can document a former watercourse without locating every surviving pipe."
+    },
+    "buriedcreek": {
+      "label": "Buried creek",
+      "wikipedia": "https://en.wikipedia.org/wiki/Underground_river",
+      "description": "A buried creek follows a channel or conduit below the surface. Historical mapped reaches can document a former watercourse without locating every surviving pipe."
+    },
+    "aqueduct": {
+      "label": "Aqueduct",
+      "wikipedia": "https://en.wikipedia.org/wiki/Aqueduct_(water_supply)",
+      "description": "An aqueduct conveys water between places. The word can describe a channel, tunnel, pipeline or bridge that carries part of a water-supply route."
+    },
+    "watershed": {
+      "label": "Drainage basin",
+      "wikipedia": "https://en.wikipedia.org/wiki/Drainage_basin",
+      "description": "A drainage basin is the area contributing water to a common outlet. Land use and surface cover affect the water that reaches that outlet."
+    },
+    "sewershed": {
+      "label": "Sewer service area",
+      "wikipedia": "https://en.wikipedia.org/wiki/Sewerage",
+      "description": "A sewer service area follows the collection network that sends wastewater toward a common treatment facility. It need not share the boundaries of a natural watershed."
+    },
+    "well": {
+      "label": "Well",
+      "wikipedia": "https://en.wikipedia.org/wiki/Water_well",
+      "description": "A well reaches groundwater through a drilled or dug opening. The mapped record does not by itself establish whether the well is active or suitable for drinking."
+    },
+    "aquifer": {
+      "label": "Aquifer",
+      "wikipedia": "https://en.wikipedia.org/wiki/Aquifer",
+      "description": "An aquifer is a geologic material that can store and transmit groundwater. Its usefulness depends on permeability, water quality and the available supply."
+    },
+    "gas": {
+      "label": "Pipeline",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pipeline_transport",
+      "description": "A pipeline transports a fluid between places. The dataset identifies the recorded substance or operator where available, rather than every local service connection.",
+      "illustrativePhoto": "gas"
+    },
+    "pipeline": {
+      "label": "Pipeline",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pipeline_transport",
+      "description": "A pipeline transports a fluid between places. The dataset identifies the recorded substance or operator where available, rather than every local service connection.",
+      "illustrativePhoto": "gas"
+    },
+    "pipes": {
+      "label": "Pipeline",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pipeline_transport",
+      "description": "A pipeline transports a fluid between places. The dataset identifies the recorded substance or operator where available, rather than every local service connection.",
+      "illustrativePhoto": "gas"
+    },
+    "pipestation": {
+      "label": "Compressor station",
+      "wikipedia": "https://en.wikipedia.org/wiki/Compressor_station",
+      "description": "A gas compressor station adds pressure so gas can continue through a pipeline. The mapped station does not describe the layout of its individual machines."
+    },
+    "compressorstation": {
+      "label": "Compressor station",
+      "wikipedia": "https://en.wikipedia.org/wiki/Compressor_station",
+      "description": "A gas compressor station adds pressure so gas can continue through a pipeline. The mapped station does not describe the layout of its individual machines."
+    },
+    "dc": {
+      "label": "Data center",
+      "wikipedia": "https://en.wikipedia.org/wiki/Data_center",
+      "description": "A data center houses computing and networking equipment with supporting power and cooling systems. The building may serve one organization or host several customers."
+    },
+    "datacenter": {
+      "label": "Data center",
+      "wikipedia": "https://en.wikipedia.org/wiki/Data_center",
+      "description": "A data center houses computing and networking equipment with supporting power and cooling systems. The building may serve one organization or host several customers."
+    },
+    "carrierhotel": {
+      "label": "Carrier hotel",
+      "wikipedia": "https://en.wikipedia.org/wiki/Carrier_hotel",
+      "description": "A carrier hotel houses equipment from multiple network operators. Operators can connect their networks inside the same building."
+    },
+    "carrier": {
+      "label": "Carrier hotel",
+      "wikipedia": "https://en.wikipedia.org/wiki/Carrier_hotel",
+      "description": "A carrier hotel houses equipment from multiple network operators. Operators can connect their networks inside the same building."
+    },
+    "exch": {
+      "label": "Telephone exchange",
+      "wikipedia": "https://en.wikipedia.org/wiki/Telephone_exchange",
+      "description": "A telephone exchange connects calls within and between telephone networks. A historical exchange building can have a different use today."
+    },
+    "telephoneexchange": {
+      "label": "Telephone exchange",
+      "wikipedia": "https://en.wikipedia.org/wiki/Telephone_exchange",
+      "description": "A telephone exchange connects calls within and between telephone networks. A historical exchange building can have a different use today."
+    },
+    "internetExchange": {
+      "label": "Internet exchange point",
+      "wikipedia": "https://en.wikipedia.org/wiki/Internet_exchange_point",
+      "description": "An internet exchange lets participating networks exchange traffic directly. The exchange is a network service that can occupy space in one or more facilities."
+    },
+    "ixp": {
+      "label": "Internet exchange point",
+      "wikipedia": "https://en.wikipedia.org/wiki/Internet_exchange_point",
+      "description": "An internet exchange lets participating networks exchange traffic directly. The exchange is a network service that can occupy space in one or more facilities."
+    },
+    "fiber": {
+      "label": "Fiber optic communication",
+      "wikipedia": "https://en.wikipedia.org/wiki/Fiber-optic_communication",
+      "description": "Optical fiber carries data as pulses of light. A mapped network connection does not establish the route of every buried cable."
+    },
+    "fibre": {
+      "label": "Fiber optic communication",
+      "wikipedia": "https://en.wikipedia.org/wiki/Fiber-optic_communication",
+      "description": "Optical fiber carries data as pulses of light. A mapped network connection does not establish the route of every buried cable."
+    },
+    "utilitytunnel": {
+      "label": "Utility tunnel",
+      "wikipedia": "https://en.wikipedia.org/wiki/Utility_tunnel",
+      "description": "A utility tunnel gives workers an accessible passage containing pipes, cables or both. It differs from a buried pipe that can only be reached by excavation or through access structures."
+    },
+    "tunnel": {
+      "label": "Utility tunnel",
+      "wikipedia": "https://en.wikipedia.org/wiki/Utility_tunnel",
+      "description": "A utility tunnel gives workers an accessible passage containing pipes, cables or both. It differs from a buried pipe that can only be reached by excavation or through access structures."
+    },
+    "districtheat": {
+      "label": "District heating",
+      "wikipedia": "https://en.wikipedia.org/wiki/District_heating",
+      "description": "A central plant supplies heat to several buildings through a network of pipes. The circulating fluid can be hot water or steam."
+    },
+    "districtHeating": {
+      "label": "District heating",
+      "wikipedia": "https://en.wikipedia.org/wiki/District_heating",
+      "description": "A central plant supplies heat to several buildings through a network of pipes. The circulating fluid can be hot water or steam."
+    },
+    "districtcool": {
+      "label": "District cooling",
+      "wikipedia": "https://en.wikipedia.org/wiki/District_cooling",
+      "description": "A central plant supplies chilled water to several buildings. A return pipe brings water back after it absorbs heat."
+    },
+    "dam": {
+      "label": "Dam",
+      "wikipedia": "https://en.wikipedia.org/wiki/Dam",
+      "description": "A dam holds back or controls flowing water. It can supply a water-level difference for power, navigation, storage or another purpose."
+    },
+    "lock": {
+      "label": "Navigation lock",
+      "wikipedia": "https://en.wikipedia.org/wiki/Lock_(water_navigation)",
+      "description": "A lock raises or lowers vessels between water levels. Gates and valves control water in the chamber while a vessel passes through."
+    },
+    "cutoffwall": {
+      "label": "Buried cutoff wall",
+      "wikipedia": "https://en.wikipedia.org/wiki/Saint_Anthony_Falls#1869_collapse_of_the_Eastman_tunnel",
+      "description": "A cutoff wall blocks or reduces water movement through the ground. At Saint Anthony Falls, the historic wall protects the material beneath the limestone ledge; it is not visible from the surface.",
+      "referenceNote": "The Wikipedia article for Cutoff wall redirects to modern slurry-wall construction. This link instead describes the historic Saint Anthony Falls structure."
+    },
+    "road": {
+      "label": "Road",
+      "wikipedia": "https://en.wikipedia.org/wiki/Road",
+      "description": "A road carries movement along a prepared surface. The line here provides street context; it does not identify the route of utilities beneath the pavement."
+    },
+    "roads": {
+      "label": "Road",
+      "wikipedia": "https://en.wikipedia.org/wiki/Road",
+      "description": "A road carries movement along a prepared surface. The line here provides street context; it does not identify the route of utilities beneath the pavement."
+    },
+    "street": {
+      "label": "Road",
+      "wikipedia": "https://en.wikipedia.org/wiki/Road",
+      "description": "A road carries movement along a prepared surface. The line here provides street context; it does not identify the route of utilities beneath the pavement."
+    },
+    "water": {
+      "label": "River",
+      "wikipedia": "https://en.wikipedia.org/wiki/River",
+      "description": "A river carries surface water through a channel. A mapped river reach is surface-water context, separate from a drinking-water distribution main."
+    },
+    "river": {
+      "label": "River",
+      "wikipedia": "https://en.wikipedia.org/wiki/River",
+      "description": "A river carries surface water through a channel. A mapped river reach is surface-water context, separate from a drinking-water distribution main."
+    },
+    "surfacewater": {
+      "label": "River",
+      "wikipedia": "https://en.wikipedia.org/wiki/River",
+      "description": "A river carries surface water through a channel. A mapped river reach is surface-water context, separate from a drinking-water distribution main."
+    },
+    "groundwater": {
+      "label": "Groundwater contamination area",
+      "wikipedia": "https://en.wikipedia.org/wiki/Groundwater_pollution",
+      "description": "This polygon records an area of known or investigated groundwater contamination. Its source record and current program status explain what was mapped; it is not a test of water at every point inside it."
+    },
+    "groundwaterSource": {
+      "label": "Groundwater contamination source area",
+      "wikipedia": "https://en.wikipedia.org/wiki/Groundwater_pollution",
+      "description": "A source area identifies the mapped location associated with a contamination source. It differs from the larger area through which affected groundwater may move."
+    },
+    "groundwaterBoundary": {
+      "label": "Groundwater area boundary",
+      "wikipedia": "https://en.wikipedia.org/wiki/Groundwater_pollution",
+      "description": "This line records an interpreted boundary and its stated certainty. It outlines an environmental investigation area rather than a fault in the rock."
+    },
+    "groundwaterSite": {
+      "label": "Groundwater investigation site",
+      "wikipedia": "https://en.wikipedia.org/wiki/Groundwater_pollution",
+      "description": "This point identifies a site associated with groundwater investigation or cleanup. The source record describes the program and status; the point does not outline the full affected area."
+    },
+    "cleanup": {
+      "label": "Cleanup program site",
+      "wikipedia": "https://en.wikipedia.org/wiki/Environmental_remediation",
+      "description": "A cleanup record identifies a site and the environmental program associated with it. Program listings can include investigation, active work and closed cases, so a point alone does not establish current contamination."
+    },
+    "remediation": {
+      "label": "Cleanup program site",
+      "wikipedia": "https://en.wikipedia.org/wiki/Environmental_remediation",
+      "description": "A cleanup record identifies a site and the environmental program associated with it. Program listings can include investigation, active work and closed cases, so a point alone does not establish current contamination."
+    },
+    "undergroundtank": {
+      "label": "Underground storage tank",
+      "wikipedia": "https://en.wikipedia.org/wiki/Underground_storage_tank",
+      "description": "An underground storage tank holds a substance below ground. A tanks-program record can identify a site without locating each tank or establishing whether a release occurred."
+    },
+    "tank": {
+      "label": "Underground storage tank",
+      "wikipedia": "https://en.wikipedia.org/wiki/Underground_storage_tank",
+      "description": "An underground storage tank holds a substance below ground. A tanks-program record can identify a site without locating each tank or establishing whether a release occurred."
+    },
+    "borehole": {
+      "label": "Borehole",
+      "wikipedia": "https://en.wikipedia.org/wiki/Borehole",
+      "description": "A borehole is a drilled opening used for water, sampling, observation or another purpose. Its record describes the opening rather than a complete area beneath the surface."
+    },
+    "wspSanManhole": {
+      "label": "Manhole",
+      "wikipedia": "https://en.wikipedia.org/wiki/Manhole",
+      "description": "A manhole provides access to a sewer or drain for inspection and maintenance. The published system identifies whether this structure belongs to the sanitary or storm network."
+    },
+    "wspStormManhole": {
+      "label": "Manhole",
+      "wikipedia": "https://en.wikipedia.org/wiki/Manhole",
+      "description": "A manhole provides access to a sewer or drain for inspection and maintenance. The published system identifies whether this structure belongs to the sanitary or storm network."
+    },
+    "wspInlets": {
+      "label": "Storm drain inlet",
+      "wikipedia": "https://en.wikipedia.org/wiki/Storm_drain",
+      "description": "An inlet admits surface runoff into the drainage network. The published storm system describes its location and recorded structure type."
+    },
+    "pave": {
+      "label": "Pavement condition",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pavement_condition_index",
+      "description": "A pavement condition index summarizes surveyed surface distress. It describes the road surface rather than the condition of the utilities underneath it."
+    },
+    "pavement": {
+      "label": "Pavement condition",
+      "wikipedia": "https://en.wikipedia.org/wiki/Pavement_condition_index",
+      "description": "A pavement condition index summarizes surveyed surface distress. It describes the road surface rather than the condition of the utilities underneath it."
+    },
+    "bdepth": {
+      "label": "Depth to bedrock",
+      "wikipedia": "https://en.wikipedia.org/wiki/Bedrock",
+      "description": "Depth to bedrock is the distance from the ground surface to solid rock beneath soil and unconsolidated deposits. A model estimates that surface between observations."
+    },
+    "bedrockdepth": {
+      "label": "Depth to bedrock",
+      "wikipedia": "https://en.wikipedia.org/wiki/Bedrock",
+      "description": "Depth to bedrock is the distance from the ground surface to solid rock beneath soil and unconsolidated deposits. A model estimates that surface between observations."
+    },
+    "bedrock": {
+      "label": "Bedrock geology",
+      "wikipedia": "https://en.wikipedia.org/wiki/Bedrock",
+      "description": "Bedrock is the solid rock beneath soil and loose sediment. A geologic map groups rock by its age, material and stratigraphic relationships."
+    },
+    "fault": {
+      "label": "Geologic fault",
+      "wikipedia": "https://en.wikipedia.org/wiki/Fault_(geology)",
+      "description": "A fault is a fracture along which rock has moved. A mapped trace records the interpreted position of that structure."
+    },
+    "bfault": {
+      "label": "Geologic fault",
+      "wikipedia": "https://en.wikipedia.org/wiki/Fault_(geology)",
+      "description": "A fault is a fracture along which rock has moved. A mapped trace records the interpreted position of that structure."
+    },
+    "bedrock-Cmu": {
+      "label": "Middle and Upper Cambrian rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Cambrian",
+      "description": "This map group includes sandstone, siltstone and shale assigned to the middle and upper Cambrian. It is a grouped map unit, not a single named formation."
+    },
+    "bedrock-Cu": {
+      "label": "Upper Cambrian rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Cambrian",
+      "description": "This map group includes sandstone, siltstone, shale and dolostone assigned to the upper Cambrian. It is a grouped map unit, not a single named formation."
+    },
+    "bedrock-Ol": {
+      "label": "Lower Ordovician rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ordovician",
+      "description": "This map group includes dolostone and sandstone assigned to the lower Ordovician. It is a grouped map unit, not a single named formation."
+    },
+    "bedrock-Omu": {
+      "label": "Middle and Upper Ordovician rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ordovician",
+      "description": "This map group includes shale, limestone and sandstone assigned to the middle and upper Ordovician. It is a grouped map unit, not a single named formation."
+    },
+    "bedrock-Ou": {
+      "label": "Upper Ordovician rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ordovician",
+      "description": "This map group includes limestone and dolostone assigned to the upper Ordovician. It is a grouped map unit, not a single named formation."
+    },
+    "bedrock-window": {
+      "label": "Bedrock erosional window",
+      "wikipedia": "https://en.wikipedia.org/wiki/Bedrock",
+      "description": "An erosional window exposes an older rock unit through a younger one. This map label does not identify a single formation."
+    },
+    "stpeter": {
+      "label": "Saint Peter Sandstone",
+      "wikipedia": "https://en.wikipedia.org/wiki/St._Peter_Sandstone",
+      "description": "Saint Peter Sandstone is an Ordovician sandstone formation. Its porous and erodible rock is part of the geologic setting beneath the Twin Cities."
+    },
+    "platteville": {
+      "label": "Platteville Limestone",
+      "wikipedia": "https://en.wikipedia.org/wiki/Platteville_Formation",
+      "description": "Platteville limestone overlies softer formations in parts of the Twin Cities. This named formation is more specific than the broad groups in the regional bedrock layer."
+    },
+    "jordan": {
+      "label": "Jordan Sandstone",
+      "wikipedia": "https://en.wikipedia.org/wiki/Jordan_Sandstone",
+      "description": "Jordan Sandstone is an upper Cambrian sandstone formation. Its water-bearing rock is part of a regional groundwater system."
+    },
+    "decorah": {
+      "label": "Decorah Shale",
+      "wikipedia": "https://en.wikipedia.org/wiki/Decorah_Shale",
+      "description": "Decorah Shale is an Ordovician formation dominated by shale. It is a named formation rather than one of the broad age groups displayed in the regional map."
+    },
+    "glenwood": {
+      "label": "Glenwood Formation",
+      "wikipedia": "https://en.wikipedia.org/wiki/Glenwood_Formation",
+      "description": "The Glenwood Formation is an Ordovician unit between Saint Peter Sandstone and Platteville rocks in this region. The broad map groups do not locate it separately."
+    },
+    "bedrock-Osp": {
+      "label": "Saint Peter Sandstone",
+      "wikipedia": "https://en.wikipedia.org/wiki/St._Peter_Sandstone",
+      "description": "Saint Peter Sandstone is an Ordovician sandstone formation. Its porous and erodible rock is part of the geologic setting beneath the Twin Cities."
+    },
+    "bedrock-Opg": {
+      "label": "Platteville and Glenwood formations",
+      "wikipedia": "https://en.wikipedia.org/wiki/Platteville_Formation",
+      "description": "This grouped unit contains Platteville and Glenwood rocks. Its code identifies both formations, so it must not be described as Platteville alone.",
+      "relatedWikipedia": [
+        {
+          "label": "Glenwood Formation",
+          "url": "https://en.wikipedia.org/wiki/Glenwood_Formation"
+        }
+      ]
+    },
+    "Cmu": {
+      "label": "Middle and Upper Cambrian rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Cambrian",
+      "description": "This map group includes sandstone, siltstone and shale assigned to the middle and upper Cambrian. It is a grouped map unit, not a single named formation."
+    },
+    "Cu": {
+      "label": "Upper Cambrian rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Cambrian",
+      "description": "This map group includes sandstone, siltstone, shale and dolostone assigned to the upper Cambrian. It is a grouped map unit, not a single named formation."
+    },
+    "Ol": {
+      "label": "Lower Ordovician rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ordovician",
+      "description": "This map group includes dolostone and sandstone assigned to the lower Ordovician. It is a grouped map unit, not a single named formation."
+    },
+    "Omu": {
+      "label": "Middle and Upper Ordovician rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ordovician",
+      "description": "This map group includes shale, limestone and sandstone assigned to the middle and upper Ordovician. It is a grouped map unit, not a single named formation."
+    },
+    "Ou": {
+      "label": "Upper Ordovician rocks",
+      "wikipedia": "https://en.wikipedia.org/wiki/Ordovician",
+      "description": "This map group includes limestone and dolostone assigned to the upper Ordovician. It is a grouped map unit, not a single named formation."
+    },
+    "Osp": {
+      "label": "Saint Peter Sandstone",
+      "wikipedia": "https://en.wikipedia.org/wiki/St._Peter_Sandstone",
+      "description": "Saint Peter Sandstone is an Ordovician sandstone formation. Its porous and erodible rock is part of the geologic setting beneath the Twin Cities."
+    },
+    "Opg": {
+      "label": "Platteville and Glenwood formations",
+      "wikipedia": "https://en.wikipedia.org/wiki/Platteville_Formation",
+      "description": "This grouped unit contains Platteville and Glenwood rocks. Its code identifies both formations, so it must not be described as Platteville alone.",
+      "relatedWikipedia": [
+        {
+          "label": "Glenwood Formation",
+          "url": "https://en.wikipedia.org/wiki/Glenwood_Formation"
+        }
+      ]
+    }
+  }
+}

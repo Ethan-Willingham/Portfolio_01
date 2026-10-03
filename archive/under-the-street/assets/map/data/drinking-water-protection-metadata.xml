@@ -1,0 +1,1507 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata xml:lang="en">
+        	
+    
+    <Esri>
+                		
+        
+        <CreaDate>20261001</CreaDate>
+                		
+        
+        <CreaTime>23452600</CreaTime>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                		
+        
+        <SyncOnce>TRUE</SyncOnce>
+                	
+    
+    </Esri>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>	Source Water Protection Unit Staff</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Department of Health - Environmental Health Division</rpOrgName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntPhone>
+                                				
+                
+                <voiceNum>651- 201-4700</voiceNum>
+                                				
+                
+                <faxNum>651-201-4701</faxNum>
+                                			
+            
+            </cntPhone>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>P.O box 64975</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55164-0975</postCode>
+                                				
+                
+                <eMailAdd>health.gis@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20250819</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_health/water_drinking_water_supply/FeatureServer</linkage>
+                                			
+                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                        		
+            
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/185/water_drinking_water_supply.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>Drinking Water Supply Management Areas</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2019-07-15</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Department of Health</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Department of Health</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>These sets of data include the drinking water supply management area boundaries and the vulnerability levels within each management area in Minnesota.
+
+ More information can be found at:
+https://www.health.state.mn.us/communities/environment/water/swp/reqrec.html
+
+Follow the links below to the access the individual metadata pages for each layer:
+
+&lt;b&gt;Drinking Water Supply Management Areas:&lt;/b&gt; &lt;a href='drinking_water_supply_management_areas.html' rel='nofollow ugc'&gt;drinking_water_supply_management_areas.html&lt;/a&gt;
+
+&lt;b&gt;Drinking Water Supply Management Areas Vulnerability:&lt;/b&gt; &lt;a href='drinking_water_supply_management_area_vulnerability.html' rel='nofollow ugc'&gt;drinking_water_supply_management_area_vulnerability.html&lt;/a&gt;&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/185/water_drinking_water_supply.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/185/water_drinking_water_supply.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/185/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>This dataset was developed with the intention of protecting the public drinking water supply and complies with the federal Safe Drinking Water Act, United States Code, title 42 and the State of Minnesota Rule (parts 4720.5100 to 4720.5590).
+</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="001">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Source Water Protection Unit Staff</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Department of Health - Environmental Health Division</rpOrgName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntPhone>
+                                        					
+                    
+                    <voiceNum>(651) 201-4700</voiceNum>
+                                        					
+                    
+                    <faxNum>(651) 201-4701</faxNum>
+                                        				
+                
+                </cntPhone>
+                                				
+                
+                <cntAddress addressType="postal">
+                                        					
+                    
+                    <delPoint>P.O box 64975</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55164-0975</postCode>
+                                        					
+                    
+                    <eMailAdd>health.drinkingwater@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="001">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <graphOver>
+                        			
+            
+            <bgFileName>https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_health/water_drinking_water_supply/metadata/preview.jpg</bgFileName>
+                        			
+            
+            <bgFileDesc>Drinking Water Supply Management Areas and Vulnerability assessments over aerial photos</bgFileDesc>
+                        		
+        
+        </graphOver>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>Drinking Water Supply Management Area, Groundwatershed, Vulnerability, Drinking water, Capture zone, Wellhead Protection</keyword>
+                        			
+            
+            <thesaName>
+                                				
+                
+                <resTitle>MDH GID Data Keyword Thesaurus</resTitle>
+                                			
+            
+            </thesaName>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>Drinking Water Supply Management Area</keyword>
+            <keyword>Groundwatershed</keyword>
+            <keyword>Vulnerability</keyword>
+            <keyword>Drinking water</keyword>
+            <keyword>Capture zone</keyword>
+            <keyword>Wellhead Protection</keyword>
+            <keyword>Minnesota</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <Consts>
+                                				
+                
+                <useLimit>Geospatial data is provided "as-is". MDH makes no warranty, expressed or implied, and disclaims all implied warranties of the data for any purpose. MDH also does not warrant that the geospatial data is error free. The geospatial data was developed for MDH internal business purposes. MDH shall not be liable for any activity involving the geospatial data with respect to the following: a.) Lost profits, lost savings or any other consequential damages; b.) The fitness of the geospatial data for a particular purpose; or c.) The installation of the geospatial data, its use or the results obtained.</useLimit>
+                                			
+            
+            </Consts>
+                        		
+        
+        </resConst>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>Geospatial data is provided "as-is". MDH makes no warranty, expressed or implied, and disclaims all implied warranties of the data for any purpose. MDH also does not warrant that the geospatial data is error free. The geospatial data was developed for MDH internal business purposes. MDH shall not be liable for any activity involving the geospatial data with respect to the following: a.) Lost profits, lost savings or any other consequential damages; b.) The fitness of the geospatial data for a particular purpose; or c.) The installation of the geospatial data, its use or the results obtained.</useLimit>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.072169</westBL>
+                                        					
+                    
+                    <eastBL>-91.139865</eastBL>
+                                        					
+                    
+                    <northBL>48.805032</northBL>
+                                        					
+                    
+                    <southBL>43.432979</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>This data is updated continuously, more frequently than the metadata. See more details in activity stream at https://gisdata.mn.gov/dataset/activity/water-drinking-water-supply</exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2019-07-15</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Minnesota</suppInfo>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>http://www.mngeo.state.mn.us/committee/standards/mgmg/metadata.htm</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <detailed>
+                        			
+            
+            <enttyp>
+                                				
+                
+                <enttypl>DWSMA</enttypl>
+                                				
+                
+                <enttypd>Drinking Water Supply Management Area</enttypd>
+                                				
+                
+                <enttypds>MDH</enttypds>
+                                			
+            
+            </enttyp>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>FID</attrlabl>
+                                				
+                
+                <attrdef>internal feature number</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Shape</attrlabl>
+                                				
+                
+                <attrdef>Feature geometry</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>AREA</attrlabl>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PERIMETER</attrlabl>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWS_ID</attrlabl>
+                                				
+                
+                <attrdef>Drinking Water Supply Management ID</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWS_NAME</attrlabl>
+                                				
+                
+                <attrdef>DWS_NAME</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>WHP_TYPE_C</attrlabl>
+                                				
+                
+                <attrdef>WHP_TYPE_C</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>A</edomv>
+                                                						
+                        
+                        <edomvd>Aquifer delineation</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>C</edomv>
+                                                						
+                        
+                        <edomvd>Conjuctive delineation</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>F</edomv>
+                                                						
+                        
+                        <edomvd>Fractured Rock delineation</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>FC</edomv>
+                                                						
+                        
+                        <edomvd>Fractured Rock delineation</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>FA</edomv>
+                                                						
+                        
+                        <edomvd>Fractured Rock delineation</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>CZ_TYPE_C</attrlabl>
+                                				
+                
+                <attrdef>CZ_TYPE_C</attrdef>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>S</edomv>
+                                                						
+                        
+                        <edomvd>Single capture zone for a given DWSMA</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>M</edomv>
+                                                						
+                        
+                        <edomvd>Multiple capture zones for a given DWSMA</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>C</edomv>
+                                                						
+                        
+                        <edomvd>Complex capture zones for a given DWSMA (overlapping or adjacent regions)</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWSA_D</attrlabl>
+                                				
+                
+                <attrdef>Date of DWSMA Approval. For multi-community DWSMAs; It is the final date that all pubic water suppliers signed the approval.</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWS_STAT_C</attrlabl>
+                                				
+                
+                <attrdef>DWS_STAT_C</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>A</edomv>
+                                                						
+                        
+                        <edomvd>Active</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>D</edomv>
+                                                						
+                        
+                        <edomvd>Deactivated</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>LCM_CODE</attrlabl>
+                                				
+                
+                <attrdef>Location collection method code</attrdef>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>DS1</edomv>
+                                                						
+                        
+                        <edomvd>Digitization (Screen) - DRG Map (1:24,000)</edomvd>
+                                                						
+                        
+                        <edomvds>CWI</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>DS2</edomv>
+                                                						
+                        
+                        <edomvd>Digitization (Screen) - DRG Map (1:24,000)</edomvd>
+                                                						
+                        
+                        <edomvds>CWI</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>DS3</edomv>
+                                                						
+                        
+                        <edomvd>Digitization (Screen) - NAIP Map (1:12,000)</edomvd>
+                                                						
+                        
+                        <edomvds>CWI</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ACRES</attrlabl>
+                                				
+                
+                <attrdef>Acres of the DWSMA (derived from AREA / 4046.8717 ) + 0.001</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PLAN_ID</attrlabl>
+                                				
+                
+                <attrdef>Wellhead Protection Plan ID</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PWSID</attrlabl>
+                                				
+                
+                <attrdef>Public Water Supply ID .  The first digit is either a 1 or a 5. A 1 signifies it is a cummunity public water supplier.  A 5 signifies it is a non-community public water supplier.  The 2nd and 3rd digits are the county code. The last 4 digits are sequential as new public water suppliers are added.</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        		
+        
+        </detailed>
+                		
+        
+        <detailed>
+                        			
+            
+            <enttyp>
+                                				
+                
+                <enttypl>DWSMAvul</enttypl>
+                                				
+                
+                <enttypd>Vulnerability of Public Water Supply Management Area</enttypd>
+                                			
+            
+            </enttyp>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>FID</attrlabl>
+                                				
+                
+                <attrdef>Internal feature number.</attrdef>
+                                				
+                
+                <attrdefs>ESRI</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>dv_type_c</attrlabl>
+                                				
+                
+                <attrdef>DWSMA Vulnerability Type Code - Whether the vulnerabilty of the DWSMA was determined from the SWCA or GWCA</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>GW</edomv>
+                                                						
+                        
+                        <edomvd>Ground Water.  The vulnerability is determined from only the GWCA</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>SW</edomv>
+                                                						
+                        
+                        <edomvd>Surface Water - The vulnerability is determined from only the SWCA</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>GS</edomv>
+                                                						
+                        
+                        <edomvd>The SWCA and GWCA overlap and the GWCA has a high vulnerability</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>SG</edomv>
+                                                						
+                        
+                        <edomvd>The SWCA and GWCA overlap and the GWCA has a low or moderate vulnerability</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Shape</attrlabl>
+                                				
+                
+                <attrdef>Feature geometry.</attrdef>
+                                				
+                
+                <attrdefs>ESRI</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>AREA</attrlabl>
+                                				
+                
+                <attrdefs>ESRI</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWSVUL_ID</attrlabl>
+                                				
+                
+                <attrdef>Drinking Water Supply Management Area Vulnerability ID</attrdef>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWS_VUL_C</attrlabl>
+                                				
+                
+                <attrdef>DWSMA Vulnerability Code.  Note* Very High and Very Low are no longer used</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>VH</edomv>
+                                                						
+                        
+                        <edomvd>Very High - This is no longer used and should be considered High</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>H</edomv>
+                                                						
+                        
+                        <edomvd>High</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>M</edomv>
+                                                						
+                        
+                        <edomvd>Moderate</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>L</edomv>
+                                                						
+                        
+                        <edomvd>Low</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>VL</edomv>
+                                                						
+                        
+                        <edomvd>Very Low - This is no lnger used and should be considred Low</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>U</edomv>
+                                                						
+                        
+                        <edomvd>Unknown</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWS_VUL</attrlabl>
+                                				
+                
+                <attrdef>DWSMA Vulnerability - The vulnerability of the DWSMA.  Where the GWCA and SWCA overlap, the vulnerability is considered to be high becasue the  SWCA is high</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>High</edomv>
+                                                						
+                        
+                        <edomvd>High Vulnerability</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Moderate</edomv>
+                                                						
+                        
+                        <edomvd>Moderate Vulnerability</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Low</edomv>
+                                                						
+                        
+                        <edomvd>Low Vulnerability</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Very High</edomv>
+                                                						
+                        
+                        <edomvd>Very High Vulnerability.  (This is no longer used and should be considered a High vulnerability)</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Very Low</edomv>
+                                                						
+                        
+                        <edomvd>Very Low Vulnerability (This is no longer used and should be considered a Low vulnerability)</edomvd>
+                                                						
+                        
+                        <edomvds>MDH</edomvds>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ACRES</attrlabl>
+                                				
+                
+                <attrdef>Acres of DWSMA vulnerability (derived)</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Acres of DWSMA vulnerability (derived)</attrlabl>
+                                				
+                
+                <attrdef>Aquifer Vulnerability Code (for public and regulatory use) - Low is considered not vulnerable.  Moderate and High are considered to be vulnerable.</attrdef>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>V</edomv>
+                                                						
+                        
+                        <edomvd>Vulnerable</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>N</edomv>
+                                                						
+                        
+                        <edomvd>Not Vulnerable</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>DWS_ID</attrlabl>
+                                				
+                
+                <attrdef>Drinking Water Supply Management Area ID - sequential number</attrdef>
+                                				
+                
+                <attrdefs>MDH</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PERMIETER</attrlabl>
+                                				
+                
+                <attrdefs>ESRI</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>GWCA_vul</attrlabl>
+                                				
+                
+                <attrdef>GWCA Vulnerability - The vulnerability of the GWCA may be differnet that the DWSMA vulnerability where the GWCA and SWCA overlap.</attrdef>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>High</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Moderate</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Low</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        		
+        
+        </detailed>
+                		
+        
+        <overview>
+                        			
+            
+            <eaover>Follow the links below to the access the individual meta data pages for each layer:
+
+&lt;b&gt;Drinking Water Supply Management Areas:&lt;/b&gt; &lt;a href="drinking_water_supply_management_areas.html"&gt;drinking_water_supply_management_areas.html&lt;/a&gt;
+
+In 2025 MDH began creating DWSMAs that  included multiple public water suppliers where DWSMAs from individual public water suppliers extended into other public water suppliers DWSMAs. This was to address management ambiguity in areas where DWSMAs overlapped.  For these DWSMAs, a "fake" pwsid is used in the attribute table to represent all public water suppliers.  More information about how and why this was done can be found in the Drinking Water Supply Management Areas metadata. 
+
+&lt;b&gt;Drinking Water Supply Management Areas Vulnerability:&lt;/b&gt; &lt;a href="drinking_water_supply_management_area_vulnerability.html"&gt;drinking_water_supply_management_area_vulnerability.html&lt;/a&gt;</eaover>
+                        		
+        
+        </overview>
+                	
+    
+    </eainfo>
+        
+
+</metadata>

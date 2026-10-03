@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><metadata xml:lang="en">
+    <Esri>
+        <CreaDate>20231010</CreaDate>
+        <CreaTime>14452200</CreaTime>
+        <ArcGISFormat>1.0</ArcGISFormat>
+        <ArcGISProfile>ISO19139</ArcGISProfile>
+        <DataProperties>
+            <itemProps>
+                <portalDetails>
+                    <thumbnailURL>https://www.arcgis.com/sharing/rest/content/items/1427f0d1156e44a584e4b8bd68aa5bc7/info/thumbnail/thumbnail1774033904218.png</thumbnailURL>
+                </portalDetails>
+            </itemProps>
+        </DataProperties>
+        <SyncOnce>TRUE</SyncOnce>
+    </Esri>
+    <dataIdInfo>
+        <idAbs>&lt;p&gt;&lt;strong&gt;Overview&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;This feature service provides a detailed dataset compiling new and previously published geologic mapping to represent the surficial sediments across Minnesota. It focuses on the texture and genesis of these sediments, offering a comprehensive view of the state's Quaternary geology.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Feature Layers&lt;/strong&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;strong&gt;Surficial Geology&lt;/strong&gt;: This layer depicts surficial sediments categorized by texture rather than provenance, using color-coded map units such as green for diamicton interpreted as till, red/orange for sand and gravel-dominated sediments, and blue for silt and clay. It incorporates glacial sediments mapped with lithostratigraphic formation names and identifies post-glacial and proglacial sediments by genesis. The dataset also includes peat and modern lake sediments, representing the most recent and detailed surficial geology data available for Minnesota.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Geographic Coverage&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;The data covers the entire state of Minnesota, supporting geological and environmental studies throughout the region.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Use Cases&lt;/strong&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Geological mapping and research focused on glacial and post-glacial sediment distribution.&lt;/li&gt;&lt;li&gt;Water resource management&lt;/li&gt;&lt;li&gt;Environmental assessments and land-use planning requiring detailed surface sediment information.&lt;/li&gt;&lt;li&gt;Infrastructure development and natural resource management benefiting from understanding sediment textures and deposit types.&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Additional Information&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;This dataset is curated and provided by the Minnesota Geological Survey, with licensing encouraging appropriate citation to credit the source. The service supports GIS applications that require detailed, reliable surficial geological information for analysis and decision-making.&lt;/p&gt;&lt;div style='display:flex; flex-direction:column; gap:10px; max-width:1000px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Minnesota Surficial Geology Application&lt;/strong&gt;&lt;/span&gt; &lt;a style='background-color:#7A0019; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://experience.arcgis.com/experience/31a950366d7d43ae92f5477de5617679' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;View&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style='display:flex; flex-direction:column; gap:10px; max-width:1000px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Minnesota Surficial Geology Database&lt;/strong&gt;&lt;/span&gt; &lt;a style='background-color:#7A0019; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://mngs-umn.opendata.arcgis.com/datasets/UMN::d-01-surficial-geology-of-minnesota/about' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+        <idCitation>
+            <resTitle>Surficial Geology of Minnesota - Updated 4/30/2025</resTitle>
+            <date>
+                <reviseDate>2025-04-30T00:00:00</reviseDate>
+            </date>
+            <citRespParty>
+                <role>
+                    <RoleCd value="006"/>
+                </role>
+                <rpCntInfo>
+                    <cntAddress>
+                        <eMailAdd>mgs@umn.edu</eMailAdd>
+                    </cntAddress>
+                    <cntPhone>
+                        <voiceNum>612-626-2969</voiceNum>
+                    </cntPhone>
+                </rpCntInfo>
+                <rpOrgName>Minnesota Geological Survey</rpOrgName>
+            </citRespParty>
+        </idCitation>
+        <dataExt>
+            <geoEle>
+                <GeoBndBox>
+                    <westBL Sync="FALSE">-97.269874</westBL>
+                    <eastBL Sync="FALSE">-89.397127</eastBL>
+                    <northBL Sync="FALSE">49.404545</northBL>
+                    <southBL Sync="FALSE">43.435392</southBL>
+                    <exTypeCode Sync="FALSE">1</exTypeCode>
+                </GeoBndBox>
+            </geoEle>
+            <geoEle>
+                <GeoDesc>
+                    <geoId>
+                        <identCode>Minnesota</identCode>
+                    </geoId>
+                    <exTypeCode Sync="FALSE">1</exTypeCode>
+                </GeoDesc>
+            </geoEle>
+        </dataExt>
+        <searchKeys>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+        <keyword>Minnesota geology</keyword><keyword>surficial sediments</keyword><keyword>glacial geology</keyword><keyword>Quaternary deposits</keyword><keyword>sediment texture</keyword><keyword>geological mapping</keyword><keyword>Minnesota Geological Survey</keyword><keyword>water resources</keyword><keyword>D-01</keyword><keyword>Open Data</keyword><keyword>Pleistocene</keyword></searchKeys>
+        <themeKeys>
+            <keyword>Geology</keyword>
+        </themeKeys>
+        <idPurp>Comprehensive geologic mapping of Minnesota's surficial geology showing texture-based classification including glacial and post-glacial deposits.</idPurp>
+        <idCredit>Minnesota Geological Survey</idCredit>
+        <resConst>
+            <Consts>
+                <useLimit>&lt;p&gt;&lt;span style='background-color:rgb(255,255,255); color:rgb(74,74,74); font-family:&amp;quot;Avenir Next&amp;quot;, Avenir, &amp;quot;Helvetica Neue&amp;quot;, sans-serif; font-size:16px;'&gt;&lt;span style='display:inline !important; float:none; font-style:normal; font-variant-caps:normal; font-variant-ligatures:normal; font-weight:400; letter-spacing:normal; text-align:left; text-decoration-color:initial; text-decoration-style:initial; text-indent:0px; text-transform:none; word-spacing:0px;'&gt;Every reasonable effort has been made to ensure the accuracy of the factual data on which this map interpretation is based; however, the Minnesota Geological Survey does not warrant or guarantee that there are no errors. Users may wish to verify critical information; sources include both the references listed here and information on file at the offices of the Minnesota Geological Survey in St. Paul, MN. In addition, effort has been made to ensure that the interpretation conforms to sound geologic and cartographic principles. No claim is made that the interpretation shown is rigorously correct, however, and it should not be used to guide engineering-scale decisions without site-specific verification. Selected tribal lands have been removed as per tribal request.&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;</useLimit>
+            </Consts>
+        </resConst>
+        <dataLang>
+            <languageCode value="eng"/>
+        </dataLang>
+        <dataChar>
+            <CharSetCd value="004"/>
+        </dataChar>
+        <idStatus>
+            <ProgCd value="004"/>
+        </idStatus>
+        <resMaint>
+            <maintFreq>
+                <MaintFreqCd value="009"/>
+            </maintFreq>
+        </resMaint>
+        <placeKeys>
+            <keyword>Minnesota</keyword>
+        </placeKeys>
+        <tpCat>
+            <TopicCatCd value="008"/>
+        </tpCat>
+    </dataIdInfo>
+    <mdLang>
+        <languageCode value="eng"/>
+    </mdLang>
+    <mdHrLv>
+        <ScopeCd value="005"/>
+    </mdHrLv>
+    <Binary>
+        <Thumbnail>
+            <Data EsriPropertyType="PictureX">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</Data>
+        </Thumbnail>
+    </Binary>
+    <mdChar>
+        <CharSetCd value="004"/>
+    </mdChar>
+    <mdDateSt Sync="FALSE">2026-01-27</mdDateSt>
+    <mdContact>
+        <role>
+            <RoleCd value="007"/>
+        </role>
+        <rpOrgName>Minnesota Geological Survey</rpOrgName>
+        <rpCntInfo>
+            <cntAddress>
+                <eMailAdd>stub0035@umn.edu</eMailAdd>
+            </cntAddress>
+            <cntPhone>
+                <voiceNum>612-626-2969</voiceNum>
+            </cntPhone>
+            <cntInstr>Or mgs@umn.edu</cntInstr>
+        </rpCntInfo>
+        <rpPosName>Geological Information Scientist</rpPosName>
+    </mdContact>
+    <dqInfo>
+        <dataLineage>
+            <statement>Compilation of MGS mapping to create statewide surficial geology map.
+
+This database (D-01 Surficial Geology of Minnesota)  compiles new and previously published geologic mapping to show the surficial sediments in Minnesota. In contrast to Hobbs and Goebel (1982), where map colors indicated provenance, on this map unit colors refer to texture: green for diamicton interpreted to be till, red/orange for sand and gravel-dominated sediments, and blue for silt and clay. Glacial sediments were mapped using lithostratigraphic formation names of Johnson and others (2016) and references therein. Post glacial and proglacial sediments were named for their genesis. This data includes Peat and modern lake sediments. 
+
+The  S-23 Geologic Map of Minnesota - Quaternary Geology publication (2019) is the publication version of this data and it older that this D-01 dataset.  This D-01 series is the most recent data available.</statement>
+        </dataLineage>
+        <report type="DQQuanAttAcc">
+            <measDesc>Every reasonable effort has been made to ensure the accuracty of the factural data on which this map interpreatation is based; however, the Minnesota Geological Survey does not warrant or guarantee that there are no errors. Users may wish to verify critical information. Sources are on file at the Minnesota Geological Survey in St. Paul. In addition, effort has been made to ensure that the interpretation shown is rigorusly correct, however, and it should not be used to guide engineering-scale decieions without site-specific verification.</measDesc>
+        </report>
+        <report type="DQCompOm">
+            <measDesc>Complete to the best of the Minnesota Geological Survey ability.</measDesc>
+        </report>
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+            <measDesc>Data sources reviewed and data vaires in accuracy from 1:100.000 to 1:200,000 - scale maps depending on County Geological Atlas maps incorporated to the project. The dataset is not intended for legal land survey use.</measDesc>
+        </report>
+    </dqInfo>
+    <distInfo>
+        <distTranOps>
+            <onLineSrc>
+                <linkage>https://umn.maps.arcgis.com/home/item.html?id=1427f0d1156e44a584e4b8bd68aa5bc7</linkage>
+                <orName>Authoritative data files</orName>
+            </onLineSrc>
+        </distTranOps>
+        <distributor>
+            <distorCont>
+                <rpOrgName>Minnesota Geological Survey</rpOrgName>
+                <rpPosName>Geological Information Scientist</rpPosName>
+                <role>
+                    <RoleCd value="010"/>
+                </role>
+                <rpCntInfo>
+                    <cntAddress>
+                        <eMailAdd>mgs@umn.edu</eMailAdd>
+                    </cntAddress>
+                </rpCntInfo>
+            </distorCont>
+        </distributor>
+    </distInfo>
+    <mdMaint>
+        <maintFreq>
+            <MaintFreqCd value="009"/>
+        </maintFreq>
+    </mdMaint>
+</metadata>

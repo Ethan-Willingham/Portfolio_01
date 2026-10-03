@@ -1,0 +1,1027 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+        	
+    
+    <Esri>
+                		
+        
+        <ModDate>20100819</ModDate>
+                		
+        
+        <ModTime>08583700</ModTime>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                	
+    
+    </Esri>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>MnGeo</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                		
+        
+        <rpPosName>GIS Data Specialist</rpPosName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>600 Robert Street N</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55146</postCode>
+                                				
+                
+                <eMailAdd>gisinfo.mngeo@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20260424</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distributor>
+                        			
+            
+            <distorCont>
+                                				
+                
+                <rpIndName>MnGeo</rpIndName>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <rpPosName>GIS Data Specialist</rpPosName>
+                                				
+                
+                <rpCntInfo>
+                                        					
+                    
+                    <cntAddress addressType="both">
+                                                						
+                        
+                        <delPoint>600 Robert Street N</delPoint>
+                                                						
+                        
+                        <city>St. Paul</city>
+                                                						
+                        
+                        <adminArea>MN</adminArea>
+                                                						
+                        
+                        <postCode>55146</postCode>
+                                                						
+                        
+                        <eMailAdd>gisinfo.mngeo@state.mn.us</eMailAdd>
+                                                					
+                    
+                    </cntAddress>
+                                        				
+                
+                </rpCntInfo>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="005">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </distorCont>
+                        			
+            
+            <distorOrdPrc>
+                                				
+                
+                <ordInstr>This data set is distributed on the internet by clicking below after Online Linkage.
+
+The Telephone Exchange interactive map can be accessed here: https://experience.arcgis.com/experience/b1a26b60ce9141aa86c4cb7391bb8940
+
+The Telephone Exchange ArcGIS REST service can be found here: https://feat.gisdata.mn.gov/arcgis/rest/services/telex/fcc_service_area_boundaries/MapServer
+
+Note: The data delivered by the service is current as of March 2026.</ordInstr>
+                                			
+            
+            </distorOrdPrc>
+                        			
+            
+            <distorFormat>
+                                				
+                
+                <formatName>Shapefile</formatName>
+                                			
+            
+            </distorFormat>
+                        		
+        
+        </distributor>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_mngeo/util_telephone_exchange/FeatureServer</linkage>
+                                			
+                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                        		
+            
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/521/util_telephone_exchange.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>Telephone Exchange Service Area Boundaries, Minnesota</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2026-04-24</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>This data set provides a statewide view of telephone exchange service area boundaries. 
+
+In addition, LATAs (local access and transport areas) and wire centers are included. At the time of the Bell System breakup, Bell operating companies were restricted to operations within specific areas called LATAs. Wire centers or 'wire center serving area', refers to the area to which local service is provided by one or more switches located at a single point. The wire center serving area is often the same area as the exchange, but a wire center can be equal to a portion of an exchange or to several exchanges combined.
+
+The data was compiled in cooperation with the Minnesota Department of Commerce and the Minnesota incumbent local exchange carriers.&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/521/util_telephone_exchange.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/521/util_telephone_exchange.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/521/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>The data are intended to provide a statewide overview of telephone exchanges and are the official telephone exchange boundary maps in Minnesota. Please contact the Department of Commerce at (651) 539-1500 with questions on any boundary lines.</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="001">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Elorm Agbolosoo</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                        			
+            
+            <rpPosName>GIS Technician</rpPosName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntAddress addressType="both">
+                                        					
+                    
+                    <delPoint>600 Robert Street N</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55146</postCode>
+                                        					
+                    
+                    <eMailAdd>gisinfo.mngeo@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="008">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <graphOver>
+                        			
+            
+            <bgFileName>https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_mngeo/util_telephone_exchange/metadata/preview.jpg</bgFileName>
+                        			
+            
+            <bgFileDesc>A screen shot of the data displayed in ArcGIS. White areas are unassigned territories.</bgFileDesc>
+                        		
+        
+        </graphOver>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota, MN</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>utilitiesCommunication, telephone exchanges, telecommunications, telecom, area code, LATA zone, wire center</keyword>
+                        			
+            
+            <thesaName>
+                                				
+                
+                <resTitle>ISO 19115 Topic Category</resTitle>
+                                			
+            
+            </thesaName>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>utilitiesCommunication</keyword>
+            <keyword>telephone exchanges</keyword>
+            <keyword>telecommunications</keyword>
+            <keyword>telecom</keyword>
+            <keyword>area code</keyword>
+            <keyword>LATA zone</keyword>
+            <keyword>wire center</keyword>
+            <keyword>Minnesota</keyword>
+            <keyword>MN</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <Consts>
+                                				
+                
+                <useLimit>Redistribution conditions:  In obtaining this data from MnGeo, it is understood that you and/or your organization have the right to use it for any purpose.  If you modify it, you are encouraged to apply responsible best practices by documenting those changes in a metadata record.  If you transmit or provide the data to another user, it is your responsibility to provide appropriate content, limitation, warranty and liability information as you see fit.</useLimit>
+                                			
+            
+            </Consts>
+                        		
+        
+        </resConst>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>MnGeo's data disclaimer: https://mn.gov/mngeo/gis-data-and-maps/disclaimer.jsp</useLimit>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <aggrInfo>
+                        			
+            
+            <aggrDSName>
+                                				
+                
+                <resTitle>Other related telecommunications GIS data, maps and statistics are described on MnGeo's webpage, 'Telecommunication Infrastructure Information for Minnesota':  https://www.mngeo.state.mn.us/chouse/telecommunication.html</resTitle>
+                                			
+            
+            </aggrDSName>
+                        			
+            
+            <assocType>
+                                				
+                
+                <AscTypeCd value="001">
+				</AscTypeCd>
+                                			
+            
+            </assocType>
+                        		
+        
+        </aggrInfo>
+                		
+        
+        <spatRpType>
+                        			
+            
+            <SpatRepTypCd value="001">
+			</SpatRepTypCd>
+                        		
+        
+        </spatRpType>
+                		
+        
+        <envirDesc>ArcGIS v.9.2</envirDesc>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.23</westBL>
+                                        					
+                    
+                    <eastBL>-89.53</eastBL>
+                                        					
+                    
+                    <northBL>49.37</northBL>
+                                        					
+                    
+                    <southBL>43.5</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>Any changes in telephone exchange service area ownership that were filed with the Minnesota Department of Commerce and completely processed by the Department of Commerce by March 2026 were incorporated into the data set.</exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2026-04-24</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Minnesota</suppInfo>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                		
+        
+        <report type="DQQuanAttAcc">
+                        			
+            
+            <measDesc>The data revision process was conducted through ArcGIS Online where telephone companies had the opportunity to make edits to the boundaries. Once completed, there was a second revision process by the Minnesota Department of Commerce.
+
+No statistical analysis has been conducted.  MnGeo has worked closely with the Department of Commerce to ensure the accuracy of the attribute data.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQConcConsis">
+                        			
+            
+            <measDesc>Data are topologically structured and verified within ArcGIS.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQCompOm">
+                        			
+            
+            <measDesc>All updates to the original digitized exchange, area code and LATA information from the Department of Commerce have maintained the original scale.
+
+Geographic areas not covered by a service area are designated "Unassigned".</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Telephone companies review the data. Accuracy can range from +/- 400 feet to +/- 40 feet depending on the area. No statistical analysis has been conducted. 
+
+                </measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <dataLineage>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>In 1992, the Land Management Information Center (LMIC, now MnGeo) began a telecommunications project with the Minnesota Department of Commerce (the Department of Public Service at that time) as part of LMIC's Datanet online data service. MNDOC had exchange boundaries marked on the Minnesota Department of Transportation highway maps (1:126,720 or 1:63,360 scale). LMIC digitized the exchange, area code and LATA boundaries from these maps using EPPL7 version 2 software. A statewide EPPL7 vector file (.dgt) was created, then converted to ARC/INFO coverage format. The datum was NAD27. The last step in this project was the development of the first statewide telecommunications map. This map depicted exchange, area code and LATA boundaries. Exchanges were labeled and shaded by company. Over time, MNDOC and MnGeo have worked together in order to maintain this data by updating area code boundaries, ownership changes, exchange boundary changes, exchange company changes, and company name changes/corrections.
+
+Process steps for 2013 to 2015 dataset:
+The Minnesota Department of Commerce (MNDOC), Minnesota Telephone Alliance (MNTA), Minnesota Geospatial Information Office (MnGeo) and 100% of the telephone companies operating in Minnesota formed an ad hoc alliance in 2012/2013 to prepare these boundaries - encompassing all of Minnesota - for submission to the Federal Communications Commission, FCC Order DA 13-282.
+
+To expedite the boundary review process prior to FCC submission, a web-based comment and mark-up application was created using Esri's ArcGIS Online (AGOL) product. In addition to map layers available in AGOL, the following digital base maps were provided to assist the companies:
+- 2011 (or more recent) aerial photography served by MnGeo:  https://www.mngeo.state.mn.us/chouse/wms/geo_image_server.html
+- 2013 municipal and county boundaries (CTUs):  https://gisdata.mn.gov/dataset/bdry-mn-city-township-unorg
+- Public Land Survey (PLS) lines: https://gis.data.mn.gov/maps/dfa70fcba96e4d24ac73fef484b2da9c/about
+
+Process:
+
+1. MNTA coordinates boundary review activities with the companies. 
+
+2. MnGeo conducts webinars to refresh the companies on how to use the AGOL application. It also provides a detailed help document to assist them with their review.
+
+3. Telephone companies can review the boundaries and suggest corrections using a markup layer. Adjoining companies can agree to the proposed changes or suggest their own boundary.
+
+4. Public Land Survey (PLS) quarter-quarter section data is used as a 'snapping' layer to assist the user in making accurate boundary changes.
+
+5. MNDOC reviews the proposed boundary changes offered by the companies and makes corrections to the digital service territories after agreement on the boundary is reached with the companies. Historical, printed maps of the boundaries housed at MNDOC serve as guides to resolve any differences in opinion.
+
+6. GIS data updates:
+a. Once MNDOC makes all the agreed upon corrections to the GIS data, MnGeo checks the topology for gaps and overlaps. All topological errors are corrected using several layers as guides: the markup layer, existing exchange boundaries and quarter-quarter section lines.
+
+b. Companies are given a final opportunity to review the data before the submission to the FCC.
+
+Subsequent updates have followed a similar process.</stepDesc>
+                                			
+            
+            </prcStep>
+                        			
+            
+            <dataSource>
+                                				
+                
+                <srcScale>
+                                        					
+                    
+                    <rfDenom>126720</rfDenom>
+                                        				
+                
+                </srcScale>
+                                			
+            
+            </dataSource>
+                        		
+        
+        </dataLineage>
+                	
+    
+    </dqInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>https://mn.gov/mngeo/gis-data-and-maps/standards/mgmg/</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <detailed>
+                        			
+            
+            <enttyp>
+                                				
+                
+                <enttypl>telephone_exchange_service_areas</enttypl>
+                                			
+            
+            </enttyp>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>OBJECTID</attrlabl>
+                                				
+                
+                <attrdef>A unique ID representing each feature in the shapefile. This field is automatically created with the shapefile.</attrdef>
+                                				
+                
+                <attrdefs>Esri</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>Shape</attrlabl>
+                                				
+                
+                <attrdef>Stores the type of geometry associated with the feature. This field is automatically created with the shapefile.</attrdef>
+                                				
+                
+                <attrdefs>Esri</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>OCN</attrlabl>
+                                				
+                
+                <attrdef>The four digit NECA (National Exchange Carrier Association) Operating Company Number associated with the polygon.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>CO_NAME</attrlabl>
+                                				
+                
+                <attrdef>The company name associated with the polygon. The preferred format for this field is upper case.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>EXCHANGE</attrlabl>
+                                				
+                
+                <attrdef>The telephone exchange name associated with the polygon. The preferred format for this field is upper case. If submitting wire center boundaries, or if the polygon represents the study area boundary only, this field may be left blank.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>WIRECENTER</attrlabl>
+                                				
+                
+                <attrdef>The eight character CLLI (Common Language Location Identifier) code associated with the polygon. If submitting exchange boundaries, or if the polygon represents the study area boundary only, this field may be left blank.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>SAC</attrlabl>
+                                				
+                
+                <attrdef>The six digit Study Area Code assigned to each carrier by NECA (National Exchange Carrier Association) or USAC (Universal Service Administrative Company) associated with the polygon.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>STATE</attrlabl>
+                                				
+                
+                <attrdef>The two character United States Postal Service state abbreviation for the state corresponding to the Study Area Code associated with the polygon.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>FROZEN</attrlabl>
+                                				
+                
+                <attrdef>A single character relating to the status of frozen support for the company associated with the polygon. If a rural carrier purchases an exchange from a non-rural carrier that receives support based on the FCC's High Cost Model (HCM) for non-rural carriers, the loops of the acquired exchange receive the same per-line support as calculated at the time of the transfer under the HCM component. If the polygon represents the study area boundary only this field may be left blank.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Y</edomv>
+                                                						
+                        
+                        <edomvd>Yes</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>N</edomv>
+                                                						
+                        
+                        <edomvd>No</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>BOUND_TYPE</attrlabl>
+                                				
+                
+                <attrdef>A two character identifier for the type of boundary represented by the polygon.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>SA</edomv>
+                                                						
+                        
+                        <edomvd>Study Area</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>EX</edomv>
+                                                						
+                        
+                        <edomvd>Exchange</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>WC</edomv>
+                                                						
+                        
+                        <edomvd>Wire Center</edomvd>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>LATA</attrlabl>
+                                				
+                
+                <attrdef>Local access and transport area ID code (at the time of the Bell System breakup, Bell operating companies were restricted to operations within specific areas called LATAs)</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>AREACODE</attrlabl>
+                                				
+                
+                <attrdef>3-digit telephone area code.</attrdef>
+                                				
+                
+                <attrdefs>FCC</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>METROCALL</attrlabl>
+                                				
+                
+                <attrdef>Area of the Twin Cities metro in which there is flat-rate calling.</attrdef>
+                                				
+                
+                <attrdefs>Minnesota Department of Commerce</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>Yes</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <edom>
+                                                						
+                        
+                        <edomv>No</edomv>
+                                                					
+                    
+                    </edom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        		
+        
+        </detailed>
+                	
+    
+    </eainfo>
+        
+
+</metadata>

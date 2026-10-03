@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?><metadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><eainfo><overview><eaover>Field Descriptions
+
+Field Name (Field Alias): Description
+*Domain Option
+*Domain Option
+
+
+Unique_ID (Unique ID): Unique identifier given to each feature. Unique ID values are unique across all point feature classes in the wastewater geodatabase. Duplicating a Unique ID will result in an automated error email to GIS staff. 
+
+Metershed (Metershed): Sewered area that flows through the single indicated meter. Metersheds ending in "S" indicate the "Sum" of flow to an "A" and "B" meter, capturing flow from the same geographic area. An area's metershed always corresponds to the first meter the flow encounters, regardless of if it subsequentially flows through a downstream meter.
+
+ServiceStatus (Service Status): State of sewer service (existing or planned) for the area. Uses the domain ServiceStatus. Domain values:
+*Served - Served by MCES
+*Potential Future Service - Planned to be served by MCES in the future
+*No Service Potential - Not served by MCES and due to unsuitable conditions (such as wetland, regional parks, water features, etc.) the area is not planned for future service.
+
+InterceptorName (Interceptor Name): Name of the interceptor; commonly known description. Obtained from record drawings. Multiple Interceptor Names (when a point connects to two or more interceptors) are to be recorded separately in the three available fields. For remote point features, the nearest downstream MCES Interceptor is listed.
+
+LiftStation (Lift Station): Associated downstream Lift Station to which the sewered  area flows through. 
+
+WWTP (Wastewater Treatment Plant): Associated downstream Wastewater Treatment Plant that accepts flow from the sewered area.
+*Blue Lake
+*Eagles Point
+*East Bethel
+*Empire
+*Hastings
+*Metro
+*Rogers
+*Seneca
+*St. Croix Valley
+
+CTU_NAME (City): The city where the feature is located. Uses the domain CTU_NAME. Domain values:
+*Domain contains all cities in the 7 county area (over 180 records).
+
+CTU_ID (City ID): 6-8 digit federal Geographic Names Information System (GNIS) identification code for all Minnesota cities, townships and unorganized territories.
+
+FlowsToCity (Flows To City): Community where flow from the unmetered sewershed is recorded at a meter. Uses the domain CTU_NAME. Domain contains all cities in the 7-county area (over 180 records).
+
+FlowsThroughCity (Flows Through City): Community where flow from an unmetered sewershed flows through without being registered by a meter of before entering the "Flows To City" where the flow is registered by a meter. Uses the domain CTU_NAME. Domain contains all cities in the 7-county area (over 180 records).
+
+MeteringBilling (Metering (Billing Purposes)): Identifies whether the area is classified as metered or unmetered from a Municipal Wastewater Charge (MWC) (billing) perspective. Uses the domain MeteringBilling. Domain values:
+*Metered - Flow from this sewershed is recorded by a meter used in calculating the MWC for the Community.
+*Unmetered - Flow from this sewershed is recorded by a meter that is not used in calculating the MWC for the Community. See Adjusted and AdjustedMethod fields for more information on how billing is handled for flow in this sewershed. 
+
+Adjusted (Adjusted for Billing?): Indicates if flow from the served, but unmetered sewershed is adjusted by MCES as part of the Municipal Wastewater Charge (MWC). Uses the domain YesNo. Domain values:
+*Yes - MCES uses in-house methods to adjust the Community's Municipal Wastewater Charge to account for the unmetered flow from this sewershed. See Adjustment Method field for in-house method used.
+*No - MCES does not adjust the Community's Municipal Wastewater Charge to account for the unmetered flow from this sewershed. See IC Agreement Link field for the Intercommunity Agreement document detailing how neighboring communities independently address flow from this unmetered area.
+
+Area_Acres (Area (Acres)): GIS-calculated area of the feature.
+
+DataSourceDate (Data Source Date): Date the data source was published (PM email received, GPS data collected, Record Drawings published etc.)
+
+Shape (Shape): Automatically generated GIS field that describes the type of feature (Point, Line, Polygon)
+
+OBJECTID (OBJECTID): Automatically generated GIS field.</eaover></overview></eainfo><idinfo><citation><citeinfo><origin>Metropolitan Council</origin><title>Sewersheds (Metersheds, WWTP Service Areas)</title><pubinfo><publish>Metropolitan Council</publish></pubinfo><pubdate>periodically revised</pubdate><onlink>None</onlink></citeinfo></citation><descript><abstract>This dataset was developed to divide areas within the Twin Cities Metro Area into smaller, geographic regions. These sewershed boundaries are classified as currently served, potential served in the future, or never to be served by the MCES regional wastewater system. A sewershed is a defined area that is tributary to a single point along an MCES interceptor (a community system connection) or is tributary to a single lift station.
+
+This dataset can also be queried to show Metersheds (areas tributary to each MCES Meter) or WWTP Service Areas (areas tributary to each wastewater treatment plant).</abstract><purpose>To provide a spatial data inventory to aid maintenance, planning and analysis efforts. </purpose><supplinf>Twin Cities - 7 County Metro</supplinf></descript><browse><browsen>None</browsen></browse><crossref><citeinfo><title>Interceptors, LocalSanitaryLines, LocalConnections, TreatmentPlants, Meters, LiftStations, MaintenanceHoles, LongTermServiceAreas, MUSA2020, MUSA2030, MUSA2040</title></citeinfo></crossref><timeperd><current>Data is regularly added and updated. The last_edited_date field captures date and time of the most recent modification. The created_date field indicates when the record was originally created.</current><timeinfo><sngdate><caldate>20200517</caldate></sngdate></timeinfo></timeperd><status><progress>Complete</progress><update>Monthly</update></status><spdom><bounding><westbc>-94.012</westbc><eastbc>-92.732</eastbc><northbc>45.415</northbc><southbc>44.471</southbc></bounding></spdom><keywords><theme><themekey>utilitiescommunication: wastewater, sewer, sewage, sewer systems, utilities, service area, served area, sewershed, metershed, wastewater treatment plant, city connection, local connection</themekey></theme><place><placekey>Twin Cities, Metro, Anoka, Carver, Dakota, Hennepin, Ramsey, Scott, Washington</placekey></place></keywords><accconst>None. This dataset is considered public under the Minnesota Government Data Practices Act. Please contact the Distribution Contact Person for more information.</accconst><useconst>Although this dataset is considered public under the Minnesota Government Data Practices Act, do not transfer or share data with others. They must request the data directly from the Distribution Contact Person. This will ensure every user has received the proper data disclaimers, supporting documentation, and the most up-to-date data available. Please see the Distribution Liability section below for more information.</useconst><ptcontac><cntinfo><cntperp><cntorg>Metropolitan Council</cntorg><cntper>Environmental Services GIS Team</cntper></cntperp><cntaddr><addrtype>mailing and physical</addrtype><address>3565 Kennebec Drive</address><city>Eagan</city><state>MN</state><postal>55122</postal></cntaddr><cntemail>ESGIS@metc.state.mn.us</cntemail></cntinfo></ptcontac></idinfo><dataqual><complete>The entire seven county metro is divided into polygons according the service status: served, potentially served, and will never be served.</complete><posacc><horizpa><horizpar>The positional accuracy of the dataset is unknown.</horizpar></horizpa></posacc><lineage><procstep><procdesc>A variety of sources are used to create the Sewershed polygon features including, but not limited to: GIS Community boundaries, GIS parcel boundaries, local sewer lines, documents submitted through the comprehensive planning process, and lakes/river features (GIS), aerial imagery, and MCES interceptors. This data is updated with changes to MCES interceptors and every 10 years, after the communities submit their comp plans. </procdesc></procstep></lineage></dataqual><distinfo><resdesc>SewershedsPublic</resdesc><distliab>NOTICE: The Geographic Information System (GIS) Data to which this notice is attached are made available pursuant to the Minnesota Government Data Practices Act (Minnesota Statutes Chapter 13). THE GIS DATA ARE PROVIDED TO YOU AS IS AND WITHOUT ANY WARRANTY AS TO THEIR PERFORMANCE, MERCHANTABILITY, OR FITNESS FOR ANY PARTICULAR PURPOSE. The GIS Data were developed by the Metropolitan Council for its own internal business purposes. The Metropolitan Council does not represent or warrant that the GIS Data or the data documentation are error-free, complete, current, or accurate. You are responsible for any consequences resulting from your use of the GIS Data or your reliance on the GIS Data. You should consult the data documentation for this particular GIS Data to determine the limitations of the GIS Data and the precision with which the GIS Data may depict distance, direction, location, or other geographic features. If you transmit or provide the GIS Data (or any portion of it) to another user, it is recommended that the GIS Data include a copy of this disclaimer and this metadata.</distliab><stdorder><ordering>Contact the Distributor</ordering></stdorder><distrib><cntinfo><cntperp><cntorg>Metropolitan Council</cntorg><cntper>Environmental Services GIS Team</cntper></cntperp><cntaddr><addrtype>mailing and physical</addrtype><address>3565 Kennebec Drive</address><city>Eagan</city><state>MN</state><postal>55122</postal></cntaddr><cntemail>ESGIS@metc.state.mn.us</cntemail></cntinfo></distrib></distinfo><metainfo><metd>20231208</metd><metstdn>Minnesota Geographic Metadata Guidelines</metstdn><metstdv>1.2</metstdv><metextns><onlink>http://www.mngeo.state.mn.us/committee/standards/mgmg/metadata.htm</onlink></metextns><metc><cntinfo><cntperp><cntorg>Metropolitan Council</cntorg><cntper>Environmental Services GIS Team</cntper></cntperp><cntaddr><addrtype>mailing and physical</addrtype><address>3565 Kennebec Drive</address><city>Eagan</city><state>MN</state><postal>55122</postal></cntaddr><cntemail>ESGIS@metc.state.mn.us</cntemail></cntinfo></metc></metainfo><spref><horizsys><planar><gridsys><gridsysn>Universal Transverse Mercator</gridsysn><utm><utmzone>15</utmzone></utm></gridsys><planci><plandu>meters</plandu></planci></planar><geodetic><horizdn>NAD83</horizdn><ellips>GRS80</ellips></geodetic></horizsys></spref></metadata>
