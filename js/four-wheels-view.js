@@ -97,6 +97,26 @@
   }
   const circle = (p,rx,ry=rx,z=0,count=32) => Array.from({length:count},(_,i)=>add(p,Math.cos(i*Math.PI*2/count)*rx,Math.sin(i*Math.PI*2/count)*ry,z));
   const quad = (x,y,w,h,z=0) => [{x,y,z},{x:x+w,y,z},{x:x+w,y:y+h,z},{x,y:y+h,z}];
+  function slopeMarkers(level) {
+    const ribs=[],signs=[],runs=[];let run=null;
+    // Sample the same supporting height field along the forward route. A bump
+    // and the empty jump gap are distinct obstacles, not sustained grades.
+    for(const leg of level.legs){
+      const count=Math.ceil(leg.length/12),step=leg.length/count,a=Math.atan2(leg.b.y-leg.a.y,leg.b.x-leg.a.x),c=Math.cos(a),s=Math.sin(a);
+      for(let i=0;i<count;i++){
+        const u=(i+.5)*step,p={x:leg.a.x+c*u,y:leg.a.y+s*u},d=Math.min(6,step/2),t=level.terrain,bump=TerrainModule.coordinates(p,t.bumps),inBumps=Math.abs(bump.v)<t.bumps.width/2&&bump.u>t.bumps.centers[0]-t.bumps.length/2&&bump.u<t.bumps.centers.at(-1)+t.bumps.length/2;
+        const before={x:p.x-c*d,y:p.y-s*d},after={x:p.x+c*d,y:p.y+s*d},base={kind:leg.surface,grip:1,drag:1},low=TerrainModule.sample(level,before,base,false),high=TerrainModule.sample(level,after,base,false),grade=low&&high?(high.height-low.height)/(2*d):0,kind=!inBumps&&Math.abs(grade)>=.035?(grade>0?'up':'down'):null;
+        if(!kind){run=null;continue;}
+        if(!run||run.kind!==kind){run={kind,samples:[]};runs.push(run);}
+        run.samples.push({x:p.x,y:p.y,a,width:leg.width,shoulder:leg.shoulder,chapter:leg.chapter,distance:leg.distance+u,grade,kind});
+      }
+    }
+    for(const run of runs){
+      if(run.samples.length<3)continue;
+      run.samples.forEach((p,i)=>{if(i%2===0)ribs.push({...p,chevron:i%6===0});if(i===1||i>1&&(i-1)%14===0)signs.push(p);});
+    }
+    return {ribs,signs};
+  }
   const faces = [
     [[0,3,2,1],[0,0,-1]],[[4,5,6,7],[0,0,1]],[[0,4,7,3],[-1,0,0]],
     [[1,2,6,5],[1,0,0]],[[0,1,5,4],[0,-1,0]],[[3,7,6,2],[0,1,0]]
@@ -173,7 +193,7 @@
       return textures.get(key);
     }
     class Scene {
-      constructor(opacity=1,cached=false){this.commands=[];this.sequence=0;this.opacity=opacity;this.cached=cached;}
+      constructor(opacity=1,cached=false){this.commands=[];this.sequence=0;this.opacity=opacity;this.cached=cached;this.grid=null;}
       push(points,draw,bias=0,mesh=null) {
         const q=this.cached?points.map(p=>project(p)):null;
         this.commands.push({depth:points.reduce((n,p)=>n+depth(p),0)/points.length+bias,order:this.sequence++,draw,mesh,bounds:q?{left:Math.min(...q.map(p=>p.x))-4,right:Math.max(...q.map(p=>p.x))+4,top:Math.min(...q.map(p=>p.y))-4,bottom:Math.max(...q.map(p=>p.y))+4}:null});
@@ -244,6 +264,22 @@
         this.commands.sort((a,b)=>a.depth-b.depth||a.order-b.order);
         for(const command of this.commands)command.draw(g,origin);
         g.globalAlpha=1;
+      }
+      visibleCommands({left,top,right,bottom}) {
+        const size=128;
+        if(!this.grid){
+          this.grid=new Map();
+          for(const command of this.commands){const b=command.bounds;
+            for(let y=Math.floor(b.top/size);y<=Math.floor(b.bottom/size);y++)for(let x=Math.floor(b.left/size);x<=Math.floor(b.right/size);x++){
+              const key=x+','+y,bin=this.grid.get(key)||[];bin.push(command);this.grid.set(key,bin);
+            }
+          }
+        }
+        const visible=new Set();
+        for(let y=Math.floor(top/size);y<=Math.floor(bottom/size);y++)for(let x=Math.floor(left/size);x<=Math.floor(right/size);x++)for(const command of this.grid.get(x+','+y)||[]){
+          const b=command.bounds;if(b.right>=left&&b.left<=right&&b.bottom>=top&&b.top<=bottom)visible.add(command);
+        }
+        return visible;
       }
     }
     const shelfFields=['cx','cy','a','tilt','nx','ny','w','h','height','kind','theme','label'];
@@ -899,7 +935,8 @@
         const gx=Terrain.height(terrainLevel,{x:center.x+1,y:center.y})-z,gy=Terrain.height(terrainLevel,{x:center.x,y:center.y+1})-z;
         // Sample color on the world grid so overlapping ribbons share a tint.
         const tint=typeof color==='function'?color(x+step/2,y+step/2):color;
-        groundPoly(g,q,blend(tint,P.dark,clamp((gx+gy)*.12,-.05,.2)));
+        const light=clamp((gx*.6+gy*.8)*1.6,-.28,.36);
+        groundPoly(g,q,blend(tint,light<0?P.light:P.dark,Math.abs(light)));
       }
     }
     function courseRoadArt(level) {
@@ -932,6 +969,30 @@
         }
       }
       return {bands,arrows};
+    }
+    function slopePaint(g,w,tile=null) {
+      w.level._slopes||=slopeMarkers(w.level);
+      for(const p of w.level._slopes.ribs){
+        if(tile&&(p.x<tile.x-p.width||p.x>tile.x+tile.w+p.width||p.y<tile.y-p.width||p.y>tile.y+tile.h+p.width))continue;
+        const color=p.kind==='up'?P.gold:P.blue,half=p.width*.31;
+        const paint=(points,tint)=>{const q=points.map(([u,v])=>local(p,u,v));if(tile)mesh(g,q,tint,tile,true);else groundPoly(g,q.map(onGround),tint);};
+        if(p.chevron){
+          for(const side of [-1,1]){paint([[-7,side*half],[6,0],[9,0],[-5,side*half]],P.hairDark);paint([[-6,side*half],[6,0],[8,0],[-4,side*half]],color);}
+        }else {paint([[-1.5,-half],[1.5,-half],[1.5,half],[-1.5,half]],P.hairDark);paint([[-.75,-half],[.75,-half],[.75,half],[-.75,half]],color);}
+      }
+    }
+    function slopeSigns(scene,w) {
+      w.level._slopes||=slopeMarkers(w.level);
+      for(const p of w.level._slopes.signs){
+        const nx=-Math.sin(p.a),ny=Math.cos(p.a),side=nx+ny>0?-1:1,offset=p.width/2+p.shoulder-10,x=p.x+nx*side*offset,y=p.y+ny*side*offset,z=Terrain.height(w.level,{x,y}),color=p.kind==='up'?P.gold:P.blue,key='slope-'+p.kind;
+        if(!textures.has(key)){
+          const c=document.createElement('canvas');c.width=96;c.height=36;const g=c.getContext('2d');rect(g,0,0,96,36,P.hairDark);rect(g,1,1,94,34,color);rect(g,3,3,90,30,P.dark);
+          text(g,p.kind==='up'?'UPHILL':'DOWNHILL',48,16,P.light,12,'center');
+          const a={x:35,y:p.kind==='up'?29:22},b={x:60,y:p.kind==='up'?22:29};line(g,a,b,color,3);line(g,{x:35,y:30},{x:60,y:30},P.mid,1);textures.set(key,c);
+        }
+        scene.box((u,v,h)=>({x:u,y:v,z:z+h}),x-1.5,y-1.5,0,3,3,26,P.steelShade,P.steelLight);
+        scene.texture([{x:x-23,y:y+23,z:z+50},{x:x+23,y:y-23,z:z+50},{x:x+23,y:y-23,z:z+23},{x:x-23,y:y+23,z:z+23}],textures.get(key));
+      }
     }
     function cliffFaces(scene,w,visible,mode='upper'){
       const edges=w.level._edges||(w.level._edges=exposedEdges(w.level,root.CartCourse));
@@ -1056,6 +1117,7 @@
         mesh(g,arrow.poly,arrow.surface==='dirt'?blend(P.cream,P.gold,.28):blend(P.cream,P.steel,.1),tileBounds,s=>s.kind===arrow.surface);
       }
       for(const f of [w.level.terrain.boost,w.level.terrain.ramp]){for(let u=10;u<f.length;u+=15){const p=onGround(local(f,u,0));if(p.x<x*size||p.x>=(x+1)*size||p.y<y*size||p.y>=(y+1)*size)continue;groundArrow(g,{...p,a:f.a},8,f===w.level.terrain.boost?P.hairDark:P.gold,.95);}}
+      slopePaint(g,w,{x:x*size,y:y*size,w:size,h:size});
       const tile={canvas:c,x:left,y:top};background.tiles.set(key,tile);if(background.tiles.size>32)background.tiles.delete(background.tiles.keys().next().value);return tile;
     }
     function courseRocks(g,w,background,camera,follow) {
@@ -1149,6 +1211,7 @@
       const tr=(x,y,z)=>({x,y,z:z+Terrain.height(w.level,{x,y})});
       if(mode!=='dynamic'){
       cliffFaces(scene,w,visible);
+      slopeSigns(scene,w);
       for(const r of w.level.rails)if(visible({x:(r.a.x+r.b.x)/2,y:(r.a.y+r.b.y)/2},Math.hypot(r.b.x-r.a.x,r.b.y-r.a.y)/2+70)){
         scene.flat(r.poly.map(onGround),P.steelShade);
         const d=Math.hypot(r.b.x-r.a.x,r.b.y-r.a.y);
@@ -1220,6 +1283,7 @@
         if(!map||map.width!==width||map.height!==height){
           map=document.createElement('canvas');map.width=width;map.height=height;const target=map.getContext('2d');target.translate(camera.x,camera.y);target.scale(camera.scale,camera.scale);
           for(const a of w.level.floorAreas)groundPoly(target,a.poly.map(onGround),a.kind==='grass'?P.pine:a.kind==='tile'?P.cream:a.kind==='dirt'?P.clay:P.steelShade);background.floorMap=map;
+          slopePaint(target,w);
         }
         g.drawImage(map,-camera.x/camera.scale,-camera.y/camera.scale,width/camera.scale,height/camera.scale);
       }
@@ -1246,7 +1310,11 @@
           map=document.createElement('canvas');map.width=width;map.height=height;const target=map.getContext('2d');target.translate(camera.x,camera.y);target.scale(camera.scale,camera.scale);background.scenery.flush(target);background.sceneryMap=map;background.sceneryMapEpoch=cacheEpoch;
         }
         g.drawImage(map,left,top,width/camera.scale,height/camera.scale);
-      }else for(const command of background.scenery.commands){const b=command.bounds;if(b.right<left-4||b.left>right+4||b.bottom<top-4||b.top>bottom+4)continue;scene.commands.push({...command,order:scene.sequence++});}
+      }else {
+        for(const command of background.scenery.visibleCommands({left:left-4,top:top-4,right:right+4,bottom:bottom+4}))scene.commands.push(command);
+        // Keep the original tie order after culling, with live models last.
+        scene.sequence=background.scenery.sequence;
+      }
       courseModels(scene,w,visible,'dynamic');if(w.fall||w.body.z<w.ground.lastHeight-2)cliffFaces(scene,w,visible,'occlude');
       for(const s of w.shelves)if(visible({x:s.cx,y:s.cy},170))cachedModel(scene,s,shelfFields,shelf);
       for(const p of w.stock.items)if(!p.broken&&visible(p))cachedModel(scene,p,productFields,product,p.state==='shelf'?[p.shelf,...shelfFields.map(k=>p.shelf[k])]:[]);
@@ -1301,6 +1369,6 @@
     }
     return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
   }
-  const api={CAMERA,project,unproject,depth,local,exposedEdges,create};
+  const api={CAMERA,project,unproject,depth,local,exposedEdges,slopeMarkers,create};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartView=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

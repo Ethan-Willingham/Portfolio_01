@@ -12,6 +12,9 @@ const hooks=`
   scene:(chapter,x,y,a=0,v=0)=>{cancelAnimationFrame(raf);raf=0;reset(chapter);followCart=true;if(x!==undefined){Object.assign(world.body,{x,y,a,vx:Math.cos(a)*v,vy:Math.sin(a)*v,omega:0});CartTerrain.init(world,world.terrainGeometry);world.wheels.forEach(q=>Object.assign(q,{a,omega:0}));}if(chapter===2||chapter===7){for(let i=0;i<240;i++)world.step(1/120,{push:.4});world.events.length=0;}draw();},
   cacheCheck:()=>{cancelAnimationFrame(raf);raf=0;const original=CartCourse.snapshot(world),changes=[];
    const check=()=>{draw();const warm=canvas.toDataURL();view.refreshFonts();view.draw(ctx,world,view.makeFloor(world.level),{follow:followCart});changes.push(warm===canvas.toDataURL());};
+   draw();const indexed=canvas.toDataURL(),scenery=floor.scenery,query=scenery.visibleCommands;
+   scenery.visibleCommands=function({left,top,right,bottom}){return this.commands.filter(q=>{const b=q.bounds;return b.right>=left&&b.left<=right&&b.bottom>=top&&b.top<=bottom;});};
+   try{draw();changes.push(indexed===canvas.toDataURL());}finally{scenery.visibleCommands=query;}
    const s=world.shelves[1],p=s.stockItems.find(p=>p.state==='shelf');check();s.cx+=7;s.a+=.13;s.tilt+=.2;s.nx=.6;s.ny=.8;check();p.u+=3;p.a+=.3;p.color=5;check();world.stock.release(p);p.state='floor';p.flat=true;p.width*=1.35;check();view.refreshFonts();check();
    CartCourse.restore(world,original);draw();return changes;
   },
@@ -31,7 +34,7 @@ async function measure(label,context,url){
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url);await page.waitForFunction(()=>!!window.__cartPerf);await page.evaluate(()=>document.fonts.ready);
  const samples={};
- for(const [name,pose]of [['start',[0]],['grocery',[2,1190,1316,0,65]],['relay',[7,850,290,0,65]]]){
+ for(const [name,pose]of [['start',[0]],['first hill',[0,285,1520,0,35]],['quarry hill',[4,1400,980,Math.PI,35]],['grocery',[2,1190,1316,0,65]],['relay',[7,850,290,0,65]]]){
   await page.evaluate(p=>__cartPerf.scene(...p),pose);await page.locator('#cart-start').click();await page.keyboard.down('w');
   await page.waitForTimeout(750);await page.evaluate(()=>__cartPerf.clear());const start=Date.now();await page.waitForTimeout(4000);
   const data=await page.evaluate(()=>__cartPerf.stats()),cpu=distribution(data.frames),interval=distribution(data.intervals);

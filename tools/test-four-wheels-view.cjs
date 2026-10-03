@@ -5,6 +5,7 @@ const Physics=require('../js/four-wheels-physics.js');
 const Stock=require('../js/four-wheels-stock.js');
 const levels=require('../js/four-wheels-levels.js');
 const Course=require('../js/four-wheels-course.js');
+const Terrain=require('../js/four-wheels-terrain.js');
 const {CAMERA,project,unproject,depth,local}=View;
 const near=(a,b,epsilon=1e-8)=>assert.ok(Math.abs(a-b)<epsilon,`${a} != ${b}`);
 function check(name,fn){fn();console.log('PASS '+name);}
@@ -30,6 +31,19 @@ check('cliffs follow actual floor support and terrain height, including both jum
     }
   }
   for(const x of [1180,1250])assert.ok(cliffEdges.some(e=>Math.abs(e.a.x-x)<1e-6&&Math.abs(e.b.x-x)<1e-6&&Math.abs((e.a.y+e.b.y)/2-410)<80),'jump lip at '+x);
+});
+
+check('hill cues agree with the physical route and leave bumps and the jump void unmarked',()=>{
+  const level=Course.build(),markers=View.slopeMarkers(level),all=[...markers.ribs,...markers.signs];
+  for(const chapter of [0,3,4])for(const kind of ['up','down'])assert.ok(markers.signs.some(p=>p.chapter===chapter&&p.kind===kind),'both sides of hill '+chapter+' are labeled');
+  assert.ok(markers.signs.some(p=>p.chapter===11&&p.kind==='up'),'the final climb is labeled');
+  for(const p of all){
+    const d={x:Math.cos(p.a)*.5,y:Math.sin(p.a)*.5},a=Course.sample(level,{x:p.x-d.x,y:p.y-d.y}),b=Course.sample(level,{x:p.x+d.x,y:p.y+d.y});
+    assert.ok(a&&b,'paint stays on supported road');assert.ok(p.kind==='up'?b.height>a.height:b.height<a.height,'the sign describes forward travel');
+    const bump=Terrain.coordinates(p,level.terrain.bumps);assert.ok(!(Math.abs(bump.v)<level.terrain.bumps.width/2&&bump.u>31&&bump.u<163),'speed bumps keep their own markings');
+    const nx=-Math.sin(p.a),ny=Math.cos(p.a),side=nx+ny>0?-1:1,offset=p.width/2+p.shoulder-10;
+    assert.ok(Course.sample(level,{x:p.x+nx*side*offset,y:p.y+ny*side*offset}),'sign posts stand on the shoulder or road edge');
+  }
 });
 
 check('ground axes stay symmetric and show substantially more floor than a 2:1 view',()=>{
