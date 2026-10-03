@@ -1,0 +1,69 @@
+{
+  "adapter": {
+    "vendor": "apple",
+    "architecture": "metal-3",
+    "description": "",
+    "isFallbackAdapter": false
+  },
+  "cases": [
+    {
+      "flowN": 32,
+      "n": 32,
+      "steps": 100,
+      "maxErrorNm": 0.0003662109375,
+      "rmsErrorNm": 0.000030191738354257068,
+      "volumeErrorRelative": -1.6205012807968267e-8,
+      "minNm": 201.92147827148438,
+      "maxNm": 598.0785522460938,
+      "resetCorrect": true,
+      "resetBufferCorrect": true
+    },
+    {
+      "flowN": 16,
+      "n": 32,
+      "steps": 100,
+      "maxErrorNm": 0.00030517578125,
+      "rmsErrorNm": 0.00003301559328673126,
+      "volumeErrorRelative": 3.7252903006823605e-9,
+      "minNm": 201.92147827148438,
+      "maxNm": 598.0785522460938,
+      "resetCorrect": true,
+      "resetBufferCorrect": true
+    }
+  ],
+  "large": [
+    {
+      "n": 512,
+      "steps": 120,
+      "wallMilliseconds": 209.5,
+      "cpuEncode": {
+        "medianMs": 0.2999999523162842,
+        "p95Ms": 0.6000000238418579,
+        "samples": 120
+      },
+      "thicknessRangeNm": [
+        142.4699249267578,
+        1119.428466796875
+      ],
+      "volumeErrorRelative": -9.447851673062861e-8
+    },
+    {
+      "n": 1024,
+      "steps": 8,
+      "wallMilliseconds": 101.60000002384186,
+      "cpuEncode": {
+        "medianMs": 0.20000004768371582,
+        "p95Ms": 0.40000009536743164,
+        "samples": 8
+      },
+      "thicknessRangeNm": [
+        141.3807373046875,
+        1119.7142333984375
+      ],
+      "volumeErrorRelative": -1.951866609442504e-8
+    }
+  ],
+  "displayMaxError": 0.0018866625720995733,
+  "errors": [],
+  "pass": true
+}
