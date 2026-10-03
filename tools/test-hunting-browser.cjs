@@ -7,7 +7,7 @@ const { execFileSync } = require('node:child_process');
 const { chromium, webkit } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v11-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v12-qa';
 const baselineIndex=process.argv.indexOf('--baseline'),baseline=baselineIndex>=0?process.argv[baselineIndex+1]:null;
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
@@ -30,6 +30,34 @@ function testPointer(point) {
 }
 window.__huntTest = {
  ready: () => !!art && !!view && !!world,
+ rangeState: () => ({range:view.lastRange,text:$('range-value').textContent,hidden:$('range').hidden,aim:{...aim}}),
+ rangePoint: point => {
+  setScope(false);aim=world.aim(HuntingView.unproject(HuntingView.project(point)));setScope(true);draw();
+  return window.__huntTest.rangeState();
+ },
+ rangeAnimal: (species,level,facingRight,gap=false) => {
+  window.__huntTest.fixture(species,level,80,0,20);world.critters=[];world.ambient=world.critters;
+  const d=world.deer[0],mask=world.animalArt(d),size=world.animalSize(d);d.facingRight=facingRight;
+  let u=mask.vitalsX,v=mask.vitalsY;
+  if(gap){
+   const row=Math.floor(mask.height*.9),pixels=Array.from({length:mask.width},(_,i)=>i).filter(i=>mask.alpha[row*mask.width+i]);
+   const x=Array.from({length:mask.width},(_,i)=>i).find(i=>i>pixels[0]&&i<pixels.at(-1)&&!mask.alpha[row*mask.width+i]);
+   if(x===undefined)throw new Error('No actual transparent leg gap in the fixture');
+   u=(x+.5)/mask.width;v=1-(row+.5)/mask.height;
+  }
+  const point={x:d.x+((facingRight?u:1-u)-.5)*size.width,y:d.y,h:v*size.height};
+  return {point,state:window.__huntTest.rangePoint(point)};
+ },
+ rangeCritter: kind => {
+  window.__huntTest.quiet();const d=world.spawnCritter(kind,0,80);Object.assign(d,{h:kind==='owl'?8:0,stride:1,age:1});
+  const point={x:0,y:80,h:d.h+(kind==='owl'?.12:.18)};
+  return {point,state:window.__huntTest.rangePoint(point)};
+ },
+ steadyRangeWrites: () => {
+  const observer=new MutationObserver(()=>{});observer.observe($('range'),{subtree:true,childList:true,attributes:true});
+  draw();observer.takeRecords();for(let i=0;i<30;i++)draw();
+  const count=observer.takeRecords().length;observer.disconnect();return count;
+ },
  sceneAssets: () => ['birch-terrain','birch-sky','lookout-stand'].map(name => ({
   name, width:art.sprites[name].naturalWidth,height:art.sprites[name].naturalHeight,complete:art.sprites[name].complete})),
  detailState: () => ({density:art.scene.effective_width,active:view.activeDetail.map(id=>({id,state:view.detailTiles.get(id).state})),
@@ -232,6 +260,14 @@ async function noOverflow(page) {
       .filter(b => b.getBoundingClientRect().width > 0)
       .every(b => {const r=b.getBoundingClientRect();return r.x>=-1&&r.right<=innerWidth+1&&r.height>=44;}));
 }
+async function rangeFits(page) {
+  return page.locator('#hunt-range').evaluate(el=>{
+    const r=el.getBoundingClientRect(),c=document.querySelector('#hunt-canvas').getBoundingClientRect(),style=getComputedStyle(el);
+    const stats=document.querySelector('.hunt-field-stats').getBoundingClientRect();
+    const overlap=r.x<stats.right&&r.right>stats.x&&r.y<stats.bottom&&r.bottom>stats.y;
+    return !el.hidden&&!overlap&&r.x>=c.x&&r.right<=c.right&&r.y>=c.y&&r.bottom<=c.bottom&&parseFloat(style.fontSize)>=12&&style.pointerEvents==='none';
+  });
+}
 async function steer(page, x, y) {
   const point=await page.evaluate(point=>__huntTest.pointer(point),{x,y});
   await page.mouse.move(point.x,point.y);
@@ -271,7 +307,8 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
       assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
       return;
     }
-    browser=await chromium.launch({headless:true,executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'});
+    const rangeWebkit=process.argv.includes('--range-webkit');
+    browser=await (rangeWebkit?webkit:chromium).launch({headless:true,...(rangeWebkit?{}:{executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'})});
     const desktop=await browser.newContext({viewport:{width:1440,height:1000}});
     const page=await setup(desktop,url);
     check('loading opens directly in the stationary distant field',await page.evaluate(()=>{const s=__huntTest.state();return s.phase==='running'&&s.x===0&&s.y===0&&s.height===12;}));
@@ -285,6 +322,42 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     check('wide pointer projection is invertible',await page.evaluate(()=>__huntTest.projection()<1e-8));
     check('unchanged controls do not rewrite the DOM every frame',await page.evaluate(()=>__huntTest.stableHudWrites()===0));
     check('a stationary wide view reuses its sampled scenery',await page.evaluate(()=>__huntTest.rasterReuse(false)===0));
+    check('yardage stays hidden in the wide view',await page.locator('#hunt-range').evaluate(el=>el.hidden));
+    await page.evaluate(()=>__huntTest.quiet());
+    for(const point of [{x:0,y:45,h:0},{x:0,y:140,h:0},{x:50,y:80,h:0}]) {
+      const s=await page.evaluate(point=>__huntTest.rangePoint(point),point),expected=Math.hypot(point.x,point.y,12)/.9144;
+      check('ground yardage follows the precise point at '+point.x+','+point.y,Math.abs(s.range.yards-expected)<1e-6&&s.range.surface==='ground'&&s.text==='Range '+expected.toFixed(1)+' yd'&&!s.hidden);
+    }
+    check('a fixed aim causes no redundant yardage DOM writes',await page.evaluate(()=>__huntTest.steadyRangeWrites()===0));
+    await steer(page,320,180);
+    const groundBefore=await page.evaluate(()=>__huntTest.rangeState());await steer(page,320,325);
+    const groundAfter=await page.evaluate(()=>__huntTest.rangeState());
+    check('real pointer motion changes the distance to the crosshair',Math.abs(groundAfter.range.yards-groundBefore.range.yards)>.1);
+    await page.evaluate(()=>__huntTest.step(.5));
+    const panAfter=await page.evaluate(()=>__huntTest.rangeState());
+    check('scope panning updates yardage along with the sight ray',Math.abs(panAfter.range.yards-groundAfter.range.yards)>.1);
+    for(const point of [{x:0,y:100,h:12},{x:0,y:100,h:20}]) {
+      const s=await page.evaluate(point=>__huntTest.rangePoint(point),point);
+      check('the horizon and sky have no invented finite distance',s.range===null&&s.text==='No range');
+    }
+    for(const [species,level] of [...Array.from({length:5},(_,i)=>['deer',i+1]),['boar',1]])for(const facing of [true,false]) {
+      const {point,state:s}=await page.evaluate(({species,level,facing})=>__huntTest.rangeAnimal(species,level,facing),{species,level,facing});
+      const expected=Math.hypot(point.x,point.y,12-point.h)/.9144;
+      check('the visible '+species+' '+level+' facing '+facing+' reports its exact surface distance',s.range?.surface==='animal'&&Math.abs(s.range.yards-expected)<1e-6&&s.text==='Range '+expected.toFixed(1)+' yd');
+    }
+    const gap=await page.evaluate(()=>__huntTest.rangeAnimal('deer',1,true,true));
+    check('a transparent leg gap ranges the field behind the animal',gap.state.range.surface==='ground'&&gap.state.range.point.y>gap.point.y);
+    for(const kind of ['owl','squirrel']) {
+      const {point,state:s}=await page.evaluate(kind=>__huntTest.rangeCritter(kind),kind);
+      check('ranging the visible '+kind+' uses its own depth',s.range?.surface==='animal'&&Math.abs(s.range.yards-Math.hypot(point.x,point.y,12-point.h)/.9144)<1e-6);
+    }
+    check('desktop yardage fits the scope and cannot intercept aiming',await rangeFits(page));
+    await page.screenshot({path:path.join(dump,'range-desktop.png')});
+    if(rangeWebkit){
+      check('WebKit range rendering has no errors or missing assets',!errors.length&&!missing.length);
+      console.log('Passed WebKit range checks: '+passedChecks);return;
+    }
+    await page.evaluate(()=>__huntTest.quiet());
     await page.screenshot({path:path.join(dump,'wide-field.png')});
     await page.evaluate(()=>__huntTest.showcase());await page.screenshot({path:path.join(dump,'sunny-field.png')});
     fs.writeFileSync(path.join(dump,'sunny-field-canvas.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
@@ -463,6 +536,14 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     const mobile=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,deviceScaleFactor:1});
     const phone=await setup(mobile,url);
     check('portrait field fits with 44-pixel controls',await noOverflow(phone));
+    await phone.evaluate(()=>{__huntTest.quiet();__huntTest.rangePoint({x:0,y:80,h:0});});
+    check('portrait yardage stays readable within the actual canvas',await rangeFits(phone));
+    await phone.screenshot({path:path.join(dump,'range-phone-portrait.png'),fullPage:true});
+    await phone.setViewportSize({width:844,height:390});await phone.locator('#hunt-canvas').scrollIntoViewIfNeeded();
+    check('landscape yardage stays within the letterboxed canvas',await rangeFits(phone));
+    await phone.screenshot({path:path.join(dump,'range-phone-landscape.png')});
+    await phone.setViewportSize({width:390,height:844});await phone.locator('#hunt-canvas').scrollIntoViewIfNeeded();
+    await phone.evaluate(()=>__huntTest.quiet());
     let target=await phone.evaluate(()=>__huntTest.fixture('deer',1,65,0));
     await phone.touchscreen.tap(target.x,target.y);
     check('touching the field aims without shooting',(await state(phone)).shots===0);
@@ -509,6 +590,8 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     check('Retina scope uses the full capped display canvas',await crisp.locator('#hunt-canvas').evaluate(c=>c.width===2560&&c.height===1440));
     check('Retina scope loads native detail within the six-image budget',await crisp.evaluate(()=>{const s=__huntTest.detailState();return s.density>=6000&&s.resident<=6;}));
     check('Retina scenery caching respects the same memory budget',await crisp.evaluate(()=>{const s=__huntTest.rasterState();return s.buffers<=3&&s.pixels<=13000000;}));
+    await crisp.evaluate(()=>__huntTest.rangePoint({x:20,y:80,h:0}));
+    check('Retina rendering keeps yardage and pointing coordinates aligned',await crisp.evaluate(()=>Math.abs(__huntTest.rangeState().range.yards-Math.hypot(20,80,12)/.9144)<1e-6));
     fs.writeFileSync(path.join(dump,'retina-scope.png'),Buffer.from(await crisp.evaluate(()=>__huntTest.screenshot()),'base64'));
     check('scripts have no page errors and all local assets load',!errors.length&&!missing.length);
     console.log('Passed checks: '+passedChecks);
