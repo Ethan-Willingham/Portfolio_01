@@ -1,13 +1,12 @@
 // DOM-free host machinery. No canvas, animation loop, network request or room
 // allocation happens merely by importing this module.
-export const VERSION = '3';
+export const VERSION = '4';
 export const FIXED_DT = 1 / 60;
 export const PLAYBACK_RATES = Object.freeze([1, 4, 12]);
 export const ROUTE = Object.freeze([
   { id: 'soap-film', title: 'Soap film', file: 'soap-film-room.js', assets: 'soap-film' },
   { id: 'negative-temperature', title: 'Superfluid', file: 'negative-temperature-room.js', assets: 'negative-temperature' },
-  { id: 'hydrogen-exactly', title: 'Hydrogen', file: 'hydrogen-exactly-room.js', assets: 'hydrogen-exactly' },
-  { id: 'qcd-lava-lamp', title: 'Gauge vacuum', file: 'qcd-lava-lamp-room.js', assets: 'qcd-lava-lamp' }
+  { id: 'hydrogen-exactly', title: 'Hydrogen', file: 'hydrogen-exactly-room.js', assets: 'hydrogen-exactly' }
 ]);
 export const BOOTSTRAP = { id: 'descent-bootstrap', title: 'Hydrogen interim study', file: 'descent-bootstrap-room.js', assets: 'descent' };
 export const ROOMS = [...ROUTE, BOOTSTRAP];
@@ -158,7 +157,7 @@ export class RoomManager {
 const ease = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
 export class RouteClock {
   constructor(saved = {}) {
-    this.index = clamp(Math.floor(saved.index || 0), 0, 3); this.cycle = Math.max(0, Math.floor(saved.cycle || 0));
+    this.index = clamp(Math.floor(saved.index || 0), 0, ROUTE.length - 1); this.cycle = Math.max(0, Math.floor(saved.cycle || 0));
     this.age = clamp(saved.age || 0, 0, 220); this.extension = clamp(saved.extension || 0, 0, 40); this.total = Math.max(0, saved.total || 0);
   }
   get phase() {
@@ -176,10 +175,10 @@ export class RouteClock {
     this.age += dt; this.total += dt;
     if (this.age + 1e-8 < 180 + this.extension) return false;
     this.age = 0; this.extension = 0; this.index++;
-    if (this.index === 4) { this.index = 0; this.cycle++; }
+    if (this.index === ROUTE.length) { this.index = 0; this.cycle++; }
     return true;
   }
-  seek(position) { const p = clamp(position, 0, 719); this.index = Math.floor(p / 180); this.age = p % 180; this.extension = 0; }
+  seek(position) { const p = clamp(position, 0, ROUTE.length * 180 - 1); this.index = Math.floor(p / 180); this.age = p % 180; this.extension = 0; }
   snapshot() { return { index: this.index, cycle: this.cycle, age: this.age, extension: this.extension, total: this.total, phase: this.phase }; }
 }
 export class AmbientClock {
@@ -222,11 +221,7 @@ export function scaleLabel(info, s = {}) {
 }
 export function routeCompleteness(registry, snapshots = {}) {
   const missing = ROUTE.filter(r => registry.entries.get(r.id)?.status !== 'ready').map(r => `js/${r.file}`);
-  const q = snapshots['qcd-lava-lamp'];
-  const group = q?.parameters?.group ?? q?.gaugeGroup ?? q?.group;
-  const model = q?.model ?? registry.entries.get('qcd-lava-lamp')?.info?.model ?? '';
-  const isSU3 = group === 'SU(3)' || /SU\s*\(\s*3\s*\)/i.test(model);
-  return { modulesReady: 4 - missing.length, missing, vacuumGroup: group ?? null, promisedSU3: isSU3, complete: missing.length === 0 && isSU3 && ROUTE.every(r => snapshots[r.id]) };
+  return { modulesReady: ROUTE.length - missing.length, modulesTotal: ROUTE.length, missing, complete: missing.length === 0 && ROUTE.every(r => snapshots[r.id]) };
 }
 export async function deriveRoomSeed(seed, id, cycle) {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`descent:v1:${seed}:${id}:${cycle}`));

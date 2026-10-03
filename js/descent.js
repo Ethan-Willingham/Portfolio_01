@@ -1,6 +1,6 @@
-import { VERSION, ROUTE, ROOMS, BOOTSTRAP, FIXED_DT, PLAYBACK_RATES, ModuleRegistry, RoomManager, RouteClock, AmbientClock, CostSamples, scaleLabel, routeCompleteness, deriveRoomSeed } from './descent-host.js?v=3';
+import { VERSION, ROUTE, ROOMS, BOOTSTRAP, FIXED_DT, PLAYBACK_RATES, ModuleRegistry, RoomManager, RouteClock, AmbientClock, CostSamples, scaleLabel, routeCompleteness, deriveRoomSeed } from './descent-host.js?v=4';
 import { offlineSeed, validSeed, verifyBeaconSeed, fetchBeaconSeed } from './descent-seed.js';
-import { configureRoom, exposureFor, parametersOf, roomPresentation } from './descent-room-adapters.js?v=3';
+import { configureRoom, exposureFor, parametersOf, roomPresentation } from './descent-room-adapters.js?v=4';
 
 const $ = id => document.getElementById(`descent-${id}`);
 const piece = document.getElementById('descent');
@@ -24,7 +24,8 @@ const PRESENTATION_REVISION = 3;
 let quality = saved?.presentationRevision === PRESENTATION_REVISION && ['low','medium','high'].includes(saved?.quality) ? saved.quality : 'high';
 let preferences = {hydrogenMode:['spectral','revival'].includes(saved?.preferences?.hydrogenMode)?saved.preferences.hydrogenMode:'spectral'};
 let clock = new RouteClock(saved?.clock);
-let roomId = saved?.roomId ?? null;
+let roomId = ROOMS.some(r=>r.id===saved?.roomId) ? saved.roomId : null;
+if (saved?.roomId && !roomId) { saved.visit = null; clock = new RouteClock(); }
 let manager, device, adapter, context, presenter, displayUniform, displayBind, presentationTarget;
 let loading = false, hidden = document.hidden, offscreen = false, deviceLost = false, disposed = false;
 let raf = 0, dirty = true, lastUi = 0, lastSave = 0, renderCount = 0, replayRemaining = 0, replayTotal = 0;
@@ -45,10 +46,9 @@ function textRow(label, value) {
 }
 function dependencyText() {
   const state = routeCompleteness(registry, measured);
-  if (state.missing.length) return `Route incomplete: ${state.modulesReady} of 4 modules available. Showing an explicitly labeled interim study when a route room is unavailable.`;
-  if (!state.promisedSU3) return 'Route incomplete: the vacuum room has not established SU(3) gauge theory.';
-  if (!state.complete) return 'About twelve minutes through four rooms, with dark rests. Instruments opens direct room choices.';
-  return 'Four rooms reporting live state. About twelve minutes per journey, with dark rests.';
+  if (state.missing.length) return `Route incomplete: ${state.modulesReady} of ${ROUTE.length} modules available. Showing an explicitly labeled interim study when a route room is unavailable.`;
+  if (!state.complete) return 'About nine minutes through three rooms, with dark rests. Instruments opens direct room choices.';
+  return 'Three rooms reporting live state. About nine minutes per journey, with dark rests.';
 }
 function updateUI(force = false) {
   const now = performance.now(); if (!force && now - lastUi < 500) return; lastUi = now;
@@ -60,8 +60,8 @@ function updateUI(force = false) {
   $('auto').checked = automatic; $('quality').value = quality;
   $('instruments').setAttribute('aria-expanded', String(!$('panel').hidden));
   if (document.activeElement !== $('position')) $('position').value = String(Math.floor(clock.position));
-  const p = Math.floor(clock.position); $('position-label').textContent = `${Math.floor(p/60)}:${String(p%60).padStart(2,'0')} / about 12:00`;
-  $('progress').style.width = `${clock.position/720*100}%`;
+  const p = Math.floor(clock.position); $('position-label').textContent = `${Math.floor(p/60)}:${String(p%60).padStart(2,'0')} / about 9:00`;
+  $('progress').style.width = `${clock.position/(ROUTE.length*180)*100}%`;
   $('seed-origin').textContent = `${seedError?`Beacon unavailable: ${seedError}. Kept the existing seed. `:''}${seed.source}${seed.round ? `, round ${seed.round}` : ''}. ${seed.derivation}`;
   $('replay').textContent = replayRemaining ? `Replaying seed progress: ${replayTotal-replayRemaining} of ${replayTotal} fixed steps. ${manualPaused ? 'Play to continue.' : ''}` : replayMeaning;
   if (!beaconRequest) $('notice').textContent = !device ? 'Calculated still. Live rooms require WebGPU.' : `${dependencyText()}${playbackRate > 1 ? ` Fast forward, up to ${playbackRate}x as this device allows.` : ''}`;
@@ -74,7 +74,7 @@ function updateUI(force = false) {
   const info = manager.active.info;
   const presentation = roomPresentation(roomId,s);
   $('hydrogen-control').hidden = roomId !== 'hydrogen-exactly'; $('hydrogen-mode').value = preferences.hydrogenMode;
-  $('number').textContent = roomId === BOOTSTRAP.id ? 'Interim study / route pending' : `${String(ROUTE.findIndex(r=>r.id===roomId)+1).padStart(2,'0')} / 04`;
+  $('number').textContent = roomId === BOOTSTRAP.id ? 'Interim study / route pending' : `${String(ROUTE.findIndex(r=>r.id===roomId)+1).padStart(2,'0')} / ${String(ROUTE.length).padStart(2,'0')}`;
   $('caption-title').textContent = ROOMS.find(r=>r.id===roomId)?.title ?? info.title;
   $('scale').textContent = scaleLabel(info,s);
   const description = presentation.explanation;
@@ -130,8 +130,8 @@ async function openRoom(id, { restore = null, retry = false } = {}) {
   setBusy(true); roomWorkPending = null; replayRemaining = 0; replayExpected = null; replayValidation = null; message('A dark rest',`Opening ${ROOMS.find(r=>r.id===id)?.title ?? id}.`); dirty = true;
   try {
     if (retry) await registry.load(id,true);
-    // The gauge sampler currently accepts two u32 seed words. Use the first
-    // 64 bits of the derived SHA-256 for every room and record that truncation.
+    // Use the first 64 bits of the derived SHA-256 for every room and record
+    // that truncation in each visit.
     const roomSeed = restore?.seed ?? (await deriveRoomSeed(seed.seed,id,clock.cycle)).slice(0,16);
     if (ticket !== roomRequest || disposed) return;
     device.pushErrorScope('validation');
@@ -168,7 +168,7 @@ function waitForRoomWork(a) {
   if (typeof a.room.waitForIdle !== 'function' || !manager.snapshot()?.busy) return;
   const work = { active: a }; roomWorkPending = work;
   // An asynchronous sweep must finish before another fixed step can consume
-  // its time. Otherwise fast batches would suppress the promised sweep rate.
+  // its time. This keeps fast batches from overrunning an asynchronous room update.
   Promise.resolve(a.room.waitForIdle()).catch(e => {
     if (!disposed && roomWorkPending === work) failRoom(e.message);
   }).finally(() => {
@@ -289,13 +289,13 @@ on($('about'),'click',() => togglePanel('about-panel','about','panel','instrumen
 on($('restart'),'click',() => {
   if (!device || deviceLost) { location.reload(); return; }
   clock = new RouteClock(); ambient.reset();
-  const id=automatic && routeCompleteness(registry,measured).modulesReady === 4 ? ROUTE[0].id : roomId;
+  const id=automatic && routeCompleteness(registry,measured).modulesReady === ROUTE.length ? ROUTE[0].id : roomId;
   void openRoom(id,{retry:registry.entries.get(id)?.status==='unavailable'});
 });
 on($('room'),'change',() => { void chooseRoom($('room').value); });
 on($('quality'),'change',() => { quality = $('quality').value; manager.quality = quality; void openRoom(roomId); });
 on($('hydrogen-mode'),'change',() => { preferences.hydrogenMode=$('hydrogen-mode').value; void openRoom(roomId); });
-on($('position'),'input',() => { const p = +$('position').value; $('position-label').textContent = `${Math.floor(p/60)}:${String(p%60).padStart(2,'0')} / about 12:00`; });
+on($('position'),'input',() => { const p = +$('position').value; $('position-label').textContent = `${Math.floor(p/60)}:${String(p%60).padStart(2,'0')} / about 9:00`; });
 on($('position'),'change',() => { if (!device || deviceLost) return; clock.seek(+$('position').value); automatic = !reducedMotion.matches; void openRoom(ROUTE[clock.index].id); });
 on($('auto'),'change',() => { automatic = $('auto').checked; if (automatic && device && roomId === BOOTSTRAP.id) void openRoom(ROUTE[clock.index].id); dirty = true; updateUI(true); wake(); persist(); });
 on($('apply-seed'),'click',() => { try { seed = offlineSeed($('seed').value.trim()); seedError=null; $('seed').setCustomValidity(''); clock.cycle = 0; if (device && !deviceLost) void openRoom(roomId); } catch (e) { $('seed').setCustomValidity(e.message); $('seed').reportValidity(); } });
@@ -360,7 +360,7 @@ async function init() {
     displayUniform = device.createBuffer({ label: 'Descent display fade',size: 16,usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     manager = new RoomManager({ device,registry,quality }); resize();
     await probing;
-    if (!roomId) { roomId = routeCompleteness(registry,measured).modulesReady === 4 ? ROUTE[0].id : BOOTSTRAP.id; if (roomId === BOOTSTRAP.id) automatic = false; }
+    if (!roomId) { roomId = routeCompleteness(registry,measured).modulesReady === ROUTE.length ? ROUTE[0].id : BOOTSTRAP.id; if (roomId === BOOTSTRAP.id) automatic = false; }
     if (reducedMotion.matches) { automatic = false; manualPaused = true; }
     await openRoom(roomId,{ restore: requestedReplay }); requestedReplay = null;
   } catch (e) {
@@ -368,7 +368,7 @@ async function init() {
     canvas.hidden = true; $('still').hidden = false; message(null); setBusy(false);
     $('caption-title').textContent = 'Hydrogen / calculated still'; $('number').textContent = 'CPU analytic projection / zero phase';
     $('scale').textContent = 'Mean radius 0.218 nm; 25% 1s and 75% 2p. Calculated in the ideal Coulomb model.';
-    $('explanation').textContent = `${e.message}. This still was calculated on the CPU from the analytic hydrogen interim model. The four-room journey requires live WebGPU modules.`;
+    $('explanation').textContent = `${e.message}. This still was calculated on the CPU from the analytic hydrogen interim model. The three-room journey requires live WebGPU modules.`;
     $('sources').replaceChildren(); const a = document.createElement('a'); a.href = 'https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0'; a.textContent = 'Bohr radius (NIST)'; $('sources').append(a);
     $('room').disabled = true; $('position').disabled = true; $('auto').disabled = true; $('quality').disabled = true;
     updateUI(true);

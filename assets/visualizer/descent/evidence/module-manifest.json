@@ -54,14 +54,6 @@
           "committedSHA256": "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe",
           "committedBytesWereTested": true
         },
-        "js/qcd-lava-lamp-room.js": {
-          "servedSHA256": [
-            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
-          ],
-          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
-          "committedSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
-          "committedBytesWereTested": true
-        },
         "js/soap-film-model.js": {
           "servedSHA256": [
             "d67369094cc16f9b7f4895cde6433dbfb3579ab94e05a3725ea0354285a1fa1a"
@@ -101,22 +93,6 @@
           ],
           "lastCommittedChange": "e9fe9d63f2f57e266d0882cf7c83a704977b3723",
           "committedSHA256": "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8",
-          "committedBytesWereTested": true
-        },
-        "js/qcd-lava-lamp-math.js": {
-          "servedSHA256": [
-            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
-          ],
-          "lastCommittedChange": "7b9df6da5faa6d78659c1bc20253acc215e99a76",
-          "committedSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
-          "committedBytesWereTested": true
-        },
-        "js/qcd-lava-lamp-shaders.js": {
-          "servedSHA256": [
-            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
-          ],
-          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
-          "committedSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
           "committedBytesWereTested": true
         },
         "assets/visualizer/descent/drand-verifier-1.4.2.js": {
@@ -186,14 +162,6 @@
           "committedSHA256": "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe",
           "committedBytesWereTested": true
         },
-        "js/qcd-lava-lamp-room.js": {
-          "servedSHA256": [
-            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
-          ],
-          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
-          "committedSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
-          "committedBytesWereTested": true
-        },
         "js/soap-film-model.js": {
           "servedSHA256": [
             "ff7ccd740d7ab5049beb29a35d52f7012e797a528c15a9a6cb6146d9330e2c7b"
@@ -238,22 +206,6 @@
           ],
           "lastCommittedChange": "e9fe9d63f2f57e266d0882cf7c83a704977b3723",
           "committedSHA256": "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8",
-          "committedBytesWereTested": true
-        },
-        "js/qcd-lava-lamp-shaders.js": {
-          "servedSHA256": [
-            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
-          ],
-          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
-          "committedSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
-          "committedBytesWereTested": true
-        },
-        "js/qcd-lava-lamp-math.js": {
-          "servedSHA256": [
-            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
-          ],
-          "lastCommittedChange": "7b9df6da5faa6d78659c1bc20253acc215e99a76",
-          "committedSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
           "committedBytesWereTested": true
         },
         "assets/visualizer/descent/drand-verifier-1.4.2.js": {
@@ -333,14 +285,6 @@
           "committedSHA256": "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe",
           "committedBytesWereTested": true
         },
-        "js/qcd-lava-lamp-room.js": {
-          "servedSHA256": [
-            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
-          ],
-          "lastCommittedChange": "af79a7e76f9d24045afd91571b983cd1b0f18e79",
-          "committedSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
-          "committedBytesWereTested": true
-        },
         "js/soap-film-model.js": {
           "servedSHA256": [
             "d271f9f85e36bde577766a8373f197891466d9938f2a18088e8236ebb33716b7"
@@ -379,22 +323,6 @@
           ],
           "lastCommittedChange": "8681961d5f6120feda289e441108c40c41740dae",
           "committedSHA256": "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a",
-          "committedBytesWereTested": true
-        },
-        "js/qcd-lava-lamp-shaders.js": {
-          "servedSHA256": [
-            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
-          ],
-          "lastCommittedChange": "af79a7e76f9d24045afd91571b983cd1b0f18e79",
-          "committedSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
-          "committedBytesWereTested": true
-        },
-        "js/qcd-lava-lamp-math.js": {
-          "servedSHA256": [
-            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
-          ],
-          "lastCommittedChange": "294b75c84308d613c63cde93416d32334b7d6c4e",
-          "committedSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
           "committedBytesWereTested": true
         },
         "js/hydrogen-exactly-shaders.js": {
@@ -484,14 +412,6 @@
           "sourceLastCommittedChange": "07c73b4e1ed3f02f91b437472410c12d9638fdb2",
           "ownedHostUpdate": false
         },
-        "js/qcd-lava-lamp-room.js": {
-          "servedSHA256": [
-            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
-          ],
-          "testedBytesSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
-          "sourceLastCommittedChange": "af79a7e76f9d24045afd91571b983cd1b0f18e79",
-          "ownedHostUpdate": false
-        },
         "js/negative-temperature-model.js": {
           "servedSHA256": [
             "0414b0a52f08c8e81650e94d9de0f8beaf400ba2023d29b1cbdf587f198c0a67"
@@ -538,22 +458,6 @@
           ],
           "testedBytesSHA256": "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8",
           "sourceLastCommittedChange": "07c73b4e1ed3f02f91b437472410c12d9638fdb2",
-          "ownedHostUpdate": false
-        },
-        "js/qcd-lava-lamp-shaders.js": {
-          "servedSHA256": [
-            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
-          ],
-          "testedBytesSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
-          "sourceLastCommittedChange": "af79a7e76f9d24045afd91571b983cd1b0f18e79",
-          "ownedHostUpdate": false
-        },
-        "js/qcd-lava-lamp-math.js": {
-          "servedSHA256": [
-            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
-          ],
-          "testedBytesSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
-          "sourceLastCommittedChange": "294b75c84308d613c63cde93416d32334b7d6c4e",
           "ownedHostUpdate": false
         },
         "assets/visualizer/descent/drand-verifier-1.4.2.js": {
@@ -635,14 +539,6 @@
           "committedBytesWereTested": true,
           "lastCommittedChange": "eb64140a8b12b46b2d308e215419a458012d2f84"
         },
-        "js/qcd-lava-lamp-room.js": {
-          "servedSHA256": [
-            "c1d217518dfbfa552b5bc275839ddb50b10afcb61f95c61e9d7d81a0b7f2bd04"
-          ],
-          "committedSHA256": "c1d217518dfbfa552b5bc275839ddb50b10afcb61f95c61e9d7d81a0b7f2bd04",
-          "committedBytesWereTested": true,
-          "lastCommittedChange": "ab99207e19b124ac956eb525e0f495051acab4c9"
-        },
         "js/negative-temperature-gpu.js": {
           "servedSHA256": [
             "e2bb85b99850d3179666572fbdd418f4124c2bad372627e310170d6407edf18d"
@@ -682,22 +578,6 @@
           "committedSHA256": "9279a7c2b2df6f5cbf798257e023d76476c30a49d4797832f49a995110a0b223",
           "committedBytesWereTested": true,
           "lastCommittedChange": "eb64140a8b12b46b2d308e215419a458012d2f84"
-        },
-        "js/qcd-lava-lamp-shaders.js": {
-          "servedSHA256": [
-            "1129d94516dfbbe66d365283c962c316d4fd13ff146de29405f796b6fe4ae6bc"
-          ],
-          "committedSHA256": "1129d94516dfbbe66d365283c962c316d4fd13ff146de29405f796b6fe4ae6bc",
-          "committedBytesWereTested": true,
-          "lastCommittedChange": "ab99207e19b124ac956eb525e0f495051acab4c9"
-        },
-        "js/qcd-lava-lamp-math.js": {
-          "servedSHA256": [
-            "2ddb25df3a1e1316711ee191a24b5d1d7df1dc005f15935bb0a75b3c58f40ad1"
-          ],
-          "committedSHA256": "2ddb25df3a1e1316711ee191a24b5d1d7df1dc005f15935bb0a75b3c58f40ad1",
-          "committedBytesWereTested": true,
-          "lastCommittedChange": "ab99207e19b124ac956eb525e0f495051acab4c9"
         },
         "js/hydrogen-exactly-math.js": {
           "servedSHA256": [

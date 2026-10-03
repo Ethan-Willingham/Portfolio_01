@@ -21,7 +21,6 @@ The route consumes these actual ES modules, in this order:
 | Soap film | js/soap-film-room.js | Flat reduced Boussinesq fluid, conservative thickness transport, drainage and phenomenological rupture |
 | Superfluid | js/negative-temperature-room.js | Conservative Gross-Pitaevskii evolution with a symmetric Fourier split step |
 | Hydrogen | js/hydrogen-exactly-room.js | Finite analytic basis of the ideal Coulomb Hamiltonian |
-| Gauge vacuum | js/qcd-lava-lamp-room.js | Pure SU(3) Wilson lattice gauge theory, no quarks |
 
 No magnet
 is inserted as an intermediate spatial scale. The standalone page scripts are
@@ -45,7 +44,7 @@ Driver overhead and JS heap are outside the byte estimates.
 
 ## Route and clocks
 
-The nominal cycle is 720 seconds of active watching time:
+The nominal cycle is 540 seconds of active watching time:
 
 | Phase in each room | Seconds |
 | --- | ---: |
@@ -55,8 +54,7 @@ The nominal cycle is 720 seconds of active watching time:
 | Dark rest | 2 |
 
 Loading pauses the clock and may lengthen a rest. Film thickness within 10%
-of its declared rupture threshold, a rupture, paddle withdrawal or an in-flight
-gauge update may extend the dwell, up to 210 seconds. A near-threshold film
+of its declared rupture threshold, a rupture, or paddle withdrawal may extend the dwell, up to 210 seconds. A near-threshold film
 waits for its measured rest state, within that ceiling.
 These conditions come from snapshots; brightness never invents a climax.
 Neither coefficients nor solver time are changed to meet the route schedule.
@@ -68,8 +66,6 @@ unchanged 1/60 steps for the model and route together. Fast playback yields
 after about 12 ms of CPU work per frame and retains a bounded step count;
 a single source step can exceed that budget. Actual speed depends on the
 device and room, with no skipped model steps to reach a time target.
-The gauge room's public waitForIdle finishes an asynchronous sweep before
-another host step runs, preserving the requested sweeps per model second.
 Speed is saved, changing it does not resume Pause, and reduced motion starts
 at 1x. Next room immediately starts the following room from its derived seed
 and preserves Pause and the automatic-journey choice.
@@ -111,42 +107,33 @@ monotone scientific ruler:
 | Superfluid | Model units | No atom species or laboratory length conversion is supplied |
 | Low-n hydrogen | 1.322943 nm, n_max squared a0 for n_max = 5 | Mode-specific snapshot and NIST Bohr radius; characteristic extent, not a density boundary |
 | Rydberg option | 47.625949 nm, n0 squared a0 for n0 = 30 | Mode-specific snapshot and NIST Bohr radius |
-| Gauge vacuum | Model units | No justified lattice spacing for this small Wilson box is supplied |
 
 Descent defaults to the source hydrogen room's low-n spectral mode through its
 public `setMode` extension. Rydberg remains an explicit option, with its own
 scale. The host accepts snapshot overrides ahead of static roomInfo metadata.
-It does not infer femtometers merely from beta 6.0 or borrow a calibration from
-another gauge group. Each source module's technical note supplies model details:
+Each source module's technical note supplies model details:
 [film](SOAP_FILM.md), [superfluid](NEGATIVE_TEMPERATURE.md),
-[hydrogen](HYDROGEN_EXACTLY.md), [gauge field](QCD_LAVA_LAMP.md).
+[hydrogen](HYDROGEN_EXACTLY.md).
 
 All room output is linear radiance. The host applies Reinhard c/(1+c), then
 the piecewise sRGB transfer, once. There is no host bloom, temporal feedback,
 fluid warp or dither. Exposure is 12 for the film, 1 for the superfluid and
-hydrogen, and 1.2 for the gauge field, matching standalone linear multipliers.
+hydrogen, matching standalone linear multipliers.
 Film interference colors are not replaced by a route palette. Hydrogen's
-spectral-frequency encoding is not emitted radiation. Gauge colors represent
-the signs of a smoothed charge estimator, not spectra or an instanton census.
+spectral-frequency encoding is not emitted radiation.
 
 The compact panel reads each snapshot's actual observables: film thickness and
 volume ledger, superfluid norm, circulation and cluster measures, hydrogen basis
-norm and overlaps, and gauge plaquette, matrix constraints and Q by cooling
-depth. The raw snapshot includes diagnostic ages and unavailable measurements.
+norm and overlaps. The raw snapshot includes diagnostic ages and unavailable measurements.
 There is no universal score. The superfluid uses a saturating density display,
 a faint phase tint and small spatial bloom. Hydrogen shades measured density
 contours; spectral mode retains frequency false color, while the optional
-Rydberg packet uses arbitrary density false color. The gauge render interpolates
-measured charge and action maps, normalizes their display by measured RMS and
-shades a 0.85-RMS charge contour within an action-density cloud; those operations leave observables unchanged. Negative
-temperature is not estimated by the superfluid room and is not claimed by this host. The gauge room is SU(3), but
-it is not the reference film's improved cooling or a continuum calibration.
+Rydberg packet uses arbitrary density false color. Negative temperature is not estimated by the superfluid room and is not claimed by this host.
 
 ## Seeds and restoration
 
 The default is an offline reproducible preset. Per-visit seeds are the first
-64 bits of SHA-256 of `descent:v1:rootSeed:roomId:routeCycle`. The truncation is
-explicit because the gauge sampler accepts two u32 seed words. A cycle repeats
+64 bits of SHA-256 of `descent:v1:rootSeed:roomId:routeCycle`. Every room records the truncation explicitly. A cycle repeats
 the route with newly derived initial seeds. Inactive live states do not continue.
 Hydrogen's source coefficients ignore its recorded seed; the host says so in
 the raw room provenance.
@@ -181,7 +168,7 @@ directly without advancing a paused simulation.
 ## Interim and missing WebGPU
 
 `js/descent-bootstrap-room.js` is an explicit interim study, not a substitute
-export under another agent's id. It is outside the four-room completeness test.
+export under another agent's id. It is outside the three-room completeness test.
 It uses normalized 1s and 2p_z states with probabilities 1/4 and 3/4:
 
 ```text
@@ -229,10 +216,7 @@ missing modules, no WebGPU and explicit device destruction to exercise device
 loss handling. No unexpected JS, shader or WebGPU validation errors remain.
 
 Two full real routes run at low quality with the same 1/60 solver sequence at
-faster wall-clock pacing. The accelerator awaits the gauge room's public
-waitForIdle after each call, preserving its two requested sweeps per active
-second instead of letting a tight JS batch suppress asynchronous updates.
-Each visit records its complete dwell, fresh measured
+faster wall-clock pacing. Each visit records its complete dwell, fresh measured
 diagnostics, transition and resource retirement. Snapshots and screenshots are
 actual output; no solver coefficient is altered for a screenshot. Default medium
 initialization, readbacks and separate render measurements are checked too.
@@ -243,8 +227,7 @@ The interim basis norm integrates to 1.0000000002109095 (tolerance 2e-9), and
 mean radius to 4.124999999894551 a0. Its GPU f32 point density agrees with the
 CPU formula within relative tolerance 3e-5 with a 1e-7 near-zero floor. Source
 numerical tests also pass: film mass conservation and refinement, Fourier/GPE
-norm and time refinement, hydrogen basis normalization and phase conventions,
-and SU(3) gauge invariance, heatbath statistics and nontrivial flux normalization.
+norm and time refinement, hydrogen basis normalization and phase conventions.
 Those checks establish implemented-model behavior, not experimental fidelity.
 The superfluid source reports 3.58% f32 norm loss over its separate 36-minute
 run. Descent starts each three-minute visit from a derived seed, rather than
@@ -253,18 +236,12 @@ concealing or correcting that precision limit with frame normalization.
 Final timings, source manifests and the exact tested module commits are recorded
 with the delivered evidence below. Measurements apply to the observed Apple
 Metal-3 hardware adapter, not real mobile hardware or Safari. GPU render times
-use timestamp queries around the room's render pass. QCD's slice compute is
-included in its queue-completion measurement, outside the volume-pass timestamp.
+use timestamp queries around the room's render pass.
 Solver call timings include calls that need no internal substep; queue fences
 include scheduling and browser overhead. These distinctions are kept in the
 machine-readable report.
 
-Two largest adjacent medium rooms, hydrogen and SU(3), allocate simultaneously
-on this adapter: about 29.7 MB for their persistent resources, plus test targets.
-That proves allocation fit, not concurrent solver performance or cross-device
-fit. Descent keeps its one-room policy. Every retired buffer, texture and query
-set is released; swap-chain allocations, pipeline driver caches and JS garbage
-collection are not measured as GPU VRAM.
+Pair-allocation tests use hydrogen and soap film. Descent retains only one active room. Every retired buffer, texture and query set is released; swap-chain allocations, pipeline driver caches and JS garbage collection are outside measured room storage.
 
 ## Delivered runs and measurements
 
@@ -286,7 +263,6 @@ and these source-room commits:
 | Film | 6a5de433d55c4ec770ab378759e6ed5cb4fde5bb |
 | Superfluid | e43966600499757fdf75c3dd87d91cb53b09a4c9 |
 | Hydrogen | 07c73b4e1ed3f02f91b437472410c12d9638fdb2 |
-| SU(3) gauge field | af79a7e76f9d24045afd91571b983cd1b0f18e79 |
 
 The committed superfluid maps three solver units per watching second;
 the earlier route report used 0.75. This is a source-room clock change.
@@ -306,27 +282,18 @@ substep or work below the browser timer resolution.
 | Film / 256 squared | 0.00 / 20.20 | 0.10 / 20.30 | 0.09 / 0.19 | 0.50 / 0.70 |
 | GPE / 256 squared | 0.00 / 0.10 | 1.10 / 1.30 | 0.16 / 0.17 | 0.60 / 0.70 |
 | Low-n H / 128 cubed, 160 ray steps | 0.00 / 0.10 | 1.60 / 2.50 | 1.28 / 1.41 | 1.70 / 2.40 |
-| SU(3) / 12 to the fourth | 0.00 / 0.10 | 0.10 / 0.20 | 0.87 / 0.95 | 1.30 / 1.50 |
 
 The final display and fade pass measured 0.90 / 1.09 ms over 60 GPU samples.
 The earlier reports retain their separate timings; none establishes a
 cross-device performance guarantee.
 
-Persistent room allocations were 2.294 MB for film, 1.611 MB for GPE,
-16.778 MB for hydrogen and 12.954 MB for SU(3), plus 4.427 MB for the current
-HDR target. MB here means one million bytes. Slow test readbacks raised the
-hydrogen ledger peak to 33.555 MB and SU(3) to 19.258 MB, excluding the target.
-All retired resource counts reached zero. The H/SU(3) pair allocation test
-succeeded with 29.732 MB of persistent rooms plus 3.686 MB of test targets;
-production still retains one active room.
+The reports record persistent room allocations and transient readback peaks separately. Every retired resource count reached zero; production retains one active room.
 
 The full-route film extensions were approximately 3.17 and 3.97 seconds and
 captured rupture before departure. GPE's measured states at 512.50 and
 512.15 solver units had eight vortices, a largest component of four, C2 = 1,
 and norm losses of 1.096% and 1.098%. The source solver's f32 precision limit
-is visible in those measurements and is not hidden by frame normalization. The gauge room reached 597 total sweeps including burn-in at the dwell
-capture; measured unitarity and determinant errors stayed below 0.001. Its Q
-near zero was reported without assigning an integer sector. The real GPE seed
+is visible in those measurements and is not hidden by frame normalization. The real GPE seed
 replay reproduced sampled field values exactly on this adapter (test tolerance
 1e-4); this does not establish cross-device equality.
 
@@ -337,13 +304,12 @@ Screenshots come from the named runs and are not visualizer inputs:
 | Film | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-soap-film-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-dwell.png) |
 | Superfluid | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-negative-temperature-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-negative-temperature-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-negative-temperature-dwell.png) |
 | Hydrogen | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-hydrogen-exactly-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-hydrogen-exactly-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-hydrogen-exactly-dwell.png) |
-| Gauge vacuum | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-qcd-lava-lamp-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-qcd-lava-lamp-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-qcd-lava-lamp-dwell.png) |
 
 Additional captures show [rupture](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-rupturing.png),
 [dark transition](../../assets/visualizer/descent/evidence/whole-route/live-dark-transition.png),
 [Rydberg mode](../../assets/visualizer/descent/evidence/whole-route/live-hydrogen-revival-option.png),
 [portrait](../../assets/visualizer/descent/evidence/whole-route/layout-hydrogen-exactly-390x844.png),
-[landscape](../../assets/visualizer/descent/evidence/whole-route/layout-qcd-lava-lamp-844x390.png),
+[landscape](../../assets/visualizer/descent/evidence/whole-route/layout-hydrogen-exactly-844x390.png),
 [device loss](../../assets/visualizer/descent/evidence/whole-route/device-loss.png), and the
 [calculated no-WebGPU fallback](../../assets/visualizer/descent/evidence/whole-route/no-webgpu-calculated-still.png).
 The reports retain both routes and the complete layout matrix.
@@ -351,9 +317,8 @@ The reports retain both routes and the complete layout matrix.
 ## Playback update checks
 
 The [playback update report](../../assets/visualizer/descent/evidence/playback/report.json)
-records 24 passed browser checks. All four actual rooms advanced through
-unchanged fixed steps at the requested faster rate. The gauge sweep count
-remained its initial 256 plus one sweep per 30 host steps. Faster hydrogen
+records 24 passed browser checks. All three actual rooms advanced through
+unchanged fixed steps at the requested faster rate. Faster hydrogen
 playback completed 667 host steps in about 1.57 wall seconds, compared
 with 87 at 1x in a separate sample; these are device observations, not
 promised rates. Automatic fades, rests and room changes accelerated too.
@@ -372,26 +337,23 @@ The original two full real-route captures remain the baseline evidence above.
 The [sharpness report](../../assets/visualizer/descent/evidence/sharpness/report.json)
 records 27 passed browser checks in one frozen publication checkout. Every
 actual room initialized and rendered at high quality. The desktop 1440 by 900
-view used a 2880 by 1800 canvas. All four rooms filled the viewport at 1440 by
+view used a 2880 by 1800 canvas. All three rooms filled the viewport at 1440 by
 900, 390 by 844 and 844 by 390; resize preserved Pause. About and Instruments
 opened as exclusive overlays and closed with Escape. Native and rejected
 fullscreen, old-preference migration, restoration, missing WebGPU, device loss,
 resource disposal and all prior fast-forward controls passed.
 
 High uses a 512-square film grid, the source's validated 512-square superfluid,
-a 160-cubed hydrogen density field with 224 ray intervals, and a 24-to-the-fourth
-SU(3) lattice. Film framing is enlarged through its public filmFill render
+and a 160-cubed hydrogen density field with 224 ray intervals. Film framing is enlarged through its public filmFill render
 argument. Source equations and coefficients are unchanged. The host requests
 a performance adapter and retains its one-room allocation policy. High-detail
-startup, particularly the gauge burn-in, takes longer than the earlier medium
-quality run. Watching time can slow under load while spatial detail stays fixed.
+startup takes longer than the earlier medium quality run. Watching time can slow under load while spatial detail stays fixed.
 Earlier numerical and full-route reports remain evidence for their recorded
 source versions, not timing promises for these larger grids.
 
 Current captures: [film](../../assets/visualizer/descent/evidence/sharpness/live-soap-film-startup.png),
 [superfluid](../../assets/visualizer/descent/evidence/sharpness/live-negative-temperature-startup.png),
 [hydrogen](../../assets/visualizer/descent/evidence/sharpness/live-hydrogen-exactly-startup.png),
-[gauge vacuum](../../assets/visualizer/descent/evidence/sharpness/live-qcd-lava-lamp-startup.png),
 [portrait](../../assets/visualizer/descent/evidence/sharpness/playback-controls-390x844.png),
 [landscape](../../assets/visualizer/descent/evidence/sharpness/playback-controls-844x390.png).
 
@@ -400,7 +362,7 @@ Current captures: [film](../../assets/visualizer/descent/evidence/sharpness/live
 - [NIST Bohr radius](https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0) and
   [MIT Quantum Physics I](https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2016/)
   for the interim study's units and eigenstate model.
-- The four roomInfo source lists and the linked source-room technical notes for
+- The three roomInfo source lists and the linked source-room technical notes for
   their equations, calibration limits, numerical checks and color meanings.
 - [drand JavaScript client](https://github.com/drand/drand-client) and
   [quicknet HTTP API](https://docs.drand.love/developer/http-api/) for verification.

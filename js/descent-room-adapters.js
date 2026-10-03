@@ -1,9 +1,9 @@
-// Host presentation and documented public extensions. The four source modules
+// Host presentation and documented public extensions. The three source modules
 // retain all equations, parameters, diagnostics and resource ownership.
 export function configureRoom(id,room,{hydrogenMode='spectral'}={}) {
   if(id==='hydrogen-exactly' && typeof room.setMode==='function') room.setMode(hydrogenMode);
 }
-export const exposureFor = id => id === 'soap-film' ? 12 : id === 'qcd-lava-lamp' ? 1.2 : 1;
+export const exposureFor = id => id === 'soap-film' ? 12 : 1;
 export const parametersOf = s => s?.parameters ?? s?.parameterValues ?? null;
 export function roomPresentation(id,s) {
   const d=s.diagnostics ?? {};
@@ -30,14 +30,6 @@ export function roomPresentation(id,s) {
     colors:s.mode==='spectral'?'False color of visible beat frequencies; not radiated light. Infrared pairs do not acquire a visible spectral color.':s.parameterValues?.colorEncoding==='density false color'?'Arbitrary density false color; the packet\'s infrared beats are not shown as visible spectral light.':'Single density tint; infrared beat frequencies are not shown as visible spectral light.',
     observables:{'Mode':s.mode,'Basis norm':s.analyticNorm,'Autocorrelation':s.autocorrelation,'Rotation-adjusted overlap':s.rotationAdjustedOverlap,'Finite-grid captured mass':s.spatialCapturedMass,'Grid':s.parameterValues?.grid,'Basis states':s.parameterValues?.states?.length,'Measurement limitations':s.unavailableMeasurements},
     event:s.routeEvent
-  };
-  if(id==='qcd-lava-lamp')return{
-    explanation:`A pure ${s.parameters?.group ?? 'unspecified-group'} gauge field is sampled on a small four-dimensional lattice. Colors show a smoothed charge-density estimator. The scan moves through a lattice coordinate; it is not physical time.`,
-    clock:`${s.parameters?.sweepsPerAmbientSecond ?? 'Unspecified'} requested Markov sweeps per watching second; completed sweeps are measured. Cooling depth ${s.parameters?.depth ?? 'unavailable'}.`,
-    units:s.simulationTimeUnits,
-    colors:'Warm and cool lobes encode opposite signs of smoothed topological charge density; zero net charge can contain both signs.',
-    observables:{'Gauge group':s.parameters?.group,'Wilson beta':s.parameters?.beta,'Lattice':s.parameters?.dimensions,'Average plaquette':s.averagePlaquette,'Unitarity error':s.unitarityError,'Determinant error':s.determinantError,'Q by cooling depth':s.chargeByCoolingDepth,'Integer sector':s.sectorReason,'Diagnostic age (s)':s.diagnosticAgeSeconds},
-    event:{pending:s.busy===true,complete:s.busy===false,label:'In-flight measured Markov update'}
   };
   return{explanation:s.explanation??s.model,clock:s.timeAxisMeaning,units:s.simulationTimeUnits,colors:s.colorMeaning,observables:s.diagnostics??{},event:s.routeEvent};
 }
