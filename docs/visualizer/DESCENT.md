@@ -251,30 +251,31 @@ collection are not measured as GPU VRAM.
 
 ## Delivered runs and measurements
 
-[Whole-route report](../../assets/visualizer/descent/evidence/whole-route/report.json)
-records 28 passed browser checks, including two complete real routes.
-[Fresh-module report](../../assets/visualizer/descent/evidence/final/report.json)
-records 20 passed checks, including the Rydberg option, numerical replay,
-listener removal and subsequent source-room updates. The
+[Publication report](../../assets/visualizer/descent/evidence/whole-route/report.json)
+records 29 passed browser checks, including two complete real routes through a
+fixed committed checkout. The [earlier working-copy report](../../assets/visualizer/descent/evidence/final/report.json)
+and [earlier route report](../../assets/visualizer/descent/evidence/earlier-whole-route-report.json)
+retain previous measurements. The
 [module manifest](../../assets/visualizer/descent/evidence/module-manifest.json)
-records every served SHA-256 and whether it matches committed bytes. A room
-loaded before an update keeps its imported version for that visit. Source
-updates were never staged in the Descent commit.
+records every served SHA-256 and exact source commit. All publication-run
+served modules match their committed bytes. Source implementations were never
+staged in the Descent commits.
 
-Reviewed and tested source commits include:
+The publication run tested host commit 58f454de6b1c97d92866d914a10e505ad537babb
+and these source-room commits:
 
 | Input | Commit |
 | --- | --- |
-| Film | c1d8304e2c0cb25fb51bab01a3ec76b1f080c694 |
-| Superfluid | a961fea4985fd4e477dc7d4bdb61d6d98b75350d |
-| Hydrogen | e9fe9d63f2f57e266d0882cf7c83a704977b3723 |
-| SU(3) gauge field | d2cca0b3f40211383963142ae58ff9d9f1f005f5 |
+| Film | 6a5de433d55c4ec770ab378759e6ed5cb4fde5bb |
+| Superfluid | e43966600499757fdf75c3dd87d91cb53b09a4c9 |
+| Hydrogen | 07c73b4e1ed3f02f91b437472410c12d9638fdb2 |
+| SU(3) gauge field | af79a7e76f9d24045afd91571b983cd1b0f18e79 |
 
-The later superfluid working copy maps three solver units per watching second;
-the earlier full-route capture used 0.75. This is a source-room clock change,
-not a host alteration of physical coefficients. Its actual parameters and
-clock are displayed and saved. The film's optional persistent/oval standalone
-mode does not replace Descent's square, draining default.
+The committed superfluid maps three solver units per watching second;
+the earlier route report used 0.75. This is a source-room clock change.
+Its actual parameters and clock are displayed and saved. The film's optional
+persistent/oval standalone mode does not replace Descent's square, draining
+default. The publication run used that draining default throughout both routes.
 
 The final medium measurements below used Chrome for Testing 148.0.7778.96,
 Apple M1 Pro hardware with the non-fallback apple / metal-3 adapter, and an
@@ -285,14 +286,14 @@ substep or work below the browser timer resolution.
 
 | Room / medium grid | Step call CPU | Step queue fence | Render GPU timestamp | Render queue fence |
 | --- | ---: | ---: | ---: | ---: |
-| Film / 256 squared | 0.00 / 20.70 | 0.10 / 20.90 | 0.14 / 0.32 | 0.60 / 0.90 |
-| GPE / 256 squared | 0.00 / 0.10 | 1.80 / 2.60 | 0.30 / 0.43 | 0.80 / 1.10 |
-| Low-n H / 128 cubed, 160 ray steps | 0.00 / 0.10 | 2.10 / 2.70 | 1.65 / 2.06 | 2.30 / 2.70 |
-| SU(3) / 12 to the fourth | 0.00 / 0.00 | 0.10 / 0.20 | 1.28 / 2.14 | 1.80 / 2.80 |
+| Film / 256 squared | 0.00 / 20.20 | 0.10 / 20.30 | 0.09 / 0.19 | 0.50 / 0.70 |
+| GPE / 256 squared | 0.00 / 0.10 | 1.10 / 1.30 | 0.16 / 0.17 | 0.60 / 0.70 |
+| Low-n H / 128 cubed, 160 ray steps | 0.00 / 0.10 | 1.60 / 2.50 | 1.28 / 1.41 | 1.70 / 2.40 |
+| SU(3) / 12 to the fourth | 0.00 / 0.10 | 0.10 / 0.20 | 0.87 / 0.95 | 1.30 / 1.50 |
 
-The final display and fade pass measured 1.40 / 2.77 ms
-over 60 GPU samples. The same earlier full-route run measured 1.44 / 2.84 ms.
-The reports keep both results rather than treating that variation as a guarantee.
+The final display and fade pass measured 0.90 / 1.09 ms over 60 GPU samples.
+The earlier reports retain their separate timings; none establishes a
+cross-device performance guarantee.
 
 Persistent room allocations were 2.294 MB for film, 1.611 MB for GPE,
 16.778 MB for hydrogen and 12.954 MB for SU(3), plus 4.427 MB for the current
@@ -303,9 +304,10 @@ succeeded with 29.732 MB of persistent rooms plus 3.686 MB of test targets;
 production still retains one active room.
 
 The full-route film extensions were approximately 3.17 and 3.97 seconds and
-captured rupture before departure. GPE's measured state near 128 solver units
-had eight vortices, a largest component of four, C2 = 1, and norm loss about
-0.247%. The gauge room reached 597 total sweeps including burn-in at the dwell
+captured rupture before departure. GPE's measured states at 512.50 and
+512.15 solver units had eight vortices, a largest component of four, C2 = 1,
+and norm losses of 1.096% and 1.098%. The source solver's f32 precision limit
+is visible in those measurements and is not hidden by frame normalization. The gauge room reached 597 total sweeps including burn-in at the dwell
 capture; measured unitarity and determinant errors stayed below 0.001. Its Q
 near zero was reported without assigning an integer sector. The real GPE seed
 replay reproduced sampled field values exactly on this adapter (test tolerance
@@ -315,18 +317,18 @@ Screenshots come from the named runs and are not visualizer inputs:
 
 | Room | Current initial state | Developing structure | Dwell / measured state |
 | --- | --- | --- | --- |
-| Film | [Initial](../../assets/visualizer/descent/evidence/final/live-soap-film-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-dwell.png) |
-| Superfluid | [Initial](../../assets/visualizer/descent/evidence/final/live-negative-temperature-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-negative-temperature-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-negative-temperature-dwell.png) |
-| Hydrogen | [Initial](../../assets/visualizer/descent/evidence/final/live-hydrogen-exactly-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-hydrogen-exactly-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-hydrogen-exactly-dwell.png) |
-| Gauge vacuum | [Initial](../../assets/visualizer/descent/evidence/final/live-qcd-lava-lamp-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-qcd-lava-lamp-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-qcd-lava-lamp-dwell.png) |
+| Film | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-soap-film-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-dwell.png) |
+| Superfluid | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-negative-temperature-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-negative-temperature-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-negative-temperature-dwell.png) |
+| Hydrogen | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-hydrogen-exactly-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-hydrogen-exactly-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-hydrogen-exactly-dwell.png) |
+| Gauge vacuum | [Initial](../../assets/visualizer/descent/evidence/whole-route/live-qcd-lava-lamp-startup.png) | [Developing](../../assets/visualizer/descent/evidence/whole-route/real-route-1-qcd-lava-lamp-developing.png) | [Dwell](../../assets/visualizer/descent/evidence/whole-route/real-route-1-qcd-lava-lamp-dwell.png) |
 
 Additional captures show [rupture](../../assets/visualizer/descent/evidence/whole-route/real-route-1-soap-film-rupturing.png),
 [dark transition](../../assets/visualizer/descent/evidence/whole-route/live-dark-transition.png),
-[Rydberg mode](../../assets/visualizer/descent/evidence/final/live-hydrogen-revival-option.png),
-[portrait](../../assets/visualizer/descent/evidence/final/layout-hydrogen-exactly-390x844.png),
-[landscape](../../assets/visualizer/descent/evidence/final/layout-qcd-lava-lamp-844x390.png),
-[device loss](../../assets/visualizer/descent/evidence/final/device-loss.png), and the
-[calculated no-WebGPU fallback](../../assets/visualizer/descent/evidence/final/no-webgpu-calculated-still.png).
+[Rydberg mode](../../assets/visualizer/descent/evidence/whole-route/live-hydrogen-revival-option.png),
+[portrait](../../assets/visualizer/descent/evidence/whole-route/layout-hydrogen-exactly-390x844.png),
+[landscape](../../assets/visualizer/descent/evidence/whole-route/layout-qcd-lava-lamp-844x390.png),
+[device loss](../../assets/visualizer/descent/evidence/whole-route/device-loss.png), and the
+[calculated no-WebGPU fallback](../../assets/visualizer/descent/evidence/whole-route/no-webgpu-calculated-still.png).
 The reports retain both routes and the complete layout matrix.
 
 ## Sources and asset provenance
