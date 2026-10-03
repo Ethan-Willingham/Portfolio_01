@@ -16,14 +16,13 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // Recounted 2026-10-01 after moving The Wisdom Never Written Down and
-  // The Zhuangzi into In Progress: 25 archived posts plus 39 in-progress
-  // posts at their root URLs, against 86 indexed posts in all.
+  // Recounted 2026-10-02 after deleting a post: 24 archived posts plus
+  // 39 in-progress posts at their root URLs, against 85 indexed posts in all.
   // Recount both numbers together when membership changes.
   // `node tools/build-search-index.mjs` prints the active / in progress /
   // archived split used here.
-  var ARCHIVED = 64;
-  var TOTAL = 86;
+  var ARCHIVED = 63;
+  var TOTAL = 85;
   var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 74
 
   var css =

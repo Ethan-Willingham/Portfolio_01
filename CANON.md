@@ -264,7 +264,7 @@ books each get their own post.
 - Movements that became businesses or cages: Scientology, est and Landmark, A Course in Miracles, Theosophy and the New Age (D, case study) [add]
 
 **12. The honest blind spot**
-- The wisdom never written down: oral and indigenous traditions, Native American, African, Aboriginal (B, essay) [add]
+- The wisdom never written down: oral and indigenous traditions, Native American, African, Aboriginal (B, essay) [removed by owner, 2026-10-02]
 
 **13. Strategy and power** (the amoral art of winning, distinct from ethics)
 - ★ Sun Tzu, The Art of War (A) [add], short and aphoristic, a dozen translations diverge
