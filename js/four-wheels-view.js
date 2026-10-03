@@ -30,6 +30,12 @@
     v=Math.imul(v^(v>>>16),0x7feb352d);v=Math.imul(v^(v>>>15),0x846ca68b);
     return ((v^(v>>>16))>>>0)/4294967296;
   }
+  function noise(x,y,size) {
+    const ix=Math.floor(x/size),iy=Math.floor(y/size),u=x/size-ix,v=y/size-iy;
+    const sx=u*u*(3-2*u),sy=v*v*(3-2*v);
+    const a=hash(ix,iy),b=hash(ix+1,iy),c=hash(ix,iy+1),d=hash(ix+1,iy+1);
+    return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy;
+  }
   function rect(g,x,y,w,h,color) {g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
   function poly(g,points,color) {
     if(points.length<3)return;
@@ -810,9 +816,54 @@
     }
     function clipPolygon(points,axis,value,sign){const out=[];for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length],inside=(a[axis]-value)*sign>=0,other=(b[axis]-value)*sign>=0;if(inside)out.push(a);if(inside!==other){const t=(value-a[axis])/(b[axis]-a[axis]);out.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});}}return out;}
     function mesh(g,points,color,tile,requireFloor=false){
-      let p=clipPolygon(clipPolygon(clipPolygon(clipPolygon(points,'x',tile.x,1),'x',tile.x+tile.w,-1),'y',tile.y,1),'y',tile.y+tile.h,-1);if(p.length<3)return;
+      const p=clipPolygon(clipPolygon(clipPolygon(clipPolygon(points,'x',tile.x,1),'x',tile.x+tile.w,-1),'y',tile.y,1),'y',tile.y+tile.h,-1);
+      if(p.length<3)return;
       const b=root.CartCourse.bounds(p),step=8;
-      for(let y=Math.floor(b.top/step)*step;y<b.bottom;y+=step)for(let x=Math.floor(b.left/step)*step;x<b.right;x+=step){const part=clipPolygon(clipPolygon(clipPolygon(clipPolygon(p,'x',x,1),'x',x+step,-1),'y',y,1),'y',y+step,-1);if(part.length<3)continue;const center={x:part.reduce((a,p)=>a+p.x,0)/part.length,y:part.reduce((a,p)=>a+p.y,0)/part.length};if(requireFloor&&!root.CartCourse.sample(terrainLevel,center))continue;const q=part.map(onGround),z=Terrain.height(terrainLevel,center),gx=(Terrain.height(terrainLevel,{x:center.x+1,y:center.y})-z),gy=(Terrain.height(terrainLevel,{x:center.x,y:center.y+1})-z);groundPoly(g,q,blend(color,P.dark,clamp((gx+gy)*.12,-.05,.2)));}
+      for(let y=Math.floor(b.top/step)*step;y<b.bottom;y+=step)for(let x=Math.floor(b.left/step)*step;x<b.right;x+=step){
+        const part=clipPolygon(clipPolygon(clipPolygon(clipPolygon(p,'x',x,1),'x',x+step,-1),'y',y,1),'y',y+step,-1);
+        if(part.length<3)continue;
+        const center={x:part.reduce((a,p)=>a+p.x,0)/part.length,y:part.reduce((a,p)=>a+p.y,0)/part.length};
+        if(requireFloor){
+          const surface=root.CartCourse.sample(terrainLevel,center,false);
+          if(!surface||typeof requireFloor==='function'&&!requireFloor(surface))continue;
+        }
+        const q=part.map(onGround),z=Terrain.height(terrainLevel,center);
+        const gx=Terrain.height(terrainLevel,{x:center.x+1,y:center.y})-z,gy=Terrain.height(terrainLevel,{x:center.x,y:center.y+1})-z;
+        // Sample color on the world grid so overlapping ribbons share a tint.
+        const tint=typeof color==='function'?color(x+step/2,y+step/2):color;
+        groundPoly(g,q,blend(tint,P.dark,clamp((gx+gy)*.12,-.05,.2)));
+      }
+    }
+    function courseRoadArt(level) {
+      const bands=[],arrows=[];
+      for(const section of level.sections){
+        const path=section.path,offset=(i,r,side)=>{
+          const p=path[i],before=path[Math.max(0,i-1)],after=path[Math.min(path.length-1,i+1)];
+          const normal=(a,b)=>{const d=Math.hypot(b.x-a.x,b.y-a.y);return d?{x:-(b.y-a.y)/d,y:(b.x-a.x)/d}:null;};
+          const a=normal(before,p)||normal(p,after),b=normal(p,after)||a,n=normalize({x:a.x+b.x,y:a.y+b.y,z:0}),m=r/Math.max(.35,n.x*b.x+n.y*b.y);
+          return {x:p.x+n.x*m*side,y:p.y+n.y*m*side};
+        };
+        let distance=section.startDistance;
+        for(let i=0;i<path.length-1;i++){
+          const a=path[i],b=path[i+1],length=Math.hypot(b.x-a.x,b.y-a.y),edge=section.width/2;
+          const interpolate=(p,q,t)=>({x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t});
+          for(const side of [-1,1]){
+            const inner=[offset(i,edge-7,side),offset(i+1,edge-7,side)],outer=[offset(i,edge,side),offset(i+1,edge,side)];
+            for(let u=0;u<length-.001;){
+              // Paint blocks keep their phase through every short curve segment.
+              const block=Math.floor((distance+u+.001)/18),end=Math.min(length,(block+1)*18-distance),t=u/length,v=end/length;
+              const poly=[interpolate(inner[0],inner[1],t),interpolate(inner[0],inner[1],v),interpolate(outer[0],outer[1],v),interpolate(outer[0],outer[1],t)];
+              bands.push({poly,red:block%2===0,bounds:root.CartCourse.bounds(poly)});u=end;
+            }
+          }
+          if(length>90){const p={x:(a.x+b.x)/2,y:(a.y+b.y)/2,a:Math.atan2(b.y-a.y,b.x-a.x)};
+            const poly=[[-15,-3],[-1,-3],[-1,-8],[15,0],[-1,8],[-1,3],[-15,3]].map(([x,y])=>local(p,x,y));
+            arrows.push({poly,surface:section.surface,bounds:root.CartCourse.bounds(poly)});
+          }
+          distance+=length;
+        }
+      }
+      return {bands,arrows};
     }
     function cliffFaces(scene,w,visible,mode='upper'){
       const Course=root.CartCourse;
@@ -824,8 +875,36 @@
       const Course=root.CartCourse,size=256,area=quad(x*size,y*size,size,size),q=area.map(p=>project(p)),left=Math.floor(Math.min(...q.map(p=>p.x)))-5,top=Math.floor(Math.min(...q.map(p=>p.y)))-140;
       const c=document.createElement('canvas');c.width=Math.ceil(Math.max(...q.map(p=>p.x))-left)+8;c.height=Math.ceil(Math.max(...q.map(p=>p.y))-top)+12;
       const g=c.getContext('2d');g.translate(-left,-top);
+      const tileBounds={x:x*size,y:y*size,w:size,h:size},surfaceTints=new Map();
+      const legs=w.level.legs.filter(l=>Math.max(l.a.x,l.b.x)+l.width>x*size&&Math.min(l.a.x,l.b.x)-l.width<(x+1)*size&&Math.max(l.a.y,l.b.y)+l.width>y*size&&Math.min(l.a.y,l.b.y)-l.width<(y+1)*size);
+      const roadAt=(p,kind)=>{let best=null;for(const l of legs)if(l.surface===kind){const q=Course.nearest(p,l.a,l.b);if(!best||q.d<best.d)best={...q,leg:l};}return best;};
+      const surfaceTint=(kind,xx,yy)=>{
+        const key=kind+','+xx+','+yy;if(surfaceTints.has(key))return surfaceTints.get(key);
+        const broad=noise(xx,yy,72),fine=noise(xx+317,yy-109,21),road=kind==='dirt'||kind==='asphalt'?roadAt({x:xx,y:yy},kind):null;
+        let color;
+        if(kind==='grass')color=blend(blend(P.pine,P.sage,.14+broad*.19),P.dark,fine*.055);
+        else if(kind==='dirt'){
+          color=blend(blend(P.clay,P.gold,.24+broad*.26),P.hairDark,(1-fine)*.075);
+          if(road){
+            const edge=clamp(road.d/(road.leg.width/2),0,1),track=Math.exp(-(((road.d-road.leg.width*.22)/9)**2));
+            color=blend(color,P.gold,track*(.13+fine*.08));color=blend(color,P.hairDark,edge**8*.17);
+          }
+        }else if(kind==='asphalt'){
+          color=blend(blend(P.steelShade,P.dark,.42),P.steel,broad*.055+fine*.025);
+          if(road){
+            const edge=clamp(road.d/(road.leg.width/2),0,1),wear=Math.exp(-((road.d/(road.leg.width*.3))**2));
+            color=blend(color,P.steel,wear*.065);color=blend(color,P.dark,edge**8*.12);
+          }
+        }else color=blend(P.cream,P.coral,.15);
+        surfaceTints.set(key,color);return color;
+      };
       const candidates=Course.query(w.level.floorAreas,w.level.floorGrid,{x:(x+.5)*size,y:(y+.5)*size},size*.72).sort((a,b)=>(a.kind==='grass'?0:a.kind==='tile'?2:1)-(b.kind==='grass'?0:b.kind==='tile'?2:1));
-      for(const a of candidates)mesh(g,a.poly,a.kind==='grass'?blend(P.pine,P.sage,.2):a.kind==='dirt'?blend(P.clay,P.gold,.28):a.kind==='asphalt'?blend(P.steelShade,P.dark,.35):blend(P.cream,P.coral,.15),{x:x*size,y:y*size,w:size,h:size});
+      for(const a of candidates)mesh(g,a.poly,(xx,yy)=>surfaceTint(a.kind,xx,yy),tileBounds);
+      // Low, soft rail shadows stay in the floor cache and follow its elevation.
+      for(const rail of w.level.rails){
+        const b=rail.bounds;if(b.right+10<x*size||b.left>(x+1)*size||b.bottom+8<y*size||b.top>(y+1)*size)continue;
+        for(const [dx,dy,strength]of [[9,6,.09],[5,3,.13]])mesh(g,[rail.a,rail.b,add(rail.b,dx,dy),add(rail.a,dx,dy)],(xx,yy)=>{const s=Course.sample(w.level,{x:xx,y:yy},false);return blend(surfaceTint(s?.kind||'grass',xx,yy),P.dark,strength);},tileBounds,s=>s.kind!=='tile');
+      }
       const strip=f=>{const c=Math.cos(f.a),s=Math.sin(f.a);return [[0,-f.width/2],[f.length,-f.width/2],[f.length,f.width/2],[0,f.width/2]].map(([u,v])=>({x:f.x+u*c-v*s,y:f.y+u*s+v*c}));};
       for(const [f,color]of [[w.level.terrain.ice,blend(P.blue,P.light,.45)],[w.level.terrain.boost,P.gold]])mesh(g,strip(f),color,{x:x*size,y:y*size,w:size,h:size},true);
       const bumps=w.level.terrain.bumps;
@@ -833,13 +912,20 @@
       for(let yy=y*size;yy<(y+1)*size;yy+=8)for(let xx=x*size;xx<(x+1)*size;xx+=8){
         const h=hash(xx,yy),p=onGround({x:xx+h*6,y:yy+hash(yy,xx)*6}),surface=Course.sample(w.level,p);if(!surface)continue;const a=project(p);
         if(surface.kind==='grass'){
-          if(h>.48){line(g,a,{x:a.x-2,y:a.y-3},h>.82?P.sage:P.pine,1);line(g,a,{x:a.x+2,y:a.y-2},P.pine,1);}
-          if(h>.96)rect(g,a.x,a.y-3,2,2,P.gold);
+          if(h>.57){line(g,a,{x:a.x-2,y:a.y-3},h>.82?P.sage:P.pine,1);line(g,a,{x:a.x+2,y:a.y-2},P.pine,1);}
+          if(h>.965){rect(g,a.x,a.y-3,2,1,P.cream);rect(g,a.x+1,a.y-2,1,1,P.gold);}
         }else if(surface.kind==='dirt'){
-          g.globalAlpha=.18+h*.25;rect(g,a.x,a.y,h>.8?3:1,1,h>.55?P.hairDark:P.light);g.globalAlpha=1;
-          if(h>.95)groundLine(g,p,onGround({x:p.x+7,y:p.y+2}),P.hairDark,1,.22);
+          if(h>.38){g.globalAlpha=.13;rect(g,a.x,a.y,1,1,h>.7?P.hairDark:P.light);g.globalAlpha=1;}
+          if(h>.84){const r=.8+hash(xx,yy+37)*1.1;
+            groundPoly(g,[{x:p.x-r,y:p.y},{x:p.x,y:p.y-r*.7},{x:p.x+r,y:p.y},{x:p.x,y:p.y+r*.7}].map(onGround),blend(P.clay,P.hairDark,.3));
+            rect(g,a.x-1,a.y-1,r>1.5?2:1,1,blend(P.gold,P.cream,.3));
+          }
+          if(h>.94){const road=roadAt(p,'dirt');if(road){const angle=Math.atan2(road.leg.b.y-road.leg.a.y,road.leg.b.x-road.leg.a.x),end={x:p.x+Math.cos(angle)*9,y:p.y+Math.sin(angle)*9};if(Course.sample(w.level,end,false)?.kind==='dirt')groundLine(g,p,onGround(end),P.hairDark,1,.2);}}
         }else if(surface.kind==='asphalt'){
-          if(h>.3){g.globalAlpha=.12;rect(g,a.x,a.y,1,1,h>.7?P.light:P.dark);g.globalAlpha=1;}
+          if(h>.28){g.globalAlpha=h>.87?.2:.09;rect(g,a.x,a.y,1,1,h>.65?P.steelLight:P.dark);g.globalAlpha=1;}
+          if(h>.977){const angle=hash(yy,xx+53)*Math.PI*2,b={x:p.x+Math.cos(angle)*7,y:p.y+Math.sin(angle)*7},c={x:b.x+Math.cos(angle+.7)*6,y:b.y+Math.sin(angle+.7)*6};
+            if([b,c].every(q=>Course.sample(w.level,q,false)?.kind==='asphalt')){groundLine(g,p,onGround(b),P.dark,1,.45);groundLine(g,onGround(b),onGround(c),P.dark,1,.4);}
+          }
         }else if(surface.kind==='ice'){
           if(h>.7)groundLine(g,p,onGround({x:p.x+8,y:p.y+5}),P.light,1,.7);
           if(h>.93){groundLine(g,p,onGround({x:p.x-7,y:p.y+10}),P.blue,1,.7);groundLine(g,p,onGround({x:p.x+3,y:p.y+12}),P.blue,1,.5);}
@@ -848,7 +934,18 @@
       for(const store of w.level.stores){if(store.x>x*size+size||store.x+store.w<x*size||store.y>y*size+size||store.y+store.h<y*size)continue;
         for(let yy=Math.max(store.y,Math.floor(y*size/20)*20);yy<Math.min(store.y+store.h,(y+1)*size);yy+=20)for(let xx=Math.max(store.x,Math.floor(x*size/20)*20);xx<Math.min(store.x+store.w,(x+1)*size);xx+=20){const ww=Math.min(20,store.x+store.w-xx),hh=Math.min(20,store.y+store.h-yy);mesh(g,quad(xx+.5,yy+.5,ww-1,hh-1),(Math.floor((xx-store.x)/20)+Math.floor((yy-store.y)/20))%2?blend(P.light,P.sage,.13):blend(P.cream,P.coral,.12),{x:x*size,y:y*size,w:size,h:size});}
       }
-      for(const curb of w.level.curbs){const b=Course.bounds(curb.poly);if(b.right<x*size||b.left>(x+1)*size||b.bottom<y*size||b.top>(y+1)*size||w.level.stores.some(s=>b.left>s.x&&b.right<s.x+s.w&&b.top>s.y&&b.bottom<s.y+s.h))continue;mesh(g,curb.poly,curb.red?(P.raceRed||P.brick):P.light,{x:x*size,y:y*size,w:size,h:size},true);}
+      background.roadArt||=courseRoadArt(w.level);
+      const roadPaint=s=>s.kind!=='tile'&&s.kind!=='grass';
+      for(const curb of background.roadArt.bands){const b=curb.bounds;if(b.right<x*size||b.left>(x+1)*size||b.bottom<y*size||b.top>(y+1)*size)continue;
+        const color=curb.red?blend(P.raceRed||P.brick,P.brick,.32):blend(P.cream,P.gold,.08),p=curb.poly;
+        const inset=t=>[add(p[0],(p[3].x-p[0].x)*t,(p[3].y-p[0].y)*t),add(p[1],(p[2].x-p[1].x)*t,(p[2].y-p[1].y)*t)];
+        mesh(g,p,blend(color,P.dark,.28),tileBounds,roadPaint);
+        mesh(g,[...inset(.17),p[2],p[3]],color,tileBounds,roadPaint);
+        mesh(g,[...inset(.83),p[2],p[3]],blend(color,P.light,.24),tileBounds,roadPaint);
+      }
+      for(const arrow of background.roadArt.arrows){const b=arrow.bounds;if(b.right<x*size||b.left>(x+1)*size||b.bottom<y*size||b.top>(y+1)*size)continue;
+        mesh(g,arrow.poly,arrow.surface==='dirt'?blend(P.cream,P.gold,.28):blend(P.cream,P.steel,.1),tileBounds,s=>s.kind===arrow.surface);
+      }
       for(const f of [w.level.terrain.boost,w.level.terrain.ramp]){for(let u=10;u<f.length;u+=15){const p=onGround(local(f,u,0));if(p.x<x*size||p.x>=(x+1)*size||p.y<y*size||p.y>=(y+1)*size)continue;groundArrow(g,{...p,a:f.a},8,f===w.level.terrain.boost?P.hairDark:P.gold,.95);}}
       const tile={canvas:c,x:left,y:top};background.tiles.set(key,tile);if(background.tiles.size>32)background.tiles.delete(background.tiles.keys().next().value);return tile;
     }
@@ -954,7 +1051,7 @@
       }
       spills(g,w.stock);shadows(g,w);
       for(const t of w.tracks)if(visible(t))groundLocal(g,onGround(t),-2,-1,4,1,P.hairDark,t.life/3*.25);
-      for(const l of w.level.legs)if(l.length>90){const p={...onGround({x:(l.a.x+l.b.x)/2,y:(l.a.y+l.b.y)/2}),a:Math.atan2(l.b.y-l.a.y,l.b.x-l.a.x)};if(visible(p))groundArrow(g,p,13,P.light,l.surface==='asphalt'?.65:.42);}
+      if(options.follow===false)for(const l of w.level.legs)if(l.length>90){const p={...onGround({x:(l.a.x+l.b.x)/2,y:(l.a.y+l.b.y)/2}),a:Math.atan2(l.b.y-l.a.y,l.b.x-l.a.x)};if(visible(p))groundArrow(g,p,20,P.cream,.8);}
       const start=w.level.sections[0].start;
       if(visible(start,120))for(let row=0;row<8;row++)for(let col=0;col<2;col++)groundPoly(g,quad(start.x+55+col*10,start.y-40+row*10,10,10),(row+col)%2?P.light:P.hairDark);
       const f=w.level.finish;if(visible({...f,z:Terrain.height(w.level,f)},160))for(let y=-60;y<60;y+=15)for(let x=-15;x<30;x+=15)groundPoly(g,quad(f.x+x,f.y+y,15,15).map(onGround),(Math.round((x+y)/15)%2)?P.light:P.dark);

@@ -239,8 +239,13 @@ articulated shopper use a small per-pixel depth buffer inside that world scene.
 The following camera uses a 960-pixel canvas on wide views and 480 in portrait,
 at scales 1.45 and 1.8 respectively. Canvas height matches the stage aspect ratio.
 Course map fits the entire route without advancing physics. Lazy 256-unit floor
-tiles cache deterministic gravel, asphalt flecks, grass tufts, flowers, curbs and
-store tiles, capped at 32 canvases. Floor polygons are clipped into eight-unit
+tiles cache deterministic gravel, dusty wheel paths, mottled asphalt with fine
+cracks, grass tufts, flowers, rail shadows, painted arrows, curbs and store tiles,
+capped at 32 canvases. Surface tint follows a shared world grid so overlapping
+road ribbons and neighboring cache tiles agree. Red and cream curb paint keeps
+its spacing through the bends, with a shaded inner edge and a light outer rim.
+Paint follows supported ground and stays outside store floors and the jump gap.
+Floor polygons are clipped into eight-unit
 height-field facets. Exposed rock faces use the exact supporting edge, with
 visible-side culling and vertical subdivisions for falling-cart occlusion.
 Guardrail posts and beams follow the road height. The camera follows ground
