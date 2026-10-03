@@ -1,0 +1,17 @@
+{
+  "width": 4096,
+  "height": 31,
+  "thicknessStepNm": 1,
+  "angleStepDegrees": 2,
+  "encoding": "little-endian float32 RGBA; unclipped linear sRGB",
+  "illumination": "D65 unpolarized directional light reflected at the selected angle; dark transmitted background",
+  "observer": "CIE 1931 2 degree",
+  "nFilm": 1.333,
+  "wavelengthNm": [
+    360,
+    830
+  ],
+  "integration": "1 nm rectangle sum including endpoints",
+  "sha256": "1e9660871c24da840b891d0a83e9e1c573312c07e084a3ba576ba82add00d372",
+  "license": "CC BY-SA 4.0; derived from the two attributed CIE datasets"
+}
