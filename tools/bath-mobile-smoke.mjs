@@ -142,17 +142,19 @@ try {
     await press(button('close-tray'),true);
 
     await game("bathToolReset();bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=(g.slot?22.5:20.75)*TILE;});updateCamera();render();");
-    check('waiting visitors and their order cards remain visible in the same view',await game(`(function(){var L=hearthRoomLayout();return bathGuests.every(g=>{var x=(g.s.x-cam.x)*worldScale,r=bathOrderRect(g),rx=(r.x-cam.x)*worldScale,ry=(r.y-cam.y)*worldScale,rw=r.w*worldScale,rh=r.h*worldScale;
-      return x-g.s.r*worldScale>=L.scene.x && x+g.s.r*worldScale<=L.scene.x+L.scene.w && rx>=0 && ry>=0 && rx+rw<=L.w+.1 && ry+rh<=L.h+.1 && rw>=44 && rh>=44;
+    check('waiting visitors remain visible with 44px touch padding',await game(`(function(){var L=hearthRoomLayout();return bathGuests.every(g=>{var x=(g.s.x-cam.x)*worldScale,y=(g.s.y-cam.y)*worldScale,r=g.s.r*worldScale;
+      return x-r>=L.scene.x && x+r<=L.scene.x+L.scene.w && y-r>=0 && y+r<=L.h && bathGuestHitRadius(g)*worldScale>=22;
     });})()`));
     const ids=await game('bathGuests.map(g=>g.s.id)');
-    const order=id=>`(function(){var g=bathGuests.find(g=>g.s.id===${id}),r=bathOrderRect(g);return{x:(r.x+r.w/2-cam.x)*worldScale,y:(r.y+r.h/2-cam.y)*worldScale};})()`;
-    await press(order(ids[0]),true);
-    check('a cold empty bath keeps its visitor waiting',await game('!bathGuests[0].served && bathGuests[0].st===\'wait\''));
-    await game('bathWater=BATH_MIN_WATER;bathThermal.meanC=40;render();');
+    const visitor=id=>`(function(){var g=bathGuests.find(g=>g.s.id===${id});return{x:(g.s.x-cam.x)*worldScale,y:(g.s.y-cam.y)*worldScale};})()`;
+    await press(visitor(ids[0]),mobile);
+    check('selecting a visitor in a cold empty bath keeps it waiting',await game('!bathGuests[0].served && bathGuests[0].st===\'wait\''));
+    await game('bathWater=BATH_MIN_WATER;bathThermal.meanC=40;bathNoticeT=0;render();');
     await screenshot(width+'x'+height+'-guests-ready');
-    for(const id of ids)await press(order(id),true);
-    check('both order cards admit real guests into a ready bath',await game('bathGuests.every(g=>g.served&&g.st===\'hop\'&&g.hop.next===\'plunge\')'));
+    await press(visitor(ids[1]),mobile);
+    check('selecting the second visitor admits that body even when touch padding overlaps',await game('bathGuests[1].served && !bathGuests[0].served'));
+    await press(visitor(ids[0]),mobile);
+    check('both visitors enter a ready bath through their own bodies',await game('bathGuests.every(g=>g.served&&g.st===\'hop\'&&g.hop.next===\'plunge\')'));
     await game('bathGuests=[];bathWater=0;bathThermal.meanC=20;render();');
 
     await press(button('fuels'),true);

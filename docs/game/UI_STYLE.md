@@ -21,8 +21,9 @@
 > Controls flank the joined tub and furnace on desktop and landscape mobile.
 > Materials, bellows, claw and hose sit on the left; striker, grate, liquid
 > selection and readings sit on the right. Short viewports scale the vessel
-> and use compact guest cards while retaining 44px targets. The dry guest
-> landing stays visible in the same view. Liquid and
+> while retaining 44px targets. Guest admission uses the waiting body itself,
+> with invisible touch padding. Order cards and their connecting lines are removed.
+> The dry guest landing stays visible in the same view. Liquid and
 > material trays have explicit CLOSE controls and own pointer input while open.
 > Targets stay at least 44px
 > wide and tall. Real water, heat-driven steam, guests and fire stay live.

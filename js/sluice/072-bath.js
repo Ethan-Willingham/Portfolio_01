@@ -615,7 +615,7 @@
     var rct = canvas.getBoundingClientRect();
     var cssX = (e.clientX - rct.left) * (canvas.width / dpr / rct.width);
     var cssY = (e.clientY - rct.top) * (canvas.height / dpr / rct.height);
-    if (gamePaused || bathServicePointer(cssX, cssY) || bathOrderPointer(p.x, p.y)) return;
+    if (gamePaused || bathServicePointer(cssX, cssY) || bathGuestPointer(p.x, p.y)) return;
     // Main-room walls do not expose the hidden legacy floor purchase targets.
     if (bathMainRoomVisible()) return;
     // Purchase buttons on locked floors take priority over the exit door.
