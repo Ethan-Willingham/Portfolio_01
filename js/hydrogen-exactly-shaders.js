@@ -1,3 +1,4 @@
+export const CONTOUR_LEVELS = Object.freeze([0.3, 0.9, 2.7, 8.1, 24.3, 72.9]);
 export const EVALUATOR = /* wgsl */ `
 struct Uniforms {
   domain: vec4<f32>,
@@ -117,6 +118,12 @@ export const RENDER = EVALUATOR + /* wgsl */ `
 @group(0) @binding(1) var field: texture_3d<f32>;
 @group(0) @binding(2) var smoothSampler: sampler;
 struct Vertex { @builtin(position) position: vec4<f32>, @location(0) uv: vec2<f32> };
+struct Fragment { @location(0) radiance: vec4<f32>, @location(1) layer: u32 };
+fn output(radiance:vec3<f32>, layer:u32) -> Fragment {
+  var result:Fragment;
+  result.radiance=vec4<f32>(radiance*u.camera.z,1.0); result.layer=layer;
+  return result;
+}
 fn fieldAt(p:vec3<f32>) -> vec4<f32> {
   if (any(abs(p)>=vec3<f32>(1.0))) { return vec4<f32>(0.0); }
   return textureSampleLevel(field,smoothSampler,p*0.5+0.5,0.0);
@@ -161,7 +168,7 @@ fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
   let p = array<vec2<f32>,3>(vec2<f32>(-1.0,-1.0),vec2<f32>(3.0,-1.0),vec2<f32>(-1.0,3.0));
   var v: Vertex; v.position=vec4<f32>(p[i],0.0,1.0); v.uv=p[i]; return v;
 }
-@fragment fn fragment(v: Vertex) -> @location(0) vec4<f32> {
+@fragment fn fragment(v: Vertex) -> Fragment {
   let aspect=u.view.x/u.view.y;
   // Frame the occupied orbit rather than the entire finite integration box.
   let portrait=aspect<1.0 && u.view.w<0.5;
@@ -174,6 +181,7 @@ fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
   let up=vec3<f32>(-sin(yaw)*sin(tilt),cos(yaw)*sin(tilt),cos(tilt));
   let forward=-cross(right,up);
   var radiance=vec3<f32>(0.0);
+  var layer=0u;
   if (u.view.w>0.5) {
     // Direct analytic equatorial cut: no interpolation across dark nodes.
     let p=select(vec3<f32>(xy*u.domain.y,0.0),vec3<f32>(xy.x*u.domain.y,0.0,xy.y*u.domain.y),u.domain.z>0.5);
@@ -207,14 +215,14 @@ fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
     let boxB=(vec3<f32>(1.0)-origin)/safeForward;
     let near=max(max(min(boxA.x,boxB.x),min(boxA.y,boxB.y)),min(boxA.z,boxB.z));
     let far=min(min(max(boxA.x,boxB.x),max(boxA.y,boxB.y)),max(boxA.z,boxB.z));
-    if (far<=near) { return vec4<f32>(plane*u.camera.z,1.0); }
+    if (far<=near) { return output(plane,0u); }
     let steps=u32(ceil((far-near)*u.camera.y/3.4641016));
     let ds=(far-near)/f32(steps);
     var previousP=origin+forward*near;
     var previous=fieldAt(previousP).a;
     var highestLevel=0u;
     var surface=vec3<f32>(0.0);
-    let levels=array<f32,6>(0.3,0.9,2.7,8.1,24.3,72.9);
+    let levels=array<f32,6>(${CONTOUR_LEVELS.join(',')});
     for (var i=1u; i<=steps; i++) {
       let p=origin+forward*(near+f32(i)*ds);
       let current=fieldAt(p).a;
@@ -240,6 +248,7 @@ fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
     }
     radiance=plane;
     if (highestLevel>0u) {
+      layer=highestLevel;
       let sample=fieldAt(surface);
       let color=sample.rgb/max(sample.a,1e-8);
       let outward=densityNormal(surface);
@@ -255,7 +264,7 @@ fn referencePlane(origin:vec3<f32>, forward:vec3<f32>, pixel:f32) -> vec3<f32> {
       radiance=color*(fill+3.3*diffuse*shadow+0.42*rim)+mix(color,u.tint.rgb,0.35)*highlight*1.35;
     }
   }
-  return vec4<f32>(radiance*u.camera.z,1.0);
+  return output(radiance,layer);
 }
 `;
 export const DISPLAY = /* wgsl */ `

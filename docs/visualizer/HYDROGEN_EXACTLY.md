@@ -1,7 +1,8 @@
 # Hydrogen Exactly
 
 Comparison prototype: [live page](https://ethanwillingham.com/hydrogen-exactly-lab.html).
-No homepage, hub, archive, shared style or existing visualization changes.
+Listed on In Progress at the owner's request. Its card and search entry use
+the existing page URL; no page move or shared-style change is needed.
 
 Owned paths: hydrogen-exactly-lab.html, hydrogen-exactly.css,
 js/hydrogen-exactly.js, js/hydrogen-exactly-room.js,
@@ -150,7 +151,7 @@ times the local display color. Scaling avoids underflow of physical high-n
 densities in f16. Complex amplitudes and physical diagnostics are evaluated in
 f32 before storage. No f16 coefficients, basis states or phases are used.
 
-The default view draws six density contours from this trilinearly sampled
+The default view offers six density contours from this trilinearly sampled
 texture, at rhoScaled = 0.3, 0.9, 2.7, 8.1, 24.3 and 72.9. Newly reached higher
 contours along each ray are refined by five bisections. The highest level reached
 is shown, with its first surface normal estimated by centered voxel differences.
@@ -159,6 +160,32 @@ The contour thresholds omit faint tails from the image, not from the field or
 captured-mass calculation. Surface illumination is a display aid, not light
 emitted by the atom. Ray steps can miss a thin contour and the grid can soften
 or displace a boundary; these are presentation errors.
+
+A contour appears only where the field reaches its threshold. The initial
+circular packet reaches five of the six levels; higher bands can disappear
+as it spreads. The low-n mode reaches all six. These are density boundaries
+of one electron, not energy shells, different electrons or fixed enclosed
+probabilities. The chosen circular states concentrate around an equatorial
+ring. Their superposition initially occupies an arc and then spreads around
+it. Hydrogen's 1s ground state instead has a spherical probability density.
+
+Hovering a visible contour reads the layer ID written by that same render
+pass into a room-owned r32uint attachment. Picking does not infer a band from
+its shaded color. A single-pixel copy returns the selected boundary's density
+as rhoScaled / (domainHalfSideA0 * a0InNm)^3, in inverse cubic nanometers,
+along with its ratio to the outermost level and the rendered score timestamp.
+The value describes the surface, not an enclosed percentage or every point
+inside the displayed band. Background and the reference plane have ID zero.
+Soft-volume and analytic-section modes do not offer discrete layer picking.
+The sampled boundary can differ from the exact analytic surface by the
+renderer errors described above.
+
+The host allows one pick at a time, at most once every 110 ms, while the
+pointer is over the contour view. It refreshes a stationary hover as the
+packet evolves and stops when paused without new input. A touch tap opens
+the same bounded card; a movement beyond six CSS pixels rotates the camera.
+Instruments also provides six keyboard-focusable layer explanations.
+Inspection neither advances time nor changes the computed field.
 
 Contour lighting uses a fixed world-space directional key, a camera-side fill,
 and a tight halfway-vector highlight. Normals face the viewer, with Lambert
@@ -200,7 +227,11 @@ no filament is presented as positive probability at a node.
 | Medium (default) | 128 cubed | 160 | 16,777,216 |
 | High | 160 cubed | 224 | 32,768,000 |
 
-The host additionally owns a full-size rgba16float scene target. DPR is capped
+The host additionally owns a full-size rgba16float scene target. The room's
+layer-ID target adds four bytes per render pixel (3,715,488 bytes at 1358 by
+684); each pending pick adds a temporary 256-byte readback buffer. Both are
+destroyed on disposal, and the ID target is replaced on size changes.
+DPR is capped
 at 2 and the long render dimension at 1800 pixels. The page uses the available
 width, a compact header, and a stage sized to leave playback controls in view.
 The orthographic camera frames the occupied orbit rather than the full render
@@ -253,7 +284,13 @@ render clears and writes the supplied full-size rgba16float target, applies
 exposure linearly and adds a pass to the host encoder without submitting it.
 step submits the room's own compute command buffer. The host owns the canvas,
 device, output target, presentation, loop and tone mapping. Extra methods are
-setMode, setPresentation, setQuality and benchmark. Slow mass readbacks include
+setMode, setPresentation, setQuality, densityLayers, pickLayer and benchmark.
+pickLayer({u, v}) uses normalized canvas coordinates with the origin at the
+top left. Submit the host render encoder before calling it. It returns null
+for background, unsupported views, invalid coordinates or a disposed room.
+A successful result contains index (zero based), scaledDensity, relativeDensity,
+densityPerNmCubed, mode and scoreSeconds from the most recently encoded frame.
+Slow mass readbacks include
 their score timestamp and age; absent measurements are null with an explicit
 unavailableMeasurements entry. Numerical step count counts analytic evaluations,
 not differential-equation integration substeps.
@@ -303,7 +340,8 @@ gitignored research/visualizer/hydrogen-exactly-results directory.
 Measured on October 3, 2026, Apple M1 Pro, hardware Apple Metal-3 WebGPU adapter
 (isFallbackAdapter false), Chrome for Testing 148.0.7778.96. A 24-sample benchmark
 after three warmups at 128 cubed and 1358 by 684 pixels measured compute median
-3.0 ms / p95 4.0 ms, lit contour render with shadows median 3.2 ms / p95 4.4 ms.
+3.5 ms / p95 5.4 ms, lit contour render with shadows and layer IDs median
+4.5 ms / p95 6.6 ms.
 These are GPU queue-completion latencies
 including submit/wait overhead, not pure shader timestamps or a claim about
 other devices. Simulation and rendering are timed separately. The final run's
@@ -366,6 +404,12 @@ changes in the projected volume. Tests cover edge-on, overhead, underneath and
 flipped views, arrow keys, both reset controls, pointer capture beyond the
 canvas, cancellation, fullscreen persistence and real CDP touch input at DPR 2.
 Touch rotation leaves page scroll and the reduced-motion pause unchanged.
+Layer tests find five visible circular-packet levels and all six spectral
+levels, check the density ratios and inverse-volume units, and exercise real
+hover, keyboard focus and CDP touch tap followed by drag. The card stays inside
+the portrait canvas. Background gives no layer; neutral color preserves the
+same picked ID. Inspection leaves GPU probes, captured mass and step count
+unchanged. Soft and section views hide the layer controls.
 
 Limitations: no demonstrated knotted nodes, Bohmian tracers, fine structure,
 Lamb shifts, spontaneous emission, or global synchronization.
@@ -378,6 +422,8 @@ by sampling and display precision. No photosensitivity certification is claimed.
 
 - [Bluhm, Kostelecký and Porter](https://arxiv.org/html/quant-ph/9510029v1):
   revival scales, circular packets and approximate hydrogen returns.
+- [MIT hydrogen lecture notes](https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2016/e34ceed6a6ec944a3c761fcbbf48be5f_MIT8_04S16_LecNotes22.pdf):
+  hydrogen eigenstates and the spherical ground-state density.
 - [NIST Bohr radius](https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0) and
   [Rydberg constant](https://physics.nist.gov/cgi-bin/cuu/Value?ryd): 2022 CODATA
   values in the supplied reference. h and c have their exact SI definitions.
@@ -397,4 +443,7 @@ The prior-art Falstad and XMinty77 implementations were not copied or reused.
 The model, shaders, host, tests and computed still were written for this piece.
 The supplied presets/reference constants were retained as owned public inputs;
 the rest of the research handoff remains local and gitignored. The still is
-computed density, not a photograph, and no generated comparison thumbnail is used.
+computed density, not a photograph. The In Progress preview is a 600 by 400
+crop of the actual GPU contour render at score 50 seconds, after the browser
+test's 220 by -100 pixel camera drag. Its PNG and WebP preserve the display
+colors and lighting; no separate image model or invented cloud is used.

@@ -17,6 +17,18 @@
 .hx-stage-heading span:last-child, .hx-caption { font: 400 .68rem/1.5 var(--font-mono); color: var(--text-dim); }
 .hx-rotation-hint { position: absolute; top: 25px; right: 24px; font: 400 .68rem/1.5 var(--font-mono); color: var(--text-dim); pointer-events: none; }
 .hx-rotation-hint[hidden] { display: none; }
+.hx-rotation-hint span { display: block; text-align: right; }
+.hx-rotation-hint span + span { margin-top: 3px; }
+.hx-layer-tip { position: absolute; z-index: 2; width: 310px; max-width: calc(100% - 24px); padding: 14px 16px; border: 1px solid var(--rule-strong); background: var(--bg-raised); color: var(--text); pointer-events: none; font: 400 .84rem/1.5 var(--font-body); }
+.hx-layer-tip[hidden], .hx-layer-detail[hidden], .hx-density-guide[hidden] { display: none; }
+.hx-layer-tip p, .hx-layer-detail p { margin: 0; }
+.hx-layer-tip p + p, .hx-layer-detail p + p { margin-top: 7px; }
+.hx-layer-title { font: 400 1.15rem/1.3 var(--font-heading); color: var(--text-bright); }
+.hx-layer-value { font: 400 .68rem/1.5 var(--font-mono); color: var(--text-dim); }
+.hx-density-guide { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.hx-layer-choices { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.hx-layer-choices .hx-button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-hover); }
+.hx-layer-detail { max-width: 500px; padding: 12px 0; color: var(--text); font: 400 .88rem/1.55 var(--font-body); }
 .hx-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .hx-camera-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .hx-camera-tools .hx-note { margin: 0; }
@@ -63,6 +75,7 @@
   .hx-stage { height: max(380px, calc(100svh - 196px)); }
   .hx-stage-heading { left: 16px; top: 16px; }
   .hx-rotation-hint { right: 16px; top: 19px; font-size: .62rem; }
+  .hx-rotation-hint span + span { margin-top: 24px; }
   .hx-caption { left: 16px; right: 16px; bottom: 16px; flex-direction: column; gap: 3px; font-size: .62rem; }
   .hx-toolbar.pillbar { padding: 8px; gap: 6px; }
   .hx-button { padding: 8px 10px; font-size: .8rem; }

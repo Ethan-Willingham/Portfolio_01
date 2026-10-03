@@ -1,6 +1,6 @@
 // Standalone host. The room owns no DOM, canvas configuration or animation loop.
-import { createRoom } from './hydrogen-exactly-room.js?v=4';
-import { DISPLAY } from './hydrogen-exactly-shaders.js?v=4';
+import { createRoom } from './hydrogen-exactly-room.js?v=5';
+import { DISPLAY } from './hydrogen-exactly-shaders.js?v=5';
 import * as M from './hydrogen-exactly-math.js?v=2';
 const $ = id => document.getElementById(id);
 const demo = $('hx-demo'), canvas = $('hx-canvas'), status = $('hx-status');
@@ -14,7 +14,59 @@ let frameCosts = [], slowWindows = 0, nextQuality = 'medium', busy = false, mode
 const adapterInfo = {};
 let beaconAudit = null;
 let cameraYaw = 0.1, cameraTilt = 0.92, drag = null, viewRaf = 0, viewDirty = false;
+let inspection = null, inspectionRevision = 0, inspectionRaf = 0, inspectionTimer = 0, picking = false, lastPickAt = 0, renderSerial = 0;
+const layerTip = $('hx-layer-tip');
 const wrapAngle = value => Math.atan2(Math.sin(value), Math.cos(value));
+function canInspect() { return !!room && !disposed && !busy && visible && intersecting && demo.dataset.ready === 'true' && $('hx-view').value === 'volume'; }
+function clearInspection() {
+  inspection = null; inspectionRevision++; layerTip.hidden = true;
+  cancelAnimationFrame(inspectionRaf); clearTimeout(inspectionTimer); inspectionRaf = 0; inspectionTimer = 0;
+}
+function fillLayerInfo(element, layer) {
+  if (element.dataset.layer === String(layer.index) && element.dataset.mode === layer.mode) return;
+  element.dataset.layer = layer.index; element.dataset.mode = layer.mode;
+  element.querySelector('[data-layer-title]').textContent = `Density layer ${layer.index + 1} of 6`;
+  element.querySelector('[data-layer-relative]').textContent = layer.index ? `${layer.relativeDensity} times the outermost layer's density, and 3 times layer ${layer.index}.` : 'The lowest displayed density. Fainter probability tails extend beyond this surface.';
+  element.querySelector('[data-layer-meaning]').textContent = 'All six layers describe the same electron. Higher density means a greater chance of finding it in an equally small region.';
+  element.querySelector('[data-layer-value]').textContent = `Surface density: ${layer.densityPerNmCubed.toExponential(2)} per nm³. This is density, not a percentage enclosed.`;
+}
+function placeLayerTip(point) {
+  const box = canvas.getBoundingClientRect(), card = layerTip.getBoundingClientRect();
+  let x = point.x - box.left + 18, y = point.y - box.top + 18;
+  if (point.kind === 'touch') { x = (box.width - card.width) / 2; y = box.height - card.height - 68; }
+  else { if (x + card.width > box.width - 12) x = point.x - box.left - card.width - 18; if (y + card.height > box.height - 12) y = point.y - box.top - card.height - 18; }
+  layerTip.style.left = `${Math.max(12, Math.min(x, box.width - card.width - 12))}px`;
+  layerTip.style.top = `${Math.max(12, Math.min(y, box.height - card.height - 12))}px`;
+}
+function requestInspection() {
+  if (!inspection || !canInspect() || drag || picking || inspectionRaf || inspectionTimer) return;
+  const delay = Math.max(0, 110 - (performance.now() - lastPickAt));
+  if (delay) { inspectionTimer = setTimeout(() => { inspectionTimer = 0; requestInspection(); }, delay); return; }
+  inspectionRaf = requestAnimationFrame(async () => {
+    inspectionRaf = 0;
+    if (!inspection || !canInspect() || drag) return;
+    const point = inspection, revision = inspectionRevision, serial = renderSerial, box = canvas.getBoundingClientRect();
+    picking = true; lastPickAt = performance.now();
+    try {
+      const layer = await room.pickLayer({ u: (point.x - box.left) / box.width, v: (point.y - box.top) / box.height });
+      if (revision !== inspectionRevision || !canInspect() || drag) return;
+      if (!layer) { layerTip.hidden = true; return; }
+      fillLayerInfo(layerTip, layer); layerTip.dataset.score = layer.scoreSeconds; layerTip.hidden = false; placeLayerTip(point);
+    } catch { if (revision === inspectionRevision) layerTip.hidden = true; }
+    finally { picking = false; if (inspection && (revision !== inspectionRevision || serial !== renderSerial)) requestInspection(); }
+  });
+}
+function inspectPoint(e) {
+  if (!canInspect()) return;
+  inspection = { x: e.clientX, y: e.clientY, kind: e.pointerType === 'touch' ? 'touch' : 'mouse' }; inspectionRevision++; requestInspection();
+}
+function updateLayerGuide() {
+  const active = !!room && !disposed && demo.dataset.ready === 'true' && $('hx-view').value === 'volume';
+  $('hx-density-guide').hidden = !active; $('hx-inspection-hint').hidden = !active;
+  $('hx-inspection-hint').textContent = 'Hover or tap a layer';
+  for (const button of $('hx-density-guide').querySelectorAll('button')) button.disabled = !active;
+  if (!active) clearInspection();
+}
 function canRotate() { return !!room && !disposed && !busy && demo.dataset.ready === 'true' && $('hx-view').value !== 'section'; }
 function endDrag() {
   const pointer = drag?.pointerId; drag = null; delete canvas.dataset.dragging;
@@ -24,6 +76,7 @@ function cameraInteraction() {
   const active = canRotate(); canvas.dataset.rotatable = String(active);
   $('hx-rotation-hint').hidden = !active; $('hx-reset-view').disabled = !active;
   if (!active) endDrag();
+  updateLayerGuide();
 }
 function setCamera(yaw, tilt) {
   if (!canRotate()) return;
@@ -64,6 +117,7 @@ function render() {
   room.render({ encoder, targetView: scene.createView(), width: canvas.width, height: canvas.height, exposure });
   const pass = encoder.beginRenderPass({ colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store', clearValue: { r: 0, g: 0, b: 0, a: 1 } }] });
   pass.setPipeline(display); pass.setBindGroup(0, displayBinding); pass.draw(3); pass.end(); device.queue.submit([encoder.finish()]);
+  renderSerial++; requestInspection();
 }
 function resize() {
   if (!room || disposed) return;
@@ -71,6 +125,7 @@ function resize() {
   const dpr = Math.min(devicePixelRatio, 2), factor = Math.min(1, 1800 / (Math.max(box.width, box.height) * dpr));
   const width = Math.max(1, Math.floor(box.width * dpr * factor)), height = Math.max(1, Math.floor(box.height * dpr * factor));
   if (scene && width === canvas.width && height === canvas.height) return;
+  clearInspection();
   canvas.width = width; canvas.height = height; scene?.destroy();
   scene = device.createTexture({ size: [width, height], format: 'rgba16float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
   displayBinding = device.createBindGroup({ layout: display.getBindGroupLayout(0), entries: [{ binding: 0, resource: scene.createView() }, { binding: 1, resource: device.createSampler({ minFilter: 'linear', magFilter: 'linear' }) }, { binding: 2, resource: { buffer: background } }] });
@@ -142,6 +197,7 @@ function fullscreenLabel() {
   $('hx-fullscreen').textContent = full ? 'Exit fullscreen' : 'Fullscreen'; $('hx-fullscreen').setAttribute('aria-label', full ? 'Exit fullscreen' : 'Enter fullscreen');
 }
 function setMode(value) {
+  clearInspection(); $('hx-layer-detail').hidden = true;
   mode = value; room.setMode(value); score = 0; accumulator = 0;
   $('hx-spectrum').hidden = value !== 'spectral'; $('hx-events').hidden = value === 'spectral';
   for (const option of $('hx-color').options) option.disabled = value !== 'spectral' && ['1','2'].includes(option.value);
@@ -161,6 +217,11 @@ $('hx-play').addEventListener('click', () => { paused = !paused; playLabel(); if
 $('hx-instruments-toggle').addEventListener('click', toggleInstruments, options);
 $('hx-restart').addEventListener('click', () => seek(0), options);
 $('hx-reset-view').addEventListener('click', resetView, options);
+for (const name of ['click', 'focusin']) $('hx-density-guide').addEventListener(name, e => {
+  const button = e.target.closest('button[data-density-layer]'); if (!button || !canInspect()) return;
+  fillLayerInfo($('hx-layer-detail'), room.densityLayers()[+button.dataset.densityLayer]); $('hx-layer-detail').hidden = false;
+  for (const other of $('hx-density-guide').querySelectorAll('button')) other.setAttribute('aria-pressed', String(other === button));
+}, options);
 $('hx-fullscreen').addEventListener('click', fullscreen, options);
 $('hx-mode').addEventListener('change', e => setMode(e.target.value), options);
 $('hx-view').addEventListener('change', e => { room.setPresentation({ section: e.target.value === 'section', soft: e.target.value === 'soft' }); cameraInteraction(); render(); }, options);
@@ -196,20 +257,31 @@ $('hx-beacon').addEventListener('click', async () => {
 document.addEventListener('fullscreenchange', () => { fullscreenLabel(); resize(); }, options);
 canvas.addEventListener('pointerdown', e => {
   if (!canRotate() || !visible || !intersecting || !e.isPrimary || e.button !== 0 || drag) return;
-  e.preventDefault(); canvas.focus({ preventScroll: true });
-  drag = { pointerId: e.pointerId, x: e.clientX, y: e.clientY }; canvas.dataset.dragging = 'true';
+  clearInspection(); e.preventDefault(); canvas.focus({ preventScroll: true });
+  drag = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, startX: e.clientX, startY: e.clientY, moved: false }; canvas.dataset.dragging = 'true';
   canvas.setPointerCapture(e.pointerId);
 }, options);
 canvas.addEventListener('pointermove', e => {
-  if (!drag || drag.pointerId !== e.pointerId || !canRotate()) return;
+  if (!drag) { if (e.pointerType !== 'touch' && !e.buttons) inspectPoint(e); return; }
+  if (drag.pointerId !== e.pointerId || !canRotate()) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) <= 6) return;
+  drag.moved = true;
   const scale = 4 / Math.min(canvas.clientWidth, canvas.clientHeight);
   setCamera(cameraYaw + (e.clientX - drag.x) * scale, cameraTilt + (e.clientY - drag.y) * scale);
   drag.x = e.clientX; drag.y = e.clientY;
 }, options);
-for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(name, e => { if (drag?.pointerId === e.pointerId) endDrag(); }, options);
-document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (!visible) { endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); } }, options);
+for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(name, e => {
+  if (drag?.pointerId !== e.pointerId) return;
+  const tap = name === 'pointerup' && e.pointerType === 'touch' && !drag.moved;
+  endDrag(); if (tap) inspectPoint(e);
+}, options);
+canvas.addEventListener('pointerleave', () => { if (inspection?.kind !== 'touch') clearInspection(); }, options);
+document.addEventListener('pointerdown', e => { if (e.target !== canvas) clearInspection(); }, options);
+window.addEventListener('scroll', clearInspection, { ...options, passive: true });
+document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (!visible) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); } }, options);
 demo.addEventListener('keydown', e => {
   if (e.target.matches('input,select,button')) return;
+  if (e.key === 'Escape') clearInspection();
   if (e.target === canvas && canRotate()) {
     const step = e.shiftKey ? 0.3 : 0.12;
     const turns = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
@@ -223,7 +295,7 @@ demo.addEventListener('keydown', e => {
 }, options);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && demo.classList.contains('hx-pseudo-fullscreen')) fullscreen(); }, options);
 function dispose() {
-  if (disposed) return; endDrag(); disposed = true; stop(); cameraInteraction(); controller.abort(); observer?.disconnect(); resizeObserver?.disconnect(); room?.dispose(); scene?.destroy(); background?.destroy(); context?.unconfigure(); device?.destroy();
+  if (disposed) return; clearInspection(); endDrag(); disposed = true; stop(); cameraInteraction(); controller.abort(); observer?.disconnect(); resizeObserver?.disconnect(); room?.dispose(); scene?.destroy(); background?.destroy(); context?.unconfigure(); device?.destroy();
 }
 window.addEventListener('pagehide', dispose, options);
 playLabel();
@@ -258,7 +330,7 @@ async function init() {
     }
     room.setMode(spectral.mode);
     resizeObserver = new ResizeObserver(resize); resizeObserver.observe($('hx-stage'));
-    observer = new IntersectionObserver(entries => { intersecting = entries[0].isIntersecting; if (!intersecting) { endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); } }); observer.observe($('hx-stage'));
+    observer = new IntersectionObserver(entries => { intersecting = entries[0].isIntersecting; if (!intersecting) { clearInspection(); endDrag(); stop(); } else { if (viewDirty) setCamera(cameraYaw, cameraTilt); schedule(); } }); observer.observe($('hx-stage'));
     demo.dataset.ready = 'true'; demo.setAttribute('aria-busy', 'false'); status.hidden = true;
     cameraInteraction();
     resize(); seek(0); schedule();
@@ -267,6 +339,7 @@ async function init() {
       snapshot: () => ({ ...room.snapshot(), paused, running, visible, intersecting, cameraDragging: !!drag, adapter: adapterInfo, renderWidth: canvas.width, renderHeight: canvas.height, evaluationCadenceDivider: updateEvery, beaconAudit }),
       seek, setMode: value => { $('hx-mode').value = value; setMode(value); },
       setCamera: ({ yaw, tilt }) => setCamera(yaw, tilt), resetView,
+      pickLayer: point => room.pickLayer(point),
       debugReadback: async () => { const resume = !paused; busy = true; stop(); try { return await room.debugReadback(); } finally { busy = false; if (resume) schedule(); } },
       benchmark: async count => { busy = true; stop(); try { return await room.benchmark(count); } finally { busy = false; schedule(); } },
       debugLoseDevice: () => device.destroy(), dispose
