@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#303931">
+  <meta name="theme-color" content="#090d20">
   <meta name="robots" content="noindex">
   <title>Arrow of time</title>
   <meta name="description" content="An original moth drawing dissolves into a reversible Ising cellular automaton, then returns through the exact inverse dynamics.">
@@ -14,9 +14,9 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="arrow-of-time.css?v=3">
+  <link rel="stylesheet" href="arrow-of-time.css?v=4">
 </head>
-<body>
+<body class="aot-page">
   <div class="site-wrapper aot-site">
     <header class="post-header"><a class="post-back" href="/">Home</a></header>
     <main class="post-body">
@@ -26,7 +26,7 @@
       </header>
       <section class="aot-piece" id="aot-piece" aria-label="Reversible spin lattice" aria-busy="true">
         <div class="aot-stage">
-          <canvas id="aot-canvas" aria-label="Two-tone domains computed from the current spin lattice"></canvas>
+          <canvas id="aot-canvas" aria-label="Colorful domains computed from the current spin lattice"></canvas>
           <canvas id="aot-still" hidden aria-label="CPU-generated still of the initial moth spin lattice"></canvas>
           <p class="aot-loading" id="aot-loading" role="status">Rendering the dissolve and return.</p>
           <p class="aot-still-label" id="aot-still-label" hidden>Still from the deterministic CPU model</p>
@@ -35,6 +35,11 @@
           <label for="aot-timeline">Dissolve and return <output id="aot-position">0:00 / 6:00</output></label>
           <input id="aot-timeline" type="range" min="0" max="8640" value="0" step="1" disabled aria-label="Sequence timeline" aria-valuetext="Opening image">
           <div class="aot-timeline-marks" aria-hidden="true"><span>Image</span><span>Reverse</span><span>Exact return</span></div>
+        </div>
+        <div class="aot-view-controls">
+          <label for="aot-zoom">Zoom <output id="aot-zoom-value">2.2×</output></label>
+          <input id="aot-zoom" type="range" min="0.4" max="8" value="2.2" step="0.1" aria-label="Zoom into the spin cells">
+          <button type="button" id="aot-fit">Whole image</button>
         </div>
         <div class="aot-caption"><p id="aot-phase" role="status">An image, before it comes apart.</p><span id="aot-caption-detail">Every spin keeps its history.</span></div>
         <div class="aot-toolbar">
@@ -48,7 +53,7 @@
           <canvas id="aot-drawing" width="384" height="256" tabindex="0" aria-label="Drawing pad. Drag to draw. Arrow keys move the brush; Enter toggles the pen."></canvas>
           <div class="aot-editor-tools">
             <p>Draw a shape, choose its colors, then render its dissolve and return.</p>
-            <div class="aot-colors"><label>First ink<input id="aot-ink-a" type="color" value="#d9978c"></label><label>Second ink<input id="aot-ink-b" type="color" value="#8fb3c7"></label></div>
+            <div class="aot-colors"><label>First ink<input id="aot-ink-a" type="color" value="#24edff"></label><label>Second ink<input id="aot-ink-b" type="color" value="#8f5cff"></label><label>Third ink<input id="aot-ink-c" type="color" value="#ff42b3"></label><label>Fourth ink<input id="aot-ink-d" type="color" value="#ffce50"></label><label>Background<input id="aot-background" type="color" value="#090d20"></label></div>
             <div class="aot-editor-actions"><button id="aot-eraser" type="button" aria-pressed="false">Eraser</button><button id="aot-clear" type="button">Clear</button><button id="aot-template" type="button">Moth</button></div>
             <button id="aot-render-drawing" type="button" disabled>Render drawing</button>
             <p class="aot-note" id="aot-drawing-note" role="status">Use your mouse or touch. Keyboard: arrows move, Enter toggles the pen.</p>
@@ -60,17 +65,16 @@
           <div class="aot-controls">
             <label>Authored image<select id="aot-preset"><option value="moth">Moth</option><option value="bloom">Bloom</option><option value="orbit">Orbit</option><option value="custom" hidden>Your drawing</option></select></label>
             <label>Playback pace<select id="aot-rate"><option value="24">24 steps / second</option><option value="96">96 steps / second</option><option value="768">768 steps / second, accelerated</option></select></label>
-            <label>Resolved zoom <span id="aot-zoom-value">1.0</span><input id="aot-zoom" type="range" min="1" max="4" value="1" step="0.1"></label>
             <button type="button" id="aot-record" disabled>Save exact state</button>
           </div>
           <p class="aot-note" id="aot-adapter">WebGPU initialization pending.</p>
-          <p class="aot-note">Energy couples both time layers. Entropy is an 8 × 8 block estimator. The zoom stops at resolved cells; the display has no trails. No equilibrium criticality or fractal dimension is claimed.</p>
+          <p class="aot-note">Energy couples both time layers. Entropy is an 8 × 8 block estimator. Zoom reveals the individual cells; the display has no trails. No equilibrium criticality or fractal dimension is claimed.</p>
         </div>
         <p class="aot-error" id="aot-error" hidden role="status"></p>
       </section>
       <div class="aot-explanation">
         <p>The moth comes back, down to its last spin. Two layers of a rectangular lattice evolve by one reversible rule: when four neighbors split two and two, a spin in the older layer flips. The image dissolves into moving domains. Drag the timeline to any part of its six-minute dissolve and return, or press Play to watch. The sequence is prepared from the exact rule, and Instruments checks both layers at the end. Draw your own replaces the starting image.</p>
-        <p class="aot-note">Copper and blue show the mean of both time layers, with a vertical color blend. The inks are adjustable. Fine block averages keep the cell detail visible, and brief transitions between computed states soften the motion. The microscopic information survives even when the coarse image disappears; this authored orbit is not a thermal sample.</p>
+        <p class="aot-note">Cyan, violet, pink and amber show the mean of both time layers. All four inks and the navy background are adjustable. The close view resolves individual cells; zoom out for the whole image. Brief transitions between computed states soften the motion. The microscopic information survives even when the coarse image disappears; this authored orbit is not a thermal sample.</p>
         <details class="u-collapse">
           <summary class="u-collapse-s">Sources and implementation</summary>
           <ol class="u-collapse-list">
@@ -83,6 +87,6 @@
     </main>
     <footer class="site-footer"><a href="/">Ethan Willingham</a></footer>
   </div>
-  <script type="module" src="js/arrow-of-time.js?v=3"></script>
+  <script type="module" src="js/arrow-of-time.js?v=4"></script>
 </body>
 </html>

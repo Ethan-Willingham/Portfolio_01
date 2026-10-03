@@ -1,4 +1,4 @@
-import { dimensions, pack, unpack, checksum, evolve } from './arrow-of-time-model.js?v=3';
+import { dimensions, pack, unpack, checksum, evolve } from './arrow-of-time-model.js?v=4';
 
 const triangle = `@vertex fn vertex(@builtin(vertex_index) i:u32)->@builtin(position) vec4f {
  let p=array<vec2f,3>(vec2f(-1,-1),vec2f(3,-1),vec2f(-1,3)); return vec4f(p[i],0,1); }`;
@@ -122,8 +122,8 @@ var<workgroup> sums:array<vec4i,64>;
   const levels = []; let pw = width, ph = height, offset = 0;
   while (true) { levels.push({ width: pw, height: ph, offset }); offset += pw * ph; if (pw === 1 && ph === 1) break; pw = Math.ceil(pw / 2); ph = Math.ceil(ph / 2); }
   const pyramid = buffer(offset * 8, GPUBufferUsage.STORAGE, 'Q2R paired-layer block counts');
-  const renderUniform = buffer(64, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'Q2R view');
-  const viewDeclaration = `struct View {size:vec2f,zoom:f32,exposure:f32,detail:f32,visibility:f32,blend:f32,reverse:f32,inkA:vec4f,inkB:vec4f};`;
+  const renderUniform = buffer(112, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'Q2R view');
+  const viewDeclaration = `struct View {size:vec2f,zoom:f32,exposure:f32,detail:f32,visibility:f32,blend:f32,reverse:f32,inkA:vec4f,inkB:vec4f,inkC:vec4f,inkD:vec4f,base:vec4f};`;
   const offsets = levels.map(l => `${l.offset}u`).join(','), widths = levels.map(l => `${l.width}u`).join(','), heights = levels.map(l => `${l.height}u`).join(','), declarations = `const OFF=array<u32,${levels.length}>(${offsets});const LW=array<u32,${levels.length}>(${widths});const LH=array<u32,${levels.length}>(${heights});`;
   const hierarchyShader = await checkedShader(device, `
 ${declarations} ${viewDeclaration} override LEVEL:u32=0;
@@ -151,20 +151,24 @@ fn average(uv:vec2f,level:u32)->f32 {let p=uv*vec2f(${width},${height})/f32(1u<<
  return mix(mix(cell(level,q.x,q.y),cell(level,q.x+1,q.y),f.x),mix(cell(level,q.x,q.y+1),cell(level,q.x+1,q.y+1),f.x),f.y);}
 fn scale(uv:vec2f,lod:f32)->f32 {let l=clamp(lod,0,f32(${levels.length - 1}));let lo=u32(floor(l));return mix(average(uv,lo),average(uv,min(lo+1,${levels.length - 1}u)),fract(l));}
 @fragment fn fragment(@builtin(position) pos:vec4f)->@location(0) vec4f {
- let fit=min(view.size.x/min(${width}.,${height}.*.90),view.size.y/${height}.)*.98;let extent=vec2f(${width},${height})*fit;
- let plane=(pos.xy-view.size*.5)/extent+.5;let uv=(plane-.5)/view.zoom+.5;
- let base=vec3f(.029557,.040915,.030713); var color=base;
- if(all(plane>vec2f(0))&&all(plane<vec2f(1))){
- let lod=max(0.,.45-log2(view.zoom))+view.detail;
- let value=.88*scale(uv,lod)+.10*scale(uv,lod+1.5)+.02*scale(uv,lod+3.);
- let shade=smoothstep(.06,.9,value);let ink=mix(view.inkA.rgb,view.inkB.rgb,smoothstep(.15,.85,uv.y));
- let edge=smoothstep(0.,.016,min(min(plane.x,plane.y),min(1-plane.x,1-plane.y)));
- color=mix(base, mix(base*.78,ink,shade),edge);}
+ let fit=max(view.size.x/${width}.,view.size.y/${height}.);let extent=vec2f(${width},${height})*fit*view.zoom;
+ let uv=(pos.xy-view.size*.5)/extent+.5;
+ let base=view.base.rgb;var color=base;
+ if(all(uv>=vec2f(0))&&all(uv<vec2f(1))){
+ let pixelsPerCell=fit*view.zoom;let lod=max(0.,-log2(pixelsPerCell))+view.detail;
+ let filtered=scale(uv,lod);let index=vec2i(floor(uv*vec2f(${width},${height})));
+ let value=mix(filtered,cell(0,index.x,index.y),smoothstep(1.,2.5,pixelsPerCell));
+ let shade=smoothstep(.12,.96,value);
+ let t=clamp((uv.y-.23)*2.1+(uv.x-.5)*.65,0.,1.);
+ var ink=mix(view.inkA.rgb,view.inkB.rgb,clamp(t*3.,0.,1.));
+ ink=mix(ink,view.inkC.rgb,clamp(t*3.-1.,0.,1.));
+ ink=mix(ink,view.inkD.rgb,clamp(t*3.-2.,0.,1.));
+ color=mix(base,ink,shade);}
  return vec4f(mix(base,color,clamp(view.visibility,0.,1.))*max(0.,view.exposure),1);}`, 'Q2R paired-layer domain renderer');
   const renderer = await device.createRenderPipelineAsync({ layout: 'auto', vertex: { module: renderShader, entryPoint: 'vertex' }, fragment: { module: renderShader, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } });
   const renderGroup = device.createBindGroup({ layout: renderer.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: pyramid } }, { binding: 1, resource: { buffer: renderUniform } }] });
-  function render({ encoder, targetView, width: rw, height: rh, exposure = 1, zoom = 1, detail = 0, visibility = 1, blend = 1, inkA = [.687,.309,.263], inkB = [.275,.451,.571], timestampWrites }) {
-    device.queue.writeBuffer(renderUniform, 0, new Float32Array([rw, rh, zoom, exposure, detail, visibility, blend, lastDirection === -1 ? 1 : 0, ...inkA, 1, ...inkB, 1]));
+  function render({ encoder, targetView, width: rw, height: rh, exposure = 1, zoom = 1, detail = 0, visibility = 1, blend = 1, inkA = [.017642,.846873,1], inkB = [.274677,.107023,1], inkC = [1,.05448,.450786], inkD = [1,.617207,.08022], background = [.002732,.004025,.014444], timestampWrites }) {
+    device.queue.writeBuffer(renderUniform, 0, new Float32Array([rw, rh, zoom, exposure, detail, visibility, blend, lastDirection === -1 ? 1 : 0, ...inkA, 1, ...inkB, 1, ...inkC, 1, ...inkD, 1, ...background, 1]));
     for (let level = 0; level < levels.length; level++) {
       const pipeline = hierarchyPipelines[level], pass = encoder.beginComputePass(); pass.setPipeline(pipeline);
       pass.setBindGroup(0, device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [fields[x], fields[y], fields[scratch], pyramid, renderUniform].map((buffer, binding) => ({ binding, resource: { buffer } })) }));
