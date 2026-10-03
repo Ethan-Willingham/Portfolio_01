@@ -8,7 +8,11 @@ welcoming. A low shooting rail, edge posts, corner braces and floorboards establ
 the player's shelter without filling the animal corridor.
 
 The generated masters, complete prompts, export manifest and completed review
-are in `../../assets/hunting/source-v8/`. Fresh saves begin at 08:00; existing
+are in `../../assets/hunting/source-v9/`, with the original sky and stand
+in `source-v8/`. The owner requested finer zoom detail and brighter light after
+reviewing the first scene at 06:47. Version 9 supplies 14 registered native
+detail tiles, a compact wide overview and a gentler dawn exposure curve.
+Fresh saves begin at 08:00; existing
 saves retain their time. Progression and ballistics use the existing tuning.
 
 ## References and jobs

@@ -32,15 +32,19 @@
   }
   function noise(n) { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); }
   async function loadArt() {
+    const detailPromise = fetch('assets/hunting/birch-detail-v9.json?v=9').then(response => {
+      if (!response.ok) throw new Error('Could not load the field detail map.');
+      return response.json();
+    });
     const animals = ['boar', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)];
     const files = Object.fromEntries(animals.map(name => [name, name + (name.startsWith('deer-') ? '-v4.png?v=4' : '-v3.png?v=4')]));
-    Object.assign(files, { 'birch-terrain': 'birch-terrain-v8.webp?v=8', 'birch-sky': 'birch-sky-v8.webp?v=8', 'lookout-stand': 'lookout-stand-v8.webp?v=8' });
-    const pairs = await Promise.all(Object.entries(files).map(([name, file]) => new Promise((resolve, reject) => {
+    Object.assign(files, { 'birch-terrain': 'birch-terrain-v9.webp?v=9', 'birch-underpaint': 'birch-terrain-v8.webp?v=8', 'birch-sky': 'birch-sky-v8.webp?v=8', 'lookout-stand': 'lookout-stand-v8.webp?v=8' });
+    const [pairs, scene] = await Promise.all([Promise.all(Object.entries(files).map(([name, file]) => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve([name, img]);
       img.onerror = () => reject(new Error('Could not load ' + name + ' artwork.'));
       img.src = 'assets/hunting/' + file;
-    })));
+    }))), detailPromise]);
     const sprites = Object.fromEntries(pairs); sprites.deer = sprites['deer-1'];
     const masks = {};
     for (const name of ['boar', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)]) {
@@ -51,14 +55,21 @@
       const species = name.startsWith('deer-') ? HuntingCampaign.deerLevel(Number(name.split('-')[1])) : HuntingCampaign.SPECIES[name];
       masks[name] = { width: canvas.width, height: canvas.height, alpha, vitalsX: species.vitalsX, vitalsY: species.vitalsY, radius: species.radius };
     }
-    masks.deer = masks['deer-1']; return { sprites, mask: masks.deer, masks };
+    masks.deer = masks['deer-1']; return { sprites, mask: masks.deer, masks, scene };
   }
   class View {
-    constructor(canvas, sprites) {
+    constructor(canvas, sprites, scene) {
       this.canvas = canvas; this.g = canvas.getContext('2d'); this.sprites = sprites;
       this.camera = normal(); this.effects = []; this.trails = []; this.time = 0;
       this.scopePan = { x: 0, y: 0 };
       this.paintedLayers = new Map();
+      this.scene = scene; this.detailUse = 0; this.activeDetail = [];
+      this.detailTiles = new Map((scene?.tiles || []).map(tile => [tile.id, { ...tile, state: 'idle', image: null, used: 0 }]));
+      this.onArtReady = null;
+      // Warm the common center-field targets while the compact overview is already playable.
+      setTimeout(() => {
+        for (const tile of this.detailTiles.values()) if ([1, 2].includes(tile.row) && [1, 2].includes(tile.col)) this.requestDetail(tile);
+      }, 300);
       this.grass = Array.from({ length: 1700 }, (_, i) => ({ x: (noise(i + 1) - .5) * 230,
         y: 16 + noise(i + 3122) ** 1.7 * 178, h: .04 + noise(i + 224) * .23, color: i % 4, lean: noise(i + 313) - .5 }));
       this.trees = Array.from({ length: 124 }, (_, i) => ({ x: -190 + i * 3.1 + noise(i + 431) * 2,
@@ -123,36 +134,74 @@
       }
       // Re-light source pixels only when the clock enters a new light step.
       // Each layer owns one buffer, including its original soft alpha edge.
-      const day = Math.round(tone.daylight * 24) / 24, warm = Math.round(tone.warm * 12) / 12;
+      // Dawn opens quickly into clear light. The original linear multiplier made 06:47 needlessly gray.
+      const day = Math.round((1 - Math.pow(1 - tone.daylight, 2.4)) * 48) / 48, warm = Math.round(tone.warm * 12) / 12;
       const travel = Math.round(clamp((tone.hour - 5.3) / 14.4, 0, 1) * 20) / 20;
       const key = day + ':' + warm + ':' + travel;
       if (layer.key !== key) {
         const p = layer.g, width = image.width, height = image.height;
         p.clearRect(0, 0, width, height);
-        const brightness = name === 'birch-sky' ? .2 + .7 * day : name === 'lookout-stand' ? .2 + .76 * day : .25 + .75 * day;
-        p.filter = 'brightness(' + brightness + ') saturate(' + (.55 + .45 * day) + ')';
+        const brightness = name === 'birch-sky' ? .32 + .73 * day : name === 'lookout-stand' ? .28 + .84 * day : .3 + .82 * day;
+        p.filter = 'brightness(' + brightness + ') saturate(' + (.78 + .22 * day) + ')';
         p.drawImage(image, 0, 0); p.filter = 'none';
         p.globalCompositeOperation = 'source-atop';
-        p.fillStyle = 'rgba(44,65,80,' + ((1 - day) * .3) + ')'; p.fillRect(0, 0, width, height);
-        p.fillStyle = 'rgba(188,113,71,' + (warm * day * .12) + ')'; p.fillRect(0, 0, width, height);
-        if (name === 'birch-terrain' && day > .15) {
-          const light = p.createRadialGradient(width * (.12 + travel * .76), height * .65, 0, width * (.12 + travel * .76), height * .65, width * .55);
-          light.addColorStop(0, 'rgba(237,219,162,' + (day * .08) + ')'); light.addColorStop(1, 'rgba(237,219,162,0)');
+        p.fillStyle = 'rgba(44,65,80,' + ((1 - day) * .12) + ')'; p.fillRect(0, 0, width, height);
+        p.fillStyle = 'rgba(188,113,71,' + (warm * day * .025) + ')'; p.fillRect(0, 0, width, height);
+        if (name !== 'birch-sky' && name !== 'lookout-stand' && day > .15) {
+          const rect = this.detailTiles.get(name)?.rect || [0, 0, 1, 1];
+          const cx = width * (.12 + travel * .76 - rect[0]) / rect[2], cy = height * (.65 - rect[1]) / rect[3];
+          const light = p.createRadialGradient(cx, cy, 0, cx, cy, width * .55 / rect[2]);
+          light.addColorStop(0, 'rgba(237,219,162,' + (day * .04) + ')'); light.addColorStop(1, 'rgba(237,219,162,0)');
           p.fillStyle = light; p.fillRect(0, 0, width, height);
         }
         p.globalCompositeOperation = 'source-over'; layer.key = key;
       }
       return layer.canvas;
     }
+    requestDetail(tile) {
+      tile.used = ++this.detailUse;
+      if (tile.state !== 'idle') return;
+      tile.state = 'loading'; const image = new Image(); tile.image = image;
+      image.onload = () => {
+        tile.state = 'ready'; this.sprites[tile.id] = image;
+        this.trimDetail(); if (this.onArtReady) this.onArtReady();
+      };
+      image.onerror = () => { tile.state = 'error'; if (this.onArtReady) this.onArtReady(); };
+      image.src = tile.file + '?v=9';
+    }
+    trimDetail() {
+      const resident = [...this.detailTiles.values()].filter(tile => tile.image);
+      resident.sort((a, b) => b.used - a.used);
+      for (const tile of resident.slice(6)) {
+        tile.image.onload = tile.image.onerror = null; tile.image.src = ''; tile.image = null; tile.state = 'idle';
+        const layer = this.paintedLayers.get(tile.id);
+        if (layer) { layer.canvas.width = layer.canvas.height = 0; this.paintedLayers.delete(tile.id); }
+        delete this.sprites[tile.id];
+      }
+    }
     paintedTerrain(g, tone) {
-      const c = this.camera, a = anchor(c), image = this.paintedLayer('birch-terrain', tone);
+      const c = this.camera, a = anchor(c), image = this.paintedLayer(c.zoom > 1 ? 'birch-underpaint' : 'birch-terrain', tone);
       if (!image) { this.terrain(g, tone, false); return; }
       g.save(); g.translate(W / 2 - a.x * c.zoom, H / 2 - a.y * c.zoom); g.scale(c.zoom, c.zoom);
       // Register the generated 44.4% skyline to the 40% projected horizon.
       // Uniform scaling keeps brushwork undistorted and the bottom stays filled.
-      const fit = (1 - geometry.horizon / H) / (1 - .444);
+      const fit = (1 - geometry.horizon / H) / (1 - (this.scene?.horizon || .444));
+      const left = (W - W * fit) / 2, top = H - H * fit;
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      g.drawImage(image, (W - W * fit) / 2, H - H * fit, W * fit, H * fit); g.restore();
+      g.drawImage(image, left, top, W * fit, H * fit);
+      this.activeDetail = [];
+      if (c.zoom > 1) {
+        const radius = H * .45 / c.zoom;
+        for (const tile of this.detailTiles.values()) {
+          const [x, y, w, h] = tile.rect, tx = left + x * W * fit, ty = top + y * H * fit;
+          const tw = w * W * fit, th = h * H * fit;
+          if (tx > a.x + radius || tx + tw < a.x - radius || ty > a.y + radius || ty + th < a.y - radius) continue;
+          this.activeDetail.push(tile.id); this.requestDetail(tile);
+          if (tile.state === 'ready') g.drawImage(this.paintedLayer(tile.id, tone), tx, ty, tw, th);
+        }
+        this.trimDetail();
+      }
+      g.restore();
     }
     stand(g, tone) {
       if (this.camera.zoom > 1) return;

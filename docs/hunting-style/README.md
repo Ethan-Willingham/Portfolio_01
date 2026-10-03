@@ -139,13 +139,24 @@ labels stay real text. Reuse the existing watching, time and shooting flow.
 ## Rendering and asset migration
 
 Birch Clearing now uses the first painted scene, with separate sky, transparent
-landscape and close wooden hunting-stand layers. Its masters, prompts and review
-live in `assets/hunting/source-v8/`. `tools/build-hunting-scene.cjs` exports smooth
-WebP imagery without the old palette or binary-alpha conversion. The logical
+landscape and close wooden hunting-stand layers. Original sky and stand masters
+live in `assets/hunting/source-v8/`; current terrain detail, prompts and review
+live in `assets/hunting/source-v9/`. `tools/build-hunting-scene.cjs` and
+`tools/build-hunting-detail.cjs` export smooth WebP imagery without the old
+palette or binary-alpha conversion. The logical
 projection stays at 640 by 360; display rendering uses the viewport and device
 pixel ratio, capped at 2560 by 1440. The landscape's source skyline is registered
 to the projected horizon with uniform scaling. Sky and scenery share the scope's
 camera, while the stand stays in the unscoped foreground.
+
+Version 9 uses a 2048 by 1152 overview in the wide view and 14 overlapping
+painted tiles in the scope. Each tile contains new native detail for a small
+registered crop, giving the terrain about 6183 by 3481 pixels of effective
+density. Only intersecting scope tiles are drawn, with at most six decoded
+images and light buffers retained. Do not replace this with an enlargement of
+the overview. Dawn exposure opens promptly into clear field light and keeps
+the painting's greens; night remains a distinct darker state. Match lighting
+coordinates across tiles so sunlight and tint do not reveal their boundaries.
 
 The scene is the first step, described in `FIRST_MAP.md`. Cypress scenery, animals,
 ambient wildlife, the interface and effects still need their own painting passes.
