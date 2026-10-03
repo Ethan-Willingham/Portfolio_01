@@ -77,7 +77,8 @@ two isolated puddles or ketchup do not count. A connection held for 0.3 seconds
 latches the relay. The shutter then rises over 1.25 seconds, with its moving
 bottom and top used by collisions. Its lamp and visible water path reflect the
 actual relay state. The open relay, water, debris and toppled table survive falls
-and reloads. Wet tires can paint a connecting trail if the vase lands to one side.
+within the current visit. Wet tires can paint a connecting trail if the vase lands
+to one side.
 
 ## Editable sources
 
@@ -94,7 +95,7 @@ and reloads. Wet tires can paint a connecting trail if the vase lands to one sid
 - `js/four-wheels-scenery-worker.js`: background rasterization of immutable floor
   and lower cliff tiles, using the same renderer and palette as the main thread.
 - `js/four-wheels-audio.js`: surface-aware wheel Foley, material impacts and audio lifecycle.
-- `js/four-wheels.js`: input, lifecycle, saved run, records and UI.
+- `js/four-wheels.js`: input, lifecycle, current run, records and UI.
 
 `js/four-wheels-levels.js` and `tools/four-wheels-driver.cjs` remain as legacy
 regression fixtures for the old timed store. The live page loads the course
@@ -117,8 +118,8 @@ The four casters retain their swivel inertia and each tire's surface grip.
 The shopper is a separate spring mass. Legs support the pelvis on local ground,
 while arms exchange impulses with the moving handle. Elbows bend before the
 maximum reach becomes a unilateral tether. Knees crouch as the handle drops.
-Torso lean has its own damped velocity and survives saves. The head follows the
-torso rather than the basket tilt. Feet can lose ground independently of tires.
+Torso lean has its own damped velocity and survives practice parking. The head
+follows the torso rather than the basket tilt. Feet can lose ground independently of tires.
 Countersteering shifts hand loading against a sideways tip. Pull opposes a
 forward tip; push opposes an excessive backward tip. The finite balance torque
 requires planted feet. No input grants traction to a fully airborne assembly.
@@ -127,7 +128,7 @@ The legacy timed fixtures retain their original combined body.
 At a lip, the shopper shortens a step or moves sideways onto nearby supporting
 floor. A grounded cart can brace the arms while the shopper stands back up. Feet
 restore drive force only after planting; a fully airborne cart supplies no stepping
-assist. Existing saves with a shopper hanging just below the lip recover in place.
+assist. A parked run with a shopper hanging just below the lip recovers in place.
 
 All four wheels have independent swivel angles, angular velocities and signed
 rolling distances. Each fixed pivot carries a fork whose tire trails 5.5 units
@@ -146,8 +147,8 @@ including on tilted
 terrain. Front forks retain the existing caster physics. Fixed rear pins use
 steel instead of gold. Switching preserves the cart, momentum, route and mess;
 pressing the button again restores four swivel wheels. The selected arrangement
-survives restart, falls and saved-run reloads. Practice inherits the current
-arrangement, while returning to the run restores its parked arrangement.
+survives restart and falls within the visit. New visits use four swivel wheels.
+Practice inherits the current arrangement, while returning to the run restores its parked arrangement.
 
 The tire envelope is 8 by 4 units. Physical fork pivots, trailing tire contacts,
 collision rectangles, colored tread and visible wheel models share the same pose.
@@ -211,15 +212,15 @@ and outward pop. A shopper stuck without footing beside a supported cart also
 releases after 0.55 seconds. The cart keeps its road contacts, collisions and
 rolling momentum while only the shopper tumbles, then both return to the usual
 catch. Brief slips can still replant, and airborne jumps do not start the hanging
-timer. The timer and shopper-only fall survive pause and saved-run reloads.
+timer. The timer and shopper-only fall survive pause and practice parking.
 Fifteen physical joints carry the launch velocity and spin;
 a braced torso, free elbows and knees, gravity, bone constraints and floor
 contacts produce the tumble and rebound. The cart falls independently. A short
 launch cue and a soft thud or splash follow the physical events. The camera
 keeps both bodies visible on short screens. Edge rescues and successful jumps
-keep the shopper attached. Pause freezes every joint, and saved falls preserve
-joint positions, velocities and impact timing. Older mid-fall saves release on
-Continue. The catch waits for the landing beat, with a bounded recovery timeout.
+keep the shopper attached. Pause freezes every joint, and parked falls preserve
+joint positions, velocities and impact timing when parking a run for practice.
+The catch waits for the landing beat, with a bounded recovery timeout.
 
 It then returns to the earlier catch using the same body, wheels and stock world.
 Ordered progress rewinds. Furthest distance, furniture, products, doors, relay
@@ -321,7 +322,7 @@ header, footer, border or page scrolling. Distance, best and the current section
 occupy one small dark panel at the upper left.
 The upper right has two 44-pixel buttons: course map and pause/menu. There is no
 always-visible minimap. The start menu has a short goal, the three driving controls
-and Play (Continue for a saved run). Pause shows the current section, Resume and
+and Play. Pause shows the current section, Resume and
 Restart. Sound, fullscreen, fixed rear wheels, practice and short instructions
 including the current section's advice live under one closed Options section.
 There is one Leave game link. The finish card shows distance, time, falls and
@@ -388,27 +389,22 @@ The game remains playable if the audio script itself fails to load.
 The engine reads physics without changing the cart or consuming its randomness.
 There are no audio downloads, music, or dependencies on Sluice's audio engine.
 
-## Saves and practice
+## Records and practice
 
-`four-wheels-course-v1` holds best distance, completion/time/falls, and one parked
-challenge run. Older v1 through v6 timed record keys remain untouched. Every two
-seconds of play, on pause, fall, recovery and pagehide, the game saves the cart,
-casters, gait, route state, time, falls, furniture, props, supported and loose
-stock, films, hinged doors, loaded contacts, vertical motion and the water relay. Restoring rebuilds shelf references
-and film maps; it does not turn supported stock into falling products. Short-lived particles restart after reload. Mid-jump and mid-fall saves retain
-vertical velocity, orientation, angular rates and delayed impact.
-
-Loading parks a valid saved run behind Continue. Schema 3 migrates the former planar schema 1: records and store mess stay, new
-vertical motion initializes on the terrain, and the new relay table gets a vase.
-An old pose inside the new gap moves to its catch. Invalid versions or malformed
-physics values start a fresh run safely. Blocked storage shows a short message
-and permits play. Record distance stays after a fall or fresh start.
+Every visit starts a fresh challenge at the first section with a clean course,
+zero time and falls, and four swivel wheels. Reloading, revisiting the page and
+returning through the browser's back/forward cache all start fresh. Loading ignores
+old saved runs and rewrites `four-wheels-course-v1` with only best distance and
+completion/time/falls records. Older v1 through v6 timed record keys remain untouched.
+Records update every two seconds of play and on pause, fall, recovery and pagehide.
+Blocked storage still permits play. The sound preference remains separate.
 
 Reached sections unlock practice rows under Options. Practice creates its own
-world while parking the challenge snapshot. It cannot alter the challenge record
-or overwrite its save. Return to run on the pause menu restores that parked
-challenge, including its exact body momentum and mess. Reload during practice
-loads the parked challenge.
+world while parking the challenge snapshot in memory for the current visit.
+It cannot alter the challenge record. Return to run on the pause menu restores
+that challenge, including its exact body momentum and mess. Reloading or leaving
+during practice discards both worlds. Pausing or switching browser tabs keeps the
+current game available to resume.
 
 ## Verification and release
 
@@ -502,9 +498,10 @@ jumps, airborne traction, ice, disconnected film rejection, table-powered relay
 and saved airborne motion. The verification pilot drives all
 twelve sections using player forces, without teleporting or forced falls.
 
-The browser suite covers the same whole journey, desktop/mobile input, parked
-reloads, practice isolation, restart confirmation, both falls, paused gravity,
-edge rescue, jump reload, lifting water relay, ice, overview, fullscreen, 320-pixel phones, short landscape, blocked storage,
+The browser suite covers the same whole journey, desktop/mobile input,
+fresh visits and browser-cache returns, practice isolation, restart confirmation,
+both falls, paused gravity, edge rescue, jumps, lifting water relay, ice, overview,
+fullscreen, 320-pixel phones, short landscape, blocked storage,
 reduced motion, no scene requests and JavaScript errors. Layout assertions check the canvas itself against all four viewport edges,
 compact separated HUD buttons, help scrolling, dialog keyboard focus and retained
 phone controls. Mobile regressions cover neutral off-center starts, diagonals,

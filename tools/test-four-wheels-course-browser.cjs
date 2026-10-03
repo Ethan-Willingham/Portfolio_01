@@ -11,7 +11,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
  const testPilot=${pilot.toString()};
  window.__cartTest={
   state:()=>({phase,index:levelIndex,room:world.roomIndex,narrowCamera,followCart,cameraFocusY:touchFocusY,body:{...world.body},shopper:{...world.shopper},wheels:world.wheels.map(q=>({...q})),gait:{...world.gait},gate:world.gate,time:world.time,distance:world.distance,peak:world.peak,best:{...best},penalty:world.penalty,bonus:world.bonus,particles:particles.length,terrain:{...world.terrainStats},ground:{...world.ground},circuit:{...world.circuit},messes:world.messes,fall:world.fall,falls:world.falls,practice:world.practice,keys:keys.size,touches:touches.size,input:controls(),touchInput:[...touches].map(([id,q])=>({id,source:q.source,turn:q.turn||0,push:q.push||0,brake:q.brake||0,baseX:q.baseX||0,baseY:q.baseY||0})),contacts:world.boundaryContacts}),
-  world:()=>world,draw,reset,run,events,save,startPractice,returnToRun,stop:()=>{cancelAnimationFrame(raf);raf=0;},
+  world:()=>world,parked:()=>parkedRun,draw,reset,run,events,save,startPractice,returnToRun,stop:()=>{cancelAnimationFrame(raf);raf=0;},
   step:(seconds,input)=>{cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,input||controls());events();tickEffects(1/120);}draw();updateUI();},
   pilot:(seconds)=>{cancelAnimationFrame(raf);raf=0;for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,testPilot(world));events();tickEffects(1/120);}draw();updateUI();},
   pose:(index)=>{__cartTest.reset(index);__cartTest.run();__cartTest.stop();draw();updateUI();},
@@ -27,6 +27,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
 function check(name,condition){assert.ok(condition,name);console.log('PASS '+name);}
 async function setup(context,url){await context.route('https://www.googletagmanager.com/**',r=>r.abort());const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));await page.goto(url);await page.waitForFunction(()=>!!window.__cartTest);await page.evaluate(()=>document.fonts.ready);return page;}
 const state=p=>p.evaluate(()=>__cartTest.state());
+const freshVisit=p=>p.evaluate(()=>__cartTest.state().phase==='ready'&&!__cartTest.world().practice&&JSON.stringify(CartCourse.snapshot(__cartTest.world()))===JSON.stringify(CartCourse.snapshot(new CartPhysics.World(CartCourse.build()))));
 async function options(p){if(!await p.locator('#cart-options').evaluate(e=>e.open))await p.locator('#cart-options summary').click();}
 async function shot(p,name){return p.locator('#cart-game').screenshot({path:path.join(dump,name+'.png')});}
 const fits=()=>{const game=document.getElementById('cart-game').getBoundingClientRect(),stage=document.getElementById('cart-stage').getBoundingClientRect(),c=document.getElementById('cart-canvas');return Math.abs(game.top)<1&&Math.abs(game.left)<1&&Math.abs(game.width-innerWidth)<1&&Math.abs(game.height-innerHeight)<1&&Math.abs(stage.width-innerWidth)<1&&Math.abs(stage.height-innerHeight)<1&&Math.abs(c.height/c.width-stage.height/stage.width)<.003&&document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight+1;};
@@ -36,6 +37,19 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  const desktop=await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:1});
  await desktop.addInitScript(()=>{if(!localStorage.getItem('four-wheels-records-v6'))localStorage.setItem('four-wheels-records-v6','[{"time":42,"stars":3}]');});
  const page=await setup(desktop,url);let a;
+ // Seed a valid old run with actual motion, then verify the upgraded visit ignores it.
+ const legacyRun=await page.evaluate(()=>{
+  const w=new CartPhysics.World(CartCourse.build());
+  for(let i=0;i<120;i++)w.step(1/120,{push:1,turn:.3});
+  return {version:CartCourse.VERSION,best:{peak:40,completed:false,time:null,falls:null},run:CartCourse.snapshot(w)};
+ });
+ await page.addInitScript(saved=>{
+  if(localStorage.getItem('cart-legacy-seeded'))return;
+  localStorage.setItem('cart-legacy-seeded','yes');
+  localStorage.setItem('four-wheels-course-v1',JSON.stringify(saved));
+ },legacyRun);
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
+ check('a valid old saved run is discarded while best distance stays',await freshVisit(page)&&(await state(page)).best.peak===40&&await page.locator('#cart-start').textContent()==='Play'&&await page.evaluate(()=>!Object.hasOwn(JSON.parse(localStorage.getItem('four-wheels-course-v1')),'run')));
  if(process.env.MOBILE_ONLY!=='1'){
  check('the complete twelve-section course boots',await page.evaluate(()=>__cartTest.world().level.campaign&&__cartTest.world().level.rooms.length===12));
  check('the canvas fills the complete desktop viewport with no reserved bars',await page.evaluate(fits));await shot(page,'desktop-start');
@@ -48,17 +62,15 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await page.locator('#cart-start').click();await page.evaluate(()=>{__cartTest.stop();__cartTest.step(.55,{push:1,turn:.5});});
  check('front casters swivel while rear forks follow the moving chassis',await page.evaluate(()=>{const w=__cartTest.world();return [0,2].every(i=>w.wheels[i].a===w.body.a&&w.wheels[i].roll>0)&&[1,3].some(i=>Math.abs(CartPhysics.wrap(w.wheels[i].a-w.body.a))>.05);}));await shot(page,'fixed-rear-cart');
  await page.locator('#cart-pause').click();const fixedParked=await state(page);
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
- check('reload restores the selected cart and its exact parked pose',await page.evaluate(()=>__cartTest.world().wheelMode==='front-swivel')&&JSON.stringify((await state(page)).body)===JSON.stringify(fixedParked.body)&&await page.locator('#cart-wheel-mode').getAttribute('aria-pressed')==='true');
- const fixedSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-course-v1')).run);
+ const fixedSave=await page.evaluate(()=>CartCourse.snapshot(__cartTest.world()));
  await options(page);await page.locator('#cart-courses').click();await page.locator('.cart-course-tile').first().click();await page.evaluate(()=>__cartTest.stop());
  check('choosing practice starts playing without another briefing',(await state(page)).phase==='running'&&await page.locator('#cart-overlay').isHidden());
  await page.locator('#cart-pause').click();await options(page);
  check('practice inherits the test cart',await page.evaluate(()=>__cartTest.world().practice&&__cartTest.world().wheelMode==='front-swivel'));
  await page.locator('#cart-wheel-mode').click();
- check('switching the practice cart leaves the parked run intact',await page.evaluate(old=>JSON.stringify(JSON.parse(localStorage.getItem('four-wheels-course-v1')).run)===JSON.stringify(old),fixedSave));
+ check('switching the practice cart leaves the parked run intact',await page.evaluate(old=>JSON.stringify(__cartTest.parked())===JSON.stringify(old),fixedSave));
  await page.locator('#cart-secondary').click();
- check('returning from practice restores the saved wheel arrangement',await page.evaluate(()=>!__cartTest.world().practice&&__cartTest.world().wheelMode==='front-swivel')&&JSON.stringify((await state(page)).body)===JSON.stringify(fixedParked.body));
+ check('returning from practice restores the parked wheel arrangement',await page.evaluate(()=>!__cartTest.world().practice&&__cartTest.world().wheelMode==='front-swivel')&&JSON.stringify((await state(page)).body)===JSON.stringify(fixedParked.body));
  await page.locator('#cart-retry').click();await page.locator('#cart-start').click();await page.evaluate(()=>__cartTest.stop());
  check('starting fresh retains the selected cart',await page.evaluate(()=>__cartTest.world().wheelMode==='front-swivel'));
  await page.locator('#cart-pause').click();const beforeSwitch=await state(page);await options(page);await page.locator('#cart-wheel-mode').click();
@@ -75,13 +87,13 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await options(page);check('options and short instructions open inside the paused game',await page.locator('#cart-instructions').isVisible()&&await page.locator('#cart-courses').isVisible()&&await page.locator('#cart-sound').isVisible()&&await page.locator('#cart-fullscreen').isVisible()&&(await state(page)).phase==='paused');
  const helpTime=(await state(page)).time;await page.keyboard.press('w');await page.waitForTimeout(100);check('reading help never pushes the parked cart',(await state(page)).time===helpTime&&(await state(page)).keys===0);
  await page.locator('.cart-bottomnav a').last().focus();await page.keyboard.press('Tab');check('Tab stays inside the pause menu',await page.locator('#cart-start').evaluate(e=>document.activeElement===e));await page.keyboard.press('Shift+Tab');check('reverse Tab stays inside the pause menu',await page.locator('.cart-bottomnav a').last().evaluate(e=>document.activeElement===e));await shot(page,'pause-help');
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);a=await state(page);check('reload restores a parked run',a.phase==='ready'&&JSON.stringify(a.body)===JSON.stringify(parked.body)&&a.time===parked.time&&await page.locator('#cart-start').textContent()==='Continue');
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest);a=await state(page);check('reload starts a clean run with zero time and default wheels',await freshVisit(page)&&a.time===0&&await page.locator('#cart-start').textContent()==='Play'&&await page.locator('#cart-retry').isHidden());
  await page.locator('#cart-start').click();await page.keyboard.press('r');check('start over asks before discarding progress',(await state(page)).phase==='confirm'&&await page.locator('#cart-secondary').evaluate(e=>document.activeElement===e)&&await page.locator('#cart-options').isHidden());await page.locator('#cart-secondary').click();check('cancel keeps the run',(await state(page)).phase==='running');
  await page.evaluate(()=>{__cartTest.reset();__cartTest.run();__cartTest.stop();});
  const count=requests.length;await page.evaluate(()=>{for(let i=0;i<90&&__cartTest.state().room<2;i++)__cartTest.pilot(1);});a=await state(page);
  check('normal forces reach the grocery detour without loading',a.room===2&&!a.fall&&a.phase==='running'&&requests.length===count&&await page.locator('#cart-overlay').isHidden());await shot(page,'quick-mart');
- await page.evaluate(()=>__cartTest.save());const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('four-wheels-course-v1')));await page.locator('#cart-pause').click();await options(page);await page.locator('#cart-courses').click();check('only reached practice sections unlock',await page.locator('.cart-course-tile').count()===12&&await page.locator('.cart-course-tile:not(:disabled)').count()===3);check('practice is a compact list without preview canvases',await page.locator('#cart-course-grid canvas').count()===0);await page.locator('#cart-picker-close').focus();await page.keyboard.press('Shift+Tab');check('reverse Tab stays inside the practice picker',await page.locator('.cart-course-tile:not(:disabled)').last().evaluate(e=>document.activeElement===e));await page.keyboard.press('Tab');check('Tab stays inside the practice picker',await page.locator('#cart-picker-close').evaluate(e=>document.activeElement===e));await shot(page,'route-picker');
- await page.locator('#cart-picker-close').click();check('closing the route returns to the paused menu',(await state(page)).phase==='paused'&&await page.locator('#cart-start').isVisible()&&await page.locator('#cart-courses').evaluate(e=>document.activeElement===e));await page.locator('#cart-courses').click();await page.locator('.cart-course-tile').nth(1).click();await page.evaluate(()=>{__cartTest.stop();__cartTest.step(.3,{push:1});__cartTest.save();});check('practice preserves the parked challenge and record',await page.evaluate(old=>{const s=JSON.parse(localStorage.getItem('four-wheels-course-v1'));return __cartTest.world().practice&&JSON.stringify(s.run)===JSON.stringify(old.run)&&s.best.peak===old.best.peak;},saved));
+ await page.evaluate(()=>__cartTest.save());const saved=await page.evaluate(()=>({best:JSON.parse(localStorage.getItem('four-wheels-course-v1')).best,run:CartCourse.snapshot(__cartTest.world())}));await page.locator('#cart-pause').click();await options(page);await page.locator('#cart-courses').click();check('only reached practice sections unlock',await page.locator('.cart-course-tile').count()===12&&await page.locator('.cart-course-tile:not(:disabled)').count()===3);check('practice is a compact list without preview canvases',await page.locator('#cart-course-grid canvas').count()===0);await page.locator('#cart-picker-close').focus();await page.keyboard.press('Shift+Tab');check('reverse Tab stays inside the practice picker',await page.locator('.cart-course-tile:not(:disabled)').last().evaluate(e=>document.activeElement===e));await page.keyboard.press('Tab');check('Tab stays inside the practice picker',await page.locator('#cart-picker-close').evaluate(e=>document.activeElement===e));await shot(page,'route-picker');
+ await page.locator('#cart-picker-close').click();check('closing the route returns to the paused menu',(await state(page)).phase==='paused'&&await page.locator('#cart-start').isVisible()&&await page.locator('#cart-courses').evaluate(e=>document.activeElement===e));await page.locator('#cart-courses').click();await page.locator('.cart-course-tile').nth(1).click();await page.evaluate(()=>{__cartTest.stop();__cartTest.step(.3,{push:1});__cartTest.save();});check('practice preserves the parked challenge and record',await page.evaluate(old=>{const s=JSON.parse(localStorage.getItem('four-wheels-course-v1'));return __cartTest.world().practice&&JSON.stringify(__cartTest.parked())===JSON.stringify(old.run)&&!Object.hasOwn(s,'run')&&s.best.peak===old.best.peak;},saved));
  await page.locator('#cart-pause').click();await page.locator('#cart-secondary').click();check('exit practice restores the challenge',(await state(page)).room===2&&JSON.stringify((await state(page)).body)===JSON.stringify(a.body));
  await page.locator('#cart-start').click();await page.evaluate(()=>__cartTest.stop());
  await page.locator('#cart-camera').click();check('overview displays the whole course without changing physics',!(await state(page)).followCart);await shot(page,'course-map');await page.locator('#cart-camera').click();
@@ -90,9 +102,17 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  check('a hard real door impact produces glass debris',await page.evaluate(()=>__cartTest.world().trackDoors[0].broken&&__cartTest.world().stock.items.some(p=>p.kind==='shard')));await shot(page,'broken-door');
  await page.evaluate(()=>{__cartTest.terrainPose(2,1190,1316,0,65);__cartTest.step(2,{push:.3});__cartTest.save();});
  check('a table hit makes a clear physical water puddle',await page.evaluate(()=>__cartTest.world().stock.liquids.get('water')?.cells.size>0));await shot(page,'vase-water');
- const mess=await page.evaluate(()=>{const w=__cartTest.world();return {body:{...w.body},stats:{...w.stock.stats},items:w.stock.items.map(p=>[p.state,p.x,p.y,p.z]),water:[...w.stock.liquids.get('water').cells]};});
  await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
- check('reload preserves supported stock, broken debris and clear water',await page.evaluate(old=>{const w=__cartTest.world();return JSON.stringify({body:{...w.body},stats:{...w.stock.stats},items:w.stock.items.map(p=>[p.state,p.x,p.y,p.z]),water:[...w.stock.liquids.get('water').cells]})===JSON.stringify(old);},mess));
+ check('reload resets the cart, furniture, products, water and doors',await freshVisit(page));
+ await page.evaluate(()=>{__cartTest.startPractice(2);__cartTest.stop();__cartTest.step(.4,{push:1});});
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
+ check('reload during practice starts a fresh challenge',await freshVisit(page)&&await page.locator('#cart-secondary').isHidden());
+ await page.evaluate(()=>{__cartTest.startPractice(2);__cartTest.stop();__cartTest.step(.4,{push:1});window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
+ check('a cached browser return discards practice and its parked run',await freshVisit(page)&&await page.evaluate(()=>__cartTest.parked()===null&&__cartTest.state().keys===0&&__cartTest.state().touches===0&&__cartTest.state().followCart));
+ await page.locator('#cart-start').click();await page.keyboard.down('w');await page.waitForTimeout(150);await page.keyboard.up('w');
+ await page.locator('.cart-bottomnav a').evaluate(e=>e.click());await page.waitForURL('**/archive.html');
+ await page.goBack();await page.waitForFunction(()=>!!window.__cartTest);
+ check('leaving and returning through browser history starts fresh',await freshVisit(page));
  check('old timed records remain untouched',await page.evaluate(()=>localStorage.getItem('four-wheels-records-v6')==='[{"time":42,"stars":3}]'));
  for(const kind of ['lake','cliff']){await page.evaluate(kind=>__cartTest.hazard(kind),kind);await page.evaluate(()=>{for(let i=0;i<50&&!__cartTest.world().fall;i++)__cartTest.step(.1,{push:1});});a=await state(page);check(kind+' has a gravity fall and no clock penalty',a.fall?.kind===kind&&a.body.z<a.ground.lastHeight-8&&a.penalty===0);await shot(page,kind+'-fall');await page.locator('#cart-pause').click();const f=await state(page);await page.waitForTimeout(200);check('pause freezes '+kind+' gravity',JSON.stringify(f.fall)===JSON.stringify((await state(page)).fall));await page.locator('#cart-start').click();await page.evaluate(()=>__cartTest.step(3));check(kind+' catches at an earlier stretch and keeps the peak',!(await state(page)).fall&&(await state(page)).room===(kind==='lake'?1:0)&&(await state(page)).peak>=f.peak);}
  check('the spin rewards and style UI are removed',await page.locator('#cart-trick, #cart-style').count()===0&&await page.evaluate(()=>!window.CartTricks));
@@ -105,7 +125,7 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await page.evaluate(()=>{__cartTest.terrainPose(1,590,1195,-Math.PI/2,35);__cartTest.step(.35,{push:1});});await shot(page,'speed-bumps');
  await page.evaluate(()=>__cartTest.terrainPose(4,1260,930,-2.04));await shot(page,'quarry-climb');
  await page.evaluate(()=>{__cartTest.terrainPose(5,1390,410,Math.PI,35);for(let i=0;i<300;i++){__cartTest.step(1/120,{push:1});if(__cartTest.world().ground.airborne&&__cartTest.world().body.z>10)break;}__cartTest.step(.08,{push:1});__cartTest.save();});check('the ramp produces visible unsupported airtime',(await state(page)).ground.airborne&&(await state(page)).body.z>10);await shot(page,'boost-jump');
- const flying=await state(page);await page.reload();await page.waitForFunction(()=>!!window.__cartTest);check('reloading in a jump parks the same vertical and angular momentum',JSON.stringify((await state(page)).body)===JSON.stringify(flying.body));await page.locator('#cart-start').click();await page.evaluate(()=>{__cartTest.stop();__cartTest.step(1.1,{brake:1});});check('the jump lands on the far side with real contact recovery',(await state(page)).falls===0&&(await state(page)).terrain.landings>0);await shot(page,'jump-landed');
+ await page.locator('#cart-pause').click();const flying=await state(page);await page.waitForTimeout(150);check('pause keeps the same jump momentum within a visit',JSON.stringify((await state(page)).body)===JSON.stringify(flying.body));await page.locator('#cart-start').click();await page.evaluate(()=>{__cartTest.stop();__cartTest.step(1.1,{brake:1});});check('the jump lands on the far side with real contact recovery',(await state(page)).falls===0&&(await state(page)).terrain.landings>0);await shot(page,'jump-landed');
  await page.evaluate(()=>{__cartTest.terrainPose(7,850,290,0,65);__cartTest.step(2,{push:.4});__cartTest.step(3,{brake:1});});check('the table vase powers the actual lifting shutter',(await state(page)).circuit.powered&&(await state(page)).circuit.lift===1);await shot(page,'water-relay');
  await page.evaluate(()=>{__cartTest.terrainPose(9,2110,600,Math.PI/2,45);__cartTest.step(.2,{brake:1});});await shot(page,'ice');
  console.log('Warm render ms:',await page.evaluate(()=>__cartTest.profile()));
@@ -172,17 +192,19 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await phone.evaluate(()=>{window.savedCapture=HTMLElement.prototype.setPointerCapture;HTMLElement.prototype.setPointerCapture=function(){};});
  await phone.mouse.move(mr.x+mr.width/2,mr.y+mr.height/2);await phone.mouse.down();await phone.mouse.move(mr.x+mr.width*2,mr.y-40);check('window-level pointer move survives absent capture',(await state(phone)).input.turn>0);
  await phone.mouse.up();check('window-level pointer up cannot strand a mouse stick',(await state(phone)).touches===0&&(await state(phone)).input.turn===0);await phone.evaluate(()=>HTMLElement.prototype.setPointerCapture=window.savedCapture);
+ await phone.reload();await phone.waitForFunction(()=>!!window.__cartTest);
+ check('phone reload starts a new game with released controls',await freshVisit(phone)&&(await state(phone)).touches===0&&await phone.locator('#cart-start').textContent()==='Play');
  if(process.env.MOBILE_ONLY==='1'){check('no JavaScript errors on desktop and mobile',errors.length===0);console.log('Screenshots: '+dump);return;}
  await page.evaluate(()=>{__cartTest.reset();__cartTest.run();__cartTest.stop();});
  // A whole journey, driven by forces. This is intentionally separate from pose-based render fixtures.
  await page.evaluate(()=>__cartTest.pilot(440));a=await state(page);
  console.log('Journey:',JSON.stringify({seconds:a.time,gate:a.gate,falls:a.falls,relay:a.circuit.powered}));
  check('a complete normal-control journey reaches the finish',a.phase==='won'&&a.gate===54&&a.falls===0&&a.distance>9300);
- check('completion saves the full distance and clears the parked run',await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('four-wheels-course-v1'));return s.best.completed&&s.best.peak===__cartTest.world().level.totalDistance&&s.run===null;}));await shot(page,'finish');
- await phone.evaluate(()=>{__cartTest.finishPose();__cartTest.step(1.8,{push:1});});
+ check('completion saves the full distance without a run snapshot',await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('four-wheels-course-v1'));return s.best.completed&&s.best.peak===__cartTest.world().level.totalDistance&&!Object.hasOwn(s,'run');}));await shot(page,'finish');
+ await phone.locator('#cart-start').tap();await phone.evaluate(()=>{__cartTest.finishPose();__cartTest.step(1.8,{push:1});});
  check('a phone can finish with distance and falls',(await state(phone)).phase==='won'&&!/style/.test(await phone.locator('#cart-result').textContent()));
  check('the finish card fits in landscape',await phone.evaluate(()=>{const a=document.querySelector('.cart-overlay-card').getBoundingClientRect(),b=document.getElementById('cart-stage').getBoundingClientRect();return a.top>=b.top&&a.bottom<=b.bottom+1;}));await shot(phone,'mobile-finish');
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);check('furthest distance and finish survive reload',(await state(page)).best.completed);
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest);check('furthest distance and finish records survive a fresh visit',await freshVisit(page)&&(await state(page)).best.completed);
  await options(page);await page.locator('#cart-fullscreen').click();check('fullscreen works',await page.evaluate(()=>document.fullscreenElement===document.getElementById('cart-game')||document.getElementById('cart-game').classList.contains('cart-pseudo-fullscreen')));await page.locator('#cart-fullscreen').click();
  const fallback=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'});await fallback.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked');}});});const blocked=await setup(fallback,url);await blocked.locator('#cart-start').click();await blocked.keyboard.down('w');await blocked.waitForTimeout(150);await blocked.keyboard.up('w');check('blocked storage still allows play',(await state(blocked)).phase==='running');
  check('reduced motion removes scene shake and decorative dust',await blocked.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches));
