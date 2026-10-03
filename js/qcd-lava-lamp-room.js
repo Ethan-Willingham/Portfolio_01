@@ -1,4 +1,4 @@
-import {solverShader,sliceShader,volumeShader} from './qcd-lava-lamp-shaders.js';
+import {solverShader,sliceShader,volumeShader} from './qcd-lava-lamp-shaders.js?v=2';
 import {seedKey,lagOne,MODEL} from './qcd-lava-lamp-math.js';
 export const roomInfo={apiVersion:1,id:'qcd-lava-lamp',title:'QCD Lava Lamp',model:MODEL,representativeScaleMeters:null,scaleMeaning:'Lattice units. No physical lattice spacing has been calibrated.',sources:['https://arxiv.org/html/1903.08308v1','https://arxiv.org/pdf/1003.3219','https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf','https://www.thesalmons.org/john/random123/papers/random123sc11.pdf']};
 const B=globalThis.GPUBufferUsage??{MAP_READ:1,COPY_SRC:4,COPY_DST:8,UNIFORM:64,STORAGE:128,QUERY_RESOLVE:512};

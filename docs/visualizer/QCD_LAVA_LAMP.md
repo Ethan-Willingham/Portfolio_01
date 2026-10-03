@@ -1,6 +1,6 @@
 # QCD Lava Lamp
 
-Built October 3, 2026. The page is `qcd-lava-lamp-lab.html`, a comparison prototype excluded from the sitemap and public indexes. It implements pure SU(3) Wilson lattice gauge theory with periodic boundaries, beta 6.0, and no quarks. The SU(2) solver is retained for numerical checks, not presented as QCD. All production density comes from the gauge ensemble.
+Built October 3, 2026. The page is `qcd-lava-lamp-lab.html`, a comparison prototype listed in In Progress and excluded from the sitemap. It implements pure SU(3) Wilson lattice gauge theory with periodic boundaries, beta 6.0, and no quarks. The SU(2) solver is retained for numerical checks, not presented as QCD. All production density comes from the gauge ensemble.
 
 ## Files and running
 
@@ -102,9 +102,11 @@ The browser targets two Markov sweeps per ambient second, with at most one pendi
 
 Wilson cooling can erase small structures. [Improved field-strength operators](https://arxiv.org/abs/hep-lat/0203008) combine larger clovers to reduce discretization errors; [Wilson flow](https://arxiv.org/abs/1006.4518) supplies a continuous smoothing scale. Neither is implemented here. They would need new staple/force operators, integration and normalization checks. The current cooling and operator cannot reproduce the improved 25-sweep treatment in the [reference visualization](https://arxiv.org/html/1903.08308v1), which uses a 24^3 x 36 SU(3) box. Beta 6.0 does not assign our box a physical spacing.
 
-The slice interpolates neighboring planes along coordinate zero. Hardware trilinear filtering softens the displayed density in the remaining three coordinates. Previous and current snapshot maps crossfade for seven seconds, each normalized by its own measured RMS. Warm and blue are arbitrary sign encodings, not spectra. An 80-step ray integral uses density-dependent extinction and gradient highlights; a thin boundary fade exposes the interior of the periodic box. No particles, synthetic instantons, texture noise, fluid warp or image feedback drive it.
+The slice interpolates neighboring planes along coordinate zero and uses hardware trilinear interpolation within the measured 3D density map. Previous and current snapshots crossfade for seven seconds, each normalized by its own measured RMS. Warm and blue are arbitrary sign encodings, not spectra.
 
-The room writes linear radiance to rgba16float and applies exposure linearly. The standalone host adds a small bright-only nine-tap bloom and maps `c/(1+c)` once before sRGB encoding. Observable values are calculated from lattice state before this presentation filtering. RMS scaling makes a weak cooled field visible; it does not imply preserved physical amplitude. Instruments expose the RMS, peak and Q curve through the room snapshot. There is no photosensitivity certification claim.
+The display traces contours where the absolute interpolated charge is 1.1 times the measured RMS. A ray uses 128 intervals and five bisections to locate each entering contour, then composites that surface with opacity 0.8. Central-difference normals, a fixed light and restrained specular highlights give the surfaces depth. A thin boundary fade closes contours at the edge of the displayed periodic box. This presentation gives the coarse lattice clear silhouettes; it does not create sub-lattice detail or change the charge measurements. No synthetic instantons, texture noise, fluid warp or image feedback drive it.
+
+The room writes linear radiance to rgba16float and applies exposure linearly. The standalone host maps `c/(1+c)` once before sRGB encoding, without bloom. Its enlarged view occupies nearly the full page width and 690 CSS pixels at 1440 x 900. The render target caps DPR at 2, dimensions at 2560 pixels and total area at 4 Mi pixels. The camera fits the volume to the shorter viewport axis so portrait views retain the whole field. Observable values are calculated from lattice state before presentation filtering. RMS scaling makes a weak cooled field visible; it does not imply preserved physical amplitude. Instruments expose the RMS, peak and Q curve through the room snapshot. There is no photosensitivity certification claim.
 
 ## Memory budget
 
@@ -122,7 +124,7 @@ The adapter reported 128 MiB per storage binding and 256 MiB per buffer. No API 
 | Ordinary transient diagnostic readback | 2,097,152 | 2 |
 | Optional debug link and charge readback | 19,922,944 | 19 |
 
-Readback buffers are destroyed after mapping. Debug arrays also consume JS heap, which is not included in GPU totals. The host owns its HDR target, swap chain and any presentation resources; a 1280 x 620 HDR target adds 6,348,800 bytes. Low and medium persistent solver buffers are 2,556,544 and 12,939,904 bytes before the room view and volume texture.
+Readback buffers are destroyed after mapping. Debug arrays also consume JS heap, which is not included in GPU totals. The host owns its HDR target, swap chain and any presentation resources; a 2560 x 1264 HDR target adds 25,886,720 bytes. Low and medium persistent solver buffers are 2,556,544 and 12,939,904 bytes before the room view and volume texture.
 
 ## Verification and measured results
 
@@ -130,13 +132,13 @@ Machine-readable evidence is in `cpu-verification.json` and `verification.json` 
 
 | Phase | 8^4 median / p95 ms | 12^4 median / p95 ms | 16^4 median / p95 ms |
 | --- | ---: | ---: | ---: |
-| SU(3) heatbath sweep | 0.864 / 0.875 | 3.285 / 3.613 | 9.411 / 9.463 |
-| One cooling sweep | 0.711 / 0.713 | 3.011 / 3.026 | 9.121 / 9.141 |
-| Full 4D clover charge | 0.328 / 0.331 | 1.428 / 1.432 | 4.316 / 4.543 |
-| Live plaquette and constraints | 0.116 / 0.118 | 0.425 / 0.427 | 1.174 / 1.437 |
-| Four-depth readback and CPU sum | 0.700 / 0.800 | 1.500 / 3.500 | 4.000 / 4.700 |
+| SU(3) heatbath sweep | 0.861 / 0.945 | 3.301 / 3.650 | 16.907 / 25.918 |
+| One cooling sweep | 0.704 / 1.016 | 3.018 / 3.313 | 17.273 / 23.608 |
+| Full 4D clover charge | 0.328 / 0.340 | 1.424 / 1.641 | 4.464 / 14.468 |
+| Live plaquette and constraints | 0.117 / 0.122 | 0.422 / 0.433 | 1.175 / 1.335 |
+| Four-depth readback and CPU sum | 0.700 / 5.900 | 1.500 / 2.500 | 3.700 / 7.400 |
 
-There are 16 isolated measurements per solver phase. A 12^4 volume at 1280 x 620 took 0.833 / 0.860 ms over 32 GPU measurements; whole submitted render wall time was 1.300 / 1.500 ms. Slice assembly was 0.0065 / 0.0108 ms. The standalone final tone-map pass is outside that room benchmark. Its costs are not included in the volume-only timestamp.
+There are 16 isolated measurements per solver phase. The updated 12^4 contour rendering at 2560 x 1264 took 6.212 / 9.234 ms over 32 GPU measurements; whole submitted render wall time was 6.900 / 9.900 ms. Slice assembly was 0.0069 / 0.0483 ms. The standalone final tone-map pass is outside that room benchmark. Its costs are not included in the volume-only timestamp. This run showed more variable 16^4 costs, so the default remains 12^4.
 
 Numerical checks include:
 

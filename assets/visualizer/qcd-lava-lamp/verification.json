@@ -1,4 +1,51 @@
 {
+  "numerics": {
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "limits": {
+      "maxBufferSize": 268435456,
+      "maxStorageBufferBindingSize": 134217728
+    },
+    "groups": [
+      {
+        "n": 2,
+        "identityChargeError": 0,
+        "identityPlaquette": 1,
+        "sweepMaxError": 0.000001952052116394043,
+        "sweepRMSError": 1.6664448656582426e-7,
+        "chargeMaxError": 5.719820537347653e-9,
+        "constraints": {
+          "unitary": 5.435105850937205e-7,
+          "determinant": 5.24365069282565e-7
+        },
+        "fluxQ": 1.8992822766304016,
+        "fluxExpected": 1.8992824071035674,
+        "gaugeError": 2.7939677238464355e-9,
+        "coolingMax": 3.725290298461914e-7
+      },
+      {
+        "n": 3,
+        "identityChargeError": 0,
+        "identityPlaquette": 1,
+        "sweepMaxError": 0.000003248453140258789,
+        "sweepRMSError": 2.5734567540148297e-7,
+        "chargeMaxError": 2.954725264806002e-9,
+        "constraints": {
+          "unitary": 5.543025221044218e-7,
+          "determinant": 6.044089702009446e-7
+        },
+        "fluxQ": 1.8992822766304016,
+        "fluxExpected": 1.8992824071035674,
+        "gaugeError": 1.3969838619232178e-9,
+        "coolingMax": 8.642673492431641e-7
+      }
+    ]
+  },
   "benchmarks": [
     {
       "L": 8,
@@ -38,56 +85,56 @@
       "costs": {
         "heatbath": {
           "gpuMs": {
-            "median": 0.196812,
-            "p95": 0.207603,
+            "median": 0.185772,
+            "p95": 0.190563,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.6000000238418579,
-            "p95": 1.399999976158142,
+            "median": 1.100000023841858,
+            "p95": 8.600000023841858,
             "count": 16
           }
         },
         "coolingSweep": {
           "gpuMs": {
-            "median": 0.141609,
-            "p95": 0.147817,
+            "median": 0.128819,
+            "p95": 0.138235,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.5,
-            "p95": 0.6000000238418579,
+            "median": 0.8999999761581421,
+            "p95": 6.5,
             "count": 16
           }
         },
         "cloverAll4D": {
           "gpuMs": {
-            "median": 0.0737,
-            "p95": 0.077158,
+            "median": 0.073413,
+            "p95": 0.081116,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.5,
-            "p95": 0.6000000238418579,
+            "median": 0.8000000715255737,
+            "p95": 5.199999928474426,
             "count": 16
           }
         },
         "liveDiagnostics": {
           "gpuMs": {
-            "median": 0.023873,
-            "p95": 0.026957,
+            "median": 0.02304,
+            "p95": 0.026081,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.3999999761581421,
-            "p95": 0.6000000238418579,
+            "median": 0.6999999284744263,
+            "p95": 8.600000023841858,
             "count": 16
           }
         },
         "chargeReadbackAndCPU4DepthReduction": {
           "queueWallMs": {
-            "median": 0.6000000238418579,
-            "p95": 0.8999999761581421,
+            "median": 0.7000000476837158,
+            "p95": 1.2999999523162842,
             "count": 16
           },
           "gpuMs": null
@@ -132,56 +179,56 @@
       "costs": {
         "heatbath": {
           "gpuMs": {
-            "median": 0.863793,
-            "p95": 0.874835,
+            "median": 0.86064,
+            "p95": 0.944638,
             "count": 16
           },
           "queueWallMs": {
-            "median": 1.2999999523162842,
-            "p95": 1.399999976158142,
+            "median": 3.5,
+            "p95": 9.299999952316284,
             "count": 16
           }
         },
         "coolingSweep": {
           "gpuMs": {
-            "median": 0.710883,
-            "p95": 0.71326,
+            "median": 0.704228,
+            "p95": 1.016302,
             "count": 16
           },
           "queueWallMs": {
-            "median": 1.100000023841858,
-            "p95": 1.2000000476837158,
+            "median": 1.5999999046325684,
+            "p95": 6.5,
             "count": 16
           }
         },
         "cloverAll4D": {
           "gpuMs": {
-            "median": 0.32836,
-            "p95": 0.330776,
+            "median": 0.32774,
+            "p95": 0.339781,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.7000000476837158,
-            "p95": 0.8000000715255737,
+            "median": 1.100000023841858,
+            "p95": 9.399999976158142,
             "count": 16
           }
         },
         "liveDiagnostics": {
           "gpuMs": {
-            "median": 0.115995,
-            "p95": 0.11766,
+            "median": 0.117289,
+            "p95": 0.122204,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.5,
-            "p95": 0.6000000238418579,
+            "median": 0.8999999761581421,
+            "p95": 6,
             "count": 16
           }
         },
         "chargeReadbackAndCPU4DepthReduction": {
           "queueWallMs": {
             "median": 0.6999999284744263,
-            "p95": 0.7999999523162842,
+            "p95": 5.899999976158142,
             "count": 16
           },
           "gpuMs": null
@@ -226,56 +273,56 @@
       "costs": {
         "heatbath": {
           "gpuMs": {
-            "median": 3.284659,
-            "p95": 3.61282,
+            "median": 3.301033,
+            "p95": 3.649569,
             "count": 16
           },
           "queueWallMs": {
-            "median": 3.899999976158142,
-            "p95": 4.799999952316284,
+            "median": 4,
+            "p95": 6.5,
             "count": 16
           }
         },
         "coolingSweep": {
           "gpuMs": {
-            "median": 3.011121,
-            "p95": 3.025871,
+            "median": 3.018496,
+            "p95": 3.312532,
             "count": 16
           },
           "queueWallMs": {
-            "median": 3.5,
-            "p95": 3.600000023841858,
+            "median": 3.4000000953674316,
+            "p95": 3.700000047683716,
             "count": 16
           }
         },
         "cloverAll4D": {
           "gpuMs": {
-            "median": 1.42827,
-            "p95": 1.431936,
+            "median": 1.423853,
+            "p95": 1.640725,
             "count": 16
           },
           "queueWallMs": {
-            "median": 1.8000000715255737,
-            "p95": 1.899999976158142,
+            "median": 2,
+            "p95": 7.700000047683716,
             "count": 16
           }
         },
         "liveDiagnostics": {
           "gpuMs": {
-            "median": 0.424661,
-            "p95": 0.42716,
+            "median": 0.422494,
+            "p95": 0.432909,
             "count": 16
           },
           "queueWallMs": {
-            "median": 0.7999999523162842,
-            "p95": 0.8999999761581421,
+            "median": 1.100000023841858,
+            "p95": 5.900000095367432,
             "count": 16
           }
         },
         "chargeReadbackAndCPU4DepthReduction": {
           "queueWallMs": {
             "median": 1.5,
-            "p95": 3.5,
+            "p95": 2.5,
             "count": 16
           },
           "gpuMs": null
@@ -320,56 +367,56 @@
       "costs": {
         "heatbath": {
           "gpuMs": {
-            "median": 9.410814,
-            "p95": 9.463065,
+            "median": 16.906534,
+            "p95": 25.917854,
             "count": 16
           },
           "queueWallMs": {
-            "median": 10.100000023841858,
-            "p95": 10.200000047683716,
+            "median": 21.90000009536743,
+            "p95": 36.5,
             "count": 16
           }
         },
         "coolingSweep": {
           "gpuMs": {
-            "median": 9.121486,
-            "p95": 9.141152,
+            "median": 17.272904,
+            "p95": 23.60764,
             "count": 16
           },
           "queueWallMs": {
-            "median": 9.700000047683716,
-            "p95": 9.899999976158142,
+            "median": 19.700000047683716,
+            "p95": 32.10000002384186,
             "count": 16
           }
         },
         "cloverAll4D": {
           "gpuMs": {
-            "median": 4.31635,
-            "p95": 4.542556,
+            "median": 4.463974,
+            "p95": 14.468279,
             "count": 16
           },
           "queueWallMs": {
-            "median": 4.899999976158142,
-            "p95": 5.200000047683716,
+            "median": 9.5,
+            "p95": 17.100000023841858,
             "count": 16
           }
         },
         "liveDiagnostics": {
           "gpuMs": {
-            "median": 1.174066,
-            "p95": 1.436895,
+            "median": 1.174774,
+            "p95": 1.334771,
             "count": 16
           },
           "queueWallMs": {
-            "median": 1.7000000476837158,
-            "p95": 2,
+            "median": 2.700000047683716,
+            "p95": 9.600000023841858,
             "count": 16
           }
         },
         "chargeReadbackAndCPU4DepthReduction": {
           "queueWallMs": {
-            "median": 4,
-            "p95": 4.700000047683716,
+            "median": 3.700000047683716,
+            "p95": 7.399999976158142,
             "count": 16
           },
           "gpuMs": null
@@ -378,17 +425,18 @@
     },
     {
       "phase": "volume rendering",
+      "renderer": "1.1 RMS charge contours, 128 ray intervals",
       "L": 12,
-      "width": 1280,
-      "height": 620,
+      "width": 2560,
+      "height": 1264,
       "gpuMs": {
-        "median": 0.833154,
-        "p95": 0.860445,
+        "median": 6.211572,
+        "p95": 9.234193,
         "count": 32
       },
       "queueWallMs": {
-        "median": 1.2999999523162842,
-        "p95": 1.5,
+        "median": 6.899999976158142,
+        "p95": 9.899999976158142,
         "count": 32
       }
     },
@@ -396,13 +444,13 @@
       "phase": "3D slice assembly",
       "L": 12,
       "gpuMs": {
-        "median": 0.006542,
-        "p95": 0.010792,
+        "median": 0.006875,
+        "p95": 0.048332,
         "count": 16
       },
       "wholeRenderQueueWallMs": {
-        "median": 1.2999999523162842,
-        "p95": 1.4000000953674316,
+        "median": 7.399999976158142,
+        "p95": 10.800000071525574,
         "count": 16
       }
     },
@@ -919,53 +967,6 @@
       "independentSnapshots": false
     }
   ],
-  "numerics": {
-    "adapter": {
-      "vendor": "apple",
-      "architecture": "metal-3",
-      "device": "",
-      "description": "",
-      "isFallbackAdapter": false
-    },
-    "limits": {
-      "maxBufferSize": 268435456,
-      "maxStorageBufferBindingSize": 134217728
-    },
-    "groups": [
-      {
-        "n": 2,
-        "identityChargeError": 0,
-        "identityPlaquette": 1,
-        "sweepMaxError": 0.000001952052116394043,
-        "sweepRMSError": 1.6664448656582426e-7,
-        "chargeMaxError": 5.719820537347653e-9,
-        "constraints": {
-          "unitary": 5.435105850937205e-7,
-          "determinant": 5.24365069282565e-7
-        },
-        "fluxQ": 1.8992822766304016,
-        "fluxExpected": 1.8992824071035674,
-        "gaugeError": 2.7939677238464355e-9,
-        "coolingMax": 3.725290298461914e-7
-      },
-      {
-        "n": 3,
-        "identityChargeError": 0,
-        "identityPlaquette": 1,
-        "sweepMaxError": 0.000003248453140258789,
-        "sweepRMSError": 2.5734567540148297e-7,
-        "chargeMaxError": 2.954725264806002e-9,
-        "constraints": {
-          "unitary": 5.543025221044218e-7,
-          "determinant": 6.044089702009446e-7
-        },
-        "fluxQ": 1.8992822766304016,
-        "fluxExpected": 1.8992824071035674,
-        "gaugeError": 1.3969838619232178e-9,
-        "coolingMax": 8.642673492431641e-7
-      }
-    ]
-  },
   "captures": {
     "startup": {
       "apiVersion": 1,
@@ -1009,7 +1010,7 @@
         "beaconVerified": false,
         "crossDeviceReplay": "floating-point results may differ"
       },
-      "assetBaseURL": "http://127.0.0.1:63054/assets/visualizer/qcd-lava-lamp/",
+      "assetBaseURL": "http://127.0.0.1:49222/assets/visualizer/qcd-lava-lamp/",
       "diagnosticAgeSeconds": 0.016666666666666666,
       "diagnosticsAvailable": true,
       "numericalFault": null,
@@ -1074,9 +1075,9 @@
       "sweepQueueWallMedianMs": null,
       "sweepQueueWallP95Ms": null,
       "viewport": {
-        "width": 1158,
-        "height": 468,
-        "dpr": 1
+        "width": 2560,
+        "height": 1264,
+        "dpr": 1.8315968340562536
       },
       "busy": false,
       "manualPause": true,
@@ -1134,7 +1135,7 @@
         "beaconVerified": false,
         "crossDeviceReplay": "floating-point results may differ"
       },
-      "assetBaseURL": "http://127.0.0.1:63054/assets/visualizer/qcd-lava-lamp/",
+      "assetBaseURL": "http://127.0.0.1:49222/assets/visualizer/qcd-lava-lamp/",
       "diagnosticAgeSeconds": 3.9999999999997726,
       "diagnosticsAvailable": true,
       "numericalFault": null,
@@ -1230,13 +1231,13 @@
         "maxStorageBufferBindingSize": 134217728,
         "maxBufferSize": 268435456
       },
-      "lastSweepQueueWallMs": 3.8000000715255737,
+      "lastSweepQueueWallMs": 3.799999952316284,
       "sweepQueueWallMedianMs": 3.9000000953674316,
-      "sweepQueueWallP95Ms": 6.799999952316284,
+      "sweepQueueWallP95Ms": 4.799999952316284,
       "viewport": {
-        "width": 1158,
-        "height": 468,
-        "dpr": 1
+        "width": 2560,
+        "height": 1264,
+        "dpr": 1.8315968340562536
       },
       "busy": false,
       "manualPause": true,
@@ -1294,7 +1295,7 @@
         "beaconVerified": false,
         "crossDeviceReplay": "floating-point results may differ"
       },
-      "assetBaseURL": "http://127.0.0.1:63054/assets/visualizer/qcd-lava-lamp/",
+      "assetBaseURL": "http://127.0.0.1:49222/assets/visualizer/qcd-lava-lamp/",
       "diagnosticAgeSeconds": 0,
       "diagnosticsAvailable": true,
       "numericalFault": null,
@@ -1430,13 +1431,13 @@
         "maxStorageBufferBindingSize": 134217728,
         "maxBufferSize": 268435456
       },
-      "lastSweepQueueWallMs": 3.6999999284744263,
-      "sweepQueueWallMedianMs": 3.9000000953674316,
-      "sweepQueueWallP95Ms": 5.300000071525574,
+      "lastSweepQueueWallMs": 3.8000000715255737,
+      "sweepQueueWallMedianMs": 3.899999976158142,
+      "sweepQueueWallP95Ms": 4.5,
       "viewport": {
-        "width": 1158,
-        "height": 468,
-        "dpr": 1
+        "width": 2560,
+        "height": 1264,
+        "dpr": 1.8315968340562536
       },
       "busy": false,
       "manualPause": true,
@@ -1495,7 +1496,7 @@
       "beaconVerified": false,
       "crossDeviceReplay": "floating-point results may differ"
     },
-    "assetBaseURL": "http://127.0.0.1:63054/assets/visualizer/qcd-lava-lamp/",
+    "assetBaseURL": "http://127.0.0.1:49222/assets/visualizer/qcd-lava-lamp/",
     "diagnosticAgeSeconds": 0,
     "diagnosticsAvailable": true,
     "numericalFault": null,
@@ -1706,13 +1707,13 @@
       "maxStorageBufferBindingSize": 134217728,
       "maxBufferSize": 268435456
     },
-    "lastSweepQueueWallMs": 6.5,
-    "sweepQueueWallMedianMs": 3.899999976158142,
-    "sweepQueueWallP95Ms": 5.699999928474426,
+    "lastSweepQueueWallMs": 3.799999952316284,
+    "sweepQueueWallMedianMs": 4,
+    "sweepQueueWallP95Ms": 4.399999976158142,
     "viewport": {
-      "width": 1158,
-      "height": 468,
-      "dpr": 1
+      "width": 2560,
+      "height": 1264,
+      "dpr": 1.8315968340562536
     },
     "busy": false,
     "manualPause": true,
@@ -1726,6 +1727,32 @@
       "description": "",
       "isFallbackAdapter": false,
       "timestampQuery": true
+    }
+  },
+  "presentation": {
+    "stage": {
+      "x": 21.15625,
+      "y": 143.4375,
+      "width": 1397.6875,
+      "height": 690,
+      "top": 143.4375,
+      "right": 1418.84375,
+      "bottom": 833.4375,
+      "left": 21.15625
+    },
+    "resolution": {
+      "width": 2560,
+      "height": 1264,
+      "css": {
+        "x": 21.15625,
+        "y": 143.4375,
+        "width": 1397.6875,
+        "height": 690,
+        "top": 143.4375,
+        "right": 1418.84375,
+        "bottom": 833.4375,
+        "left": 21.15625
+      }
     }
   },
   "errors": []
