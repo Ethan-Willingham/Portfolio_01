@@ -146,6 +146,13 @@ for prices, exported tuning, runtime integration and verification.
 
 ## Build & run
 
+**Live performance panel (v28.164):** dev mode retains up to thirty seconds
+without starting a recording. Pin worst keeps the slowdown, preceding CPU frame
+and workload context; Save 30s exports the retained history. The compact view
+shows the 120 FPS budget, disjoint CPU phases, and sampled GPU costs/queue counts
+with frame IDs and freshness. Details contains the deeper diagnostics and
+manual recorder. See [PLAY_RECORDING.md](PLAY_RECORDING.md).
+
 **Gameplay performance recording (v28.124):** F9 starts a local capture in the
 ordinary game; F9 again stops and saves it. Play through the slowdown and its
 recovery. Frames, inputs, snow/slime state, CPU costs and supported sampled GPU

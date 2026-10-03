@@ -83,7 +83,7 @@
     // Mobile play requires landscape, including iPadOS desktop-style agents.
     // Loading still warms the GPU behind the cover; ordinary simulation stops.
     var rotateScreen = document.getElementById('gm-rotate-screen');
-    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder'];
+    var orientationControls = ['game-canvas', 'game-death', 'game-pause', 'game-intro', 'gm-pause-btn', 'gm-perf-recorder', 'gm-perf-panel'];
     function syncMobileOrientation() {
       var blocked = isMobile && window.innerWidth <= window.innerHeight;
       if (rotateScreen) rotateScreen.hidden = !blocked;

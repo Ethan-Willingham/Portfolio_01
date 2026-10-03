@@ -1,5 +1,43 @@
 # Recording a gameplay slowdown
 
+Since v28.164, dev mode shows a compact live performance panel. It compares
+callback pacing with a 120 FPS target (8.33 ms), shows disjoint CPU phase means,
+active snow and slime workload, and retains up to thirty seconds of packed
+frames automatically. The twenty-second graph shows arrival gaps and CPU time.
+Pin worst preserves a slowdown and its workload until cleared. For an arrival
+gap, it retains the preceding CPU frame; CPU work after the gap is separate.
+The prior-second mean provides context, not proof of causation.
+
+Save 30s downloads the retained local history without starting a recording.
+The file reports its actual duration, including shorter captures after startup.
+Storage is bounded at 8,192 frames, so rates above 273 callbacks per second can
+retain less than thirty seconds. Export copying and serialization can affect
+play; the snapshot cost is included in the export. Details contains backend,
+mesh/solver, cache, input, A/B and manual recording tools. The default panel
+uses the same layout at a given viewport size on desktop and landscape mobile,
+with scrolling rather than smaller type. Portrait makes its controls inert.
+
+Sampled GPU pass timings and small collision-queue readbacks run asynchronously
+at most once per second. Queue totals count repeated visits across collision
+batches; peaks count particles in the largest batch. They are not unique frame
+particle counts. Each sample carries the callback frame ID and freshness.
+The panel explicitly marks separate samples and missing exact-frame timestamps.
+Sparse sampling can miss a brief spike. GPU pass times omit WebGL and browser
+composition and overlap CPU work. Neither arrival gaps nor queue waits alone
+identify a hardware bottleneck. The particle mirror lag uses simulation time; the contact count covers body-pair corrections.
+No additional diagnostic GPU commands run when both dev mode and manual
+recording are off.
+
+The rolling export uses the existing trace schema with explicit `active`,
+`frameId`, and `observerMs` columns. Its times are relative to capture start;
+`pageAtMs`/`at` retain absolute page-clock context. A pin older than the rolling
+window is preserved separately with `outsideHistory: true`. The reader honors
+active-frame boundaries and derives second bins when needed.
+`window.__sluicePerformance.liveStatus()` and `liveSnapshot()` expose the
+current evidence without taking keyboard control. `rollingCapture()` reads
+retained data; `pin()`, `clearPin()` and `saveRecent()` match the panel buttons.
+Nothing is uploaded.
+
 Since v28.124, ordinary play has a local performance recorder. Press F9 to
 start, play through the drop and recovery, then press F9 again to stop and
 download JSON. `?perfrec=1` shows the controls and starts on the first gameplay

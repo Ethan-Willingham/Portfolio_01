@@ -11,6 +11,7 @@
 // EXPORT_FREEZE=0 keeps game RAF running during export; default freezes this test only after recording.
 // DRY_RUN=1 validates sources/settings without starting a browser.
 // SNOW_SNAPSHOT=1 freezes the game after the trace and saves true GPU resident state.
+// CHECKPOINTS=0 omits mid-capture CDP reads when comparing observer overhead.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -217,7 +218,7 @@ try{
  const offset=await ev('performance.now()-__ownerReplay.start()'),hostStart=performance.now()-offset;
  const events=input.events.filter(e=>['keydown','keyup','pointerdown','pointerup','pointermove'].includes(e.kind)&&e.atMs<input.durationMs&&(process.env.NO_POINTER==='0'||!e.kind.startsWith('pointer')));
  console.log(JSON.stringify({started:true,out,liquidSource:process.env.LIQUID_SOURCE,offset,rect,events:events.length}));
- phase='capture';checkpointActive=true;scheduleCheckpoint(hostStart);
+ phase='capture';checkpointActive=process.env.CHECKPOINTS!=='0';scheduleCheckpoint(hostStart);
  let actionReport=null;
  if(route)actionReport=route==='town-gather'
   ?await gatherNaturalResidents(send,ev,{...routeOptions,out,durationMs:input.durationMs,hostStart})

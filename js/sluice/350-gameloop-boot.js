@@ -190,16 +190,17 @@
     audioUpdate(0);
     gamepadTick(0);
     if (gameOver && !gamePaused && !mobileLandscapeBlocked) deathFrameTick(Math.min(0.25,Math.max(0,intervalMs/1000)));
-    if (playPerfActive || playPerfAuto) playPerfFrame(time,intervalMs,cpuStart ? performance.now()-cpuStart : 0,2);
+    if (playPerfActive || playPerfAuto || perfLive.enabled) playPerfFrame(time,intervalMs,cpuStart ? performance.now()-cpuStart : 0,2);
     gameRafId=gamePaused || mobileLandscapeBlocked ? 0 : requestAnimationFrame(loop);
   }
 
   function loop(time) {
-    var _playPerfCPU = playPerfActive ? performance.now() : 0;
+    var _perfWatching = perfLiveBegin();
+    var _playPerfCPU = _perfWatching ? performance.now() : 0;
     gameRafId = 0;
     if (!requireWaterGPU() || !requireFireGPU()) return;
     if (introPhase !== 'done') {
-      if (playPerfActive) perfBucketsRaw = {};
+      if (_perfWatching) perfBucketsRaw = {};
       var _playLoadingInterval = time - lastTime;
       lastTime = time;
       lastFrameDt = 1 / 60;
@@ -211,7 +212,7 @@
         return;
       }
       gameRafId = requestAnimationFrame(loop);
-      if (playPerfActive) playPerfFrame(time, _playLoadingInterval, performance.now() - _playPerfCPU, 3);
+      if (_perfWatching) playPerfFrame(time, _playLoadingInterval, performance.now() - _playPerfCPU, 3);
       return;
     }
     // v17.82 — if a pause landed between scheduling and firing this frame,
@@ -222,6 +223,7 @@
     var dt = frameIntervalMs / 1000;
     if (dt > 0.1) dt = 0.1;
     lastTime = time;
+    if (UI_NEW && gameOver) perfBucketsRaw = {};
     if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     if (dt > 0) dt = simFrameStep(dt);
     lastFrameDt = dt;
@@ -270,7 +272,7 @@
       }
       cargoManifestPadHeld = manifestNow;
       render();
-      if (playPerfActive || playPerfAuto) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
+      if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 1);
       gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
       return;
     }
@@ -288,7 +290,7 @@
       }
       ledgerPadHeld = ledgerNow;
       render();
-      if (playPerfActive || playPerfAuto) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 2);
+      if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0, 2);
       gameRafId = gamePaused ? 0 : requestAnimationFrame(loop);
       return;
     }
@@ -310,7 +312,7 @@
         // re-init (fresh world) for testing; the save survives until the
         // next autosave because dev runs don't dock-save.
         if (typeof radioMsgCut === 'function') radioMsgCut();   // prompt answered, drop the line
-        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+        if (devMode) { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
         else if (gameOver) respawnFromDeath();
         else bailoutToTown();
       } else {
@@ -326,10 +328,10 @@
     if ((gameWon || (gameOver && !UI_NEW)) && touch.active) {
       touch.active = false;
       if (gameOver) respawnFromDeath();
-      else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+      else { queueSceneLoading('Preparing your mine', init); gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
     }
 
-    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); if (playPerfActive) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
+    if (introPhase !== 'done') { gameRafId = requestAnimationFrame(loop); if (_perfWatching) playPerfFrame(time, frameIntervalMs, performance.now() - _playPerfCPU, 3); return; }
 
     // Shop toggle via keyboard. [E] is the documented key (shown in the
     // proximity prompt); [P] is kept as a hidden alias for muscle memory
@@ -663,14 +665,14 @@
     _ts = performance.now(); updateSurfaceWind(dt);        perfMark('update.wind',     _ts);
     _ts = performance.now(); try { updateGrassWind(dt); } catch (e) { if (!window.__grassWindErr) { window.__grassWindErr = String(e) + '\n' + (e.stack||''); console.error('updateGrassWind threw:', e); } } perfMark('update.grassWind', _ts);
     _ts = performance.now(); try { treesUpdate(dt); } catch (e) { if (!window.__treesErr) { window.__treesErr = String(e) + '\n' + (e.stack||''); console.error('treesUpdate threw:', e); } } perfMark('update.trees', _ts);
-    if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt);
+    _ts = performance.now(); if (typeof surfaceBouldersUpdate === 'function') surfaceBouldersUpdate(dt); perfMark('update.boulders', _ts);
     _ts = performance.now(); try { updateWeather(dt); } catch (e) { if (!window.__weatherErr) { window.__weatherErr = String(e) + '\n' + (e.stack||''); console.error('updateWeather threw:', e); } } perfMark('update.weather', _ts);
     _ts = performance.now();
     try { if (!bathMode) updateSmoke(dt); } catch (e) { if (!window.__smokeErr) { window.__smokeErr = String(e) + '\n' + (e.stack||''); console.error('updateSmoke threw:', e); } }
     perfMark('update.smoke', _ts);
     // Plume intensity is now current, so the voice and drawn flame agree
     // on the first firing frame as well as the first released frame.
-    if (typeof audioUpdate === 'function') audioUpdate(dt);
+    _ts = performance.now(); if (typeof audioUpdate === 'function') audioUpdate(dt); perfMark('update.audio', _ts);
     var _t3 = performance.now();
     _ts = performance.now(); updateDrillAnim(dt);          perfMark('update.drillAnim', _ts);
     _ts = performance.now(); updateExplosions(dt);         perfMark('update.explosions', _ts);
@@ -687,13 +689,13 @@
     perfMark('update.bathhouse', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);
-    surfaceSlimeTick(dt);
+    _ts = performance.now(); surfaceSlimeTick(dt); perfMark('update.residents', _ts);
     _ts = performance.now(); if (ENABLE_JELLO) updateJello(dt); perfMark('update.jello', _ts);
     // Fluid and drawing use this frame's same interpolated outer skin.
-    surfaceSlimeBuildFluidGuests();
+    _ts = performance.now(); surfaceSlimeBuildFluidGuests(); perfMark('update.fluidSkin', _ts);
     _ts = performance.now(); updateParticleRain(dt);       perfMark('update.rain', _ts);
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
-    slimeAudioUpdate(dt);
+    _ts = performance.now(); slimeAudioUpdate(dt); perfMark('update.slimeAudio', _ts);
     var _t4 = performance.now();
     // v11.80 — render PERF_STRESS times so the true frame cost surfaces past
     // a vsync cap. Default 1 = normal; ?stress=N multiplies it.
@@ -705,7 +707,8 @@
 
     // Async WebGPU queue completion latency. The callback can also be
     // delayed by the browser or main thread; it is not a GPU execution timer.
-    if (perfOverlayOn()) probeWebGPUGpu();
+    // Queue completion waits are omitted from the live panel. Timestamp samples
+    // are asynchronous and do not serialize each gameplay callback.
 
     // Perf metrics (smoothed via rolling window)
     perfUpdateMs = perfUpdateMs * 0.9 + (_t1 - _t0) * 0.1;
@@ -739,7 +742,7 @@
     // scheduling. CPU submission time does not describe visible frame pacing.
     // The benchmark also drives scripted flight while a run is active.
     if (typeof benchTick === 'function') benchTick(frameIntervalMs, frameIntervalMs / 1000);
-    if (playPerfActive || playPerfAuto) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0);
+    if (_perfWatching) playPerfFrame(time, frameIntervalMs, _playPerfCPU ? performance.now() - _playPerfCPU : 0);
 
     // v17.84 — never reschedule while paused (covers the boot pause, which sets
     // gamePaused mid-frame after the top guard has already passed).
