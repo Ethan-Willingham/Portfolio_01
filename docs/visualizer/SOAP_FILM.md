@@ -113,12 +113,16 @@ The stable substep obeys explicit diffusion and an advective CFL bound. A
 0.04-second ambient increment is split into as many stable substeps as needed.
 The standalone loop renders independently, with at most two increments per
 call, or one when cost rises. Its pending ambient backlog is capped at 0.12 s;
-dropped ambient debt is reported. While caught up, one ambient second is one
-model second. Under load the piece plays slower in wall time. Hidden and
+dropped ambient debt is reported. While caught up, one room-input second is one
+model second. The standalone host defaults to 3× playback, passing three model
+seconds per wall second, with 1×, 2× and 4× also available in Instruments.
+Changing playback speed preserves the current state and stable solver steps.
+Under load the piece plays slower in wall time. Hidden and
 offscreen states perform no simulation or rendering, and a manual pause survives
 those changes.
 
-The default begins at 256², low is 128², and high is 512². The standalone host
+The standalone default begins at 128², medium is 256², and high is 512². The
+room module retains its medium default for other hosts. The standalone host
 first reduces its per-frame work budget when the measured p95 exceeds 26 ms.
 If p95 stays over 32 ms after 100 samples, it halves the grid, stopping at 128².
 This restriction averages thickness over four cells, preserving area-integrated
@@ -126,6 +130,12 @@ volume; face velocities are restricted and projected again. It retains model
 time, fluid ledger, seed, temperature, hole and apparatus cycle. It does not
 change coefficients or secretly renew the apparatus. Instruments and the caption
 report the change. Explicitly choosing a grid disables automatic reduction.
+The standalone stage fills the available viewport below a compact heading,
+with the playback controls visible at the bottom. Its square film uses 96% of
+the available width, capped by the stage height minus 64 CSS pixels reserved
+for labels. Pointer sampling uses the same geometry. The optional render
+argument filmFill sets normalized x/y limits; omitting it retains the room's
+original 82% width / 84% height framing for existing hosts.
 Canvas DPR is capped at 1.5. The CPU model uses Float32 state arrays and
 JavaScript Float64 arithmetic; optics and composite are rendered in WebGPU.
 No GPU fluid solver or 1024² performance is claimed.
@@ -284,7 +294,7 @@ verification run. These are implementation checks of a reduced model. Short
 step/grid convergence does not establish long-time experimental fidelity,
 and the threshold cannot predict the lifetime of a real soap film.
 
-### Recorded results, October 3, 2026
+### Original recorded results, October 3, 2026
 
 The final run used an Apple M1 Pro, macOS, headless Chrome for Testing, and an
 Apple metal-3 WebGPU adapter reporting isFallbackAdapter = false. These are
@@ -303,7 +313,7 @@ about 60 model seconds; rest and hole replay are excluded from solver samples.
 | CPU encoding/submitting both render passes | 0.10 ms | 0.20 ms |
 
 The original 2 to 4 ms hypothesis does not hold for this CPU fluid solver at
-128² or 256². Automatic restriction makes the default usable on this machine;
+128² or 256². The original default depended on automatic restriction on this machine;
 256² can be retained explicitly for slower playback. 512² is available but
 has not been given a long-run performance or convergence claim. GPU optical
 costs above are for the 256² developing state. The 128² run has only one GPU
@@ -358,6 +368,33 @@ The machine-readable [numerical report](../../assets/visualizer/soap-film/checks
 [browser report](../../assets/visualizer/soap-film/checks/browser.json) and
 [three-phrase report](../../assets/visualizer/soap-film/checks/phrases.json)
 retain parameters, diagnostic ages, seeds, grids, counters and timings.
+
+### Faster playback and larger default view, October 3, 2026
+
+The updated standalone starts at 128² and requests 3× playback. On the same
+Apple hardware adapter, the browser measured 2.99 model seconds per wall second
+over a three-second sample of developed flow, versus 1.01 at the 1× setting.
+Solver increments remain 0.04 model seconds with the same stable substeps and
+physical coefficients. The speed control acts immediately without renewal or
+changing manual pause.
+
+At 1440 × 900 the stage is now 1358 × 729 CSS pixels, and the square film has
+a 665 px side rather than 462 px, about 2.07 times its original visible area.
+The default controls fit within the viewport at 1440 × 900, 390 × 844 and
+844 × 390. Portrait retains the site's 20 px gutter. All original browser
+interaction and fallback checks passed, with no captured script or WebGPU errors.
+The enlarged GPU composite measured 0.220 ms median / 0.275 ms p95 over 93
+timestamp samples. CPU solver increments measured 9.1 / 9.4 ms at 128².
+The independent GPU optical reference still differs from the CPU calculation by
+at most 5.08e-5 linear RGB, below the 1e-4 tolerance.
+
+Updated evidence: [default view](../../assets/visualizer/soap-film/checks-v2/startup.png),
+[developed film](../../assets/visualizer/soap-film/checks-v2/developing.png),
+[portrait](../../assets/visualizer/soap-film/checks-v2/390x844.png),
+[landscape](../../assets/visualizer/soap-film/checks-v2/844x390.png), and
+[browser report](../../assets/visualizer/soap-film/checks-v2/report.json).
+The fluid and optical equations are unchanged; the earlier numerical and
+three-phrase results remain the model validation record.
 
 ### Remaining limits
 

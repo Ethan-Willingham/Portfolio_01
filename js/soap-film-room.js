@@ -4,7 +4,7 @@ export const roomInfo = { apiVersion: 1, id: 'soap-film', title: 'Soap film',
   representativeScaleMeters: .16, scaleMeaning: 'side length of the square frame, an assumed apparatus dimension',
   sources: ['https://doi.org/10.1103/PhysRevLett.100.144501','https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer','https://cie.co.at/datatable/cie-standard-illuminant-d65','https://pages.nist.gov/SCATMECH/code/filmtran.cpp'] };
 const shader = `
-struct Params { size: vec2f, grid: f32, exposure: f32, angle: f32, state: f32, radius: f32, pad: f32, hole: vec2f, rest: f32, pad2: f32 };
+struct Params { size: vec2f, grid: f32, exposure: f32, angle: f32, state: f32, radius: f32, fillX: f32, hole: vec2f, rest: f32, fillY: f32 };
 @group(0) @binding(0) var<storage,read> thickness: array<f32>;
 @group(0) @binding(1) var lut: texture_2d<f32>;
 @group(0) @binding(2) var<uniform> p: Params;
@@ -14,7 +14,7 @@ fn value(c:vec2i)->f32 {let n=i32(p.grid);let q=clamp(c,vec2i(0),vec2i(n-1));ret
 fn spectrum(h:f32)->vec3f {let x=clamp(h,0.0,4095.0);let y=clamp(p.angle*.5,0.0,30.0);let i=i32(x);let j=i32(y);
 return mix(mix(textureLoad(lut,vec2i(i,j),0).rgb,textureLoad(lut,vec2i(min(i+1,4095),j),0).rgb,fract(x)),mix(textureLoad(lut,vec2i(i,min(j+1,30)),0).rgb,textureLoad(lut,vec2i(min(i+1,4095),min(j+1,30)),0).rgb,fract(x)),fract(y));}
 @fragment fn fs(v:V)->@location(0) vec4f {
- let side=min(p.size.x*.82,p.size.y*.84);let uv=(v.pos.xy-p.size*.5)/side+.5;
+ let side=min(p.size.x*p.fillX,p.size.y*p.fillY);let uv=(v.pos.xy-p.size*.5)/side+.5;
  let edge=max(abs(uv.x-.5),abs(uv.y-.5));
  if(edge>.504){return vec4f(0,0,0,1);} if(edge>.5){return vec4f(vec3f(.012)*p.exposure,1);}
  if(p.state>1.5){return vec4f(0,0,0,1);}
@@ -55,8 +55,8 @@ export async function createRoom({device, seed = '51a9f17c', quality = 'medium',
    if(work){if(model.steps>stepBefore)add(solverCosts,(performance.now()-start)/work);device.queue.writeBuffer(field,0,model.h);}
    if(model.time-lastMeasure>=1){measured=model.measure();lastMeasure=model.time;}
   },
-  render({encoder,targetView,width:w=width,height:h=height,exposure=12}){if(disposed)return;const start=performance.now();
-   const hole=model.hole;device.queue.writeBuffer(uniform,0,new Float32Array([w,h,n,exposure,angle,{intact:0,rupturing:1,rest:2}[model.state],hole?hole.radius/parameters.lengthMeters:0,0,hole?.x??0,hole?.y??0,(model.cycle>1?Math.min(1,model.age/6)**2*(3-2*Math.min(1,model.age/6)):1),0]));
+  render({encoder,targetView,width:w=width,height:h=height,exposure=12,filmFill={x:.82,y:.84}}){if(disposed)return;const start=performance.now();
+   const hole=model.hole;device.queue.writeBuffer(uniform,0,new Float32Array([w,h,n,exposure,angle,{intact:0,rupturing:1,rest:2}[model.state],hole?hole.radius/parameters.lengthMeters:0,filmFill.x,hole?.x??0,hole?.y??0,(model.cycle>1?Math.min(1,model.age/6)**2*(3-2*Math.min(1,model.age/6)):1),filmFill.y]));
    const timed=timestamps&&!timingPending&&frames++%timingInterval===0;
    const pass=encoder.beginRenderPass({colorAttachments:[{view:targetView,loadOp:'clear',storeOp:'store',clearValue:[0,0,0,1]}],...(timed?{timestampWrites:{querySet:queries,beginningOfPassWriteIndex:0,endOfPassWriteIndex:1}}:{})});
    pass.setPipeline(pipeline);pass.setBindGroup(0,group);pass.draw(3);pass.end();

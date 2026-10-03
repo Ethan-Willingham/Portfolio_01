@@ -1,0 +1,537 @@
+{
+  "adapter": {
+    "description": "Not exposed",
+    "vendor": "apple",
+    "architecture": "metal-3",
+    "isFallbackAdapter": false
+  },
+  "layouts": [
+    {
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "stage": {
+        "x": 41,
+        "y": 95.796875,
+        "width": 1358,
+        "height": 729,
+        "top": 95.796875,
+        "right": 1399,
+        "bottom": 824.796875,
+        "left": 41
+      },
+      "buttons": [
+        {
+          "width": 50.984375,
+          "height": 44,
+          "right": 103.984375,
+          "left": 53,
+          "bottom": 877.796875
+        },
+        {
+          "width": 94.84375,
+          "height": 44,
+          "right": 203.828125,
+          "left": 108.984375,
+          "bottom": 877.796875
+        },
+        {
+          "width": 67.421875,
+          "height": 44,
+          "right": 276.25,
+          "left": 208.828125,
+          "bottom": 877.796875
+        },
+        {
+          "width": 84.125,
+          "height": 44,
+          "right": 1387,
+          "left": 1302.875,
+          "bottom": 877.796875
+        }
+      ],
+      "filmSideCSS": 665
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scroll": 390,
+      "stage": {
+        "x": 21,
+        "y": 115.859375,
+        "width": 348,
+        "height": 657,
+        "top": 115.859375,
+        "right": 369,
+        "bottom": 772.859375,
+        "left": 21
+      },
+      "buttons": [
+        {
+          "width": 44,
+          "height": 44,
+          "right": 71,
+          "left": 27,
+          "bottom": 823.859375
+        },
+        {
+          "width": 82.671875,
+          "height": 44,
+          "right": 153.671875,
+          "left": 71,
+          "bottom": 823.859375
+        },
+        {
+          "width": 56.96875,
+          "height": 44,
+          "right": 210.640625,
+          "left": 153.671875,
+          "bottom": 823.859375
+        },
+        {
+          "width": 72.625,
+          "height": 44,
+          "right": 363,
+          "left": 290.375,
+          "bottom": 823.859375
+        }
+      ],
+      "filmSideCSS": 334.08
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "scroll": 844,
+      "stage": {
+        "x": 33,
+        "y": 55,
+        "width": 778,
+        "height": 260,
+        "top": 55,
+        "right": 811,
+        "bottom": 315,
+        "left": 33
+      },
+      "buttons": [
+        {
+          "width": 50.984375,
+          "height": 44,
+          "right": 95.984375,
+          "left": 45,
+          "bottom": 368
+        },
+        {
+          "width": 94.84375,
+          "height": 44,
+          "right": 195.828125,
+          "left": 100.984375,
+          "bottom": 368
+        },
+        {
+          "width": 67.421875,
+          "height": 44,
+          "right": 268.25,
+          "left": 200.828125,
+          "bottom": 368
+        },
+        {
+          "width": 84.125,
+          "height": 44,
+          "right": 799,
+          "left": 714.875,
+          "bottom": 368
+        }
+      ],
+      "filmSideCSS": 196
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "stage": {
+        "x": 41,
+        "y": 95.796875,
+        "width": 1358,
+        "height": 729,
+        "top": 95.796875,
+        "right": 1399,
+        "bottom": 824.796875,
+        "left": 41
+      },
+      "buttons": [
+        {
+          "width": 50.984375,
+          "height": 44,
+          "right": 103.984375,
+          "left": 53,
+          "bottom": 877.796875
+        },
+        {
+          "width": 94.84375,
+          "height": 44,
+          "right": 203.828125,
+          "left": 108.984375,
+          "bottom": 877.796875
+        },
+        {
+          "width": 67.421875,
+          "height": 44,
+          "right": 276.25,
+          "left": 208.828125,
+          "bottom": 877.796875
+        },
+        {
+          "width": 84.125,
+          "height": 44,
+          "right": 1387,
+          "left": 1302.875,
+          "bottom": 877.796875
+        }
+      ],
+      "filmSideCSS": 665
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scroll": 390,
+      "stage": {
+        "x": 21,
+        "y": 115.859375,
+        "width": 348,
+        "height": 657,
+        "top": 115.859375,
+        "right": 369,
+        "bottom": 772.859375,
+        "left": 21
+      },
+      "buttons": [
+        {
+          "width": 44,
+          "height": 44,
+          "right": 71,
+          "left": 27,
+          "bottom": 823.859375
+        },
+        {
+          "width": 82.671875,
+          "height": 44,
+          "right": 153.671875,
+          "left": 71,
+          "bottom": 823.859375
+        },
+        {
+          "width": 56.96875,
+          "height": 44,
+          "right": 210.640625,
+          "left": 153.671875,
+          "bottom": 823.859375
+        },
+        {
+          "width": 72.625,
+          "height": 44,
+          "right": 363,
+          "left": 290.375,
+          "bottom": 823.859375
+        }
+      ],
+      "filmSideCSS": 334.08
+    }
+  ],
+  "gpuReference": {
+    "maxLinearRGBError": 0.00005083965592111994,
+    "tolerance": 0.0001,
+    "samples": 9,
+    "scope": "GPU spectral lookup, bilinear thickness reconstruction, gamut mapping and linear target; hydrodynamics run on CPU"
+  },
+  "defaultPerformance": {
+    "apiVersion": 1,
+    "id": "soap-film",
+    "title": "Soap film",
+    "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
+    "representativeScaleMeters": 0.16,
+    "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
+    "sources": [
+      "https://doi.org/10.1103/PhysRevLett.100.144501",
+      "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
+      "https://cie.co.at/datatable/cie-standard-illuminant-d65",
+      "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
+    ],
+    "numericalStepCount": 2732,
+    "simulationTime": 63.400000000004404,
+    "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
+    "parameters": {
+      "lengthMeters": 0.16,
+      "dtSeconds": 0.04,
+      "viscosity": 0.000001,
+      "thermalDiffusivity": 0.0000012,
+      "gravity": 9.81,
+      "expansionPerKelvin": 0.0002,
+      "dragPerSecond": 1,
+      "ambientC": 22,
+      "heatingKelvin": 12,
+      "coolingPerSecond": 0.025,
+      "evaporationNmPerSecond": 0.7,
+      "drainageSpeedMetersPerSecond": 0.000055,
+      "drainageReferenceNm": 800,
+      "ruptureNm": 18,
+      "gammaNewtonPerMeter": 0.03,
+      "densityKgPerM3": 1000,
+      "ruptureSlowdown": 240,
+      "restSeconds": 5,
+      "viewingAngleDegrees": 18
+    },
+    "quality": "low",
+    "requestedQuality": "low",
+    "adaptiveReductions": 0,
+    "workBudget": 2,
+    "droppedAmbientSeconds": 0.009700000000000042,
+    "grid": [
+      128,
+      128
+    ],
+    "seed": "51a9f17c",
+    "seedProvenance": "offline deterministic hexadecimal seed; no random forcing or external beacon",
+    "diagnosticAgeSeconds": 0,
+    "diagnostics": {
+      "step": 2732,
+      "time": 63.400000000004404,
+      "state": "intact",
+      "cycle": 1,
+      "thicknessRangeNm": [
+        95.52149200439453,
+        1041.7421875
+      ],
+      "temperatureRangeC": [
+        21.996320724487305,
+        33.89204788208008
+      ],
+      "divergenceMaxPerSecond": 0.000010617077350616455,
+      "pressureResidualMetersInverseSecondsInverse": 0.008493661880493164,
+      "pressureCycles": 1,
+      "maxSpeedMetersPerSecond": 0.00820888765156269,
+      "volumeM3": 1.5259035510516166e-8,
+      "filmVolumeM3": 1.5259035510516166e-8,
+      "rimVolumeM3": 0,
+      "evaporatedM3": 1.1361280000002906e-9,
+      "drainedM3": 7.500156243447218e-10,
+      "replenishedM3": 1.7145183804488184e-8,
+      "resetDiscardedM3": 0,
+      "massBalanceErrorM3": -4.669627006394435e-15,
+      "hole": null
+    },
+    "performance": {
+      "solverCPU": {
+        "medianMs": 9.099999904632568,
+        "p95Ms": 9.399999976158142,
+        "samples": 240
+      },
+      "opticalCompositeCPUEncode": {
+        "medianMs": 0,
+        "p95Ms": 0.10000002384185791,
+        "samples": 226
+      },
+      "opticalCompositeGPU": {
+        "medianMs": 0.22008,
+        "p95Ms": 0.275038,
+        "samples": 93
+      },
+      "timestampQueries": true
+    },
+    "elapsedConvention": "one ambient second equals one model second while caught up; bounded work can slow wall-clock playback",
+    "precision": "Float32 state, JavaScript Float64 arithmetic",
+    "host": {
+      "paused": true,
+      "visible": true,
+      "offscreen": false,
+      "loopRunning": false,
+      "error": null,
+      "playbackSpeed": 3,
+      "canvas": [
+        1358,
+        729
+      ],
+      "renderCPU": {
+        "medianMs": 0.10000002384185791,
+        "p95Ms": 0.30000007152557373,
+        "samples": 226
+      },
+      "finalDisplayGPU": {
+        "medianMs": 0.177248,
+        "p95Ms": 0.37012,
+        "samples": 93
+      },
+      "queueReadbackLatency": {
+        "medianMs": 1.4000000953674316,
+        "p95Ms": 4,
+        "samples": 93
+      }
+    },
+    "adapter": {
+      "description": "Not exposed",
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "isFallbackAdapter": false
+    }
+  },
+  "playback": [
+    {
+      "requestedSpeed": 1,
+      "wallSeconds": 3.0137000000476837,
+      "modelSeconds": 3.0399999999996012,
+      "actualSpeed": 1.0087268141989918
+    },
+    {
+      "requestedSpeed": 3,
+      "wallSeconds": 3.007899999976158,
+      "modelSeconds": 8.99999999999821,
+      "actualSpeed": 2.9921207487182246
+    }
+  ],
+  "adaptation": {
+    "reduced": true,
+    "beforeGrid": [
+      256,
+      256
+    ],
+    "afterGrid": [
+      128,
+      128
+    ],
+    "volumeError": -5.137919878309824e-18,
+    "timeError": 0
+  },
+  "networkLoss": "Cached local lookup continues without network",
+  "lowPerformance": {
+    "apiVersion": 1,
+    "id": "soap-film",
+    "title": "Soap film",
+    "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
+    "representativeScaleMeters": 0.16,
+    "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
+    "sources": [
+      "https://doi.org/10.1103/PhysRevLett.100.144501",
+      "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
+      "https://cie.co.at/datatable/cie-standard-illuminant-d65",
+      "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
+    ],
+    "numericalStepCount": 2566,
+    "simulationTime": 60.080000000003885,
+    "simulationTimeUnits": "seconds in the reduced model; rupture replay slowed 240 times",
+    "parameters": {
+      "lengthMeters": 0.16,
+      "dtSeconds": 0.04,
+      "viscosity": 0.000001,
+      "thermalDiffusivity": 0.0000012,
+      "gravity": 9.81,
+      "expansionPerKelvin": 0.0002,
+      "dragPerSecond": 1,
+      "ambientC": 22,
+      "heatingKelvin": 12,
+      "coolingPerSecond": 0.025,
+      "evaporationNmPerSecond": 0.7,
+      "drainageSpeedMetersPerSecond": 0.000055,
+      "drainageReferenceNm": 800,
+      "ruptureNm": 18,
+      "gammaNewtonPerMeter": 0.03,
+      "densityKgPerM3": 1000,
+      "ruptureSlowdown": 240,
+      "restSeconds": 5,
+      "viewingAngleDegrees": 18
+    },
+    "quality": "low",
+    "requestedQuality": "medium",
+    "adaptiveReductions": 1,
+    "workBudget": 1,
+    "droppedAmbientSeconds": 0,
+    "grid": [
+      128,
+      128
+    ],
+    "seed": "51a9f17c",
+    "seedProvenance": "offline deterministic hexadecimal seed; no random forcing or external beacon",
+    "diagnosticAgeSeconds": 0,
+    "diagnostics": {
+      "step": 2566,
+      "time": 60.080000000003885,
+      "state": "intact",
+      "cycle": 1,
+      "thicknessRangeNm": [
+        97.92874145507812,
+        1045.2138671875
+      ],
+      "temperatureRangeC": [
+        21.993589401245117,
+        33.88736343383789
+      ],
+      "divergenceMaxPerSecond": 0.000005471520125865936,
+      "pressureResidualMetersInverseSecondsInverse": 0.004377216100692749,
+      "pressureCycles": 1,
+      "maxSpeedMetersPerSecond": 0.00820537656545639,
+      "volumeM3": 1.5335650740611556e-8,
+      "filmVolumeM3": 1.5335650740611556e-8,
+      "rimVolumeM3": 0,
+      "evaporatedM3": 1.0766336000002746e-9,
+      "drainedM3": 7.328229213508308e-10,
+      "replenishedM3": 1.7145111057674885e-8,
+      "resetDiscardedM3": 0,
+      "massBalanceErrorM3": -3.7957122244793785e-15,
+      "hole": null
+    },
+    "performance": {
+      "solverCPU": {
+        "medianMs": 9.299999952316284,
+        "p95Ms": 9.600000023841858,
+        "samples": 240
+      },
+      "opticalCompositeCPUEncode": {
+        "medianMs": 0,
+        "p95Ms": 0.09999990463256836,
+        "samples": 4
+      },
+      "opticalCompositeGPU": {
+        "medianMs": 0.249038,
+        "p95Ms": 0.249038,
+        "samples": 1
+      },
+      "timestampQueries": true
+    },
+    "elapsedConvention": "one ambient second equals one model second while caught up; bounded work can slow wall-clock playback",
+    "precision": "Float32 state, JavaScript Float64 arithmetic",
+    "host": {
+      "paused": true,
+      "visible": true,
+      "offscreen": false,
+      "loopRunning": true,
+      "error": null,
+      "playbackSpeed": 3,
+      "canvas": [
+        1358,
+        729
+      ],
+      "renderCPU": {
+        "medianMs": 0,
+        "p95Ms": 0.10000002384185791,
+        "samples": 240
+      },
+      "finalDisplayGPU": {
+        "medianMs": 0.177248,
+        "p95Ms": 0.37012,
+        "samples": 105
+      },
+      "queueReadbackLatency": {
+        "medianMs": 1.399999976158142,
+        "p95Ms": 4.100000023841858,
+        "samples": 105
+      }
+    },
+    "adapter": {
+      "description": "Not exposed",
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "isFallbackAdapter": false
+    }
+  },
+  "deviceLoss": "Caught and replaced by labelled still",
+  "errors": [],
+  "checks": "Faster 3x playback, viewport-filling stage and visible controls, pause, keyboard, instruments, angle, resize, desktop, portrait and landscape, fullscreen, hidden and offscreen suspension, reduced motion, touch sample, seed replay, missing WebGPU, offline continuity"
+}
