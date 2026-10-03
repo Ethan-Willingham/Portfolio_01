@@ -192,9 +192,10 @@ The host additionally owns a full-size rgba16float scene target. DPR is capped
 at 2 and the long render dimension at 1800 pixels. The page uses the available
 width, a compact header, and a stage sized to leave playback controls in view.
 The orthographic camera frames the occupied orbit rather than the full render
-box. Portrait volume views rotate the projection by 90 degrees and use a
-0.6-radian tilt to keep the full orbit within the narrow canvas; the box and
-density diagnostics are unchanged. Device limits, adapter and
+box. Portrait volume views rotate the projection by 90 degrees and offset the
+camera tilt by -0.32 radians, giving a default tilt of 0.6 radians. Framing
+widens toward an overhead view so the rotated orbit fits the narrow canvas.
+The box and density diagnostics are unchanged. Device limits, adapter and
 shader validation are checked. Optional timestamp-query support is recorded;
 the current benchmark uses queue completion rather than timestamp queries.
 The fixed local clock ticks at 30 Hz, with at most two ticks per animation
@@ -210,6 +211,22 @@ errors. This fallback is a scientific section of the same packet, not a running
 volume. Disposal aborts owned fetches, disconnects observers, removes listeners,
 cancels animation, destroys owned buffers/textures and releases its own device.
 The room itself never destroys the supplied host device.
+
+Mouse or one-finger dragging rotates the 3D camera in both contour and soft
+volume views. Pointer capture keeps the gesture active across the canvas edge;
+release, cancellation, lost capture, hidden/offscreen suspension and disposal
+end it. The canvas permits browser pinch zoom while taking one-finger gestures
+for rotation. Arrow keys rotate a focused canvas, Shift increases the angle,
+and Home or Instruments > Reset view restores the starting camera. Rotation
+does not resume a paused packet or start evolution under reduced motion. The
+analytic 2D section keeps its stated plane and disables camera gestures.
+
+Yaw and tilt wrap to bounded angles without pole clamps, inertia or automatic
+spinning. Multiple pointer updates share one pending presentation redraw; the
+normal animation frame can satisfy that redraw too. Camera-only changes update
+uniforms and reuse the existing density texture. They neither recompute the
+field nor invalidate a measured box mass, increment the numerical step count,
+or change the clock, coefficients, energy phases and physical diagnostics.
 
 ## Reusable room and example host
 
@@ -274,7 +291,7 @@ gitignored research/visualizer/hydrogen-exactly-results directory.
 Measured on October 3, 2026, Apple M1 Pro, hardware Apple Metal-3 WebGPU adapter
 (isFallbackAdapter false), Chrome for Testing 148.0.7778.96. A 24-sample benchmark
 after three warmups at 128 cubed and 1358 by 684 pixels measured compute median
-5.1 ms / p95 6.9 ms, contour render median 3.7 ms / p95 5.5 ms.
+2.5 ms / p95 2.7 ms, contour render median 2.8 ms / p95 3.2 ms.
 These are GPU queue-completion latencies
 including submit/wait overhead, not pure shader timestamps or a claim about
 other devices. Simulation and rendering are timed separately. The final run's
@@ -331,6 +348,12 @@ Presentation checks additionally verify that the large canvas and playback
 controls fit the initial viewport, DPR 2 remains sharp, and switching contours,
 soft volume, analytic section and density colors leaves GPU probes and captured
 mass exactly unchanged at the same score.
+Rotation checks compare GPU complex amplitudes, density and captured mass
+before and after mouse rotation at a paused score. Screenshots demonstrate
+changes in the projected volume. Tests cover edge-on, overhead, underneath and
+flipped views, arrow keys, both reset controls, pointer capture beyond the
+canvas, cancellation, fullscreen persistence and real CDP touch input at DPR 2.
+Touch rotation leaves page scroll and the reduced-motion pause unchanged.
 
 Limitations: no demonstrated knotted nodes, Bohmian tracers, fine structure,
 Lamb shifts, spontaneous emission, or global synchronization.

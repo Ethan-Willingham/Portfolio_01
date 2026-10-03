@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="hydrogen-exactly.css?v=2">
+  <link rel="stylesheet" href="hydrogen-exactly.css?v=3">
 </head>
 <body class="hx-page">
   <div class="site-wrapper">
@@ -25,9 +25,11 @@
       </header>
       <section class="hx-demo" id="hx-demo" aria-label="Hydrogen wavefunction visualizer" aria-busy="true">
         <div class="hx-stage" id="hx-stage">
-          <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" tabindex="0"></canvas>
+          <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" aria-describedby="hx-camera-help" tabindex="0"></canvas>
           <img id="hx-still" src="assets/visualizer/hydrogen-exactly/initial-section.png?v=2" alt="Computed equatorial density section of the initial n=24 to 36 circular-state packet, localized on the left of the nucleus.">
           <div class="hx-stage-heading"><span id="hx-mode-label">Circular packet</span><span id="hx-encoding-label">Density false color, cyan to gold</span></div>
+          <p class="hx-rotation-hint" id="hx-rotation-hint" aria-hidden="true" hidden>Drag to rotate</p>
+          <p class="hx-sr-only" id="hx-camera-help">Drag with a mouse or one finger to rotate the 3D view. Arrow keys rotate when the image has focus. Home resets the camera. Rotation is available in the contour and soft volume views.</p>
           <p class="hx-status" id="hx-status" role="status">Preparing the wavefunction</p>
           <div class="hx-caption"><span id="hx-caption">13 circular states, n = 24 to 36</span><span id="hx-scale">Characteristic radius 47.6 nm</span></div>
         </div>
@@ -47,6 +49,7 @@
             <label id="hx-color-field">Color encoding<select id="hx-color"><option value="3" selected>Density (false color)</option><option value="0">Neutral density</option><option value="1" disabled>Spectral frequencies (false color)</option><option value="2" disabled>Signed 2p / 3s diagnostic</option></select></label>
             <label>Display exposure<input id="hx-exposure" type="range" min="0.4" max="2" step="0.05" value="1"></label>
           </div>
+          <div class="hx-camera-tools"><button class="hx-button" id="hx-reset-view" type="button">Reset view</button><p class="hx-note">Drag to rotate in 3D. Arrow keys rotate the focused image; Home resets the view.</p></div>
           <label class="hx-timeline">Local display time <output id="hx-time-output">0.0 s</output><input id="hx-time" type="range" min="0" max="900" step="0.1" value="0"></label>
           <div id="hx-events" class="hx-events" aria-label="Computed packet events">
             <button type="button" data-time="0">Initial packet</button>
@@ -95,6 +98,6 @@
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
-  <script type="module" src="js/hydrogen-exactly.js?v=2"></script>
+  <script type="module" src="js/hydrogen-exactly.js?v=3"></script>
 </body>
 </html>
