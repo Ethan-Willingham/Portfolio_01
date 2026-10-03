@@ -31,13 +31,14 @@ const server = http.createServer((req,res) => {
     res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'}).end(bytes);
   } catch {res.writeHead(404).end();}
 });
-async function pageFor(size,hash='') {
-  const context=await browser.newContext({viewport:size,reducedMotion:'reduce',deviceScaleFactor:size.width<600?2:1,hasTouch:size.width<600});
+async function pageFor(size,hash='',options={}) {
+  const context=await browser.newContext({viewport:size,reducedMotion:options.motion||'reduce',deviceScaleFactor:size.width<600?2:1,hasTouch:size.width<600});
   await context.route('https://www.googletagmanager.com/**',r=>r.abort());
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   page.on('response',r=>{if(r.url().startsWith(url)){requests.push(r.url());if(r.status()>=400)localFailures.push(r.url());}});
+  if(options.configure)await options.configure(page);
   await page.goto(url+'/archive/under-the-street/under-the-street.html'+hash);
-  await page.locator('#undermap').scrollIntoViewIfNeeded();
+  if(!options.natural)await page.locator('#undermap').scrollIntoViewIfNeeded();
   await page.waitForFunction(()=>window.__mapAudit && document.querySelectorAll('.um-result').length>0);
   await page.evaluate(()=>document.fonts.ready);
   return {page,context};
@@ -101,6 +102,16 @@ async function assertViewportFit(page,size) {
   assert.match(depthHit.name,/ft to bedrock/);
   const timings=await page.evaluate(()=>__mapAudit.performance());console.log('Map draw ms:',timings.map(n=>n.toFixed(2)).join(', '));
   await context.close();
+  for(const motion of ['reduce','no-preference'])for(const size of [{width:1440,height:800},{width:820,height:720}]){
+    const {page,context}=await pageFor(size,'#undermap',{natural:true,motion,configure:p=>p.route('**/assets/map/media.json?*',async r=>{await new Promise(resolve=>setTimeout(resolve,650));await r.continue();})});
+    await page.waitForFunction(()=>document.querySelector('.um-result-thumb img')?.naturalWidth>0);
+    await page.waitForTimeout(650);
+    let frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Delayed photographs keep the direct map link entirely visible with '+motion);
+    await page.locator('[data-id="511"]').click();await page.waitForFunction(()=>__mapAudit.state().view.z>=15.99);
+    await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.naturalWidth>0);
+    frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Selecting a place after loading preserves the entire demo');
+    await context.close();
+  }
   for(const size of [{width:1512,height:850},{width:1280,height:720},{width:1024,height:768},{width:820,height:720},{width:780,height:740},{width:390,height:844},{width:320,height:568},{width:844,height:390}]) {
     const {page,context}=await pageFor(size);
     await assertViewportFit(page,size);

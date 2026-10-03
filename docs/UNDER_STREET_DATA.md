@@ -366,6 +366,9 @@ keyboard instructions and source downloads open through disclosures. Phones and
 short landscape windows retain the stacked map and article layout.
 The fit checks exercise all eight topics at 1440 by 800 and the opening and Ground
 views at 1512 by 850, 1280 by 720, 1024 by 768, 820 by 720 and 780 by 740.
+The direct map anchor opens without the page's automatic scroll animation, which
+could finish at an obsolete position while the page loaded. Delayed-photo checks
+verify that the frame stays entirely visible with either motion preference.
 
 The browser checks use Playwright and an owned Chrome for Testing process:
 
