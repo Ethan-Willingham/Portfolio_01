@@ -1,4 +1,4 @@
-import { dimensions, pack, unpack, checksum, evolve } from './arrow-of-time-model.js?v=4';
+import { dimensions, pack, unpack, checksum, evolve, IMAGE_SCALE } from './arrow-of-time-model.js?v=5';
 
 const triangle = `@vertex fn vertex(@builtin(vertex_index) i:u32)->@builtin(position) vec4f {
  let p=array<vec2f,3>(vec2f(-1,-1),vec2f(3,-1),vec2f(-1,3)); return vec4f(p[i],0,1); }`;
@@ -159,7 +159,8 @@ fn scale(uv:vec2f,lod:f32)->f32 {let l=clamp(lod,0,f32(${levels.length - 1}));le
  let filtered=scale(uv,lod);let index=vec2i(floor(uv*vec2f(${width},${height})));
  let value=mix(filtered,cell(0,index.x,index.y),smoothstep(1.,2.5,pixelsPerCell));
  let shade=smoothstep(.12,.96,value);
- let t=clamp((uv.y-.23)*2.1+(uv.x-.5)*.65,0.,1.);
+ let paletteUV=(uv-.5)/${IMAGE_SCALE}+.5;
+ let t=clamp((paletteUV.y-.23)*2.1+(paletteUV.x-.5)*.65,0.,1.);
  var ink=mix(view.inkA.rgb,view.inkB.rgb,clamp(t*3.,0.,1.));
  ink=mix(ink,view.inkC.rgb,clamp(t*3.-1.,0.,1.));
  ink=mix(ink,view.inkD.rgb,clamp(t*3.-2.,0.,1.));

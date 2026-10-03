@@ -1,5 +1,5 @@
-import { MODEL, PRESETS, PRESET_VERSION, prepare, compare, measure, pack, checksum } from './arrow-of-time-model.js?v=4';
-import { createQ2RGPU } from './arrow-of-time-gpu.js?v=4';
+import { MODEL, PRESETS, PRESET_VERSION, prepare, compare, measure, pack, checksum, IMAGE_SCALE } from './arrow-of-time-model.js?v=5';
+import { createQ2RGPU } from './arrow-of-time-gpu.js?v=5';
 export const roomInfo = {
   apiVersion: 1, id: 'arrow-of-time', title: 'Arrow of time', model: MODEL,
   representativeScaleMeters: null, scaleMeaning: 'Abstract lattice cells; no physical length is assigned.',
@@ -7,8 +7,8 @@ export const roomInfo = {
 };
 export async function createRoom({ device, seed, quality = 'medium', assetBaseURL }) {
   if (!device) throw new Error('Arrow of time requires WebGPU. The standalone page offers a labeled CPU-generated still.');
-  if (!['low', 'medium', 'high'].includes(quality)) throw new RangeError('Unknown room quality.');
-  const [width, height] = quality === 'high' ? [1024, 768] : quality === 'low' ? [256, 256] : [768, 512], stepsPerPhrase = 4320;
+  if (!['low', 'medium', 'high', 'ultra'].includes(quality)) throw new RangeError('Unknown room quality.');
+  const [width, height] = quality === 'ultra' ? [2048, 1536] : quality === 'high' ? [1024, 768] : quality === 'low' ? [256, 256] : [768, 512], stepsPerPhrase = 4320;
   const assets = new URL(assetBaseURL || '../assets/visualizer/arrow-of-time/', import.meta.url).href;
   let referenceEnergy = 0;
   let initial, gpu, customDrawing = null, timeline = null, justSeeked = false, usedSeeking = false, preset = 0, cycle = 0, totalSteps = 0, orbitStep = 0, forwardSteps = 0, inverseSteps = 0;
@@ -79,7 +79,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     resize() {}, step,
     render(args) { const visibility = justSeeked ? 1 : phase === 'returned' ? Math.min(1, holdSeconds / 2) : phase === 'arrival' && cycle > 0 ? Math.min(1, (8 - holdSeconds) / 2) : 1; const moving = phase === 'forward' && forwardSteps > 0 || phase === 'inverse' && inverseSteps > 0; const blend = moving && !justSeeked ? Math.max(0, Math.min(1, accumulator)) : 1; if (!disposed && phase !== 'resetting') gpu.render({ ...args, zoom, visibility, blend }); },
     snapshot() { return { ...roomInfo, quality, seed: seed || null, seedProvenance: 'Host seed recorded but unused; authored constructors or user drawing; deterministic preparation, no random source.',
-      parameters: { J: 1, width, height, forwardStepsScheduled: stepsPerPhrase, updatesPerAmbientSecond: rate, presetVersion: PRESET_VERSION, zoom, storage: '32 spins per u32, row aligned', display: 'Mean of both time layers, eased between adjacent computed states', assets },
+      parameters: { J: 1, width, height, forwardStepsScheduled: stepsPerPhrase, updatesPerAmbientSecond: rate, presetVersion: PRESET_VERSION, imageScale: IMAGE_SCALE, zoom, storage: '32 spins per u32, row aligned', display: 'Mean of both time layers, eased between adjacent computed states', assets },
       numericalStepCount: totalSteps, simulationTime: orbitStep, simulationTimeUnits: 'Q2R integer steps from authored state', configurationId: initial.configurationId,
       ...controls(), presetIndex: customDrawing ? -1 : preset, timelineReady: !!timeline?.exactReturn, timelinePosition: direction === 1 ? orbitStep : 2 * stepsPerPhrase - orbitStep, timelineLength: 2 * stepsPerPhrase, timelineCheckpointCount: timeline?.checkpoints || 0, timelineBytes: timeline?.bytes || 0, timelinePreparationSteps: timeline?.computedSteps || 0, stepsUntilReversal: direction === 1 ? stepsPerPhrase - orbitStep : 0, stepsUntilReturn: direction === -1 ? orbitStep : 2 * stepsPerPhrase - orbitStep,
       ...last, diagnosticStep: measuredAtStep, diagnosticAgeSteps: measuredAtStep === null ? null : totalSteps - measuredAtStep, diagnosticPending: !!pending, returnResult, lastReturn,
@@ -87,7 +87,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     async debugReadback() { const state = await read(); return { ...state, x: [...state.x], y: [...state.y], packedX: [...state.packedX], packedY: [...state.packedY], replay: { apiVersion: 1, id: roomInfo.id, model: MODEL, quality, seed: seed || null, seedProvenance: 'unused host seed', configurationId: initial.configurationId, width, height, presetVersion: PRESET_VERSION, ...state.control } }; },
     async measure() { await read(); },
     setRate(value) { if (![24, 96, 768].includes(value)) throw new RangeError('Unsupported playback pacing.'); rate = value; },
-    setZoom(value) { zoom = Math.max(.4, Math.min(8, Number(value) || 1)); },
+    setZoom(value) { zoom = Math.max(.4, Math.min(16, Number(value) || 1)); },
     async seek(position) {
       if (disposed || !timeline?.exactReturn) throw new Error('The timeline is not ready.');
       if (!Number.isInteger(position) || position < 0 || position > 2 * stepsPerPhrase) throw new RangeError('Timeline position is out of bounds.');
