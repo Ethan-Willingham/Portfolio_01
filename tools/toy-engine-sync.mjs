@@ -14,6 +14,10 @@
  *   - slime: js/sluice/340-jello.js, embedded verbatim between
  *     ENGINE SYNC sentinels (toy behavior lives in later same-named
  *     function declarations that shadow the copies, never in edits).
+ *   - resident elastic material, skin contacts, finite grip and rendering:
+ *     the soft-* blocks and material skin functions below, also verbatim.
+ *     The host installs passive material state and no-op motor/eye hooks.
+ *     The creature controller and locomotion fragments are not loaded.
  *
  * Usage:
  *   node tools/toy-engine-sync.mjs --check   # diff, exit 1 on drift (pre-commit runs this)
@@ -62,7 +66,44 @@ function smokeBlock() {
 const expected = {
   'smoke-engine': smokeBlock(),
   'jello-engine': readText(JELLO_SRC),
+  'soft-contact': readText(`${root}/js/sluice/342-soft-contact.js`),
+  'soft-handling': readText(`${root}/js/sluice/344-soft-handling.js`),
+  'soft-terrain': readText(`${root}/js/sluice/344-soft-terrain.js`),
+  'soft-material': readText(`${root}/js/sluice/344-soft-material.js`),
+  'soft-pairs': readText(`${root}/js/sluice/345-soft-pairs.js`),
+  'soft-intent': passiveSkinContacts(),
+  'soft-presentation': passivePresentation(),
+  'slime-skin': skinBlock(),
 };
+
+function passiveSkinContacts() {
+  const text = readText(`${root}/js/sluice/346-soft-intent.js`);
+  const start = text.indexOf('  // Resolve moving-edge contact');
+  if (start < 0) throw new Error('passive skin contact anchor missing');
+  return text.slice(start);
+}
+
+function passivePresentation() {
+  const text = readText(`${root}/js/sluice/346-soft-presentation.js`);
+  function between(startName, endName) {
+    const start = text.indexOf(`  function ${startName}(`);
+    const end = text.indexOf(`  function ${endName}(`, start);
+    if (start < 0 || end < 0) throw new Error('passive material presentation anchor missing');
+    return text.slice(start, end);
+  }
+  return between('softPresentationInit', 'softPresentationEyeMatrix') +
+    between('softPresentationDrawInterior', 'softPresentationContact');
+}
+
+// These functions observe and draw material. Creature brains and eye animation
+// stay in the game. The demo supplies inert material state and a no-op eye hook.
+function skinBlock() {
+  const text = readText(`${root}/js/sluice/347-surface-slimes.js`);
+  const start = text.indexOf('  function surfaceSlimeSnapshot(');
+  const end = text.indexOf('  // Bath departure animation', start);
+  if (start < 0 || end < 0) throw new Error('resident skin anchors missing');
+  return text.slice(start, end);
+}
 
 // ---- the toy's sentinel-delimited blocks -----------------------------
 const toy = readText(TOY);

@@ -7,9 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Water, Smoke, and Slime</title>
-  <meta name="description" content="Pour water, throw slimes, and stir smoke. An interactive physics playground from Sluice.">
+  <meta name="description" content="Stretch squishy gel, pour waterfalls, and stir smoke. Three interacting physics engines from Sluice, running in your browser.">
   <meta property="og:title" content="Water, Smoke, and Slime">
-  <meta property="og:description" content="Pour water, throw slimes, and stir smoke. An interactive physics playground from Sluice.">
+  <meta property="og:description" content="Stretch squishy gel, pour waterfalls, and stir smoke. Three interacting physics engines from Sluice, running in your browser.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/water-smoke-slime/water-smoke-slime.html">
@@ -24,15 +24,15 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=4.41">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=5.0">
 </head>
 <body class="physics-page">
-  <script src="/js/archive-banner.js"></script>
   <div class="site-wrapper toy-page">
     <header class="toy-header">
-      <h1>Water, Smoke, and Slime</h1>
-      <nav aria-label="Site"><a href="/">Home</a><a href="/grand-motherload.html">Play Sluice</a></nav>
+      <div><p class="toy-kicker">A physics sandbox from Sluice</p><h1>Water, Smoke, and Slime</h1></div>
+      <nav aria-label="Site"><a href="/">Home</a><a href="#how-it-works">How it works</a><a href="/grand-motherload.html">Play Sluice</a></nav>
     </header>
+    <p class="toy-intro">Grab a slime and stretch it. Drop it into the water, stir the smoke, or draw a dam.</p>
 
     <section class="toy-shell" id="toy" aria-label="Physics playground">
       <div class="toy-bar" id="toy-bar">
@@ -43,6 +43,7 @@
             <button class="toy-chip" data-scene="chimney" aria-pressed="false">Plumes</button>
             <button class="toy-chip" data-scene="rig" aria-pressed="false">Rig exhaust</button>
             <button class="toy-chip" data-scene="spa" aria-pressed="false">Spring</button>
+            <button class="toy-chip" data-scene="blank" aria-pressed="false">Empty</button>
           </div>
           <div class="toy-playback" role="group" aria-label="Playback">
             <button class="toy-icon" id="toy-pause" aria-label="Pause" title="Pause (Space)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
@@ -68,7 +69,7 @@
             <button class="tb is-on" data-tool="poke" title="Grab (6)" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5l12.5 8-5.4 1.4 3 6.1-2.8 1.4-3-6.2-4.3 3.4z"/></svg><span>Grab</span></button>
             <button class="tb" data-tool="water" title="Water (3)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2c2.9 3.6 5.8 7 5.8 10.2a5.8 5.8 0 01-11.6 0C6.2 10.2 9.1 6.8 12 3.2z"/></svg><span>Water</span></button>
             <button class="tb" data-tool="smoke" title="Smoke (4)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 13c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/><path d="M4 17.5c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2"/></svg><span>Smoke</span></button>
-            <button class="tb" data-tool="slime" title="Slime (5)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c4.4 0 7.5 3.2 7.5 7.2 0 4.4-3.4 7.8-7.5 7.8s-7.5-3.4-7.5-7.8c0-4 3.1-7.2 7.5-7.2z"/><circle cx="9.4" cy="10.6" r="0.7" fill="currentColor" stroke="none"/><circle cx="14.6" cy="10.6" r="0.7" fill="currentColor" stroke="none"/></svg><span>Slime</span></button>
+            <button class="tb" data-tool="slime" title="Slime (5)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c4.4 0 7.5 3.2 7.5 7.2 0 4.4-3.4 7.8-7.5 7.8s-7.5-3.4-7.5-7.8c0-4 3.1-7.2 7.5-7.2z"/><path d="M8 8.5c.7-1 1.7-1.5 3-1.5"/></svg><span>Slime</span></button>
             <button class="tb" data-tool="draw" title="Draw (1)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 19.5l1.2-4.2L16.4 4.6l3 3L8.7 18.3 4.5 19.5z"/><path d="M14.2 6.8l3 3"/></svg><span>Draw</span></button>
             <button class="tb" data-tool="erase" title="Erase (2)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 20h9"/><path d="M5.2 14.2l8-8a2 2 0 012.8 0l2.3 2.3a2 2 0 010 2.8l-8 8H7.5l-2.3-2.3a2 2 0 010-2.8z"/><path d="M10.5 8.9l4.6 4.6"/></svg><span>Erase</span></button>
           </div>
@@ -128,9 +129,24 @@
     </section>
     <p class="toy-nowater" id="toy-nowater" role="status" hidden>Water isn’t available in this browser. You can still play with smoke and slime.</p>
 
-    <main class="post-body toy-prose">
-      <p>Lift a slime into a plume and watch the smoke part around it. Drop it through a waterfall, or into the spring to send a wave across the pool. Draw a dam, erase a hole, and see where the water goes. The material menus change how everything moves and looks.</p>
-      <p>These are the physics engines from <a href="/grand-motherload.html">Sluice</a>, my mining game. Built on work by <a href="https://oimo.io/works/water/">saharan</a>, <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov</a>, and <a href="https://mmacklin.com/xpbd.pdf">Macklin, Müller, and Chentanez</a>. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">The source is here.</a></p>
+    <main class="post-body toy-prose" id="how-it-works">
+      <div class="toy-experiments" aria-label="Things to try">
+        <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>
+        <button data-try="water"><span>Break a dam</span>Open the cascade, choose Erase, and cut through a basin.</button>
+        <button data-try="smoke"><span>Split a plume</span>Open Plumes and drag a slime through the rising smoke.</button>
+      </div>
+      <h2>Three engines, one box</h2>
+      <p>The water flows around the same walls that hold the gel and deflect the smoke. Draw a wall and all three simulations see it. These are the engines from <a href="/grand-motherload.html">Sluice</a>, my mining game, with the slime creatures reduced to their squishy material.</p>
+      <details class="toy-method"><summary>How the simulation works</summary>
+        <dl>
+          <div><dt>Water</dt><dd>Particles carry the liquid. A temporary grid exchanges their momentum and applies pressure, then sends them on their way. The MLS-MPM solver runs on WebGPU, adapted from <a href="https://oimo.io/works/water/">saharan’s water demo</a>.</dd></div>
+          <div><dt>Smoke</dt><dd>A WebGL fluid solver moves velocity and dye through a grid, following <a href="https://github.com/PavelDoGreat/WebGL-Fluid-Simulation">Pavel Dobryakov’s work</a>. The visible smoke is dye in that flow.</dd></div>
+          <div><dt>Slime</dt><dd>A mesh of elastic connections holds its volume while stretching and compressing. Sluice’s current material, skin contacts, and spring grip use <a href="https://mmacklin.com/xpbd.pdf">XPBD</a> on the CPU. Highlights attach to the deforming mesh. There are no creature brains or eyes here.</dd></div>
+        </dl>
+        <p>This is a game simulation tuned for interaction. The water, smoke, and gel exchange approximate boundary motion; they aren’t one unified physical solver.</p>
+      </details>
+      <p class="toy-compat">Water needs WebGPU. Smoke needs WebGL. If either is unavailable, the other materials still work. The simulation pauses when you leave the tab or scroll it out of view.</p>
+      <div class="toy-links"><a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/js/water-smoke-slime.js">Read the source</a><a href="/grand-motherload.html">Play Sluice</a><span>In progress</span></div>
     </main>
 
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
@@ -138,8 +154,8 @@
   <!-- Shared water engine; the stamp follows GAME_VERSION. -->
   <script src="/js/liquid-wgpu.js?v=v28.147"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
-  <script src="/js/water-smoke-slime.js?v=v4.46"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=4.39"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.0"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=5.0"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

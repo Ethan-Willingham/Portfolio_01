@@ -58,29 +58,17 @@
  *
  * v3.11 visibility contract: the normal droplet pass reads actual rendered
  * field coverage, so fast sheets cannot fall between the surface and droplet
- * paths. (v4.18: the old orphan retirement is gone; water is conserved.
- * Isolated beads persist, rest under the per-cell calm brake, and render
- * through the droplet pass; a sweep only WAKES sleeping strays whose
- * support has drained away so they cannot fossilize mid-air.)
+ * paths. A guarded orphan sweep also retires small isolated clusters that do
+ * not rejoin water, instead of simulating them forever.
  *
  * v3.12 honest-footprint contract: dense water uses a compact field support
  * instead of wide per-particle halos, while thin water stays visible through
  * the coverage droplet pass. Both paths clip against collision terrain.
  *
- * v4.0 surface-carry contract: the pointer owns one continuous coordinate on
- * the visible boundary. It receives the full pointer displacement after every
- * solver substep, with no proxy or speed ceiling. The hidden solver may deform
- * the remaining body, but it never becomes the visible material. The generic
- * actor-intent seam drives later locomotion and pose changes without referring
- * to the body's internal discretization.
- *
- * v4.7 dissipation contract: the shared solver gained a momentum-conserving
- * pairwise eddy exchange (gate grows with each pair's own disagreement) and a
- * graded floor boundary layer (the floor grips up to six cells above the
- * touching row). Probe-verified at the landing point: a resting film measures
- * 0.1 px/s, a drip's bore no longer crosses the puddle, a hard-stirred
- * 400x110 tank calms in about ten seconds, and splash peak speeds are
- * unchanged. The slider drives the new terms plus the v4.6 quiet stages.
+ * v5.0 passive gel: the current Sluice elastic material, skin contacts,
+ * and finite spring grip run with the same material-attached rendering.
+ * Creature motors, brains, eyes, and autonomous movement are not installed.
+ * tools/toy-engine-sync.mjs checks every shared block against the game.
  *
  * v4.6 calm-range contract: full simulation time, particle footprint, and
  * airborne spray never change. A relative filter now reaches one-cell-thick
@@ -94,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v4.46'; // shown in the engine stats; bump with the
+  var TOY_VERSION = 'v5.0'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -423,6 +411,8 @@
   var liquidSleeping = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidFrozen = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidRestFrames = new Uint16Array(LIQUID_MAX_PARTICLES);
+  var liquidOrphanDwell = new Uint8Array(LIQUID_MAX_PARTICLES);
+  var LIQUID_ORPHAN_DWELL_TICKS = 8;  // 8 half-second sweeps = 4 s for fast spray
   var liquidOrphanTick = 0;
 
   var liquidCount = 0;
@@ -447,6 +437,7 @@
     liquidSleeping[id] = 0;
     liquidFrozen[id] = 0;
     liquidRestFrames[id] = 0;
+    liquidOrphanDwell[id] = 0;
     if (liquidOps.length < LIQUID_OPS_MAX) {
       liquidOps.push(1, x, y, vx || 0, vy || 0, liquidType[id], liquidOrigin[id]);
     } else liquidOpsOverflow = true;
@@ -474,21 +465,17 @@
       liquidSleeping[i] = liquidSleeping[last];
       liquidFrozen[i] = liquidFrozen[last];
       liquidRestFrames[i] = liquidRestFrames[last];
+      liquidOrphanDwell[i] = liquidOrphanDwell[last];
     }
     liquidMutationSeq++;
     liquidCount--;
   }
 
-  /* v4.18 conservation contract: WATER NEVER EVAPORATES. The old sweep
-   * retired small isolated clusters (the v3.11 orphan rule); the owner
-   * wants every particle to persist, and the per-cell calm field means a
-   * lone bead now genuinely comes to rest instead of jittering awake
-   * forever (the disease the retirement was built for: with GLOBAL calm,
-   * any activity anywhere held the rest brake off a wedged stray). What
-   * remains is a WAKE pass: every 30 frames, a SLEEPING particle with no
-   * particles and no solid in the 16 px bucket below it has had its
-   * support drained away, so it is woken to fall and bead on the floor
-   * instead of fossilizing mid-air. Beads asleep on solid stay asleep. */
+  /* Small isolated clusters should either merge back into visible water or
+   * leave the simulation. Every 30 frames, use the async CPU mirror to count
+   * support in the same 16 px neighbourhood as Sluice. Slow isolated residue
+   * retires immediately; moving spray gets four seconds to land or rejoin.
+   * Real streams and pools reset their dwell because they have ample support. */
   function retireLiquidOrphans() {
     liquidOrphanTick++;
     if (liquidOrphanTick < 30 || !liquidCount) return;
@@ -500,21 +487,28 @@
       key = ((liquidX[i] / 16) | 0) * 100003 + ((liquidY[i] / 16) | 0);
       buckets.set(key, (buckets.get(key) || 0) + 1);
     }
-    var woke = 0;
     for (i = liquidCount - 1; i >= 0; i--) {
-      if (liquidFrozen[i] || !liquidSleeping[i]) continue;
+      if (liquidFrozen[i]) continue;
       var cx = (liquidX[i] / 16) | 0;
       var cy = (liquidY[i] / 16) | 0;
-      if (buckets.get(cx * 100003 + (cy + 1)) || 0) continue;
-      if (jelloWorldSolidAt(liquidX[i], liquidY[i] + 16)) continue;
-      liquidSleeping[i] = 0;
-      liquidRestFrames[i] = 0;
-      if (liquidOps.length < LIQUID_OPS_MAX) {
-        liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
-      } else liquidOpsOverflow = true;
-      woke++;
+      var nearby = 0;
+      for (var ox = -1; ox <= 1; ox++) {
+        for (var oy = -1; oy <= 1; oy++) {
+          nearby += buckets.get((cx + ox) * 100003 + (cy + oy)) || 0;
+        }
+      }
+      if (nearby >= 24) {
+        liquidOrphanDwell[i] = 0;
+        continue;
+      }
+      var dwell = liquidOrphanDwell[i] + 1;
+      if (dwell > 250) dwell = 250;
+      liquidOrphanDwell[i] = dwell;
+      var vx = liquidVX[i], vy = liquidVY[i];
+      if (vx * vx + vy * vy < 36 || dwell >= LIQUID_ORPHAN_DWELL_TICKS) {
+        removeLiquidParticle(i);
+      }
     }
-    if (woke) liquidMutationSeq++;
   }
 
   // Waking is a real op (type 4) so the change reaches the GPU-resident rows.
@@ -611,19 +605,10 @@
     waterCellCount.fill(0);
     waterCellVX.fill(0);
     waterCellVY.fill(0);
-    if (waterState !== 'on' || liquidCount === 0) {
-      waterColSurf.fill(Infinity);
-      waterFastCount = 0;
-      return;
-    }
-    waterFastCount = 0;
+    if (waterState !== 'on' || liquidCount === 0) { waterColSurf.fill(Infinity); return; }
     for (var i = 0; i < liquidCount; i++) {
       var c = (liquidX[i] / TILE) | 0;
       var r = (liquidY[i] / TILE) | 0;
-      // v4.9: fast-water census for the liveliness state (the game's
-      // LIQUID_FAST_VSQ idiom, 24 px/s). Counted before the bounds check
-      // so off-grid spray still registers as activity.
-      if (liquidVX[i] * liquidVX[i] + liquidVY[i] * liquidVY[i] > 576) waterFastCount++;
       if (c < 0 || c >= gridW || r < 0 || r >= gridH) continue;
       var idx = r * gridW + c;
       waterCellCount[idx]++;
@@ -756,12 +741,9 @@
           // repeats this centrally for every host, but keeping the toy's
           // source honest makes the dead-band below read the same velocity.
           var spd = Math.sqrt(pvx * pvx + pvy * pvy);
-          // v4.26: cap raised 600 -> 900 with the engine's faster terminal
-          // (JELLO_VMAX 1400 = 700 real px/s): a 600 cap would saturate the
-          // splash input and flatten every big plunge this retune bought.
-          if (spd > 900) {
-            var psc = 900 / spd;
-            pvx *= psc; pvy *= psc; spd = 900;
+          if (spd > 600) {
+            var psc = 600 / spd;
+            pvx *= psc; pvy *= psc; spd = 600;
           }
           if (spd > vMax) vMax = spd;
           mvxSum += pvx; mvySum += pvy;
@@ -839,10 +821,6 @@
     }
     liquidWGPU = window.LiquidWGPU.create({
       mainCanvas: canvas,
-      // v4.22: the toy has no bottom console HUD, so the engine's 36 px
-      // bottom clip (a game-HUD guard) must be off. It was silently
-      // hiding every drop that rested in the world's bottom 36 px.
-      hudInset: 0,
       liquid: {
         maxParticles: LIQUID_MAX_PARTICLES,
         getCount: function () { return liquidCount; },
@@ -915,7 +893,7 @@
             // Fresh CPU mirror for the slime coupling: the default cadence
             // (every 20 runFrames) is built for oil suction; the per-point
             // density/velocity sampling wants ~3-frame-old water.
-            liquidWGPU.setSimParam('DBG_READBACK_EVERY', isMobile ? 4 : 3);
+            liquidWGPU.setSimParam('DBG_READBACK_EVERY', isMobile ? 4 : 2);
           }
           if (liquidWGPU.setRenderParam) {
             // The toy's water palette: the game default is a bright azure
@@ -945,7 +923,7 @@
           clearLiquid();
         }
         onEnginesSettled();
-      }).catch(function () { waterState = 'off'; clearLiquid(); onEnginesSettled(); });
+      }).catch(function (error) { console.warn('Demo water startup:', error); waterState = 'off'; clearLiquid(); onEnginesSettled(); });
     } else {
       waterState = 'off';
       onEnginesSettled();
@@ -959,7 +937,15 @@
   var liquidIdleDrawFrames = 0;
 
   function updateLiquidToy(dt) {
-    if (!liquidWGPU || !liquidWGPU.simActive) return;
+    if (!liquidWGPU) return;
+    if (waterState === 'on' && (!liquidWGPU.simActive || !liquidWGPU.renderActive)) {
+      waterState = 'off';
+      clearLiquid();
+      if (liquidWGPU.renderCanvas) liquidWGPU.renderCanvas.hidden = true;
+      onEnginesSettled();
+      return;
+    }
+    if (!liquidWGPU.simActive) return;
     var seqNow = liquidMutationSeq;
     var mutated = seqNow !== liquidGPULastSeq;
     liquidGPULastSeq = seqNow;
@@ -997,7 +983,6 @@
   // ---- Spawning ---------------------------------------------------------
   function spawnWaterJet(wx, wy, rad, vx, vy, n) {
     if (waterState === 'off') return;
-    waterInputT = performance.now();   // v4.9 liveliness: pouring is input
     for (var i = 0; i < n; i++) {
       if (liquidCount >= LIQUID_MAX_PARTICLES - 8) return;
       var a = Math.random() * 6.2831853;
@@ -1028,6 +1013,7 @@
 
   function clearLiquid() {
     liquidCount = 0;
+    liquidOrphanDwell.fill(0);
     liquidOrphanTick = 0;
     liquidMutationSeq++;
     liquidOps.length = 0;
@@ -2443,8 +2429,7 @@
 
   function smokePuff(wx, wy, dvx, dvy, col, rad) {
     if (!smokeActive) return;
-    smokeAwakeT = (typeof presetIdleHold === 'number' && presetIdleHold > 0)
-      ? presetIdleHold : SMOKE_IDLE_HOLD;   // v4.28: ink blooms hang longer
+    smokeAwakeT = SMOKE_IDLE_HOLD;
     SmokeFluid.splat(wx / worldW, 1 - wy / worldH, dvx, dvy, col || SMOKE_COL, rad || 0.013);
   }
 
@@ -9582,6 +9567,1300 @@
   /* >>> ENGINE SYNC: END jello-engine <<< */
 
 
+  /* Passive residents: shared elastic material and skin, no creature controller. */
+  var softProjectEnabled = true, softPlayEnabled = false;
+  var SOFT_PAIRS = true, SOFT_INTENT = true, SOFT_WORLD = false, SOFT_PRESENTATION = true;
+  var bathMode = false, gamePaused = false;
+  var surfaceSlimeGrip = null;
+  function skySlimeClamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function surfaceSlimeMuscleStep() {}
+  function surfaceSlimeAdhesionStep() {}
+  function surfaceSlimeDetach() {}
+  function surfaceSlimeDampMotion() {}
+  function surfaceSlimeDrawEye() {}
+  function softIntentBody(b) { return !!b.surfaceSlime; }
+  function softPresentationBody(b) { return !!b.surfaceSlime; }
+  function softPresentationContact() {}
+
+  function spawnSlimeAt(wx, wy, rad) {
+    var b = spawnSlimeShapeAt(wx, wy, rad);
+    if (!b) return null;
+    var seed = (slimeHueCycle * 0.61803398875) % 1;
+    var r = Math.max(18, Math.min(46, rad));
+    b._toyHue = b.hue;
+    b.surfaceSlime = { radius: r, hue: b.hue, seed: seed, drive: false, motorBlend: 0 };
+    // Match the game's passive rest material, including its small irregularities.
+    if (slimeShape === 'ball') {
+      for (var p = 0; p < b.n; p++) {
+        var x = b.rx[p] - b.cx, y = b.ry[p] - b.cy, angle = Math.atan2(y, x);
+        var radial = 0.94 * (1 + 0.045 * Math.sin(angle * 3 + seed * 6.28) +
+          0.025 * Math.cos(angle * 5 - seed * 9));
+        b.px[p] = b.ox[p] = b.rx[p] = b.cx + x * radial;
+        b.py[p] = b.oy[p] = b.ry[p] = b.cy + y * radial;
+      }
+      for (var si = 0; si < b.springN; si++) {
+        var a = b.sA[si], c = b.sB[si];
+        b.sRest[si] = Math.hypot(b.rx[a] - b.rx[c], b.ry[a] - b.ry[c]);
+      }
+      var area = 0;
+      for (var k = 0; k < b.ringN; k++) {
+        var i = b.ring[k], j = b.ring[(k + 1) % b.ringN];
+        area += (b.rx[i] - b.cx) * (b.ry[j] - b.cy) - (b.rx[j] - b.cy) * (b.ry[i] - b.cy);
+      }
+      b.restArea = Math.abs(area) * 0.5;
+      jelloComputeRest(b); jelloInstallSpringHealthMesh(b); jelloShadeAnchors(b);
+      jelloUpdateBody(b, JELLO_H);
+    }
+    jelloClearActorIntent(b);
+    softPresentationInit(b);
+    presetApplySlimeLook(PRESET_ACTIVE.slimeLook);
+    return b;
+  }
+
+  /* >>> ENGINE SYNC: BEGIN soft-contact <<< */
+  /* ---- Opt-in resident contact experiment ----
+     One skin contact exchanges momentum between the rig and local gel nodes.
+     Rest shape, muscle targets, material parameters and world contacts belong
+     to the restored baseline. ?softcontact=1 selects this path for residents. */
+  var softContactParams = new URLSearchParams(location.search);
+  var SOFT_CONTACT = softProjectEnabled || softContactParams.get('softcontact') === '1' ||
+    (softContactParams.get('softplay') === '1' && softContactParams.get('softcontact') !== '0');
+  var softContactFrame = null;
+  var softContactOrigin = null;
+  var softContactSupport = null;
+  var softContactDraw = null;
+  var SOFT_CONTACT_RIG_MASS = 3.0;
+  var SOFT_CONTACT_POINT_MASS = 0.09;
+  var SOFT_CONTACT_FRICTION = 0.45;
+  var softContactReport = { contacts: 0, selfContacts: 0, impulse: 0, friction: 0, penetration: 0 };
+
+  function softContactBody(b) { return SOFT_CONTACT && !!b.surfaceSlime; }
+
+  function softContactClear() {
+    softContactFrame = softContactOrigin = softContactSupport = softContactDraw = null;
+  }
+
+  function softContactSnapshot(b) {
+    if (!softContactBody(b)) return;
+    if (!b._softPX || b._softPX.length !== b.px.length) {
+      b._softPX = new Float64Array(b.px.length); b._softPY = new Float64Array(b.py.length);
+    }
+    b._softPX.set(b.px); b._softPY.set(b.py);
+  }
+
+  // A skin can touch itself after folding against the floor. Point/edge
+  // contact keeps the two surfaces on their previous sides without imposing
+  // a target outline.
+  function softContactSkin(b) {
+    if (typeof softIntentBody === 'function' && softIntentBody(b)) return softIntentSkinContact(b);
+    if (!b._softPX || !softContactSkinCrossed(b)) return;
+    var px = b.px, py = b.py, oldX = b._softPX, oldY = b._softPY;
+    for (var k = 0; k < b.ringN; k++) {
+      var p = b.ring[k];
+      for (var e = 0; e < b.ringN; e++) {
+        var a = b.ring[e], c = b.ring[(e + 1) % b.ringN];
+        if (p === a || p === c) continue;
+        var ex = px[c] - px[a], ey = py[c] - py[a], len = Math.hypot(ex, ey);
+        if (len < 1e-6) continue;
+        var t = ((px[p] - px[a]) * ex + (py[p] - py[a]) * ey) / (len * len);
+        if (t <= 0 || t >= 1) continue;
+        var before = (oldX[c] - oldX[a]) * (oldY[p] - oldY[a]) -
+          (oldY[c] - oldY[a]) * (oldX[p] - oldX[a]);
+        var side = before < 0 ? -1 : 1;
+        var nx = -ey / len * side, ny = ex / len * side;
+        var d = (px[p] - px[a]) * nx + (py[p] - py[a]) * ny;
+        if (d >= 0) continue;
+        // A changing line normal alone is not self-contact. One of this
+        // vertex's incident skin segments must actually cross the edge.
+        var prev = b.ring[(k + b.ringN - 1) % b.ringN], next = b.ring[(k + 1) % b.ringN];
+        if (!softContactEdgesCross(b, p, prev, a, c) && !softContactEdgesCross(b, p, next, a, c)) continue;
+        var wa = 1 - t, wc = t;
+        var mxP = jelloWorldSolidAt(px[p] + nx * 0.5, py[p]) ? 0 : 1;
+        var myP = jelloWorldSolidAt(px[p], py[p] + ny * 0.5) ? 0 : 1;
+        var mxA = jelloWorldSolidAt(px[a] - nx * 0.5, py[a]) ? 0 : 1;
+        var myA = jelloWorldSolidAt(px[a], py[a] - ny * 0.5) ? 0 : 1;
+        var mxC = jelloWorldSolidAt(px[c] - nx * 0.5, py[c]) ? 0 : 1;
+        var myC = jelloWorldSolidAt(px[c], py[c] - ny * 0.5) ? 0 : 1;
+        var den = nx * nx * (mxP + mxA * wa * wa + mxC * wc * wc) +
+          ny * ny * (myP + myA * wa * wa + myC * wc * wc);
+        if (den < 1e-8) continue;
+        var dl = (0.10 - d) / den;
+        var vx = px[p] - b.ox[p] - (px[a] - b.ox[a]) * wa - (px[c] - b.ox[c]) * wc;
+        var vy = py[p] - b.oy[p] - (py[a] - b.oy[a]) * wa - (py[c] - b.oy[c]) * wc;
+        var impulse = Math.max(0, -(vx * nx + vy * ny)) / den;
+        px[p] += nx * dl * mxP; py[p] += ny * dl * myP;
+        px[a] -= nx * dl * wa * mxA; py[a] -= ny * dl * wa * myA;
+        px[c] -= nx * dl * wc * mxC; py[c] -= ny * dl * wc * myC;
+        b.ox[p] += nx * (dl - impulse) * mxP; b.oy[p] += ny * (dl - impulse) * myP;
+        b.ox[a] -= nx * (dl - impulse) * wa * mxA; b.oy[a] -= ny * (dl - impulse) * wa * myA;
+        b.ox[c] -= nx * (dl - impulse) * wc * mxC; b.oy[c] -= ny * (dl - impulse) * wc * myC;
+        softContactReport.selfContacts++;
+      }
+    }
+  }
+
+  // A correction below requires a proper skin crossing. Most contact passes
+  // have none, and several visit exactly the same ring before anything moves
+  // it. Remember only a proven clear pose, comparing the actual coordinates
+  // so every solver, grab and terrain correction invalidates it automatically.
+  // Previous-position history cannot create a crossing in an unchanged ring.
+  function softContactSkinCrossed(b) {
+    var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
+    var clearX = b._softClearX, clearY = b._softClearY;
+    var intentMode = typeof softIntentBody === 'function' && softIntentBody(b);
+    if (clearX && clearX.length === n && !!b._softClearIntent === intentMode) {
+      var same = true;
+      for (var k = 0; k < n; k++) {
+        var p = ring[k];
+        if (px[p] !== clearX[k] || py[p] !== clearY[k]) { same = false; break; }
+      }
+      if (same) return false;
+    }
+    for (var a = 0; a < n; a++) {
+      var p0 = ring[a], p1 = ring[(a + 1) % n];
+      var left = Math.min(px[p0], px[p1]), right = Math.max(px[p0], px[p1]);
+      var top = Math.min(py[p0], py[p1]), bottom = Math.max(py[p0], py[p1]);
+      for (var c = a + 2; c < n; c++) {
+        if (a === 0 && c === n - 1) continue;
+        var q0 = ring[c], q1 = ring[(c + 1) % n];
+        // Strictly disjoint bounds also exclude collinear intent overlap.
+        // Touching bounds retain the existing proper-crossing/overlap test.
+        if ((px[q0] < left && px[q1] < left) || (px[q0] > right && px[q1] > right) ||
+            (py[q0] < top && py[q1] < top) || (py[q0] > bottom && py[q1] > bottom)) continue;
+        if (softContactEdgesCross(b, p0, p1, q0, q1)) return true;
+      }
+    }
+    if (!clearX || clearX.length !== n) {
+      clearX = b._softClearX = new Float64Array(n);
+      clearY = b._softClearY = new Float64Array(n);
+    }
+    b._softClearIntent = intentMode;
+    for (var i = 0; i < n; i++) { clearX[i] = px[ring[i]]; clearY[i] = py[ring[i]]; }
+    return false;
+  }
+
+  function softContactEdgesCross(b, p, q, a, c) {
+    if (p === a || p === c || q === a || q === c) return false;
+    var ex = b.px[c] - b.px[a], ey = b.py[c] - b.py[a];
+    var dp = ex * (b.py[p] - b.py[a]) - ey * (b.px[p] - b.px[a]);
+    var dq = ex * (b.py[q] - b.py[a]) - ey * (b.px[q] - b.px[a]);
+    var vx = b.px[q] - b.px[p], vy = b.py[q] - b.py[p];
+    var da = vx * (b.py[a] - b.py[p]) - vy * (b.px[a] - b.px[p]);
+    var dc = vx * (b.py[c] - b.py[p]) - vy * (b.px[c] - b.px[p]);
+    return (dp * dq < 0 && da * dc < 0) ||
+      (typeof softIntentBody === 'function' && softIntentBody(b) && softIntentEdgesOverlap(b, p, q, a, c));
+  }
+
+  function softContactCapture() {
+    if (!SOFT_CONTACT) return;
+    softContactOrigin = { x: player.x, y: player.y };
+  }
+
+  function softContactPrepare(dt) {
+    if (!SOFT_CONTACT || !softContactOrigin) return;
+    var pending = softContactFrame;
+    var start = pending && !pending.started ? { x: pending.x, y: pending.y } : softContactOrigin;
+    softContactFrame = { x: start.x, y: start.y,
+      dx: player.x - start.x, dy: player.y - start.y,
+      vx: player.vx, vy: player.vy, dt: dt + (pending && !pending.started ? pending.dt : 0), started: false, support: false,
+      hit: false, endX: player.x, endY: player.y };
+    softContactOrigin = null;
+  }
+
+  // Axis sweeps retain terrain collision during any contact deflection.
+  function softContactMove(rig, dx, dy) {
+    var count = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 2));
+    dx /= count; dy /= count;
+    for (var i = 0; i < count; i++) {
+      if (!solidAt(rig.x + dx, rig.y, PLAYER_W, PLAYER_H)) rig.x += dx;
+      else { rig.vx = 0; dx = 0; }
+      if (!solidAt(rig.x, rig.y + dy, PLAYER_W, PLAYER_H)) rig.y += dy;
+      else { if (dy > 0) rig.onGround = true; rig.vy = 0; dy = 0; }
+    }
+  }
+
+  function softContactStep(active, count, h, steps) {
+    if (!SOFT_CONTACT || !player || bathMode || gameOver || gameWon) return;
+    var f = softContactFrame;
+    if (!f || !(steps > 0)) return;
+    if (!f.started) {
+      f.started = true;
+      // Preserve any hard-circle correction made after normal movement.
+      f.step = 0;
+      f.rig = { x: f.x + player.x - f.endX, y: f.y + player.y - f.endY,
+        vx: player.vx, vy: player.vy, onGround: player.onGround };
+      f.vx = player.vx; f.vy = player.vy;
+      f.endX = player.x; f.endY = player.y;
+      softContactReport.contacts = softContactReport.selfContacts = softContactReport.impulse = softContactReport.friction = softContactReport.penetration = 0;
+    }
+    var rig = f.rig;
+    if (f.step++ % Math.max(1, Math.round(JELLO_H / h)) === 0) { f.previousX = rig.x; f.previousY = rig.y; }
+    var realH = h / JELLO_TIMESCALE, frameH = f.dt / steps;
+    softContactMove(rig, f.dx / steps + (rig.vx - f.vx) * frameH,
+      f.dy / steps + (rig.vy - f.vy) * frameH);
+    f.support = false;
+    // Samples on all four rig edges catch both a flat track patch and corner
+    // contact. Forces distribute to the actual skin edge's two material nodes.
+    for (var pass = 0; pass < 4; pass++) {
+      for (var bi = 0; bi < count; bi++) {
+        var b = active[bi];
+        if (!softContactBody(b) || b.frozen) continue;
+        softContactSkin(b);
+        jelloRingBBox(b);
+        if (b._cbR < rig.x - 4 || b._cbL > rig.x + PLAYER_W + 4 ||
+            b._cbB < rig.y - 4 || b._cbT > rig.y + PLAYER_H + 4) continue;
+        // The reverse vertex/face test matters: a narrow fold can enter the
+        // hull without enclosing any of its perimeter samples.
+        for (var rk = 0; rk < b.ringN; rk++) {
+          var p = b.ring[rk], px = b.px[p], py = b.py[p];
+          if (px <= rig.x || px >= rig.x + PLAYER_W || py <= rig.y || py >= rig.y + PLAYER_H) continue;
+          var depth = px - rig.x, nx = 1, ny = 0;
+          if (rig.x + PLAYER_W - px < depth) { depth = rig.x + PLAYER_W - px; nx = -1; ny = 0; }
+          if (py - rig.y < depth) { depth = py - rig.y; nx = 0; ny = 1; }
+          if (rig.y + PLAYER_H - py < depth) { depth = rig.y + PLAYER_H - py; nx = 0; ny = -1; }
+          softContactProject(b, p, p, 0, nx, ny, depth, py, realH, f);
+        }
+        for (var side = 0; side < 4; side++) {
+          var samples = side % 2 ? 7 : 6;
+          for (var sample = 0; sample <= samples; sample++) {
+            var u = sample / samples;
+            var sx = rig.x + (side === 1 ? PLAYER_W : side === 3 ? 0 : u * PLAYER_W);
+            var sy = rig.y + (side === 0 ? 0 : side === 2 ? PLAYER_H : u * PLAYER_H);
+            if (!jelloPointInRing(b, sx, sy)) continue;
+            softContactSolve(b, sx, sy, realH, f);
+          }
+        }
+        // Contact and the baseline's orientation constraint must converge
+        // together. Leaving contact as the final mover can mirror a thin
+        // edge cell until the next material tick, even with a clear hull.
+        jelloLimitOrientation(b);
+        for (var wi = 0; wi < b.n; wi++) {
+          if (jelloWorldSolidAt(b.px[wi], b.py[wi])) jelloCollidePointWorld(b, wi, h);
+        }
+        softContactSkin(b);
+      }
+    }
+  }
+
+  function softContactSolve(b, sx, sy, dt, f) {
+    var best = Infinity, a = 0, c = 0, t = 0, qx = 0, qy = 0;
+    for (var k = 0; k < b.ringN; k++) {
+      var i = b.ring[k], j = b.ring[(k + 1) % b.ringN];
+      var ex = b.px[j] - b.px[i], ey = b.py[j] - b.py[i];
+      var den = ex * ex + ey * ey;
+      var u = den > 1e-10 ? skySlimeClamp(((sx - b.px[i]) * ex + (sy - b.py[i]) * ey) / den, 0, 1) : 0;
+      var x = b.px[i] + ex * u, y = b.py[i] + ey * u;
+      var d2 = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+      if (d2 < best) { best = d2; a = i; c = j; t = u; qx = x; qy = y; }
+    }
+    var depth = Math.sqrt(best);
+    if (!(depth > 0.000001)) return;
+    var nx = (qx - sx) / depth, ny = (qy - sy) / depth;
+    softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f);
+  }
+
+  function softContactProject(b, a, c, t, nx, ny, depth, sy, dt, f) {
+    var rig = f.rig;
+    var wa = 1 - t, wc = t, invPoint = 1 / SOFT_CONTACT_POINT_MASS;
+    var invRig = 1 / SOFT_CONTACT_RIG_MASS;
+    var rx = solidAt(rig.x + nx * 0.5, rig.y, PLAYER_W, PLAYER_H) ? 0 : invRig;
+    var ry = solidAt(rig.x, rig.y + ny * 0.5, PLAYER_W, PLAYER_H) ? 0 : invRig;
+    var effective = rx * nx * nx + ry * ny * ny + invPoint * (wa * wa + wc * wc);
+    var avx = (b.px[a] - b.ox[a]) / dt, avy = (b.py[a] - b.oy[a]) / dt;
+    var cvx = (b.px[c] - b.ox[c]) / dt, cvy = (b.py[c] - b.oy[c]) / dt;
+    var rvx = rig.vx - avx * wa - cvx * wc, rvy = rig.vy - avy * wa - cvy * wc;
+    // No restitution kick or banked landing speed. The baseline gel's own
+    // springs recover the deformation this unilateral contact produces.
+    var lambda = Math.min(depth + 0.03, 2) / effective;
+    var dx = nx * lambda, dy = ny * lambda;
+    rig.x += dx * rx; rig.y += dy * ry;
+    rig.vx += dx * rx / dt; rig.vy += dy * ry / dt;
+    b.px[a] -= dx * invPoint * wa; b.py[a] -= dy * invPoint * wa;
+    b.px[c] -= dx * invPoint * wc; b.py[c] -= dy * invPoint * wc;
+    var normalImpulse = lambda / dt;
+    // Friction is bounded by the normal impulse. A glancing impact can roll
+    // the body because its impulse acts on the contacted patch, not its center.
+    var tx = -ny, ty = nx, tangent = rvx * tx + rvy * ty;
+    var tangentMass = invRig + invPoint * (wa * wa + wc * wc);
+    var jt = skySlimeClamp(-tangent / tangentMass,
+      -normalImpulse * SOFT_CONTACT_FRICTION, normalImpulse * SOFT_CONTACT_FRICTION);
+    var ivx = tx * jt, ivy = ty * jt;
+    rig.vx += ivx * rx; rig.vy += ivy * ry;
+    b.ox[a] += ivx * invPoint * wa * dt; b.oy[a] += ivy * invPoint * wa * dt;
+    b.ox[c] += ivx * invPoint * wc * dt; b.oy[c] += ivy * invPoint * wc * dt;
+    if (ny < -0.5 && sy > rig.y + PLAYER_H * 0.65) { f.support = true; f.supportBody = b; }
+    if (!f.hit && ny < -0.5 && f.vy > 120) recordLandingImpact(f.vy, sy, 'jello', 1);
+    f.hit = true;
+    if (-(rvx * nx + rvy * ny) > 35 || Math.abs(f.vx) > 25) b._plyMs = performance.now();
+    b.sleeping = false; b.sleepFrames = 0;
+    if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
+      // dt is already real seconds here; include any masked friction coupling
+      // in the measured change of relative normal speed.
+      var afterRVX = rig.vx - ((b.px[a] - b.ox[a]) * wa + (b.px[c] - b.ox[c]) * wc) / dt;
+      var afterRVY = rig.vy - ((b.py[a] - b.oy[a]) * wa + (b.py[c] - b.oy[c]) * wc) / dt;
+      softPresentationContact(b, a, c, t, -(rvx * nx + rvy * ny),
+        (afterRVX - rvx) * nx + (afterRVY - rvy) * ny);
+    }
+    softContactReport.contacts++;
+    softContactReport.impulse += normalImpulse;
+    softContactReport.friction += Math.abs(jt);
+    softContactReport.penetration = Math.max(softContactReport.penetration, depth);
+  }
+
+  function softContactFinish() {
+    var f = softContactFrame;
+    if (!SOFT_CONTACT || !f || !f.started) return;
+    if (f.hit) {
+      player.x = f.rig.x; player.y = f.rig.y;
+      player.vx += f.rig.vx - f.vx; player.vy += f.rig.vy - f.vy;
+    }
+    if (f.support && !player.thrusting) {
+      player.onGround = true; player.onJello = true;
+      player.coyoteT = Math.max(player.coyoteT, 0.08);
+      resetFlightBank();
+    }
+    softContactSupport = f.support ? f.supportBody : null;
+    if (f.hit) { player.jelloImpactVy = 0; player.jelloCarryVx = 0; }
+    // Match the existing 120 Hz skin interpolation at every trial frame.
+    // Drawing never changes collision positions or feeds motion into the solve.
+    softContactDraw = { x: f.previousX, y: f.previousY, endX: player.x, endY: player.y };
+    softContactInterpolate();
+    softContactFrame = null;
+  }
+
+  function softContactInterpolate() {
+    if (!softContactDraw) return;
+    var d = softContactDraw, alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1);
+    player.renderX = d.x + (d.endX - d.x) * alpha;
+    player.renderY = d.y + (d.endY - d.y) * alpha;
+  }
+
+  // Display frames can outnumber gel ticks. Retain a real supporting contact
+  // between ticks only while the feet remain on that skin, without a pose hold.
+  function softContactIdle() {
+    if (!SOFT_CONTACT || !softContactFrame) return;
+    softContactInterpolate();
+    var b = softContactSupport;
+    if (!b || player.thrusting || jelloBodies.indexOf(b) < 0) return;
+    for (var i = 1; i < 4; i++) {
+      var x = player.x + PLAYER_W * i / 4, y = Infinity, vy = 0;
+      for (var k = 0; k < b.ringN; k++) {
+        var a = b.ring[k], c = b.ring[(k + 1) % b.ringN], ex = b.px[c] - b.px[a];
+        if (Math.abs(ex) < 1e-8) continue;
+        var t = (x - b.px[a]) / ex;
+        if (t < 0 || t > 1) continue;
+        var edgeY = b.py[a] + (b.py[c] - b.py[a]) * t;
+        if (edgeY < y) {
+          y = edgeY;
+          vy = ((b.py[a] - b.oy[a]) * (1 - t) + (b.py[c] - b.oy[c]) * t) / jelloStepH * JELLO_TIMESCALE;
+        }
+      }
+      if (Math.abs(player.y + PLAYER_H - y) <= 1.5 && player.vy - vy >= -1) {
+        player.onGround = true; player.onJello = true;
+        player.coyoteT = Math.max(player.coyoteT, 0.08);
+        return;
+      }
+    }
+  }
+  /* >>> ENGINE SYNC: END soft-contact <<< */
+
+  /* >>> ENGINE SYNC: BEGIN soft-handling <<< */
+  /* ---- Opt-in material handling (?softhandling=1) ----
+     The hand pulls one fixed material patch. Release only removes that force;
+     translation, rotation and deformation keep their simulated velocities. */
+  var SOFT_HANDLING = softProjectEnabled || new URLSearchParams(location.search).get('softhandling') === '1' ||
+    (softPlayEnabled && (softPlayTerrainTrial || softPlayMaterialTrial));
+
+  function softHandlingBody(b) { return SOFT_HANDLING && !!b.surfaceSlime; }
+
+  function softHandlingStart(g) {
+    g.physical = SOFT_HANDLING;
+    if (!g.physical) return;
+    g.cursorX = g.x; g.cursorY = g.y;
+    g.stepX = g.stepY = g.handleVX = g.handleVY = 0;
+  }
+
+  // Consume the latest input over the actual simulated interval. Frames with
+  // no gel tick keep the target pending instead of manufacturing a release kick.
+  function softHandlingPrepare(steps, h) {
+    var g = surfaceSlimeGrip;
+    if (!g || !g.physical || !(steps > 0)) return;
+    var dt = h / JELLO_TIMESCALE;
+    g.stepX = (g.x - g.cursorX) / steps;
+    g.stepY = (g.y - g.cursorY) / steps;
+    g.handleVX = g.stepX / dt; g.handleVY = g.stepY / dt;
+  }
+
+  function softHandlingStep(b, h) {
+    var g = surfaceSlimeGrip, dt = h / JELLO_TIMESCALE;
+    g.cursorX += g.stepX; g.cursorY += g.stepY;
+    var x = 0, y = 0, vx = 0, vy = 0, inverse = 0;
+    var invPoint = 1 / SOFT_CONTACT_POINT_MASS;
+    for (var i = 0; i < b.n; i++) {
+      var w = g.weights[i];
+      x += b.px[i] * w; y += b.py[i] * w;
+      vx += (b.px[i] - b.ox[i]) / dt * w;
+      vy += (b.py[i] - b.oy[i]) / dt * w;
+      inverse += invPoint * w * w;
+    }
+    // Implicit spring/damper at the patch. These are the original grip's
+    // whole-body gains, expressed as force with the same mass as rig contact.
+    // Gravity remains active, and damping measures slip relative to the hand.
+    var mass = b.n * SOFT_CONTACT_POINT_MASS;
+    var stiffness = mass * 160, damping = mass * 22;
+    var denominator = 1 + inverse * (stiffness * dt * dt + damping * dt);
+    var fx = (-stiffness * (x - g.cursorX - g.dx) - damping * (vx - g.handleVX)) / denominator;
+    var fy = (-stiffness * (y - g.cursorY - g.dy) - damping * (vy - g.handleVY)) / denominator;
+    var force = Math.hypot(fx, fy), cap = mass * 7000;
+    if (force > cap) { fx *= cap / force; fy *= cap / force; }
+    for (i = 0; i < b.n; i++) {
+      var amount = invPoint * g.weights[i] * dt * dt;
+      b.px[i] += fx * amount; b.py[i] += fy * amount;
+    }
+    b._grabApplied = 1; b.sleeping = false; b.sleepFrames = 0; b._plyMs = performance.now();
+  }
+
+  // The guard rejects the entire displacement of an invalid substep. Its
+  // accepted velocity is therefore zero, including for a peer rolled back by
+  // the same event. Keeping either candidate or pre-step velocity would bank
+  // invisible motion while the body is parked at an obstacle, then launch it
+  // on release. Ordinary valid deformation and contact retain their history.
+  function jelloGrabRejectStep(b) {
+    var g = surfaceSlimeGrip;
+    if (!g || !g.physical) return;
+    for (var i = 0; i < b.n; i++) { b.ox[i] = b.px[i]; b.oy[i] = b.py[i]; }
+    b._handRejects = (b._handRejects || 0) + 1;
+  }
+  /* >>> ENGINE SYNC: END soft-handling <<< */
+
+  /* >>> ENGINE SYNC: BEGIN soft-terrain <<< */
+  /* ---- Local skin/terrain contacts, opt-in (?softterrain=1) ---- */
+  var SOFT_TERRAIN = softProjectEnabled || new URLSearchParams(location.search).get('softterrain') === '1' ||
+    (softPlayEnabled && softPlayMaterialTrial);
+  var SOFT_TERRAIN_SKIN = 0.02;
+  var softTerrainReport = { points: 0, edges: 0, sweeps: 0, corners: 0 };
+
+  function softTerrainBody(b) { return SOFT_TERRAIN && !!b.surfaceSlime; }
+
+  // Clip a segment against a closed tile. Open endpoints alone do not prove
+  // that the skin between them is clear of a ledge or corner.
+  function softTerrainInterval(ax, ay, bx, by, left, top) {
+    var dx = bx - ax, dy = by - ay, lo = 0, hi = 1;
+    var nx = 0, ny = 0;
+    for (var axis = 0; axis < 2; axis++) {
+      var p = axis ? ay : ax, d = axis ? dy : dx;
+      var lower = axis ? top : left, upper = lower + TILE;
+      if (Math.abs(d) < 1e-10) { if (p <= lower || p >= upper) return null; continue; }
+      var a = (lower - p) / d, c = (upper - p) / d, sign = -1;
+      if (a > c) { var swap = a; a = c; c = swap; sign = 1; }
+      if (a > lo) { lo = a; nx = axis ? 0 : sign; ny = axis ? sign : 0; }
+      hi = Math.min(hi, c);
+      if (lo >= hi) return null;
+    }
+    return hi > 0 && lo < 1 ? { lo: lo, hi: hi, nx: nx, ny: ny } : null;
+  }
+
+  // A contact changes only its material point or its two supporting skin
+  // nodes. Reconcile normal velocity at the contact and bound tangential
+  // friction by the normal impulse. No whole-body velocity or pose target.
+  function softTerrainProject(b, a, c, t, nx, ny, depth, h) {
+    if (!(depth > 0)) return;
+    b._terrainStepHit = true;
+    var wa = 1 - t, wc = t, den = wa * wa + wc * wc;
+    var vx = (b.px[a] - b.ox[a]) * wa + (b.px[c] - b.ox[c]) * wc;
+    var vy = (b.py[a] - b.oy[a]) * wa + (b.py[c] - b.oy[c]) * wc;
+    var vn = vx * nx + vy * ny, normal = Math.max(0, -vn);
+    var bounce = normal > JELLO_REST_VEL * h ? JELLO_BOUNCE : 0;
+    var impulse = normal * (1 + bounce), tangent = -vx * ny + vy * nx;
+    var friction = Math.max(-normal * 0.45, Math.min(normal * 0.45, tangent));
+    var dvx = nx * impulse + ny * friction, dvy = ny * impulse - nx * friction;
+    for (var k = 0; k < 2; k++) {
+      var i = k ? c : a, w = (k ? wc : wa) / den;
+      if (!w) continue;
+      var mx = nx * depth * w, my = ny * depth * w;
+      b.px[i] += mx; b.py[i] += my;
+      b.ox[i] += mx - dvx * w; b.oy[i] += my - dvy * w;
+    }
+    if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
+      // normal/impulse are Verlet displacements per solver substep.
+      var realIH = JELLO_TIMESCALE / h;
+      softPresentationContact(b, a, c, t, normal * realIH, impulse * realIH);
+    }
+  }
+
+  function softTerrainFace(x, y, oldX, oldY, row, col) {
+    var left = col * TILE, top = row * TILE, best = null, distance = Infinity;
+    var faces = [[-1, 0, x - left, oldX - left, row, col - 1],
+      [1, 0, left + TILE - x, left + TILE - oldX, row, col + 1],
+      [0, -1, y - top, oldY - top, row - 1, col],
+      [0, 1, top + TILE - y, top + TILE - oldY, row + 1, col]];
+    for (var i = 0; i < 4; i++) {
+      var f = faces[i];
+      if (tileAt(f[4], f[5]) !== null || f[3] > SOFT_TERRAIN_SKIN) continue;
+      if (f[2] < distance) { distance = f[2]; best = f; }
+    }
+    return best;
+  }
+
+  function softTerrainPoint(b, i, h) {
+    var x = b.px[i], y = b.py[i];
+    if (!isFinite(x + y) || !b._guardPX) return false;
+    var sx = b._guardPX[i], sy = b._guardPY[i];
+    var r0 = Math.floor(Math.min(sy, y) / TILE), r1 = Math.floor(Math.max(sy, y) / TILE);
+    var c0 = Math.floor(Math.min(sx, x) / TILE), c1 = Math.floor(Math.max(sx, x) / TILE);
+    var first = null, time = Infinity;
+    for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
+      if (tileAt(row, col) === null) continue;
+      var hit = softTerrainInterval(sx, sy, x, y, col * TILE, row * TILE);
+      if (hit && hit.lo < time && (hit.nx || hit.ny)) { first = hit; time = hit.lo; }
+    }
+    if (first) {
+      var nx = first.nx, ny = first.ny;
+      var depth = -((x - sx) * nx + (y - sy) * ny) * (1 - time) + SOFT_TERRAIN_SKIN;
+      softTerrainProject(b, i, i, 0, nx, ny, depth, h);
+      softTerrainReport.points++; softTerrainReport.sweeps++;
+    } else if (jelloWorldSolidAt(x, y)) {
+      var face = softTerrainFace(x, y, sx, sy, Math.floor(y / TILE), Math.floor(x / TILE));
+      if (!face) return false;
+      softTerrainProject(b, i, i, 0, face[0], face[1], face[2] + SOFT_TERRAIN_SKIN, h);
+      softTerrainReport.points++;
+    }
+    return true;
+  }
+
+  function softTerrainEdges(b, h) {
+    if (!b._guardPX) return;
+    for (var k = 0; k < b.ringN; k++) {
+      var a = b.ring[k], c = b.ring[(k + 1) % b.ringN];
+      var ax = b.px[a], ay = b.py[a], bx = b.px[c], by = b.py[c];
+      var sax = b._guardPX[a], say = b._guardPY[a], sbx = b._guardPX[c], sby = b._guardPY[c];
+      var r0 = Math.floor(Math.min(ay, by, say, sby) / TILE), r1 = Math.floor(Math.max(ay, by, say, sby) / TILE);
+      var c0 = Math.floor(Math.min(ax, bx, sax, sbx) / TILE), c1 = Math.floor(Math.max(ax, bx, sax, sbx) / TILE);
+      for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
+        if (tileAt(row, col) === null) continue;
+        for (var corner = 0; corner < 4; corner++) {
+          var right = corner & 1, bottom = corner >> 1;
+          if (tileAt(row, col + (right ? 1 : -1)) !== null ||
+              tileAt(row + (bottom ? 1 : -1), col) !== null) continue;
+          softTerrainCorner(b, a, c, (col + right) * TILE, (row + bottom) * TILE, h);
+        }
+        ax = b.px[a]; ay = b.py[a]; bx = b.px[c]; by = b.py[c];
+        var hit = softTerrainInterval(ax, ay, bx, by, col * TILE, row * TILE);
+        if (!hit) continue;
+        var t = (hit.lo + hit.hi) * 0.5, wa = 1 - t;
+        var x = ax * wa + bx * t, y = ay * wa + by * t;
+        var oldX = b._guardPX[a] * wa + b._guardPX[c] * t;
+        var oldY = b._guardPY[a] * wa + b._guardPY[c] * t;
+        var face = softTerrainFace(x, y, oldX, oldY, row, col);
+        if (!face) continue;
+        softTerrainProject(b, a, c, t, face[0], face[1], face[2] + SOFT_TERRAIN_SKIN, h);
+        softTerrainReport.edges++;
+        ax = b.px[a]; ay = b.py[a]; bx = b.px[c]; by = b.py[c];
+      }
+    }
+  }
+
+  // A moving skin edge can sweep across a convex corner while both end nodes
+  // stay in air. Its signed distance polynomial is quadratic in substep time.
+  // Solve its zeroes, then require a hit on the finite edge, not its extension.
+  function softTerrainCorner(b, a, c, x, y, h) {
+    var ax = b._guardPX[a], ay = b._guardPY[a];
+    var ex = b._guardPX[c] - ax, ey = b._guardPY[c] - ay;
+    var dax = b.px[a] - ax, day = b.py[a] - ay;
+    var dex = b.px[c] - b._guardPX[c] - dax, dey = b.py[c] - b._guardPY[c] - day;
+    var cx = x - ax, cy = y - ay;
+    var q0 = ex * cy - ey * cx;
+    var q1 = dex * cy - dey * cx - ex * day + ey * dax;
+    var q2 = -dex * day + dey * dax, roots = [];
+    if (Math.abs(q2) < 1e-10) {
+      if (Math.abs(q1) > 1e-10) roots.push(-q0 / q1);
+    } else {
+      var disc = q1 * q1 - 4 * q2 * q0;
+      if (disc < 0) return;
+      var sq = Math.sqrt(disc);
+      roots.push((-q1 - sq) / (2 * q2), (-q1 + sq) / (2 * q2));
+      roots.sort(function (u, v) { return u - v; });
+    }
+    for (var j = 0; j < roots.length; j++) {
+      var time = roots[j];
+      if (!(time > 1e-7 && time <= 1)) continue;
+      var hx = ax + dax * time, hy = ay + day * time;
+      var vx = ex + dex * time, vy = ey + dey * time, len2 = vx * vx + vy * vy;
+      if (!(len2 > 1e-10)) continue;
+      var t = ((x - hx) * vx + (y - hy) * vy) / len2;
+      if (!(t > 1e-6 && t < 1 - 1e-6)) continue;
+      var nx = -vy / Math.sqrt(len2), ny = vx / Math.sqrt(len2);
+      var oldX = ax + ex * t, oldY = ay + ey * t;
+      if ((oldX - x) * nx + (oldY - y) * ny < 0) { nx = -nx; ny = -ny; }
+      var gap = (b.px[a] * (1 - t) + b.px[c] * t - x) * nx +
+        (b.py[a] * (1 - t) + b.py[c] * t - y) * ny;
+      if (gap >= SOFT_TERRAIN_SKIN) continue;
+      softTerrainProject(b, a, c, t, nx, ny, SOFT_TERRAIN_SKIN - gap, h);
+      softTerrainReport.corners++; softTerrainReport.edges++;
+      return;
+    }
+  }
+
+  function softTerrainSolve(b, h) {
+    if (!softTerrainBody(b) || b._guardRejectedStep) return;
+    for (var pass = 0; pass < 6; pass++) {
+      var before = softTerrainReport.points + softTerrainReport.edges;
+      var selfBefore = softContactReport.selfContacts;
+      for (var i = 0; i < b.n; i++) {
+        if (!softTerrainPoint(b, i, h)) jelloCollidePointWorld(b, i, h);
+      }
+      softTerrainEdges(b, h);
+      var intentSkin = typeof softIntentBody === 'function' && softIntentBody(b) && softContactSkinCrossed(b);
+      if (!b._terrainStepHit && !intentSkin) break;
+      // A floor correction can bring two pieces of skin together after the
+      // ordinary rig/self-contact pass. Solve that contact in the same loop.
+      softContactSkin(b);
+      var fixed = jelloLimitOrientation(b);
+      if (!fixed && before === softTerrainReport.points + softTerrainReport.edges &&
+          selfBefore === softContactReport.selfContacts) break;
+    }
+    // Orientation is a positional constraint too. Close the last iteration
+    // with terrain before the independent enclosure/topology validators run.
+    if (b._terrainStepHit || (typeof softIntentBody === 'function' && softIntentBody(b) && softContactSkinCrossed(b))) {
+      for (var p = 0; p < b.n; p++) {
+        if (!softTerrainPoint(b, p, h)) jelloCollidePointWorld(b, p, h);
+      }
+      softTerrainEdges(b, h);
+      // Two skin edges can cross at a wall/floor corner without inverting a
+      // health triangle. Finish their local contact too, then recheck terrain.
+      for (var close = 0; close < 6 && softTerrainSkinCrossed(b); close++) {
+        softContactSkin(b);
+        for (var q = 0; q < b.n; q++) {
+          if (!softTerrainPoint(b, q, h)) jelloCollidePointWorld(b, q, h);
+        }
+        softTerrainEdges(b, h);
+      }
+      if (softTerrainSkinCrossed(b)) jelloRestoreResilienceSnapshot(b, 'skin');
+    }
+  }
+
+  function softTerrainSkinCrossed(b) {
+    return softContactSkinCrossed(b);
+  }
+  /* >>> ENGINE SYNC: END soft-terrain <<< */
+
+  /* >>> ENGINE SYNC: BEGIN soft-material <<< */
+  /* ---- Local elastic material comparison (?softmaterial=1) ----
+     The existing spring web stores strain energy. No fitted silhouette or
+     pose-velocity target is part of this material law. Muscles still change
+     their own rest lengths and work against the existing terrain grips. */
+  var SOFT_MATERIAL = softProjectEnabled || new URLSearchParams(location.search).get('softmaterial') === '1';
+  var SOFT_MATERIAL_COMPLIANCE = 0.002;
+  var SOFT_MATERIAL_VOLUME = 0.002;
+  var SOFT_MATERIAL_HARDEN = 4;
+  var SOFT_MATERIAL_DAMP = 8;
+
+  function softMaterialBody(b) { return SOFT_MATERIAL && !!b.surfaceSlime; }
+
+  function softMaterialSolve(b, h) {
+    jelloResetLambdas(b);
+    var alpha = SOFT_MATERIAL_COMPLIANCE / (h * h);
+    for (var s = 0; s < b.springN; s++) {
+      var a = b.sA[s], c = b.sB[s], rest = b.sRest[s];
+      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+      var length = Math.sqrt(dx * dx + dy * dy);
+      if (!(length > 1e-9 && rest > 1e-9)) continue;
+      var strain = (length - rest) / rest;
+      var hard = SOFT_MATERIAL_HARDEN * strain * strain;
+      var root = Math.sqrt(1 + hard);
+      var C = (length - rest) * root;
+      var gradient = (1 + 2 * hard) / root;
+      // C encodes quadratic plus quartic strain energy. Its derivative must
+      // appear in both the effective mass and the applied correction.
+      var dl = (-C - alpha * b.sLambda[s]) / (2 * gradient * gradient + alpha);
+      b.sLambda[s] += dl;
+      var move = dl * gradient / length, mx = dx * move, my = dy * move;
+      b.px[a] -= mx; b.py[a] -= my;
+      b.px[c] += mx; b.py[c] += my;
+    }
+    softMaterialVolume(b, h);
+  }
+
+  function softMaterialVolume(b, h) {
+    var n = b.ringN;
+    if (!(n >= 3 && b.restArea > 0)) return;
+    if (!b._materialGX || b._materialGX.length !== n) {
+      b._materialGX = new Float64Array(n); b._materialGY = new Float64Array(n);
+    }
+    var gx = b._materialGX, gy = b._materialGY;
+    var x0 = b.px[b.ring[0]], y0 = b.py[b.ring[0]], area = 0, den = 0;
+    var sign = b.ringSign;
+    for (var k = 0; k < n; k++) {
+      var a = b.ring[k], prev = b.ring[(k + n - 1) % n], next = b.ring[(k + 1) % n];
+      area += (b.px[a] - x0) * (b.py[next] - y0) - (b.py[a] - y0) * (b.px[next] - x0);
+      gx[k] = 0.5 * (b.py[next] - b.py[prev]) * sign;
+      gy[k] = 0.5 * (b.px[prev] - b.px[next]) * sign;
+      den += gx[k] * gx[k] + gy[k] * gy[k];
+    }
+    if (!(den > 1e-9)) return;
+    var alpha = SOFT_MATERIAL_VOLUME / (h * h);
+    var C = sign * area * 0.5 - b.restArea * JELLO_INFLATE;
+    var dl = (-C - alpha * b.volLambda) / (den + alpha);
+    b.volLambda += dl;
+    // Freeze every gradient before moving any node. Reading changed neighbors
+    // during this pass would turn internal pressure into a net force and torque.
+    for (k = 0; k < n; k++) {
+      var p = b.ring[k];
+      b.px[p] += dl * gx[k]; b.py[p] += dl * gy[k];
+    }
+  }
+
+  function softMaterialDamp(b, h) {
+    var fraction = 1 - Math.exp(-SOFT_MATERIAL_DAMP * h / JELLO_TIMESCALE);
+    for (var s = 0; s < b.springN; s++) {
+      var a = b.sA[s], c = b.sB[s];
+      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+      var length = Math.sqrt(dx * dx + dy * dy);
+      if (!(length > 1e-9)) continue;
+      var nx = dx / length, ny = dy / length;
+      var vx = (b.px[c] - b.ox[c]) - (b.px[a] - b.ox[a]);
+      var vy = (b.py[c] - b.oy[c]) - (b.py[a] - b.oy[a]);
+      var impulse = 0.5 * fraction * (vx * nx + vy * ny);
+      // Equal/opposite central impulses dissipate edge strain rate while
+      // preserving linear and angular momentum, including rigid spin.
+      b.ox[a] -= nx * impulse; b.oy[a] -= ny * impulse;
+      b.ox[c] += nx * impulse; b.oy[c] += ny * impulse;
+    }
+  }
+
+  function softMaterialAreaContact(b, a, c, d, inverse) {
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    // Use the corrected triangle, not the normal before its positional repair.
+    // An active area barrier stops compression velocity without a rebound kick.
+    var ax = (py[c] - py[d]) * inverse, ay = (px[d] - px[c]) * inverse;
+    var cx = (py[d] - py[a]) * inverse, cy = (px[a] - px[d]) * inverse;
+    var dx = (py[a] - py[c]) * inverse, dy = (px[c] - px[a]) * inverse;
+    if (jelloWorldSolidAt(px[a] + Math.sign(ax) * 0.7, py[a])) ax = 0;
+    if (jelloWorldSolidAt(px[a], py[a] + Math.sign(ay) * 0.7)) ay = 0;
+    if (jelloWorldSolidAt(px[c] + Math.sign(cx) * 0.7, py[c])) cx = 0;
+    if (jelloWorldSolidAt(px[c], py[c] + Math.sign(cy) * 0.7)) cy = 0;
+    if (jelloWorldSolidAt(px[d] + Math.sign(dx) * 0.7, py[d])) dx = 0;
+    if (jelloWorldSolidAt(px[d], py[d] + Math.sign(dy) * 0.7)) dy = 0;
+    var den = ax * ax + ay * ay + cx * cx + cy * cy + dx * dx + dy * dy;
+    var inward = ax * (px[a] - ox[a]) + ay * (py[a] - oy[a]) +
+      cx * (px[c] - ox[c]) + cy * (py[c] - oy[c]) +
+      dx * (px[d] - ox[d]) + dy * (py[d] - oy[d]);
+    if (!(den > 1e-12 && inward < 0)) return;
+    var impulse = -inward / den;
+    ox[a] -= ax * impulse; oy[a] -= ay * impulse;
+    ox[c] -= cx * impulse; oy[c] -= cy * impulse;
+    ox[d] -= dx * impulse; oy[d] -= dy * impulse;
+  }
+  /* >>> ENGINE SYNC: END soft-material <<< */
+
+  /* >>> ENGINE SYNC: BEGIN soft-pairs <<< */
+  /* ---- Local surface contact between soft residents ----
+     The fast particle solver carries ordinary loads. If stretched skins
+     interleave between particles, a node pushes on the actual opposite edge. The weighted reaction
+     enters that edge's two nodes; bulk compression and recovery belong to the
+     material. No centre separation, phasing, or pile-wide velocity target. */
+  var SOFT_PAIRS_FRICTION = 0.42;
+  var softPairsReport = { contacts: 0, impulse: 0, depth: 0 };
+
+  function softPairsBody(b) { return SOFT_PAIRS && !!b.surfaceSlime; }
+  function softPairsManaged(a, b) { return softPairsBody(a) && softPairsBody(b); }
+
+  var softPairsBodies = new Array(4), softPairsNodes = new Int32Array(4);
+  var softPairsWeights = new Float64Array(4), softPairsMX = new Float64Array(4), softPairsMY = new Float64Array(4);
+
+  function softPairsProject(A, p, B, a, c, t, nx, ny, depth, h) {
+    softPairsPatch(A, p, p, 0, B, a, c, t, nx, ny, depth, h);
+  }
+
+  function softPairsPatch(A, p, q, u, B, a, c, t, nx, ny, depth, h) {
+    var bodies = softPairsBodies, nodes = softPairsNodes, weights = softPairsWeights;
+    var mx = softPairsMX, my = softPairsMY, kx = 0, ky = 0, vx = 0, vy = 0, maxGradient = 0;
+    bodies[0] = bodies[1] = A; bodies[2] = bodies[3] = B;
+    nodes[0] = p; nodes[1] = q; nodes[2] = a; nodes[3] = c;
+    weights[0] = 1 - u; weights[1] = u; weights[2] = t - 1; weights[3] = -t;
+    for (var k = 0; k < 4; k++) {
+      var b = bodies[k], i = nodes[k], w = weights[k], side = w < 0 ? -1 : 1;
+      if (!w) { mx[k] = my[k] = 0; continue; }
+      mx[k] = jelloWorldSolidAt(b.px[i] + nx * side * 0.5, b.py[i]) ? 0 : 1;
+      my[k] = jelloWorldSolidAt(b.px[i], b.py[i] + ny * side * 0.5) ? 0 : 1;
+      kx += w * w * mx[k]; ky += w * w * my[k];
+      maxGradient = Math.max(maxGradient, Math.abs(w) * Math.hypot(nx * mx[k], ny * my[k]));
+      vx += w * (b.px[i] - b.ox[i]); vy += w * (b.py[i] - b.oy[i]);
+    }
+    var den = nx * nx * kx + ny * ny * ky;
+    if (!(den > 1e-8 && maxGradient > 1e-8)) return;
+    var approach = -(vx * nx + vy * ny);
+    var normal = Math.max(0, approach) / den;
+    var move = Math.min(depth / den, 2 / maxGradient);
+    var tx = -ny, ty = nx, tangentDen = tx * tx * kx + ty * ty * ky;
+    // Sequential orthogonal projections in the actual masked mass metric.
+    // Each removes energy. A final normal projection closes the coupling
+    // introduced when only one coordinate of a terrain-bound point can move.
+    vx += nx * normal * kx; vy += ny * normal * ky;
+    var friction = tangentDen > 1e-9 ? skySlimeClamp(-(vx * tx + vy * ty) / tangentDen,
+      -normal * SOFT_PAIRS_FRICTION, normal * SOFT_PAIRS_FRICTION) : 0;
+    vx += tx * friction * kx; vy += ty * friction * ky;
+    normal += Math.max(0, -(vx * nx + vy * ny)) / den;
+    for (k = 0; k < 4; k++) {
+      b = bodies[k]; i = nodes[k]; w = weights[k];
+      if (!w) continue;
+      var dx = nx * move * w * mx[k], dy = ny * move * w * my[k];
+      b.px[i] += dx; b.py[i] += dy;
+      b.ox[i] += dx - (nx * normal + tx * friction) * w * mx[k];
+      b.oy[i] += dy - (ny * normal + ty * friction) * w * my[k];
+    }
+    A.sleeping = B.sleeping = false; A._solve = B._solve = true;
+    A.sleepFrames = B.sleepFrames = 0;
+    if (typeof softPresentationBody === 'function' && (softPresentationBody(A) || softPresentationBody(B))) {
+      // Observe actual closure after normal, tangent and final normal solves.
+      var afterNormal = 0;
+      for (var audioK = 0; audioK < 4; audioK++) {
+        var audioBody = bodies[audioK], audioNode = nodes[audioK];
+        afterNormal += weights[audioK] * ((audioBody.px[audioNode] - audioBody.ox[audioNode]) * nx +
+          (audioBody.py[audioNode] - audioBody.oy[audioNode]) * ny);
+      }
+      var realIH = JELLO_TIMESCALE / h, resolved = (afterNormal + approach) * realIH;
+      softPresentationContact(A, p, q, u, approach * realIH, resolved);
+      softPresentationContact(B, a, c, t, approach * realIH, resolved);
+    }
+    A._cHits++; B._cHits++; A._pairTouched = B._pairTouched = true;
+    softPairsReport.contacts++;
+    softPairsReport.impulse += normal * SOFT_CONTACT_POINT_MASS * JELLO_TIMESCALE / h;
+    softPairsReport.depth = Math.max(softPairsReport.depth, depth);
+  }
+
+  // Stretched skins can cross between vertices while every vertex remains
+  // outside the other ring. Resolve the two intersecting material patches.
+  function softPairsEdges(A, B, h) {
+    for (var i = 0; i < A.ringN; i++) {
+      var p = A.ring[i], q = A.ring[(i + 1) % A.ringN];
+      var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
+      var right = Math.max(px,qx), left = Math.min(px,qx), bottom = Math.max(py,qy), top = Math.min(py,qy);
+      var ex = qx - px, ey = qy - py;
+      for (var j = 0; j < B.ringN; j++) {
+        var a = B.ring[j], c = B.ring[(j + 1) % B.ringN];
+        var ax = B.px[a], ay = B.py[a], cx = B.px[c], cy = B.py[c];
+        if (right <= Math.min(ax,cx) || left >= Math.max(ax,cx) ||
+            bottom <= Math.min(ay,cy) || top >= Math.max(ay,cy)) continue;
+        var fx = cx - ax, fy = cy - ay;
+        var det = ex * fy - ey * fx;
+        if (Math.abs(det) < 1e-10) continue;
+        var u = ((ax-px)*fy-(ay-py)*fx)/det, t = ((ax-px)*ey-(ay-py)*ex)/det;
+        if (!(u > 0 && u < 1 && t > 0 && t < 1)) continue;
+        var length = Math.hypot(fx,fy), nx = fy/length, ny = -fx/length;
+        var oldAX = A._softPX || A.ox, oldAY = A._softPY || A.oy;
+        var oldBX = B._softPX || B.ox, oldBY = B._softPY || B.oy;
+        var oldGap = (oldAX[p]*(1-u)+oldAX[q]*u-oldBX[a]*(1-t)-oldBX[c]*t)*nx +
+          (oldAY[p]*(1-u)+oldAY[q]*u-oldBY[a]*(1-t)-oldBY[c]*t)*ny;
+        if (oldGap < 0) { nx = -nx; ny = -ny; }
+        softPairsPatch(A,p,q,u,B,a,c,t,nx,ny,0.5,h);
+        // A patch can move this A edge and the current B edge. Refresh A
+        // immediately; the next candidate still reads B's current nodes.
+        px = A.px[p]; py = A.py[p]; qx = A.px[q]; qy = A.py[q];
+        right = Math.max(px,qx); left = Math.min(px,qx); bottom = Math.max(py,qy); top = Math.min(py,qy);
+        ex = qx - px; ey = qy - py;
+      }
+    }
+  }
+
+  function softPairsOneWay(A, B, h, reverse) {
+    var margin = 0.10;
+    for (var k = 0; k < A.ringN; k++) {
+      var p = A.ring[reverse ? A.ringN - 1 - k : k], x = A.px[p], y = A.py[p];
+      if (x < B._cbL - margin || x > B._cbR + margin || y < B._cbT - margin || y > B._cbB + margin) continue;
+      if (!jelloPointInRing(B, x, y)) continue;
+      var inside = true, best = Infinity, edge = -1, weight = 0, qx = 0, qy = 0;
+      for (var e = 0; e < B.ringN; e++) {
+        var a = B.ring[e], c = B.ring[(e + 1) % B.ringN];
+        var ex = B.px[c] - B.px[a], ey = B.py[c] - B.py[a], den = ex * ex + ey * ey;
+        if (!(den > 1e-10)) continue;
+        var t = skySlimeClamp(((x - B.px[a]) * ex + (y - B.py[a]) * ey) / den, 0, 1);
+        var sx = B.px[a] + ex * t, sy = B.py[a] + ey * t;
+        var dx = x - sx, dy = y - sy, d2 = dx * dx + dy * dy;
+        if (d2 < best) { best = d2; edge = e; weight = t; qx = sx; qy = sy; }
+      }
+      if (edge < 0 || (!inside && best >= margin * margin)) continue;
+      a = B.ring[edge]; c = B.ring[(edge + 1) % B.ringN];
+      var d = Math.sqrt(best), nx, ny;
+      if (d > 1e-8) { nx = (x - qx) / d; ny = (y - qy) / d; if (inside) { nx = -nx; ny = -ny; } }
+      else {
+        ex = B.px[c] - B.px[a]; ey = B.py[c] - B.py[a];
+        var length = Math.sqrt(ex * ex + ey * ey);
+        nx = ey / length * B.ringSign; ny = -ex / length * B.ringSign;
+      }
+      softPairsProject(A, p, B, a, c, weight, nx, ny, inside ? margin + d : margin - d, h);
+    }
+  }
+
+  function softPairsStep(active, count, h) {
+    if (!SOFT_PAIRS || count < 2) return 0;
+    var start = softPairsReport.contacts;
+    for (var pass = 0; pass < 4; pass++) {
+      for (var clear = 0; clear < count; clear++) active[clear]._pairTouched = false;
+      var before = softPairsReport.contacts, reverse = !!((jelloFrameNo + pass) & 1);
+      for (var i = 0; i < count; i++) {
+        var ai = reverse ? count - 1 - i : i, A = active[ai];
+        if (!softPairsBody(A)) continue;
+        for (var j = i + 1; j < count; j++) {
+          var B = active[reverse ? count - 1 - j : j];
+          if (!softPairsBody(B) || (!A._solve && !B._solve)) continue;
+          jelloRingBBox(A); jelloRingBBox(B);
+          var margin = 0.1;
+          if (A._cbR + margin < B._cbL || A._cbL - margin > B._cbR ||
+              A._cbB + margin < B._cbT || A._cbT - margin > B._cbB) continue;
+          softPairsOneWay(A, B, h, reverse);
+          jelloRingBBox(A); jelloRingBBox(B);
+          softPairsOneWay(B, A, h, !reverse);
+          softPairsEdges(A, B, h);
+        }
+      }
+      if (before === softPairsReport.contacts) break;
+      // Pair contact and the existing orientation/terrain constraints converge
+      // together. Keep the contact patch local even under a held pile load.
+      for (i = 0; i < count; i++) {
+        A = active[i];
+        if (!softPairsBody(A) || !A._solve || !A._pairTouched) continue;
+        jelloLimitOrientation(A); softContactSkin(A);
+        for (var p = 0; p < A.n; p++) {
+          if (jelloWorldSolidAt(A.px[p], A.py[p]) && !softTerrainPoint(A, p, h)) jelloCollidePointWorld(A, p, h);
+        }
+        softTerrainEdges(A, h);
+      }
+    }
+    return softPairsReport.contacts - start;
+  }
+  /* >>> ENGINE SYNC: END soft-pairs <<< */
+
+  /* >>> ENGINE SYNC: BEGIN soft-intent <<< */
+  // Resolve moving-edge contact at its actual crossing time. A collinear
+  // overlap has no crossing normal, so that degeneracy uses the smallest
+  // local separation. Neither path prescribes the body outline or velocity.
+  function softIntentSkinContact(b) {
+    if (!b._softPX || !softContactSkinCrossed(b)) return;
+    var px = b.px, py = b.py, ring = b.ring, count = b.ringN;
+    for (var first = 0; first < count; first++) {
+      var a = ring[first], c = ring[(first + 1) % count];
+      for (var second = first + 2; second < count; second++) {
+        if (first === 0 && second === count - 1) continue;
+        var p = ring[second], q = ring[(second + 1) % count];
+        if (!softContactEdgesCross(b, a, c, p, q)) continue;
+        var best = null;
+        candidate(a, c, p, q); candidate(c, a, p, q);
+        candidate(p, q, a, c); candidate(q, p, a, c);
+        if (!best) continue;
+        softIntentSkinApply(b, best);
+      }
+    }
+    if (softContactSkinCrossed(b)) softIntentSkinFallback(b);
+    function candidate(v, other, e, f) {
+      var oldX = b._softPX, oldY = b._softPY;
+      var ex = oldX[f] - oldX[e], ey = oldY[f] - oldY[e];
+      var rx = oldX[v] - oldX[e], ry = oldY[v] - oldY[e];
+      var ax = px[e] - oldX[e], ay = py[e] - oldY[e];
+      var dex = px[f] - oldX[f] - ax, dey = py[f] - oldY[f] - ay;
+      var drx = px[v] - oldX[v] - ax, dry = py[v] - oldY[v] - ay;
+      var q0 = ex * ry - ey * rx;
+      var q1 = dex * ry - dey * rx + ex * dry - ey * drx;
+      var q2 = dex * dry - dey * drx, roots = [];
+      if (Math.abs(q2) < 1e-12) {
+        if (Math.abs(q1) > 1e-12) roots.push(-q0 / q1);
+      } else {
+        var discriminant = q1 * q1 - 4 * q2 * q0;
+        if (discriminant < 0) return;
+        var square = Math.sqrt(discriminant);
+        roots.push((-q1 - square) / (2 * q2), (-q1 + square) / (2 * q2));
+      }
+      roots.sort(function(u, w) { return u - w; });
+      var time = -1, t = 0, nx = 0, ny = 0;
+      for (var root = 0; root < roots.length; root++) {
+        var when = roots[root];
+        if (!(when >= -1e-8 && when <= 1 + 1e-8)) continue;
+        when = skySlimeClamp(when, 0, 1);
+        var hx = ex + dex * when, hy = ey + dey * when, length2 = hx * hx + hy * hy;
+        if (!(length2 > 1e-10)) continue;
+        var u = ((rx + drx * when) * hx + (ry + dry * when) * hy) / length2;
+        if (!(u >= -1e-8 && u <= 1 + 1e-8)) continue;
+        var side = -(q1 + 2 * q2 * when);
+        if (when < 1e-7) side = ex * (oldY[other] - oldY[e]) - ey * (oldX[other] - oldX[e]);
+        if (Math.abs(side) < 1e-10) continue;
+        var sign = side < 0 ? -1 : 1;
+        nx = -hy / Math.sqrt(length2) * sign; ny = hx / Math.sqrt(length2) * sign;
+        t = skySlimeClamp(u, 0, 1); time = when; break;
+      }
+      if (time < 0) return;
+      var gap = (px[v] - px[e] * (1 - t) - px[f] * t) * nx +
+        (py[v] - py[e] * (1 - t) - py[f] * t) * ny;
+      if (!(gap < 0.10)) return;
+      var wa = 1 - t, wc = t, ids = [v, e, f], weights = [1, -wa, -wc];
+      var mx = [], my = [], den = 0, gradient = 0;
+      for (var node = 0; node < 3; node++) {
+        var id = ids[node], weight = weights[node], sx = weight < 0 ? -1 : 1;
+        mx[node] = jelloWorldSolidAt(px[id] + nx * sx * 0.5, py[id]) ? 0 : 1;
+        my[node] = jelloWorldSolidAt(px[id], py[id] + ny * sx * 0.5) ? 0 : 1;
+        den += weight * weight * (nx * nx * mx[node] + ny * ny * my[node]);
+        gradient = Math.max(gradient, Math.abs(weight) * Math.hypot(nx * mx[node], ny * my[node]));
+      }
+      if (!(den > 1e-8)) return;
+      var depth = 0.10 - gap, cost = depth * depth / den;
+      if (best && (best.time < time - 1e-6 || (Math.abs(best.time - time) <= 1e-6 && best.cost <= cost))) return;
+      best = { p: v, a: e, c: f, nx: nx, ny: ny, t: t, mx: mx, my: my, den: den, gradient: gradient, depth: depth, cost: cost, time: time };
+    }
+  }
+
+  function softIntentSkinFallback(b) {
+    if (!b._softPX || !softContactSkinCrossed(b)) return;
+    var px = b.px, py = b.py, ring = b.ring, count = b.ringN;
+    for (var first = 0; first < count; first++) {
+      var a = ring[first], c = ring[(first + 1) % count];
+      for (var second = first + 2; second < count; second++) {
+        if (first === 0 && second === count - 1) continue;
+        var p = ring[second], q = ring[(second + 1) % count];
+        if (!softContactEdgesCross(b, a, c, p, q)) continue;
+        var best = null;
+        candidate(a, c, p, q); candidate(c, a, p, q);
+        candidate(p, q, a, c); candidate(q, p, a, c);
+        if (!best) continue;
+        softIntentSkinApply(b, best);
+      }
+    }
+    function candidate(v, other, e, f) {
+      var ex = px[f] - px[e], ey = py[f] - py[e], len2 = ex * ex + ey * ey;
+      if (!(len2 > 1e-10)) return;
+      var t = ((px[v] - px[e]) * ex + (py[v] - py[e]) * ey) / len2;
+      if (!(t >= 0 && t <= 1)) return;
+      var invLength = 1 / Math.sqrt(len2), nx = -ey * invLength, ny = ex * invLength;
+      if ((px[other] - px[e]) * nx + (py[other] - py[e]) * ny < 0) { nx = -nx; ny = -ny; }
+      var gap = (px[v] - px[e]) * nx + (py[v] - py[e]) * ny;
+      if (gap > 1e-7) return;
+      var wa = 1 - t, wc = t, ids = [v, e, f], weights = [1, -wa, -wc];
+      var mx = [], my = [], den = 0, gradient = 0;
+      for (var node = 0; node < 3; node++) {
+        var id = ids[node], weight = weights[node], sx = weight < 0 ? -1 : 1;
+        mx[node] = jelloWorldSolidAt(px[id] + nx * sx * 0.5, py[id]) ? 0 : 1;
+        my[node] = jelloWorldSolidAt(px[id], py[id] + ny * sx * 0.5) ? 0 : 1;
+        den += weight * weight * (nx * nx * mx[node] + ny * ny * my[node]);
+        gradient = Math.max(gradient, Math.abs(weight) * Math.hypot(nx * mx[node], ny * my[node]));
+      }
+      if (!(den > 1e-8)) return;
+      var depth = 0.10 - gap, cost = depth * depth / den;
+      if (best && best.cost <= cost) return;
+      best = { p: v, a: e, c: f, nx: nx, ny: ny, t: t, mx: mx, my: my, den: den, gradient: gradient, depth: depth, cost: cost };
+    }
+  }
+
+  function softIntentEdgesOverlap(b, p, q, a, c) {
+    var px = b.px, py = b.py;
+    if (Math.max(px[p], px[q]) < Math.min(px[a], px[c]) || Math.max(px[a], px[c]) < Math.min(px[p], px[q]) ||
+        Math.max(py[p], py[q]) < Math.min(py[a], py[c]) || Math.max(py[a], py[c]) < Math.min(py[p], py[q])) return false;
+    var ex = px[q] - px[p], ey = py[q] - py[p], length2 = ex * ex + ey * ey;
+    if (!(length2 > 1e-10)) return false;
+    var tolerance = Math.sqrt(length2) * 1e-7;
+    if (Math.abs(ex * (py[a] - py[p]) - ey * (px[a] - px[p])) > tolerance ||
+        Math.abs(ex * (py[c] - py[p]) - ey * (px[c] - px[p])) > tolerance) return false;
+    var ta = ((px[a] - px[p]) * ex + (py[a] - py[p]) * ey) / length2;
+    var tc = ((px[c] - px[p]) * ex + (py[c] - py[p]) * ey) / length2;
+    return Math.min(1, Math.max(ta, tc)) - Math.max(0, Math.min(ta, tc)) > 1e-7;
+  }
+
+  // Position repair shifts history equally. Only the inward normal impulse
+  // changes velocity; terrain masks supply any external reaction.
+  function softIntentSkinApply(b, contact) {
+    var px = b.px, py = b.py;
+    var v = contact.p, e = contact.a, f = contact.c, nx = contact.nx, ny = contact.ny;
+    var wa = 1 - contact.t, wc = contact.t;
+    var vx = px[v] - b.ox[v] - (px[e] - b.ox[e]) * wa - (px[f] - b.ox[f]) * wc;
+    var vy = py[v] - b.oy[v] - (py[e] - b.oy[e]) * wa - (py[f] - b.oy[f]) * wc;
+    var impulse = Math.max(0, -(vx * nx + vy * ny)) / contact.den;
+    var dl = Math.min(contact.depth / contact.den, 2 / contact.gradient);
+    var ids = [v, e, f], weights = [1, -wa, -wc];
+    for (var node = 0; node < 3; node++) {
+      var id = ids[node], weight = weights[node], mx = contact.mx[node], my = contact.my[node];
+      px[id] += nx * dl * weight * mx; py[id] += ny * dl * weight * my;
+      b.ox[id] += nx * (dl - impulse) * weight * mx;
+      b.oy[id] += ny * (dl - impulse) * weight * my;
+    }
+    softContactReport.selfContacts++;
+  }
+  /* >>> ENGINE SYNC: END soft-intent <<< */
+
+  /* >>> ENGINE SYNC: BEGIN soft-presentation <<< */
+  function softPresentationInit(b) {
+    var m = b.surfaceSlime, state = m.presentation;
+    if (state) return state;
+    state = m.presentation = { nodes: [], patches: [], qxx: 0, qxy: 0, qyy: 0,
+      initialized: false, vx: 0, vy: 0, x: b.px[0], y: b.py[0],
+      compression: 0, extension: 0 };
+    // The six spokes immediately around the eye measure local material strain.
+    // Rest coordinates stay fixed when locomotion changes muscle rest lengths.
+    for (var s = 0; s < b.springN; s++) {
+      var p = b.sA[s] === 0 ? b.sB[s] : (b.sB[s] === 0 ? b.sA[s] : -1);
+      if (p < 0 || state.nodes.indexOf(p) >= 0) continue;
+      state.nodes.push(p);
+      var x = b.rx[p] - b.rx[0], y = b.ry[p] - b.ry[0];
+      state.qxx += x * x; state.qxy += x * y; state.qyy += y * y;
+    }
+    var det = state.qxx * state.qyy - state.qxy * state.qxy;
+    if (det > 1e-12) {
+      state.i00 = state.qyy / det; state.i01 = -state.qxy / det; state.i11 = state.qxx / det;
+    } else { state.i00 = state.i01 = state.i11 = 0; }
+    // One highlight and three inclusions attach to actual rest-mesh triangles.
+    // A bent lobe moves its own highlight independently of the centre and rim.
+    var angles = [3.98, 0.72, 1.57, 2.42];
+    for (var n = 0; n < angles.length; n++) {
+      var best = 0, distance = Infinity;
+      for (var k = 0; k < b.ringN; k++) {
+        var a = b.ring[k], c = b.ring[(k + 1) % b.ringN];
+        var mx = (b.rx[a] + b.rx[c]) * 0.5 - b.rx[0];
+        var my = (b.ry[a] + b.ry[c]) * 0.5 - b.ry[0];
+        var length = Math.hypot(mx, my) || 1;
+        var error = 1 - (mx * Math.cos(angles[n]) + my * Math.sin(angles[n])) / length;
+        if (error < distance) { best = k; distance = error; }
+      }
+      a = b.ring[best]; c = b.ring[(best + 1) % b.ringN];
+      var ax = b.rx[a] - b.rx[0], ay = b.ry[a] - b.ry[0];
+      var cx = b.rx[c] - b.rx[0], cy = b.ry[c] - b.ry[0];
+      var weight = n ? 0.25 : 0.3;
+      var targetX = b.rx[0] + (ax + cx) * weight;
+      var targetY = b.ry[0] + (ay + cy) * weight;
+      var patch = null;
+      for (var ti = 0; ti < b.triN; ti++) {
+        var o = b.triA[ti], i = b.triB[ti], j = b.triC[ti];
+        var ux = b.rx[i] - b.rx[o], uy = b.ry[i] - b.ry[o];
+        var vx = b.rx[j] - b.rx[o], vy = b.ry[j] - b.ry[o];
+        var determinant = ux * vy - uy * vx;
+        if (Math.abs(determinant) < 1e-8) continue;
+        var dx = targetX - b.rx[o], dy = targetY - b.ry[o];
+        var wi = (dx * vy - dy * vx) / determinant;
+        var wj = (ux * dy - uy * dx) / determinant;
+        if (wi < -1e-6 || wj < -1e-6 || wi + wj > 1 + 1e-6) continue;
+        patch = { o: o, a: i, c: j, wa: wi, wc: wj,
+          i00: vy / determinant, i01: -vx / determinant,
+          i10: -uy / determinant, i11: ux / determinant };
+        break;
+      }
+      // Legacy/custom bodies without a health mesh still have a material fan.
+      if (!patch) {
+        determinant = ax * cy - ay * cx;
+        patch = { o: 0, a: a, c: c, wa: weight, wc: weight,
+          i00: determinant ? cy / determinant : 0, i01: determinant ? -cx / determinant : 0,
+          i10: determinant ? -ay / determinant : 0, i11: determinant ? ax / determinant : 0 };
+      }
+      state.patches.push(patch);
+    }
+    return state;
+  }
+
+  function softPresentationDrawInterior(b) {
+    if (!softPresentationBody(b) || !b.surfaceSlime.presentation) return false;
+    var m = b.surfaceSlime, patches = m.presentation.patches, r = m.radius;
+    for (var n = 0; n < patches.length; n++) {
+      var p = patches[n], ax = b.px[p.a] - b.px[p.o], ay = b.py[p.a] - b.py[p.o];
+      var cx = b.px[p.c] - b.px[p.o], cy = b.py[p.c] - b.py[p.o];
+      var f00 = ax * p.i00 + cx * p.i10, f01 = ax * p.i01 + cx * p.i11;
+      var f10 = ay * p.i00 + cy * p.i10, f11 = ay * p.i01 + cy * p.i11;
+      var x = b.px[p.o] + ax * p.wa + cx * p.wc, y = b.py[p.o] + ay * p.wa + cy * p.wc;
+      if (!isFinite(x + y + f00 + f01 + f10 + f11)) continue;
+      ctx.save(); ctx.translate(x, y); ctx.transform(f00, f10, f01, f11, 0, 0);
+      if (n === 0) {
+        var sheen = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.55);
+        sheen.addColorStop(0, 'rgba(245,241,234,0.6)'); sheen.addColorStop(1, 'rgba(245,241,234,0)');
+        ctx.fillStyle = sheen; ctx.fillRect(-r * 0.55, -r * 0.55, r * 1.1, r * 1.1);
+        ctx.fillStyle = 'rgba(245,241,234,0.45)'; ctx.beginPath();
+        ctx.ellipse(0, -r * 0.05, r * 0.2, r * 0.065, -0.35, 0, Math.PI * 2); ctx.fill();
+      } else {
+        // A thin material patch transmits more light. A compressed patch reads
+        // denser, directly from its Jacobian, without any timed impact flash.
+        var area = Math.abs(f00 * f11 - f01 * f10);
+        ctx.fillStyle = 'rgba(245,241,234,' + skySlimeClamp(0.18 * area, 0.09, 0.28) + ')';
+        ctx.beginPath(); ctx.arc(0, 0, r * (0.037 + n * 0.013), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    return true;
+  }
+  /* >>> ENGINE SYNC: END soft-presentation <<< */
+
+  /* >>> ENGINE SYNC: BEGIN slime-skin <<< */
+  function surfaceSlimeSnapshot(b) {
+    var m = b.surfaceSlime;
+    if (!m.previousX) { m.previousX = new Float64Array(b.n); m.previousY = new Float64Array(b.n); }
+    m.previousX.set(b.px); m.previousY.set(b.py); m.renderFrame = jelloFrameNo;
+  }
+
+  function surfaceSlimeRenderBody(b) {
+    var m = b.surfaceSlime;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
+    var view = m.renderBody;
+    if (!view) {
+      view = m.renderBody = Object.create(b);
+      view.px = new Float64Array(b.n); view.py = new Float64Array(b.n);
+    }
+    // The solver ticks at 120 Hz. Display its two latest poses one tick behind
+    // real time, so 144 Hz and variable-rate screens never repeat a skin frame.
+    // Physics, contacts, grabs, saves and water continue to use the live body.
+    var alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1), x = 0, y = 0;
+    view.bboxL = view.bboxT = Infinity; view.bboxR = view.bboxB = -Infinity;
+    for (var p = 0; p < b.n; p++) {
+      var px = m.previousX[p] + (b.px[p] - m.previousX[p]) * alpha;
+      var py = m.previousY[p] + (b.py[p] - m.previousY[p]) * alpha;
+      view.px[p] = px; view.py[p] = py; x += px; y += py;
+      view.bboxL = Math.min(view.bboxL, px); view.bboxR = Math.max(view.bboxR, px);
+      view.bboxT = Math.min(view.bboxT, py); view.bboxB = Math.max(view.bboxB, py);
+    }
+    view.cx = x / b.n; view.cy = y / b.n; view.shFrame = -1;
+    return view;
+  }
+
+  function surfaceSlimeDraw(b) {
+    b = surfaceSlimeRenderBody(b);
+    var m = b.surfaceSlime;
+    if (!m || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) return;
+    jelloRingBake(b);
+    // Round the actual moving skin vertices into a continuous gel surface.
+    // No extra draw-time wave: the contour follows the colliding soft body.
+    var path = new Path2D(), count = jelloRingBakeN;
+    path.moveTo((jelloROX[count - 1] + jelloROX[0]) * 0.5, (jelloROY[count - 1] + jelloROY[0]) * 0.5);
+    for (var k = 0; k < count; k++) {
+      var next = (k + 1) % count;
+      path.quadraticCurveTo(jelloROX[k], jelloROY[k],
+        (jelloROX[k] + jelloROX[next]) * 0.5, (jelloROY[k] + jelloROY[next]) * 0.5);
+    }
+    path.closePath();
+    var r = m.radius, hue = m.hue;
+    var h = Math.max(1, b.bboxB - b.bboxT), w = Math.max(1, b.bboxR - b.bboxL);
+    ctx.save();
+    if (!m.climb && jelloSupportedBelowTile(b)) {
+      ctx.fillStyle = 'rgba(30,36,32,0.18)'; ctx.beginPath();
+      ctx.ellipse(b.cx, b.bboxB + 3, w * 0.43, 3, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.save(); ctx.clip(path);
+    var gel = ctx.createLinearGradient(b.cx, b.bboxT - 4, b.cx + r * 0.25, b.bboxB + 4);
+    gel.addColorStop(0, 'hsla(' + hue + ',42%,81%,0.97)');
+    gel.addColorStop(0.45, 'hsla(' + hue + ',38%,66%,0.94)');
+    gel.addColorStop(1, 'hsla(' + (hue + 9) + ',34%,40%,0.98)');
+    ctx.fillStyle = gel; ctx.fillRect(b.bboxL - 12, b.bboxT - 12, w + 24, h + 24);
+    // Internal highlights stay attached to the gel as it rolls. The eye below
+    // has a circular cup rather than a permanently upright face.
+    if (!(typeof softPresentationDrawInterior === 'function' && softPresentationDrawInterior(b))) {
+      jelloShadeMatrix(b);
+      ctx.save(); ctx.translate(b.cx, b.cy);
+      ctx.transform(b.shM00, b.shM10, b.shM01, b.shM11, 0, 0);
+      var sheen = ctx.createRadialGradient(-r * 0.35, -r * 0.48, 0, -r * 0.35, -r * 0.48, r * 0.55);
+      sheen.addColorStop(0, 'rgba(245,241,234,0.6)'); sheen.addColorStop(1, 'rgba(245,241,234,0)');
+      ctx.fillStyle = sheen; ctx.fillRect(-r, -r, r * 1.5, r * 1.3);
+      ctx.fillStyle = 'rgba(245,241,234,0.45)';
+      ctx.beginPath(); ctx.ellipse(-r * 0.35, -r * 0.53, r * 0.2, r * 0.065, -0.35, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(245,241,234,0.18)';
+      for (var n = 0; n < 3; n++) {
+        ctx.beginPath(); ctx.arc((n - 1) * r * 0.43, r * (0.34 + Math.sin(n * 3 + m.seed * 8) * 0.12), r * (0.05 + n * 0.013), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    surfaceSlimeDrawEye(b);
+    ctx.restore(); ctx.restore();
+  }
+  /* >>> ENGINE SYNC: END slime-skin <<< */
+
   /* ==== SLIME OVERRIDES (toy host) ======================================
    * Later declarations shadow the engine copies above. Rig couplings
    * become no-ops; the disc builder gets the game's 8 px lattice pitch
@@ -9701,11 +10980,6 @@
   /* ---- Slime spawning + pointer grab ---------------------------------- */
   var slimeHueCycle = 0;
 
-  // v4.29 shape menu: what the slime tool drops. 'ball' is the classic
-  // disc; everything else is a cell mask ('#' = one 8px world cell) scaled
-  // by the brush slider (k x k cells per glyph). Single-boundary shapes
-  // only: a true donut has two boundary rings and the boundary trace
-  // assumes one, so the ring shape is a horseshoe with a thin throat.
   var slimeShape = 'ball';
   // Masks stay SMALL on purpose: each '#' is one 8px cell that builds a
   // 16-point lattice patch, so ~20 cells is already a ~320-point body (the
@@ -9721,7 +10995,7 @@
     heart: ['##..##', '######', '.####.', '..##..'],
     hoop:  ['.####.', '##..##', '##..##', '##.###']
   };
-  function spawnSlimeAt(wx, wy, rad) {
+  function spawnSlimeShapeAt(wx, wy, rad) {
     var r = Math.max(18, Math.min(46, rad));
     wx = Math.max(r + TILE * 2, Math.min(worldW - r - TILE * 2, wx));
     wy = Math.max(r + TILE * 2, Math.min(worldH - r - TILE * 2, wy));
@@ -9744,305 +11018,18 @@
     return cells.length ? jelloBuildBody(cells, key) : null;
   }
 
-  // Pointer carry state. The public controller below addresses only a
-  // continuous surface coordinate and bulk motion.
+  // One held material patch. All force and contact work stays in the solver.
   var grabBody = null;
-  var grabIdx = null, grabOffX = null, grabOffY = null;
-  var grabWeight = null, grabRing = null, grabAnchor = -1;
-  var grabTargetX = 0, grabTargetY = 0, grabSolveX = 0, grabSolveY = 0;
-  var grabPrevSolveX = 0, grabPrevSolveY = 0;
-  var grabAttemptDX = 0, grabAttemptDY = 0;
-  var grabBlockNX = 0, grabBlockNY = 0, grabBlockReason = '';
-  var grabProxyLead = 0, grabCorrectionAlpha = 1;
-  var grabReleaseVX = 0, grabReleaseVY = 0, grabReleaseOmega = 0;
-  var grabLastH = JELLO_H, grabLastMotionMs = 0;
-  var JELLO_GRAB_RELEASE_BLEND = 0.92;
-  var JELLO_GRAB_RELEASE_SPEED = 1400;
-  var JELLO_GRAB_RELEASE_POINT = 1600;
-  var JELLO_GRAB_RELEASE_FRESH = 230;
-  var JELLO_GRAB_RELEASE_BOOST_MIN = 1.05;
-  var JELLO_GRAB_RELEASE_BOOST_MAX = 1.15;
-  var JELLO_GRAB_RELEASE_SPIN = 0.55;
-  var JELLO_GRAB_RELEASE_SPIN_MAX = 7;
-  var JELLO_GRAB_RECOVER = 1.35;
-
-  function jelloGrabApplyRelease(b) {
-    if (!grabLastMotionMs ||
-        performance.now() - grabLastMotionMs > JELLO_GRAB_RELEASE_FRESH) return;
-    var vx = grabReleaseVX, vy = grabReleaseVY;
-    if (!isFinite(vx + vy)) return;
-    var speed = Math.sqrt(vx * vx + vy * vy);
-    if (!(speed > 1)) return;
-    var u = Math.max(0, Math.min(1, (speed - 140) / 860));
-    u = u * u * (3 - 2 * u);
-    var boost = JELLO_GRAB_RELEASE_BOOST_MIN +
-      (JELLO_GRAB_RELEASE_BOOST_MAX - JELLO_GRAB_RELEASE_BOOST_MIN) * u;
-    vx *= boost; vy *= boost;
-    jelloCarryReadSurface(b);
-    var rx = carrySurfaceX - b.cx, ry = carrySurfaceY - b.cy;
-    var radius = Math.max(8, (b.bboxR - b.bboxL + b.bboxB - b.bboxT) * 0.25);
-    var omega = (rx * vy - ry * vx) /
-      Math.max(1, rx * rx + ry * ry + radius * radius * 0.45) * JELLO_GRAB_RELEASE_SPIN;
-    var launch = jelloLaunchBody(b, vx, vy, {
-      h: grabLastH, blend: JELLO_GRAB_RELEASE_BLEND,
-      maxSpeed: JELLO_GRAB_RELEASE_SPEED,
-      maxPointSpeed: JELLO_GRAB_RELEASE_POINT,
-      omega: omega, maxOmega: JELLO_GRAB_RELEASE_SPIN_MAX
-    });
-    if (launch) {
-      carryLastLaunchSpeed = launch.speed;
-      carryLastLaunchSpin = launch.omega;
+  window.__slimeGrab = function () {
+    var g = surfaceSlimeGrip, x = 0, y = 0;
+    if (g) for (var k = 0; k < g.body.n; k++) {
+      x += g.body.px[k] * g.weights[k]; y += g.body.py[k] * g.weights[k];
     }
-  }
-
-  /* ==== KINEMATIC SURFACE CARRY ========================================
-   * The pointer owns one continuous coordinate on the visible boundary.
-   * That coordinate follows pointer displacement exactly, with no speed cap,
-   * proxy, trust region, or interior-node patch. The soft solver remains free
-   * to squash and wobble the rest of the body. A final per-substep pin makes
-   * the hand attachment authoritative after contact and world collision.
-   *
-   * This is also the first consumer of the generic drive seam used by future
-   * slime actors. Carry is kinematic. Actor intent is dynamic. Both address a
-   * body as a silhouette and a pose, never as a visible lattice. ==== */
-  var carrySurfaceA = -1, carrySurfaceB = -1, carrySurfaceT = 0;
-  var carrySurfaceX = 0, carrySurfaceY = 0;
-  var carryOffsetX = 0, carryOffsetY = 0;
-  var carryPointerX = 0, carryPointerY = 0, carryPointerMs = 0;
-  var carryPendingX = 0, carryPendingY = 0;
-  var carrySessionTravel = 0, carrySessionMaxError = 0;
-  var carryLastTravel = 0, carryLastMaxError = 0, carryLastReleaseSpeed = 0;
-  var carryLastLaunchSpeed = 0, carryLastLaunchSpin = 0;
-
-  function jelloCarryReadSurface(b) {
-    if (!b || carrySurfaceA < 0 || carrySurfaceB < 0) {
-      carrySurfaceX = carrySurfaceY = 0;
-      return;
-    }
-    var u = carrySurfaceT, v = 1 - u;
-    carrySurfaceX = b.px[carrySurfaceA] * v + b.px[carrySurfaceB] * u;
-    carrySurfaceY = b.py[carrySurfaceA] * v + b.py[carrySurfaceB] * u;
-  }
-
-  function jelloCarryFindSurface(b, wx, wy) {
-    var best = 1e30, bestA = -1, bestB = -1, bestT = 0;
-    for (var k = 0; k < b.ringN; k++) {
-      var a = b.ring[k], z = b.ring[(k + 1) % b.ringN];
-      var ax = b.px[a], ay = b.py[a];
-      var dx = b.px[z] - ax, dy = b.py[z] - ay;
-      var dd = dx * dx + dy * dy;
-      var u = dd > 1e-9 ? ((wx - ax) * dx + (wy - ay) * dy) / dd : 0;
-      if (u < 0) u = 0; else if (u > 1) u = 1;
-      var sx = ax + dx * u, sy = ay + dy * u;
-      var ex = sx - wx, ey = sy - wy, d2 = ex * ex + ey * ey;
-      if (d2 < best) { best = d2; bestA = a; bestB = z; bestT = u; }
-    }
-    carrySurfaceA = bestA; carrySurfaceB = bestB; carrySurfaceT = bestT;
-    jelloCarryReadSurface(b);
-    return bestA >= 0;
-  }
-
-  function jelloCarryTranslate(b, dx, dy) {
-    if (!(Math.abs(dx) + Math.abs(dy) > 1e-10)) return;
-    for (var i = 0; i < b.n; i++) {
-      b.px[i] += dx; b.py[i] += dy;
-      b.ox[i] += dx; b.oy[i] += dy;
-    }
-    b.bboxL += dx; b.bboxR += dx;
-    b.bboxT += dy; b.bboxB += dy;
-    b.cx += dx; b.cy += dy;
-  }
-
-  function jelloCarryPin(b) {
-    jelloCarryReadSurface(b);
-    var wantedX = grabTargetX + carryOffsetX;
-    var wantedY = grabTargetY + carryOffsetY;
-    var dx = wantedX - carrySurfaceX;
-    var dy = wantedY - carrySurfaceY;
-    jelloCarryTranslate(b, dx, dy);
-    carrySurfaceX = wantedX; carrySurfaceY = wantedY;
-    jelloCarryReadSurface(b);
-    var postError = Math.hypot(wantedX - carrySurfaceX, wantedY - carrySurfaceY);
-    if (postError > carrySessionMaxError) carrySessionMaxError = postError;
-    grabSolveX = grabTargetX; grabSolveY = grabTargetY;
-    grabProxyLead = 0; grabCorrectionAlpha = 1;
-  }
-
-  function jelloCarryInjectLag(b) {
-    var dx = carryPendingX, dy = carryPendingY;
-    carryPendingX = carryPendingY = 0;
-    var d = Math.sqrt(dx * dx + dy * dy);
-    if (!(d > 1e-5)) return;
-    var cap = Math.max(2, (b.spacing || JELLO_DISC_PITCH) * 0.9);
-    if (d > cap) { dx *= cap / d; dy *= cap / d; d = cap; }
-    jelloCarryReadSurface(b);
-    var far = 1;
-    for (var i = 0; i < b.n; i++) {
-      var fx = b.px[i] - carrySurfaceX, fy = b.py[i] - carrySurfaceY;
-      var fd = Math.sqrt(fx * fx + fy * fy);
-      if (fd > far) far = fd;
-    }
-    for (i = 0; i < b.n; i++) {
-      fx = b.px[i] - carrySurfaceX; fy = b.py[i] - carrySurfaceY;
-      var weight = Math.sqrt(fx * fx + fy * fy) / far;
-      weight = weight * weight * 0.24;
-      b.ox[i] += dx * weight;
-      b.oy[i] += dy * weight;
-    }
-    if (b.rippleCd <= 0 && d > (b.spacing || 1) * 0.45) {
-      var amp = Math.min(1, d / Math.max(1, (b.spacing || 1) * 0.9));
-      jelloRippleInject(b, carrySurfaceX, carrySurfaceY,
-                        -amp * JELLO_RIPPLE_MAX * 0.22, 2);
-      b.rippleCd = 0.07;
-    }
-  }
-
-  function jelloGrabStart(wx, wy) {
-    jelloGrabEnd();
-    for (var bi = jelloBodies.length - 1; bi >= 0; bi--) {
-      var b = jelloBodies[bi], pad = 18;
-      if (!b || b._melting || b.ringN < 3) continue;
-      if (wx < b.bboxL - pad || wx > b.bboxR + pad ||
-          wy < b.bboxT - pad || wy > b.bboxB + pad) continue;
-      if (!jelloPointInRing(b, wx, wy)) {
-        var near = jelloNearestOnRing(b, wx, wy);
-        var ndx = near.x - wx, ndy = near.y - wy;
-        if (ndx * ndx + ndy * ndy > pad * pad) continue;
-      }
-      if (!jelloCarryFindSurface(b, wx, wy)) continue;
-      grabBody = b;
-      grabAnchor = carrySurfaceA;
-      grabIdx = [carrySurfaceA, carrySurfaceB];
-      grabOffX = grabOffY = null;
-      grabWeight = grabRing = null;
-      grabTargetX = grabSolveX = wx;
-      grabTargetY = grabSolveY = wy;
-      grabPrevSolveX = wx; grabPrevSolveY = wy;
-      carryOffsetX = carrySurfaceX - wx;
-      carryOffsetY = carrySurfaceY - wy;
-      carryPointerX = wx; carryPointerY = wy;
-      carryPointerMs = performance.now();
-      carryPendingX = carryPendingY = 0;
-      carrySessionTravel = carrySessionMaxError = 0;
-      carryLastLaunchSpeed = carryLastLaunchSpin = 0;
-      grabAttemptDX = grabAttemptDY = 0;
-      grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
-      grabLastMotionMs = 0;
-      grabBlockReason = ''; grabBlockNX = grabBlockNY = 0;
-      grabProxyLead = 0; grabCorrectionAlpha = 1;
-      b._grabbed = false;
-      b._carried = true;
-      b._grabApplied = 0;
-      b._recoverT = 0;
-      b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
-      return true;
-    }
-    return false;
-  }
-
-  function jelloGrabTick(wx, wy) {
-    var b = grabBody;
-    if (!b) return;
-    if (jelloBodies.indexOf(b) < 0 || b._melting) { jelloGrabEnd(); return; }
-    var dx = wx - carryPointerX, dy = wy - carryPointerY;
-    if (Math.abs(dx) + Math.abs(dy) > 1e-8) {
-      var now = performance.now();
-      var sampleDt = Math.max(1, Math.min(80, now - carryPointerMs));
-      var svx = dx * 1000 / sampleDt, svy = dy * 1000 / sampleDt;
-      var blend = 1 - Math.exp(-sampleDt / 34);
-      grabReleaseVX += (svx - grabReleaseVX) * blend;
-      grabReleaseVY += (svy - grabReleaseVY) * blend;
-      grabLastMotionMs = now;
-      carryPendingX += dx; carryPendingY += dy;
-      carrySessionTravel += Math.sqrt(dx * dx + dy * dy);
-      grabAttemptDX = dx; grabAttemptDY = dy;
-      carryPointerX = wx; carryPointerY = wy; carryPointerMs = now;
-    }
-    grabTargetX = grabSolveX = wx;
-    grabTargetY = grabSolveY = wy;
-    b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
-    b._plyMs = performance.now();
-  }
-
-  function jelloGrabSubstep(b, h) {
-    if (b !== grabBody || !b._carried) return;
-    grabLastH = h;
-    b._grabApplied = 0;
-    b.sleeping = false; b.sleepFrames = 0;
-    jelloCarryPin(b);
-    jelloCarryInjectLag(b);
-  }
-
-  // The shared solver calls this after collision and its velocity clamp. The
-  // surface pin wins last, which is the exact one-to-one hand contract.
-  function jelloDrivePostSubstep(b, h) {
-    if (b !== grabBody || !b._carried) return;
-    grabLastH = h;
-    jelloCarryPin(b);
-  }
-
-  function jelloGrabRejectStep() {}
-  function jelloGrabAcceptStep() {}
-  function jelloGrabResolveTopologyStep() { return false; }
-
-  function jelloGrabEnd() {
-    var b = grabBody;
-    if (b && jelloBodies.indexOf(b) >= 0 && !b._melting) {
-      jelloCarryPin(b);
-      carryLastTravel = carrySessionTravel;
-      carryLastMaxError = carrySessionMaxError;
-      carryLastReleaseSpeed = Math.hypot(grabReleaseVX, grabReleaseVY);
-      jelloGrabApplyRelease(b);
-      b._carried = false;
-      b._grabbed = false;
-      b._grabApplied = 0;
-      b._recoverT = Math.max(b._recoverT || 0, JELLO_GRAB_RECOVER);
-      b.sleeping = false; b.sleepFrames = 0; b.frozen = false;
-    }
-    grabBody = null; grabIdx = null; grabOffX = null; grabOffY = null;
-    grabWeight = null; grabRing = null; grabAnchor = -1;
-    carrySurfaceA = carrySurfaceB = -1; carrySurfaceT = 0;
-    carrySurfaceX = carrySurfaceY = carryOffsetX = carryOffsetY = 0;
-    carryPendingX = carryPendingY = 0;
-    grabAttemptDX = grabAttemptDY = 0;
-    grabReleaseVX = grabReleaseVY = grabReleaseOmega = 0;
-    grabLastMotionMs = 0;
-    grabBlockReason = ''; grabBlockNX = grabBlockNY = 0;
-  }
-
-  if (typeof window !== 'undefined') {
-    window.__slimeGrab = function () {
-      var b = grabBody, error = 0;
-      if (b) {
-        jelloCarryReadSurface(b);
-        error = Math.hypot(grabTargetX + carryOffsetX - carrySurfaceX,
-                           grabTargetY + carryOffsetY - carrySurfaceY);
-      }
-      return {
-        worldW: worldW, worldH: worldH, fitScale: fitScale,
-        pointerDown: !!pointerDown, tool: tool || '',
-        pointerX: px || 0, pointerY: py || 0,
-        active: !!b, mode: b ? 'surface-carry' : 'free',
-        targetX: grabTargetX, targetY: grabTargetY,
-        solveX: grabTargetX, solveY: grabTargetY,
-        gap: 0, anchorError: error,
-        sessionTravel: b ? carrySessionTravel : carryLastTravel,
-        maxAnchorError: b ? carrySessionMaxError : carryLastMaxError,
-        lastReleaseSpeed: carryLastReleaseSpeed,
-        lastLaunchSpeed: carryLastLaunchSpeed,
-        lastLaunchSpin: carryLastLaunchSpin,
-        releaseVX: grabReleaseVX, releaseVY: grabReleaseVY,
-        body: b ? {
-          cx: b.cx, cy: b.cy, vx: b.vx || 0, vy: b.vy || 0,
-          left: b.bboxL, top: b.bboxT, right: b.bboxR, bottom: b.bboxB
-        } : null,
-        bodies: jelloBodies.map(function (body) {
-          return { cx: body.cx, cy: body.cy, left: body.bboxL, top: body.bboxT,
-                   right: body.bboxR, bottom: body.bboxB, melting: !!body._melting };
-        })
-      };
-    };
-  }
+    return { active: !!g, mode: g ? 'spring-grip' : 'free',
+      targetX: g ? g.x + g.dx : 0, targetY: g ? g.y + g.dy : 0,
+      patchX: x, patchY: y,
+      gap: g ? Math.hypot(g.x + g.dx - x, g.y + g.dy - y) : 0 };
+  };
 
   /* ---- Sleeping-droplet sweep -----------------------------------------
    * A particle that falls asleep while resting on a slime SKIPS
@@ -10401,7 +11388,7 @@
   function slimeRadius() { return Math.max(20, Math.min(46, brushR * 1.7)); }
 
   function toWorld(e) {
-    var rect = stage.getBoundingClientRect();
+    var rect = viewport.getBoundingClientRect();
     return {
       x: (e.clientX - rect.left) / fitScale,
       y: (e.clientY - rect.top) / fitScale
@@ -10411,7 +11398,7 @@
   var inputEl = document.getElementById('toy-input');
 
   inputEl.addEventListener('pointerdown', function (e) {
-    if (pointerDown || userPaused) return;
+    if (pointerDown) return;
     pointerDown = true;
     pointerId = e.pointerId;
     try { inputEl.setPointerCapture(e.pointerId); } catch (err) {}
@@ -10482,10 +11469,8 @@
       pts[k * 4 + 3] = vy;
     }
     pokeGuest = { x: px, y: py, hw: Math.min(34, R), hh: Math.min(34, R), pts: pts };
-    waterInputT = performance.now();   // v4.9 liveliness: poking is input
   }
 
-  var pointerSmokeAcc = 0, pointerSmokeAge = 0;
   function toolTick(dt) {
     updatePokeGuest();
     if (!pointerDown) return;
@@ -10501,14 +11486,13 @@
       spawnWaterJet(px, py, Math.max(6, brushR * 0.6),
         pvx * 0.35, pvy * 0.35 + 150 * gravMul, n);
     } else if (tool === 'smoke') {
-      // Use the same recipe for painted smoke and automatic exhaust.
-      pointerSmokeAcc = Math.min(0.1, pointerSmokeAcc + dt * timeMul);
-      while (pointerSmokeAcc >= SMOKE_EMITTER_DT) {
-        pointerSmokeAcc -= SMOKE_EMITTER_DT;
-        pointerSmokeAge += SMOKE_EMITTER_DT;
-        emitSmokeRecipe(px, py, 0, -1, pointerSmokeAge, 0,
-          0.25 + 0.75 * gravMul, Math.max(0.6, brushR / 16), 1, pvx * 0.28, pvy * 0.28);
-      }
+      // Pointer velocity carries the smoke (Pavel-style): world px/s maps
+      // to texel/s at ~0.28, and world +y (down) is UV -y (down).
+      var pulse = 0.6 + 0.4 * Math.sin(performance.now() * 0.0017);
+      smokePuff(px, py,
+        pvx * 0.28,
+        -pvy * 0.28 + 26 * pulse * (0.25 + 0.75 * gravMul),
+        SMOKE_COL, 0.010 * Math.max(0.6, brushR / 16));
     } else if (tool === 'poke') {
       jelloGrabTick(px, py);
       // A carried slime supplies its own surface velocity to the air.
@@ -10944,83 +11928,14 @@
     }
   }
   function presetApplySlime(name) {
-    presetSlimeSnapshot();
-    // Reset to boot, then layer.
-    presetSlimeBodyReset();
-    jelloApplyFeel(slimeSnap.feelIdx);
-    JELLO_PLASTICITY = slimeSnap.plas; JELLO_YIELD = slimeSnap.yield_;
-    JELLO_HARDEN = slimeSnap.harden; JELLO_SHEAR = slimeSnap.shear;
-    JELLO_SHEAR_CAP = slimeSnap.shearCap; JELLO_EDGE_STYLE = slimeSnap.edge;
-    JELLO_EDGE_FUZZ = slimeSnap.fuzz; JELLO_DAMPING = slimeSnap.damping;
-    JELLO_CONTACT_FRICTION = slimeSnap.fric;
-    if (name === 'oobleck') {
-      // Cornstarch slurry on the shipped-at-zero shear-thickening path:
-      // hits meet a solid, patience meets a liquid.
-      JELLO_E = 2; jelloRecomputeMaterial();
-      JELLO_XPBD_SHAPE = 0.002; JELLO_SHEAR = 0.6; JELLO_SHEAR_CAP = 3.0;
-    } else if (name === 'clay') {
-      // Pottery: throws leave permanent dents (the dormant plasticity
-      // axis), and dented bodies stack instead of sliding.
-      JELLO_E = 25; jelloRecomputeMaterial();
-      JELLO_XPBD_SHAPE = 0.02; JELLO_INT_DAMP = 35; JELLO_BOUNCE = 0.05;
-      JELLO_PLASTICITY = 0.35; JELLO_YIELD = 0.15; JELLO_HARDEN = 0.3;
-      JELLO_CONTACT_FRICTION = 0.9; JELLO_EDGE_STYLE = 0;
-    } else if (name === 'lava') {
-      JELLO_DAMPING = 0.9995;   // lazy waxy drift
-    }
-    // mood / jelly need no global physics change; the tick owns them.
-  }
-  function presetTickSlime(dt) {
-    var name = PRESET_ACTIVE.slime;
-    if (name === 'default') return;
-    var ts = (typeof JELLO_TIMESCALE === 'number') ? JELLO_TIMESCALE : 0.5;
+    SOFT_MATERIAL_COMPLIANCE = name === 'soft' ? 0.005 : name === 'firm' ? 0.0004 : 0.002;
+    SOFT_MATERIAL_VOLUME = name === 'soft' ? 0.003 : name === 'firm' ? 0.0008 : 0.002;
+    SOFT_MATERIAL_DAMP = name === 'soft' ? 5 : name === 'firm' ? 12 : 8;
     for (var i = 0; i < jelloBodies.length; i++) {
-      var b = jelloBodies[i];
-      if (!b || b.n <= 0) continue;
-      presetSlimeMark(b);
-      if (name === 'mood') {
-        // Live speedometer: asleep-blue at rest, lime mid, hot orange when
-        // flung, cooling back over about two seconds.
-        var spd = Math.hypot(b.vx || 0, b.vy || 0) * ts;
-        var t = Math.min(1, spd / 520);
-        var target = t < 0.5 ? 200 + (90 - 200) * (t * 2) : 90 + (18 - 90) * (t * 2 - 1);
-        var h0 = (typeof b.hue === 'number') ? b.hue : 200;
-        b.hue = h0 + (target - h0) * Math.min(1, 5 * dt);
-        b.sat = 1.1;
-      } else if (name === 'lava') {
-        // Every blob its own slow-cycling wax color, phase-offset so no
-        // two match; shimmer and lens up for the iridescent look.
-        if (b._pmPhase === undefined) b._pmPhase = (i * 47) % 360;
-        b._pmPhase += (6 + (i % 5) * 2.5) * dt;
-        b.hue = b._pmPhase % 360;
-        b.shimmer = 0.35; b.refract = 0.2; b.sat = 1.15;
-      } else if (name === 'oobleck') {
-        b.hue = 60; b.sat = 0.15; b.light = 0.3; b.alpha = 0.92;
-        b.refract = 0; b.shimmer = 0.05;
-      } else if (name === 'clay') {
-        b.hue = 20; b.sat = 0.75; b.light = 0.08; b.alpha = 0.95;
-        b.refract = 0; b.shimmer = 0;
-      } else if (name === 'jelly') {
-        // Aquarium bells: translucent, rim-lit, pulsing to swim. Each body
-        // contracts on its own clock and gets a small upward shove at the
-        // squeeze, so it climbs a little and sinks back.
-        if (b._pmPhase === undefined) b._pmPhase = Math.random() * Math.PI * 2;
-        b._pmPhase += dt * (1.1 + (i % 3) * 0.25);
-        var ph = b._pmPhase;
-        b.hue = 260 + (i * 25) % 80; b.alpha = 0.4; b.refract = 0.25;
-        b.shimmer = 0.4; b.light = 0.1; b.rim = 0.35; b.sat = 0.9;
-        var squeeze = Math.sin(ph);
-        try {
-          jelloSetActorIntent(b, {
-            poseX: 1 + 0.16 * squeeze, poseY: 1 - 0.20 * squeeze,
-            poseFollow: 6, wobble: 0.08, phaseSpeed: 0,
-            jump: (squeeze > 0.92 && Math.cos(ph) > 0) ? 150 : 0,
-            state: 'jelly'
-          });
-        } catch (e) {}
-      }
+      jelloBodies[i].sleeping = false; jelloBodies[i].sleepFrames = 0;
     }
   }
+  function presetTickSlime() {}
 
   function presetTick(dt) {
     presetClock += dt;
@@ -11039,189 +11954,15 @@
    * ------------------------------------------------------------------ */
   var lookNoiseCv = null, lookNoiseFrame = -9;
   var lookStripesCv = null, lookSnapCv = null;
-  function presetApplySlimeLook(name) { lookNoiseFrame = -9; }
-  function lookNoise() {
-    if (!lookNoiseCv) {
-      lookNoiseCv = document.createElement('canvas');
-      lookNoiseCv.width = 96; lookNoiseCv.height = 96;
-    }
-    if (toyFrameNo - lookNoiseFrame >= 4) {   // TV refresh, not per-frame
-      lookNoiseFrame = toyFrameNo;
-      var nctx = lookNoiseCv.getContext('2d');
-      var img = nctx.createImageData(96, 96);
-      var d = img.data;
-      for (var i = 0; i < d.length; i += 4) {
-        var v = (Math.random() * 255) | 0;
-        d[i] = v; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255;
-      }
-      nctx.putImageData(img, 0, 0);
-      // Scanlines: every third row darkened, the CRT read.
-      nctx.fillStyle = 'rgba(0,0,0,0.45)';
-      for (var y = 0; y < 96; y += 3) nctx.fillRect(0, y, 96, 1);
-    }
-    return lookNoiseCv;
-  }
-  function lookStripes() {
-    if (lookStripesCv) return lookStripesCv;
-    lookStripesCv = document.createElement('canvas');
-    lookStripesCv.width = 28; lookStripesCv.height = 28;
-    var sctx = lookStripesCv.getContext('2d');
-    sctx.fillStyle = '#fff';
-    sctx.fillRect(0, 0, 28, 28);
-    sctx.fillStyle = '#000';
-    sctx.beginPath();
-    sctx.moveTo(0, 0); sctx.lineTo(14, 0); sctx.lineTo(0, 14); sctx.closePath();
-    sctx.moveTo(28, 0); sctx.lineTo(28, 14); sctx.lineTo(14, 28);
-    sctx.lineTo(0, 28); sctx.closePath();
-    sctx.fill();
-    return lookStripesCv;
-  }
-  function slimeRingPath(b) {
-    var ring = b.ring, rn = b.ringN, px = b.px, py = b.py;
-    var p = new Path2D();
-    p.moveTo(px[ring[0]], py[ring[0]]);
-    for (var i = 1; i < rn; i++) p.lineTo(px[ring[i]], py[ring[i]]);
-    p.closePath();
-    return p;
-  }
-  function drawSlimeLooks() {
-    var look = PRESET_ACTIVE.slimeLook;
-    if (look === 'default') return;
-    if (look === 'portal') {
-      // One snapshot of the frame so far (walls + water shadows + bodies):
-      // every slime becomes a live monitor showing the whole stage. The
-      // next frame's snapshot contains this one, so deep in every slime
-      // the world tunnels away into itself.
-      if (!lookSnapCv) {
-        lookSnapCv = document.createElement('canvas');
-        lookSnapCv.width = Math.max(2, canvas.width >> 2);
-        lookSnapCv.height = Math.max(2, canvas.height >> 2);
-      }
-      var snctx = lookSnapCv.getContext('2d');
-      snctx.clearRect(0, 0, lookSnapCv.width, lookSnapCv.height);
-      snctx.drawImage(canvas, 0, 0, lookSnapCv.width, lookSnapCv.height);
-    }
-    var t = presetClock;
-    for (var bi = 0; bi < jelloBodies.length; bi++) {
-      var b = jelloBodies[bi];
-      if (!b || b.ringN < 3 || !b.ring) continue;
-      var bl = b.bboxL, br = b.bboxR, bt = b.bboxT, bb = b.bboxB;
-      if (!isFinite(bl + br + bt + bb)) continue;
-      var bw = br - bl, bh = bb - bt;
-      if (bw < 4 || bh < 4) continue;
-      var cx = (bl + br) / 2, cy = (bt + bb) / 2;
-      var ctx2 = ctx;
-      ctx2.save();
-      try {
-        ctx2.clip(slimeRingPath(b));
-        if (look === 'tiedye') {
-          // Spiral dye: a slowly rotating six-color wheel, 'color' keeps
-          // the engine's light so the swirl looks soaked in, not painted.
-          ctx2.globalCompositeOperation = 'color';
-          ctx2.globalAlpha = 0.9;
-          if (ctx2.createConicGradient) {
-            var g = ctx2.createConicGradient(t * 0.5 + bi, cx, cy);
-            var stops = ['#e5484d', '#f5a524', '#f2e34c', '#3dd68c', '#3c9eff', '#b662f0', '#e5484d'];
-            for (var s1 = 0; s1 < stops.length; s1++) g.addColorStop(s1 / 6, stops[s1]);
-            ctx2.fillStyle = g;
-          } else {
-            ctx2.fillStyle = 'hsl(' + ((t * 40 + bi * 60) % 360) + ' 80% 55%)';
-          }
-          ctx2.fillRect(bl, bt, bw, bh);
-          // The white spiral core every tie-dye has.
-          ctx2.globalCompositeOperation = 'overlay';
-          ctx2.globalAlpha = 0.5;
-          var rg = ctx2.createRadialGradient(cx, cy, 1, cx, cy, Math.max(bw, bh) * 0.5);
-          rg.addColorStop(0, 'rgba(255,255,255,0.9)');
-          rg.addColorStop(0.35, 'rgba(255,255,255,0)');
-          ctx2.fillStyle = rg;
-          ctx2.fillRect(bl, bt, bw, bh);
-        } else if (look === 'static') {
-          // Dead channel: rolling TV snow with scanlines.
-          ctx2.globalCompositeOperation = 'overlay';
-          ctx2.globalAlpha = 0.6;
-          ctx2.drawImage(lookNoise(), bl, bt, bw, bh);
-        } else if (look === 'zebra') {
-          // Marching diagonal stripes.
-          ctx2.globalCompositeOperation = 'overlay';
-          ctx2.globalAlpha = 0.55;
-          var pat = ctx2.createPattern(lookStripes(), 'repeat');
-          ctx2.translate((t * 26) % 28, 0);
-          ctx2.fillStyle = pat;
-          ctx2.fillRect(bl - 28, bt, bw + 56, bh);
-        } else if (look === 'galaxy') {
-          // A nebula inside: dark space, one colored cloud, seeded stars
-          // that twinkle on their own clocks.
-          ctx2.globalCompositeOperation = 'multiply';
-          ctx2.globalAlpha = 0.85;
-          ctx2.fillStyle = '#141230';
-          ctx2.fillRect(bl, bt, bw, bh);
-          ctx2.globalCompositeOperation = 'lighter';
-          var ng = ctx2.createRadialGradient(
-            cx + Math.sin(t * 0.3 + bi) * bw * 0.2, cy, 1, cx, cy, Math.max(bw, bh) * 0.45);
-          ng.addColorStop(0, 'rgba(120,80,220,0.35)');
-          ng.addColorStop(1, 'rgba(0,0,0,0)');
-          ctx2.fillStyle = ng;
-          ctx2.fillRect(bl, bt, bw, bh);
-          for (var st = 0; st < 14; st++) {
-            var sx = bl + ((Math.sin(bi * 131 + st * 37.7) * 0.5 + 0.5) * bw);
-            var sy = bt + ((Math.sin(bi * 57 + st * 91.3) * 0.5 + 0.5) * bh);
-            var tw = 0.25 + 0.75 * Math.abs(Math.sin(t * (1.2 + st * 0.23) + st));
-            ctx2.globalAlpha = tw;
-            ctx2.fillStyle = st % 4 ? '#fff' : '#ffd9a0';
-            ctx2.fillRect(sx, sy, st % 3 ? 1.2 : 2, st % 3 ? 1.2 : 2);
-          }
-        } else if (look === 'portal') {
-          ctx2.globalAlpha = 0.9;
-          ctx2.drawImage(lookSnapCv, bl, bt, bw, bh);
-          var vg = ctx2.createRadialGradient(cx, cy, Math.min(bw, bh) * 0.25, cx, cy, Math.max(bw, bh) * 0.6);
-          vg.addColorStop(0, 'rgba(0,0,0,0)');
-          vg.addColorStop(1, 'rgba(10,20,14,0.75)');
-          ctx2.fillStyle = vg;
-          ctx2.fillRect(bl, bt, bw, bh);
-        } else if (look === 'eyes') {
-          // A googly eye that follows the pointer.
-          var er = Math.min(bw, bh) * 0.30;
-          var dxp = px - cx, dyp = py - cy;
-          var dl = Math.hypot(dxp, dyp) || 1;
-          var off = Math.min(er * 0.38, dl * 0.1);
-          ctx2.globalAlpha = 0.95;
-          ctx2.fillStyle = '#f4f1e8';
-          ctx2.beginPath(); ctx2.arc(cx, cy, er, 0, 6.2832); ctx2.fill();
-          ctx2.fillStyle = 'hsl(' + (((b.hue || 160) + 180) % 360) + ' 55% 45%)';
-          ctx2.beginPath(); ctx2.arc(cx + dxp / dl * off, cy + dyp / dl * off, er * 0.55, 0, 6.2832); ctx2.fill();
-          ctx2.fillStyle = '#181d18';
-          ctx2.beginPath(); ctx2.arc(cx + dxp / dl * off * 1.25, cy + dyp / dl * off * 1.25, er * 0.28, 0, 6.2832); ctx2.fill();
-          ctx2.globalAlpha = 0.8; ctx2.fillStyle = '#fff';
-          ctx2.beginPath(); ctx2.arc(cx - er * 0.2, cy - er * 0.25, er * 0.12, 0, 6.2832); ctx2.fill();
-        } else if (look === 'holo') {
-          // Holographic foil: a rotating pastel wheel burned in with
-          // color-dodge plus a sheen band sweeping through.
-          ctx2.globalCompositeOperation = 'color-dodge';
-          ctx2.globalAlpha = 0.33;
-          if (ctx2.createConicGradient) {
-            var hg = ctx2.createConicGradient(-t * 0.8 + bi * 2, cx, cy);
-            var hs = ['#ff9ecb', '#9effd0', '#9ec8ff', '#f0e6a0', '#d0a0ff', '#ff9ecb'];
-            for (var s2 = 0; s2 < hs.length; s2++) hg.addColorStop(s2 / 5, hs[s2]);
-            ctx2.fillStyle = hg;
-          } else {
-            ctx2.fillStyle = '#c8c2ff';
-          }
-          ctx2.fillRect(bl, bt, bw, bh);
-          var bandX = bl + ((t * 60 + bi * 40) % (bw + 80)) - 40;
-          var lg = ctx2.createLinearGradient(bandX, 0, bandX + 34, 0);
-          lg.addColorStop(0, 'rgba(255,255,255,0)');
-          lg.addColorStop(0.5, 'rgba(255,255,255,0.55)');
-          lg.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx2.globalCompositeOperation = 'overlay';
-          ctx2.globalAlpha = 0.7;
-          ctx2.fillStyle = lg;
-          ctx2.fillRect(bl, bt, bw, bh);
-        }
-      } catch (e) {}
-      ctx2.restore();
+  function presetApplySlimeLook(name) {
+    var hues = { honey: 38, rose: 335, ink: 215 };
+    for (var i = 0; i < jelloBodies.length; i++) {
+      var b = jelloBodies[i];
+      b.hue = hues[name] === undefined ? b._toyHue : hues[name];
+      b.surfaceSlime.hue = b.hue;
     }
   }
+  function drawSlimeLooks() {}
 
   /* ---- chips ---- */
   var PRESET_GROUPS = [
@@ -11229,8 +11970,8 @@
     { sys: 'waterLook', label: 'water look', names: ['default', 'pearl', 'abyss', 'toxic', 'wine', 'chrome', 'candy'] },
     { sys: 'smoke', label: 'smoke', names: window.SmokePresets.recipes.map(function (p) { return p.id; }) },
     { sys: 'smokeScale', label: 'smoke size', names: ['default', 'billow', 'tower', 'flood', 'chill', 'frenzy'] },
-    { sys: 'slime', label: 'slime', names: ['default', 'mood', 'lava', 'oobleck', 'clay', 'jelly'] },
-    { sys: 'slimeLook', label: 'slime look', names: ['default', 'tiedye', 'static', 'zebra', 'galaxy', 'portal', 'eyes', 'holo'] }
+    { sys: 'slime', label: 'slime', names: ['default', 'soft', 'firm'] },
+    { sys: 'slimeLook', label: 'slime look', names: ['default', 'honey', 'rose', 'ink'] }
   ];
   function presetSyncChips() {
     var chips = document.querySelectorAll('#toy-bar [data-preset]');
@@ -11731,18 +12472,7 @@
     readoutEl.setAttribute('data-grab-active', carryData && carryData.active ? 'true' : 'false');
     readoutEl.setAttribute('data-grab-mode', carryData ? carryData.mode : 'free');
     readoutEl.setAttribute('data-grab-cursor-gap', carryData ? carryData.gap.toFixed(3) : '0');
-    readoutEl.setAttribute('data-grab-anchor-error', carryData ? carryData.anchorError.toFixed(3) : '0');
-    readoutEl.setAttribute('data-grab-release-speed', carryData
-      ? (carryData.active
-        ? Math.hypot(carryData.releaseVX, carryData.releaseVY)
-        : carryData.lastReleaseSpeed).toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-launch-speed', carryData
-      ? carryData.lastLaunchSpeed.toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-launch-spin', carryData
-      ? carryData.lastLaunchSpin.toFixed(3) : '0');
-    readoutEl.setAttribute('data-grab-travel', carryData ? carryData.sessionTravel.toFixed(2) : '0');
-    readoutEl.setAttribute('data-grab-max-anchor-error', carryData
-      ? carryData.maxAnchorError.toFixed(4) : '0');
+
   }
 
   function frame(tNow) {
@@ -11811,7 +12541,17 @@
     else startLoop();
   }
 
-  document.addEventListener('visibilitychange', syncRunning);
+  function cancelHeldInput() {
+    if (!pointerDown) return;
+    slimeGhost = null;
+    try { inputEl.releasePointerCapture(pointerId); } catch (e) {}
+    releasePointer({ pointerId: pointerId });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) cancelHeldInput();
+    syncRunning();
+  });
+  window.addEventListener('blur', cancelHeldInput);
   if (typeof IntersectionObserver !== 'undefined') {
     var io = new IntersectionObserver(function (entries) {
       for (var i = 0; i < entries.length; i++) visibleFrac = entries[i].intersectionRatio;
@@ -11822,7 +12562,13 @@
 
   function onEnginesSettled() {
     var chip = document.getElementById('toy-nowater');
-    if (chip) chip.hidden = waterState !== 'off';
+    if (chip) {
+      chip.hidden = waterState !== 'off' && smokeActive;
+      if (waterState === 'off') chip.textContent = smokeActive
+        ? 'Water needs WebGPU, which isn’t available here. Smoke and slime still work.'
+        : 'Water and smoke aren’t available here. You can still stretch, drop, and stack the slime.';
+      else if (!smokeActive) chip.textContent = 'Smoke needs WebGL, which isn’t available here. Water and slime still work.';
+    }
     var wbtn = document.querySelector('#toy-bar [data-tool="water"]');
     if (wbtn && waterState === 'off') wbtn.classList.add('is-dead');
     var pbtn = document.getElementById('toy-particles');
@@ -11837,39 +12583,20 @@
   // ---- Boot ------------------------------------------------------------
   function boot() {
     readoutEl = document.getElementById('toy-readout');
-    var webgl = false;
-    try {
-      var probe = document.createElement('canvas');
-      webgl = !!(probe.getContext('webgl2') || probe.getContext('webgl'));
-    } catch (e) {}
-    if (!webgl && !(navigator.gpu && window.isSecureContext)) {
-      var fb = document.getElementById('toy-fallback');
-      if (fb) fb.hidden = false;
-      document.querySelectorAll('[data-toy-controls]').forEach(function (control) { control.hidden = true; });
-      fitStage();
-      return;
-    }
     addBorder();
     bootLiquid();
     bootSmoke();
     wireUI();
     var smokeQuery = new URLSearchParams(location.search);
     var smokeName = smokeQuery.get('smoke');
-    scene(smokeQuery.get('scene') === 'rig' || window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
+    var initialScene = smokeQuery.get('scene');
+    var knownScenes = ['falls', 'zerog', 'chimney', 'spa', 'rig', 'blank'];
+    scene(knownScenes.indexOf(initialScene) >= 0 ? initialScene : window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
     presetSet('smoke', window.SmokePresets.byId[smokeName] ? smokeName : 'copperhead');
     if (Object.prototype.hasOwnProperty.call(SMOKE_SCALES, smokeQuery.get('scale'))) presetSet('smokeScale', smokeQuery.get('scale'));
     ['mass', 'motion', 'size'].forEach(function (key) {
       if (smokeQuery.has(key)) window.__toy.smokeTune(key, smokeQuery.get(key));
     });
-    // Opt-in browser probe for the public actor-intent seam. It deliberately
-    // speaks only in whole-body motion and pose, never solver topology.
-    if (location.search.indexOf('actortest=1') >= 0 && jelloBodies[2]) {
-      jelloSetActorIntent(jelloBodies[2], {
-        moveX: 1, speed: 150, accel: 1100,
-        poseX: 1.12, poseY: 0.9, poseFollow: 9,
-        wobble: 0.07, phaseSpeed: 5, state: 'browser-test'
-      });
-    }
     if (location.search.indexOf('flingtest=1') >= 0 && jelloBodies[2]) {
       jelloLaunchBody(jelloBodies[2], 520, -420, {
         blend: 0.92, maxSpeed: 1400, maxPointSpeed: 1600, omega: 3.5
@@ -11885,6 +12612,52 @@
         'pulled from the Sluice mining game on this site. View source, it is all here.');
     } catch (e) {}
   }
+
+  /* The same finite spring grip as Sluice, adapted to the demo's pointer. */
+  function jelloGrabStart(wx, wy) {
+    jelloGrabEnd();
+    for (var i = jelloBodies.length - 1; i >= 0; i--) {
+      var b = jelloBodies[i];
+      if (!jelloPointInRing(b, wx, wy)) continue;
+      var nearest = 0, distance = Infinity;
+      for (var k = 0; k < b.n; k++) {
+        var d = Math.hypot(b.px[k] - wx, b.py[k] - wy);
+        if (d < distance) { distance = d; nearest = k; }
+      }
+      var weights = new Float64Array(b.n), total = 0, x = 0, y = 0;
+      for (k = 0; k < b.n; k++) {
+        weights[k] = Math.exp(-Math.pow(Math.hypot(b.rx[k] - b.rx[nearest], b.ry[k] - b.ry[nearest]) / 16, 2));
+        total += weights[k];
+      }
+      for (k = 0; k < b.n; k++) { weights[k] /= total; x += b.px[k] * weights[k]; y += b.py[k] * weights[k]; }
+      surfaceSlimeGrip = { body: b, weights: weights, x: wx, y: wy, dx: x - wx, dy: y - wy };
+      softHandlingStart(surfaceSlimeGrip);
+      grabBody = b;
+      b._grabbed = true; b._carried = false; b._recoverT = 0;
+      b.sleeping = false; b.sleepFrames = 0;
+      return true;
+    }
+    return false;
+  }
+  function jelloGrabTick(wx, wy) {
+    if (!surfaceSlimeGrip) return;
+    surfaceSlimeGrip.x = wx; surfaceSlimeGrip.y = wy;
+    surfaceSlimeGrip.body.sleeping = false; surfaceSlimeGrip.body.sleepFrames = 0;
+  }
+  function jelloGrabSubstep(b, h) {
+    if (surfaceSlimeGrip && surfaceSlimeGrip.body === b && b._grabbed) softHandlingStep(b, h);
+  }
+  function jelloDrivePostSubstep() {}
+  function jelloGrabEnd() {
+    if (surfaceSlimeGrip) {
+      var b = surfaceSlimeGrip.body;
+      b._grabbed = false; b._carried = false; b._grabApplied = 0; b._recoverT = 0;
+      b.sleeping = false; b.sleepFrames = 0;
+      surfaceSlimeSnapshot(b);
+    }
+    surfaceSlimeGrip = null; grabBody = null;
+  }
+  function surfaceSlimeGrabEnd() { jelloGrabEnd(); }
 
   // Headless-harness + curious-console export.
   try {
@@ -11962,22 +12735,12 @@
       },
       liquid: function () { return liquidWGPU; },
       bodies: function () { return jelloBodies; },
-      actor: function (i, intent) {
-        var b = jelloBodies[i];
-        return b ? jelloSetActorIntent(b, intent) : null;
-      },
       fling: function (i, vx, vy, omega) {
         var b = jelloBodies[i];
         return b ? jelloLaunchBody(b, vx, vy, {
           blend: 0.92, maxSpeed: 1400, maxPointSpeed: 1600,
           omega: omega || 0, maxOmega: 7
         }) : null;
-      },
-      clearActor: function (i) {
-        var b = jelloBodies[i];
-        if (!b) return false;
-        jelloClearActorIntent(b);
-        return true;
       },
       smoke: function () {
         return { fluid: SmokeFluid, awake: smokeAwakeT, active: smokeActive,
@@ -11998,14 +12761,6 @@
         setTimeout(function () { pokeGuest = null; }, ms || 400);
       },
       mirror: function (i) { return { x: liquidX[i], y: liquidY[i], sleeping: liquidSleeping[i] }; },
-      fling: function (bi2, fvx, fvy) {
-        var b = jelloBodies[bi2]; if (!b) return false;
-        var ts2 = (typeof JELLO_TIMESCALE === 'number' && JELLO_TIMESCALE >= 0.02) ? JELLO_TIMESCALE : 0.5;
-        var kk = JELLO_H / ts2;
-        for (var p2 = 0; p2 < b.n; p2++) { b.ox[p2] -= fvx * kk; b.oy[p2] -= fvy * kk; }
-        b.sleeping = false; b.sleepFrames = 0;
-        return true;
-      },
       couple: function (wx, wy) {
         var gx = wx / TILE - 0.5, gy = wy / TILE - 0.5;
         var cc = Math.floor(gx), rr = Math.floor(gy);
