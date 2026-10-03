@@ -169,6 +169,18 @@ in the download but displays as unreported depth; it is not used as a measuremen
 
 ## Municipal pipe snapshots and model distinctions
 
+The 18 complete municipal exports use deterministic `.json.gz` files. Decoding
+preserves the exact original GeoJSON bytes, including every native field and
+coordinate. The registry records compressed and decoded SHA256 hashes and sizes.
+Together they occupy 14,489,092 bytes instead of 120,695,707 bytes, an 88 percent
+reduction. This is compression, without geometry simplification or record removal.
+
+The browser prefers native `DecompressionStream` and accepts responses a server
+has already decoded. Older browsers load the self-hosted, unmodified fflate 0.8.3
+decoder only when needed. Its MIT license, package integrity and upstream tag are
+retained in `assets/map/vendor/`. A failed decoder request can retry through the
+same layer control as a failed dataset. Downloads retain the explicit gzip format.
+
 [Maplewood's anonymous city service](https://gis.maplewoodmn.gov/arcgis/rest/services/PublicWorks/Cartegraph_MS/MapServer)
 publishes sanitary gravity pipes, force mains and storm pipes. The sanitary source
 includes 1,509 MCES records, so these counts do not represent additional unique
@@ -293,6 +305,10 @@ The catalog does not assign a precise flight year to an individual crop when the
 service has not supplied one. Existing imagery and photographs retain their source
 colors.
 
+Well reference links follow reported use: exploration and elevator borings,
+monitoring wells, piezometers and heat-pump wells have distinct labels. Unknown
+uses remain well or borehole records, rather than assumed water-supply wells.
+
 ## Address navigation
 
 `under-locate.js` submits searches to the Metropolitan Council's anonymous
@@ -348,10 +364,12 @@ node tools/under-street/test-explorer.cjs
 node tools/under-street/test-explorer-deep.cjs
 node tools/under-street/test-locator.cjs
 node tools/under-street/test-map-context.cjs
+node tools/under-street/test-compression.cjs
 ```
 
 They cover the opening, all 66 layer selections, exact record coordinates and IDs,
 source/type links, complete fact disclosure, tiles and offscreen bookmarks,
+direct shared-link landing and visible map/detail transitions,
 keyboard model inspection, data/catalog/imagery retries, phone layouts and
 address matching and local result browsing after city or address navigation. Address cases use controlled responses plus one live civic
 query to check browser CORS and the source schema. The harness uses an installed Playwright package or the bundled Codex runtime.
@@ -362,6 +380,11 @@ and confirms that selected-record inspection and exact shared coordinates surviv
 cache cleanup. It checks lazy street loading below zoom 13.2, actual source street
 names, and explicit retries after an index or tile returns HTTP 503.
 
+The compression check exercises complete records through native decoding, the
+lazy fallback, an already decoded server response, corrupt-data retry and failed
+decoder loading. The offline check also compares the fallback's decoded bytes
+against the standard-library decoder for all 18 municipal files.
+
 `UNDER_MAP_PLAYWRIGHT` and `UNDER_MAP_CHROME` can select another test installation;
 the owner's personal Chrome application is rejected. The browser closes in a
 `finally` block. Test outputs default to `/tmp/under-street-*`.
@@ -371,7 +394,15 @@ The municipal acquisition defaults to scratch:
 ```sh
 python3 tools/under-street/acquire-municipal.py
 python3 tools/under-street/acquire-municipal.py --publish --from-review
+python3 tools/under-street/compress-municipal.py
 ```
+
+Acquisition packages final municipal exports automatically; grouped Eagan scratch
+components stay plain JSON until combined. The separate compression command checks
+recorded hashes, packages reviewed plain exports and validates already compressed
+ones without changing them. It refuses to delete a plain export whose bytes have
+changed. Use `--assets /path/to/reviewed --manifest municipal-manifest.json` for a
+review directory.
 
 Named road context has its own standard-library acquisition. A fresh directory
 produces a new snapshot; an existing staging directory resumes cached batches and

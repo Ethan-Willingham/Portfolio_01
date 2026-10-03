@@ -15,6 +15,8 @@ const zlib = require('node:zlib');
 
 const root = path.resolve(__dirname, '../..');
 const mapRoot = path.join(root, 'archive/under-the-street/assets/map');
+const fallbackGzip = require(path.join(mapRoot, 'vendor/fflate-0.8.3.min.js'));
+assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(mapRoot, 'vendor/fflate-0.8.3.min.js'))).digest('hex'), '462ef8041fc970e3615a20a9dd2b2e3047a073b2da729ef4f02b634bba8b7b83', 'Pinned unmodified fallback decoder');
 const adapterFile = path.join(root, 'archive/under-the-street/under-data.js');
 const manifest = readJSON('datasets.json');
 const media = readJSON('media.json');
@@ -107,6 +109,7 @@ for (const entry of manifest.datasets) {
       assert.equal(bytes[3]&8,0,'Deterministic gzip has no machine-specific filename');
       assert.equal(decoded.length,entry.uncompressedBytes,'Complete decoded byte size');
       assert.equal(crypto.createHash('sha256').update(decoded).digest('hex'),entry.uncompressedSha256,'Complete decoded SHA256');
+      if (entry.file.startsWith('data/municipal/')) assert.ok(Buffer.from(fallbackGzip.gunzipSync(bytes)).equals(decoded), 'Older-browser decoder preserves every municipal export byte');
     }
     const exportData = JSON.parse(decoded);
     const layer = configuredByFile.get(entry.file);
@@ -357,6 +360,13 @@ check('Water-facility tags do not establish treatment', () => {
   assert.equal(data.name(feature('waterworks',{man_made:'water_works'})),'Mapped water facility','Unnamed generic record is not called a drinking-water plant');
   assert.match(data.typeInfo(feature('waterworks',{})).description,/does not establish treatment/);
   assert.equal(data.typeInfo(feature('eaganFiberCable',{})).wiki,'https://en.wikipedia.org/wiki/Optical_fiber_cable');
+  assert.equal(data.typeInfo(feature('wells',{u:'EB'})).label,'Exploration boring record');
+  assert.equal(data.typeInfo(feature('wells',{u:'EB'})).wiki,'https://en.wikipedia.org/wiki/Borehole');
+  assert.equal(data.typeInfo(feature('wells',{u:'PZ'})).wiki,'https://en.wikipedia.org/wiki/Hydraulic_head');
+  assert.equal(data.typeInfo(feature('wells',{u:'MW'})).label,'Monitoring well record');
+  assert.equal(data.typeInfo(feature('wells',{u:'HP'})).wiki,'https://en.wikipedia.org/wiki/Ground_source_heat_pump');
+  assert.equal(data.typeInfo(feature('wells',{u:'DO'})).label,'Recorded water well');
+  assert.equal(data.typeInfo(feature('wells',{u:'UN'})).label,'Recorded well or borehole');
 });
 
 check('Water inventory interpretations and missing values', () => {

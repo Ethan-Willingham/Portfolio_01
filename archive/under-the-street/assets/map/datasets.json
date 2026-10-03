@@ -7583,8 +7583,8 @@
     {
       "id": "maplewood-sanitary",
       "title": "Maplewood-area sanitary gravity pipe inventory",
-      "file": "data/municipal/maplewood-sanitary.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/maplewood-sanitary.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 6316,
       "sourceFeatureCount": 6316,
       "bounds": [
@@ -7924,14 +7924,17 @@
       "municipality": "Maplewood",
       "conduitRole": "sanitary",
       "latestRecordEdit": "2026-09-30T18:20:42+00:00",
-      "bytes": 2459890,
-      "sha256": "b449a46c31da8b434aaedb4cb6c1e4b86b34b01c9fda05575a92b02d01c206c9"
+      "bytes": 247814,
+      "sha256": "e0266a8b1bc299dee66de9a4c7097e9bd90774a0096695f2d36c66ed3157ad60",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 2459890,
+      "uncompressedSha256": "b449a46c31da8b434aaedb4cb6c1e4b86b34b01c9fda05575a92b02d01c206c9"
     },
     {
       "id": "maplewood-force",
       "title": "Maplewood-area sanitary force-main inventory",
-      "file": "data/municipal/maplewood-force.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/maplewood-force.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 83,
       "sourceFeatureCount": 83,
       "bounds": [
@@ -8058,14 +8061,17 @@
       "municipality": "Maplewood",
       "conduitRole": "force",
       "latestRecordEdit": "2025-02-14T06:26:38+00:00",
-      "bytes": 31110,
-      "sha256": "7ff359ac5785c9cab8b0c6bc4a3424a6d6fe179051f16756c49ce328ed87ff78"
+      "bytes": 3576,
+      "sha256": "1a518e85266d93e74165c62b36460961550bf50b985b61ce257d8dfbabb39867",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 31110,
+      "uncompressedSha256": "7ff359ac5785c9cab8b0c6bc4a3424a6d6fe179051f16756c49ce328ed87ff78"
     },
     {
       "id": "maplewood-storm",
       "title": "Maplewood-area storm pipe inventory",
-      "file": "data/municipal/maplewood-storm.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/maplewood-storm.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 12740,
       "sourceFeatureCount": 12740,
       "bounds": [
@@ -8461,14 +8467,17 @@
       "municipality": "Maplewood",
       "conduitRole": "storm",
       "latestRecordEdit": "2026-10-02T14:01:29+00:00",
-      "bytes": 4524580,
-      "sha256": "e44989405ba97df7be07ba6093467168156f79d05c16a7e758651d4bb1bdcda2"
+      "bytes": 379570,
+      "sha256": "a16096ce8b39429e2fc9fbb92f492378cd062346333835be0f66d65f527013cb",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 4524580,
+      "uncompressedSha256": "e44989405ba97df7be07ba6093467168156f79d05c16a7e758651d4bb1bdcda2"
     },
     {
       "id": "mwmo-north-model",
       "title": "MWMO North Minneapolis stormwater-model pipe conduits",
-      "file": "data/municipal/mwmo-north-model.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/mwmo-north-model.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 6659,
       "sourceFeatureCount": 6659,
       "bounds": [
@@ -8740,14 +8749,17 @@
       "municipality": "North Minneapolis model area",
       "conduitRole": "model",
       "latestRecordEdit": null,
-      "bytes": 6365650,
-      "sha256": "7403d828d9dd7cf74828a36f82da70cfa90cd4cb4ab469a696c38657af97bd6a"
+      "bytes": 492211,
+      "sha256": "5e831b3d3b5e0c8a9b68884ca1f9a9e92573e36d60d4390cc3ad1b088ceb67c1",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 6365650,
+      "uncompressedSha256": "7403d828d9dd7cf74828a36f82da70cfa90cd4cb4ab469a696c38657af97bd6a"
     },
     {
       "id": "bloomington-water",
       "title": "Bloomington-area water mains",
-      "file": "data/municipal/bloomington-water.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-water.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 11704,
       "sourceFeatureCount": 11704,
       "bounds": [
@@ -9288,14 +9300,17 @@
       "municipality": "Bloomington",
       "conduitRole": "water",
       "latestRecordEdit": "2026-09-29T15:07:57+00:00",
-      "bytes": 11301775,
-      "sha256": "2aa8decc511869e637104db06971e3109de2704852447194f06b1e7c24f6d325"
+      "bytes": 1527964,
+      "sha256": "0b0c955f1f38ef2de63a9f1f4f2b0f432050de4b24cc29e1afb34dbc9bf3a3ec",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 11301775,
+      "uncompressedSha256": "2aa8decc511869e637104db06971e3109de2704852447194f06b1e7c24f6d325"
     },
     {
       "id": "bloomington-services",
       "title": "Bloomington-area water service alignments",
-      "file": "data/municipal/bloomington-services.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-services.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 30511,
       "sourceFeatureCount": 30511,
       "bounds": [
@@ -9708,14 +9723,17 @@
       "municipality": "Bloomington",
       "conduitRole": "service",
       "latestRecordEdit": "2026-09-25T17:44:47+00:00",
-      "bytes": 16278567,
-      "sha256": "f6d8017a86fa1161de67e90371b54617065cfae511d4b7c5960126d9fa1de095"
+      "bytes": 1886929,
+      "sha256": "79ed560dfe62c6110272123b3da1890b882b626cefc0e34fd7b69f794b113c79",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 16278567,
+      "uncompressedSha256": "f6d8017a86fa1161de67e90371b54617065cfae511d4b7c5960126d9fa1de095"
     },
     {
       "id": "bloomington-sanitary",
       "title": "Bloomington-area sanitary pipe inventory",
-      "file": "data/municipal/bloomington-sanitary.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-sanitary.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 8215,
       "sourceFeatureCount": 8215,
       "bounds": [
@@ -10382,14 +10400,17 @@
       "municipality": "Bloomington",
       "conduitRole": "sanitary",
       "latestRecordEdit": "2026-09-24T15:36:35+00:00",
-      "bytes": 10227548,
-      "sha256": "1a0d4109d6890a78ed832b5fda8e98d39244d4921c96a54a86b741bed370e653"
+      "bytes": 1446524,
+      "sha256": "1aa96bc32e298334784ce6ac632ca632329764a8f07022f4a32394e4a489bcb2",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 10227548,
+      "uncompressedSha256": "1a0d4109d6890a78ed832b5fda8e98d39244d4921c96a54a86b741bed370e653"
     },
     {
       "id": "bloomington-storm",
       "title": "Bloomington-area storm sewer pipe inventory",
-      "file": "data/municipal/bloomington-storm.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-storm.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 20533,
       "sourceFeatureCount": 20533,
       "bounds": [
@@ -10805,14 +10826,17 @@
       "municipality": "Bloomington",
       "conduitRole": "storm",
       "latestRecordEdit": "2026-10-01T19:25:41+00:00",
-      "bytes": 14458421,
-      "sha256": "45f1e9f26ed72d681b7d0411bd343e94a387934e1266c5d4afb1928fc2cb4355"
+      "bytes": 1765769,
+      "sha256": "2733d273af682a39458041b83e4ced1981b92e3eb0f3c593d1fe3379d327b711",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 14458421,
+      "uncompressedSha256": "45f1e9f26ed72d681b7d0411bd343e94a387934e1266c5d4afb1928fc2cb4355"
     },
     {
       "id": "bloomington-private-storm",
       "title": "Bloomington private storm pipe inventory",
-      "file": "data/municipal/bloomington-private-storm.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-private-storm.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 7354,
       "sourceFeatureCount": 7354,
       "bounds": [
@@ -10987,14 +11011,17 @@
       "municipality": "Bloomington",
       "conduitRole": "privateStorm",
       "latestRecordEdit": "2026-09-22T23:03:13+00:00",
-      "bytes": 2976610,
-      "sha256": "062c5144f16c76443da43a4f52dab39f644a02ad0dc969fb81b6d981f261f61b"
+      "bytes": 428171,
+      "sha256": "2d0b934f9205e27de8cc3ccdcb16bcc560e999b1b1e54a16ddfa4dcfb837242c",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 2976610,
+      "uncompressedSha256": "062c5144f16c76443da43a4f52dab39f644a02ad0dc969fb81b6d981f261f61b"
     },
     {
       "id": "bloomington-culverts",
       "title": "Bloomington-area storm culverts",
-      "file": "data/municipal/bloomington-culverts.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-culverts.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 123,
       "sourceFeatureCount": 123,
       "bounds": [
@@ -11290,14 +11317,17 @@
       "municipality": "Bloomington",
       "conduitRole": "culvert",
       "latestRecordEdit": "2026-04-30T17:34:38+00:00",
-      "bytes": 70014,
-      "sha256": "f3c11fd1c89bb933cd296062b894e46915be860f6ecfc540ebe4a0e80b676217"
+      "bytes": 10289,
+      "sha256": "449ed3a9f4ed49b182395bd1fb1cda39f8dd34c770a31069fc1c9099dd4c909a",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 70014,
+      "uncompressedSha256": "f3c11fd1c89bb933cd296062b894e46915be860f6ecfc540ebe4a0e80b676217"
     },
     {
       "id": "bloomington-drain-tile",
       "title": "Bloomington storm drain-tile inventory",
-      "file": "data/municipal/bloomington-drain-tile.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-drain-tile.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 861,
       "sourceFeatureCount": 861,
       "bounds": [
@@ -11409,14 +11439,17 @@
       "municipality": "Bloomington",
       "conduitRole": "drainTile",
       "latestRecordEdit": "2026-09-29T23:28:28+00:00",
-      "bytes": 400865,
-      "sha256": "94126c65b4bb858ed41dc765c65a00bb34259167b627b14aa39a3eeb388c29db"
+      "bytes": 65819,
+      "sha256": "b376344139ed5be5117386e085b98eb50feea61ba4f07d0317282deaf1c9d65d",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 400865,
+      "uncompressedSha256": "94126c65b4bb858ed41dc765c65a00bb34259167b627b14aa39a3eeb388c29db"
     },
     {
       "id": "bloomington-conduit",
       "title": "Bloomington city underground conduit inventory",
-      "file": "data/municipal/bloomington-conduit.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/bloomington-conduit.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 1199,
       "sourceFeatureCount": 1199,
       "bounds": [
@@ -11495,14 +11528,17 @@
       "municipality": "Bloomington",
       "conduitRole": "conduit",
       "latestRecordEdit": null,
-      "bytes": 649727,
-      "sha256": "fcee71562ee1cc41e960092f2e4dbffac76bdb6e81c5c6b4c276d853d789b111"
+      "bytes": 103021,
+      "sha256": "a7c21b660a4bc16e35f8fdb0d4b0f24e7bfc2a8c07a0476f0bc2ee8a864ece0a",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 649727,
+      "uncompressedSha256": "fcee71562ee1cc41e960092f2e4dbffac76bdb6e81c5c6b4c276d853d789b111"
     },
     {
       "id": "eagan-water",
       "title": "Eagan-area pressurized water mains",
-      "file": "data/municipal/eagan-water.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/eagan-water.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 14163,
       "sourceFeatureCount": 14163,
       "bounds": [
@@ -12545,14 +12581,17 @@
           "Measurement units are unspecified unless explicitly recorded in the field definitions."
         ]
       },
-      "bytes": 9928189,
-      "sha256": "770df1df423d3d1dd13a936cdd0ebaf2332e05876c1e6db4cbb09b3b3c268fe7"
+      "bytes": 1227238,
+      "sha256": "577a78cbdfcc7e41e253811ff141758e4158a419d5660f6a8c19af4c924b0b0d",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 9928189,
+      "uncompressedSha256": "770df1df423d3d1dd13a936cdd0ebaf2332e05876c1e6db4cbb09b3b3c268fe7"
     },
     {
       "id": "eagan-services",
       "title": "Eagan-area water lateral lines",
-      "file": "data/municipal/eagan-services.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/eagan-services.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 22114,
       "sourceFeatureCount": 22114,
       "bounds": [
@@ -13430,14 +13469,17 @@
           "Measurement units are unspecified unless explicitly recorded in the field definitions."
         ]
       },
-      "bytes": 13269513,
-      "sha256": "c4af2b6dfa143afdcecef9d870f9626cc61e416b5947f80206b6b81dad9e8c65"
+      "bytes": 1463981,
+      "sha256": "f8ce477743fda89c18ce8f05bfee3795d453ba80771e5676d7f4d4eeb5d59951",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 13269513,
+      "uncompressedSha256": "c4af2b6dfa143afdcecef9d870f9626cc61e416b5947f80206b6b81dad9e8c65"
     },
     {
       "id": "eagan-sanitary",
       "title": "Eagan-area sanitary gravity, lateral and force-main pipes",
-      "file": "data/municipal/eagan-sanitary.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/eagan-sanitary.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 12469,
       "sourceFeatureCount": 12469,
       "bounds": [
@@ -15946,14 +15988,17 @@
           "Measurement units are unspecified unless explicitly recorded in the field definitions."
         ]
       },
-      "bytes": 8708223,
-      "sha256": "f00e756eea1460b2de937fa1888169bf85fa1d5666bb5f9959d785e2351a8234"
+      "bytes": 1053727,
+      "sha256": "3223bf7887d8e2274a0ac83fa361f32858c245b5ec1129e037c420a8f5671c41",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 8708223,
+      "uncompressedSha256": "f00e756eea1460b2de937fa1888169bf85fa1d5666bb5f9959d785e2351a8234"
     },
     {
       "id": "eagan-storm",
       "title": "Eagan-area storm gravity, lateral and pressurized pipes",
-      "file": "data/municipal/eagan-storm.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/eagan-storm.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 25606,
       "sourceFeatureCount": 25606,
       "bounds": [
@@ -18288,14 +18333,17 @@
           "Measurement units are unspecified unless explicitly recorded in the field definitions."
         ]
       },
-      "bytes": 18566609,
-      "sha256": "e2e3de2dc91e60d972168e8341c5ebd6afbc210327ccb0b243586c6f40575dda"
+      "bytes": 2310487,
+      "sha256": "97bb2580bd0e317d84530b9467d404b466adc7f469013b441c8a4c222fd26a08",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 18566609,
+      "uncompressedSha256": "e2e3de2dc91e60d972168e8341c5ebd6afbc210327ccb0b243586c6f40575dda"
     },
     {
       "id": "eagan-fiber-cable",
       "title": "Eagan published fiber cable inventory",
-      "file": "data/municipal/eagan-fiber-cable.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/eagan-fiber-cable.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 134,
       "sourceFeatureCount": 134,
       "bounds": [
@@ -19047,14 +19095,17 @@
           "Measurement units are unspecified unless explicitly recorded in the field definitions."
         ]
       },
-      "bytes": 115076,
-      "sha256": "d1fc29f316c15f73da949f45bc75147a501ac768b08b619624c7deeac21177e2"
+      "bytes": 19720,
+      "sha256": "c37bfe20f9194bc02c640207ff37d6b9af27cb88cb46e105897faeafddcc2a17",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 115076,
+      "uncompressedSha256": "d1fc29f316c15f73da949f45bc75147a501ac768b08b619624c7deeac21177e2"
     },
     {
       "id": "eagan-fiber-path",
       "title": "Eagan published utility path inventory",
-      "file": "data/municipal/eagan-fiber-path.json",
-      "format": "GeoJSON",
+      "file": "data/municipal/eagan-fiber-path.json.gz",
+      "format": "GeoJSON (gzip)",
       "featureCount": 463,
       "sourceFeatureCount": 463,
       "bounds": [
@@ -19629,8 +19680,11 @@
           "Measurement units are unspecified unless explicitly recorded in the field definitions."
         ]
       },
-      "bytes": 363340,
-      "sha256": "e3f572df494948a91bb767053a6dc1758ee0ab26c5cce9c74833869319cff7d2"
+      "bytes": 56282,
+      "sha256": "6f2770e1d9ed46e71be1f86e0b63a9b46516ec1c3fc43e643c9566806ae62002",
+      "contentEncoding": "gzip",
+      "uncompressedBytes": 363340,
+      "uncompressedSha256": "e3f572df494948a91bb767053a6dc1758ee0ab26c5cce9c74833869319cff7d2"
     },
     {
       "id": "context-streets",

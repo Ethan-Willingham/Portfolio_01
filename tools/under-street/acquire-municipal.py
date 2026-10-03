@@ -10,6 +10,7 @@ import argparse
 import collections
 import datetime as dt
 import hashlib
+import importlib.util
 import json
 import pathlib
 import shutil
@@ -24,6 +25,10 @@ BLOOMINGTON = 'https://gis.bloomingtonmn.gov/arcgis/rest/services/PW_Utilities/G
 MWMO = 'https://services3.arcgis.com/5aiR7gURjh2E0gMd/arcgis/rest/services/N_Minneapolis_Model_Data/FeatureServer/'
 EAGAN = 'https://utility.arcgis.com/usrsvcs/servers/767fc45e18f54af18762b00a30514a3c/rest/services/SecuredServices/EA_UtilitiesFeature/FeatureServer/'
 EAGAN_MAP = 'https://www.arcgis.com/home/item.html?id=0391652170f14eea9d2084e744adf604'
+
+_compression_spec = importlib.util.spec_from_file_location('municipal_compression', pathlib.Path(__file__).with_name('compress-municipal.py'))
+compression = importlib.util.module_from_spec(_compression_spec)
+_compression_spec.loader.exec_module(compression)
 
 def spec(id, title, city, role, server, index, fields, identity, units=None, caveats=None):
     return dict(id=id, title=title, city=city, role=role, url=server+str(index),
@@ -202,20 +207,22 @@ def main():
     assert selected and all(d in [s['id'] for s in SPECS] for d in args.datasets), 'Unknown dataset'
     dest=MAP if args.publish else args.output
     entries=[]
+    reviewed_entries=[]
     for s in selected:
         if args.from_review:
             assert args.publish, '--from-review requires --publish'
             audited=json.loads((args.output/'municipal-manifest.json').read_text())
             entry=next(d for d in audited if d['id']==s['id'])
+            entry=compression.package_entry(entry,args.output)
+            reviewed_entries.append(entry)
             source=args.output/entry['file']
-            payload=source.read_bytes()
-            assert len(payload)==entry['bytes'] and hashlib.sha256(payload).hexdigest()==entry['sha256'], 'Reviewed hash mismatch'
             target=dest/entry['file']
             target.parent.mkdir(parents=True,exist_ok=True)
             shutil.copyfile(source,target)
             print(s['id']+': published reviewed snapshot',flush=True)
         else:
             entry=acquire_group(s,dest,args.output) if s.get('components') else acquire(s,dest,args.output)
+            entry=compression.package_entry(entry,dest)
         entries.append(entry)
         # A later service failure should not lose successfully audited metadata.
         args.output.mkdir(parents=True,exist_ok=True)
@@ -232,6 +239,11 @@ def main():
         temporary.replace(MAP/'datasets.json')
     else:
         dest.mkdir(parents=True,exist_ok=True)
+    # Only remove redundant plain exports once every catalog points to gzip.
+    for entry in entries:
+        compression.remove_plain(entry,dest)
+    for entry in reviewed_entries:
+        compression.remove_plain(entry,args.output)
 
 if __name__=='__main__':
     main()

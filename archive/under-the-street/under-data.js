@@ -92,7 +92,7 @@
     eaganFiberPath:['Eagan utility paths','eagan-fiber-path','fiberPath','fiberpath',C.net,false,'A published utility path does not establish a laid cable']
   };
   Object.keys(municipalLayers).forEach(function(id) {
-    var s=municipalLayers[id], cfg=layer(s[0],'data/municipal/'+s[1]+'.json','line',s[4],s[3],s[2]==='service'?15:12,s[5],s[6]);
+    var s=municipalLayers[id], cfg=layer(s[0],'data/municipal/'+s[1]+'.json.gz','line',s[4],s[3],s[2]==='service'?15:12,s[5],s[6]);
     cfg.municipal=true; cfg.role=s[2]; cfg.hasInactive=s[2]!=='model';
     layers[id]=cfg;
   });
@@ -585,7 +585,18 @@
     if (f.layer === 'groundwaterBounds') return {dash:/uncertain|inferred|approximate/i.test(p.certainty || '') ? [5,4] : [],opacity:.9};
     return {dash:[],opacity:1};
   }
+  var wellReferences = {
+    EB:['Exploration boring record','Borehole'], EX:['Exploration well or borehole record','Borehole'],
+    EL:['Elevator boring record','Borehole'], MW:['Monitoring well record','Well'],
+    OB:['Observation well record','Well'], PZ:['Piezometer record','Hydraulic_head'],
+    HP:['Heat-pump well record','Ground_source_heat_pump']
+  };
   function typeInfo(f) {
+    if (f.layer === 'wells') {
+      var use=String(pof(f).u || '').trim(), known=wellReferences[use], supply=/^(?:DO|IR|LA|LN|MD|MU|PC|PN|PP|PS)$/.test(use);
+      var entry=known || (supply?['Recorded water well','Water_well']:['Recorded well or borehole','Borehole']);
+      return {label:entry[0],wiki:'https://en.wikipedia.org/wiki/'+entry[1],description:'A County Well Index record. '+(wellUses[use]?'Its reported use is '+wellUses[use].toLowerCase()+'. ':'Its use is not established by the available code. ')+'Status, depth and location methods come from the published record.'};
+    }
     if (f.layer === 'towers') {
       var tower = historicTowers[pof(f).i];
       return {label:'Water tower',wiki:'https://en.wikipedia.org/wiki/Water_tower',description:tower ? 'This tower remains standing after its water-storage service ended. ' + tower.status + '.' : 'An elevated tank can store water and supply pressure to a network. Historic towers can remain standing after water storage ends; this snapshot does not establish each tower’s present use.'};

@@ -249,7 +249,7 @@
 #undermap .um-error { border-top: 2px solid var(--warn, var(--accent)); }
 #undermap .um-browser[data-inspecting="true"] > :is(.um-search, .um-browse-controls, .um-browse-note, .um-results-heading, .um-results, .um-results-more),
 #undermap .um-browser:has(.um-panel:not([hidden])) > :is(.um-search, .um-browse-controls, .um-browse-note, .um-results-heading, .um-results, .um-results-more) { display: none; }
-#undermap .um-panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 0.1rem 1.2rem; scrollbar-width: thin; scrollbar-color: var(--line-mid) transparent; }
+#undermap .um-panel { scroll-margin-top: 1rem; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 0.1rem 1.2rem; scrollbar-width: thin; scrollbar-color: var(--line-mid) transparent; }
 #undermap .um-pback {
   display: inline-flex;
   align-items: center;
