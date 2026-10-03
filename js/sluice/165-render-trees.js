@@ -43,7 +43,7 @@
   //     relocated so the pool never grows. Hard gust passes and falls flush
   //     all of a tree's birds at once.
   //
-  // Perf model: sprites are baked ONCE (one-time, ~18 small offscreen
+  // Perf model: sprites are baked ONCE (one-time, 48 small offscreen
   // canvases at world-px resolution) and blitted with a shear transform for
   // sway or a rotation for falls; nothing path-draws per frame (the v13.15
   // mountain lesson). Update + draw bail when the sky band is off screen and
@@ -236,34 +236,50 @@
   // Spruce: a slender leader, staggered woody boughs and hanging needle fans.
   // Unequal branch lengths leave air between tiers without Christmas triangles.
   function treesBakeSpruce(hTiles, seed) {
-    var h = Math.round(hTiles * TILE), w = Math.round(h * .53) | 1;
+    var h = Math.round(hTiles * TILE), w = Math.round(h * (.39 + treesHash(seed * 17) * .25)) | 1;
     var s = treesMakeSprite(w + 10, h + 6), g = s.g;
     var cx = (s.w / 2) | 0, baseY = h + 3;
-    var tw = h > 110 ? 4 : 3, top = 5;
-    treesTwig(g, cx - 1, baseY - tw - 1, cx - 1, top, tw + 2, BLD.outline);
-    treesTwig(g, cx, baseY - tw, cx, top + 2, tw, BLD.woodDark);
-    treesTwig(g, cx, baseY - 3, cx, h * .54, 1, BLD.woodBase);
+    var tw = h > 135 ? 4 : h < 75 ? 2 : 3, top = 4;
+    var bend = (treesHash(seed * 23) - .5) * w * .14, forkY = h * .53;
+    var leaderX = cx + bend * 1.5;
+    treesTwig(g, cx - 1, baseY - tw - 1, cx + bend - 1, forkY, tw + 2, BLD.outline);
+    treesTwig(g, cx + bend - 1, forkY, leaderX - 1, top, tw + 1, BLD.outline);
+    treesTwig(g, cx, baseY - tw, cx + bend, forkY, tw, BLD.woodDark);
+    treesTwig(g, cx + bend, forkY, leaderX, top + 2, Math.max(1, tw - 1), BLD.woodDark);
+    treesTwig(g, cx, baseY - 3, cx + bend, forkY, 1, BLD.woodBase);
     g.fillStyle = BLD.woodDark; g.fillRect(cx - 2, baseY - 2, tw + 4, 2);
-    var sprays = [], boughs = hTiles > 3.6 ? 7 : 6;
+    var sprays = [], boughs = 4 + Math.floor(hTiles * .7 + treesHash(seed * 29) * 2);
+    var crownEnd = .68 + treesHash(seed * 37) * .15;
+    var fullness = .76 + treesHash(seed * 43) * .24;
+    var favoredSide = treesHash(seed * 53) < .5 ? -1 : 1;
     for (var b = boughs - 1; b >= 0; b--) {
       var p = (b + 1) / boughs;
-      var by = top + h * (.09 + p * .71);
+      var by = top + h * (.09 + p * (crownEnd - .09));
       for (var side = -1; side <= 1; side += 2) {
         var salt = seed * 47 + b * 103 + side * 19;
-        var len = w * .43 * (.14 + p * .86) * (.76 + treesHash(salt) * .24);
-        var y0 = by + (treesHash(salt + 3) - .5) * h * .07;
-        var tx = cx + side * len, ty = y0 + h * .015;
-        treesTwig(g, cx, y0 - h * .045, tx, ty, 2, BLD.outline);
-        treesTwig(g, cx, y0 - h * .045, tx, ty, 1, BLD.woodDark);
+        var len = w * .40 * (.14 + Math.pow(p, fullness) * .86) * (.64 + treesHash(salt) * .36);
+        len *= side === favoredSide ? 1.04 : .80;
+        // Some boughs are sparse or weather-shortened, leaving a different
+        // opening in each crown rather than paired, evenly spaced tiers.
+        var sparse = b > 0 && b < boughs - 1 && treesHash(salt + 11) < .18;
+        if (sparse) len *= .52;
+        var y0 = by + (treesHash(salt + 3) - .5) * h * .085;
+        var rootX = cx + bend * Math.min(1.5, (baseY - y0) / (baseY - forkY));
+        var tx = rootX + side * len, ty = y0 + h * (.008 + treesHash(salt + 7) * .02);
+        treesTwig(g, rootX, y0 - h * .035, tx, ty, 2, BLD.outline);
+        treesTwig(g, rootX, y0 - h * .035, tx, ty, 1, BLD.woodDark);
         // Each branch carries two or three distinct, drooping needle sprays.
-        for (var f = 0; f < 3; f++) {
-          var t = .22 + f * .31;
-          sprays.push({x:cx + side * len * t, y:y0 - h * .025 + f * h * .007,
-            rx:Math.max(3, len * (.42 - f * .045)), ry:h * (.051 - f * .007), tilt:side * .26});
+        var fans = sparse ? 2 : 2 + (treesHash(salt + 13) > .35 ? 1 : 0);
+        for (var f = 0; f < fans; f++) {
+          var t = .22 + f * .62 / (fans - 1), spread = .83 + treesHash(salt + f * 31) * .23;
+          sprays.push({x:rootX + side * len * t, y:y0 - h * .02 + f * h * .009,
+            rx:Math.max(3, len * (.39 - f * .05) * spread),
+            ry:h * (.039 + treesHash(salt + f * 61) * .018) * (1 - f * .12),
+            tilt:side * (.12 + treesHash(salt + 17) * .22)});
         }
       }
     }
-    sprays.push({x:cx + 1, y:top + h * .065, rx:w * .095, ry:h * .073, tilt:-.12});
+    sprays.push({x:leaderX, y:top + h * .055, rx:w * .095, ry:h * .055, tilt:-.12});
     treesPaintSprays(s, sprays, seed, true);
     return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
   }
@@ -271,33 +287,41 @@
   // Birch: crooked pale trunk, visible forks and an open, uneven crown.
   // Smaller leaf groups use the same shape vocabulary as the woody scrub.
   function treesBakeBirch(hTiles, seed) {
-    var h = Math.round(hTiles * TILE), w = Math.round(h * .64) | 1;
+    var h = Math.round(hTiles * TILE), w = Math.round(h * (.48 + treesHash(seed * 17) * .28)) | 1;
     var s = treesMakeSprite(w + 10, h + 6), g = s.g;
     var cx = (s.w / 2) | 0, baseY = h + 3, tw = h > 80 ? 4 : 3;
     var kink = (treesHash(seed * 19) - .5) * w * .14;
-    var forkX = cx + kink, forkY = h * .56;
+    var forkX = cx + kink, forkY = h * (.55 + treesHash(seed * 23) * .17);
     treesTwig(g, cx - 1, baseY - tw, forkX - 1, forkY, tw + 2, BLD.outline);
     treesTwig(g, cx, baseY - tw, forkX, forkY, tw, TREES_BARK_PALE);
     treesTwig(g, cx + tw - 1, baseY - tw, forkX + tw - 1, forkY, 1, BLD.woodDark);
     g.fillStyle = BLD.woodDark; g.fillRect(cx - 2, baseY - 1, tw + 4, 1);
-    var crowns = [
-      [-.28,.42,.19,.085], [.28,.38,.19,.10],
-      [-.20,.26,.22,.12], [.20,.21,.20,.115],
-      [-.06,.135,.22,.10], [.02,.36,.21,.105], [.32,.49,.14,.065]
-    ];
-    var sprays = [];
-    for (var b = 0; b < crowns.length; b++) {
-      var p = crowns[b], salt = seed * 41 + b * 137;
-      var tx = cx + w * p[0] + (treesHash(salt) - .5) * 4;
-      var ty = h * p[1] + (treesHash(salt + 9) - .5) * 4 + 3;
-      var bx = forkX + (tx - forkX) * .45, by = forkY + (ty - forkY) * .32;
-      treesTwig(g, forkX, forkY, bx, by, 3, BLD.outline);
+    var leaderX = cx + kink * 1.8, leaderY = 3 + h * .11;
+    treesTwig(g, forkX - 1, forkY, leaderX - 1, leaderY, 3, BLD.outline);
+    treesTwig(g, forkX, forkY, leaderX, leaderY, 2, TREES_BARK_PALE);
+    var sprays = [], crowns = 5 + Math.floor(treesHash(seed * 29) * 4);
+    var sideBias = (treesHash(seed * 31) - .5) * w * .14;
+    var crownDepth = .37 + treesHash(seed * 37) * .18;
+    for (var b = crowns - 1; b >= 0; b--) {
+      var salt = seed * 41 + b * 137, p = b / (crowns - 1);
+      var side = b % 2 ? -1 : 1;
+      var ty = 3 + h * (.14 + p * crownDepth + (treesHash(salt + 9) - .5) * .065);
+      var by = ty + (forkY - ty) * .34, branchRootY = Math.min(forkY, by + h * .08);
+      var branchRootX = forkX + (leaderX - forkX) * (forkY - branchRootY) / (forkY - leaderY);
+      var tx = cx + sideBias + side * w * (.12 + treesHash(salt) * .18) * (.55 + p * .45);
+      var bx = branchRootX + (tx - branchRootX) * .45;
+      treesTwig(g, branchRootX, branchRootY, bx, by, 3, BLD.outline);
       treesTwig(g, bx, by, tx, ty, 2, BLD.outline);
-      treesTwig(g, forkX, forkY, bx, by, 2, TREES_BARK_PALE);
+      treesTwig(g, branchRootX, branchRootY, bx, by, 2, TREES_BARK_PALE);
       treesTwig(g, bx, by, tx, ty, 1, TREES_BARK_PALE);
-      sprays.push({x:tx, y:ty, rx:w * p[2], ry:h * p[3], tilt:(p[0] < 0 ? -.16 : .12)});
-      sprays.push({x:tx - w * .07, y:ty + h * .063, rx:w * .12, ry:h * .048, tilt:-.16});
+      var rx = w * (.13 + treesHash(salt + 13) * .065), ry = h * (.055 + treesHash(salt + 17) * .027);
+      sprays.push({x:tx, y:ty, rx:rx, ry:ry, tilt:side * (.08 + treesHash(salt + 19) * .13)});
+      if (b % 3 !== seed % 3) {
+        sprays.push({x:tx - side * rx * .54, y:ty + ry * .92,
+          rx:rx * .62, ry:ry * .54, tilt:-side * .16});
+      }
     }
+    sprays.push({x:leaderX, y:leaderY + h * .02, rx:w * .12, ry:h * .06, tilt:-.10});
     for (var y = Math.round(forkY + 6); y < baseY - 4; y += 7) {
       var tx = cx + kink * (baseY - y) / (baseY - forkY);
       g.fillStyle = BLD.woodDeep;
@@ -431,21 +455,27 @@
       treesSet[kind].push(treesSprites.length);
       treesSprites.push(spr);
     }
-    var i;
-    var sprS = [2.0, 2.7, 3.6];
+    var i, v;
+    var sprS = [1.65, 2.35, 3.15, 4.15, 5.15];
     for (i = 0; i < sprS.length; i++) {
-      reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i], 11 + i * 6));
-      reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i] + 0.15, 23 + i * 6));
+      for (v = 0; v < 4; v++) {
+        reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i] + v * .08, 11 + i * 149 + v * 37));
+      }
     }
-    var brS = [1.9, 2.5];
+    var brS = [1.55, 2.30, 3.25, 4.35];
     for (i = 0; i < brS.length; i++) {
-      reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i], 31 + i * 8));
-      reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i] + 0.12, 47 + i * 8));
+      for (v = 0; v < 4; v++) {
+        reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i] + v * .07, 31 + i * 163 + v * 43));
+      }
     }
     reg(TREES_KIND_BUSH, treesBakeBush(0.52, 53, 0, false));
     reg(TREES_KIND_BUSH, treesBakeBush(0.64, 67, 1, false));
     reg(TREES_KIND_BUSH, treesBakeBush(0.72, 79, 2, true));
     reg(TREES_KIND_BUSH, treesBakeBush(0.80, 97, 3, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.86, 109, 0, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.92, 127, 1, false));
+    reg(TREES_KIND_BUSH, treesBakeBush(0.98, 139, 2, true));
+    reg(TREES_KIND_BUSH, treesBakeBush(1.04, 157, 3, false));
     var snS = [1.6, 2.3];
     for (i = 0; i < snS.length; i++) {
       reg(TREES_KIND_SNAG, treesBakeSnag(snS[i], 71 + i * 12));
@@ -453,13 +483,17 @@
     }
   }
 
-  // Sprite pick: the grove field biases toward the larger bakes in grove
-  // cores, hash spreads within the band (lists are ordered small to large).
-  function treesPickSprite(kind, sizeBias, h) {
+  // Pick height and branch form independently. A grove slightly favors
+  // mature trees, but still includes young trees beside the tall crowns.
+  function treesPickSprite(kind, sizeBias, h, form) {
     var list = treesSet[kind];
-    var f = h * 0.5 + sizeBias * 0.5;
+    var variants = kind === TREES_KIND_SPRUCE || kind === TREES_KIND_BIRCH ? 4 : 1;
+    var bands = list.length / variants;
+    var f = h + (sizeBias - .5) * .16;
+    if (f < 0) f = 0;
     if (f > 0.999) f = 0.999;
-    return treesSprites[list[(f * list.length) | 0]];
+    if (form == null) form = treesHash(Math.floor(h * 100000) + kind * 19);
+    return treesSprites[list[Math.floor(f * bands) * variants + Math.floor(form * variants)]];
   }
 
   // ----- Placement -----
@@ -496,7 +530,8 @@
       var kind;
       if (isZone) kind = kr < 0.74 ? TREES_KIND_SNAG : (kr < 0.92 ? TREES_KIND_SPRUCE : TREES_KIND_BUSH);
       else        kind = kr < 0.44 ? TREES_KIND_SPRUCE : (kr < 0.72 ? TREES_KIND_BIRCH : TREES_KIND_BUSH);
-      var spr = treesPickSprite(kind, isZone ? g * 0.6 : g, treesHash(c * 277 + 5));
+      var spr = treesPickSprite(kind, isZone ? g * 0.6 : g,
+        treesHash(c * 277 + c * c * 37 + 5), treesHash(c * 1009 + c * c * 13 + 71));
       // Small groups, with clear air between the larger silhouettes.
       var minDx = (kind === TREES_KIND_BUSH) ? 24 : 18 + spr.w * 0.50;
       var x = c * TILE + TILE * 0.5 + (treesHash(c * 401 + 3) - 0.5) * 16;
@@ -693,9 +728,11 @@
 
   function treesUpdate(dt) {
     if (!treesTune.enabled) return;
+    // Loading prepares the larger sprite set with dt=0, before play starts.
+    // Preparing scenery never advances sway, falls, particles or birds.
+    if (treesWorldRef !== world || !treesBuilt) treesRebuild();
     if (!(dt > 0)) return;
     if (dt > 0.05) dt = 0.05;
-    if (treesWorldRef !== world || !treesBuilt) treesRebuild();
     if (treesShotCol != null) {
       // ?treeshot=COL harness: park the rig at that surface column once.
       player.x = treesShotCol * TILE;

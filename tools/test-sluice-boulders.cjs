@@ -9,6 +9,7 @@ var marks = [], bakedPixels = 0, pieceCrops = [], canvasStack = [];
 var c = {
   Math: Math, Uint8Array: Uint8Array, Int32Array: Int32Array,
   TILE: 32, SKY_ROWS: 4, COLS: 320, REGION_TOWN: 'town',
+  ENABLE_BATH: false, DECK_CENTER_COL: 48,
   center: 48, regionKind: 'town', surfacePonds: [], world: [],
   cam: { x: 0, y: 0 }, screenW: 320 * 32, screenH: 256,
   window: { location: { search: '' } },
