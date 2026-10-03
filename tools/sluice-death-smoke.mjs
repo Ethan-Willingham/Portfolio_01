@@ -40,6 +40,7 @@ window.__deathSmoke = {
     maxFuel:getMaxFuel(),maxHull:getMaxHull(),x:player.x,y:player.y,
     blocked:mobileLandscapeBlocked,keys:keys,touch:touch.active,dpad:dpad,
     worldTicks:deathWorldTicks,tod:timeOfDay,cam:[cam.x,cam.y],
+    reveal:deathRevealProgress(),opacity:deathOverlay.style.getPropertyValue('--death-reveal-opacity'),
     burst:deathSequence ? {ready:deathSequence.ready,duration:deathSequence.duration,quiet:deathSequence.quiet,
       lowFlash:deathSequence.lowFlash,pieces:deathSequence.pieces.length,physics:deathSequence.physicsT,
       x:deathSequence.x,y:deathSequence.y} : null}; },
@@ -60,6 +61,7 @@ window.__deathSmoke = {
   },
   preview: function (time) {
     if(gameRafId)cancelAnimationFrame(gameRafId);gameRafId=0;
+    if(time<deathSequence.duration)deathOverlay.hidden=true;
     deathSequence.pieces=[];deathSequence.physicsT=0;deathFractureSprite(deathSequence);
     deathPhaseT=time;updateDeathFragments(deathSequence);drawDeathFrame();
   },
@@ -157,8 +159,11 @@ try {
   await size(1440,900); await boot();
   async function seed(kind='mixed', cause='fall') {
     await ev(`__deathSmoke.seed(${JSON.stringify(kind)},${JSON.stringify(cause)})`);
+    await screenReady();
+  }
+  async function screenReady() {
     for(let i=0;i<60;i++) {
-      if(await ev("!document.getElementById('game-death').hidden")) return;
+      if(await ev("!document.getElementById('game-death').hidden && !document.getElementById('gm-death-return').disabled")) return;
       await sleep(50);
     }
     throw Error('Death summary did not appear');
@@ -188,7 +193,17 @@ try {
     await ev(`__deathSmoke.preview(${t})`);
     await shot(`burst-desktop-${t}`,await ev(`(()=>{const r=document.getElementById('game-canvas').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scale:1};})()`));
   }
-  await ev('__deathSmoke.continue()');await sleep(400);
+  for(const offset of [0.08,0.18,0.29]) {
+    await ev(`__deathSmoke.preview(__deathSmoke.state().burst.duration+${offset})`);
+    await shot(`death-reveal-${offset}`,await ev(`(()=>{const r=document.getElementById('game-canvas').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scale:1};})()`));
+  }
+  await check('pixelated fade follows the burst with recovery held until readable', `(()=>{const s=__deathSmoke.state(),o=document.getElementById('game-death');return s.reveal>0&&s.reveal<1&&Number(s.opacity)>0&&Number(s.opacity)<1&&!o.hidden&&o.getAttribute('aria-hidden')==='true'&&getComputedStyle(o.querySelector('.death-card')).maskImage.includes('data:image/svg+xml')&&document.getElementById('gm-death-return').disabled;})()`);
+  await ev('document.getElementById("gm-death-return").click();__deathSmoke.release();window.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter"}))');
+  await check('click and keyboard cannot bypass the fade', '__deathSmoke.state().over');
+  await key('Escape');const fading=await ev('__deathSmoke.state()');await sleep(150);
+  await check('manual pause holds the exact pixel reveal', `__deathSmoke.state().paused && __deathSmoke.state().clock===${fading.clock} && __deathSmoke.state().opacity===${JSON.stringify(fading.opacity)}`);
+  await key('Escape');await screenReady();
+  await check('fully revealed panel drops its pixel mask and restores access', 'getComputedStyle(document.querySelector(".death-card")).maskImage==="none" && document.getElementById("game-death").getAttribute("aria-hidden")==="false" && __deathSmoke.state().opacity==="1.000"');
   await check('summary appears with one focused action', `!document.getElementById('game-death').hidden &&
     document.querySelectorAll('#game-death button').length===1 && document.activeElement.id==='gm-death-return' &&
     document.getElementById('gm-death-cause').textContent==='Hard landing at 184 m.' &&
@@ -231,7 +246,10 @@ try {
   await check('portrait freezes the burst before the panel', `__deathSmoke.state().blocked && __deathSmoke.state().clock===${stopped} && document.getElementById("game-death").hidden`);
   await size(844,390,true,2);
   await ev('__deathSmoke.preview(0.2)');await shot('burst-landscape');await ev('__deathSmoke.continue()');
-  await sleep(1000);
+  await ev('__deathSmoke.preview(__deathSmoke.state().burst.duration+0.18)');await shot('death-reveal-landscape');
+  await size(390,844,true,2);const pixelStop=await ev('__deathSmoke.state()');await sleep(180);
+  await check('portrait freezes the pixel fade', `__deathSmoke.state().blocked && __deathSmoke.state().clock===${pixelStop.clock} && __deathSmoke.state().opacity===${JSON.stringify(pixelStop.opacity)}`);
+  await size(844,390,true,2);await screenReady();
   for(const [width,height] of [[844,390],[667,375],[568,320],[1024,600],[844,250]]) {
     await size(width,height,true,2);
     await check(`recovery action fits landscape ${width}x${height}`, `(()=>{const a=document.querySelector('.game-canvas-area').getBoundingClientRect(),c=document.querySelector('.death-card').getBoundingClientRect(),b=document.getElementById('gm-death-return').getBoundingClientRect(),body=document.querySelector('.death-body');return b.width>=44&&b.height>=44&&b.top>=a.top&&b.bottom<=a.bottom&&c.left>=a.left&&c.right<=a.right&&body.clientHeight>0&&document.querySelector('.death-actions').getBoundingClientRect().top>=body.getBoundingClientRect().bottom-1;})()`);
@@ -254,7 +272,10 @@ try {
   await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await ev('SluiceOptions.set("lowflash","1");__deathSmoke.seed("mixed","bomb")');await sleep(100);
   await check('reduced motion uses a shorter quieter explosion without a bright core', '__deathSmoke.state().burst.quiet && __deathSmoke.state().burst.lowFlash && __deathSmoke.state().burst.duration===0.6');
-  await ev('__deathSmoke.preview(0.20)');await shot('burst-reduced-motion');await ev('__deathSmoke.continue()');await sleep(500);
+  await ev('__deathSmoke.preview(0.20)');await shot('burst-reduced-motion');
+  await ev('__deathSmoke.preview(__deathSmoke.state().burst.duration+0.06)');
+  await check('reduced motion uses a brief plain fade with no pixel breakup', 'Number(__deathSmoke.state().opacity)>0 && Number(__deathSmoke.state().opacity)<1 && getComputedStyle(document.querySelector(".death-card")).maskImage==="none"');
+  await ev('__deathSmoke.continue()');await screenReady();
   await check('reduced-motion explosion still leads to recovery', '!document.getElementById("game-death").hidden && document.activeElement.id==="gm-death-return"');
   await click('gm-death-return');await alive();
   await check('recovery releases the frozen frame and fragment resources', '!__deathSmoke.state().burst && !__deathSmoke.state().over');

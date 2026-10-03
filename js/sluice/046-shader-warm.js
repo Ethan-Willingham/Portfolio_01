@@ -717,6 +717,7 @@
   }
 
   function shaderWarmDeath(ws,ox,oy) {
+    warmDeathReveal();
     var sprite=document.createElement('canvas');sprite.width=sprite.height=288;
     var sc=sprite.getContext('2d');sc.fillStyle=UIMAT_PLATE_BASE;sc.fillRect(116,112,60,68);
     var s={sprite:sprite,pieces:[],duration:DEATH_BURST_S,quiet:false,lowFlash:false};
