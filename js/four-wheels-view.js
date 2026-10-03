@@ -101,6 +101,43 @@
     [[0,3,2,1],[0,0,-1]],[[4,5,6,7],[0,0,1]],[[0,4,7,3],[-1,0,0]],
     [[1,2,6,5],[1,0,0]],[[0,1,5,4],[0,-1,0]],[[3,7,6,2],[0,1,0]]
   ];
+  function exposedEdges(level,Course) {
+    const edges=[],seen=new Set(),cross2=(a,b)=>a.x*b.y-a.y*b.x;
+    // Split at polygon intersections before testing support. Fixed-length
+    // midpoint tests leave holes where road ribbons overlap rounded joins.
+    for(const area of level.floorAreas)for(let i=0;i<area.poly.length;i++){
+      const p=area.poly[i],q=area.poly[(i+1)%area.poly.length],v={x:q.x-p.x,y:q.y-p.y},length=Math.hypot(v.x,v.y);
+      if(length<1e-6)continue;
+      const n={x:-v.y/length,y:v.x/length},cuts=[0,1],middle={x:(p.x+q.x)/2,y:(p.y+q.y)/2};
+      for(const other of Course.query(level.floorAreas,level.floorGrid,middle,length/2+1)){
+        if(other===area||other.bounds.right<Math.min(p.x,q.x)-1e-6||other.bounds.left>Math.max(p.x,q.x)+1e-6||other.bounds.bottom<Math.min(p.y,q.y)-1e-6||other.bounds.top>Math.max(p.y,q.y)+1e-6)continue;
+        for(let j=0;j<other.poly.length;j++){
+          const a=other.poly[j],b=other.poly[(j+1)%other.poly.length],u={x:b.x-a.x,y:b.y-a.y},r={x:a.x-p.x,y:a.y-p.y},denominator=cross2(v,u);
+          if(Math.abs(denominator)>1e-8){
+            const t=cross2(r,u)/denominator,s=cross2(r,v)/denominator;
+            if(t>0&&t<1&&s>=-1e-8&&s<=1+1e-8)cuts.push(t);
+          }else if(Math.abs(cross2(r,v))<1e-6){
+            for(const point of [a,b]){const t=((point.x-p.x)*v.x+(point.y-p.y)*v.y)/(length*length);if(t>0&&t<1)cuts.push(t);}
+          }
+        }
+      }
+      cuts.sort((a,b)=>a-b);
+      for(let j=1;j<cuts.length;j++){
+        const low=cuts[j-1],high=cuts[j];if((high-low)*length<1e-5)continue;
+        const t=(low+high)/2,mid={x:p.x+v.x*t,y:p.y+v.y*t},epsilon=Math.min(1e-4,(high-low)*length*.1);
+        const plus=Course.sample(level,{x:mid.x+n.x*epsilon,y:mid.y+n.y*epsilon},false),minus=Course.sample(level,{x:mid.x-n.x*epsilon,y:mid.y-n.y*epsilon},false);
+        if(!!plus===!!minus)continue;
+        const normal={x:n.x*(plus?-1:1),y:n.y*(plus?-1:1)},kind=(plus||minus).kind,count=Math.ceil((high-low)*length/12);
+        for(let k=0;k<count;k++){
+          const point=f=>{const x=p.x+v.x*f,y=p.y+v.y*f;return {x,y,z:TerrainModule.height(level,{x,y})};};
+          const a=point(low+(high-low)*k/count),b=point(low+(high-low)*(k+1)/count);
+          const key=[a,b].map(p=>Math.round(p.x*1e5)+','+Math.round(p.y*1e5)).sort().join('/');
+          if(seen.has(key))continue;seen.add(key);edges.push({a,b,normal,kind});
+        }
+      }
+    }
+    return edges;
+  }
   function create(P) {
     const Physics=root.CartPhysics,Stock=root.CartStock,Terrain=TerrainModule;
     let terrainLevel=null;
@@ -866,9 +903,50 @@
       return {bands,arrows};
     }
     function cliffFaces(scene,w,visible,mode='upper'){
-      const Course=root.CartCourse;
-      if(!w.level._edges){const out=[],seen=new Set();for(const a of w.level.floorAreas)for(let i=0;i<a.poly.length;i++){const p=a.poly[i],q=a.poly[(i+1)%a.poly.length],dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy),n={x:-dy/d,y:dx/d};if(d<.1)continue;const count=Math.ceil(d/12);for(let j=0;j<count;j++){const mid={x:p.x+dx*(j+.5)/count,y:p.y+dy*(j+.5)/count};const plus=!!Course.sample(w.level,{x:mid.x+n.x*.3,y:mid.y+n.y*.3}),minus=!!Course.sample(w.level,{x:mid.x-n.x*.3,y:mid.y-n.y*.3});if(plus===minus||(n.x+n.y)*(plus?-1:1)<.02)continue;const A={x:p.x+dx*j/count,y:p.y+dy*j/count},B={x:p.x+dx*(j+1)/count,y:p.y+dy*(j+1)/count},key=[A,B].map(p=>Math.round(p.x*4)+','+Math.round(p.y*4)).sort().join('/');if(seen.has(key))continue;seen.add(key);out.push({a:onGround(A),b:onGround(B),kind:a.kind});}}w.level._edges=out;}
-      for(const e of w.level._edges){const a=e.a,b=e.b;if(!visible({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2},140)||mode==='occlude'&&Math.hypot((a.x+b.x)/2-w.body.x,(a.y+b.y)/2-w.body.y)>65)continue;const low=mode==='upper'?0:-105,high=mode==='below'?0:Math.max(a.z,b.z);for(let z=low;z<high;z+=12){const za=Math.min(a.z,z+12,high),zb=Math.min(b.z,z+12,high);if(za<=z&&zb<=z)continue;scene.flat([{...a,z:za},{...b,z:zb},{...b,z:Math.min(b.z,z)},{...a,z:Math.min(a.z,z)}],blend(P.clay,P.hairDark,.4+hash(Math.round(a.x),z)*.12));}if(mode!=='below')scene.flat([a,b,{...b,z:Math.max(low,b.z-5)},{...a,z:Math.max(low,a.z-5)}],e.kind==='grass'?P.pine:blend(P.clay,P.dark,.4));for(const offset of [20,42,65])if(a.z-offset>=low&&a.z-offset<=high)scene.wire({...a,z:a.z-offset},{...b,z:b.z-offset},offset===42?P.hairDark:P.hair,1,.55);if(mode!=='below')scene.wire(a,b,P.hairDark,1,.7);}
+      const edges=w.level._edges||(w.level._edges=exposedEdges(w.level,root.CartCourse));
+      const seam=(p,z)=>z+3*Math.sin((p.x-p.y)*.024+z*.08)+1.5*Math.sin((p.x+p.y)*.037);
+      for(const e of edges){
+        const {a,b,normal,kind}=e,mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2};
+        if(!visible(mid,160)||mode==='occlude'&&Math.hypot(mid.x-w.body.x,mid.y-w.body.y)>65)continue;
+        if(normal.x+normal.y<.02)continue;
+        // Subpixel slivers from intersecting round joins have no readable
+        // face; drawing their seams above the floor produces upright streaks.
+        if(mode!=='below'&&Math.abs((a.x-a.y)-(b.x-b.y))*CAMERA.horizontal<1.25)continue;
+        const low=mode==='upper'?0:-105,high=mode==='below'?0:Math.max(a.z,b.z);
+        const at=(p,z)=>({...p,z:clamp(seam(p,z),low,Math.max(low,Math.min(p.z,high)))});
+        if(mode==='below'){
+          const foot=p=>({x:p.x+normal.x*12,y:p.y+normal.y*12,z:-105});
+          scene.flat([{...a,z:-105},{...b,z:-105},foot(b),foot(a)],P.dark,.22);
+        }
+        // Shared, gently uneven strata connect across the whole contour.
+        // Their orientation and deeper shading make the vertical drop legible.
+        for(let z=-120;z<high+16;z+=16){
+          const A=at(a,z),B=at(b,z),C=at(b,z+16),D=at(a,z+16);
+          if(D.z<=A.z&&C.z<=B.z)continue;
+          const shade=clamp(.32+normal.y*.12+Math.max(0,-z)/105*.24+(Math.round(z/16)%2===0?.025:0),.25,.78);
+          scene.flat([D,C,B,A],blend(P.clay,P.hairDark,shade));
+        }
+        for(let z=-88;z<high;z+=32){
+          const A=at(a,z),B=at(b,z);
+          if(A.z<=low||B.z<=low||A.z>=a.z||B.z>=b.z)continue;
+          scene.wire(A,B,P.hairDark,1,.4);
+          scene.wire({...A,z:A.z-1.2},{...B,z:B.z-1.2},P.clay,1,.16);
+        }
+        // Sparse fractures stop within a bed, rather than slicing the cliff
+        // into detached columns. Use the same details in falling occlusion.
+        const seed=hash(Math.round(mid.x/9),Math.round(mid.y/9));
+        if(seed>.83&&Math.hypot(b.x-a.x,b.y-a.y)>5){
+          const z=Math.floor(mid.z/32)*32-8-Math.floor(seed*3)*16,A={...mid,z:clamp(z,low,Math.min(mid.z,high))},B={x:mid.x+(b.x-a.x)*.22,y:mid.y+(b.y-a.y)*.22,z:clamp(z-10,low,Math.min(mid.z,high))};
+          if(A.z>B.z)scene.wire(A,B,P.hairDark,1,.32);
+        }
+        if(mode!=='below'){
+          const bottom=p=>({...p,z:Math.max(low,p.z-(kind==='grass'?4:6))});
+          const lip=kind==='grass'?blend(P.pine,P.hairDark,.35):kind==='asphalt'||kind==='ice'?blend(P.steelShade,P.dark,.35):kind==='tile'?blend(P.cream,P.hairDark,.35):blend(P.clay,P.hairDark,.52);
+          scene.flat([a,b,bottom(b),bottom(a)],lip);
+          scene.wire(a,b,P.hairDark,2,.85);
+          scene.wire({...a,z:a.z+.6},{...b,z:b.z+.6},kind==='grass'?P.sage:P.gold,1,.45);
+        }
+      }
     }
     function courseTile(w,background,x,y) {
       const key=x+','+y;if(background.tiles.has(key)){const tile=background.tiles.get(key);background.tiles.delete(key);background.tiles.set(key,tile);return tile;}
@@ -1123,6 +1201,6 @@
     }
     return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
   }
-  const api={CAMERA,project,unproject,depth,local,create};
+  const api={CAMERA,project,unproject,depth,local,exposedEdges,create};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartView=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

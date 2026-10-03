@@ -246,8 +246,11 @@ road ribbons and neighboring cache tiles agree. Red and cream curb paint keeps
 its spacing through the bends, with a shaded inner edge and a light outer rim.
 Paint follows supported ground and stays outside store floors and the jump gap.
 Floor polygons are clipped into eight-unit
-height-field facets. Exposed rock faces use the exact supporting edge, with
-visible-side culling and vertical subdivisions for falling-cart occlusion.
+height-field facets. Cliff boundaries split at floor-polygon intersections so
+overlapping ribbons and rounded joins form a closed outline without gaps.
+Exposed faces have a distinct surface lip, directional shading, connected rock
+strata, short fractures and a shadow at the foot. The same vertical subdivisions
+and details draw in front of a falling cart at their actual depth.
 Guardrail posts and beams follow the road height. The camera follows ground
 elevation and part of a jump arc, retaining the lip in view during a drop. Floor polygons, support, rails, spills, shadows,
 markers and overlays share the projection. The art is drawn locally and the game
