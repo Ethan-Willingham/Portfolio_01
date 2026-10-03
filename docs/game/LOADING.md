@@ -5,6 +5,14 @@ bar, a percentage and a collapsed Details control. Step lists, elapsed time,
 resource names and the full report stay inside Details. They do not repaint
 while Details is closed. Pause > Loading report keeps the report afterward.
 
+The cover uses dark gunmetal, the painted-stencil cream and etched-brass rim
+colors from UI_STYLE.md. A large Segoe UI wordmark sits above the mono status
+and a thin brass progress line. Static engraved strata and a bore cross-section
+give the screen its mining character. These are inline SVGs, so the first paint
+does not wait for artwork or game code. Desktop and landscape mobile share the
+composition; short views reduce the title and spacing. Details remains a native
+44px control, and its expanded report scrolls within the cover.
+
 The percentage measures preparation completed, not download bytes or remaining
 time. No timer advances it. A task settles when it completes, selects a working
 fallback or reuses existing work. Failed tasks do not count as complete.
