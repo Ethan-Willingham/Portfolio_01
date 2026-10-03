@@ -23,7 +23,7 @@ The route consumes these actual ES modules, in this order:
 | Hydrogen | js/hydrogen-exactly-room.js | Finite analytic basis of the ideal Coulomb Hamiltonian |
 | Gauge vacuum | js/qcd-lava-lamp-room.js | Pure SU(3) Wilson lattice gauge theory, no quarks |
 
-Arrow of Time is an optional future room, excluded from this route. No magnet
+No magnet
 is inserted as an intermediate spatial scale. The standalone page scripts are
 never imported. The registry caches module results and records separate load
 and initialization errors, including the exact missing module path.
