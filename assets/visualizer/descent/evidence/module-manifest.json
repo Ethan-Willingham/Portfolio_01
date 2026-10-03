@@ -1,0 +1,277 @@
+{
+  "description": "Exact served module bytes for both successful runs. Owned host files only are committed by Descent. Source-room changes belong to their agents.",
+  "runs": {
+    "whole-route": {
+      "date": "2026-10-03T17:26:07.294Z",
+      "checks": 28,
+      "modules": {
+        "js/descent.js": {
+          "servedSHA256": [
+            "ab128edec7a8c2b4a6b2199b51af463a27299a038151242d81a687ee147dff5b"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-host.js": {
+          "servedSHA256": [
+            "6f41ffe0888924f76241dd4e0c0c1dc0c05d592ea077bf2340f6867212dd1cef"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-seed.js": {
+          "servedSHA256": [
+            "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-room-adapters.js": {
+          "servedSHA256": [
+            "e2bd6356014d9df9d9a7273b244f7060e7433974d84a6cddae0d967ffebb8eac",
+            "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/soap-film-room.js": {
+          "servedSHA256": [
+            "80f7dba464341f07a9c136ec9894d7a12e8794bfea5ba89e761bc6239e1e1dc6"
+          ],
+          "lastCommittedChange": "c1d8304e2c0cb25fb51bab01a3ec76b1f080c694",
+          "committedSHA256": "80f7dba464341f07a9c136ec9894d7a12e8794bfea5ba89e761bc6239e1e1dc6",
+          "committedBytesWereTested": true
+        },
+        "js/negative-temperature-room.js": {
+          "servedSHA256": [
+            "3326c68e9c40ccc7fe0d27805bbd1e0e629b432c28e741a97b126a18ecf2109e"
+          ],
+          "lastCommittedChange": "a961fea4985fd4e477dc7d4bdb61d6d98b75350d",
+          "committedSHA256": "3326c68e9c40ccc7fe0d27805bbd1e0e629b432c28e741a97b126a18ecf2109e",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-room.js": {
+          "servedSHA256": [
+            "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe"
+          ],
+          "lastCommittedChange": "e9fe9d63f2f57e266d0882cf7c83a704977b3723",
+          "committedSHA256": "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-room.js": {
+          "servedSHA256": [
+            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
+          ],
+          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
+          "committedSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
+          "committedBytesWereTested": true
+        },
+        "js/soap-film-model.js": {
+          "servedSHA256": [
+            "d67369094cc16f9b7f4895cde6433dbfb3579ab94e05a3725ea0354285a1fa1a"
+          ],
+          "lastCommittedChange": "5aaf56b42b41577ccf4b07287431ffd41fb50efd",
+          "committedSHA256": "d67369094cc16f9b7f4895cde6433dbfb3579ab94e05a3725ea0354285a1fa1a",
+          "committedBytesWereTested": true
+        },
+        "js/negative-temperature-model.js": {
+          "servedSHA256": [
+            "5bc009e3430fff923b7ecb82e22ce1b5e0fab97ab5142827a2fa2d10282a3752"
+          ],
+          "lastCommittedChange": "a961fea4985fd4e477dc7d4bdb61d6d98b75350d",
+          "committedSHA256": "5bc009e3430fff923b7ecb82e22ce1b5e0fab97ab5142827a2fa2d10282a3752",
+          "committedBytesWereTested": true
+        },
+        "js/negative-temperature-gpu.js": {
+          "servedSHA256": [
+            "8f7241cdbdc7f94614d111811f2cebdac70a11fc11554e7ac9a189515663614d"
+          ],
+          "lastCommittedChange": "a961fea4985fd4e477dc7d4bdb61d6d98b75350d",
+          "committedSHA256": "8f7241cdbdc7f94614d111811f2cebdac70a11fc11554e7ac9a189515663614d",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-math.js": {
+          "servedSHA256": [
+            "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a"
+          ],
+          "lastCommittedChange": "cc5d4b94cbd144e0d879697b597ce907cf307d5a",
+          "committedSHA256": "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-shaders.js": {
+          "servedSHA256": [
+            "4d730227aa5214dea20c8e6cca14a066e4a594226269b47b57dd8bd66652ff26",
+            "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8"
+          ],
+          "lastCommittedChange": "e9fe9d63f2f57e266d0882cf7c83a704977b3723",
+          "committedSHA256": "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-math.js": {
+          "servedSHA256": [
+            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
+          ],
+          "lastCommittedChange": "7b9df6da5faa6d78659c1bc20253acc215e99a76",
+          "committedSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-shaders.js": {
+          "servedSHA256": [
+            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
+          ],
+          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
+          "committedSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
+          "committedBytesWereTested": true
+        },
+        "assets/visualizer/descent/drand-verifier-1.4.2.js": {
+          "servedSHA256": [
+            "ceb94a257a56958df899496b05b1677eb44963819596f1edb8ce8b374ef0390b"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-bootstrap-room.js": {
+          "servedSHA256": [
+            "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e"
+          ],
+          "lastCommittedChange": null
+        }
+      }
+    },
+    "final": {
+      "date": "2026-10-03T17:41:17.827Z",
+      "checks": 20,
+      "modules": {
+        "js/descent.js": {
+          "servedSHA256": [
+            "ab128edec7a8c2b4a6b2199b51af463a27299a038151242d81a687ee147dff5b"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-host.js": {
+          "servedSHA256": [
+            "6f41ffe0888924f76241dd4e0c0c1dc0c05d592ea077bf2340f6867212dd1cef"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-seed.js": {
+          "servedSHA256": [
+            "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-room-adapters.js": {
+          "servedSHA256": [
+            "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/soap-film-room.js": {
+          "servedSHA256": [
+            "0cdbd97927813612b4e47a50aa79bebd7c260e0b47901b6ec1267b311ee019ad"
+          ],
+          "lastCommittedChange": "c1d8304e2c0cb25fb51bab01a3ec76b1f080c694",
+          "committedSHA256": "80f7dba464341f07a9c136ec9894d7a12e8794bfea5ba89e761bc6239e1e1dc6",
+          "committedBytesWereTested": false
+        },
+        "js/negative-temperature-room.js": {
+          "servedSHA256": [
+            "277dec7e9c65064004997bf9816b37119bf11893fa39bc7d0fabe3011f7aa2b0"
+          ],
+          "lastCommittedChange": "a961fea4985fd4e477dc7d4bdb61d6d98b75350d",
+          "committedSHA256": "3326c68e9c40ccc7fe0d27805bbd1e0e629b432c28e741a97b126a18ecf2109e",
+          "committedBytesWereTested": false
+        },
+        "js/hydrogen-exactly-room.js": {
+          "servedSHA256": [
+            "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe"
+          ],
+          "lastCommittedChange": "e9fe9d63f2f57e266d0882cf7c83a704977b3723",
+          "committedSHA256": "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-room.js": {
+          "servedSHA256": [
+            "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
+          ],
+          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
+          "committedSHA256": "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5",
+          "committedBytesWereTested": true
+        },
+        "js/soap-film-model.js": {
+          "servedSHA256": [
+            "ff7ccd740d7ab5049beb29a35d52f7012e797a528c15a9a6cb6146d9330e2c7b"
+          ],
+          "lastCommittedChange": "5aaf56b42b41577ccf4b07287431ffd41fb50efd",
+          "committedSHA256": "d67369094cc16f9b7f4895cde6433dbfb3579ab94e05a3725ea0354285a1fa1a",
+          "committedBytesWereTested": false
+        },
+        "js/soap-film-geometry.js": {
+          "servedSHA256": [
+            "e5012a4269f44664b17987a31dc00c62792c56c72a9aa65160925aaee35dfbb5"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/negative-temperature-model.js": {
+          "servedSHA256": [
+            "0414b0a52f08c8e81650e94d9de0f8beaf400ba2023d29b1cbdf587f198c0a67"
+          ],
+          "lastCommittedChange": "a961fea4985fd4e477dc7d4bdb61d6d98b75350d",
+          "committedSHA256": "5bc009e3430fff923b7ecb82e22ce1b5e0fab97ab5142827a2fa2d10282a3752",
+          "committedBytesWereTested": false
+        },
+        "js/negative-temperature-gpu.js": {
+          "servedSHA256": [
+            "cdc39aeb9c8829d5f3417ec1f97bd72c683f0fbb21f920918da83a06b619aa87"
+          ],
+          "lastCommittedChange": "a961fea4985fd4e477dc7d4bdb61d6d98b75350d",
+          "committedSHA256": "8f7241cdbdc7f94614d111811f2cebdac70a11fc11554e7ac9a189515663614d",
+          "committedBytesWereTested": false
+        },
+        "js/hydrogen-exactly-math.js": {
+          "servedSHA256": [
+            "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a"
+          ],
+          "lastCommittedChange": "cc5d4b94cbd144e0d879697b597ce907cf307d5a",
+          "committedSHA256": "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a",
+          "committedBytesWereTested": true
+        },
+        "js/hydrogen-exactly-shaders.js": {
+          "servedSHA256": [
+            "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8"
+          ],
+          "lastCommittedChange": "e9fe9d63f2f57e266d0882cf7c83a704977b3723",
+          "committedSHA256": "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-shaders.js": {
+          "servedSHA256": [
+            "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
+          ],
+          "lastCommittedChange": "d2cca0b3f40211383963142ae58ff9d9f1f005f5",
+          "committedSHA256": "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68",
+          "committedBytesWereTested": true
+        },
+        "js/qcd-lava-lamp-math.js": {
+          "servedSHA256": [
+            "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
+          ],
+          "lastCommittedChange": "7b9df6da5faa6d78659c1bc20253acc215e99a76",
+          "committedSHA256": "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64",
+          "committedBytesWereTested": true
+        },
+        "assets/visualizer/descent/drand-verifier-1.4.2.js": {
+          "servedSHA256": [
+            "ceb94a257a56958df899496b05b1677eb44963819596f1edb8ce8b374ef0390b"
+          ],
+          "lastCommittedChange": null
+        },
+        "js/descent-bootstrap-room.js": {
+          "servedSHA256": [
+            "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e"
+          ],
+          "lastCommittedChange": null
+        }
+      }
+    }
+  },
+  "verifierCommentCleanup": {
+    "shippedSHA256": "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4",
+    "change": "Trailing spaces removed from bundled license-comment blank lines; the executable minified line is identical. Node good/altered BLS verification rerun after cleanup."
+  }
+}
