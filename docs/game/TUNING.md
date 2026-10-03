@@ -1142,7 +1142,7 @@ The ascent horizon treatment (`js/sluice/158-horizon-atmos.js`, BACKGROUND_STYLE
 ## 5.6 Surface trees · grep `SURFACE TREES` · tier `live` (the `trees` gm group)
 
 Bush art was loosened in v26.93 after the rounded v26.91 forms felt too bulky.
-Four cached silhouettes (low spreading, compact, flowering, upright) grow from
+Four bush forms (low spreading, compact, flowering, upright) grow from
 crooked woody forks with small, tapered leaf sprays and open gaps. Leaves use
 the existing three greens, sparse highlights and green upper edges; dark
 outlines belong to the undersides. The branching remains visible through the
@@ -1158,13 +1158,21 @@ three living species use upper-left highlights, darker lower-right edges and
 the existing flora/wood palette to sit beside the station's pixel art. Sprites
 remain cached; silhouette detail adds no per-frame painting.
 
-The follow-up spacing pass uses 0.68 density, smaller living sprites and wider
-gaps between trunks. Sway and leaf shedding are quieter, with fewer bright
-foliage facets. `166-render-surface-boulders.js` adds sparse cached stones in
-clearings: four angular profiles, 26 to 45 world px wide and 13 to 25 px tall,
-using dark slate faces from the station's stone palette. Each shape has its
-own chipped profile and short fissures; shading runs continuously over the
-crown, without a separate pale top patch. Boulders are scenery behind the rig, with
+The woodland keeps 0.68 density and open gaps between trunks. Sway and leaf
+shedding are quiet, with sparse bright foliage facets. The October 2026 variety
+pass bakes 20 spruces, 16 birches, eight bushes and four snags. Living trees
+range from about 50 to 172 world px tall before sprite padding. Height and
+branch form are picked independently, so short young trees share groves with
+tall mature crowns. Spruces vary in width, trunk bend, bough count, missing
+branches and fan spacing; birches vary their forks, crown depth and leaf groups.
+The existing flora palette and cached drawing remain unchanged.
+
+`166-render-surface-boulders.js` adds sparse cached stones in clearings. Eight
+angular profile families vary their dimensions, crown, shoulders and facets
+by world column, about 24 to 54 world px wide and 11 to 30 px tall. A compressed
+slice of the station's stone ramp keeps the face, flank and upper-left light
+close in value, with short quiet fissures and occasional muted moss. Each
+column's sprite is baked once and reused on rebuild. Boulders are scenery behind the rig, with
 no collision. They avoid trees, ponds and the station compound. Excavating
 any tile beneath a boulder starts a quiet 1.05-second collapse: a 0.16-second
 lean toward the gap, then three cached stone fragments, four small chips and

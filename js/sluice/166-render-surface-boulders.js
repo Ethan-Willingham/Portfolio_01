@@ -2,16 +2,37 @@
   // Low, quiet stone accents between groves. Decorative, like the trees;
   // they leave the rig's route open. Baked at world-pixel resolution with the
   // station's stone ramp, top-left light and broad fractured faces.
-  var surfaceBoulders = [], surfaceBoulderSprites = null;
+  var surfaceBoulders = [], surfaceBoulderSprites = {}, surfaceBoulderPalette = null;
   var surfaceBoulderWorld = null, surfaceBoulderDensity = -1;
   var SURFACE_BOULDER_SETTLE = .16, SURFACE_BOULDER_LIFE = 1.05;
+
+  function surfaceBoulderMix(a, b, t) {
+    var out = [];
+    for (var i = 1; i < 7; i += 2) {
+      var av = parseInt(a.slice(i, i + 2), 16), bv = parseInt(b.slice(i, i + 2), 16);
+      out.push(Math.round(av + (bv - av) * t));
+    }
+    return 'rgb(' + out.join(',') + ')';
+  }
+
+  function surfaceBoulderColors() {
+    if (!surfaceBoulderPalette) {
+      // Stone scenery uses a compressed slice of the station's existing ramp.
+      // Whole stones can lean lighter, but adjacent faces stay close in value.
+      surfaceBoulderPalette = [surfaceBoulderMix(BLD.stoneDark, BLD.stoneBase, .56),
+        surfaceBoulderMix(BLD.stoneDark, BLD.stoneBase, .73), BLD.stoneBase,
+        surfaceBoulderMix(BLD.stoneBase, BLD.stoneLight, .15),
+        surfaceBoulderMix(BLD.stoneBase, BLD.stoneLight, .28)];
+    }
+    return surfaceBoulderPalette;
+  }
 
   function surfaceBoulderBake(w, h, seed) {
     var s = treesMakeSprite(w + 6, h + 6), g = s.g;
     var baseY = h + 3, cx = (s.w / 2) | 0;
-    // Each size gets a different broken profile: an upright split stone,
-    // a low slab, a rounded shoulder and a broad double-ridged block.
-    var kind = Math.floor(seed / 11) % 4;
+    // Eight shape families, with a different crown, shoulder and lean per
+    // column. Geometry may reverse; light always remains on the upper left.
+    var kind = Math.floor(treesHash(seed * 11 + 31) * 8);
     var profiles = [
       [[.03,1],[.07,.54],[.23,.49],[.19,.31],[.38,.04],[.54,0],
         [.71,.18],[.70,.27],[.83,.29],[.96,.62],[.91,.80],[.95,1]],
@@ -20,12 +41,33 @@
       [[.04,1],[.01,.68],[.15,.30],[.35,.09],[.59,0],[.76,.14],
         [.81,.39],[.94,.46],[.91,.62],[1,.83],[.92,1]],
       [[.01,1],[.06,.64],[.18,.50],[.20,.24],[.38,.16],[.43,0],
-        [.61,.05],[.70,.23],[.84,.22],[.96,.54],[1,.82],[.93,1]]
+        [.61,.05],[.70,.23],[.84,.22],[.96,.54],[1,.82],[.93,1]],
+      [[.02,1],[0,.69],[.11,.35],[.30,.06],[.68,0],[.82,.16],
+        [.93,.45],[1,.78],[.96,1]],
+      [[.03,1],[.11,.61],[.26,.42],[.38,.21],[.64,0],[.73,.09],
+        [.77,.36],[.89,.56],[1,.83],[.94,1]],
+      [[.04,1],[0,.78],[.07,.47],[.21,.19],[.44,0],[.64,.03],
+        [.83,.23],[.96,.54],[1,.83],[.93,1]],
+      [[.01,1],[.04,.59],[.16,.42],[.28,.43],[.32,.16],[.48,0],
+        [.63,.08],[.66,.29],[.80,.21],[.93,.45],[1,.83],[.95,1]]
     ];
-    var pts = profiles[kind];
-    var split = [.57, .73, .62, .48][kind];
-    var cleft = [.43, .31, .48, .35][kind];
-    var cleftLean = [-.18, .24, .17, -.14][kind];
+    var pts = [], reverse = treesHash(seed * 29 + 7) < .5;
+    var profile = profiles[kind];
+    for (var p = 0; p < profile.length; p++) {
+      var px = profile[p][0], py = profile[p][1];
+      px += (treesHash(seed * 41 + p * 97) - .5) * .08;
+      if (py > 0 && py < 1) py += (treesHash(seed * 47 + p * 71) - .5) * .09;
+      px = Math.max(.01, Math.min(.99, px));
+      pts.push([reverse ? 1 - px : px, Math.max(0, Math.min(1, py))]);
+    }
+    var split = .52 + treesHash(seed * 53 + 1) * .24;
+    var splitLean = (treesHash(seed * 59 + 3) - .5) * .32;
+    var cleft = .29 + treesHash(seed * 61 + 5) * .35;
+    var cleftLean = (treesHash(seed * 67 + 9) - .5) * .28;
+    var crown = .13 + treesHash(seed * 71 + 11) * .13;
+    var hasCrack = treesHash(seed * 73 + 13) < .62;
+    var palette = surfaceBoulderColors(), tone = treesHash(seed * 79 + 17) < .3 ? 1 : 0;
+    var moss = surfaceBoulderMix(BLD.stoneBase, TREES_GREEN_DARK, .24);
     var mask = new Uint8Array(s.w * s.h), x, y, i;
     // Scan-convert the angular silhouette. The outline stays exactly one
     // world pixel, without antialiased paths or smooth gradients.
@@ -53,29 +95,39 @@
       var nx = (x - 3) / w, ny = (y - 3) / h;
       // The front plane continues over the crown. Low-contrast side facets
       // model slate without a separate bright patch laid across the top.
-      var shaded = nx > split + ny * (kind % 2 ? -.16 : .19);
-      if (kind === 0 && ny > .56 + nx * .54) shaded = true;
-      if (kind === 3 && ny > .72 - nx * .18 && nx < .62) shaded = true;
-      if (ny > .91 - nx * .04) shaded = true;
-      g.fillStyle = shaded ? BLD.stoneDark : BLD.stoneBase;
+      var shaded = nx > split + ny * splitLean;
+      if (ny > .94 - nx * .03) shaded = true;
+      var lit = !shaded && ny < crown + nx * .14 && nx < split - .10;
+      g.fillStyle = palette[tone + (shaded ? 1 : (lit ? 3 : 2))];
       g.fillRect(x, y, 1, 1);
       // A short, bent hairline and one small split at its foot. Keep most
       // of the face quiet; these are weathered rocks, not faceted jewels.
       var crackX = Math.round(3 + w * (cleft + ny * cleftLean)) + (ny > .44 ? 1 : 0);
-      if (ny > .26 && ny < .67 &&
+      if (hasCrack && ny > .30 && ny < .63 &&
           (x === crackX || (ny > .56 && ny < .62 && x === crackX - 1))) {
-        g.fillStyle = BLD.stoneDark; g.fillRect(x, y, 1, 1);
+        g.fillStyle = palette[tone]; g.fillRect(x, y, 1, 1);
       }
       // A couple of small fracture faces inside the shaded flank add depth
       // without scattering bright pixels or outlining every interior plane.
-      if (shaded && ny > .54 && ny < .64 && nx > .77 && nx < .86 - ny * .035) {
-        g.fillStyle = BLD.stoneBase; g.fillRect(x, y, 1, 1);
+      if (kind % 3 === 0 && shaded && ny > .54 && ny < .64 && nx > .77 && nx < .86 - ny * .035) {
+        g.fillStyle = palette[tone + 2]; g.fillRect(x, y, 1, 1);
       }
       if (seed % 2 && ny > .86 && nx > .14 && nx < .31 - (ny > .93 ? .05 : 0)) {
-        g.fillStyle = TREES_GREEN_DARK; g.fillRect(x, y, 1, 1);
+        g.fillStyle = moss; g.fillRect(x, y, 1, 1);
       }
     }
-    return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY };
+    return { cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY,
+      base:palette[tone + 2], shade:palette[tone + 1] };
+  }
+
+  function surfaceBoulderSprite(c) {
+    if (surfaceBoulderSprites[c]) return surfaceBoulderSprites[c];
+    var seed = c * 373 + 19;
+    var sizes = [[29,20],[40,14],[35,23],[45,21],[44,15],[33,25],[32,18],[40,24]];
+    var kind = Math.floor(treesHash(seed * 11 + 31) * sizes.length), size = sizes[kind];
+    var w = Math.round(size[0] * (.82 + treesHash(seed * 83 + 3) * .38));
+    var h = Math.round(size[1] * (.80 + treesHash(seed * 89 + 5) * .38));
+    return surfaceBoulderSprites[c] = surfaceBoulderBake(w, h, seed);
   }
 
   function surfaceBoulderSupported(rock) {
@@ -87,10 +139,6 @@
   }
 
   function surfaceBouldersRebuild() {
-    if (!surfaceBoulderSprites) {
-      surfaceBoulderSprites = [surfaceBoulderBake(26,13,11), surfaceBoulderBake(35,19,22),
-        surfaceBoulderBake(45,22,35), surfaceBoulderBake(32,25,46)];
-    }
     surfaceBoulders.length = 0;
     surfaceBoulderWorld = world;
     surfaceBoulderDensity = treesTune.density;
@@ -102,7 +150,7 @@
       if (Math.abs(c - townCenterCol(region.townIndex)) < TREES_TOWN_CLEAR - 2) continue;
       // More likely at the edge of a grove, but rare enough to keep clearings.
       if (treesHash(c * 1249 + 617) > .07 + (1 - treesGrove(c)) * .03) continue;
-      var spr = surfaceBoulderSprites[Math.floor(treesHash(c * 373 + 19) * surfaceBoulderSprites.length)];
+      var spr = surfaceBoulderSprite(c);
       var x = c * TILE + TILE * .5;
       if (x - lastX < TILE * 5) continue;
       var nearTree = false;
@@ -204,10 +252,10 @@
       for (var j = 0; j < 4; j++) {
         var vx = (j - 1.5) * 12 + dir * 5;
         var cy = surfaceY - 3 - (18 + j * 4) * f + 100 * f * f;
-        ctx.fillStyle = j % 2 ? BLD.stoneDark : BLD.stoneBase;
+        ctx.fillStyle = j % 2 ? s.shade : s.base;
         ctx.fillRect(Math.round(rock.x + (j - 1.5) * 3 + vx * f), Math.round(cy), 2, j % 2 + 1);
       }
-      ctx.fillStyle = BLD.stoneBase;
+      ctx.fillStyle = s.base;
       for (var d = 0; d < 3; d++) {
         var age = f - d * .045;
         if (age < 0) continue;
