@@ -258,7 +258,7 @@ async function runGPU() {
       for (let i = 0; i < count; i++) settledMaxSpeed = Math.max(settledMaxSpeed, Math.hypot(settled[i * 4 + 2], settled[i * 4 + 3]));
       check(settledMaxSpeed < 8, 'shallow bed settles before drive: ' + settledMaxSpeed);
       let peakMeanRise = 0, peakRise = 0, minVY = 0, upwardContacts = 0, maxHullOverlap = 0;
-      for (let frame = 1; frame <= 120; frame++) {
+      for (let frame = 1; frame <= 240; frame++) {
         current = { active: true, x: 88 + dir * 150 * frame * grainDt, y: 102, dir, vx: dir * 150, vy: 0 };
         current.hull = worldHull(local, current.x, current.y, dir); api.writeGameParams(instance, 1);
         await tick();

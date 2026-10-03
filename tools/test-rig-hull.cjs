@@ -63,6 +63,9 @@ function localPoints(dip) {
     return [x, y + (y < 18 ? dip : 0)];
   });
 }
+const neutral = localPoints(0);
+assert(Math.min(...neutral.map(p => p[1])) < 7, 'rounded crown reaches the visible head');
+assert(neutral[0][1] < 9 && neutral[9][1] < 9, 'both slopes continue to head height');
 let sampleCount = 0;
 // Reserve paint around the hull for drill shake and event-driven tremor.
 const margin = 0.8;
@@ -127,7 +130,8 @@ for (const dir of [-1, 1]) for (const dip of [0, 0.5, 1.35])
       assert(w.rigHullContains(h, cx, cy), 'interior stays inside under pose');
       assert(w.rigHullQuery(h, cx, cy).distance < 0, 'interior signed distance');
       for (let i = 0; i < h.n; i++) {
-        if (i !== h.n - 2) assert(h.ny[i] < 0, 'every non-base face guides material upward');
+        if (i !== h.n - 2) assert(h.ny[i] * Math.cos(tilt) - h.nx[i] * Math.sin(tilt) < 0,
+          'every non-base face guides material toward the banked crown');
         const j = (i + 1) % h.n;
         const x = (h.x[i] + h.x[j]) / 2, y = (h.y[i] + h.y[j]) / 2;
         assert(w.rigHullContains(h, x - h.nx[i] * 0.1, y - h.ny[i] * 0.1), 'normal points out');
