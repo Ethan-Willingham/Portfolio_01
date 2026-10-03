@@ -13,6 +13,10 @@
   var SOFT_CONTACT_POINT_MASS = 0.09;
   // Let gel slide toward the crown along the taller, steeper armor sides.
   var SOFT_CONTACT_FRICTION = 0.25;
+  // The upper armor gives a supported resident traction while being lifted.
+  // It remains a local Coulomb contact, with no force once the skin separates.
+  var SOFT_CONTACT_CARRY_FRICTION = 1.25;
+  var SOFT_CONTACT_ROLL_RADIUS = 8;
   var softContactReport = { contacts: 0, selfContacts: 0, impulse: 0, friction: 0, penetration: 0 };
 
   function softContactBody(b) { return SOFT_CONTACT && !!b.surfaceSlime; }
@@ -369,13 +373,17 @@
     // Friction is bounded by the normal impulse. A glancing impact can roll
     // the body because its impulse acts on the contacted patch, not its center.
     var tx = -ny, ty = nx, tangent = rvx * tx + rvy * ty;
-    var tangentMass = invRig + invPoint * (wa * wa + wc * wc);
+    var tangentMass = rx * tx * tx + ry * ty * ty + invPoint * (wa * wa + wc * wc);
+    var carrying = ny > 0.5 && sy < rig.y + PLAYER_H * 0.5;
+    var friction = carrying ?
+      SOFT_CONTACT_CARRY_FRICTION : SOFT_CONTACT_FRICTION;
     var jt = skySlimeClamp(-tangent / tangentMass,
-      -normalImpulse * SOFT_CONTACT_FRICTION, normalImpulse * SOFT_CONTACT_FRICTION);
+      -normalImpulse * friction, normalImpulse * friction);
     var ivx = tx * jt, ivy = ty * jt;
     rig.vx += ivx * rx; rig.vy += ivy * ry;
     b.ox[a] += ivx * invPoint * wa * dt; b.oy[a] += ivy * invPoint * wa * dt;
     b.ox[c] += ivx * invPoint * wc * dt; b.oy[c] += ivy * invPoint * wc * dt;
+    if (carrying) softContactRoll(b, normalImpulse, dt);
     if (ny < -0.5 && sy > rig.y + PLAYER_H * 0.65) { f.support = true; f.supportBody = b; }
     if (!f.hit && ny < -0.5 && f.vy > 120) recordLandingImpact(f.vy, sy, 'jello', 1);
     f.hit = true;
@@ -394,6 +402,31 @@
     softContactReport.impulse += normalImpulse;
     softContactReport.friction += Math.abs(jt);
     softContactReport.penetration = Math.max(softContactReport.penetration, depth);
+  }
+
+  // A loaded gel patch resists rolling across the roof. Its finite moment
+  // budget removes only measured angular motion, preserving translation and
+  // internal deformation. Separation immediately removes this resistance.
+  function softContactRoll(b, load, dt) {
+    var cx = 0, cy = 0, vx = 0, vy = 0;
+    for (var i = 0; i < b.n; i++) {
+      cx += b.px[i]; cy += b.py[i];
+      vx += b.px[i] - b.ox[i]; vy += b.py[i] - b.oy[i];
+    }
+    cx /= b.n; cy /= b.n; vx /= b.n; vy /= b.n;
+    var inertia = 0, angular = 0;
+    for (i = 0; i < b.n; i++) {
+      var x = b.px[i] - cx, y = b.py[i] - cy;
+      inertia += x * x + y * y;
+      angular += x * (b.py[i] - b.oy[i] - vy) - y * (b.px[i] - b.ox[i] - vx);
+    }
+    if (!(inertia > 0.000001)) return;
+    var cap = load * SOFT_CONTACT_ROLL_RADIUS / (inertia * SOFT_CONTACT_POINT_MASS);
+    var omega = skySlimeClamp(angular / (inertia * dt), -cap, cap);
+    for (i = 0; i < b.n; i++) {
+      b.ox[i] -= (b.py[i] - cy) * omega * dt;
+      b.oy[i] += (b.px[i] - cx) * omega * dt;
+    }
   }
 
   function softContactFinish() {

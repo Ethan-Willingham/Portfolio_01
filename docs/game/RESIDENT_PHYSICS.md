@@ -799,3 +799,31 @@ Fixed nominal-step slime CPU savings were about 0.9% for five bodies and
 sweeps expose extra physics catch-up and GPU costs, with AC repeats and
 actual body-work coverage. See [SLIME_SNOW_CAPACITY.md](SLIME_SNOW_CAPACITY.md)
 for conditions, tables, rejected candidates and pending foreground validation.
+
+
+### Roof carrying (v28.169)
+
+Soft residents have more traction on the upper crown, with loaded rolling
+resistance so a small initial offset does not immediately roll them off.
+Drive or fly underneath, then hold upward thrust to lift the supported gel.
+Gentle sideways flight can carry it; a hard sideways move or lost roof contact
+lets it fall away. There is no grip button or saved attachment.
+
+The existing hull, material, locomotion and side-ramp friction remain intact.
+Roof friction is 1.25, while ordinary contact keeps 0.25. Its tangential
+effective mass now respects the rig's terrain-blocked axes. Rolling resistance
+is bounded by the actual contact normal impulse times an eight-pixel moment
+arm. It removes only the measured rigid angular velocity component, preserving
+linear momentum, positions and residual deformation velocity. The rig's
+fixed orientation absorbs this frictional moment. Separation supplies no
+rolling resistance.
+
+`node tools/test-soft-rig-carry.mjs` checks momentum, energy and load bounds;
+ordinary WebGPU boot; centered and slightly offset lifting at 30, 60 and
+144 Hz; both resident size limits; gentle lateral carry and hard lateral
+release; ceiling and wall contact; and landscape touch input. Reports and
+an actual-render image go under `/tmp`. The side-ramp and enclosed recovery
+checks remain in `tools/test-soft-rig-ramp.cjs`. The existing contact comparison
+also passes its solved-contact, mesh, terrain and support checks. At 144 Hz
+its two-pixel display-overlap limit still fails on pending physics frames,
+including unchanged centered and offset drops in the pre-carry snapshot.
