@@ -84,6 +84,8 @@
     }
     range(lo, hi) { return lo + this.random() * (hi - lo); }
     report(type, text, point, animal) { this.events.push({ type, text, point, animal: animal ? { ...animal.profile, wounded: animal.wounded } : null }); }
+    animalArt(deer) { return this.options.artFor ? this.options.artFor(deer.profile) : this.art; }
+    animalSprite(deer) { return this.options.spriteFor ? this.options.spriteFor(deer.profile) : this.artName; }
     spawn(x = this.range(-8, 8), y = this.range(TUNING.roamNear, TUNING.roamFar)) {
       const deer = { id: this.nextId++, x, y, previousX: x, previousY: y,
         facingRight: this.random() > .5, state: 'grazing', pause: this.range(1.2, 3.5),
@@ -192,8 +194,6 @@
           }
         }
       }
-      const width = this.art.width / TUNING.pixelsPerUnit;
-      const height = this.art.height / TUNING.pixelsPerUnit;
       this.bullets = this.bullets.filter(shot => {
         const previous = position(shot, shot.age);
         const age = Math.min(shot.age + dt, shot.duration);
@@ -209,6 +209,7 @@
         }
         candidates.sort((a, b) => a.fraction - b.fraction);
         for (const { deer, fraction } of candidates) {
+          const art = this.animalArt(deer), width = art.width / TUNING.pixelsPerUnit, height = art.height / TUNING.pixelsPerUnit;
           const time = shot.age + (age - shot.age) * fraction;
           const at = position(shot, time);
           const x = deer.previousX + (deer.x - deer.previousX) * fraction;
@@ -216,7 +217,7 @@
           if (u < 0 || u >= 1) continue;
           if (v >= 1) { shot.reason = 'high'; continue; }
           if (v < 0) { shot.reason = 'low'; continue; }
-          const hit = hitPixel(this.art, deer.facingRight, u, v);
+          const hit = hitPixel(art, deer.facingRight, u, v);
           if (hit === 'transparent' || hit === 'miss') { shot.reason = 'gap'; continue; }
           deer.state = 'fleeing';
           if (hit === 'vitals') {

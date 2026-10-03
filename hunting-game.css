@@ -156,8 +156,21 @@ body.hunt-lock { overflow: hidden; }
 .hunt-record-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: .8rem; }
 .hunt-record { display: grid; grid-template-columns: 75px 1fr; gap: .9rem; border: 1px solid var(--rule); padding: 1.2rem; border-radius: 5px; }
 .hunt-record > div { min-width: 0; }
-.hunt-record-art { width: 75px; height: 65px; align-self: center; background: url('assets/hunting/deer-v2.png') center / contain no-repeat; image-rendering: pixelated; }
-.hunt-record-art[data-species="boar"] { background-image: url('assets/hunting/boar-v3.png'); }
+.hunt-record-art { display: block; width: 75px; height: 65px; align-self: center; background: url('assets/hunting/deer-1-v4.png') center / contain no-repeat; image-rendering: pixelated; }
+.hunt-record-art[data-art="deer-2"] { background-image: url('assets/hunting/deer-2-v4.png'); }
+.hunt-record-art[data-art="deer-3"] { background-image: url('assets/hunting/deer-3-v4.png'); }
+.hunt-record-art[data-art="deer-4"] { background-image: url('assets/hunting/deer-4-v4.png'); }
+.hunt-record-art[data-art="deer-5"] { background-image: url('assets/hunting/deer-5-v4.png'); }
+.hunt-record-art[data-art="boar"] { background-image: url('assets/hunting/boar-v3.png'); }
+.hunt-deer-heading { margin-top: 1.8rem; }
+.hunt-deer-heading h3 { font: 1.5rem var(--font-heading); color: var(--text-bright); margin: .4rem 0; }
+.hunt-deer-heading > p:last-child { font: .75rem/1.6 var(--font-body); color: var(--text-dim); }
+.hunt-deer-levels { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .7rem; margin-top: 1rem; }
+.hunt-deer-levels button { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; text-align: left; padding: .85rem; }
+.hunt-deer-levels .hunt-record-art { width: 100%; height: 80px; }
+.hunt-deer-levels strong { font: 1.05rem var(--font-heading); color: var(--text-bright); }
+.hunt-deer-levels button > span:not(.hunt-kicker):not(.hunt-record-art) { font: .7rem/1.5 var(--font-body); }
+.hunt-deer-levels .hunt-deer-gate { color: var(--accent); margin-top: auto; }
 .hunt-record h4 { font: 1.2rem var(--font-heading); color: var(--text-bright); margin: .45rem 0; }
 .hunt-record p:not(.hunt-kicker) { font-size: .72rem; color: var(--text-dim); margin: .3rem 0; }
 .hunt-record .hunt-record-status { color: var(--accent); }
@@ -178,6 +191,7 @@ body.hunt-lock { overflow: hidden; }
 .hunt-shuffle > div { display: flex; gap: .35rem; }
 @media (max-width: 1050px) { .hunt-readouts { gap: 1rem; } .hunt-readouts output { font-size: 1rem; } .hunt-minor-readout { display: none; } }
 @media (max-width: 760px) {
+  .hunt-deer-levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hunt-camp-grid { grid-template-columns: 1fr; }
   .hunt-planner { border-left: 0; border-top: 1px solid var(--rule); padding: 1.4rem 0 0; }
   .hunt-regions button { padding: .8rem; }

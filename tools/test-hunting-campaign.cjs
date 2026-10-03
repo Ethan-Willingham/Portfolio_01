@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { Campaign, period } = require('../js/hunting-campaign.js');
+const { Campaign, DEER_LEVELS, animalArt, animalName, period } = require('../js/hunting-campaign.js');
 function check(name, run) { run(); console.log('PASS ' + name); }
 check('the clock runs in real time, supports fast wait and rolls into tomorrow', () => {
   const c = new Campaign(); c.advance(60); assert.equal(c.time, '05:31');
@@ -53,4 +53,40 @@ check('saved records, equipment, credits and trails survive reload', () => {
   assert.equal(loaded.value(loaded.packed[0]), c.value(c.packed[0]));
   const malformed = new Campaign({ version: 1, credits: -10, owned: ['made-up'], regions: ['made-up'], records: [{ species: '<script>' }] });
   assert.equal(malformed.state.credits, 0); assert.equal(malformed.state.records.length, 0); assert.deepEqual(malformed.state.regions, ['birch']);
+});
+check('five deer levels unlock on deer recoveries and keep the selected outing level', () => {
+  const c = new Campaign();
+  assert.equal(c.selectDeerLevel(2), false); assert.equal(c.selectDeerLevel(0), false);
+  for (let i = 0; i < 14; i++) {
+    const before = c.maxDeerLevel;
+    c.recover(c.animal('deer', 100 + i));
+    const unlocked = DEER_LEVELS.filter(d => d.required <= i + 1).at(-1).level;
+    assert.equal(c.maxDeerLevel, unlocked);
+    if (unlocked > before) assert.equal(c.state.deerLevel, unlocked);
+  }
+  assert.equal(c.maxDeerLevel, 5); assert.equal(c.begin().deerLevel, 5);
+  const next = c.animal('deer', 4), record = c.recover(next);
+  assert.equal(next.level, 5); assert.equal(animalArt(record), 'deer-5'); assert.equal(animalName(record), 'Crowned stag');
+  assert.equal(c.selectDeerLevel(2), true); assert.equal(c.begin().deerLevel, 2);
+  assert.equal(c.animal('deer', 4, 5).level, 5);
+  assert.equal(new Campaign(JSON.parse(c.export())).state.deerLevel, 2);
+  const boars = new Campaign(); for (let i = 0; i < 15; i++) boars.recover(boars.animal('boar', i));
+  assert.equal(boars.maxDeerLevel, 1);
+});
+check('deer levels survive trophies and tracking, and old saves migrate without losing progress', () => {
+  const c = new Campaign();
+  for (let i = 0; i < 14; i++) c.recover(c.animal('deer', i));
+  const trophy = c.recover(c.animal('deer', 4)); c.mount(trophy.id); c.sellAll();
+  const trail = c.addTrack(c.animal('deer', 7));
+  const loaded = new Campaign(JSON.parse(c.export()));
+  assert.equal(loaded.state.records.at(-1).level, 5); assert.equal(loaded.pending[0].level, 5);
+  assert.equal(loaded.maxDeerLevel, 5);
+  const result = loaded.search(trail.id);
+  if (result.found) assert.equal(result.record.level, 5);
+  const legacy = JSON.parse(c.export()); delete legacy.deerLevel;
+  legacy.records.forEach(r => delete r.level); legacy.tracks.forEach(t => delete t.level);
+  const migrated = new Campaign(legacy);
+  assert.equal(migrated.state.deerLevel, 5); assert.equal(migrated.state.records.at(-1).level, 1);
+  assert.equal(migrated.pending[0].level, 1); assert.equal(migrated.state.credits, c.state.credits);
+  legacy.deerLevel = 99; assert.equal(new Campaign(legacy).state.deerLevel, 1);
 });

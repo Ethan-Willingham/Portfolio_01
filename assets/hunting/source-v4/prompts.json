@@ -1,0 +1,48 @@
+{
+  "tool": "Built-in imagegen",
+  "common": "Use case: stylized-concept. Asset type: ONE production pixel-art whitetail deer sprite for a playable woodland hunting game. Input image is a STYLE REFERENCE ONLY: match its warm ochre, walnut, cream palette, square pixel clusters, upper-left lighting, and right-facing full-body composition, but correct its anatomy. Strict side profile facing RIGHT. Realistic deer proportions: long slim legs, compact head, horizontal deer torso, upright ears, dark nose and hooves, pale throat and underside, small tail held down at LEFT rump. EXACTLY FOUR LEGS AND FOUR HOOVES TOTAL: two hind legs at the rump and two front legs at the shoulder. Each pair separated by a transparent gap, with the far leg slightly darker and slightly offset. No fifth central leg, no hanging belly projection, no extra feet. Show full body, full rack, all hooves, with generous transparent margin. Restrained polished indie pixel art, deliberate hard square pixel clusters readable after downsampling to around 64 pixels wide. Natural coat and antler materials, no black outlines, no blur. No ground, cast shadow, environment, framing, text, labels, accessories, magic or glow. Genuinely transparent background. ",
+  "tiers": [
+    {
+      "id": 1,
+      "name": "Young buck",
+      "detail": "Level 1, YOUNG BUCK. A lean young whitetail, small compact four-point forked antlers, slender neck, plain warm tan coat. Modest believable starter deer. Head and rack small relative to body."
+    },
+    {
+      "id": 2,
+      "name": "Woodland buck",
+      "detail": "Level 2, WOODLAND BUCK. Adult whitetail, lean strong body, richer russet brown coat, a balanced medium eight-point antler rack, slightly thicker neck. Clearly more impressive than a young four-point buck, still ordinary real woodland anatomy."
+    },
+    {
+      "id": 3,
+      "name": "Ridge buck",
+      "detail": "Level 3, RIDGE BUCK. Large mature whitetail with broad shoulders and a muscular rut-season neck, deep chestnut coat with cream throat, broad tall ten-point rack with long clean tines. Strong memorable realistic trophy deer. Antlers bigger than ordinary eight-point deer but naturally branching."
+    },
+    {
+      "id": 4,
+      "name": "Old monarch",
+      "detail": "Level 4, OLD MONARCH. Imposing old whitetail with heavy mature shoulders and thick rut neck, dark walnut coat, pale weathered gray muzzle, a small healed notch in one ear. A spectacular wide twelve-point rack with long ivory tips and one naturally irregular extra branch. Distinct silhouette. Push the natural trophy proportions a little for a cool late-game deer, keep it a living woodland deer."
+    },
+    {
+      "id": 5,
+      "name": "Crowned stag",
+      "detail": "Level 5, CROWNED STAG. The rare final trophy: massive but anatomically plausible whitetail buck, powerful broad chest and thick mature neck, silver-gray winter coat with darker walnut legs and a cream throat. Extraordinary wide high crown of branching bone antlers, about sixteen points, a few natural non-typical forks; dramatic but still whitetail antler anatomy, no moose paddles. A majestic real deer with slightly heightened proportions, no supernatural effects."
+    }
+  ],
+  "edits": [
+    {
+      "tier": 2,
+      "extra": "Keep the medium antlers and russet coat otherwise unchanged. The final deer must have only four distinct hooves.",
+      "prompt": "Use case: precise-object-edit. Asset type: transparent pixel art game deer. Image 1 is the EDIT TARGET. It incorrectly has FIVE legs: two hind legs on the left and THREE front legs on the right. REMOVE THE EXTRA REARMOST FRONT LEG completely, the thin leg descending from the belly just behind the main shoulder leg (about 60 percent across the image). Replace all of that extra leg from belly to hoof with genuine transparency. Keep only the main near foreleg and the far foreleg at the right chest: TWO FORELEGS, TWO HINDLEGS, EXACTLY FOUR HOOVES. Image 2 is an ANATOMY REFERENCE ONLY: its two hind legs and two forelegs are correct. Preserve image 1's full-body right-facing pose, pixel clusters, upper-left light, body placement, ears and tail. Keep the medium antlers and russet coat otherwise unchanged. The final deer must have only four distinct hooves."
+    },
+    {
+      "tier": 3,
+      "extra": "Keep the tall antlers but shift the coat to DEEP CHESTNUT red-brown, noticeably darker than ordinary tan. Thicken the neck and shoulder slightly to show a mature rut buck. Preserve the four-leg correction. Transparent background, no text, no ground.",
+      "prompt": "Use case: precise-object-edit. Asset type: transparent pixel art game deer. Image 1 is the EDIT TARGET. It incorrectly has FIVE legs: two hind legs on the left and THREE front legs on the right. REMOVE THE EXTRA REARMOST FRONT LEG completely, the thin leg descending from the belly just behind the main shoulder leg (about 60 percent across the image). Replace all of that extra leg from belly to hoof with genuine transparency. Keep only the main near foreleg and the far foreleg at the right chest: TWO FORELEGS, TWO HINDLEGS, EXACTLY FOUR HOOVES. Image 2 is an ANATOMY REFERENCE ONLY: its two hind legs and two forelegs are correct. Preserve image 1's full-body right-facing pose, pixel clusters, upper-left light, body placement, ears and tail. Keep the tall antlers but shift the coat to DEEP CHESTNUT red-brown, noticeably darker than ordinary tan. Thicken the neck and shoulder slightly to show a mature rut buck. Preserve the four-leg correction. Transparent background, no text, no ground."
+    },
+    {
+      "tier": 4,
+      "extra": "Make the coat DARK WALNUT BROWN, much darker than tan, with a visibly gray weathered muzzle and a small notch in one ear. Expand the rack sideways with a few natural irregular extra forks and long ivory tips for an old trophy buck, still naturally branching whitetail bone antlers. Heavy shoulders and thick neck. Preserve the four-leg correction. Transparent background, no text, no ground.",
+      "prompt": "Use case: precise-object-edit. Asset type: transparent pixel art game deer. Image 1 is the EDIT TARGET. It incorrectly has FIVE legs: two hind legs on the left and THREE front legs on the right. REMOVE THE EXTRA REARMOST FRONT LEG completely, the thin leg descending from the belly just behind the main shoulder leg (about 60 percent across the image). Replace all of that extra leg from belly to hoof with genuine transparency. Keep only the main near foreleg and the far foreleg at the right chest: TWO FORELEGS, TWO HINDLEGS, EXACTLY FOUR HOOVES. Image 2 is an ANATOMY REFERENCE ONLY: its two hind legs and two forelegs are correct. Preserve image 1's full-body right-facing pose, pixel clusters, upper-left light, body placement, ears and tail. Make the coat DARK WALNUT BROWN, much darker than tan, with a visibly gray weathered muzzle and a small notch in one ear. Expand the rack sideways with a few natural irregular extra forks and long ivory tips for an old trophy buck, still naturally branching whitetail bone antlers. Heavy shoulders and thick neck. Preserve the four-leg correction. Transparent background, no text, no ground."
+    }
+  ]
+}

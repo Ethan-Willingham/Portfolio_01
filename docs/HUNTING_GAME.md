@@ -5,7 +5,8 @@ prototype. The Unity source was reviewed at commit `0ef16c9` (2026-09-01) and
 stays intact. This game is ordinary JavaScript served from `hunting-game.html`,
 listed beside All Four Wheels on In Progress.
 
-The owner supplied the original design prompt on 2026-09-30. Version 3 adds a
+The owner supplied the original design prompt on 2026-09-30. Version 4 adds five
+deer levels and corrects the original buck's extra leg. Version 3 added a
 complete camp-to-field loop around the original visible bullet mechanic.
 Keep developing the JavaScript version in this repo. The current art is
 generated pixel art and can accept owner-drawn replacements later.
@@ -18,9 +19,10 @@ generated pixel art and can accept owner-drawn replacements later.
 - `js/hunting-physics.js`: ballistics, movement, animal behavior and pixel hits.
 - `js/hunting-view.js`: renderer, asset loading, species masks and scope camera.
 - `js/hunting-game.js`: fixed-step loop, input, UI, saving, sound and phase changes.
-- `assets/hunting/*-v2.png`: birch meadow, deer and hunter.
+- `assets/hunting/*-v2.png`: birch meadow and hunter, plus the retired deer.
 - `assets/hunting/*-v3.png`: cypress field, boar, dog and tracking illustration.
-- `assets/hunting/source-v2/`, `source-v3/`: generated masters and full prompts.
+- `assets/hunting/deer-[1-5]-v4.png`: five four-legged whitetail buck sprites.
+- `assets/hunting/source-v2/`, `source-v3/`, `source-v4/`: generated masters and full prompts.
 - `tools/build-hunting-art.cjs`: repeatable asset normalization, requires Sharp.
 - `assets/hunting/source/*.aseprite`: original Unity art, retained as history.
 - `tools/export-hunting-art.mjs`: legacy Aseprite export.
@@ -83,6 +85,26 @@ Records and unfinished trails are retained across outings.
 - Field-dressing kit, 100 credits: halves the time penalty on recovery value
   and doubles the packed freshness window.
 
+Birch has five selectable deer levels. The camp previews all five and states
+how many more deer each locked level needs. Only recovered deer count, including
+tracked recoveries. Selling or mounting a record retains that progress; boar
+recoveries and failed trails do not count. A new unlock is selected for the next
+outing, while animals already in the field keep their original level.
+
+| Level | Deer | Deer recoveries to unlock | Weight range | Base value |
+|---|---|---|---|---|
+| 1 | Young buck | 0 | 110 to 140 lb | 90 |
+| 2 | Woodland buck | 2 | 140 to 180 lb | 120 |
+| 3 | Ridge buck | 5 | 180 to 220 lb | 165 |
+| 4 | Old monarch | 9 | 220 to 260 lb | 225 |
+| 5 | Crowned stag | 14 | 260 to 300 lb | 310 |
+
+Each level has a separate coat, rack and silhouette. The last two push natural
+trophy proportions slightly. The selected Birch level persists across reloads,
+and level identity follows each animal through blood trails, recovery, sales
+and trophies. Older saves retain their economy and records, label historical
+deer as level 1, and unlock the levels their existing recoveries have earned.
+
 These are game tuning values. They do not model real hunting, animal welfare,
 market prices, or species biology. Duck hunting, exotic regions, a larger
 connected world and authored directional animation remain future work.
@@ -104,10 +126,11 @@ including shots travelling toward or away from the top of the screen. Animal
 position is interpolated at the crossing, then its mirrored PNG alpha is read.
 A transparent pixel lets the round continue.
 
-The right-facing deer is 64 by 48; boar is 64 by 42. Their current vital center
-is u = 0.67, v = 0.45 with normalized radius 0.10. The actual opaque shoulder
-was checked for both orientations. The ellipse uses the species mask's own
-width and height. Source alpha remains intact; runtime sprites have binary
+The five right-facing deer are 56 by 56, 60 by 57, 64 by 59, 70 by 63 and
+76 by 75; boar is 64 by 42. Their current vital center is u = 0.67, v = 0.45
+with normalized radius 0.10. The actual opaque shoulder was checked for both
+orientations of every level. Rendering, guide ellipses and collision use each
+animal's own sprite and mask. Source alpha remains intact; runtime sprites have binary
 alpha so visible boundaries and collision boundaries match. The first port's
 24 by 19 deer and original sources remain as history. See `HUNTING_ART.md`.
 
@@ -132,7 +155,8 @@ starts off and is synthesized after enabling it. Fullscreen uses the native
 API where available and a page fallback otherwise.
 
 Local storage key: `hunting-camp-v1`, schema version 1. Saved data includes
-clock, credits, equipment, area unlocks, loadout, records and trail outcomes.
+clock, credits, equipment, area unlocks, loadout, selected deer level, records
+and trail outcomes. Deer records and trails carry their original level.
 A reload starts at camp. It does not resume a live bullet or preserve a field's
 animal positions. Storage errors leave the game playable and show the save
 limitation inline. No account, server save, offline time jump or cloud sync.
@@ -154,14 +178,17 @@ NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 
 Campaign checks cover overnight time, gate conditions, single-payment sales,
 trophies, upgrades, tracking success and failure, delay and preservation,
-and save reload. Physics checks use actual species PNG alpha, including
+and save reload, plus deer unlock thresholds, selection and old-save migration.
+Physics checks count four separate feet in every runtime deer silhouette and
+use actual species PNG alpha, including
 mirrored vital hits, gaps, reverse shots, ground height, wind, bounds, stand
 proximity and wound trails. Browser checks follow the full earned loop with
 real pointer and touch shots, plus scope, waiting, pause, fullscreen, focus
-loss, persisted state and portrait/landscape layouts.
+loss, persisted state and portrait/landscape layouts. All five levels also get
+real pointer-shot recoveries, collection checks and reload checks.
 
 The QA server injects inspection helpers at `TEST_HOOKS`; public scripts expose
 no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v3-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v4-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.
