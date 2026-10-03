@@ -1,9 +1,9 @@
-// Worker output, stale replies, fallback and model invalidation in real browsers.
+// The optional artwork worker, stale replies, fallback and model invalidation.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium,webkit}=require('playwright'),sharp=require('sharp'),root=path.resolve(__dirname,'..');let browser;
 const hooks=`window.__renderQA={
  ready:()=>floor.pending===0,
- scene:index=>{cancelAnimationFrame(raf);raf=0;reset(index);},
+ scene:index=>{cancelAnimationFrame(raf);raf=0;reset(index);floor=view.makeFloor(world.level,false,true);draw();},
  stats:()=>({pending:floor.pending,working:floor.working,tiles:floor.tiles.size,rocks:floor.rocks.size,chunks:floor.commandRasters?.size||0,pixels:floor.commandRasters?.pixels||0}),
  fresh:()=>{draw();const cached=canvas.toDataURL(),before=JSON.stringify(Course.snapshot(world));view.draw(ctx,world,view.makeFloor(world.level),{follow:followCart,focusY:touchFocusY});const fresh=canvas.toDataURL();draw();return {cached,fresh,unchanged:before===JSON.stringify(Course.snapshot(world))};},
  change:()=>{const shelf=world.shelves[1],p=shelf.stockItems.find(p=>p.state==='shelf');shelf.cx+=7;shelf.tilt=.2;shelf.a+=.1;p.color=(p.color+1)%6;p.u+=3;draw();},
@@ -38,7 +38,7 @@ async function check(page,label){
   await context.route('https://www.googletagmanager.com/**',r=>r.abort());
   if(mode==='unavailable')await context.addInitScript(()=>{window.OffscreenCanvas=undefined;});
   if(mode==='failure')await context.route('**/four-wheels-scenery-worker.js?*',r=>r.abort());
-  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>!!window.__renderQA);await page.evaluate(()=>document.fonts.ready);
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>!!window.__renderQA&&document.getElementById('cart-game').dataset.loading!=='true');await page.evaluate(()=>document.fonts.ready);
   for(const chapter of [0,2,4,7,11]){await page.evaluate(i=>__renderQA.scene(i),chapter);await check(page,mode+' chapter '+chapter);}
   await page.evaluate(()=>{__renderQA.scene(7);__renderQA.scene(0);__renderQA.scene(2);});await check(page,mode+' quick changes');
   for(const action of ['change','release','fonts','map','map']){await page.evaluate(action=>__renderQA[action](),action);await check(page,mode+' '+action);}

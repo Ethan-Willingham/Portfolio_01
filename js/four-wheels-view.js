@@ -510,7 +510,7 @@
       }
     }
     function makeFloor(level,transparent=false,async=false) {
-      if(level.campaign)return {course:true,async,tiles:new Map(),rocks:new Map(),floorPresence:new Map()};
+      if(level.campaign)return {course:true,async,tiles:new Map(),rocks:new Map(),floorPresence:new Map(),preparedTiles:new Map(),preparedRocks:new Map(),ready:false};
       if(level.connected)return {rooms:level.rooms.map(r=>({room:r,canvas:makeFloor(r,true)}))};
       const c=document.createElement('canvas');c.width=CAMERA.width;c.height=CAMERA.height;const g=c.getContext('2d');
       const matte=blend(P.hairDark,P.edge,.48);if(!transparent)rect(g,0,0,c.width,c.height,matte);
@@ -1177,6 +1177,8 @@
     }
     function courseTile(w,background,x,y) {
       const key=x+','+y;if(background.tiles.has(key)){const tile=background.tiles.get(key);if(tile.ready===false){if(background.working){background.pending++;queueScenery('floor',key,x,y);}else{background.tiles.delete(key);return courseTile(w,background,x,y);}}background.tiles.delete(key);background.tiles.set(key,tile);return tile;}
+      const prepared=background.preparedTiles.get(key);
+      if(prepared){background.tiles.set(key,prepared);trimTiles(background.tiles,32);return prepared;}
       const Course=root.CartCourse,size=256,area=quad(x*size,y*size,size,size),q=area.map(p=>project(p)),left=Math.floor(Math.min(...q.map(p=>p.x)))-5,top=Math.floor(Math.min(...q.map(p=>p.y)))-140;
       const c=document.createElement('canvas');c.width=Math.ceil(Math.max(...q.map(p=>p.x))-left)+8;c.height=Math.ceil(Math.max(...q.map(p=>p.y))-top)+12;
       const g=c.getContext('2d');g.translate(-left,-top);
@@ -1305,6 +1307,49 @@
       const visible=(p,r)=>{const q=project(p);return q.x>=x*size-r&&q.x<=(x+1)*size+r&&q.y>=y*size-r&&q.y<=(y+1)*size+r;};
       const scene=new Scene();cliffFaces(scene,w,visible,'below');scene.flush(target);return tile;
     }
+    // The live LRU maps reference retained sources, so eviction never
+    // regenerates a texture or duplicates its pixel storage.
+    function retainedRockTile(w,background,x,y) {
+      const key=x+','+y;
+      let tile=background.rocks.get(key)||background.preparedRocks.get(key);
+      if(!tile&&background.ready)return null;
+      if(!tile)tile={canvas:rockTile(w,x,y),x:x*512,y:y*512};
+      background.rocks.delete(key);background.rocks.set(key,tile);trimTiles(background.rocks,24);
+      return tile;
+    }
+    async function prepareCourse(w,background,onProgress=()=>{}) {
+      if(background.ready){onProgress(1);return;}
+      background.async=false; // Prepare complete textures before any worker placeholder can be drawn.
+      const Course=root.CartCourse,jobs=[];
+      const warmup=document.createElement('canvas');warmup.width=warmup.height=1;
+      const target=warmup.getContext('2d');
+      const retain=(map,key,tile)=>{map.set(key,tile);target.drawImage(tile.canvas,0,0,1,1);};
+      for(let y=0;y<=Math.floor(w.level.bounds.bottom/256);y++)for(let x=0;x<=Math.floor(w.level.bounds.right/256);x++){
+        if(Course.query(w.level.floorAreas,w.level.floorGrid,{x:(x+.5)*256,y:(y+.5)*256},184).length)jobs.push(()=>{const key=x+','+y;retain(background.preparedTiles,key,courseTile(w,background,x,y));});
+      }
+      let box;
+      terrainLevel=w.level;
+      try{box=worldFrame(w);}finally{terrainLevel=null;}
+      const padding=512;
+      // Include the lower cliff foot and its shadow beyond the floor bounds.
+      for(let y=Math.floor((box.top-padding)/512);y<=Math.floor((box.top+box.height+padding)/512);y++)for(let x=Math.floor((box.left-padding)/512);x<=Math.floor((box.left+box.width+padding)/512);x++)jobs.push(()=>retain(background.preparedRocks,x+','+y,retainedRockTile(w,background,x,y)));
+      jobs.push(()=>{background.trees=new Scene(1,true);background.treesEpoch=cacheEpoch;for(const p of w.level.decor)if(p.kind==='tree')courseTree(background.trees,p);spaceCourseTrees(background.trees,w.level);background.trees.commands.sort((a,b)=>a.depth-b.depth);background.trees.flush(target);});
+      jobs.push(()=>{background.scenery=new Scene(1,true);background.sceneryEpoch=cacheEpoch;courseModels(background.scenery,w,()=>true,'static');background.scenery.flush(target);});
+      const scene=new Scene();
+      jobs.push(()=>{for(const s of w.shelves)cachedModel(scene,s,shelfFields,shelf);});
+      jobs.push(()=>{for(const p of w.stock.items)if(!p.broken)cachedModel(scene,p,productFields,product,p.state==='shelf'?[p.shelf,...shelfFields.map(k=>p.shelf[k])]:[]);});
+      jobs.push(()=>scene.flush(target)); // Build cached paths and upload labels before play.
+      for(let i=0;i<jobs.length;i++){
+        // A task boundary lets the loading card paint without exposing partial
+        // scenery. Terrain state is restored before yielding to the browser.
+        await new Promise(resolve=>setTimeout(resolve,0));
+        terrainLevel=w.level;
+        try{jobs[i]();}finally{terrainLevel=null;}
+        onProgress((i+1)/jobs.length);
+      }
+      background.geometry={edges:w.level._edges,frame:box};
+      background.ready=true;
+    }
     function courseRocks(g,w,background,camera,follow) {
       // The lower cliffs never move or interleave with the cart. Rasterize them
       // once in bounded screen-space tiles, just like the supporting floor.
@@ -1320,6 +1365,17 @@
       }
       const size=512,left=-camera.x/camera.scale,top=-camera.y/camera.scale,right=left+g.canvas.width/camera.scale,bottom=top+g.canvas.height/camera.scale;
       for(let y=Math.floor(top/size);y<=Math.floor(bottom/size);y++)for(let x=Math.floor(left/size);x<=Math.floor(right/size);x++){
+        if(background.ready){
+          const tile=retainedRockTile(w,background,x,y);
+          if(tile)g.drawImage(tile.canvas,tile.x,tile.y);
+          else{
+            // Extreme window shapes can see beyond the prepared course margin.
+            // Paint the lower earth directly in that empty region in this frame.
+            g.save();g.beginPath();g.rect(x*size,y*size,size,size);g.clip();
+            courseGround(g,w,{left:x*size,top:y*size,right:(x+1)*size,bottom:(y+1)*size});g.restore();
+          }
+          continue;
+        }
         const key=x+','+y;let tile=background.rocks.get(key);
         if(!tile||tile.ready===false&&!background.working)tile=background.working?{canvas:null,ready:false}:{canvas:rockTile(w,x,y),ready:true};
         if(tile.ready===false){background.pending++;queueScenery('rock',key,x,y);}
@@ -1468,10 +1524,16 @@
     }
     function drawCourse(g,w,background,options) {
       terrainLevel=w.level;
+      if(background.ready){
+        // A new run has the same immutable course. Its first fall and map view
+        // must reuse the prepared boundary instead of rebuilding all joins.
+        w.level._edges||=background.geometry.edges;
+        w.level._viewFrame||=background.geometry.frame;
+      }
       background.pending=0;
       background.working=!options.preview&&options.follow!==false&&startScenery(background,w.level);
       const Course=root.CartCourse,width=g.canvas.width,height=g.canvas.height,camera=connectedCamera(width,height,w,options.follow!==false,options.focusY),visible=(p,r=100)=>{const q=project(p);return camera.x+q.x*camera.scale>-r&&camera.x+q.x*camera.scale<width+r&&camera.y+q.y*camera.scale>-r&&camera.y+q.y*camera.scale<height+r;};w._visible=visible;
-      g.save();g.imageSmoothingEnabled=false;rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
+      g.save();g.imageSmoothingEnabled=false;g.clearRect(0,0,width,height);rect(g,0,0,width,height,blend(P.pine,P.dark,.6));g.translate(camera.x,camera.y);g.scale(camera.scale,camera.scale);
       if(options.shake&&!options.reducedMotion)g.translate(Math.sin(w.time*99)*options.shake*.45,Math.cos(w.time*78)*options.shake*.45);
       courseRocks(g,w,background,camera,options.follow!==false);
       if(!background.trees||background.treesEpoch!==cacheEpoch){
@@ -1581,7 +1643,7 @@
       g.restore();
     }
     function renderSceneryTile(level,kind,x,y){terrainLevel=level;try{return kind==='floor'?courseTile({level},makeFloor(level),x,y).canvas:rockTile({level},x,y);}finally{terrainLevel=null;}}
-    return {draw,makeFloor,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,renderSceneryTile,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
+    return {draw,makeFloor,prepareCourse,drawCart,drawShelf,drawFurnitureShadow,illustration,framing,present,rect,text,blend,Scene,connectedCamera,worldFrame,renderSceneryTile,refreshFonts:()=>{textures.clear();cacheEpoch++;}};
   }
   const api={CAMERA,project,unproject,depth,local,exposedEdges,slopeMarkers,create,createMotionInterpolator};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.CartView=api;

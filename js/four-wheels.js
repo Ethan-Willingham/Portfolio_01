@@ -27,6 +27,7 @@
     }
   } catch { canSave = false; }
   let levelIndex = 0, world = new World(Course.build()), phase = 'ready', floor;
+  let artworkReady = false, artworkPreparing = false, artworkFailed = false;
   let resumed = false, saveTime = 0, confirmReturn = 'ready';
   best.peak = Math.min(best.peak, world.level.totalDistance);
   const feet = value => Math.floor(value / Course.UNITS_PER_FOOT).toLocaleString('en-US') + ' ft';
@@ -104,10 +105,11 @@
   let sceneryRaf=0;
   const view = CartView.create(P,{onSceneryReady:()=>{if(phase!=='running'&&!sceneryRaf)sceneryRaf=requestAnimationFrame(()=>{sceneryRaf=0;draw();});}});
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
-  const makeFloor = level => view.makeFloor(level,false,true);
+  const makeFloor = level => view.makeFloor(level,false);
   const motion=CartView.createMotionInterpolator();
   let narrowCamera = false, followCart = true, touchFocusY = .54;
   function draw(g = ctx, w = world, background = floor, preview = false, alpha = null) {
+    if(!artworkReady)return;
     if(alpha!==null)w=motion.sample(w,alpha);
     view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview ? .54 : touchFocusY});
   }
@@ -195,9 +197,10 @@
     $('wheel-mode').setAttribute('aria-pressed',String(frontSwivel));
     $('wheel-mode').textContent='Fixed rear wheels: '+(frontSwivel?'on':'off');
     $('wheel-mode').setAttribute('aria-label',frontSwivel?'Use four swivel wheels':'Test cart with front swivel wheels and fixed rear wheels');
-    $('wheel-mode').disabled=!['ready','paused'].includes(phase);
+    $('start').disabled=!artworkReady&&!artworkFailed;
+    $('wheel-mode').disabled=!artworkReady||!['ready','paused'].includes(phase);
     $('pause').disabled = !['running','paused'].includes(phase)||!$('picker').hidden;
-    $('retry').disabled=!$('picker').hidden||phase==='confirm';$('courses').disabled=phase==='confirm';
+    $('retry').disabled=!artworkReady||!$('picker').hidden||phase==='confirm';$('courses').disabled=!artworkReady||phase==='confirm';
     $('pause').setAttribute('aria-label',phase==='paused'?'Resume game':'Pause and open menu');
     $('pause').setAttribute('aria-pressed',String(phase==='paused'));
     $('camera').disabled = phase!=='running';
@@ -219,7 +222,8 @@
     clearInput();world=w;levelIndex=w.level.startRoom;resumed=continuing;
     phase='ready';particles=[];screenShake=0;toastLife=0;
     $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
-    floor=makeFloor(world.level);
+    // The course artwork is immutable across restarts and practice worlds.
+    floor||=makeFloor(world.level);
     overlay(world.practice?'Practice':null,'All Four Wheels',continuing?'Your run is parked. Keep going.':'Get the cart to the end. Take your time.',continuing?'Continue':'Play',world.practice?'Return to run':null);
     updateUI();draw();sound.stop();
     $('start').focus({preventScroll:true});
@@ -239,6 +243,7 @@
     reset(index,true);run();
   }
   function run() {
+    if(!artworkReady)return;
     phase='running';clearInput();$('overlay').hidden=true;
     canvas.focus({preventScroll:true});sound.prepare().then(ready => { if (ready && phase === 'running' && !document.hidden) sound.update(world, controls()); });last=performance.now();accumulator=0;uiTime=0;
     motion.capture(world);updateUI();if(!raf)raf=requestAnimationFrame(frame);
@@ -315,6 +320,7 @@
     if (phase === 'running') $('canvas').focus({ preventScroll: true });
   }
   $('start').addEventListener('click',()=>{
+    if(!artworkReady){prepareArtwork();return;}
     if(phase==='confirm'){parkedRun=null;reset();run();}
     else if(phase==='ready'||phase==='paused')run();
     else if(phase==='won'){reset(world.practice?levelIndex:0,world.practice);run();}
@@ -497,6 +503,25 @@
   refreshSound(); prepare(world);save();
   const viewResize = new ResizeObserver(resizeView);
   viewResize.observe($('stage')); viewResize.observe($('touch'));
-  // Canvas text caches are rebuilt when the site's own mono font arrives.
-  document.fonts.ready.then(() => { view.refreshFonts(); floor = makeFloor(world.level); draw(); });
+  async function prepareArtwork() {
+    if(artworkPreparing||artworkReady)return;
+    artworkPreparing=true;artworkFailed=false;updateUI();
+    $('loading').textContent='Preparing course...';
+    try {
+      // Explicitly request the canvas font before font readiness. A font
+      // failure settles to fallback text without discarding terrain caches.
+      await Promise.allSettled([document.fonts.load('bold 12px "Commit Mono"'),document.fonts.load('12px "Commit Mono"'),document.fonts.ready]);
+      view.refreshFonts();
+      await view.prepareCourse(world,floor,progress=>{$('loading').textContent='Preparing course: '+Math.floor(progress*100)+'%';});
+      artworkReady=true;resizeView();
+      $('loading').hidden=true;game.dataset.loading='false';game.removeAttribute('aria-busy');
+      $('start').textContent=resumed?'Continue':'Play';updateUI();
+      if(document.activeElement===document.body)$('start').focus({preventScroll:true});
+    } catch {
+      artworkReady=false;artworkFailed=true;
+      $('loading').textContent='The course could not load. Try again.';
+      $('start').textContent='Try again';updateUI();
+    } finally {artworkPreparing=false;}
+  }
+  prepareArtwork();
 })();

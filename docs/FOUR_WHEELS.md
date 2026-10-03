@@ -286,10 +286,20 @@ articulated shopper use a small per-pixel depth buffer inside that world scene.
 
 The following camera uses a 960-pixel canvas on wide views and 480 in portrait,
 at scales 1.45 and 1.8 respectively. Canvas height matches the stage aspect ratio.
-Course map fits the entire route without advancing physics. Lazy 256-unit floor
-tiles cache deterministic gravel, dusty wheel paths, mottled asphalt with fine
-cracks, grass tufts, flowers, rail shadows, painted arrows, curbs and store tiles,
-capped at 32 canvases. Surface tint follows a shared world grid so overlapping
+Course map fits the entire route without advancing physics. Before Play or
+Continue becomes available, a loading card prepares all 71 floor textures,
+lower cliff textures, scenery and stock labels. The canvas stays hidden until
+the complete first frame is ready. Preparation yields between tiles so the
+loading progress remains visible. The canvas fonts finish loading first, with
+fallback text if a font fails.
+
+The 256-unit floor tiles contain deterministic gravel, dusty wheel paths,
+mottled asphalt with fine cracks, grass tufts, flowers, rail shadows, painted
+arrows, curbs and store tiles. The 32-entry floor cache and 24-entry cliff cache reference these
+retained sources, so driving into a new area or revisiting an evicted tile never
+regenerates its texture. Restart, practice and returning to a parked run reuse
+the same course artwork and derived cliff boundary. Surface tint follows a
+shared world grid so overlapping
 road ribbons and neighboring cache tiles agree. Red and cream curb paint keeps
 its spacing through the bends, with a shaded inner edge and a light outer rim.
 Paint follows supported ground and stays outside store floors and the jump gap.
@@ -424,17 +434,17 @@ Wall elevation and spatial query candidates reuse immutable geometry; moving
 wall bounds still invalidate their elevation. Tire and ground contacts keep
 sampling their actual coordinates.
 
-Supported browsers render new floor and lower cliff tiles in one scenery worker.
-Only one tile request is in flight, with queued requests following the current
-viewport. A simple floor appears until its detailed bitmap is ready. Course
-changes discard stale replies, and eviction closes transferred bitmaps. A
-missing or failed worker uses the synchronous renderer. Fonts and preview art
-remain on the main thread. All worker imports share the page's cache version.
+The complete floor and lower cliff textures are prepared before Play. The live
+renderer does not use worker placeholders or request missing scenery while
+driving. The standalone worker remains available for artwork tools. Very tall
+windows can see beyond the prepared lower-earth margin; that empty region is
+painted directly in the same frame without allocating a texture.
 The cart reuses its pixel and depth buffers and clips triangle scanlines before
 testing pixels. Palette parsing avoids GPU readbacks, and tint cache buckets
 have deterministic colors on both threads. Wet cells reuse projected paths.
 
-The renderer caches immutable scenery and lower cliff tiles. Shelves and stock
+The renderer prepares immutable scenery and lower cliff tiles before enabling
+play. Shelves and stock
 reuse projected pixel paths until their pose, appearance or supporting shelf
 changes. Font readiness invalidates labels. Floor tiles use a 32-entry cache,
 lower cliffs use at most 24 tiles, and the overview caches three viewport-sized
@@ -444,7 +454,9 @@ pixels. Every moving door, particle and cart retains its sorted position between
 those runs.
 Spills outside the camera skip drawing. Point contacts use a finer polygon index
 with the same floor precedence; liquid cells cache exact support and height.
-Moving tires still sample their actual coordinates and physics still runs at
+The retained course sources have a fixed bound and are reused by the live caches
+without duplicate pixel storage. Font readiness no longer discards floor textures
+during play. Moving tires still sample their actual coordinates and physics still runs at
 120 Hz. These caches do not enter saved runs.
 
 Run `node --check` on all seven live scripts and the legacy fixture, then:
@@ -473,6 +485,8 @@ NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-performance.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-performance.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-loading.cjs
+CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-loading.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-render-cache.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-render-cache.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-browser.cjs
@@ -492,6 +506,10 @@ hardware. Individual frames must also stay below 33.4 ms, adjustable with
 at least a 25 percent reduction in mean frame work across the three driving
 scenes and a 75 percent reduction in their worst hitch. Run this
 suite alone so competing test processes do not skew frame measurements.
+The loading suite delays the canvas font, checks the hidden scene and disabled
+Play action, traverses every route vertex after readiness, and verifies that
+cache eviction, restart, practice and viewport changes generate no new textures.
+It also checks late-course practice, failed fonts, retry and retained artwork size.
 The audio suite renders real stereo PCM to check material spectra, every effect,
 surface blending, tire motion, footfalls, shutter movement, distance attenuation,
 voice cleanup and bounded pileup levels. Gesture-driven desktop and phone checks

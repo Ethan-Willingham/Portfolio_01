@@ -25,7 +25,7 @@ const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+deco
  res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'});res.end(data);
  }catch(e){res.writeHead(404).end();}});
 function check(name,condition){assert.ok(condition,name);console.log('PASS '+name);}
-async function setup(context,url){await context.route('https://www.googletagmanager.com/**',r=>r.abort());const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));await page.goto(url);await page.waitForFunction(()=>!!window.__cartTest);await page.evaluate(()=>document.fonts.ready);return page;}
+async function setup(context,url){await context.route('https://www.googletagmanager.com/**',r=>r.abort());const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>requests.push(r.url()));await page.goto(url);await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');await page.evaluate(()=>document.fonts.ready);return page;}
 const state=p=>p.evaluate(()=>__cartTest.state());
 const freshVisit=p=>p.evaluate(()=>__cartTest.state().phase==='ready'&&!__cartTest.world().practice&&JSON.stringify(CartCourse.snapshot(__cartTest.world()))===JSON.stringify(CartCourse.snapshot(new CartPhysics.World(CartCourse.build()))));
 async function options(p){if(!await p.locator('#cart-options').evaluate(e=>e.open))await p.locator('#cart-options summary').click();}
@@ -48,7 +48,7 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
   localStorage.setItem('cart-legacy-seeded','yes');
   localStorage.setItem('four-wheels-course-v1',JSON.stringify(saved));
  },legacyRun);
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');
  check('a valid old saved run is discarded while best distance stays',await freshVisit(page)&&(await state(page)).best.peak===40&&await page.locator('#cart-start').textContent()==='Play'&&await page.evaluate(()=>!Object.hasOwn(JSON.parse(localStorage.getItem('four-wheels-course-v1')),'run')));
  if(process.env.MOBILE_ONLY!=='1'){
  check('the complete twelve-section course boots',await page.evaluate(()=>__cartTest.world().level.campaign&&__cartTest.world().level.rooms.length===12));
@@ -87,7 +87,7 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await options(page);check('options and short instructions open inside the paused game',await page.locator('#cart-instructions').isVisible()&&await page.locator('#cart-courses').isVisible()&&await page.locator('#cart-sound').isVisible()&&await page.locator('#cart-fullscreen').isVisible()&&(await state(page)).phase==='paused');
  const helpTime=(await state(page)).time;await page.keyboard.press('w');await page.waitForTimeout(100);check('reading help never pushes the parked cart',(await state(page)).time===helpTime&&(await state(page)).keys===0);
  await page.locator('.cart-bottomnav a').last().focus();await page.keyboard.press('Tab');check('Tab stays inside the pause menu',await page.locator('#cart-start').evaluate(e=>document.activeElement===e));await page.keyboard.press('Shift+Tab');check('reverse Tab stays inside the pause menu',await page.locator('.cart-bottomnav a').last().evaluate(e=>document.activeElement===e));await shot(page,'pause-help');
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);a=await state(page);check('reload starts a clean run with zero time and default wheels',await freshVisit(page)&&a.time===0&&await page.locator('#cart-start').textContent()==='Play'&&await page.locator('#cart-retry').isHidden());
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');a=await state(page);check('reload starts a clean run with zero time and default wheels',await freshVisit(page)&&a.time===0&&await page.locator('#cart-start').textContent()==='Play'&&await page.locator('#cart-retry').isHidden());
  await page.locator('#cart-start').click();await page.keyboard.press('r');check('start over asks before discarding progress',(await state(page)).phase==='confirm'&&await page.locator('#cart-secondary').evaluate(e=>document.activeElement===e)&&await page.locator('#cart-options').isHidden());await page.locator('#cart-secondary').click();check('cancel keeps the run',(await state(page)).phase==='running');
  await page.evaluate(()=>{__cartTest.reset();__cartTest.run();__cartTest.stop();});
  const count=requests.length;await page.evaluate(()=>{for(let i=0;i<90&&__cartTest.state().room<2;i++)__cartTest.pilot(1);});a=await state(page);
@@ -102,16 +102,16 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  check('a hard real door impact produces glass debris',await page.evaluate(()=>__cartTest.world().trackDoors[0].broken&&__cartTest.world().stock.items.some(p=>p.kind==='shard')));await shot(page,'broken-door');
  await page.evaluate(()=>{__cartTest.terrainPose(2,1190,1316,0,65);__cartTest.step(2,{push:.3});__cartTest.save();});
  check('a table hit makes a clear physical water puddle',await page.evaluate(()=>__cartTest.world().stock.liquids.get('water')?.cells.size>0));await shot(page,'vase-water');
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');
  check('reload resets the cart, furniture, products, water and doors',await freshVisit(page));
  await page.evaluate(()=>{__cartTest.startPractice(2);__cartTest.stop();__cartTest.step(.4,{push:1});});
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');
  check('reload during practice starts a fresh challenge',await freshVisit(page)&&await page.locator('#cart-secondary').isHidden());
  await page.evaluate(()=>{__cartTest.startPractice(2);__cartTest.stop();__cartTest.step(.4,{push:1});window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});
  check('a cached browser return discards practice and its parked run',await freshVisit(page)&&await page.evaluate(()=>__cartTest.parked()===null&&__cartTest.state().keys===0&&__cartTest.state().touches===0&&__cartTest.state().followCart));
  await page.locator('#cart-start').click();await page.keyboard.down('w');await page.waitForTimeout(150);await page.keyboard.up('w');
  await page.locator('.cart-bottomnav a').evaluate(e=>e.click());await page.waitForURL('**/archive.html');
- await page.goBack();await page.waitForFunction(()=>!!window.__cartTest);
+ await page.goBack();await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');
  check('leaving and returning through browser history starts fresh',await freshVisit(page));
  check('old timed records remain untouched',await page.evaluate(()=>localStorage.getItem('four-wheels-records-v6')==='[{"time":42,"stars":3}]'));
  for(const kind of ['lake','cliff']){await page.evaluate(kind=>__cartTest.hazard(kind),kind);await page.evaluate(()=>{for(let i=0;i<50&&!__cartTest.world().fall;i++)__cartTest.step(.1,{push:1});});a=await state(page);check(kind+' has a gravity fall and no clock penalty',a.fall?.kind===kind&&a.body.z<a.ground.lastHeight-8&&a.penalty===0);await shot(page,kind+'-fall');await page.locator('#cart-pause').click();const f=await state(page);await page.waitForTimeout(200);check('pause freezes '+kind+' gravity',JSON.stringify(f.fall)===JSON.stringify((await state(page)).fall));await page.locator('#cart-start').click();await page.evaluate(()=>__cartTest.step(3));check(kind+' catches at an earlier stretch and keeps the peak',!(await state(page)).fall&&(await state(page)).room===(kind==='lake'?1:0)&&(await state(page)).peak>=f.peak);}
@@ -192,7 +192,7 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await phone.evaluate(()=>{window.savedCapture=HTMLElement.prototype.setPointerCapture;HTMLElement.prototype.setPointerCapture=function(){};});
  await phone.mouse.move(mr.x+mr.width/2,mr.y+mr.height/2);await phone.mouse.down();await phone.mouse.move(mr.x+mr.width*2,mr.y-40);check('window-level pointer move survives absent capture',(await state(phone)).input.turn>0);
  await phone.mouse.up();check('window-level pointer up cannot strand a mouse stick',(await state(phone)).touches===0&&(await state(phone)).input.turn===0);await phone.evaluate(()=>HTMLElement.prototype.setPointerCapture=window.savedCapture);
- await phone.reload();await phone.waitForFunction(()=>!!window.__cartTest);
+ await phone.reload();await phone.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');
  check('phone reload starts a new game with released controls',await freshVisit(phone)&&(await state(phone)).touches===0&&await phone.locator('#cart-start').textContent()==='Play');
  if(process.env.MOBILE_ONLY==='1'){check('no JavaScript errors on desktop and mobile',errors.length===0);console.log('Screenshots: '+dump);return;}
  await page.evaluate(()=>{__cartTest.reset();__cartTest.run();__cartTest.stop();});
@@ -204,7 +204,7 @@ const fits=()=>{const game=document.getElementById('cart-game').getBoundingClien
  await phone.locator('#cart-start').tap();await phone.evaluate(()=>{__cartTest.finishPose();__cartTest.step(1.8,{push:1});});
  check('a phone can finish with distance and falls',(await state(phone)).phase==='won'&&!/style/.test(await phone.locator('#cart-result').textContent()));
  check('the finish card fits in landscape',await phone.evaluate(()=>{const a=document.querySelector('.cart-overlay-card').getBoundingClientRect(),b=document.getElementById('cart-stage').getBoundingClientRect();return a.top>=b.top&&a.bottom<=b.bottom+1;}));await shot(phone,'mobile-finish');
- await page.reload();await page.waitForFunction(()=>!!window.__cartTest);check('furthest distance and finish records survive a fresh visit',await freshVisit(page)&&(await state(page)).best.completed);
+ await page.reload();await page.waitForFunction(()=>!!window.__cartTest&&document.getElementById('cart-game').dataset.loading!=='true');check('furthest distance and finish records survive a fresh visit',await freshVisit(page)&&(await state(page)).best.completed);
  await options(page);await page.locator('#cart-fullscreen').click();check('fullscreen works',await page.evaluate(()=>document.fullscreenElement===document.getElementById('cart-game')||document.getElementById('cart-game').classList.contains('cart-pseudo-fullscreen')));await page.locator('#cart-fullscreen').click();
  const fallback=await browser.newContext({viewport:{width:1024,height:768},reducedMotion:'reduce'});await fallback.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked');}});});const blocked=await setup(fallback,url);await blocked.locator('#cart-start').click();await blocked.keyboard.down('w');await blocked.waitForTimeout(150);await blocked.keyboard.up('w');check('blocked storage still allows play',(await state(blocked)).phase==='running');
  check('reduced motion removes scene shake and decorative dust',await blocked.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches));

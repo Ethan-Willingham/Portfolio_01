@@ -25,17 +25,17 @@
   <meta property="og:image:alt" content="An isometric dirt racecourse with red and white curbs, grass shoulders, guardrails and a silver shopping cart.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/four-wheels.jpg">
-  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/commit_mono_bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=46">
+  <link rel="stylesheet" href="four-wheels.css?v=47">
 </head>
 <body class="cart-page">
   <main>
     <h1 class="sr-only">All Four Wheels</h1>
-    <section class="cart-game" id="cart-game" aria-label="All Four Wheels game">
+    <section class="cart-game" id="cart-game" data-loading="true" aria-busy="true" aria-label="All Four Wheels game">
           <header class="cart-hud" id="cart-hud" aria-label="Run progress and game menu">
             <div class="cart-hud-left">
               <div class="cart-readouts">
@@ -71,11 +71,12 @@
                 <p class="cart-kicker" id="cart-overlay-kicker" hidden></p>
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
                 <p id="cart-overlay-text">Get the cart to the end. Take your time.</p>
+                <p class="cart-best" id="cart-loading" role="status">Preparing course...</p>
                 <p class="cart-intro-controls"><span><kbd>W</kbd> <kbd>S</kbd> move</span><span><kbd>A</kbd> <kbd>D</kbd> turn</span><span><kbd>Space</kbd> brake</span></p>
                 <p class="cart-intro-touch">Left stick moves and turns. Right button brakes.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
                 <div class="cart-overlay-actions">
-                  <button class="cart-button cart-button-primary" id="cart-start" type="button">Play</button>
+                  <button class="cart-button cart-button-primary" id="cart-start" type="button" disabled>Play</button>
                   <button class="cart-button" id="cart-retry" type="button" hidden>Restart</button>
                   <button class="cart-button" id="cart-secondary" type="button" hidden>Cancel</button>
                 </div>
@@ -111,12 +112,12 @@
     </section>
   </main>
   <script src="js/main.js"></script>
-  <script src="js/four-wheels-stock.js?v=46"></script>
-  <script src="js/four-wheels-terrain.js?v=46"></script>
-  <script src="js/four-wheels-course.js?v=46"></script>
-  <script src="js/four-wheels-physics.js?v=46"></script>
-  <script src="js/four-wheels-view.js?v=46"></script>
-  <script src="js/four-wheels-audio.js?v=46"></script>
-  <script src="js/four-wheels.js?v=46"></script>
+  <script src="js/four-wheels-stock.js?v=47"></script>
+  <script src="js/four-wheels-terrain.js?v=47"></script>
+  <script src="js/four-wheels-course.js?v=47"></script>
+  <script src="js/four-wheels-physics.js?v=47"></script>
+  <script src="js/four-wheels-view.js?v=47"></script>
+  <script src="js/four-wheels-audio.js?v=47"></script>
+  <script src="js/four-wheels.js?v=47"></script>
 </body>
 </html>

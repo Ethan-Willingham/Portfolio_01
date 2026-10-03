@@ -21,6 +21,7 @@
 .cart-game [hidden] { display: none !important; }
 .cart-stage { position: absolute; inset: 0; overflow: hidden; background: var(--cart-ink); }
 #cart-canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+.cart-game[data-loading="true"] #cart-canvas { visibility: hidden; }
 .cart-kicker { display: block; font-family: var(--font-mono); font-size: .6rem; text-transform: uppercase; letter-spacing: .08em; color: var(--cart-muted); }
 .cart-hud {
   position: absolute; z-index: 3; top: max(12px, env(safe-area-inset-top));

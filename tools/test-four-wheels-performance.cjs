@@ -33,7 +33,7 @@ const server=http.createServer((req,res)=>{
 const distribution=a=>{const sorted=a.slice().sort((a,b)=>a-b);return {mean:a.reduce((n,x)=>n+x,0)/a.length,p95:sorted[Math.floor(sorted.length*.95)],max:sorted.at(-1)};};
 async function measure(label,context,url){
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
- await page.goto(url);await page.waitForFunction(()=>!!window.__cartPerf);await page.evaluate(()=>document.fonts.ready);
+ await page.goto(url);await page.waitForFunction(()=>!!window.__cartPerf&&document.getElementById('cart-game').dataset.loading!=='true');await page.evaluate(()=>document.fonts.ready);
  const samples={};
  for(const [name,pose]of [['start',[0]],['first hill',[0,285,1520,0,35]],['quarry hill',[4,1400,980,Math.PI,35]],['grocery',[2,1190,1316,0,65]],['relay',[7,850,290,0,65]]]){
   await page.evaluate(p=>__cartPerf.scene(...p),pose);await page.locator('#cart-start').click();await page.keyboard.down('w');
