@@ -62,6 +62,7 @@
     scopeToggle = !!enabled;
     if (view) view.scope(scopeToggle, aim);
     if (scopeToggle) { keys.delete('f'); keys.delete(' '); holds.clear(); }
+    else for (const key of ['w', 'a', 's', 'd']) keys.delete(key);
     updateUI(); draw();
   }
   function clearInput() { keys.clear(); holds.clear(); touchAim.clear(); $('wait').setAttribute('aria-pressed', 'false'); }
@@ -138,7 +139,7 @@
   }
   function fire() {
     if (phase !== 'running' || world.bullets.length || world.hunter.reload > 0 || shotViewLeft > 0) return;
-    if (!scopeToggle) { setScope(true); message('Scope raised. Your next click shoots. Q lowers it.'); return; }
+    if (!scopeToggle) { setScope(true); message('Scope raised. WASD moves the view. Click to shoot; Q lowers it.'); return; }
     if (world.fire(aim)) { shotViewLeft = .8; clearInput(); message('Round away. Watch its drop and wind drift.'); }
     events(); updateUI(); draw();
   }
@@ -189,12 +190,13 @@
     if (!game.contains(document.activeElement) || event.target.closest('input, select, textarea, a')) return;
     const key = event.key.toLowerCase();
     if (event.target.closest('button') && [' ', 'enter'].includes(key)) return;
-    if (!['f', ' ', 'q', 'r', 'p', 'escape', 'enter'].includes(key)) return;
+    if (!['f', ' ', 'q', 'r', 'p', 'escape', 'enter', 'w', 'a', 's', 'd'].includes(key)) return;
     event.preventDefault(); if (event.repeat) return;
     if (key === 'escape' && scopeToggle && phase === 'running' && !world.bullets.length && !shotViewLeft) { setScope(false); return; }
     if (key === 'p' || key === 'escape') { pause(); return; }
     if (phase !== 'running') return;
     if (key === 'f' || key === ' ') { if (!scopeToggle && !world.bullets.length) keys.add(key); }
+    else if (['w', 'a', 's', 'd'].includes(key)) { if (scopeToggle && !world.bullets.length && !shotViewLeft) keys.add(key); }
     else if (key === 'q') { if (!world.bullets.length && !shotViewLeft) setScope(!scopeToggle); }
     else if (key === 'r') reload(); else if (key === 'enter') fire(); updateUI();
   });
@@ -242,6 +244,12 @@
     while (left > .000001) {
       const elapsed = Math.min(left, .05); left -= elapsed; opportunityLeft = Math.max(0, opportunityLeft - elapsed);
       const flight = world.bullets.length > 0;
+      if (scopeToggle && !flight && !shotViewLeft) {
+        const moveX = Number(keys.has('d')) - Number(keys.has('a'));
+        const moveY = Number(keys.has('s')) - Number(keys.has('w'));
+        const reticle = HuntingView.project(aim, view.camera);
+        if (view.panScope(moveX, moveY, elapsed)) aim = world.aim(HuntingView.unproject(reticle, view.camera));
+      }
       pace = flight ? { clock: 1, simulation: .6 } : world.lookoutPace(waiting(), scopeToggle, opportunityLeft);
       campaign.advance(elapsed, pace.clock); accumulator += elapsed * pace.simulation;
       while (accumulator >= STEP) { world.step(STEP); accumulator -= STEP; }
