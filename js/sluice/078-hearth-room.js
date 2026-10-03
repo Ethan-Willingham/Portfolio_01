@@ -340,10 +340,10 @@
     hearthButtons.push({ x: r.x, y: r.y, w: r.w, h: r.h, action: action });
   }
   function hearthDrawNav(c, view) {
-    var L = hearthRoomLayout(), w = L.landscape ? L.scene.w : L.w;
+    var L = hearthRoomLayout(), w = L.controls.x + L.controls.w;
     // The native pause button occupies x=8..52. These individual wall plates
     // stay clear of it without laying an opaque strip over the bathhouse.
-    hearthButton(c, { x: w - 86, y: 8, w: 74, h: 44 }, 'LEAVE', 'exit', false);
+    hearthButton(c, { x: w - 74, y: 8, w: 74, h: 44 }, 'LEAVE', 'exit', false);
 
   }
   function hearthWrap(c, text, x, y, width, color, maxLines) {

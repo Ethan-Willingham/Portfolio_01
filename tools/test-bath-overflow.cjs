@@ -127,8 +127,8 @@ function fixture() {
   s.mineralLiquidPark(2, c.x1 + 20, F.fr * s.TILE - 2);
   s.addLiquidParticle(0, c.x0 - 1, F.fr * s.TILE - 2);
   s.addLiquidParticle(0, (c.x0 + c.x1) / 2, c.y0 + c.D - 10);
-  s.addLiquidParticle(0, c.x0 - 20, c.y0 - 12); // A live airborne splash can still return.
-  s.mineralLiquidPark(3, c.x1 + 20, c.y0 - 12);
+  s.addLiquidParticle(0, c.x0 - 20, F.fr * s.TILE - 12); // A live airborne splash can still return.
+  s.mineralLiquidPark(3, c.x1 + 20, F.fr * s.TILE - 12);
   s.mineralLiquidPark(0, 100, 200); // Outdoor liquid is untouched.
   s.addLiquidParticle(0, c.x0 - 20, F.fr * s.TILE - 5.05); // Would round onto the floor in the save.
   const savedService = copy(s.bathServiceSave()), savedLiquid = copy(s.mineralLiquidSave());

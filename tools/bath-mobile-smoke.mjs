@@ -21,7 +21,7 @@ const server = createServer((req, res) => {
     if (!file.startsWith(root + '/')) { res.writeHead(403).end(); return; }
     let data = fs.readFileSync(file);
     if (file === path.join(root, 'js/sluice.js')) {
-      let src = process.env.BUNDLE ? data.toString() : fs.readdirSync(path.join(root, 'js/sluice')).filter(n=>/^\d.*\.js$/.test(n)).sort().map(n=>fs.readFileSync(path.join(root,'js/sluice',n),'utf8')).join('\n');
+      let src = process.env.BUNDLE_FILE ? fs.readFileSync(process.env.BUNDLE_FILE, 'utf8') : process.env.BUNDLE ? data.toString() : fs.readdirSync(path.join(root, 'js/sluice')).filter(n=>/^\d.*\.js$/.test(n)).sort().map(n=>fs.readFileSync(path.join(root,'js/sluice',n),'utf8')).join('\n');
       const end = src.lastIndexOf('})();');
       assert(end >= 0, 'bundle IIFE seam exists');
       data = Buffer.from(src.slice(0, end) + 'window.__hearthTest = function(source) { return eval(source); };\n' + src.slice(end));
@@ -117,15 +117,17 @@ try {
       var overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
       return bs.every((a,i)=>a.x>=0&&a.y>=0&&a.x+a.w<=L.w+.1&&a.y+a.h<=L.h+.1&&a.w>=44&&a.h>=44&&bs.slice(i+1).every(b=>!overlap(a,b))&&!overlap(a,L.box)) &&
         b.x>=0&&b.y>=0&&b.x+b.w<=L.w+.1&&b.y+b.h<=L.h+.1&&b.w>=150&&b.h>=44 &&
-        L.bin.x+L.bin.w<=b.x && L.pump.x+L.pump.w<=b.x && L.action.x>=b.x+b.w && L.ash.x>=b.x+b.w;
+        L.bin.x+L.bin.w<=b.x && L.pump.x+L.pump.w<=b.x && L.action.x+L.action.w<=b.x && L.ash.x+L.ash.w<=b.x && L.water.x+L.water.w<=b.x && L.meter.x+L.meter.w<=b.x;
     })()`);
     if(!fit)console.log('LAYOUT',width,height,await game('({layout:hearthRoomLayout(),buttons:hearthButtons})'));
-    check(width+'x'+height+' has separate 44px flanking controls and a visible furnace',fit);
+    check(width+'x'+height+' has separate 44px controls below the left landing and a visible furnace',fit);
     check('the copper tub remains the integrated furnace ceiling',await game(`(function(){var L=hearthRoomLayout(),c=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]),p=hearthCasingProfile(L.box,true),lip=(c.y0-cam.y)*worldScale,bottom=(c.y0+c.D-cam.y)*worldScale;
       var shoulder=bathRimPoint(c,c.x0+(c.x1-c.x0)*.06,24),left=p.roof[p.roof.length-1];
       return p.roof.length>2 && Math.hypot(left[0]-(shoulder.x-cam.x)*worldScale,left[1]-(shoulder.y-cam.y)*worldScale)<1 &&
         Math.abs(L.box.x+L.box.w/2-((c.x0+c.x1)/2-cam.x)*worldScale)<1 && L.box.y>lip && L.box.y+L.box.h>bottom;
     })()`));
+    check('the top of the tub is level with the expanded waiting floor', await game(`(function(){var F=BATH_FLOORS[0],c=bathTubCurve(F,F.tubs[0]);return c.y0-20===F.fr*TILE && c.x0-(F.c0-1)*TILE>=14*TILE;})()`));
+    check('both copper lips fit completely inside the viewport', await game(`(function(){var c=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]),L=hearthRoomLayout();return (c.x0-31-cam.x)*worldScale>=L.controls.x+L.controls.w && (c.x1+31-cam.x)*worldScale<=L.w;})()`));
     await screenshot(width===1280?'desktop':width+'x'+height+'-shared');
 
     await press(button('hose'),true);await press(button('tool-valve'),true);
@@ -141,7 +143,7 @@ try {
     await screenshot(width+'x'+height+'-liquids');
     await press(button('close-tray'),true);
 
-    await game("bathToolReset();bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=(g.slot?22.5:20.75)*TILE;});updateCamera();render();");
+    await game("bathToolReset();bathGuests=[];bathGuestAccept(skySlimeFresh(0,0));bathGuestAccept(skySlimeFresh(0,0));bathGuests.forEach(g=>{g.hop=null;g.st='wait';g.s.x=bathGuestQueueX(g.slot);});updateCamera();render();");
     check('waiting visitors remain visible with 44px touch padding',await game(`(function(){var L=hearthRoomLayout();return bathGuests.every(g=>{var x=(g.s.x-cam.x)*worldScale,y=(g.s.y-cam.y)*worldScale,r=g.s.r*worldScale;
       return x-r>=L.scene.x && x+r<=L.scene.x+L.scene.w && y-r>=0 && y+r<=L.h && bathGuestHitRadius(g)*worldScale>=22;
     });})()`));

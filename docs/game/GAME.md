@@ -64,8 +64,9 @@ Since v28.97, select an existing fuel or mineral from the rack, then click to
 release the translucent cursor preview as a real piece. They collide, tumble, catch from neighboring fuel, glow,
 and burn down to ash. Bellows increase heat and fuel consumption.
 Landscape phones and desktop share the same integrated tub above the furnace,
-with fuel, bellows, claw and hose on the left and striker, grate, liquid selection
-and readings on the right. Short viewports scale the joined vessel while
+with the joined vessel on the right and all controls in two columns below
+the longer waiting landing on the left. The copper rim meets the waiting floor.
+Short viewports scale the joined vessel while
 keeping every control together with 44px touch targets. Tap a waiting visitor
 itself to admit it; the old guest cards and connecting lines are removed. The dry
 guest landing stays visible without switching views.

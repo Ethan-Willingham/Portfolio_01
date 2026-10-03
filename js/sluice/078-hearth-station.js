@@ -1,37 +1,28 @@
   // One composition on every screen: copper bath over the joined furnace,
-  // with the same tool columns on both sides. Only viewport size changes fit.
+  // with all tool columns below the left landing. Only viewport size changes fit.
   function hearthRoomLayout() {
     var w = canvas.width / dpr, h = canvas.height / dpr;
-    var compact = h < 500 || w < 700, gap = 8, station, scene, box, bw, bh;
+    var compact = h < 500 || w < 700, gap = 8;
     var F = BATH_FLOORS[0], curve = bathTubCurve(F, F.tubs[0]);
     var shoulder = bathRimPoint(curve, curve.x0 + (curve.x1 - curve.x0) * 0.06, 24);
     var outerWorldW = curve.x0 + curve.x1 - 2 * shoulder.x;
-    var cw = compact ? Math.max(96, Math.min(144, w * 0.14)) : 144;
-    var bodyWidth = Math.max(88, w - 2 * (cw + 20));
-    if (compact) {
-      scene = { x: 0, y: 0, w: w, h: Math.max(44, h - 26) };
-      var floor = (curve.y0 + curve.D + 24 - cam.y) * worldScale;
-      station = { x: 0, y: floor, w: w, h: Math.max(0, h - floor) };
-    } else {
-      bh = Math.min(208, h * 0.26, (w - 344) / (HEARTH_WIDTH / HEARTH_HEIGHT));
-      var sh = Math.max(242, bh + 74);
-      station = { x: 0, y: h - sh, w: w, h: sh };
-      scene = { x: 0, y: 0, w: w, h: station.y };
-    }
+    var cw = Math.max(96, Math.min(144, w * 0.18));
+    var controls = { x: 8, y: 0, w: cw * 2 + gap, h: h };
+    var bodyWidth = Math.max(88, w - controls.w - 48);
+    var scene = { x: 0, y: 0, w: w, h: Math.max(44, h - 26) };
+    var floor = (curve.y0 + curve.D + 24 - cam.y) * worldScale;
+    var station = { x: 0, y: floor, w: w, h: Math.max(0, h - floor) };
     // Draw and collide against the same continuous ellipse under the copper.
     var outerX = (shoulder.x - cam.x) * worldScale;
     var outerW = outerWorldW * worldScale;
     var outerY = (shoulder.y - cam.y) * worldScale;
     var outerH = Math.max(88, outerW / (HEARTH_PHI * HEARTH_PHI));
-    box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
+    var box = { x: outerX + outerW * HEARTH_BOWL_ENTRY, y: outerY + outerH * HEARTH_BOWL_CUT,
       w: outerW * HEARTH_BOWL_SPAN, h: outerH * (1 - HEARTH_BOWL_CUT),
       bowl: { x: outerX, y: outerY, w: outerW, h: outerH } };
-    bw = box.w; bh = box.h;
-    if (!compact) cw = Math.min(144, (w - bw) / 2 - 20);
-    var cy = compact ? Math.max(60, h - 218) : Math.max(station.y, box.y + bh - 194);
-    var left = compact ? 8 : box.x - cw - 12;
-    var right = compact ? w - cw - 8 : box.x + bw + 12;
-    var half = (cw - gap) / 2;
+    var landingY = (F.fr * TILE - cam.y) * worldScale;
+    var cy = Math.max(60, Math.min(h - 218, landingY + 24));
+    var left = controls.x, right = left + cw + gap, half = (cw - gap) / 2;
     var bin = { x: left, y: cy, w: cw, h: 44 };
     var pump = { x: left, y: cy + 50, w: cw, h: 44 };
     var action = { x: right, y: cy, w: cw, h: 44 };
@@ -45,7 +36,7 @@
     var water = { x: right, y: cy + 100, w: cw, h: 44 };
     var meter = { x: right, y: cy + 150, w: cw, h: 44 };
     if (bathMode && typeof hearthCasingProfile === 'function') hearthChamberSetLayout(box, true);
-    return { w: w, h: h, top: 0, footer: h, station: station, scene: scene, box: box,
+    return { w: w, h: h, top: 0, footer: h, station: station, scene: scene, box: box, controls: controls,
       bin: bin, pump: pump, action: action, ash: ash, tools: tools, water: water, meter: meter,
       bodyWidth: bodyWidth, outerWorldW: outerWorldW, shoulderDepth: shoulder.y - curve.y0,
       compact: compact, touch: !!isMobile, mobile: false, wide: true, side: false, landscape: false };
@@ -108,8 +99,7 @@
     hearthButtons.push(Object.assign({ action: 'strike' }, L.action));
     hearthDrawGrateControl(c, L.ash);
     if (L.wide || L.side) {
-      hearthText(c, hearthStationReadout(bed), r.x + r.w / 2, r.y + r.h - 9, 11, BLD.cream, 'center');
-      if (L.wide && !bed.chunks.length) { var hint = { x: L.bin.x, y: L.bin.y - 26, w: L.bin.w, h: 20 }; hearthPlate(c, hint, false); hearthText(c, bathToolTouchControls() ? 'TAP TO DROP' : 'CLICK TO DROP', hint.x + hint.w / 2, hint.y + 10, 11, BLD.cream, 'center'); }
+      hearthText(c, hearthStationReadout(bed), L.controls.x + L.controls.w / 2, L.h - 10, 10, BLD.cream, 'center');
     } else {
       // Keep the sloping ironwork continuous behind the compact readings.
       var readY = L.h >= 500 ? L.h - 12 : r.y + 8;

@@ -318,8 +318,9 @@
     }
     c.fillStyle = BLD.metalDark; c.fillRect(tapX - 8, tapY - 5, 16, 6);
     // The waiting landing remains level with the actual guest contacts.
-    bathInteriorTimber(c, 19 * TILE, floor, 5 * TILE - 24, 18);
-    c.fillStyle = BLD.woodMid; c.fillRect(19 * TILE, floor, 5 * TILE - 24, 2);
+    var landingLeft = (F.c0 - 1) * TILE, landingRight = curve.x0 - 8;
+    bathInteriorTimber(c, landingLeft, floor, landingRight - landingLeft, 18);
+    c.fillStyle = BLD.woodMid; c.fillRect(landingLeft, floor, landingRight - landingLeft, 2);
     c.fillStyle = BLD.woodDeep; c.fillRect(curve.x0, curve.y0 - 16, curve.x1 - curve.x0, curve.D + 24);
     bathDrawDryLiner(c, curve);
     c.restore();
