@@ -16,14 +16,12 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // Recounted 2026-10-02 after deleting a post: 24 archived posts plus
-  // 39 in-progress posts at their root URLs, against 85 indexed posts in all.
-  // Recount both numbers together when membership changes.
-  // `node tools/build-search-index.mjs` prints the active / in progress /
-  // archived split used here.
-  var ARCHIVED = 63;
+  // Recounted 2026-10-02 from search-index.json: 24 archived posts
+  // and 37 in-progress posts, out of 85 indexed posts in all.
+  // How Long Can You Live is now a finished standalone homepage post.
+  var ARCHIVED = 61;
   var TOTAL = 85;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 74
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 72
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +
