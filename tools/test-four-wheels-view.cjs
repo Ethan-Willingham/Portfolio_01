@@ -4,9 +4,33 @@ const View=require('../js/four-wheels-view.js');
 const Physics=require('../js/four-wheels-physics.js');
 const Stock=require('../js/four-wheels-stock.js');
 const levels=require('../js/four-wheels-levels.js');
+const Course=require('../js/four-wheels-course.js');
 const {CAMERA,project,unproject,depth,local}=View;
 const near=(a,b,epsilon=1e-8)=>assert.ok(Math.abs(a-b)<epsilon,`${a} != ${b}`);
 function check(name,fn){fn();console.log('PASS '+name);}
+
+const course=Course.build(),cliffEdges=View.exposedEdges(course,Course);
+check('the exposed course boundary closes without gaps at ribbons, joins or stores',()=>{
+  const endpoints=new Map();
+  for(const edge of cliffEdges)for(const p of [edge.a,edge.b]){
+    const key=p.x.toFixed(4)+','+p.y.toFixed(4);endpoints.set(key,(endpoints.get(key)||0)+1);
+  }
+  assert.ok(cliffEdges.length>1000);
+  for(const [point,count]of endpoints)assert.equal(count,2,'disconnected or doubled cliff at '+point);
+});
+check('cliffs follow actual floor support and terrain height, including both jump lips',()=>{
+  const Terrain=require('../js/four-wheels-terrain.js');
+  for(const {a,b,normal}of cliffEdges){
+    near(a.z,Terrain.height(course,a));near(b.z,Terrain.height(course,b));
+    const epsilon=Math.min(1e-5,Math.hypot(b.x-a.x,b.y-a.y)*.01);
+    for(const t of [.25,.5,.75]){
+      const p={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+      assert.ok(Course.sample(course,{x:p.x-normal.x*epsilon,y:p.y-normal.y*epsilon},false),'cliff has supporting land inside');
+      assert.equal(Course.sample(course,{x:p.x+normal.x*epsilon,y:p.y+normal.y*epsilon},false),null,'cliff does not cross supported land');
+    }
+  }
+  for(const x of [1180,1250])assert.ok(cliffEdges.some(e=>Math.abs(e.a.x-x)<1e-6&&Math.abs(e.b.x-x)<1e-6&&Math.abs((e.a.y+e.b.y)/2-410)<80),'jump lip at '+x);
+});
 
 check('ground axes stay symmetric and show substantially more floor than a 2:1 view',()=>{
   const origin=project({x:0,y:0}),x=project({x:100,y:0}),y=project({x:0,y:100});
