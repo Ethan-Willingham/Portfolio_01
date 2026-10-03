@@ -545,62 +545,93 @@
       scene.wire(local(b,...WHEELS[i],9.6),local(b,...WHEELS[i],11),P.steelLight);
     }
     function shopper(scene,b,gait) {
-      if(b.shopper){articulatedShopper(scene,b,gait,b.shopper);return;}
-
+      const p=b.shopper,c=Math.cos(b.a),s=Math.sin(b.a);
+      // One model for the independent shopper, menu art and legacy fixtures.
+      // The live pelvis stays upright while the hands follow the cart's tilt.
+      const tr=p?(x,y,z)=>({x:p.x+x*c-y*s,y:p.y+x*s+y*c,z:p.z+z}):(x,y,z)=>local(b,-16+x,y,18+z);
       const phase=gait.phase||0,stride=gait.stride||0,forward=gait.forward??1,sideways=gait.sideways||0;
-      const lx=gait.leanX||0,ly=gait.leanY||0,sway=Math.cos(phase)*Math.min(1,stride/2.8)*.25;
-      const tr=(x,y,z)=>local(b,x,y,z);
+      const leanX=p?.leanX??gait.leanX??0,leanY=p?.leanY??gait.leanY??0;
+      const activity=clamp(stride/2.8,0,1),sway=Math.cos(phase)*activity*.24;
+      const vector=(x,y,z)=>subtract(tr(x,y,z),tr(0,0,0));
+      function joint(a,b,l1,l2,hint) {
+        const delta=subtract(b,a),distance=Math.hypot(delta.x,delta.y,delta.z),axis=distance>.0001?normalize(delta):normalize(vector(0,0,-1));
+        // Preserve the handle endpoint through a stretched or folded pose.
+        const scale=Math.max(1,distance/(l1+l2-.06));l1*=scale;l2*=scale;
+        const d=clamp(distance,Math.abs(l1-l2)+.001,l1+l2-.001),along=(l1*l1-l2*l2+d*d)/(2*d);
+        const dot=axis.x*hint.x+axis.y*hint.y+axis.z*hint.z;
+        let bend=subtract(hint,{x:axis.x*dot,y:axis.y*dot,z:axis.z*dot});
+        if(Math.hypot(bend.x,bend.y,bend.z)<.001){const ref=Math.abs(axis.z)<.8?{x:0,y:0,z:1}:{x:c,y:s,z:0};bend=cross(axis,ref);}
+        bend=normalize(bend);const radius=Math.sqrt(Math.max(0,l1*l1-along*along));
+        return add(a,axis.x*along+bend.x*radius,axis.y*along+bend.y*radius,axis.z*along+bend.z*radius);
+      }
+      function shell(profile,color,transform=tr) {
+        // Chamfered clothing keeps a readable shoulder and waist at every angle.
+        const rings=profile.map(([z,x,y])=>[[x,-y*.65],[x*.65,-y],[-x*.65,-y],[-x,-y*.65],[-x,y*.65],[-x*.65,y],[x*.65,y],[x,y*.65]].reverse().map(([u,v])=>transform(u,v,z)));
+        for(let k=0;k<rings.length-1;k++)for(let i=0;i<8;i++)scene.face([rings[k][i],rings[k][(i+1)%8],rings[k+1][(i+1)%8],rings[k+1][i]],color);
+        scene.face(rings.at(-1),color);
+      }
       for(const side of [-1,1]) {
         const t=((phase/(Math.PI*2)+(side===1?.5:0))%1+1)%1,swing=Math.max(0,(t-.6)/.4);
-        const reach=t<.6?1-t/.3:-1+2*swing*swing*(3-2*swing),lift=Math.sin(swing*Math.PI)*Math.min(1,stride/2.8)*4;
-        const travel=reach*stride,x=-17+travel*forward,y=side*3.2+travel*sideways*.75;
-        const sole=tr(x,y,lift),floor=terrainLevel?root.CartCourse.sample(terrainLevel,sole,false):null;if(floor&&Math.abs(sole.z-lift-floor.height)<6)sole.z=floor.height+lift;
-        const hip=tr(-16,side*2.6,18),knee=tr(-17+travel*forward*.35+lift*.25,side*3+travel*sideways*.3,9+lift*.35),ankle={...sole,z:sole.z+2};
-        scene.limb(hip,knee,3.4,2.8,P.steelShade,P.blue);scene.limb(knee,ankle,2.8,2,P.edge);
-        const shoe={...sole,a:b.a+side*.12+clamp(sideways*.18,-.18,.18)},foot=(u,v,z)=>local(shoe,u,v,z);
-        scene.box(foot,-2,-1.5,0,5.5,3,1,P.cream,P.steelLight);
-        scene.box(foot,-1.7,-1.4,1,4.8,2.8,1.5,P.dark,P.steelShade);
-        scene.wire(foot(.2,-.9,2.55),foot(.2,.9,2.55),P.steelLight,1,.8);
-        scene.wire(foot(1.1,-.8,2.55),foot(1.1,.8,2.55),P.mid,1);
+        const reach=t<.6?1-t/.3:-1+2*swing*swing*(3-2*swing),lift=Math.sin(swing*Math.PI)*activity*3.6;
+        const travel=reach*stride,sole=tr(travel*forward-1,side*3.35+travel*sideways*.65,-18+lift);
+        const floor=terrainLevel?root.CartCourse.sample(terrainLevel,sole,false):null;
+        if(floor&&(p?p.feet:Math.abs(sole.z-lift-floor.height)<6))sole.z=floor.height+lift;
+        else if(p)sole.z=Math.min(sole.z,p.z-10+lift);
+        const hip=tr(0,side*2.65,-.1),ankle=add(sole,0,0,2.1),knee=joint(hip,ankle,10,10,vector(1,side*.12,0));
+        scene.limb(hip,knee,3.8,3.1,P.edge);scene.limb(knee,ankle,3,2.25,P.dark);
+        // A small knee fold and ankle cuff break up the trouser silhouette.
+        scene.limb(add(knee,c*.9,s*.9,.25),add(knee,c*.9-s*side*.6,s*.9+c*side*.6,-.5),.75,.65,P.steelShade);
+        scene.limb(add(ankle,0,0,.8),ankle,2.35,2.35,P.steelShade);
+        const foot=(x,y,z)=>local({...sole,a:b.a+side*.08+clamp(sideways*.2,-.2,.2),pitch:swing>.01?-Math.sin(swing*Math.PI)*.2:0},x,y,z);
+        shell([[0,2.7,1.6],[.8,2.8,1.6]],P.cream,(x,y,z)=>foot(x+.65,y,z));
+        shell([[.8,2.55,1.5],[2,2.15,1.35],[2.6,1.25,1.1]],P.dark,(x,y,z)=>foot(x+.4,y,z));
+        for(const edge of [-1,1]) {
+          scene.wire(foot(-1.4,edge*1.53,1.15),foot(2.5,edge*1.53,1.15),P.coral,1);
+          scene.wire(foot(-1.6,edge*1.32,2),foot(-.8,edge*1.38,2.4),P.cream,1);
+        }
+        for(const x of [.1,.85])scene.wire(foot(x,-.7,2.64),foot(x,.7,2.64),P.cream,1);
       }
-      const bottom=[tr(-18,-3,18),tr(-13,-3,18),tr(-13,3,18),tr(-18,3,18)];
-      const top=[tr(-17+lx,-5+ly+sway,30),tr(-13+lx,-5+ly+sway,30),tr(-13+lx,5+ly+sway,30),tr(-17+lx,5+ly+sway,30)];
-      const torso=[...bottom,...top];
-      for(const [indices]of faces)scene.face(indices.map(i=>torso[i]),P.brick,1,null,true);
-      scene.wire(tr(-13+lx,-4+ly,30.05),tr(-13+lx,4+ly,30.05),P.coral,2);
-      scene.wire(tr(-13,-3,19),tr(-13,3,19),P.hairDark,1,.45);
+      const coat=(x,y,z)=>{const t=clamp(z/11.5,0,1);return tr(x+leanX*t,y+(leanY+sway)*t,z);};
+      shell([[-.5,2.75,3.3],[1,2.65,3.4],[8.5,2.5,4.6],[10.6,2.15,4.9],[12,1.7,3.3]],P.brick,coat);
+      shell([[-.55,2.8,3.35],[.45,2.78,3.4]],blend(P.brick,P.dark,.35),coat);
+      cylinder(scene,(x,y,z)=>coat(x*.8,y,z),[[11.9,1.65],[15.3,1.45]],P.clay);
+      cylinder(scene,(x,y,z)=>coat(x,y,z),[[11.9,2.1],[12.65,1.8]],blend(P.brick,P.dark,.3));
+      // Cream tee, zipper, collar and a restrained shoulder seam.
+      scene.face([coat(2.58,-.72,8.3),coat(2.58,.72,8.3),coat(1.76,.9,12.03),coat(1.76,-.9,12.03)],P.cream);
+      scene.wire(coat(2.78,0,.7),coat(2.6,0,8.2),P.gold,1);
       for(const side of [-1,1]) {
-        const shoulder=tr(-15+lx,side*5+ly,29),elbow=tr(-10.5+lx*.3,side*7.5+ly*.3,25),wrist=tr(-6,side*9,30);
-        scene.limb(shoulder,elbow,3.4,2.6,P.brick,P.coral);scene.limb(elbow,wrist,2.5,2,P.clay,P.gold);
-        scene.box((x,y,z)=>add(wrist,x,y,z),-1,-1,-1,2,2,2,P.clay,P.gold);
+        scene.face([coat(1.8,side*.85,12.07),coat(1.8,side*2.6,12.07),coat(2.4,side*1.6,10.1)],P.coral);
+        scene.wire(coat(-1.45,side*4.45,10.9),coat(1.5,side*4.45,10.9),P.coral,1,.8);
+        scene.wire(coat(2.64,side*1.35,3.1),coat(2.58,side*2.5,4.2),P.hairDark,1,.55);
+        const shoulder=coat(0,side*4.7,10.1),wrist=local(b,-6,side*8.7,30);
+        const elbow=joint(shoulder,wrist,8.5,8.8,vector(-.7,side*.85,-.4));
+        const cuff={x:elbow.x+(wrist.x-elbow.x)*.85,y:elbow.y+(wrist.y-elbow.y)*.85,z:elbow.z+(wrist.z-elbow.z)*.85};
+        scene.limb(shoulder,elbow,4.1,3.25,P.brick);scene.limb(elbow,cuff,3.35,2.35,P.brick);
+        scene.limb(cuff,wrist,2.5,2.3,P.cream);
+        // Hands wrap the bar instead of ending in floating square blocks.
+        const hand=(x,y,z)=>local({...wrist,a:b.a},x,y,z);
+        scene.box(hand,-1.2,-1.05,-1.05,2.4,2.1,1.9,P.clay,P.gold);
+        scene.wire(hand(1.25,-.75,.25),hand(1.25,.7,.25),P.hair,1,.65);
       }
-      const head=tr(-15+lx,ly+sway,36.5),headTr=(x,y,z)=>b.comHeight?local(b,-15+lx+x,ly+sway+y,36.5+z):local({...head,a:b.a},x,y,z);
-      // Faceted round head, a hair cap and local crown highlights rotate in 3D.
-      cylinder(scene,headTr,[[-3.5,1.8],[-2.5,3.5],[1,4],[3.5,3],[4.5,1]],P.clay);
-      cylinder(scene,headTr,[[.5,4.05],[2.8,3.45],[4.3,1.9],[4.6,.8]],P.hair);
-      scene.box(headTr,3,-1,-1.2,2,2,1.7,P.clay,P.gold);
-      for(const side of [-1,1])scene.box(headTr,-.5,side*3.5,-1,1.5,1,2,P.clay,P.gold);
-      scene.wire(headTr(-2,-1.5,3.4),headTr(0,-1.5,4.4),P.hairLight,1,.8);
-      scene.wire(headTr(0,-1.5,4.4),headTr(1,-.5,4.2),P.hairDark,1,.7);
-      // Eye details only on the visible front, so they never leak through hair.
-      if(Math.cos(b.a)+Math.sin(b.a)>.15)for(const side of [-1,1])scene.wire(headTr(3.65,side*1.7,.1),headTr(3.65,side*1.7,-.7),P.hairDark,1);
-    }
-    function articulatedShopper(scene,b,gait,p) {
-      const c=Math.cos(b.a),s=Math.sin(b.a),leanX=p.leanX,leanY=p.leanY,tr=(x,y,z)=>({x:p.x+x*c-y*s,y:p.y+x*s+y*c,z:p.z+z});
-      const bentJoint=(a,b,l1,l2,side)=>{const delta=subtract(b,a),distance=Math.hypot(delta.x,delta.y,delta.z)||1,axis=normalize(delta),d=Math.min(distance,l1+l2-.05),along=(l1*l1-l2*l2+d*d)/(2*d),bend=Math.sqrt(Math.max(.15,l1*l1-along*along)),hint={x:c,y:s,z:0},normal=normalize(subtract(hint,{x:axis.x*(axis.x*c+axis.y*s),y:axis.y*(axis.x*c+axis.y*s),z:axis.z*(axis.x*c+axis.y*s)}));return add(a,axis.x*along+normal.x*bend*side,axis.y*along+normal.y*bend*side,axis.z*along+normal.z*bend*side);};
-      const phase=gait.phase||0,stride=gait.stride||0;
-      for(const side of [-1,1]){
-        const t=((phase/(Math.PI*2)+(side===1?.5:0))%1+1)%1,swing=Math.max(0,(t-.6)/.4),reach=t<.6?1-t/.3:-1+2*swing*swing*(3-2*swing),lift=Math.sin(swing*Math.PI)*Math.min(1,stride/2.8)*3.6;
-        const travel=reach*stride,sole=tr(travel*(gait.forward??1)-1,side*3.5+travel*(gait.sideways||0)*.65,-18+lift),floor=terrainLevel?root.CartCourse.sample(terrainLevel,sole,false):null;
-        if(p.feet&&floor)sole.z=floor.height+lift;else sole.z=Math.min(sole.z,p.z-10+lift);
-        const hip=tr(0,side*2.7,0),ankle=add(sole,0,0,2),knee=bentJoint(hip,ankle,10,10,1);
-        scene.limb(hip,knee,3.5,2.7,P.steelShade);scene.limb(knee,ankle,2.8,2.1,P.edge);
-        const foot=(x,y,z)=>local({...sole,a:b.a+side*.1},x,y,z);scene.box(foot,-2,-1.5,0,5.5,3,1,P.cream,P.steelLight);scene.box(foot,-1.7,-1.4,1,4.8,2.8,1.5,P.dark,P.steelShade);scene.wire(foot(.2,-.9,2.55),foot(.2,.9,2.55),P.steelLight);
+      const head=coat(0,0,18.5),headTr=(x,y,z)=>local({...head,a:b.a,pitch:clamp(-leanX*.035,-.18,.18),rollTilt:clamp(leanY*.035,-.18,.18)},x,y,z);
+      cylinder(scene,(x,y,z)=>headTr(x*.88,y,z),[[-3.4,1.7],[-2.4,3.1],[.8,3.65],[2.7,3.15],[3.7,1.6]],P.clay);
+      // An uneven hairline and swept crown, rather than concentric cap rings.
+      const hair=Array.from({length:3},(_,row)=>Array.from({length:8},(_,i)=>{
+        const a=i*Math.PI/4,front=Math.cos(a),side=Math.sin(a),r=[3.7,3.25,1.65][row];
+        const z=row===0?-.6+Math.max(0,front)*2.5+side*.35:row===1?2.85+side*.4:4.55+side*.25;
+        return headTr(front*r*.9-.4,side*r+.15,z);
+      }));
+      for(let k=0;k<2;k++)for(let i=0;i<8;i++)scene.face([hair[k][i],hair[k][(i+1)%8],hair[k+1][(i+1)%8],hair[k+1][i]],k===1?P.hair:P.hairDark);
+      scene.face(hair[2],P.hair);
+      scene.wire(headTr(-1.8,-1.4,4.2),headTr(.4,-.7,4.65),P.hairLight,1,.85);
+      scene.wire(headTr(.4,-.7,4.65),headTr(1.4,.5,4.15),P.hairLight,1,.6);
+      scene.box(headTr,2.85,-.65,-1.15,1.15,1.3,1.25,P.clay,P.gold);
+      for(const side of [-1,1]) {
+        scene.box(headTr,-.1,side*3.1,-1.5,1.25,.85,1.65,P.clay,P.gold);
+        scene.wire(headTr(3.12,side*1.3,.25),headTr(3.15,side*1.3,-.35),P.hairDark,1);
+        scene.wire(headTr(3.04,side*1.65,.85),headTr(3.2,side*.95,1.05),P.hairDark,1);
       }
-      const bottom=[tr(-2.7,-3,0),tr(2.7,-3,0),tr(2.7,3,0),tr(-2.7,3,0)],top=[tr(-2+leanX,-5+leanY,11.5),tr(2+leanX,-5+leanY,11.5),tr(2+leanX,5+leanY,11.5),tr(-2+leanX,5+leanY,11.5)],torso=[...bottom,...top];for(const [indices]of faces)scene.face(indices.map(i=>torso[i]),P.brick);
-      for(const side of [-1,1]){const shoulder=tr(leanX,side*5+leanY,10.5),wrist=local(b,-6,side*9,30),elbow=bentJoint(shoulder,wrist,9,10,-1);scene.limb(shoulder,elbow,3.3,2.6,P.brick);scene.limb(elbow,wrist,2.5,2,P.clay);scene.box((x,y,z)=>local({...wrist,a:b.a},x,y,z),-1,-1,-1,2,2,2,P.clay,P.gold);}
-      const head=tr(leanX*1.12,leanY*1.12,18.5),headTr=(x,y,z)=>local({...head,a:b.a,pitch:clamp(-leanX*.035,-.18,.18),rollTilt:clamp(leanY*.035,-.18,.18)},x,y,z);
-      cylinder(scene,headTr,[[-3.5,1.8],[-2.5,3.5],[1,4],[3.5,3],[4.5,1]],P.clay);cylinder(scene,headTr,[[.5,4.05],[2.8,3.45],[4.3,1.9],[4.6,.8]],P.hair);scene.box(headTr,3,-1,-1.2,2,2,1.7,P.clay,P.gold);for(const side of [-1,1])scene.box(headTr,-.5,side*3.5,-1,1.5,1,2,P.clay,P.gold);scene.wire(headTr(-2,-1.5,3.4),headTr(0,-1.5,4.4),P.hairLight);scene.wire(headTr(0,-1.5,4.4),headTr(1,-.5,4.2),P.hairDark);
+      scene.wire(headTr(2.9,-.7,-2.15),headTr(2.9,.7,-2.15),P.hair,1,.65);
     }
     function cart(target,b,wheels,gait) {
       const scene=new Scene();scene.rigid=true;

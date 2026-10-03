@@ -158,6 +158,15 @@ their actual depth during a tumble. Each tire also has a height-dependent
 contact shadow. Gait advances during physics, including travel around the handle while
 rotating. Rendering and pause do not advance it.
 
+The shopper uses one model in the live game, menu illustration and legacy
+fixtures. A chamfered terracotta jacket has a ribbed hem, collar, cream cuffs,
+tee and zipper. Dark tapered trousers meet cream-soled sneakers with laces and
+side trim. The faceted head has a neck, an uneven swept hairline, brows and eyes.
+Sleeves use two-segment joints with outward elbow bends; hands stay on the actual
+handle through bumps and tumbles. Degenerate joint directions use a stable bend
+plane. Clothing, face details and hands share the cart's depth buffer. These are
+rendering changes; gait timing, shopper forces and saved-run fields are unchanged.
+
 The caster model follows the principles described by
 [Arrizabalaga et al., 2021](https://arxiv.org/abs/2110.05604), simplified for a game.
 The contact solver uses point velocity, equal and opposite impulses and Coulomb
