@@ -339,18 +339,31 @@ bath. The forge has an anvil, weighted hammer animation, and a quench pail.
 These explicit user-operated fixture animations extend the old exterior-only
 animation table; no surface-building theme or palette is changed.
 
-## 18. Bathhouse exterior (v28.29)
+## 18. Bathhouse exterior (v28.144)
 
 The tiered banya uses the gas station canopy's warm timber and red trim family.
 Its painted iron roofs use `redDark` faces, `redDeep` folds and right returns,
 and restrained `woodBase` / `woodMid` catches on the lit side. Keep the red
 below the brightness of the lanterns and carved window casings. The local
-`tier()` helper in `drawBanyaExterior` composes eight-pixel wood planking,
-corner posts, a shaded right return, and a lower rail. The wider board rhythm
-leaves more red-brown face visible. The plinth uses `drawStoneFoundation` and
+`tier()` helper in `drawBanyaExterior` composes twelve-pixel wood planking,
+corner posts, a shaded right return, and a pegged lower rail. Most boards keep
+quiet faces; narrow catches and sparse grain leave the carved trim in focus.
+The plinth uses `drawStoneFoundation` and
 a pale step edge. A real, unmineable surface apron continues the nearby town
 foundation beneath the bench and tower, including in older saves. Preserve
 ponds when an older world places the banya away from the town.
+
+The local `casing()` helper gives windows and the entrance the same stepped
+crown, carved cuts and directional bevel. Window crowns sit clear of the
+eaves; glazing is recessed, with small daylight reflections and separate
+nighttime glow phases. Eave seams follow the roof pitch, above a continuous
+fascia with small carved pendants. The tent roof has three folded sheet courses
+and an outlined brass cap below the fixed red star. Paper lanterns use stepped
+shells, ribs and iron end caps. `warmHalo()` shares one cached soft falloff
+sprite for windows and lanterns. Lights fade with dusk without hard halo rings.
+The rain barrel uses shaded wooden staves, raised iron hoops and the existing
+water palette; the bench keeps a narrow lit seat edge. Cull the whole exterior
+only outside bounds that include its lights, star and ground props.
 
 The entrance has red stage velvet that sweeps into side gathers as the rig
 approaches. Each upper drape gathers into a small gold cord; the bundle
