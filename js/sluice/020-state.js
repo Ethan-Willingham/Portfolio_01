@@ -955,6 +955,7 @@
     // v14.22 — show/hide the on-screen TUNE button (mobile dev access) with
     // dev mode. Defined later in the file; guard for hoist order.
     if (typeof gmTuningButtonSync === 'function') gmTuningButtonSync();
+    if (typeof perfLive !== 'undefined' && perfLive) perfLiveSync();
   }
 
   // v25.9 — the read-only perf overlay is shown when dev mode is on OR (on a

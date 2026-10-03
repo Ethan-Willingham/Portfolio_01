@@ -9679,6 +9679,114 @@ struct P2GParams {
     liquidSubmit(instance, enc);
   }
 
+  // Live diagnostics read only the existing queue lengths. The physical
+  // fallback buffer is shared by water and snow, so copy its counter after
+  // every eligible collision batch, before the next batch resets it.
+  // No diagnostic resources, copies or mapping run until explicitly enabled.
+  var LIQUID_DIAGNOSTICS_BYTES = 4096;
+  var LIQUID_DIAGNOSTICS_INTERVAL_MS = 1000;
+  function liquidDiagnosticsNow() { return performance.now(); }
+  function stopLiquidDiagnostics(instance) {
+    instance.diagnosticsGeneration++;
+    instance.diagnosticsFrame = null;
+    instance.diagnosticsPending = false;
+    if (instance.diagnosticsBuffer) {
+      try { instance.diagnosticsBuffer.unmap(); } catch (_) {}
+      try { instance.diagnosticsBuffer.destroy(); } catch (_) {}
+      instance.diagnosticsBuffer = null;
+    }
+  }
+  function beginLiquidDiagnostics(instance) {
+    var now = liquidDiagnosticsNow();
+    if (instance.diagnosticsPending ||
+        now - instance.diagnosticsLastAt < LIQUID_DIAGNOSTICS_INTERVAL_MS) return null;
+    instance.diagnosticsLastAt = now;
+    try {
+      if (!instance.diagnosticsBuffer) {
+        instance.diagnosticsBuffer = instance.device.createBuffer({
+          label: 'liquid.diagnosticsQueues', size: LIQUID_DIAGNOSTICS_BYTES,
+          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+        });
+      }
+      var frameId = null;
+      try { frameId = window.__sluicePerformance ? window.__sluicePerformance.frameId : null; } catch (_) {}
+      return instance.diagnosticsFrame = { frameId: frameId, atMs: now,
+        generation: instance.diagnosticsGeneration, buffer: instance.diagnosticsBuffer,
+        kinds: [], collisionBatches: 0, snowCollisionBatches: 0,
+        liquidCollisionBatches: 0, snowTerrainBatches: 0, partial: false };
+    } catch (e) {
+      instance.diagnosticsError = String((e && e.message) || e).slice(0, 240);
+      return null;
+    }
+  }
+  function captureLiquidDiagnosticsBatch(instance, enc, snowOnly, terrainOnly) {
+    var sample = instance.diagnosticsFrame;
+    sample.collisionBatches++;
+    if (snowOnly && terrainOnly) { sample.snowTerrainBatches++; return; }
+    if (snowOnly) sample.snowCollisionBatches++;
+    else sample.liquidCollisionBatches++;
+    if (sample.kinds.length * 8 >= LIQUID_DIAGNOSTICS_BYTES) {
+      sample.partial = true;
+      return;
+    }
+    var offset = sample.kinds.length * 8;
+    try {
+      if (snowOnly) enc.copyBufferToBuffer(instance.buf.snowGuestCount, 0, sample.buffer, offset, 4);
+      enc.copyBufferToBuffer(instance.buf.snowFallbackCount, 0, sample.buffer, offset + 4, 4);
+      sample.kinds.push(!!snowOnly);
+    } catch (e) {
+      sample.partial = true;
+      instance.diagnosticsError = String((e && e.message) || e).slice(0, 240);
+    }
+  }
+  function finishLiquidDiagnostics(instance, sample) {
+    instance.diagnosticsFrame = null;
+    instance.diagnosticsPending = true;
+    function publish(words) {
+      if (sample.generation !== instance.diagnosticsGeneration) return;
+      var row = { frameId: sample.frameId, atMs: sample.atMs, completedAtMs: liquidDiagnosticsNow(),
+        collisionBatches: sample.collisionBatches, snowCollisionBatches: sample.snowCollisionBatches,
+        liquidCollisionBatches: sample.liquidCollisionBatches, snowTerrainBatches: sample.snowTerrainBatches,
+        copiedBatches: sample.kinds.length, partial: sample.partial,
+        snowGuestTotal: 0, snowGuestPeak: 0, snowFallbackTotal: 0, snowFallbackPeak: 0,
+        liquidFallbackTotal: 0, liquidFallbackPeak: 0, copyBytes: 0 };
+      for (var i = 0; i < sample.kinds.length; i++) {
+        var fallback = words[i * 2 + 1];
+        if (sample.kinds[i]) {
+          var guest = words[i * 2];
+          row.snowGuestTotal += guest; row.snowGuestPeak = Math.max(row.snowGuestPeak, guest);
+          row.snowFallbackTotal += fallback; row.snowFallbackPeak = Math.max(row.snowFallbackPeak, fallback);
+          row.copyBytes += 8;
+        } else {
+          row.liquidFallbackTotal += fallback;
+          row.liquidFallbackPeak = Math.max(row.liquidFallbackPeak, fallback);
+          row.copyBytes += 4;
+        }
+      }
+      instance.diagnosticsLatest = row;
+      instance.diagnosticsError = null;
+      instance.diagnosticsPending = false;
+    }
+    if (!sample.kinds.length) { publish(null); return; }
+    try {
+      sample.buffer.mapAsync(GPUMapMode.READ, 0, sample.kinds.length * 8).then(function () {
+        if (sample.generation !== instance.diagnosticsGeneration) return;
+        try {
+          publish(new Uint32Array(sample.buffer.getMappedRange(0, sample.kinds.length * 8)));
+        } finally {
+          sample.buffer.unmap();
+        }
+      }).catch(function (e) {
+        if (sample.generation !== instance.diagnosticsGeneration) return;
+        instance.diagnosticsPending = false;
+        instance.diagnosticsError = String((e && e.message) || e).slice(0, 240);
+      });
+    } catch (e) {
+      instance.diagnosticsPending = false;
+      instance.diagnosticsError = String((e && e.message) || e).slice(0, 240);
+    }
+  }
+
   /* Run the Stage-6 collide kernel in one command encoder. One kernel —
    * one thread per particle; resolves terrain collision against the
    * uploaded terrainMask. Assumes runG2P() already wrote the new particle
@@ -9708,6 +9816,7 @@ struct P2GParams {
         cp.dispatchWorkgroups(Math.ceil(count / 256));
       }
       cp.end();
+      if (instance.diagnosticsFrame) captureLiquidDiagnosticsBatch(instance, enc, true, true);
       liquidSubmit(instance, enc);
       return;
     }
@@ -9739,6 +9848,7 @@ struct P2GParams {
       cp.dispatchWorkgroupsIndirect(instance.buf.snowFallbackDispatch,0);
       cp.end();
     }
+    if (instance.diagnosticsFrame) captureLiquidDiagnosticsBatch(instance, enc, !!snowOnly, false);
     liquidSubmit(instance, enc);
   }
 
@@ -11365,6 +11475,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     if (hasSnow) prepareSnowGrains(instance, instance.stepDt / LIQUID_TIMESCALE / grainSteps);
     var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
     instance.frameEncoder = frameEncoder;
+    var diagnosticsSample = instance.diagnosticsActive ? beginLiquidDiagnostics(instance) : null;
     try {
       if (hasSnow) runSnowBoundary(instance);
 
@@ -11395,10 +11506,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       runSparseEndClear(instance);
       instance.queue.submit([frameEncoder.finish()]);
       instance.simulationClock += instance.stepDt * subSteps;
+      if (diagnosticsSample) finishLiquidDiagnostics(instance, diagnosticsSample);
     } finally {
       // A failed encode must not leave subsequent standalone calls holding
       // an unfinished encoder or suppress their physics-uniform refresh.
       instance.frameEncoder = null;
+      instance.diagnosticsFrame = null;
     }
     // 7. The mirror supports tools, persistence and water-contact melting.
     // Snow motion stays resident and never waits for these snapshots, so
@@ -11564,6 +11677,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         // A lost device permanently drops the GPU path; the game falls
         // back to the CPU solver from the next frame.
         device.lost.then(function (info) {
+          instance.diagnosticsActive = false;
+          stopLiquidDiagnostics(instance);
           instance.available = false;
           instance.simActive = false;
           instance.renderActive = false;
@@ -11836,6 +11951,14 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       opsBG: null,           // v24.109 — replay bind group
       opsReady: false,       // v24.109 — ops-replay path available (else full re-upload)
       frameEncoder: null,   // shared only during the synchronous live frame
+      diagnosticsActive: false,
+      diagnosticsBuffer: null,
+      diagnosticsFrame: null,
+      diagnosticsPending: false,
+      diagnosticsGeneration: 0,
+      diagnosticsLastAt: -Infinity,
+      diagnosticsLatest: null,
+      diagnosticsError: null,
       terrainMaskWords: 0,   // last uploaded mask length; zero forces the first transfer
       // v15.0 — sparse active-block grid state.
       sparseCapable: false,  // device grants >= 10 storage buffers/stage
@@ -11864,11 +11987,39 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       getReadbackAge: function () {
         return Math.max(0, instance.simulationClock - instance.readbackAppliedTime);
       },
+      // Totals count queue visits across the whole sampled frame, not unique
+      // particles. Peaks are the largest individual batch. Terrain-only snow
+      // batches have no guest queues and are counted separately. Sampling
+      // does not wait for GPU work and publishes no more than one frame/sec.
+      setDiagnosticsActive: function (value) {
+        var active = !!value;
+        if (active === instance.diagnosticsActive) return;
+        instance.diagnosticsActive = active;
+        instance.diagnosticsLatest = null;
+        instance.diagnosticsError = null;
+        if (!active) stopLiquidDiagnostics(instance);
+      },
+      getDiagnostics: function () {
+        var row = instance.diagnosticsLatest;
+        var age = row ? Math.max(0, liquidDiagnosticsNow() - row.atMs) : null;
+        var result = row ? Object.assign({}, row) : {};
+        result.active = instance.diagnosticsActive;
+        result.available = instance.available && instance.simActive;
+        result.pending = instance.diagnosticsPending;
+        result.sampleIntervalMs = LIQUID_DIAGNOSTICS_INTERVAL_MS;
+        result.ageMs = age;
+        result.valid = !!(row && result.active && result.available && !row.partial &&
+          !instance.diagnosticsError && age <= LIQUID_DIAGNOSTICS_INTERVAL_MS * 3);
+        result.error = instance.diagnosticsError;
+        return result;
+      },
       update: function (dt) {
         if (!instance.simActive) return;
         try {
           runFrame(instance, dt);
         } catch (e) {
+          instance.diagnosticsActive = false;
+          stopLiquidDiagnostics(instance);
           instance.simActive = false;
           instance.renderActive = false;
           try { console.warn('LiquidWGPU Stage 8: runtime error in sim step — ' + ((e && e.message) || e) + ' — reverting to CPU solver.'); } catch (_) {}
@@ -12190,6 +12341,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         return n;
       },
       dispose: function () {
+        instance.diagnosticsActive = false;
+        stopLiquidDiagnostics(instance);
         if (instance.buf) {
           for (var k in instance.buf) {
             if (instance.buf[k]) { try { instance.buf[k].destroy(); } catch (_) {} }

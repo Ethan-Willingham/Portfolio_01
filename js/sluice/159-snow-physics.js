@@ -466,7 +466,9 @@
         snow.grains[old] = snow.grains[snow.grains.length - 1]; snow.grains.pop();
       }
     }
+    var snowProfile = perfLive.enabled || playPerfActive, snowPhaseAt = snowProfile ? performance.now() : 0;
     updateSnowAir(dt);
+    if (snowProfile) perfMark('snow.airCPU', snowPhaseAt);
     snow.time += dt; snow.temperature = snowTemperature();
     snow.tick += dt;
     snowSkyExposure.clear();
@@ -480,8 +482,11 @@
     // set changed, as a search spread over frames.
     var gpuMirror = !!(liquidWGPU && liquidWGPU.simActive);
     var liveCPUContact = !gpuMirror && snow.active > 0 && snow.grains.length > 0;
+    if (snowProfile) snowPhaseAt = performance.now();
     if (maintenanceDt || liveCPUContact) snowScan(dt, maintenanceDt, gpuMirror);
+    if (snowProfile) { perfMark('snow.scanCPU', snowPhaseAt); snowPhaseAt = performance.now(); }
     if (gpuMirror) snowSupportJobStep(SNOW_SUPPORT_SLICE_MS);
+    if (snowProfile) { perfMark('snow.supportCPU', snowPhaseAt); snowPhaseAt = performance.now(); }
     if (maintenanceDt) snow.tick = 0;
     var surf = SKY_ROWS * TILE, sky = cam.y < surf, rect = particleWeatherRect();
     var left = rect.left, right = rect.right, top = rect.top, bottom = rect.bottom;
@@ -543,6 +548,7 @@
       }
       if (remove) { snow.grains[i] = snow.grains[snow.grains.length - 1]; snow.grains.pop(); }
     }
+    if (snowProfile) perfMark('snow.flakesCPU', snowPhaseAt);
   }
   function snowSave() {
     if (!worldSnowEnabled) return null;

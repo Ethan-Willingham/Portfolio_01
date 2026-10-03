@@ -101,7 +101,7 @@ try {
   await ev('(()=>{const t=performance.now();while(performance.now()-t<220){}return true})()');
   await tap('Escape', 'Escape'); await until('__recordTest.state().paused'); await delay(250); await tap('Escape', 'Escape');
   await until('!__recordTest.state().paused');
-  await until('__sluicePerformance.frameId >= 1100', 90000);
+  await until('__recordTest.summary().frames >= 1100', 90000);
   const screen = await call('Page.captureScreenshot'); fs.writeFileSync(path.join(out, 'recording.png'), Buffer.from(screen.data, 'base64'));
   await tap('F9', 'F9');
   const deadline = Date.now() + 10000; let filename;

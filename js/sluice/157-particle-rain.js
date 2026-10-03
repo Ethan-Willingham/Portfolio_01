@@ -246,7 +246,11 @@
     rain.scan -= dt; rain.scanDt += dt;
     if (rain.scan <= 0) { rainScan(rain.scanDt); rain.scanDt = 0; rain.scan = 0.16; }
     var kind = weatherPrecipType(), rainIntensity = kind === 'rain' ? rain.intensity : 0;
-    if (worldSnowEnabled) updateSnow(dt, kind === 'snow' ? rain.intensity : 0);
+    if (worldSnowEnabled) {
+      var snowCPUAt = performance.now();
+      updateSnow(dt, kind === 'snow' ? rain.intensity : 0);
+      perfMark('snow.cpu', snowCPUAt);
+    }
     // Both pools finish their trajectories when a front changes. Only the
     // source intensity changes; existing rain, snow and piles keep their mass.
     var gpu = liquidWGPU && liquidWGPU.simActive;

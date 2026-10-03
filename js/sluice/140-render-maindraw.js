@@ -1319,8 +1319,6 @@
     var _rPerf = performance.now();
     if (perfOverlayOn()) drawPerfOverlay();
     perfMark('render.perfOverlay', _rPerf);
-    // In-game now-playing music readout (dev mode) — track name(s) + position
-    if (devMode) drawNowPlaying();
 
     // Layer-crossing banner — gated; environmental cue replacement TBD
     if (!UI_NEW && layerBanner) drawLayerBanner();

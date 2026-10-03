@@ -8,13 +8,14 @@
     'x', 'y', 'vx', 'vy', 'cameraX', 'cameraY', 'jet', 'holding', 'bath', 'paused',
     'visible', 'focus', 'liquids', 'snowActive', 'snowAirborne', 'snowParked',
     'residents', 'awakeResidents', 'outerTicks', 'microsteps', 'contacts',
-    'terrainRebuilds', 'readbackAgeMs', 'inputMask', 'view'];
+    'terrainRebuilds', 'readbackAgeMs', 'inputMask', 'view', 'frameId'];
   var playPerfStride = playPerfFields.length + playPerfBucketLimit;
   var playPerfKeys = ['w', 'a', 's', 'd', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', ' ', 'f', 'q', 'e'];
   var playPerfInputCodes = /^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|Escape|Backquote|Shift(Left|Right))$/;
   var playPerfPointerAt = 0, playPerfObserver = null, playPerfSaving = false;
 
   function playPerfEvent(kind, detail) {
+    perfLiveEvent(kind, detail);
     var trace = playPerfTrace;
     if (!playPerfActive || !trace) return;
     if (trace.events.length >= 12000) { trace.droppedEvents++; return; }
@@ -54,22 +55,14 @@
       heapBytes: performance.memory ? performance.memory.usedJSHeapSize : null };
   }
   function playPerfPause(paused, reason) {
-    if (!playPerfActive) return;
+    perfLiveInterrupt();
     playPerfEvent(paused ? 'pause' : 'resume', { reason: reason || null });
+    if (!playPerfActive) return;
     playPerfTrace.binInterrupted = true;
     playPerfTrace.lastAt = null;
   }
   function playPerfGPUCollect() {
-    var trace = playPerfTrace, gpu = window.__sluiceGPUTrace;
-    if (!trace || !gpu) return;
-    var rows = gpu.drain();
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
-      if (row.at < trace.started || (trace.ended && row.at > trace.ended)) continue;
-      row.atMs = row.at - trace.started;
-      if (trace.gpu.length < 8000) trace.gpu.push(row); else trace.droppedGPU++;
-    }
-    trace.gpuStatus = gpu.status();
+    perfLiveGPUCollect();
   }
   function playPerfPublish(bin) {
     var trace = playPerfTrace;
@@ -150,8 +143,8 @@
       binAt: now, binFrames: 0, binCPU: 0, binRecorder: 0, binMax: 0,
       binBuckets: {}, binInterrupted: gamePaused || document.hidden, lastAt: null };
     playPerfPointerAt = 0;
-    if (window.__sluiceGPUTrace) { window.__sluiceGPUTrace.drain(); window.__sluiceGPUTrace.setActive(true); }
     playPerfActive = true;
+    perfLiveSync();
     if (window.PerformanceObserver) {
       try {
         playPerfObserver = new PerformanceObserver(function (list) {
@@ -171,7 +164,8 @@
     playPerfHeartbeat(true);
     playPerfActive = false;
     playPerfTrace.ended = performance.now(); playPerfTrace.reason = reason || 'Stopped';
-    if (window.__sluiceGPUTrace) window.__sluiceGPUTrace.setActive(false);
+    playPerfTrace.metadata.liveObserver = { enabled: perfLive.enabled, frameMs: perfLive.observerMs, panelPaintMs: perfLive.paintMs };
+    perfLiveSync();
     if (playPerfObserver) { playPerfObserver.disconnect(); playPerfObserver = null; }
     playPerfPublish(playPerfTrace.seconds[playPerfTrace.seconds.length - 1]);
     if (save) playPerfDownload();
@@ -190,7 +184,7 @@
         durationMs: trace.ended - trace.started, reason: trace.reason, metadata: trace.metadata,
         initialState: trace.initialState, initialSavedGame: trace.initialSavedGame,
         frameCount: trace.frameCount, columns: columns, stride: playPerfStride,
-        seconds: trace.seconds, events: trace.events, gpu: trace.gpu, gpuStatus: trace.gpuStatus,
+        seconds: trace.seconds, events: trace.events, gpu: trace.gpu, gpuStatus: trace.gpuStatus, workload: trace.workload || [],
         droppedEvents: trace.droppedEvents, droppedGPU: trace.droppedGPU, droppedBuckets: trace.droppedBuckets };
       var parts = [JSON.stringify(header).slice(0, -1) + ',"frameChunks":['], chunkNo = 0;
       function chunk() {
@@ -214,8 +208,9 @@
     ready();
   }
   function playPerfFrame(time, interval, cpu, view) {
+    perfLiveFrame(time, interval, cpu, view);
     if (!playPerfActive) {
-      if (playPerfAuto) { playPerfAuto = false; playPerfStart(); }
+      if (playPerfAuto && playPerfStart()) playPerfAuto = false;
       return;
     }
     var trace = playPerfTrace, t0 = performance.now(), index = trace.frameCount;
@@ -242,7 +237,7 @@
     row[offset + 25] = !view && jelloRecordedMicrosteps ? jelloContactsThisFrame : 0; row[offset + 26] = terrainChunkRebuildsThisFrame;
     row[offset + 27] = liquidWGPU && liquidWGPU.getReadbackAge ? liquidWGPU.getReadbackAge() * 1000 : -1;
     row[offset + 28] = inputMask;
-    row[offset + 29] = view || 0;
+    row[offset + 29] = view || 0; row[offset + 30] = perfLive.frameId;
     for (var name in perfBucketsRaw) {
       var slot = trace.bucketIndex[name];
       if (slot === undefined) {
@@ -269,7 +264,7 @@
         frames: Array.from(playPerfTrace.chunks[n].subarray(0, count * playPerfStride)) };
     }
   };
-  Object.defineProperty(window.__sluicePerformance, 'frameId', { get: function () { return playPerfTrace ? playPerfTrace.frameCount : null; } });
+  Object.defineProperty(window.__sluicePerformance, 'frameId', { get: function () { return perfLive.frameId; } });
   (function () {
     var root = document.getElementById('gm-perf-recorder'); if (!root) return;
     playPerfUI = { root: root, status: document.getElementById('gm-perf-status'),
@@ -293,7 +288,7 @@
     window.addEventListener('keyup', function (e) { if (playPerfInputCodes.test(e.code)) playPerfEvent('keyup', { code: e.code }); });
     ['pointerdown', 'pointerup', 'pointercancel', 'pointermove'].forEach(function (kind) {
       canvas.addEventListener(kind, function (e) {
-        if (!playPerfActive) return;
+        if (!playPerfActive && !perfLive.enabled) return;
         var now = performance.now();
         if (kind === 'pointermove' && now - playPerfPointerAt < 100) return;
         if (kind === 'pointermove') playPerfPointerAt = now;
@@ -306,8 +301,8 @@
     root.parentNode.addEventListener('click', function (e) {
       var button = e.target.closest('button'); if (button && !root.contains(button)) playPerfEvent('control', { id: button.id, text: button.textContent.trim().slice(0, 80) });
     });
-    ['focus', 'blur', 'resize'].forEach(function (kind) { window.addEventListener(kind, function () { playPerfEvent(kind, null); if (playPerfTrace && kind === 'blur') playPerfTrace.binInterrupted = true; }); });
-    document.addEventListener('visibilitychange', function () { playPerfEvent('visibility', { visible: !document.hidden }); if (playPerfTrace) playPerfTrace.binInterrupted = true; });
+    ['focus', 'blur', 'resize'].forEach(function (kind) { window.addEventListener(kind, function () { playPerfEvent(kind, null); if (kind === 'blur') perfLiveInterrupt(); if (playPerfTrace && kind === 'blur') playPerfTrace.binInterrupted = true; }); });
+    document.addEventListener('visibilitychange', function () { playPerfEvent('visibility', { visible: !document.hidden }); perfLiveInterrupt(); if (playPerfTrace) playPerfTrace.binInterrupted = true; });
     window.addEventListener('error', function (e) { playPerfEvent('error', { message: e.message, file: e.filename, line: e.lineno }); });
     window.addEventListener('unhandledrejection', function (e) { playPerfEvent('rejection', { message: String(e.reason) }); });
     setInterval(playPerfHeartbeat, 1000);
