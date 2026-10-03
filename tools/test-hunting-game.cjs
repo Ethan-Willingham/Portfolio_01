@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { PNG } = require('pngjs');
-const { TUNING: T, World, launch, position, hitPixel } = require('../js/hunting-physics.js');
+const { TUNING: T, World, launch, position, hitPixel, lookoutPace } = require('../js/hunting-physics.js');
 const { DEER_LEVELS, Campaign, animalArt } = require('../js/hunting-campaign.js');
 const masks = Object.fromEntries(DEER_LEVELS.map(d => {
   const png = PNG.sync.read(fs.readFileSync(path.join(__dirname, '../assets/hunting/deer-' + d.level + '-v4.png')));
@@ -165,4 +165,125 @@ check('every deer level uses its own shoulder mask for mirrored shots and recove
     assert.equal(world.recovered, 1, 'level ' + d.level + ' / facing ' + facingRight);
     assert.equal(world.events.find(e => e.type === 'recovered').animal.level, d.level);
   }
+});
+function lookoutScene(mask = art, facingRight = true, depth = 90) {
+  const world = new World(mask, 101, { lookout: true, windForce: 0 });
+  world.spawnTimer = 999;
+  const deer = world.spawn(0, depth);
+  Object.assign(deer, { facingRight, state: 'grazing', pause: 999, visit: 999 });
+  return world;
+}
+function sightFor(world, deer, u, v, wind = 0) {
+  const size = world.animalSize(deer), x = deer.x + (u - .5) * size.width;
+  const speed = world.hunter.muzzleSpeed, depth = deer.y - world.hunter.y;
+  let flight = Math.hypot(x - world.hunter.x, depth) / speed;
+  for (let i = 0; i < 20; i++) flight = Math.hypot(x - world.hunter.x - .5 * wind * T.windStrength * flight * flight, depth) / speed;
+  const compensatedX = x - .5 * wind * T.windStrength * flight * flight;
+  const sightHeight = v * size.height + .5 * T.gravity * flight * flight;
+  return { x: compensatedX * 100 / depth, y: 100, h: world.hunter.height + (sightHeight - world.hunter.height) * 100 / depth };
+}
+check('the lookout starts with an empty distant field and cannot be moved or dismounted', () => {
+  const world = new World(art, 7, { lookout: true, freeWalk: true });
+  assert.equal(world.deer.length, 0);
+  assert.equal(world.hunter.height, T.lookoutEyeHeight);
+  assert.equal(world.hunter.muzzleSpeed, T.lookoutMuzzleSpeed);
+  assert.equal(world.toggleStand(), false);
+  advance(world, 1, { move: 1, moveY: 1 });
+  assert.equal(world.hunter.x, 0); assert.equal(world.hunter.y, 0);
+  assert.deepEqual(world.critters.map(c => c.kind).sort(), ['owl', 'squirrel']);
+  assert.equal(world.ambient, world.critters);
+});
+check('new arrivals offer finite positive-speed assistance and can leave while waiting is held', () => {
+  const world = new World(art, 31, { lookout: true });
+  world.critterTimer = 999;
+  world.spawnTimer = .01; advance(world, .02);
+  const deer = world.deer[0];
+  assert.ok(deer.y >= T.lookoutNear && deer.y <= T.lookoutFar);
+  assert.equal(world.opportunity, 1);
+  const arrival = world.events.find(event => event.type === 'arrival');
+  assert.equal(arrival.id, deer.id); assert.equal(arrival.animal.species, 'deer');
+  const helped = lookoutPace(true, false, 2.4), expired = lookoutPace(true, false, 0);
+  assert.ok(helped.clock > 1 && helped.simulation > 1);
+  assert.ok(expired.clock > helped.clock && expired.simulation > helped.simulation);
+  assert.deepEqual(lookoutPace(false, false, 2.4), { clock: 1, simulation: 1 });
+  assert.deepEqual(lookoutPace(true, true, 2.4), { clock: 1, simulation: 1 });
+  world.spawnTimer = 999;
+  const x = deer.x; advance(world, 1);
+  assert.notEqual(deer.x, x);
+  advance(world, T.lookoutVisitMax + T.lookoutDepartureSeconds);
+  assert.ok(!world.deer.some(d => d.id === deer.id));
+  assert.ok(world.events.some(event => event.type === 'departed' && event.id === deer.id));
+});
+check('default near and distant arrivals are visible before their attention event, preserving explicit fixtures', () => {
+  const projectedX = animal => T.width / 2 + T.lookoutFocal * animal.x / animal.y;
+  let nearest = Infinity, farthest = 0;
+  for (let seed = 1; seed <= 120; seed++) {
+    const world = new World(art, seed, { lookout: true });
+    for (const animal of [world.spawn(), world.spawn(undefined, 24), world.spawn(undefined, 145),
+      world.spawnCritter('squirrel'), world.spawnCritter('squirrel', undefined, 20), world.spawnCritter('owl', undefined, 145)]) {
+      const x = projectedX(animal);
+      assert.ok(x >= 24 && x <= T.width - 24, animal.species + ' at depth ' + animal.y + ' must arrive in view');
+      nearest = Math.min(nearest, animal.y); farthest = Math.max(farthest, animal.y);
+    }
+    assert.equal(world.spawn(130, 24).x, 130);
+    assert.equal(world.spawnCritter('squirrel', -130, 20).x, -130);
+  }
+  assert.equal(nearest, 20); assert.equal(farthest, 145);
+});
+check('scope rays share a direction at every reference depth while bullets visibly drop and drift', () => {
+  const world = new World(art, 23, { lookout: true });
+  const shallow = launch(world.hunter, { x: 8, y: 80, h: 2 }, .8);
+  const deep = launch(world.hunter, { x: 12, y: 120, h: -3 }, .8);
+  assert.equal(shallow.dx, deep.dx); assert.equal(shallow.dy, deep.dy);
+  assert.ok(Math.abs(shallow.vz - deep.vz) < 1e-10);
+  for (const t of [.1, .4]) {
+    const bullet = position(shallow, t);
+    assert.ok(Math.abs(bullet.h - (12 + shallow.vz * t - .5 * T.gravity * t * t)) < 1e-10);
+    assert.ok(Math.abs(bullet.x - (shallow.dx * 150 * t + .5 * .8 * T.windStrength * t * t)) < 1e-10);
+  }
+  assert.ok(world.sight({ x: 10, y: 100, h: -25 }).h < 0);
+  const sky = launch(world.hunter, { x: 0, y: 100, h: 70 });
+  assert.equal(sky.duration, T.lookoutMaxFlight);
+});
+check('pointing directly at a far shoulder misses low, while holdover and wind correction hit actual mirrored pixels', () => {
+  const world = lookoutScene(art, true, 140), deer = world.deer[0], size = world.animalSize(deer);
+  const shoulderX = deer.x + (T.vitalsX - .5) * size.width, h = T.vitalsY * size.height;
+  world.fire({ x: shoulderX * 100 / deer.y, y: 100, h: 12 + (h - 12) * 100 / deer.y });
+  advance(world, 2);
+  assert.equal(world.recovered, 0); assert.equal(world.wounded, 0);
+  for (const facingRight of [true, false]) for (const wind of [-.8, .8]) {
+    const corrected = lookoutScene(art, facingRight, 140); corrected.wind = wind;
+    corrected.fire(sightFor(corrected, corrected.deer[0], facingRight ? T.vitalsX : 1 - T.vitalsX, T.vitalsY, wind));
+    advance(corrected, 3); assert.equal(corrected.recovered, 1);
+  }
+});
+check('every distant level and boar uses physical sprite dimensions for alpha collision', () => {
+  const c = new Campaign();
+  for (const d of DEER_LEVELS) for (const facingRight of [true, false]) {
+    const world = new World(art, 77, { lookout: true, windForce: 0,
+      animal: (species, seed) => c.animal(species, seed, d.level), artFor: profile => masks[animalArt(profile)] });
+    world.spawnTimer = 999;
+    const deer = world.spawn(0, 100);
+    Object.assign(deer, { state: 'grazing', pause: 999, visit: 999, facingRight, scale: 1.1 });
+    assert.equal(world.animalSize(deer).width, T.lookoutAnimalWidth * 1.1);
+    world.fire(sightFor(world, deer, facingRight ? d.vitalsX : 1 - d.vitalsX, d.vitalsY));
+    advance(world, 3); assert.equal(world.recovered, 1, 'distant level ' + d.level);
+    assert.equal(world.events.find(event => event.type === 'recovered').animal.level, d.level);
+  }
+  const png = PNG.sync.read(fs.readFileSync(path.join(__dirname, '../assets/hunting/boar-v3.png')));
+  const mask = { width: png.width, height: png.height, alpha: Uint8Array.from({ length: png.width * png.height }, (_, i) => png.data[i * 4 + 3]) };
+  const world = lookoutScene(mask, false, 120); world.deer[0].profile.species = 'boar';
+  world.fire(sightFor(world, world.deer[0], .33, .45)); advance(world, 3);
+  assert.equal(world.recovered, 1); assert.equal(world.events.find(event => event.type === 'recovered').animal.species, 'boar');
+});
+check('owls and squirrels move, expire and remain outside the hunting hit candidates', () => {
+  const world = new World(art, 29, { lookout: true, windForce: 0 });
+  world.spawnTimer = 999; world.critterTimer = 999;
+  const owl = world.critters.find(c => c.kind === 'owl'), squirrel = world.critters.find(c => c.kind === 'squirrel');
+  const owlX = owl.x, squirrelX = squirrel.x;
+  world.fire({ x: owl.x * 100 / owl.y, y: 100, h: 12 + (owl.h - 12) * 100 / owl.y });
+  advance(world, 3);
+  assert.notEqual(owl.x, owlX); assert.notEqual(squirrel.x, squirrelX);
+  assert.equal(world.recovered, 0); assert.equal(world.wounded, 0);
+  advance(world, 25); assert.equal(world.critters.length, 0);
 });

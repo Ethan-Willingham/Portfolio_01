@@ -41,8 +41,8 @@ and per-pixel collision exactly the same boundaries. The generated master
 alpha channels remain intact. The field uses 128 palette colors and the
 sprites up to 48 each, with no dithering.
 
-The renderer now uses a 640 by 360 canvas and 32 pixels per world unit, so the
-playable world is still 20 by 11.25 units. It draws the wooden platform from
+The version 2 renderer used a 640 by 360 canvas and 32 pixels per world unit,
+with a 20 by 11.25-unit playable world. It drew the wooden platform from
 pixel planks, posts, fasteners, and a front lip. The new deer silhouette has
 its shoulder at normalized u = 0.67, v = 0.45. Its actual PNG supplies the
 hit mask, including the transparent spaces between legs and antlers.
@@ -69,7 +69,7 @@ The existing birch background, deer and rear-view hunter are reused. The new
 boar has a lower silhouette, with the shoulder checked at u = 0.67, v = 0.45.
 The species' real alpha masks drive hit detection, and vital guides use those
 same sizes. Blood marks, time-of-day shade and the stand are drawn in canvas.
-Bracken follows the hunter after purchase and can be left at camp.
+Version 3 allowed Bracken to follow the hunter after purchase or stay at camp.
 
 `tools/build-hunting-art.cjs` now rebuilds both versions. It preserves aspect
 ratio when only one sprite dimension is supplied, while using the authored
@@ -105,3 +105,24 @@ test also verifies four separate connected silhouettes in the bottom 15 percent
 of each runtime sprite. Each level's shoulder is opaque at u = 0.67, v = 0.45
 in both orientations. The renderer, guide and bullet collision select the same
 per-animal asset, so a larger rack never inherits another level's hitbox.
+
+## Version 5, distant lookout
+
+The owner's 2026-10-02 clarification replaces the camp-and-walking presentation
+with a stationary view across a much deeper field. The current renderer draws
+layered hills, grass, distant trees, a sun whose position follows the game
+clock, and changing daylight directly in canvas. The older meadow, marsh,
+hunter, dog and tracking assets remain source history; their original scene
+composition no longer defines the playable view.
+
+Deer and boar retain their existing source sprites and binary collision masks.
+Each animal has a physical size in the depth projection, so distant animals
+appear small in the wide view. The 6x scope renders at the final magnified
+scale to preserve those sprites' available detail. Rendering, pointer inverse
+projection, per-animal dimensions and pixel collision must agree when art is
+replaced. See `HUNTING_GAME.md` for the projection and flight equations.
+
+Owls and squirrels are procedural canvas wildlife, with movement distinct
+from the hunt animals. They do not use new generated sprite assets. The scope
+and wide flight inset are live canvas treatments. The projectile's visible
+drop and wind drift come from actual ballistic positions.

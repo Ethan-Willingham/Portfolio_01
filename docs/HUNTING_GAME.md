@@ -5,161 +5,156 @@ prototype. The Unity source was reviewed at commit `0ef16c9` (2026-09-01) and
 stays intact. This game is ordinary JavaScript served from `hunting-game.html`,
 listed beside All Four Wheels on In Progress.
 
-The owner supplied the original design prompt on 2026-09-30. Version 4 adds five
-deer levels and corrects the original buck's extra leg. Version 3 added a
-complete camp-to-field loop around the original visible bullet mechanic.
-Keep developing the JavaScript version in this repo. The current art is
-generated pixel art and can accept owner-drawn replacements later.
+The owner clarified the design on 2026-10-02: a simple lookout game about
+watching a huge field, rushing the sun across the sky, and catching a brief
+animal opportunity before it passes. Version 5 replaces the camp planner,
+shop, walking, stand interaction and tracking screens with that direct loop.
+The current art is generated pixel art and can accept owner-drawn replacements.
 
 ## Sources
 
-- `hunting-game.html`: camp, field, tracking dialog, controls, and short post.
-- `hunting-game.css`: site-colored shell, camp panels, phone layouts, fullscreen.
-- `js/hunting-campaign.js`: clock, inventory, progression, tracking and save data.
-- `js/hunting-physics.js`: ballistics, movement, animal behavior and pixel hits.
-- `js/hunting-view.js`: renderer, asset loading, species masks and scope camera.
-- `js/hunting-game.js`: fixed-step loop, input, UI, saving, sound and phase changes.
-- `assets/hunting/*-v2.png`: birch meadow and hunter, plus the retired deer.
+- `hunting-game.html`: field, compact controls, pause and optional settings.
+- `hunting-game.css`: site-colored shell, phone layouts and fullscreen.
+- `js/hunting-campaign.js`: clock, deer progression, record data and legacy save.
+- `js/hunting-physics.js`: ballistics, finite visits, animal behavior and pixel hits.
+- `js/hunting-view.js`: distant-field renderer, moving sun, scope and projection.
+- `js/hunting-game.js`: fixed-step loop, input, UI, saving, sound and time pacing.
+- `assets/hunting/*-v2.png`: original birch meadow and hunter art.
 - `assets/hunting/*-v3.png`: cypress field, boar, dog and tracking illustration.
 - `assets/hunting/deer-[1-5]-v4.png`: five four-legged whitetail buck sprites.
-- `assets/hunting/source-v2/`, `source-v3/`, `source-v4/`: generated masters and full prompts.
+- `assets/hunting/source-v2/`, `source-v3/`, `source-v4/`: masters and full prompts.
 - `tools/build-hunting-art.cjs`: repeatable asset normalization, requires Sharp.
 - `assets/hunting/source/*.aseprite`: original Unity art, retained as history.
 - `tools/export-hunting-art.mjs`: legacy Aseprite export.
 
 No Unity runtime, game engine package, Sluice dependencies or bundle step.
-The public page uses the site's three self-hosted fonts and its existing
-analytics. Artwork load failures keep a usable reload prompt. Bump the page's
-CSS and script version queries when changing deployed files.
+The public page uses the site's three self-hosted fonts and existing analytics.
+Artwork load failures keep a usable reload prompt. Bump the page's CSS and
+script version queries when changing deployed files.
 
 ## The loop
 
-Camp begins at 05:30 on day 1, with 160 credits and a field rifle. Camp has
-Plan an outing, Outfitter, and Pack & trophies tabs. The clock supports pause,
-real time, 60x and 300x. Wait until jumps to the next occurrence of a selected
-hour, including tomorrow if that hour has passed. Dawn and dusk increase
-animal activity. The game clock advances only while the visible tab is active.
+Loading goes straight into the field. The player remains at a raised lookout,
+looking over foreground grass, distant hills and the tree line. Animals have
+real depth: a far deer looks small in the wide view and becomes readable
+through the scope. There is no walking or preparation required before a shot.
 
-Embarking and returning each use ten minutes. Departure is blocked if the
-field would be dark on arrival. An outing returns automatically at 20:00.
-Field Wait uses 8x animal simulation and 300x clock speed, with the hunter
-standing still. This keeps fast wait smooth without integrating 300 physics
-steps per rendered frame. Normal field time is real time.
+Hold Fast forward, F or Space to move the day along. The sun travels visibly
+across the sky from the same clock used by the simulation and saved time.
+Dawn, daylight, dusk and night change the light. The clock can continue through
+the night into the next day without a camp screen or departure gate.
 
-The hunter enters the bottom left on foot. WASD, arrow keys, or four touch
-buttons move across the open ground. Walking too close to an animal startles
-it. E or Climb stand works within 1.4 world units of the stand at bottom center.
-Mounted movement stays on the deck; Leave stand returns to the path. Ground
-shots launch from a lower height than stand shots. Scope, aim guide, reload,
-visible bullets, sideways wind and five-round magazines work in either state.
+A newly arriving animal gives a 2.4-second real-time easing window while
+fast-forward is held. It reduces both clock and animal speed without stopping
+either. The window expires even if the player keeps holding the button, and
+the same animal does not keep extending it. Release fast-forward to watch at
+normal speed. Continuing to rush time can carry an animal out of the field.
+Each visit has a finite life; animals do not wait indefinitely for the player.
 
-Clean hits finish a short recovery run and add an animal to the pack. A wound
-can be followed up, or leave a blood trail into the trees. Escaped wounds add
-an unfinished trail. A wounded animal still in the clearing when leaving also
-adds a trail. Returning finishes rounds already in flight and clean-hit timers,
-so pressing Return does not lose a recovery that is about to complete.
+Owls and squirrels add movement to the scene alongside deer and boar. They
+have distinct behavior and silhouettes. Ambient wildlife does not create an
+automatic pause or an endless slow-time window.
 
-Searching uses the illustrated trail screen for a short presentation. A
-search consumes 20 game minutes, or 12 with Bracken. Each trail gets one attempt.
-The outcome is reserved and saved before the presentation starts, preventing
-a reload from rolling the same trail again. Old trails have lower odds and
-recover lower-value animals. The result allows returning to camp or continuing
-the same outing. Searching also works from camp after the hunt.
+The first primary click raises the scope around that point. Move the pointer
+to adjust the sight, then click again to fire. Scope and Aim / Fire offer the
+same two-step action on touchscreens. Raising a scope slows rushed time to
+normal time so the player can aim; it does not pause wildlife. A shot keeps
+the scope raised while the projectile flies, with a wide flight inset, then
+lowers the scope shortly after the round finishes.
 
-Selling a packed animal pays its current value and retains the field record.
-Keeping a trophy removes it from the sellable pack without paying credits.
-Sold and kept animals remain in the collection. Record weight and bronze,
-silver or gold tier derive from a seeded game score, not a wildlife scoring
-standard. Time lowers packed sale value too, to a floor of 40 percent freshness.
-Records and unfinished trails are retained across outings.
+Rounds are visible in flight, with a trail, gravity and sideways wind. Flight
+runs at a readable pace while the game clock stays at normal speed. The flight
+inset reports range in yards and drift in inches. A clean
+hit finishes a brief recovery run and saves the animal to the field record.
+Wounds and misses remain visible in the field without a tracking interstitial.
+The rifle keeps five-round magazines and a short reload.
 
-## Progression
+## Deer and records
 
-- Birch Clearing: whitetail bucks, open birch and spruce meadow, initial area.
-- Cypress Edge: wild boar, cypress and reed clearing, stronger wind. Unlock needs
-  two recoveries and 350 credits. It is a separate playable one-screen map.
-- Weighted-round rifle, 400 credits: reduces wind acceleration by 40 percent.
-  Both owned rifles can be selected before departure.
-- Bracken, 300 credits: higher tracking odds, shorter searches, follows the
-  hunter in the field. Bringing him is optional after purchase.
-- Field-dressing kit, 100 credits: halves the time penalty on recovery value
-  and doubles the packed freshness window.
+Birch deer keep the five distinct coats, racks and silhouettes from version 4.
+Only recovered deer count toward a new deer level. Records retain their
+original species, level and art. Historical deer in old saves are level 1;
+their recoveries still contribute to the unlock count.
 
-Birch has five selectable deer levels. The camp previews all five and states
-how many more deer each locked level needs. Only recovered deer count, including
-tracked recoveries. Selling or mounting a record retains that progress; boar
-recoveries and failed trails do not count. A new unlock is selected for the next
-outing, while animals already in the field keep their original level.
+| Level | Deer | Deer recoveries to unlock | Weight range |
+|---|---|---|---|
+| 1 | Young buck | 0 | 110 to 140 lb |
+| 2 | Woodland buck | 2 | 140 to 180 lb |
+| 3 | Ridge buck | 5 | 180 to 220 lb |
+| 4 | Old monarch | 9 | 220 to 260 lb |
+| 5 | Crowned stag | 14 | 260 to 300 lb |
 
-| Level | Deer | Deer recoveries to unlock | Weight range | Base value |
-|---|---|---|---|---|
-| 1 | Young buck | 0 | 110 to 140 lb | 90 |
-| 2 | Woodland buck | 2 | 140 to 180 lb | 120 |
-| 3 | Ridge buck | 5 | 180 to 220 lb | 165 |
-| 4 | Old monarch | 9 | 220 to 260 lb | 225 |
-| 5 | Crowned stag | 14 | 260 to 300 lb | 310 |
+The More panel contains optional field choices, settings and records. It
+pauses the field while open and returns directly to the same lookout. Field
+choices stay disabled until an in-flight round or clean recovery finishes,
+so a change cannot discard a pending recovery. The
+previous economy, equipment and tracking data remain in compatible saves;
+the active game no longer requires those menus to hunt.
 
-Each level has a separate coat, rack and silhouette. The last two push natural
-trophy proportions slightly. The selected Birch level persists across reloads,
-and level identity follows each animal through blood trails, recovery, sales
-and trophies. Older saves retain their economy and records, label historical
-deer as level 1, and unlock the levels their existing recoveries have earned.
+Weights and record tiers are game tuning, not a wildlife scoring standard.
+The game does not model real hunting, market prices or species biology.
 
-These are game tuning values. They do not model real hunting, animal welfare,
-market prices, or species biology. Duck hunting, exotic regions, a larger
-connected world and authored directional animation remain future work.
+## Ballistics and projection
 
-## Ballistics and art
+The lookout uses world x across the field, world y as depth and h as height.
+The eye and muzzle are 12 world units above the ground. The base canvas is
+640 by 360, with a focal length of 300 and horizon at y = 144. Projection is:
 
-The Unity mechanic uses ground x/y plus bullet height. One world unit is 32
-pixels on the 640 by 360 canvas, preserving the original 20 by 11.25-unit field.
-The crosshair marks the still-air landing point. Aim beyond an animal so the
-round remains high enough when crossing its depth plane. The renderer adds
-height to its screen position so the flight is visible.
+```text
+screen.x = 320 + 300 * x / depth
+screen.y = 144 + 300 * (12 - h) / depth
+```
 
-At launch, duration = range / muzzleSpeed. Vertical velocity is
-`(0.5 * gravity * duration^2 - muzzleHeight) / duration`. Position is analytic,
-including `0.5 * wind * windStrength * age^2` sideways drift. Weapon wind
-modifiers affect the actual shot and the guide identically. The simulation
-advances in 1/120-second steps. Candidates are resolved in crossing order,
-including shots travelling toward or away from the top of the screen. Animal
-position is interpolated at the crossing, then its mirrored PNG alpha is read.
-A transparent pixel lets the round continue.
+Scope magnification is 6x around the selected sight. Pointer input uses the
+inverse of the same projection and resolves to a sight ray at depth 100.
+Rendering and collisions use each animal's own physical size and sprite.
+The renderer draws the scene at the final magnified scale, so scoped animals
+retain their source detail instead of enlarging an already tiny field image.
+
+The rifle launches along the sight ray. Vertical position follows
+`h = muzzleHeight + verticalVelocity * age - 0.5 * gravity * age^2`.
+Sideways displacement includes `0.5 * wind * windStrength * age^2`. Raising
+the crosshair compensates for drop, and aiming against the wind compensates
+for drift. The internal diagnostic guide uses the same launch and position
+calculations as the actual projectile; the playable controls keep it hidden.
+
+The simulation advances in 1/120-second steps. Candidate animals are checked
+in crossing order, and their positions are interpolated at the crossing. Hit
+detection reads the animal's correctly mirrored PNG alpha. A transparent
+pixel lets the round continue. The vital center is u = 0.67, v = 0.45 with
+normalized radius 0.10 for deer and boar.
 
 The five right-facing deer are 56 by 56, 60 by 57, 64 by 59, 70 by 63 and
-76 by 75; boar is 64 by 42. Their current vital center is u = 0.67, v = 0.45
-with normalized radius 0.10. The actual opaque shoulder was checked for both
-orientations of every level. Rendering, guide ellipses and collision use each
-animal's own sprite and mask. Source alpha remains intact; runtime sprites have binary
-alpha so visible boundaries and collision boundaries match. The first port's
-24 by 19 deer and original sources remain as history. See `HUNTING_ART.md`.
-
-Downed animals fade after 12 seconds and do not occupy the three-living-animal
-spawn limit. Blood marks are bounded to 120 visible drops per outing. The field
-shades with time of day. Current animals are single-frame sprites; the hunter
-has a small walking bob. Avoid presenting this as handmade or fully animated art.
+76 by 75; boar is 64 by 42. Runtime sprites have binary alpha, matching
+visible boundaries to collision boundaries. Source alpha remains intact.
+Downed animals fade after 12 seconds, and blood marks are bounded. Existing
+animal art is single-frame; owls and squirrels use procedural canvas shapes.
+See `HUNTING_ART.md` for asset history.
 
 ## Controls and saves
 
-G toggles the optional guide. Q or held right mouse raises a 2x scope. Its
-camera centers on the aim at activation and then holds still; pointer input
-uses the inverse projection. Touch must hold and drag to aim; Fire is separate
-and touching the field never fires. Movement and Wait use pointer capture,
-with release, cancel and lost-capture cleanup. Keyboard input is scoped to the
-game and ignores text and select inputs. The tracking dialog traps Tab and
-supports Escape when a search is not in progress.
+Keyboard input is scoped to the game and ignores text and select inputs.
+F and Space hold fast-forward. Q or right-click toggles the scope, R reloads,
+and P or Escape pauses. The visible controls
+offer equivalent actions without requiring a keyboard.
 
-P or Escape pauses the field. Losing focus, hiding the tab or scrolling the
-game out of view pauses it too. Held inputs clear on phase changes. Sound
-starts off and is synthesized after enabling it. Fullscreen uses the native
-API where available and a page fallback otherwise.
+Touch aim uses pointer capture and dragging. Aim / Fire raises the scope on
+its first activation and fires on the next. Hold controls clear on release,
+cancel and lost capture. Pausing, opening More, losing focus, hiding the tab
+or scrolling the game out of view also clears held input and stops time.
+The pause and More overlays maintain keyboard focus within their controls.
 
-Local storage key: `hunting-camp-v1`, schema version 1. Saved data includes
-clock, credits, equipment, area unlocks, loadout, selected deer level, records
-and trail outcomes. Deer records and trails carry their original level.
-A reload starts at camp. It does not resume a live bullet or preserve a field's
-animal positions. Storage errors leave the game playable and show the save
-limitation inline. No account, server save, offline time jump or cloud sync.
+Sound starts off and is synthesized after enabling it. Fullscreen uses the
+native API where available and a page fallback otherwise. Phone portrait
+and landscape retain the same field and actions, with 44-pixel touch targets.
+The Sluice-only landscape gate does not apply to Hunting Game.
+
+Local storage key: `hunting-camp-v1`, schema version 1. The compatible save
+retains the clock, region, selected deer level, records and prior economy
+data. A reload begins in the lookout at the saved time. It does not resume
+a live bullet or preserve an animal's field position. Storage errors leave
+the game playable and show the save limitation inline. No account, server
+save, offline time jump or cloud sync.
 
 ## Checks
 
@@ -176,19 +171,22 @@ NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 ```
 
-Campaign checks cover overnight time, gate conditions, single-payment sales,
-trophies, upgrades, tracking success and failure, delay and preservation,
-and save reload, plus deer unlock thresholds, selection and old-save migration.
-Physics checks count four separate feet in every runtime deer silhouette and
-use actual species PNG alpha, including
-mirrored vital hits, gaps, reverse shots, ground height, wind, bounds, stand
-proximity and wound trails. Browser checks follow the full earned loop with
-real pointer and touch shots, plus scope, waiting, pause, fullscreen, focus
-loss, persisted state and portrait/landscape layouts. All five levels also get
-real pointer-shot recoveries, collection checks and reload checks.
+Campaign checks cover save compatibility, deer unlocks and retained historical
+economy behavior. Physics checks use real sprite alpha for both orientations,
+all five levels, opaque vitals, transparent gaps, wind and visible gravity.
+Lookout checks cover bounded visits, arrival events, ambient wildlife and
+finite time easing.
 
-The QA server injects inspection helpers at `TEST_HOOKS`; public scripts expose
-no test-state API. The harness owns a Chrome for Testing process through
+Browser checks verify immediate field entry, sun movement, finite arrival
+easing, opportunities that can pass, real two-click scope shots, inverse
+projection, scope lens bounds, touch aiming, pause, focus loss, held-input
+cleanup after a focus change, stalled frames, pending recoveries, fullscreen,
+records and reload. Closing More offscreen keeps the field paused. The checks
+also inspect desktop, portrait, narrow-phone and
+landscape layouts for overflow and usable controls.
+
+The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
+expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v4-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v5-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.
