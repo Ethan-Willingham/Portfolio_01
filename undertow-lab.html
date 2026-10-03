@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#303931">
+ <meta name="robots" content="noindex">
+ <title>Undertow</title>
+ <meta name="description" content="Stir a live fluid. Colored dye stretches into ribbons and folds into vortices in a periodic, incompressible flow.">
+ <meta property="og:title" content="Undertow">
+ <meta property="og:type" content="article">
+ <meta property="og:url" content="https://ethanwillingham.com/undertow-lab.html">
+ <meta property="og:image" content="https://ethanwillingham.com/assets/visualizer/undertow/still.webp">
+ <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+ <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+ <link rel="stylesheet" href="style.css">
+ <link rel="stylesheet" href="undertow.css?v=1">
+</head>
+<body class="undertow-page">
+<div class="site-wrapper">
+ <a class="post-back" href="archive.html"><span class="pb-label">In Progress</span></a>
+ <main class="post-body">
+  <header class="u-hero undertow-hero">
+   <p class="u-eyebrow">Fluid experiment</p>
+   <h1 class="u-title">Undertow</h1>
+   <p class="u-dek">Drag through the dye. Watch the flow pull it apart.</p>
+  </header>
+  <section class="undertow-demo demo-wrapper" id="undertow-demo" aria-label="Interactive fluid visualizer" aria-busy="true">
+   <div class="undertow-stage" id="undertow-stage">
+    <canvas id="undertow-canvas" tabindex="0" aria-label="Live colored dye in a two-dimensional fluid. Drag to stir and add dye. Space pauses. F opens fullscreen."></canvas>
+    <img class="undertow-still" id="undertow-still" src="assets/visualizer/undertow/still.webp?v=1" alt="A saved fluid simulation with gold, blue and coral dye folded into curling ribbons." hidden>
+    <div class="undertow-status" id="undertow-status" role="status">Starting the flow...</div>
+    <div class="undertow-caption"><span>Incompressible flow</span><span id="undertow-hint">Drag to stir</span></div>
+   </div>
+   <div class="undertow-toolbar">
+    <button class="pillbar-btn" type="button" id="undertow-play" disabled>Pause</button>
+    <button class="pillbar-btn" type="button" id="undertow-restart" disabled>Restart</button>
+    <button class="pillbar-btn" type="button" id="undertow-instruments-toggle" aria-expanded="false" aria-controls="undertow-instruments">Instruments</button>
+    <button class="pillbar-btn undertow-fullscreen" type="button" id="undertow-fullscreen">Fullscreen</button>
+   </div>
+   <div class="undertow-instruments" id="undertow-instruments" hidden>
+    <div class="undertow-settings">
+     <label>Resolution<select id="undertow-quality"><option value="low">64 flow / 384 dye</option><option value="medium" selected>128 flow / 512 dye</option><option value="high">256 flow / 1024 dye</option></select></label>
+     <label class="undertow-seed">Replay seed<input id="undertow-seed" maxlength="16" pattern="[0-9a-fA-F]{16}" value="5eedc0de1234abcd" spellcheck="false" autocomplete="off"></label>
+     <p class="undertow-settings-note">Resolution and seed take effect on Restart. The fluid domain is a periodic rectangle, 2 by 1 in dimensionless units. The display fits it to the canvas.</p>
+    </div>
+    <dl class="undertow-readouts" id="undertow-readouts"></dl>
+    <p class="undertow-instrument-note" id="undertow-instrument-note">Measurements are preparing.</p>
+   </div>
+  </section>
+  <div class="undertow-prose">
+   <p>The curls come from a two-dimensional fluid. A steady drive feeds its motion; pressure keeps it from compressing. Dye moves with that flow, stretching into thin ribbons as neighboring patches take different paths. Dragging pushes the fluid and adds more dye.</p>
+   <p class="undertow-limit">This is a fluid experiment in dimensionless units. The colors show which dye dominates locally, with contrast added to separate mixed patches. Lighting makes the edges easier to see. For the lattice gauge-field experiment, open <a href="qcd-lava-lamp-lab.html">QCD Lava Lamp</a>.</p>
+   <details class="u-collapse"><summary class="u-collapse-s">Sources and implementation</summary><ol class="u-collapse-list">
+    <li><a href="https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu">Harris, Fast Fluid Dynamics Simulation on the GPU</a>. Advection and pressure projection.</li>
+    <li><a href="https://physbam.stanford.edu/papers/stanford2006-09.pdf">Selle and collaborators, An Unconditionally Stable MacCormack Method</a>. Dye transport with an error correction and a limiter.</li>
+    <li><a href="docs/visualizer/UNDERTOW.md">Equations, numerical checks and rendering conventions</a>.</li>
+   </ol></details>
+  </div>
+ </main>
+ <footer class="site-footer"><div class="site-footer-inner"><span>Ethan Willingham</span><a href="/">Home</a></div></footer>
+</div>
+<script type="module" src="js/undertow.js?v=1"></script>
+</body>
+</html>

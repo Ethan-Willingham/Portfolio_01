@@ -34,26 +34,27 @@ for(var k=0u;k<3u;k++){u.v[3u+k]/=sqrt(norm);}
 u.v[6]=conj(cmul(u.v[1],u.v[5])-cmul(u.v[2],u.v[4]));u.v[7]=conj(cmul(u.v[2],u.v[3])-cmul(u.v[0],u.v[5]));u.v[8]=conj(cmul(u.v[0],u.v[4])-cmul(u.v[1],u.v[3]));`}}links[4u*x+mu]=u;}}
 @compute @workgroup_size(64) fn update(@builtin(global_invocation_id) id:vec3<u32>){let x=id.x;if(x>=N){return;}let c=coords(x);if((c.x+c.y+c.z+c.w)%2u!=params.parity){return;}let v=staple(x,params.mu);var u=links[4u*x+params.mu];for(var sub=0u;sub<${n===2?'1':'3'}u;sub++){var i=0u;var j=1u;if(sub==1u){j=2u;}if(sub==2u){i=1u;j=2u;}let k=mm(u,dag(v));var q=vec4((k.v[i*NC+i].x+k.v[j*NC+j].x)*.5,(k.v[i*NC+j].y+k.v[j*NC+i].y)*.5,(k.v[i*NC+j].x-k.v[j*NC+i].x)*.5,(k.v[i*NC+i].y-k.v[j*NC+j].y)*.5);let norm=length(q);if(norm>1e-12){q=vec4(q.x,-q.yzw)/norm;}else{q=vec4(1.,0.,0.,0.);}var t=vec4(1.,0.,0.,0.);if(params.mode==0u){var r=RNG(x,(params.mu*2u+params.parity)*4u+sub,0u,vec4(0u));t=hb(2.*params.beta*norm/f32(NC),&r);}u=rotateRows(u,qm(t,q),i,j);}links[4u*x+params.mu]=u;}
 fn clover(x:u32,mu:u32,nu:u32)->Matrix{let a=i32(mu)+1;let b=i32(nu)+1;let c=ma(ma(path(x,vec4(a,b,-a,-b)),path(x,vec4(b,-a,-b,a))),ma(path(x,vec4(-a,-b,a,b)),path(x,vec4(-b,a,b,-a))));var f:Matrix;for(var i=0u;i<NC;i++){for(var j=0u;j<NC;j++){let z=c.v[i*NC+j]-conj(c.v[j*NC+i]);f.v[i*NC+j]=vec2(z.y,-z.x)*.125;}}let t=tr(f)/f32(NC);for(var i=0u;i<NC;i++){f.v[i*NC+i].x-=t;}return f;}
-@compute @workgroup_size(64) fn measureCharge(@builtin(global_invocation_id) id:vec3<u32>){let x=id.x;if(x>=N){return;}let f01=clover(x,0u,1u);let f02=clover(x,0u,2u);let f03=clover(x,0u,3u);let f12=clover(x,1u,2u);let f13=clover(x,1u,3u);let f23=clover(x,2u,3u);charge[params.layer*N+x]=(tr(mm(f01,f23))-tr(mm(f02,f13))+tr(mm(f03,f12)))*.02533029591;}
+fn norm2(a:Matrix)->f32{var sum=0.;for(var i=0u;i<NN;i++){sum+=dot(a.v[i],a.v[i]);}return sum;}
+@compute @workgroup_size(64) fn measureCharge(@builtin(global_invocation_id) id:vec3<u32>){let x=id.x;if(x>=N){return;}let f01=clover(x,0u,1u);let f02=clover(x,0u,2u);let f03=clover(x,0u,3u);let f12=clover(x,1u,2u);let f13=clover(x,1u,3u);let f23=clover(x,2u,3u);charge[params.layer*N+x]=(tr(mm(f01,f23))-tr(mm(f02,f13))+tr(mm(f03,f12)))*.02533029591;charge[(4u+params.layer)*N+x]=norm2(f01)+norm2(f02)+norm2(f03)+norm2(f12)+norm2(f13)+norm2(f23);}
 @compute @workgroup_size(64) fn measureLive(@builtin(global_invocation_id) id:vec3<u32>){let x=id.x;if(x>=N){return;}var p=0.;for(var mu=0u;mu<4u;mu++){for(var nu=mu+1u;nu<4u;nu++){p+=tr(path(x,vec4(i32(mu)+1,i32(nu)+1,-i32(mu)-1,-i32(nu)-1)))/f32(NC);}}var unit=0.;var detError=0.;for(var mu=0u;mu<4u;mu++){let u=links[4u*x+mu];let a=mm(u,dag(u));let ident=eye();for(var k=0u;k<NN;k++){unit=max(unit,max(abs(a.v[k].x-ident.v[k].x),abs(a.v[k].y)));}var det=vec2(0.);${n===2?'det=cmul(u.v[0],u.v[3])-cmul(u.v[1],u.v[2]);':`det=cmul(u.v[0],cmul(u.v[4],u.v[8])-cmul(u.v[5],u.v[7]))-cmul(u.v[1],cmul(u.v[3],u.v[8])-cmul(u.v[5],u.v[6]))+cmul(u.v[2],cmul(u.v[3],u.v[7])-cmul(u.v[4],u.v[6]));`}detError=max(detError,length(det-vec2(1.,0.)));}diagnostics[x]=vec4(p/6.,unit,detError,0.);}
 `;}
 export const sliceShader=/* wgsl */`
-struct View { dims:vec4<f32>, clock:vec4<f32>, levels:vec4<f32>, ranges:vec4<f32>, previousRanges:vec4<f32> }
+struct View { dims:vec4<f32>, clock:vec4<f32>, levels:vec4<f32>, ranges:vec4<f32>, previousRanges:vec4<f32>, energyRanges:vec4<f32>, previousEnergyRanges:vec4<f32>, camera:vec4<f32> }
 @group(0) @binding(0) var<uniform> view:View;
 @group(0) @binding(1) var<storage,read> charge:array<f32>;
 @group(0) @binding(2) var<storage,read> previous:array<f32>;
 @group(0) @binding(3) var volume:texture_storage_3d<rgba16float,write>;
-fn sampleField(a:u32,b:u32,x:u32,mixValue:f32)->f32{let n=u32(view.dims.z);let N=n*n*n*n;let q=mix(charge[a*N+x]/view.ranges[a],charge[b*N+x]/view.ranges[b],mixValue);let p=mix(previous[a*N+x]/view.previousRanges[a],previous[b*N+x]/view.previousRanges[b],mixValue);return mix(p,q,view.clock.z);}
-@compute @workgroup_size(4,4,4) fn slice(@builtin(global_invocation_id) id:vec3<u32>){let n=u32(view.dims.z);if(any(id>=vec3(n))){return;}let scan=view.clock.x*f32(n);let i=u32(floor(scan))%n;let j=(i+1u)%n;let base=n*(id.x+n*(id.y+n*id.z));let a=u32(view.levels.x);let b=u32(view.levels.y);let q=mix(sampleField(a,b,base+i,view.levels.z),sampleField(a,b,base+j,view.levels.z),fract(scan));textureStore(volume,vec3<i32>(id),vec4(q,0.,0.,1.));}
+fn sampleField(a:u32,b:u32,x:u32,mixValue:f32,energy:bool)->f32{let n=u32(view.dims.z);let N=n*n*n*n;let offset=select(0u,4u,energy);let ranges=select(view.ranges,view.energyRanges,energy);let prevRanges=select(view.previousRanges,view.previousEnergyRanges,energy);let q=mix(charge[(a+offset)*N+x]/ranges[a],charge[(b+offset)*N+x]/ranges[b],mixValue);let p=mix(previous[(a+offset)*N+x]/prevRanges[a],previous[(b+offset)*N+x]/prevRanges[b],mixValue);return mix(p,q,view.clock.z);}
+@compute @workgroup_size(4,4,4) fn slice(@builtin(global_invocation_id) id:vec3<u32>){let n=u32(view.dims.z);if(any(id>=vec3(n))){return;}let scan=view.clock.x*f32(n);let i=u32(floor(scan))%n;let j=(i+1u)%n;let base=n*(id.x+n*(id.y+n*id.z));let a=u32(view.levels.x);let b=u32(view.levels.y);let q=mix(sampleField(a,b,base+i,view.levels.z,false),sampleField(a,b,base+j,view.levels.z,false),fract(scan));let energy=mix(sampleField(a,b,base+i,view.levels.z,true),sampleField(a,b,base+j,view.levels.z,true),fract(scan));textureStore(volume,vec3<i32>(id),vec4(q,energy,0.,1.));}
 `;
 export const volumeShader=/* wgsl */`
-struct View { dims:vec4<f32>, clock:vec4<f32>, levels:vec4<f32>, ranges:vec4<f32>, previousRanges:vec4<f32> }
+struct View { dims:vec4<f32>, clock:vec4<f32>, levels:vec4<f32>, ranges:vec4<f32>, previousRanges:vec4<f32>, energyRanges:vec4<f32>, previousEnergyRanges:vec4<f32>, camera:vec4<f32> }
 @group(0) @binding(0) var<uniform> view:View;
 @group(0) @binding(1) var volume:texture_3d<f32>;
 @group(0) @binding(2) var samp:sampler;
 struct Out { @builtin(position) p:vec4<f32>, @location(0) uv:vec2<f32> }
 @vertex fn vertex(@builtin(vertex_index) i:u32)->Out{var p=array<vec2<f32>,3>(vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));var o:Out;o.p=vec4(p[i],0.,1.);o.uv=p[i];return o;}
-fn rot(p:vec3<f32>)->vec3<f32>{let a=view.clock.y;let c=cos(a);let s=sin(a);let b=-.22;let v=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);return vec3(v.x,cos(b)*v.y-sin(b)*v.z,sin(b)*v.y+cos(b)*v.z);}
+fn rot(p:vec3<f32>)->vec3<f32>{let a=view.clock.y+view.camera.x;let c=cos(a);let s=sin(a);let b=-.22+view.camera.y;let v=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);return vec3(v.x,cos(b)*v.y-sin(b)*v.z,sin(b)*v.y+cos(b)*v.z);}
 fn q(p:vec3<f32>)->f32{return textureSampleLevel(volume,samp,p+.5,0.).x;}
 // Contours of the measured RMS-normalized charge, with no synthetic detail.
 fn density(p:vec3<f32>)->f32{
@@ -94,15 +95,27 @@ fn shade(p:vec3<f32>,direction:vec3<f32>)->vec3<f32>{
     // crossing within its ray interval for a clean silhouette.
     for(var i=0u;i<=128u;i++){
       let t=start+f32(i)*ds;
-      let value=density(origin+direction*t);
-      if(previous<1.1&&value>=1.1){
+      let point=origin+direction*t;
+      let boundary=min(min(.5-abs(point.x),.5-abs(point.y)),.5-abs(point.z));
+      let fields=textureSampleLevel(volume,samp,point+.5,0.).xy;
+      let value=density(point);
+      if(view.clock.w!=1.&&i<128u){
+        let excess=max(0.,fields.y-.75)*smoothstep(0.,.04,boundary);
+        let opacity=1.-exp(-excess*ds*3.0);
+        let tint=select(vec3(.16,.38,.58),vec3(.62,.25,.12),fields.x>0.);
+        let neutral=vec3(.23,.28,.20);
+        let color=select(mix(neutral,tint,clamp(abs(fields.x)*.6,0.,1.)),vec3(.52,.38,.17),view.clock.w==2.);
+        radiance+=trans*opacity*color*(.45+excess*.5);
+        trans*=1.-opacity;
+      }
+      if(view.clock.w!=2.&&previous<.85&&value>=.85){
         var left=max(start,t-ds);var right=t;
         for(var j=0u;j<5u;j++){
           let middle=(left+right)*.5;
-          if(density(origin+direction*middle)>=1.1){right=middle;}else{left=middle;}
+          if(density(origin+direction*middle)>=.85){right=middle;}else{left=middle;}
         }
         let p=origin+direction*((left+right)*.5);
-        let opacity=.80;
+        let opacity=select(.65,.80,view.clock.w==1.);
         radiance+=trans*opacity*shade(p,direction);
         trans*=1.-opacity;
         if(trans<.015){break;}

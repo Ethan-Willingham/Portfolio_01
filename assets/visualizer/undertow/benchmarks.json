@@ -1,0 +1,120 @@
+{
+  "adapter": {
+    "vendor": "apple",
+    "architecture": "metal-3"
+  },
+  "results": [
+    {
+      "n": 64,
+      "dyeSize": 384,
+      "memoryBytes": 7211440,
+      "precision": "f32",
+      "dt": 0.016666666666666666,
+      "target": [
+        2560,
+        1264
+      ],
+      "phases": {
+        "simulation": {
+          "gpuMs": {
+            "median": 0.873625,
+            "p95": 1.525292,
+            "count": 32
+          },
+          "queueWallMs": {
+            "median": 1.5999999046325684,
+            "p95": 2.399999976158142,
+            "count": 32
+          }
+        },
+        "render": {
+          "gpuMs": {
+            "median": 2.273028,
+            "p95": 4.632964,
+            "count": 32
+          },
+          "queueWallMs": {
+            "median": 3.1999999284744263,
+            "p95": 6.899999976158142,
+            "count": 32
+          }
+        }
+      }
+    },
+    {
+      "n": 128,
+      "dyeSize": 512,
+      "memoryBytes": 13110000,
+      "precision": "f32",
+      "dt": 0.016666666666666666,
+      "target": [
+        2560,
+        1264
+      ],
+      "phases": {
+        "simulation": {
+          "gpuMs": {
+            "median": 0.947817,
+            "p95": 1.768475,
+            "count": 32
+          },
+          "queueWallMs": {
+            "median": 1.6999999284744263,
+            "p95": 2.600000023841858,
+            "count": 32
+          }
+        },
+        "render": {
+          "gpuMs": {
+            "median": 2.50926,
+            "p95": 3.178854,
+            "count": 32
+          },
+          "queueWallMs": {
+            "median": 3.399999976158142,
+            "p95": 3.9000000953674316,
+            "count": 32
+          }
+        }
+      }
+    },
+    {
+      "n": 256,
+      "dyeSize": 1024,
+      "memoryBytes": 52431920,
+      "precision": "f32",
+      "dt": 0.016666666666666666,
+      "target": [
+        2560,
+        1264
+      ],
+      "phases": {
+        "simulation": {
+          "gpuMs": {
+            "median": 4.079125,
+            "p95": 5.757074,
+            "count": 32
+          },
+          "queueWallMs": {
+            "median": 6,
+            "p95": 6.900000095367432,
+            "count": 32
+          }
+        },
+        "render": {
+          "gpuMs": {
+            "median": 2.477712,
+            "p95": 4.137229,
+            "count": 32
+          },
+          "queueWallMs": {
+            "median": 3.5,
+            "p95": 5.100000023841858,
+            "count": 32
+          }
+        }
+      }
+    }
+  ],
+  "errors": []
+}

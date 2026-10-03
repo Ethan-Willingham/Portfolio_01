@@ -1,0 +1,418 @@
+{
+  "numerics": {
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3"
+    },
+    "results": [
+      {
+        "n": 16,
+        "initialMax": 4.474652942620949e-7,
+        "divergenceBefore": 2.364707864677481,
+        "divergenceAfter": 5.586227762036451e-7,
+        "projectionMax": 5.21540641784668e-8,
+        "memoryBytes": 59184,
+        "dyeCPUError": 5.839590971890019e-7
+      },
+      {
+        "n": 32,
+        "initialMax": 0.0000010070592363353725,
+        "divergenceBefore": 7.630275833338821,
+        "divergenceAfter": 0.0000013933767328348924,
+        "projectionMax": 1.0244548320770264e-7,
+        "memoryBytes": 231536
+      },
+      {
+        "n": 128,
+        "initialMax": 0.000005290022469850442,
+        "divergenceBefore": 21.906829663701917,
+        "divergenceAfter": 0.000019820804864230263,
+        "projectionMax": 3.427267074584961e-7,
+        "memoryBytes": 3672816
+      },
+      {
+        "n": 256,
+        "initialMax": 0.00001194438680718335,
+        "divergenceBefore": 34.348642639018266,
+        "divergenceAfter": 0.000024581642588853077,
+        "projectionMax": 2.6263296604156494e-7,
+        "memoryBytes": 14683184
+      }
+    ]
+  },
+  "captures": {
+    "startup": {
+      "apiVersion": 1,
+      "id": "undertow",
+      "title": "Undertow",
+      "model": "Forced incompressible 2D flow and passive dye on a periodic MAC grid",
+      "representativeScaleMeters": null,
+      "scaleMeaning": "Dimensionless domain, 2 by 1. No physical calibration.",
+      "sources": [
+        "https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu",
+        "https://physbam.stanford.edu/papers/stanford2006-09.pdf"
+      ],
+      "quality": "medium",
+      "seed": "5eedc0de1234abcd",
+      "numericalStepCount": 720,
+      "simulationTime": 12,
+      "simulationTimeUnits": "dimensionless fluid time",
+      "ambientSeconds": 0,
+      "parameters": {
+        "velocityGrid": [
+          128,
+          128
+        ],
+        "dyeGrid": [
+          512,
+          512
+        ],
+        "domain": [
+          2,
+          1
+        ],
+        "dt": 0.016666666666666666,
+        "viscosity": 0.000004,
+        "linearDrag": 0.1,
+        "transport": "RK2 semi-Lagrangian velocity, bounded MacCormack dye",
+        "pressure": "Periodic discrete Laplacian solved with 2D radix-2 FFT",
+        "forcing": "Discrete curl of six stream-function modes",
+        "dyeSources": "Initial bands, weak replenishment, pointer injection"
+      },
+      "memory": {
+        "roomBuffersBytes": 13110000
+      },
+      "seedProvenance": {
+        "seed": "5eedc0de1234abcd",
+        "source": "offline fixed replayable seed",
+        "crossDeviceReplay": "f32 transcendental results may differ"
+      },
+      "assetBaseURL": "http://127.0.0.1:59719/assets/visualizer/undertow/",
+      "diagnosticsAvailable": true,
+      "diagnosticAgeSteps": 0,
+      "diagnostics": {
+        "measuredStep": 720,
+        "divergenceRms": 2.910134843535413e-7,
+        "maxSpeed": 0.18730632552217827,
+        "meanKineticEnergy": 0.0018950136893715348,
+        "dyeMin": 2.9299868207621965e-20,
+        "dyeMax": 0.9098507165908813,
+        "meanDye": [
+          0.19133531593783015,
+          0.20245107353687922,
+          0.16312637588667023
+        ]
+      },
+      "numericalFault": null,
+      "busy": false,
+      "lastStepQueueWallMs": null,
+      "medianStepQueueWallMs": null,
+      "initializing": false,
+      "manualPause": true,
+      "onScreen": true,
+      "active": false,
+      "errors": []
+    },
+    "developing": {
+      "apiVersion": 1,
+      "id": "undertow",
+      "title": "Undertow",
+      "model": "Forced incompressible 2D flow and passive dye on a periodic MAC grid",
+      "representativeScaleMeters": null,
+      "scaleMeaning": "Dimensionless domain, 2 by 1. No physical calibration.",
+      "sources": [
+        "https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu",
+        "https://physbam.stanford.edu/papers/stanford2006-09.pdf"
+      ],
+      "quality": "medium",
+      "seed": "5eedc0de1234abcd",
+      "numericalStepCount": 1320,
+      "simulationTime": 22,
+      "simulationTimeUnits": "dimensionless fluid time",
+      "ambientSeconds": 0,
+      "parameters": {
+        "velocityGrid": [
+          128,
+          128
+        ],
+        "dyeGrid": [
+          512,
+          512
+        ],
+        "domain": [
+          2,
+          1
+        ],
+        "dt": 0.016666666666666666,
+        "viscosity": 0.000004,
+        "linearDrag": 0.1,
+        "transport": "RK2 semi-Lagrangian velocity, bounded MacCormack dye",
+        "pressure": "Periodic discrete Laplacian solved with 2D radix-2 FFT",
+        "forcing": "Discrete curl of six stream-function modes",
+        "dyeSources": "Initial bands, weak replenishment, pointer injection"
+      },
+      "memory": {
+        "roomBuffersBytes": 13110000
+      },
+      "seedProvenance": {
+        "seed": "5eedc0de1234abcd",
+        "source": "offline fixed replayable seed",
+        "crossDeviceReplay": "f32 transcendental results may differ"
+      },
+      "assetBaseURL": "http://127.0.0.1:59719/assets/visualizer/undertow/",
+      "diagnosticsAvailable": true,
+      "diagnosticAgeSteps": 0,
+      "diagnostics": {
+        "measuredStep": 1320,
+        "divergenceRms": 2.924072924521377e-7,
+        "maxSpeed": 0.1596090864862339,
+        "meanKineticEnergy": 0.0019262040965590563,
+        "dyeMin": 3.7296402410902374e-8,
+        "dyeMax": 0.728763997554779,
+        "meanDye": [
+          0.18848620294391485,
+          0.19735335820557823,
+          0.16763495606806966
+        ]
+      },
+      "numericalFault": null,
+      "busy": false,
+      "lastStepQueueWallMs": null,
+      "medianStepQueueWallMs": null,
+      "initializing": false,
+      "manualPause": true,
+      "onScreen": true,
+      "active": false,
+      "errors": []
+    },
+    "payoff": {
+      "apiVersion": 1,
+      "id": "undertow",
+      "title": "Undertow",
+      "model": "Forced incompressible 2D flow and passive dye on a periodic MAC grid",
+      "representativeScaleMeters": null,
+      "scaleMeaning": "Dimensionless domain, 2 by 1. No physical calibration.",
+      "sources": [
+        "https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu",
+        "https://physbam.stanford.edu/papers/stanford2006-09.pdf"
+      ],
+      "quality": "medium",
+      "seed": "5eedc0de1234abcd",
+      "numericalStepCount": 2520,
+      "simulationTime": 42,
+      "simulationTimeUnits": "dimensionless fluid time",
+      "ambientSeconds": 0,
+      "parameters": {
+        "velocityGrid": [
+          128,
+          128
+        ],
+        "dyeGrid": [
+          512,
+          512
+        ],
+        "domain": [
+          2,
+          1
+        ],
+        "dt": 0.016666666666666666,
+        "viscosity": 0.000004,
+        "linearDrag": 0.1,
+        "transport": "RK2 semi-Lagrangian velocity, bounded MacCormack dye",
+        "pressure": "Periodic discrete Laplacian solved with 2D radix-2 FFT",
+        "forcing": "Discrete curl of six stream-function modes",
+        "dyeSources": "Initial bands, weak replenishment, pointer injection"
+      },
+      "memory": {
+        "roomBuffersBytes": 13110000
+      },
+      "seedProvenance": {
+        "seed": "5eedc0de1234abcd",
+        "source": "offline fixed replayable seed",
+        "crossDeviceReplay": "f32 transcendental results may differ"
+      },
+      "assetBaseURL": "http://127.0.0.1:59719/assets/visualizer/undertow/",
+      "diagnosticsAvailable": true,
+      "diagnosticAgeSteps": 0,
+      "diagnostics": {
+        "measuredStep": 2520,
+        "divergenceRms": 3.255467086387328e-7,
+        "maxSpeed": 0.18561026250283835,
+        "meanKineticEnergy": 0.002127424054592181,
+        "dyeMin": 0.00005570136272581294,
+        "dyeMax": 0.42039862275123596,
+        "meanDye": [
+          0.1672634926155303,
+          0.17322545919308752,
+          0.15512773317120354
+        ]
+      },
+      "numericalFault": null,
+      "busy": false,
+      "lastStepQueueWallMs": null,
+      "medianStepQueueWallMs": null,
+      "initializing": false,
+      "manualPause": true,
+      "onScreen": true,
+      "active": false,
+      "errors": []
+    },
+    "long-run": {
+      "apiVersion": 1,
+      "id": "undertow",
+      "title": "Undertow",
+      "model": "Forced incompressible 2D flow and passive dye on a periodic MAC grid",
+      "representativeScaleMeters": null,
+      "scaleMeaning": "Dimensionless domain, 2 by 1. No physical calibration.",
+      "sources": [
+        "https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu",
+        "https://physbam.stanford.edu/papers/stanford2006-09.pdf"
+      ],
+      "quality": "medium",
+      "seed": "5eedc0de1234abcd",
+      "numericalStepCount": 4320,
+      "simulationTime": 72,
+      "simulationTimeUnits": "dimensionless fluid time",
+      "ambientSeconds": 0,
+      "parameters": {
+        "velocityGrid": [
+          128,
+          128
+        ],
+        "dyeGrid": [
+          512,
+          512
+        ],
+        "domain": [
+          2,
+          1
+        ],
+        "dt": 0.016666666666666666,
+        "viscosity": 0.000004,
+        "linearDrag": 0.1,
+        "transport": "RK2 semi-Lagrangian velocity, bounded MacCormack dye",
+        "pressure": "Periodic discrete Laplacian solved with 2D radix-2 FFT",
+        "forcing": "Discrete curl of six stream-function modes",
+        "dyeSources": "Initial bands, weak replenishment, pointer injection"
+      },
+      "memory": {
+        "roomBuffersBytes": 13110000
+      },
+      "seedProvenance": {
+        "seed": "5eedc0de1234abcd",
+        "source": "offline fixed replayable seed",
+        "crossDeviceReplay": "f32 transcendental results may differ"
+      },
+      "assetBaseURL": "http://127.0.0.1:59719/assets/visualizer/undertow/",
+      "diagnosticsAvailable": true,
+      "diagnosticAgeSteps": 0,
+      "diagnostics": {
+        "measuredStep": 4320,
+        "divergenceRms": 3.167579127609024e-7,
+        "maxSpeed": 0.1750813821229212,
+        "meanKineticEnergy": 0.0018689072933863416,
+        "dyeMin": 0.04143432527780533,
+        "dyeMax": 0.33540788292884827,
+        "meanDye": [
+          0.14514669644239575,
+          0.14793148710938908,
+          0.1388594148507707
+        ]
+      },
+      "numericalFault": null,
+      "busy": false,
+      "lastStepQueueWallMs": null,
+      "medianStepQueueWallMs": null,
+      "initializing": false,
+      "manualPause": true,
+      "onScreen": true,
+      "active": false,
+      "errors": []
+    }
+  },
+  "presentation": {
+    "stage": {
+      "x": 21.15625,
+      "y": 143.4375,
+      "width": 1397.6875,
+      "height": 690
+    },
+    "canvas": {
+      "width": 2560,
+      "height": 1264
+    }
+  },
+  "interaction": {
+    "apiVersion": 1,
+    "id": "undertow",
+    "title": "Undertow",
+    "model": "Forced incompressible 2D flow and passive dye on a periodic MAC grid",
+    "representativeScaleMeters": null,
+    "scaleMeaning": "Dimensionless domain, 2 by 1. No physical calibration.",
+    "sources": [
+      "https://developer.nvidia.com/gpugems/gpugems/part-vi-beyond-triangles/chapter-38-fast-fluid-dynamics-simulation-gpu",
+      "https://physbam.stanford.edu/papers/stanford2006-09.pdf"
+    ],
+    "quality": "medium",
+    "seed": "5eedc0de1234abcd",
+    "numericalStepCount": 4353,
+    "simulationTime": 72.55,
+    "simulationTimeUnits": "dimensionless fluid time",
+    "ambientSeconds": 0.5666666666666667,
+    "parameters": {
+      "velocityGrid": [
+        128,
+        128
+      ],
+      "dyeGrid": [
+        512,
+        512
+      ],
+      "domain": [
+        2,
+        1
+      ],
+      "dt": 0.016666666666666666,
+      "viscosity": 0.000004,
+      "linearDrag": 0.1,
+      "transport": "RK2 semi-Lagrangian velocity, bounded MacCormack dye",
+      "pressure": "Periodic discrete Laplacian solved with 2D radix-2 FFT",
+      "forcing": "Discrete curl of six stream-function modes",
+      "dyeSources": "Initial bands, weak replenishment, pointer injection"
+    },
+    "memory": {
+      "roomBuffersBytes": 13110000
+    },
+    "seedProvenance": {
+      "seed": "5eedc0de1234abcd",
+      "source": "offline fixed replayable seed",
+      "crossDeviceReplay": "f32 transcendental results may differ"
+    },
+    "assetBaseURL": "http://127.0.0.1:59719/assets/visualizer/undertow/",
+    "diagnosticsAvailable": true,
+    "diagnosticAgeSteps": 0,
+    "diagnostics": {
+      "measuredStep": 4353,
+      "divergenceRms": 0.00001166540737976338,
+      "maxSpeed": 2.699849664758805,
+      "meanKineticEnergy": 0.04006180678757587,
+      "dyeMin": 0.0432363785803318,
+      "dyeMax": 0.6289242506027222,
+      "meanDye": [
+        0.14350819621395772,
+        0.1528455649899314,
+        0.1468794256299617
+      ]
+    },
+    "numericalFault": null,
+    "busy": false,
+    "lastStepQueueWallMs": 7.200000047683716,
+    "medianStepQueueWallMs": 9.399999976158142,
+    "initializing": false,
+    "manualPause": true,
+    "onScreen": true,
+    "active": false,
+    "errors": []
+  },
+  "errors": []
+}

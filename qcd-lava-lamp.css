@@ -23,7 +23,7 @@
 .qcd-toolbar button:focus-visible, .qcd-settings input:focus-visible, .qcd-settings select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .qcd-fullscreen { margin-left: auto; }
 .qcd-instruments { padding: 1.2rem; border-top: 1px solid var(--rule); }
-.qcd-settings { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 1rem; }
+.qcd-settings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 .qcd-settings label { color: var(--text-dim); font: .72rem/1.5 var(--font-mono); }
 .qcd-settings input, .qcd-settings select { display: block; margin-top: .5rem; width: 100%; min-width: 0; min-height: 44px; color: var(--text); border: 1px solid var(--rule); border-radius: 3px; background: var(--bg); padding: .5rem; font: .85rem var(--font-mono); }
 .qcd-settings-note { grid-column: 1/-1; font-size: .85rem; color: var(--text-dim); }
@@ -59,3 +59,12 @@
  .qcd-hero .u-dek { font-size: .95rem; }
  .qcd-stage { height: calc(100dvh - 158px); min-height: 200px; }
 }
+
+#qcd-canvas { touch-action: none; cursor: grab; }
+#qcd-canvas:active { cursor: grabbing; }
+
+.qcd-flow-link { align-self: center; font: .8rem/1.4 var(--font-body); padding: .5rem; }
+
+.qcd-caption { padding: 10px 12px; background: color-mix(in srgb, var(--bg-raised) 78%, transparent); width: fit-content; max-width: calc(100% - 44px); gap: 2rem; border-radius: 3px; }
+
+.qcd-flow-link { display: inline-flex; align-items: center; min-height: 44px; }
