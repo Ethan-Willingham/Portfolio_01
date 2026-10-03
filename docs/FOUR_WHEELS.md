@@ -81,8 +81,8 @@ and reloads. Wet tires can paint a connecting trail if the vase lands to one sid
 
 ## Editable sources
 
-- `four-wheels.html`: game shell, briefing, results and play notes.
-- `four-wheels.css`: viewport canvas, floating HUD, paper menus and phone controls.
+- `four-wheels.html`: game shell, compact menus and results.
+- `four-wheels.css`: viewport canvas, floating HUD, compact paper menus and phone controls.
 - `js/four-wheels-course.js`: route geometry, spatial hashes, surfaces, stores,
   guardrails, swinging-door poses, route distance, catches and saved-world schema.
 - `js/four-wheels-stock.js`: furniture, supported stock, products, breakage and films.
@@ -123,11 +123,12 @@ with the chassis; idle casters keep their last angles. Ground impulses constrain
 lateral tire velocity using body translation, yaw and caster swivel inertia.
 Unsupported tires receive no ground grip. Unequal surfaces can produce braking yaw.
 
-The menu's test cart button switches between the original four swivel wheels and
-front swivel wheels with fixed rear forks. The rear pair are the pivots at local
-X = 1, nearest the shopper. They stay aligned with the chassis while their tires
-roll forward or backward. Their lateral grip and collision impulses act on the
-chassis without an independent swivel degree of freedom, including on tilted
+The fixed rear wheels button under Options switches between the original four
+swivel wheels and front swivel wheels with fixed rear forks. The rear pair are the
+pivots at local X = 1, nearest the shopper. They stay aligned with the chassis
+while their tires roll forward or backward. Their lateral grip and collision
+impulses act on the chassis without an independent swivel degree of freedom,
+including on tilted
 terrain. Front forks retain the existing caster physics. Fixed rear pins use
 steel instead of gold. Switching preserves the cart, momentum, route and mess;
 pressing the button again restores four swivel wheels. The selected arrangement
@@ -260,10 +261,15 @@ The canvas fills the entire browser viewport from page load, with no reserved
 header, footer, border or page scrolling. Distance, best and the current section
 occupy one small dark panel at the upper left.
 The upper right has two 44-pixel buttons: course map and pause/menu. There is no
-always-visible minimap. The pause menu contains route progress, falls, the current
-section's advice, unlocked practice, restart, sound, fullscreen, expandable help
-and links back to the site. Help and the route picker scroll inside their dialogs.
-Opening either clears driving input; closed dialogs cannot receive keyboard focus.
+always-visible minimap. The start menu has a short goal, the three driving controls
+and Play (Continue for a saved run). Pause shows the current section, Resume and
+Restart. Sound, fullscreen, fixed rear wheels, practice and short instructions
+including the current section's advice live under one closed Options section.
+There is one Leave game link. The finish card shows distance, time, falls and
+Play again. Menus scroll inside the viewport when expanded. Practice uses compact
+numbered rows rather than map preview cards.
+Choosing an unlocked row starts practice immediately. Opening either menu clears
+driving input; closed dialogs cannot receive keyboard focus.
 Tab and reverse Tab stay within the active dialog. Phone captions use small dark
 labels above the driving stick, with no bottom background band.
 
@@ -339,10 +345,11 @@ An old pose inside the new gap moves to its catch. Invalid versions or malformed
 physics values start a fresh run safely. Blocked storage shows a short message
 and permits play. Record distance stays after a fall or fresh start.
 
-Reached sections unlock practice cards. Practice creates its own world while
-parking the challenge snapshot. It cannot alter the challenge record or overwrite
-its save. Exit practice/Return to run restores that parked challenge, including
-its exact body momentum and mess. Reload during practice loads the parked challenge.
+Reached sections unlock practice rows under Options. Practice creates its own
+world while parking the challenge snapshot. It cannot alter the challenge record
+or overwrite its save. Return to run on the pause menu restores that parked
+challenge, including its exact body momentum and mess. Reload during practice
+loads the parked challenge.
 
 ## Verification and release
 

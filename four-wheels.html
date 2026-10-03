@@ -30,7 +30,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="four-wheels.css?v=33">
+  <link rel="stylesheet" href="four-wheels.css?v=34">
 </head>
 <body class="cart-page">
   <main>
@@ -68,71 +68,45 @@
             </div>
             <div class="cart-overlay" id="cart-overlay" role="dialog" aria-modal="true" aria-labelledby="cart-overlay-title">
               <div class="cart-overlay-card">
-                <div class="cart-intro-art" aria-hidden="true"><canvas id="cart-illustration" width="180" height="132"></canvas><span id="cart-wheel-caption">FOUR WHEELS. ALL SWIVEL.</span></div>
-                <div class="cart-overlay-copy">
-                <p class="cart-kicker" id="cart-overlay-kicker">Section 01 / 12 &middot; The first push</p>
+                <p class="cart-kicker" id="cart-overlay-kicker" hidden></p>
                 <h2 id="cart-overlay-title">All Four Wheels</h2>
-                <p id="cart-overlay-text">Hills, speed bumps, ice, a boost into a jump, and a water-powered grocery shutter. Get the cart to the end.</p>
-                <div class="cart-intro-controls" aria-hidden="true"><span><b><kbd>W</kbd> <kbd>S</kbd></b>Push / pull</span><span><b><kbd>A</kbd> <kbd>D</kbd></b>Rotate</span><span><b><kbd>Space</kbd></b>Brake</span></div>
-                <p class="cart-intro-touch">Left stick drives and steers. Right button brakes. Release the stick to coast.</p>
+                <p id="cart-overlay-text">Get the cart to the end. Take your time.</p>
+                <p class="cart-intro-controls"><span><kbd>W</kbd> <kbd>S</kbd> move</span><span><kbd>A</kbd> <kbd>D</kbd> turn</span><span><kbd>Space</kbd> brake</span></p>
+                <p class="cart-intro-touch">Left stick moves and turns. Right button brakes.</p>
                 <div id="cart-result" class="cart-result" hidden></div>
-                <label class="cart-practice" id="cart-practice-label" hidden><input type="checkbox" id="cart-practice"><span>Practice<small>Get a feel for the wheels.</small></span></label>
                 <div class="cart-overlay-actions">
-                  <button class="cart-button cart-button-primary" id="cart-start" type="button">Let's roll</button>
-                  <button class="cart-button" id="cart-secondary" type="button" hidden>Try again</button>
+                  <button class="cart-button cart-button-primary" id="cart-start" type="button">Play</button>
+                  <button class="cart-button" id="cart-retry" type="button" hidden>Restart</button>
+                  <button class="cart-button" id="cart-secondary" type="button" hidden>Cancel</button>
                 </div>
-                <p class="cart-best" id="cart-best"></p>
-                <div class="cart-menu-route">
-                  <div class="cart-menu-section"><span class="cart-kicker" id="cart-course-number">Section 01 / 12</span><div class="cart-mishaps"><output id="cart-messes">0</output><span>falls</span></div></div>
-                  <div class="cart-route-steps" id="cart-route-steps" aria-label="Route progress"></div>
-                  <p id="cart-route">Turn the basket, then push to change your path</p>
-                </div>
-                <div class="cart-menu-tools" aria-label="Game settings">
-                  <button class="cart-menu-button" id="cart-courses" type="button" aria-label="View the route and practice sections"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zm6-2v16m6-14v16"/></svg><span class="cart-route-full">Route &amp; practice</span><span class="cart-route-short">Route</span></button>
-                  <button class="cart-menu-button" type="button" id="cart-retry">Start over <span class="cart-key-hint">R</span></button>
-                  <button class="cart-menu-button" id="cart-sound" type="button" aria-label="Turn sound off" aria-pressed="true" title="Sound">
-                    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-on" d="M17 8a7 7 0 0 1 0 8m3-11a11 11 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cart-sound-off" d="m17 9 5 6m0-6-5 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="cart-sound-text">Sound on</span>
-                  </button>
-                  <button class="cart-menu-button" id="cart-fullscreen" type="button" aria-label="Enter fullscreen" title="Fullscreen (F)" aria-pressed="false">
-                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="cart-fullscreen-text">Fullscreen</span>
-                  </button>
-                </div>
-                <button class="cart-menu-button cart-wheel-mode" id="cart-wheel-mode" type="button" aria-pressed="false">Test cart: front swivel / rear fixed</button>
-                <details class="cart-help" id="cart-help">
-                  <summary>Controls &amp; how to play</summary>
-                  <div class="cart-controls" id="cart-instructions">
-                    <span><kbd>W</kbd> <kbd>S</kbd> push / pull</span><span><kbd>A</kbd> <kbd>D</kbd> rotate</span><span><kbd>Space</kbd> brake</span>
-                    <span>Arrow keys work too. <kbd>P</kbd> pause, <kbd>M</kbd> map, <kbd>F</kbd> fullscreen.</span>
+                <p class="cart-best" id="cart-best" hidden></p>
+                <details class="cart-options" id="cart-options">
+                  <summary>Options</summary>
+                  <div class="cart-menu-tools" aria-label="Game settings">
+                    <button class="cart-menu-button" id="cart-sound" type="button" aria-label="Turn sound off" aria-pressed="true"><span id="cart-sound-text">Sound on</span></button>
+                    <button class="cart-menu-button" id="cart-fullscreen" type="button" aria-label="Enter fullscreen" aria-pressed="false"><span id="cart-fullscreen-text">Fullscreen</span></button>
+                    <button class="cart-menu-button cart-wheel-mode" id="cart-wheel-mode" type="button" aria-pressed="false">Fixed rear wheels: off</button>
+                    <button class="cart-menu-button" id="cart-courses" type="button" aria-haspopup="dialog" aria-controls="cart-picker">Practice a section</button>
                   </div>
-                  <div class="post-body cart-prose">
-                    <p><strong>All Four Wheels</strong> is my shopping cart game. An empty cart, four swivel wheels, and a dirt track that keeps taking you through grocery stores. Turn the basket while it slides in the old direction, then push to bend its path. See how far you can get. Still in progress.</p>
-                    <div class="cart-notes">
-                      <p>Follow the red and white curbs. Dirt slows the wheels, asphalt carries a slide farther, and the grass shoulders drag on the cart. Some bends have guardrails. Some have a long drop.</p>
-                      <p>Push straight for a moment, let go of W, and hold D. The basket turns while the cart keeps traveling in its old direction. Push again to pull that slide into a curve. Space brakes; S pulls you backward. Brake before a tight bend and leave room for the shopper behind the handle.</p>
-                      <p>On a phone, drag the left stick up to push, down to pull, or sideways to turn. Drag diagonally to do both. The stick starts under your thumb, wherever you touch it. Small movements give you a gentle nudge. Let go to coast, or hold Brake with your right thumb to slow down. You can still turn while braking.</p>
-                      <p>The route runs through three grocery stores. Push the swinging doors open, or hit them hard enough to break the glass. Tables rock, shelves topple, bottles break, and cans roll. A vase leaves clear water; a wheel over a ketchup bottle squeezes sauce onto the tiles. The tires pick up spills and leave tracks. That mess stays after a fall.</p>
-                      <p>The gold pins are the swivel pivots. Each tire sits behind its pin on a little fork. Pull backward and watch all four swing around. The test cart button in the menu locks the rear forks straight while the front pair swivel. The rear tires still roll both ways, and their grip bends a turn into a tighter curve. Press it again to return to four swivel wheels. Any tire touching a numbered route circle clears it. The little GO sign points toward the next stretch when it is outside the view.</p>
-                      <p>Lost wheel support lets the cart tip. Steer against a sideways tip. Pull back if the nose is going over, or push if it is lifting too far. Your feet need ground to brace. The arms and knees bend as the cart rocks. A real drop below the lip becomes a fall. You land back at an earlier safe stretch. Some falls cost a little ground. The narrow section without rails can send you all the way back to the start. Your furthest distance stays recorded.</p>
-                      <p>There is no countdown. The run saves automatically in your browser, including the cart, broken stock and puddles. Reach a section to unlock it in the route menu for practice. Practice parks your real run and leaves its record alone. Start over keeps your distance record but begins with a fresh cart and course.</p>
-                      <p>The road climbs and dips. Yellow and black speed bumps lift each wheel as it passes. Line up with the gold boost pad, keep pushing up the ramp, and carry your speed across the gap. Brake before the blue ice. In the weekly shop, knock the vase off the small table and get its clear water to connect the two brass contacts on the floor. The powered shutter lifts out of your way. At the end, get the cart, all four tires and the shopper onto the checked finish pad.</p>
-                    </div>
-                    <p class="cart-source">Built with JavaScript and a small canvas. Pixel art is drawn in the game. <a href="js/four-wheels-course.js">The course</a> &middot; <a href="js/four-wheels-terrain.js">Terrain physics</a> &middot; <a href="js/four-wheels-physics.js">Cart physics</a> &middot; <a href="js/four-wheels-stock.js">Store physics</a> &middot; <a href="js/four-wheels.js">Game source</a>.</p>
+                  <div class="cart-help" id="cart-instructions">
+                    <p id="cart-tip" hidden></p>
+                    <p>Arrow keys work too. <kbd>Esc</kbd> pauses. <kbd>M</kbd> shows the map. <kbd>F</kbd> fills the screen.</p>
+                    <p>Follow the track. Brake before tight turns. Falls send you back; your best distance stays.</p>
+                    <p>Your run saves automatically. Practice keeps it parked.</p>
                   </div>
                 </details>
-                <nav class="cart-bottomnav" aria-label="Site navigation">
-                  <a href="/">Home</a>
-                  <a href="archive.html">In Progress</a>
-                </nav>
-
-                </div>
+                <nav class="cart-bottomnav" aria-label="Site navigation"><a href="archive.html">Leave game</a></nav>
               </div>
             </div>
             <div class="cart-toast" id="cart-toast" aria-hidden="true"></div>
             <p class="cart-live sr-only" id="cart-live" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
           <div class="cart-course-picker" id="cart-picker" hidden role="dialog" aria-modal="true" aria-labelledby="cart-picker-title">
-            <div class="cart-picker-head"><div><p class="cart-kicker">Twelve stretches. One continuous route.</p><h2 id="cart-picker-title">The long way round</h2></div><button class="cart-button" id="cart-picker-close" type="button">Back to game</button></div>
-            <div class="cart-course-grid" id="cart-course-grid"></div>
+            <div class="cart-picker-card">
+              <div class="cart-picker-head"><h2 id="cart-picker-title">Practice</h2><button class="cart-button" id="cart-picker-close" type="button">Back</button></div>
+              <p class="cart-picker-note">Choose a section. Your run stays saved.</p>
+              <div class="cart-course-grid" id="cart-course-grid"></div>
+            </div>
           </div>
     </section>
   </main>
@@ -143,6 +117,6 @@
   <script src="js/four-wheels-physics.js?v=33"></script>
   <script src="js/four-wheels-view.js?v=33"></script>
   <script src="js/four-wheels-audio.js?v=33"></script>
-  <script src="js/four-wheels.js?v=33"></script>
+  <script src="js/four-wheels.js?v=34"></script>
 </body>
 </html>

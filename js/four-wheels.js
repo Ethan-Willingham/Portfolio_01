@@ -108,7 +108,6 @@
   $('stage').style.backgroundColor = view.blend(P.hairDark,P.edge,.48);
   const { makeFloor } = view;
   let narrowCamera = false, followCart = true, touchFocusY = .54;
-  function drawIllustration() { view.illustration($('illustration').getContext('2d'),world.wheelMode); }
   function draw(g = ctx, w = world, background = floor, preview = false) {
     view.draw(g,w,background,{preview,particles,shake:screenShake,reducedMotion:reducedMotion.matches,follow:preview?true:followCart,focusY:preview ? .54 : touchFocusY});
   }
@@ -183,29 +182,19 @@
     $('time-label').textContent = world.practice ? 'Practice' : 'Distance';
     $('time').textContent = feet(world.distance);
     $('clock-fill').style.setProperty('--clock', clamp(world.distance / world.level.totalDistance, 0, 1));
-    $('messes').textContent = world.falls;
-    $('messes').closest('.cart-mishaps').classList.toggle('has-messes', world.falls > 0);
     $('penalty').textContent = 'BEST '+feet(best.peak);
     const section = world.level.sections[world.roomIndex];
-    if (!$('route-steps').children.length) {
-      for(let i=0;i<levels.length;i++){const step=document.createElement('i');step.textContent=i+1;step.setAttribute('aria-hidden','true');$('route-steps').append(step);}
-    }
-    [...$('route-steps').children].forEach((step,i)=>{step.classList.toggle('is-done',phase==='won'||i<world.roomIndex);step.classList.toggle('is-current',phase!=='won'&&i===world.roomIndex);});
-    $('route-steps').setAttribute('aria-label','Section '+(world.roomIndex+1)+' of '+levels.length+', '+feet(world.distance)+' traveled');
-    $('course-number').textContent=(world.practice?'Practice ':'Section ')+String(world.roomIndex+1).padStart(2,'0')+' / 12';
     $('course-badge').textContent=String(world.roomIndex+1).padStart(2,'0');
     $('course-title').textContent=section.name;
     game.style.setProperty('--room-color',P[section.theme]||P.clay);
-    $('courses').setAttribute('aria-label','View the route and practice sections, currently '+section.name);
-    if (phase==='won') $('route').textContent='All four wheels at the finish.';
-    else if (world.fall) $('route').textContent='Catching at '+levels[world.fall.catch.chapter].name+'. Record kept.';
-    else $('route').textContent=world.roomIndex===7&&!world.circuit.powered&&world.shelves[6].spilled?'Roll the wet wheels between the two brass floor contacts. A continuous water trail powers the shutter.':section.tip;
-    $('retry').firstChild.textContent=world.practice?'Exit practice ':'Start over ';
+    $('tip').hidden=phase!=='paused';
+    $('tip').textContent=world.roomIndex===7&&!world.circuit.powered&&world.shelves[6].spilled?'Roll wet wheels between the two brass contacts to open the shutter.':section.tip;
+    $('retry').hidden=world.practice||!((phase==='ready'&&resumed)||phase==='paused');
     const frontSwivel=world.wheelMode==='front-swivel';
     $('wheel-mode').setAttribute('aria-pressed',String(frontSwivel));
-    $('wheel-mode').textContent=frontSwivel?'Using front swivel / rear fixed':'Test cart: front swivel / rear fixed';
+    $('wheel-mode').textContent='Fixed rear wheels: '+(frontSwivel?'on':'off');
     $('wheel-mode').setAttribute('aria-label',frontSwivel?'Use four swivel wheels':'Test cart with front swivel wheels and fixed rear wheels');
-    $('wheel-caption').textContent=frontSwivel?'FRONT SWIVEL. REAR FIXED.':'FOUR WHEELS. ALL SWIVEL.';
+    $('wheel-mode').disabled=!['ready','paused'].includes(phase);
     $('pause').disabled = !['running','paused'].includes(phase)||!$('picker').hidden;
     $('retry').disabled=!$('picker').hidden||phase==='confirm';$('courses').disabled=phase==='confirm';
     $('pause').setAttribute('aria-label',phase==='paused'?'Resume game':'Pause and open menu');
@@ -213,15 +202,16 @@
     $('camera').disabled = phase!=='running';
   }
   function bestText() {
-    if (!canSave) return 'Saving is unavailable in this browser. You can still play.';
-    return 'Furthest '+feet(best.peak)+(best.completed?' / Finished in '+timeString(best.time):' / Runs save automatically');
+    if (!canSave) return 'Saving unavailable. You can still play.';
+    return best.peak>0?'Best '+feet(best.peak):'';
   }
   function overlay(kicker,title,message,primary,secondary) {
     $('overlay').dataset.state=phase;
-    $('overlay-kicker').textContent=kicker; $('overlay-title').textContent=title; $('overlay-text').textContent=message;
+    $('overlay-kicker').textContent=kicker; $('overlay-kicker').hidden=!kicker;
+    $('overlay-title').textContent=title; $('overlay-text').textContent=message;
     $('start').textContent=primary; $('secondary').textContent=secondary||''; $('secondary').hidden=!secondary;
-    $('practice-label').hidden=true; $('best').textContent=bestText(); $('overlay').hidden=false;
-    $('help').open=false; $('overlay').scrollTop=0;
+    $('best').textContent=bestText(); $('best').hidden=!$('best').textContent||phase==='confirm'||phase==='won'||(phase==='paused'&&canSave); $('overlay').hidden=false;
+    $('options').open=false; $('overlay').scrollTop=0;
   }
   function prepare(w,continuing=false) {
     if(raf)cancelAnimationFrame(raf);raf=0;
@@ -229,8 +219,8 @@
     phase='ready';particles=[];screenShake=0;toastLife=0;
     $('toast').classList.remove('is-visible');$('picker').hidden=true;$('result').hidden=true;
     floor=makeFloor(world.level);
-    overlay(world.practice?'Practice / Section '+String(levelIndex+1).padStart(2,'0'):'One cart. One long way round.',continuing?'Your cart is waiting':'All Four Wheels',world.practice?levels[levelIndex].tip:continuing?'Pick up exactly where you parked. The cart, shelves, spills and furthest distance are saved.':'Climb the quarry, ride the bumps, jump the gap, and spill your way through the groceries. Get the cart to the end. Falls send you back; your record stays.',continuing?'Continue':"Let's roll",world.practice?'Return to run':continuing?'Start over':null);
-    updateUI();draw();drawIllustration();sound.stop();
+    overlay(world.practice?'Practice':null,'All Four Wheels',continuing?'Your run is saved. Keep going.':'Get the cart to the end. Take your time.',continuing?'Continue':'Play',world.practice?'Return to run':null);
+    updateUI();draw();sound.stop();
     $('start').focus({preventScroll:true});
   }
   function reset(index=0,practice=false) { prepare(new World(Course.build(index),practice,world.wheelMode)); if(!practice)save(); }
@@ -241,7 +231,7 @@
   }
   function startPractice(index) {
     if(!world.practice) { save(); parkedRun=world.status==='won'?null:Course.snapshot(world); }
-    reset(index,true);$('start').focus({preventScroll:true});
+    reset(index,true);run();
   }
   function run() {
     phase='running';clearInput();$('overlay').hidden=true;
@@ -251,24 +241,25 @@
   function pause() {
     if(phase!=='running')return;
     phase='paused';clearInput();sound.stop();save();$('result').hidden=true;
-    overlay('All Four Wheels','Cart parked',world.practice?'Your practice stretch is paused. Your saved run is waiting.':canSave?'Your run is saved. Pick up exactly where you left it.':'Everything is paused. Pick up exactly where you left it.','Keep rolling',null);
+    const section=world.level.sections[world.roomIndex];
+    overlay(world.practice?'Practice':null,'Paused',section.name,'Resume',world.practice?'Return to run':null);
     updateUI();$('start').focus({preventScroll:true});
   }
   function retry() {
     if(world.practice){returnToRun();return;}
     if(phase==='confirm')return;
     confirmReturn=phase;phase='confirm';clearInput();sound.stop();save();$('result').hidden=true;
-    overlay('Furthest distance kept','Back to the first push?','This starts a fresh run and resets the cart and the mess. Your furthest distance and unlocked practice sections stay.','Start fresh','Keep this run');
+    overlay(null,'Restart?','Go back to the start with a clean course. Your best distance stays.','Restart','Cancel');
     updateUI();$('secondary').focus({preventScroll:true});
   }
   function cancelRetry() { const was=confirmReturn;phase=was;prepare(world,true);if(was==='running')run();else if(was==='paused'){run();pause();}else if(was==='won')finish(); }
   function finish() {
     phase='won';clearInput();sound.stop();
     if(!world.practice){best.peak=world.level.totalDistance;if(!best.completed||world.time<best.time){best.time=world.time;best.falls=world.falls;}best.completed=true;save();}
-    overlay(world.practice?'Practice complete':'Every bend, every grocery aisle.','All four made it.',world.practice?'A clean way to learn the last stretch. Your saved run is waiting.':'You got the cart to the end. There is probably some wine on the floor behind you.','Go again',world.practice?'Return to run':null);
+    overlay(world.practice?'Practice complete':null,'Made it!','You got the cart to the end.','Play again',world.practice?'Return to run':null);
     const result=$('result');result.replaceChildren();
     const distance=document.createElement('strong');distance.textContent=feet(world.level.totalDistance);
-    const detail=document.createElement('span');detail.textContent=timeString(world.time)+' rolling / '+world.falls+(world.falls===1?' fall':' falls')+' / '+(world.messes-world.falls)+' things knocked';
+    const detail=document.createElement('span');detail.textContent=timeString(world.time)+' / '+world.falls+(world.falls===1?' fall':' falls');
     result.append(distance,detail);result.hidden=false;
     updateUI();announce('Course complete. All four wheels made it.');$('start').focus({preventScroll:true});
   }
@@ -292,16 +283,11 @@
       const unlocked=i===0||best.peak>=section.startDistance-1;
       const button=document.createElement('button');button.type='button';button.disabled=!unlocked;
       button.className='cart-course-tile'+(i===world.roomIndex?' is-current':'');
-      const c=document.createElement('canvas');c.width=300;c.height=160;c.setAttribute('aria-hidden','true');
-      const g=c.getContext('2d'),pts=section.path.map(q=>CartView.project(q)),b=Course.bounds(pts),scale=Math.min(250/(b.right-b.left+section.width),120/(b.bottom-b.top+section.width));
-      g.fillStyle=P.dark;g.fillRect(0,0,300,160);g.translate(150-(b.left+b.right)*scale/2,80-(b.top+b.bottom)*scale/2);g.scale(scale,scale);
-      g.lineCap='round';g.lineJoin='round';g.beginPath();pts.forEach((q,j)=>j?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y));
-      g.lineWidth=section.width;g.strokeStyle=section.surface==='dirt'?P.clay:P.steelShade;g.stroke();g.lineWidth=2/scale;g.setLineDash([8/scale,6/scale]);g.strokeStyle=P.light;g.stroke();
+      const number=document.createElement('span');number.className='cart-course-number';number.textContent=String(i+1).padStart(2,'0');number.setAttribute('aria-hidden','true');
       const copy=document.createElement('span');copy.className='cart-course-tile-copy';
-      const label=document.createElement('span');label.className='cart-kicker';label.textContent='SECTION '+String(i+1).padStart(2,'0');
       const title=document.createElement('strong');title.textContent=section.name;
-      const meta=document.createElement('span');meta.className='cart-course-tile-meta';meta.textContent=feet(section.startDistance)+' / '+(unlocked?'Practice this stretch':'Reach here to unlock');
-      copy.append(label,title,meta);button.append(c,copy);grid.append(button);
+      const meta=document.createElement('span');meta.className='cart-course-tile-meta';meta.textContent=unlocked?feet(section.startDistance):'Locked';
+      copy.append(title,meta);button.append(number,copy);grid.append(button);
       button.setAttribute('aria-label',section.name+', '+(unlocked?'practice at ':'locked until ')+feet(section.startDistance));
       button.addEventListener('click',()=>startPractice(i));
     });
@@ -332,7 +318,7 @@
   $('wheel-mode').addEventListener('click',()=>{
     if(!['ready','paused'].includes(phase))return;
     clearInput();world.setWheelMode(world.wheelMode==='front-swivel'?'all-swivel':'front-swivel');
-    save();updateUI();draw();drawIllustration();
+    save();updateUI();draw();
     announce(world.wheelMode==='front-swivel'?'Front wheels swivel. Rear wheels are fixed.':'All four wheels swivel.');
   });
   $('pause').addEventListener('click', () => phase === 'paused' ? run() : pause());
@@ -474,7 +460,7 @@
       }
       return;
     }
-    // Keep keyboard navigation inside the active dialog, including expanded help.
+    // Keep keyboard navigation inside the active dialog, including open options.
     if(e.code==='Tab'&&!$('overlay').hidden){
       const items=[...$('overlay').querySelectorAll('button, a[href], summary')].filter(q=>!q.disabled&&q.getClientRects().length);
       const first=items[0],end=items[items.length-1];
@@ -498,7 +484,7 @@
   window.visualViewport?.addEventListener('resize', clearInput);
   touchMode.addEventListener('change', clearInput);
   reducedMotion.addEventListener('change', () => { screenShake = 0; draw(); });
-  refreshSound(); prepare(world,resumed); drawIllustration();
+  refreshSound(); prepare(world,resumed);
   const viewResize = new ResizeObserver(resizeView);
   viewResize.observe($('stage')); viewResize.observe($('touch'));
   // Canvas text caches are rebuilt when the site's own mono font arrives.
