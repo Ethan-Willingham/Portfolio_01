@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.145';
+  var GAME_VERSION = 'v28.147';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -40662,6 +40662,103 @@
     }
   }
 
+  // Young spruces keep their low branches and short, rising needle shoots.
+  // Two juvenile bands use this growth habit before the mature hanging boughs.
+  function treesBakeYoungSpruce(hTiles, seed, stage, form) {
+    var h = Math.round(hTiles * TILE), w = Math.round(h * (.46 + treesHash(seed * 17) * .19)) | 1;
+    var s = treesMakeSprite(w + 10, h + 6), g = s.g;
+    var cx = (s.w / 2) | 0, baseY = h + 3, top = 5;
+    var lean = (treesHash(seed * 23) - .5) * w * .16;
+    var tw = stage ? 2 : 1, leaderX = cx + lean;
+    treesTwig(g, cx - 1, baseY - 2, leaderX - 1, top, tw + 2, BLD.outline);
+    treesTwig(g, cx, baseY - 2, leaderX, top + 1, tw, BLD.woodDark);
+    treesTwig(g, cx, baseY - 3, cx + lean * .35, h * .66, 1, BLD.woodBase);
+    var sprays = [], whorls = [3, 4, 3, 4][form] + stage;
+    var favored = treesHash(seed * 37) < .5 ? -1 : 1;
+    for (var b = whorls - 1; b >= 0; b--) {
+      var p = b / (whorls - 1), by = top + h * (.29 + Math.pow(p, form === 2 ? .72 : 1) * .56);
+      for (var side = -1; side <= 1; side += 2) {
+        var salt = seed * 47 + b * 103 + side * 19;
+        var y0 = by + (treesHash(salt + 29) - .5) * h * .085;
+        var rootX = cx + lean * (baseY - y0) / (baseY - top);
+        var len = w * (.13 + p * .29) * (.70 + treesHash(salt) * .30);
+        len *= (side === favored ? 1 : .74) * (form === 0 ? .82 : form === 1 ? 1.08 : 1);
+        if (form === 3 && side !== favored && b === 1) len *= .36;
+        var rise = 3 + treesHash(salt + 3) * (stage ? 6 : 4);
+        var tx = rootX + side * len, ty = y0 - rise;
+        treesTwig(g, rootX, y0, tx, ty, 2, BLD.outline);
+        treesTwig(g, rootX, y0, tx, ty, 1, BLD.woodDark);
+        // Needle size stays near a few world pixels. Lower shoots grow
+        // upward off the branch, rather than shrinking an adult's flat fans.
+        var shoots = len > 11 || form === 1 ? 3 : 2;
+        for (var f = 0; f < shoots; f++) {
+          var t = .18 + f * .75 / (shoots - 1);
+          var x = rootX + side * len * t, y = y0 - rise * t;
+          var shootH = 3 + treesHash(salt + f * 31) * 4;
+          treesTwig(g, x, y, x + side * 2, y - shootH, 1, BLD.woodDark);
+          sprays.push({x:x + side, y:y - shootH * .52,
+            rx:3 + treesHash(salt + f * 61) * (stage ? 3 : 2),
+            ry:3 + treesHash(salt + f * 71) * 2 + (form === 1 ? 1 : 0), tilt:-side * .40});
+        }
+      }
+    }
+    // The current leader and its two side buds are visible above the whorls.
+    sprays.push({x:leaderX, y:top + 5, rx:2.5, ry:5, tilt:-.08});
+    sprays.push({x:leaderX - 3, y:top + h * .23, rx:3.5, ry:4, tilt:.50});
+    sprays.push({x:leaderX + 3, y:top + h * .25, rx:3, ry:4, tilt:-.50});
+    treesPaintSprays(s, sprays, seed, true);
+    return {cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY};
+  }
+
+  // Birch saplings have warm, thin stems and leaves along upward side shoots.
+  // Some fork low; others keep a single whippy leader with scattered leaves.
+  function treesBakeYoungBirch(hTiles, seed, stage) {
+    var h = Math.round(hTiles * TILE), w = Math.round(h * (.42 + treesHash(seed * 17) * .24)) | 1;
+    var s = treesMakeSprite(w + 12, h + 6), g = s.g;
+    var cx = (s.w / 2) | 0, baseY = h + 3;
+    var lean = (treesHash(seed * 19) - .5) * w * .30;
+    var forkY = h * (.62 + treesHash(seed * 23) * .14);
+    var forkX = cx + lean * .45, leaderX = cx + lean, leaderY = 7;
+    var tw = stage ? 2 : 1, forked = treesHash(seed * 29) > .45;
+    treesTwig(g, cx - 1, baseY - 2, forkX - 1, forkY, tw + 2, BLD.outline);
+    treesTwig(g, forkX - 1, forkY, leaderX - 1, leaderY, 3, BLD.outline);
+    treesTwig(g, cx, baseY - 2, forkX, forkY, tw, BLD.woodDark);
+    treesTwig(g, forkX, forkY, leaderX, leaderY, 1, BLD.woodBase);
+    // Older young stems get a short pale sliver, not mature bark stripes.
+    if (stage) treesTwig(g, cx, baseY - 4, forkX, forkY + 5, 1, TREES_BARK_PALE);
+    var sprays = [], shoots = 3 + stage;
+    for (var b = 0; b < shoots; b++) {
+      var salt = seed * 41 + b * 137, side = b % 2 ? -1 : 1;
+      if (treesHash(seed * 31) > .5) side = -side;
+      var y0 = h * (.33 + b * .48 / (shoots - 1));
+      var rootX = y0 > forkY ? cx + (forkX - cx) * (baseY - y0) / (baseY - forkY)
+        : forkX + (leaderX - forkX) * (forkY - y0) / (forkY - leaderY);
+      var len = w * (.19 + treesHash(salt) * .16);
+      var tx = rootX + side * len, ty = Math.max(12, y0 - (7 + treesHash(salt + 9) * 9));
+      var bx = rootX + side * len * .55, by = y0 - 3;
+      treesTwig(g, rootX - 1, y0, bx - 1, by, 2, BLD.outline);
+      treesTwig(g, bx - 1, by, tx - 1, ty, 2, BLD.outline);
+      treesTwig(g, rootX, y0, bx, by, 1, BLD.woodDark);
+      treesTwig(g, bx, by, tx, ty, 1, BLD.woodBase);
+      // A few separate leaf pairs leave the growing tip and stem readable.
+      var rx = 4 + treesHash(salt + 13) * 2.5, ry = 2.5 + treesHash(salt + 17) * 1.5;
+      sprays.push({x:tx, y:ty + 2, rx:rx, ry:ry, tilt:-side * .35});
+      sprays.push({x:bx + side * 2, y:by - 2, rx:rx * .72, ry:ry * .8, tilt:side * .26});
+    }
+    if (forked) {
+      var side = lean < 0 ? 1 : -1, tx = forkX + side * w * .23, ty = h * .31;
+      treesTwig(g, forkX - 1, forkY, tx - 1, ty, 2, BLD.outline);
+      treesTwig(g, forkX, forkY, tx, ty, 1, BLD.woodBase);
+      sprays.push({x:tx, y:ty + 3, rx:5, ry:3.5, tilt:side * .22});
+      sprays.push({x:forkX + (tx - forkX) * .65, y:forkY + (ty - forkY) * .65,
+        rx:4, ry:3, tilt:-side * .28});
+    }
+    sprays.push({x:leaderX - 2, y:leaderY + 4, rx:4, ry:3, tilt:-.30});
+    sprays.push({x:leaderX + 2, y:leaderY + 10, rx:4.5, ry:3, tilt:.30});
+    treesPaintSprays(s, sprays, seed, false);
+    return {cv:s.cv, w:s.w, h:s.h, ax:cx, ay:baseY};
+  }
+
   // Spruce: a slender leader, staggered woody boughs and hanging needle fans.
   // Unequal branch lengths leave air between tiers without Christmas triangles.
   function treesBakeSpruce(hTiles, seed) {
@@ -40888,13 +40985,17 @@
     var sprS = [1.65, 2.35, 3.15, 4.15, 5.15];
     for (i = 0; i < sprS.length; i++) {
       for (v = 0; v < 4; v++) {
-        reg(TREES_KIND_SPRUCE, treesBakeSpruce(sprS[i] + v * .08, 11 + i * 149 + v * 37));
+        reg(TREES_KIND_SPRUCE, i < 2
+          ? treesBakeYoungSpruce(sprS[i] + v * .08, 11 + i * 149 + v * 37, i, v)
+          : treesBakeSpruce(sprS[i] + v * .08, 11 + i * 149 + v * 37));
       }
     }
     var brS = [1.55, 2.30, 3.25, 4.35];
     for (i = 0; i < brS.length; i++) {
       for (v = 0; v < 4; v++) {
-        reg(TREES_KIND_BIRCH, treesBakeBirch(brS[i] + v * .07, 31 + i * 163 + v * 43));
+        reg(TREES_KIND_BIRCH, i < 2
+          ? treesBakeYoungBirch(brS[i] + v * .07, 31 + i * 163 + v * 43, i)
+          : treesBakeBirch(brS[i] + v * .07, 31 + i * 163 + v * 43));
       }
     }
     reg(TREES_KIND_BUSH, treesBakeBush(0.52, 53, 0, false));

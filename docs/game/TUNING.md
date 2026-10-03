@@ -1167,6 +1167,13 @@ tall mature crowns. Spruces vary in width, trunk bend, bough count, missing
 branches and fan spacing; birches vary their forks, crown depth and leaf groups.
 The existing flora palette and cached drawing remain unchanged.
 
+The two shortest bands use separate juvenile builders. Young spruces retain
+low branches with rising needle shoots, varied branch counts and uneven gaps.
+Birch saplings have thin warm stems, optional low forks and small leaf pairs
+along their side shoots; the older juvenile band adds a pale lower stem.
+Needle and leaf clusters stay a few world pixels across rather than scaling
+down the mature crown. Taller trees keep the mature branching and bark.
+
 `166-render-surface-boulders.js` adds sparse cached stones in clearings. Eight
 angular profile families vary their dimensions, crown, shoulders and facets
 by world column, about 24 to 54 world px wide and 11 to 30 px tall. A compressed
