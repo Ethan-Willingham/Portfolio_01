@@ -1,17 +1,19 @@
-.aot-site { max-width: 1180px; }
-.aot-site .post-header { margin-bottom: 1.1rem; }
-.aot-hero { margin: 0 0 1.8rem; }
-.aot-hero .u-title { font-size: clamp(3rem, 8vw, 5.6rem); }
-.aot-hero .u-eyebrow { margin-bottom: .65rem; }
+.aot-site { max-width: 1640px; padding-top: .8rem; }
+.aot-site .post-header { margin-bottom: .25rem; }
+.aot-site .post-back { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 0; padding: 0; }
+.aot-hero { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: baseline; gap: 1rem; margin: 0 0 .7rem; }
+.aot-hero .u-title { font-size: clamp(2.2rem, 4vw, 3rem); }
+.aot-hero .u-eyebrow { margin-bottom: 0; font-size: .65rem; }
 .aot-piece { width: 100%; position: relative; }
 .aot-piece [hidden] { display: none !important; }
-.aot-stage { height: clamp(310px, 54vh, 560px); position: relative; overflow: hidden; background: var(--bg); }
+.aot-stage { height: max(350px, calc(100dvh - 226px)); position: relative; overflow: hidden; background: var(--bg); }
 .aot-stage canvas { width: 100%; height: 100%; display: block; }
 #aot-still { position: absolute; inset: 0; object-fit: contain; }
 .aot-loading { position: absolute; inset: 48% 0 auto; text-align: center; color: var(--text-dim); font: .85rem var(--font-mono); }
 .aot-still-label { position: absolute; bottom: .5rem; left: 0; right: 0; text-align: center; font: .7rem var(--font-mono); color: var(--text-faint); }
 .aot-score { height: 1px; background: var(--rule); }
 .aot-score span { display: block; height: 1px; width: 0; background: var(--accent); }
+.aot-piece .aot-caption p { margin: 0; }
 .aot-caption { display: flex; justify-content: space-between; gap: 1rem; margin: .8rem 0; align-items: baseline; }
 .aot-caption p { margin: 0; font: 1rem/1.45 var(--font-heading); color: var(--text); }
 .aot-caption > span { font: .68rem/1.5 var(--font-mono); color: var(--text-faint); text-align: right; }
@@ -41,28 +43,23 @@
 .aot-piece:fullscreen .aot-stage, .aot-piece.aot-fullscreen .aot-stage { flex: 1; min-height: 180px; height: auto; }
 .aot-piece:fullscreen .aot-instruments, .aot-piece.aot-fullscreen .aot-instruments { max-height: 45vh; overflow: auto; flex-shrink: 0; }
 @media (max-width: 650px) {
- .aot-hero { margin-bottom: .9rem; }
- .aot-stage { height: 340px; height: min(52vh, 410px); min-height: 280px; }
+ .aot-hero { display: block; margin-bottom: .5rem; }
+ .aot-hero .u-eyebrow { margin: 0 0 .35rem; }
+ .aot-stage { height: max(320px, calc(100dvh - 295px)); }
  .aot-caption { display: block; margin: .7rem 0; }
  .aot-caption > span { display: block; text-align: left; margin-top: .3rem; }
  .aot-toolbar { display: grid; grid-template-columns: repeat(2, 1fr); }
  .aot-readouts, .aot-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
  .aot-explanation { margin-top: 2rem; }
 }
-@media (max-height: 480px) and (min-width: 651px) {
- .aot-stage { height: 250px; }
- .aot-hero .u-title { font-size: 3rem; }
- .aot-hero { margin-bottom: .5rem; }
- .aot-caption { margin: .45rem 0; }
-}
 @media (prefers-reduced-motion: reduce) { .aot-piece * { scroll-behavior: auto; } }
 /* Keep the complete piece and its controls visible in a short landscape viewport. */
 @media (max-height: 480px) and (min-width: 651px) {
  .aot-site { padding-top: .3rem; }
- .aot-site .post-header { margin-bottom: 0; }
- .aot-site .post-back { min-height: 44px; padding: 0; margin-bottom: 0; display: inline-flex; align-items: center; }
+ .aot-site .post-header { position: absolute; top: .3rem; right: var(--gutter); margin-bottom: 0; }
  .aot-hero .u-eyebrow { display: none; }
- .aot-hero .u-title { font-size: 2.4rem; }
- .aot-hero { margin-bottom: .3rem; }
- .aot-stage { height: max(150px, calc(100dvh - 190px)); }
+ .aot-hero .u-title { font-size: 2.1rem; }
+ .aot-hero { flex-direction: row; min-height: 44px; align-items: center; margin-bottom: .3rem; }
+ .aot-stage { height: max(150px, calc(100dvh - 137px)); }
+ .aot-caption { margin: .45rem 0; }
 }

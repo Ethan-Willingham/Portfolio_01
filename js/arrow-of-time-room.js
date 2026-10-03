@@ -1,5 +1,5 @@
-import { MODEL, PRESETS, PRESET_VERSION, prepare, compare, measure, pack, checksum } from './arrow-of-time-model.js';
-import { createQ2RGPU } from './arrow-of-time-gpu.js';
+import { MODEL, PRESETS, PRESET_VERSION, prepare, compare, measure, pack, checksum } from './arrow-of-time-model.js?v=2';
+import { createQ2RGPU } from './arrow-of-time-gpu.js?v=2';
 export const roomInfo = {
   apiVersion: 1, id: 'arrow-of-time', title: 'Arrow of time', model: MODEL,
   representativeScaleMeters: null, scaleMeaning: 'Abstract lattice cells; no physical length is assigned.',
@@ -8,18 +8,18 @@ export const roomInfo = {
 export async function createRoom({ device, seed, quality = 'medium', assetBaseURL }) {
   if (!device) throw new Error('Arrow of time requires WebGPU. The standalone page offers a labeled CPU-generated still.');
   if (!['low', 'medium', 'high'].includes(quality)) throw new RangeError('Unknown room quality.');
-  const size = quality === 'high' ? 512 : 256, stepsPerPhrase = 4320;
+  const [width, height] = quality === 'high' ? [1024, 768] : quality === 'low' ? [256, 256] : [768, 512], stepsPerPhrase = 4320;
   const assets = new URL(assetBaseURL || '../assets/visualizer/arrow-of-time/', import.meta.url).href;
   let initial, gpu, preset = 0, cycle = 0, totalSteps = 0, orbitStep = 0, forwardSteps = 0, inverseSteps = 0;
   let phase = 'arrival', direction = 1, holdSeconds = 8, accumulator = 0, activeSeconds = 0, rate = 24, zoom = 1;
   let disposed = false, epoch = 0, pending = null, last = {}, returnResult = null, lastReturn = null, measuredAtStep = 0;
   async function initialize() {
-    initial = prepare(size, size, PRESETS[preset]);
+    initial = prepare(width, height, PRESETS[preset]);
     const nextGpu = await createQ2RGPU(device, initial);
     if (disposed) { nextGpu.dispose(); return; }
     gpu = nextGpu;
     const m = measure(initial);
-    last = { ...m, energyDriftJ: 0, checksum: checksum(pack(initial.x, size, size), pack(initial.y, size, size)), measurementAvailable: true };
+    last = { ...m, energyDriftJ: 0, checksum: checksum(pack(initial.x, width, height), pack(initial.y, width, height)), measurementAvailable: true };
     measuredAtStep = totalSteps;
   }
   await initialize();
@@ -71,14 +71,14 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
   }
   return {
     resize() {}, step,
-    render(args) { const visibility = phase === 'returned' ? Math.min(1, holdSeconds / 2) : phase === 'arrival' && cycle > 0 ? Math.min(1, (8 - holdSeconds) / 2) : 1; if (!disposed && phase !== 'resetting') gpu.render({ ...args, zoom, visibility }); },
+    render(args) { const visibility = phase === 'returned' ? Math.min(1, holdSeconds / 2) : phase === 'arrival' && cycle > 0 ? Math.min(1, (8 - holdSeconds) / 2) : 1; const moving = phase === 'forward' && forwardSteps > 0 || phase === 'inverse' && inverseSteps > 0; const blend = moving ? Math.max(0, Math.min(1, accumulator)) : 1; if (!disposed && phase !== 'resetting') gpu.render({ ...args, zoom, visibility, blend }); },
     snapshot() { return { ...roomInfo, quality, seed: seed || null, seedProvenance: 'Host seed recorded but unused; three authored deterministic constructors, no random source.',
-      parameters: { J: 1, width: size, height: size, forwardStepsScheduled: stepsPerPhrase, updatesPerAmbientSecond: rate, presetVersion: PRESET_VERSION, zoom, storage: '32 spins per u32, row aligned', assets },
+      parameters: { J: 1, width, height, forwardStepsScheduled: stepsPerPhrase, updatesPerAmbientSecond: rate, presetVersion: PRESET_VERSION, zoom, storage: '32 spins per u32, row aligned', display: 'Mean of both time layers, eased between adjacent computed states', assets },
       numericalStepCount: totalSteps, simulationTime: orbitStep, simulationTimeUnits: 'Q2R integer steps from authored state', configurationId: initial.configurationId,
       ...controls(), stepsUntilReversal: direction === 1 ? stepsPerPhrase - orbitStep : 0, stepsUntilReturn: direction === -1 ? orbitStep : 2 * stepsPerPhrase - orbitStep,
       ...last, diagnosticStep: measuredAtStep, diagnosticAgeSteps: totalSteps - measuredAtStep, diagnosticPending: !!pending, returnResult, lastReturn,
       criticality: 'Not established. Energy proximity is only an equilibrium Ising reference.', memoryBytes: gpu.bufferBytes }; },
-    async debugReadback() { const state = await read(); return { ...state, x: [...state.x], y: [...state.y], packedX: [...state.packedX], packedY: [...state.packedY], replay: { apiVersion: 1, id: roomInfo.id, model: MODEL, quality, seed: seed || null, seedProvenance: 'unused host seed', configurationId: initial.configurationId, width: size, height: size, presetVersion: PRESET_VERSION, ...state.control } }; },
+    async debugReadback() { const state = await read(); return { ...state, x: [...state.x], y: [...state.y], packedX: [...state.packedX], packedY: [...state.packedY], replay: { apiVersion: 1, id: roomInfo.id, model: MODEL, quality, seed: seed || null, seedProvenance: 'unused host seed', configurationId: initial.configurationId, width, height, presetVersion: PRESET_VERSION, ...state.control } }; },
     async measure() { await read(); },
     setRate(value) { if (![24, 96, 768].includes(value)) throw new RangeError('Unsupported playback pacing.'); rate = value; },
     setZoom(value) { zoom = Math.max(1, Math.min(4, Number(value) || 1)); },
