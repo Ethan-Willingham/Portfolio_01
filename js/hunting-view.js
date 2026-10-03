@@ -55,6 +55,7 @@
     constructor(canvas, sprites) {
       this.canvas = canvas; this.g = canvas.getContext('2d'); this.sprites = sprites;
       this.camera = normal(); this.effects = []; this.trails = []; this.time = 0;
+      this.scopePan = { x: 0, y: 0 };
       this.grass = Array.from({ length: 1700 }, (_, i) => ({ x: (noise(i + 1) - .5) * 230,
         y: 16 + noise(i + 3122) ** 1.7 * 178, h: .04 + noise(i + 224) * .23, color: i % 4, lean: noise(i + 313) - .5 }));
       this.trees = Array.from({ length: 124 }, (_, i) => ({ x: -190 + i * 3.1 + noise(i + 431) * 2,
@@ -64,17 +65,29 @@
       this.seenBullets = new WeakSet(); this.lastMinute = 360;
     }
     scope(active, aim) {
-      if (!active) { this.camera = normal(); return; }
+      if (!active) { this.camera = normal(); this.stopScopePan(); return; }
       if (this.camera.zoom > 1) return;
       const at = baseProject(aim);
       this.camera = { x: aim.x, y: aim.y, h: aim.h || 0, zoom: 6, screenX: at.x, screenY: at.y };
+      this.stopScopePan();
     }
-    panScope(moveX, moveY, dt) {
-      if (this.camera.zoom <= 1 || !(dt > 0) || !(moveX || moveY)) return false;
-      const length = Math.max(1, Math.hypot(moveX, moveY));
-      const speed = 300 / this.camera.zoom;
-      const x = clamp(this.camera.screenX + moveX / length * speed * dt, 0, W);
-      const y = clamp(this.camera.screenY + moveY / length * speed * dt, 0, H);
+    stopScopePan() { this.scopePan.x = 0; this.scopePan.y = 0; }
+    panScope(point, dt) {
+      if (this.camera.zoom <= 1 || !(dt > 0)) return false;
+      const dx = point.x - W / 2, dy = point.y - H / 2, distance = Math.hypot(dx, dy);
+      const radius = H * .45;
+      // Fine aim is direct and steady in the center. The outer lens gives a
+      // progressively faster look, with a soft start and no coast into a shot.
+      const edge = clamp((distance / radius - .38) / .5, 0, 1);
+      if (!edge) { this.stopScopePan(); return false; }
+      const strength = edge * edge * (3 - 2 * edge), ease = 1 - Math.exp(-dt / .12);
+      this.scopePan.x += (dx / distance * strength - this.scopePan.x) * ease;
+      this.scopePan.y += (dy / distance * strength - this.scopePan.y) * ease;
+      const speed = 240 / this.camera.zoom;
+      const x = clamp(this.camera.screenX + this.scopePan.x * speed * dt, 0, W);
+      const y = clamp(this.camera.screenY + this.scopePan.y * speed * dt, 0, H);
+      if (x === this.camera.screenX) this.scopePan.x = 0;
+      if (y === this.camera.screenY) this.scopePan.y = 0;
       if (x === this.camera.screenX && y === this.camera.screenY) return false;
       this.camera.screenX = x; this.camera.screenY = y;
       Object.assign(this.camera, unproject({ x: W / 2, y: H / 2 }, this.camera));
@@ -340,6 +353,12 @@
       g.fillStyle = lens; g.beginPath(); g.arc(cx, cy, radius, 0, Math.PI * 2); g.fill();
       g.strokeStyle = '#4a544b'; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy, radius + 2, 0, Math.PI * 2); g.stroke();
       g.strokeStyle = '#a4a293'; g.lineWidth = .65; g.beginPath(); g.arc(cx, cy, radius - .5, 0, Math.PI * 2); g.stroke();
+      const pan = Math.hypot(this.scopePan.x, this.scopePan.y);
+      if (pan > .02) {
+        const angle = Math.atan2(this.scopePan.y, this.scopePan.x);
+        g.save(); g.globalAlpha = Math.min(.85, .25 + pan * .6); g.strokeStyle = palette.gold; g.lineWidth = 2;
+        g.beginPath(); g.arc(cx, cy, radius + 2, angle - .14, angle + .14); g.stroke(); g.restore();
+      }
       if (showReticle) {
         const at = project(world.sight ? world.sight(aim) : world.aim(aim), this.camera);
         g.save(); g.beginPath(); g.arc(cx, cy, radius - 2, 0, Math.PI * 2); g.clip();
