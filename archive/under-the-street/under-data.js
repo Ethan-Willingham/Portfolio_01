@@ -98,7 +98,6 @@
   });
 
   var topics = {
-    tour:{title:'Start with a place', text:'A river held up by a buried wall, a telephone hotel, a water tower. Pick a place to see what it does.', layers:[]},
     water:{title:'The drinking-water system', text:'Treatment plants, water towers and Minneapolis service connections. The city records connection materials; these points do not show buried mains. Map details adds hydrants and source-water protection.', layers:['waterworks','towers','services','hydrants','protection','vulnerability']},
     wastewater:{title:'Where sewage goes', text:'Regional pipes carry sewage to treatment plants. West Saint Paul also publishes local pipes. The regional inventory keeps abandoned and removed records alongside the online system.', layers:['interceptors','plants','wspSanitary','lifts','meters','sheds','wspSanManholes','osmWastewater']},
     storm:{title:'Rain, creeks and the river', text:'Storm drains carry runoff toward waterways. The Bassett Creek engineering overview separates its three tunnel phases. Buried-watercourse records distinguish culverts, sewers, tunnels and former channels. Minneapolis publishes an inlet subset; West Saint Paul publishes local storm pipes.', layers:['buried','bassettPlan','inlets','wspStorm','streams','dams','wspInlets','wspStormManholes']},

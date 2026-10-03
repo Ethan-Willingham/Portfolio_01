@@ -5,7 +5,7 @@
   var CANVAS=HOST.querySelector('canvas'),STAGE=HOST.querySelector('.um-stage'),PANEL=HOST.querySelector('.um-panel');
   var STATUS=HOST.querySelector('.um-status'),SCALE=HOST.querySelector('.um-scale'),TOOLTIP=HOST.querySelector('.um-tooltip');
   var RESULTS=HOST.querySelector('.um-results'),SEARCH=HOST.querySelector('.um-search input'),ctx=CANVAS.getContext('2d');
-  var ROOT='assets/map/',VERSION='20261003-5',W=0,H=0,DPR=1,raf=null,started=false,topic='tour',scope='all';
+  var ROOT='assets/map/',VERSION='20261003-6',W=0,H=0,DPR=1,raf=null,started=false,topic='water',scope='all';
   var showInactive=false,sourceScope='current',catalogLoading=false,catalogError=false;
   var selection=null,hovered=null,addressPin=null,media={photos:[],types:{}},manifest=null,visibleLimit=30,resultItems=[],data={};
   var fmt=new Intl.NumberFormat('en-US'),MINZ=9,MAXZ=18,view={x:mx(-93.19),y:my(44.985),z:10.6};
@@ -14,9 +14,8 @@
   var catalog=window.UnderStreetData;
   if(!catalog){STATUS.textContent='The map data definitions could not load. The article and sources are below.';return;}
   var topics=catalog.topics,layers=catalog.layers;
-  topics.tour.text='A wall beneath the falls, a building where internet networks meet, a creek beneath downtown. Choose a place to see what is there.';
-  var tour=[
-    {id:'falls',name:'The wall under St. Anthony Falls',lon:-93.257,lat:44.9806,z:15,type:'cutoffwall',color:C.ground,topic:'tour',photoName:'St. Anthony Falls + the 1876 dike',blurb:'A concrete cutoff wall beneath the limestone blocks water from eroding the sandstone under the falls. The Corps finished the 1,850-foot wall in 1876; it reaches about 40 feet into the sandstone.',facts:[['Completed','1876'],['Wall length','1,850 ft']],source:'https://www.mvp.usace.army.mil/Home/Projects/Article/626089/engineering-the-falls-the-corps-of-engineers-role-at-st-anthony-falls/',wiki:'https://en.wikipedia.org/wiki/Saint_Anthony_Falls'},
+  var places=[
+    {id:'falls',name:'The wall under St. Anthony Falls',lon:-93.257,lat:44.9806,z:15,type:'cutoffwall',color:C.ground,topic:'ground',photoName:'St. Anthony Falls + the 1876 dike',blurb:'A concrete cutoff wall beneath the limestone blocks water from eroding the sandstone under the falls. The Corps finished the 1,850-foot wall in 1876; it reaches about 40 feet into the sandstone.',facts:[['Completed','1876'],['Wall length','1,850 ft']],source:'https://www.mvp.usace.army.mil/Home/Projects/Article/626089/engineering-the-falls-the-corps-of-engineers-role-at-st-anthony-falls/',wiki:'https://en.wikipedia.org/wiki/Saint_Anthony_Falls'},
     {id:'511',name:'The 511 Building',lon:-93.25458,lat:44.97141,z:16,type:'carrierhotel',color:C.net,topic:'networks',blurb:'Networks connect their equipment in this carrier hotel at 511 11th Avenue South. Cologix MIN1 hosts the Midwest Internet Cooperative Exchange.',source:'https://cologix.com/data-centers/minneapolis/min1/',wiki:'https://en.wikipedia.org/wiki/511_Building_(Minneapolis)'},
     {id:'metro',name:'Metro wastewater plant',photoName:'Metro',lon:-93.04547,lat:44.92526,z:14.3,type:'tplant',color:C.sewer,topic:'wastewater',blurb:'The regional plant near Pig\'s Eye Lake treats an average of 172 million gallons a day for 1.8 million people. It opened in 1938.',facts:[['Average flow','172 million gal/day'],['Service population','1.8 million']],source:'https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx'},
     {id:'fridley',name:'Fridley waterworks',photoName:'Minneapolis Water Treatment Plant',lon:-93.27868,lat:45.04322,z:15.2,type:'ww',color:C.water,topic:'water',blurb:'Minneapolis draws its drinking water from the Mississippi River. Its Fridley and Columbia Heights campuses treat the water before distribution.',source:'https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/'},
@@ -28,7 +27,9 @@
     {id:'wsp',name:'Local pipes in West Saint Paul',lon:-93.087,lat:44.904,z:14,type:'sewer',color:C.sewer,topic:'wastewater',blurb:'This city publishes local sanitary and storm pipe geometry. Zoom in and select a pipe to inspect its available material and size fields.'},
     {id:'bassett',name:'Old Bassett Creek Tunnel outlet',photoName:'Old Bassett Creek Tunnel outlet',lon:-93.273508,lat:44.990355,z:15.5,type:'bstream',color:C.water,topic:'storm',blurb:'The 1923 tunnel still carries stormwater from north Minneapolis. MWMO cleared accumulated sediment and debris between 2017 and 2020. The map anchor is an approximate outlet location derived from DNR hydrography, rather than a surveyed pipe route.',source:'https://www.mwmo.org/projects/old-bassett-creek-tunnel/',wiki:'https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)'}
   ];
-  tour.forEach(function(f){f.x=mx(f.lon);f.y=my(f.lat);f.kind='point';f.p={};f.layer='tour';});
+  places.forEach(function(f){f.x=mx(f.lon);f.y=my(f.lat);f.kind='point';f.p={};f.layer='tour';});
+  var placeControls={falls:['depth','bedrock'],fridley:['waterworks'],mccarrons:['waterworks'],highland:['towers'],washburn:['towers'],'511':['comms'],metro:['plants'],wsp:['wspSanitary'],steam:['pipelines'],'district-stpaul':['pipelines'],bassett:['buried','bassettPlan']};
+  function shownPlace(f){return f.topic===topic&&placeControls[f.id].some(function(id){return layers[id].on;})&&allowed(f);}
   function mx(lon){return (lon+180)/360;}
   function my(lat){var r=lat*Math.PI/180;return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2;}
   function lonOf(x){return x*360-180;}
@@ -220,7 +221,6 @@
     if(photo&&photo.wikipedia&&photo.wikipedia!==placeWiki&&photo.wikipedia!==info.wiki)links+='<a href="'+safeLink(photo.wikipedia)+'" target="_blank" rel="noopener">About this place <span>Wikipedia</span></a>';
     catalog.primarySources(f).forEach(function(l){links+='<a href="'+safeLink(l.url)+'" target="_blank" rel="noopener">'+esc(l.label)+'</a>';});
     if(record&&record!==source)links+='<a href="'+safeLink(record)+'" target="_blank" rel="noopener">Source record</a>';
-    if(f.layer==='tour'&&f.topic!=='tour')links+='<button type="button" data-related="'+esc(f.topic)+'">Browse this system</button>';
     var extraRows=rows.length>10?rows.slice(10):[],primaryRows=rows.slice(0,10);
     function factRows(rs){return rs.map(function(r){return '<div><dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd></div>';}).join('');}
     var extra=extraRows.length?'<details class="um-record-details"><summary>More record details ('+extraRows.length+')</summary><dl class="um-facts">'+factRows(extraRows)+'</dl></details>':'';
@@ -355,7 +355,7 @@
         if(!dense&&view.z>11.4&&catalog.isNamed(f))queueLabel(f.name,p[0],p[1]-r-4,id==='plants'?5:2);
       });
     });
-    if(topic==='tour')tour.forEach(function(f,i){if(!visible(f))return;var p=toPx(f.x,f.y);ctx.fillStyle=f.color;ctx.strokeStyle='#1e2420';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p[0],p[1],6,0,Math.PI*2);ctx.fill();ctx.stroke();queueLabel(f.name,p[0],p[1]-10,10-i);});
+    places.forEach(function(f,i){if(!shownPlace(f)||!visible(f))return;var p=toPx(f.x,f.y);ctx.fillStyle=f.color;ctx.strokeStyle='#1e2420';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p[0],p[1],6,0,Math.PI*2);ctx.fill();ctx.stroke();queueLabel(f.name,p[0],p[1]-10,10-i);});
     if(addressPin){var ap=toPx(addressPin.x,addressPin.y);ctx.strokeStyle=C.cream;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ap[0],ap[1],7,0,Math.PI*2);ctx.moveTo(ap[0]-11,ap[1]);ctx.lineTo(ap[0]+11,ap[1]);ctx.moveTo(ap[0],ap[1]-11);ctx.lineTo(ap[0],ap[1]+11);ctx.stroke();}
     if(document.activeElement===CANVAS){ctx.strokeStyle=C.cream;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W/2-8,H/2);ctx.lineTo(W/2+8,H/2);ctx.moveTo(W/2,H/2-8);ctx.lineTo(W/2,H/2+8);ctx.stroke();}
     if(selection){if(selection.rings){ctx.beginPath();path(selection);ctx.strokeStyle='#ede0c0';ctx.lineWidth=3;ctx.stroke();}else{var sp=toPx(selection.x,selection.y);ctx.strokeStyle='#ede0c0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sp[0],sp[1],10,0,Math.PI*2);ctx.stroke();}}
@@ -375,7 +375,7 @@
   function buildLayerControls(){
     var list=HOST.querySelector('.um-layer-list');list.innerHTML=topics[topic].layers.map(function(id){var cfg=layers[id];return '<button class="um-layer" type="button" data-layer="'+id+'" aria-pressed="'+cfg.on+'" style="--layer-color:'+cfg.color+'"><i aria-hidden="true"></i><span><b>'+esc(cfg.title)+'</b><small></small></span><span class="um-layer-state" aria-hidden="true"></span></button>';}).join('');
     list.querySelectorAll('button').forEach(function(btn){btn.addEventListener('click',function(){var id=btn.dataset.layer,state=data[id];if(state&&(state.error||state.tileError)){delete data[id];layers[id].on=true;}else layers[id].on=!layers[id].on;hovered=null;if(layers[id].on&&shouldLoad(id))ensure(id);if(selection&&selection.layer===id&&!layers[id].on)closePanel(false);updateLayers();updateLegend();renderResults();requestDraw();writeHash();});});updateLayers();updateLegend();
-    HOST.querySelector('.um-layers').hidden=topic==='tour';
+    HOST.querySelector('.um-layers').hidden=false;
     var inactive=HOST.querySelector('.um-inactive');inactive.hidden=!topics[topic].layers.some(function(id){return layers[id].hasInactive;});
     inactive.querySelector('button').setAttribute('aria-pressed',String(showInactive));
   }
@@ -392,7 +392,8 @@
   function namedFeature(f){return catalog.isNamed(f);}
   function renderResults(){
     if(!RESULTS)return;var active=document.activeElement,focusedResult=RESULTS.contains(active)&&active.dataset.id,resultsScroll=RESULTS.scrollTop;var q=SEARCH.value.trim().toLowerCase(),items=[],busy=false,denseHidden=false;
-    if(topic==='tour')items=tour.slice();else activeIds().forEach(function(id){var d=data[id],cfg=layers[id];if(view.z<cfg.minZ||cfg.municipal&&!shouldLoad(id)){denseHidden=true;return;}if(!d||d.loading){busy=true;return;}if(!d.features)return;
+    items=places.filter(function(f){return shownPlace(f)&&(scope!=='view'||visible(f))&&(!q||(f.name+' '+f.blurb+' '+typeInfo(f).label).toLowerCase().indexOf(q)>=0);});
+    activeIds().forEach(function(id){var d=data[id],cfg=layers[id];if(view.z<cfg.minZ||cfg.municipal&&!shouldLoad(id)){denseHidden=true;return;}if(!d||d.loading){busy=true;return;}if(!d.features)return;
       var dense=['services','wells','hydrants','inlets','cleanup','meters','lifts','wspInlets','wspSanManholes','wspStormManholes'].indexOf(id)>=0;
       if(dense&&view.z<cfg.minZ){denseHidden=true;return;}
       var fs=cfg.municipal?d.features.filter(function(f){return visible(f);}):dense?visiblePoints(d):d.features;
@@ -400,12 +401,11 @@
         if(q){var text=(f.name+' '+f.id+' '+typeInfo(f).label+' '+Object.values(f.p).join(' ')).toLowerCase();if(text.indexOf(q)<0)return;}items.push(f);
       });
     });
-    if(topic==='tour'&&q)items=items.filter(function(f){return (f.name+' '+f.blurb+' '+typeInfo(f).label).toLowerCase().indexOf(q)>=0;});
-    if(topic!=='tour')items.sort(function(a,b){var an=namedFeature(a)?0:1,bn=namedFeature(b)?0:1;return an-bn||Math.hypot(a.x-view.x,a.y-view.y)-Math.hypot(b.x-view.x,b.y-view.y);});
+    items.sort(function(a,b){var an=a.layer==='tour'?-1:namedFeature(a)?0:1,bn=b.layer==='tour'?-1:namedFeature(b)?0:1;return an-bn||Math.hypot(a.x-view.x,a.y-view.y)-Math.hypot(b.x-view.x,b.y-view.y);});
     resultItems=items;var heading=HOST.querySelector('.um-results-heading'),shown=Math.min(items.length,visibleLimit),hasModel=topic==='ground'&&layers.depth.on&&data.depth&&data.depth.raster;
-    heading.textContent=topic==='tour'?'Places to begin':hasModel&&!items.length&&!q?'Explore the depth model':busy&&!items.length?'Loading places…':fmt.format(items.length)+' matching '+(items.length===1?'record':'records')+(scope==='view'?' in this view':'');
+    heading.textContent=hasModel&&!items.length&&!q?'Explore the depth model':busy&&!items.length?'Loading places…':fmt.format(items.length)+' matching '+(items.length===1?'record':'records')+(scope==='view'?' in this view':'');
     var nameCounts=Object.create(null);items.forEach(function(f){nameCounts[f.name]=(nameCounts[f.name]||0)+1;});
-    RESULTS.innerHTML=items.slice(0,visibleLimit).map(function(f,i){var info=typeInfo(f),p=photoFor(f),thumb=topic==='tour'&&p?'<picture class="um-result-thumb">'+(p.webp?'<source type="image/webp" srcset="'+esc(photoAsset(p.webp))+'">':'')+'<img src="'+esc(photoAsset(p.src))+'" alt="" width="56" height="56" loading="'+(i===0?'eager':'lazy')+'"></picture>':'';return '<button class="um-result" type="button" data-id="'+esc(f.id)+'" style="--result-color:'+pointColor(f)+'">'+thumb+'<span class="um-result-text"><span class="um-result-name">'+esc(f.name)+'</span><span class="um-result-meta">'+esc(info.label)+(catalog.status(f)&&layers[f.layer]&&layers[f.layer].hasInactive?' · '+catalog.status(f):'')+(nameCounts[f.name]>1&&f.layer==='interceptors'&&f.p.i!=null?' · Record '+esc(f.p.i):'')+'</span></span></button>';}).join('');
+    RESULTS.innerHTML=items.slice(0,visibleLimit).map(function(f,i){var info=typeInfo(f),p=photoFor(f),thumb=p?'<picture class="um-result-thumb">'+(p.webp?'<source type="image/webp" srcset="'+esc(photoAsset(p.webp))+'">':'')+'<img src="'+esc(photoAsset(p.src))+'" alt="" width="56" height="56" loading="'+(i===0?'eager':'lazy')+'"></picture>':'';return '<button class="um-result" type="button" data-id="'+esc(f.id)+'" style="--result-color:'+pointColor(f)+'">'+thumb+'<span class="um-result-text"><span class="um-result-name">'+esc(f.name)+'</span><span class="um-result-meta">'+esc(info.label)+(catalog.status(f)&&layers[f.layer]&&layers[f.layer].hasInactive?' · '+catalog.status(f):'')+(nameCounts[f.name]>1&&f.layer==='interceptors'&&f.p.i!=null?' · Record '+esc(f.p.i):'')+'</span></span></button>';}).join('');
     if(!items.length)RESULTS.innerHTML='<p class="um-empty">'+(busy?'Loading this system.':q?denseHidden?'No matching records at this scale. Zoom in to search street records, or try a facility name.':'No matching records. Try a name, type or record ID.':hasModel?'Select a colored part of the map to see the modeled depth. Zoom in for well records, or add a geology layer in Map details.':denseHidden?'Zoom in for individual connections and records, or turn on another layer in Map details.':'No records in this view. Choose Browse records or another layer.')+'</p>';
     else if(denseHidden)RESULTS.insertAdjacentHTML('beforeend','<p class="um-empty">Zoom in for individual connections and street records.</p>');
     RESULTS.querySelectorAll('[data-id]').forEach(function(btn){btn.addEventListener('click',function(){var f=items.find(function(f){return f.id===btn.dataset.id;});if(!f)return;lastSelected=f.id;lastFocusControl=btn;if(f.layer==='tour'&&f.z>=14)setBase(true);openPanel(f,true);flyTo(f.x,f.y,f.z||Math.max(view.z,f.kind==='point'?14.5:14));});});
@@ -414,7 +414,7 @@
     var more=HOST.querySelector('.um-results-more');more.hidden=shown>=items.length||!items.length;more.textContent='Show '+Math.min(30,items.length-shown)+' more';
   }
   function setTopic(id,reset){
-    if(!topics[id])return;if(started&&restoring){restoring=false;requestedFeature=null;}topic=id;visibleLimit=30;SEARCH.value='';closePanel(false);HOST.querySelector('.um-browse-controls').hidden=id==='tour';
+    if(!topics[id])return;if(started&&restoring){restoring=false;requestedFeature=null;}topic=id;visibleLimit=30;SEARCH.value='';closePanel(false);HOST.querySelector('.um-browse-controls').hidden=false;
     HOST.querySelectorAll('[data-um-topic]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.umTopic===id));});
     var intro=HOST.querySelector('.um-topic-copy');intro.innerHTML='<h3>'+esc(topics[id].title)+'</h3><p>'+esc(topics[id].text)+'</p>';
     buildLayerControls();if(manifest)renderSources();if(started)ensureActive();if(reset){view.x=HOME.x;view.y=HOME.y;view.z=HOME.z;}
@@ -429,12 +429,12 @@
     if(!manifest)return;
     var all=manifest.datasets||[],mapped=Object.keys(layers).map(function(id){return layers[id].file;}).concat(['counties.json','water.json','roads-context.json','data/context-streets.json.gz']),selected=topics[topic].layers.map(function(id){return layers[id].file;}),query=(HOST.querySelector('.um-source-search input').value||'').trim().toLowerCase();
     HOST.querySelector('.um-summary').textContent=Object.keys(layers).length+' map layers · Public records';
-    HOST.querySelectorAll('[data-um-topic]').forEach(function(b){var key=b.dataset.umTopic,n=key==='tour'?tour.length:topics[key].layers.length;b.querySelector('.um-topic-count').textContent=n;b.setAttribute('aria-label',b.firstChild.textContent.trim()+', '+n+(key==='tour'?' places':' layers'));});
+    HOST.querySelectorAll('[data-um-topic]').forEach(function(b){var key=b.dataset.umTopic,n=topics[key].layers.length;b.querySelector('.um-topic-count').textContent=n;b.setAttribute('aria-label',b.firstChild.textContent.trim()+', '+n+' layers');});
     var list=all.filter(function(m){
-      var current=mapped.indexOf(m.file)>=0,match=sourceScope==='earlier'?!current&&m.legacy:sourceScope==='all'?true:topic==='tour'?current:selected.indexOf(m.file)>=0;
+      var current=mapped.indexOf(m.file)>=0,match=sourceScope==='earlier'?!current&&m.legacy:sourceScope==='all'?true:selected.indexOf(m.file)>=0;
       return match&&(!query||(m.title+' '+m.id+' '+(m.source||{}).coverage).toLowerCase().indexOf(query)>=0);
     });
-    HOST.querySelector('.um-source-count').textContent=fmt.format(list.length)+' '+(list.length===1?'dataset':'datasets')+(sourceScope==='current'&&topic!=='tour'?' for '+topics[topic].title.toLowerCase():'')+'. Source dates describe the published snapshot. Map expanded October 3, 2026; retrieval dates vary by dataset.';
+    HOST.querySelector('.um-source-count').textContent=fmt.format(list.length)+' '+(list.length===1?'dataset':'datasets')+(sourceScope==='current'?' for '+topics[topic].title.toLowerCase():'')+'. Source dates describe the published snapshot. Map expanded October 3, 2026; retrieval dates vary by dataset.';
     HOST.querySelector('.um-datasets').innerHTML=list.length?'<div class="um-source-grid">'+list.map(function(m){
       var source=m.source||{},url=source.url,file=m.file,title=m.title||m.id,date=source.sourceDate,license=source.license,n=m.featureCount!=null?m.featureCount:m.recordCount,caveats=source.caveats||[],format=m.format==='DepthRaster'?'depth model JSON':m.format==='Table'?'table JSON':'GeoJSON',used=mapped.indexOf(file)>=0;if(/\.gz$/.test(file||''))format+=' (gzip)';var downloadSize=m.bytes!=null?' · '+(m.bytes>=1000000?(m.bytes/1000000).toFixed(1)+' MB':Math.max(1,Math.round(m.bytes/1000))+' KB'):'';
       return '<article class="um-source-item"><h4>'+esc(title)+'</h4><p class="um-source-meta">'+(n!=null?fmt.format(n)+' '+(m.format==='DepthRaster'?'model cells':'records')+' · ':'')+esc(displayDate(date))+'</p>'+(source.retrievedAt?'<p class="um-source-meta">Retrieved: '+esc(displayDate(source.retrievedAt))+'</p>':'')+(!used&&m.legacy?'<p class="um-source-version">Reference snapshot; this version is not drawn on the map.</p>':'')+'<p>'+esc(m.coverage||source.coverage||'')+'</p>'+'<div>'+(url?'<a href="'+safeLink(url)+'" target="_blank" rel="noopener">Source</a>':'')+(file?'<a href="'+esc(ROOT+file)+'" download>Download '+esc(format+downloadSize)+'</a>':'')+(source.itemUrl?'<a href="'+safeLink(source.itemUrl)+'" target="_blank" rel="noopener">Metadata</a>':'')+'</div>'+((caveats.length||license)?'<details class="um-source-notes"><summary>Record notes and terms</summary>'+(caveats.length?'<p>'+esc(caveats.join(' '))+'</p>':'')+(license?'<small>'+esc(license)+'</small>':'')+'</details>':'')+'</article>';
@@ -445,7 +445,7 @@
   function hitTest(px,py){
     var best=null,distance=14,s=scale(),wx=view.x+(px-W/2)/s,wy=view.y+(py-H/2)/s;
     function point(f){if(!allowed(f))return;var p=toPx(f.x,f.y),d=Math.hypot(p[0]-px,p[1]-py);if(d<distance){distance=d;best=f;}}
-    if(topic==='tour')tour.forEach(point);
+    places.filter(shownPlace).forEach(point);
     activeIds().forEach(function(id){var cfg=layers[id],state=data[id];if(!state||!state.features||cfg.kind!=='point'||view.z<cfg.minZ)return;visiblePoints(state).forEach(point);});if(best)return best;
     distance=7;
     activeIds().forEach(function(id){var cfg=layers[id],state=data[id];if(!state||!state.features||cfg.kind!=='line'||view.z<cfg.minZ)return;state.features.forEach(function(f){if(!allowed(f))return;if(wx<f.b[0]-8/s||wx>f.b[2]+8/s||wy<f.b[1]-8/s||wy>f.b[3]+8/s)return;f.rings.forEach(function(r){for(var i=1;i<r.length;i++){var a=toPx(r[i-1][0],r[i-1][1]),b=toPx(r[i][0],r[i][1]),dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/(dx*dx+dy*dy||1))),d=Math.hypot(px-a[0]-t*dx,py-a[1]-t*dy);if(d<distance){distance=d;best=f;}}});});});if(best)return best;
@@ -463,9 +463,9 @@
   var flyRaf=null;
   function flyTo(x,y,z){
     if(flyRaf)cancelAnimationFrame(flyRaf);z=Math.max(MINZ,Math.min(MAXZ,z));
-    if(reduced){view.x=x;view.y=y;view.z=z;clampView();noteMoved();requestDraw();return;}
+    if(reduced){view.x=x;view.y=y;view.z=z;clampView();noteMoved();renderResults();requestDraw();return;}
     var from={x:view.x,y:view.y,z:view.z},start=performance.now();
-    function frame(now){var t=Math.min(1,(now-start)/600),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;view.x=from.x+(x-from.x)*e;view.y=from.y+(y-from.y)*e;view.z=from.z+(z-from.z)*e;clampView();requestDraw();if(t<1)flyRaf=requestAnimationFrame(frame);else{flyRaf=null;noteMoved();}}
+    function frame(now){var t=Math.min(1,(now-start)/600),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;view.x=from.x+(x-from.x)*e;view.y=from.y+(y-from.y)*e;view.z=from.z+(z-from.z)*e;clampView();requestDraw();if(t<1)flyRaf=requestAnimationFrame(frame);else{flyRaf=null;noteMoved();renderResults();}}
     flyRaf=requestAnimationFrame(frame);
   }
   function resize(){
@@ -520,7 +520,7 @@
   document.addEventListener('keydown',function(e){if(HOST.querySelector('.um-photo-dialog').open)return;if(expanded&&e.key==='Tab'){var nodes=Array.from(shell.querySelectorAll('button,a[href],input,select,summary,[tabindex="0"]')).filter(function(n){if(n.hidden||n.disabled||!n.getClientRects().length)return false;for(var a=n.parentElement;a&&a!==shell;a=a.parentElement){if(a.tagName==='DETAILS'&&!a.open){var summary=a.querySelector(':scope > summary');if(!summary||!summary.contains(n))return false;}}return true;}),first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}if(e.key!=='Escape')return;if(expanded)toggleExpanded();else if(selection&&!document.fullscreenElement)closePanel(true);});
   HOST.querySelector('.um-source-link').addEventListener('click',function(){HOST.querySelector('.um-data').open=true;});
   function restoreFeature(){
-    if(!requestedFeature)return;var all=topic==='tour'?tour:activeIds().reduce(function(a,id){return a.concat(data[id]&&data[id].features||[]);},[]),f=all.find(function(f){return f.id===requestedFeature;});
+    if(!requestedFeature)return;var all=places.filter(function(f){return f.topic===topic;}).concat(activeIds().reduce(function(a,id){return a.concat(data[id]&&data[id].features||[]);},[])),f=all.find(function(f){return f.id===requestedFeature;});
     if(!f&&requestedFeature.indexOf('depth-')===0&&data.depth&&data.depth.raster){var parts=requestedFeature.split('-'),r=data.depth.raster,row=+parts[1],col=+parts[2];if(row>=0&&row<r.height&&col>=0&&col<r.width){var ft=r.values[row*r.width+col],b=rasterBounds(r);if(ft!=null)f={id:requestedFeature,layer:'depth',kind:'point',type:'bdepth',x:b[0]+(col+.5)/r.width*(b[2]-b[0]),y:b[1]+(row+.5)/r.height*(b[3]-b[1]),p:{},name:'About '+fmt.format(ft)+' ft to bedrock',facts:[['Modeled depth',ft+' ft'],['Model','MGS D-03, 2025'],['Display cell','About 400 ft across (120 m)'],['Meaning','Regional estimate, rounded to feet']],blurb:'This regional depth model estimates the thickness of Quaternary deposits above bedrock. It is resampled from the native 30-m model. Blank areas have no modeled depth in this export. A rounded value of zero does not establish exposed rock at a property. Utility depth, fill and groundwater level are separate.'};}}
     if(f){if(!allowed(f)){showInactive=true;var inactive=HOST.querySelector('[data-um-inactive]');inactive.setAttribute('aria-pressed','true');updateLegend();}requestedFeature=null;restoring=false;lastSelected=f.id;openPanel(f,false);(!compactLayout()?PANEL:HOST).scrollIntoView({block:'start',behavior:'instant'});PANEL.querySelector('.um-pback').focus({preventScroll:true});}
   }
@@ -538,8 +538,8 @@
   }
   var hash=location.hash,m=hash.match(/map=([\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)(\/sat)?/),params=new URLSearchParams(hash.replace(/^#/,''));
   if(m&&isFinite(+m[1])&&isFinite(+m[2])&&isFinite(+m[3])&&Math.abs(+m[2])<=85&&Math.abs(+m[3])<=180){view.z=+m[1];view.y=my(+m[2]);view.x=mx(+m[3]);clampView();savedView=true;SAT.on=!!m[4];}
-  requestedFeature=params.get('feature');var pinValue=(params.get('pin')||'').match(/^(-?[\d.]+)\/(-?[\d.]+)$/);if(pinValue&&isFinite(+pinValue[1])&&isFinite(+pinValue[2])&&Math.abs(+pinValue[1])<=85&&Math.abs(+pinValue[2])<=180)requestedPin={lat:+pinValue[1],lon:+pinValue[2]};var initial=params.get('topic');if(topics[initial])topic=initial;showInactive=params.get('inactive')==='1';
-  if(params.has('layers')){var enabled=params.get('layers').split(',');topics[topic].layers.forEach(function(id){layers[id].on=enabled.indexOf(id)>=0;});}
+  requestedFeature=params.get('feature');var pinValue=(params.get('pin')||'').match(/^(-?[\d.]+)\/(-?[\d.]+)$/);if(pinValue&&isFinite(+pinValue[1])&&isFinite(+pinValue[2])&&Math.abs(+pinValue[1])<=85&&Math.abs(+pinValue[2])<=180)requestedPin={lat:+pinValue[1],lon:+pinValue[2]};var initial=params.get('topic'),oldPlace=places.find(function(f){return f.id===requestedFeature;});if(oldPlace)topic=oldPlace.topic;else if(topics[initial])topic=initial;showInactive=params.get('inactive')==='1';
+  if(params.has('layers')&&initial!=='tour'){var enabled=params.get('layers').split(',');topics[topic].layers.forEach(function(id){layers[id].on=enabled.indexOf(id)>=0;});}
   if(requestedFeature){var selectedLayer=Object.keys(layers).find(function(id){return requestedFeature.indexOf(id+'-')===0;});if(selectedLayer){layers[selectedLayer].on=true;if(topics[topic].layers.indexOf(selectedLayer)<0)topic=Object.keys(topics).find(function(t){return topics[t].layers.indexOf(selectedLayer)>=0;})||topic;}}
   setTopic(topic,false);HOST.querySelectorAll('[data-um-base]').forEach(function(b){b.setAttribute('aria-pressed',String((b.dataset.umBase==='sat')===SAT.on));});
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(entries){if(entries.some(function(e){return e.isIntersecting;})){start();io.disconnect();}},{rootMargin:'500px'});io.observe(HOST);}else start();

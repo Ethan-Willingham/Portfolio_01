@@ -96,7 +96,7 @@
   /* sources */
   .srcs { margin: 4rem 0 2rem; }
   </style>
-  <link rel="stylesheet" href="under-map.css?v=20261003-5">
+  <link rel="stylesheet" href="under-map.css?v=20261003-6">
 </head>
 <body>
   <script src="/js/archive-banner.js"></script>
@@ -123,8 +123,7 @@
     </header>
 
     <nav class="um-topics" aria-label="Choose a system">
-      <button type="button" data-um-topic="tour" aria-pressed="true">Start here<span class="um-topic-count" aria-hidden="true"></span></button>
-      <button type="button" data-um-topic="water" aria-pressed="false">Drinking water<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="water" aria-pressed="true">Drinking water<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="wastewater" aria-pressed="false">Sewage<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="storm" aria-pressed="false">Rain &amp; river<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="power" aria-pressed="false">Power<span class="um-topic-count" aria-hidden="true"></span></button>
@@ -148,8 +147,8 @@
     <details class="um-layers">
       <summary>Map details <small>Layers and legend</small></summary>
       <div class="um-topic-copy">
-        <h3>Start with a place</h3>
-        <p>Choose a stop to see the system it belongs to, the published records and a photograph when one is available.</p>
+        <h3>The drinking-water system</h3>
+        <p>Treatment plants and towers supply the system. Minneapolis publishes connection-material points; Bloomington and Eagan publish water-main and lateral alignments.</p>
       </div>
       <div class="um-inactive" hidden><button type="button" data-um-inactive aria-pressed="false">Include inactive records</button><p>Show reported former, removed, planned or offline assets alongside operating records.</p></div>
       <div class="um-layer-list" aria-label="Optional map layers"></div>
@@ -168,7 +167,7 @@
           <button type="button" data-um-scope="view" aria-pressed="false">In this view</button>
           <button type="button" data-um-scope="all" aria-pressed="true">Browse records</button>
         </div>
-        <p class="um-results-heading" id="um-results-heading" aria-live="polite">Places to begin</p>
+        <p class="um-results-heading" id="um-results-heading" aria-live="polite">Published places and records</p>
         <p class="um-browse-note" hidden></p>
         <div class="um-results" id="um-results" aria-labelledby="um-results-heading"></div>
         <button class="um-results-more" type="button" hidden>Show more places</button>
@@ -387,8 +386,8 @@
       }, { passive: true });
     })();
   </script>
-  <script src="under-data.js?v=20261003-3" defer></script>
-  <script src="under-map.js?v=20261003-5" defer></script>
+  <script src="under-data.js?v=20261003-6" defer></script>
+  <script src="under-map.js?v=20261003-6" defer></script>
   <script src="under-locate.js?v=20261003-3" defer></script>
   <script src="/js/backtotop.js"></script>
 

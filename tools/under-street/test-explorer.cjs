@@ -53,19 +53,33 @@ async function assertViewportFit(page,size) {
   assert.ok(stage.height>=239,'Map remains usable in the compact frame');
   assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false,'Viewport fit does not require fullscreen');
 }
+async function assertTopicColors(page){
+  const contrast=await page.locator('.um-topics button').evaluateAll(bs=>{
+    const c=document.createElement('canvas');c.width=c.height=1;const ctx=c.getContext('2d');
+    function rgb(color){ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return Array.from(ctx.getImageData(0,0,1,1).data).slice(0,3);}
+    function luminance(v){return v.map(x=>{x/=255;return x<=0.04045?x/12.92:Math.pow((x+0.055)/1.055,2.4);}).reduce((sum,x,i)=>sum+x*[0.2126,0.7152,0.0722][i],0);}
+    return bs.map(b=>{const s=getComputedStyle(b),text=luminance(rgb(s.color)),bg=luminance(rgb(s.backgroundColor));return {topic:b.dataset.umTopic,ratio:(Math.max(text,bg)+0.05)/(Math.min(text,bg)+0.05),accent:s.getPropertyValue('--topic-color').trim()};});
+  });
+  for(const b of contrast){assert.ok(b.accent,'Every system has its map color');assert.ok(b.ratio>=4.5,'Readable '+b.topic+' button: '+b.ratio);}
+}
 (async()=>{try {
   await new Promise(r=>server.listen(0,'127.0.0.1',r));url='http://127.0.0.1:'+server.address().port;
   browser=await chromium.launch(launchOptions);
   const desktop={width:1440,height:800}, {page,context}=await pageFor(desktop);
   await page.waitForFunction(()=>__mapAudit.state().data.contextRoads);
   const initial=await page.evaluate(()=>__mapAudit.state());
-  assert.equal(initial.topic,'tour');assert.equal(initial.selected,null);
-  assert.ok(!initial.data.services&&!initial.data.interceptors,'opening the map does not fetch all systems');
-  assert.equal(await page.locator('.um-topics button').count(),8);
+  assert.equal(initial.topic,'water');assert.equal(initial.selected,null);
+  assert.ok(!initial.data.interceptors&&!initial.data.pipelines,'opening the map fetches its selected system');
+  assert.equal(await page.locator('.um-topics button').count(),7);assert.equal(await page.locator('[data-um-topic="tour"]').count(),0,'No Start here section');
   assert.equal(await page.locator('.rail,.top-nav').count(),0,'Removed article navigation stays removed');
   assert.doesNotMatch(await page.locator('.u-hero').textContent(),/field guide/i);
+  await page.locator('.um-layers').evaluate(d=>d.open=true);
+  await page.locator('[data-layer="waterworks"]').click();assert.equal(await page.locator('[data-id="fridley"]').count(),0,'Named places respect their layer switch');
+  await page.locator('[data-layer="waterworks"]').click();assert.equal(await page.locator('[data-id="fridley"]').count(),1);
+  await page.locator('.um-layers').evaluate(d=>d.open=false);
   await assertViewportFit(page,desktop);
   await page.locator('#undermap').screenshot({path:path.join(output,'desktop-start.png')});
+  await page.locator('[data-um-topic="networks"]').click();
   await page.locator('[data-id="511"]').click();
   assert.match(await page.locator('.um-ptitle').textContent(),/511/);
   await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.complete);
@@ -81,7 +95,7 @@ async function assertViewportFit(page,size) {
     await page.locator('[data-um-topic="'+topic+'"]').click();
     await page.waitForFunction(()=>Object.values(__mapAudit.state().data).every(d=>!d.loading&&!d.pending));
     assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,topic);
-    await assertViewportFit(page,desktop);
+    await assertViewportFit(page,desktop);await assertTopicColors(page);
     await page.locator('#undermap').screenshot({path:path.join(output,topic+'.png')});
   }
   const loaded=await page.evaluate(()=>__mapAudit.state());console.log('Loaded systems:',JSON.stringify(loaded.data));
@@ -107,7 +121,8 @@ async function assertViewportFit(page,size) {
     await page.waitForFunction(()=>document.querySelector('.um-result-thumb img')?.naturalWidth>0);
     await page.waitForTimeout(650);
     let frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Delayed photographs keep the direct map link entirely visible with '+motion);
-    await page.locator('[data-id="511"]').click();await page.waitForFunction(()=>__mapAudit.state().view.z>=15.99);
+    await page.locator('[data-um-topic="networks"]').click();
+  await page.locator('[data-id="511"]').click();await page.waitForFunction(()=>__mapAudit.state().view.z>=15.99);
     await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.naturalWidth>0);
     frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Selecting a place after loading preserves the entire demo');
     await context.close();
@@ -119,7 +134,7 @@ async function assertViewportFit(page,size) {
       const column=await page.locator('.descent > .col').boundingBox();assert.ok(Math.abs(column.x+column.width/2-size.width/2)<1,'Article remains centered');
       await page.locator('[data-um-topic="ground"]').click();await page.waitForFunction(()=>Object.values(__mapAudit.state().data).every(d=>!d.loading&&!d.pending));
       await assertViewportFit(page,size);
-      await page.locator('[data-um-topic="tour"]').click();
+      await page.locator('[data-um-topic="water"]').click();
     }
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no page overflow '+JSON.stringify(size));
     const targets=await page.locator('#undermap button:visible').evaluateAll(bs=>bs.filter(b=>{const r=b.getBoundingClientRect();return r.width<43.5||r.height<43.5;}).map(b=>b.outerHTML));

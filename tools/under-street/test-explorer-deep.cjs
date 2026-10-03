@@ -119,7 +119,7 @@ let url;
   }
   const mapContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),mapLink=await mapContext.newPage();
   await mapLink.goto(url+'/archive/under-the-street/under-the-street.html#map=10.2/44.985/-93.19&topic=tour');
-  await mapLink.waitForFunction(()=>window.__mapAudit&&document.querySelectorAll('.um-result').length===11);
+  await mapLink.waitForFunction(()=>window.__mapAudit?.state().topic==='water'&&document.querySelectorAll('.um-result').length>0);
   const mapLanding=await mapLink.locator('#undermap').boundingBox();assert.ok(mapLanding.y>=-2&&mapLanding.y<90,'Shared map view lands on the explorer');await mapContext.close();
   // Read-only data fetch failures have an explicit retry path.
   let failed=false;
