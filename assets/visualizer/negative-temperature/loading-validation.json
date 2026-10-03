@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-03",
+  "cases": [
+    {
+      "name": "Chrome native, worker available",
+      "startupMs": 7466,
+      "backend": "module worker",
+      "fallbackReason": null,
+      "openingSteps": 12000,
+      "hash": "2e875a84a74bd11997ff2eb907751a037427dd4cbbf3297540bfa369b048d807",
+      "pixels": {
+        "width": 2716,
+        "height": 1224,
+        "cssWidth": 1358,
+        "cssHeight": 612
+      },
+      "progressUpdates": 427,
+      "errors": []
+    },
+    {
+      "name": "Chrome worker silent",
+      "startupMs": 11704,
+      "backend": "main thread",
+      "fallbackReason": "Diagnostic worker did not respond.",
+      "openingSteps": 12000,
+      "hash": "2e875a84a74bd11997ff2eb907751a037427dd4cbbf3297540bfa369b048d807",
+      "pixels": {
+        "width": 2716,
+        "height": 1224,
+        "cssWidth": 1358,
+        "cssHeight": 612
+      },
+      "progressUpdates": 427,
+      "errors": []
+    },
+    {
+      "name": "Chrome worker constructor",
+      "startupMs": 7676,
+      "backend": "main thread",
+      "fallbackReason": "Worker blocked",
+      "openingSteps": 12000,
+      "hash": "2e875a84a74bd11997ff2eb907751a037427dd4cbbf3297540bfa369b048d807",
+      "pixels": {
+        "width": 2716,
+        "height": 1224,
+        "cssWidth": 1358,
+        "cssHeight": 612
+      },
+      "progressUpdates": 427,
+      "errors": []
+    },
+    {
+      "name": "Module fetch failure and reload recovery",
+      "startupMs": 11047,
+      "backend": "module worker",
+      "fallbackReason": null,
+      "openingSteps": 12000,
+      "hash": "2e875a84a74bd11997ff2eb907751a037427dd4cbbf3297540bfa369b048d807",
+      "pixels": {
+        "width": 2716,
+        "height": 1224,
+        "cssWidth": 1358,
+        "cssHeight": 612
+      },
+      "progressUpdates": 427,
+      "errors": []
+    },
+    {
+      "name": "Unanswered GPU request",
+      "boundedFailure": true,
+      "retryAvailable": true
+    },
+    {
+      "name": "WebKit native, worker available",
+      "startupMs": 11475,
+      "backend": "module worker",
+      "fallbackReason": null,
+      "openingSteps": 12000,
+      "hash": "1595f97553b947be5c384448a6622fe26ff39ce7ab6c91c8c90d4cee60cc5ecf",
+      "pixels": {
+        "width": 2716,
+        "height": 1224,
+        "cssWidth": 1358,
+        "cssHeight": 612
+      },
+      "progressUpdates": 427,
+      "errors": []
+    }
+  ],
+  "baseline": {
+    "busy": "true",
+    "phase": "Preparing the field",
+    "status": "Preparing a condensate with imaginary-time evolution."
+  }
+}

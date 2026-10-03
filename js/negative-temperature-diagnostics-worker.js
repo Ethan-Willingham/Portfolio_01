@@ -1,4 +1,4 @@
-import { measure } from './negative-temperature-model.js?v=3';
+import { measure } from './negative-temperature-model.js?v=4';
 
 self.onmessage = ({ data: { field, parameters, time } }) => {
   try {

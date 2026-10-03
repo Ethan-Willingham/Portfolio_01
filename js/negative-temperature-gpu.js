@@ -1,4 +1,4 @@
-import { CONFIG, initialField, protocol } from './negative-temperature-model.js?v=3';
+import { CONFIG, initialField, protocol } from './negative-temperature-model.js?v=4';
 
 const complex = `fn mul(a:vec2f,b:vec2f)->vec2f{return vec2f(a.x*b.x-a.y*b.y,a.x*b.y+a.y*b.x);}`;
 export function fftShader(n, axis, inverse) {

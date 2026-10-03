@@ -11,8 +11,8 @@
   "render": {
     "width": 2716,
     "height": 1224,
-    "median": 1.1999999284744263,
-    "p95": 1.7999999523162842,
+    "median": 0.8999999761581421,
+    "p95": 2.200000047683716,
     "units": "ms, queue completion including CPU submission",
     "samples": 25
   },

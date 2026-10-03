@@ -1,5 +1,6 @@
-import { createRoom, viewHalfSpan } from './negative-temperature-room.js?v=3';
-import { DEFAULT_SEED } from './negative-temperature-model.js?v=3';
+import { createRoom, viewHalfSpan } from './negative-temperature-room.js?v=4';
+import { DEFAULT_SEED } from './negative-temperature-model.js?v=4';
+import { withDeadline } from './negative-temperature-loading.js?v=4';
 
 const $ = id => document.getElementById(id), piece = $('nt-piece'), canvas = $('nt-canvas');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -11,10 +12,13 @@ const listen = (el, event, fn) => { el.addEventListener(event, fn); cleanup.push
 const fmt = (v, places = 3) => Number.isFinite(v) ? v.toFixed(places) : 'Unavailable';
 function controls() { $('nt-play').textContent = paused ? 'Play' : 'Pause'; }
 function fail(message) {
+  if (fallback || disposed) return;
   fallback = true; paused = true; stop(); $('nt-fallback').hidden = false; canvas.hidden = true;
   $('nt-status').hidden = false; $('nt-status').textContent = `${message} Still recorded from this solver; no live simulation.`;
   $('nt-phase').textContent = 'Recorded solver image'; piece.setAttribute('aria-busy', 'false');
-  $('nt-play').disabled = true; $('nt-restart').disabled = true;
+  $('nt-play').disabled = true; $('nt-restart').disabled = false;
+  $('nt-restart').textContent = 'Reload'; $('nt-restart').onclick = () => location.reload();
+  room?.dispose(); room = null; target?.destroy(); target = null; context?.unconfigure(); device?.destroy();
 }
 function resize() {
   if (!device || fallback || disposed) return;
@@ -24,7 +28,7 @@ function resize() {
     canvas.width = width; canvas.height = height; target?.destroy();
     target = device.createTexture({ size: [width, height], format: 'rgba16float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC });
     room?.resize({ width, height, dpr });
-    if (presentation) presentation.group = device.createBindGroup({ layout: presentation.pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: target.createView() }] });
+    if (presentation) presentation.group = device.createBindGroup({ layout: presentation.layout, entries: [{ binding: 0, resource: target.createView() }] });
   }
   if (room) {
     const span = viewHalfSpan({ width: box.width, height: box.height }, room.snapshot().parameters);
@@ -71,7 +75,7 @@ function tick(time) {
     while (accumulator >= 1 / 60 && count < 4) { ambientTime += 1 / 60; room.step({ dtSeconds: 1 / 60, elapsedSeconds: ambientTime, scoreSeconds: ambientTime }); accumulator -= 1 / 60; count++; }
     if (count === 4) accumulator = Math.min(accumulator, 1 / 60);
     const start = performance.now(); draw(); gpuBusy = true;
-    device.queue.onSubmittedWorkDone().then(() => {
+    withDeadline(device.queue.onSubmittedWorkDone(), 15000, 'The GPU stopped responding.').then(() => {
       timings.push(performance.now() - start); if (timings.length > 300) timings.shift(); gpuBusy = false;
       if (timings.length >= 60 && pixelRatioCap > 2 && [...timings.slice(-60)].sort((a,b)=>a-b)[30] > 24) { pixelRatioCap = 2; resize(); }
     }).catch(e => fail(e.message));
@@ -85,21 +89,31 @@ async function restart() {
   if (!/^[0-9a-f]{1,64}$/i.test(seed)) { $('nt-seed').setCustomValidity('Enter 1 to 64 hexadecimal characters.'); $('nt-seed').reportValidity(); return; }
   $('nt-seed').setCustomValidity(''); starting = true; stop(); $('nt-restart').disabled = true; $('nt-play').disabled = true; piece.setAttribute('aria-busy', 'true');
   $('nt-status').hidden = false; $('nt-status').textContent = 'Preparing a condensate with imaginary-time evolution.';
-  await device.queue.onSubmittedWorkDone(); room?.dispose(); room = null;
   try {
-    room = await createRoom({ device, seed, quality: 'medium', assetBaseURL: new URL('../assets/visualizer/negative-temperature/', import.meta.url).href });
-    if (disposed) { room.dispose(); return; }
+    await withDeadline(device.queue.onSubmittedWorkDone(), 15000, 'The GPU did not become ready.'); room?.dispose(); room = null;
+    room = await createRoom({ device, seed, quality: 'medium', assetBaseURL: new URL('../assets/visualizer/negative-temperature/', import.meta.url).href,
+      onProgress({ phase, completed, total }) {
+        if (disposed || fallback) throw new Error('Viewer closed.');
+        $('nt-status').textContent = phase === 'preparing' ? `Preparing the field, ${Math.round(100 * completed / total)}%.` : phase === 'measuring' ? 'Reading the prepared field.' : 'Starting the superfluid.';
+        $('nt-phase').textContent = phase === 'measuring' ? 'Reading the field' : 'Preparing the field';
+        piece.dispatchEvent(new Event('negative-temperature-progress'));
+      },
+    });
+    if (disposed || fallback) { room.dispose(); room = null; return; }
     $('nt-status').textContent = 'Advancing the first paddle sweep.';
     const p = room.snapshot().parameters;
     resize();
     await room.debugAdvance(Math.round(p.standaloneStartTime / p.dt), ({ completed, total }) => {
+      if (disposed || fallback) return;
+      $('nt-phase').textContent = 'Stirring';
       $('nt-status').textContent = `Stirring the field, ${Math.round(100 * completed / total)}%.`;
+      piece.dispatchEvent(new Event('negative-temperature-progress'));
       if (!paused) draw();
     });
-    if (disposed) { room.dispose(); return; }
+    if (disposed || fallback) { room?.dispose(); room = null; return; }
     ambientTime = 0; $('nt-status').hidden = true; $('nt-restart').disabled = false; $('nt-play').disabled = false; piece.setAttribute('aria-busy', 'false');
     room.setDisplay({ mode: $('nt-view').value, signs: $('nt-signs').checked }); resize(); readouts();
-  } catch (e) { fail(e.message); }
+  } catch (e) { if (!disposed) fail(e.message); }
   finally { starting = false; updateLoop(); }
 }
 async function fullscreen() {
@@ -140,8 +154,10 @@ window.NegativeTemperature = {
 };
 try {
   if (!navigator.gpu) throw new Error('WebGPU is unavailable.');
-  const adapter = await navigator.gpu.requestAdapter(); if (!adapter) throw new Error('No WebGPU adapter is available.');
-  device = await adapter.requestDevice();
+  const adapter = await withDeadline(navigator.gpu.requestAdapter(), 15000, 'The browser did not provide a GPU.'); if (!adapter) throw new Error('No WebGPU adapter is available.');
+  if (disposed) throw new Error('Viewer closed.');
+  device = await withDeadline(adapter.requestDevice(), 15000, 'The browser did not finish starting the GPU.');
+  if (disposed) { device.destroy(); throw new Error('Viewer closed.'); }
   device.lost.then(info => { if (!disposed) fail(`The GPU device was lost (${info.reason}).`); });
   device.addEventListener('uncapturederror', e => { console.error('Superfluid GPU validation:', e.error.message); fail('The GPU could not run this solver.'); });
   const info = adapter.info;
@@ -152,8 +168,9 @@ try {
 @vertex fn vertex(@builtin(vertex_index) i:u32)->@builtin(position) vec4f {let a=array<vec2f,3>(vec2f(-1.,-1.),vec2f(3.,-1.),vec2f(-1.,3.));return vec4f(a[i],0.,1.);}
 fn srgb(x:vec3f)->vec3f{return select(1.055*pow(x,vec3f(1./2.4))-.055,12.92*x,x<=vec3f(.0031308));}
 @fragment fn fragment(@builtin(position) xy:vec4f)->@location(0) vec4f {let linear=textureLoad(scene,vec2i(xy.xy),0).rgb;return vec4f(srgb(linear/(1.+linear)),1.);}` });
-  presentation = { pipeline: device.createRenderPipeline({ layout: 'auto', vertex: { module, entryPoint: 'vertex' }, fragment: { module, entryPoint: 'fragment', targets: [{ format }] } }), group: null };
+  const layout = device.createBindGroupLayout({ entries: [{ binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'unfilterable-float' } }] });
+  presentation = { layout, pipeline: device.createRenderPipeline({ layout: device.createPipelineLayout({ bindGroupLayouts: [layout] }), vertex: { module, entryPoint: 'vertex' }, fragment: { module, entryPoint: 'fragment', targets: [{ format }] } }), group: null };
   const urlSeed = new URL(location.href).searchParams.get('seed'); $('nt-seed').value = urlSeed && /^[0-9a-f]{1,64}$/i.test(urlSeed) ? urlSeed : DEFAULT_SEED;
   await restart();
-} catch (e) { fail(e.message); }
+} catch (e) { if (!disposed) fail(e.message); }
 controls();

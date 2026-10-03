@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="negative-temperature.css?v=3">
+  <link rel="stylesheet" href="negative-temperature.css?v=4">
 </head>
 <body class="nt-page">
   <div class="site-wrapper">
@@ -68,6 +68,30 @@
     </main>
     <footer class="site-footer"><a href="/">Home</a></footer>
   </div>
-  <script type="module" src="js/negative-temperature.js?v=3"></script>
+  <script>
+    (() => {
+      const piece = document.getElementById('nt-piece');
+      let timer;
+      const unavailable = () => {
+        window.NegativeTemperature?.dispose();
+        document.getElementById('nt-canvas').hidden = true;
+        document.getElementById('nt-fallback').hidden = false;
+        const status = document.getElementById('nt-status');
+        status.hidden = false;
+        status.textContent = 'The live simulation could not start. Reload to retry. This is a recorded solver image.';
+        document.getElementById('nt-phase').textContent = 'Recorded solver image';
+        document.getElementById('nt-play').disabled = true;
+        const retry = document.getElementById('nt-restart');
+        retry.disabled = false; retry.textContent = 'Reload'; retry.onclick = () => location.reload();
+        piece.setAttribute('aria-busy', 'false');
+      };
+      const heartbeat = () => { clearTimeout(timer); timer = setTimeout(unavailable, 30000); };
+      piece.addEventListener('negative-temperature-progress', heartbeat);
+      heartbeat();
+      import('./js/negative-temperature.js?v=4').catch(error => { console.error('Superfluid startup:', error); unavailable(); }).finally(() => {
+        clearTimeout(timer); piece.removeEventListener('negative-temperature-progress', heartbeat);
+      });
+    })();
+  </script>
 </body>
 </html>

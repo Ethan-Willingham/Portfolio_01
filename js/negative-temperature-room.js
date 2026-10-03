@@ -1,5 +1,6 @@
-import { CONFIG, DEFAULT_SEED, healingLength, protocol, suspectedAnnihilations } from './negative-temperature-model.js?v=3';
-import { GPUSolver } from './negative-temperature-gpu.js?v=3';
+import { CONFIG, DEFAULT_SEED, healingLength, measure, protocol, suspectedAnnihilations } from './negative-temperature-model.js?v=4';
+import { GPUSolver } from './negative-temperature-gpu.js?v=4';
+import { withDeadline } from './negative-temperature-loading.js?v=4';
 
 export const roomInfo = {
   apiVersion: 1, id: 'negative-temperature', title: 'Negative temperature',
@@ -61,44 +62,65 @@ export function viewHalfSpan({ width, height }, parameters) {
   return Math.max(parameters.radiusX / width, parameters.radiusY / height) * Math.min(width, height) * 1.1;
 }
 
-export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'medium', assetBaseURL }) {
+export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'medium', assetBaseURL, onProgress }) {
   if (!device) throw new Error('WebGPU is required for the live Gross-Pitaevskii model.');
   if (!['low', 'medium', 'high'].includes(quality)) throw new Error('Unknown quality tier.');
   if (!/^[0-9a-f]{1,64}$/i.test(seed)) throw new Error('Seed must be a fixed hex string.');
   // All tiers preserve the validated 512 grid and physical parameters.
+  onProgress?.({ phase: 'compiling' });
   const p = { ...CONFIG }, solver = new GPUSolver(device, p, seed);
   const view = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   const signs = device.createBuffer({ size: 256 * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   const module = device.createShaderModule({ code: renderer });
-  const pipeline = device.createRenderPipeline({ layout: 'auto', vertex: { module, entryPoint: 'vertex' }, fragment: { module, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } });
-  const groups = solver.fields.map(buffer => device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [
+  const viewLayout = device.createBindGroupLayout({ entries: [
+    { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+    { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform', minBindingSize: 48 } },
+    { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+  ] });
+  let pipeline;
+  try { pipeline = device.createRenderPipeline({ layout: device.createPipelineLayout({ bindGroupLayouts: [viewLayout] }), vertex: { module, entryPoint: 'vertex' }, fragment: { module, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } }); }
+  catch (error) { solver.dispose(); view.destroy(); signs.destroy(); throw error; }
+  const groups = solver.fields.map(buffer => device.createBindGroup({ layout: viewLayout, entries: [
     { binding: 0, resource: { buffer } }, { binding: 1, resource: { buffer: view } }, { binding: 2, resource: { buffer: signs } },
   ] }));
   let disposed = false, accumulator = 0, busy = false, diag = null, initialNorm = null, lastMeasurement = 0, lastStep = 0, baselineEnergy = null, estimatedAnnihilations = 0;
   let width = 1, height = 1, displayMode = 0, showSigns = false;
   const assetURL = new URL(assetBaseURL || '../assets/visualizer/negative-temperature/', import.meta.url).href;
-  let worker;
-  try { worker = new Worker(new URL('./negative-temperature-diagnostics-worker.js?v=3', import.meta.url), { type: 'module' }); }
-  catch (error) { solver.dispose(); view.destroy(); signs.destroy(); throw error; }
   let pendingMeasurement = null, workerFailure = null;
-  worker.onmessage = ({ data }) => {
+  let worker;
+  function disableWorker(error) {
+    workerFailure = error.message; worker?.terminate(); worker = null;
     const pending = pendingMeasurement; pendingMeasurement = null;
-    if (data.error) pending?.reject(new Error(data.error));
-    else pending?.resolve(data.diagnostics);
-  };
-  worker.onerror = event => { workerFailure = new Error(event.message || 'Diagnostic worker failed.'); pendingMeasurement?.reject(workerFailure); pendingMeasurement = null; };
+    if (pending) { clearTimeout(pending.timer); pending.fallback(); }
+  }
+  try {
+    worker = new Worker(new URL('./negative-temperature-diagnostics-worker.js?v=4', import.meta.url), { type: 'module' });
+    worker.onmessage = ({ data }) => {
+      const pending = pendingMeasurement; pendingMeasurement = null;
+      if (!pending) return;
+      clearTimeout(pending.timer);
+      if (data.error) pending.reject(new Error(data.error));
+      else pending.resolve(data.diagnostics);
+    };
+    worker.onerror = event => { event.preventDefault(); disableWorker(new Error(event.message || 'Diagnostic worker failed.')); };
+    worker.onmessageerror = () => disableWorker(new Error('Diagnostic worker response could not be read.'));
+  } catch (error) { disableWorker(error); }
   function measureInWorker(field, time) {
+    if (!worker) return Promise.resolve(measure(field, p, time));
     return new Promise((resolve, reject) => {
-      if (workerFailure) { reject(workerFailure); return; }
-      pendingMeasurement = { resolve, reject };
-      worker.postMessage({ field, parameters: p, time }, [field.buffer]);
+      const fallback = () => { try { resolve(measure(field, p, time)); } catch (error) { reject(error); } };
+      const timer = setTimeout(() => disableWorker(new Error('Diagnostic worker did not respond.')), 4000);
+      pendingMeasurement = { resolve, reject, fallback, timer };
+      // Retain the readback for the identical CPU calculation if the worker cannot reply.
+      try { worker.postMessage({ field, parameters: p, time }); }
+      catch (error) { disableWorker(error); }
     });
   }
   async function diagnostics() {
     if (busy || disposed) return diag;
     busy = true;
     try {
-      const { field, time, steps } = await solver.readbackState(); if (disposed) return diag;
+      const { field, time, steps } = await withDeadline(solver.readbackState(), 15000, 'The GPU did not return the superfluid field.'); if (disposed) return diag;
       const measured = await measureInWorker(field, time); if (disposed) return diag;
       if (initialNorm === null) initialNorm = measured.norm;
       const localTime = time % p.phraseDuration;
@@ -117,9 +139,15 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
     } finally { busy = false; }
   }
   try {
-    for (let i = 0; i < p.preparationSteps; i += 128) { solver.advance(Math.min(128, p.preparationSteps - i), { imaginary: true }); await device.queue.onSubmittedWorkDone(); }
+    for (let i = 0; i < p.preparationSteps; i += 32) {
+      const count = Math.min(32, p.preparationSteps - i);
+      solver.advance(count, { imaginary: true });
+      await withDeadline(device.queue.onSubmittedWorkDone(), 15000, 'The GPU stopped responding while preparing the field.');
+      onProgress?.({ phase: 'preparing', completed: i + count, total: p.preparationSteps });
+    }
+    onProgress?.({ phase: 'measuring' });
     await diagnostics();
-  } catch (e) { worker.terminate(); solver.dispose(); view.destroy(); signs.destroy(); throw e; }
+  } catch (e) { worker?.terminate(); solver.dispose(); view.destroy(); signs.destroy(); throw e; }
   return {
     resize(size) { width = Math.max(1, size.width); height = Math.max(1, size.height); },
     step({ dtSeconds }) {
@@ -144,12 +172,12 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
         dx: p.side / p.grid, healingLength: healingLength(p), healingLengthCells: healingLength(p) / (p.side / p.grid),
         phase: protocol(solver.time, p).phase, temperatureStatus: 'Temperature not estimated',
         diagnosticAgeSteps: solver.steps - lastStep, diagnosticAgeSeconds: (performance.now() - lastMeasurement) / 1000,
-        diagnostics: diag, assetBaseURL: assetURL };
+        diagnostics: diag, diagnosticsBackend: worker ? 'module worker' : 'main thread', diagnosticsFallbackReason: workerFailure, assetBaseURL: assetURL };
     },
     async debugReadback() { await diagnostics(); const { field, time, steps } = await solver.readbackState(); return { field, grid: p.grid, parameters: { ...p }, time, steps, diagnostics: diag }; },
     setDisplay({ mode = 'density', signs: enabled = false }) { displayMode = ({ density: 0, phase: 1, velocity: 2 })[mode] ?? 0; showSigns = enabled; },
     // Test/recording accelerator: exactly the same real-time solver sequence.
-    async debugAdvance(count, onProgress) { const total = count; while (count > 0 && !disposed) { const batch = Math.min(128, count); solver.advance(batch); count -= batch; await device.queue.onSubmittedWorkDone(); onProgress?.({ completed: total - count, total }); } await diagnostics(); },
-    dispose() { if (disposed) return; disposed = true; pendingMeasurement?.reject(new Error('Room disposed.')); pendingMeasurement = null; worker.terminate(); solver.dispose(); view.destroy(); signs.destroy(); },
+    async debugAdvance(count, onProgress) { const total = count; while (count > 0 && !disposed) { const batch = Math.min(32, count); solver.advance(batch); count -= batch; await withDeadline(device.queue.onSubmittedWorkDone(), 15000, 'The GPU stopped responding while stirring the field.'); onProgress?.({ completed: total - count, total }); } await diagnostics(); },
+    dispose() { if (disposed) return; disposed = true; if (pendingMeasurement) { clearTimeout(pendingMeasurement.timer); pendingMeasurement.reject(new Error('Room disposed.')); pendingMeasurement = null; } worker?.terminate(); solver.dispose(); view.destroy(); signs.destroy(); },
   };
 }

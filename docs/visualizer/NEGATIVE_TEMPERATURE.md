@@ -76,7 +76,7 @@ C2 averages the sign product with the two nearest neighbors. A graph connects sa
 
 Circulation is reported in quanta of 2 pi within the detection region. Core count can change through annihilation, nucleation, edge loss, or crossing the observation mask. Candidate annihilations are opposite-sign disappearances close to each other between samples, after same-sign position matching within three units. They can miss events and confuse rapid movement or boundary loss. No causal energy decomposition is claimed from this counter.
 
-Energy uses a CPU f64 spectral transform of the actual GPU field, including the instantaneous paddle potential. A dedicated module worker performs this calculation and core detection, keeping the larger-grid diagnostics off the UI thread. Moving paddles do work. A separate forcing test compares energy change with integral rho dV/dt. The post-withdrawal energy-drift reference resets during each forced interval. Compressible sound remains in the conservative field, and annihilation can transfer vortex energy into sound. No damping is required for a vortex count to fall.
+Energy uses a CPU f64 spectral transform of the actual GPU field, including the instantaneous paddle potential. A dedicated module worker normally performs this calculation and core detection, keeping the larger-grid diagnostics off the UI thread. If the worker cannot start, fails, or does not reply within four seconds, the room terminates it and runs the identical f64 measurement on the main thread. The readback is retained until measurement finishes. Snapshot reports `diagnosticsBackend` and `diagnosticsFallbackReason`. This fallback can briefly interrupt UI responsiveness during a measurement, but does not alter physics or normalize the field. Moving paddles do work. A separate forcing test compares energy change with integral rho dV/dt. The post-withdrawal energy-drift reference resets during each forced interval. Compressible sound remains in the conservative field, and annihilation can transfer vortex energy into sound. No damping is required for a vortex count to fall.
 
 Diagnostics are sampled asynchronously, normally every three seconds (six for low quality). Snapshot reports the integer step and simulation time at readback, and both age in steps and age in wall seconds. Readbacks are serialized. Display filtering never feeds back into diagnostic data.
 
@@ -110,6 +110,8 @@ The standalone host tone maps once with linear Reinhard, then performs sRGB tran
 
 The original quiet opening made the piece appear inactive. The standalone host now computes the first 12000 real steps at the current timestep, opening midway through the first sweep at time 48. It draws the evolving field and a progress percentage during that pre-roll, then advances at three model units per display second. This uses actual solver evolution. Creation of the reusable room still returns the prepared ground state; the pre-roll belongs to the standalone host. Restart repeats the same preparation and pre-roll.
 
+Preparation and pre-roll use batches of at most 32 steps and show progress from the first preparation batch. Previously a worker that never replied left initialization awaiting its first diagnostic forever, with the phase label still reading Preparing the field. The loading regression reproduces that exact v3 state with a silent-worker fixture. The current version completes with either worker or main-thread measurement. GPU adapter/device requests, queue completion and readback each have a 15-second deadline. Failed initialization releases owned GPU resources and offers Reload beside the attributed recorded field image. A small page loader catches module download failures and watches for 30 seconds without preparation progress, so an entry-module failure also has a visible retry path.
+
 Pause is separate from hidden/offscreen suspension. Reduced motion starts with a computed still and Play. Restart prepares the same fixed seed again and preserves the manual pause state. The offline hex seed controls only a global initial phase, through FNV-1a and Mulberry32; it is not a verified beacon or an independently measured quantum random event. Same-device restart is tested, while floating-point chaos prevents a cross-device exact replay promise.
 
 The host uses fixed 1/60 ambient increments, up to four per frame. It waits for outstanding GPU work rather than accumulating an unbounded queue. Under load the same physical sequence advances more slowly. The canvas renders at least two pixels per CSS pixel on each axis, even on a 1x display, and caps DPR at 2.5. Sustained latency can reduce that cap to two, never below the requested 2x resolution. The desktop reference canvas is 2716 by 1224 for a 1358 by 612 CSS box. All three room quality labels use the validated 512 grid; low quality only samples instruments less often. The numerical grid and physical parameters do not change silently.
@@ -134,6 +136,8 @@ room.dispose(); // destroys the room's buffers and terminates its diagnostic wor
 The room uses its accumulated active solver time for forcing and renewal; host elapsed and score clocks do not advance physics during suspension. Step submits compute work but creates no animation loop. Render only adds passes to the supplied encoder. It clears the target and never submits the render encoder, configures a canvas, fetches a swap-chain texture, creates controls, or destroys the supplied device or target. Asset URLs resolve from the module or the supplied absolute base. No runtime asset fetch is required.
 
 `setDisplay` and `debugAdvance` are optional extra methods. DebugAdvance accelerates the same sequence for tests, without changing the equation. The standalone [entry script](../../js/negative-temperature.js) is a complete example host. The ownership test creates two rooms on one device, disposes one, and successfully renders the other. Snapshot carries model, units, configuration, provenance, quality, measured quantities, age, and numerical errors. DebugReadback supplies the complex field and the exact step/time captured for comparison.
+
+An optional `onProgress` callback on createRoom reports compilation, preparation counts and the initial measurement. It does not create DOM or animation side effects. The standalone host uses it for its loading text and watchdog heartbeat.
 
 ## Validation and performance
 
@@ -163,7 +167,7 @@ The current [solver record](../../assets/visualizer/negative-temperature/resolut
 | --- | ---: | --- |
 | One forward 2D FFT, 512 grid | 0.80 / 1.50 ms | Single transform, queue completion |
 | Full GPE step, 512 grid | 0.70 / 0.813 ms | Eight-step batches, time divided by eight |
-| Room render, 2716 by 1224 rgba16float | 1.20 / 1.80 ms | Single render, queue completion |
+| Room render, 2716 by 1224 rgba16float | 0.90 / 2.20 ms | Single render, queue completion |
 
 Historical 256-grid measurements are retained for comparison:
 
@@ -179,6 +183,8 @@ Browser checks cover 1440x900, 390x844 and 844x390; all visible controls have at
 
 The current opening has its own [resolution regression record](../../assets/visualizer/negative-temperature/opening-resolution-validation.json). It starts at step 12000 in the Stirring phase. The five-second live check produces density-change RMS 0.197, which excludes mere global phase rotation as the apparent motion. The fixed room clock executes exactly 750 steps for 60 ambient increments. The warmed field repeats with SHA-256 `2e875a84a74bd11997ff2eb907751a037427dd4cbbf3297540bfa369b048d807` on this device. See the [larger opening](../../assets/visualizer/negative-temperature/opening-v3.png), [five seconds later](../../assets/visualizer/negative-temperature/opening-motion-v3.png), [payoff](../../assets/visualizer/negative-temperature/payoff-v3.png), and [detail view](../../assets/visualizer/negative-temperature/detail-v3.png). The earlier [256-grid opening record](../../assets/visualizer/negative-temperature/opening-validation.json) is retained as history.
 
+The [loading regression](../../assets/visualizer/negative-temperature/loading-validation.json) covers native Chrome and WebKit startup, visible preparation/stirring progress, live advancement, 2x rendering, fullscreen, silent workers, a worker constructor blocked by SecurityError, an aborted module download followed by Reload, and an unanswered GPU-adapter request. The worker-fallback cases reproduce the complete Chrome opening field with the same hash above. The WebKit opening has a different hash, consistent with the existing cross-browser floating-point replay caveat. The test's GPU-timeout fixture shortens only the 15-second timer to 100ms; the production deadline remains 15 seconds. See the [loaded field](../../assets/visualizer/negative-temperature/loading-recovery.png).
+
 Reproduce with bundled Playwright on NODE_PATH:
 
 ```sh
@@ -187,6 +193,7 @@ NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-browser.cjs
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-protocol.cjs
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-opening.cjs
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-resolution.cjs
+NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-loading.cjs
 ```
 
 The browser harness owns its HTTP server and the exact browser child, launched through `/Users/ethan/.local/bin/agent-chrome-for-testing`, and closes both in finally. It does not launch the personal Chrome app or use broad process cleanup. The protocol harness repeats the padded-box check. `NT_STEPS` can shorten the browser recording while preserving the solver sequence; its default is three full phrases at the current timestep. The browser harness retains explicit 256-grid numerical comparisons as historical regressions; the resolution harness checks the current default. Adding `--render-only` to the resolution command skips the long physical runs and repeats rendering, exposure and shared-device ownership checks. Historical results remain in [validation-full.json](../../assets/visualizer/negative-temperature/validation-full.json), [validation.json](../../assets/visualizer/negative-temperature/validation.json), [cpu-validation.json](../../assets/visualizer/negative-temperature/cpu-validation.json), and protocol-run.json.
@@ -197,7 +204,9 @@ The browser harness owns its HTTP server and the exact browser child, launched t
 - `js/negative-temperature.js`, `js/negative-temperature-room.js`
 - `js/negative-temperature-model.js`, `js/negative-temperature-gpu.js`
 - `js/negative-temperature-diagnostics-worker.js`
+- `js/negative-temperature-loading.js`
 - `tools/test-negative-temperature-numerics.mjs`, `tools/test-negative-temperature-browser.cjs`, `tools/test-negative-temperature-protocol.cjs`, `tools/test-negative-temperature-opening.cjs`, `tools/test-negative-temperature-resolution.cjs`
+- `tools/test-negative-temperature-loading.cjs`
 - `assets/visualizer/negative-temperature/` screenshots, still fallback and diagnostic records
 - `docs/visualizer/NEGATIVE_TEMPERATURE.md`
 
