@@ -1,0 +1,206 @@
+{
+  "origin": "Saved screenshot of this live gauge simulation, not reference footage.",
+  "sourceImage": "payoff.png",
+  "encoding": "WebP quality 85",
+  "sha256": "3a2d730bd0edf171de3bf6b91927df632259b825639ad03af5c97001208d8711",
+  "checkpoint": {
+    "apiVersion": 1,
+    "id": "qcd-lava-lamp",
+    "title": "QCD Lava Lamp",
+    "model": "Pure SU(3) Wilson lattice gauge theory",
+    "representativeScaleMeters": null,
+    "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
+    "sources": [
+      "https://arxiv.org/html/1903.08308v1",
+      "https://arxiv.org/pdf/1003.3219",
+      "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
+      "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
+    ],
+    "numericalStepCount": 496,
+    "simulationTime": 496,
+    "simulationTimeUnits": "Markov-chain sweeps, not physical time",
+    "ambientSeconds": 120.01666666666114,
+    "parameters": {
+      "group": "SU(3)",
+      "beta": 6,
+      "dimensions": [
+        12,
+        12,
+        12,
+        12
+      ],
+      "start": "Haar hot",
+      "initialBurnInSweeps": 256,
+      "smoothingMethod": "Wilson subgroup cooling",
+      "depth": 4,
+      "breath": false,
+      "sweepsPerAmbientSecond": 2,
+      "scanSecondsPerLatticePlane": 10
+    },
+    "quality": "medium",
+    "seedProvenance": {
+      "source": "offline fixed user-replayable seed",
+      "seed": "5eedc0de1234abcd",
+      "prng": "Philox4x32-10",
+      "beaconVerified": false,
+      "crossDeviceReplay": "floating-point results may differ"
+    },
+    "assetBaseURL": "http://127.0.0.1:63054/assets/visualizer/qcd-lava-lamp/",
+    "diagnosticAgeSeconds": 0,
+    "diagnosticsAvailable": true,
+    "numericalFault": null,
+    "averagePlaquette": 0.5940271827793238,
+    "unitarityError": 0.00003790855407714844,
+    "determinantError": 0.00005557261829380877,
+    "measuredSweep": 496,
+    "chargeByCoolingDepth": [
+      {
+        "depth": 0,
+        "Q": 0.33770791732837324,
+        "rms": 0.005197391153679117,
+        "peak": 0.022060692310333252,
+        "positiveFraction": 0.5010609567901234
+      },
+      {
+        "depth": 2,
+        "Q": 0.12176217883079232,
+        "rms": 0.0010681924517883282,
+        "peak": 0.009970828890800476,
+        "positiveFraction": 0.5098861882716049
+      },
+      {
+        "depth": 4,
+        "Q": -0.025236806840682746,
+        "rms": 0.0005564423286581072,
+        "peak": 0.008528966456651688,
+        "positiveFraction": 0.5041473765432098
+      },
+      {
+        "depth": 8,
+        "Q": -0.03406699101185939,
+        "rms": 0.00034360234523769367,
+        "peak": 0.006484596990048885,
+        "positiveFraction": 0.4812403549382716
+      }
+    ],
+    "sectorLabel": null,
+    "sectorReason": "No integer sector assigned to this small-box clover estimator.",
+    "plaquetteLagOne": 0.2988460920315849,
+    "history": [
+      {
+        "sweep": 256,
+        "plaquette": 0.5946140952514638,
+        "Q": -1.726274929058837
+      },
+      {
+        "sweep": 272,
+        "plaquette": 0.5941637372554942,
+        "Q": -1.7744656512782875
+      },
+      {
+        "sweep": 288,
+        "plaquette": 0.5938701593470815,
+        "Q": -1.7027327260946503
+      },
+      {
+        "sweep": 304,
+        "plaquette": 0.5944969666436234,
+        "Q": -1.7464017677671784
+      },
+      {
+        "sweep": 320,
+        "plaquette": 0.592405730394223,
+        "Q": -1.6959965179087404
+      },
+      {
+        "sweep": 336,
+        "plaquette": 0.5922626860886768,
+        "Q": -2.043489158761451
+      },
+      {
+        "sweep": 352,
+        "plaquette": 0.5931652962110864,
+        "Q": -2.5559595219620395
+      },
+      {
+        "sweep": 368,
+        "plaquette": 0.5927868386418683,
+        "Q": -2.578338063573466
+      },
+      {
+        "sweep": 384,
+        "plaquette": 0.5924194801942333,
+        "Q": -1.7925707849951713
+      },
+      {
+        "sweep": 400,
+        "plaquette": 0.5929791462790202,
+        "Q": -1.5999008451479533
+      },
+      {
+        "sweep": 416,
+        "plaquette": 0.5936943181347746,
+        "Q": -2.5376583441241074
+      },
+      {
+        "sweep": 432,
+        "plaquette": 0.5933446994440835,
+        "Q": -2.409512670376318
+      },
+      {
+        "sweep": 448,
+        "plaquette": 0.5951564329084215,
+        "Q": -1.8172978282417667
+      },
+      {
+        "sweep": 464,
+        "plaquette": 0.5935131549349426,
+        "Q": -1.0151959586417831
+      },
+      {
+        "sweep": 480,
+        "plaquette": 0.5953640996163758,
+        "Q": -1.0055521238330272
+      },
+      {
+        "sweep": 496,
+        "plaquette": 0.5940271827793238,
+        "Q": -0.025236806840682746
+      }
+    ],
+    "snapshotSpacingSweeps": 16,
+    "independentSnapshots": false,
+    "frameInterpolation": 0,
+    "memory": {
+      "roomBuffersBytes": 12939984,
+      "volumeTextureBytes": 13824,
+      "hostTargetsExcluded": true,
+      "readbackPeakBytes": 663552
+    },
+    "limits": {
+      "maxStorageBufferBindingSize": 134217728,
+      "maxBufferSize": 268435456
+    },
+    "lastSweepQueueWallMs": 3.6999999284744263,
+    "sweepQueueWallMedianMs": 3.9000000953674316,
+    "sweepQueueWallP95Ms": 5.300000071525574,
+    "viewport": {
+      "width": 1158,
+      "height": 468,
+      "dpr": 1
+    },
+    "busy": false,
+    "manualPause": true,
+    "active": false,
+    "initializing": false,
+    "errors": [],
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "device": "",
+      "description": "",
+      "isFallbackAdapter": false,
+      "timestampQuery": true
+    }
+  }
+}
