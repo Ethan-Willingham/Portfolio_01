@@ -39,7 +39,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="sluice-menu.css?v=v28.158">
+  <link rel="stylesheet" href="sluice-menu.css?v=v28.159">
   <style>
     /* Page-specific overrides for the Sluice game.
        The base panel system is in style.css. */
@@ -100,6 +100,8 @@
     /* Critical loading styles live here so the first paint needs no game assets.
        Fallback colors mirror the gunmetal/brass tokens in 020-state.js. */
     #game-intro {
+      --loading-ink: #d8d2c4; /* Painted stencil, UI_STYLE.md section 4.5. */
+      --loading-brass: #9c7a3e; /* Etched brass rim, UI_STYLE.md section 4.2. */
       position: absolute;
       inset: 0;
       z-index: 30;
@@ -107,28 +109,33 @@
       align-items: center;
       justify-content: center;
       overflow: auto;
-      padding: 28px;
+      padding: 36px;
       background: var(--menu-inset, #14181f);
-      color: var(--menu-text, #eee1b8);
+      color: var(--loading-ink);
       font-family: var(--font-mono, monospace);
       text-align: center;
       opacity: 1;
       transition: opacity 180ms ease;
       touch-action: auto;
+      isolation: isolate;
     }
     #game-intro[hidden] { display: none; }
     #game-intro[data-state="revealing"] { opacity: 0; }
     #game-intro[data-state="loading"], #game-intro[data-state="error"] { transition: none; }
     #game-intro *, #game-intro *::before, #game-intro *::after { box-sizing: border-box; }
-    .loading-content { width: min(100%, 440px); margin: auto; text-align: left; }
-    .loading-mark { float: right; width: 72px; height: 64px; margin: 0; color: var(--menu-gold, #d9ad3f); }
-    .loading-mark .loading-rock { stroke: var(--menu-highlight, #46505c); }
-    #game-intro .loading-title { margin: 0; font: 700 clamp(32px, 7vw, 52px)/1.1 var(--font-mono, monospace); letter-spacing: 0.12em; color: inherit; }
-    #game-intro .loading-tagline { margin: 10px 0 36px; font-size: 12px; letter-spacing: 0.06em; color: var(--menu-dim, #929dac); }
+    .loading-engraving { position: absolute; z-index: -1; bottom: 0; left: 0; width: 100%; height: 32%; min-height: 130px; color: var(--menu-highlight, #46505c); opacity: 0.3; pointer-events: none; }
+    .loading-engraving .loading-bore { stroke: var(--loading-brass); }
+    .loading-content { position: relative; width: min(100%, 560px); flex-shrink: 0; margin: auto; padding-top: 32px; border-top: 1px solid var(--menu-highlight, #46505c); text-align: left; }
+    .loading-content::before { content: ""; position: absolute; top: -1px; left: 0; width: 32px; height: 2px; background: var(--loading-brass); }
+    .loading-brand { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 52px; }
+    .loading-mark { display: block; flex: 0 0 auto; width: 80px; height: 96px; color: var(--loading-brass); }
+    .loading-mark .loading-rock { stroke: var(--menu-weld, #566372); }
+    #game-intro .loading-title { margin: 0; font: 700 clamp(48px, 8vw, 108px)/0.95 var(--font-body, sans-serif); letter-spacing: -0.045em; color: inherit; }
+    #game-intro .loading-tagline { margin: 16px 0 0; font-size: 12px; line-height: 1.5; letter-spacing: 0.1em; color: var(--menu-dim, #929dac); }
     .loading-readings { display: flex; justify-content: space-between; gap: 20px; align-items: baseline; }
-    #gm-loading-percent { color: var(--menu-text, #eee1b8); font-size: 24px; font-variant-numeric: tabular-nums; }
-    .loading-track { height: 10px; margin: 12px 0 0; overflow: hidden; background: var(--menu-highlight, #46505c); }
-    .loading-fill { display: block; width: 0; height: 100%; background: var(--menu-gold, #d9ad3f); transition: width 120ms linear; }
+    #gm-loading-percent { flex-shrink: 0; color: var(--loading-ink); font-size: 20px; line-height: 1.3; font-variant-numeric: tabular-nums; }
+    .loading-track { height: 4px; margin: 16px 0 0; overflow: hidden; background: var(--menu-panel, #252a33); }
+    .loading-fill { display: block; width: 0; height: 100%; background: var(--loading-brass); transition: width 120ms linear; }
     #game-intro[data-state="error"] .loading-fill { background: var(--menu-red, #ec7058); }
     .loading-detail-readings { display: flex; justify-content: space-between; gap: 12px; margin: 8px 0; font-size: 11px; color: var(--menu-dim, #929dac); font-variant-numeric: tabular-nums; }
     #game-intro .loading-measure { margin: 0 0 16px; font-size: 11px; line-height: 1.5; color: var(--menu-dim, #929dac); }
@@ -142,8 +149,10 @@
     .loading-steps li[data-state="error"] { color: var(--menu-red, #ec7058); }
     .loading-step-number { font-size: 10px; }
     .loading-step-count, .loading-step-state { text-align: right; }
-    .loading-details { margin-top: 12px; }
-    .loading-details summary { cursor: pointer; padding: 14px 0; min-height: 44px; font-size: 11px; color: var(--menu-dim, #929dac); }
+    .loading-details { margin-top: 16px; }
+    .loading-details summary { width: fit-content; cursor: pointer; padding: 14px 8px 14px 0; min-height: 44px; font-size: 12px; line-height: 1.3; color: var(--menu-dim, #929dac); }
+    .loading-details summary::marker { color: var(--loading-brass); }
+    .loading-details summary:hover { color: var(--loading-ink); }
     #game-pause .pause-card[data-page="loading"] { width: 640px; }
     .loading-copy { min-height: 44px; padding: 8px 14px; border: 1px solid var(--menu-highlight, #46505c); color: var(--menu-text, #eee1b8); background: var(--menu-panel, #222831); font: 12px var(--font-mono, monospace); cursor: pointer; }
     #game-intro .loading-log, #game-pause .loading-log { border-radius: 0; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; padding: 12px; background: var(--menu-inset, #14181f); color: var(--menu-body, #c9c7b8); font: 12px/1.65 var(--font-mono, monospace); user-select: text; touch-action: pan-y; }
@@ -153,14 +162,20 @@
     #game-intro :focus-visible { outline: 2px solid var(--menu-text, #eee1b8); outline-offset: 3px; }
     @media (max-width: 440px) {
       #game-intro { padding: 20px; }
-      .loading-mark { width: 60px; height: 52px; }
+      .loading-content { padding-top: 24px; }
+      .loading-brand { gap: 16px; margin-bottom: 36px; }
+      .loading-mark { width: 48px; height: 64px; }
       .loading-steps li { grid-template-columns: 18px 1fr 28px 60px; gap: 5px; font-size: 11px; }
     }
     @media (max-height: 540px) {
       #game-intro { padding: 18px; }
-      .loading-mark { width: 56px; height: 48px; }
-      #game-intro .loading-title { font-size: 28px; }
-      #game-intro .loading-tagline { margin: 8px 0 16px; }
+      .loading-engraving { opacity: 0.2; }
+      .loading-content { width: min(100%, 480px); padding-top: 20px; }
+      .loading-brand { margin-bottom: 24px; }
+      .loading-mark { width: 56px; height: 68px; }
+      #game-intro .loading-title { font-size: clamp(48px, 8vw, 72px); }
+      #game-intro .loading-tagline { margin-top: 10px; }
+      .loading-details { margin-top: 8px; }
       .loading-steps li { padding: 8px 0; }
     }
     @media (prefers-reduced-motion: reduce) { #game-intro, .loading-fill { transition: none; } }
@@ -459,14 +474,18 @@
                 </svg>
               </button>
               <div id="game-intro" data-state="loading" aria-label="Loading Sluice" aria-busy="true">
+                <svg class="loading-engraving" viewBox="0 0 1600 320" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+                  <path d="M0 48h170l90 32h210l130-26h220l110 34h210l90-18h370M0 84h155l100 34h230l120-26h218l100 36h228l85-20h364M0 124h145l112 34h235l120-26h202l106 36h240l80-22h360M0 164h130l124 36h242l120-28h206l106 36h242l80-22h350M0 208h116l138 34h252l116-28h204l108 36h242l78-20h346M0 252h106l150 34h258l110-28h204l112 36h244l76-20h340"/>
+                  <path class="loading-bore" d="M1220 0v264l12 18 12-18V0M1212 24h40m-40 40h40m-40 40h40m-40 40h40m-40 40h40m-40 40h40"/>
+                </svg>
                 <div class="loading-content">
-                  <svg class="loading-mark" viewBox="0 0 112 96" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                    <path class="loading-rock" d="M4 28h27l10 7h30l12-7h25M4 48l18-4 17 7h35l14-7 20 4M4 68l21-6 17 8h28l20-8 18 6M4 88l27-7 19 7h19l21-7 18 7"/>
-                    <path d="M44 8h24v16l-12 10-12-10zM44 16h24M50 26h12M56 34v20"/>
-                    <path d="m50 49 6 6 6-6M51 64l5-4 5 4-5 7z"/>
-                  </svg>
-                  <h2 class="loading-title">SLUICE</h2>
-                  <p class="loading-tagline">Dig. Haul. Upgrade.</p>
+                  <div class="loading-brand">
+                    <div><h2 class="loading-title">SLUICE</h2><p class="loading-tagline">Dig. Haul. Upgrade.</p></div>
+                    <svg class="loading-mark" viewBox="0 0 80 96" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+                      <path class="loading-rock" d="M0 20h16l10 6h10m8 0h10l10-6h16M0 40h12l14 7h10m8 0h12l12-7h12M0 61h10l16 8h10m8 0h14l12-8h10M0 83h10l18 7h8m8 0h16l12-7h8"/>
+                      <path d="M36 4h8v70l-4 6-4-6V4M32 4h16M32 12h16M36 32h8M36 54h8"/>
+                    </svg>
+                  </div>
                   <div class="loading-readings"><p class="loading-status" id="gm-loading-status" role="status" aria-live="polite" aria-atomic="true">Loading game files</p><span id="gm-loading-percent" aria-hidden="true">0%</span></div>
                   <div class="loading-track" id="gm-loading-progress" role="progressbar" aria-label="Game preparation" aria-describedby="gm-loading-status" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="loading-fill" id="gm-loading-fill"></span></div>
                   <details class="loading-details" id="gm-loading-details"><summary>Details</summary>
@@ -966,13 +985,13 @@
       });
     })();
   </script>
-  <script defer src="js/sluice-performance-gpu.js?v=v28.158"></script>
-  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.158"></script>
-  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.158"></script>
-  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.158"></script>
-  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.158"></script>
-  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.158"></script>
-  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.158"></script>
-  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.158"></script>
+  <script defer src="js/sluice-performance-gpu.js?v=v28.159"></script>
+  <script defer data-loading-task="script-liquid-wgpu" src="js/liquid-wgpu.js?v=v28.159"></script>
+  <script defer data-loading-task="script-smoke-wgpu" src="js/smoke-wgpu.js?v=v28.159"></script>
+  <script defer data-loading-task="script-fire-wgpu" src="js/fire-wgpu.js?v=v28.159"></script>
+  <script defer data-loading-task="script-jello-wgpu" src="js/jello-wgpu.js?v=v28.159"></script>
+  <script defer data-loading-task="script-audio" src="js/audio.js?v=v28.159"></script>
+  <script defer data-loading-task="script-smoke-presets" src="js/smoke-presets.js?v=v28.159"></script>
+  <script defer data-loading-task="script-sluice" src="js/sluice.js?v=v28.159"></script>
 </body>
 </html>

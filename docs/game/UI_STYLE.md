@@ -80,6 +80,15 @@ visible beyond the copper rim until it reaches the floor and drains away.
 > reuse. The art bench retains synchronous initialization without a cover.
 > Verify with `DUMP=/tmp/sluice-loading node tools/sluice-loading-smoke.mjs`.
 
+> **Loading presentation (2026-10-03).** A large, tightly set Segoe UI wordmark,
+> painted-stencil cream (`#d8d2c4`), etched brass (`#9c7a3e`), and a fine progress
+> line replace the smaller, widely tracked mono title and bright yellow bar.
+> The gunmetal field carries static engraved strata and a bore cross-section,
+> drawn inline before game code arrives. The title and status sit below a steel
+> seam with one brass edge. Desktop and landscape mobile use the same layout,
+> with reduced scale and spacing in short views. Text, real progress, reports,
+> retry behavior and reduced-motion handling retain the arrival contract above.
+
 
 > **Theme note (2026-05-28):** "Frontier Soviet" is the *current* skin, not a permanent contract. Sluice is heading toward a paid Steam release and the theme may be revisited for that build, so treat the palette and the Cyrillic / red-star / propaganda motifs as the present look to match, not as fixed law. The structural principles here (UI-is-in-world, the outline and palette discipline, diegetic walk-up shops, animation restraint) carry across any re-theme; the Soviet hexes and iconography are replaceable. Heads up too: parts of this doc spec work that was never built (per-tier sprites, oil depot, space station) or describe the removed win screen, so check a section against the live game before trusting it.
 
