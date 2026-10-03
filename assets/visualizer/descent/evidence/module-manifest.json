@@ -573,6 +573,173 @@
           "ownedHostUpdate": true
         }
       }
+    },
+    "sharpness": {
+      "date": "2026-10-03T19:29:58.719Z",
+      "checks": 27,
+      "publicationBase": "80e869c6893b2834420221820a401680d966f3af",
+      "modules": {
+        "js/descent.js": {
+          "servedSHA256": [
+            "0bb754f0f5f1f8fe5b11260969da08b43c14d7564714a432cf53227919826e4e"
+          ],
+          "committedSHA256": "0bb754f0f5f1f8fe5b11260969da08b43c14d7564714a432cf53227919826e4e",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": null
+        },
+        "js/descent-host.js": {
+          "servedSHA256": [
+            "0e2aa054e4d276e46e5111aa51cf82b9f215ebf374396311e83fa4ccf17e1798"
+          ],
+          "committedSHA256": "0e2aa054e4d276e46e5111aa51cf82b9f215ebf374396311e83fa4ccf17e1798",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": null
+        },
+        "js/descent-seed.js": {
+          "servedSHA256": [
+            "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e"
+          ],
+          "committedSHA256": "5c0e90c95499330e42a69af1afbf81259cd8905bf4ce9e03bd4b76d8308afa2e",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb"
+        },
+        "js/descent-room-adapters.js": {
+          "servedSHA256": [
+            "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a"
+          ],
+          "committedSHA256": "25d53dd9211ae8248f6d1a408d2b94a81365c46305c2d80e3c589d92ff9e3e7a",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb"
+        },
+        "js/soap-film-room.js": {
+          "servedSHA256": [
+            "ec0cd75b22d9360d092104013547d09377a3330c0fac309f04c67c75dac9bfee"
+          ],
+          "committedSHA256": "ec0cd75b22d9360d092104013547d09377a3330c0fac309f04c67c75dac9bfee",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "cc51fb3225ff4809ad37e73d793d77f0aa7d4106"
+        },
+        "js/negative-temperature-room.js": {
+          "servedSHA256": [
+            "78bdb843562d6fff22c25532db282983c4495697ebac3a639104465d03bbf4b2"
+          ],
+          "committedSHA256": "78bdb843562d6fff22c25532db282983c4495697ebac3a639104465d03bbf4b2",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "8aa4f73c79a6c882a59bca5946f8e13afb82294a"
+        },
+        "js/hydrogen-exactly-room.js": {
+          "servedSHA256": [
+            "7f3d6f4c7b907ce0e9008152d5488eb7638b885d78a53962bd478b330317d3fc"
+          ],
+          "committedSHA256": "7f3d6f4c7b907ce0e9008152d5488eb7638b885d78a53962bd478b330317d3fc",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "eb64140a8b12b46b2d308e215419a458012d2f84"
+        },
+        "js/qcd-lava-lamp-room.js": {
+          "servedSHA256": [
+            "c1d217518dfbfa552b5bc275839ddb50b10afcb61f95c61e9d7d81a0b7f2bd04"
+          ],
+          "committedSHA256": "c1d217518dfbfa552b5bc275839ddb50b10afcb61f95c61e9d7d81a0b7f2bd04",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "ab99207e19b124ac956eb525e0f495051acab4c9"
+        },
+        "js/negative-temperature-gpu.js": {
+          "servedSHA256": [
+            "e2bb85b99850d3179666572fbdd418f4124c2bad372627e310170d6407edf18d"
+          ],
+          "committedSHA256": "e2bb85b99850d3179666572fbdd418f4124c2bad372627e310170d6407edf18d",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "8aa4f73c79a6c882a59bca5946f8e13afb82294a"
+        },
+        "js/soap-film-model.js": {
+          "servedSHA256": [
+            "795b86e287725dd09faac418a7af7f7be7dc228bac561ceeef1fa0dd0f8978e2"
+          ],
+          "committedSHA256": "795b86e287725dd09faac418a7af7f7be7dc228bac561ceeef1fa0dd0f8978e2",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "cc51fb3225ff4809ad37e73d793d77f0aa7d4106"
+        },
+        "js/soap-film-material.js": {
+          "servedSHA256": [
+            "d7097687d8a2e9a175bac1599c5ed1091de524d00ac0551f7c0a7dbb264c14bd"
+          ],
+          "committedSHA256": "d7097687d8a2e9a175bac1599c5ed1091de524d00ac0551f7c0a7dbb264c14bd",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "cc51fb3225ff4809ad37e73d793d77f0aa7d4106"
+        },
+        "js/soap-film-geometry.js": {
+          "servedSHA256": [
+            "e5012a4269f44664b17987a31dc00c62792c56c72a9aa65160925aaee35dfbb5"
+          ],
+          "committedSHA256": "e5012a4269f44664b17987a31dc00c62792c56c72a9aa65160925aaee35dfbb5",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "6a5de433d55c4ec770ab378759e6ed5cb4fde5bb"
+        },
+        "js/hydrogen-exactly-shaders.js": {
+          "servedSHA256": [
+            "9279a7c2b2df6f5cbf798257e023d76476c30a49d4797832f49a995110a0b223"
+          ],
+          "committedSHA256": "9279a7c2b2df6f5cbf798257e023d76476c30a49d4797832f49a995110a0b223",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "eb64140a8b12b46b2d308e215419a458012d2f84"
+        },
+        "js/qcd-lava-lamp-shaders.js": {
+          "servedSHA256": [
+            "1129d94516dfbbe66d365283c962c316d4fd13ff146de29405f796b6fe4ae6bc"
+          ],
+          "committedSHA256": "1129d94516dfbbe66d365283c962c316d4fd13ff146de29405f796b6fe4ae6bc",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "ab99207e19b124ac956eb525e0f495051acab4c9"
+        },
+        "js/qcd-lava-lamp-math.js": {
+          "servedSHA256": [
+            "2ddb25df3a1e1316711ee191a24b5d1d7df1dc005f15935bb0a75b3c58f40ad1"
+          ],
+          "committedSHA256": "2ddb25df3a1e1316711ee191a24b5d1d7df1dc005f15935bb0a75b3c58f40ad1",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "ab99207e19b124ac956eb525e0f495051acab4c9"
+        },
+        "js/hydrogen-exactly-math.js": {
+          "servedSHA256": [
+            "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a"
+          ],
+          "committedSHA256": "efe9ede98f86ecf7185aa45b112eb92c3c725d96f4cdef9e993ebb23c7be007a",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "8681961d5f6120feda289e441108c40c41740dae"
+        },
+        "js/negative-temperature-model.js": {
+          "servedSHA256": [
+            "70ed9f724851448f8844a6f8029209e9800a072a58f85a315fa0329200c5e71c"
+          ],
+          "committedSHA256": "70ed9f724851448f8844a6f8029209e9800a072a58f85a315fa0329200c5e71c",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "8aa4f73c79a6c882a59bca5946f8e13afb82294a"
+        },
+        "js/negative-temperature-diagnostics-worker.js": {
+          "servedSHA256": [
+            "2095dcfa2f924522413f9b6ab89af2482b8f020cd5dec694398e2033edc90322"
+          ],
+          "committedSHA256": "2095dcfa2f924522413f9b6ab89af2482b8f020cd5dec694398e2033edc90322",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "8aa4f73c79a6c882a59bca5946f8e13afb82294a"
+        },
+        "assets/visualizer/descent/drand-verifier-1.4.2.js": {
+          "servedSHA256": [
+            "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4"
+          ],
+          "committedSHA256": "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb"
+        },
+        "js/descent-bootstrap-room.js": {
+          "servedSHA256": [
+            "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e"
+          ],
+          "committedSHA256": "174f1ef7a38e862da2884df36ec86321e48b8eda82ce089d6bfc33256e70411e",
+          "committedBytesWereTested": true,
+          "lastCommittedChange": "58f454de6b1c97d92866d914a10e505ad537babb"
+        }
+      }
     }
   },
   "verifierCommentCleanup": {

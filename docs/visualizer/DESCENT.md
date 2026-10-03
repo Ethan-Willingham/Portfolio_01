@@ -1,7 +1,9 @@
 # Descent
 
 [Open the comparison prototype](https://ethanwillingham.com/descent-lab.html).
-It starts silently, with Pause, Speed, Next room, Instruments, Restart and Fullscreen. Direct
+It opens silently into a viewport-filling scene, with Pause, Speed, Next room,
+Instruments, About and Fullscreen overlaid along the bottom. Restart lives in
+Instruments. About holds the model explanation, scale and source links. Direct
 room choice, route position, quality, hydrogen state and seed controls live
 inside Instruments. No homepage or hub curation changes belong to this build.
 
@@ -74,12 +76,16 @@ and preserves Pause and the automatic-journey choice.
 
 One requestAnimationFrame loop drives a fixed 1/60 ambient step. The bounded
 work budget drops excess wall-clock debt rather than taking an enormous step.
-The route slows under load. CPU frame cost and observed queue-completion latency can reduce the update
-budget and then display resolution, with unchanged model coefficients. A
+The route slows under load. CPU frame cost and observed queue-completion latency
+can reduce the update budget, with unchanged model coefficients and display resolution. A
 pending presentation prevents another frame of simulation and render commands
 from being queued; skipped wall time is not accumulated as a catch-up debt.
-Queue latency includes driver and browser scheduling, not just GPU execution. DPR is capped at
-1.5. Rooms retain their own internal stable solver steps and time conversion.
+Queue latency includes driver and browser scheduling, not just GPU execution.
+The canvas supersamples at 2 pixels per CSS pixel, including on 1x displays.
+A fixed 8,388,608-pixel allocation limit and the device texture dimensions bound
+large screens; these are viewport limits, never load-driven reductions. The
+snapshot records the actual pixel ratio. High quality is the initial default.
+Old preferences migrate once to high; a new explicit quality choice is saved. Rooms retain their own internal stable solver steps and time conversion.
 Hydrogen currently uses the absolute local piece clock; the other rooms use
 their room-local accumulated solver time. Instruments states those meanings.
 
@@ -131,8 +137,8 @@ There is no universal score. The superfluid uses a saturating density display,
 a faint phase tint and small spatial bloom. Hydrogen shades measured density
 contours; spectral mode retains frequency false color, while the optional
 Rydberg packet uses arbitrary density false color. The gauge render interpolates
-measured charge maps, normalizes their display by measured RMS and shades a
-1.1-RMS contour; those operations leave observables unchanged. Negative
+measured charge and action maps, normalizes their display by measured RMS and
+shades a 0.85-RMS charge contour within an action-density cloud; those operations leave observables unchanged. Negative
 temperature is not estimated by the superfluid room and is not claimed by this host. The gauge room is SU(3), but
 it is not the reference film's improved cooling or a continuum calibration.
 
@@ -360,6 +366,34 @@ The report and module manifest record the exact served bytes. Updated layouts:
 [portrait](../../assets/visualizer/descent/evidence/playback/playback-controls-390x844.png),
 [landscape](../../assets/visualizer/descent/evidence/playback/playback-controls-844x390.png).
 The original two full real-route captures remain the baseline evidence above.
+
+## Viewport and sharpness update
+
+The [sharpness report](../../assets/visualizer/descent/evidence/sharpness/report.json)
+records 27 passed browser checks in one frozen publication checkout. Every
+actual room initialized and rendered at high quality. The desktop 1440 by 900
+view used a 2880 by 1800 canvas. All four rooms filled the viewport at 1440 by
+900, 390 by 844 and 844 by 390; resize preserved Pause. About and Instruments
+opened as exclusive overlays and closed with Escape. Native and rejected
+fullscreen, old-preference migration, restoration, missing WebGPU, device loss,
+resource disposal and all prior fast-forward controls passed.
+
+High uses a 512-square film grid, the source's validated 512-square superfluid,
+a 160-cubed hydrogen density field with 224 ray intervals, and a 24-to-the-fourth
+SU(3) lattice. Film framing is enlarged through its public filmFill render
+argument. Source equations and coefficients are unchanged. The host requests
+a performance adapter and retains its one-room allocation policy. High-detail
+startup, particularly the gauge burn-in, takes longer than the earlier medium
+quality run. Watching time can slow under load while spatial detail stays fixed.
+Earlier numerical and full-route reports remain evidence for their recorded
+source versions, not timing promises for these larger grids.
+
+Current captures: [film](../../assets/visualizer/descent/evidence/sharpness/live-soap-film-startup.png),
+[superfluid](../../assets/visualizer/descent/evidence/sharpness/live-negative-temperature-startup.png),
+[hydrogen](../../assets/visualizer/descent/evidence/sharpness/live-hydrogen-exactly-startup.png),
+[gauge vacuum](../../assets/visualizer/descent/evidence/sharpness/live-qcd-lava-lamp-startup.png),
+[portrait](../../assets/visualizer/descent/evidence/sharpness/playback-controls-390x844.png),
+[landscape](../../assets/visualizer/descent/evidence/sharpness/playback-controls-844x390.png).
 
 ## Sources and asset provenance
 
