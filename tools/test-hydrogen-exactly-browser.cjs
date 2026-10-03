@@ -58,6 +58,36 @@ async function fit(page) {
   console.log('ADAPTER', JSON.stringify(report.adapter));
   await page.locator('#hx-play').click(); assert.ok((await snap(page)).paused);
   await page.evaluate(() => HydrogenExactly.seek(0)); await shot(page, 'desktop-initial', false); await shot(page, 'initial');
+  const framing = await page.locator('#hx-demo').evaluate(e => ({ width: e.clientWidth, stageHeight: e.querySelector('.hx-stage').clientHeight, bottom: e.getBoundingClientRect().bottom, screen: [innerWidth,innerHeight] }));
+  assert.ok(framing.width >= framing.screen[0]*.9 && framing.stageHeight >= framing.screen[1]*.7 && framing.bottom <= framing.screen[1]);
+  report.framing = framing; pass('Large default canvas and playback controls fit the first desktop screen');
+  if (process.env.HYDROGEN_PRESENTATION_ONLY) {
+    await page.locator('#hx-instruments-toggle').click(); await page.evaluate(() => HydrogenExactly.seek(50));
+    const state = await page.evaluate(() => HydrogenExactly.debugReadback());
+    for (const view of ['soft','section','volume']) {
+      await page.locator('#hx-view').selectOption(view); await shot(page, `review-${view}`);
+      const other = await page.evaluate(() => HydrogenExactly.debugReadback());
+      assert.deepEqual(other.probes,state.probes); assert.equal(other.spatialCapturedMass,state.spatialCapturedMass);
+    }
+    for (const color of ['0','3']) {
+      await page.locator('#hx-color').selectOption(color);
+      const other = await page.evaluate(() => HydrogenExactly.debugReadback()); assert.deepEqual(other.probes,state.probes);
+    }
+    pass('Contours, soft volume, section and density colors preserve the measured physical state');
+    await page.locator('#hx-instruments-toggle').click(); report.performance = await page.evaluate(() => HydrogenExactly.benchmark(24));
+    console.log('PERFORMANCE',JSON.stringify(report.performance));
+    for (const [width,height] of [[390,844],[844,390]]) {
+      await page.setViewportSize({width,height}); await page.evaluate(() => scrollTo(0,0)); await fit(page); await shot(page,`layout-${width}x${height}`,false);
+      const bounds = await page.locator('#hx-demo').boundingBox(); assert.ok(bounds.y+bounds.height <= height+2);
+    }
+    const retinaContext = await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,reducedMotion:'reduce'});
+    const retina = await open(retinaContext); await retina.evaluate(() => HydrogenExactly.seek(50)); await fit(retina); await shot(retina,'portrait-retina',false);
+    report.retinaSize = await retina.locator('#hx-canvas').evaluate(e => ({pixels:[e.width,e.height],css:[e.clientWidth,e.clientHeight]}));
+    assert.ok(report.retinaSize.pixels[0]>=report.retinaSize.css[0]*1.9 && report.retinaSize.pixels[1]>=report.retinaSize.css[1]*1.9);
+    await retinaContext.close(); await context.close(); assert.deepEqual(errors,[]);
+    pass('Portrait, landscape and DPR 2 retain crisp rendering and on-screen playback controls');
+    fs.writeFileSync(path.join(output,'presentation.json'),JSON.stringify(report,null,2)+'\n'); return;
+  }
   await page.locator('#hx-instruments-toggle').click();
   await page.locator('#hx-beacon').click();
   await page.waitForFunction(() => document.getElementById('hx-beacon-status').textContent.startsWith('Verified:'), null, { timeout: 15000 });

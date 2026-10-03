@@ -1,7 +1,7 @@
 // Standalone host. The room owns no DOM, canvas configuration or animation loop.
-import { createRoom } from './hydrogen-exactly-room.js';
-import { DISPLAY } from './hydrogen-exactly-shaders.js';
-import * as M from './hydrogen-exactly-math.js';
+import { createRoom } from './hydrogen-exactly-room.js?v=2';
+import { DISPLAY } from './hydrogen-exactly-shaders.js?v=2';
+import * as M from './hydrogen-exactly-math.js?v=2';
 const $ = id => document.getElementById(id);
 const demo = $('hx-demo'), canvas = $('hx-canvas'), status = $('hx-status');
 const controller = new AbortController(), options = { signal: controller.signal };
@@ -42,7 +42,7 @@ function render() {
 function resize() {
   if (!room || disposed) return;
   const box = $('hx-stage').getBoundingClientRect();
-  const dpr = Math.min(devicePixelRatio, 1.5), factor = Math.min(1, 1400 / (box.width * dpr));
+  const dpr = Math.min(devicePixelRatio, 2), factor = Math.min(1, 1800 / (Math.max(box.width, box.height) * dpr));
   const width = Math.max(1, Math.floor(box.width * dpr * factor)), height = Math.max(1, Math.floor(box.height * dpr * factor));
   if (scene && width === canvas.width && height === canvas.height) return;
   canvas.width = width; canvas.height = height; scene?.destroy();
@@ -117,17 +117,18 @@ function fullscreenLabel() {
 }
 function setMode(value) {
   mode = value; room.setMode(value); score = 0; accumulator = 0;
-  $('hx-color-field').hidden = value !== 'spectral'; $('hx-spectrum').hidden = value !== 'spectral'; $('hx-events').hidden = value === 'spectral';
+  $('hx-spectrum').hidden = value !== 'spectral'; $('hx-events').hidden = value === 'spectral';
+  for (const option of $('hx-color').options) option.disabled = value !== 'spectral' && ['1','2'].includes(option.value);
   $('hx-event-note').hidden = value === 'spectral'; $('hx-time').max = value === 'spectral' ? 60 : 900;
   $('hx-mode-label').textContent = value === 'spectral' ? 'Low-n superposition' : 'Circular packet';
-  $('hx-encoding-label').textContent = value === 'spectral' ? 'Spectral-frequency false color' : 'Probability density';
+  $('hx-encoding-label').textContent = value === 'spectral' ? 'Spectral-frequency false color' : 'Density false color, cyan to gold';
   $('hx-caption').textContent = value === 'spectral' ? '2p_z + 3s + 4s + 5s, equal amplitudes' : '13 circular states, n = 24 to 36';
   $('hx-scale').textContent = value === 'spectral' ? 'n = 5 extent scale 1.32 nm' : 'Characteristic radius 47.6 nm';
   $('hx-speed').options[0].textContent = value === 'spectral' ? '1x, 24 atomic time units per second' : '1x, 10 seconds per orbit';
   for (const option of $('hx-speed').options) option.disabled = value === 'spectral' && +option.value > 4;
   if (value === 'spectral' && speed > 4) { speed = 1; $('hx-speed').value = '1'; }
   $('hx-model-note').textContent = value === 'spectral' ? 'All six cross terms are included in the density. Three visible pairs use CIE hues; the other three are infrared. Actual dipole emission obeys selection rules. No emitted light is simulated.' : 'E_n = -1 / (2n²). One orbit is 10 display seconds; the approximate revival scale is 200 s. Finite-grid box mass is measured only on demand.';
-  $('hx-color').value = value === 'spectral' ? '1' : '0'; $('hx-measurement').textContent = 'Analytic norm is the integral over all space. A finite render box captures less.';
+  $('hx-color').value = value === 'spectral' ? '1' : '3'; $('hx-measurement').textContent = 'Analytic norm is the integral over all space. A finite render box captures less.';
   room.step({ dtSeconds: 1 / 30, elapsedSeconds: 0, scoreSeconds: 0 }); render(); updateReadouts();
 }
 $('hx-play').addEventListener('click', () => { paused = !paused; playLabel(); if (paused) stop(); else schedule(); }, options);
@@ -135,8 +136,8 @@ $('hx-instruments-toggle').addEventListener('click', toggleInstruments, options)
 $('hx-restart').addEventListener('click', () => seek(0), options);
 $('hx-fullscreen').addEventListener('click', fullscreen, options);
 $('hx-mode').addEventListener('change', e => setMode(e.target.value), options);
-$('hx-view').addEventListener('change', e => { room.setPresentation({ section: e.target.value === 'section' }); render(); }, options);
-$('hx-color').addEventListener('change', e => { room.setPresentation({ overlay: e.target.value }); $('hx-encoding-label').textContent = ['Probability density', 'Spectral-frequency false color', 'Signed 2p / 3s diagnostic'][+e.target.value]; render(); }, options);
+$('hx-view').addEventListener('change', e => { room.setPresentation({ section: e.target.value === 'section', soft: e.target.value === 'soft' }); render(); }, options);
+$('hx-color').addEventListener('change', e => { room.setPresentation({ overlay: e.target.value }); $('hx-encoding-label').textContent = ['Probability density', 'Spectral-frequency false color', 'Signed 2p / 3s diagnostic', 'Density false color, cyan to gold'][+e.target.value]; render(); }, options);
 $('hx-quality').addEventListener('change', e => { nextQuality = e.target.value; room.setQuality(nextQuality); render(); updateReadouts(); }, options);
 $('hx-speed').addEventListener('change', e => { speed = +e.target.value; }, options);
 $('hx-exposure').addEventListener('input', e => { exposure = +e.target.value; render(); }, options);

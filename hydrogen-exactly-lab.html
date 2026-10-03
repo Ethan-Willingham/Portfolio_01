@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="hydrogen-exactly.css?v=1">
+  <link rel="stylesheet" href="hydrogen-exactly.css?v=2">
 </head>
 <body class="hx-page">
   <div class="site-wrapper">
@@ -26,8 +26,8 @@
       <section class="hx-demo" id="hx-demo" aria-label="Hydrogen wavefunction visualizer" aria-busy="true">
         <div class="hx-stage" id="hx-stage">
           <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" tabindex="0"></canvas>
-          <img id="hx-still" src="assets/visualizer/hydrogen-exactly/initial-section.png" alt="Computed equatorial density section of the initial n=24 to 36 circular-state packet, localized on the left of the nucleus.">
-          <div class="hx-stage-heading"><span id="hx-mode-label">Circular packet</span><span id="hx-encoding-label">Probability density</span></div>
+          <img id="hx-still" src="assets/visualizer/hydrogen-exactly/initial-section.png?v=2" alt="Computed equatorial density section of the initial n=24 to 36 circular-state packet, localized on the left of the nucleus.">
+          <div class="hx-stage-heading"><span id="hx-mode-label">Circular packet</span><span id="hx-encoding-label">Density false color, cyan to gold</span></div>
           <p class="hx-status" id="hx-status" role="status">Preparing the wavefunction</p>
           <div class="hx-caption"><span id="hx-caption">13 circular states, n = 24 to 36</span><span id="hx-scale">Characteristic radius 47.6 nm</span></div>
         </div>
@@ -41,10 +41,10 @@
         <div class="hx-instruments" id="hx-instruments" hidden>
           <div class="hx-fields">
             <label>Superposition<select id="hx-mode"><option value="revival">Circular Rydberg packet</option><option value="spectral">Low-n spectral frequencies</option></select></label>
-            <label>View<select id="hx-view"><option value="volume">Soft volume</option><option value="section">Analytic 2D section</option></select></label>
+            <label>View<select id="hx-view"><option value="volume">Density contours</option><option value="soft">Soft volume</option><option value="section">Analytic 2D section</option></select></label>
             <label>Playback speed<select id="hx-speed"><option value="1">1x, 10 seconds per orbit</option><option value="4">4x</option><option value="16">16x</option><option value="64">64x</option></select></label>
-            <label>Sampling<select id="hx-quality"><option value="low">64 cubed / 64 ray samples</option><option value="medium" selected>128 cubed / 96 ray samples</option><option value="high">160 cubed / 128 ray samples</option></select></label>
-            <label id="hx-color-field" hidden>Color encoding<select id="hx-color"><option value="1">Spectral frequencies (false color)</option><option value="0">Neutral density</option><option value="2">Signed 2p / 3s diagnostic</option></select></label>
+            <label>Sampling<select id="hx-quality"><option value="low">64 cubed / 96 ray samples</option><option value="medium" selected>128 cubed / 160 ray samples</option><option value="high">160 cubed / 224 ray samples</option></select></label>
+            <label id="hx-color-field">Color encoding<select id="hx-color"><option value="3" selected>Density (false color)</option><option value="0">Neutral density</option><option value="1" disabled>Spectral frequencies (false color)</option><option value="2" disabled>Signed 2p / 3s diagnostic</option></select></label>
             <label>Display exposure<input id="hx-exposure" type="range" min="0.4" max="2" step="0.05" value="1"></label>
           </div>
           <label class="hx-timeline">Local display time <output id="hx-time-output">0.0 s</output><input id="hx-time" type="range" min="0" max="900" step="0.1" value="0"></label>
@@ -78,11 +78,11 @@
         </div>
       </section>
       <article class="post-body hx-explanation">
-        <p>A localized hydrogen wave packet spreads around its orbit, forms smaller packets, and partly gathers itself again. This image comes from adding 13 circular states and evolving each with its own energy. Switch to the low-n mode in Instruments to see interference frequencies encoded as the familiar hydrogen colors. Those colors describe beats in the density; they do not show emitted light.</p>
+        <p>A localized hydrogen wave packet spreads around its orbit, forms smaller packets, and partly gathers itself again. The colored contours mark increasing probability density, from cyan through violet and pink to gold. This image comes from adding 13 circular states and evolving each with its own energy. Switch to the low-n mode in Instruments to see interference frequencies encoded as the familiar hydrogen colors. Those colors describe beats in the density; they do not show emitted light.</p>
         <details class="u-collapse">
           <summary class="u-collapse-s">What “exactly” means here, and sources</summary>
           <p>These are exact eigenstates of the fixed-nucleus, nonrelativistic Coulomb model, evaluated numerically. The finite state list, render box, f32 shader arithmetic, f16 display texture, grid interpolation, and ray samples introduce errors. Nuclear motion, relativity, and radiative corrections are omitted. The 2D section evaluates the wavefunction directly; the volume interpolates sampled positive density.</p>
-          <p>Brightness uses a display absorption and exposure mapping; the circular volume raises sampled density to the power 1.4 to bring out its peaks. Neutral color is a visual choice. Spectral color weights the magnitudes of visible signed cross terms, while opacity derives from the squared magnitude of the complete wavefunction. A separate diagnostic marks the sign of the 2p / 3s term. Dark nodes have zero analytic density; volume interpolation can soften them.</p>
+          <p>The default view draws surfaces at six fixed density levels, revealing the highest contour reached along each view ray. Surface shading and the cyan-to-gold density palette are visual encodings. They leave the wavefunction and its diagnostics unchanged. Soft volume and a directly evaluated 2D section are also available in Instruments. Spectral color weights the magnitudes of visible signed cross terms. A separate diagnostic marks the sign of the 2p / 3s term. Dark nodes have zero analytic density; volume interpolation can soften them.</p>
           <ol class="u-collapse-list">
             <li><a href="https://arxiv.org/html/quant-ph/9510029v1">Bluhm, Kostelecký, and Porter, wave-packet evolution and revivals</a>. Characteristic scales guide the event search; the actual energies determine the image.</li>
             <li><a href="https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0">NIST Bohr radius</a> and <a href="https://physics.nist.gov/cgi-bin/cuu/Value?ryd">Rydberg constant</a>. The circular n = 30 radius is about 48 nm. The low-n view uses a separate scale.</li>
@@ -95,6 +95,6 @@
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
-  <script type="module" src="js/hydrogen-exactly.js?v=1"></script>
+  <script type="module" src="js/hydrogen-exactly.js?v=2"></script>
 </body>
 </html>
