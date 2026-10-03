@@ -9808,33 +9808,39 @@
     softContactMove(rig, f.dx / steps + (rig.vx - f.vx) * frameH,
       f.dy / steps + (rig.vy - f.vy) * frameH);
     f.support = false;
-    // Samples on all four rig edges catch both a flat track patch and corner
-    // contact. Forces distribute to the actual skin edge's two material nodes.
+    // Sample the rounded hull and flat track base. Forces distribute to the
+    // actual skin edge's two material nodes.
     for (var pass = 0; pass < 4; pass++) {
       for (var bi = 0; bi < count; bi++) {
         var b = active[bi];
         if (!softContactBody(b) || b.frozen) continue;
         softContactSkin(b);
         jelloRingBBox(b);
-        if (b._cbR < rig.x - 4 || b._cbL > rig.x + PLAYER_W + 4 ||
-            b._cbB < rig.y - 4 || b._cbT > rig.y + PLAYER_H + 4) continue;
+        var hull = rigContactHull(rig.x, rig.y);
+        if (b._cbR < hull.l - 4 || b._cbL > hull.r + 4 ||
+            b._cbB < hull.t - 4 || b._cbT > hull.b + 4) continue;
         // The reverse vertex/face test matters: a narrow fold can enter the
         // hull without enclosing any of its perimeter samples.
         for (var rk = 0; rk < b.ringN; rk++) {
           var p = b.ring[rk], px = b.px[p], py = b.py[p];
-          if (px <= rig.x || px >= rig.x + PLAYER_W || py <= rig.y || py >= rig.y + PLAYER_H) continue;
-          var depth = px - rig.x, nx = 1, ny = 0;
-          if (rig.x + PLAYER_W - px < depth) { depth = rig.x + PLAYER_W - px; nx = -1; ny = 0; }
-          if (py - rig.y < depth) { depth = py - rig.y; nx = 0; ny = 1; }
-          if (rig.y + PLAYER_H - py < depth) { depth = rig.y + PLAYER_H - py; nx = 0; ny = -1; }
-          softContactProject(b, p, p, 0, nx, ny, depth, py, realH, f);
+          var contact = rigHullQuery(rigContactHull(rig.x, rig.y), px, py);
+          if (!(contact.distance < 0)) continue;
+          softContactProject(b, p, p, 0, -contact.nx, -contact.ny,
+            -contact.distance, contact.y, realH, f);
         }
-        for (var side = 0; side < 4; side++) {
-          var samples = side % 2 ? 7 : 6;
-          for (var sample = 0; sample <= samples; sample++) {
+        var hullN = hull.n;
+        for (var side = 0; side < hullN; side++) {
+          hull = rigContactHull(rig.x, rig.y);
+          var next = (side + 1) % hullN;
+          var samples = Math.max(1, Math.ceil(Math.hypot(hull.x[next] - hull.x[side],
+            hull.y[next] - hull.y[side]) / 3));
+          for (var sample = 0; sample < samples; sample++) {
             var u = sample / samples;
-            var sx = rig.x + (side === 1 ? PLAYER_W : side === 3 ? 0 : u * PLAYER_W);
-            var sy = rig.y + (side === 0 ? 0 : side === 2 ? PLAYER_H : u * PLAYER_H);
+            // Contact moves the rig during this sweep. Refresh its translated
+            // perimeter before each sample, as with the reverse vertex test.
+            hull = rigContactHull(rig.x, rig.y);
+            var sx = hull.x[side] + (hull.x[next] - hull.x[side]) * u;
+            var sy = hull.y[side] + (hull.y[next] - hull.y[side]) * u;
             if (!jelloPointInRing(b, sx, sy)) continue;
             softContactSolve(b, sx, sy, realH, f);
           }
@@ -9951,23 +9957,31 @@
     softContactInterpolate();
     var b = softContactSupport;
     if (!b || player.thrusting || jelloBodies.indexOf(b) < 0) return;
-    for (var i = 1; i < 4; i++) {
-      var x = player.x + PLAYER_W * i / 4, y = Infinity, vy = 0;
-      for (var k = 0; k < b.ringN; k++) {
-        var a = b.ring[k], c = b.ring[(k + 1) % b.ringN], ex = b.px[c] - b.px[a];
-        if (Math.abs(ex) < 1e-8) continue;
-        var t = (x - b.px[a]) / ex;
-        if (t < 0 || t > 1) continue;
-        var edgeY = b.py[a] + (b.py[c] - b.py[a]) * t;
-        if (edgeY < y) {
-          y = edgeY;
-          vy = ((b.py[a] - b.oy[a]) * (1 - t) + (b.py[c] - b.oy[c]) * t) / jelloStepH * JELLO_TIMESCALE;
+    var hull = rigContactHull();
+    for (var side = 0; side < hull.n; side++) {
+      if (hull.ny[side] <= 0.5) continue;
+      var next = (side + 1) % hull.n;
+      for (var sample = 1; sample < 4; sample++) {
+        var u = sample / 4;
+        var x = hull.x[side] + (hull.x[next] - hull.x[side]) * u;
+        var footY = hull.y[side] + (hull.y[next] - hull.y[side]) * u;
+        var y = Infinity, vy = 0;
+        for (var k = 0; k < b.ringN; k++) {
+          var a = b.ring[k], c = b.ring[(k + 1) % b.ringN], ex = b.px[c] - b.px[a];
+          if (Math.abs(ex) < 1e-8) continue;
+          var t = (x - b.px[a]) / ex;
+          if (t < 0 || t > 1) continue;
+          var edgeY = b.py[a] + (b.py[c] - b.py[a]) * t;
+          if (edgeY < y) {
+            y = edgeY;
+            vy = ((b.py[a] - b.oy[a]) * (1 - t) + (b.py[c] - b.oy[c]) * t) / jelloStepH * JELLO_TIMESCALE;
+          }
         }
-      }
-      if (Math.abs(player.y + PLAYER_H - y) <= 1.5 && player.vy - vy >= -1) {
-        player.onGround = true; player.onJello = true;
-        player.coyoteT = Math.max(player.coyoteT, 0.08);
-        return;
+        if (Math.abs(footY - y) <= 1.5 && player.vy - vy >= -1) {
+          player.onGround = true; player.onJello = true;
+          player.coyoteT = Math.max(player.coyoteT, 0.08);
+          return;
+        }
       }
     }
   }

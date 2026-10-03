@@ -21,13 +21,7 @@
   // Shared warm stone ramp from PIXEL_ART.md.
   var SKY_SLIME_RAMP = ['#252320', '#3e3830', '#5a5248', '#7a706a', '#9e9488', '#c0b8b0'];
   var skySlimeRigLast = null;
-  // A broader roof tolerates small header offsets. Moving the shoulders
-  // out by the same amount keeps their ground-launch slope unchanged.
-  // Land and air use this same hull; contact height still controls a shot.
-  // The broad, flat track base keeps a mostly centered landing vertical.
-  // Only its outer corners turn that load into a sideways knock.
-  var SKY_SLIME_RIG_HULL = [0.30,0.18, 0.70,0.18, 1.35,0.80,
-    1.25,0.98, -0.25,0.98, -0.35,0.80];
+  // Rocky visitors share the inset rig silhouette used by gel and liquids.
   var SKY_SLIME_RIG_RESTITUTION = 0.90;
   var SKY_SLIME_ROOF_RESTITUTION = 0.96;
   var SKY_SLIME_RIG_LANDING_RESTITUTION = 0.98;
@@ -335,31 +329,12 @@
   }
 
   function skySlimeRigContact(s, rx, ry) {
-    if (s.x + s.r < rx - 10 || s.x - s.r > rx + PLAYER_W + 10 ||
-        s.y + s.r < ry - 1 || s.y - s.r > ry + PLAYER_H + 2) return null;
-    // Closest point on the convex hull gives both separation and impulse
-    // direction. Its lower shoulders meet a grounded ball below its center.
-    // No minimum pop, target velocity, aiming, or airborne-only impulse.
-    var hull = SKY_SLIME_RIG_HULL, best = Infinity, inside = true;
-    var dx = 0, dy = 0, faceX = 0, faceY = 0;
-    for (var i = 0; i < hull.length; i += 2) {
-      var j = (i + 2) % hull.length;
-      var ax = rx + hull[i] * PLAYER_W, ay = ry + hull[i + 1] * PLAYER_H;
-      var ex = (hull[j] - hull[i]) * PLAYER_W, ey = (hull[j + 1] - hull[i + 1]) * PLAYER_H;
-      var px = s.x - ax, py = s.y - ay, edge2 = ex * ex + ey * ey;
-      if (ex * py - ey * px < 0) inside = false;
-      var t = skySlimeClamp((px * ex + py * ey) / edge2, 0, 1);
-      var qx = px - ex * t, qy = py - ey * t, d2 = qx * qx + qy * qy;
-      if (d2 < best) {
-        best = d2; dx = qx; dy = qy;
-        var edge = Math.sqrt(edge2); faceX = ey / edge; faceY = -ex / edge;
-      }
-    }
-    var radius = s.r + 0.5, dist = Math.sqrt(best);
-    if (!inside && dist > radius + 1) return null;
-    var nx = inside || dist < 0.001 ? faceX : dx / dist;
-    var ny = inside || dist < 0.001 ? faceY : dy / dist;
-    return { nx: nx, ny: ny, depth: radius + (inside ? dist : -dist) + 0.006 };
+    var hull = rigContactHull(rx, ry), radius = s.r;
+    if (s.x + radius < hull.l || s.x - radius > hull.r ||
+        s.y + radius < hull.t || s.y - radius > hull.b) return null;
+    var q = rigHullQuery(hull, s.x, s.y);
+    if (q.distance >= radius) return null;
+    return { nx: q.nx, ny: q.ny, depth: radius - q.distance + 0.006 };
   }
 
   function skySlimeSupportsRig(px, py) {
