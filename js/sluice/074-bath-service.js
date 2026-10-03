@@ -22,7 +22,7 @@
     bathThermalReset(); bathSiloReset();
     bathScalePop(); bathSteamPop();
     hearthRoomReset();
-    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
+    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0; bathSkinFlakes.length = 0;
     bathTransitionSerial++;
     bathMode = false; bathRoomReady = false; bathFading = false; bathSyncCollision();
     if (typeof document !== 'undefined') bathLayerVis(false);
@@ -189,6 +189,7 @@
     s.vx = 0; s.vy = 0; s.entry = 0; s.wet = 0; s._trail = [];
     s.visit = 'inside';
     var g = { s: s, slot: slot, st: 'arrive', t: 0, paid: false, served: false, soak: 0 };
+    bathSkinInit(g);
     bathGuests.push(g);
     bathBeginHop(g, (slot ? 22.5 : 20.75) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
     if (!bathIntroSeen) {
@@ -211,12 +212,16 @@
       bathSetNotice(bathWater < BATH_MIN_WATER ? 'Pour water into the tub with the hose.' : bathThermalTemperature() > 48 ? 'The water is too hot. Let it cool, or mix in cold water.' : 'Place fuel, cast sparks from the striker, and let the water warm.');
       return false;
     }
-    // Admission uses the shared warm bath. No guest recipe is charged.
+    return bathStartGuest(g);
+  }
+  function bathStartGuest(g) {
+    if (g.st !== 'wait' || g.paid || bathTool.held === g || gamePaused || bathFading || !bathCanServe()) return false;
+    // A waiting visitor chooses the ready bath, including while we mine.
     g.served = true;
     bathBeginHop(g, (BATH_FLOORS[0].tubs[0][0] - 0.1) * TILE,
-      (BATH_FLOORS[0].fr - 1) * TILE - g.s.r, 0.85, 52, 'plunge');
+      (BATH_FLOORS[0].fr - 1) * TILE - g.s.r, 0.65, 52, 'plunge');
     bathNoticeT = 0;
-    sfxPlay('ui-confirm');
+    if (bathMode) sfxPlay('ui-confirm');
     saveNow('bath-order');
     return true;
   }
@@ -255,10 +260,11 @@
     return true;
   }
   function bathGuestTick(dt) {
-    if (!ENABLE_BATH || !(dt > 0) || gameOver || gameWon) return;
+    if (!ENABLE_BATH || !(dt > 0) || gameOver || gameWon || gamePaused) return;
     dt = Math.min(dt, 0.1);
     bathOperationsTick(dt);
     bathToolTick(dt);
+    bathSkinFlakeTick(dt);
     bathNoticeT = Math.max(0, bathNoticeT - dt);
     bathGuestColliders.length = 0;
     for (var f = bathFloats.length - 1; f >= 0; f--) {
@@ -267,8 +273,9 @@
     }
     for (var i = bathGuests.length - 1; i >= 0; i--) {
       var g = bathGuests[i], s = g.s, oldX = s.x, oldY = s.y;
+      var oldContour = bathMode ? bathGuestContour(s) : null;
       g.t += dt; s.age += dt;
-      s._bathMorph = skySlimeClamp((g.soak / BATH_VISIT.seconds - 0.7) / 0.3, 0, 1);
+      if (g.st === 'wait' && !g.paid) bathStartGuest(g);
       var physical = !!g.manual;
       if (physical) {
         bathToolGuestTick(g, dt);
@@ -281,24 +288,14 @@
         if (k >= 1) {
           g.st = h.next; g.t = 0; g.hop = null; s.squashV = 2;
           s._ground = g.st === 'wait' || g.st === 'leave';
-          if (g.st === 'soak') {
-            s.wet = 0.6;
-            bathSplashWater(g, 45);
-            if (bathMode) bathSplashPoof(s.x, bathWaterline(), 0.6);
-          }
+          if (g.st === 'soak') { g.manual = true; physical = true; s.vx = 45; s.vy = 70; }
         }
       } else if (g.st === 'plunge') {
         var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
-        bathBeginHop(g, (g.slot ? 38 : 35.5) * TILE, bathWaterline() + 6, 0.95, 74, 'soak');
+        bathBeginHop(g, (g.slot ? 38 : 35.5) * TILE, curve.y0 - s.r - 12, 0.85, 74, 'soak');
       } else if (g.st === 'soak') {
-        if (bathCanServe()) g.soak = Math.min(BATH_VISIT.seconds, g.soak + dt);
-        g.splash = (g.splash || 0) + dt;
-        if (g.splash >= 1.4) { g.splash = 0; bathSplashWater(g, 12); }
-        var waterline = bathWaterline();
-        s.x = (g.slot ? 38 : 35.5) * TILE + Math.sin(g.t * 0.65 + s.seed * 6) * 13;
-        s.y = waterline + 6 + Math.sin(g.t * 1.7 + s.seed * 8) * 3.5;
-        s.wet = 0.6;
-        if (g.soak >= BATH_VISIT.seconds) bathFinishGuest(g);
+        // Older scripted soaks migrate onto the same physical path.
+        g.manual = true; physical = true; bathToolGuestTick(g, dt);
       } else if (g.st === 'leave') {
         s.wet = 0;
         bathBeginHop(g, 20.5 * TILE, BATH_FLOORS[0].fr * TILE - s.r, 0.85, 32, 'exit');
@@ -307,11 +304,11 @@
         continue;
       }
       if (!physical) { s.vx = (s.x - oldX) / dt; s.vy = (s.y - oldY) / dt; }
-      s.settled = g.st === 'wait' || g.st === 'soak';
+      if (physical) bathGuestSoakTick(g, dt);
+      if (!physical) s.settled = g.st === 'wait';
       skySlimeExpression(s, Math.min(dt, 1 / 60));
       if (g.st === 'soak') s.eye = 0.2 + Math.sin(g.t * 0.8) * 0.035;
-      if (bathMode) bathGuestColliders.push({ x: s.x, y: s.y, hw: s.r, hh: s.r,
-        vx: s.vx, vy: s.vy, pts: null });
+      if (bathMode) bathGuestColliders.push(bathGuestBoundary(s, oldContour, dt));
     }
     bathToolCollider();
   }
@@ -333,6 +330,7 @@
     bathServe(nearest.s.id); return true;
   }
   function bathDrawGuests() {
+    bathSkinDrawFlakes(ctx);
     ctx.save();
     for (var w = 0; w < bathWetFloor.length; w++) {
       var wet = bathWetFloor[w];
@@ -405,14 +403,14 @@
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
-          served: g.served, soak: g.soak, manual: !!g.manual, hop: g.hop ? Object.assign({}, g.hop) : null };
+          served: g.served, soak: g.soak, skin: g.skin, manual: !!g.manual, hop: g.hop ? Object.assign({}, g.hop) : null };
       }) };
   }
   function bathServiceRestore(data) {
     if (typeof bathArrivalReset === 'function') bathArrivalReset();
     bathToolReset();
     bathThermalReset(); bathSiloReset();
-    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
+    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0; bathSkinFlakes.length = 0;
     bathRoomReady = false; bathSyncCollision(); banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
     bathFloorsOwned = [true, false, false, false, false];
     bathSupplies = [0, 0, 0, 0, 0];
@@ -458,6 +456,7 @@
       }
       if (g.paid) s.bathed = true;
       if (g.paid && g.st === 'soak') g.st = 'leave';
+      bathSkinInit(g, Array.isArray(src.skin) ? src.skin : null);
       s.visit = 'inside'; bathGuests.push(g);
       // Save migrations and interrupted transitions cannot duplicate a visitor.
       for (var j = skySlimes.length - 1; j >= 0; j--) if (skySlimes[j].id === s.id) skySlimes.splice(j, 1);

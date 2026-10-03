@@ -7,7 +7,7 @@ function fixture(fps = 60) {
   const s = { Math: math, console: { log() {} }, window: {}, performance: { now: () => 1000 },
     canvas: { width: 1000, height: 750, style: {}, addEventListener() {}, setPointerCapture() {},
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 750 }) }, dpr: 1,
-    cam: {x:0,y:0}, worldScale: 1, screenW: 1000, screenH: 750,
+    cam: {x:0,y:0}, worldScale: 1, isMobile:false, screenW: 1000, screenH: 750,
     residents: [], JELLO_H: 1/120, jelloStepH: 1/240,
     surfaceSlimeBuild(x,y,guest) { const b={x,y,id:guest.id};s.residents.push(b);return b; },
     jelloLaunchBody() {}, surfaceSlimeGrabEnd() {},
@@ -35,7 +35,9 @@ function fixture(fps = 60) {
     tileAt(r,c) { return r>=4 ? {type:'dirt'} : null; }, solidAt(x,y,w,h) { return y+h>128; },
   };
   vm.createContext(s);
-  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-silos','074-bath-thermal','074-bath-tools','074-bath-vapor','077-hearth-materials','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-interaction','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  for (const file of ['072-bath','073-bath-interior','074-bath-service','074-bath-skin','074-bath-silos','074-bath-thermal','074-bath-tools','074-bath-vapor','077-hearth-materials','077-hearth-combustion','077-hearth-fracture','077-hearth-geometry','077-hearth-physics','078-fire-bridge','078-hearth-interaction','078-hearth-room','078-hearth-station','079-forge-resources','348-sky-slimes']) vm.runInContext(fs.readFileSync('js/sluice/'+file+'.js','utf8'),s);
+  // Rig contact has its own physics suite; this fixture exercises service.
+  s.skySlimeRigContact = () => null;
   s.bathPickSite();
   // The furnace now fits the actual copper shoulders in camera space.
   s.bathMode = true; s.bathCamPin(); s.bathMode = false;
@@ -137,13 +139,55 @@ function setBathTemperature(s, temperature = 42) {
   console.log('PASS banya foundation, legacy excavation recovery, pond preservation and live enable');
 }
 for (const fps of [30,60,144]) {
+  const f=fixture(fps),s=f.s;
+  s.bathCarveRoom();s.skySlimeNext=1e9;
+  for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
+  for(let i=0;i<2;i++){
+    assert(s.bathGuestAccept(s.skySlimeFresh(0,0)));
+    const g=s.bathGuests[i];g.st='wait';g.hop=null;
+  }
+  setBathTemperature(s,20);f.inside(.2,20);
+  assert(s.bathGuests.every(g=>!g.served),'cold water keeps the full queue waiting');
+  setBathTemperature(s,60);f.inside(.2,60);
+  assert(s.bathGuests.every(g=>!g.served),'overheated water keeps the full queue waiting');
+  setBathTemperature(s,42);s.bathGuestTick(1/fps);
+  assert(s.bathGuests.every(g=>g.served&&g.st==='hop'),'both guests choose a ready bath immediately while mining');
+  f.inside(9,42);
+  assert(s.bathGuests.every(g=>g.manual&&g.s.wet>.25&&g.soak>0),'both autonomous guests become buoyant physical bodies');
+  const guest=s.bathGuests[0],peels=guest.skin.map(p=>p.peel);
+  assert(Math.max(...peels)-Math.min(...peels)>.4,'thick and thin wet scales soften unevenly');
+  assert(peels.some(p=>p===1)&&peels.some(p=>p<.8),'detached scales coexist with retained hard skin');
+  const contour=s.bathGuestContour(guest.s);
+  assert(contour.every(p=>Number.isFinite(p.x+p.y)&&Math.hypot(p.x-guest.s.x,p.y-guest.s.y)<guest.s.r*1.16),
+    'mixed contours stay finite and close to the physical body');
+  s.bathGuestColliders=[s.bathGuestBoundary(guest.s,null,1/fps)];
+  const projected=s.bathToolProjectLiquid(guest.s.x,guest.s.y,0,0,1);
+  assert(Math.hypot(projected[0]-guest.s.x,projected[1]-guest.s.y)>guest.s.r*.8,'CPU water leaves the mixed body core');
+  const saved=JSON.parse(JSON.stringify(s.bathServiceSave()));
+  s.bathServiceRestore(saved);
+  assert.deepEqual(JSON.parse(JSON.stringify(s.bathGuests[0].skin)),saved.guests[0].skin,'reload retains each wetted and peeled patch');
+  const before=JSON.stringify(s.bathGuests.map(g=>({soak:g.soak,skin:g.skin})));
+  f.inside(1,20);
+  assert.equal(JSON.stringify(s.bathGuests.map(g=>({soak:g.soak,skin:g.skin}))),before,'cooling pauses both soak and peel progress');
+  const paused=JSON.stringify(s.bathServiceSave());s.gamePaused=true;f.inside(1);s.gamePaused=false;
+  assert.equal(JSON.stringify(s.bathServiceSave()),paused,'manual pause freezes bath guests and patches');
+  f.inside(26,42);
+  assert.equal(s.money,150,'two guests each pay exactly once after becoming soft');
+  assert.equal(s.bathServed,2);assert.equal(s.residents.length,2);
+  assert.deepEqual(s.residents.map(g=>g.id).sort(),saved.guests.map(g=>g.s.id).sort(),'the same two identities leave as residents');
+  s.bathServiceRestore(JSON.parse(JSON.stringify(s.bathServiceSave())));f.inside(5,42);
+  assert.equal(s.money,150,'reloading completed automatic baths cannot pay again');
+  console.log('PASS automatic two-guest physics, uneven peel, pauses and save/payment at '+fps+' FPS');
+}
+for (const fps of [30,60,144]) {
   const f=fixture(fps), s=f.s;
   s.skySlimeSpawn();
   f.advance(85);
   assert(s.bathGuests.length>0,'meteor meanders and enters on its own');
   // Natural hops can reorder arrivals; follow a guest who reached the room.
   const id=s.bathGuests[0].s.id;
-  assert.equal(s.bathGuests.length,2,'bounded indoor queue');
+  assert(s.bathGuests.length<=2,'bounded indoor queue');
+  s.bathGuests.splice(1); // Follow one payment; multi-guest auto admission is checked below.
   assert(s.bathGuests.every(g=>g.st==='wait'));
   assert.equal(s.money,0,'waiting never earns money');
   s.bathMode=true;
@@ -480,10 +524,10 @@ for (const dev of [false, true]) {
   g.s.x=(curve.x0+curve.x1)/2;g.s.y=s.bathWaterline()-g.s.r-80;g.s.vx=80;g.s.vy=0;
   for(let i=0;i<8000;i++)s.addLiquidParticle(0,1150,19530);
   s.bathWater=8000;setBathTemperature(s);
-  for(let i=0;i<900;i++){s.bathToolGuestTick(g,1/60);assert(Number.isFinite(g.s.x+g.s.y));}
+  for(let i=0;i<900;i++){s.bathToolGuestTick(g,1/60);s.bathGuestSoakTick(g,1/60);assert(Number.isFinite(g.s.x+g.s.y));}
   assert(g.served);assert(g.soak>0,'physical drop earns actual submerged soak time');
   const earned=g.soak;s.bathTool.held=g;
-  for(let i=0;i<60;i++)s.bathToolGuestTick(g,1/60);
+  for(let i=0;i<60;i++){s.bathToolGuestTick(g,1/60);s.bathGuestSoakTick(g,1/60);}
   assert.equal(g.soak,earned,'holding a guest pauses service');s.bathToolReset();
   s.bathGuestColliders=[{x:100,y:100,hw:20,hh:20,vx:80,vy:20}];
   const p=s.bathToolProjectLiquid(118,100,-10,0,1);

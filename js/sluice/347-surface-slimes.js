@@ -309,26 +309,30 @@
 
   // Bath departure animation uses the new material immediately upon the
   // completed soak. Its physical resident is created at the surface door.
-  function surfaceSlimeDrawGuest(s) {
+  function surfaceSlimeDrawGuest(s, hideEye) {
     var r = s.r, pulse = Math.sin(s.age * 5.3 + s.seed * 7) * 0.035;
     var hue = surfaceSlimeHues[Math.floor(s.seed * 5) % 5];
     var m = s._softEye;
     if (!m) m = s._softEye = { seed: s.seed, hue: hue, blink: s.blink || 0, age: s.age };
     surfaceSlimeEyeTick(m, s.x, s.y, r, Math.max(0, Math.min(0.05, s.age - m.age)), null, null);
     m.age = s.age; m.blink = s.blink || 0;
-    ctx.save(); ctx.translate(s.x, s.y); ctx.scale(1 + pulse, 1 - pulse);
+    ctx.save(); ctx.translate(s.x, s.y);
+    if (!s._bathSkin || s.bathed) ctx.scale(1 + pulse, 1 - pulse);
     ctx.beginPath();
+    var contour = s._bathSkin && !s.bathed ? bathGuestContour(s) : null;
     for (var n = 0; n <= 40; n++) {
       var angle = n / 40 * Math.PI * 2;
       var radial = r * 0.94 * (1 + 0.045 * Math.sin(angle * 3 + s.seed * 6.28) +
         0.025 * Math.cos(angle * 5 - s.seed * 9));
       var x = Math.cos(angle) * radial, y = Math.sin(angle) * radial;
+      if (contour) { var p = contour[Math.floor(n / 40 * contour.length) % contour.length]; x = p.x - s.x; y = p.y - s.y; }
       if (n === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.closePath();
     var gel = ctx.createLinearGradient(0, -r, 0, r);
     gel.addColorStop(0, 'hsl(' + hue + ',42%,81%)'); gel.addColorStop(1, 'hsl(' + hue + ',34%,44%)');
-    ctx.fillStyle = gel; ctx.fill(); surfaceSlimeFace(m, r);
+    ctx.fillStyle = gel; ctx.fill();
+    if (!hideEye) surfaceSlimeFace(m, r);
     ctx.restore();
   }
 

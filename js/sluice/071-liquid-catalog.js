@@ -174,14 +174,14 @@
 
   // Read the waterline beside a solid visitor, whose own collider has
   // displaced all particles from its interior. Sparse spray is not a pool.
-  function liquidSampleBall(x, y, radius) {
+  function liquidSampleBall(x, y, radius, type) {
     var rowH = 4, span = radius * 1.8, top = y - span;
     var rows = Math.ceil(span * 2 / rowH), bins = new Array(rows);
     for (var b = 0; b < rows; b++) bins[b] = 0;
     var inner = radius + 2, outer = radius * 1.75;
     var vx = 0, vy = 0, count = 0;
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidType[i] === 5) continue;
+      if (liquidType[i] === 5 || (type !== undefined && liquidType[i] !== type)) continue;
       var dx = Math.abs(liquidX[i] - x), row = Math.floor((liquidY[i] - top) / rowH);
       if (dx < inner || dx > outer || row < 0 || row >= rows) continue;
       bins[row]++;
