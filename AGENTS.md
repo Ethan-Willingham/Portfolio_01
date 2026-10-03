@@ -86,11 +86,16 @@ when changing them so deployed edits bypass stale caches.
 lives in `hunting-game.html`, `hunting-game.css`, and `js/hunting-*.js`.
 Read `docs/HUNTING_GAME.md` for the ballistics, art, and checks. Its original
 pixel art and editable Aseprite sources live in `assets/hunting/`. The current
-art uses `*-v2.png` and `*-v3.png`, with generated masters and prompts in
-`source-v2/` and `source-v3/`; see `docs/HUNTING_ART.md` and
-`tools/build-hunting-art.cjs`. `js/hunting-campaign.js` owns the camp clock,
-shop, trophies, tracking outcomes, and local save. Birch Clearing and Cypress
-Edge are both playable one-screen areas. Keep this
+deer art uses `deer-[1-5]-v4.png`, with boar in `boar-v3.png`. Generated masters
+and prompts live in `source-v2/`, `source-v3/` and `source-v4/`; see `docs/HUNTING_ART.md` and
+`tools/build-hunting-art.cjs`. The owner's design is a simple fixed lookout over
+a huge field. Holding fast-forward visibly moves the sun; wildlife arrivals
+briefly ease the speed, then can pass if the player keeps holding. First click
+raises the scope, second click fires a visible round with gravity and wind.
+Owls and squirrels add ambient movement. Keep the active interface to watching,
+time and shooting; do not restore camp planning, shops or tracking dialogs.
+`js/hunting-campaign.js` retains the clock, deer progression, recoveries and
+compatible local save. Birch Clearing and Cypress Edge are playable areas. Keep this
 post beside All Four Wheels on `archive.html` (In Progress). It has no Unity
 runtime, Sluice dependencies, or bundle step. Bump its CSS and script `?v=`
 values when changing them.

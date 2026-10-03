@@ -12,25 +12,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#303931">
   <title>Hunting Game</title>
-  <meta name="description" content="Pick an hour, walk into the clearing, and bring back a pack to sell. A playable JavaScript hunting game with wind, tracking, and saved trophies.">
+  <meta name="description" content="Watch a wide field as the sun crosses the sky. Rush through time, catch a passing animal, and watch your bullet drop and drift.">
   <link rel="canonical" href="https://ethanwillingham.com/hunting-game.html">
   <meta property="og:title" content="Hunting Game">
-  <meta property="og:description" content="Plan an outing, hunt the clearing, and follow the trail home. A playable hunting game with a camp clock, equipment, tracking, and trophies.">
+  <meta property="og:description" content="Fast-forward the daylight. Catch a brief wildlife sighting, raise your scope, and watch the shot travel.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/hunting-game.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game-v2.jpg">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game-v5.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="675">
-  <meta property="og:image:alt" content="Pixel-art deer grazing in a grassy clearing, with pine trees behind them and a hunting stand in the foreground.">
+  <meta property="og:image:alt" content="Deer crossing a wide grassy field beneath a moving sun, seen from a birch-framed lookout.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game-v2.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/hunting-game-v5.jpg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="hunting-game.css?v=4">
+  <link rel="stylesheet" href="hunting-game.css?v=5">
 </head>
 <body class="hunt-page">
   <div class="site-wrapper">
@@ -38,120 +38,55 @@
       <h1 class="sr-only">Hunting Game</h1>
       <section class="hunt-game" id="hunt-game" aria-label="Hunting Game">
         <header class="hunt-toolbar">
-          <div class="hunt-brand"><span class="hunt-kicker" id="hunt-mode">Preparing camp</span><span class="hunt-name">Hunting Game</span></div>
-          <div class="hunt-readouts">
-            <div><span class="hunt-kicker">Day &amp; time</span><output id="hunt-clock">1 / 05:30</output></div>
-            <div><span class="hunt-kicker">Credits</span><output id="hunt-credits">160</output></div>
-            <div class="hunt-field-readout"><span class="hunt-kicker">Rounds</span><output id="hunt-ammo">5 / 5</output></div>
-            <div class="hunt-field-readout hunt-minor-readout"><span class="hunt-kicker">Recovered</span><output id="hunt-recovered">0</output></div>
-            <div class="hunt-field-readout hunt-minor-readout"><span class="hunt-kicker">Shots</span><output id="hunt-shots">0</output></div>
-          </div>
-          <div class="hunt-utilities">
-            <button id="hunt-sound" type="button" aria-pressed="false">Sound off</button>
-            <button id="hunt-fullscreen" type="button">Fullscreen</button>
-            <button id="hunt-pause" type="button" disabled>Pause</button>
-          </div>
+          <div class="hunt-brand"><span class="hunt-kicker" id="hunt-mode">The lookout</span><span class="hunt-name">Hunting Game</span></div>
+          <div class="hunt-clock"><div><span id="hunt-day">Day 1</span><span id="hunt-period">Dawn</span></div><output id="hunt-clock">05:30</output><output id="hunt-speed">1x time</output></div>
+          <div class="hunt-utilities"><button id="hunt-pause" type="button" disabled>Pause</button><button id="hunt-menu" type="button" disabled>More</button></div>
         </header>
-        <div class="hunt-camp" id="hunt-camp" hidden>
-          <nav class="hunt-camp-tabs" aria-label="Camp">
-            <button type="button" data-tab="outing" aria-pressed="true">Plan an outing</button>
-            <button type="button" data-tab="shop" aria-pressed="false">Outfitter</button>
-            <button type="button" data-tab="trophies" aria-pressed="false">Pack &amp; trophies <span id="hunt-pack-count">0</span></button>
-          </nav>
-          <p class="hunt-camp-notice" id="hunt-camp-notice" role="status" aria-live="polite">Choose a place and a good hour. No hurry.</p>
-          <section data-panel="outing" aria-label="Plan an outing">
-            <div class="hunt-camp-grid">
-              <div>
-                <div class="hunt-location" id="hunt-location">
-                  <div><p class="hunt-kicker" id="hunt-period">Dawn</p><h2 id="hunt-location-name">Birch Clearing</h2><p id="hunt-location-detail">Whitetail bucks. One small clearing.</p></div>
-                </div>
-                <div class="hunt-regions" id="hunt-regions" aria-label="Hunting areas"></div>
-              </div>
-              <div class="hunt-planner">
-                <p class="hunt-kicker">Before you leave</p><h2>Pick your hour.</h2>
-                <p class="hunt-planner-copy">Dawn and dusk bring more animals. Walking too close sends them running. The stand keeps you out of their way.</p>
-                <label for="hunt-departure">Wait until</label>
-                <div class="hunt-time-input"><input type="time" id="hunt-departure" value="06:00" required><button type="button" id="hunt-wait-until">Wait until then</button></div>
-                <fieldset class="hunt-clock-controls"><legend>Camp clock</legend><div><button type="button" data-speed="0" aria-pressed="false">Paused</button><button type="button" data-speed="1" aria-pressed="true">1x</button><button type="button" data-speed="60" aria-pressed="false">60x</button><button type="button" data-speed="300" aria-pressed="false">300x</button></div></fieldset>
-                <label for="hunt-loadout">Rifle</label><select id="hunt-loadout"><option value="starter">Field rifle</option></select>
-                <label class="hunt-dog-choice"><input type="checkbox" id="hunt-dog-along" checked disabled>Bring Bracken <span id="hunt-dog-note">Available at the outfitter.</span></label>
-                <button type="button" class="hunt-primary" id="hunt-embark">Head into the field</button>
-                <p class="hunt-save-note" id="hunt-save-note">Progress saves in this browser. The clock stops while the tab is hidden.</p>
-              </div>
-            </div>
-            <div class="hunt-deer-heading"><p class="hunt-kicker">Birch Clearing / deer levels</p><h3>From young buck to crowned stag.</h3><p id="hunt-deer-progress"></p></div>
-            <div class="hunt-deer-levels" id="hunt-deer-levels" aria-label="Deer levels for Birch Clearing"></div>
-          </section>
-          <section data-panel="shop" aria-label="Outfitter" hidden>
-            <div class="hunt-camp-heading"><p class="hunt-kicker">The outfitter</p><h2>A little help in the field.</h2><p>Sell recoveries from your pack to pay for equipment and new ground. Your records stay in the collection.</p></div>
-            <div class="hunt-shop-items" id="hunt-shop-items"></div>
-          </section>
-          <section data-panel="trophies" aria-label="Pack and trophies" hidden>
-            <div class="hunt-camp-heading"><p class="hunt-kicker">Pack &amp; trophies</p><h2>What came back with you.</h2><p>Sell an animal, or keep it as a trophy. Every recovery stays in your field record.</p></div>
-            <div class="hunt-pack-heading"><h3>In your pack</h3><button type="button" id="hunt-sell-all">Sell the pack</button></div>
-            <div id="hunt-bag-list" class="hunt-record-grid"></div>
-            <div class="hunt-pack-heading"><h3>Unfinished trails</h3><button type="button" id="hunt-camp-search">Search for an animal</button></div>
-            <div id="hunt-camp-trails" class="hunt-trail-summary"></div>
-            <h3 class="hunt-record-title">Field record</h3><div id="hunt-record-list" class="hunt-record-grid"></div>
-          </section>
-        </div>
         <div class="hunt-stage" id="hunt-stage">
-          <canvas id="hunt-canvas" width="640" height="360" tabindex="0" aria-label="A hunter in a small clearing. WASD or arrow keys walk, E climbs or leaves a nearby stand. Aim with the mouse and click to fire. On touchscreens, hold and drag to aim, use the movement buttons, then Fire." aria-describedby="hunt-instructions">This game needs a browser with canvas support.</canvas>
+          <canvas id="hunt-canvas" width="640" height="360" tabindex="0" aria-label="A wide field seen from a lookout. Hold F or Space to fast-forward. Release to watch at normal speed. Click to raise the scope, then click to shoot. Q lowers the scope. On touchscreens, drag to aim and use Aim, then Shoot." aria-describedby="hunt-instructions">This game needs a browser with canvas support.</canvas>
+          <div class="hunt-field-stats" aria-label="Field conditions"><span>Wind <output id="hunt-wind">Calm</output></span><span>Rounds <output id="hunt-ammo">5 / 5</output></span><span>Recovered <output id="hunt-recovered">0</output></span></div>
           <div class="hunt-overlay" id="hunt-overlay" role="dialog" aria-modal="false" aria-labelledby="hunt-overlay-title">
-            <div class="hunt-briefing">
-              <p class="hunt-kicker" id="hunt-overlay-kicker">A small hunting game</p><h2 id="hunt-overlay-title">Preparing camp.</h2>
-              <p id="hunt-overlay-text">Loading the field and your equipment.</p>
-              <p class="hunt-briefing-note" id="hunt-briefing-note">The gold rings show the vitals. The dotted arc shows the round's path, including wind. Aim beyond an animal so the falling round passes through its chest.</p>
-              <button class="hunt-primary" id="hunt-start" type="button" disabled>Loading the field...</button>
-              <p class="hunt-briefing-controls">WASD to walk. E to climb the stand.<br>On a phone, hold and drag to aim, then tap Fire.</p>
-            </div>
+            <div class="hunt-briefing"><p class="hunt-kicker">The lookout</p><h2 id="hunt-overlay-title">Opening the field.</h2><p id="hunt-overlay-text">Loading the wildlife.</p><button class="hunt-primary" id="hunt-start" type="button" disabled>Loading...</button></div>
           </div>
-          <span class="hunt-scope-label" id="hunt-scope-label" hidden>Scope raised</span>
           <noscript><p class="hunt-no-js">Enable JavaScript to play this game.</p></noscript>
         </div>
-        <div class="hunt-field-bar" id="hunt-field-bar">
-          <div class="hunt-wind"><span class="hunt-kicker">Wind</span><svg width="70" height="15" viewBox="0 0 70 15" aria-hidden="true"><path d="M35 1v13" class="hunt-wind-center"/><path id="hunt-wind-arrow" d="M35 7h0"/></svg><output id="hunt-wind">Calm</output></div>
-          <p id="hunt-message" role="status" aria-live="polite" aria-atomic="true">Loading the field.</p>
-          <button id="hunt-reset" type="button" disabled>Return to camp</button>
+        <div class="hunt-actions" aria-label="Game controls">
+          <button class="hunt-time-button" id="hunt-wait" type="button" aria-pressed="false" disabled>Fast-forward <span>hold F or Space</span></button>
+          <button id="hunt-scope" type="button" aria-pressed="false" disabled>Scope</button>
+          <button class="hunt-primary" id="hunt-fire" type="button" disabled>Aim</button>
         </div>
-        <div class="hunt-actions" id="hunt-actions" aria-label="Game controls">
-          <button class="hunt-primary" id="hunt-fire" type="button" disabled>Fire <kbd>Click</kbd></button>
-          <button id="hunt-reload" type="button" disabled>Reload <kbd>R</kbd></button>
-          <button id="hunt-scope" type="button" aria-pressed="false" disabled>Scope <kbd>Q</kbd></button>
-          <button id="hunt-guide" type="button" aria-pressed="true">Guide on <kbd>G</kbd></button>
-          <button id="hunt-wait" type="button" aria-pressed="false" disabled>Wait <kbd>Hold F</kbd></button>
-          <button id="hunt-interact" type="button" disabled>Climb stand <kbd>E</kbd></button>
-          <button id="hunt-search" type="button" disabled>Search trails <span id="hunt-track-count">0</span></button>
-          <div class="hunt-shuffle" aria-label="Walk"><button data-move="-1" type="button" aria-label="Walk left" disabled>A</button><div><button data-move-y="1" type="button" aria-label="Walk forward" disabled>W</button><button data-move-y="-1" type="button" aria-label="Walk backward" disabled>S</button></div><button data-move="1" type="button" aria-label="Walk right" disabled>D</button></div>
-        </div>
-        <footer class="hunt-instructions" id="hunt-instructions">WASD walks. E climbs the stand. Aim beyond an animal. Hold F to wait, P pauses. Return to camp when you're ready.</footer>
-        <section class="hunt-tracking" id="hunt-tracking" role="dialog" aria-modal="true" aria-labelledby="hunt-tracking-title" hidden>
-          <div class="hunt-tracking-card">
-            <picture><source type="image/webp" srcset="assets/hunting/trail-v3.webp"><img src="assets/hunting/trail-v3.png" width="640" height="360" loading="lazy" decoding="async" alt="A hunter walking along a sunlit forest trail, following small blood marks."></picture>
-            <div class="hunt-tracking-copy"><p class="hunt-kicker">Beyond the clearing</p><h2 id="hunt-tracking-title">Follow a trail.</h2><p id="hunt-tracking-text">Fresh trails are easier to find. Searching uses daylight.</p><div id="hunt-track-choice"></div><progress id="hunt-search-progress" max="1" value="0" hidden aria-label="Search progress"></progress><button type="button" id="hunt-track-close">Back</button></div>
+        <p class="hunt-message" id="hunt-message" role="status" aria-live="polite" aria-atomic="true">Loading the field.</p>
+        <span class="sr-only" id="hunt-instructions">Hold Fast-forward to pass time. New wildlife briefly slows the rush, but can still leave if you keep holding. Click to raise the scope; click again to shoot. Aim above a far target for bullet drop, and against the wind. R reloads, P pauses. Touch the field to aim and use the Aim or Shoot button.</span>
+        <section class="hunt-options" id="hunt-options" role="dialog" aria-modal="true" aria-labelledby="hunt-options-title" hidden>
+          <div class="hunt-options-sheet">
+            <div class="hunt-options-head"><h2 id="hunt-options-title">Your lookout</h2><button type="button" id="hunt-menu-close">Back</button></div>
+            <label for="hunt-region">Field</label><select id="hunt-region"><option value="birch">Birch Clearing</option><option value="cypress">Cypress Edge</option></select>
+            <label for="hunt-deer-level">Birch deer</label><select id="hunt-deer-level"><option value="1">Young buck</option></select>
+            <p class="hunt-option-note" id="hunt-option-note">Larger bucks unlock as you recover deer. Changing fields starts a fresh view at the same hour.</p>
+            <div class="hunt-option-actions"><button id="hunt-sound" type="button" aria-pressed="false">Sound off</button><button id="hunt-fullscreen" type="button" aria-pressed="false">Fullscreen</button></div>
+            <h3>Recoveries</h3><ul id="hunt-record-list" class="hunt-record-list"><li>Your first recovery will appear here.</li></ul>
+            <p class="hunt-save-note" id="hunt-save-note">Your clock and recoveries save in this browser.</p>
           </div>
         </section>
       </section>
       <div class="post-body hunt-prose">
-        <p><strong>Hunting Game</strong> started as a Unity project I made with AI. I don't want to keep developing it in Unity, so this is the JavaScript version: a camp clock, a pack to sell, and a round you can watch fall through the field. Pick an hour, walk to the stand, and bring something back. Still in progress.</p>
-        <details class="hunt-notes">
-          <summary>How shooting works</summary>
-          <p>Your crosshair marks where the round would land without wind. Aim at a deer's hooves and the round arrives too low. Aim beyond the deer, along the line from your stand, and the round is still above the ground when it reaches the animal. Aim too far beyond it and you shoot over its back.</p>
-          <p>With the guide on, the gold ring marks the vitals near the front shoulder. The dotted line is the visible bullet's predicted path with the current wind. Bring that line through the ring, then wait for the deer to stop walking or lead its movement. The little square marks the predicted landing point. The guide won't move your aim or correct the shot.</p>
-          <p>Transparent pixels between the legs or around the antlers let a round pass through. A hit outside the vitals wounds the deer and it runs. A vital hit brings it down after a short run and puts the animal in your pack. A wounded animal leaves a blood trail. If it escapes, you can search right away or keep hunting. Waiting makes the trail harder to follow and lowers the sale value. Bracken, the tracking dog, helps with both the search and the walk back.</p>
-          <p>You have five rounds. R reloads; clicking with an empty magazine starts a reload too. Q toggles the scope, or hold the right mouse button. WASD or the arrow keys walk; E climbs or leaves a nearby stand. Hold F or Wait to pass time faster. P pauses. On a phone, hold and drag your aim, then use Fire. Camp has a clock you can speed up, and a Wait until control for a specific departure time.</p>
+        <p><strong>Hunting Game</strong> is about watching a field while the day rushes past. Hold Fast-forward and watch the sun cross the sky. Wildlife briefly eases the speed. Release in time to take a closer look, or keep holding and let it pass. Still in progress.</p>
+        <details class="hunt-notes"><summary>Controls and shooting</summary>
+          <p>Click once to raise the scope, then click to shoot. Q or right-click lowers the scope. On a phone, drag on the field to aim, tap Aim to raise the scope, then Shoot. Hold F, Space, or Fast-forward to pass time. Release to return to normal speed. P pauses.</p>
+          <p>Aim above the shoulder to allow for bullet drop, and against the wind to allow for drift. Farther shots need more correction. The scope stays up while the round travels; the small field view shows its whole flight. You have five rounds, with automatic reloading after the last shot. R reloads sooner.</p>
+          <p>Deer and boar pass through the field. Squirrels move through the grass, and owls cross overhead. A vital hit saves a recovery after a short run. A body hit can send the animal into the trees. Your clock and recoveries save in this browser.</p>
         </details>
-        <p class="hunt-source">Built with JavaScript and a 640 by 360 canvas. The current pixel art was generated for this browser version. Credits, equipment and recoveries save in this browser. <a href="js/hunting-campaign.js">Camp and progression</a> &middot; <a href="js/hunting-physics.js">Shooting and animal behavior</a> &middot; <a href="js/hunting-view.js">Renderer</a> &middot; <a href="js/hunting-game.js">Game source</a>.</p>
+        <p class="hunt-source">Built with JavaScript and a canvas. The landscape is drawn in code; the deer and boar use generated pixel art. <a href="js/hunting-physics.js">Shooting and wildlife</a> &middot; <a href="js/hunting-view.js">Renderer</a> &middot; <a href="js/hunting-game.js">Game source</a>.</p>
         <nav class="hunt-bottomnav" aria-label="Site navigation"><a href="/" class="post-back"><span class="pb-label">Home</span></a><a href="archive.html" class="post-back"><span class="pb-label">In Progress</span></a></nav>
       </div>
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
   <script src="js/main.js"></script>
-  <script src="js/hunting-physics.js?v=4"></script>
-  <script src="js/hunting-campaign.js?v=4"></script>
-  <script src="js/hunting-view.js?v=4"></script>
-  <script src="js/hunting-game.js?v=4"></script>
+  <script src="js/hunting-physics.js?v=5"></script>
+  <script src="js/hunting-campaign.js?v=5"></script>
+  <script src="js/hunting-view.js?v=5"></script>
+  <script src="js/hunting-game.js?v=5"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
