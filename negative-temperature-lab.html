@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#303931">
+  <meta name="robots" content="noindex">
+  <title>Negative temperature</title>
+  <meta property="og:title" content="Negative temperature">
+  <meta name="description" content="A live two-dimensional superfluid. Repulsive paddles stir a condensate wave field; signed vortex cores reveal the flow.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="negative-temperature.css?v=1">
+</head>
+<body class="nt-page">
+  <div class="site-wrapper">
+    <header class="post-header"><a class="post-back" href="/">Ethan Willingham</a></header>
+    <main>
+      <header class="u-hero nt-hero">
+        <p class="u-eyebrow">A superfluid study</p>
+        <h1 class="u-title">Negative temperature</h1>
+        <p class="u-dek">A field of tiny whirlpools, left to find its own order.</p>
+      </header>
+      <section id="nt-piece" class="nt-piece" aria-label="Live superfluid visualization" aria-busy="true">
+        <div class="nt-stage">
+          <canvas id="nt-canvas" tabindex="0" aria-label="Condensate density. Dark cores are vortices. Space pauses or resumes; F opens fullscreen."></canvas>
+          <picture id="nt-fallback" hidden><source srcset="assets/visualizer/negative-temperature/fallback.webp" type="image/webp"><img src="assets/visualizer/negative-temperature/fallback.png" alt="A recorded density image from this Gross-Pitaevskii solver, with dark vortex cores in a luminous elliptical condensate." loading="eager"></picture>
+          <p class="nt-stage-label" id="nt-phase">Preparing the field</p>
+          <p class="nt-status" id="nt-status" role="status">Preparing a condensate with imaginary-time evolution.</p>
+          <div class="nt-scale" aria-hidden="true"><span></span>10 model units</div>
+        </div>
+        <div class="nt-toolbar" aria-label="Visualization controls">
+          <div class="nt-controls">
+            <button id="nt-play" type="button" disabled>Pause</button>
+            <button id="nt-instruments-button" type="button" aria-expanded="false" aria-controls="nt-instruments">Instruments</button>
+            <button id="nt-restart" type="button" disabled>Restart</button>
+          </div>
+          <button id="nt-fullscreen" type="button">Fullscreen</button>
+        </div>
+        <div class="nt-instruments" id="nt-instruments" hidden>
+          <div class="nt-options">
+            <label>View<select id="nt-view"><option value="density">Density with phase tint</option><option value="phase">Cyclic phase</option><option value="velocity">Density and velocity</option></select></label>
+            <label class="nt-check"><input id="nt-signs" type="checkbox">Show vortex signs</label>
+            <label>Replay seed<input id="nt-seed" type="text" value="180106951" inputmode="text" pattern="[0-9a-fA-F]{1,64}" maxlength="64" aria-describedby="nt-seed-note"></label>
+            <button id="nt-export" type="button">Save diagnostics</button>
+          </div>
+          <p id="nt-seed-note" class="nt-note">Fixed offline seed. Apply it with Restart. Floating-point replay can diverge across GPUs.</p>
+          <dl id="nt-readouts" class="nt-readouts"></dl>
+          <details class="nt-configuration"><summary>Model configuration</summary><pre id="nt-configuration"></pre></details>
+          <p class="nt-note" id="nt-adapter"></p>
+          <p class="nt-note">Energy includes the moving paddles, which do work on the field. Real-time evolution has no damping or norm correction. Candidate annihilations are estimates between samples.</p>
+          <p class="nt-note">Warm circles mark positive winding; blue circles mark negative winding. Phase hue is a smooth, constant-lightness OKLab color wheel, an encoding rather than emitted light.</p>
+        </div>
+      </section>
+      <div class="post-body nt-prose">
+        <p>Each dark core carries one turn of the condensate’s phase. Two repulsive paddles move through the field, shed vortices, and withdraw. The wave equation then decides what survives. Same-sign cores can organize into persistent groups; Instruments measures their circulation and organization.</p>
+        <p class="nt-note">“Negative temperature” refers to the statistical temperature of the vortex subsystem. This prototype does not estimate that temperature or establish thermodynamic equilibrium. The condensate is a two-dimensional mean-field model, with dimensionless lengths and time.</p>
+        <details class="u-collapse">
+          <summary class="u-collapse-s">Sources and numerical notes</summary>
+          <ol class="u-collapse-list">
+            <li>Gauthier and collaborators, <a href="https://arxiv.org/abs/1801.06951">Giant vortex clusters in a two-dimensional quantum fluid</a>. Preprint 2018; <i>Science</i>, 2019. The double-paddle protocol is the starting point for this smaller, smooth trap.</li>
+            <li>Johnstone and collaborators, <a href="https://arxiv.org/abs/1801.06952">Order from chaos</a>. Preprint 2018; <i>Science</i>, 2019. Signed nearest-neighbor correlations measure organization.</li>
+            <li><a href="docs/visualizer/NEGATIVE_TEMPERATURE.md">Implementation, validation and measured limitations</a>. The live solver uses a 256 by 256 grid and symmetric split-step Fourier evolution.</li>
+          </ol>
+        </details>
+      </div>
+    </main>
+    <footer class="site-footer"><a href="/">Home</a></footer>
+  </div>
+  <script type="module" src="js/negative-temperature.js?v=1"></script>
+</body>
+</html>

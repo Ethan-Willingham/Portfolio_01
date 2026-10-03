@@ -1,0 +1,284 @@
+{
+  "numerics": {
+    "adapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "description": "",
+      "isFallbackAdapter": false
+    },
+    "roundTripRMS": 1.0067630876668875e-7,
+    "cpuGPU20StepsRMS": 0.0000017991855923633095,
+    "normDrift20Steps": -0.000005255782852819912,
+    "roundTrip256RMS": 7.306403995040152e-8,
+    "prepared": {
+      "norm": 1105.9407457469085,
+      "energy": 1150.0126878767298,
+      "kinetic": 25.80191727191461,
+      "interaction": 1062.743588460364,
+      "potential": 61.46718214445118,
+      "edgeNormFraction": 2.5534642118012064e-15,
+      "positive": 0,
+      "negative": 0,
+      "circulation": 0,
+      "vortices": [],
+      "c2": null,
+      "componentSizes": [],
+      "largestCluster": 0,
+      "clustered": false
+    },
+    "preparationRelativeChange": 5.6718786705444407e-8,
+    "planeWave256RMS": 0.000015381621323015844,
+    "normDrift100Steps": -0.000033154832198900586,
+    "fftTiming": {
+      "median": 0.3999999761581421,
+      "p95": 0.9000000953674316,
+      "units": "ms, queue completion including CPU submission",
+      "samples": 25
+    },
+    "stepTiming": {
+      "median": 0.22499999403953552,
+      "p95": 0.32500000298023224,
+      "units": "ms, queue completion including CPU submission",
+      "samples": 25
+    },
+    "roundTrip512RMS": 5.4589920143635713e-8,
+    "wideBoxFinite": true,
+    "renderTiming": {
+      "median": 0.40000009536743164,
+      "p95": 0.7999999523162842,
+      "units": "ms, queue completion including CPU submission",
+      "size": [
+        640,
+        360
+      ],
+      "samples": 25
+    },
+    "roomContract": {
+      "remainingRoomUsableAfterOtherDispose": true,
+      "linearExposureRatio": [
+        2,
+        2,
+        2
+      ],
+      "snapshot": {
+        "apiVersion": 1,
+        "id": "negative-temperature",
+        "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
+        "numericalStepCount": 0,
+        "simulationTime": 0,
+        "simulationUnits": "dimensionless: hbar = m = 1",
+        "quality": "low",
+        "parameters": {
+          "grid": 256,
+          "side": 64,
+          "g": 2,
+          "bulkDensity": 1,
+          "chemicalPotential": 2,
+          "radiusX": 24,
+          "radiusY": 17,
+          "wallWidth": 0.8,
+          "wallHeight": 12,
+          "dt": 0.01,
+          "preparationDt": 0.04,
+          "preparationSteps": 1600,
+          "paddleAmplitude": 10,
+          "paddleSigmaX": 7.5,
+          "paddleSigmaY": 0.55,
+          "paddleX": 24,
+          "paddleStartY": 22,
+          "paddleSpeed": 0.5,
+          "stirStart": 12,
+          "sweepDuration": 44,
+          "withdrawalDuration": 16,
+          "phraseDuration": 540,
+          "solverUnitsPerSecond": 0.75,
+          "damping": 0,
+          "detectionRadius": 0.89,
+          "detectionDensity": 0.08,
+          "clusterLink": 7,
+          "clusterMinimum": 4,
+          "clusterCorrelation": 0.55
+        },
+        "seed": "180106951",
+        "seedProvenance": "Fixed offline hex seed, FNV-1a + Mulberry32 sets initial global phase only; deterministic paddles.",
+        "replayCaveat": "Same solver sequence; floating-point evolution can diverge across devices.",
+        "preparation": {
+          "method": "Grand-canonical imaginary-time split step at fixed chemical potential, no frame normalization",
+          "steps": 1600
+        },
+        "dx": 0.25,
+        "healingLength": 0.5,
+        "healingLengthCells": 2,
+        "phase": "Quiet field",
+        "temperatureStatus": "Temperature not estimated",
+        "diagnosticAgeSteps": 0,
+        "diagnosticAgeSeconds": 0.32040000009536745,
+        "diagnostics": {
+          "norm": 1105.9407263802152,
+          "energy": 1150.0126491156066,
+          "kinetic": 25.801916654087986,
+          "interaction": 1062.7435524729156,
+          "potential": 61.46717998860292,
+          "edgeNormFraction": 2.461503275723126e-15,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false,
+          "measuredStep": 0,
+          "measuredSimulationTime": 0,
+          "normDrift": 0,
+          "conservativeEnergyDrift": null,
+          "estimatedAnnihilations": 0,
+          "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
+          "temperature": null,
+          "temperatureStatus": "Temperature not estimated",
+          "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
+        },
+        "assetBaseURL": "http://127.0.0.1:64400/assets/visualizer/negative-temperature/"
+      }
+    },
+    "protocolDtHalving": [
+      {
+        "dt": 0.01,
+        "norm": 1102.7203833837893,
+        "energy": 1463.0058199344428,
+        "kinetic": 251.9837803416077,
+        "interaction": 1104.9418957180292,
+        "potential": 106.08014387480613,
+        "edgeNormFraction": 0.00012593686501506015,
+        "positive": 4,
+        "negative": 4,
+        "circulation": 0,
+        "vortices": [
+          {
+            "x": -11.375,
+            "y": -8.875,
+            "sign": 1
+          },
+          {
+            "x": 11.375,
+            "y": -8.875,
+            "sign": -1
+          },
+          {
+            "x": 13.375,
+            "y": -5.125,
+            "sign": -1
+          },
+          {
+            "x": -13.875,
+            "y": -4.875,
+            "sign": 1
+          },
+          {
+            "x": -9.375,
+            "y": -4.625,
+            "sign": 1
+          },
+          {
+            "x": 9.375,
+            "y": -3.875,
+            "sign": -1
+          },
+          {
+            "x": -12.125,
+            "y": -0.875,
+            "sign": 1
+          },
+          {
+            "x": 12.625,
+            "y": -0.875,
+            "sign": -1
+          }
+        ],
+        "c2": 1,
+        "componentSizes": [
+          4,
+          4
+        ],
+        "largestCluster": 4,
+        "clustered": true
+      },
+      {
+        "dt": 0.005,
+        "norm": 1099.392039093142,
+        "energy": 1455.1619120172159,
+        "kinetic": 250.19701341946396,
+        "interaction": 1099.2434882595837,
+        "potential": 105.72141033816831,
+        "edgeNormFraction": 0.00011272456467014078,
+        "positive": 5,
+        "negative": 5,
+        "circulation": 0,
+        "vortices": [
+          {
+            "x": -10.625,
+            "y": -9.625,
+            "sign": 1
+          },
+          {
+            "x": 9.875,
+            "y": -8.125,
+            "sign": -1
+          },
+          {
+            "x": 13.625,
+            "y": -5.875,
+            "sign": -1
+          },
+          {
+            "x": -13.625,
+            "y": -4.625,
+            "sign": 1
+          },
+          {
+            "x": -9.375,
+            "y": -4.375,
+            "sign": 1
+          },
+          {
+            "x": 9.625,
+            "y": -3.875,
+            "sign": -1
+          },
+          {
+            "x": 13.625,
+            "y": -1.375,
+            "sign": -1
+          },
+          {
+            "x": -13.125,
+            "y": -1.125,
+            "sign": 1
+          },
+          {
+            "x": 0.125,
+            "y": 3.125,
+            "sign": -1
+          },
+          {
+            "x": 2.625,
+            "y": 3.125,
+            "sign": 1
+          }
+        ],
+        "c2": 0.7,
+        "componentSizes": [
+          4,
+          4,
+          1,
+          1
+        ],
+        "largestCluster": 4,
+        "clustered": true
+      }
+    ],
+    "errors": []
+  },
+  "clusteredSamples": 51,
+  "errors": []
+}

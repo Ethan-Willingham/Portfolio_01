@@ -1,0 +1,1077 @@
+{
+  "status": "superseded",
+  "reason": "These early vortex counts used a density gate inside the core. Use corrected-paddle-runs.json, wall-check-runs.json and the final protocol-run.json for vortex organization. Physical energy and norm measurements were separate from this detector.",
+  "record": [
+    {
+      "parameters": {
+        "grid": 512,
+        "side": 96,
+        "g": 1,
+        "bulkDensity": 1,
+        "chemicalPotential": 1,
+        "radiusX": 38,
+        "radiusY": 27,
+        "wallWidth": 0.8,
+        "wallHeight": 8,
+        "dt": 0.005,
+        "preparationDt": 0.04,
+        "preparationSteps": 1600,
+        "paddleAmplitude": 5,
+        "paddleSigmaX": 11.5,
+        "paddleSigmaY": 0.6,
+        "paddleX": 38,
+        "paddleStartY": 32,
+        "paddleSpeed": 0.4,
+        "stirStart": 12,
+        "sweepDuration": 80,
+        "withdrawalDuration": 20,
+        "phraseDuration": 2000,
+        "solverUnitsPerSecond": 0.75,
+        "damping": 0,
+        "detectionRadius": 0.89,
+        "detectionDensity": 0.08,
+        "clusterLink": 7,
+        "clusterMinimum": 4,
+        "clusterCorrelation": 0.55
+      },
+      "history": [
+        {
+          "time": 25.00000000000001,
+          "norm": 2886.981616311402,
+          "energy": 1485.6617136676919,
+          "kinetic": 34.588686669961575,
+          "interaction": 1401.490243448946,
+          "potential": 49.58278354878424,
+          "edgeNormFraction": 6.935954965175424e-12,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 50.00000000000003,
+          "norm": 2885.9506290367776,
+          "energy": 1566.5830119524571,
+          "kinetic": 58.460091958017244,
+          "interaction": 1443.5066642950708,
+          "potential": 64.616255699369,
+          "edgeNormFraction": 1.1279475797667509e-11,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 75.00000000000006,
+          "norm": 2883.1178395229717,
+          "energy": 1781.7209128108184,
+          "kinetic": 162.65598906201745,
+          "interaction": 1538.6102424714888,
+          "potential": 80.45468127731219,
+          "edgeNormFraction": 1.8183702955425622e-11,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 100.00000000000009,
+          "norm": 2879.525631163112,
+          "energy": 1960.6350430477335,
+          "kinetic": 271.02987669015806,
+          "interaction": 1602.6070385369512,
+          "potential": 86.99812782062416,
+          "edgeNormFraction": 1.3148681516973067e-10,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 125.00000000000011,
+          "norm": 2876.7203093427333,
+          "energy": 1911.5431574604672,
+          "kinetic": 371.0253545997042,
+          "interaction": 1473.4729649302535,
+          "potential": 67.04483793050966,
+          "edgeNormFraction": 3.9837674431744784e-09,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 149.99999999999963,
+          "norm": 2873.5987191578697,
+          "energy": 1907.739736518615,
+          "kinetic": 363.06512519487325,
+          "interaction": 1476.3243965624529,
+          "potential": 68.35021476128873,
+          "edgeNormFraction": 1.2272537740835518e-08,
+          "positive": 0,
+          "negative": 1,
+          "circulation": -1,
+          "vortices": [
+            {
+              "x": 29.53125,
+              "y": 9.46875,
+              "sign": -1
+            }
+          ],
+          "c2": null,
+          "componentSizes": [
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 174.9999999999991,
+          "norm": 2869.956204519489,
+          "energy": 1903.4116091043034,
+          "kinetic": 319.00178707295873,
+          "interaction": 1519.3746235668677,
+          "potential": 65.03519846447702,
+          "edgeNormFraction": 2.4898581442648164e-07,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 199.99999999999855,
+          "norm": 2866.8662402760624,
+          "energy": 1899.794619552437,
+          "kinetic": 387.9105435237523,
+          "interaction": 1445.9882377271138,
+          "potential": 65.89583830157115,
+          "edgeNormFraction": 2.2642499946537173e-06,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 224.999999999998,
+          "norm": 2863.839149705625,
+          "energy": 1896.194192785881,
+          "kinetic": 345.9215270199793,
+          "interaction": 1477.3405976475392,
+          "potential": 72.9320681183623,
+          "edgeNormFraction": 1.0097100120029422e-05,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 249.99999999999747,
+          "norm": 2860.4273088509344,
+          "energy": 1892.1950486858368,
+          "kinetic": 362.52182659792453,
+          "interaction": 1457.8686399853723,
+          "potential": 71.80458210254012,
+          "edgeNormFraction": 2.155248517262864e-05,
+          "positive": 1,
+          "negative": 0,
+          "circulation": 1,
+          "vortices": [
+            {
+              "x": -0.84375,
+              "y": 10.96875,
+              "sign": 1
+            }
+          ],
+          "c2": null,
+          "componentSizes": [
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 274.999999999997,
+          "norm": 2856.9845779813713,
+          "energy": 1888.2029872824894,
+          "kinetic": 361.11334558751713,
+          "interaction": 1444.3831449569436,
+          "potential": 82.70649673802839,
+          "edgeNormFraction": 3.07526488103555e-05,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 299.9999999999965,
+          "norm": 2853.9822411398036,
+          "energy": 1884.6776201011296,
+          "kinetic": 354.9677775776628,
+          "interaction": 1439.7209266057466,
+          "potential": 89.98891591772004,
+          "edgeNormFraction": 4.404907045928677e-05,
+          "positive": 0,
+          "negative": 1,
+          "circulation": -1,
+          "vortices": [
+            {
+              "x": 4.21875,
+              "y": 21.65625,
+              "sign": -1
+            }
+          ],
+          "c2": null,
+          "componentSizes": [
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 324.99999999999596,
+          "norm": 2850.6599704219966,
+          "energy": 1880.8187802895286,
+          "kinetic": 356.02533213346055,
+          "interaction": 1439.476294811754,
+          "potential": 85.31715334431411,
+          "edgeNormFraction": 4.7982280906658464e-05,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 349.99999999999545,
+          "norm": 2847.0524392342923,
+          "energy": 1876.6344259648583,
+          "kinetic": 353.4540913121008,
+          "interaction": 1421.2270752298352,
+          "potential": 101.95325942292224,
+          "edgeNormFraction": 6.789226618749562e-05,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 374.99999999999494,
+          "norm": 2843.9042130995435,
+          "energy": 1872.945395482694,
+          "kinetic": 356.699320991492,
+          "interaction": 1417.2885289428389,
+          "potential": 98.95754554836287,
+          "edgeNormFraction": 8.402218302128207e-05,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 399.99999999999443,
+          "norm": 2840.7018181239464,
+          "energy": 1869.2614369588853,
+          "kinetic": 337.7206406244273,
+          "interaction": 1427.3757894514042,
+          "potential": 104.16500688305364,
+          "edgeNormFraction": 9.884902524753205e-05,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        }
+      ]
+    },
+    {
+      "parameters": {
+        "grid": 512,
+        "side": 96,
+        "g": 2,
+        "bulkDensity": 1,
+        "chemicalPotential": 2,
+        "radiusX": 38,
+        "radiusY": 27,
+        "wallWidth": 0.8,
+        "wallHeight": 8,
+        "dt": 0.005,
+        "preparationDt": 0.04,
+        "preparationSteps": 1600,
+        "paddleAmplitude": 10,
+        "paddleSigmaX": 11.5,
+        "paddleSigmaY": 0.6,
+        "paddleX": 38,
+        "paddleStartY": 32,
+        "paddleSpeed": 0.6,
+        "stirStart": 12,
+        "sweepDuration": 53.3,
+        "withdrawalDuration": 16,
+        "phraseDuration": 2000,
+        "solverUnitsPerSecond": 0.75,
+        "damping": 0,
+        "detectionRadius": 0.89,
+        "detectionDensity": 0.08,
+        "clusterLink": 7,
+        "clusterMinimum": 4,
+        "clusterCorrelation": 0.55
+      },
+      "history": [
+        {
+          "time": 25.00000000000001,
+          "norm": 2983.325193193947,
+          "energy": 3069.887861621913,
+          "kinetic": 40.48999506059798,
+          "interaction": 2913.6661021709424,
+          "potential": 115.73176439037246,
+          "edgeNormFraction": 1.0360075471389646e-10,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 50.00000000000003,
+          "norm": 2980.8713644104405,
+          "energy": 3640.392344334543,
+          "kinetic": 284.2715042510437,
+          "interaction": 3198.319490860835,
+          "potential": 157.8013492226644,
+          "edgeNormFraction": 9.146614531941294e-11,
+          "positive": 0,
+          "negative": 0,
+          "circulation": 0,
+          "vortices": [],
+          "c2": null,
+          "componentSizes": [],
+          "largestCluster": 0,
+          "clustered": false
+        },
+        {
+          "time": 75.00000000000006,
+          "norm": 2977.0529567483677,
+          "energy": 4191.023921909419,
+          "kinetic": 680.6380917791885,
+          "interaction": 3321.075123991864,
+          "potential": 189.3107061383668,
+          "edgeNormFraction": 2.9142132907132526e-07,
+          "positive": 2,
+          "negative": 2,
+          "circulation": 0,
+          "vortices": [
+            {
+              "x": -29.90625,
+              "y": 3.46875,
+              "sign": 1
+            },
+            {
+              "x": 29.90625,
+              "y": 3.46875,
+              "sign": -1
+            },
+            {
+              "x": -32.15625,
+              "y": 6.84375,
+              "sign": -1
+            },
+            {
+              "x": 32.15625,
+              "y": 6.84375,
+              "sign": 1
+            }
+          ],
+          "c2": -0.5,
+          "componentSizes": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 100.00000000000009,
+          "norm": 2974.0262892633755,
+          "energy": 4108.531268281138,
+          "kinetic": 715.8135688580643,
+          "interaction": 3227.013887051539,
+          "potential": 165.70381237153538,
+          "edgeNormFraction": 6.3402381822554055e-06,
+          "positive": 7,
+          "negative": 5,
+          "circulation": 2,
+          "vortices": [
+            {
+              "x": -31.03125,
+              "y": -1.21875,
+              "sign": 1
+            },
+            {
+              "x": 31.03125,
+              "y": -1.21875,
+              "sign": -1
+            },
+            {
+              "x": -28.78125,
+              "y": 3.65625,
+              "sign": 1
+            },
+            {
+              "x": 28.78125,
+              "y": 3.65625,
+              "sign": -1
+            },
+            {
+              "x": -21.84375,
+              "y": 3.84375,
+              "sign": 1
+            },
+            {
+              "x": 19.78125,
+              "y": 4.40625,
+              "sign": 1
+            },
+            {
+              "x": 28.59375,
+              "y": 5.90625,
+              "sign": -1
+            },
+            {
+              "x": 12.09375,
+              "y": 9.28125,
+              "sign": 1
+            },
+            {
+              "x": -12.28125,
+              "y": 9.46875,
+              "sign": -1
+            },
+            {
+              "x": -11.34375,
+              "y": 10.78125,
+              "sign": 1
+            },
+            {
+              "x": 11.15625,
+              "y": 10.78125,
+              "sign": -1
+            },
+            {
+              "x": -19.78125,
+              "y": 15.09375,
+              "sign": 1
+            }
+          ],
+          "c2": 0.25,
+          "componentSizes": [
+            3,
+            3,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 3,
+          "clustered": false
+        },
+        {
+          "time": 125.00000000000011,
+          "norm": 2970.3760010866777,
+          "energy": 4099.580330515731,
+          "kinetic": 743.0746390111575,
+          "interaction": 3140.5453607077134,
+          "potential": 215.9603307968594,
+          "edgeNormFraction": 0.00010464829948914104,
+          "positive": 2,
+          "negative": 1,
+          "circulation": 1,
+          "vortices": [
+            {
+              "x": 0.65625,
+              "y": -14.34375,
+              "sign": 1
+            },
+            {
+              "x": -1.21875,
+              "y": -14.15625,
+              "sign": -1
+            },
+            {
+              "x": -17.71875,
+              "y": -7.40625,
+              "sign": 1
+            }
+          ],
+          "c2": -0.3333333333333333,
+          "componentSizes": [
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 149.99999999999963,
+          "norm": 2967.2975724004273,
+          "energy": 4092.123937695609,
+          "kinetic": 808.3331817533808,
+          "interaction": 2992.3540624618736,
+          "potential": 291.4366934803547,
+          "edgeNormFraction": 0.0002791578278487287,
+          "positive": 2,
+          "negative": 5,
+          "circulation": -3,
+          "vortices": [
+            {
+              "x": -20.71875,
+              "y": -15.28125,
+              "sign": -1
+            },
+            {
+              "x": 16.96875,
+              "y": -13.78125,
+              "sign": -1
+            },
+            {
+              "x": 24.84375,
+              "y": -11.53125,
+              "sign": -1
+            },
+            {
+              "x": -24.46875,
+              "y": -1.59375,
+              "sign": 1
+            },
+            {
+              "x": 19.78125,
+              "y": -0.65625,
+              "sign": -1
+            },
+            {
+              "x": -25.03125,
+              "y": 2.34375,
+              "sign": 1
+            },
+            {
+              "x": 24.65625,
+              "y": 3.09375,
+              "sign": -1
+            }
+          ],
+          "c2": 0.42857142857142855,
+          "componentSizes": [
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 2,
+          "clustered": false
+        },
+        {
+          "time": 174.9999999999991,
+          "norm": 2963.9854335957916,
+          "energy": 4084.105090920129,
+          "kinetic": 789.4288851748073,
+          "interaction": 2984.137502820396,
+          "potential": 310.53870292492536,
+          "edgeNormFraction": 0.00036711299617587964,
+          "positive": 3,
+          "negative": 2,
+          "circulation": 1,
+          "vortices": [
+            {
+              "x": -25.40625,
+              "y": -9.84375,
+              "sign": 1
+            },
+            {
+              "x": -11.53125,
+              "y": -6.84375,
+              "sign": 1
+            },
+            {
+              "x": 11.15625,
+              "y": -4.96875,
+              "sign": -1
+            },
+            {
+              "x": -11.15625,
+              "y": -4.40625,
+              "sign": 1
+            },
+            {
+              "x": -8.15625,
+              "y": -3.65625,
+              "sign": -1
+            }
+          ],
+          "c2": 0,
+          "componentSizes": [
+            2,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 2,
+          "clustered": false
+        },
+        {
+          "time": 199.99999999999855,
+          "norm": 2960.335208945407,
+          "energy": 4075.498052205612,
+          "kinetic": 791.9950858807173,
+          "interaction": 2943.1296751628374,
+          "potential": 340.3732911620577,
+          "edgeNormFraction": 0.0003980511198322285,
+          "positive": 2,
+          "negative": 4,
+          "circulation": -2,
+          "vortices": [
+            {
+              "x": 6.46875,
+              "y": -16.78125,
+              "sign": 1
+            },
+            {
+              "x": 14.90625,
+              "y": -16.59375,
+              "sign": -1
+            },
+            {
+              "x": 25.59375,
+              "y": -13.03125,
+              "sign": -1
+            },
+            {
+              "x": -8.53125,
+              "y": -12.28125,
+              "sign": 1
+            },
+            {
+              "x": 17.53125,
+              "y": -10.78125,
+              "sign": -1
+            },
+            {
+              "x": -25.59375,
+              "y": -1.03125,
+              "sign": -1
+            }
+          ],
+          "c2": 0,
+          "componentSizes": [
+            2,
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 2,
+          "clustered": false
+        },
+        {
+          "time": 224.999999999998,
+          "norm": 2956.9998947226145,
+          "energy": 4067.6051105139913,
+          "kinetic": 730.6721409722086,
+          "interaction": 2984.5111919692076,
+          "potential": 352.4217775725755,
+          "edgeNormFraction": 0.00046457601746399256,
+          "positive": 2,
+          "negative": 2,
+          "circulation": 0,
+          "vortices": [
+            {
+              "x": 7.59375,
+              "y": -19.96875,
+              "sign": 1
+            },
+            {
+              "x": 16.03125,
+              "y": -17.71875,
+              "sign": -1
+            },
+            {
+              "x": 7.96875,
+              "y": -8.71875,
+              "sign": -1
+            },
+            {
+              "x": 7.21875,
+              "y": 11.71875,
+              "sign": 1
+            }
+          ],
+          "c2": -0.5,
+          "componentSizes": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 249.99999999999747,
+          "norm": 2953.0362795080937,
+          "energy": 4058.3493163821763,
+          "kinetic": 764.8974903625707,
+          "interaction": 2914.7649254117214,
+          "potential": 378.68690060788373,
+          "edgeNormFraction": 0.000469708592970215,
+          "positive": 1,
+          "negative": 1,
+          "circulation": 0,
+          "vortices": [
+            {
+              "x": 9.09375,
+              "y": -17.34375,
+              "sign": -1
+            },
+            {
+              "x": 3.28125,
+              "y": -16.40625,
+              "sign": 1
+            }
+          ],
+          "c2": null,
+          "componentSizes": [
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 274.999999999997,
+          "norm": 2949.340359122078,
+          "energy": 4049.7053954282587,
+          "kinetic": 777.7171684353051,
+          "interaction": 2904.9913819424164,
+          "potential": 366.99684505053705,
+          "edgeNormFraction": 0.0004827216861072634,
+          "positive": 1,
+          "negative": 2,
+          "circulation": -1,
+          "vortices": [
+            {
+              "x": 19.03125,
+              "y": 0.65625,
+              "sign": -1
+            },
+            {
+              "x": 10.78125,
+              "y": 5.34375,
+              "sign": -1
+            },
+            {
+              "x": 5.71875,
+              "y": 11.53125,
+              "sign": 1
+            }
+          ],
+          "c2": -0.3333333333333333,
+          "componentSizes": [
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 299.9999999999965,
+          "norm": 2945.693305277684,
+          "energy": 4041.141851743181,
+          "kinetic": 796.9636587488285,
+          "interaction": 2871.5846639021793,
+          "potential": 372.59352909217426,
+          "edgeNormFraction": 0.0005414432701667596,
+          "positive": 3,
+          "negative": 5,
+          "circulation": -2,
+          "vortices": [
+            {
+              "x": 25.78125,
+              "y": -8.34375,
+              "sign": -1
+            },
+            {
+              "x": 29.71875,
+              "y": -6.09375,
+              "sign": -1
+            },
+            {
+              "x": 33.09375,
+              "y": -1.21875,
+              "sign": 1
+            },
+            {
+              "x": 15.46875,
+              "y": 0.09375,
+              "sign": -1
+            },
+            {
+              "x": -16.78125,
+              "y": 3.28125,
+              "sign": -1
+            },
+            {
+              "x": 30.65625,
+              "y": 7.59375,
+              "sign": 1
+            },
+            {
+              "x": 8.90625,
+              "y": 9.28125,
+              "sign": -1
+            },
+            {
+              "x": 9.46875,
+              "y": 12.09375,
+              "sign": 1
+            }
+          ],
+          "c2": 0,
+          "componentSizes": [
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 2,
+          "clustered": false
+        },
+        {
+          "time": 324.99999999999596,
+          "norm": 2942.1925177724365,
+          "energy": 4032.911833080525,
+          "kinetic": 780.7330966192809,
+          "interaction": 2881.2168514029163,
+          "potential": 370.9618850583269,
+          "edgeNormFraction": 0.000519356859370223,
+          "positive": 1,
+          "negative": 0,
+          "circulation": 1,
+          "vortices": [
+            {
+              "x": -15.28125,
+              "y": -4.40625,
+              "sign": 1
+            }
+          ],
+          "c2": null,
+          "componentSizes": [
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 349.99999999999545,
+          "norm": 2938.7506554775755,
+          "energy": 4024.8568675055494,
+          "kinetic": 763.4479937884629,
+          "interaction": 2877.266317652152,
+          "potential": 384.14255606493475,
+          "edgeNormFraction": 0.0005077070445153085,
+          "positive": 3,
+          "negative": 3,
+          "circulation": 0,
+          "vortices": [
+            {
+              "x": -18.09375,
+              "y": -14.90625,
+              "sign": 1
+            },
+            {
+              "x": -15.84375,
+              "y": -12.84375,
+              "sign": -1
+            },
+            {
+              "x": 17.71875,
+              "y": -6.28125,
+              "sign": -1
+            },
+            {
+              "x": -6.65625,
+              "y": -5.71875,
+              "sign": 1
+            },
+            {
+              "x": 19.40625,
+              "y": 1.40625,
+              "sign": -1
+            },
+            {
+              "x": 25.59375,
+              "y": 14.34375,
+              "sign": 1
+            }
+          ],
+          "c2": -0.3333333333333333,
+          "componentSizes": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 374.99999999999494,
+          "norm": 2935.102944401639,
+          "energy": 4016.332983255996,
+          "kinetic": 793.8043042822133,
+          "interaction": 2848.233171338621,
+          "potential": 374.2955076351613,
+          "edgeNormFraction": 0.0004929089579335608,
+          "positive": 1,
+          "negative": 3,
+          "circulation": -2,
+          "vortices": [
+            {
+              "x": -4.78125,
+              "y": -20.34375,
+              "sign": -1
+            },
+            {
+              "x": 13.21875,
+              "y": -13.96875,
+              "sign": -1
+            },
+            {
+              "x": -10.03125,
+              "y": -13.59375,
+              "sign": 1
+            },
+            {
+              "x": -15.65625,
+              "y": 12.46875,
+              "sign": -1
+            }
+          ],
+          "c2": -0.25,
+          "componentSizes": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        },
+        {
+          "time": 399.99999999999443,
+          "norm": 2931.6183337910957,
+          "energy": 4008.2190319850542,
+          "kinetic": 799.2999011178478,
+          "interaction": 2833.7634484117834,
+          "potential": 375.15568245542306,
+          "edgeNormFraction": 0.0005044339010880549,
+          "positive": 1,
+          "negative": 3,
+          "circulation": -2,
+          "vortices": [
+            {
+              "x": -1.78125,
+              "y": -0.65625,
+              "sign": 1
+            },
+            {
+              "x": 23.53125,
+              "y": 2.34375,
+              "sign": -1
+            },
+            {
+              "x": 1.78125,
+              "y": 7.21875,
+              "sign": -1
+            },
+            {
+              "x": -21.09375,
+              "y": 9.09375,
+              "sign": -1
+            }
+          ],
+          "c2": -0.25,
+          "componentSizes": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "largestCluster": 1,
+          "clustered": false
+        }
+      ]
+    }
+  ]
+}
