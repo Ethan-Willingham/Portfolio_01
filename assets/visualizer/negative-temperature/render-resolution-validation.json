@@ -1,0 +1,25 @@
+{
+  "adapter": {
+    "vendor": "apple",
+    "architecture": "metal-3",
+    "fallback": false
+  },
+  "precision": "f32",
+  "runs": [],
+  "errors": [],
+  "cpuGPU20StepsRMS": 0.0000017991855923633095,
+  "render": {
+    "width": 2716,
+    "height": 1224,
+    "median": 1.1999999284744263,
+    "p95": 1.7999999523162842,
+    "units": "ms, queue completion including CPU submission",
+    "samples": 25
+  },
+  "remainingRoomUsableAfterOtherDispose": true,
+  "linearExposureRatio": [
+    2,
+    2,
+    2
+  ]
+}

@@ -1,11 +1,11 @@
-import { createRoom } from './negative-temperature-room.js?v=2';
-import { DEFAULT_SEED } from './negative-temperature-model.js?v=2';
+import { createRoom, viewHalfSpan } from './negative-temperature-room.js?v=3';
+import { DEFAULT_SEED } from './negative-temperature-model.js?v=3';
 
 const $ = id => document.getElementById(id), piece = $('nt-piece'), canvas = $('nt-canvas');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 let paused = reduced.matches, onscreen = true, running = false, disposed = false, room = null, device = null, context = null, target = null, presentation = null;
 let frame = 0, lastTime = 0, ambientTime = 0, accumulator = 0, reading = 0, starting = false, fallback = false, gpuBusy = false;
-const cleanup = [], timings = [], maxDPR = 1.5;
+const cleanup = [], timings = [], maxDPR = 2.5;
 let pixelRatioCap = maxDPR;
 const listen = (el, event, fn) => { el.addEventListener(event, fn); cleanup.push(() => el.removeEventListener(event, fn)); };
 const fmt = (v, places = 3) => Number.isFinite(v) ? v.toFixed(places) : 'Unavailable';
@@ -18,7 +18,7 @@ function fail(message) {
 }
 function resize() {
   if (!device || fallback || disposed) return;
-  const box = canvas.getBoundingClientRect(), dpr = Math.min(pixelRatioCap, devicePixelRatio || 1);
+  const box = canvas.getBoundingClientRect(), dpr = Math.min(pixelRatioCap, Math.max(2, devicePixelRatio || 1));
   const width = Math.max(1, Math.round(box.width * dpr)), height = Math.max(1, Math.round(box.height * dpr));
   if (canvas.width !== width || canvas.height !== height || !target) {
     canvas.width = width; canvas.height = height; target?.destroy();
@@ -26,7 +26,10 @@ function resize() {
     room?.resize({ width, height, dpr });
     if (presentation) presentation.group = device.createBindGroup({ layout: presentation.pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: target.createView() }] });
   }
-  const bar = piece.querySelector('.nt-scale span'); bar.style.width = `${Math.min(box.width, box.height) * 10 / (room?.snapshot().parameters.side * .84 || 53.76)}px`;
+  if (room) {
+    const span = viewHalfSpan({ width: box.width, height: box.height }, room.snapshot().parameters);
+    piece.querySelector('.nt-scale span').style.width = `${Math.min(box.width, box.height) * 10 / (2 * span)}px`;
+  }
   draw();
 }
 function draw() {
@@ -51,7 +54,8 @@ function readouts() {
     ['Candidate annihilations', String(d?.estimatedAnnihilations ?? '?')], ['Boundary norm fraction', d?.edgeNormFraction?.toExponential(2) ?? '?'],
     ['dx / dt', `${fmt(s.dx)} / ${fmt(s.parameters.dt)}`], ['Healing length / cells', `${fmt(s.healingLength)} / ${fmt(s.healingLengthCells, 2)}`],
     ['Solver time / steps', `${fmt(s.simulationTime, 2)} / ${s.numericalStepCount}`], ['Diagnostic age', `${s.diagnosticAgeSteps} steps`],
-    ['Clock mapping', `${s.parameters.solverUnitsPerSecond} model units/s`], ['Grid / precision', '256 x 256 / f32'],
+    ['Clock mapping', `${s.parameters.solverUnitsPerSecond} model units/s`], ['Grid / precision', `${s.parameters.grid} x ${s.parameters.grid} / f32`],
+    ['Render pixels', `${canvas.width} x ${canvas.height}`],
   ];
   $('nt-readouts').replaceChildren(...pairs.map(([name, value]) => { const div = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = name; dd.textContent = value; div.append(dt, dd); return div; }));
 }
@@ -69,7 +73,7 @@ function tick(time) {
     const start = performance.now(); draw(); gpuBusy = true;
     device.queue.onSubmittedWorkDone().then(() => {
       timings.push(performance.now() - start); if (timings.length > 300) timings.shift(); gpuBusy = false;
-      if (timings.length >= 60 && pixelRatioCap > 1 && [...timings.slice(-60)].sort((a,b)=>a-b)[30] > 12) { pixelRatioCap = 1; resize(); }
+      if (timings.length >= 60 && pixelRatioCap > 2 && [...timings.slice(-60)].sort((a,b)=>a-b)[30] > 24) { pixelRatioCap = 2; resize(); }
     }).catch(e => fail(e.message));
   }
   if (time - reading > 500) { readouts(); reading = time; }
@@ -87,7 +91,11 @@ async function restart() {
     if (disposed) { room.dispose(); return; }
     $('nt-status').textContent = 'Advancing the first paddle sweep.';
     const p = room.snapshot().parameters;
-    await room.debugAdvance(Math.round(p.standaloneStartTime / p.dt));
+    resize();
+    await room.debugAdvance(Math.round(p.standaloneStartTime / p.dt), ({ completed, total }) => {
+      $('nt-status').textContent = `Stirring the field, ${Math.round(100 * completed / total)}%.`;
+      if (!paused) draw();
+    });
     if (disposed) { room.dispose(); return; }
     ambientTime = 0; $('nt-status').hidden = true; $('nt-restart').disabled = false; $('nt-play').disabled = false; piece.setAttribute('aria-busy', 'false');
     room.setDisplay({ mode: $('nt-view').value, signs: $('nt-signs').checked }); resize(); readouts();

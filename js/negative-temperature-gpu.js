@@ -1,8 +1,8 @@
-import { CONFIG, initialField, protocol } from './negative-temperature-model.js?v=2';
+import { CONFIG, initialField, protocol } from './negative-temperature-model.js?v=3';
 
 const complex = `fn mul(a:vec2f,b:vec2f)->vec2f{return vec2f(a.x*b.x-a.y*b.y,a.x*b.y+a.y*b.x);}`;
 export function fftShader(n, axis, inverse) {
-  const bits = Math.log2(n), threads = n / 2;
+  const bits = Math.log2(n), threads = Math.min(256, n / 2), lanes = n / threads;
   return `${complex}
 @group(0) @binding(0) var<storage,read> src:array<vec2f>;
 @group(0) @binding(1) var<storage,read_write> dst:array<vec2f>;
@@ -11,15 +11,18 @@ var<workgroup> line:array<vec2f,${n}>;
 fn idx(i:u32,row:u32)->u32 {return ${axis ? `i*${n}u+row` : `row*${n}u+i`};}
 @compute @workgroup_size(${threads}) fn main(@builtin(local_invocation_index) tid:u32,@builtin(workgroup_id) group:vec3u){
   let row=group.x;
-  for(var c=0u;c<2u;c++){let i=tid+c*${threads}u;let rev=reverseBits(i)>>${32 - bits}u;line[rev]=src[idx(i,row)];}
+  for(var c=0u;c<${lanes}u;c++){let i=tid+c*${threads}u;let rev=reverseBits(i)>>${32 - bits}u;line[rev]=src[idx(i,row)];}
   workgroupBarrier();
   for(var span=2u;span<=${n}u;span*=2u){
-    let half=span/2u;let j=tid%half;let i=(tid/half)*span+j;
+    for(var c=0u;c<${lanes / 2}u;c++){
+    let butterfly=tid+c*${threads}u;
+    let half=span/2u;let j=butterfly%half;let i=(butterfly/half)*span+j;
     let root=roots[j*${n}u/span];
     let u=line[i];let v=mul(line[i+half],root${inverse ? '*vec2f(1.,-1.)' : ''});
-    workgroupBarrier();line[i]=u+v;line[i+half]=u-v;workgroupBarrier();
+    line[i]=u+v;line[i+half]=u-v;
+    }workgroupBarrier();
   }
-  for(var c=0u;c<2u;c++){let i=tid+c*${threads}u;dst[idx(i,row)]=line[i]${inverse ? `/f32(${n})` : ''};}
+  for(var c=0u;c<${lanes}u;c++){let i=tid+c*${threads}u;dst[idx(i,row)]=line[i]${inverse ? `/f32(${n})` : ''};}
 }`;
 }
 const evolution = `${complex}
@@ -60,7 +63,7 @@ struct Params {geom:vec4f,trap:vec4f,paddle:vec4f,extra:vec4f,mode:vec4f};
 export class GPUSolver {
   constructor(device, p = CONFIG, seed = '180106951') {
     this.device = device; this.p = { ...p }; this.n = p.grid; this.time = 0; this.steps = 0; this.preparationSteps = 0; this.disposed = false;
-    if (!device || device.limits.maxComputeInvocationsPerWorkgroup < Math.max(256, this.n / 2) || device.limits.maxComputeWorkgroupStorageSize < this.n * 8) throw new Error('WebGPU limits do not support the superfluid FFT.');
+    if (!device || device.limits.maxComputeInvocationsPerWorkgroup < 256 || device.limits.maxComputeWorkgroupStorageSize < this.n * 8) throw new Error('WebGPU limits do not support the superfluid FFT.');
     const size = this.n * this.n * 8;
     this.fields = [0, 1].map(() => device.createBuffer({ size, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC }));
     this.current = 0; this.readChain = Promise.resolve(); this.readBuffer = device.createBuffer({ size, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });

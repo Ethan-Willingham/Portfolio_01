@@ -1,5 +1,5 @@
-import { CONFIG, DEFAULT_SEED, healingLength, measure, protocol, suspectedAnnihilations } from './negative-temperature-model.js?v=2';
-import { GPUSolver } from './negative-temperature-gpu.js?v=2';
+import { CONFIG, DEFAULT_SEED, healingLength, protocol, suspectedAnnihilations } from './negative-temperature-model.js?v=3';
+import { GPUSolver } from './negative-temperature-gpu.js?v=3';
 
 export const roomInfo = {
   apiVersion: 1, id: 'negative-temperature', title: 'Negative temperature',
@@ -10,7 +10,7 @@ export const roomInfo = {
 };
 
 const renderer = `
-struct View {size:vec2f,exposure:f32,mode:f32,n:f32,side:f32,signs:f32,count:f32};
+struct View {size:vec2f,exposure:f32,mode:f32,n:f32,side:f32,signs:f32,count:f32,span:f32};
 @group(0) @binding(0) var<storage,read> psi:array<vec2f>;
 @group(0) @binding(1) var<uniform> v:View;
 @group(0) @binding(2) var<storage,read> vortices:array<vec4f>;
@@ -26,7 +26,7 @@ fn lab(l:f32,a:f32,b:f32)->vec3f{
   let q=z*z*z;return max(vec3f(0.),vec3f(4.0767416621*q.x-3.3077115913*q.y+.2309699292*q.z,-1.2684380046*q.x+2.6097574011*q.y-.3413193965*q.z,-.0041960863*q.x-.7034186147*q.y+1.707614701*q.z));
 }
 @fragment fn fragment(o:Vertex)->@location(0) vec4f{
-  let xy=o.uv* v.size/min(v.size.x,v.size.y)*v.side*.42;
+  let xy=o.uv* v.size/min(v.size.x,v.size.y)*v.span;
   let grid=(xy/v.side+.5)*v.n;
   let ij=vec2i(floor(grid));let f=fract(grid);
   let a=mix(mix(at(ij),at(ij+vec2i(1,0)),f.x),mix(at(ij+vec2i(0,1)),at(ij+vec2i(1,1)),f.x),f.y);
@@ -57,13 +57,17 @@ fn lab(l:f32,a:f32,b:f32)->vec3f{
   return vec4f(scene*v.exposure,1.);
 }`;
 
+export function viewHalfSpan({ width, height }, parameters) {
+  return Math.max(parameters.radiusX / width, parameters.radiusY / height) * Math.min(width, height) * 1.1;
+}
+
 export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'medium', assetBaseURL }) {
   if (!device) throw new Error('WebGPU is required for the live Gross-Pitaevskii model.');
   if (!['low', 'medium', 'high'].includes(quality)) throw new Error('Unknown quality tier.');
   if (!/^[0-9a-f]{1,64}$/i.test(seed)) throw new Error('Seed must be a fixed hex string.');
-  // All tiers preserve the validated 256 grid and physical parameters.
+  // All tiers preserve the validated 512 grid and physical parameters.
   const p = { ...CONFIG }, solver = new GPUSolver(device, p, seed);
-  const view = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const view = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   const signs = device.createBuffer({ size: 256 * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   const module = device.createShaderModule({ code: renderer });
   const pipeline = device.createRenderPipeline({ layout: 'auto', vertex: { module, entryPoint: 'vertex' }, fragment: { module, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } });
@@ -73,12 +77,29 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
   let disposed = false, accumulator = 0, busy = false, diag = null, initialNorm = null, lastMeasurement = 0, lastStep = 0, baselineEnergy = null, estimatedAnnihilations = 0;
   let width = 1, height = 1, displayMode = 0, showSigns = false;
   const assetURL = new URL(assetBaseURL || '../assets/visualizer/negative-temperature/', import.meta.url).href;
+  let worker;
+  try { worker = new Worker(new URL('./negative-temperature-diagnostics-worker.js?v=3', import.meta.url), { type: 'module' }); }
+  catch (error) { solver.dispose(); view.destroy(); signs.destroy(); throw error; }
+  let pendingMeasurement = null, workerFailure = null;
+  worker.onmessage = ({ data }) => {
+    const pending = pendingMeasurement; pendingMeasurement = null;
+    if (data.error) pending?.reject(new Error(data.error));
+    else pending?.resolve(data.diagnostics);
+  };
+  worker.onerror = event => { workerFailure = new Error(event.message || 'Diagnostic worker failed.'); pendingMeasurement?.reject(workerFailure); pendingMeasurement = null; };
+  function measureInWorker(field, time) {
+    return new Promise((resolve, reject) => {
+      if (workerFailure) { reject(workerFailure); return; }
+      pendingMeasurement = { resolve, reject };
+      worker.postMessage({ field, parameters: p, time }, [field.buffer]);
+    });
+  }
   async function diagnostics() {
     if (busy || disposed) return diag;
     busy = true;
     try {
       const { field, time, steps } = await solver.readbackState(); if (disposed) return diag;
-      const measured = measure(field, p, time);
+      const measured = await measureInWorker(field, time); if (disposed) return diag;
       if (initialNorm === null) initialNorm = measured.norm;
       const localTime = time % p.phraseDuration;
       if (protocol(time, p).amplitude > 0) baselineEnergy = null;
@@ -98,19 +119,19 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
   try {
     for (let i = 0; i < p.preparationSteps; i += 128) { solver.advance(Math.min(128, p.preparationSteps - i), { imaginary: true }); await device.queue.onSubmittedWorkDone(); }
     await diagnostics();
-  } catch (e) { solver.dispose(); view.destroy(); signs.destroy(); throw e; }
+  } catch (e) { worker.terminate(); solver.dispose(); view.destroy(); signs.destroy(); throw e; }
   return {
     resize(size) { width = Math.max(1, size.width); height = Math.max(1, size.height); },
     step({ dtSeconds }) {
       if (disposed || diag?.diagnosticError) return;
       accumulator += Math.min(0.1, Math.max(0, dtSeconds)) * p.solverUnitsPerSecond;
-      const count = Math.min(8, Math.floor((accumulator + 1e-10) / p.dt));
+      const count = Math.min(32, Math.floor((accumulator + 1e-10) / p.dt));
       if (count) { solver.advance(count); accumulator -= count * p.dt; }
       if (performance.now() - lastMeasurement > (quality === 'low' ? 6000 : 3000) && solver.steps !== lastStep) diagnostics().catch(e => { diag = { ...diag, diagnosticError: e.message }; });
     },
     render({ encoder, targetView, width: w = width, height: h = height, exposure = 1 }) {
       if (disposed) return;
-      device.queue.writeBuffer(view, 0, new Float32Array([w, h, exposure, displayMode, p.grid, p.side, showSigns ? 1 : 0, Math.min(256, diag?.vortices.length || 0)]));
+      device.queue.writeBuffer(view, 0, new Float32Array([w, h, exposure, displayMode, p.grid, p.side, showSigns ? 1 : 0, Math.min(256, diag?.vortices.length || 0), viewHalfSpan({ width: w, height: h }, p)]));
       const pass = encoder.beginRenderPass({ label: 'Superfluid linear density', colorAttachments: [{ view: targetView, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }] });
       pass.setPipeline(pipeline); pass.setBindGroup(0, groups[solver.current]); pass.draw(3); pass.end();
     },
@@ -128,7 +149,7 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
     async debugReadback() { await diagnostics(); const { field, time, steps } = await solver.readbackState(); return { field, grid: p.grid, parameters: { ...p }, time, steps, diagnostics: diag }; },
     setDisplay({ mode = 'density', signs: enabled = false }) { displayMode = ({ density: 0, phase: 1, velocity: 2 })[mode] ?? 0; showSigns = enabled; },
     // Test/recording accelerator: exactly the same real-time solver sequence.
-    async debugAdvance(count) { while (count > 0 && !disposed) { const batch = Math.min(128, count); solver.advance(batch); count -= batch; await device.queue.onSubmittedWorkDone(); } await diagnostics(); },
-    dispose() { if (disposed) return; disposed = true; solver.dispose(); view.destroy(); signs.destroy(); },
+    async debugAdvance(count, onProgress) { const total = count; while (count > 0 && !disposed) { const batch = Math.min(128, count); solver.advance(batch); count -= batch; await device.queue.onSubmittedWorkDone(); onProgress?.({ completed: total - count, total }); } await diagnostics(); },
+    dispose() { if (disposed) return; disposed = true; pendingMeasurement?.reject(new Error('Room disposed.')); pendingMeasurement = null; worker.terminate(); solver.dispose(); view.destroy(); signs.destroy(); },
   };
 }

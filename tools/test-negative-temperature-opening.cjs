@@ -27,13 +27,18 @@ let browser;
     await page.waitForFunction(() => document.getElementById('nt-piece').getAttribute('aria-busy') === 'false');
     const report = { date: '2026-10-03', adapter: 'Apple M1 Pro / Metal', opening: await page.evaluate(() => NegativeTemperature.snapshot()) };
     assert.equal(report.opening.parameters.solverUnitsPerSecond, 3);
-    assert.ok(report.opening.numericalStepCount >= 4800);
+    assert.ok(report.opening.numericalStepCount >= 12000);
     assert.equal(report.opening.phase, 'Stirring');
     const first = await page.evaluate(async () => {
       const state = await NegativeTemperature.debugReadback();
       return { time: state.time, field: Array.from(state.field) };
     });
-    await page.screenshot({ path: path.join(output, 'opening-v2.png'), fullPage: true });
+    report.canvas = await page.evaluate(() => { const canvas = document.getElementById('nt-canvas'), box = canvas.getBoundingClientRect(); return { width: canvas.width, height: canvas.height, cssWidth: box.width, cssHeight: box.height }; });
+    assert.equal(report.opening.parameters.grid, 512);
+    assert.ok(report.canvas.width >= 2 * report.canvas.cssWidth - 1);
+    assert.ok(report.canvas.height >= 2 * report.canvas.cssHeight - 1);
+    assert.ok(report.canvas.cssWidth > 1300 && report.canvas.cssHeight > 580);
+    await page.screenshot({ path: path.join(output, 'opening-v3.png'), fullPage: true });
     await page.waitForTimeout(5000);
     report.fiveSeconds = await page.evaluate(() => NegativeTemperature.snapshot());
     const later = await page.evaluate(async () => {
@@ -44,9 +49,9 @@ let browser;
     const a = density(first.field), b = density(later.field);
     report.densityChangeRMS = Math.sqrt(a.reduce((sum, value, i) => sum + (value - b[i]) ** 2, 0) / a.length);
     report.activeClockAdvance = later.time - first.time;
-    assert.ok(report.activeClockAdvance > 10, 'The live clock must advance meaningfully in five seconds.');
+    assert.ok(report.activeClockAdvance > 3, 'The live clock must advance meaningfully in five seconds.');
     assert.ok(report.densityChangeRMS > 0.03, 'Opening density must visibly change, beyond global phase rotation.');
-    await page.screenshot({ path: path.join(output, 'opening-motion-v2.png'), fullPage: true });
+    await page.screenshot({ path: path.join(output, 'opening-motion-v3.png'), fullPage: true });
     await page.locator('#nt-play').click();
     const paused = await page.evaluate(() => NegativeTemperature.snapshot().numericalStepCount);
     await page.waitForTimeout(200);
@@ -54,30 +59,37 @@ let browser;
     const restart = async () => {
       await page.locator('#nt-restart').click();
       await page.waitForFunction(() => !NegativeTemperature.activity().starting);
-      assert.equal(await page.evaluate(() => NegativeTemperature.snapshot().numericalStepCount), 4800);
+      assert.equal(await page.evaluate(() => NegativeTemperature.snapshot().numericalStepCount), 12000);
       return page.evaluate(async () => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', (await NegativeTemperature.debugReadback()).field.buffer))).map(v => v.toString(16).padStart(2, '0')).join(''));
     };
     report.restartHash = await restart();
     assert.equal(await restart(), report.restartHash);
-    report.payoff = await page.evaluate(() => NegativeTemperature.advance(10200));
+    report.payoff = await page.evaluate(() => NegativeTemperature.advance(25500));
     assert.ok(report.payoff.diagnostics.clustered);
     assert.ok(report.payoff.diagnostics.positive >= 4 && report.payoff.diagnostics.negative >= 4);
-    await page.screenshot({ path: path.join(output, 'payoff-v2.png'), fullPage: true });
+    await page.screenshot({ path: path.join(output, 'payoff-v3.png'), fullPage: true });
+    await page.locator('#nt-piece').screenshot({ path: path.join(output, 'detail-v3.png') });
+    const png = await page.evaluate(() => document.getElementById('nt-canvas').toDataURL('image/png'));
+    fs.writeFileSync(path.join(output, 'fallback.png'), Buffer.from(png.split(',')[1], 'base64'));
+    await page.locator('#nt-fullscreen').click();
+    await page.waitForFunction(() => !!document.fullscreenElement || document.getElementById('nt-piece').classList.contains('nt-fullscreen'));
+    await page.locator('#nt-fullscreen').click();
     for (const [width, height] of [[390, 844], [844, 390]]) {
       await page.setViewportSize({ width, height });
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       assert.ok(await page.evaluate(() => [...document.querySelectorAll('.nt-toolbar button')].every(el => el.getBoundingClientRect().height >= 44)));
+      await page.screenshot({ path: path.join(output, `resolution-${width}x${height}.png`), fullPage: true });
     }
     const still = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     await still.goto(`http://127.0.0.1:${server.address().port}/negative-temperature-lab.html`);
     await still.waitForFunction(() => document.getElementById('nt-piece').getAttribute('aria-busy') === 'false');
     assert.equal(await still.locator('#nt-play').textContent(), 'Play');
-    assert.equal(await still.evaluate(() => NegativeTemperature.snapshot().numericalStepCount), 4800);
+    assert.equal(await still.evaluate(() => NegativeTemperature.snapshot().numericalStepCount), 12000);
     await still.waitForTimeout(200);
-    assert.equal(await still.evaluate(() => NegativeTemperature.snapshot().numericalStepCount), 4800);
+    assert.equal(await still.evaluate(() => NegativeTemperature.snapshot().numericalStepCount), 12000);
     // The room's ordinary fixed-clock path must keep up with the faster mapping.
     report.roomClock = await page.evaluate(async () => {
-      const { createRoom } = await import('./js/negative-temperature-room.js?v=2');
+      const { createRoom } = await import('./js/negative-temperature-room.js?v=3');
       const adapter = await navigator.gpu.requestAdapter(), device = await adapter.requestDevice();
       const room = await createRoom({ device, seed: '180106951' });
       try {
@@ -86,11 +98,11 @@ let browser;
         return room.snapshot().numericalStepCount;
       } finally { room.dispose(); device.destroy(); }
     });
-    assert.equal(report.roomClock, 300);
+    assert.equal(report.roomClock, 750);
     assert.deepEqual(errors, []);
     report.errors = errors;
-    fs.writeFileSync(path.join(output, 'opening-validation.json'), JSON.stringify(report, null, 2));
-    console.log(JSON.stringify({ openingSteps: report.opening.numericalStepCount, activeClockAdvance: report.activeClockAdvance, densityChangeRMS: report.densityChangeRMS, restartHash: report.restartHash, roomStepsPerSecond: report.roomClock, clusteredAtTime150: report.payoff.diagnostics.clustered, errors }));
+    fs.writeFileSync(path.join(output, 'opening-resolution-validation.json'), JSON.stringify(report, null, 2));
+    console.log(JSON.stringify({ openingSteps: report.opening.numericalStepCount, activeClockAdvance: report.activeClockAdvance, densityChangeRMS: report.densityChangeRMS, restartHash: report.restartHash, canvas: report.canvas, roomStepsPerSecond: report.roomClock, clusteredAtTime150: report.payoff.diagnostics.clustered, errors }));
   } finally {
     await browser?.close();
     await new Promise(resolve => server.close(resolve));

@@ -1,8 +1,8 @@
 // Pure numerical reference and the single configuration used by both hosts.
 export const CONFIG = Object.freeze({
-  grid: 256, side: 64, g: 2, bulkDensity: 1, chemicalPotential: 2,
+  grid: 512, side: 64, g: 2, bulkDensity: 1, chemicalPotential: 2,
   radiusX: 24, radiusY: 17, wallWidth: 0.8, wallHeight: 12,
-  dt: 0.01, preparationDt: 0.04, preparationSteps: 1600,
+  dt: 0.004, preparationDt: 0.04, preparationSteps: 1600,
   paddleAmplitude: 10, paddleSigmaX: 7.5, paddleSigmaY: 0.55,
   paddleX: 24, paddleStartY: 22, paddleSpeed: 0.5,
   stirStart: 12, sweepDuration: 44, withdrawalDuration: 16,
