@@ -321,6 +321,7 @@
   // Residency normally trickles in on maintenance clocks. Drain those batches
   // under the cover, without advancing weather, thaw, drainage or the clock.
   // A quiet pass means every nearby particle that fits is already drawable.
+  // Explicit scene changes use this gate; ordinary residency continues in play.
   function prepareSceneMaterials() {
     var seq = liquidMutationSeq;
     mineralLiquidClock = 0;
@@ -331,14 +332,6 @@
       updateParticleRain(0);
     }
     return seq === liquidMutationSeq;
-  }
-
-  // Fast travel or a dense returning pile can outrun the padded streamer.
-  // Hide its first visible restoration before adding anything to that view.
-  function coverStoredMaterial(x, y) {
-    if (introPhase !== 'done' || x < cam.x || x >= cam.x + screenW || y < cam.y || y >= cam.y + screenH) return;
-    beginSceneLoading(bathMode ? 'Preparing bath water' : 'Preparing nearby water and snow');
-    if (!gameRafId && (gamePaused || mobileLandscapeBlocked)) gameRafId = requestAnimationFrame(loop);
   }
 
   // Called instead of gameplay, including while a focus pause is pending.

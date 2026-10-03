@@ -415,7 +415,6 @@
       if (thaw && Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
         rain.parked.push(px, py); snow.melted++; remove = true;
       } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
-        if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
         if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
           budget--; snow.active++; remove = true;
         }

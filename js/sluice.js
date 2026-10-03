@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.166';
+  var GAME_VERSION = 'v28.168';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -5709,6 +5709,7 @@
   // Residency normally trickles in on maintenance clocks. Drain those batches
   // under the cover, without advancing weather, thaw, drainage or the clock.
   // A quiet pass means every nearby particle that fits is already drawable.
+  // Explicit scene changes use this gate; ordinary residency continues in play.
   function prepareSceneMaterials() {
     var seq = liquidMutationSeq;
     mineralLiquidClock = 0;
@@ -5719,14 +5720,6 @@
       updateParticleRain(0);
     }
     return seq === liquidMutationSeq;
-  }
-
-  // Fast travel or a dense returning pile can outrun the padded streamer.
-  // Hide its first visible restoration before adding anything to that view.
-  function coverStoredMaterial(x, y) {
-    if (introPhase !== 'done' || x < cam.x || x >= cam.x + screenW || y < cam.y || y >= cam.y + screenH) return;
-    beginSceneLoading(bathMode ? 'Preparing bath water' : 'Preparing nearby water and snow');
-    if (!gameRafId && (gamePaused || mobileLandscapeBlocked)) gameRafId = requestAnimationFrame(loop);
   }
 
   // Called instead of gameplay, including while a focus pause is pending.
@@ -10978,11 +10971,6 @@
     if (pond.rainFed) return true;
     var need = surfacePondNeed(pond);
     if (liquidCount + need > LIQUID_MAX_PARTICLES) return false;
-    if (typeof coverStoredMaterial === 'function' && (pond.cR + 1) * TILE > cam.x &&
-        pond.cL * TILE < cam.x + screenW && (SKY_ROWS + (pond.d || 1)) * TILE > cam.y &&
-        SKY_ROWS * TILE < cam.y + screenH) {
-      coverStoredMaterial(Math.max(cam.x, pond.cL * TILE), Math.max(cam.y, SKY_ROWS * TILE));
-    }
     var wo = liquidSurfaceOriginForType('water');
     var step = LIQUID_CELL * LIQUID_PDELTA;     // rest spacing, density = 1/PDELTA^2
     // v24.115 — inset the lattice from the walls/floor by the collide probe
@@ -16121,7 +16109,6 @@
           }
           if (px < x0 || px > x1 || py < y0 || py > y1) continue;
           if (bathMode && typeof bathArrivalHolds === 'function' && bathArrivalHolds(px, py)) continue;
-          if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
           if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
           var end = data.length - 3;
           data[j] = data[end]; data[j + 1] = data[end + 1]; data[j + 2] = data[end + 2];
@@ -38911,7 +38898,6 @@
       if (budget <= 0) continue;
       if (px < x0 || px > x1 || py < y0 || py > y1) continue;
       if (liquidWorldSolidAt(px, py)) continue;
-      if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
       if (addLiquidParticle(0, px, py, 0, 0, RAIN_ORIGIN) < 0) break;
       rain.parked[j] = rain.parked[rain.parked.length - 2];
       rain.parked[j + 1] = rain.parked[rain.parked.length - 1];
@@ -40189,7 +40175,6 @@
       if (thaw && Math.random() < 1 - Math.exp(-snowHeat(px, py) * maintenanceDt) && rain.waterCount + rain.parked.length / 2 < RAIN_STORAGE_CAP) {
         rain.parked.push(px, py); snow.melted++; remove = true;
       } else if (budget > 0 && snowVisible(px, py) && !liquidWorldSolidAt(px, py)) {
-        if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
         if (addLiquidParticle(5, px, py, snow.parked[j + 2], snow.parked[j + 3], RAIN_ORIGIN) >= 0) {
           budget--; snow.active++; remove = true;
         }
