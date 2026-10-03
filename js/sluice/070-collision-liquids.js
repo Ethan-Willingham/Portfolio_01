@@ -195,7 +195,7 @@
   //   LIQUID_SURFACE_WATER_PARTICLES_PER_TILE  spawn density per surface tile
   //  Miner interaction — fluid cannot sit in or on the rig:
   //   LIQUID_PLAYER_EJECT .... force pushing fluid out of the miner AABB
-  //   LIQUID_MINER_HULL_*/_TRACK_*  miner silhouette rects, player-local px
+  //   rigContactHull / rigHullQuery  shared curved miner contact silhouette
   //   LIQUID_MINER_CX/_CY .... eject centre
   //  Active region / sleep / skip — the mitigations above:
   //   LIQUID_ACTIVE_MARGIN ... freeze margin around the camera, in screens
@@ -472,19 +472,9 @@
     }
   }
 
-  // Tests a world-space point against the miner's *visual* silhouette
-  // (hull + tracks rects), mirroring local-x when the miner faces left.
-  // Cheap — two AABB tests after a subtract.
+  // Water and snow use the same inset curved cab and flat tracks as slimes.
   function liquidPointInMiner(x, y) {
-    if (!player || gameWon) return false;
-    var lx = x - player.x;
-    var ly = y - player.y;
-    if (player.dir < 0) lx = PLAYER_W - lx;
-    if (lx >= LIQUID_MINER_HULL_L && lx <= LIQUID_MINER_HULL_R
-        && ly >= LIQUID_MINER_HULL_T && ly <= LIQUID_MINER_HULL_B) return true;
-    if (lx >= LIQUID_MINER_TRACK_L && lx <= LIQUID_MINER_TRACK_R
-        && ly >= LIQUID_MINER_TRACK_T && ly <= LIQUID_MINER_TRACK_B) return true;
-    return false;
+    return !!player && !gameWon && rigHullContains(rigContactHull(), x, y, 0);
   }
 
   // Moving rig contact must wake resting water immediately, even below the
@@ -499,13 +489,20 @@
     liquidRigLastX = px; liquidRigLastY = py;
     if (Math.abs(px - ox) + Math.abs(py - oy) > TILE * 4) { ox = px; oy = py; }
     var moving = Math.abs(px - ox) + Math.abs(py - oy) > 0.02;
-    var l = Math.min(px, ox) - 4, r = Math.max(px, ox) + PLAYER_W + 4;
-    var t = Math.min(py, oy) - 4, b = Math.max(py, oy) + PLAYER_H + 4;
-    var woke = 0, radius = LIQUID_CELL * LIQUID_PDELTA * 0.85;
+    var h = rigContactHull(), radius = LIQUID_CELL * LIQUID_PDELTA * 0.85;
+    var l = h.l + Math.min(0, ox - px) - radius, r = h.r + Math.max(0, ox - px) + radius;
+    var t = h.t + Math.min(0, oy - py) - radius, b = h.b + Math.max(0, oy - py) + radius;
+    var swept = Math.max(1, Math.ceil(Math.hypot(px - ox, py - oy) / Math.max(1, radius)));
+    var woke = 0;
     for (var i = 0; i < liquidCount; i++) {
       var x = liquidX[i], y = liquidY[i];
       if (x < l || x > r || y < t || y > b) continue;
-      if (!moving && !liquidMinerContains(x, y, radius)) continue;
+      var touching = false;
+      for (var sample = 0; sample <= (moving ? swept : 0); sample++) {
+        var u = moving ? sample / swept : 1;
+        if (rigHullContains(h, x + (px - ox) * (1 - u), y + (py - oy) * (1 - u), radius + 0.15)) { touching = true; break; }
+      }
+      if (!touching) continue;
       liquidRigTouch = true;
       if (!liquidSleeping[i]) continue;
       liquidSleeping[i] = 0; liquidRestFrames[i] = 0;
@@ -516,23 +513,9 @@
     if (woke) liquidMutationSeq++;
   }
 
-  function liquidMinerRect(which, pad) {
-    var l = which ? LIQUID_MINER_TRACK_L : LIQUID_MINER_HULL_L;
-    var r = which ? LIQUID_MINER_TRACK_R : LIQUID_MINER_HULL_R;
-    var t = which ? LIQUID_MINER_TRACK_T : LIQUID_MINER_HULL_T;
-    var b = which ? LIQUID_MINER_TRACK_B : LIQUID_MINER_HULL_B;
-    return [player.x + (player.dir < 0 ? PLAYER_W - r : l) - pad,
-      player.y + t - pad, player.x + (player.dir < 0 ? PLAYER_W - l : r) + pad,
-      player.y + b + pad];
-  }
   function liquidMinerContains(x, y, radius) {
     if (!player || gameWon || LIQUID_DBG_NO_PLAYER) return false;
-    var lx = x - player.x, ly = y - player.y, p = radius + 0.15;
-    if (player.dir < 0) lx = PLAYER_W - lx;
-    return (lx >= LIQUID_MINER_HULL_L - p && lx <= LIQUID_MINER_HULL_R + p &&
-      ly >= LIQUID_MINER_HULL_T - p && ly <= LIQUID_MINER_HULL_B + p) ||
-      (lx >= LIQUID_MINER_TRACK_L - p && lx <= LIQUID_MINER_TRACK_R + p &&
-      ly >= LIQUID_MINER_TRACK_T - p && ly <= LIQUID_MINER_TRACK_B + p);
+    return rigHullContains(rigContactHull(), x, y, radius + 0.15);
   }
   function liquidMinerExitClear(x, y, tx, ty, radius) {
     var steps = Math.max(1, Math.ceil(Math.hypot(tx - x, ty - y) / Math.max(1, radius)));
@@ -545,26 +528,25 @@
   }
   function liquidProjectMiner(x, y, vx, vy, radius) {
     if (!liquidMinerContains(x, y, radius)) return null;
-    var best = Infinity, result = null, vlen = Math.hypot(player.vx, player.vy);
-    for (var rect = 0; rect < 2; rect++) {
-      var box = liquidMinerRect(rect, radius + 0.3);
-      for (var face = 0; face < 4; face++) {
-        var tx = Math.max(box[0], Math.min(box[2], x));
-        var ty = Math.max(box[1], Math.min(box[3], y));
-        var nx = 0, ny = 0;
-        if (face === 0) { tx = box[0]; nx = -1; }
-        if (face === 1) { tx = box[2]; nx = 1; }
-        if (face === 2) { ty = box[1]; ny = -1; }
-        if (face === 3) { ty = box[3]; ny = 1; }
-        if (liquidMinerContains(tx, ty, radius)) continue;
-        var dx = tx - x, dy = ty - y;
-        // Prefer the advancing face: a moving track plows water ahead,
-        // while a stationary hull simply clears its nearest open face.
-        var score = Math.hypot(dx, dy) - (vlen > 0.5 ? (dx * player.vx + dy * player.vy) / vlen * 0.65 : 0);
-        if (score >= best || !liquidMinerExitClear(x, y, tx, ty, radius)) continue;
-        var relative = Math.min(0, (vx - player.vx) * nx + (vy - player.vy) * ny);
-        best = score; result = [tx, ty, vx - nx * relative, vy - ny * relative];
+    var h = rigContactHull(), nearest = rigHullQuery(h, x, y);
+    var qx = nearest.x, qy = nearest.y, qnx = nearest.nx, qny = nearest.ny;
+    var best = Infinity, result = null, vlen = Math.hypot(player.vx, player.vy), pad = radius + 0.3;
+    for (var face = -1; face < h.n; face++) {
+      var tx, ty, nx, ny;
+      if (face < 0) { tx = qx + qnx * pad; ty = qy + qny * pad; nx = qnx; ny = qny; }
+      else {
+        var j = (face + 1) % h.n, ex = h.x[j] - h.x[face], ey = h.y[j] - h.y[face];
+        var u = Math.max(0, Math.min(1, ((x - h.x[face]) * ex + (y - h.y[face]) * ey) / (ex * ex + ey * ey)));
+        nx = h.nx[face]; ny = h.ny[face];
+        tx = h.x[face] + ex * u + nx * pad; ty = h.y[face] + ey * u + ny * pad;
       }
+      if (liquidMinerContains(tx, ty, radius)) continue;
+      var dx = tx - x, dy = ty - y;
+      // Prefer the advancing face, keeping terrain authoritative for exits.
+      var score = Math.hypot(dx, dy) - (vlen > 0.5 ? (dx * player.vx + dy * player.vy) / vlen * 0.65 : 0);
+      if (score >= best || !liquidMinerExitClear(x, y, tx, ty, radius)) continue;
+      var relative = Math.min(0, (vx - player.vx) * nx + (vy - player.vy) * ny);
+      best = score; result = [tx, ty, vx - nx * relative, vy - ny * relative];
     }
     return result;
   }
@@ -755,37 +737,9 @@
     if (!player || gameWon || LIQUID_DBG_NO_PLAYER) return;   // v24.167 diagnostic: rig invisible to water
     var gx = (liquidCellGX[c] + 0.5) * LIQUID_CELL;
     var gy = (liquidCellGY[c] + 0.5) * LIQUID_CELL;
-    // Compute local coords (mirrored when facing left).
-    var lx = gx - player.x;
-    var ly = gy - player.y;
-    var mirrored = player.dir < 0;
-    if (mirrored) lx = PLAYER_W - lx;
-    var inHull = (lx >= LIQUID_MINER_HULL_L && lx <= LIQUID_MINER_HULL_R
-                  && ly >= LIQUID_MINER_HULL_T && ly <= LIQUID_MINER_HULL_B);
-    var inTrack = (lx >= LIQUID_MINER_TRACK_L && lx <= LIQUID_MINER_TRACK_R
-                   && ly >= LIQUID_MINER_TRACK_T && ly <= LIQUID_MINER_TRACK_B);
-    if (inHull || inTrack) {
-      // Eject along the nearest-face normal of the containing rect — water
-      // on top gets straight up, water on the side gets sideways. Far
-      // faster exit than a radial-from-center push (which fires water back
-      // into the miner from the opposite face).
-      var rL, rT, rR, rB;
-      if (inHull) {
-        rL = LIQUID_MINER_HULL_L; rT = LIQUID_MINER_HULL_T;
-        rR = LIQUID_MINER_HULL_R; rB = LIQUID_MINER_HULL_B;
-      } else {
-        rL = LIQUID_MINER_TRACK_L; rT = LIQUID_MINER_TRACK_T;
-        rR = LIQUID_MINER_TRACK_R; rB = LIQUID_MINER_TRACK_B;
-      }
-      var dL = lx - rL;
-      var dR = rR - lx;
-      var dT = ly - rT;
-      var dB = rB - ly;
-      var nx = -1, ny = 0, minD = dL;
-      if (dR < minD) { minD = dR; nx = 1; ny = 0; }
-      if (dT < minD) { minD = dT; nx = 0; ny = -1; }
-      if (dB < minD) { minD = dB; nx = 0; ny = 1; }
-      if (mirrored) nx = -nx;
+    var h = rigContactHull();
+    if (rigHullContains(h, gx, gy, 0)) {
+      var contact = rigHullQuery(h, gx, gy), nx = contact.nx, ny = contact.ny;
       // v24.125 — the silhouette coupling, two modes by rig speed (deadzone
       // 8 px/s, full eject at 60 px/s). MOVING: the nearest-face eject
       // clears water the miner plows through (its original job), scaled by
@@ -1300,18 +1254,11 @@
   }
 
   function liquidSolidAt(x, y, r) {
-    // v10.100 GOLD — once-per-particle proximity check before the 4
-    // miner sub-tests. For the 99% of particles nowhere near the
-    // rig, this short-circuits 4 liquidPointInMiner calls (each
-    // ~10 ops) into a single bbox compare. With 30k awake particles
-    // calling solidAt per frame, that saves ~1ms easily.
+    // Reject distant particles before probing the curved miner boundary.
     var nearMiner = false;
     if (player && !gameWon) {
-      var pxL = player.x - r;
-      var pxR = player.x + PLAYER_W + r;
-      var pyT = player.y - r;
-      var pyB = player.y + PLAYER_H + r;
-      if (x >= pxL && x <= pxR && y >= pyT && y <= pyB) nearMiner = true;
+      var hull = rigContactHull();
+      nearMiner = x >= hull.l - r && x <= hull.r + r && y >= hull.t - r && y <= hull.b + r;
     }
     if (nearMiner) {
       if (liquidWorldSolidAt(x,     y + r) || liquidPointInMiner(x,     y + r)) return true;

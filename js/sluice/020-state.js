@@ -701,7 +701,7 @@
             // v24.125 — vx/vy feed the speed-scaled silhouette eject
             // (writeGameParams gates LIQUID_PLAYER_EJECT by rig speed).
             pl = { active: true, x: player.x, y: player.y, dir: player.dir,
-                   vx: player.vx || 0, vy: player.vy || 0 };
+                   vx: player.vx || 0, vy: player.vy || 0, hull: rigContactHull() };
           }
           var rk = { active: false, intensity: 0, exDirX: 0, exDirY: 0, nozzles: null };
           if (rocketIntensity > 0.02 && player && player.thrusting) {

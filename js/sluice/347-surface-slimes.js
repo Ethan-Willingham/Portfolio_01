@@ -230,7 +230,8 @@
 
   function surfaceSlimeRenderBody(b) {
     var m = b.surfaceSlime;
-    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed) return b;
+    if (!m || !m.previousX || m.renderFrame !== jelloFrameNo || b._grabbed ||
+        b._softRigContactFrame === jelloFrameNo) return b;
     var view = m.renderBody;
     if (!view) {
       view = m.renderBody = Object.create(b);
@@ -238,7 +239,8 @@
     }
     // The solver ticks at 120 Hz. Display its two latest poses one tick behind
     // real time, so 144 Hz and variable-rate screens never repeat a skin frame.
-    // Physics, contacts, grabs, saves and water continue to use the live body.
+    // Rig contacts draw the current skin so it meets the current rig hull.
+    // Physics, grabs, saves and water continue to use the live body.
     var alpha = skySlimeClamp(jelloAccum / JELLO_H, 0, 1), x = 0, y = 0;
     view.bboxL = view.bboxT = Infinity; view.bboxR = view.bboxB = -Infinity;
     for (var p = 0; p < b.n; p++) {

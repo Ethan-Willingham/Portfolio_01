@@ -799,10 +799,8 @@
       // Airborne sibling of the ceiling-slip below. When horizontal motion
       // is blocked by a tile, try a tiny vertical nudge (max 3px) to slip
       // past the corner — Celeste/Mario imperceptible range. Direction
-      // biased by current vy. Smoothness comes from the renderX/Y lerp
-      // (applied later in the update) — the snap happens for collision
-      // purposes but the sprite eases over a few frames so the eye sees
-      // a continuous motion. Edge-only squash adds a tactile thump per
+      // biased by current vy. The body follows the corrected contact pose.
+      // Edge-only squash adds a tactile thump per
       // contact chain (not every frame, so contact spans don't sit
       // permanently squashed).
       var SIDE_NUDGE_MAX = 3;
@@ -1120,26 +1118,6 @@
       if (player.squash < 0) player.squash = 0;
     }
 
-    // ----- Render-position smoothing -----
-    // Sprite trails the logical position with a quick exponential lerp.
-    // Corner-correction snaps (3-8px) become visually smooth — the rig
-    // catches up over ~5 frames instead of teleporting. Big deltas
-    // (respawn, rover dismount, etc.) snap directly so the sprite doesn't
-    // streak across the world. The lag at normal motion (~3px/frame) is
-    // sub-pixel and imperceptible.
-    var RENDER_LERP_RATE = 22;       // higher = catches up faster
-    var RENDER_SNAP_THRESHOLD = 48;  // px — beyond this, snap (teleport)
-    var rdx = player.x - player.renderX;
-    var rdy = player.y - player.renderY;
-    if (Math.abs(rdx) > RENDER_SNAP_THRESHOLD || Math.abs(rdy) > RENDER_SNAP_THRESHOLD) {
-      player.renderX = player.x;
-      player.renderY = player.y;
-    } else {
-      var k = 1 - Math.exp(-RENDER_LERP_RATE * dt);
-      player.renderX += rdx * k;
-      player.renderY += rdy * k;
-    }
-
     // ====== UPDATE: Drill trigger ======
     // Each direction probes the tile in front of the rig and routes through
     // getTileObj(). Down/left/right are the usual dig directions; the
@@ -1194,8 +1172,7 @@
           resetFlightBank();
           player.dir = -1;
           // Row-snap so the AABB sits cleanly inside the row of the
-          // target tile. Renders smoothly via the renderX/Y lerp; up to
-          // ~13px snap is invisible by the time the rig's drawn.
+          // target tile. The visible body follows the corrected contact pose.
           var snapY_l = pr2 * TILE + (TILE - PLAYER_H);
           if (Math.abs(snapY_l - player.y) <= TILE * 0.4 &&
               !solidAt(player.x, snapY_l, PLAYER_W, PLAYER_H)) {
@@ -1284,6 +1261,11 @@
       layerBanner.t -= dt;
       if (layerBanner.t <= 0) layerBanner = null;
     }
+
+    // Keep the visible body on its final contact position, including drill
+    // row snaps. A trailing sprite exposes an invisible bumper during travel.
+    player.renderX = player.x;
+    player.renderY = player.y;
 
     // (msgTimer is now ticked in loop() so it keeps counting down even
     //  while the shop is open or the game is over.)
@@ -1391,4 +1373,3 @@
     if (cam.x < 0) cam.x = 0;
     if (cam.x > COLS * TILE - screenW) cam.x = COLS * TILE - screenW;
   }
-

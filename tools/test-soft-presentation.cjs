@@ -48,7 +48,7 @@ function context() {
     softPlayEnabled: false, softPlayMaterialTrial: false, SOFT_PAIRS: true,
     performance: { now: () => 1000 }, solidAt: () => false, jelloWorldSolidAt: () => false,
     JELLO_REST_VEL: 30, JELLO_BOUNCE: 0.18, recordLandingImpact() {},
-    JELLO_TIMESCALE: 0.5, JELLO_H: 1 / 240, jelloStepH: 1 / 240,
+    JELLO_TIMESCALE: 0.5, JELLO_H: 1 / 240, jelloStepH: 1 / 240, jelloFrameNo: 0,
     skySlimeClamp: (v, lo, hi) => Math.max(lo, Math.min(hi, v)), ctx: canvas,
     ENABLE_JELLO: true, gamePaused: false, gameOver: false, gameWon: false,
     shopOpen: false, shopState: 'closed', ledgerOpen: false, cargoManifestOpen: false,

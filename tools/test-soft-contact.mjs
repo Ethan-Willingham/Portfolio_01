@@ -116,6 +116,7 @@ try {
 
   await game(`window.__runContactCase = function(spec) {
     var nativeRandom = Math.random, nativeNow = performance.now, clock = 100000, randomState = 314159265;
+    var nativeProject = softContactProject;
     Math.random = function() { randomState = (Math.imul(randomState, 1664525) + 1013904223) >>> 0; return randomState / 4294967296; };
     performance.now = function() { return clock; };
     var deterministicClock = performance.now() === clock;
@@ -167,7 +168,7 @@ try {
         // Position from the rested skin, not the construction height.
         var actualTop = jelloRingCross(b, true, player.x + PLAYER_W / 2, false);
         if (!isFinite(actualTop)) actualTop = b.bboxT;
-        player.y = actualTop - PLAYER_H - 5; player.vx = 0; player.vy = spec.speed;
+        player.y = actualTop - rigContactHull(0, 0).b - 5; player.vx = 0; player.vy = spec.speed;
         player.onGround = false;
       } else {
         player.x = direction > 0 ? b.bboxL - PLAYER_W - 10 : b.bboxR + 10;
@@ -178,7 +179,7 @@ try {
       player.onJello = false; player.renderX = player.x; player.renderY = player.y;
       var result = { name: spec.name, mode: spec.experimental ? 'contact' : 'baseline', fps: spec.fps,
         requestedSpeed: spec.speed, deterministicClock: deterministicClock,
-        finite: true, alive: true, maxRigJump: 0, maxNodeJump: 0, maxCenterJump: 0,
+        finite: true, alive: true, maxRigJump: 0, maxNodeJump: 0, maxCenterJump: 0, maxRenderGap: 0,
         maxPenetration: 0, maxSkinInsideHull: 0, maxVisualPenetration: 0,
         maxSolvedPenetration: 0, maxSolvedSkinInsideHull: 0,
         maxPendingPenetration: 0, maxPendingSkinInsideHull: 0, maxPendingPenetrationExcess: 0,
@@ -186,7 +187,8 @@ try {
         maxSevereInvertedTriangles: 0, minTriangleDet: 1,
         maxRingCrossings: 0, minAreaRatio: 1, maxAreaRatio: 1,
         minHeight: initialHeight, maxHeight: initialHeight, maxRigUpSpeed: 0,
-        groundedFrames: 0, contactFrames: 0, maxReportedContact: 0,
+        groundedFrames: 0, contactFrames: 0, maxReportedContact: 0, maxBodyRise: 0,
+        rampContactCalls: 0, maxRampRisePerSolve: 0, rampUpwardVelocityCalls: 0,
         selfContactCorrections: 0, firstSelfContact: null,
         firstContactTime: null, firstContactVy: null, peakBodyRealSpeed: 0,
         zeroStepFrames: 0, zeroStepPendingFrames: 0, supportLostOnZeroStep: 0,
@@ -202,6 +204,15 @@ try {
       result.material = materialState();
       var initialMaterial = JSON.stringify(result.material);
       result.materialUnchangedFrames = 0; result.firstMaterialChange = null;
+      softContactProject = function(body, a, c, t, nx, ny, depth, sy, h, f) {
+        var driveRamp = !drop && !passive && f.rig.vx * direction > 25 && nx * direction < -0.2 && ny > 0.2;
+        var beforeA = body.py[a], beforeC = body.py[c];
+        nativeProject(body, a, c, t, nx, ny, depth, sy, h, f);
+        if (!driveRamp) return;
+        result.rampContactCalls++;
+        result.maxRampRisePerSolve = Math.max(result.maxRampRisePerSolve, beforeA - body.py[a], beforeC - body.py[c]);
+        if (body.py[a] - body.oy[a] < -0.0001 || body.py[c] - body.oy[c] < -0.0001) result.rampUpwardVelocityCalls++;
+      };
       for (var frame = 0; frame < Math.ceil(spec.fps * duration); frame++) {
         var elapsed = frame * dt; clock += dt * 1000;
         if (spec.pause && frame === Math.round(spec.fps * 0.75)) {
@@ -221,8 +232,10 @@ try {
         }
         var approachVy = player.vy, physicsFrameBefore = jelloFrameNo, supportedBefore = player.onJello;
         var supportBodyBefore = typeof softContactSupport !== 'undefined' && !!softContactSupport;
-        var feetBefore = player.y + PLAYER_H;
+        var feetBefore = rigContactHull().b;
         update(dt); surfaceSlimeTick(dt); updateJello(dt);
+        result.maxRenderGap = Math.max(result.maxRenderGap, Math.hypot(player.renderX - player.x, player.renderY - player.y));
+        result.maxBodyRise = Math.max(result.maxBodyRise, initialY - b.cy);
         if (SOFT_CONTACT && jelloFrameNo !== physicsFrameBefore && softContactReport.selfContacts > 0) {
           result.selfContactCorrections += softContactReport.selfContacts;
           if (result.firstSelfContact === null) result.firstSelfContact = { time: elapsed, frame: frame, count: softContactReport.selfContacts };
@@ -232,18 +245,14 @@ try {
           if (softContactFrame && !softContactFrame.started) result.zeroStepPendingFrames++;
           if (supportedBefore && !player.onJello) {
             result.supportLostOnZeroStep++;
-            var heights = [];
-            for (var foot = 1; foot < 4; foot++) {
-              var footX = player.x + PLAYER_W * foot / 4;
-              heights.push(footState(b, footX, player.y + PLAYER_H));
-            }
+            var heights = rigFootStates(b);
             var stillClosing = !player.thrusting && heights.some(function(foot) {
               return foot.feetMinusSkin !== null && Math.abs(foot.feetMinusSkin) <= 1.5 && foot.relativeVy >= 0;
             });
             if (stillClosing) result.closingSupportLostOnZeroStep++;
             if (result.supportLossEvents.length < 10) {
               result.supportLossEvents.push({ time: elapsed, rigX: player.x, rigY: player.y,
-                vyBefore: approachVy, vy: player.vy, feetBefore: feetBefore, feet: player.y + PLAYER_H,
+                vyBefore: approachVy, vy: player.vy, feetBefore: feetBefore, feet: rigContactHull().b,
                 bodyVy: b.vy * JELLO_TIMESCALE, underfoot: heights,
                 supportBodyBefore: supportBodyBefore,
                 supportBodyAfter: typeof softContactSupport !== 'undefined' && !!softContactSupport,
@@ -260,7 +269,8 @@ try {
         }
         var penetration = rigDepth(b, player.x, player.y), skinInside = skinDepth(b, player.x, player.y);
         var visible = typeof surfaceSlimeRenderBody === 'function' ? surfaceSlimeRenderBody(b) : b;
-        var visual = rigDepth(visible, player.renderX, player.renderY);
+        var visual = Math.max(rigDepth(visible, player.renderX, player.renderY),
+          skinDepth(visible, player.renderX, player.renderY));
         var reportContact = SOFT_CONTACT && softContactReport ? softContactReport.contacts : 0;
         var contacting = penetration > 0.001 || skinInside > 0.001 || player.onJello || reportContact > 0;
         if (contacting && firstContact === null) {
@@ -343,6 +353,7 @@ try {
       return result;
     } finally {
       Math.random = nativeRandom; performance.now = nativeNow;
+      softContactProject = nativeProject;
       keys.ArrowLeft = keys.ArrowRight = false;
     }
     function ringArea(body) {
@@ -391,24 +402,40 @@ try {
       for (var k = 0; k < data.length; k++) hash = Math.imul(hash ^ data.charCodeAt(k), 16777619) >>> 0;
       return hash;
     }
+    function rigFootStates(body) {
+      var hull = rigContactHull(), feet = [];
+      for (var side = 0; side < hull.n; side++) {
+        if (hull.ny[side] <= 0.5) continue;
+        var next = (side + 1) % hull.n;
+        for (var sample = 1; sample < 4; sample++) {
+          var u = sample / 4;
+          feet.push(footState(body, hull.x[side] + (hull.x[next] - hull.x[side]) * u,
+            hull.y[side] + (hull.y[next] - hull.y[side]) * u));
+        }
+      }
+      return feet;
+    }
     function rigDepth(body, rx, ry) {
-      var depth = 0;
-      for (var side = 0; side < 4; side++) for (var sample = 0; sample <= 8; sample++) {
-        var u = sample / 8, sx = rx + (side === 1 ? PLAYER_W : side === 3 ? 0 : u * PLAYER_W);
-        var sy = ry + (side === 0 ? 0 : side === 2 ? PLAYER_H : u * PLAYER_H);
-        if (!jelloPointInRing(body, sx, sy)) continue;
-        var near = jelloNearestOnRing(body, sx, sy);
-        depth = Math.max(depth, Math.hypot(near.x - sx, near.y - sy));
+      var depth = 0, hull = rigContactHull(rx, ry);
+      for (var side = 0; side < hull.n; side++) {
+        var next = (side + 1) % hull.n;
+        var samples = Math.max(1, Math.ceil(Math.hypot(hull.x[next] - hull.x[side], hull.y[next] - hull.y[side])));
+        for (var sample = 0; sample < samples; sample++) {
+          var u = sample / samples;
+          var sx = hull.x[side] + (hull.x[next] - hull.x[side]) * u;
+          var sy = hull.y[side] + (hull.y[next] - hull.y[side]) * u;
+          if (!jelloPointInRing(body, sx, sy)) continue;
+          var near = jelloNearestOnRing(body, sx, sy);
+          depth = Math.max(depth, Math.hypot(near.x - sx, near.y - sy));
+        }
       }
       return depth;
     }
     function skinDepth(body, rx, ry) {
-      var depth = 0;
+      var depth = 0, hull = rigContactHull(rx, ry);
       for (var k = 0; k < body.ringN; k++) {
         var p = body.ring[k], sx = body.px[p], sy = body.py[p];
-        if (sx > rx && sx < rx + PLAYER_W && sy > ry && sy < ry + PLAYER_H) {
-          depth = Math.max(depth, Math.min(sx - rx, rx + PLAYER_W - sx, sy - ry, ry + PLAYER_H - sy));
-        }
+        depth = Math.max(depth, -rigHullQuery(hull, sx, sy).distance);
       }
       return depth;
     }
@@ -510,6 +537,10 @@ try {
   check('no body ends underneath the floor', results.every(result => result.final.cy <= results[0].initial.cy + 80));
   check('experimental contacts were exercised', results.filter(result => result.mode === 'contact').some(result => result.maxReportedContact > 0));
   const experimental = results.filter(result => result.mode === 'contact');
+  check('experimental drawn rig stays aligned with its solved hull after complete updates', experimental.every(result => result.maxRenderGap < 0.001));
+  const drives = experimental.filter(result => result.name.startsWith('push-'));
+  check('horizontal drives use real slope contacts that lift skin and leave upward material velocity',
+    drives.every(result => result.rampContactCalls > 0 && result.maxRampRisePerSolve > 0.01 && result.rampUpwardVelocityCalls > 0));
   check('solved experimental rig and skin penetration stay below two pixels', experimental.every(result => result.maxSolvedPenetration < 2 && result.maxSolvedSkinInsideHull < 2));
   check('between-tick penetration stays within pending travel plus two pixels', experimental.every(result => result.maxPendingPenetrationExcess < 2));
   check('experimental rendered rig and skin penetration stay below two pixels', experimental.every(result => result.maxVisualPenetration < 2));
@@ -585,7 +616,7 @@ try {
       keys.ArrowRight = keys.ArrowLeft = false;
       if (!b) b = surfaceSlimeBuild(x, floor - 36, { id: 93002, seed: 0.46, r: 24.3 });
       cam.x = x - screenW / 2; cam.y = floor - screenH * 0.6;
-      player.x = b.cx - PLAYER_W / 2; player.y = b.bboxT - PLAYER_H - 8;
+      player.x = b.cx - PLAYER_W / 2; player.y = b.bboxT - rigContactHull(0, 0).b - 8;
       player.vx = 0; player.vy = 150; player.onGround = false; player.onJello = false;
       player.renderX = player.x; player.renderY = player.y;
       for (frame = 0; frame < 30; frame++) {
@@ -649,7 +680,7 @@ try {
   check('opt-in comparison UI disables saves and switches both modes', ui.found && ui.savesDisabled && ui.original && ui.experimental);
   check('all five interactions are selectable and Repeat recreates the pose', ui.options === 5 && ui.selectWorks && ui.repeatButton && ui.singleResident && ui.repeatPoseError < 0.001);
   check('Repeat restores dug terrain and clears prior movement inputs and drill motion', ui.repeatRestoresTile && ui.repeatClearsTransientMotion);
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setDeviceMetricsOverride', { width: 844, height: 390, deviceScaleFactor: 1, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
   await evaluate("document.body.classList.add('gm-fs'); document.body.appendChild(document.querySelector('.game-wrapper')); window.dispatchEvent(new Event('resize')); window.scrollTo(0, 0)");
   await sleep(250);
@@ -668,17 +699,17 @@ try {
       controls: Array.from(panel.querySelectorAll('button,select')).map(rect),
       fits: box.left >= 0 && box.top >= 0 && box.right <= innerWidth + 0.5 && box.bottom <= innerHeight + 0.5 };
   })()`);
-  check('390 by 844 comparison controls fit and remain reachable', ui.mobile.width === 390 && ui.mobile.height === 844 &&
+  check('844 by 390 landscape comparison controls fit and remain reachable', ui.mobile.width === 844 && ui.mobile.height === 390 &&
     ui.mobile.fits && ui.mobile.controls.every(control => control.visible && control.hitTarget && control.width > 0 &&
-      control.height >= 44 && control.left >= 0 && control.top >= 0 && control.right <= 390.5 && control.bottom <= 844.5));
+      control.height >= 44 && control.left >= 0 && control.top >= 0 && control.right <= 844.5 && control.bottom <= 390.5));
   const mobileImage = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   fs.writeFileSync(path.join(dump, 'soft-contact-mobile.png'), Buffer.from(mobileImage.data, 'base64'));
   ui.mobile.screenshot = 'soft-contact-mobile.png';
   check('no browser exceptions', browserErrors.length === 0);
   const notes = [
     'Penetration, compression, rebound, folds, grounding, and travel are diagnostics, not claims of satisfying feel.',
-    'maxPenetration samples rig perimeter inside the physical ring; maxSkinInsideHull samples skin vertices inside the rig.',
-    'maxVisualPenetration separately compares interpolated skin with eased rig render position.',
+    'maxPenetration samples the shared rounded rig perimeter inside the physical ring; maxSkinInsideHull uses signed distance of skin vertices inside that hull.',
+    'maxVisualPenetration checks both directions of overlap between interpolated skin and the rounded hull at the eased rig render position.',
     'Solved-frame overlap is separate from unsimulated rig travel between gel ticks; pending penetration is bounded by that travel plus the two-pixel contact tolerance.',
     'Grounding asserts only a prior support whose underfoot gap stays within 1.5 pixels and whose local skin is closing relative to the rig. Genuine separation remains diagnostic.',
     'Triangle counts inspect the existing overlapping health mesh, not a newly triangulated physical volume.',

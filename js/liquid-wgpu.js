@@ -504,23 +504,14 @@
   var LIQUID_DBG_PARTICLES   = 0;
 
   /* ---- Stage 8 — game-coupled-force constants ------------------------
-   * The grid-update wake kernels + the collide kernel's miner-silhouette
-   * test mirror the CPU literals in sluice.js: the player-eject
-   * force (LIQUID_PLAYER_EJECT), the player box (PLAYER_W/H) and the miner
-   * hull/track silhouette rects (player-local px — liquidPointInMiner /
-   * liquidApplyPlayerGridWake). They are static tuned constants on both
-   * sides; the values below mirror sluice.js exactly and are
-   * interpolated as literals into the WGSL game-coupled kernels. Keep them
-   * in sync if the CPU constants ever change. Stage-8 caps: the wake
-   * uniform carries at most GS_MAX_NOZZLES rocket nozzles and
-   * GS_MAX_EXPLOSIONS explosions (the game never exceeds either).
+   * Grid wake and particle collision consume the same transformed outline
+   * supplied by the game. Only the eject force and terrain player-box sizes
+   * remain duplicated constants. Standalone fixtures use the inset local
+   * outline below. The wake uniform also carries bounded rocket nozzles,
+   * explosions and deforming guest rings.
    * -------------------------------------------------------------------- */
   var LIQUID_PLAYER_EJECT = 720;
   var LIQUID_PLAYER_W = 22, LIQUID_PLAYER_H = 26;
-  var LIQUID_MINER_HULL_L = 3.0,  LIQUID_MINER_HULL_T = 6.0;
-  var LIQUID_MINER_HULL_R = 20.0, LIQUID_MINER_HULL_B = 20.0;
-  var LIQUID_MINER_TRACK_L = 1.5,  LIQUID_MINER_TRACK_T = 18.0;
-  var LIQUID_MINER_TRACK_R = 20.5, LIQUID_MINER_TRACK_B = 25.0;
   var GS_MAX_NOZZLES = 4;            // rocket-plume nozzle cap (game uses 2)
   var GS_MAX_EXPLOSIONS = 8;         // explosion-wake cap per frame
   var GS_MAX_GUESTS = 8;             // v26.04 — bath-guest moving boundaries
@@ -532,7 +523,8 @@
                                      // this is the only line to touch.
   // GameParams guest-lane layout, derived (v26.09): 15 legacy vec4 lanes
   // (player/rocket/counts/nozzles/explosions = f32 lanes 0..59), then 2 meta
-  // vec4 per guest, then GS_RING ring vec4 per guest. writeGameParams and
+  // vec4 per guest, then GS_RING ring vec4 per guest, then the rig outline.
+  // writeGameParams and
   // the buffer allocation read these; the WGSL struct interpolates the same
   // constants, so JS and GPU can never disagree on the layout.
   var GS_META_BASE = 60;             // f32 lane where guest meta begins
@@ -540,7 +532,13 @@
                                      // EXACT deforming silhouette, resampled
                                      // from the jello boundary each frame)
   var GS_RING_BASE = GS_META_BASE + GS_MAX_GUESTS * 8;               // rings start after the meta
-  var GS_PARAM_LANES = GS_RING_BASE + GS_MAX_GUESTS * GS_RING * 4;   // total f32 lanes
+  var GS_RIG_BASE = GS_RING_BASE + GS_MAX_GUESTS * GS_RING * 4;
+  var GS_RIG_POINTS = 16;
+  var GS_PARAM_LANES = GS_RIG_BASE + 8 + GS_RIG_POINTS * 4;
+  // Standalone solver fixtures can supply a player without the game's hull.
+  // This inset reference mirrors 069-rig-hull.js; live play uploads its fully
+  // transformed outline, including facing, squash, bank and suspension.
+  var DEFAULT_RIG_HULL = [8.228718707889795,14.4,8.672404346966244,13.804026758820052,9.241571270173422,13.326439003478603,9.90553554135786,12.992983613485093,10.628502674799265,12.821637255225783,11.371497325200737,12.821637255225783,12.09446445864214,12.992983613485093,12.75842872982658,13.326439003478603,13.327595653033756,13.804026758820052,13.771281292110205,14.4,19,24,3,24];
   // v26.13 — one immutable GameParams uniform per fixed water substep.
   // A single buffer cannot be rewritten between command buffers that are
   // batched into one queue.submit: every pass would see the final write.
@@ -1200,6 +1198,29 @@
         gh[1] = (pl.x || 0) - (pl.vx || 0) * backTime;
         gh[2] = (pl.y || 0) - (pl.vy || 0) * backTime;
         gh[3] = (pl.dir < 0) ? -1 : 1;
+      }
+      if (pl && pl.active) {
+        var hull = pl.hull, hn = hull ? Math.min(GS_RIG_POINTS, hull.n) : DEFAULT_RIG_HULL.length / 2;
+        var hl = Infinity, ht = Infinity, hr = -Infinity, hb = -Infinity;
+        gh[GS_RIG_BASE] = hn;
+        for (var hi = 0; hi < hn; hi++) {
+          var hj = (hi + 1) % hn, hx, hy, hnx, hny;
+          if (hull) { hx = hull.x[hi]; hy = hull.y[hi]; hnx = hull.nx[hi]; hny = hull.ny[hi]; }
+          else {
+            var hd = pl.dir < 0 ? -1 : 1;
+            var lx = DEFAULT_RIG_HULL[hi * 2], ly = DEFAULT_RIG_HULL[hi * 2 + 1];
+            var ex = (DEFAULT_RIG_HULL[hj * 2] - lx) * hd, ey = DEFAULT_RIG_HULL[hj * 2 + 1] - ly;
+            var len = Math.hypot(ex, ey);
+            hx = (pl.x || 0) + (hd < 0 ? LIQUID_PLAYER_W - lx : lx); hy = (pl.y || 0) + ly;
+            hnx = ey / len * hd; hny = -ex / len * hd;
+          }
+          hx -= (pl.vx || 0) * backTime; hy -= (pl.vy || 0) * backTime;
+          var lane = GS_RIG_BASE + 8 + hi * 4;
+          gh[lane] = hx; gh[lane + 1] = hy; gh[lane + 2] = hnx; gh[lane + 3] = hny;
+          hl = Math.min(hl, hx); hr = Math.max(hr, hx); ht = Math.min(ht, hy); hb = Math.max(hb, hy);
+        }
+        gh[GS_RIG_BASE + 4] = hl; gh[GS_RIG_BASE + 5] = ht;
+        gh[GS_RIG_BASE + 6] = hr; gh[GS_RIG_BASE + 7] = hb;
       }
       // rocket vec4 — lanes 4-7: (active, intensity, exDirX, exDirY).
       var rk = gs.rocket;
@@ -4479,7 +4500,8 @@ fn encodeFx(v : f32) -> i32 {
    *             blastScale is CPU-precomputed (large ? 1050 : 660); only
    *             explosions with the CPU t-gate already passed are uploaded,
    *             so the kernel needs no timer lane.
-   * 15 vec4 = 240 bytes. Built by writeGameParams() each frame; the CPU
+   * Guest rings and the rig outline follow the legacy lanes.
+   * Built by writeGameParams() each frame; the CPU
    * fill is the one place the game state crosses into the GPU sim.
    * -------------------------------------------------------------------- */
   var WGSL_GAME_PARAMS = /* wgsl */ `
@@ -4497,6 +4519,9 @@ struct GameParams {
   // (x, y, vx, vy) each — position AND local Verlet velocity, so the
   // fluid feels the true shape and the true motion of every face.
   guestPts : array<vec4<f32>, ${GS_MAX_GUESTS * GS_RING}>,
+  rigMeta : vec4<f32>,
+  rigBounds : vec4<f32>,
+  rigPts : array<vec4<f32>, ${GS_RIG_POINTS}>, // world x/y and outward edge normal
 };
 
 // v26.05 — a cell inside a guest is pinned to the LOCAL surface velocity
@@ -4506,18 +4531,43 @@ struct GameParams {
 // edge: black voids).
 const GUEST_PUSH : f32 = 26.0;   // px/s of outward push per px of depth
 
-// Miner silhouette rects (player-local px) — mirror the CPU literals.
-const MINER_HULL_L  : f32 = ${LIQUID_MINER_HULL_L};
-const MINER_HULL_T  : f32 = ${LIQUID_MINER_HULL_T};
-const MINER_HULL_R  : f32 = ${LIQUID_MINER_HULL_R};
-const MINER_HULL_B  : f32 = ${LIQUID_MINER_HULL_B};
-const MINER_TRACK_L : f32 = ${LIQUID_MINER_TRACK_L};
-const MINER_TRACK_T : f32 = ${LIQUID_MINER_TRACK_T};
-const MINER_TRACK_R : f32 = ${LIQUID_MINER_TRACK_R};
-const MINER_TRACK_B : f32 = ${LIQUID_MINER_TRACK_B};
-const PLAYER_EJECT  : f32 = ${LIQUID_PLAYER_EJECT};
-const PLAYER_W      : f32 = ${LIQUID_PLAYER_W};
-const PLAYER_H      : f32 = ${LIQUID_PLAYER_H};
+const PLAYER_EJECT : f32 = ${LIQUID_PLAYER_EJECT};
+const PLAYER_W : f32 = ${LIQUID_PLAYER_W};
+const PLAYER_H : f32 = ${LIQUID_PLAYER_H};
+
+struct MinerContact { point : vec2<f32>, normal : vec2<f32>, distance : f32, };
+fn minerContact(p : vec2<f32>) -> MinerContact {
+  var q : MinerContact;
+  var best = 1e30;
+  var inside = true;
+  let count = i32(gameP.rigMeta.x);
+  for (var i = 0; i < count; i = i + 1) {
+    let a = gameP.rigPts[i];
+    let edge = gameP.rigPts[(i + 1) % count].xy - a.xy;
+    let d = p - a.xy;
+    if (dot(d, a.zw) > 0.0) { inside = false; }
+    let t = clamp(dot(d, edge) / dot(edge, edge), 0.0, 1.0);
+    let point = a.xy + edge * t;
+    let d2 = dot(p - point, p - point);
+    if (d2 < best) { best = d2; q.point = point; q.normal = a.zw; }
+  }
+  let dist = sqrt(best);
+  q.distance = select(dist, -dist, inside);
+  if (!inside && dist > 0.000001) { q.normal = (p - q.point) / dist; }
+  return q;
+}
+fn minerContains(p : vec2<f32>, radius : f32) -> bool {
+  if (gameP.player.x < 0.5 || gameP.rigMeta.x < 3.0) { return false; }
+  let pad = radius + 0.15;
+  if (any(p < gameP.rigBounds.xy - vec2<f32>(pad)) || any(p > gameP.rigBounds.zw + vec2<f32>(pad))) { return false; }
+  return minerContact(p).distance <= pad;
+}
+fn pointInMiner(x : f32, y : f32) -> bool {
+  if (gameP.player.x < 0.5 || gameP.rigMeta.x < 3.0) { return false; }
+  let p = vec2<f32>(x, y);
+  if (any(p < gameP.rigBounds.xy) || any(p > gameP.rigBounds.zw)) { return false; }
+  return minerContact(p).distance <= 0.0;
+}
 // Cell pitch (world px / cell) — the wake needs it to place cell centres.
 // WGSL_GRID2_PRELUDE does not define it (only the G2P prelude does), so
 // the game-coupled block carries its own copy.
@@ -4803,8 +4853,8 @@ fn bowlProject(point:vec4f,r:f32)->vec4f {
    * Stage-4 velocity+gravity core is untouched.
    *
    * Faithful-port notes:
-   *  - player wake: nearest-face eject out of the hull/track rect the cell
-   *    centre sits in (mirrored when the rig faces left). Identical math to
+   *  - player wake: eject along the nearest face of the transformed rig
+   *    outline containing the cell centre. Identical math to
    *    the CPU; no outside-silhouette drag ring (the CPU has none either).
    *  - rocket wake: per-nozzle cone push along the exhaust direction.
    *    v15.1 — the CPU's liquidLineClear terrain occlusion test is now
@@ -4878,37 +4928,13 @@ fn gridWake(c : u32, cgx : i32, cgy : i32) {
   // back as a perpetual jet at the hull base (the resting-pond
   // firecracker pump). edit² sluice.js 070 liquidApplyPlayerGridWake.
   if (gameP.player.x > 0.5) {
-    let px = gameP.player.y;
-    let py = gameP.player.z;
-    let dir = gameP.player.w;
-    var lx = wx - px;
-    let ly = wy - py;
-    let mirrored = dir < 0.0;
-    if (mirrored) { lx = PLAYER_W - lx; }
-    let inHull  = lx >= MINER_HULL_L  && lx <= MINER_HULL_R
-               && ly >= MINER_HULL_T  && ly <= MINER_HULL_B;
-    let inTrack = lx >= MINER_TRACK_L && lx <= MINER_TRACK_R
-               && ly >= MINER_TRACK_T && ly <= MINER_TRACK_B;
-    if (inHull || inTrack) {
+    if (pointInMiner(wx, wy)) {
       let pvx = gameP.counts.z;
       let pvy = gameP.counts.w;
       let ejs = clamp((abs(pvx) + abs(pvy) - 8.0) / 52.0, 0.0, 1.0);
       if (ejs > 0.0) {
-        var rL = MINER_TRACK_L; var rT = MINER_TRACK_T;
-        var rR = MINER_TRACK_R; var rB = MINER_TRACK_B;
-        if (inHull) {
-          rL = MINER_HULL_L; rT = MINER_HULL_T;
-          rR = MINER_HULL_R; rB = MINER_HULL_B;
-        }
-        let dL = lx - rL;
-        let dR = rR - lx;
-        let dT = ly - rT;
-        let dB = rB - ly;
-        var nx : f32 = -1.0; var ny : f32 = 0.0; var minD = dL;
-        if (dR < minD) { minD = dR; nx =  1.0; ny =  0.0; }
-        if (dT < minD) { minD = dT; nx =  0.0; ny = -1.0; }
-        if (dB < minD) { minD = dB; nx =  0.0; ny =  1.0; }
-        if (mirrored) { nx = -nx; }
+        let n = minerContact(vec2<f32>(wx, wy)).normal;
+        let nx = n.x; let ny = n.y;
         let eject = PLAYER_EJECT * ejs * stepDt / CELL;
         cellVelX[c] = cellVelX[c] + nx * eject;
         cellVelY[c] = cellVelY[c] + ny * eject;
@@ -6551,41 +6577,8 @@ fn terrainSolidAt(px : f32, py : f32) -> bool {
   return ((word >> (idx & 31u)) & 1u) != 0u;
 }
 
-// Stage 8 — the moving-miner silhouette test. A faithful port of the CPU
-// liquidPointInMiner: a world point is mapped into player-local space
-// (mirrored when the rig faces left) and tested against the hull + track
-// AABBs. gameP.player.x is the active flag (0 when there is no player or
-// the game is won — the CPU returns false then).
-fn pointInMiner(x : f32, y : f32) -> bool {
-  if (gameP.player.x < 0.5) { return false; }
-  var lx = x - gameP.player.y;
-  let ly = y - gameP.player.z;
-  if (gameP.player.w < 0.0) { lx = PLAYER_W - lx; }
-  if (lx >= MINER_HULL_L  && lx <= MINER_HULL_R
-      && ly >= MINER_HULL_T  && ly <= MINER_HULL_B) { return true; }
-  if (lx >= MINER_TRACK_L && lx <= MINER_TRACK_R
-      && ly >= MINER_TRACK_T && ly <= MINER_TRACK_B) { return true; }
-  return false;
-}
-
-// A moving hull needs a full geometric exit, not an r-sized static nudge.
-// CPU twin: liquidMinerContains / liquidProjectMiner in 070.
-fn minerRect(which : i32, pad : f32) -> vec4<f32> {
-  let l = select(MINER_HULL_L, MINER_TRACK_L, which == 1);
-  let r = select(MINER_HULL_R, MINER_TRACK_R, which == 1);
-  let t = select(MINER_HULL_T, MINER_TRACK_T, which == 1);
-  let b = select(MINER_HULL_B, MINER_TRACK_B, which == 1);
-  let mirrored = gameP.player.w < 0.0;
-  return vec4<f32>(gameP.player.y + select(l, PLAYER_W - r, mirrored) - pad,
-    gameP.player.z + t - pad, gameP.player.y + select(r, PLAYER_W - l, mirrored) + pad,
-    gameP.player.z + b + pad);
-}
-fn minerContains(p : vec2<f32>, radius : f32) -> bool {
-  if (gameP.player.x < 0.5) { return false; }
-  let a = minerRect(0, radius + 0.15);
-  let b = minerRect(1, radius + 0.15);
-  return (all(p >= a.xy) && all(p <= a.zw)) || (all(p >= b.xy) && all(p <= b.zw));
-}
+// Moving-miner contacts use the uploaded curved cab and flat track outline.
+// CPU twin: rigHullQuery / liquidProjectMiner in 069 and 070.
 fn minerExitClear(p : vec2<f32>, q : vec2<f32>, r : f32) -> bool {
   let steps = max(1.0, ceil(length(q - p) / max(1.0, r)));
   for (var s : f32 = 1.0; s <= steps; s = s + 1.0) {
@@ -6601,23 +6594,26 @@ fn projectMiner(p : vec2<f32>, vel : vec2<f32>, radius : f32) -> vec4<f32> {
   let vlen = length(pv);
   var best : f32 = 1e9;
   var result = vec4<f32>(p, vel);
-  for (var rect : i32 = 0; rect < 2; rect = rect + 1) {
-    let box = minerRect(rect, radius + 0.3);
-    for (var face : i32 = 0; face < 4; face = face + 1) {
-      var q = clamp(p, box.xy, box.zw);
-      var n = vec2<f32>(0.0);
-      if (face == 0) { q.x = box.x; n.x = -1.0; }
-      if (face == 1) { q.x = box.z; n.x = 1.0; }
-      if (face == 2) { q.y = box.y; n.y = -1.0; }
-      if (face == 3) { q.y = box.w; n.y = 1.0; }
-      if (minerContains(q, radius)) { continue; }
-      var score = length(q - p);
-      if (vlen > 0.5) { score = score - dot(q - p, pv) / vlen * 0.65; }
-      if (score >= best || !minerExitClear(p, q, radius)) { continue; }
-      let relative = min(0.0, dot(vel - pv, n));
-      best = score;
-      result = vec4<f32>(q, vel - n * relative);
+  let nearest = minerContact(p);
+  let pad = radius + 0.3;
+  let count = i32(gameP.rigMeta.x);
+  for (var face : i32 = -1; face < count; face = face + 1) {
+    var q = nearest.point + nearest.normal * pad;
+    var n = nearest.normal;
+    if (face >= 0) {
+      let a = gameP.rigPts[face];
+      let edge = gameP.rigPts[(face + 1) % count].xy - a.xy;
+      let t = clamp(dot(p - a.xy, edge) / dot(edge, edge), 0.0, 1.0);
+      n = a.zw;
+      q = a.xy + edge * t + n * pad;
     }
+    if (minerContains(q, radius)) { continue; }
+    var score = length(q - p);
+    if (vlen > 0.5) { score = score - dot(q - p, pv) / vlen * 0.65; }
+    if (score >= best || !minerExitClear(p, q, radius)) { continue; }
+    let relative = min(0.0, dot(vel - pv, n));
+    best = score;
+    result = vec4<f32>(q, vel - n * relative);
   }
   return result;
 }
@@ -7437,10 +7433,8 @@ fn guestExitClear(x0 : f32, y0 : f32, x1 : f32, y1 : f32, r : f32) -> bool {
   if (gameP.player.x >= 0.5) {
     // Extra padding makes this a conservative rejection in world space;
     // the original predicate maps the ring probes into mirrored rig space.
-    let hull = minerRect(0, r + 1.0);
-    let track = minerRect(1, r + 1.0);
-    nearMiner = (all(high >= hull.xy) && all(low <= hull.zw)) ||
-                (all(high >= track.xy) && all(low <= track.zw));
+    let pad = vec2<f32>(r + 1.0);
+    nearMiner = all(high >= gameP.rigBounds.xy - pad) && all(low <= gameP.rigBounds.zw + pad);
   }
   if (!nearMiner) {
     let origin = vec2<i32>(bitcast<i32>(gp.tileOrigC), bitcast<i32>(gp.tileOrigR));
