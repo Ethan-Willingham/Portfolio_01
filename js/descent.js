@@ -1,6 +1,6 @@
-import { VERSION, ROUTE, ROOMS, BOOTSTRAP, FIXED_DT, PLAYBACK_RATES, ModuleRegistry, RoomManager, RouteClock, AmbientClock, CostSamples, scaleLabel, routeCompleteness, deriveRoomSeed } from './descent-host.js?v=2';
+import { VERSION, ROUTE, ROOMS, BOOTSTRAP, FIXED_DT, PLAYBACK_RATES, ModuleRegistry, RoomManager, RouteClock, AmbientClock, CostSamples, scaleLabel, routeCompleteness, deriveRoomSeed } from './descent-host.js?v=3';
 import { offlineSeed, validSeed, verifyBeaconSeed, fetchBeaconSeed } from './descent-seed.js';
-import { configureRoom, exposureFor, parametersOf, roomPresentation } from './descent-room-adapters.js';
+import { configureRoom, exposureFor, parametersOf, roomPresentation } from './descent-room-adapters.js?v=3';
 
 const $ = id => document.getElementById(`descent-${id}`);
 const piece = document.getElementById('descent');
@@ -20,7 +20,8 @@ if (seed.beacon) seed = { ...seed, source: 'Cached beacon seed, verification pen
 let manualPaused = reducedMotion.matches || saved?.paused === true;
 let automatic = !reducedMotion.matches && saved?.automatic !== false;
 let playbackRate = !reducedMotion.matches && PLAYBACK_RATES.includes(saved?.playbackRate) ? saved.playbackRate : 1;
-let quality = ['low','medium','high'].includes(saved?.quality) ? saved.quality : 'medium';
+const PRESENTATION_REVISION = 3;
+let quality = saved?.presentationRevision === PRESENTATION_REVISION && ['low','medium','high'].includes(saved?.quality) ? saved.quality : 'high';
 let preferences = {hydrogenMode:['spectral','revival'].includes(saved?.preferences?.hydrogenMode)?saved.preferences.hydrogenMode:'spectral'};
 let clock = new RouteClock(saved?.clock);
 let roomId = saved?.roomId ?? null;
@@ -30,7 +31,7 @@ let raf = 0, dirty = true, lastUi = 0, lastSave = 0, renderCount = 0, replayRema
 let replayExpected = null, replayValidation = null;
 let gpuQueuePending = false, lastGpuQueueMs = 0, roomWorkPending = null;
 let requestedReplay = saved?.visit ?? null;
-let roomRequest = 0, beaconRequest = null, beaconTimer = null, resolutionScale = 1, slowFrames = 0;
+let roomRequest = 0, beaconRequest = null, beaconTimer = null, renderDpr = 2, slowFrames = 0;
 let replayMeaning = 'Every visit starts from a recorded seed. Floating-point replay can differ across devices.';
 let seedError = null;
 const roomCosts = {};
@@ -102,7 +103,7 @@ function snapshot() {
     seed, quality, preferences, clock: clock.snapshot(), roomTicks: manager?.active?.ticks ?? 0,
     replayRemaining, replayMeaning, replayValidation, fixedDtSeconds: FIXED_DT, renderCount,
     adapter: adapter?.info ? { vendor: adapter.info.vendor, architecture: adapter.info.architecture, device: adapter.info.device, description: adapter.info.description, isFallbackAdapter: adapter.info.isFallbackAdapter ?? null } : null,
-    resolution: { width: canvas.width, height: canvas.height, dprCap: 1.5, adaptiveScale: resolutionScale },
+    resolution: { width: canvas.width, height: canvas.height, dpr: renderDpr, dprCap: 2, maxPixels: 8388608, adaptiveScale: 1, policy: '2x supersampling within device dimensions and pixel budget; no load-driven downscale' },
     resources: manager?.resources() ?? null, budgetPolicy: 'One active room; no prewarming or overlapping targets',
     droppedAmbientSeconds: ambient.droppedSeconds, cpuCosts: costs.snapshot(), roomCpuCosts: Object.fromEntries(Object.entries(roomCosts).map(([id,s])=>[id,s.snapshot()])),
     integration: routeCompleteness(registry,measured), modules: registry.snapshot(),
@@ -117,7 +118,7 @@ function persist() {
   const visit = a ? { id: a.id, ticks: a.ticks+replayRemaining, scoreOrigin: a.scoreOrigin, seed: a.seed, parameters: parametersOf(s), model: s?.model ?? null,
     numericalStepCount: replayRemaining ? replayExpected?.numericalStepCount ?? null : s?.numericalStepCount ?? null,
     simulationTime: replayRemaining ? replayExpected?.simulationTime ?? null : s?.simulationTime ?? null } : null;
-  try { localStorage.setItem(STORAGE,JSON.stringify({ version: 1, roomId, seed, quality, preferences, paused: manualPaused, automatic, playbackRate, clock: clock.snapshot(), visit })); } catch (_) { /* storage denial never stops watching */ }
+  try { localStorage.setItem(STORAGE,JSON.stringify({ version: 1, presentationRevision: PRESENTATION_REVISION, roomId, seed, quality, preferences, paused: manualPaused, automatic, playbackRate, clock: clock.snapshot(), visit })); } catch (_) { /* storage denial never stops watching */ }
 }
 function displayTint() {
   const color = getComputedStyle(piece).getPropertyValue('--accent').trim();
@@ -208,10 +209,12 @@ function tick() {
 }
 function resize() {
   if (!manager || disposed) return;
-  const r = $('view').getBoundingClientRect(); const dpr = Math.min(devicePixelRatio || 1,1.5);
+  const r = $('view').getBoundingClientRect();
   const limit = device.limits.maxTextureDimension2D;
-  const width = Math.max(1,Math.min(limit,Math.round(r.width*dpr*resolutionScale)));
-  const height = Math.max(1,Math.min(limit,Math.round(r.height*dpr*resolutionScale)));
+  const dpr = Math.min(2, limit/Math.max(1,r.width), limit/Math.max(1,r.height), Math.sqrt(8388608/Math.max(1,r.width*r.height)));
+  renderDpr = dpr;
+  const width = Math.max(1,Math.round(r.width*dpr));
+  const height = Math.max(1,Math.round(r.height*dpr));
   if (canvas.width === width && canvas.height === height) return;
   canvas.width = width; canvas.height = height; manager.resize({ width,height,dpr });
   displayBind = null; presentationTarget = null; dirty = true; wake();
@@ -220,7 +223,7 @@ function draw() {
   if (!device || !context || disposed || deviceLost || loading || hidden || offscreen || gpuQueuePending) return;
   const encoder = device.createCommandEncoder({ label: 'Descent room and final display' });
   const start = performance.now(); const a = manager.active;
-  if (a) manager.render(encoder,exposureFor(roomId));
+  if (a) manager.render(encoder,exposureFor(roomId),roomId === 'soap-film' ? {filmFill:{x:.92,y:.88}} : {});
   currentCosts().add('renderEncoding',performance.now()-start);
   const presentStart = performance.now();
   if (a && presentationTarget !== a.target) {
@@ -251,7 +254,7 @@ function frame(now) {
       slowFrames = Math.max(cpuMs,lastGpuQueueMs) > 18 ? slowFrames+1 : Math.max(0,slowFrames-1);
       if (slowFrames > 90) {
         if (ambient.maxSteps > 1) ambient.maxSteps--;
-        else if (resolutionScale > .55) { resolutionScale = Math.max(.55,resolutionScale*.85); resize(); }
+        // Preserve spatial detail under load. Only the watching clock slows.
         slowFrames = 0;
       }
     }
@@ -276,7 +279,13 @@ on($('speed'),'click',() => {
   playbackRate = PLAYBACK_RATES[(PLAYBACK_RATES.indexOf(playbackRate)+1)%PLAYBACK_RATES.length]; ambient.reset(); dirty = true; updateUI(true); persist(); wake();
 });
 on($('next'),'click',nextRoom);
-on($('instruments'),'click',() => { $('panel').hidden = !$('panel').hidden; updateUI(true); });
+function togglePanel(id, button, otherId, otherButton) {
+  $(id).hidden = !$(id).hidden;
+  if (!$(id).hidden) { $(otherId).hidden = true; $(otherButton).setAttribute('aria-expanded','false'); }
+  $(button).setAttribute('aria-expanded',String(!$(id).hidden)); updateUI(true);
+}
+on($('instruments'),'click',() => togglePanel('panel','instruments','about-panel','about'));
+on($('about'),'click',() => togglePanel('about-panel','about','panel','instruments'));
 on($('restart'),'click',() => {
   if (!device || deviceLost) { location.reload(); return; }
   clock = new RouteClock(); ambient.reset();
@@ -301,7 +310,14 @@ on($('beacon'),'click',async () => {
 on($('fullscreen'),'click',() => { void fullscreen(); });
 on(document,'fullscreenchange',() => { updateFullscreen(); resize(); });
 on(canvas,'keydown',e => { if (e.code === 'Space') { e.preventDefault(); togglePause(); } if (e.key.toLowerCase() === 'f') void fullscreen(); });
-on(document,'keydown',e => { if (e.key === 'Escape' && piece.classList.contains('descent-pseudo-fs')) void fullscreen(); });
+on(document,'keydown',e => {
+  if (e.key !== 'Escape') return;
+  if (!$('panel').hidden || !$('about-panel').hidden) {
+    const button = !$('panel').hidden ? 'instruments' : 'about';
+    $('panel').hidden = true; $('about-panel').hidden = true;
+    $('about').setAttribute('aria-expanded','false'); updateUI(true); $(button).focus();
+  } else if (piece.classList.contains('descent-pseudo-fs')) void fullscreen();
+});
 on(document,'visibilitychange',() => { hidden = document.hidden; if (hidden) suspend(); else { dirty = true; wake(); } });
 on(reducedMotion,'change',() => { if (reducedMotion.matches) { manualPaused = true; automatic = false; playbackRate = 1; suspend(); dirty = true; wake(); } });
 const observer = new IntersectionObserver(entries => { offscreen = !entries[0].isIntersecting; if (offscreen) suspend(); else { dirty = true; wake(); } },{ threshold: 0 }); observer.observe($('view'));
@@ -318,7 +334,7 @@ async function init() {
   const probing = registry.probe();
   try {
     if (!navigator.gpu) throw new Error('WebGPU is unavailable in this browser');
-    adapter = await navigator.gpu.requestAdapter({ powerPreference: 'low-power' });
+    adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
     if (!adapter) throw new Error('No WebGPU adapter is available');
     device = await adapter.requestDevice({ label: 'Descent shared device', requiredFeatures: adapter.features.has('timestamp-query') ? ['timestamp-query'] : [] });
     device.lost.then(info => {

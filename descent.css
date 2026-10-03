@@ -1,24 +1,24 @@
-.descent-page .site-wrapper { max-width: 1120px; padding-top: 1.6rem; padding-bottom: 3rem; }
+.descent-page { margin: 0; padding: 0; overflow: hidden; }
+.descent-page .site-wrapper { width: 100%; max-width: none; margin: 0; padding: 0; }
+.descent-page main { padding: 0; margin: 0; }
 .descent-page [hidden] { display: none !important; }
-.descent-page .post-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0; }
-.descent-edition { color: var(--text-faint); font: .65rem/1.5 var(--font-mono); letter-spacing: .04em; }
-.descent-hero { margin: 1.5rem 0 1.5rem; }
-.descent-hero .u-title { font-size: clamp(3rem, 9vw, 6rem); }
-.descent-hero .u-dek { margin-top: .65rem; font-size: 1.1rem; }
-.descent-piece { border: 1px solid var(--rule); background: var(--bg-raised); }
-.descent-view { position: relative; height: clamp(300px, 55vh, 640px); overflow: hidden; background: var(--bg-raised); }
+.descent-piece { position: relative; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg-raised); }
+.descent-view { position: absolute; inset: 0; overflow: hidden; background: var(--bg-raised); }
 #descent-canvas, #descent-still { display: block; width: 100%; height: 100%; object-fit: contain; }
 #descent-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.descent-brand { position: absolute; top: max(20px, env(safe-area-inset-top)); left: max(24px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 1rem; }
+.descent-brand a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text-dim); font: .75rem/1.3 var(--font-body); }
+.descent-brand h1 { margin: 0; color: var(--text); font: 1.35rem/1.3 var(--font-heading); }
 .descent-message { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: .7rem; padding: 2rem; text-align: center; background: var(--bg-raised); }
 #descent-message-title { color: var(--text); font: 1.55rem/1.3 var(--font-heading); }
 #descent-message-detail { max-width: 36rem; color: var(--text-dim); font: .9rem/1.6 var(--font-body); }
-.descent-caption { position: absolute; bottom: 24px; left: 24px; display: grid; gap: .2rem; pointer-events: none; }
+.descent-caption { position: absolute; top: max(24px, env(safe-area-inset-top)); right: max(24px, env(safe-area-inset-right)); display: grid; gap: .2rem; text-align: right; pointer-events: none; }
 .descent-caption > :first-child { font: .6rem/1.5 var(--font-mono); letter-spacing: .08em; color: var(--text-dim); text-transform: uppercase; }
 .descent-caption > :last-child { font: 1.4rem/1.2 var(--font-heading); color: var(--text); }
 .descent-rail { position: absolute; bottom: 0; inset-inline: 0; height: 2px; }
 .descent-rail i { display: block; width: 0; height: 100%; background: var(--accent); opacity: .5; }
-.descent-toolbar { flex-wrap: wrap; padding: .65rem .8rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; border-top: 1px solid var(--rule); }
-.descent-actions { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; flex: 1 1 260px; }
+.descent-toolbar { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: .45rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .35rem; border: 1px solid var(--rule); border-radius: 5px; background: color-mix(in srgb, var(--bg-raised) 94%, transparent); }
+.descent-actions { display: contents; }
 #descent-speed { min-width: 82px; font-variant-numeric: tabular-nums; }
 .descent-piece button, .descent-piece select, .descent-piece input[type="text"] { min-width: 44px; min-height: 44px; padding: .6rem .8rem; border: 1px solid var(--rule); border-radius: 3px; background: var(--bg); color: var(--text); font: .8rem/1.2 var(--font-body); }
 .descent-piece button { cursor: pointer; }
@@ -26,8 +26,9 @@
 .descent-piece button:disabled { opacity: .5; cursor: default; }
 .descent-piece button[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
 .descent-piece :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.descent-notice { padding: .55rem 1rem .8rem; color: var(--text-dim); font: .75rem/1.6 var(--font-body); }
-.descent-panel { padding: 1.2rem; border-top: 1px solid var(--rule); font: .8rem/1.65 var(--font-body); }
+.descent-notice { margin: 1rem 0; color: var(--text-dim); font: .8rem/1.6 var(--font-body); }
+.descent-panel { position: absolute; top: 80px; right: max(24px, env(safe-area-inset-right)); bottom: 90px; width: min(620px, calc(100% - 48px)); padding: 1.25rem; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--rule); border-radius: 5px; background: var(--bg-raised); font: .8rem/1.65 var(--font-body); }
+#descent-restart { margin-bottom: 1rem; }
 .descent-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: end; margin-bottom: 1rem; }
 .descent-controls label { display: grid; gap: .45rem; color: var(--text-dim); min-width: 0; }
 .descent-controls select, .descent-controls input[type="text"] { width: 100%; }
@@ -47,30 +48,29 @@
 .descent-dependencies p { margin: .3rem 0; overflow-wrap: anywhere; }
 .descent-dependencies strong { color: var(--accent); font-weight: 400; }
 .descent-small { color: var(--text-dim); margin-top: 1rem; }
-.descent-reading { max-width: var(--content-width); margin: 2rem auto 0; }
+.descent-reading { margin: 0; max-width: none; }
+.descent-reading h2 { margin: 0 0 1rem; font: 1.6rem/1.3 var(--font-heading); }
 .descent-scale { color: var(--text-dim); font: .8rem/1.65 var(--font-mono); }
 .descent-source-links { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; margin: 1rem 0 2rem; font-size: .85rem; }
 .descent-source-links a { min-height: 44px; display: inline-flex; align-items: center; }
 .descent-method p { font-size: .95rem; }
-.descent-piece:fullscreen, .descent-piece.descent-pseudo-fs { width: 100%; height: 100dvh; display: flex; flex-direction: column; border: 0; background: var(--bg-raised); }
+.descent-piece:fullscreen { width: 100%; height: 100dvh; }
 .descent-piece.descent-pseudo-fs { position: fixed; inset: 0; z-index: 1000; }
-.descent-piece:fullscreen .descent-view, .descent-piece.descent-pseudo-fs .descent-view { flex: 1; min-height: 100px; height: auto; }
-.descent-piece:fullscreen .descent-panel, .descent-piece.descent-pseudo-fs .descent-panel { max-height: 45dvh; overflow: auto; }
 .descent-fs-open { overflow: hidden; }
 @media (max-width: 640px) {
-  .descent-edition { font-size: .55rem; }
-  .descent-hero { margin: 1.5rem 0; }
-  .descent-view { height: min(57vh, 450px); min-height: 290px; }
-  .descent-toolbar { flex-wrap: wrap; padding: .45rem; gap: .3rem; }
-  .descent-piece button { padding-inline: .55rem; font-size: .72rem; }
-  .descent-panel { padding: 1rem; }
+  .descent-brand { top: max(12px, env(safe-area-inset-top)); left: 16px; gap: .75rem; }
+  .descent-caption { top: max(20px, env(safe-area-inset-top)); right: 16px; }
+  .descent-caption > :last-child { font-size: 1.1rem; }
+  .descent-toolbar { padding: .35rem; gap: .3rem; }
+  .descent-piece button { padding-inline: .55rem; font-size: .75rem; }
+  .descent-panel { top: 76px; right: 12px; bottom: 126px; width: calc(100% - 24px); padding: 1rem; }
   .descent-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .descent-seed-input, .descent-seed-actions { grid-column: 1 / -1; }
-  .descent-caption { left: 16px; bottom: 20px; }
 }
 @media (max-height: 500px) and (min-width: 641px) {
-  .descent-hero { margin: .75rem 0; }
-  .descent-hero .u-title { font-size: 3rem; }
-  .descent-view { height: 62vh; min-height: 180px; }
+  .descent-brand { top: max(8px, env(safe-area-inset-top)); }
+  .descent-caption { top: max(12px, env(safe-area-inset-top)); }
+  .descent-toolbar { bottom: max(8px, env(safe-area-inset-bottom)); }
+  .descent-panel { top: 62px; bottom: 76px; }
 }
 @media (prefers-reduced-motion: reduce) { .descent-page { scroll-behavior: auto; } }

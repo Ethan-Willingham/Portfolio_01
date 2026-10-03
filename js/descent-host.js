@@ -1,6 +1,6 @@
 // DOM-free host machinery. No canvas, animation loop, network request or room
 // allocation happens merely by importing this module.
-export const VERSION = '1';
+export const VERSION = '3';
 export const FIXED_DT = 1 / 60;
 export const PLAYBACK_RATES = Object.freeze([1, 4, 12]);
 export const ROUTE = Object.freeze([
@@ -141,8 +141,8 @@ export class RoomManager {
     const a = this.active; if (!a) return;
     a.room.step({ dtSeconds: FIXED_DT, elapsedSeconds: (a.ticks + 1) * FIXED_DT, scoreSeconds }); a.ticks++;
   }
-  render(encoder, exposure = 1) {
-    if (this.active) this.active.room.render({ encoder, targetView: this.active.view, width: this.width, height: this.height, exposure });
+  render(encoder, exposure = 1, presentation = {}) {
+    if (this.active) this.active.room.render({ encoder, targetView: this.active.view, width: this.width, height: this.height, exposure, ...presentation });
   }
   snapshot() { return this.active ? validateSnapshot(this.active.room.snapshot(), this.active.id) : null; }
   release() {

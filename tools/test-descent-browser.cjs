@@ -31,7 +31,7 @@ async function open(opts={}){
     window.requestAnimationFrame=fn=>{let id;id=request(t=>{__rafPending.delete(id);fn(t)});__rafPending.add(id);return id;};
     window.cancelAnimationFrame=id=>{__rafPending.delete(id);cancel(id);};
   },{noGPU:!!opts.noGPU});
-  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  const page=await context.newPage();page.setDefaultTimeout(180000);page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('404')&&!m.text().includes('ERR_FAILED')&&!m.text().includes('ERR_CONNECTION'))errors.push(m.text());});
   await page.goto(`http://127.0.0.1:${server.address().port}/descent-lab.html`);
   await page.waitForFunction(()=>window.Descent&&document.getElementById('descent').getAttribute('aria-busy')==='false');
@@ -48,7 +48,11 @@ async function screenshot(page,name){
 }
 async function pause(page){if(!(await snap(page)).paused)await page.locator('#descent-pause').click();}
 async function speed(page,rate){for(let i=0;i<3&&(await snap(page)).playbackRate!==rate;i++)await page.locator('#descent-speed').click();assert.equal((await snap(page)).playbackRate,rate);}
-async function fit(page){const g=await page.evaluate(()=>({width:document.documentElement.scrollWidth,view:innerWidth,buttons:[...document.querySelectorAll('.descent-toolbar button, .descent-toolbar select')].map(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,right:r.right};})}));assert.ok(g.width<=g.view+1,JSON.stringify(g));for(const b of g.buttons){assert.ok(b.width>=44&&b.height>=44);assert.ok(b.right<=g.view+1);}}
+async function fit(page){
+  const frame=await page.evaluate(()=>{const r=document.getElementById('descent-view').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,viewport:[innerWidth,innerHeight],canvas:[document.getElementById('descent-canvas').width,document.getElementById('descent-canvas').height],gpu:!!navigator.gpu};});
+  assert.equal(frame.x,0);assert.equal(frame.y,0);assert.equal(frame.width,frame.viewport[0]);assert.equal(frame.height,frame.viewport[1]);
+  if(frame.gpu){assert.equal(frame.canvas[0],Math.round(frame.width*2));assert.equal(frame.canvas[1],Math.round(frame.height*2));assert.equal((await snap(page)).resolution.adaptiveScale,1);}
+  const g=await page.evaluate(()=>({width:document.documentElement.scrollWidth,view:innerWidth,buttons:[...document.querySelectorAll('.descent-toolbar button, .descent-toolbar select')].map(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,right:r.right};})}));assert.ok(g.width<=g.view+1,JSON.stringify(g));for(const b of g.buttons){assert.ok(b.width>=44&&b.height>=44);assert.ok(b.right<=g.view+1);}}
 async function stable(page,field='roomTicks') {const a=(await snap(page))[field];await page.waitForTimeout(160);assert.equal((await snap(page))[field],a);}
 async function renderTiming(page){return page.evaluate(async()=>{
   const {device,manager}=__descentTest;const stepCpu=[],stepFence=[];for(let i=0;i<90;i++){await device.queue.onSubmittedWorkDone();const a=performance.now();manager.step(i/60);stepCpu.push(performance.now()-a);await device.queue.onSubmittedWorkDone();stepFence.push(performance.now()-a);}
@@ -80,7 +84,13 @@ async function displayTiming(page){return page.evaluate(async()=>{
   report.browser=await browser.version();
   for(const id of ids){const file=path.join(root,'js',id+'-room.js');report.routeModules[id]=fs.existsSync(file)?'present':'missing';}
   const real=await open();const p=real.page;await p.waitForTimeout(4500);
-  const start=await snap(p);assert.equal(start.deviceLost,false);assert.ok(start.room,start.roomId+' not initialized');
+  const start=await snap(p);await fit(p);assert.equal(start.quality,'high');
+  pass('First load fills the viewport with high quality and a 2x canvas, without adaptive image downscaling');
+  await p.locator('#descent-about').click();assert.equal(await p.locator('#descent-about-panel').isVisible(),true);
+  await p.locator('#descent-instruments').click();assert.equal(await p.locator('#descent-about-panel').isVisible(),false);
+  await p.keyboard.press('Escape');assert.equal(await p.locator('#descent-panel').isVisible(),false);
+  pass('About and Instruments overlay the scene, open exclusively and close with Escape');
+  assert.equal(start.deviceLost,false);assert.ok(start.room,start.roomId+' not initialized');
   if(start.roomId==='descent-bootstrap'){
     assert.equal(start.integration.complete,false);await p.waitForTimeout(1200);assert.ok((await snap(p)).roomTicks>start.roomTicks);await pause(p);await stable(p);
     const gpu=await p.evaluate(()=>Descent.debugReadback());const relative=gpu.values.map((x,i)=>Math.abs(x-gpu.cpuReference[i])/Math.max(1e-7,Math.abs(gpu.cpuReference[i])));assert.ok(Math.max(...relative)<3e-5,JSON.stringify(relative));report.numerical={gpuVsCpuMaxRelativeError:Math.max(...relative),points:gpu.points.length};
@@ -234,6 +244,11 @@ async function displayTiming(page){return page.evaluate(async()=>{
   await f.evaluate(()=>Descent.dispose());assert.equal(await f.evaluate(()=>__rafPending.size),0);assert.equal((await snap(f)).resources.liveRooms,0);
   const stopped=await snap(f);await f.locator('#descent-pause').click();await f.locator('#descent-speed').click();await f.locator('#descent-next').click();await f.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});const inert=await snap(f);assert.equal(inert.paused,stopped.paused);assert.equal(inert.playbackRate,stopped.playbackRate);assert.equal(inert.roomId,stopped.roomId);assert.equal(inert.hidden,stopped.hidden);assert.equal(await f.evaluate(()=>__rafPending.size),0);
   pass('Two whole fixture routes and sixteen switches retain one room, free tracked resources, and abort input/visibility listeners');await fixtures.context.close();
+  const migration=await open({fixtures:true,reduced:true});
+  await migration.page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('descent-v1'));delete s.presentationRevision;s.quality='low';s.paused=true;s.playbackRate=4;localStorage.setItem('descent-v1',JSON.stringify(s));});
+  await migration.page.reload();await migration.page.waitForFunction(()=>window.Descent&&!Descent.snapshot().loading&&Descent.snapshot().room);
+  assert.equal((await snap(migration.page)).quality,'high');assert.equal((await snap(migration.page)).paused,true);
+  pass('Previous low-resolution preferences migrate to high quality while preserving manual pause');await migration.context.close();
   const reduced=await open({reduced:true});assert.equal((await snap(reduced.page)).paused,true);assert.equal((await snap(reduced.page)).automatic,false);assert.equal((await snap(reduced.page)).playbackRate,1);await stable(reduced.page);await reduced.page.locator('#descent-pause').click();await reduced.page.waitForTimeout(120);assert.ok((await snap(reduced.page)).roomTicks>0);pass('Reduced motion starts still and Play explicitly begins stepping');await reduced.context.close();
   const fallback=await open({noGPU:true,viewport:{width:390,height:844},mobile:true});assert.equal(await fallback.page.locator('#descent-still').isVisible(),true);assert.equal(await fallback.page.locator('#descent-pause').isDisabled(),true);assert.equal(await fallback.page.locator('#descent-speed').isDisabled(),true);assert.equal(await fallback.page.locator('#descent-next').isDisabled(),true);await fit(fallback.page);await screenshot(fallback.page,'no-webgpu-calculated-still');pass('No WebGPU presents the labeled CPU-calculated still');await fallback.context.close();
   const missing=await open({fixtures:'missing',reduced:true});const m=missing.page;assert.equal((await snap(m)).roomId,'descent-bootstrap');assert.equal((await snap(m)).integration.complete,false);
