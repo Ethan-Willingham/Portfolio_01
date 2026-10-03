@@ -3,8 +3,7 @@
   "routeModules": {
     "soap-film": "present",
     "negative-temperature": "present",
-    "hydrogen-exactly": "present",
-    "qcd-lava-lamp": "present"
+    "hydrogen-exactly": "present"
   },
   "servedSourceHashes": {
     "js/descent.js": [
@@ -28,9 +27,6 @@
     "js/hydrogen-exactly-room.js": [
       "0b9a492eb425c53e2c3da6f4acfc3581a8a70f8ad78f1a50324e1e352d713efe"
     ],
-    "js/qcd-lava-lamp-room.js": [
-      "8aa3ae2f394eb69f610f742181699d0fe13ce4232eb2161ebc651cc5682b00f5"
-    ],
     "js/negative-temperature-model.js": [
       "0414b0a52f08c8e81650e94d9de0f8beaf400ba2023d29b1cbdf587f198c0a67"
     ],
@@ -49,12 +45,6 @@
     "js/hydrogen-exactly-shaders.js": [
       "863faf68e13fd63541e9e206add330619543bd98017dd2064eae4cbbd9991ea8"
     ],
-    "js/qcd-lava-lamp-shaders.js": [
-      "0e99836dc73258ff064d7c9b166b90e878c197bffd40d3dbed90773a0fdd4e68"
-    ],
-    "js/qcd-lava-lamp-math.js": [
-      "c40c4b2a8ee7e9ba3f000e3aac33b9e0e29ad60aba9f973bed89812e0f098a64"
-    ],
     "assets/visualizer/descent/drand-verifier-1.4.2.js": [
       "347da3de56c0528382af746cef70bdbd28717e7cad8bde19d98225bf151357d4"
     ],
@@ -67,9 +57,7 @@
     "Live negative-temperature initialization, rgba16float render, diagnostics and readback",
     "Explicit Rydberg option uses its actual 47.6 nm scale and documented density color meaning",
     "Live hydrogen-exactly initialization, rgba16float render, diagnostics and readback",
-    "Live qcd-lava-lamp initialization, rgba16float render, diagnostics and readback",
     "Largest adjacent room pair allocates together on this adapter; shared device remains usable after disposal",
-    "Visible 12x playback advances every real model with fixed steps; asynchronous SU(3) sweeps retain their rate",
     "Next room previews all four models, preserves Pause and auto choice, and saved speed survives reload",
     "Speed control supports keyboard input and 44px controls fit desktop, portrait and landscape",
     "Every real room fits all three viewports and stays paused during resize and selection",
@@ -93,7 +81,6 @@
     "/tmp/descent-playback-checks/live-negative-temperature-startup.png",
     "/tmp/descent-playback-checks/live-hydrogen-exactly-startup.png",
     "/tmp/descent-playback-checks/live-hydrogen-revival-option.png",
-    "/tmp/descent-playback-checks/live-qcd-lava-lamp-startup.png",
     "/tmp/descent-playback-checks/playback-controls-1440x900.png",
     "/tmp/descent-playback-checks/playback-controls-390x844.png",
     "/tmp/descent-playback-checks/playback-controls-844x390.png",
@@ -101,26 +88,21 @@
     "/tmp/descent-playback-checks/layout-soap-film-1440x900.png",
     "/tmp/descent-playback-checks/layout-negative-temperature-1440x900.png",
     "/tmp/descent-playback-checks/layout-hydrogen-exactly-1440x900.png",
-    "/tmp/descent-playback-checks/layout-qcd-lava-lamp-1440x900.png",
     "/tmp/descent-playback-checks/viewport-390x844.png",
     "/tmp/descent-playback-checks/layout-soap-film-390x844.png",
     "/tmp/descent-playback-checks/layout-negative-temperature-390x844.png",
     "/tmp/descent-playback-checks/layout-hydrogen-exactly-390x844.png",
-    "/tmp/descent-playback-checks/layout-qcd-lava-lamp-390x844.png",
     "/tmp/descent-playback-checks/viewport-844x390.png",
     "/tmp/descent-playback-checks/layout-soap-film-844x390.png",
     "/tmp/descent-playback-checks/layout-negative-temperature-844x390.png",
     "/tmp/descent-playback-checks/layout-hydrogen-exactly-844x390.png",
-    "/tmp/descent-playback-checks/layout-qcd-lava-lamp-844x390.png",
     "/tmp/descent-playback-checks/device-loss.png",
     "/tmp/descent-playback-checks/fixture-route-1-soap-film.png",
     "/tmp/descent-playback-checks/fixture-route-1-negative-temperature.png",
     "/tmp/descent-playback-checks/fixture-route-1-hydrogen-exactly.png",
-    "/tmp/descent-playback-checks/fixture-route-1-qcd-lava-lamp.png",
     "/tmp/descent-playback-checks/fixture-route-2-soap-film.png",
     "/tmp/descent-playback-checks/fixture-route-2-negative-temperature.png",
     "/tmp/descent-playback-checks/fixture-route-2-hydrogen-exactly.png",
-    "/tmp/descent-playback-checks/fixture-route-2-qcd-lava-lamp.png",
     "/tmp/descent-playback-checks/fixture-editorial-transition.png",
     "/tmp/descent-playback-checks/no-webgpu-calculated-still.png",
     "/tmp/descent-playback-checks/missing-module-error.png"
@@ -244,7 +226,6 @@
           "modulesReady": 4,
           "missing": [],
           "vacuumGroup": null,
-          "promisedSU3": true,
           "complete": false
         },
         "modules": [
@@ -295,7 +276,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -305,26 +286,6 @@
               ]
             },
             "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
@@ -358,8 +319,8 @@
           "parameters": {
             "lengthMeters": 0.16,
             "dtSeconds": 0.04,
-            "viscosity": 0.000001,
-            "thermalDiffusivity": 0.0000012,
+            "viscosity": 1e-06,
+            "thermalDiffusivity": 1.2e-06,
             "gravity": 9.81,
             "expansionPerKelvin": 0.0002,
             "dragPerSecond": 1,
@@ -367,7 +328,7 @@
             "heatingKelvin": 12,
             "coolingPerSecond": 0.025,
             "evaporationNmPerSecond": 0.7,
-            "drainageSpeedMetersPerSecond": 0.000055,
+            "drainageSpeedMetersPerSecond": 5.5e-05,
             "drainageReferenceNm": 800,
             "ruptureNm": 18,
             "gammaNewtonPerMeter": 0.03,
@@ -406,12 +367,12 @@
             "pressureResidualMetersInverseSecondsInverse": null,
             "pressureCycles": 0,
             "maxSpeedMetersPerSecond": 0,
-            "volumeM3": 1.7145111060446502e-8,
-            "filmVolumeM3": 1.7145111060446502e-8,
+            "volumeM3": 1.7145111060446502e-08,
+            "filmVolumeM3": 1.7145111060446502e-08,
             "rimVolumeM3": 0,
             "evaporatedM3": 0,
             "drainedM3": 0,
-            "replenishedM3": 1.7145111060446502e-8,
+            "replenishedM3": 1.7145111060446502e-08,
             "resetDiscardedM3": 0,
             "massBalanceErrorM3": 0,
             "hole": null
@@ -570,7 +531,6 @@
             "modulesReady": 4,
             "missing": [],
             "vacuumGroup": null,
-            "promisedSU3": true,
             "complete": false
           },
           "modules": [
@@ -621,7 +581,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -631,26 +591,6 @@
                 ]
               },
               "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
@@ -684,8 +624,8 @@
             "parameters": {
               "lengthMeters": 0.16,
               "dtSeconds": 0.04,
-              "viscosity": 0.000001,
-              "thermalDiffusivity": 0.0000012,
+              "viscosity": 1e-06,
+              "thermalDiffusivity": 1.2e-06,
               "gravity": 9.81,
               "expansionPerKelvin": 0.0002,
               "dragPerSecond": 1,
@@ -693,7 +633,7 @@
               "heatingKelvin": 12,
               "coolingPerSecond": 0.025,
               "evaporationNmPerSecond": 0.7,
-              "drainageSpeedMetersPerSecond": 0.000055,
+              "drainageSpeedMetersPerSecond": 5.5e-05,
               "drainageReferenceNm": 800,
               "ruptureNm": 18,
               "gammaNewtonPerMeter": 0.03,
@@ -728,16 +668,16 @@
                 21.750255584716797,
                 35.30252456665039
               ],
-              "divergenceMaxPerSecond": 0.00003133191057713702,
+              "divergenceMaxPerSecond": 3.133191057713702e-05,
               "pressureResidualMetersInverseSecondsInverse": 0.05013309419155121,
               "pressureCycles": 1,
               "maxSpeedMetersPerSecond": 0.0004150059830863029,
-              "volumeM3": 1.7108018247860673e-8,
-              "filmVolumeM3": 1.7108018247860673e-8,
+              "volumeM3": 1.7108018247860673e-08,
+              "filmVolumeM3": 1.7108018247860673e-08,
               "rimVolumeM3": 0,
               "evaporatedM3": 1.7919999999974384e-11,
               "drainedM3": 1.917261083731428e-11,
-              "replenishedM3": 1.7145111060446502e-8,
+              "replenishedM3": 1.7145111060446502e-08,
               "resetDiscardedM3": 0,
               "massBalanceErrorM3": -2.0174854076468315e-16,
               "hole": null
@@ -776,16 +716,16 @@
             21.754487991333008,
             35.392845153808594
           ],
-          "divergenceMaxPerSecond": 0.000029352668207138777,
+          "divergenceMaxPerSecond": 2.9352668207138777e-05,
           "pressureResidualMetersInverseSecondsInverse": 0.04696426913142204,
           "pressureCycles": 1,
           "maxSpeedMetersPerSecond": 0.0005051371990703046,
-          "volumeM3": 1.70902569835186e-8,
-          "filmVolumeM3": 1.70902569835186e-8,
+          "volumeM3": 1.70902569835186e-08,
+          "filmVolumeM3": 1.70902569835186e-08,
           "rimVolumeM3": 0,
           "evaporatedM3": 2.6521599999962087e-11,
           "drainedM3": 2.833229544684291e-11,
-          "replenishedM3": 1.7145111060446502e-8,
+          "replenishedM3": 1.7145111060446502e-08,
           "resetDiscardedM3": 0,
           "massBalanceErrorM3": -1.8148109705352932e-16,
           "hole": null
@@ -930,7 +870,6 @@
           "modulesReady": 4,
           "missing": [],
           "vacuumGroup": null,
-          "promisedSU3": true,
           "complete": false
         },
         "modules": [
@@ -981,7 +920,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -991,26 +930,6 @@
               ]
             },
             "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
@@ -1259,7 +1178,6 @@
             "modulesReady": 4,
             "missing": [],
             "vacuumGroup": null,
-            "promisedSU3": true,
             "complete": false
           },
           "modules": [
@@ -1310,7 +1228,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -1320,26 +1238,6 @@
                 ]
               },
               "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
@@ -1450,7 +1348,7 @@
           "clustered": false,
           "measuredStep": 450,
           "measuredSimulationTime": 4.499999999999992,
-          "normDrift": -0.00006590833265940343,
+          "normDrift": -6.590833265940343e-05,
           "conservativeEnergyDrift": null,
           "estimatedAnnihilations": 0,
           "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
@@ -1618,7 +1516,6 @@
           "modulesReady": 4,
           "missing": [],
           "vacuumGroup": null,
-          "promisedSU3": true,
           "complete": false
         },
         "modules": [
@@ -1669,7 +1566,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -1679,26 +1576,6 @@
               ]
             },
             "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
@@ -1710,7 +1587,7 @@
           "id": "hydrogen-exactly",
           "title": "Hydrogen Exactly",
           "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-          "representativeScaleMeters": 1.32294302636e-9,
+          "representativeScaleMeters": 1.32294302636e-09,
           "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
           "sources": [
             "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2052,7 +1929,6 @@
             "modulesReady": 4,
             "missing": [],
             "vacuumGroup": null,
-            "promisedSU3": true,
             "complete": false
           },
           "modules": [
@@ -2103,7 +1979,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2113,26 +1989,6 @@
                 ]
               },
               "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
@@ -2144,7 +2000,7 @@
             "id": "hydrogen-exactly",
             "title": "Hydrogen Exactly",
             "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-            "representativeScaleMeters": 1.32294302636e-9,
+            "representativeScaleMeters": 1.32294302636e-09,
             "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
             "sources": [
               "https://arxiv.org/html/quant-ph/9510029v1",
@@ -2292,952 +2148,13 @@
         "finite": true,
         "mass": 0.9968708093965688,
         "errors": [
-          4.183857472655404e-7,
-          8.173428965598204e-7,
-          8.032925648799835e-8,
-          3.9496351535366117e-7,
-          3.7924038871243546e-8,
-          0.0000023754240723140644
+          4.183857472655404e-07,
+          8.173428965598204e-07,
+          8.032925648799835e-08,
+          3.9496351535366117e-07,
+          3.7924038871243546e-08,
+          2.3754240723140644e-06
         ]
-      }
-    },
-    "qcd-lava-lamp": {
-      "startup": {
-        "version": "1",
-        "roomId": "qcd-lava-lamp",
-        "paused": true,
-        "automatic": false,
-        "playbackRate": 1,
-        "hidden": false,
-        "offscreen": false,
-        "loading": false,
-        "deviceLost": false,
-        "seed": {
-          "seed": "4b71a7e59b3127d9b179d9d08e19e70554c1472b4d956813f23b87274aa13166",
-          "source": "Offline reproducible preset",
-          "chainHash": null,
-          "round": null,
-          "derivation": "First 64 bits of SHA-256(descent:v1:seed:room:cycle) per visit"
-        },
-        "quality": "medium",
-        "preferences": {
-          "hydrogenMode": "spectral"
-        },
-        "clock": {
-          "index": 3,
-          "cycle": 0,
-          "age": 4,
-          "extension": 0,
-          "total": 3.299999999999993,
-          "phase": "watching"
-        },
-        "roomTicks": 0,
-        "replayRemaining": 0,
-        "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
-        "replayValidation": null,
-        "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 411,
-        "adapter": {
-          "vendor": "apple",
-          "architecture": "metal-3",
-          "device": "",
-          "description": "",
-          "isFallbackAdapter": false
-        },
-        "resolution": {
-          "width": 1118,
-          "height": 495,
-          "dprCap": 1.5,
-          "adaptiveScale": 1
-        },
-        "resources": {
-          "room": {
-            "bytes": 12953808,
-            "unknownSizeAllocations": 0,
-            "buffers": 26,
-            "textures": 1,
-            "querySets": 0,
-            "peakBytes": 13617360,
-            "created": 29,
-            "destroyed": 2
-          },
-          "targetBytes": 4427280,
-          "liveRooms": 1,
-          "retired": [
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2293872,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2293872,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "negative-temperature",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 1610784,
-              "created": 7,
-              "destroyed": 7
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 33555296,
-              "created": 6,
-              "destroyed": 6
-            }
-          ]
-        },
-        "budgetPolicy": "One active room; no prewarming or overlapping targets",
-        "droppedAmbientSeconds": 0,
-        "cpuCosts": {
-          "frameCpu": {
-            "samples": 360,
-            "medianMs": 0.20000004768371582,
-            "p95Ms": 19.5,
-            "meaning": "CPU wall time; GPU execution is asynchronous"
-          },
-          "displayAndSubmit": {
-            "samples": 360,
-            "medianMs": 0.09999990463256836,
-            "p95Ms": 0.10000002384185791,
-            "meaning": "CPU wall time; GPU execution is asynchronous"
-          },
-          "frameQueueCompletion": {
-            "samples": 360,
-            "medianMs": 1.100000023841858,
-            "p95Ms": 2.700000047683716,
-            "meaning": "CPU wall time; GPU execution is asynchronous"
-          }
-        },
-        "roomCpuCosts": {
-          "soap-film": {
-            "renderEncoding": {
-              "samples": 360,
-              "medianMs": 0,
-              "p95Ms": 0.10000002384185791,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            },
-            "simulationStep": {
-              "samples": 198,
-              "medianMs": 0,
-              "p95Ms": 22.399999976158142,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "negative-temperature": {
-            "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.20000004768371582,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "hydrogen-exactly": {
-            "renderEncoding": {
-              "samples": 6,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.20000004768371582,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "qcd-lava-lamp": {
-            "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.19999992847442627,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          }
-        },
-        "integration": {
-          "modulesReady": 4,
-          "missing": [],
-          "vacuumGroup": "SU(3)",
-          "promisedSU3": true,
-          "complete": true
-        },
-        "modules": [
-          {
-            "id": "soap-film",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "soap-film",
-              "title": "Soap film",
-              "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
-              "representativeScaleMeters": 0.16,
-              "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
-              "sources": [
-                "https://doi.org/10.1103/PhysRevLett.100.144501",
-                "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
-                "https://cie.co.at/datatable/cie-standard-illuminant-d65",
-                "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/soap-film-room.js?descent=1"
-          },
-          {
-            "id": "negative-temperature",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "negative-temperature",
-              "title": "Negative temperature",
-              "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Dimensionless healing length; no atom species or laboratory length is calibrated.",
-              "sources": [
-                "https://arxiv.org/abs/1801.06951",
-                "https://arxiv.org/abs/1801.06952"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/negative-temperature-room.js?descent=1"
-          },
-          {
-            "id": "hydrogen-exactly",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "hydrogen-exactly",
-              "title": "Hydrogen Exactly",
-              "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
-              "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
-              "sources": [
-                "https://arxiv.org/html/quant-ph/9510029v1",
-                "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0",
-                "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
-                "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
-          }
-        ],
-        "initializationError": null,
-        "gpuQueuePending": false,
-        "lastGpuQueueMs": 4,
-        "roomWorkPending": false,
-        "room": {
-          "apiVersion": 1,
-          "id": "qcd-lava-lamp",
-          "title": "QCD Lava Lamp",
-          "model": "Pure SU(3) Wilson lattice gauge theory",
-          "representativeScaleMeters": null,
-          "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-          "sources": [
-            "https://arxiv.org/html/1903.08308v1",
-            "https://arxiv.org/pdf/1003.3219",
-            "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-            "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-          ],
-          "numericalStepCount": 256,
-          "simulationTime": 256,
-          "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-          "ambientSeconds": 0,
-          "parameters": {
-            "group": "SU(3)",
-            "beta": 6,
-            "dimensions": [
-              12,
-              12,
-              12,
-              12
-            ],
-            "start": "Haar hot",
-            "initialBurnInSweeps": 256,
-            "smoothingMethod": "Wilson subgroup cooling",
-            "depth": 4,
-            "breath": false,
-            "sweepsPerAmbientSecond": 2,
-            "scanSecondsPerLatticePlane": 10
-          },
-          "quality": "medium",
-          "seedProvenance": {
-            "source": "offline fixed user-replayable seed",
-            "seed": "b4e87df6f60874d5",
-            "prng": "Philox4x32-10",
-            "beaconVerified": false,
-            "crossDeviceReplay": "floating-point results may differ"
-          },
-          "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-          "diagnosticAgeSeconds": 0,
-          "diagnosticsAvailable": true,
-          "numericalFault": null,
-          "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
-          "measuredSweep": 256,
-          "chargeByCoolingDepth": [
-            {
-              "depth": 0,
-              "Q": 0.042705899681095616,
-              "rms": 0.005173329648302789,
-              "peak": 0.02295963279902935,
-              "positiveFraction": 0.5005304783950617
-            },
-            {
-              "depth": 2,
-              "Q": 1.0710391146909117,
-              "rms": 0.0010453558580617128,
-              "peak": 0.012390798889100552,
-              "positiveFraction": 0.5313946759259259
-            },
-            {
-              "depth": 4,
-              "Q": 0.9227077355507296,
-              "rms": 0.0005106912770703726,
-              "peak": 0.00546626141294837,
-              "positiveFraction": 0.5485146604938271
-            },
-            {
-              "depth": 8,
-              "Q": 0.9269584014016568,
-              "rms": 0.00025443336138744165,
-              "peak": 0.0022672321647405624,
-              "positiveFraction": 0.5685281635802469
-            }
-          ],
-          "sectorLabel": null,
-          "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-          "plaquetteLagOne": null,
-          "history": [
-            {
-              "sweep": 256,
-              "plaquette": 0.59294699709129,
-              "Q": 0.9227077355507296
-            }
-          ],
-          "snapshotSpacingSweeps": 16,
-          "independentSnapshots": false,
-          "frameInterpolation": 0,
-          "memory": {
-            "roomBuffersBytes": 12939984,
-            "volumeTextureBytes": 13824,
-            "hostTargetsExcluded": true,
-            "readbackPeakBytes": 663552
-          },
-          "limits": {
-            "maxStorageBufferBindingSize": 134217728,
-            "maxBufferSize": 268435456
-          },
-          "lastSweepQueueWallMs": null,
-          "sweepQueueWallMedianMs": null,
-          "sweepQueueWallP95Ms": null,
-          "viewport": {
-            "width": 1118,
-            "height": 495,
-            "dpr": 1
-          },
-          "busy": false
-        },
-        "loopPending": false
-      },
-      "timings": {
-        "simulationCallCpu": {
-          "samples": 90,
-          "medianMs": 0,
-          "p95Ms": 0.10000002384185791
-        },
-        "simulationQueueFenceLatency": {
-          "samples": 90,
-          "medianMs": 0.09999990463256836,
-          "p95Ms": 0.20000004768371582
-        },
-        "roomRenderGpuTimestamps": {
-          "samples": 90,
-          "medianMs": 6.406943,
-          "p95Ms": 10.025847
-        },
-        "renderQueueFenceLatency": {
-          "samples": 90,
-          "medianMs": 7.800000071525574,
-          "p95Ms": 12.5
-        },
-        "timestampSupported": true,
-        "snapshot": {
-          "version": "1",
-          "roomId": "qcd-lava-lamp",
-          "paused": true,
-          "automatic": false,
-          "playbackRate": 1,
-          "hidden": false,
-          "offscreen": false,
-          "loading": false,
-          "deviceLost": false,
-          "seed": {
-            "seed": "4b71a7e59b3127d9b179d9d08e19e70554c1472b4d956813f23b87274aa13166",
-            "source": "Offline reproducible preset",
-            "chainHash": null,
-            "round": null,
-            "derivation": "First 64 bits of SHA-256(descent:v1:seed:room:cycle) per visit"
-          },
-          "quality": "medium",
-          "preferences": {
-            "hydrogenMode": "spectral"
-          },
-          "clock": {
-            "index": 3,
-            "cycle": 0,
-            "age": 4,
-            "extension": 0,
-            "total": 3.299999999999993,
-            "phase": "watching"
-          },
-          "roomTicks": 90,
-          "replayRemaining": 0,
-          "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
-          "replayValidation": null,
-          "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 411,
-          "adapter": {
-            "vendor": "apple",
-            "architecture": "metal-3",
-            "device": "",
-            "description": "",
-            "isFallbackAdapter": false
-          },
-          "resolution": {
-            "width": 1118,
-            "height": 495,
-            "dprCap": 1.5,
-            "adaptiveScale": 1
-          },
-          "resources": {
-            "room": {
-              "bytes": 12953808,
-              "unknownSizeAllocations": 0,
-              "buffers": 26,
-              "textures": 1,
-              "querySets": 0,
-              "peakBytes": 13617360,
-              "created": 29,
-              "destroyed": 2
-            },
-            "targetBytes": 4427280,
-            "liveRooms": 1,
-            "retired": [
-              {
-                "id": "soap-film",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 2293872,
-                "created": 6,
-                "destroyed": 6
-              },
-              {
-                "id": "soap-film",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 2293872,
-                "created": 6,
-                "destroyed": 6
-              },
-              {
-                "id": "negative-temperature",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 1610784,
-                "created": 7,
-                "destroyed": 7
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 33555296,
-                "created": 6,
-                "destroyed": 6
-              }
-            ]
-          },
-          "budgetPolicy": "One active room; no prewarming or overlapping targets",
-          "droppedAmbientSeconds": 0,
-          "cpuCosts": {
-            "frameCpu": {
-              "samples": 360,
-              "medianMs": 0.20000004768371582,
-              "p95Ms": 19.5,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            },
-            "displayAndSubmit": {
-              "samples": 360,
-              "medianMs": 0.09999990463256836,
-              "p95Ms": 0.10000002384185791,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            },
-            "frameQueueCompletion": {
-              "samples": 360,
-              "medianMs": 1.100000023841858,
-              "p95Ms": 2.700000047683716,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "roomCpuCosts": {
-            "soap-film": {
-              "renderEncoding": {
-                "samples": 360,
-                "medianMs": 0,
-                "p95Ms": 0.10000002384185791,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              },
-              "simulationStep": {
-                "samples": 198,
-                "medianMs": 0,
-                "p95Ms": 22.399999976158142,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            },
-            "negative-temperature": {
-              "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.20000004768371582,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            },
-            "hydrogen-exactly": {
-              "renderEncoding": {
-                "samples": 6,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.20000004768371582,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            },
-            "qcd-lava-lamp": {
-              "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.19999992847442627,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            }
-          },
-          "integration": {
-            "modulesReady": 4,
-            "missing": [],
-            "vacuumGroup": "SU(3)",
-            "promisedSU3": true,
-            "complete": true
-          },
-          "modules": [
-            {
-              "id": "soap-film",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "soap-film",
-                "title": "Soap film",
-                "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
-                "representativeScaleMeters": 0.16,
-                "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
-                "sources": [
-                  "https://doi.org/10.1103/PhysRevLett.100.144501",
-                  "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
-                  "https://cie.co.at/datatable/cie-standard-illuminant-d65",
-                  "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/soap-film-room.js?descent=1"
-            },
-            {
-              "id": "negative-temperature",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "negative-temperature",
-                "title": "Negative temperature",
-                "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Dimensionless healing length; no atom species or laboratory length is calibrated.",
-                "sources": [
-                  "https://arxiv.org/abs/1801.06951",
-                  "https://arxiv.org/abs/1801.06952"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/negative-temperature-room.js?descent=1"
-            },
-            {
-              "id": "hydrogen-exactly",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "hydrogen-exactly",
-                "title": "Hydrogen Exactly",
-                "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
-                "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
-                "sources": [
-                  "https://arxiv.org/html/quant-ph/9510029v1",
-                  "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0",
-                  "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
-                  "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
-            }
-          ],
-          "initializationError": null,
-          "gpuQueuePending": false,
-          "lastGpuQueueMs": 4,
-          "roomWorkPending": false,
-          "room": {
-            "apiVersion": 1,
-            "id": "qcd-lava-lamp",
-            "title": "QCD Lava Lamp",
-            "model": "Pure SU(3) Wilson lattice gauge theory",
-            "representativeScaleMeters": null,
-            "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-            "sources": [
-              "https://arxiv.org/html/1903.08308v1",
-              "https://arxiv.org/pdf/1003.3219",
-              "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-              "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-            ],
-            "numericalStepCount": 259,
-            "simulationTime": 259,
-            "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-            "ambientSeconds": 1.4999999999999996,
-            "parameters": {
-              "group": "SU(3)",
-              "beta": 6,
-              "dimensions": [
-                12,
-                12,
-                12,
-                12
-              ],
-              "start": "Haar hot",
-              "initialBurnInSweeps": 256,
-              "smoothingMethod": "Wilson subgroup cooling",
-              "depth": 4,
-              "breath": false,
-              "sweepsPerAmbientSecond": 2,
-              "scanSecondsPerLatticePlane": 10
-            },
-            "quality": "medium",
-            "seedProvenance": {
-              "source": "offline fixed user-replayable seed",
-              "seed": "b4e87df6f60874d5",
-              "prng": "Philox4x32-10",
-              "beaconVerified": false,
-              "crossDeviceReplay": "floating-point results may differ"
-            },
-            "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-            "diagnosticAgeSeconds": 1.4999999999999996,
-            "diagnosticsAvailable": true,
-            "numericalFault": null,
-            "averagePlaquette": 0.59294699709129,
-            "unitarityError": 0.00002181529998779297,
-            "determinantError": 0.000030641000194009393,
-            "measuredSweep": 256,
-            "chargeByCoolingDepth": [
-              {
-                "depth": 0,
-                "Q": 0.042705899681095616,
-                "rms": 0.005173329648302789,
-                "peak": 0.02295963279902935,
-                "positiveFraction": 0.5005304783950617
-              },
-              {
-                "depth": 2,
-                "Q": 1.0710391146909117,
-                "rms": 0.0010453558580617128,
-                "peak": 0.012390798889100552,
-                "positiveFraction": 0.5313946759259259
-              },
-              {
-                "depth": 4,
-                "Q": 0.9227077355507296,
-                "rms": 0.0005106912770703726,
-                "peak": 0.00546626141294837,
-                "positiveFraction": 0.5485146604938271
-              },
-              {
-                "depth": 8,
-                "Q": 0.9269584014016568,
-                "rms": 0.00025443336138744165,
-                "peak": 0.0022672321647405624,
-                "positiveFraction": 0.5685281635802469
-              }
-            ],
-            "sectorLabel": null,
-            "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-            "plaquetteLagOne": null,
-            "history": [
-              {
-                "sweep": 256,
-                "plaquette": 0.59294699709129,
-                "Q": 0.9227077355507296
-              }
-            ],
-            "snapshotSpacingSweeps": 16,
-            "independentSnapshots": false,
-            "frameInterpolation": 0.21428571428571422,
-            "memory": {
-              "roomBuffersBytes": 12939984,
-              "volumeTextureBytes": 13824,
-              "hostTargetsExcluded": true,
-              "readbackPeakBytes": 663552
-            },
-            "limits": {
-              "maxStorageBufferBindingSize": 134217728,
-              "maxBufferSize": 268435456
-            },
-            "lastSweepQueueWallMs": 23.100000023841858,
-            "sweepQueueWallMedianMs": 19.299999952316284,
-            "sweepQueueWallP95Ms": 23.100000023841858,
-            "viewport": {
-              "width": 1118,
-              "height": 495,
-              "dpr": 1
-            },
-            "busy": false
-          },
-          "loopPending": false
-        }
-      },
-      "readback": {
-        "group": 3,
-        "extent": 12,
-        "snapshot": {
-          "apiVersion": 1,
-          "id": "qcd-lava-lamp",
-          "title": "QCD Lava Lamp",
-          "model": "Pure SU(3) Wilson lattice gauge theory",
-          "representativeScaleMeters": null,
-          "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-          "sources": [
-            "https://arxiv.org/html/1903.08308v1",
-            "https://arxiv.org/pdf/1003.3219",
-            "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-            "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-          ],
-          "numericalStepCount": 259,
-          "simulationTime": 259,
-          "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-          "ambientSeconds": 1.4999999999999996,
-          "parameters": {
-            "group": "SU(3)",
-            "beta": 6,
-            "dimensions": [
-              12,
-              12,
-              12,
-              12
-            ],
-            "start": "Haar hot",
-            "initialBurnInSweeps": 256,
-            "smoothingMethod": "Wilson subgroup cooling",
-            "depth": 4,
-            "breath": false,
-            "sweepsPerAmbientSecond": 2,
-            "scanSecondsPerLatticePlane": 10
-          },
-          "quality": "medium",
-          "seedProvenance": {
-            "source": "offline fixed user-replayable seed",
-            "seed": "b4e87df6f60874d5",
-            "prng": "Philox4x32-10",
-            "beaconVerified": false,
-            "crossDeviceReplay": "floating-point results may differ"
-          },
-          "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-          "diagnosticAgeSeconds": 1.4999999999999996,
-          "diagnosticsAvailable": true,
-          "numericalFault": null,
-          "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
-          "measuredSweep": 256,
-          "chargeByCoolingDepth": [
-            {
-              "depth": 0,
-              "Q": 0.042705899681095616,
-              "rms": 0.005173329648302789,
-              "peak": 0.02295963279902935,
-              "positiveFraction": 0.5005304783950617
-            },
-            {
-              "depth": 2,
-              "Q": 1.0710391146909117,
-              "rms": 0.0010453558580617128,
-              "peak": 0.012390798889100552,
-              "positiveFraction": 0.5313946759259259
-            },
-            {
-              "depth": 4,
-              "Q": 0.9227077355507296,
-              "rms": 0.0005106912770703726,
-              "peak": 0.00546626141294837,
-              "positiveFraction": 0.5485146604938271
-            },
-            {
-              "depth": 8,
-              "Q": 0.9269584014016568,
-              "rms": 0.00025443336138744165,
-              "peak": 0.0022672321647405624,
-              "positiveFraction": 0.5685281635802469
-            }
-          ],
-          "sectorLabel": null,
-          "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-          "plaquetteLagOne": null,
-          "history": [
-            {
-              "sweep": 256,
-              "plaquette": 0.59294699709129,
-              "Q": 0.9227077355507296
-            }
-          ],
-          "snapshotSpacingSweeps": 16,
-          "independentSnapshots": false,
-          "frameInterpolation": 0.21428571428571422,
-          "memory": {
-            "roomBuffersBytes": 12939984,
-            "volumeTextureBytes": 13824,
-            "hostTargetsExcluded": true,
-            "readbackPeakBytes": 663552
-          },
-          "limits": {
-            "maxStorageBufferBindingSize": 134217728,
-            "maxBufferSize": 268435456
-          },
-          "lastSweepQueueWallMs": 23.100000023841858,
-          "sweepQueueWallMedianMs": 19.299999952316284,
-          "sweepQueueWallP95Ms": 23.100000023841858,
-          "viewport": {
-            "width": 1118,
-            "height": 495,
-            "dpr": 1
-          },
-          "busy": false
-        },
-        "links": 1492992
       }
     }
   },
@@ -3361,7 +2278,6 @@
           "modulesReady": 4,
           "missing": [],
           "vacuumGroup": null,
-          "promisedSU3": true,
           "complete": false
         },
         "modules": [
@@ -3412,7 +2328,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -3422,26 +2338,6 @@
               ]
             },
             "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
@@ -3475,8 +2371,8 @@
           "parameters": {
             "lengthMeters": 0.16,
             "dtSeconds": 0.04,
-            "viscosity": 0.000001,
-            "thermalDiffusivity": 0.0000012,
+            "viscosity": 1e-06,
+            "thermalDiffusivity": 1.2e-06,
             "gravity": 9.81,
             "expansionPerKelvin": 0.0002,
             "dragPerSecond": 1,
@@ -3484,7 +2380,7 @@
             "heatingKelvin": 12,
             "coolingPerSecond": 0.025,
             "evaporationNmPerSecond": 0.7,
-            "drainageSpeedMetersPerSecond": 0.000055,
+            "drainageSpeedMetersPerSecond": 5.5e-05,
             "drainageReferenceNm": 800,
             "ruptureNm": 18,
             "gammaNewtonPerMeter": 0.03,
@@ -3523,12 +2419,12 @@
             "pressureResidualMetersInverseSecondsInverse": null,
             "pressureCycles": 0,
             "maxSpeedMetersPerSecond": 0,
-            "volumeM3": 1.7145111060446502e-8,
-            "filmVolumeM3": 1.7145111060446502e-8,
+            "volumeM3": 1.7145111060446502e-08,
+            "filmVolumeM3": 1.7145111060446502e-08,
             "rimVolumeM3": 0,
             "evaporatedM3": 0,
             "drainedM3": 0,
-            "replenishedM3": 1.7145111060446502e-8,
+            "replenishedM3": 1.7145111060446502e-08,
             "resetDiscardedM3": 0,
             "massBalanceErrorM3": 0,
             "hole": null
@@ -3687,7 +2583,6 @@
             "modulesReady": 4,
             "missing": [],
             "vacuumGroup": null,
-            "promisedSU3": true,
             "complete": false
           },
           "modules": [
@@ -3738,7 +2633,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -3748,26 +2643,6 @@
                 ]
               },
               "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
@@ -3801,8 +2676,8 @@
             "parameters": {
               "lengthMeters": 0.16,
               "dtSeconds": 0.04,
-              "viscosity": 0.000001,
-              "thermalDiffusivity": 0.0000012,
+              "viscosity": 1e-06,
+              "thermalDiffusivity": 1.2e-06,
               "gravity": 9.81,
               "expansionPerKelvin": 0.0002,
               "dragPerSecond": 1,
@@ -3810,7 +2685,7 @@
               "heatingKelvin": 12,
               "coolingPerSecond": 0.025,
               "evaporationNmPerSecond": 0.7,
-              "drainageSpeedMetersPerSecond": 0.000055,
+              "drainageSpeedMetersPerSecond": 5.5e-05,
               "drainageReferenceNm": 800,
               "ruptureNm": 18,
               "gammaNewtonPerMeter": 0.03,
@@ -3845,16 +2720,16 @@
                 21.750255584716797,
                 35.30252456665039
               ],
-              "divergenceMaxPerSecond": 0.00003133191057713702,
+              "divergenceMaxPerSecond": 3.133191057713702e-05,
               "pressureResidualMetersInverseSecondsInverse": 0.05013309419155121,
               "pressureCycles": 1,
               "maxSpeedMetersPerSecond": 0.0004150059830863029,
-              "volumeM3": 1.7108018247860673e-8,
-              "filmVolumeM3": 1.7108018247860673e-8,
+              "volumeM3": 1.7108018247860673e-08,
+              "filmVolumeM3": 1.7108018247860673e-08,
               "rimVolumeM3": 0,
               "evaporatedM3": 1.7919999999974384e-11,
               "drainedM3": 1.917261083731428e-11,
-              "replenishedM3": 1.7145111060446502e-8,
+              "replenishedM3": 1.7145111060446502e-08,
               "resetDiscardedM3": 0,
               "massBalanceErrorM3": -2.0174854076468315e-16,
               "hole": null
@@ -3893,16 +2768,16 @@
             21.754487991333008,
             35.392845153808594
           ],
-          "divergenceMaxPerSecond": 0.000029352668207138777,
+          "divergenceMaxPerSecond": 2.9352668207138777e-05,
           "pressureResidualMetersInverseSecondsInverse": 0.04696426913142204,
           "pressureCycles": 1,
           "maxSpeedMetersPerSecond": 0.0005051371990703046,
-          "volumeM3": 1.70902569835186e-8,
-          "filmVolumeM3": 1.70902569835186e-8,
+          "volumeM3": 1.70902569835186e-08,
+          "filmVolumeM3": 1.70902569835186e-08,
           "rimVolumeM3": 0,
           "evaporatedM3": 2.6521599999962087e-11,
           "drainedM3": 2.833229544684291e-11,
-          "replenishedM3": 1.7145111060446502e-8,
+          "replenishedM3": 1.7145111060446502e-08,
           "resetDiscardedM3": 0,
           "massBalanceErrorM3": -1.8148109705352932e-16,
           "hole": null
@@ -4047,7 +2922,6 @@
           "modulesReady": 4,
           "missing": [],
           "vacuumGroup": null,
-          "promisedSU3": true,
           "complete": false
         },
         "modules": [
@@ -4098,7 +2972,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4108,26 +2982,6 @@
               ]
             },
             "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
@@ -4376,7 +3230,6 @@
             "modulesReady": 4,
             "missing": [],
             "vacuumGroup": null,
-            "promisedSU3": true,
             "complete": false
           },
           "modules": [
@@ -4427,7 +3280,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4437,26 +3290,6 @@
                 ]
               },
               "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
@@ -4567,7 +3400,7 @@
           "clustered": false,
           "measuredStep": 450,
           "measuredSimulationTime": 4.499999999999992,
-          "normDrift": -0.00006590833265940343,
+          "normDrift": -6.590833265940343e-05,
           "conservativeEnergyDrift": null,
           "estimatedAnnihilations": 0,
           "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
@@ -4735,7 +3568,6 @@
           "modulesReady": 4,
           "missing": [],
           "vacuumGroup": null,
-          "promisedSU3": true,
           "complete": false
         },
         "modules": [
@@ -4786,7 +3618,7 @@
               "id": "hydrogen-exactly",
               "title": "Hydrogen Exactly",
               "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
+              "representativeScaleMeters": 4.762594894896e-08,
               "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
               "sources": [
                 "https://arxiv.org/html/quant-ph/9510029v1",
@@ -4796,26 +3628,6 @@
               ]
             },
             "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
           }
         ],
         "initializationError": null,
@@ -4827,7 +3639,7 @@
           "id": "hydrogen-exactly",
           "title": "Hydrogen Exactly",
           "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-          "representativeScaleMeters": 1.32294302636e-9,
+          "representativeScaleMeters": 1.32294302636e-09,
           "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
           "sources": [
             "https://arxiv.org/html/quant-ph/9510029v1",
@@ -5169,7 +3981,6 @@
             "modulesReady": 4,
             "missing": [],
             "vacuumGroup": null,
-            "promisedSU3": true,
             "complete": false
           },
           "modules": [
@@ -5220,7 +4031,7 @@
                 "id": "hydrogen-exactly",
                 "title": "Hydrogen Exactly",
                 "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
+                "representativeScaleMeters": 4.762594894896e-08,
                 "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
                 "sources": [
                   "https://arxiv.org/html/quant-ph/9510029v1",
@@ -5230,26 +4041,6 @@
                 ]
               },
               "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
             }
           ],
           "initializationError": null,
@@ -5261,7 +4052,7 @@
             "id": "hydrogen-exactly",
             "title": "Hydrogen Exactly",
             "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-            "representativeScaleMeters": 1.32294302636e-9,
+            "representativeScaleMeters": 1.32294302636e-09,
             "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
             "sources": [
               "https://arxiv.org/html/quant-ph/9510029v1",
@@ -5409,952 +4200,13 @@
         "finite": true,
         "mass": 0.9968708093965688,
         "errors": [
-          4.183857472655404e-7,
-          8.173428965598204e-7,
-          8.032925648799835e-8,
-          3.9496351535366117e-7,
-          3.7924038871243546e-8,
-          0.0000023754240723140644
+          4.183857472655404e-07,
+          8.173428965598204e-07,
+          8.032925648799835e-08,
+          3.9496351535366117e-07,
+          3.7924038871243546e-08,
+          2.3754240723140644e-06
         ]
-      }
-    },
-    "qcd-lava-lamp": {
-      "startup": {
-        "version": "1",
-        "roomId": "qcd-lava-lamp",
-        "paused": true,
-        "automatic": false,
-        "playbackRate": 1,
-        "hidden": false,
-        "offscreen": false,
-        "loading": false,
-        "deviceLost": false,
-        "seed": {
-          "seed": "4b71a7e59b3127d9b179d9d08e19e70554c1472b4d956813f23b87274aa13166",
-          "source": "Offline reproducible preset",
-          "chainHash": null,
-          "round": null,
-          "derivation": "First 64 bits of SHA-256(descent:v1:seed:room:cycle) per visit"
-        },
-        "quality": "medium",
-        "preferences": {
-          "hydrogenMode": "spectral"
-        },
-        "clock": {
-          "index": 3,
-          "cycle": 0,
-          "age": 4,
-          "extension": 0,
-          "total": 3.299999999999993,
-          "phase": "watching"
-        },
-        "roomTicks": 0,
-        "replayRemaining": 0,
-        "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
-        "replayValidation": null,
-        "fixedDtSeconds": 0.016666666666666666,
-        "renderCount": 411,
-        "adapter": {
-          "vendor": "apple",
-          "architecture": "metal-3",
-          "device": "",
-          "description": "",
-          "isFallbackAdapter": false
-        },
-        "resolution": {
-          "width": 1118,
-          "height": 495,
-          "dprCap": 1.5,
-          "adaptiveScale": 1
-        },
-        "resources": {
-          "room": {
-            "bytes": 12953808,
-            "unknownSizeAllocations": 0,
-            "buffers": 26,
-            "textures": 1,
-            "querySets": 0,
-            "peakBytes": 13617360,
-            "created": 29,
-            "destroyed": 2
-          },
-          "targetBytes": 4427280,
-          "liveRooms": 1,
-          "retired": [
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2293872,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2293872,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "negative-temperature",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 1610784,
-              "created": 7,
-              "destroyed": 7
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 16777792,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 33555296,
-              "created": 6,
-              "destroyed": 6
-            }
-          ]
-        },
-        "budgetPolicy": "One active room; no prewarming or overlapping targets",
-        "droppedAmbientSeconds": 0,
-        "cpuCosts": {
-          "frameCpu": {
-            "samples": 360,
-            "medianMs": 0.20000004768371582,
-            "p95Ms": 19.5,
-            "meaning": "CPU wall time; GPU execution is asynchronous"
-          },
-          "displayAndSubmit": {
-            "samples": 360,
-            "medianMs": 0.09999990463256836,
-            "p95Ms": 0.10000002384185791,
-            "meaning": "CPU wall time; GPU execution is asynchronous"
-          },
-          "frameQueueCompletion": {
-            "samples": 360,
-            "medianMs": 1.100000023841858,
-            "p95Ms": 2.700000047683716,
-            "meaning": "CPU wall time; GPU execution is asynchronous"
-          }
-        },
-        "roomCpuCosts": {
-          "soap-film": {
-            "renderEncoding": {
-              "samples": 360,
-              "medianMs": 0,
-              "p95Ms": 0.10000002384185791,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            },
-            "simulationStep": {
-              "samples": 198,
-              "medianMs": 0,
-              "p95Ms": 22.399999976158142,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "negative-temperature": {
-            "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.20000004768371582,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "hydrogen-exactly": {
-            "renderEncoding": {
-              "samples": 6,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.20000004768371582,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "qcd-lava-lamp": {
-            "renderEncoding": {
-              "samples": 3,
-              "medianMs": 0.10000002384185791,
-              "p95Ms": 0.19999992847442627,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          }
-        },
-        "integration": {
-          "modulesReady": 4,
-          "missing": [],
-          "vacuumGroup": "SU(3)",
-          "promisedSU3": true,
-          "complete": true
-        },
-        "modules": [
-          {
-            "id": "soap-film",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "soap-film",
-              "title": "Soap film",
-              "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
-              "representativeScaleMeters": 0.16,
-              "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
-              "sources": [
-                "https://doi.org/10.1103/PhysRevLett.100.144501",
-                "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
-                "https://cie.co.at/datatable/cie-standard-illuminant-d65",
-                "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/soap-film-room.js?descent=1"
-          },
-          {
-            "id": "negative-temperature",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "negative-temperature",
-              "title": "Negative temperature",
-              "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Dimensionless healing length; no atom species or laboratory length is calibrated.",
-              "sources": [
-                "https://arxiv.org/abs/1801.06951",
-                "https://arxiv.org/abs/1801.06952"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/negative-temperature-room.js?descent=1"
-          },
-          {
-            "id": "hydrogen-exactly",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "hydrogen-exactly",
-              "title": "Hydrogen Exactly",
-              "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-              "representativeScaleMeters": 4.762594894896e-8,
-              "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
-              "sources": [
-                "https://arxiv.org/html/quant-ph/9510029v1",
-                "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0",
-                "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
-                "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-          },
-          {
-            "id": "qcd-lava-lamp",
-            "status": "ready",
-            "error": null,
-            "info": {
-              "apiVersion": 1,
-              "id": "qcd-lava-lamp",
-              "title": "QCD Lava Lamp",
-              "model": "Pure SU(3) Wilson lattice gauge theory",
-              "representativeScaleMeters": null,
-              "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-              "sources": [
-                "https://arxiv.org/html/1903.08308v1",
-                "https://arxiv.org/pdf/1003.3219",
-                "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-              ]
-            },
-            "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
-          }
-        ],
-        "initializationError": null,
-        "gpuQueuePending": false,
-        "lastGpuQueueMs": 4,
-        "roomWorkPending": false,
-        "room": {
-          "apiVersion": 1,
-          "id": "qcd-lava-lamp",
-          "title": "QCD Lava Lamp",
-          "model": "Pure SU(3) Wilson lattice gauge theory",
-          "representativeScaleMeters": null,
-          "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-          "sources": [
-            "https://arxiv.org/html/1903.08308v1",
-            "https://arxiv.org/pdf/1003.3219",
-            "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-            "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-          ],
-          "numericalStepCount": 256,
-          "simulationTime": 256,
-          "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-          "ambientSeconds": 0,
-          "parameters": {
-            "group": "SU(3)",
-            "beta": 6,
-            "dimensions": [
-              12,
-              12,
-              12,
-              12
-            ],
-            "start": "Haar hot",
-            "initialBurnInSweeps": 256,
-            "smoothingMethod": "Wilson subgroup cooling",
-            "depth": 4,
-            "breath": false,
-            "sweepsPerAmbientSecond": 2,
-            "scanSecondsPerLatticePlane": 10
-          },
-          "quality": "medium",
-          "seedProvenance": {
-            "source": "offline fixed user-replayable seed",
-            "seed": "b4e87df6f60874d5",
-            "prng": "Philox4x32-10",
-            "beaconVerified": false,
-            "crossDeviceReplay": "floating-point results may differ"
-          },
-          "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-          "diagnosticAgeSeconds": 0,
-          "diagnosticsAvailable": true,
-          "numericalFault": null,
-          "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
-          "measuredSweep": 256,
-          "chargeByCoolingDepth": [
-            {
-              "depth": 0,
-              "Q": 0.042705899681095616,
-              "rms": 0.005173329648302789,
-              "peak": 0.02295963279902935,
-              "positiveFraction": 0.5005304783950617
-            },
-            {
-              "depth": 2,
-              "Q": 1.0710391146909117,
-              "rms": 0.0010453558580617128,
-              "peak": 0.012390798889100552,
-              "positiveFraction": 0.5313946759259259
-            },
-            {
-              "depth": 4,
-              "Q": 0.9227077355507296,
-              "rms": 0.0005106912770703726,
-              "peak": 0.00546626141294837,
-              "positiveFraction": 0.5485146604938271
-            },
-            {
-              "depth": 8,
-              "Q": 0.9269584014016568,
-              "rms": 0.00025443336138744165,
-              "peak": 0.0022672321647405624,
-              "positiveFraction": 0.5685281635802469
-            }
-          ],
-          "sectorLabel": null,
-          "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-          "plaquetteLagOne": null,
-          "history": [
-            {
-              "sweep": 256,
-              "plaquette": 0.59294699709129,
-              "Q": 0.9227077355507296
-            }
-          ],
-          "snapshotSpacingSweeps": 16,
-          "independentSnapshots": false,
-          "frameInterpolation": 0,
-          "memory": {
-            "roomBuffersBytes": 12939984,
-            "volumeTextureBytes": 13824,
-            "hostTargetsExcluded": true,
-            "readbackPeakBytes": 663552
-          },
-          "limits": {
-            "maxStorageBufferBindingSize": 134217728,
-            "maxBufferSize": 268435456
-          },
-          "lastSweepQueueWallMs": null,
-          "sweepQueueWallMedianMs": null,
-          "sweepQueueWallP95Ms": null,
-          "viewport": {
-            "width": 1118,
-            "height": 495,
-            "dpr": 1
-          },
-          "busy": false
-        },
-        "loopPending": false
-      },
-      "timings": {
-        "simulationCallCpu": {
-          "samples": 90,
-          "medianMs": 0,
-          "p95Ms": 0.10000002384185791
-        },
-        "simulationQueueFenceLatency": {
-          "samples": 90,
-          "medianMs": 0.09999990463256836,
-          "p95Ms": 0.20000004768371582
-        },
-        "roomRenderGpuTimestamps": {
-          "samples": 90,
-          "medianMs": 6.406943,
-          "p95Ms": 10.025847
-        },
-        "renderQueueFenceLatency": {
-          "samples": 90,
-          "medianMs": 7.800000071525574,
-          "p95Ms": 12.5
-        },
-        "timestampSupported": true,
-        "snapshot": {
-          "version": "1",
-          "roomId": "qcd-lava-lamp",
-          "paused": true,
-          "automatic": false,
-          "playbackRate": 1,
-          "hidden": false,
-          "offscreen": false,
-          "loading": false,
-          "deviceLost": false,
-          "seed": {
-            "seed": "4b71a7e59b3127d9b179d9d08e19e70554c1472b4d956813f23b87274aa13166",
-            "source": "Offline reproducible preset",
-            "chainHash": null,
-            "round": null,
-            "derivation": "First 64 bits of SHA-256(descent:v1:seed:room:cycle) per visit"
-          },
-          "quality": "medium",
-          "preferences": {
-            "hydrogenMode": "spectral"
-          },
-          "clock": {
-            "index": 3,
-            "cycle": 0,
-            "age": 4,
-            "extension": 0,
-            "total": 3.299999999999993,
-            "phase": "watching"
-          },
-          "roomTicks": 90,
-          "replayRemaining": 0,
-          "replayMeaning": "New visit from a seed derived from room and route cycle. No previous GPU state is retained.",
-          "replayValidation": null,
-          "fixedDtSeconds": 0.016666666666666666,
-          "renderCount": 411,
-          "adapter": {
-            "vendor": "apple",
-            "architecture": "metal-3",
-            "device": "",
-            "description": "",
-            "isFallbackAdapter": false
-          },
-          "resolution": {
-            "width": 1118,
-            "height": 495,
-            "dprCap": 1.5,
-            "adaptiveScale": 1
-          },
-          "resources": {
-            "room": {
-              "bytes": 12953808,
-              "unknownSizeAllocations": 0,
-              "buffers": 26,
-              "textures": 1,
-              "querySets": 0,
-              "peakBytes": 13617360,
-              "created": 29,
-              "destroyed": 2
-            },
-            "targetBytes": 4427280,
-            "liveRooms": 1,
-            "retired": [
-              {
-                "id": "soap-film",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 2293872,
-                "created": 6,
-                "destroyed": 6
-              },
-              {
-                "id": "soap-film",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 2293872,
-                "created": 6,
-                "destroyed": 6
-              },
-              {
-                "id": "negative-temperature",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 1610784,
-                "created": 7,
-                "destroyed": 7
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 16777792,
-                "created": 2,
-                "destroyed": 2
-              },
-              {
-                "id": "hydrogen-exactly",
-                "bytes": 0,
-                "unknownSizeAllocations": 0,
-                "buffers": 0,
-                "textures": 0,
-                "querySets": 0,
-                "peakBytes": 33555296,
-                "created": 6,
-                "destroyed": 6
-              }
-            ]
-          },
-          "budgetPolicy": "One active room; no prewarming or overlapping targets",
-          "droppedAmbientSeconds": 0,
-          "cpuCosts": {
-            "frameCpu": {
-              "samples": 360,
-              "medianMs": 0.20000004768371582,
-              "p95Ms": 19.5,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            },
-            "displayAndSubmit": {
-              "samples": 360,
-              "medianMs": 0.09999990463256836,
-              "p95Ms": 0.10000002384185791,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            },
-            "frameQueueCompletion": {
-              "samples": 360,
-              "medianMs": 1.100000023841858,
-              "p95Ms": 2.700000047683716,
-              "meaning": "CPU wall time; GPU execution is asynchronous"
-            }
-          },
-          "roomCpuCosts": {
-            "soap-film": {
-              "renderEncoding": {
-                "samples": 360,
-                "medianMs": 0,
-                "p95Ms": 0.10000002384185791,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              },
-              "simulationStep": {
-                "samples": 198,
-                "medianMs": 0,
-                "p95Ms": 22.399999976158142,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            },
-            "negative-temperature": {
-              "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.20000004768371582,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            },
-            "hydrogen-exactly": {
-              "renderEncoding": {
-                "samples": 6,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.20000004768371582,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            },
-            "qcd-lava-lamp": {
-              "renderEncoding": {
-                "samples": 3,
-                "medianMs": 0.10000002384185791,
-                "p95Ms": 0.19999992847442627,
-                "meaning": "CPU wall time; GPU execution is asynchronous"
-              }
-            }
-          },
-          "integration": {
-            "modulesReady": 4,
-            "missing": [],
-            "vacuumGroup": "SU(3)",
-            "promisedSU3": true,
-            "complete": true
-          },
-          "modules": [
-            {
-              "id": "soap-film",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "soap-film",
-                "title": "Soap film",
-                "model": "Flat depth-averaged Boussinesq MAC flow with conservative thickness transport, cubic gravity drainage and phenomenological rupture",
-                "representativeScaleMeters": 0.16,
-                "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
-                "sources": [
-                  "https://doi.org/10.1103/PhysRevLett.100.144501",
-                  "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
-                  "https://cie.co.at/datatable/cie-standard-illuminant-d65",
-                  "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/soap-film-room.js?descent=1"
-            },
-            {
-              "id": "negative-temperature",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "negative-temperature",
-                "title": "Negative temperature",
-                "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Dimensionless healing length; no atom species or laboratory length is calibrated.",
-                "sources": [
-                  "https://arxiv.org/abs/1801.06951",
-                  "https://arxiv.org/abs/1801.06952"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/negative-temperature-room.js?descent=1"
-            },
-            {
-              "id": "hydrogen-exactly",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "hydrogen-exactly",
-                "title": "Hydrogen Exactly",
-                "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-                "representativeScaleMeters": 4.762594894896e-8,
-                "scaleMeaning": "n0^2 a0, the characteristic circular n0=30 radius; snapshot overrides this in spectral mode",
-                "sources": [
-                  "https://arxiv.org/html/quant-ph/9510029v1",
-                  "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0",
-                  "https://physics.nist.gov/cgi-bin/cuu/Value?ryd",
-                  "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/hydrogen-exactly-room.js?descent=1"
-            },
-            {
-              "id": "qcd-lava-lamp",
-              "status": "ready",
-              "error": null,
-              "info": {
-                "apiVersion": 1,
-                "id": "qcd-lava-lamp",
-                "title": "QCD Lava Lamp",
-                "model": "Pure SU(3) Wilson lattice gauge theory",
-                "representativeScaleMeters": null,
-                "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-                "sources": [
-                  "https://arxiv.org/html/1903.08308v1",
-                  "https://arxiv.org/pdf/1003.3219",
-                  "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-                  "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-                ]
-              },
-              "url": "http://127.0.0.1:58124/js/qcd-lava-lamp-room.js?descent=1"
-            }
-          ],
-          "initializationError": null,
-          "gpuQueuePending": false,
-          "lastGpuQueueMs": 4,
-          "roomWorkPending": false,
-          "room": {
-            "apiVersion": 1,
-            "id": "qcd-lava-lamp",
-            "title": "QCD Lava Lamp",
-            "model": "Pure SU(3) Wilson lattice gauge theory",
-            "representativeScaleMeters": null,
-            "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-            "sources": [
-              "https://arxiv.org/html/1903.08308v1",
-              "https://arxiv.org/pdf/1003.3219",
-              "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-              "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-            ],
-            "numericalStepCount": 259,
-            "simulationTime": 259,
-            "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-            "ambientSeconds": 1.4999999999999996,
-            "parameters": {
-              "group": "SU(3)",
-              "beta": 6,
-              "dimensions": [
-                12,
-                12,
-                12,
-                12
-              ],
-              "start": "Haar hot",
-              "initialBurnInSweeps": 256,
-              "smoothingMethod": "Wilson subgroup cooling",
-              "depth": 4,
-              "breath": false,
-              "sweepsPerAmbientSecond": 2,
-              "scanSecondsPerLatticePlane": 10
-            },
-            "quality": "medium",
-            "seedProvenance": {
-              "source": "offline fixed user-replayable seed",
-              "seed": "b4e87df6f60874d5",
-              "prng": "Philox4x32-10",
-              "beaconVerified": false,
-              "crossDeviceReplay": "floating-point results may differ"
-            },
-            "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-            "diagnosticAgeSeconds": 1.4999999999999996,
-            "diagnosticsAvailable": true,
-            "numericalFault": null,
-            "averagePlaquette": 0.59294699709129,
-            "unitarityError": 0.00002181529998779297,
-            "determinantError": 0.000030641000194009393,
-            "measuredSweep": 256,
-            "chargeByCoolingDepth": [
-              {
-                "depth": 0,
-                "Q": 0.042705899681095616,
-                "rms": 0.005173329648302789,
-                "peak": 0.02295963279902935,
-                "positiveFraction": 0.5005304783950617
-              },
-              {
-                "depth": 2,
-                "Q": 1.0710391146909117,
-                "rms": 0.0010453558580617128,
-                "peak": 0.012390798889100552,
-                "positiveFraction": 0.5313946759259259
-              },
-              {
-                "depth": 4,
-                "Q": 0.9227077355507296,
-                "rms": 0.0005106912770703726,
-                "peak": 0.00546626141294837,
-                "positiveFraction": 0.5485146604938271
-              },
-              {
-                "depth": 8,
-                "Q": 0.9269584014016568,
-                "rms": 0.00025443336138744165,
-                "peak": 0.0022672321647405624,
-                "positiveFraction": 0.5685281635802469
-              }
-            ],
-            "sectorLabel": null,
-            "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-            "plaquetteLagOne": null,
-            "history": [
-              {
-                "sweep": 256,
-                "plaquette": 0.59294699709129,
-                "Q": 0.9227077355507296
-              }
-            ],
-            "snapshotSpacingSweeps": 16,
-            "independentSnapshots": false,
-            "frameInterpolation": 0.21428571428571422,
-            "memory": {
-              "roomBuffersBytes": 12939984,
-              "volumeTextureBytes": 13824,
-              "hostTargetsExcluded": true,
-              "readbackPeakBytes": 663552
-            },
-            "limits": {
-              "maxStorageBufferBindingSize": 134217728,
-              "maxBufferSize": 268435456
-            },
-            "lastSweepQueueWallMs": 23.100000023841858,
-            "sweepQueueWallMedianMs": 19.299999952316284,
-            "sweepQueueWallP95Ms": 23.100000023841858,
-            "viewport": {
-              "width": 1118,
-              "height": 495,
-              "dpr": 1
-            },
-            "busy": false
-          },
-          "loopPending": false
-        }
-      },
-      "readback": {
-        "group": 3,
-        "extent": 12,
-        "snapshot": {
-          "apiVersion": 1,
-          "id": "qcd-lava-lamp",
-          "title": "QCD Lava Lamp",
-          "model": "Pure SU(3) Wilson lattice gauge theory",
-          "representativeScaleMeters": null,
-          "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-          "sources": [
-            "https://arxiv.org/html/1903.08308v1",
-            "https://arxiv.org/pdf/1003.3219",
-            "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-            "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-          ],
-          "numericalStepCount": 259,
-          "simulationTime": 259,
-          "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-          "ambientSeconds": 1.4999999999999996,
-          "parameters": {
-            "group": "SU(3)",
-            "beta": 6,
-            "dimensions": [
-              12,
-              12,
-              12,
-              12
-            ],
-            "start": "Haar hot",
-            "initialBurnInSweeps": 256,
-            "smoothingMethod": "Wilson subgroup cooling",
-            "depth": 4,
-            "breath": false,
-            "sweepsPerAmbientSecond": 2,
-            "scanSecondsPerLatticePlane": 10
-          },
-          "quality": "medium",
-          "seedProvenance": {
-            "source": "offline fixed user-replayable seed",
-            "seed": "b4e87df6f60874d5",
-            "prng": "Philox4x32-10",
-            "beaconVerified": false,
-            "crossDeviceReplay": "floating-point results may differ"
-          },
-          "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-          "diagnosticAgeSeconds": 1.4999999999999996,
-          "diagnosticsAvailable": true,
-          "numericalFault": null,
-          "averagePlaquette": 0.59294699709129,
-          "unitarityError": 0.00002181529998779297,
-          "determinantError": 0.000030641000194009393,
-          "measuredSweep": 256,
-          "chargeByCoolingDepth": [
-            {
-              "depth": 0,
-              "Q": 0.042705899681095616,
-              "rms": 0.005173329648302789,
-              "peak": 0.02295963279902935,
-              "positiveFraction": 0.5005304783950617
-            },
-            {
-              "depth": 2,
-              "Q": 1.0710391146909117,
-              "rms": 0.0010453558580617128,
-              "peak": 0.012390798889100552,
-              "positiveFraction": 0.5313946759259259
-            },
-            {
-              "depth": 4,
-              "Q": 0.9227077355507296,
-              "rms": 0.0005106912770703726,
-              "peak": 0.00546626141294837,
-              "positiveFraction": 0.5485146604938271
-            },
-            {
-              "depth": 8,
-              "Q": 0.9269584014016568,
-              "rms": 0.00025443336138744165,
-              "peak": 0.0022672321647405624,
-              "positiveFraction": 0.5685281635802469
-            }
-          ],
-          "sectorLabel": null,
-          "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-          "plaquetteLagOne": null,
-          "history": [
-            {
-              "sweep": 256,
-              "plaquette": 0.59294699709129,
-              "Q": 0.9227077355507296
-            }
-          ],
-          "snapshotSpacingSweeps": 16,
-          "independentSnapshots": false,
-          "frameInterpolation": 0.21428571428571422,
-          "memory": {
-            "roomBuffersBytes": 12939984,
-            "volumeTextureBytes": 13824,
-            "hostTargetsExcluded": true,
-            "readbackPeakBytes": 663552
-          },
-          "limits": {
-            "maxStorageBufferBindingSize": 134217728,
-            "maxBufferSize": 268435456
-          },
-          "lastSweepQueueWallMs": 23.100000023841858,
-          "sweepQueueWallMedianMs": 19.299999952316284,
-          "sweepQueueWallP95Ms": 23.100000023841858,
-          "viewport": {
-            "width": 1118,
-            "height": 495,
-            "dpr": 1
-          },
-          "busy": false
-        },
-        "links": 1492992
       }
     }
   },
@@ -6364,7 +4216,7 @@
       "id": "hydrogen-exactly",
       "title": "Hydrogen Exactly",
       "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-      "representativeScaleMeters": 4.762594894896e-8,
+      "representativeScaleMeters": 4.762594894896e-08,
       "scaleMeaning": "n0^2 a0, characteristic circular radius",
       "sources": [
         "https://arxiv.org/html/quant-ph/9510029v1",
@@ -6567,7 +4419,7 @@
         "id": "hydrogen-exactly",
         "title": "Hydrogen Exactly",
         "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-        "representativeScaleMeters": 1.32294302636e-9,
+        "representativeScaleMeters": 1.32294302636e-09,
         "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
         "sources": [
           "https://arxiv.org/html/quant-ph/9510029v1",
@@ -6756,7 +4608,7 @@
         "id": "hydrogen-exactly",
         "title": "Hydrogen Exactly",
         "model": "Fixed-nucleus nonrelativistic Coulomb Hamiltonian, H = -laplacian/2 - 1/r",
-        "representativeScaleMeters": 1.32294302636e-9,
+        "representativeScaleMeters": 1.32294302636e-09,
         "scaleMeaning": "n_max^2 a0, characteristic extent of the highest n=5 basis state",
         "sources": [
           "https://arxiv.org/html/quant-ph/9510029v1",
@@ -6979,8 +4831,8 @@
           "parameters": {
             "lengthMeters": 0.16,
             "dtSeconds": 0.04,
-            "viscosity": 0.000001,
-            "thermalDiffusivity": 0.0000012,
+            "viscosity": 1e-06,
+            "thermalDiffusivity": 1.2e-06,
             "gravity": 9.81,
             "expansionPerKelvin": 0.0002,
             "dragPerSecond": 1,
@@ -6988,7 +4840,7 @@
             "heatingKelvin": 12,
             "coolingPerSecond": 0.025,
             "evaporationNmPerSecond": 0.7,
-            "drainageSpeedMetersPerSecond": 0.000055,
+            "drainageSpeedMetersPerSecond": 5.5e-05,
             "drainageReferenceNm": 800,
             "ruptureNm": 18,
             "gammaNewtonPerMeter": 0.03,
@@ -7023,16 +4875,16 @@
               21.80611801147461,
               34.73980712890625
             ],
-            "divergenceMaxPerSecond": 0.000009592622518539429,
+            "divergenceMaxPerSecond": 9.592622518539429e-06,
             "pressureResidualMetersInverseSecondsInverse": 0.007674098014831543,
             "pressureCycles": 1,
             "maxSpeedMetersPerSecond": 0.0012772314948961139,
-            "volumeM3": 1.685241549680233e-8,
-            "filmVolumeM3": 1.685241549680233e-8,
+            "volumeM3": 1.685241549680233e-08,
+            "filmVolumeM3": 1.685241549680233e-08,
             "rimVolumeM3": 0,
             "evaporatedM3": 1.4336000000003193e-10,
             "drainedM3": 1.4940816017519683e-10,
-            "replenishedM3": 1.714518380212784e-8,
+            "replenishedM3": 1.714518380212784e-08,
             "resetDiscardedM3": 0,
             "massBalanceErrorM3": -1.4515028230262853e-16,
             "hole": null
@@ -7269,206 +5121,6 @@
               "peakBytes": 2097264,
               "created": 6,
               "destroyed": 6
-            }
-          ]
-        }
-      },
-      "qcd-lava-lamp": {
-        "seconds": 1.601,
-        "ticks": 330,
-        "watchingSeconds": 5.499999999999687,
-        "room": {
-          "apiVersion": 1,
-          "id": "qcd-lava-lamp",
-          "title": "QCD Lava Lamp",
-          "model": "Pure SU(3) Wilson lattice gauge theory",
-          "representativeScaleMeters": null,
-          "scaleMeaning": "Lattice units. No physical lattice spacing has been calibrated.",
-          "sources": [
-            "https://arxiv.org/html/1903.08308v1",
-            "https://arxiv.org/pdf/1003.3219",
-            "https://luscher.web.cern.ch/luscher/lectures/LesHouches09.pdf",
-            "https://www.thesalmons.org/john/random123/papers/random123sc11.pdf"
-          ],
-          "numericalStepCount": 267,
-          "simulationTime": 267,
-          "simulationTimeUnits": "Markov-chain sweeps, not physical time",
-          "ambientSeconds": 5.499999999999986,
-          "parameters": {
-            "group": "SU(3)",
-            "beta": 6,
-            "dimensions": [
-              8,
-              8,
-              8,
-              8
-            ],
-            "start": "Haar hot",
-            "initialBurnInSweeps": 256,
-            "smoothingMethod": "Wilson subgroup cooling",
-            "depth": 4,
-            "breath": false,
-            "sweepsPerAmbientSecond": 2,
-            "scanSecondsPerLatticePlane": 10
-          },
-          "quality": "low",
-          "seedProvenance": {
-            "source": "offline fixed user-replayable seed",
-            "seed": "b4e87df6f60874d5",
-            "prng": "Philox4x32-10",
-            "beaconVerified": false,
-            "crossDeviceReplay": "floating-point results may differ"
-          },
-          "assetBaseURL": "http://127.0.0.1:58124/assets/visualizer/qcd-lava-lamp/",
-          "diagnosticAgeSeconds": 5.499999999999986,
-          "diagnosticsAvailable": true,
-          "numericalFault": null,
-          "averagePlaquette": 0.5915686595944862,
-          "unitarityError": 0.000021696090698242188,
-          "determinantError": 0.00003102501796092838,
-          "measuredSweep": 256,
-          "chargeByCoolingDepth": [
-            {
-              "depth": 0,
-              "Q": 0.18286346800823594,
-              "rms": 0.005180143961696087,
-              "peak": 0.019572969526052475,
-              "positiveFraction": 0.507080078125
-            },
-            {
-              "depth": 2,
-              "Q": 0.015244771994161965,
-              "rms": 0.0009195574346805368,
-              "peak": 0.005670387297868729,
-              "positiveFraction": 0.49560546875
-            },
-            {
-              "depth": 4,
-              "Q": -0.0002882069798211262,
-              "rms": 0.0003622230626793714,
-              "peak": 0.002442475175485015,
-              "positiveFraction": 0.483642578125
-            },
-            {
-              "depth": 8,
-              "Q": 0.00026726570640134284,
-              "rms": 0.00011313916214054366,
-              "peak": 0.000681311241351068,
-              "positiveFraction": 0.47216796875
-            }
-          ],
-          "sectorLabel": null,
-          "sectorReason": "No integer sector assigned to this small-box clover estimator.",
-          "plaquetteLagOne": null,
-          "history": [
-            {
-              "sweep": 256,
-              "plaquette": 0.5915686595944862,
-              "Q": -0.0002882069798211262
-            }
-          ],
-          "snapshotSpacingSweeps": 16,
-          "independentSnapshots": false,
-          "frameInterpolation": 0.7857142857142837,
-          "memory": {
-            "roomBuffersBytes": 2556624,
-            "volumeTextureBytes": 4096,
-            "hostTargetsExcluded": true,
-            "readbackPeakBytes": 131072
-          },
-          "limits": {
-            "maxStorageBufferBindingSize": 134217728,
-            "maxBufferSize": 268435456
-          },
-          "lastSweepQueueWallMs": 75.20000004768372,
-          "sweepQueueWallMedianMs": 28.700000047683716,
-          "sweepQueueWallP95Ms": 75.20000004768372,
-          "viewport": {
-            "width": 1118,
-            "height": 495,
-            "dpr": 1
-          },
-          "busy": false
-        },
-        "resources": {
-          "room": {
-            "bytes": 2560720,
-            "unknownSizeAllocations": 0,
-            "buffers": 26,
-            "textures": 1,
-            "querySets": 0,
-            "peakBytes": 2691792,
-            "created": 29,
-            "destroyed": 2
-          },
-          "targetBytes": 4427280,
-          "liveRooms": 1,
-          "retired": [
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2293872,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2097264,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2097728,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "hydrogen-exactly",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2097728,
-              "created": 2,
-              "destroyed": 2
-            },
-            {
-              "id": "soap-film",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 2097264,
-              "created": 6,
-              "destroyed": 6
-            },
-            {
-              "id": "negative-temperature",
-              "bytes": 0,
-              "unknownSizeAllocations": 0,
-              "buffers": 0,
-              "textures": 0,
-              "querySets": 0,
-              "peakBytes": 1610784,
-              "created": 7,
-              "destroyed": 7
             }
           ]
         }
