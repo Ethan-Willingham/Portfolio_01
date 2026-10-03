@@ -1,0 +1,184 @@
+{
+  "numerical": [
+    {
+      "size": "2x2",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    },
+    {
+      "size": "30x6",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    },
+    {
+      "size": "32x8",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    },
+    {
+      "size": "34x10",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    },
+    {
+      "size": "66x4",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    },
+    {
+      "size": "256x256",
+      "longForward": 4320,
+      "longInverse": 4320,
+      "comparedSpins": 131072,
+      "exact": true,
+      "checksum": "caf08a0d"
+    },
+    {
+      "size": "256x256",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    },
+    {
+      "size": "512x512",
+      "longForward": 4320,
+      "longInverse": 4320,
+      "comparedSpins": 524288,
+      "exact": true,
+      "checksum": "11ea4af9"
+    },
+    {
+      "size": "512x512",
+      "cpuGpuStepsCompared": 24,
+      "inverseSteps": 24,
+      "energyDriftTwiceJ": 0,
+      "tolerance": 0
+    }
+  ],
+  "performance": [
+    {
+      "size": "256x256",
+      "mode": "compute",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 0.0026024166666666665,
+        "p95": 0.0027586250000000002
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 0.7000000476837158,
+        "p95": 11.600000023841858
+      },
+      "gpuScope": "per microscopic step, batch of 24",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "256x256",
+      "mode": "render",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 0.222954,
+        "p95": 7.87888
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 0.8999999761581421,
+        "p95": 8.5
+      },
+      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "512x512",
+      "mode": "compute",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 0.0029027500000000004,
+        "p95": 0.04296116666666667
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 1.5,
+        "p95": 9.899999976158142
+      },
+      "gpuScope": "per microscopic step, batch of 24",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "512x512",
+      "mode": "render",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 1.352771,
+        "p95": 8.90078
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 2.200000047683716,
+        "p95": 9.5
+      },
+      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    }
+  ],
+  "browser": [
+    "Returned scene pixels exactly equal startup, excluding adjacent progress hairline",
+    {
+      "severalPhrases": 3,
+      "lastReturn": {
+        "exact": true,
+        "mismatches": 0,
+        "comparedSpins": 131072,
+        "cycle": 2,
+        "forwardSteps": 4320,
+        "inverseSteps": 4320,
+        "checksum": "44762045",
+        "method": "Full comparison of both computed time layers; no frame replay."
+      },
+      "totalSteps": 25920
+    },
+    "pause/resume, reduced motion, restart, replay export and restored-state computation, zoom, 1440x900 / 390x844 / 844x390 layouts, hidden/offscreen suspension, native and fallback fullscreen, missing WebGPU, device loss, auto-start, no script/shader/validation errors"
+  ],
+  "environment": {
+    "date": "2026-10-03",
+    "hardware": "Apple M1 Pro",
+    "operatingSystem": "macOS 26.6.2",
+    "adapter": "Apple metal-3, hardware",
+    "browser": "Chrome for Testing"
+  }
+}
