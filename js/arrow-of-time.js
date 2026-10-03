@@ -1,16 +1,17 @@
 // Example standalone host. The room owns neither this DOM nor this animation loop.
-import { createRoom } from './arrow-of-time-room.js?v=4';
-import { prepare, PRESETS } from './arrow-of-time-model.js?v=4';
-import { checkedShader, fullscreenTriangleWGSL } from './arrow-of-time-gpu.js?v=4';
-import { createDrawingEditor, linearInk } from './arrow-of-time-editor.js?v=4';
+import { createRoom } from './arrow-of-time-room.js?v=5';
+import { prepare, PRESETS, IMAGE_SCALE } from './arrow-of-time-model.js?v=5';
+import { checkedShader, fullscreenTriangleWGSL } from './arrow-of-time-gpu.js?v=5';
+import { createDrawingEditor, linearInk } from './arrow-of-time-editor.js?v=5';
 const $ = id => document.getElementById(id), piece = $('aot-piece'), canvas = $('aot-canvas'), stage = canvas.parentElement;
 const motion = matchMedia('(prefers-reduced-motion: reduce)'), listeners = new AbortController();
 let room, device, context, scene, sceneView, displayPipeline, displayGroup, adapterInfo, raf = 0, inView = true, manualPause = motion.matches, disposed = false;
 let frameTime = 0, clockDebt = 0, activeClock = 0, lastMeasurement = 0, lastUI = 0, needsDraw = true, busy = false;
 let fallbackDrawing = null;
-let seekRequested = null, seeking = false, measureAfterSeek = false, inkA = linearInk('#24edff'), inkB = linearInk('#8f5cff'), inkC = linearInk('#ff42b3'), inkD = linearInk('#ffce50'), background = linearInk('#090d20'), zoomValue = 2.2;
-let tickBudget = 6, renderDprCap = 2, slowFrames = 0;
-const fixedDt = 1 / 60, quality = new URL(location.href).searchParams.get('quality') === 'medium' ? 'medium' : 'high';
+let seekRequested = null, seeking = false, measureAfterSeek = false, inkA = linearInk('#24edff'), inkB = linearInk('#8f5cff'), inkC = linearInk('#ff42b3'), inkD = linearInk('#ffce50'), background = linearInk('#090d20'), zoomValue = 6;
+let tickBudget = 6, renderDprCap = 3, slowFrames = 0;
+const fixedDt = 1 / 60, requestedQuality = new URL(location.href).searchParams.get('quality');
+const quality = ['medium','high','ultra'].includes(requestedQuality) ? requestedQuality : 'ultra';
 function listen(target, event, handler) { target.addEventListener(event, handler, { signal: listeners.signal }); }
 function available() { return room && !manualPause && inView && document.visibilityState !== 'hidden' && !busy && !disposed; }
 function updatePlay() { $('aot-play').textContent = manualPause ? 'Play' : 'Pause'; $('aot-play').setAttribute('aria-label', manualPause ? 'Play the spin lattice' : 'Pause the spin lattice'); }
@@ -50,7 +51,7 @@ function frame(now) {
   if (available() && frameTime && now - frameTime > 45) slowFrames++; else slowFrames = Math.max(0, slowFrames - 1);
   if (slowFrames >= 90) {
     if (tickBudget > 2) tickBudget = 2;
-    else if (renderDprCap > .75) { renderDprCap = Math.max(.75, renderDprCap - .25); resize(); }
+    else if (renderDprCap > 2) { renderDprCap = Math.max(2, renderDprCap - .25); resize(); }
     slowFrames = 0;
   }
   if (available()) {
@@ -66,12 +67,13 @@ function frame(now) {
 }
 function suspendOrResume() { frameTime = 0; clockDebt = 0; if (raf) cancelAnimationFrame(raf); raf = 0; if (available() || needsDraw) requestDraw(); }
 function still(message) {
-  const target = $('aot-still'), width = quality === 'high' ? 1024 : 768, height = quality === 'high' ? 768 : 512;
+  const target = $('aot-still'), width = quality === 'ultra' ? 2048 : quality === 'high' ? 1024 : 768, height = quality === 'ultra' ? 1536 : quality === 'high' ? 768 : 512;
   const s = prepare(width,height,fallbackDrawing ? 'custom' : 'moth',fallbackDrawing), ctx = target.getContext('2d'); target.width = width; target.height = height;
   const data = ctx.createImageData(width,height), inks = [inkA,inkB,inkC,inkD];
   const srgb = v => 255*(v <= .0031308 ? 12.92*v : 1.055*v**(1/2.4)-.055);
   for (let row = 0; row < height; row++) for (let col = 0; col < width; col++) {
-    const t = Math.max(0,Math.min(1,(row/height-.23)*2.1+(col/width-.5)*.65))*3;
+    const u = (col/width-.5)/IMAGE_SCALE+.5, v = (row/height-.5)/IMAGE_SCALE+.5;
+    const t = Math.max(0,Math.min(1,(v-.23)*2.1+(u-.5)*.65))*3;
     const lo = Math.min(2,Math.floor(t)), blend = t-lo, i = (row * width + col) * 4;
     for(let channel=0;channel<3;channel++){const ink=inks[lo][channel]*(1-blend)+inks[lo+1][channel]*blend;data.data[i+channel]=srgb(s.x[row*width+col]===-1 ? ink : background[channel]);}data.data[i+3]=255;
   }
@@ -103,9 +105,9 @@ listen($('aot-timeline'), 'input', async event => {
 function refreshSeekMeasurements(){if(room)void room.measure().then(ui).catch(error=>fail(error.message));}
 listen($('aot-timeline'),'change',()=>{if(seeking)measureAfterSeek=true;else refreshSeekMeasurements();});
 listen($('aot-rate'), 'change', e => { room?.setRate(Number(e.target.value)); ui(); });
-function setZoom(value) { zoomValue = Math.max(.4,Math.min(8,Number(value)));room?.setZoom(zoomValue);$('aot-zoom').value=zoomValue;$('aot-zoom-value').textContent=`${zoomValue.toFixed(1)}×`;if(!room)$('aot-still').style.transform=`scale(${zoomValue})`;needsDraw=true;requestDraw(); }
+function setZoom(value) { zoomValue = Math.max(.4,Math.min(16,Number(value)));room?.setZoom(zoomValue);$('aot-zoom').value=zoomValue;$('aot-zoom-value').textContent=`${zoomValue.toFixed(1)}×`;if(!room)$('aot-still').style.transform=`scale(${zoomValue})`;needsDraw=true;requestDraw(); }
 listen($('aot-zoom'), 'input', e => setZoom(e.target.value));
-listen($('aot-fit'), 'click', () => {const {width,height}=stage.getBoundingClientRect(),s=room?.snapshot().parameters||{width:1024,height:768};const fit=Math.min(width/(s.height*.90),height/s.height)*.92,cover=Math.max(width/s.width,height/s.height);setZoom(Math.round(fit/cover*10)/10);});
+listen($('aot-fit'), 'click', () => {const {width,height}=stage.getBoundingClientRect(),s=room?.snapshot().parameters||{width:quality==='ultra'?2048:quality==='high'?1024:768,height:quality==='ultra'?1536:quality==='high'?768:512};const fit=Math.min(width/(s.height*IMAGE_SCALE*.90),height/(s.height*IMAGE_SCALE))*.92,cover=Math.max(width/s.width,height/s.height);setZoom(Math.round(fit/cover*10)/10);});
 listen($('aot-record'), 'click', async () => {
   if (!room || busy) return; const parameters = room.snapshot().parameters; const data = await room.debugReadback(), file = { ...data.replay, packedX: data.packedX, packedY: data.packedY, checksum: data.checksum, parameters, host: { activeClock, clockDebt, manualPause, tickBudget, renderDprCap, inkA, inkB, inkC, inkD, background } };
   const url = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' })), a = document.createElement('a'); a.href = url; a.download = 'arrow-of-time-state.json'; a.click(); URL.revokeObjectURL(url);

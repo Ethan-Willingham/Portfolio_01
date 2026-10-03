@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { evolve, neighbors, prepare, energyTwice, pack, unpack, compare, measure, checksum, PRESETS } from '../js/arrow-of-time-model.js';
+import { evolve, neighbors, prepare, energyTwice, pack, unpack, compare, measure, checksum, PRESETS, motifAt, IMAGE_SCALE } from '../js/arrow-of-time-model.js';
 const state = (width, height, a, b) => ({ width, height, x: Int8Array.from({ length: width * height }, (_, i) => (a >>> i & 1) * 2 - 1), y: Int8Array.from({ length: width * height }, (_, i) => (b >>> i & 1) * 2 - 1) });
 assert.deepEqual(neighbors(0, 4, 4), [3, 1, 12, 4]);
 assert.deepEqual(neighbors(15, 4, 4), [14, 12, 11, 3]);
@@ -56,3 +56,7 @@ for (const [width,height] of [[768,512],[1024,768]]) {
 
 const drawing={width:24,height:16,mask:Uint8Array.from({length:384},(_,i)=>Number(Math.abs(i%24-12)<3||Math.abs(Math.floor(i/24)-8)<2))};
 const custom=prepare(96,64,'custom',drawing);assert.deepEqual(prepare(96,64,'custom',drawing).x,custom.x);let drawn=custom;for(let k=0;k<128;k++)drawn=evolve(drawn);for(let k=0;k<128;k++)drawn=evolve(drawn,-1);assert.ok(compare(drawn,custom).exact);assert.throws(()=>prepare(96,64,'custom',{width:24,height:16,mask:[]}),/complete mask/);console.log('PASS user drawing preparation, exact return and invalid mask');
+
+// The drawing is small in lattice coordinates, with custom masks centered and unstretched.
+for(const id of PRESETS){let left=2048,right=0,top=1536,bottom=0;for(let row=0;row<1536;row++)for(let col=0;col<2048;col++)if(motifAt(col,row,2048,1536,id)){left=Math.min(left,col);right=Math.max(right,col);top=Math.min(top,row);bottom=Math.max(bottom,row);}assert.ok(right-left<1536*IMAGE_SCALE);assert.ok(bottom-top<1536*IMAGE_SCALE);}
+const ultra=prepare(2048,1536);assert.deepEqual(unpack(pack(ultra.x,2048,1536),2048,1536),ultra.x);let future=ultra;for(let k=0;k<24;k++)future=evolve(future);assert.equal(energyTwice(future),energyTwice(ultra));for(let k=0;k<24;k++)future=evolve(future,-1);assert.ok(compare(future,ultra).exact);console.log('PASS small motif bounds and 2048x1536 packing, energy and 24+24 exact steps');

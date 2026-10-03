@@ -1,4 +1,4 @@
-import { motifAt } from './arrow-of-time-model.js?v=4';
+import { motifAt } from './arrow-of-time-model.js?v=5';
 export function linearInk(hex) {
   return [1,3,5].map(i => { const value = parseInt(hex.slice(i,i+2),16)/255; return value <= .04045 ? value/12.92 : ((value+.055)/1.055)**2.4; });
 }
@@ -10,7 +10,7 @@ export function createDrawingEditor({ canvas, firstInk, secondInk, thirdInk, fou
   function palette() { ctx.globalCompositeOperation='source-in';ctx.fillStyle=gradient();ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalCompositeOperation='source-over';canvas.style.background=background.value;onPalette(...[firstInk,secondInk,thirdInk,fourthInk,background].map(ink=>linearInk(ink.value))); }
   function moth() {
     const pixels=ctx.createImageData(canvas.width,canvas.height);
-    for(let row=0;row<canvas.height;row++)for(let col=0;col<canvas.width;col++){if(motifAt(col,row,canvas.width,canvas.height,'moth')){const i=(row*canvas.width+col)*4;pixels.data[i]=255;pixels.data[i+1]=255;pixels.data[i+2]=255;pixels.data[i+3]=255;}}
+    for(let row=0;row<canvas.height;row++)for(let col=0;col<canvas.width;col++){if(motifAt(col,row,canvas.width,canvas.height,'moth',1)){const i=(row*canvas.width+col)*4;pixels.data[i]=255;pixels.data[i+1]=255;pixels.data[i+2]=255;pixels.data[i+3]=255;}}
     ctx.putImageData(pixels,0,0);palette();note.textContent='Edit the moth, or clear the pad and draw a new shape.';
   }
   function point(event) { const r=canvas.getBoundingClientRect();return {x:Math.max(0,Math.min(canvas.width,(event.clientX-r.left)*canvas.width/r.width)),y:Math.max(0,Math.min(canvas.height,(event.clientY-r.top)*canvas.height/r.height))}; }

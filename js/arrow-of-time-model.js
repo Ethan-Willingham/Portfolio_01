@@ -1,9 +1,10 @@
 // Exact byte-spin reference and deterministic authored preparation. No random source.
 export const MODEL = 'Published two-layer Q2R, periodic four-neighbor lattice';
-export const PRESET_VERSION = 3;
+export const PRESET_VERSION = 4;
+export const IMAGE_SCALE = .14;
 export const PRESETS = ['moth', 'bloom', 'orbit'];
 export function dimensions(width, height) {
-  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 2 || height < 2 || width % 2 || height % 2 || width > 1024 || height > 1024) throw new RangeError('Q2R requires even dimensions from 2 to 1024.');
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 2 || height < 2 || width % 2 || height % 2 || width > 2048 || height > 2048) throw new RangeError('Q2R requires even dimensions from 2 to 2048.');
 }
 export function neighbors(i, width, height) {
   const col = i % width, row = Math.floor(i / width);
@@ -47,8 +48,8 @@ export function compare(a, b) {
   for (const key of ['x', 'y']) for (let i = 0; i < a[key].length; i++) if (a[key][i] !== b[key][i]) mismatches++;
   return { exact: mismatches === 0, mismatches, comparedSpins: a.x.length + a.y.length };
 }
-export function motifAt(col, row, width, height, id = 'moth') {
-  const u = (col + .5 - width / 2) / height, v = (row + .5) / height - .5;
+export function motifAt(col, row, width, height, id = 'moth', scale = IMAGE_SCALE) {
+  const u = (col + .5 - width / 2) / (height * scale), v = (row + .5 - height / 2) / (height * scale);
   const ax = Math.abs(u);
   if (id === 'moth') {
     const upper = ((ax - .19) / .235) ** 2 + ((v + .07 + .30 * ax) / .19) ** 2 < 1 && ax > .018;
@@ -86,7 +87,12 @@ export function prepare(width = 256, height = width, id = 'moth', drawing = null
   // A coordinate polynomial weave, explicitly constructed, not a PRNG or thermal draw.
   for (let row = 0; row < height; row++) for (let col = 0; col < width; col++) {
     const i = row * width + col, weave = (col * col + 3 * row * row + 7 * col * row + 11 * col + 13 * row + phase) % 127;
-    const marked = id === 'custom' ? drawing.mask[Math.min(drawing.height-1,Math.floor(row*drawing.height/height))*drawing.width+Math.min(drawing.width-1,Math.floor(col*drawing.width/width))] > 0 : motifAt(col, row, width, height, id);
+    let marked;
+    if (id === 'custom') {
+      const scale = height * IMAGE_SCALE / drawing.height;
+      const sx = Math.floor((col + .5 - width / 2) / scale + drawing.width / 2), sy = Math.floor((row + .5 - height / 2) / scale + drawing.height / 2);
+      marked = sx >= 0 && sx < drawing.width && sy >= 0 && sy < drawing.height && drawing.mask[sy * drawing.width + sx] > 0;
+    } else marked = motifAt(col, row, width, height, id);
     base[i] = marked ? -1 : 1;
     x[i] = base[i] * (weave < 9 ? -1 : 1);
   }
@@ -129,7 +135,7 @@ export function measure(state, block = 8) {
 }
 // Restore the microscopic fields of an exported replay record without a frame cache.
 export function decodeReplay(record) {
-  if (record.apiVersion !== 1 || record.id !== 'arrow-of-time' || ![1, 2, PRESET_VERSION].includes(record.presetVersion)) throw new Error('Unsupported Arrow of time replay record.');
+  if (record.apiVersion !== 1 || record.id !== 'arrow-of-time' || ![1, 2, 3, PRESET_VERSION].includes(record.presetVersion)) throw new Error('Unsupported Arrow of time replay record.');
   const { width, height } = record; dimensions(width, height);
   const words = Math.ceil(width / 32) * height;
   for (const key of ['packedX', 'packedY']) if (!Array.isArray(record[key]) || record[key].length !== words || record[key].some(v => !Number.isInteger(v) || v < 0 || v > 0xffffffff)) throw new Error('Invalid packed replay field.');
