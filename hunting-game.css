@@ -19,7 +19,7 @@
 #hunt-speed[data-slow="true"] { color: var(--accent); }
 .hunt-utilities { display: flex; justify-content: flex-end; gap: .4rem; flex: 1; }
 .hunt-stage { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; overflow: hidden; background: var(--bg-raised); }
-#hunt-canvas { display: block; flex-shrink: 0; image-rendering: pixelated; touch-action: none; cursor: crosshair; }
+#hunt-canvas { display: block; flex-shrink: 0; image-rendering: auto; touch-action: none; cursor: crosshair; }
 .hunt-game[data-phase="running"] #hunt-canvas[data-scoped="true"] { cursor: none; }
 .hunt-field-stats { position: absolute; left: .8rem; bottom: .55rem; display: flex; gap: 1rem; padding: .3rem .55rem; background: color-mix(in srgb, var(--bg-raised) 80%, transparent); pointer-events: none; font: .6rem var(--font-mono); color: var(--text-dim); }
 .hunt-field-stats output { color: var(--text); margin-left: .25rem; }

@@ -1,0 +1,47 @@
+{
+  "version": 8,
+  "filtering": "lanczos3 export; smooth canvas display",
+  "webp": {
+    "quality": 95,
+    "alphaQuality": 100,
+    "effort": 6
+  },
+  "layers": [
+    {
+      "name": "terrain",
+      "source": "assets/hunting/source-v8/terrain.png",
+      "source_width": 1672,
+      "source_height": 941,
+      "source_sha256": "8e6825725915e7121c367956b3f86a4f18b1f2d165f4001799760465334abbab",
+      "runtime": "assets/hunting/birch-terrain-v8.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 580654,
+      "sha256": "3552d7c195bf8fd17f2493456ee0d00841affc3f4cf97d726890a6dbb0c7e67c"
+    },
+    {
+      "name": "sky",
+      "source": "assets/hunting/source-v8/sky.png",
+      "source_width": 1672,
+      "source_height": 941,
+      "source_sha256": "894d99d830cdbeec8f745acc4e2fb1a206cc5f6f633f2f6cd91742d5e85a8078",
+      "runtime": "assets/hunting/birch-sky-v8.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 415360,
+      "sha256": "0eefc1833f87a5438645b94739279ef94376358725b8267acb646cd7b0a61076"
+    },
+    {
+      "name": "stand",
+      "source": "assets/hunting/source-v8/stand.png",
+      "source_width": 1672,
+      "source_height": 941,
+      "source_sha256": "f01da1e3f095296ca043b933f6bed900e2d6c0be2e5a91bc55b171dbc80f3920",
+      "runtime": "assets/hunting/lookout-stand-v8.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 224938,
+      "sha256": "f4586d6784c461677fdaba64a747e3f829596f24252781586cbac83709884b58"
+    }
+  ]
+}

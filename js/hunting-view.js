@@ -32,12 +32,14 @@
   }
   function noise(n) { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); }
   async function loadArt() {
-    const names = ['boar', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)];
-    const pairs = await Promise.all(names.map(name => new Promise((resolve, reject) => {
+    const animals = ['boar', ...HuntingCampaign.DEER_LEVELS.map(d => 'deer-' + d.level)];
+    const files = Object.fromEntries(animals.map(name => [name, name + (name.startsWith('deer-') ? '-v4.png?v=4' : '-v3.png?v=4')]));
+    Object.assign(files, { 'birch-terrain': 'birch-terrain-v8.webp?v=8', 'birch-sky': 'birch-sky-v8.webp?v=8', 'lookout-stand': 'lookout-stand-v8.webp?v=8' });
+    const pairs = await Promise.all(Object.entries(files).map(([name, file]) => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve([name, img]);
       img.onerror = () => reject(new Error('Could not load ' + name + ' artwork.'));
-      img.src = 'assets/hunting/' + name + (name.startsWith('deer-') ? '-v4.png' : ['hunter', 'clearing'].includes(name) ? '-v2.png' : '-v3.png') + '?v=4';
+      img.src = 'assets/hunting/' + file;
     })));
     const sprites = Object.fromEntries(pairs); sprites.deer = sprites['deer-1'];
     const masks = {};
@@ -56,6 +58,7 @@
       this.canvas = canvas; this.g = canvas.getContext('2d'); this.sprites = sprites;
       this.camera = normal(); this.effects = []; this.trails = []; this.time = 0;
       this.scopePan = { x: 0, y: 0 };
+      this.paintedLayers = new Map();
       this.grass = Array.from({ length: 1700 }, (_, i) => ({ x: (noise(i + 1) - .5) * 230,
         y: 16 + noise(i + 3122) ** 1.7 * 178, h: .04 + noise(i + 224) * .23, color: i % 4, lean: noise(i + 313) - .5 }));
       this.trees = Array.from({ length: 124 }, (_, i) => ({ x: -190 + i * 3.1 + noise(i + 431) * 2,
@@ -110,13 +113,65 @@
       return { hour, daylight, warm, sky: mix('#273b3c', '#8faaa6', daylight), horizon: mix('#596459', '#ddd4ad', daylight),
         field: mix('#303d32', '#88915e', daylight), front: mix('#24352d', '#697544', daylight) };
     }
-    backdrop(g, tone, minute) {
+    paintedLayer(name, tone) {
+      const image = this.sprites[name];
+      if (!image) return null;
+      let layer = this.paintedLayers.get(name);
+      if (!layer) {
+        const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+        layer = { canvas, g: canvas.getContext('2d'), key: '' }; this.paintedLayers.set(name, layer);
+      }
+      // Re-light source pixels only when the clock enters a new light step.
+      // Each layer owns one buffer, including its original soft alpha edge.
+      const day = Math.round(tone.daylight * 24) / 24, warm = Math.round(tone.warm * 12) / 12;
+      const travel = Math.round(clamp((tone.hour - 5.3) / 14.4, 0, 1) * 20) / 20;
+      const key = day + ':' + warm + ':' + travel;
+      if (layer.key !== key) {
+        const p = layer.g, width = image.width, height = image.height;
+        p.clearRect(0, 0, width, height);
+        const brightness = name === 'birch-sky' ? .2 + .7 * day : name === 'lookout-stand' ? .2 + .76 * day : .25 + .75 * day;
+        p.filter = 'brightness(' + brightness + ') saturate(' + (.55 + .45 * day) + ')';
+        p.drawImage(image, 0, 0); p.filter = 'none';
+        p.globalCompositeOperation = 'source-atop';
+        p.fillStyle = 'rgba(44,65,80,' + ((1 - day) * .3) + ')'; p.fillRect(0, 0, width, height);
+        p.fillStyle = 'rgba(188,113,71,' + (warm * day * .12) + ')'; p.fillRect(0, 0, width, height);
+        if (name === 'birch-terrain' && day > .15) {
+          const light = p.createRadialGradient(width * (.12 + travel * .76), height * .65, 0, width * (.12 + travel * .76), height * .65, width * .55);
+          light.addColorStop(0, 'rgba(237,219,162,' + (day * .08) + ')'); light.addColorStop(1, 'rgba(237,219,162,0)');
+          p.fillStyle = light; p.fillRect(0, 0, width, height);
+        }
+        p.globalCompositeOperation = 'source-over'; layer.key = key;
+      }
+      return layer.canvas;
+    }
+    paintedTerrain(g, tone) {
+      const c = this.camera, a = anchor(c), image = this.paintedLayer('birch-terrain', tone);
+      if (!image) { this.terrain(g, tone, false); return; }
+      g.save(); g.translate(W / 2 - a.x * c.zoom, H / 2 - a.y * c.zoom); g.scale(c.zoom, c.zoom);
+      // Register the generated 44.4% skyline to the 40% projected horizon.
+      // Uniform scaling keeps brushwork undistorted and the bottom stays filled.
+      const fit = (1 - geometry.horizon / H) / (1 - .444);
+      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.drawImage(image, (W - W * fit) / 2, H - H * fit, W * fit, H * fit); g.restore();
+    }
+    stand(g, tone) {
+      if (this.camera.zoom > 1) return;
+      const image = this.paintedLayer('lookout-stand', tone);
+      if (!image) return;
+      // Near timber stays in the player's foreground, outside the scope's lens.
+      g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(image, 0, 0, W, H); g.restore();
+    }
+    backdrop(g, tone, minute, painted = false) {
       const c = this.camera, a = anchor(c), zoom = c.zoom;
       g.save(); g.translate(W / 2 - a.x * zoom, H / 2 - a.y * zoom); g.scale(zoom, zoom);
       const sky = g.createLinearGradient(0, 0, 0, H * .53);
       sky.addColorStop(0, tone.sky); sky.addColorStop(.7, mix('#52695e', '#b7c3ac', tone.daylight));
       sky.addColorStop(1, tone.warm > .15 ? mix('#d4c4a0', '#d9978c', tone.warm * .65) : tone.horizon);
       g.fillStyle = sky; g.fillRect(-W * 3, -H * 3, W * 7, H * 7);
+      if (painted) {
+        const image = this.paintedLayer('birch-sky', tone);
+        if (image) { g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(image, 0, 0, W, H); }
+      }
       if (tone.daylight < .6) {
         g.globalAlpha = (1 - tone.daylight) * .65; g.fillStyle = palette.cream;
         for (let i = 0; i < 54; i++) g.fillRect(noise(i + 919) * W, noise(i + 519) * H * .35, i % 5 ? .65 : 1.2, .65);
@@ -129,27 +184,36 @@
         const halo = g.createRadialGradient(sx, sy, 5, sx, sy, 68);
         halo.addColorStop(0, 'rgba(237,224,192,.3)'); halo.addColorStop(1, 'rgba(237,224,192,0)');
         g.fillStyle = halo; g.fillRect(sx - 68, sy - 68, 136, 136);
-        g.fillStyle = mix('#dfc288', '#f5f1ea', tone.daylight * .65); g.beginPath(); g.arc(sx, sy, 12, 0, Math.PI * 2); g.fill();
+        const sunColor = mix('#dfc288', '#f5f1ea', tone.daylight * .65);
+        if (painted) {
+          const disc = g.createRadialGradient(sx, sy, 3, sx, sy, 15);
+          disc.addColorStop(0, sunColor); disc.addColorStop(.55, sunColor);
+          disc.addColorStop(.8, 'rgba(237,224,192,.55)'); disc.addColorStop(1, 'rgba(237,224,192,0)');
+          g.fillStyle = disc; g.fillRect(sx - 15, sy - 15, 30, 30);
+        } else { g.fillStyle = sunColor; g.beginPath(); g.arc(sx, sy, 12, 0, Math.PI * 2); g.fill(); }
       } else {
         const nightTravel = ((tone.hour + 4) % 24) / 9.6, mx = W * (.1 + .8 * clamp(nightTravel, 0, 1)), my = H * .15;
-        g.fillStyle = '#d4c4a0'; g.beginPath(); g.arc(mx, my, 8, 0, Math.PI * 2); g.fill();
-        g.fillStyle = tone.sky; g.beginPath(); g.arc(mx + 3.5, my - 2, 7, 0, Math.PI * 2); g.fill();
+        g.save(); g.beginPath(); g.arc(mx, my, 8, 0, Math.PI * 2); g.clip();
+        g.fillStyle = '#d4c4a0'; g.beginPath(); g.arc(mx, my, 8, 0, Math.PI * 2);
+        g.arc(mx + 3.5, my - 2, 7, 0, Math.PI * 2); g.fill('evenodd'); g.restore();
       }
-      g.globalAlpha = .17 + tone.daylight * .06; g.fillStyle = palette.cream;
-      for (let i = 0; i < 6; i++) {
-        const drift = Math.sin(minute / 720 + i) * 11, x = i * 124 - 70 + drift, y = 24 + noise(i + 880) * 62;
-        g.beginPath(); g.ellipse(x, y, 34 + noise(i + 786) * 35, 2 + noise(i + 669) * 2, -.015, 0, Math.PI * 2); g.fill();
-        g.beginPath(); g.ellipse(x + 22, y + 4, 42, 1.6, -.02, 0, Math.PI * 2); g.fill();
-      }
-      g.globalAlpha = 1;
-      for (let layer = 0; layer < 3; layer++) {
-        g.fillStyle = mix(['#6f8480', '#728275', '#65745e'][layer], ['#394d46', '#35473b', '#31432f'][layer], 1 - tone.daylight);
-        g.beginPath(); g.moveTo(-W, H);
-        for (let x = -W; x <= W * 2; x += 10) {
-          const y = H * (.358 + layer * .038) - (Math.sin(x / (83 - layer * 17) + layer * 2) + Math.sin(x / 41 + layer)) * (7 - layer);
-          g.lineTo(x, y);
+      if (!painted) {
+        g.globalAlpha = .17 + tone.daylight * .06; g.fillStyle = palette.cream;
+        for (let i = 0; i < 6; i++) {
+          const drift = Math.sin(minute / 720 + i) * 11, x = i * 124 - 70 + drift, y = 24 + noise(i + 880) * 62;
+          g.beginPath(); g.ellipse(x, y, 34 + noise(i + 786) * 35, 2 + noise(i + 669) * 2, -.015, 0, Math.PI * 2); g.fill();
+          g.beginPath(); g.ellipse(x + 22, y + 4, 42, 1.6, -.02, 0, Math.PI * 2); g.fill();
         }
-        g.lineTo(W * 2, H); g.closePath(); g.fill();
+        g.globalAlpha = 1;
+        for (let layer = 0; layer < 3; layer++) {
+          g.fillStyle = mix(['#6f8480', '#728275', '#65745e'][layer], ['#394d46', '#35473b', '#31432f'][layer], 1 - tone.daylight);
+          g.beginPath(); g.moveTo(-W, H);
+          for (let x = -W; x <= W * 2; x += 10) {
+            const y = H * (.358 + layer * .038) - (Math.sin(x / (83 - layer * 17) + layer * 2) + Math.sin(x / 41 + layer)) * (7 - layer);
+            g.lineTo(x, y);
+          }
+          g.lineTo(W * 2, H); g.closePath(); g.fill();
+        }
       }
       g.restore();
     }
@@ -215,6 +279,7 @@
     }
     sprite(g, image, at, size, flip = false, lean = 0) {
       g.save(); g.translate(at.x, at.y); if (flip) g.scale(-1, 1); if (lean) g.rotate(lean);
+      g.imageSmoothingEnabled = false;
       g.drawImage(image, -size.width / 2, -size.height, size.width, size.height); g.restore();
     }
     critter(g, animal, tone) {
@@ -249,8 +314,10 @@
       const g = this.g, minute = Number.isFinite(world.minute) ? world.minute : this.lastMinute; this.lastMinute = minute;
       // Native sprite artwork is sampled at its actual projected scope size.
       // There is no tiny overview image stretched into a magnified scene.
-      g.setTransform(this.canvas.width / W, 0, 0, this.canvas.height / H, 0, 0); g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, H);
-      const tone = this.tone(minute); this.backdrop(g, tone, minute); this.terrain(g, tone, world.backdrop === 'marsh');
+      g.setTransform(this.canvas.width / W, 0, 0, this.canvas.height / H, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.clearRect(0, 0, W, H);
+      const tone = this.tone(minute), painted = world.backdrop !== 'marsh';
+      this.backdrop(g, tone, minute, painted);
+      if (painted) this.paintedTerrain(g, tone); else this.terrain(g, tone, true);
       for (const drop of world.blood || []) { const at = project(drop, this.camera), s = scaleAt(drop.y) * this.camera.zoom; g.fillStyle = '#884c3d'; g.fillRect(at.x, at.y, Math.max(1, s * .12), Math.max(.7, s * .04)); }
       const residents = [...(world.deer || []).map(animal => ({ animal, game: true })), ...(world.ambient || world.critters || []).map(animal => ({ animal, game: false }))].sort((a, b) => b.animal.y - a.animal.y);
       for (const resident of residents) {
@@ -294,6 +361,7 @@
         g.save(); g.globalAlpha = fade; g.strokeStyle = effect.type === 'miss' ? palette.gold : palette.warn; g.lineWidth = 1;
         g.beginPath(); g.ellipse(at.x, at.y, 2 + (1 - fade) * 8, 1 + (1 - fade) * 3, 0, 0, Math.PI * 2); g.stroke(); g.restore();
       }
+      this.stand(g, tone);
       if (this.camera.zoom > 1) { this.scopeMask(g, world, aim, showReticle); this.flightInset(g, world); }
       else if (showReticle) { const at = project(world.sight ? world.sight(aim) : world.aim(aim), this.camera); g.strokeStyle = 'rgba(232,226,214,.7)'; g.lineWidth = 1; g.beginPath(); g.arc(at.x, at.y, 5, 0, Math.PI * 2); g.stroke(); g.fillStyle = palette.cream; g.fillRect(at.x - .5, at.y - .5, 1, 1); }
       g.setTransform(1, 0, 0, 1, 0, 0);

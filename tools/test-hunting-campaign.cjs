@@ -2,8 +2,8 @@ const assert = require('node:assert/strict');
 const { Campaign, DEER_LEVELS, animalArt, animalName, period } = require('../js/hunting-campaign.js');
 function check(name, run) { run(); console.log('PASS ' + name); }
 check('the clock runs in real time, supports fast wait and rolls into tomorrow', () => {
-  const c = new Campaign(); c.advance(60); assert.equal(c.time, '05:31');
-  c.advance(600, 0); assert.equal(c.time, '05:31'); c.advance(10, 300); assert.equal(c.time, '06:21');
+  const c = new Campaign(); assert.equal(c.time, '08:00'); c.advance(60); assert.equal(c.time, '08:01');
+  c.advance(600, 0); assert.equal(c.time, '08:01'); c.advance(10, 300); assert.equal(c.time, '08:51');
   assert.equal(c.waitUntil('06:00'), true); assert.equal(c.day, 2); assert.equal(c.time, '06:00');
   const at = c.state.minute; assert.equal(c.waitUntil('25:99'), false); assert.equal(c.state.minute, at);
   c.waitUntil('22:00'); assert.equal(period(c.state.minute), 'Night'); assert.equal(c.begin(), null);
@@ -49,6 +49,7 @@ check('saved records, equipment, credits and trails survive reload', () => {
   const c = new Campaign(); c.state.credits = 1000; c.buy('dog'); c.buy('kit'); c.buy('rifle');
   c.recover(c.animal('boar', 8), 'tracked', .6, 'cypress'); c.addTrack(c.animal('deer', 7)); c.state.minute += 40;
   const loaded = new Campaign(JSON.parse(c.export())); assert.deepEqual(loaded.state, c.state);
+  assert.equal(new Campaign({ ...c.state, minute: 330 }).time, '05:30');
   assert.equal(loaded.packed.length, 1); assert.equal(loaded.pending.length, 1);
   assert.equal(loaded.value(loaded.packed[0]), c.value(c.packed[0]));
   const malformed = new Campaign({ version: 1, credits: -10, owned: ['made-up'], regions: ['made-up'], records: [{ species: '<script>' }] });
