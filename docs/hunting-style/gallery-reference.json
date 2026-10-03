@@ -1,0 +1,935 @@
+{
+  "schema_version": 1,
+  "studied_on": "2026-10-03",
+  "source_gallery": "https://ethanwillingham.com/gallery.html",
+  "local_gallery": "gallery.html",
+  "method": "All 14 local original reproductions were visually inspected individually and together. Titles and asset paths use the local gallery. Notes are game art-direction interpretations, not historical claims. SHA-256 fingerprints identify the exact reproductions studied. Normalized study rectangles are [left, top, width, height] measured across the full reproduction, including any photographed borders.",
+  "shared_direction": "Naturalistic oil painting; large connected landscape forms, colored atmosphere, modeled living forms, selective sharp edges and material-specific brushwork. Paint the scene coherently, then adapt it to readable interactive play.",
+  "paintings": [
+    {
+      "id": "musicians",
+      "plate": 1,
+      "title": "The Musicians",
+      "artist": "Caravaggio",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-1",
+      "source": {
+        "original": "assets/images/The Musicians - Caravaggio.jpg",
+        "webp": "assets/images/The Musicians - Caravaggio.webp",
+        "width": 4000,
+        "height": 3105,
+        "sha256": "82d57c6e26834154dd2c76717f300dfab12a77da8d8d4d917b73674108dd3683",
+        "webp_sha256": "e2e1e0b8696f83ce6270a68cccffe1471ca65446083761f39dbfac6dc4233561"
+      },
+      "tags": [
+        "animals",
+        "ui",
+        "materials"
+      ],
+      "summary": "Pale skin and folded linen emerge from a continuous brown shadow; red cloth and honey-colored wood carry the few strong color accents.",
+      "observations": [
+        "Overlapping figures form one connected foreground mass rather than four isolated cutouts.",
+        "Light turns gradually over shoulders and faces; the sharpest marks sit at eyes, strings, and fabric folds.",
+        "The lute reads as wood through a broad amber plane and a few darker edges.",
+        "Background hair and shoulders disappear into the same shadow while lit linen stays distinct."
+      ],
+      "game_translation": "Use connected shadow shapes, modeled animal volume, and restrained wood, cloth, and metal accents in controls and equipment.",
+      "avoid": "Do not copy costumes, faces, the tabletop arrangement, a brown tint over the whole game, or a dark outline around every asset.",
+      "studies": [
+        {
+          "id": "linen-and-wood",
+          "rect": [
+            0.18,
+            0.36,
+            0.43,
+            0.49
+          ],
+          "lesson": "Soft cloth turns beside a firmer wood edge; borrow this distinction for UI surfaces and equipment."
+        },
+        {
+          "id": "face-and-shadow",
+          "rect": [
+            0.36,
+            0.1,
+            0.24,
+            0.29
+          ],
+          "lesson": "Keep the focal eye and muzzle readable while less important contours merge into shade."
+        }
+      ]
+    },
+    {
+      "id": "plowed-field",
+      "plate": 2,
+      "title": "Landscape with a Plowed Field and a Village",
+      "artist": "Georges Michel",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-2",
+      "source": {
+        "original": "assets/images/Landscape with a Plowed Field and a Village - Georges Michel.jpg",
+        "webp": "assets/images/Landscape with a Plowed Field and a Village - Georges Michel.webp",
+        "width": 4000,
+        "height": 3000,
+        "sha256": "d1521a54c4743aabafb5e76aa8957bd27982157f41e03589619dd9e6133a8b51",
+        "webp_sha256": "1bf89968d03520dce19bad13162e8dfd0edbacff51158bd0b2c027c3bc7d5d2b"
+      },
+      "tags": [
+        "maps",
+        "sky",
+        "atmosphere"
+      ],
+      "summary": "A very low strip of land sits beneath a large gray sky, with warm plowed earth and a small village pushed to the right.",
+      "observations": [
+        "Clouds occupy most of the image and carry more visual weight than the village.",
+        "Near earth is dark umber; a broad lighter field leads toward a thin, cool horizon.",
+        "Low horizontal land bands are interrupted by sparse figures and distant buildings.",
+        "Cloud edges alternate between broad soft transitions and a few denser, darker lower masses."
+      ],
+      "game_translation": "Use weather as composition, spacious open terrain, compressed distant detail, and warm ground against cooler cloud shade.",
+      "avoid": "Do not copy the village or the exact low horizon when it breaks the lookout projection; do not render identical cloud blobs.",
+      "studies": [
+        {
+          "id": "cloud-bank",
+          "rect": [
+            0.12,
+            0.09,
+            0.77,
+            0.49
+          ],
+          "lesson": "Large connected cloud masses and uneven soft edges."
+        },
+        {
+          "id": "field-depth",
+          "rect": [
+            0.08,
+            0.63,
+            0.82,
+            0.26
+          ],
+          "lesson": "Horizontal value bands establish distance without drawing every furrow."
+        }
+      ]
+    },
+    {
+      "id": "breton-siblings",
+      "plate": 3,
+      "title": "Breton Brother and Sister",
+      "artist": "William-Adolphe Bouguereau",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-3",
+      "source": {
+        "original": "assets/images/Breton Brother and Sister - William-Adolphe Bouguereau.jpg",
+        "webp": "assets/images/Breton Brother and Sister - William-Adolphe Bouguereau.webp",
+        "width": 2568,
+        "height": 3722,
+        "sha256": "86fa5561182952c0c43677eebd15e0343bef3acebda60b3e89fb6479c35ec8f6",
+        "webp_sha256": "62610c2a1e8cf5a63f86da10f2aa75f5f3733b5c8806538eee01039a8ed41f6f"
+      },
+      "tags": [
+        "animals",
+        "foliage",
+        "materials"
+      ],
+      "summary": "Closely modeled faces, hands, feet, and white cloth stand against a dark woodland with a narrow opening on the left.",
+      "observations": [
+        "The bonnet is the brightest shape; the forest is a joined blue-green shadow.",
+        "Rust, muted rose, and blue cloth distinguish materials without a uniform outline.",
+        "Skin turns through warm midtones into cool shadow with very little visible brush noise.",
+        "Small woodland plants remain subordinate to the figures, even beside sharply described fingers."
+      ],
+      "game_translation": "Use careful animal anatomy, warm and cool form shading, controlled cream highlights, and softer foliage behind a readable subject.",
+      "avoid": "This is a reference for rendering living form, not a source for deer anatomy. Do not copy the visible age cracks.",
+      "studies": [
+        {
+          "id": "hands-and-cloth",
+          "rect": [
+            0.3,
+            0.27,
+            0.49,
+            0.29
+          ],
+          "lesson": "Focal precision is localized; softer surrounding planes keep it legible."
+        },
+        {
+          "id": "woodland-opening",
+          "rect": [
+            0.03,
+            0.1,
+            0.22,
+            0.5
+          ],
+          "lesson": "A quiet light passage opens through a mostly unified woodland shadow."
+        }
+      ]
+    },
+    {
+      "id": "lemons",
+      "plate": 4,
+      "title": "Girl Holding Lemons",
+      "artist": "William-Adolphe Bouguereau",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-4",
+      "source": {
+        "original": "assets/images/Girl Holding Lemons - William-Adolphe Bouguereau.jpg",
+        "webp": "assets/images/Girl Holding Lemons - William-Adolphe Bouguereau.webp",
+        "width": 3937,
+        "height": 5151,
+        "sha256": "d56fb790b905e817c410290f03bdb49577888efe1581d40e8312666891aad648",
+        "webp_sha256": "4001d08056609ee65f945c2b414d8dad0f02f9c6a31766ffc6ebf711bf1ec4a3"
+      },
+      "tags": [
+        "animals",
+        "materials",
+        "atmosphere"
+      ],
+      "summary": "Warm skin, creamy cloth, dark hair, and yellow fruit sit in front of hazy lavender mountains.",
+      "observations": [
+        "The silhouette of dark hair is simple; interior face shading is gradual and specific.",
+        "Yellow is concentrated in the fruit and reflected near the hands instead of scattered across the frame.",
+        "Mountain layers grow softer, lighter, and more violet with distance.",
+        "Leaves are dark flat accents beside rounded fruit and folded cloth, making different materials readable."
+      ],
+      "game_translation": "Use localized warm highlights, naturalistic coat modeling, material-specific marks, and cool distant land behind warm subjects.",
+      "avoid": "Do not make every animal glossy or add yellow rims to every object. Lavender distance is an option for light, not every map.",
+      "studies": [
+        {
+          "id": "fruit-and-leaves",
+          "rect": [
+            0.16,
+            0.63,
+            0.67,
+            0.3
+          ],
+          "lesson": "Saturation and fine material detail are concentrated in a small focal area."
+        },
+        {
+          "id": "mountain-distance",
+          "rect": [
+            0.03,
+            0.08,
+            0.24,
+            0.42
+          ],
+          "lesson": "Layered cool land loses contrast and definition behind a warm foreground."
+        }
+      ]
+    },
+    {
+      "id": "stream",
+      "plate": 5,
+      "title": "By the Stream (Au Bord du Ruisseau)",
+      "artist": "William-Adolphe Bouguereau",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-5",
+      "source": {
+        "original": "assets/images/By the stream (1888), by William-Adolphe Bouguereau.jpg",
+        "webp": "assets/images/By the stream (1888), by William-Adolphe Bouguereau.webp",
+        "width": 2500,
+        "height": 1990,
+        "sha256": "f17181e97e35fae77df18bb0c4565d2ae051003b8c4d07bedc6d645ab927cb23",
+        "webp_sha256": "b30895a74a4d678f1480b6b39d4a569a8d3f80b7a6ad44920700ca0612d6d4dc"
+      },
+      "tags": [
+        "maps",
+        "animals",
+        "foliage",
+        "water"
+      ],
+      "summary": "A smoothly modeled figure and pale earthen bank sit beside a dark trunk, long green reeds, and partly obscured water.",
+      "observations": [
+        "The pale bank gives the figure a quiet readable ground while the upper forest is dark.",
+        "Reeds rise in irregular overlapping ribbons with changes of green across each blade.",
+        "Rough bark, soft cloth, skin, and stone each receive a different edge and surface treatment.",
+        "Water occupies a small shaded area rather than a bright decorative ribbon through the whole image."
+      ],
+      "game_translation": "Use restrained clearing edges, species-specific plant shapes, rough bark, pale soil, and selective detail near an animal.",
+      "avoid": "Do not fill the animal corridor with tall reeds or turn every tree into a bright outlined trunk.",
+      "studies": [
+        {
+          "id": "reeds",
+          "rect": [
+            0.61,
+            0.09,
+            0.33,
+            0.64
+          ],
+          "lesson": "Irregular blades overlap in several value groups; retain gaps and distinct bends."
+        },
+        {
+          "id": "bark-and-bank",
+          "rect": [
+            0.02,
+            0.06,
+            0.2,
+            0.87
+          ],
+          "lesson": "A rough dark trunk sits against a broad, comparatively quiet patch of pale earth."
+        }
+      ]
+    },
+    {
+      "id": "veteran",
+      "plate": 6,
+      "title": "The Veteran in a New Field",
+      "artist": "Winslow Homer",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-6",
+      "source": {
+        "original": "assets/images/The Veteran in a New Field - Winslow Homer.jpg",
+        "webp": "assets/images/The Veteran in a New Field - Winslow Homer.webp",
+        "width": 2509,
+        "height": 1590,
+        "sha256": "e96c237ce0074919c78fb9373713baff42b6a4363572a9f2426c17f31ae1c49d",
+        "webp_sha256": "0d4873891aa57b00c71e306a9460b54e108b000fd967e2c80c94b0262ef22cf8"
+      },
+      "tags": [
+        "maps",
+        "foliage",
+        "materials"
+      ],
+      "summary": "A broad gold wheat field meets a small blue sky; a pale shirt and dark trousers form a simple central figure.",
+      "observations": [
+        "Wheat uses directional strokes that bend together while retaining local irregularity.",
+        "Gold and blue form a stronger color contrast than in the quieter woodland paintings.",
+        "Cut foreground stalks and standing grain have different stroke directions and densities.",
+        "The single figure reads at a glance through two major value shapes and a clear gesture."
+      ],
+      "game_translation": "Use coherent wind direction, grouped grass strokes, warm dry vegetation, and readable small silhouettes.",
+      "avoid": "Do not convert the birch meadow into a wheat farm or raise vegetation across every animal. This painting permits color, not an all-gold filter.",
+      "studies": [
+        {
+          "id": "standing-grain",
+          "rect": [
+            0.09,
+            0.29,
+            0.3,
+            0.4
+          ],
+          "lesson": "Group many strokes into a few wind-shaped masses."
+        },
+        {
+          "id": "cut-stalks",
+          "rect": [
+            0.17,
+            0.75,
+            0.66,
+            0.19
+          ],
+          "lesson": "Directional marks describe flattened plants and ground without even dot noise."
+        }
+      ]
+    },
+    {
+      "id": "shipwreck",
+      "plate": 7,
+      "title": "The Shipwreck",
+      "artist": "Claude-Joseph Vernet",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-7",
+      "source": {
+        "original": "assets/images/The Shipwreck - Claude-Joseph Vernet 1772.jpg",
+        "webp": "assets/images/The Shipwreck - Claude-Joseph Vernet 1772.webp",
+        "width": 4096,
+        "height": 2845,
+        "sha256": "a3cc556512ec902e74898b5496ef2d73a1aa4799b07556471b0b15ca0f6c396c",
+        "webp_sha256": "277dcbd26eeaa675df20d23904b69645964d541c5c4f2d557e9a44719ffa29d6"
+      },
+      "tags": [
+        "sky",
+        "atmosphere",
+        "water",
+        "effects"
+      ],
+      "summary": "A dark rocky left edge and diagonal broken mast frame green water beneath heavy clouds and a small warm opening on the right.",
+      "observations": [
+        "The darkest rock and clouds enclose the scene; a localized orange opening draws the eye.",
+        "Storm clouds are connected large masses with softened internal folds.",
+        "Foam is bright only where it catches light or breaks against a solid edge.",
+        "Small figures, ropes, and branches stay legible through silhouette and selective fine edges."
+      ],
+      "game_translation": "Use directional weather, localized storm light, irregular broken water highlights, and a clear hierarchy for brief effects.",
+      "avoid": "Do not import shipwrecks, lightning, a storm system, or constant orange skies into the calm base map.",
+      "studies": [
+        {
+          "id": "storm-opening",
+          "rect": [
+            0.66,
+            0.35,
+            0.31,
+            0.31
+          ],
+          "lesson": "One warm opening carries the light inside a much larger cool dark sky."
+        },
+        {
+          "id": "rock-and-water",
+          "rect": [
+            0.04,
+            0.47,
+            0.27,
+            0.34
+          ],
+          "lesson": "Foam breaks selectively around rock; water color stays connected to the weather."
+        }
+      ]
+    },
+    {
+      "id": "salisbury",
+      "plate": 8,
+      "title": "Salisbury Cathedral from Lower Marsh Close",
+      "artist": "John Constable",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-8",
+      "source": {
+        "original": "assets/images/Salisbury Cathedral from Lower Marsh Close - John Constable - oil on canvas.jpg",
+        "webp": "assets/images/Salisbury Cathedral from Lower Marsh Close - John Constable - oil on canvas.webp",
+        "width": 4096,
+        "height": 3197,
+        "sha256": "db6123b6dcf2c6beabeff8a622e46409a045ddd8e26fafda99c9077ede270d69",
+        "webp_sha256": "7e64922b5b1c1dd6e9dae0fa904c8e7618d8caa4df2938bce239b2d2f33a51d5"
+      },
+      "tags": [
+        "maps",
+        "sky",
+        "foliage",
+        "animals"
+      ],
+      "summary": "A dense dark tree group on the left opens onto a quiet green meadow, a distant cathedral, small grazing animals, and a luminous broken-cloud sky.",
+      "observations": [
+        "The left canopy is one strong mass interrupted by sky holes and lit leaf groups.",
+        "Broad horizontal shadows and patches of sun establish the meadow as a flat open space.",
+        "The middle-distance cattle are tiny but recognizable through their bodies, feet, and contact with the ground.",
+        "The sky is built from cream, warm gray, and muted blue shapes, with varied soft edges."
+      ],
+      "game_translation": "Primary anchor for the first lookout: asymmetric tree framing, an open animal corridor, meadow shadow bands, and observed-looking clouds.",
+      "avoid": "Do not copy the cathedral or let the tree frame block the hunt corridor. Avoid evenly spaced geometric trees and repeated leaf stamps.",
+      "studies": [
+        {
+          "id": "canopy",
+          "rect": [
+            0.02,
+            0.05,
+            0.43,
+            0.73
+          ],
+          "lesson": "A dark connected canopy uses irregular edges, branch gaps, and a few sunlit clusters."
+        },
+        {
+          "id": "meadow",
+          "rect": [
+            0.25,
+            0.76,
+            0.69,
+            0.18
+          ],
+          "lesson": "Quiet horizontal ground and small grounded animals establish scale."
+        },
+        {
+          "id": "clouds",
+          "rect": [
+            0.5,
+            0.05,
+            0.45,
+            0.48
+          ],
+          "lesson": "Clouds vary in size, edge softness, and warm or cool planes."
+        }
+      ]
+    },
+    {
+      "id": "proserpine",
+      "plate": 9,
+      "title": "The Rape of Proserpine",
+      "artist": "J. M. W. Turner",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-9",
+      "source": {
+        "original": "assets/images/The Rape of Proserpine - Joseph Mallord William Turner.jpg",
+        "webp": "assets/images/The Rape of Proserpine - Joseph Mallord William Turner.webp",
+        "width": 4096,
+        "height": 3020,
+        "sha256": "b196c799d98890e37a81ddcdcd741d6f7fb409f7d430e0b5ac7a3374a83bb798",
+        "webp_sha256": "e9963eabeac184c516e67d087e19efdae42fe42940fc3b79b6e0c14df9e14cb5"
+      },
+      "tags": [
+        "sky",
+        "atmosphere",
+        "effects"
+      ],
+      "summary": "Amber light fills a broad sky and washes distant ridges; dark foreground land and a thin tree retain structure below it.",
+      "observations": [
+        "The horizon and distant structures merge into a shared warm atmosphere.",
+        "The strongest darks remain low in the picture; the lightest passage is broad rather than a hard white disc.",
+        "A few slender branches are crisp inside a much softer surrounding landscape.",
+        "Earth and sky remain distinguishable through value even where both share yellow and brown."
+      ],
+      "game_translation": "Use luminous dawn or dusk, progressive loss of distant detail, and occasional thin focal edges within large soft forms.",
+      "avoid": "Do not make the whole day sepia or blur the hunt animals and scope into the atmosphere.",
+      "studies": [
+        {
+          "id": "luminous-sky",
+          "rect": [
+            0.05,
+            0.04,
+            0.71,
+            0.31
+          ],
+          "lesson": "Broad light merges softly with colored cloud planes."
+        },
+        {
+          "id": "distant-ridge",
+          "rect": [
+            0.23,
+            0.37,
+            0.44,
+            0.24
+          ],
+          "lesson": "Distance loses detail and contrast while the nearer land keeps weight."
+        }
+      ]
+    },
+    {
+      "id": "venice",
+      "plate": 10,
+      "title": "Venice: The Dogana and San Giorgio Maggiore",
+      "artist": "J. M. W. Turner",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-10",
+      "source": {
+        "original": "assets/images/Venice The Dogana and San Giorgio Maggiore - Joseph Mallord William Turner.jpg",
+        "webp": "assets/images/Venice The Dogana and San Giorgio Maggiore - Joseph Mallord William Turner.webp",
+        "width": 4096,
+        "height": 3035,
+        "sha256": "fa90892369e960748bd4ffd539bf0a1af7f1f42b389258945c9732ca16758b84",
+        "webp_sha256": "9f3014c1f428c9e8da224344800e59973200316828d6d3188c7fcd49040a5f78"
+      },
+      "tags": [
+        "sky",
+        "water",
+        "atmosphere",
+        "materials"
+      ],
+      "summary": "Pale blue sky and silvery green water surround warm boats and cream architecture, with a nearly dissolved distant city.",
+      "observations": [
+        "Light fills the sky and water without pure white occupying every bright surface.",
+        "Far buildings have less contrast and fewer distinct edges than nearby boats.",
+        "Reflections extend downward as broken vertical shapes interrupted by horizontal water marks.",
+        "Warm ochre and coral accents occupy boats and stone while the large fields of sky and water stay cooler."
+      ],
+      "game_translation": "Use clear daylight, pale distance, broken reflections, and warm accents that occupy a small part of a cool scene.",
+      "avoid": "Do not copy boats or architecture, turn the UI into Venice, or apply a uniform blur to foreground subjects.",
+      "studies": [
+        {
+          "id": "water-reflections",
+          "rect": [
+            0.36,
+            0.73,
+            0.39,
+            0.24
+          ],
+          "lesson": "Vertical reflected light breaks across horizontal water movement."
+        },
+        {
+          "id": "sky-and-distance",
+          "rect": [
+            0.27,
+            0.05,
+            0.36,
+            0.61
+          ],
+          "lesson": "Cool blue becomes pale and warm near the horizon; distant detail nearly disappears."
+        }
+      ]
+    },
+    {
+      "id": "dutch-boats",
+      "plate": 11,
+      "title": "Boats Carrying Out Anchors and Cables to the Dutch Men of War",
+      "artist": "J. M. W. Turner",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-11",
+      "source": {
+        "original": "assets/images/Boats Carrying Out Anchors to the Dutch Men of War - Joseph Mallord William Turner.jpg",
+        "webp": "assets/images/Boats Carrying Out Anchors to the Dutch Men of War - Joseph Mallord William Turner.webp",
+        "width": 4096,
+        "height": 3212,
+        "sha256": "5cea1973b4cc104483bb6294944de88bfc3bd9b2a4ca933e9b5c8fc1da3ba5e9",
+        "webp_sha256": "d9701eb0311214c6bde679e3b842d18cc2eb929807685bd3006f8f474f219192"
+      },
+      "tags": [
+        "sky",
+        "water",
+        "atmosphere",
+        "effects"
+      ],
+      "summary": "A diagonal brown cloud bank hangs over warm sails and a small boat surrounded by sweeping gray-green waves.",
+      "observations": [
+        "The wave strokes follow the surface instead of behaving like uniform texture.",
+        "The cloud bank and wave diagonals create one directional movement through the scene.",
+        "Cream foam and sails contrast with cool water while tiny warm accents pick out the figures.",
+        "Distant ships lose clarity as weather intervenes, without becoming a separate blurred layer."
+      ],
+      "game_translation": "Use coherent wind and weather direction, restrained pale effect marks, and atmospheric integration of moving forms.",
+      "avoid": "Do not add ocean waves to the meadow or use white particle sprays for every impact.",
+      "studies": [
+        {
+          "id": "wave-strokes",
+          "rect": [
+            0.04,
+            0.7,
+            0.48,
+            0.27
+          ],
+          "lesson": "Directional curved marks describe moving water with intermittent cream highlights."
+        },
+        {
+          "id": "cloud-diagonal",
+          "rect": [
+            0.04,
+            0.05,
+            0.84,
+            0.29
+          ],
+          "lesson": "One broad diagonal mass establishes weather movement without many small cloud icons."
+        }
+      ]
+    },
+    {
+      "id": "marseille",
+      "plate": 12,
+      "title": "Intérieur du Port de Marseille",
+      "artist": "Claude-Joseph Vernet",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-12",
+      "source": {
+        "original": "assets/images/Intérieur du Port de Marseille (Interior of the Port of Marseilles) - Claude-Joseph Vernet.jpg",
+        "webp": "assets/images/Intérieur du Port de Marseille (Interior of the Port of Marseilles) - Claude-Joseph Vernet.webp",
+        "width": 3000,
+        "height": 2227,
+        "sha256": "25473f42fa288568f6d05912ab5705c4fd7d938815a669b1f6c1cfbbc0ca760c",
+        "webp_sha256": "9a69e073d70657a474a74d4878ba51aab598aba87c9e71f6e02395ba57438ffa"
+      },
+      "tags": [
+        "maps",
+        "materials",
+        "ui",
+        "animals"
+      ],
+      "summary": "A detailed warm quay forms the foreground beneath cool water, receding ships, and a large pale sky.",
+      "observations": [
+        "Foreground figures and cargo are dense, but their groups form readable light and dark masses.",
+        "Wood, rope, cloth, stone, and barrels share the same light while keeping distinct surfaces.",
+        "Masts thin and soften with distance; the far city is lighter and quieter than the quay.",
+        "Small human and animal gestures convey activity without every figure receiving equal detail."
+      ],
+      "game_translation": "Use consistent materials across equipment and interface illustrations, selective record detail, and controlled density near scene edges.",
+      "avoid": "Do not build a harbor, a new shop, a crowded menu, or a collage of unrelated objects. The lesson is grouping, not clutter.",
+      "studies": [
+        {
+          "id": "quay-materials",
+          "rect": [
+            0.16,
+            0.78,
+            0.57,
+            0.18
+          ],
+          "lesson": "Cloth, barrels, rope, and timber share light but retain different edge and surface marks."
+        },
+        {
+          "id": "receding-port",
+          "rect": [
+            0.18,
+            0.42,
+            0.47,
+            0.25
+          ],
+          "lesson": "Layered silhouettes reduce in contrast and detail across a large quiet space."
+        }
+      ]
+    },
+    {
+      "id": "ninth-wave",
+      "plate": 13,
+      "title": "The Ninth Wave",
+      "artist": "Ivan Aivazovsky",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-13",
+      "source": {
+        "original": "assets/images/Aivazovsky, Ivan - The Ninth Wave.jpg",
+        "webp": "assets/images/Aivazovsky, Ivan - The Ninth Wave.webp",
+        "width": 5815,
+        "height": 3840,
+        "sha256": "70a899338449716d6c2529d1f59b31df7b851965bbc1a0415d2fbe4992146ab3",
+        "webp_sha256": "d29b92cce95c2cbbedd6121ccca87e17d7fe420ab38775c5a0dce89d6e5a4cc6"
+      },
+      "tags": [
+        "sky",
+        "water",
+        "atmosphere",
+        "effects"
+      ],
+      "summary": "A concentrated yellow dawn opening lights orange clouds and a translucent green wave, with very dark near water and a small group on a broken mast.",
+      "observations": [
+        "The yellow source is small relative to the cloud field but colors a much wider atmosphere.",
+        "Green water brightens where light passes through the crest and stays dark beneath it.",
+        "Warm reflections form a broken path toward the foreground.",
+        "Scale comes from tiny figures against large connected sky and water forms."
+      ],
+      "game_translation": "Use selective translucent light in water, localized dawn glow, large value masses, and brief bright effect accents.",
+      "avoid": "Do not spread the painting's strongest orange or green over ordinary daytime fields or add permanent bloom to controls.",
+      "studies": [
+        {
+          "id": "lit-wave",
+          "rect": [
+            0.16,
+            0.48,
+            0.5,
+            0.25
+          ],
+          "lesson": "Thin illuminated edges and translucent planes sit above a much darker body of water."
+        },
+        {
+          "id": "dawn-opening",
+          "rect": [
+            0.41,
+            0.11,
+            0.38,
+            0.41
+          ],
+          "lesson": "Local bright yellow diffuses into orange and cooler surrounding cloud."
+        }
+      ]
+    },
+    {
+      "id": "optevoz",
+      "plate": 14,
+      "title": "The Hamlet of Optevoz",
+      "artist": "Charles-François Daubigny",
+      "gallery_url": "https://ethanwillingham.com/gallery.html#plate-14",
+      "source": {
+        "original": "assets/images/The Hamlet of Optevoz - Charles-François Daubigny.jpg",
+        "webp": "assets/images/The Hamlet of Optevoz - Charles-François Daubigny.webp",
+        "width": 3811,
+        "height": 2365,
+        "sha256": "e135677154b3510cb0eae46d00b6f9cce0513aef494920c5fd064c1bde3be308",
+        "webp_sha256": "902e8c2c6c99fa02ef9bf0e730dce0142cd51de57dff7f74f8a91b8fcb340a4f"
+      },
+      "tags": [
+        "maps",
+        "foliage",
+        "water",
+        "animals",
+        "atmosphere"
+      ],
+      "summary": "Dark grouped trees and low stone cottages sit beneath a pale sky beside a still pond, with small grazing animals on the bank.",
+      "observations": [
+        "Tree crowns are joined dark masses with sparse broken highlights rather than individually outlined leaves.",
+        "The pale sky and reflected water hold the composition together around dark land.",
+        "Near animals and banks are darker than the farther buildings and hills.",
+        "Reflections are interrupted and less exact than the forms above them."
+      ],
+      "game_translation": "Use quiet rural depth, grouped foliage, still-water reflections, and small animals that belong to the same painted ground.",
+      "avoid": "Do not copy cottages into Birch Clearing or lighten every dark shape for visibility. Preserve readable contrast selectively.",
+      "studies": [
+        {
+          "id": "trees-and-stone",
+          "rect": [
+            0.22,
+            0.19,
+            0.43,
+            0.45
+          ],
+          "lesson": "Connected foliage and subdued stone sit in the same broad light conditions."
+        },
+        {
+          "id": "pond-and-animals",
+          "rect": [
+            0.18,
+            0.64,
+            0.65,
+            0.32
+          ],
+          "lesson": "Dark small animals and broken pale reflections create grounded rural depth."
+        }
+      ]
+    }
+  ],
+  "briefs": {
+    "birch-base": {
+      "title": "First map: Birch Clearing base scenery",
+      "status": "prepared, not implemented",
+      "intent": "An original oil-painted view from the existing fixed lookout across a huge open birch meadow. Establish scenery first; leave the central and middle-distance animal corridor readable.",
+      "references": [
+        {
+          "id": "salisbury",
+          "role": "Primary composition, meadow light, tree framing and clouds."
+        },
+        {
+          "id": "plowed-field",
+          "role": "Secondary open-field scale, weather masses and horizontal depth."
+        },
+        {
+          "id": "optevoz",
+          "role": "Secondary quiet foliage masses and rural atmosphere."
+        },
+        {
+          "id": "stream",
+          "role": "Supporting bark, pale earth, and irregular plants at the edges."
+        },
+        {
+          "id": "veteran",
+          "role": "Supporting directional grass marks and coherent wind."
+        }
+      ],
+      "constraints": [
+        "Use the current 640 by 360 logical view and horizon at y = 144 as the first composition guide; retain live depth projection and the 6x scope.",
+        "Keep birch woodland, open meadow and distant land. Create an original hunting location without cathedral, village, people, wheat crop or boats.",
+        "Deliver separable sky, far land, middle field and near vegetation where practical; do not bake the moving sun, animals, aiming reticle or UI into scenery.",
+        "Inspect native wide view, final scope magnification, dawn, midday, dusk, night, desktop and both supported phone orientations."
+      ]
+    },
+    "cypress-base": {
+      "title": "Cypress Edge scenery",
+      "status": "future visual pass",
+      "intent": "An original painted wetland in the same visual language, with cypress silhouettes, reeds and dark still water.",
+      "references": [
+        {
+          "id": "optevoz",
+          "role": "Primary still water, reflected pale sky and dark land masses."
+        },
+        {
+          "id": "stream",
+          "role": "Primary reeds, earthen bank and woodland material treatment."
+        },
+        {
+          "id": "venice",
+          "role": "Supporting broken reflections and pale distance."
+        },
+        {
+          "id": "salisbury",
+          "role": "Supporting canopy structure and observed clouds."
+        }
+      ],
+      "constraints": [
+        "Retain the cypress setting and an open boar corridor.",
+        "Use a shared level of painterly detail with Birch Clearing, with a different ecology.",
+        "Water and plant motion must share the scene's wind and light."
+      ]
+    },
+    "animals": {
+      "title": "All animals and living forms",
+      "status": "future visual pass",
+      "intent": "Naturalistic oil-painted deer, boar, owls and squirrels, with accurate species silhouettes, modeled volume and selective fine detail.",
+      "references": [
+        {
+          "id": "breton-siblings",
+          "role": "Primary controlled form shading and selective anatomical detail."
+        },
+        {
+          "id": "lemons",
+          "role": "Primary warm living form against cool distance and material distinction."
+        },
+        {
+          "id": "musicians",
+          "role": "Supporting soft shadow transitions and selected crisp edges."
+        },
+        {
+          "id": "salisbury",
+          "role": "Supporting small animals at field distance."
+        },
+        {
+          "id": "optevoz",
+          "role": "Supporting grounded animals within quiet landscape values."
+        }
+      ],
+      "constraints": [
+        "The portraits provide rendering references; use appropriate anatomy reference separately for each species.",
+        "Preserve all five deer identities, exactly four deer legs and natural racks.",
+        "Supply transparent masters without a baked ground shadow or background.",
+        "Review animals within the map in both facings, at near and far depth and through the scope.",
+        "Agree on a visible alpha edge and hit-mask policy before replacing current binary masks; update dimensions, vital coordinates and collision together."
+      ]
+    },
+    "ui": {
+      "title": "Every game interface and equipment detail",
+      "status": "future visual pass",
+      "intent": "A quiet field interface with warm cream lettering, dark green or umber surfaces, restrained ochre edges and material detail derived from the paintings.",
+      "references": [
+        {
+          "id": "musicians",
+          "role": "Primary dark ground, cream highlights, wood and cloth."
+        },
+        {
+          "id": "marseille",
+          "role": "Primary material consistency and grouping of dense detail."
+        },
+        {
+          "id": "breton-siblings",
+          "role": "Supporting light hierarchy and selective precision."
+        }
+      ],
+      "constraints": [
+        "Keep Century Supra, Segoe UI and Commit Mono; retain the surrounding site background and shared tokens.",
+        "Include toolbar, clock, ammo, wind, buttons, scope, reticle, flight inset, pause, More, field selector, records, loading, save failure, focus and fullscreen states.",
+        "Use live HTML text and usable controls; do not rasterize labels or distress text.",
+        "Keep text contrast, visible focus, 44-pixel targets and clear state differences.",
+        "Keep the watching, time and shooting loop; visual work does not add shops, tracking dialogs or preparation."
+      ]
+    },
+    "atmosphere": {
+      "title": "Sky, weather and time of day",
+      "status": "future visual pass",
+      "intent": "A painted sky whose large light and cloud masses change coherently with the live clock while the ground and animals share that atmosphere.",
+      "references": [
+        {
+          "id": "salisbury",
+          "role": "Primary everyday sky and meadow light."
+        },
+        {
+          "id": "plowed-field",
+          "role": "Primary overcast sky scale and cloud structure."
+        },
+        {
+          "id": "venice",
+          "role": "Supporting luminous clear daylight and pale distance."
+        },
+        {
+          "id": "proserpine",
+          "role": "Supporting dawn or dusk atmosphere."
+        },
+        {
+          "id": "shipwreck",
+          "role": "Supporting storm structure if weather is later requested."
+        },
+        {
+          "id": "dutch-boats",
+          "role": "Supporting directional weather marks."
+        },
+        {
+          "id": "ninth-wave",
+          "role": "Supporting concentrated dawn light and water transmission."
+        }
+      ],
+      "constraints": [
+        "Use references as specific lighting lessons rather than one filter across all hours.",
+        "The sun must keep visibly moving with the current clock.",
+        "Night is an extrapolation from shadow and atmosphere references; the gallery does not provide a dedicated night landscape.",
+        "Do not implement storms or new weather mechanics without a corresponding task."
+      ]
+    },
+    "effects": {
+      "title": "Projectiles, impacts and brief visual feedback",
+      "status": "future visual pass",
+      "intent": "Short, readable painted marks and material-appropriate motion embedded in the same world light.",
+      "references": [
+        {
+          "id": "shipwreck",
+          "role": "Primary localized bright edges within darker forms."
+        },
+        {
+          "id": "dutch-boats",
+          "role": "Primary directional strokes and broken pale marks."
+        },
+        {
+          "id": "ninth-wave",
+          "role": "Supporting concentrated light and translucent highlights."
+        },
+        {
+          "id": "musicians",
+          "role": "Supporting restrained warm material accents."
+        }
+      ],
+      "constraints": [
+        "Visible rounds must follow actual ballistic positions and wind; presentation must not conceal drift or drop.",
+        "Muzzle flash, smoke, impact, blood, fading bodies and transitions belong to the same light and palette.",
+        "Avoid neon trails, white particle clouds, screen-wide bloom and ornate success popups."
+      ]
+    }
+  }
+}

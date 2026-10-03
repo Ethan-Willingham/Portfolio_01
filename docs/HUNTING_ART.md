@@ -1,5 +1,13 @@
 # Hunting art
 
+The current visual direction is `hunting-style/README.md`: every map, animal,
+interface and effect follows the 14 paintings on the owner's `gallery.html`,
+by instruction of 2026-10-03. Use its catalog and reference packets before
+creating or changing any hunting visual. The version 2 to 5 descriptions below
+are asset history. Their pixel-art prompts and normalization settings do not
+define the new painterly target. The first scenery brief is
+`hunting-style/FIRST_MAP.md`; the game has not been restyled by the reference stage.
+
 The owner requested replacing the first port's artwork on 2026-09-30.
 The replacement uses the built-in imagegen tool, with one generation each
 for the environment, deer, and hunter. No CLI image-generation fallback was
