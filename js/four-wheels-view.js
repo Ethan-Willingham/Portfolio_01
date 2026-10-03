@@ -98,14 +98,14 @@
   const circle = (p,rx,ry=rx,z=0,count=32) => Array.from({length:count},(_,i)=>add(p,Math.cos(i*Math.PI*2/count)*rx,Math.sin(i*Math.PI*2/count)*ry,z));
   const quad = (x,y,w,h,z=0) => [{x,y,z},{x:x+w,y,z},{x:x+w,y:y+h,z},{x,y:y+h,z}];
   function slopeMarkers(level) {
-    const ribs=[],signs=[],runs=[];let run=null;
+    const arrows=[],runs=[],routeArrows=level.legs.filter(l=>l.length>90).map(l=>({x:(l.a.x+l.b.x)/2,y:(l.a.y+l.b.y)/2}));let run=null;
     // Sample the same supporting height field along the forward route. A bump
     // and the empty jump gap are distinct obstacles, not sustained grades.
     for(const leg of level.legs){
       const count=Math.ceil(leg.length/12),step=leg.length/count,a=Math.atan2(leg.b.y-leg.a.y,leg.b.x-leg.a.x),c=Math.cos(a),s=Math.sin(a);
       for(let i=0;i<count;i++){
         const u=(i+.5)*step,p={x:leg.a.x+c*u,y:leg.a.y+s*u},d=Math.min(6,step/2),t=level.terrain,bump=TerrainModule.coordinates(p,t.bumps),inBumps=Math.abs(bump.v)<t.bumps.width/2&&bump.u>t.bumps.centers[0]-t.bumps.length/2&&bump.u<t.bumps.centers.at(-1)+t.bumps.length/2;
-        const before={x:p.x-c*d,y:p.y-s*d},after={x:p.x+c*d,y:p.y+s*d},base={kind:leg.surface,grip:1,drag:1},low=TerrainModule.sample(level,before,base,false),high=TerrainModule.sample(level,after,base,false),grade=low&&high?(high.height-low.height)/(2*d):0,kind=!inBumps&&Math.abs(grade)>=.035?(grade>0?'up':'down'):null;
+        const before={x:p.x-c*d,y:p.y-s*d},after={x:p.x+c*d,y:p.y+s*d},base={kind:leg.surface,grip:1,drag:1},low=TerrainModule.sample(level,before,base,false),high=TerrainModule.sample(level,after,base,false),grade=low&&high?(high.height-low.height)/(2*d):0,kind=!inBumps&&!TerrainModule.inStrip(p,t.ramp)&&Math.abs(grade)>=.035?(grade>0?'up':'down'):null;
         if(!kind){run=null;continue;}
         if(!run||run.kind!==kind){run={kind,samples:[]};runs.push(run);}
         run.samples.push({x:p.x,y:p.y,a,width:leg.width,shoulder:leg.shoulder,chapter:leg.chapter,distance:leg.distance+u,grade,kind});
@@ -113,9 +113,13 @@
     }
     for(const run of runs){
       if(run.samples.length<3)continue;
-      run.samples.forEach((p,i)=>{if(i%2===0)ribs.push({...p,chevron:i%6===0});if(i===1||i>1&&(i-1)%14===0)signs.push(p);});
+      let next=run.samples[0].distance+18;
+      for(const p of run.samples){
+        if(p.distance<next||routeArrows.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<48))continue;
+        arrows.push(p);next=p.distance+110;
+      }
     }
-    return {ribs,signs};
+    return {arrows};
   }
   const faces = [
     [[0,3,2,1],[0,0,-1]],[[4,5,6,7],[0,0,1]],[[0,4,7,3],[-1,0,0]],
@@ -931,12 +935,14 @@
           const surface=root.CartCourse.sample(terrainLevel,center,false);
           if(!surface||typeof requireFloor==='function'&&!requireFloor(surface))continue;
         }
-        const q=part.map(onGround),z=Terrain.height(terrainLevel,center);
-        const gx=Terrain.height(terrainLevel,{x:center.x+1,y:center.y})-z,gy=Terrain.height(terrainLevel,{x:center.x,y:center.y+1})-z;
-        // Sample color on the world grid so overlapping ribbons share a tint.
-        const tint=typeof color==='function'?color(x+step/2,y+step/2):color;
-        const light=clamp((gx*.6+gy*.8)*1.6,-.28,.36);
-        groundPoly(g,q,blend(tint,light<0?P.light:P.dark,Math.abs(light)));
+        const q=part.map(onGround),sample={x:x+step/2,y:y+step/2},d=step/2;
+        const gx=(Terrain.height(terrainLevel,{x:sample.x+d,y:sample.y})-Terrain.height(terrainLevel,{x:sample.x-d,y:sample.y}))/(2*d),gy=(Terrain.height(terrainLevel,{x:sample.x,y:sample.y+d})-Terrain.height(terrainLevel,{x:sample.x,y:sample.y-d}))/(2*d);
+        // Share lighting as well as color at clipped ribbons and cache edges.
+        const tint=typeof color==='function'?color(sample.x,sample.y):color;
+        // Match the fixed light used on models. Amplify the ground normal and
+        // contrast so gentle grades read without changing the actual height.
+        const light=clamp(((gx*.7+gy*.9+.82)/Math.hypot(gx*2,gy*2,1)-.82)*2.8,-.42,.28);
+        groundPoly(g,q,blend(tint,light>0?P.light:P.dark,Math.abs(light)));
       }
     }
     function courseRoadArt(level) {
@@ -972,26 +978,13 @@
     }
     function slopePaint(g,w,tile=null) {
       w.level._slopes||=slopeMarkers(w.level);
-      for(const p of w.level._slopes.ribs){
+      for(const p of w.level._slopes.arrows){
         if(tile&&(p.x<tile.x-p.width||p.x>tile.x+tile.w+p.width||p.y<tile.y-p.width||p.y>tile.y+tile.h+p.width))continue;
-        const color=p.kind==='up'?P.gold:P.blue,half=p.width*.31;
+        const half=Math.min(16,p.width*.14);
         const paint=(points,tint)=>{const q=points.map(([u,v])=>local(p,u,v));if(tile)mesh(g,q,tint,tile,true);else groundPoly(g,q.map(onGround),tint);};
-        if(p.chevron){
-          for(const side of [-1,1]){paint([[-7,side*half],[6,0],[9,0],[-5,side*half]],P.hairDark);paint([[-6,side*half],[6,0],[8,0],[-4,side*half]],color);}
-        }else {paint([[-1.5,-half],[1.5,-half],[1.5,half],[-1.5,half]],P.hairDark);paint([[-.75,-half],[.75,-half],[.75,half],[-.75,half]],color);}
-      }
-    }
-    function slopeSigns(scene,w) {
-      w.level._slopes||=slopeMarkers(w.level);
-      for(const p of w.level._slopes.signs){
-        const nx=-Math.sin(p.a),ny=Math.cos(p.a),side=nx+ny>0?-1:1,offset=p.width/2+p.shoulder-10,x=p.x+nx*side*offset,y=p.y+ny*side*offset,z=Terrain.height(w.level,{x,y}),color=p.kind==='up'?P.gold:P.blue,key='slope-'+p.kind;
-        if(!textures.has(key)){
-          const c=document.createElement('canvas');c.width=96;c.height=36;const g=c.getContext('2d');rect(g,0,0,96,36,P.hairDark);rect(g,1,1,94,34,color);rect(g,3,3,90,30,P.dark);
-          text(g,p.kind==='up'?'UPHILL':'DOWNHILL',48,16,P.light,12,'center');
-          const a={x:35,y:p.kind==='up'?29:22},b={x:60,y:p.kind==='up'?22:29};line(g,a,b,color,3);line(g,{x:35,y:30},{x:60,y:30},P.mid,1);textures.set(key,c);
+        for(const side of [-1,1]){
+          paint([[-7,side*half],[6,0],[11,0],[-2,side*half]],P.cream);
         }
-        scene.box((u,v,h)=>({x:u,y:v,z:z+h}),x-1.5,y-1.5,0,3,3,26,P.steelShade,P.steelLight);
-        scene.texture([{x:x-23,y:y+23,z:z+50},{x:x+23,y:y-23,z:z+50},{x:x+23,y:y-23,z:z+23},{x:x-23,y:y+23,z:z+23}],textures.get(key));
       }
     }
     function cliffFaces(scene,w,visible,mode='upper'){
@@ -1211,7 +1204,6 @@
       const tr=(x,y,z)=>({x,y,z:z+Terrain.height(w.level,{x,y})});
       if(mode!=='dynamic'){
       cliffFaces(scene,w,visible);
-      slopeSigns(scene,w);
       for(const r of w.level.rails)if(visible({x:(r.a.x+r.b.x)/2,y:(r.a.y+r.b.y)/2},Math.hypot(r.b.x-r.a.x,r.b.y-r.a.y)/2+70)){
         scene.flat(r.poly.map(onGround),P.steelShade);
         const d=Math.hypot(r.b.x-r.a.x,r.b.y-r.a.y);

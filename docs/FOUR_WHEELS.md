@@ -283,12 +283,12 @@ the static scenery cache, behind the elevated road and cliffs. The art is drawn
 locally and the game has no runtime art requests or third-party engine.
 Tree sprites share a 32-entry cache across restarted runs and font refreshes.
 
-Hill shading follows the ground gradient. Level bands across the exposed rock
-provide a fixed height reference. Gold uphill and blue downhill paint cross the
-road, with matching roadside signs that include words and a slope diagram.
-Their direction comes from the physical height field along forward route travel.
-Speed bumps and the jump void keep their own markings. Hill paint stays in the
-floor caches and signs stay in the static scenery cache.
+Hill shading follows the ground gradient and the same fixed light direction as
+the cart and scenery, with stronger contrast on gentle grades. Level bands across
+the exposed rock provide a fixed height reference. Sparse cream chevrons follow
+forward travel and conform to the physical slope, supplementing the route arrows
+where there is room. Speed bumps and the launch ramp keep their own markings.
+Hill paint stays in the floor caches and stops at the jump void.
 The scenery cache indexes projected bounds so each frame visits nearby geometry
 while preserving the original depth and tie order.
 

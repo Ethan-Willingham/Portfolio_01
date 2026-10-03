@@ -34,15 +34,13 @@ check('cliffs follow actual floor support and terrain height, including both jum
 });
 
 check('hill cues agree with the physical route and leave bumps and the jump void unmarked',()=>{
-  const level=Course.build(),markers=View.slopeMarkers(level),all=[...markers.ribs,...markers.signs];
-  for(const chapter of [0,3,4])for(const kind of ['up','down'])assert.ok(markers.signs.some(p=>p.chapter===chapter&&p.kind===kind),'both sides of hill '+chapter+' are labeled');
-  assert.ok(markers.signs.some(p=>p.chapter===11&&p.kind==='up'),'the final climb is labeled');
-  for(const p of all){
+  const level=Course.build(),{arrows}=View.slopeMarkers(level);
+  assert.ok(arrows.length>0&&arrows.length<20,'hill arrows stay sparse');
+  for(const p of arrows){
     const d={x:Math.cos(p.a)*.5,y:Math.sin(p.a)*.5},a=Course.sample(level,{x:p.x-d.x,y:p.y-d.y}),b=Course.sample(level,{x:p.x+d.x,y:p.y+d.y});
-    assert.ok(a&&b,'paint stays on supported road');assert.ok(p.kind==='up'?b.height>a.height:b.height<a.height,'the sign describes forward travel');
+    assert.ok(a&&b,'paint stays on supported road');assert.ok(p.kind==='up'?b.height>a.height:b.height<a.height,'arrows follow forward route travel on a sustained grade');
     const bump=Terrain.coordinates(p,level.terrain.bumps);assert.ok(!(Math.abs(bump.v)<level.terrain.bumps.width/2&&bump.u>31&&bump.u<163),'speed bumps keep their own markings');
-    const nx=-Math.sin(p.a),ny=Math.cos(p.a),side=nx+ny>0?-1:1,offset=p.width/2+p.shoulder-10;
-    assert.ok(Course.sample(level,{x:p.x+nx*side*offset,y:p.y+ny*side*offset}),'sign posts stand on the shoulder or road edge');
+    assert.ok(!Terrain.inStrip(p,level.terrain.ramp),'the launch ramp keeps its own markings');
   }
 });
 
