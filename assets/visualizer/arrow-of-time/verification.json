@@ -14,6 +14,21 @@
       "interpolationOvershoot": false
     },
     {
+      "size": "2x2",
+      "timelineCheckpoints": 5,
+      "timelineBytes": 80,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        0.40000009536743164,
+        0.30000007152557373,
+        0.3999999761581421,
+        0.3999999761581421,
+        0.2999999523162842,
+        0.7000000476837158
+      ]
+    },
+    {
       "size": "30x6",
       "cpuGpuStepsCompared": 24,
       "inverseSteps": 24,
@@ -25,6 +40,21 @@
       "renderBoundaryPixelsExact": true,
       "forwardAndInverse": true,
       "interpolationOvershoot": false
+    },
+    {
+      "size": "30x6",
+      "timelineCheckpoints": 5,
+      "timelineBytes": 240,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        0.5,
+        0.5,
+        0.5,
+        0.30000007152557373,
+        0.3999999761581421,
+        0.3999999761581421
+      ]
     },
     {
       "size": "32x8",
@@ -40,6 +70,21 @@
       "interpolationOvershoot": false
     },
     {
+      "size": "32x8",
+      "timelineCheckpoints": 5,
+      "timelineBytes": 320,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        0.3999999761581421,
+        0.3999999761581421,
+        0.40000009536743164,
+        0.30000007152557373,
+        0.30000007152557373,
+        0.40000009536743164
+      ]
+    },
+    {
       "size": "34x10",
       "cpuGpuStepsCompared": 24,
       "inverseSteps": 24,
@@ -53,6 +98,21 @@
       "interpolationOvershoot": false
     },
     {
+      "size": "34x10",
+      "timelineCheckpoints": 5,
+      "timelineBytes": 800,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        0.5999999046325684,
+        0.3999999761581421,
+        0.5,
+        0.3999999761581421,
+        0.40000009536743164,
+        0.3999999761581421
+      ]
+    },
+    {
       "size": "66x4",
       "cpuGpuStepsCompared": 24,
       "inverseSteps": 24,
@@ -64,6 +124,21 @@
       "renderBoundaryPixelsExact": true,
       "forwardAndInverse": true,
       "interpolationOvershoot": false
+    },
+    {
+      "size": "66x4",
+      "timelineCheckpoints": 5,
+      "timelineBytes": 480,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        0.2999999523162842,
+        0.3999999761581421,
+        0.3999999761581421,
+        0.5,
+        0.3999999761581421,
+        0.5
+      ]
     },
     {
       "size": "256x256",
@@ -71,7 +146,7 @@
       "longInverse": 4320,
       "comparedSpins": 131072,
       "exact": true,
-      "checksum": "caf08a0d"
+      "checksum": "71b69919"
     },
     {
       "size": "256x256",
@@ -85,6 +160,21 @@
       "renderBoundaryPixelsExact": true,
       "forwardAndInverse": true,
       "interpolationOvershoot": false
+    },
+    {
+      "size": "256x256",
+      "timelineCheckpoints": 136,
+      "timelineBytes": 2228224,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        0.7000000476837158,
+        12,
+        0.7999999523162842,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421
+      ]
     },
     {
       "size": "512x512",
@@ -92,7 +182,7 @@
       "longInverse": 4320,
       "comparedSpins": 524288,
       "exact": true,
-      "checksum": "11ea4af9"
+      "checksum": "5aaac1e9"
     },
     {
       "size": "512x512",
@@ -106,6 +196,21 @@
       "renderBoundaryPixelsExact": true,
       "forwardAndInverse": true,
       "interpolationOvershoot": false
+    },
+    {
+      "size": "512x512",
+      "timelineCheckpoints": 136,
+      "timelineBytes": 8912896,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        1.2999999523162842,
+        5.300000071525574,
+        1.2000000476837158,
+        1.6999999284744263,
+        1.4000000953674316,
+        1.600000023841858
+      ]
     },
     {
       "size": "768x512",
@@ -113,7 +218,7 @@
       "longInverse": 4320,
       "comparedSpins": 786432,
       "exact": true,
-      "checksum": "ea908929"
+      "checksum": "ceb3861d"
     },
     {
       "size": "768x512",
@@ -127,6 +232,21 @@
       "renderBoundaryPixelsExact": true,
       "forwardAndInverse": true,
       "interpolationOvershoot": false
+    },
+    {
+      "size": "768x512",
+      "timelineCheckpoints": 136,
+      "timelineBytes": 13369344,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        1.600000023841858,
+        1.6999999284744263,
+        2,
+        1.899999976158142,
+        1.8000000715255737,
+        2
+      ]
     },
     {
       "size": "1024x768",
@@ -134,7 +254,7 @@
       "longInverse": 4320,
       "comparedSpins": 1572864,
       "exact": true,
-      "checksum": "21df578d"
+      "checksum": "187282a5"
     },
     {
       "size": "1024x768",
@@ -148,6 +268,24 @@
       "renderBoundaryPixelsExact": true,
       "forwardAndInverse": true,
       "interpolationOvershoot": false
+    },
+    {
+      "size": "1024x768",
+      "timelineCheckpoints": 136,
+      "timelineBytes": 26738688,
+      "arbitrarySeeksExact": true,
+      "inverseContinuationExact": true,
+      "seekIncludingReadbackMilliseconds": [
+        2.799999952316284,
+        3.299999952316284,
+        3.1999999284744263,
+        3.6999999284744263,
+        3.100000023841858,
+        3.299999952316284
+      ]
+    },
+    {
+      "laterCycleOpeningSeekPixelsExact": true
     }
   ],
   "performance": [
@@ -157,12 +295,12 @@
       "precision": "u32 packed spins / u32 block sums / rgba16float scene",
       "updateRate": 24,
       "gpuMilliseconds": {
-        "median": 0.0030102500000000003,
-        "p95": 0.0033904583333333334
+        "median": 0.0031423333333333333,
+        "p95": 0.0038020416666666667
       },
       "submitAndCompletionMilliseconds": {
         "median": 0.5,
-        "p95": 0.5
+        "p95": 0.7000000476837158
       },
       "gpuScope": "per microscopic step, batch of 24",
       "adapter": {
@@ -179,35 +317,35 @@
       "precision": "u32 packed spins / u32 block sums / rgba16float scene",
       "updateRate": 24,
       "gpuMilliseconds": {
-        "median": 0.269071,
-        "p95": 0.327948
+        "median": 0.327995,
+        "p95": 0.423909
       },
       "submitAndCompletionMilliseconds": {
-        "median": 0.7999999523162842,
+        "median": 0.8999999761581421,
+        "p95": 1
+      },
+      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "512x512",
+      "mode": "compute",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 0.006848833333333333,
+        "p95": 0.0084495
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 0.6000000238418579,
         "p95": 0.8000000715255737
       },
-      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
-      "adapter": {
-        "vendor": "apple",
-        "architecture": "metal-3",
-        "description": "",
-        "device": "",
-        "isFallbackAdapter": false
-      }
-    },
-    {
-      "size": "512x512",
-      "mode": "compute",
-      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
-      "updateRate": 24,
-      "gpuMilliseconds": {
-        "median": 0.004026,
-        "p95": 0.012093541666666666
-      },
-      "submitAndCompletionMilliseconds": {
-        "median": 0.6999999284744263,
-        "p95": 1.2999999523162842
-      },
       "gpuScope": "per microscopic step, batch of 24",
       "adapter": {
         "vendor": "apple",
@@ -223,100 +361,100 @@
       "precision": "u32 packed spins / u32 block sums / rgba16float scene",
       "updateRate": 24,
       "gpuMilliseconds": {
-        "median": 0.98586,
-        "p95": 2.216382
-      },
-      "submitAndCompletionMilliseconds": {
-        "median": 1.899999976158142,
-        "p95": 3.700000047683716
-      },
-      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
-      "adapter": {
-        "vendor": "apple",
-        "architecture": "metal-3",
-        "description": "",
-        "device": "",
-        "isFallbackAdapter": false
-      }
-    },
-    {
-      "size": "768x512",
-      "mode": "compute",
-      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
-      "updateRate": 24,
-      "gpuMilliseconds": {
-        "median": 0.004197833333333334,
-        "p95": 0.07115345833333334
-      },
-      "submitAndCompletionMilliseconds": {
-        "median": 1.100000023841858,
-        "p95": 4.5
-      },
-      "gpuScope": "per microscopic step, batch of 24",
-      "adapter": {
-        "vendor": "apple",
-        "architecture": "metal-3",
-        "description": "",
-        "device": "",
-        "isFallbackAdapter": false
-      }
-    },
-    {
-      "size": "768x512",
-      "mode": "render",
-      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
-      "updateRate": 24,
-      "gpuMilliseconds": {
-        "median": 0.406994,
-        "p95": 1.969761
-      },
-      "submitAndCompletionMilliseconds": {
-        "median": 1.2999999523162842,
-        "p95": 2.6999999284744263
-      },
-      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
-      "adapter": {
-        "vendor": "apple",
-        "architecture": "metal-3",
-        "description": "",
-        "device": "",
-        "isFallbackAdapter": false
-      }
-    },
-    {
-      "size": "1024x768",
-      "mode": "compute",
-      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
-      "updateRate": 24,
-      "gpuMilliseconds": {
-        "median": 0.0044426249999999995,
-        "p95": 0.008218625
-      },
-      "submitAndCompletionMilliseconds": {
-        "median": 0.7000000476837158,
-        "p95": 1.600000023841858
-      },
-      "gpuScope": "per microscopic step, batch of 24",
-      "adapter": {
-        "vendor": "apple",
-        "architecture": "metal-3",
-        "description": "",
-        "device": "",
-        "isFallbackAdapter": false
-      }
-    },
-    {
-      "size": "1024x768",
-      "mode": "render",
-      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
-      "updateRate": 24,
-      "gpuMilliseconds": {
-        "median": 0.374994,
-        "p95": 1.62185
+        "median": 0.758822,
+        "p95": 0.96836
       },
       "submitAndCompletionMilliseconds": {
         "median": 1.399999976158142,
-        "p95": 2.5
+        "p95": 1.7999999523162842
+      },
+      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "768x512",
+      "mode": "compute",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 0.007970375,
+        "p95": 0.019294875
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 0.6000000238418579,
+        "p95": 1.100000023841858
+      },
+      "gpuScope": "per microscopic step, batch of 24",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "768x512",
+      "mode": "render",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 1.031776,
+        "p95": 1.140357
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 1.7000000476837158,
+        "p95": 2.100000023841858
+      },
+      "gpuScope": "fragment render pass only, hierarchy is included in wall time",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "1024x768",
+      "mode": "compute",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 0.009652666666666667,
+        "p95": 0.01740075
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 0.7000000476837158,
+        "p95": 1
+      },
+      "gpuScope": "per microscopic step, batch of 24",
+      "adapter": {
+        "vendor": "apple",
+        "architecture": "metal-3",
+        "description": "",
+        "device": "",
+        "isFallbackAdapter": false
+      }
+    },
+    {
+      "size": "1024x768",
+      "mode": "render",
+      "precision": "u32 packed spins / u32 block sums / rgba16float scene",
+      "updateRate": 24,
+      "gpuMilliseconds": {
+        "median": 1.027693,
+        "p95": 1.164523
+      },
+      "submitAndCompletionMilliseconds": {
+        "median": 1.7000000476837158,
+        "p95": 2.100000023841858
       },
       "gpuScope": "fragment render pass only, hierarchy is included in wall time",
       "adapter": {
@@ -339,12 +477,16 @@
         "cycle": 2,
         "forwardSteps": 4320,
         "inverseSteps": 4320,
-        "checksum": "4870b299",
+        "checksum": "cfe7b36d",
+        "usedSeeking": false,
         "method": "Full comparison of both computed time layers; no frame replay."
       },
       "totalSteps": 25920
     },
-    "pause/resume, reduced motion, restart, replay export, zoom, responsive layouts, visibility, offscreen suspension, native and fallback fullscreen, missing WebGPU, device loss, auto-start, no validation errors"
+    "Timeline start/middle/end, rapid seeks, keyboard seeking, play from a seek, drawing, two color controls, custom prepared-state equivalence and exact custom return",
+    "pause/resume, reduced motion, restart, replay export, zoom, responsive layouts, visibility, offscreen suspension, native and fallback fullscreen, missing WebGPU, device loss, auto-start, no validation errors",
+    "Additional editor run: empty drawing, keyboard drawing, eraser, touch rendering, exact custom return, custom device-loss still, missing WebGPU",
+    "Final runtime check: keyboard playback, offscreen suspension, manual pause through restart, landscape controls"
   ],
   "environment": {
     "browser": "148.0.7778.96",
@@ -353,7 +495,7 @@
     "hardware": "Apple M1 Pro",
     "operatingSystem": "macOS 26.6.2",
     "adapter": "Apple metal-3, hardware",
-    "displayVersion": 2
+    "displayVersion": 3
   },
   "displayCellChanges": [
     {
@@ -362,8 +504,8 @@
         73,
         96
       ],
-      "singleLayer": 1097117,
-      "pairedLayers": 572785
+      "singleLayer": 1120298,
+      "pairedLayers": 578790
     },
     {
       "size": "1024x768",
@@ -371,8 +513,8 @@
         73,
         96
       ],
-      "singleLayer": 2167025,
-      "pairedLayers": 1144264
+      "singleLayer": 2253060,
+      "pairedLayers": 1148653
     }
   ]
 }

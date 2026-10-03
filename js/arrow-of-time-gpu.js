@@ -1,4 +1,4 @@
-import { dimensions, pack, unpack, checksum, evolve } from './arrow-of-time-model.js?v=2';
+import { dimensions, pack, unpack, checksum, evolve } from './arrow-of-time-model.js?v=3';
 
 const triangle = `@vertex fn vertex(@builtin(vertex_index) i:u32)->@builtin(position) vec4f {
  let p=array<vec2f,3>(vec2f(-1,-1),vec2f(3,-1),vec2f(-1,3)); return vec4f(p[i],0,1); }`;
@@ -64,6 +64,36 @@ fn eastB(i:u32)->u32 { let k=i%R; var carry:u32;
     pass.end();
   }
   function update(count, direction = 1) { const encoder = device.createCommandEncoder(); encodeSteps(encoder, count, direction); device.queue.submit([encoder.finish()]); }
+  let timeline = null, timelineInterval = 32, timelineLength = 0;
+  function prepareTimeline(length = 4320) {
+    if (timeline) throw new Error('This solver already has a prepared timeline.');
+    timelineLength = length;
+    const count = Math.ceil(length / timelineInterval) + 1;
+    timeline = buffer(count * words * 8, GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST, 'Q2R exact timeline checkpoints');
+    const encoder = device.createCommandEncoder();
+    let step = 0;
+    for (let index = 0; index < count; index++) {
+      const next = Math.min(length, index * timelineInterval);
+      encodeSteps(encoder, next - step); step = next;
+      encoder.copyBufferToBuffer(fields[x], 0, timeline, index * words * 8, words * 4);
+      encoder.copyBufferToBuffer(fields[y], 0, timeline, index * words * 8 + words * 4, words * 4);
+    }
+    // Preparation also computes the complete inverse, leaving the opening state visible.
+    encodeSteps(encoder, length, -1); device.queue.submit([encoder.finish()]);
+    return { checkpoints: count, bytes: timeline.size, computedSteps: length * 2 };
+  }
+  function seekTimeline(step, direction = 1) {
+    if (!timeline || !Number.isInteger(step) || step < 0 || step > timelineLength || ![1,-1].includes(direction)) throw new RangeError('Invalid prepared timeline position.');
+    const index = Math.floor(step / timelineInterval), start = index * timelineInterval;
+    x = 0; y = 1; scratch = 2; lastDirection = 1;
+    const encoder = device.createCommandEncoder();
+    encoder.copyBufferToBuffer(timeline, index * words * 8, fields[x], 0, words * 4);
+    encoder.copyBufferToBuffer(timeline, index * words * 8 + words * 4, fields[y], 0, words * 4);
+    encodeSteps(encoder, step - start);
+    // Establish the adjacent pair for reverse interpolation, without changing the chosen state.
+    if (direction === -1) { encodeSteps(encoder, 1); encodeSteps(encoder, 1, -1); }
+    device.queue.submit([encoder.finish()]); return step - start + (direction === -1 ? 2 : 0);
+  }
   const groupCount = Math.ceil(words / 64), stats = buffer(groupCount * 16, GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, 'Q2R integer reductions');
   const diagShader = await checkedShader(device, common + `
 @group(0) @binding(2) var<storage,read_write> result:array<vec4i>;
@@ -92,8 +122,8 @@ var<workgroup> sums:array<vec4i,64>;
   const levels = []; let pw = width, ph = height, offset = 0;
   while (true) { levels.push({ width: pw, height: ph, offset }); offset += pw * ph; if (pw === 1 && ph === 1) break; pw = Math.ceil(pw / 2); ph = Math.ceil(ph / 2); }
   const pyramid = buffer(offset * 8, GPUBufferUsage.STORAGE, 'Q2R paired-layer block counts');
-  const renderUniform = buffer(32, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'Q2R view');
-  const viewDeclaration = `struct View {size:vec2f,zoom:f32,exposure:f32,detail:f32,visibility:f32,blend:f32,reverse:f32};`;
+  const renderUniform = buffer(64, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'Q2R view');
+  const viewDeclaration = `struct View {size:vec2f,zoom:f32,exposure:f32,detail:f32,visibility:f32,blend:f32,reverse:f32,inkA:vec4f,inkB:vec4f};`;
   const offsets = levels.map(l => `${l.offset}u`).join(','), widths = levels.map(l => `${l.width}u`).join(','), heights = levels.map(l => `${l.height}u`).join(','), declarations = `const OFF=array<u32,${levels.length}>(${offsets});const LW=array<u32,${levels.length}>(${widths});const LH=array<u32,${levels.length}>(${heights});`;
   const hierarchyShader = await checkedShader(device, `
 ${declarations} ${viewDeclaration} override LEVEL:u32=0;
@@ -121,20 +151,20 @@ fn average(uv:vec2f,level:u32)->f32 {let p=uv*vec2f(${width},${height})/f32(1u<<
  return mix(mix(cell(level,q.x,q.y),cell(level,q.x+1,q.y),f.x),mix(cell(level,q.x,q.y+1),cell(level,q.x+1,q.y+1),f.x),f.y);}
 fn scale(uv:vec2f,lod:f32)->f32 {let l=clamp(lod,0,f32(${levels.length - 1}));let lo=u32(floor(l));return mix(average(uv,lo),average(uv,min(lo+1,${levels.length - 1}u)),fract(l));}
 @fragment fn fragment(@builtin(position) pos:vec4f)->@location(0) vec4f {
- let fit=min(view.size.x/min(${width}.,${height}.*.72),view.size.y/${height}.)*.98;let extent=vec2f(${width},${height})*fit;
+ let fit=min(view.size.x/min(${width}.,${height}.*.90),view.size.y/${height}.)*.98;let extent=vec2f(${width},${height})*fit;
  let plane=(pos.xy-view.size*.5)/extent+.5;let uv=(plane-.5)/view.zoom+.5;
  let base=vec3f(.029557,.040915,.030713); var color=base;
  if(all(plane>vec2f(0))&&all(plane<vec2f(1))){
  let lod=max(0.,.45-log2(view.zoom))+view.detail;
  let value=.88*scale(uv,lod)+.10*scale(uv,lod+1.5)+.02*scale(uv,lod+3.);
- let shade=smoothstep(.06,.9,value);let ink=vec3f(.38,.322,.214);
+ let shade=smoothstep(.06,.9,value);let ink=mix(view.inkA.rgb,view.inkB.rgb,smoothstep(.15,.85,uv.y));
  let edge=smoothstep(0.,.016,min(min(plane.x,plane.y),min(1-plane.x,1-plane.y)));
  color=mix(base, mix(base*.78,ink,shade),edge);}
  return vec4f(mix(base,color,clamp(view.visibility,0.,1.))*max(0.,view.exposure),1);}`, 'Q2R paired-layer domain renderer');
   const renderer = await device.createRenderPipelineAsync({ layout: 'auto', vertex: { module: renderShader, entryPoint: 'vertex' }, fragment: { module: renderShader, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } });
   const renderGroup = device.createBindGroup({ layout: renderer.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: pyramid } }, { binding: 1, resource: { buffer: renderUniform } }] });
-  function render({ encoder, targetView, width: rw, height: rh, exposure = 1, zoom = 1, detail = 0, visibility = 1, blend = 1, timestampWrites }) {
-    device.queue.writeBuffer(renderUniform, 0, new Float32Array([rw, rh, zoom, exposure, detail, visibility, blend, lastDirection === -1 ? 1 : 0]));
+  function render({ encoder, targetView, width: rw, height: rh, exposure = 1, zoom = 1, detail = 0, visibility = 1, blend = 1, inkA = [.687,.309,.263], inkB = [.275,.451,.571], timestampWrites }) {
+    device.queue.writeBuffer(renderUniform, 0, new Float32Array([rw, rh, zoom, exposure, detail, visibility, blend, lastDirection === -1 ? 1 : 0, ...inkA, 1, ...inkB, 1]));
     for (let level = 0; level < levels.length; level++) {
       const pipeline = hierarchyPipelines[level], pass = encoder.beginComputePass(); pass.setPipeline(pipeline);
       pass.setBindGroup(0, device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [fields[x], fields[y], fields[scratch], pyramid, renderUniform].map((buffer, binding) => ({ binding, resource: { buffer } })) }));
@@ -143,7 +173,7 @@ fn scale(uv:vec2f,lod:f32)->f32 {let l=clamp(lod,0,f32(${levels.length - 1}));le
     const pass = encoder.beginRenderPass({ label: 'Q2R scene radiance', colorAttachments: [{ view: targetView, loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }], ...(timestampWrites ? { timestampWrites } : {}) });
     pass.setPipeline(renderer); pass.setBindGroup(0, renderGroup); pass.draw(3); pass.end();
   }
-  return { update, encodeSteps, readback, render, width, height, words, bufferBytes: owned.reduce((n, b) => n + b.size, 0),
+  return { update, encodeSteps, readback, render, prepareTimeline, seekTimeline, width, height, words, get bufferBytes() { return owned.reduce((n, b) => n + b.size, 0); },
     dispose() { if (disposed) return; disposed = true; for (const resource of owned) resource.destroy(); } };
   } catch (error) { for (const resource of owned) resource.destroy(); throw error; }
 }

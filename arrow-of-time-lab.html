@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#303931">
   <meta name="robots" content="noindex">
   <title>Arrow of time</title>
-  <meta name="description" content="An hourglass dissolves into a reversible Ising cellular automaton, then returns through the exact inverse dynamics.">
+  <meta name="description" content="An original moth drawing dissolves into a reversible Ising cellular automaton, then returns through the exact inverse dynamics.">
   <meta property="og:title" content="Arrow of time">
   <meta property="og:description" content="A reversible spin lattice loses its coarse image and computes its way back.">
   <meta property="og:type" content="website">
@@ -14,7 +14,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="arrow-of-time.css?v=2">
+  <link rel="stylesheet" href="arrow-of-time.css?v=3">
 </head>
 <body>
   <div class="site-wrapper aot-site">
@@ -27,23 +27,38 @@
       <section class="aot-piece" id="aot-piece" aria-label="Reversible spin lattice" aria-busy="true">
         <div class="aot-stage">
           <canvas id="aot-canvas" aria-label="Two-tone domains computed from the current spin lattice"></canvas>
-          <canvas id="aot-still" hidden aria-label="CPU-generated still of the initial hourglass spin lattice"></canvas>
-          <p class="aot-loading" id="aot-loading" role="status">Preparing the spin lattice.</p>
+          <canvas id="aot-still" hidden aria-label="CPU-generated still of the initial moth spin lattice"></canvas>
+          <p class="aot-loading" id="aot-loading" role="status">Rendering the dissolve and return.</p>
           <p class="aot-still-label" id="aot-still-label" hidden>Still from the deterministic CPU model</p>
         </div>
-        <div class="aot-score" aria-hidden="true"><span id="aot-progress"></span></div>
+        <div class="aot-timeline">
+          <label for="aot-timeline">Dissolve and return <output id="aot-position">0:00 / 6:00</output></label>
+          <input id="aot-timeline" type="range" min="0" max="8640" value="0" step="1" disabled aria-label="Sequence timeline" aria-valuetext="Opening image">
+          <div class="aot-timeline-marks" aria-hidden="true"><span>Image</span><span>Reverse</span><span>Exact return</span></div>
+        </div>
         <div class="aot-caption"><p id="aot-phase" role="status">An image, before it comes apart.</p><span id="aot-caption-detail">Every spin keeps its history.</span></div>
         <div class="aot-toolbar">
           <button type="button" id="aot-play" disabled>Pause</button>
           <button type="button" id="aot-instruments-toggle" aria-expanded="false" aria-controls="aot-instruments">Instruments</button>
           <button type="button" id="aot-restart" disabled>Restart</button>
           <button type="button" id="aot-fullscreen">Fullscreen</button>
+          <button type="button" id="aot-draw-toggle" aria-expanded="false" aria-controls="aot-editor">Draw your own</button>
         </div>
+        <section id="aot-editor" class="aot-editor" hidden aria-label="Create a starting image">
+          <canvas id="aot-drawing" width="384" height="256" tabindex="0" aria-label="Drawing pad. Drag to draw. Arrow keys move the brush; Enter toggles the pen."></canvas>
+          <div class="aot-editor-tools">
+            <p>Draw a shape, choose its colors, then render its dissolve and return.</p>
+            <div class="aot-colors"><label>First ink<input id="aot-ink-a" type="color" value="#d9978c"></label><label>Second ink<input id="aot-ink-b" type="color" value="#8fb3c7"></label></div>
+            <div class="aot-editor-actions"><button id="aot-eraser" type="button" aria-pressed="false">Eraser</button><button id="aot-clear" type="button">Clear</button><button id="aot-template" type="button">Moth</button></div>
+            <button id="aot-render-drawing" type="button" disabled>Render drawing</button>
+            <p class="aot-note" id="aot-drawing-note" role="status">Use your mouse or touch. Keyboard: arrows move, Enter toggles the pen.</p>
+          </div>
+        </section>
         <div class="aot-instruments" id="aot-instruments" hidden>
-          <p class="aot-schedule">Scheduled: 4,320 forward steps, then 4,320 inverse steps. At the default pace, each direction takes three active minutes. A completed return is followed by an explicit reset to the next authored image.</p>
+          <p class="aot-schedule">Scheduled: 4,320 forward steps, then 4,320 inverse steps. At the default pace, each direction takes three active minutes. A completed return is followed by an explicit reset to the next authored image. Your drawing repeats until you choose another image. Timeline jumps use stored exact states; normal playback computes every update.</p>
           <dl class="aot-readouts" id="aot-readouts"></dl>
           <div class="aot-controls">
-            <label>Authored image<select id="aot-preset"><option value="hourglass">Hourglass</option><option value="rings">Concentric rings</option><option value="window">Window</option></select></label>
+            <label>Authored image<select id="aot-preset"><option value="moth">Moth</option><option value="bloom">Bloom</option><option value="orbit">Orbit</option><option value="custom" hidden>Your drawing</option></select></label>
             <label>Playback pace<select id="aot-rate"><option value="24">24 steps / second</option><option value="96">96 steps / second</option><option value="768">768 steps / second, accelerated</option></select></label>
             <label>Resolved zoom <span id="aot-zoom-value">1.0</span><input id="aot-zoom" type="range" min="1" max="4" value="1" step="0.1"></label>
             <button type="button" id="aot-record" disabled>Save exact state</button>
@@ -54,8 +69,8 @@
         <p class="aot-error" id="aot-error" hidden role="status"></p>
       </section>
       <div class="aot-explanation">
-        <p>The hourglass comes back, down to its last spin. Two layers of a rectangular lattice evolve by one reversible rule: when four neighbors split two and two, a spin in the older layer flips. The image dissolves into moving domains. After three minutes the rule runs backward, and both layers return exactly. Instruments checks the complete state.</p>
-        <p class="aot-note">Gold and green show the mean of both time layers. Fine block averages keep the cell detail visible, and brief transitions between computed states soften the motion. The microscopic information survives even when the coarse image disappears; this authored orbit is not a thermal sample.</p>
+        <p>The moth comes back, down to its last spin. Two layers of a rectangular lattice evolve by one reversible rule: when four neighbors split two and two, a spin in the older layer flips. The image dissolves into moving domains. Drag the timeline to any part of its six-minute dissolve and return, or press Play to watch. The sequence is prepared from the exact rule, and Instruments checks both layers at the end. Draw your own replaces the starting image.</p>
+        <p class="aot-note">Copper and blue show the mean of both time layers, with a vertical color blend. The inks are adjustable. Fine block averages keep the cell detail visible, and brief transitions between computed states soften the motion. The microscopic information survives even when the coarse image disappears; this authored orbit is not a thermal sample.</p>
         <details class="u-collapse">
           <summary class="u-collapse-s">Sources and implementation</summary>
           <ol class="u-collapse-list">
@@ -68,6 +83,6 @@
     </main>
     <footer class="site-footer"><a href="/">Ethan Willingham</a></footer>
   </div>
-  <script type="module" src="js/arrow-of-time.js?v=2"></script>
+  <script type="module" src="js/arrow-of-time.js?v=3"></script>
 </body>
 </html>
