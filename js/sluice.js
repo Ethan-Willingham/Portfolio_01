@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.165';
+  var GAME_VERSION = 'v28.166';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -56408,27 +56408,13 @@
   }
 
   // ---- drawing primitives ------------------------------------------------
-  // The modal surface: solid gunmetal plate, dark outline, one warm top
-  // light line, small brass corner ticks. Quiet; the content is the show.
+  // A plain gunmetal plate with a continuous dark outline. Titles and
+  // interior spacing organize the content; the frame has no accent marks.
   function ukPanelBox(x, y, w, h) {
-    ctx.fillStyle = 'rgba(0,0,0,0.34)';
-    ctx.fillRect(x - 5, y - 1, w + 10, h + 9);
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillRect(x + 1, y + 4, w, h + 1);
     ctx.fillStyle = UIT_EDGE;
     ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
     ctx.fillStyle = UIT_PANEL;
     ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = 'rgba(255,216,150,0.09)';
-    ctx.fillRect(x, y, w, 1);
-    ctx.fillStyle = 'rgba(0,0,0,0.28)';
-    ctx.fillRect(x, y + h - 2, w, 2);
-    // brass ticks in each corner
-    ctx.fillStyle = '#8a6a30';
-    ctx.fillRect(x + 3, y + 3, 8, 2); ctx.fillRect(x + 3, y + 3, 2, 8);
-    ctx.fillRect(x + w - 11, y + 3, 8, 2); ctx.fillRect(x + w - 5, y + 3, 2, 8);
-    ctx.fillRect(x + 3, y + h - 5, 8, 2); ctx.fillRect(x + 3, y + h - 11, 2, 8);
-    ctx.fillRect(x + w - 11, y + h - 5, 8, 2); ctx.fillRect(x + w - 5, y + h - 11, 2, 8);
   }
   // A recessed dark niche (art stages, list wells).
   function ukInset(x, y, w, h) {
@@ -57333,7 +57319,6 @@
     // skip bespoke-page tabs on keyboard cycling
     if (!ukModal.tabs[nt].open) ukSwitchTab(ukModal.tabs[nt].id);
   }
-
   // ====================================================================
   //  STORE -- the station shop, rebuilt on the shared UI kit (245).
   // ====================================================================
