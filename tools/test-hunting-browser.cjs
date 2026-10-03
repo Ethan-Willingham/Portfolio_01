@@ -6,7 +6,7 @@ const http = require('node:http');
 const { chromium } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v9-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v10-qa';
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const errors = [], missing = [];
@@ -31,14 +31,36 @@ window.__huntTest = {
  sceneAssets: () => ['birch-terrain','birch-sky','lookout-stand'].map(name => ({
   name, width:art.sprites[name].naturalWidth,height:art.sprites[name].naturalHeight,complete:art.sprites[name].complete})),
  detailState: () => ({density:art.scene.effective_width,active:view.activeDetail.map(id=>({id,state:view.detailTiles.get(id).state})),
-  resident:[...view.detailTiles.values()].filter(t=>t.image).length,
-  buffers:[...view.paintedLayers.keys()].filter(id=>view.detailTiles.has(id)).length}),
- fieldExposure: () => {
-  const sample=document.createElement('canvas');sample.width=640;sample.height=360;
-  const g=sample.getContext('2d');g.drawImage(canvas,0,0,640,360);
-  const p=g.getImageData(200,180,230,84).data;let sum=0;
-  for(let i=0;i<p.length;i+=4)sum+=.2126*p[i]+.7152*p[i+1]+.0722*p[i+2];
-  return sum/(p.length/4);
+  resident:[...view.detailTiles.values()].filter(t=>t.image).length}),
+ sourceColorError: () => {
+  // Compare the artwork without live celestial marks. Allow two RGB steps for
+  // GPU/CPU canvas sampling differences after a readback switches its backend.
+  window.__huntSuppressSun=true;
+  draw(false);
+  const expected=document.createElement('canvas');expected.width=canvas.width;expected.height=canvas.height;
+  const g=expected.getContext('2d');g.setTransform(canvas.width/640,0,0,canvas.height/360,0,0);
+  g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+  const zoom=view.camera.zoom;
+  if(zoom>1){g.translate(320-view.camera.screenX*zoom,180-view.camera.screenY*zoom);g.scale(zoom,zoom);}
+  g.drawImage(art.sprites['birch-sky'],0,0,640,360);
+  const fit=.6/(1-art.scene.horizon),left=(640-640*fit)/2,top=360-360*fit;
+  g.drawImage(art.sprites[zoom>1?'birch-underpaint':'birch-terrain'],left,top,640*fit,360*fit);
+  if(zoom>1)for(const tile of art.scene.tiles){
+   if(!view.activeDetail.includes(tile.id))continue;
+   const [x,y,w,h]=tile.rect;
+   g.drawImage(art.sprites[tile.id],left+x*640*fit,top+y*360*fit,w*640*fit,h*360*fit);
+  }
+  else g.drawImage(art.sprites['lookout-stand'],0,0,640,360);
+  const actual=canvas.getContext('2d'),areas=zoom>1?[[300,170,40,20],[180,165,20,30],[445,165,20,30]]
+   :[[300,130,120,8],[200,190,230,74],[180,330,140,22]];
+  const differences=areas.map(([x,y,w,h])=>{
+   const sx=canvas.width/640,sy=canvas.height/360;
+   const rect=[Math.round(x*sx),Math.round(y*sy),Math.round(w*sx),Math.round(h*sy)];
+   const a=actual.getImageData(...rect).data,b=g.getImageData(...rect).data;let difference=0;
+   for(let i=0;i<a.length;i+=4)for(let c=0;c<3;c++)difference+=Math.abs(a[i+c]-b[i+c]);
+   return difference/(a.length/4*3);
+  });
+  delete window.__huntSuppressSun;draw(false);return differences;
  },
  state: () => ({phase, time: world.time, minute: campaign.state.minute, day: campaign.day,
   x: world.hunter.x, y: world.hunter.y, height: world.hunter.height,
@@ -207,19 +229,24 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     await page.screenshot({path:path.join(dump,'wide-field.png')});
     await page.evaluate(()=>__huntTest.showcase());await page.screenshot({path:path.join(dump,'sunny-field.png')});
     fs.writeFileSync(path.join(dump,'sunny-field-canvas.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
-    await page.evaluate(()=>{__huntTest.quiet();__huntTest.clock(407);});
-    const dawnExposure=await page.evaluate(()=>__huntTest.fieldExposure());
+    await page.evaluate(()=>__huntTest.quiet());
+    for(const minute of [330,407,720,1350]) {
+      await page.evaluate(minute=>__huntTest.clock(minute),minute);
+      const colorErrors=await page.evaluate(()=>__huntTest.sourceColorError());
+      check('sky, field and stand retain source colors at minute '+minute,colorErrors.every(error=>error<1));
+    }
+    await page.evaluate(()=>__huntTest.clock(407));
     fs.writeFileSync(path.join(dump,'morning-0647.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
-    await page.evaluate(()=>__huntTest.clock(720));const fullExposure=await page.evaluate(()=>__huntTest.fieldExposure());
-    check('06:47 keeps clear field light rather than a gray dawn wash',dawnExposure/fullExposure>.88);
     await page.evaluate(()=>__huntTest.clock(407));
     for(const [name,x,y] of [['meadow',350,235],['treeline',320,151],['birch',80,90],['flowers',580,280]]) {
       await page.evaluate(({x,y})=>__huntTest.sceneFocus(x,y),{x,y});
       await page.waitForFunction(()=>{const d=__huntTest.detailState();return d.active.length&&d.active.every(t=>t.state==='ready');});
       check('6x '+name+' loads native fine detail',await page.evaluate(()=>__huntTest.detailState().density>=6000));
+      const scopeColors=await page.evaluate(()=>__huntTest.sourceColorError());
+      check('6x '+name+' keeps source colors across the clear lens',scopeColors.every(error=>error<2));
       fs.writeFileSync(path.join(dump,'detail-'+name+'.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
     }
-    check('panning keeps at most six decoded detail images and lighting buffers',await page.evaluate(()=>{const s=__huntTest.detailState();return s.resident<=6&&s.buffers<=6;}));
+    check('panning keeps at most six decoded detail images',await page.evaluate(()=>__huntTest.detailState().resident<=6));
     await page.evaluate(()=>__huntTest.quiet());
     check('default arrival locations are visible in the perspective field',await page.evaluate(()=>__huntTest.arrivalBounds()));
     await page.evaluate(()=>{__huntTest.quiet();__huntTest.clock(360);});
@@ -237,7 +264,7 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     await page.evaluate(()=>__huntTest.clock(930)); const afternoonSun=await page.evaluate(()=>__huntTest.sunCenter());
     check('the sun itself crosses the rendered sky with the day clock',morningSun&&afternoonSun&&afternoonSun.x-morningSun.x>180);
     await page.evaluate(()=>__huntTest.clock(720)); const midday=await page.evaluate(()=>__huntTest.screenshot());
-    check('the real clock visibly changes the sun and field light',sunrise!==midday);
+    check('the real clock visibly changes the celestial scene',sunrise!==midday);
     fs.writeFileSync(path.join(dump,'noon-field.png'),Buffer.from(midday,'base64'));
     for(const [name,minute] of [['dawn',330],['dusk',1110],['night',1350]]) {
       await page.evaluate(minute=>__huntTest.clock(minute),minute);
@@ -417,7 +444,7 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     await crisp.evaluate(()=>{__huntTest.quiet();__huntTest.clock(407);__huntTest.sceneFocus(350,235);});
     await crisp.waitForFunction(()=>{const d=__huntTest.detailState();return d.active.length&&d.active.every(t=>t.state==='ready');});
     check('Retina scope uses the full capped display canvas',await crisp.locator('#hunt-canvas').evaluate(c=>c.width===2560&&c.height===1440));
-    check('Retina scope loads native detail within the six-image budget',await crisp.evaluate(()=>{const s=__huntTest.detailState();return s.density>=6000&&s.resident<=6&&s.buffers<=6;}));
+    check('Retina scope loads native detail within the six-image budget',await crisp.evaluate(()=>{const s=__huntTest.detailState();return s.density>=6000&&s.resident<=6;}));
     fs.writeFileSync(path.join(dump,'retina-scope.png'),Buffer.from(await crisp.evaluate(()=>__huntTest.screenshot()),'base64'));
     check('scripts have no page errors and all local assets load',!errors.length&&!missing.length);
     console.log('Passed checks: '+passedChecks);

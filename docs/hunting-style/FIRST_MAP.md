@@ -11,7 +11,9 @@ The generated masters, complete prompts, export manifest and completed review
 are in `../../assets/hunting/source-v9/`, with the original sky and stand
 in `source-v8/`. The owner requested finer zoom detail and brighter light after
 reviewing the first scene at 06:47. Version 9 supplies 14 registered native
-detail tiles, a compact wide overview and a gentler dawn exposure curve.
+detail tiles and a compact wide overview. The owner then rejected the remaining
+artificial darkness at 05:30. Version 10 removes all exposure and color overlays
+from the painted scenery, preserving its original appearance at every hour.
 Fresh saves begin at 08:00; existing
 saves retain their time. Progression and ballistics use the existing tuning.
 
@@ -71,8 +73,9 @@ at a prototype through the actual scope. Current geometry and input stay aligned
 
 Do not bake animals, a sun or moon, cursor, reticle, scope mask, text or interface
 into the scenery. Review the source without display overlays, then in the live
-field. A daylight image also needs a deliberate plan for dawn, dusk and night;
-one opaque tint over it can erase the light relationships being studied.
+field. The current owner preference is the artwork's original exposure at every
+hour. Any later dawn, dusk or night composition must be deliberately painted
+and reviewed; an opaque tint erases the light relationships being studied.
 
 The first scene becomes the quality reference for the later UI and animal passes.
 Existing animals and controls can be used to test placement while those passes

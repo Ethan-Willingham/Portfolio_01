@@ -15,7 +15,8 @@ On 2026-10-03 the owner directed every visual part of the game to follow the
 Birch Clearing uses an oil-painted scene, with an
 open meadow, clouded sky and a visible wooden hunting stand. The owner asked
 for a calm, easy level-one feeling. `hunting-style/FIRST_MAP.md` records its
-composition. Version 9 adds native scope detail and clearer dawn light;
+composition. Version 9 adds native scope detail. Version 10 removes artificial
+dimming and tinting so the painted scenery keeps its source colors;
 `assets/hunting/source-v9/ASSET_BRIEF.md` records production and visual review.
 Animals, Cypress scenery and the remaining interface await their own passes.
 
@@ -54,7 +55,9 @@ through the scope. There is no walking or preparation required before a shot.
 
 Hold Fast forward, F or Space to move the day along. The sun travels visibly
 across the sky from the same clock used by the simulation and saved time.
-Dawn, daylight, dusk and night change the light. The clock can continue through
+The sun, moon and stars follow that clock. Birch Clearing keeps the painted
+sky, meadow and stand at their original exposure at every hour, including dawn
+and night. Cypress retains its procedural lighting. The clock can continue through
 the night into the next day without a camp screen or departure gate.
 Fresh saves start at 08:00 in Birch Clearing; existing saves keep their clock.
 
@@ -222,9 +225,10 @@ soft acceleration, diagonal speed, zoom and re-entry continuity, scope lens
 bounds, touch aiming and pan release, pause, focus loss, held-input
 cleanup after a focus change, stalled frames, pending recoveries, fullscreen,
 records and reload. Scene checks verify native painted layers, display resolution
-and live sun movement. Four scenery targets verify loaded 6x detail, six-image
-cache limits and native density; a Retina capture verifies the 2560 by 1440
-display cap. The 06:47 field retains at least 88 percent of its midday luminance.
+and live sun movement. Raw source composites are compared with actual sky,
+field and stand pixels at 05:30, 06:47, midday and night. Four scenery targets
+verify loaded 6x detail, unchanged colors across the lens, six-image cache limits
+and native density; a Retina capture verifies the 2560 by 1440 display cap.
 Captures cover dawn, noon, dusk and night. Closing More
 offscreen keeps the field paused. The checks
 also inspect desktop, portrait, narrow-phone and
@@ -233,5 +237,5 @@ landscape layouts for overflow and usable controls.
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v9-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v10-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.
