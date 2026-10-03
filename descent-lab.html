@@ -14,7 +14,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="descent.css?v=1">
+  <link rel="stylesheet" href="descent.css?v=2">
 </head>
 <body class="descent-page">
   <div class="site-wrapper">
@@ -30,7 +30,7 @@
           <div class="descent-rail" aria-hidden="true"><i id="descent-progress"></i></div>
         </div>
         <div class="descent-toolbar">
-          <div class="descent-actions"><button type="button" id="descent-pause">Pause</button><button type="button" id="descent-instruments" aria-expanded="false" aria-controls="descent-panel">Instruments</button><button type="button" id="descent-restart">Restart</button></div>
+          <div class="descent-actions"><button type="button" id="descent-pause">Pause</button><button type="button" id="descent-speed" title="Change playback speed">Speed: 1x</button><button type="button" id="descent-next">Next room</button><button type="button" id="descent-instruments" aria-expanded="false" aria-controls="descent-panel">Instruments</button><button type="button" id="descent-restart">Restart</button></div>
           <button type="button" id="descent-fullscreen" aria-pressed="false">Fullscreen</button>
         </div>
         <div class="descent-notice" id="descent-notice" role="status">Checking the route.</div>
@@ -55,11 +55,11 @@
         <p id="descent-explanation">A soap film, a superfluid, a hydrogen atom and a gauge field can share a frame without sharing an equation. Descent moves between them with dark rests. The journey is editorial; each room keeps its own clock, colors and scale.</p>
         <p class="descent-scale" id="descent-scale">Scales are labeled per model, without a continuous size ruler.</p>
         <div class="descent-source-links" id="descent-sources" aria-label="Current room sources"></div>
-        <details class="u-collapse"><summary class="u-collapse-s">How this prototype works</summary><div class="descent-method"><p>The proposed route spends 170 seconds in each room, with ten seconds for fades and a rest. A measured event may extend a stay to 210 seconds. Transitions change presentation, never solver coefficients.</p><p>The interim hydrogen study evolves a normalized 1s and 2p state analytically. Brightness encodes probability density, not emitted light. Its 36-second beat is slowed for watching. The no-WebGPU image is a CPU calculation of that same state at zero phase.</p><p>Rooms draw linear radiance into a shared format. Descent applies one Reinhard display mapping and one sRGB transfer. It adds no bloom, fluid warp, dither or sound. Repeated visits begin with a seed derived from the route cycle. GPU replay may differ across devices. The analytic study shares a time law, but visitors are not synchronized to a world clock.</p><p><a href="docs/visualizer/DESCENT.md">Technical notes and integration evidence</a></p></div></details>
+        <details class="u-collapse"><summary class="u-collapse-s">How this prototype works</summary><div class="descent-method"><p>The proposed route spends 170 seconds in each room, with ten seconds for fades and a rest. A measured event may extend a stay to 210 seconds. Transitions change presentation, never solver coefficients. Speed advances the models and route together at up to 4x or 12x, depending on the device. Next room opens the following model immediately; Pause holds at any speed.</p><p>The interim hydrogen study evolves a normalized 1s and 2p state analytically. Brightness encodes probability density, not emitted light. Its 36-second beat is slowed for watching. The no-WebGPU image is a CPU calculation of that same state at zero phase.</p><p>Rooms draw linear radiance into a shared format. Descent applies one Reinhard display mapping and one sRGB transfer. It adds no bloom, fluid warp, dither or sound. Repeated visits begin with a seed derived from the route cycle. GPU replay may differ across devices. The analytic study shares a time law, but visitors are not synchronized to a world clock.</p><p><a href="docs/visualizer/DESCENT.md">Technical notes and integration evidence</a></p></div></details>
       </div>
     </main>
     <footer class="site-footer"><p>A comparison prototype by Ethan Willingham.</p></footer>
   </div>
-  <script type="module" src="js/descent.js?v=1"></script>
+  <script type="module" src="js/descent.js?v=2"></script>
 </body>
 </html>

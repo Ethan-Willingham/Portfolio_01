@@ -41,6 +41,28 @@ assert.equal(roomPresentation('soap-film',{parameters:{ruptureNm:18},diagnostics
 assert.equal(roomPresentation('soap-film',{parameters:{ruptureNm:18},diagnostics:{state:'rest',thicknessRangeNm:[0,0]}}).event.complete,true);
 const ambient=new AmbientClock();let steps=0;ambient.frame(0,true,()=>steps++);ambient.frame(20,true,()=>steps++);assert.equal(steps,1);
 ambient.frame(4000,false,()=>steps++);ambient.frame(5000,true,()=>steps++);assert.equal(steps,1);ambient.frame(5020,true,()=>steps++);assert.equal(steps,2);ambient.frame(20000,true,()=>steps++);assert.ok(steps<=5&&ambient.droppedSeconds>10);
+// Playback advances an identical route through more fixed steps, and cannot
+// carry fast-forward debt through a pause or exceed its bounded work count.
+for(const rate of [1,4,12]) {
+  const watch=new AmbientClock(),route=new RouteClock();let ticks=0;
+  const step=()=>{ticks++;route.tick(FIXED_DT);};
+  watch.frame(0,true,step,{rate});
+  for(let i=1;i<=120;i++)watch.frame(i*1000/60,true,step,{rate});
+  assert.ok(Math.abs(ticks-120*rate)<=1,`Rate ${rate} produced ${ticks} fixed steps`);
+  assert.ok(Math.abs(route.total-ticks*FIXED_DT)<1e-9);
+  watch.frame(10000,false,step,{rate});const before=ticks;
+  watch.frame(11000,true,step,{rate});assert.equal(ticks,before);
+  watch.frame(12000,true,step,{rate});assert.ok(ticks-before<=watch.maxSteps*rate);
+}
+for(const rate of [1,4,12]) {
+  const watch=new AmbientClock(),route=new RouteClock();watch.frame(0,true,()=>{}, {rate});
+  for(let i=1;i<=Math.ceil(60*720/rate)+1;i++)watch.frame(i*1000/60,true,()=>{route.tick(FIXED_DT);}, {rate});
+  assert.equal(route.cycle,1,`Rate ${rate} completes one full route`);assert.equal(route.index,0);
+}
+const bounded=new AmbientClock();let expensive=0;
+bounded.frame(0,true,()=>{}, {rate:12});
+bounded.frame(100,true,()=>{expensive++;const started=performance.now();while(performance.now()-started<3){}},{rate:12,budgetMs:1});
+assert.equal(expensive,1,'Expensive fixed steps yield before a second step');
 // Simultaneous selections serialize creation and dispose their own resources.
 const rapid=new RoomManager({device,registry,targetFactory});await Promise.all(ROUTE.map(r=>rapid.select(r.id,'abcd'.repeat(16))));assert.equal(rapid.active.id,ROUTE.at(-1).id);assert.equal(alive,1);rapid.dispose();assert.equal(alive,0);
-console.log('PASS loading, per-module errors, contract, rgba16float, resize, pause clock, two routes, event ceiling, seed derivation, disposal and serialized selection');
+console.log('PASS loading, per-module errors, contract, rgba16float, resize, pause and fast playback clocks, two routes, event ceiling, seed derivation, disposal and serialized selection');

@@ -38,6 +38,8 @@ async function open(opts={}){
   return{context,page};
 }
 async function screenshot(page,name){
+  await page.locator('#descent-view').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>!Descent.snapshot().offscreen);
   // A paused room selection can finish initialization before the preceding
   // presentation fence's JS callback. Capture the current room after that
   // fence, rather than racing the host's intentional queue guard.
@@ -45,7 +47,8 @@ async function screenshot(page,name){
   const file=path.join(output,name+'.png');await page.screenshot({path:file,fullPage:true});report.screenshots.push(file);
 }
 async function pause(page){if(!(await snap(page)).paused)await page.locator('#descent-pause').click();}
-async function fit(page){const g=await page.evaluate(()=>({width:document.documentElement.scrollWidth,view:innerWidth,buttons:[...document.querySelectorAll('.descent-toolbar button')].map(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,right:r.right};})}));assert.ok(g.width<=g.view+1,JSON.stringify(g));for(const b of g.buttons){assert.ok(b.width>=44&&b.height>=44);assert.ok(b.right<=g.view+1);}}
+async function speed(page,rate){for(let i=0;i<3&&(await snap(page)).playbackRate!==rate;i++)await page.locator('#descent-speed').click();assert.equal((await snap(page)).playbackRate,rate);}
+async function fit(page){const g=await page.evaluate(()=>({width:document.documentElement.scrollWidth,view:innerWidth,buttons:[...document.querySelectorAll('.descent-toolbar button, .descent-toolbar select')].map(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,right:r.right};})}));assert.ok(g.width<=g.view+1,JSON.stringify(g));for(const b of g.buttons){assert.ok(b.width>=44&&b.height>=44);assert.ok(b.right<=g.view+1);}}
 async function stable(page,field='roomTicks') {const a=(await snap(page))[field];await page.waitForTimeout(160);assert.equal((await snap(page))[field],a);}
 async function renderTiming(page){return page.evaluate(async()=>{
   const {device,manager}=__descentTest;const stepCpu=[],stepFence=[];for(let i=0;i<90;i++){await device.queue.onSubmittedWorkDone();const a=performance.now();manager.step(i/60);stepCpu.push(performance.now()-a);await device.queue.onSubmittedWorkDone();stepFence.push(performance.now()-a);}
@@ -147,6 +150,41 @@ async function displayTiming(page){return page.evaluate(async()=>{
     await p.evaluate(()=>__descentTest.seek(176));await screenshot(p,'live-dark-transition');
     await p.evaluate(()=>Descent.selectRoom('soap-film'));await p.locator('#descent-instruments').click();
   }
+  if(start.integration.modulesReady===4){
+    const playback=await open(),sp=playback.page;await pause(sp);
+    await sp.locator('#descent-instruments').click();await sp.selectOption('#descent-quality','low');await sp.waitForFunction(()=>!Descent.snapshot().loading);await sp.locator('#descent-instruments').click();
+    const watch=async(id,rate)=>{
+      await pause(sp);await sp.evaluate(id=>Descent.selectRoom(id),id);await speed(sp,rate);await stable(sp);
+      assert.equal((await snap(sp)).paused,true,'Changing speed must preserve Pause');
+      const before=await snap(sp);await sp.locator('#descent-pause').click();const started=Date.now();await sp.waitForTimeout(1500);await pause(sp);await sp.waitForFunction(()=>!Descent.snapshot().roomWorkPending);
+      const after=await snap(sp);return{seconds:(Date.now()-started)/1000,ticks:after.roomTicks-before.roomTicks,watchingSeconds:after.clock.total-before.clock.total,room:after.room,resources:after.resources};
+    };
+    const normal=await watch('hydrogen-exactly',1),fast=await watch('hydrogen-exactly',12);
+    assert.ok(fast.ticks>normal.ticks*2,`Fast ${fast.ticks}, normal ${normal.ticks}`);
+    assert.ok(Math.abs(fast.watchingSeconds-fast.ticks/60)<1e-7);assert.equal(fast.room.parameterValues.atomicUnitsPerDisplaySecond,normal.room.parameterValues.atomicUnitsPerDisplaySecond);
+    report.playback={normalHydrogen:normal,fastHydrogen:fast,rooms:{}};
+    for(const id of ['soap-film','negative-temperature','qcd-lava-lamp']){
+      const r=await watch(id,12);assert.ok(r.ticks>0);assert.ok(Math.abs(r.watchingSeconds-r.ticks/60)<1e-7);
+      if(id==='soap-film')assert.ok(Math.abs(r.room.simulationTime-r.ticks/60)<.041);
+      if(id==='negative-temperature')assert.ok(Math.abs(r.room.simulationTime-r.ticks/60*r.room.parameters.solverUnitsPerSecond)<.011);
+      if(id==='qcd-lava-lamp')assert.equal(r.room.numericalStepCount,256+Math.floor((r.ticks+1e-7)/30),'Fast batches must preserve two Markov sweeps per model second');
+      report.playback.rooms[id]=r;
+    }
+    pass('Visible 12x playback advances every real model with fixed steps; asynchronous SU(3) sweeps retain their rate');
+    await sp.evaluate(()=>Descent.selectRoom('soap-film'));const cycle=(await snap(sp)).clock.cycle;
+    for(const id of ['negative-temperature','hydrogen-exactly','qcd-lava-lamp','soap-film']){
+      await sp.locator('#descent-next').click();await sp.waitForFunction(id=>!Descent.snapshot().loading&&Descent.snapshot().roomId===id,id);const state=await snap(sp);assert.equal(state.paused,true);assert.equal(state.automatic,false);assert.equal(state.roomTicks,0);
+    }
+    assert.equal((await snap(sp)).clock.cycle,cycle+1);
+    await sp.reload();await sp.waitForFunction(()=>window.Descent&&!Descent.snapshot().loading&&Descent.snapshot().room);assert.equal((await snap(sp)).playbackRate,12);assert.equal((await snap(sp)).paused,true);await stable(sp);
+    pass('Next room previews all four models, preserves Pause and auto choice, and saved speed survives reload');
+    for(const [width,height]of [[1440,900],[390,844],[844,390]]){
+      await sp.setViewportSize({width,height});await sp.waitForTimeout(100);await fit(sp);await screenshot(sp,`playback-controls-${width}x${height}`);
+    }
+    await sp.locator('#descent-speed').focus();await sp.keyboard.press('Enter');assert.equal((await snap(sp)).playbackRate,1);await sp.keyboard.press('Space');assert.equal((await snap(sp)).playbackRate,4);await stable(sp);
+    pass('Speed control supports keyboard input and 44px controls fit desktop, portrait and landscape');
+    await playback.context.close();
+  }
   await pause(p);
   for(const [width,height]of [[1440,900],[390,844],[844,390]]){
     await p.setViewportSize({width,height});await p.waitForTimeout(100);await fit(p);await screenshot(p,`viewport-${width}x${height}`);
@@ -179,7 +217,10 @@ async function displayTiming(page){return page.evaluate(async()=>{
   }
   await p.evaluate(()=>__descentTest.lose());await p.waitForFunction(()=>Descent.snapshot().deviceLost);assert.match(await p.locator('#descent-message-title').textContent(),/device was lost/);await screenshot(p,'device-loss');pass('Device loss releases rooms and reports restart semantics');await real.context.close();
 
-  const fixtures=await open({fixtures:true});const f=fixtures.page;await pause(f);await f.evaluate(()=>__descentTest.restoreClock(5));
+  const fixtures=await open({fixtures:true});const f=fixtures.page;await pause(f);await speed(f,12);await f.evaluate(()=>__descentTest.seek(177));
+  const transitionStarted=Date.now();await f.locator('#descent-pause').click();await f.waitForFunction(()=>!Descent.snapshot().loading&&Descent.snapshot().roomId==='negative-temperature');await pause(f);assert.ok(Date.now()-transitionStarted<2500,'12x must advance the automatic fade/rest/selection');
+  pass('12x playback advances automatic fades, dark rests and room selection');
+  await speed(f,1);await f.evaluate(()=>__descentTest.seek(5));
   for(let cycle=0;cycle<2;cycle++)for(let i=0;i<4;i++){
     const state=await snap(f);assert.equal(state.roomId,ids[i]);assert.equal(state.resources.liveRooms,1);
     await f.evaluate(()=>__descentTest.advance(60*170));assert.ok((await snap(f)).roomTicks>0);await screenshot(f,`fixture-route-${cycle+1}-${ids[i]}`);
@@ -191,10 +232,10 @@ async function displayTiming(page){return page.evaluate(async()=>{
   for(let i=0;i<16;i++)await f.evaluate(id=>Descent.selectRoom(id),ids[i%4]);const repeat=await snap(f);assert.equal(repeat.resources.room.buffers,1);assert.equal(repeat.resources.room.bytes,16);assert.ok(await f.evaluate(()=>__rafPending.size<=1));
   await f.evaluate(()=>__descentTest.seek(176));await f.evaluate(()=>__descentTest.draw());await screenshot(f,'fixture-editorial-transition');
   await f.evaluate(()=>Descent.dispose());assert.equal(await f.evaluate(()=>__rafPending.size),0);assert.equal((await snap(f)).resources.liveRooms,0);
-  const stopped=await snap(f);await f.locator('#descent-pause').click();await f.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});const inert=await snap(f);assert.equal(inert.paused,stopped.paused);assert.equal(inert.hidden,stopped.hidden);assert.equal(await f.evaluate(()=>__rafPending.size),0);
+  const stopped=await snap(f);await f.locator('#descent-pause').click();await f.locator('#descent-speed').click();await f.locator('#descent-next').click();await f.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});const inert=await snap(f);assert.equal(inert.paused,stopped.paused);assert.equal(inert.playbackRate,stopped.playbackRate);assert.equal(inert.roomId,stopped.roomId);assert.equal(inert.hidden,stopped.hidden);assert.equal(await f.evaluate(()=>__rafPending.size),0);
   pass('Two whole fixture routes and sixteen switches retain one room, free tracked resources, and abort input/visibility listeners');await fixtures.context.close();
-  const reduced=await open({reduced:true});assert.equal((await snap(reduced.page)).paused,true);assert.equal((await snap(reduced.page)).automatic,false);await stable(reduced.page);await reduced.page.locator('#descent-pause').click();await reduced.page.waitForTimeout(120);assert.ok((await snap(reduced.page)).roomTicks>0);pass('Reduced motion starts still and Play explicitly begins stepping');await reduced.context.close();
-  const fallback=await open({noGPU:true,viewport:{width:390,height:844},mobile:true});assert.equal(await fallback.page.locator('#descent-still').isVisible(),true);assert.equal(await fallback.page.locator('#descent-pause').isDisabled(),true);await fit(fallback.page);await screenshot(fallback.page,'no-webgpu-calculated-still');pass('No WebGPU presents the labeled CPU-calculated still');await fallback.context.close();
+  const reduced=await open({reduced:true});assert.equal((await snap(reduced.page)).paused,true);assert.equal((await snap(reduced.page)).automatic,false);assert.equal((await snap(reduced.page)).playbackRate,1);await stable(reduced.page);await reduced.page.locator('#descent-pause').click();await reduced.page.waitForTimeout(120);assert.ok((await snap(reduced.page)).roomTicks>0);pass('Reduced motion starts still and Play explicitly begins stepping');await reduced.context.close();
+  const fallback=await open({noGPU:true,viewport:{width:390,height:844},mobile:true});assert.equal(await fallback.page.locator('#descent-still').isVisible(),true);assert.equal(await fallback.page.locator('#descent-pause').isDisabled(),true);assert.equal(await fallback.page.locator('#descent-speed').isDisabled(),true);assert.equal(await fallback.page.locator('#descent-next').isDisabled(),true);await fit(fallback.page);await screenshot(fallback.page,'no-webgpu-calculated-still');pass('No WebGPU presents the labeled CPU-calculated still');await fallback.context.close();
   const missing=await open({fixtures:'missing',reduced:true});const m=missing.page;assert.equal((await snap(m)).roomId,'descent-bootstrap');assert.equal((await snap(m)).integration.complete,false);
   const density=await m.evaluate(()=>Descent.debugReadback());assert.ok(Math.max(...density.values.map((v,i)=>Math.abs(v-density.cpuReference[i])/Math.max(1e-7,Math.abs(density.cpuReference[i]))))<3e-5);
   await m.locator('#descent-instruments').click();await m.selectOption('#descent-room','soap-film');await m.waitForFunction(()=>!Descent.snapshot().loading);assert.equal((await snap(m)).room,null);assert.match(await m.locator('#descent-message-detail').textContent(),/soap-film-room/);await screenshot(m,'missing-module-error');pass('Absent route modules show their exact paths; interim GPU density matches its CPU model');

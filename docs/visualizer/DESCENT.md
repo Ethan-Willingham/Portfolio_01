@@ -1,7 +1,7 @@
 # Descent
 
 [Open the comparison prototype](https://ethanwillingham.com/descent-lab.html).
-It starts silently, with Pause, Instruments, Restart and Fullscreen. Direct
+It starts silently, with Pause, Speed, Next room, Instruments, Restart and Fullscreen. Direct
 room choice, route position, quality, hydrogen state and seed controls live
 inside Instruments. No homepage or hub curation changes belong to this build.
 
@@ -60,6 +60,17 @@ These conditions come from snapshots; brightness never invents a climax.
 Neither coefficients nor solver time are changed to meet the route schedule.
 The opacity envelope is an editorial fade in linear radiance, not a physical
 interpolation between equations. There is no moving tunnel or compulsory camera.
+
+The visible Speed button cycles through 1x, 4x and 12x playback. They schedule additional
+unchanged 1/60 steps for the model and route together. Fast playback yields
+after about 12 ms of CPU work per frame and retains a bounded step count;
+a single source step can exceed that budget. Actual speed depends on the
+device and room, with no skipped model steps to reach a time target.
+The gauge room's public waitForIdle finishes an asynchronous sweep before
+another host step runs, preserving the requested sweeps per model second.
+Speed is saved, changing it does not resume Pause, and reduced motion starts
+at 1x. Next room immediately starts the following room from its derived seed
+and preserves Pause and the automatic-journey choice.
 
 One requestAnimationFrame loop drives a fixed 1/60 ambient step. The bounded
 work budget drops excess wall-clock debt rather than taking an enormous step.
@@ -330,6 +341,25 @@ Additional captures show [rupture](../../assets/visualizer/descent/evidence/whol
 [device loss](../../assets/visualizer/descent/evidence/whole-route/device-loss.png), and the
 [calculated no-WebGPU fallback](../../assets/visualizer/descent/evidence/whole-route/no-webgpu-calculated-still.png).
 The reports retain both routes and the complete layout matrix.
+
+## Playback update checks
+
+The [playback update report](../../assets/visualizer/descent/evidence/playback/report.json)
+records 24 passed browser checks. All four actual rooms advanced through
+unchanged fixed steps at the requested faster rate. The gauge sweep count
+remained its initial 256 plus one sweep per 30 host steps. Faster hydrogen
+playback completed 667 host steps in about 1.57 wall seconds, compared
+with 87 at 1x in a separate sample; these are device observations, not
+promised rates. Automatic fades, rests and room changes accelerated too.
+Next room preserved Pause and the automatic choice, speed survived reload,
+Enter and Space operated the speed button, and unavailable WebGPU disabled
+both controls. Disposal removed both new controls' event listeners.
+
+The report and module manifest record the exact served bytes. Updated layouts:
+[desktop](../../assets/visualizer/descent/evidence/playback/playback-controls-1440x900.png),
+[portrait](../../assets/visualizer/descent/evidence/playback/playback-controls-390x844.png),
+[landscape](../../assets/visualizer/descent/evidence/playback/playback-controls-844x390.png).
+The original two full real-route captures remain the baseline evidence above.
 
 ## Sources and asset provenance
 
