@@ -123,12 +123,12 @@ async function setup(context, url) {
     await page.locator('#cart-start').click();await page.waitForFunction(()=>__cartAudioTest.state().context==='running');
     await page.evaluate(()=>{__cartAudioTest.event({type:'won'});return __cartAudioTest.suspend();});await page.locator('#cart-pause').click();
     check('an operating system audio interruption releases paused sources immediately',(await state(page)).voices===0&&(await state(page)).context==='suspended');
-    await page.locator('#cart-courses').click();check('route selection remains silent',await sample(page)<.0001);await page.locator('#cart-picker-close').click();
+    await page.locator('#cart-options summary').click();await page.locator('#cart-courses').click();check('route selection remains silent',await sample(page)<.0001);await page.locator('#cart-picker-close').click();
     await page.locator('#cart-start').click();await page.keyboard.down('w');await page.waitForTimeout(250);await page.keyboard.up('w');await page.keyboard.press('r');await page.waitForTimeout(100);check('restart confirmation silences the moving cart',(await state(page)).phase==='confirm'&&await sample(page)<.0001);await page.locator('#cart-secondary').click();
-    await page.locator('#cart-pause').click();await page.locator('#cart-sound').click();await page.reload();await page.waitForFunction(()=>!!window.__cartAudioTest);
+    await page.locator('#cart-pause').click();await page.locator('#cart-options summary').click();await page.locator('#cart-sound').click();await page.reload();await page.waitForFunction(()=>!!window.__cartAudioTest);
     check('muting persists across reload without creating an audio context',!(await state(page)).enabled&&(await state(page)).context===null&&await page.locator('#cart-sound').getAttribute('aria-pressed')==='false');
     await page.locator('#cart-start').click();await page.keyboard.down('w');await page.waitForTimeout(200);await page.keyboard.up('w');check('a muted run still moves with no audio context',(await state(page)).body.vx>10&&(await state(page)).context===null);
-    await page.locator('#cart-pause').click();await page.locator('#cart-sound').click();await page.waitForFunction(()=>__cartAudioTest.state().context==='running');await page.locator('#cart-start').click();
+    await page.locator('#cart-pause').click();await page.locator('#cart-options summary').click();await page.locator('#cart-sound').click();await page.waitForFunction(()=>__cartAudioTest.state().context==='running');await page.locator('#cart-start').click();
     await page.evaluate(()=>__cartAudioTest.emit({type:'break',material:'glass',kind:'wine',impact:60}));
     check('a physical event reaches the live sound engine',await sample(page)>.001);
     await page.evaluate(()=>__cartAudioTest.done());check('the finish cue is audible after stopping rolling',await sample(page)>.001);await page.waitForTimeout(800);check('the finish cue ends without a stuck rolling loop',await sample(page)<.0001);
@@ -151,7 +151,7 @@ async function setup(context, url) {
     await send('touchStart');finger.y-=r.width*.28;await send('touchMove');await phone.waitForTimeout(450);
     check('a native phone gesture unlocks audio and thumbstick movement makes sound',await sample(phone)>.001&&(await state(phone)).body.vx>15);await send('touchEnd');
     await phone.evaluate(()=>window.dispatchEvent(new Event('blur')));await phone.waitForTimeout(120);check('phone focus loss parks the game and silences audio',(await state(phone)).phase==='paused'&&await sample(phone)<.0001);
-    await phone.locator('#cart-sound').tap();await phone.reload();await phone.waitForFunction(()=>!!window.__cartAudioTest);check('phone mute also survives reload',!(await state(phone)).enabled);
+    await phone.locator('#cart-options summary').tap();await phone.locator('#cart-sound').tap();await phone.reload();await phone.waitForFunction(()=>!!window.__cartAudioTest);check('phone mute also survives reload',!(await state(phone)).enabled);
     const fallback=await browser.newContext();await fallback.addInitScript(()=>{Object.defineProperty(window,'AudioContext',{value:undefined});Object.defineProperty(window,'webkitAudioContext',{value:undefined});Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked');}});});const blocked=await setup(fallback,base+'/four-wheels.html');await blocked.locator('#cart-start').click();await blocked.keyboard.down('w');await blocked.waitForTimeout(250);await blocked.keyboard.up('w');
     check('unavailable audio and blocked storage still allow movement',(await state(blocked)).phase==='running'&&(await state(blocked)).body.vx>10&&!(await state(blocked)).enabled);
     for (const failure of ['resume','buffer']) {
