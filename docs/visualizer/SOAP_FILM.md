@@ -1,7 +1,8 @@
 # Soap film room
 
-Shared fluid and optical implementation for [Descent](../../descent-lab.html).
-The separate soap-film post was deleted at the owner’s request on October 3, 2026.
+Retained fluid and optical implementation.
+The separate soap-film post and the Descent comparison page were deleted at the
+owner’s request on October 3, 2026. The model source remains available for reference.
 
 ## Optional persistent mode and interaction
 
@@ -23,7 +24,7 @@ Setting persistent: true creates a closed film: evaporation and drainage
 coefficients are zero, rupture is disabled, and autoRenew is false. restart
 restores the seeded initial thickness and velocity, resets the clock and ledger,
 and retains the configured temperature. Default createRoom calls use the square,
-draining and cycling film consumed by Descent. persistent and presentation are
+draining and cycling film. persistent and presentation are
 optional initialization fields.
 
 setTemperatureC sets the nominal lower-edge temperature from 0 to 60 °C,
@@ -296,7 +297,7 @@ console.log(room.snapshot());
 room.dispose();
 ```
 
-Descent supplies the canvas host. Optional methods include sampleAt,
+A caller supplies the canvas host. Optional methods include sampleAt,
 setViewingAngle, restart and budget/restriction methods; these do not
 replace any required interface member. Snapshot reports diagnostic age,
 parameters, current and requested quality, exact numerical substep count, model
@@ -320,7 +321,6 @@ Run from the repository root:
 node tools/test-soap-film-optics.mjs
 node tools/test-soap-film-numerics.mjs --long
 NODE_PATH=/path/to/bundled/node_modules node tools/test-soap-film-material.cjs
-node tools/test-descent-contract.mjs
 ```
 
 The material reference harness serves the checkout over HTTP and owns the exact process
@@ -390,8 +390,7 @@ film lifetimes under a selected criterion, not laboratory predictions.
 
 The retained [numerical report](../../assets/visualizer/soap-film/checks/numerics.json)
 and [three-phrase report](../../assets/visualizer/soap-film/checks/phrases.json)
-record conservation, convergence and cycling-room validation. Descent maintains
-its own browser and route evidence.
+record conservation, convergence and cycling-room validation.
 
 The [GPU thickness reference](../../assets/visualizer/soap-film/checks/material-report.json)
 compares 100 closed FCT increments against the CPU reference at matching 32²
