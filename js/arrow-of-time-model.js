@@ -1,6 +1,6 @@
 // Exact byte-spin reference and deterministic authored preparation. No random source.
 export const MODEL = 'Published two-layer Q2R, periodic four-neighbor lattice';
-export const PRESET_VERSION = 1;
+export const PRESET_VERSION = 2;
 export const PRESETS = ['hourglass', 'rings', 'window'];
 export function dimensions(width, height) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 2 || height < 2 || width % 2 || height % 2 || width > 1024 || height > 1024) throw new RangeError('Q2R requires even dimensions from 2 to 1024.');
@@ -48,7 +48,7 @@ export function compare(a, b) {
   return { exact: mismatches === 0, mismatches, comparedSpins: a.x.length + a.y.length };
 }
 export function motifAt(col, row, width, height, id = 'hourglass') {
-  const u = (col + .5) / width - .5, v = (row + .5) / height - .5;
+  const u = (col + .5 - width / 2) / height, v = (row + .5) / height - .5;
   if (id === 'rings') return Math.abs(Math.hypot(u, v) - .25) < .047 || Math.hypot(u, v) < .075;
   if (id === 'window') return (Math.abs(u) < .25 && Math.abs(v) < .28) && (Math.abs(u) > .215 || Math.abs(v) > .245 || Math.abs(u) < .025 || Math.abs(v) < .025);
   const frame = Math.abs(u) < .245 && Math.abs(Math.abs(v) - .292) < .024;
@@ -105,11 +105,11 @@ export function measure(state, block = 8) {
 }
 // Restore the microscopic fields of an exported replay record without a frame cache.
 export function decodeReplay(record) {
-  if (record.apiVersion !== 1 || record.id !== 'arrow-of-time' || record.presetVersion !== PRESET_VERSION) throw new Error('Unsupported Arrow of time replay record.');
+  if (record.apiVersion !== 1 || record.id !== 'arrow-of-time' || ![1, PRESET_VERSION].includes(record.presetVersion)) throw new Error('Unsupported Arrow of time replay record.');
   const { width, height } = record; dimensions(width, height);
   const words = Math.ceil(width / 32) * height;
   for (const key of ['packedX', 'packedY']) if (!Array.isArray(record[key]) || record[key].length !== words || record[key].some(v => !Number.isInteger(v) || v < 0 || v > 0xffffffff)) throw new Error('Invalid packed replay field.');
   const x = Uint32Array.from(record.packedX), y = Uint32Array.from(record.packedY);
   if (record.checksum !== checksum(x, y)) throw new Error('Replay checksum differs from its fields.');
-  return { width, height, x: unpack(x, width, height), y: unpack(y, width, height) };
+  return { width, height, x: unpack(x, width, height), y: unpack(y, width, height), direction: record.direction === -1 ? -1 : 1 };
 }

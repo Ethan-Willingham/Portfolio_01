@@ -1,4 +1,4 @@
-import { dimensions, pack, unpack, checksum } from './arrow-of-time-model.js';
+import { dimensions, pack, unpack, checksum, evolve } from './arrow-of-time-model.js?v=2';
 
 const triangle = `@vertex fn vertex(@builtin(vertex_index) i:u32)->@builtin(position) vec4f {
  let p=array<vec2f,3>(vec2f(-1,-1),vec2f(3,-1),vec2f(-1,3)); return vec4f(p[i],0,1); }`;
@@ -19,8 +19,10 @@ export async function createQ2RGPU(device, initial) {
   const owned = [], buffer = (size, usage, label) => { const b = device.createBuffer({ size, usage, label }); owned.push(b); return b; };
   try {
   const fields = Array.from({ length: 3 }, (_, i) => buffer(words * 4, GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST, `Q2R field ${i}`));
-  let x = 0, y = 1, scratch = 2, disposed = false;
+  let x = 0, y = 1, scratch = 2, lastDirection = initial.direction === -1 ? -1 : 1, disposed = false;
   device.queue.writeBuffer(fields[x], 0, pack(initial.x, width, height)); device.queue.writeBuffer(fields[y], 0, pack(initial.y, width, height));
+  const preceding = evolve(initial, -lastDirection);
+  device.queue.writeBuffer(fields[scratch], 0, pack(lastDirection === 1 ? preceding.y : preceding.x, width, height));
   const common = `
 const W:u32=${width}; const H:u32=${height}; const R:u32=${rowWords}; const WORDS:u32=${words}; const LAST:u32=${lastBits}; const MASK:u32=${mask}u;
 @group(0) @binding(0) var<storage,read> a:array<u32>;
@@ -53,7 +55,7 @@ fn eastB(i:u32)->u32 { let k=i%R; var carry:u32;
   function encodeSteps(encoder, count, direction = 1, timestampWrites) {
     if (disposed) throw new Error('Q2R resources have been disposed.');
     if (!Number.isInteger(count) || count < 0 || count > 8192 || ![1, -1].includes(direction)) throw new RangeError('Invalid exact update count or direction.');
-    if (!count) return;
+    if (!count) return; lastDirection = direction;
     const pass = encoder.beginComputePass({ label: 'Q2R microscopic steps', ...(timestampWrites ? { timestampWrites } : {}) }); pass.setPipeline(rule);
     for (let k = 0; k < count; k++) {
       pass.setBindGroup(0, direction === 1 ? ruleGroup(x, y, scratch) : ruleGroup(y, x, scratch)); pass.dispatchWorkgroups(Math.ceil(words / 64));
@@ -86,50 +88,58 @@ var<workgroup> sums:array<vec4i,64>;
       return { width, height, x: unpack(px, width, height), y: unpack(py, width, height), packedX: px, packedY: py, checksum: checksum(px, py), integerReduction: { energyTwiceJ: sums[0], magnetizationSum: sums[1], flippableSites: sums[2], boundaryBonds: sums[3] } };
     } finally { read.destroy(); }
   }
-  // One hierarchy of exact positive-spin counts. Odd edge blocks retain their real area.
+  // Exact counts for the current pair and the preceding computed pair. No image history.
   const levels = []; let pw = width, ph = height, offset = 0;
   while (true) { levels.push({ width: pw, height: ph, offset }); offset += pw * ph; if (pw === 1 && ph === 1) break; pw = Math.ceil(pw / 2); ph = Math.ceil(ph / 2); }
-  const pyramid = buffer(offset * 4, GPUBufferUsage.STORAGE, 'Q2R multiscale block counts');
+  const pyramid = buffer(offset * 8, GPUBufferUsage.STORAGE, 'Q2R paired-layer block counts');
+  const renderUniform = buffer(32, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'Q2R view');
+  const viewDeclaration = `struct View {size:vec2f,zoom:f32,exposure:f32,detail:f32,visibility:f32,blend:f32,reverse:f32};`;
   const offsets = levels.map(l => `${l.offset}u`).join(','), widths = levels.map(l => `${l.width}u`).join(','), heights = levels.map(l => `${l.height}u`).join(','), declarations = `const OFF=array<u32,${levels.length}>(${offsets});const LW=array<u32,${levels.length}>(${widths});const LH=array<u32,${levels.length}>(${heights});`;
   const hierarchyShader = await checkedShader(device, `
-${declarations} override LEVEL:u32=0;
-@group(0) @binding(0) var<storage,read> field:array<u32>;
-@group(0) @binding(1) var<storage,read_write> blocks:array<u32>;
+${declarations} ${viewDeclaration} override LEVEL:u32=0;
+@group(0) @binding(0) var<storage,read> fieldX:array<u32>;
+@group(0) @binding(1) var<storage,read> fieldY:array<u32>;
+@group(0) @binding(2) var<storage,read> previous:array<u32>;
+@group(0) @binding(3) var<storage,read_write> blocks:array<vec2u>;
+@group(0) @binding(4) var<uniform> view:View;
 @compute @workgroup_size(64) fn hierarchy(@builtin(global_invocation_id) id:vec3u){let i=id.x;if(i>=LW[LEVEL]*LH[LEVEL]){return;}
- let col=i%LW[LEVEL];let row=i/LW[LEVEL];var sum=0u;
- if(LEVEL==0){sum=(field[row*${rowWords}u+col/32]>>(col%32))&1;}else{
+ let col=i%LW[LEVEL];let row=i/LW[LEVEL];var sum=vec2u(0);
+ if(LEVEL==0){let word=row*${rowWords}u+col/32;let bit=col%32;
+ let bx=(fieldX[word]>>bit)&1;let by=(fieldY[word]>>bit)&1;let bp=(previous[word]>>bit)&1;
+ sum=vec2u(bx+by,bp+select(by,bx,view.reverse>0.5));}else{
  for(var dy=0u;dy<2;dy++){for(var dx=0u;dx<2;dx++){let c=col*2+dx;let r=row*2+dy;if(c<LW[max(LEVEL,1u)-1u]&&r<LH[max(LEVEL,1u)-1u]){sum+=blocks[OFF[max(LEVEL,1u)-1u]+r*LW[max(LEVEL,1u)-1u]+c];}}}}
- blocks[OFF[LEVEL]+i]=sum;}`, 'Q2R block hierarchy');
+ blocks[OFF[LEVEL]+i]=sum;}`, 'Q2R paired-layer block hierarchy');
   const hierarchyPipelines = await Promise.all(levels.map((_, level) => device.createComputePipelineAsync({ layout: 'auto', compute: { module: hierarchyShader, entryPoint: 'hierarchy', constants: { LEVEL: level } } })));
-  const renderUniform = buffer(32, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, 'Q2R view');
   const renderShader = await checkedShader(device, triangle + `
-${declarations}
-@group(0) @binding(0) var<storage,read> blocks:array<u32>;
-struct View {size:vec2f,zoom:f32,exposure:f32,detail:f32,visibility:f32,pad1:f32,pad2:f32};
+${declarations} ${viewDeclaration}
+@group(0) @binding(0) var<storage,read> blocks:array<vec2u>;
 @group(0) @binding(1) var<uniform> view:View;
 fn cell(level:u32,col:i32,row:i32)->f32 {let c=u32(clamp(col,0,i32(LW[level])-1));let r=u32(clamp(row,0,i32(LH[level])-1));let side=1u<<level;
- let area=min(side,${width}u-c*side)*min(side,${height}u-r*side);return 1-f32(blocks[OFF[level]+r*LW[level]+c])/f32(area);}
+ let area=min(side,${width}u-c*side)*min(side,${height}u-r*side);let counts=blocks[OFF[level]+r*LW[level]+c];
+ return 1-mix(f32(counts.y),f32(counts.x),smoothstep(0.,1.,view.blend))/f32(2*area);}
 fn average(uv:vec2f,level:u32)->f32 {let p=uv*vec2f(${width},${height})/f32(1u<<level)-.5;let q=vec2i(floor(p));let f=fract(p);
  return mix(mix(cell(level,q.x,q.y),cell(level,q.x+1,q.y),f.x),mix(cell(level,q.x,q.y+1),cell(level,q.x+1,q.y+1),f.x),f.y);}
 fn scale(uv:vec2f,lod:f32)->f32 {let l=clamp(lod,0,f32(${levels.length - 1}));let lo=u32(floor(l));return mix(average(uv,lo),average(uv,min(lo+1,${levels.length - 1}u)),fract(l));}
 @fragment fn fragment(@builtin(position) pos:vec4f)->@location(0) vec4f {
- let side=min(view.size.x,view.size.y)*.9;let plane=(pos.xy-view.size*.5)/side+.5;let uv=(plane-.5)/view.zoom+.5;
+ let fit=min(view.size.x/min(${width}.,${height}.*.72),view.size.y/${height}.)*.98;let extent=vec2f(${width},${height})*fit;
+ let plane=(pos.xy-view.size*.5)/extent+.5;let uv=(plane-.5)/view.zoom+.5;
  let base=vec3f(.029557,.040915,.030713); var color=base;
  if(all(plane>vec2f(0))&&all(plane<vec2f(1))){
- let lod=max(0.,1.3-log2(view.zoom))+view.detail;
- let value=.68*scale(uv,lod)+.24*scale(uv,lod+1.5)+.08*scale(uv,lod+3.);
- let shade=smoothstep(.08,.85,value);let ink=vec3f(.51,.422,.265);
- let edge=smoothstep(0.,.045,min(min(plane.x,plane.y),min(1-plane.x,1-plane.y)));
+ let lod=max(0.,.45-log2(view.zoom))+view.detail;
+ let value=.88*scale(uv,lod)+.10*scale(uv,lod+1.5)+.02*scale(uv,lod+3.);
+ let shade=smoothstep(.06,.9,value);let ink=vec3f(.38,.322,.214);
+ let edge=smoothstep(0.,.016,min(min(plane.x,plane.y),min(1-plane.x,1-plane.y)));
  color=mix(base, mix(base*.78,ink,shade),edge);}
- return vec4f(mix(base,color,clamp(view.visibility,0.,1.))*max(0.,view.exposure),1);}`, 'Q2R instantaneous domain renderer');
+ return vec4f(mix(base,color,clamp(view.visibility,0.,1.))*max(0.,view.exposure),1);}`, 'Q2R paired-layer domain renderer');
   const renderer = await device.createRenderPipelineAsync({ layout: 'auto', vertex: { module: renderShader, entryPoint: 'vertex' }, fragment: { module: renderShader, entryPoint: 'fragment', targets: [{ format: 'rgba16float' }] }, primitive: { topology: 'triangle-list' } });
   const renderGroup = device.createBindGroup({ layout: renderer.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: pyramid } }, { binding: 1, resource: { buffer: renderUniform } }] });
-  function render({ encoder, targetView, width: rw, height: rh, exposure = 1, zoom = 1, detail = 0, visibility = 1, timestampWrites }) {
+  function render({ encoder, targetView, width: rw, height: rh, exposure = 1, zoom = 1, detail = 0, visibility = 1, blend = 1, timestampWrites }) {
+    device.queue.writeBuffer(renderUniform, 0, new Float32Array([rw, rh, zoom, exposure, detail, visibility, blend, lastDirection === -1 ? 1 : 0]));
     for (let level = 0; level < levels.length; level++) {
-      const pipeline = hierarchyPipelines[level], pass = encoder.beginComputePass(); pass.setPipeline(pipeline); pass.setBindGroup(0, device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: fields[x] } }, { binding: 1, resource: { buffer: pyramid } }] })); pass.dispatchWorkgroups(Math.ceil(levels[level].width * levels[level].height / 64)); pass.end();
+      const pipeline = hierarchyPipelines[level], pass = encoder.beginComputePass(); pass.setPipeline(pipeline);
+      pass.setBindGroup(0, device.createBindGroup({ layout: pipeline.getBindGroupLayout(0), entries: [fields[x], fields[y], fields[scratch], pyramid, renderUniform].map((buffer, binding) => ({ binding, resource: { buffer } })) }));
+      pass.dispatchWorkgroups(Math.ceil(levels[level].width * levels[level].height / 64)); pass.end();
     }
-    // Six scalar view values and two scalar padding values, 32 bytes.
-    device.queue.writeBuffer(renderUniform, 0, new Float32Array([rw, rh, zoom, exposure, detail, visibility, 0, 0]));
     const pass = encoder.beginRenderPass({ label: 'Q2R scene radiance', colorAttachments: [{ view: targetView, loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }], ...(timestampWrites ? { timestampWrites } : {}) });
     pass.setPipeline(renderer); pass.setBindGroup(0, renderGroup); pass.draw(3); pass.end();
   }

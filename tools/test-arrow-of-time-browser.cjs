@@ -27,7 +27,7 @@ async function numerical(page) {
     const adapter = await navigator.gpu.requestAdapter(), device = await adapter.requestDevice({ requiredFeatures: adapter.features.has('timestamp-query') ? ['timestamp-query'] : [] });
     const validation = []; device.addEventListener('uncapturederror', e => validation.push(e.error.message)); const records = [], perf = [];
     try {
-      for (const [w, h] of [[2, 2], [30, 6], [32, 8], [34, 10], [66, 4], [256, 256], [512, 512]]) {
+      for (const [w, h] of [[2, 2], [30, 6], [32, 8], [34, 10], [66, 4], [256, 256], [512, 512], [768, 512], [1024, 768]]) {
         const authored = M.prepare(w, h); if (w < 100) { for (let i = 0; i < authored.y.length; i++) if ((i * i + 3 * i) % 7 < 3) authored.y[i] *= -1; }
         const gpu = await G.createQ2RGPU(device, authored); let cpu = authored;
         try {
@@ -35,6 +35,17 @@ async function numerical(page) {
           gpu.update(24, -1); const r = await gpu.readback(); if (!M.compare(r, authored).exact) throw Error('Inverse GPU return mismatch');
           if (w >= 256) { gpu.update(4320); gpu.update(4320, -1); const long = await gpu.readback(); if (!M.compare(long, authored).exact) throw Error('Long inverse return failed'); records.push({ size: `${w}x${h}`, longForward: 4320, longInverse: 4320, comparedSpins: w * h * 2, exact: true, checksum: long.checksum }); }
           records.push({ size: `${w}x${h}`, cpuGpuStepsCompared: 24, inverseSteps: 24, energyDriftTwiceJ: 0, tolerance: 0 });
+          // A step boundary must join the old visible pair to the new visible pair exactly.
+          const imageTarget = device.createTexture({ size: [128,96], format: 'rgba16float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
+          const imageRead = device.createBuffer({size:128*96*8,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+          async function pixels(blend) { const e=device.createCommandEncoder(); gpu.render({encoder:e,targetView:imageTarget.createView(),width:128,height:96,blend}); e.copyTextureToBuffer({texture:imageTarget},{buffer:imageRead,bytesPerRow:1024},[128,96]);device.queue.submit([e.finish()]);await imageRead.mapAsync(GPUMapMode.READ);const a=new Uint16Array(imageRead.getMappedRange()).slice();imageRead.unmap();return a; }
+          try {
+            for(const direction of [1,-1]) {const before=await pixels(1);gpu.update(1,direction);const boundary=await pixels(0),middle=await pixels(.5),after=await pixels(1);
+              for(let i=0;i<before.length;i++){if(before[i]!==boundary[i])throw Error(`Display discontinuity ${w}x${h}, direction ${direction}`);if(middle[i]<Math.min(before[i],after[i])-1||middle[i]>Math.max(before[i],after[i])+1)throw Error('Display interpolation overshoot');}
+            }
+            const final=await gpu.readback();if(!M.compare(final,authored).exact)throw Error('Display checks changed the returned state');
+            records.push({size:`${w}x${h}`,renderBoundaryPixelsExact:true,forwardAndInverse:true,interpolationOvershoot:false});
+          } finally {imageTarget.destroy();imageRead.destroy();}
           if (w >= 256) {
             const target = device.createTexture({ size: [1440, 600], format: 'rgba16float', usage: GPUTextureUsage.RENDER_ATTACHMENT }), view = target.createView();
             const timestamp = device.features.has('timestamp-query'), query = timestamp ? device.createQuerySet({ type: 'timestamp', count: 2 }) : null;
@@ -66,7 +77,7 @@ async function numerical(page) {
   browser = await chromium.launch({ headless: true, executablePath: path.join(os.homedir(), '.local/bin/agent-chrome-for-testing'), args: ['--enable-unsafe-webgpu'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' }), page = await open(context);
   const problem = await page.locator('#aot-error').textContent(); assert.equal(problem, '', 'Initialization error: ' + problem); assert.ok(await page.evaluate(() => !!window.ArrowOfTime));
-  assert.equal((await snapshot(page)).numericalStepCount, 0); assert.equal(await page.locator('#aot-play').textContent(), 'Play');
+  assert.equal((await snapshot(page)).numericalStepCount, 0); assert.deepEqual([(await snapshot(page)).parameters.width, (await snapshot(page)).parameters.height], [768,512]); assert.equal(await page.locator('#aot-play').textContent(), 'Play');
   await screenshot(page, 'startup-1440'); await page.locator('.aot-stage').screenshot({ path: path.join(out, 'initial-scene.png') }); await fit(page);
   if (process.env.ARROW_LAYOUT_ONLY) { for(const [width,height] of [[390,844],[844,390],[1440,900]]) { await page.setViewportSize({width,height}); await page.evaluate(() => { document.documentElement.style.scrollBehavior='auto'; window.scrollTo(0,0); }); await page.waitForFunction(() => scrollY===0); await fit(page); if(width===844) {const bounds=await page.locator('.aot-toolbar').boundingBox();assert.ok(bounds.y+bounds.height<=height+1,'Landscape controls below fold');} await screenshot(page,`layout-${width}x${height}`); } assert.deepEqual(errors,[]); console.log('PASS top-of-page layout inspection'); return; }
   if (process.env.ARROW_RUNTIME_ONLY) {
@@ -78,7 +89,7 @@ async function numerical(page) {
     assert.deepEqual(errors,[]); console.log('PASS keyboard, final room initialization, stage suspension, paused restart and landscape controls'); return;
   }
   results.environment={browser:browser.version(),platform:process.platform};
-  const n = await numerical(page); results.numerical.push(...n.records); results.performance.push(...n.perf); console.log(JSON.stringify(n, null, 2));
+  const n = await numerical(page); results.numerical.push(...n.records); results.performance.push(...n.perf); console.log(`PASS ${n.records.length} GPU numerical/render checks and ${n.perf.length} performance measurements`);
   if (process.env.ARROW_QUICK) { fs.writeFileSync(path.join(out, 'results.json'), JSON.stringify(results, null, 2)); return; }
   await page.locator('#aot-instruments-toggle').click(); await page.locator('#aot-rate').selectOption('768'); await page.locator('#aot-play').click();
   await page.waitForFunction(() => ArrowOfTime.snapshot().orbitStep >= 2200, { timeout: 30000 });
@@ -88,7 +99,7 @@ async function numerical(page) {
   const returned = await snapshot(page); assert.equal(returned.returnResult.exact, true); assert.equal(returned.returnResult.forwardSteps, 4320); assert.equal(returned.returnResult.inverseSteps, 4320); assert.equal(returned.energyDriftJ, 0);
   await page.waitForFunction(() => document.querySelector('#aot-phase').textContent === 'Every spin has returned.'); await screenshot(page, 'return-1440'); await page.locator('.aot-stage').screenshot({ path: path.join(out, 'returned-scene.png') }); const initialPixels=PNG.sync.read(fs.readFileSync(path.join(out,'initial-scene.png'))), returnedPixels=PNG.sync.read(fs.readFileSync(path.join(out,'returned-scene.png'))); assert.equal(initialPixels.width,returnedPixels.width); assert.equal(initialPixels.height,returnedPixels.height); const interiorBytes=(initialPixels.height-1)*initialPixels.width*4; assert.ok(initialPixels.data.subarray(0,interiorBytes).equals(returnedPixels.data.subarray(0,interiorBytes)), 'Instantaneous rendered return differs inside canvas; adjacent progress hairline excluded'); results.browser.push('Returned scene pixels exactly equal startup, excluding adjacent progress hairline'); const startupBuffer = fs.readFileSync(path.join(out, 'startup-1440.png')); assert.ok(startupBuffer.length > 10000);
   await page.locator('#aot-instruments-toggle').click(); await page.locator('#aot-zoom').fill('4'); assert.equal((await snapshot(page)).parameters.zoom, 4); await page.locator('#aot-zoom').fill('1');
-  const downloadPromise = page.waitForEvent('download'); await page.locator('#aot-record').click(); const download = await downloadPromise; await download.saveAs(path.join(out, 'replay.json')); const record = JSON.parse(fs.readFileSync(path.join(out, 'replay.json'))); assert.equal(record.packedX.length, 2048); assert.equal(record.orbitStep, 0); await page.evaluate(async record => { const M=await import('/js/arrow-of-time-model.js'),G=await import('/js/arrow-of-time-gpu.js'),s=M.decodeReplay(record),a=await navigator.gpu.requestAdapter(),d=await a.requestDevice(),g=await G.createQ2RGPU(d,s); try { g.update(73); g.update(73,-1); if(!M.compare(await g.readback(),s).exact) throw Error('Exported seed/state replay failed'); } finally {g.dispose();d.destroy();} },record);
+  const downloadPromise = page.waitForEvent('download'); await page.locator('#aot-record').click(); const download = await downloadPromise; await download.saveAs(path.join(out, 'replay.json')); const record = JSON.parse(fs.readFileSync(path.join(out, 'replay.json'))); assert.equal(record.packedX.length, Math.ceil(record.width / 32) * record.height); assert.equal(record.orbitStep, 0); await page.evaluate(async record => { const M=await import('/js/arrow-of-time-model.js'),G=await import('/js/arrow-of-time-gpu.js'),s=M.decodeReplay(record),a=await navigator.gpu.requestAdapter(),d=await a.requestDevice(),g=await G.createQ2RGPU(d,s); try { g.update(73); g.update(73,-1); if(!M.compare(await g.readback(),s).exact) throw Error('Exported seed/state replay failed'); } finally {g.dispose();d.destroy();} },record);
   await page.locator('#aot-instruments-toggle').click();
   // Observe two further physical phrases at accelerated wall pacing, with all exact steps.
   await page.locator('#aot-play').click();

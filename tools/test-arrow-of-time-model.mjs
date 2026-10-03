@@ -42,3 +42,14 @@ for (const id of ['hourglass', 'rings', 'window']) {
   console.log(id, JSON.stringify(m));
 }
 console.log('All integer checks have zero tolerance.');
+
+// Rectangular production tiers retain energy and expose fewer alternating cells.
+for (const [width,height] of [[768,512],[1024,768]]) {
+  const initial=prepare(width,height), energy=energyTwice(initial); let state=initial, changesX=0,changesPair=0;
+  for(let k=0;k<96;k++){const next=evolve(state);assert.equal(energyTwice(next),energy);
+    for(let i=0;i<state.x.length;i++){const changed=state.x[i]+state.y[i]!==next.x[i]+next.y[i];if(changed){const sum=neighbors(i,width,height).reduce((v,j)=>v+state.x[j],0);assert.equal(sum,0);}if(k>=72){changesPair+=changed;changesX+=state.x[i]!==next.x[i];}}
+    state=next;
+  }
+  assert.ok(changesPair<changesX);for(let k=0;k<96;k++)state=evolve(state,-1);assert.ok(compare(state,initial).exact);
+  console.log(`PASS ${width}x${height} 96+96 exact steps; paired display changes ${changesPair} / single-layer changes ${changesX}`);
+}

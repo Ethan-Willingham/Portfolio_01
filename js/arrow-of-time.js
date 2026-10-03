@@ -1,7 +1,7 @@
 // Example standalone host. The room owns neither this DOM nor this animation loop.
-import { createRoom } from './arrow-of-time-room.js';
-import { prepare } from './arrow-of-time-model.js';
-import { checkedShader, fullscreenTriangleWGSL } from './arrow-of-time-gpu.js';
+import { createRoom } from './arrow-of-time-room.js?v=2';
+import { prepare } from './arrow-of-time-model.js?v=2';
+import { checkedShader, fullscreenTriangleWGSL } from './arrow-of-time-gpu.js?v=2';
 const $ = id => document.getElementById(id), piece = $('aot-piece'), canvas = $('aot-canvas'), stage = canvas.parentElement;
 const motion = matchMedia('(prefers-reduced-motion: reduce)'), listeners = new AbortController();
 let room, device, context, scene, sceneView, displayPipeline, displayGroup, adapterInfo, raf = 0, inView = true, manualPause = motion.matches, disposed = false;
