@@ -13,7 +13,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="hydrogen-exactly.css?v=3">
+  <link rel="stylesheet" href="hydrogen-exactly.css?v=5">
 </head>
 <body class="hx-page">
   <div class="site-wrapper">
@@ -25,11 +25,12 @@
       </header>
       <section class="hx-demo" id="hx-demo" aria-label="Hydrogen wavefunction visualizer" aria-busy="true">
         <div class="hx-stage" id="hx-stage">
-          <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" aria-describedby="hx-camera-help" tabindex="0"></canvas>
+          <canvas id="hx-canvas" aria-label="Numerical probability-density volume of a hydrogen superposition" aria-describedby="hx-camera-help hx-layer-tip" tabindex="0"></canvas>
           <img id="hx-still" src="assets/visualizer/hydrogen-exactly/initial-section.png?v=2" alt="Computed equatorial density section of the initial n=24 to 36 circular-state packet, localized on the left of the nucleus.">
           <div class="hx-stage-heading"><span id="hx-mode-label">Circular packet</span><span id="hx-encoding-label">Density false color, cyan to gold</span></div>
-          <p class="hx-rotation-hint" id="hx-rotation-hint" aria-hidden="true" hidden>Drag to rotate in 3D</p>
-          <p class="hx-sr-only" id="hx-camera-help">Drag with a mouse or one finger to rotate the 3D view. Arrow keys rotate when the image has focus. Home resets the camera. Rotation is available in the contour and soft volume views.</p>
+          <p class="hx-rotation-hint" id="hx-rotation-hint" aria-hidden="true" hidden><span>Drag to rotate in 3D</span><span id="hx-inspection-hint">Hover a layer to inspect it</span></p>
+          <p class="hx-sr-only" id="hx-camera-help">Drag with a mouse or one finger to rotate the 3D view. Arrow keys rotate when the image has focus. Home resets the camera. Hover or tap a density contour to read its meaning. Instruments has six layer buttons with the same explanations for keyboard use. Rotation is available in the contour and soft volume views.</p>
+          <div class="hx-layer-tip" id="hx-layer-tip" role="tooltip" hidden><p class="hx-layer-title" data-layer-title></p><p data-layer-relative></p><p data-layer-meaning></p><p class="hx-layer-value" data-layer-value></p></div>
           <p class="hx-status" id="hx-status" role="status">Preparing the wavefunction</p>
           <div class="hx-caption"><span id="hx-caption">13 circular states, n = 24 to 36</span><span id="hx-scale">Characteristic radius 47.6 nm</span></div>
         </div>
@@ -50,6 +51,18 @@
             <label>Display exposure<input id="hx-exposure" type="range" min="0.4" max="2" step="0.05" value="1"></label>
           </div>
           <div class="hx-camera-tools"><button class="hx-button" id="hx-reset-view" type="button">Reset view</button><p class="hx-note">Drag to rotate in 3D. Arrow keys rotate the focused image; Home resets the view.</p></div>
+          <div class="hx-density-guide" id="hx-density-guide">
+            <p class="hx-note">The six possible layers describe the same electron. Each step inward marks three times the probability density of the previous surface. A layer appears only where the packet reaches its threshold. These are density levels, not separate energy shells or percentages of the electron.</p>
+            <div class="hx-layer-choices" aria-label="Density layer explanations">
+              <button type="button" class="hx-button" data-density-layer="0" aria-describedby="hx-layer-detail">Layer 1</button>
+              <button type="button" class="hx-button" data-density-layer="1" aria-describedby="hx-layer-detail">Layer 2</button>
+              <button type="button" class="hx-button" data-density-layer="2" aria-describedby="hx-layer-detail">Layer 3</button>
+              <button type="button" class="hx-button" data-density-layer="3" aria-describedby="hx-layer-detail">Layer 4</button>
+              <button type="button" class="hx-button" data-density-layer="4" aria-describedby="hx-layer-detail">Layer 5</button>
+              <button type="button" class="hx-button" data-density-layer="5" aria-describedby="hx-layer-detail">Layer 6</button>
+            </div>
+            <div class="hx-layer-detail" id="hx-layer-detail" role="status" aria-live="polite" hidden><p class="hx-layer-title" data-layer-title></p><p data-layer-relative></p><p data-layer-meaning></p><p class="hx-layer-value" data-layer-value></p></div>
+          </div>
           <label class="hx-timeline">Local display time <output id="hx-time-output">0.0 s</output><input id="hx-time" type="range" min="0" max="900" step="0.1" value="0"></label>
           <div id="hx-events" class="hx-events" aria-label="Computed packet events">
             <button type="button" data-time="0">Initial packet</button>
@@ -82,12 +95,15 @@
       </section>
       <article class="post-body hx-explanation">
         <p>A localized hydrogen wave packet spreads around its orbit, forms smaller packets, and partly gathers itself again. The colored contours mark increasing probability density, from cyan through violet and pink to gold. This image comes from adding 13 circular states and evolving each with its own energy. Switch to the low-n mode in Instruments to see interference frequencies encoded as the familiar hydrogen colors. Those colors describe beats in the density; they do not show emitted light.</p>
+        <p>Hover or tap a layer to read its density. All the layers belong to the same electron. Each surface marks three times the density of the previous one: in equally small regions, a higher density means a greater chance of detecting the electron. A layer appears only where that density is reached. The layers are not separate energy shells.</p>
+        <p>The ring comes from the highly excited circular states chosen for this packet. Their density is concentrated around an equatorial ring; the packet initially occupies an arc and later spreads around it. Hydrogen's lowest-energy 1s state has a spherical probability cloud. The shape depends on the quantum state, rather than every hydrogen atom having a doughnut shape.</p>
         <details class="u-collapse">
           <summary class="u-collapse-s">What “exactly” means here, and sources</summary>
           <p>These are exact eigenstates of the fixed-nucleus, nonrelativistic Coulomb model, evaluated numerically. The finite state list, render box, f32 shader arithmetic, f16 display texture, grid interpolation, and ray samples introduce errors. Nuclear motion, relativity, and radiative corrections are omitted. The 2D section evaluates the wavefunction directly; the volume interpolates sampled positive density.</p>
           <p>The default view draws surfaces at six fixed density levels, revealing the highest contour reached along each view ray. Directional lighting, highlights, shadows, a faint reference plane, and the cyan-to-gold palette help show the shape. These are visual aids; the plane is not part of the atom. They leave the wavefunction and its diagnostics unchanged. Soft volume and a directly evaluated 2D section are also available in Instruments. Spectral color weights the magnitudes of visible signed cross terms. A separate diagnostic marks the sign of the 2p / 3s term. Dark nodes have zero analytic density; volume interpolation can soften them.</p>
           <ol class="u-collapse-list">
             <li><a href="https://arxiv.org/html/quant-ph/9510029v1">Bluhm, Kostelecký, and Porter, wave-packet evolution and revivals</a>. Characteristic scales guide the event search; the actual energies determine the image.</li>
+            <li><a href="https://ocw.mit.edu/courses/8-04-quantum-physics-i-spring-2016/e34ceed6a6ec944a3c761fcbbf48be5f_MIT8_04S16_LecNotes22.pdf">MIT, hydrogen atom lecture notes</a>. Quantum numbers and the spherical 1s ground state.</li>
             <li><a href="https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0">NIST Bohr radius</a> and <a href="https://physics.nist.gov/cgi-bin/cuu/Value?ryd">Rydberg constant</a>. The circular n = 30 radius is about 48 nm. The low-n view uses a separate scale.</li>
             <li><a href="https://physics.nist.gov/PhysRefData/Handbook/Tables/hydrogentable2.htm">NIST measured hydrogen line components</a>. Visible air values are separate from this ideal model's vacuum wavelengths.</li>
             <li><a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer">CIE 1931 observer table</a> (CC BY-SA 4.0). XYZ is converted to linear sRGB, negative channels clipped, and the maximum channel normalized to one. Gamut clipping and exposure mean the screen is an encoding.</li>
@@ -98,6 +114,6 @@
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div></footer>
   </div>
-  <script type="module" src="js/hydrogen-exactly.js?v=4"></script>
+  <script type="module" src="js/hydrogen-exactly.js?v=5"></script>
 </body>
 </html>
