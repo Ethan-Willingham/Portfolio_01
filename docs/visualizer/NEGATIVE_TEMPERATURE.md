@@ -40,7 +40,8 @@ The source of truth is `CONFIG` in [negative-temperature-model.js](../../js/nega
 | Paddle speed | 0.5 |
 | Quiet time, sweep, withdrawal | 12, 44, 16 model units |
 | Renewal interval | 540 model units |
-| Clock mapping | 0.75 model units per active display second |
+| Clock mapping | 3 model units per active display second |
+| Standalone opening | Time 48, after 4800 real solver steps |
 | Real damping, absorbing edges | Zero, none |
 | Detection ellipse | Inner 89% of both semiaxes |
 | Surrounding density threshold | 0.08 |
@@ -81,11 +82,11 @@ Diagnostics are sampled asynchronously, normally every three seconds (six for lo
 
 ## Observed runs and limitations
 
-The final [three-phrase run](../../assets/visualizer/negative-temperature/protocol-run.json) records every 1000 steps through step 162000, time 1620. This is 36 minutes under the normal clock mapping, accelerated in wall time with the identical solver sequence. Parameters, seed, signed positions, component sizes, norm, energy, boundary density, and diagnostic age are retained for every sample.
+The final [three-phrase run](../../assets/visualizer/negative-temperature/protocol-run.json) records every 1000 steps through step 162000, time 1620. This was 36 minutes under the original 0.75-unit clock mapping, accelerated in wall time with the identical solver sequence. The revised three-unit clock maps the same sequence to nine minutes; the stored record retains the original configuration. Parameters, seed, signed positions, component sizes, norm, energy, boundary density, and diagnostic age are retained for every sample.
 
 At time 250, step 25000, the field contains four positive and four negative vortices, in two four-member groups, with C2 = 1 and zero net detected circulation. Norm is 1100.1931, a loss of 0.5197% from the prepared field. Energy is 1457.1446. The outer four grid rows/columns contain 0.0412% of the norm. The [density screenshot](../../assets/visualizer/negative-temperature/payoff.png) and [signed instruments view](../../assets/visualizer/negative-temperature/payoff-instruments.png) come from this state.
 
-The cluster criterion remains satisfied at every sample from time 110 through 580. This includes the beginning of the next forcing interval, so the unforced persistence claim is limited to time 110 through 540, about 9.6 display minutes. Later phrases inject additional vortices and have weaker organization. The full run contains 51 clustered samples out of 162, not permanent order.
+The cluster criterion remains satisfied at every sample from time 110 through 580. This includes the beginning of the next forcing interval, so the unforced persistence claim is limited to time 110 through 540, about 9.6 display minutes at the original speed, or 2.4 minutes at the revised speed. Later phrases inject additional vortices and have weaker organization. The full run contains 51 clustered samples out of 162, not permanent order.
 
 The [padded-box check](../../assets/visualizer/negative-temperature/padding-check.json) increases the box to 96 and the grid to 512, with dt = 0.005 and the same trap and paddles. The nearest box margin rises to 48 healing lengths and the healing length spans 2.67 cells. At time 150 it has five cores of each sign, C2 = 0.7, and two four-member components. Such components persist through time 300, while C2 varies from 0.5 to 0.7. Its maximum boundary norm fraction is 0.0224%, compared with 0.1402% in the longer default run. This supports organization away from periodic seams, but does not prove independence from all boundary or sound effects. The changed counts demonstrate incomplete spatial convergence.
 
@@ -99,9 +100,11 @@ Earlier parameter trials are retained in this assets directory. `initial-fast-ru
 
 The room draws the unmodified field into a full-size rgba16float target as linear radiance. Density uses a saturating transfer 1.8 [1 - exp(-1.7 rho)] with a smooth display floor between rho = 0.015 and 0.08. This reduces the visual prominence of weak sound outside the cloud and deepens low-density cores. A small four-neighbor contribution is spatial bloom. There is no feedback, trail buffer, fabricated noise, or tracer advection.
 
-Phase is a cyclic OKLab wheel at constant lightness 0.77, chroma 0.022 by default and 0.12 in the phase instrument. It encodes phase rather than emitted spectral light. The velocity view computes Im(conj(psi) grad psi) / rho with centered differences, suppressing arrows below rho = 0.08. No integration through a core singularity is attempted. Optional sign rings use measured core positions and do not affect the wave equation.
+Phase is a cyclic OKLab wheel at constant lightness 0.77, chroma 0.045 by default (original captures used 0.022) and 0.12 in the phase instrument. It encodes phase rather than emitted spectral light. The velocity view computes Im(conj(psi) grad psi) / rho with centered differences, suppressing arrows below rho = 0.08. No integration through a core singularity is attempted. Optional sign rings use measured core positions and do not affect the wave equation.
 
 The standalone host tone maps once with linear Reinhard, then performs sRGB transfer for its unorm canvas. The room itself never tone maps and applies exposure as a linear multiplier. A readback test finds exactly a factor of two when exposure doubles. Beyond the simulated square, the scene is background; edge pixels are not extruded or tiled.
+
+The original quiet opening made the piece appear inactive. The standalone host now computes the identical first 4800 real steps before showing the field, opening midway through the first sweep at time 48. It then advances at three model units per display second. Grid, timestep, potentials, and the physical sequence are unchanged. Creation of the reusable room still returns the prepared ground state; this pre-roll belongs to the standalone host. Restart repeats the same preparation and pre-roll.
 
 Pause is separate from hidden/offscreen suspension. Reduced motion starts with a computed still and Play. Restart prepares the same fixed seed again and preserves the manual pause state. The offline hex seed controls only a global initial phase, through FNV-1a and Mulberry32; it is not a verified beacon or an independently measured quantum random event. Same-device restart is tested, while floating-point chaos prevents a cross-device exact replay promise.
 
@@ -156,9 +159,11 @@ The CPU loss test uses `dpsi/dt = -gamma psi` as an isolated optional particle-l
 | Full GPE step, 256 grid | 0.225 / 0.325 ms | 0.688 / 1.713 ms | Eight-step batches, time divided by eight |
 | Room render, 640 by 360 rgba16float | 0.40 / 0.80 ms | 1.40 / 3.10 ms | Single render, queue completion |
 
-Each operation has 25 measured samples after four warmups, including CPU encoding/submission and queue-completion latency. FFT, solver and rendering were measured separately. Different batch sizes mean the FFT number is not an additive component cost; the single-transform driver overhead is significant. Timestamp queries are detected but not used. The final UI run was substantially slower on the same adapter; the cause was not isolated. Both observations are retained rather than treating the faster baseline as a promise. Normal speed needs 75 solver steps per active display second.
+Each operation has 25 measured samples after four warmups, including CPU encoding/submission and queue-completion latency. FFT, solver and rendering were measured separately. Different batch sizes mean the FFT number is not an additive component cost; the single-transform driver overhead is significant. Timestamp queries are detected but not used. The final UI run was substantially slower on the same adapter; the cause was not isolated. Both observations are retained rather than treating the faster baseline as a promise. The original speed needed 75 solver steps per active display second; the revised clock needs 300. A room call queues at most eight stable substeps, and the host still bounds queued work.
 
 Browser checks cover 1440x900, 390x844 and 844x390; all visible controls have at least 44px targets and no horizontal overflow. Pause/resume, keyboard Space, instruments, phase, velocity, sign rings, fullscreen/exit, resize, hidden/offscreen suspension, retained manual pause, reduced motion, exact same-device restart, offline continuation, missing WebGPU, and device loss are exercised. Screenshots include [startup](../../assets/visualizer/negative-temperature/startup.png), [stirring](../../assets/visualizer/negative-temperature/developing.png), and the payoff, as well as all three viewport sizes. Fallback PNG/WebP is a recorded field render at time 250, with its origin stated in the interface.
+
+The revised opening has its own [regression record](../../assets/visualizer/negative-temperature/opening-validation.json). It starts at step 4800 in the Stirring phase. The five-second live check produces density-change RMS 0.197, which excludes mere global phase rotation as the apparent motion. The fixed room clock executes exactly 300 steps for 60 ambient increments. The warmed field repeats with SHA-256 `e6dcb847e1e2393f5238dc487648a1d3963d90d40c6327ec80ff3a4d7bf7d8ec` on this device. Pause, reduced motion and mobile layout still pass, and the unchanged protocol produces the same two four-member groups at time 150. See the [new opening](../../assets/visualizer/negative-temperature/opening-v2.png), [five seconds later](../../assets/visualizer/negative-temperature/opening-motion-v2.png), and [new payoff](../../assets/visualizer/negative-temperature/payoff-v2.png).
 
 Reproduce with bundled Playwright on NODE_PATH:
 
@@ -166,6 +171,7 @@ Reproduce with bundled Playwright on NODE_PATH:
 node tools/test-negative-temperature-numerics.mjs
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-browser.cjs --protocol
 NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-protocol.cjs
+NODE_PATH=/path/to/node_modules node tools/test-negative-temperature-opening.cjs
 ```
 
 The browser harness owns its HTTP server and the exact browser child, launched through `/Users/ethan/.local/bin/agent-chrome-for-testing`, and closes both in finally. It does not launch the personal Chrome app or use broad process cleanup. The protocol harness repeats the padded-box check. `NT_STEPS` can shorten the browser recording while preserving the solver sequence; its default is three full phrases. Raw results are in [validation-full.json](../../assets/visualizer/negative-temperature/validation-full.json), the latest [validation.json](../../assets/visualizer/negative-temperature/validation.json), [cpu-validation.json](../../assets/visualizer/negative-temperature/cpu-validation.json), and protocol-run.json. The final restart check compares the complete complex field, with matching SHA-256 `45b157afbfb28050b3d92aa9f312a628554d110250eaebaee2db22e4532b418a` on this device.
@@ -175,8 +181,8 @@ The browser harness owns its HTTP server and the exact browser child, launched t
 - `negative-temperature-lab.html`, `negative-temperature.css`
 - `js/negative-temperature.js`, `js/negative-temperature-room.js`
 - `js/negative-temperature-model.js`, `js/negative-temperature-gpu.js`
-- `tools/test-negative-temperature-numerics.mjs`, `tools/test-negative-temperature-browser.cjs`, `tools/test-negative-temperature-protocol.cjs`
+- `tools/test-negative-temperature-numerics.mjs`, `tools/test-negative-temperature-browser.cjs`, `tools/test-negative-temperature-protocol.cjs`, `tools/test-negative-temperature-opening.cjs`
 - `assets/visualizer/negative-temperature/` screenshots, still fallback and diagnostic records
 - `docs/visualizer/NEGATIVE_TEMPERATURE.md`
 
-No homepage, hub, archive, lab index, shared style, component kit, other visualization, game, or research-bundle files belong to this change. The page is noindex and deliberately absent from curation. The sitemap generator excludes comparison lab pages.
+The owner subsequently requested an In Progress listing. Its card lives on archive.html and is included in the search index. The page remains at its lab URL and noindex. The sitemap generator excludes comparison lab pages. Shared style, component kit, other visualization, game, and research-bundle files remain outside this change.

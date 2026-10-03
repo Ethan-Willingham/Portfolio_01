@@ -6,7 +6,7 @@ export const CONFIG = Object.freeze({
   paddleAmplitude: 10, paddleSigmaX: 7.5, paddleSigmaY: 0.55,
   paddleX: 24, paddleStartY: 22, paddleSpeed: 0.5,
   stirStart: 12, sweepDuration: 44, withdrawalDuration: 16,
-  phraseDuration: 540, solverUnitsPerSecond: 0.75,
+  phraseDuration: 540, solverUnitsPerSecond: 3, standaloneStartTime: 48,
   damping: 0, detectionRadius: 0.89, detectionDensity: 0.08,
   clusterLink: 7, clusterMinimum: 4, clusterCorrelation: 0.55,
 });

@@ -1,0 +1,423 @@
+{
+  "date": "2026-10-03",
+  "adapter": "Apple M1 Pro / Metal",
+  "opening": {
+    "apiVersion": 1,
+    "id": "negative-temperature",
+    "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
+    "numericalStepCount": 4800,
+    "simulationTime": 48.00000000000002,
+    "simulationUnits": "dimensionless: hbar = m = 1",
+    "quality": "medium",
+    "parameters": {
+      "grid": 256,
+      "side": 64,
+      "g": 2,
+      "bulkDensity": 1,
+      "chemicalPotential": 2,
+      "radiusX": 24,
+      "radiusY": 17,
+      "wallWidth": 0.8,
+      "wallHeight": 12,
+      "dt": 0.01,
+      "preparationDt": 0.04,
+      "preparationSteps": 1600,
+      "paddleAmplitude": 10,
+      "paddleSigmaX": 7.5,
+      "paddleSigmaY": 0.55,
+      "paddleX": 24,
+      "paddleStartY": 22,
+      "paddleSpeed": 0.5,
+      "stirStart": 12,
+      "sweepDuration": 44,
+      "withdrawalDuration": 16,
+      "phraseDuration": 540,
+      "solverUnitsPerSecond": 3,
+      "standaloneStartTime": 48,
+      "damping": 0,
+      "detectionRadius": 0.89,
+      "detectionDensity": 0.08,
+      "clusterLink": 7,
+      "clusterMinimum": 4,
+      "clusterCorrelation": 0.55
+    },
+    "seed": "180106951",
+    "seedProvenance": "Fixed offline hex seed, FNV-1a + Mulberry32 sets initial global phase only; deterministic paddles.",
+    "replayCaveat": "Same solver sequence; floating-point evolution can diverge across devices.",
+    "preparation": {
+      "method": "Grand-canonical imaginary-time split step at fixed chemical potential, no frame normalization",
+      "steps": 1600
+    },
+    "dx": 0.25,
+    "healingLength": 0.5,
+    "healingLengthCells": 2,
+    "phase": "Stirring",
+    "temperatureStatus": "Temperature not estimated",
+    "diagnosticAgeSteps": 0,
+    "diagnosticAgeSeconds": 0.0028000000715255736,
+    "diagnostics": {
+      "norm": 1105.1216068017236,
+      "energy": 1400.1925988837088,
+      "kinetic": 123.8471984753345,
+      "interaction": 1179.815107533789,
+      "potential": 96.53029287458558,
+      "edgeNormFraction": 2.333442606943839e-11,
+      "positive": 4,
+      "negative": 4,
+      "circulation": 0,
+      "circulationUnits": "quanta of 2 pi in the detected region",
+      "vortices": [
+        {
+          "x": -19.125,
+          "y": 4.125,
+          "sign": 1
+        },
+        {
+          "x": 19.125,
+          "y": 4.125,
+          "sign": -1
+        },
+        {
+          "x": -11.375,
+          "y": 5.875,
+          "sign": 1
+        },
+        {
+          "x": 11.375,
+          "y": 5.875,
+          "sign": -1
+        },
+        {
+          "x": -14.125,
+          "y": 7.125,
+          "sign": 1
+        },
+        {
+          "x": 14.125,
+          "y": 7.125,
+          "sign": -1
+        },
+        {
+          "x": -9.375,
+          "y": 7.375,
+          "sign": 1
+        },
+        {
+          "x": 9.375,
+          "y": 7.375,
+          "sign": -1
+        }
+      ],
+      "c2": 1,
+      "componentSizes": [
+        4,
+        4
+      ],
+      "largestCluster": 4,
+      "clustered": true,
+      "measuredStep": 4800,
+      "measuredSimulationTime": 48.00000000000002,
+      "normDrift": -0.0007406541408169209,
+      "conservativeEnergyDrift": null,
+      "estimatedAnnihilations": 0,
+      "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
+      "temperature": null,
+      "temperatureStatus": "Temperature not estimated",
+      "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
+    },
+    "assetBaseURL": "http://127.0.0.1:52629/assets/visualizer/negative-temperature/"
+  },
+  "fiveSeconds": {
+    "apiVersion": 1,
+    "id": "negative-temperature",
+    "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
+    "numericalStepCount": 6415,
+    "simulationTime": 64.14999999999911,
+    "simulationUnits": "dimensionless: hbar = m = 1",
+    "quality": "medium",
+    "parameters": {
+      "grid": 256,
+      "side": 64,
+      "g": 2,
+      "bulkDensity": 1,
+      "chemicalPotential": 2,
+      "radiusX": 24,
+      "radiusY": 17,
+      "wallWidth": 0.8,
+      "wallHeight": 12,
+      "dt": 0.01,
+      "preparationDt": 0.04,
+      "preparationSteps": 1600,
+      "paddleAmplitude": 10,
+      "paddleSigmaX": 7.5,
+      "paddleSigmaY": 0.55,
+      "paddleX": 24,
+      "paddleStartY": 22,
+      "paddleSpeed": 0.5,
+      "stirStart": 12,
+      "sweepDuration": 44,
+      "withdrawalDuration": 16,
+      "phraseDuration": 540,
+      "solverUnitsPerSecond": 3,
+      "standaloneStartTime": 48,
+      "damping": 0,
+      "detectionRadius": 0.89,
+      "detectionDensity": 0.08,
+      "clusterLink": 7,
+      "clusterMinimum": 4,
+      "clusterCorrelation": 0.55
+    },
+    "seed": "180106951",
+    "seedProvenance": "Fixed offline hex seed, FNV-1a + Mulberry32 sets initial global phase only; deterministic paddles.",
+    "replayCaveat": "Same solver sequence; floating-point evolution can diverge across devices.",
+    "preparation": {
+      "method": "Grand-canonical imaginary-time split step at fixed chemical potential, no frame normalization",
+      "steps": 1600
+    },
+    "dx": 0.25,
+    "healingLength": 0.5,
+    "healingLengthCells": 2,
+    "phase": "Withdrawing",
+    "temperatureStatus": "Temperature not estimated",
+    "diagnosticAgeSteps": 720,
+    "diagnosticAgeSeconds": 2.404100000023842,
+    "diagnostics": {
+      "norm": 1104.8896483784683,
+      "energy": 1541.360685755241,
+      "kinetic": 193.94245631340308,
+      "interaction": 1240.6645653565981,
+      "potential": 106.75366408524002,
+      "edgeNormFraction": 1.0035861948168449e-10,
+      "positive": 7,
+      "negative": 7,
+      "circulation": 0,
+      "circulationUnits": "quanta of 2 pi in the detected region",
+      "vortices": [
+        {
+          "x": -7.375,
+          "y": 2.125,
+          "sign": 1
+        },
+        {
+          "x": 7.375,
+          "y": 2.125,
+          "sign": -1
+        },
+        {
+          "x": -9.875,
+          "y": 2.375,
+          "sign": 1
+        },
+        {
+          "x": 9.875,
+          "y": 2.375,
+          "sign": -1
+        },
+        {
+          "x": -8.875,
+          "y": 2.875,
+          "sign": -1
+        },
+        {
+          "x": 8.875,
+          "y": 2.875,
+          "sign": 1
+        },
+        {
+          "x": -13.875,
+          "y": 3.375,
+          "sign": 1
+        },
+        {
+          "x": 13.875,
+          "y": 3.375,
+          "sign": -1
+        },
+        {
+          "x": -11.625,
+          "y": 5.375,
+          "sign": 1
+        },
+        {
+          "x": 11.625,
+          "y": 5.375,
+          "sign": -1
+        },
+        {
+          "x": -14.875,
+          "y": 5.625,
+          "sign": 1
+        },
+        {
+          "x": 14.875,
+          "y": 5.625,
+          "sign": -1
+        },
+        {
+          "x": -9.375,
+          "y": 6.125,
+          "sign": 1
+        },
+        {
+          "x": 9.375,
+          "y": 6.125,
+          "sign": -1
+        }
+      ],
+      "c2": 0.2857142857142857,
+      "componentSizes": [
+        4,
+        4,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "largestCluster": 4,
+      "clustered": false,
+      "measuredStep": 5695,
+      "measuredSimulationTime": 56.94999999999951,
+      "normDrift": -0.0009503927079230756,
+      "conservativeEnergyDrift": null,
+      "estimatedAnnihilations": 0,
+      "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
+      "temperature": null,
+      "temperatureStatus": "Temperature not estimated",
+      "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
+    },
+    "assetBaseURL": "http://127.0.0.1:52629/assets/visualizer/negative-temperature/"
+  },
+  "densityChangeRMS": 0.19663509945226987,
+  "activeClockAdvance": 16.199999999999086,
+  "restartHash": "e6dcb847e1e2393f5238dc487648a1d3963d90d40c6327ec80ff3a4d7bf7d8ec",
+  "payoff": {
+    "apiVersion": 1,
+    "id": "negative-temperature",
+    "model": "2D conservative Gross-Pitaevskii equation, symmetric split-step Fourier, f32",
+    "numericalStepCount": 15000,
+    "simulationTime": 150.00000000000009,
+    "simulationUnits": "dimensionless: hbar = m = 1",
+    "quality": "medium",
+    "parameters": {
+      "grid": 256,
+      "side": 64,
+      "g": 2,
+      "bulkDensity": 1,
+      "chemicalPotential": 2,
+      "radiusX": 24,
+      "radiusY": 17,
+      "wallWidth": 0.8,
+      "wallHeight": 12,
+      "dt": 0.01,
+      "preparationDt": 0.04,
+      "preparationSteps": 1600,
+      "paddleAmplitude": 10,
+      "paddleSigmaX": 7.5,
+      "paddleSigmaY": 0.55,
+      "paddleX": 24,
+      "paddleStartY": 22,
+      "paddleSpeed": 0.5,
+      "stirStart": 12,
+      "sweepDuration": 44,
+      "withdrawalDuration": 16,
+      "phraseDuration": 540,
+      "solverUnitsPerSecond": 3,
+      "standaloneStartTime": 48,
+      "damping": 0,
+      "detectionRadius": 0.89,
+      "detectionDensity": 0.08,
+      "clusterLink": 7,
+      "clusterMinimum": 4,
+      "clusterCorrelation": 0.55
+    },
+    "seed": "180106951",
+    "seedProvenance": "Fixed offline hex seed, FNV-1a + Mulberry32 sets initial global phase only; deterministic paddles.",
+    "replayCaveat": "Same solver sequence; floating-point evolution can diverge across devices.",
+    "preparation": {
+      "method": "Grand-canonical imaginary-time split step at fixed chemical potential, no frame normalization",
+      "steps": 1600
+    },
+    "dx": 0.25,
+    "healingLength": 0.5,
+    "healingLengthCells": 2,
+    "phase": "Turbulent relaxation",
+    "temperatureStatus": "Temperature not estimated",
+    "diagnosticAgeSteps": 0,
+    "diagnosticAgeSeconds": 0.00010000002384185791,
+    "diagnostics": {
+      "norm": 1102.7203295562701,
+      "energy": 1463.0057597319842,
+      "kinetic": 252.07184937870082,
+      "interaction": 1104.8627571666655,
+      "potential": 106.07115318661792,
+      "edgeNormFraction": 0.0001258252330389401,
+      "positive": 4,
+      "negative": 4,
+      "circulation": 0,
+      "circulationUnits": "quanta of 2 pi in the detected region",
+      "vortices": [
+        {
+          "x": -11.375,
+          "y": -8.875,
+          "sign": 1
+        },
+        {
+          "x": 11.375,
+          "y": -8.875,
+          "sign": -1
+        },
+        {
+          "x": 13.375,
+          "y": -5.125,
+          "sign": -1
+        },
+        {
+          "x": -13.875,
+          "y": -4.875,
+          "sign": 1
+        },
+        {
+          "x": -9.375,
+          "y": -4.625,
+          "sign": 1
+        },
+        {
+          "x": 9.125,
+          "y": -3.875,
+          "sign": -1
+        },
+        {
+          "x": -12.125,
+          "y": -0.875,
+          "sign": 1
+        },
+        {
+          "x": 12.625,
+          "y": -0.875,
+          "sign": -1
+        }
+      ],
+      "c2": 1,
+      "componentSizes": [
+        4,
+        4
+      ],
+      "largestCluster": 4,
+      "clustered": true,
+      "measuredStep": 15000,
+      "measuredSimulationTime": 150.00000000000009,
+      "normDrift": -0.00291190725427537,
+      "conservativeEnergyDrift": 0,
+      "estimatedAnnihilations": 0,
+      "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
+      "temperature": null,
+      "temperatureStatus": "Temperature not estimated",
+      "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
+    },
+    "assetBaseURL": "http://127.0.0.1:52629/assets/visualizer/negative-temperature/"
+  },
+  "roomClock": 300,
+  "errors": []
+}

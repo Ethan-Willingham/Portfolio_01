@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="negative-temperature.css?v=1">
+  <link rel="stylesheet" href="negative-temperature.css?v=2">
 </head>
 <body class="nt-page">
   <div class="site-wrapper">
@@ -45,7 +45,7 @@
             <label>Replay seed<input id="nt-seed" type="text" value="180106951" inputmode="text" pattern="[0-9a-fA-F]{1,64}" maxlength="64" aria-describedby="nt-seed-note"></label>
             <button id="nt-export" type="button">Save diagnostics</button>
           </div>
-          <p id="nt-seed-note" class="nt-note">Fixed offline seed. Apply it with Restart. Floating-point replay can diverge across GPUs.</p>
+          <p id="nt-seed-note" class="nt-note">Fixed offline seed. Apply it with Restart. Opens during the first paddle sweep, after 4,800 computed steps. Floating-point replay can diverge across GPUs.</p>
           <dl id="nt-readouts" class="nt-readouts"></dl>
           <details class="nt-configuration"><summary>Model configuration</summary><pre id="nt-configuration"></pre></details>
           <p class="nt-note" id="nt-adapter"></p>
@@ -68,6 +68,6 @@
     </main>
     <footer class="site-footer"><a href="/">Home</a></footer>
   </div>
-  <script type="module" src="js/negative-temperature.js?v=1"></script>
+  <script type="module" src="js/negative-temperature.js?v=2"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-import { createRoom } from './negative-temperature-room.js';
-import { DEFAULT_SEED } from './negative-temperature-model.js';
+import { createRoom } from './negative-temperature-room.js?v=2';
+import { DEFAULT_SEED } from './negative-temperature-model.js?v=2';
 
 const $ = id => document.getElementById(id), piece = $('nt-piece'), canvas = $('nt-canvas');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -51,7 +51,7 @@ function readouts() {
     ['Candidate annihilations', String(d?.estimatedAnnihilations ?? '?')], ['Boundary norm fraction', d?.edgeNormFraction?.toExponential(2) ?? '?'],
     ['dx / dt', `${fmt(s.dx)} / ${fmt(s.parameters.dt)}`], ['Healing length / cells', `${fmt(s.healingLength)} / ${fmt(s.healingLengthCells, 2)}`],
     ['Solver time / steps', `${fmt(s.simulationTime, 2)} / ${s.numericalStepCount}`], ['Diagnostic age', `${s.diagnosticAgeSteps} steps`],
-    ['Clock mapping', '0.75 model units/s'], ['Grid / precision', '256 x 256 / f32'],
+    ['Clock mapping', `${s.parameters.solverUnitsPerSecond} model units/s`], ['Grid / precision', '256 x 256 / f32'],
   ];
   $('nt-readouts').replaceChildren(...pairs.map(([name, value]) => { const div = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = name; dd.textContent = value; div.append(dt, dd); return div; }));
 }
@@ -84,6 +84,10 @@ async function restart() {
   await device.queue.onSubmittedWorkDone(); room?.dispose(); room = null;
   try {
     room = await createRoom({ device, seed, quality: 'medium', assetBaseURL: new URL('../assets/visualizer/negative-temperature/', import.meta.url).href });
+    if (disposed) { room.dispose(); return; }
+    $('nt-status').textContent = 'Advancing the first paddle sweep.';
+    const p = room.snapshot().parameters;
+    await room.debugAdvance(Math.round(p.standaloneStartTime / p.dt));
     if (disposed) { room.dispose(); return; }
     ambientTime = 0; $('nt-status').hidden = true; $('nt-restart').disabled = false; $('nt-play').disabled = false; piece.setAttribute('aria-busy', 'false');
     room.setDisplay({ mode: $('nt-view').value, signs: $('nt-signs').checked }); resize(); readouts();

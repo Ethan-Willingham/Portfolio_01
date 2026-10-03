@@ -1,5 +1,5 @@
-import { CONFIG, DEFAULT_SEED, healingLength, measure, protocol, suspectedAnnihilations } from './negative-temperature-model.js';
-import { GPUSolver } from './negative-temperature-gpu.js';
+import { CONFIG, DEFAULT_SEED, healingLength, measure, protocol, suspectedAnnihilations } from './negative-temperature-model.js?v=2';
+import { GPUSolver } from './negative-temperature-gpu.js?v=2';
 
 export const roomInfo = {
   apiVersion: 1, id: 'negative-temperature', title: 'Negative temperature',
@@ -32,7 +32,7 @@ fn lab(l:f32,a:f32,b:f32)->vec3f{
   let a=mix(mix(at(ij),at(ij+vec2i(1,0)),f.x),mix(at(ij+vec2i(0,1)),at(ij+vec2i(1,1)),f.x),f.y);
   let rho=mix(mix(density(ij),density(ij+vec2i(1,0)),f.x),mix(density(ij+vec2i(0,1)),density(ij+vec2i(1,1)),f.x),f.y);
   let phase=atan2(a.y,a.x);
-  let chroma=select(.022,.12,v.mode>0.5&&v.mode<1.5);
+  let chroma=select(.045,.12,v.mode>0.5&&v.mode<1.5);
   let color=lab(.77,chroma*cos(phase),chroma*sin(phase));
   let luminosity=1.8*(1.-exp(-1.7*max(rho,0.)))*smoothstep(.015,.08,rho);
   let bloom=(density(ij+vec2i(3,0))+density(ij-vec2i(3,0))+density(ij+vec2i(0,3))+density(ij-vec2i(0,3)))*.002;
@@ -104,7 +104,7 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
     step({ dtSeconds }) {
       if (disposed || diag?.diagnosticError) return;
       accumulator += Math.min(0.1, Math.max(0, dtSeconds)) * p.solverUnitsPerSecond;
-      const count = Math.min(4, Math.floor((accumulator + 1e-10) / p.dt));
+      const count = Math.min(8, Math.floor((accumulator + 1e-10) / p.dt));
       if (count) { solver.advance(count); accumulator -= count * p.dt; }
       if (performance.now() - lastMeasurement > (quality === 'low' ? 6000 : 3000) && solver.steps !== lastStep) diagnostics().catch(e => { diag = { ...diag, diagnosticError: e.message }; });
     },
