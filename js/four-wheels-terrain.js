@@ -94,21 +94,37 @@
   }
   // A spring-mass pelvis, braced legs and two compliant arms. A planted shopper
   // can oppose a tip; an airborne shopper has no ground force to spend.
+  function walkingStance(w,hand){
+    const b=w.body,c=Math.cos(b.a),s=Math.sin(b.a),stance={x:b.x-16*c,y:b.y-16*s};
+    const floor=w.floorAt(stance);
+    // Shorten the step toward the handle, or sidestep, at a lip. Tracking an
+    // unsupported usual stance would immediately walk a rescued shopper off again.
+    if(!floor){const a=Math.atan2(hand.y-stance.y,hand.x-stance.x);
+      for(let reach=2;reach<=10;reach+=2)for(const offset of [0,-Math.PI/4,Math.PI/4,-Math.PI/2,Math.PI/2]){const p={x:stance.x+Math.cos(a+offset)*reach,y:stance.y+Math.sin(a+offset)*reach},support=w.floorAt(p);if(support&&[[3,0],[-3,0],[0,3],[0,-3]].every(([x,y])=>w.isFloor({x:p.x+x,y:p.y+y})))return {...p,floor:support};}
+    }
+    return {...stance,floor};
+  }
   function shopperStep(w,dt,input){
     const b=w.body,p=w.shopper,c=Math.cos(b.a),s=Math.sin(b.a),hand=kinematics(b,-6,0,30),hv=velocity(b,hand),floor=w.floorAt(p);
-    const gripFloor=floor&&p.z-floor.height<26&&p.z-floor.height>5&&!w.fall;
+    const stance=walkingStance(w,hand.p),gripFloor=floor&&p.z-floor.height<26&&p.z-floor.height>=8&&!w.fall;
+    // The supported cart can brace a short step back onto the lip, or help a
+    // saved hanging pose stand up. The arms supply the lift until feet actually
+    // plant. No foothold, a deep drop or an airborne cart cannot supply this help.
+    const replant=!gripFloor&&!w.fall&&!w.ground.airborne&&w.ground.count>=2&&stance.floor&&p.z>=stance.floor.height-6&&p.z<stance.floor.height+26&&hand.p.z>stance.floor.height+12&&Math.hypot(stance.x-p.x,stance.y-p.y)<18;
     p.feet=gripFloor?Math.sqrt(floor.grip):0;
     const turn=clamp(input.turn||0,-1,1)*(p.feet?1:0),push=clamp(input.push||0,-1,1)*(p.feet?1:0);
     const shift=turn*5*p.feet,back=10+push*1.8;
     const target={x:hand.p.x-back*c-shift*s,y:hand.p.y-back*s+shift*c,z:hand.p.z-12};
+    if(replant)Object.assign(target,{x:stance.x,y:stance.y,z:stance.floor.height+18});
     // Soft hand tether. It transmits equal/opposite impulses at handle height.
     const f={x:clamp((target.x-p.x)*34+(hv.x-p.vx)*7,-150,150),y:clamp((target.y-p.y)*34+(hv.y-p.vy)*7,-150,150),z:clamp((target.z-p.z)*26+(hv.z-p.vz)*6,-170,170)};
+    if(replant){f.x=clamp((target.x-p.x)*60+(b.vx-p.vx)*12,-180,180);f.y=clamp((target.y-p.y)*60+(b.vy-p.vy)*12,-180,180);f.z=clamp((target.z-p.z)*60-p.vz*12+G,-170,480);}
     const extension=Math.hypot(hand.p.x-p.x,hand.p.y-p.y,hand.p.z-(p.z+11));p.grip=clamp(1-(extension-19)/12,.15,1);
     if(gripFloor){
       const crouch=clamp((30-hand.p.z+floor.height)*.35,0,7);p.crouch+=(crouch-p.crouch)*Math.min(1,10*dt);
       p.vz+=clamp((floor.height+18-p.crouch-p.z)*110-p.vz*18+G,-G,420)*dt;
       // Feet track the walking stance, with finite traction rather than a weld.
-      const fx=(b.x-16*c-p.x)*28+(b.vx-p.vx)*8,fy=(b.y-16*s-p.y)*28+(b.vy-p.vy)*8;
+      const fx=(stance.x-p.x)*28+(b.vx-p.vx)*8,fy=(stance.y-p.y)*28+(b.vy-p.vy)*8;
       p.vx+=clamp(fx,-180,180)*p.feet*dt;p.vy+=clamp(fy,-180,180)*p.feet*dt;
     }else {p.crouch*=Math.exp(-5*dt);}
     p.vx+=f.x*dt;p.vy+=f.y*dt;p.vz+=(f.z-G)*dt;
@@ -138,7 +154,7 @@
     b.tiltPitch=NaN;storeAttitude(b,attitude(b));b.z=0;
     b.z=Math.max(...[[-4.5,-12],[21.5,-12],[-4.5,12],[21.5,12]].map(([x,y],i)=>heights[i]-kinematics(b,x,y).p.z));initShopper(w);
     w.wheels.forEach(q=>{q.load=1;q.groundZ=b.z;});
-    w.ground={feet:1,count:4,airborne:false,lastHeight:b.z,hangTime:0,flightTime:0,impact:0,boosting:false};
+    w.ground={feet:w.shopper.feet,count:4,airborne:false,lastHeight:b.z,hangTime:0,flightTime:0,impact:0,boosting:false};
     w.edge={risk:0,count:4,threat:false};w.circuit={powered:false,connected:false,charge:0,lift:0,clock:0,refillTime:0,path:[]};
     w.level.circuitState=w.circuit;w.terrainStats={jumps:0,landings:0,saves:0,maxHeight:b.z,boosts:0};
   }

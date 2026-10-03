@@ -115,6 +115,11 @@ forward tip; push opposes an excessive backward tip. The finite balance torque
 requires planted feet. No input grants traction to a fully airborne assembly.
 The legacy timed fixtures retain their original combined body.
 
+At a lip, the shopper shortens a step or moves sideways onto nearby supporting
+floor. A grounded cart can brace the arms while the shopper stands back up. Feet
+restore drive force only after planting; a fully airborne cart supplies no stepping
+assist. Existing saves with a shopper hanging just below the lip recover in place.
+
 All four wheels have independent swivel angles, angular velocities and signed
 rolling distances. Each fixed pivot carries a fork whose tire trails 5.5 units
 behind it. The tire center is not the pivot. A tiny mirrored axle offset starts
@@ -374,6 +379,9 @@ node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
 node tools/test-four-wheels-terrain.cjs
 node tools/test-four-wheels-balance.cjs
+node tools/test-four-wheels-footing.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-footing-browser.cjs
+CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-footing-browser.cjs
 node tools/test-four-wheels-course.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-audio.cjs
