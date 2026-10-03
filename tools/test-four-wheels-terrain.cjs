@@ -4,8 +4,8 @@ const make=(i=0)=>new P.World(C.build(i));
 const step=(w,s,input={})=>{for(let i=0;i<s*120;i++)w.step(1/120,input);};
 const pose=(w,x,y,a=0,v=0)=>{Object.assign(w.body,{x,y,a,vx:Math.cos(a)*v,vy:Math.sin(a)*v,omega:0});T.init(w,w.terrainGeometry);w.wheels.forEach(q=>Object.assign(q,{a,omega:0}));};
 function check(name,fn){fn();console.log('PASS '+name);}
-check('one height field supplies hills, four physical bumps and a real unsupported jump gap',()=>{
- const w=make(),l=w.level;assert.ok(T.height(l,{x:1200,y:820})>40);const bump=l.terrain.bumps;for(const u of bump.centers){const p={x:bump.x,y:bump.y-u};assert.ok(w.floorAt(p).height>4);assert.ok(T.height(l,{x:p.x,y:p.y+15})<.1);}
+check('one height field supplies hills, low physical bumps and a real unsupported jump gap',()=>{
+ const w=make(),l=w.level;assert.ok(T.height(l,{x:1200,y:820})>40);const bump=l.terrain.bumps;for(const u of bump.centers){const p={x:bump.x,y:bump.y-u};assert.equal(w.floorAt(p).height,bump.height);assert.ok(T.height(l,{x:p.x,y:p.y+bump.length/2})<.1);}
  assert.equal(w.floorAt({x:1215,y:410}),null);assert.equal(w.floorAt({x:1215,y:520}),null);assert.ok(w.floorAt({x:1260,y:410}).height>14);assert.ok(w.floorAt({x:1170,y:410}));
 });
 check('a supported cart settles, leans on a hill and coasts downhill under gravity',()=>{

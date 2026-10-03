@@ -36,7 +36,7 @@ The twelve sections and their fall destinations are:
 | Last bottles | Asphalt and tile | One | The water relay |
 | The last long turn | Dirt | None | Grass on the outside |
 
-The road has real elevation: a gentle first hill, four speed bumps, a raised
+The road has real elevation: a gentle first hill, two speed bumps, a raised
 causeway, a quarry climb and descent, a boost ramp across an empty gap, an icy
 ledge, and a final climb. The cart has vertical velocity, pitch, roll and angular
 rates. Four cylindrical tires, the lower frame, basket corners and handle produce
@@ -53,15 +53,22 @@ swivel. A normalized quaternion stores the cart tilt, including sideways and
 upside-down poses. Heading absorbs quaternion twist so steering follows the basket. Sequential accumulated impulses remain nonnegative. Mild restitution and
 ground damping settle landings without flattening the cart's orientation.
 The empty cart rotates around a center of mass 10 units forward and 16 above its
-floor pose. Low tire impacts and high basket impacts produce different pitch and
+floor pose. Pitch inertia is 400 and roll inertia is 175, below the unchanged
+470 yaw inertia. Wheel strikes and hand corrections change tilt promptly through
+contact impulses; gravity and support still decide whether it falls or recovers.
+Low tire impacts and high basket impacts produce different pitch and
 roll torques. Collision hulls are sliced at the obstacle's actual height. The
 frame, rim and handle can hit and scrape the road. Turning over on supported
 road no longer triggers a cliff fall. This is
 a small game solver, not an imported general-purpose physics engine.
 
-Hills use smooth centerline height profiles. The four painted speed bumps have
-cosine sections, 4.5 units high and 30 units long. Their shape lifts each wheel
-separately. The boost applies a directional force only at supported wheels;
+Hills use smooth centerline height profiles. The two opening speed bumps have
+cosine sections, 1.6 units high and 38 units long, spaced 62 units apart. Their
+ends taper into the road over six units. Each is one gold surface shaded by its
+actual slope. The lower shape lets the front and rear wheels rock over it and
+settle before the next bump, including a full push from the section entrance.
+The tire sidewalls have visible rims and silver hubs against the asphalt.
+The boost applies a directional force only at supported wheels;
 the 55-unit ramp rises 18 units before a 70-unit gap. The gap removes the dirt,
 asphalt, shoulders and rails. Leaving the ramp preserves upward and horizontal
 velocity. Gravity determines airtime and where the tires land. A slow approach
@@ -454,6 +461,7 @@ node tools/test-four-wheels-journey.cjs
 node tools/test-four-wheels-tricks.cjs
 node tools/test-four-wheels-terrain.cjs
 node tools/test-four-wheels-balance.cjs
+node tools/test-four-wheels-opening.cjs
 node tools/test-four-wheels-ragdoll.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-ragdoll-browser.cjs
 CART_ENGINE=webkit NODE_PATH=/path/to/playwright/node_modules node tools/test-four-wheels-ragdoll-browser.cjs

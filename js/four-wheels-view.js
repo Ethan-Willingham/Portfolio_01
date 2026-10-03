@@ -664,6 +664,12 @@
       const rings=[-h,h].map(y=>Array.from({length:count},(_,j)=>tr(l*Math.cos(j*Math.PI*2/count),y,l+l*Math.sin(j*Math.PI*2/count))));
       for(let j=0;j<count;j++)scene.face([rings[0][j],rings[1][j],rings[1][(j+1)%count],rings[0][(j+1)%count]],P.dark);
       scene.face(rings[0],P.edge);scene.face(rings[1].slice().reverse(),P.edge);
+      // Silver hubs and a warm rubber rim separate the tire from dark asphalt.
+      for(const side of [-h-.08,h+.08]){
+        const ring=Array.from({length:count},(_,j)=>tr(l*.82*Math.cos(j*Math.PI*2/count),side,l+l*.82*Math.sin(j*Math.PI*2/count)));
+        for(let j=0;j<count;j++)scene.wire(ring[j],ring[(j+1)%count],P.mid,1,.65);
+        scene.face(Array.from({length:8},(_,j)=>tr(1.35*Math.cos(j*Math.PI/4),side,l+1.35*Math.sin(j*Math.PI/4))),P.steel);
+      }
       const phase=wheel.roll/l;
       for(let j=0;j<3;j++) {
         const a=phase+j*Math.PI*2/3,x=Math.cos(a),z=Math.sin(a);
@@ -1214,7 +1220,15 @@
       const strip=f=>{const c=Math.cos(f.a),s=Math.sin(f.a);return [[0,-f.width/2],[f.length,-f.width/2],[f.length,f.width/2],[0,f.width/2]].map(([u,v])=>({x:f.x+u*c-v*s,y:f.y+u*s+v*c}));};
       for(const [f,color]of [[w.level.terrain.ice,blend(P.blue,P.light,.45)],[w.level.terrain.boost,P.gold]])mesh(g,strip(f),color,{x:x*size,y:y*size,w:size,h:size},true);
       const bumps=w.level.terrain.bumps;
-      for(const u of bumps.centers)for(let v=-bumps.width/2;v<bumps.width/2;v+=10){const b={x:bumps.x,y:bumps.y,a:bumps.a};mesh(g,[local(b,u-5,v),local(b,u+5,v),local(b,u+5,v+10),local(b,u-5,v+10)],Math.floor(v/10)%2?P.gold:P.dark,{x:x*size,y:y*size,w:size,h:size},true);}
+      // Paint the complete physical hump. One continuous gold surface and
+      // slope shading show the rise, crest and descent without checkerboards.
+      for(const center of bumps.centers){
+        const start=center-bumps.length/2,end=center+bumps.length/2;
+        mesh(g,[local(bumps,start,-bumps.width/2),local(bumps,end,-bumps.width/2),local(bumps,end,bumps.width/2),local(bumps,start,bumps.width/2)],(xx,yy)=>{
+          const q=Terrain.coordinates({x:xx,y:yy},bumps),u=(q.u-center)/(bumps.length/2),slope=-Math.sin(u*Math.PI);
+          return slope>0?blend(P.gold,P.cream,slope*.18):blend(P.gold,P.hairDark,-slope*.22);
+        },tileBounds,s=>s.kind==='asphalt'||s.kind==='dirt');
+      }
       for(let yy=y*size;yy<(y+1)*size;yy+=8)for(let xx=x*size;xx<(x+1)*size;xx+=8){
         const h=hash(xx,yy),p=onGround({x:xx+h*6,y:yy+hash(yy,xx)*6}),surface=Course.sample(w.level,p,false);if(!surface)continue;const a=project(p);
         if(surface.kind==='grass'){

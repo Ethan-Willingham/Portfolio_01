@@ -4,7 +4,9 @@
  */
 (function(root){
   'use strict';
-  const G=200, PITCH_INERTIA=480, ROLL_INERTIA=230, YAW_INERTIA=470;
+  // Pitch and roll respond to the empty basket's mass distribution. Keeping
+  // these below yaw inertia lets a wheel strike rock the cart promptly.
+  const G=200, PITCH_INERTIA=400, ROLL_INERTIA=175, YAW_INERTIA=470;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
   const normalize=p=>{const d=Math.hypot(p.x,p.y,p.z)||1;return {x:p.x/d,y:p.y/d,z:p.z/d};};
   const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
@@ -16,7 +18,7 @@
         {chapter:4,knots:[[0,0],[.15,25],[.38,72],[.63,72],[.88,12],[1,0]]},
         {chapter:11,knots:[[0,0],[.1,0],[.75,60],[1,60]]}
       ],
-      bumps:{x:590,y:1230,a:-Math.PI/2,width:154,centers:[46,80,114,148],length:30,height:4.5},
+      bumps:{x:590,y:1230,a:-Math.PI/2,width:112,centers:[38,100],length:38,height:1.6,edge:6},
       boost:{x:1350,y:410,a:Math.PI,length:45,width:104,acceleration:165},
       ramp:{x:1305,y:410,a:Math.PI,length:55,width:234,height:18},
       gap:{x:1250,y:410,a:Math.PI,length:70,width:248},
@@ -42,7 +44,9 @@
     const t=level.terrain;if(!t)return 0;
     let z=0;for(const f of t.profiles)if(p.x>=f.box.left&&p.x<=f.box.right&&p.y>=f.box.top&&p.y<=f.box.bottom)z=Math.max(z,profile(p,f));
     const b=t.bumps,q=coordinates(p,b);
-    if(Math.abs(q.v)<b.width/2)for(const center of b.centers){const u=(q.u-center)/(b.length/2);if(Math.abs(u)<1)z+=b.height*(1+Math.cos(u*Math.PI))/2;}
+    // Rounded ends meet the road continuously, including a diagonal approach.
+    const edge=clamp((b.width/2-Math.abs(q.v))/b.edge,0,1),taper=edge*edge*(3-2*edge);
+    if(taper>0)for(const center of b.centers){const u=(q.u-center)/(b.length/2);if(Math.abs(u)<1)z+=b.height*(1+Math.cos(u*Math.PI))/2*taper;}
     if(inStrip(p,t.ramp)){const q=coordinates(p,t.ramp);z+=t.ramp.height*q.u/t.ramp.length;}
     return z;
   }

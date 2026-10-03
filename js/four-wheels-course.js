@@ -7,7 +7,7 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const chapters=[
     {name:'The first push',surface:'dirt',width:154,shoulder:42,rail:3,back:0,theme:'clay',tip:'A wide dirt track to learn the swivel. Turn the basket, then push to change your path.',points:[[180,1520],[470,1520],[590,1400],[590,1230]]},
-    {name:'The speed bumps',surface:'asphalt',width:120,shoulder:18,rail:1,back:0,theme:'gold',tip:'Four raised bumps. Let the wheels settle between them, then brake before the hairpin.',points:[[590,1230],[590,1040],[800,1040],[800,1390],[1000,1390]]},
+    {name:'The speed bumps',surface:'asphalt',width:120,shoulder:18,rail:1,back:0,theme:'gold',tip:'Two low, rounded bumps. Roll straight over them, then brake before the turn.',points:[[590,1230],[590,1040],[800,1040],[800,1390],[1000,1390]]},
     {name:'A grocery detour',surface:'dirt',width:128,shoulder:18,rail:2,back:0,theme:'coral',tip:'The route goes straight through the market. The doors swing, and a hard hit breaks the glass.',points:[[1000,1390],[1180,1390],[1180,1220],[1420,1220],[1510,1220]]},
     {name:'The water crossing',surface:'asphalt',width:88,shoulder:0,rail:1,back:1,theme:'blue',tip:'A narrow causeway over water. One side has a rail. The other side has a view.',points:[[1510,1220],[1680,1220],[1680,980],[1480,980]]},
     {name:'Quarry switchbacks',surface:'dirt',width:106,shoulder:12,rail:2,back:2,theme:'clay',tip:'Climb the quarry, hold the high ledge, then brake on the descent. Gravity carries a coast downhill.',points:[[1480,980],[1280,980],[1210,840],[1390,700],[1560,700],[1560,510]]},
