@@ -149,14 +149,18 @@ pixel ratio, capped at 2560 by 1440. The landscape's source skyline is registere
 to the projected horizon with uniform scaling. Sky and scenery share the scope's
 camera, while the stand stays in the unscoped foreground.
 
-Version 9 uses a 2048 by 1152 overview in the wide view and 14 overlapping
+The current renderer uses a 2048 by 1152 overview in the wide view and 14 overlapping
 painted tiles in the scope. Each tile contains new native detail for a small
 registered crop, giving the terrain about 6183 by 3481 pixels of effective
 density. Only intersecting scope tiles are drawn, with at most six decoded
-images and light buffers retained. Do not replace this with an enlargement of
-the overview. Dawn exposure opens promptly into clear field light and keeps
-the painting's greens; night remains a distinct darker state. Match lighting
-coordinates across tiles so sunlight and tint do not reveal their boundaries.
+images retained. Do not replace this with an enlargement of the overview.
+
+Owner correction, 2026-10-03: keep the artwork's original brightness and color.
+Version 10 draws painted sky, terrain, tiles and stand directly from their
+source images. Do not reintroduce clock-dependent dimming, saturation filters,
+cool or brown overlays, or shading inside the lens. This applies at every hour.
+The live sun, moon, stars and clock remain active. A future night composition
+needs its own painted asset and visual review, rather than a blanket dark filter.
 
 The scene is the first step, described in `FIRST_MAP.md`. Cypress scenery, animals,
 ambient wildlife, the interface and effects still need their own painting passes.

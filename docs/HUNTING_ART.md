@@ -8,6 +8,27 @@ are asset history. Their pixel-art prompts and normalization settings do not
 define the new painterly target. The first scenery brief is
 `hunting-style/FIRST_MAP.md`.
 
+## Version 10, preserve the painting's exposure
+
+The owner rejected the remaining artificial darkness at 05:30. The version 9
+dawn curve still reduced terrain brightness to about half, with additional
+saturation changes and cool/warm overlays. Version 10 removes that entire
+relighting path. The painted sky, wide terrain, scope tiles and wooden stand
+are drawn directly from the existing source images at every hour. The inner
+lens vignette is also removed. The outer scope frame and reticle remain usable.
+
+No art was regenerated or destructively edited. Version 8 sky/stand and
+version 9 detailed terrain stay active. The six-image cache now retains only
+images, without duplicate lighting canvases. The live sun, moon, stars, clock,
+wildlife and saves retain their behavior. A painted night variant can be
+reviewed separately if the owner later requests one.
+
+Browser checks compare actual scene pixels with independent raw-source
+composites at 05:30, 06:47, noon and night, plus four scope targets including
+points near both sides of the lens. They allow two RGB steps for browser canvas
+sampling differences. `hunting-style/review/v10-0530-comparison.jpg` compares
+the old and corrected scene at the owner's exact 05:30 time.
+
 ## Version 9, native scenery detail and clearer dawn
 
 The owner found the first scene too dark at 06:47 and blurry in the 6x scope.

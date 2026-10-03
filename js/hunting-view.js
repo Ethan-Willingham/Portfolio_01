@@ -62,7 +62,6 @@
       this.canvas = canvas; this.g = canvas.getContext('2d'); this.sprites = sprites;
       this.camera = normal(); this.effects = []; this.trails = []; this.time = 0;
       this.scopePan = { x: 0, y: 0 };
-      this.paintedLayers = new Map();
       this.scene = scene; this.detailUse = 0; this.activeDetail = [];
       this.detailTiles = new Map((scene?.tiles || []).map(tile => [tile.id, { ...tile, state: 'idle', image: null, used: 0 }]));
       this.onArtReady = null;
@@ -124,40 +123,6 @@
       return { hour, daylight, warm, sky: mix('#273b3c', '#8faaa6', daylight), horizon: mix('#596459', '#ddd4ad', daylight),
         field: mix('#303d32', '#88915e', daylight), front: mix('#24352d', '#697544', daylight) };
     }
-    paintedLayer(name, tone) {
-      const image = this.sprites[name];
-      if (!image) return null;
-      let layer = this.paintedLayers.get(name);
-      if (!layer) {
-        const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
-        layer = { canvas, g: canvas.getContext('2d'), key: '' }; this.paintedLayers.set(name, layer);
-      }
-      // Re-light source pixels only when the clock enters a new light step.
-      // Each layer owns one buffer, including its original soft alpha edge.
-      // Dawn opens quickly into clear light. The original linear multiplier made 06:47 needlessly gray.
-      const day = Math.round((1 - Math.pow(1 - tone.daylight, 2.4)) * 48) / 48, warm = Math.round(tone.warm * 12) / 12;
-      const travel = Math.round(clamp((tone.hour - 5.3) / 14.4, 0, 1) * 20) / 20;
-      const key = day + ':' + warm + ':' + travel;
-      if (layer.key !== key) {
-        const p = layer.g, width = image.width, height = image.height;
-        p.clearRect(0, 0, width, height);
-        const brightness = name === 'birch-sky' ? .32 + .73 * day : name === 'lookout-stand' ? .28 + .84 * day : .3 + .82 * day;
-        p.filter = 'brightness(' + brightness + ') saturate(' + (.78 + .22 * day) + ')';
-        p.drawImage(image, 0, 0); p.filter = 'none';
-        p.globalCompositeOperation = 'source-atop';
-        p.fillStyle = 'rgba(44,65,80,' + ((1 - day) * .12) + ')'; p.fillRect(0, 0, width, height);
-        p.fillStyle = 'rgba(188,113,71,' + (warm * day * .025) + ')'; p.fillRect(0, 0, width, height);
-        if (name !== 'birch-sky' && name !== 'lookout-stand' && day > .15) {
-          const rect = this.detailTiles.get(name)?.rect || [0, 0, 1, 1];
-          const cx = width * (.12 + travel * .76 - rect[0]) / rect[2], cy = height * (.65 - rect[1]) / rect[3];
-          const light = p.createRadialGradient(cx, cy, 0, cx, cy, width * .55 / rect[2]);
-          light.addColorStop(0, 'rgba(237,219,162,' + (day * .04) + ')'); light.addColorStop(1, 'rgba(237,219,162,0)');
-          p.fillStyle = light; p.fillRect(0, 0, width, height);
-        }
-        p.globalCompositeOperation = 'source-over'; layer.key = key;
-      }
-      return layer.canvas;
-    }
     requestDetail(tile) {
       tile.used = ++this.detailUse;
       if (tile.state !== 'idle') return;
@@ -174,13 +139,11 @@
       resident.sort((a, b) => b.used - a.used);
       for (const tile of resident.slice(6)) {
         tile.image.onload = tile.image.onerror = null; tile.image.src = ''; tile.image = null; tile.state = 'idle';
-        const layer = this.paintedLayers.get(tile.id);
-        if (layer) { layer.canvas.width = layer.canvas.height = 0; this.paintedLayers.delete(tile.id); }
         delete this.sprites[tile.id];
       }
     }
     paintedTerrain(g, tone) {
-      const c = this.camera, a = anchor(c), image = this.paintedLayer(c.zoom > 1 ? 'birch-underpaint' : 'birch-terrain', tone);
+      const c = this.camera, a = anchor(c), image = this.sprites[c.zoom > 1 ? 'birch-underpaint' : 'birch-terrain'];
       if (!image) { this.terrain(g, tone, false); return; }
       g.save(); g.translate(W / 2 - a.x * c.zoom, H / 2 - a.y * c.zoom); g.scale(c.zoom, c.zoom);
       // Register the generated 44.4% skyline to the 40% projected horizon.
@@ -197,7 +160,7 @@
           const tw = w * W * fit, th = h * H * fit;
           if (tx > a.x + radius || tx + tw < a.x - radius || ty > a.y + radius || ty + th < a.y - radius) continue;
           this.activeDetail.push(tile.id); this.requestDetail(tile);
-          if (tile.state === 'ready') g.drawImage(this.paintedLayer(tile.id, tone), tx, ty, tw, th);
+          if (tile.state === 'ready') g.drawImage(this.sprites[tile.id], tx, ty, tw, th);
         }
         this.trimDetail();
       }
@@ -205,7 +168,7 @@
     }
     stand(g, tone) {
       if (this.camera.zoom > 1) return;
-      const image = this.paintedLayer('lookout-stand', tone);
+      const image = this.sprites['lookout-stand'];
       if (!image) return;
       // Near timber stays in the player's foreground, outside the scope's lens.
       g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(image, 0, 0, W, H); g.restore();
@@ -218,7 +181,7 @@
       sky.addColorStop(1, tone.warm > .15 ? mix('#d4c4a0', '#d9978c', tone.warm * .65) : tone.horizon);
       g.fillStyle = sky; g.fillRect(-W * 3, -H * 3, W * 7, H * 7);
       if (painted) {
-        const image = this.paintedLayer('birch-sky', tone);
+        const image = this.sprites['birch-sky'];
         if (image) { g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(image, 0, 0, W, H); }
       }
       if (tone.daylight < .6) {
@@ -365,6 +328,7 @@
       // There is no tiny overview image stretched into a magnified scene.
       g.setTransform(this.canvas.width / W, 0, 0, this.canvas.height / H, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.clearRect(0, 0, W, H);
       const tone = this.tone(minute), painted = world.backdrop !== 'marsh';
+      // Painted scenery keeps its authored exposure and color at every clock time.
       this.backdrop(g, tone, minute, painted);
       if (painted) this.paintedTerrain(g, tone); else this.terrain(g, tone, true);
       for (const drop of world.blood || []) { const at = project(drop, this.camera), s = scaleAt(drop.y) * this.camera.zoom; g.fillStyle = '#884c3d'; g.fillRect(at.x, at.y, Math.max(1, s * .12), Math.max(.7, s * .04)); }
@@ -466,8 +430,6 @@
     scopeMask(g, world, aim, showReticle) {
       const cx = W / 2, cy = H / 2, radius = Math.min(H * .463, W * .42);
       g.fillStyle = 'rgba(14,23,18,.96)'; g.beginPath(); g.rect(0, 0, W, H); g.arc(cx, cy, radius, 0, Math.PI * 2, true); g.fill('evenodd');
-      const lens = g.createRadialGradient(cx, cy, radius * .75, cx, cy, radius); lens.addColorStop(0, 'rgba(20,30,22,0)'); lens.addColorStop(1, 'rgba(20,30,22,.56)');
-      g.fillStyle = lens; g.beginPath(); g.arc(cx, cy, radius, 0, Math.PI * 2); g.fill();
       g.strokeStyle = '#4a544b'; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy, radius + 2, 0, Math.PI * 2); g.stroke();
       g.strokeStyle = '#a4a293'; g.lineWidth = .65; g.beginPath(); g.arc(cx, cy, radius - .5, 0, Math.PI * 2); g.stroke();
       const pan = Math.hypot(this.scopePan.x, this.scopePan.y);
