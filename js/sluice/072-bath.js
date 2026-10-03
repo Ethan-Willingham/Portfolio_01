@@ -645,6 +645,7 @@
   // Paper lanterns hang from every eave tip and light with the real sun:
   // off at noon, fading in through dusk, full at night (bathNightK).
   var bathNightOverride = -1;   // dev: __bath.night(0..1); -1 = follow the sun
+  var bathExteriorHalo = null;
   function bathNightK() {
     if (bathNightOverride >= 0) return bathNightOverride;
     if (typeof timeOfDay !== 'number') return 0;
@@ -657,54 +658,139 @@
     if (!ENABLE_BATH || bathMode || !bathPickSite()) return;
     var gy = SKY_ROWS * TILE;                 // 128, the surface line
     var x = banyaX, w = BANYA_W, cx = x + w / 2;
+    // Include hanging lights and the bench, even when only a roof is visible.
+    if (cx + 140 < cam.x || cx - 140 > cam.x + screenW ||
+        gy + 2 < cam.y || gy - 485 > cam.y + screenH) return;
     var night = bathNightK();
     var t = performance.now() * 0.001;
     var flick = 0.9 + 0.1 * Math.sin(t * 3.1) * Math.sin(t * 1.7);
     var lit = night > 0.02;
 
-    function lantern(lx, ly) {
-      ctx.strokeStyle = '#3a2c1c'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx, ly + 9); ctx.stroke();
-      if (lit) {
-        ctx.fillStyle = 'rgba(255,184,92,' + (0.05 * night) + ')';
-        ctx.beginPath(); ctx.arc(lx, ly + 16, 30, 0, 6.283); ctx.fill();
-        ctx.fillStyle = 'rgba(255,184,92,' + (0.10 * night) + ')';
-        ctx.beginPath(); ctx.arc(lx, ly + 16, 15, 0, 6.283); ctx.fill();
-        ctx.fillStyle = 'rgba(255,206,106,' + (0.35 + 0.6 * night * flick) + ')';
-      } else {
-        ctx.fillStyle = '#6b5a44';
+    function warmHalo(hx, hy, radius) {
+      if (!lit) return;
+      // Bake the soft falloff once. Live lights share one small sprite rather
+      // than rebuilding gradients or drawing conspicuous concentric discs.
+      if (!bathExteriorHalo) {
+        bathExteriorHalo = document.createElement('canvas');
+        bathExteriorHalo.width = bathExteriorHalo.height = 64;
+        var haloCtx = bathExteriorHalo.getContext('2d');
+        var haloGrad = haloCtx.createRadialGradient(32, 32, 1, 32, 32, 32);
+        haloGrad.addColorStop(0, BLD.warmGlow + '36');
+        haloGrad.addColorStop(0.35, BLD.warmGlow + '18');
+        haloGrad.addColorStop(1, BLD.warmGlow + '00');
+        haloCtx.fillStyle = haloGrad; haloCtx.fillRect(0, 0, 64, 64);
       }
-      ctx.beginPath(); ctx.ellipse(lx, ly + 16, 5.5, 7, 0, 0, 6.283); ctx.fill();
-      ctx.strokeStyle = '#8a5427'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(lx - 5, ly + 16); ctx.lineTo(lx + 5, ly + 16); ctx.stroke();
-      ctx.fillStyle = '#54381f';
-      ctx.fillRect(lx - 3, ly + 7, 6, 3);
-      ctx.fillRect(lx - 2, ly + 22, 4, 2);
+      var haloAlpha = ctx.globalAlpha;
+      ctx.globalAlpha *= night;
+      ctx.drawImage(bathExteriorHalo, hx - radius, hy - radius, radius * 2, radius * 2);
+      ctx.globalAlpha = haloAlpha;
     }
-    function win(wx, wy, ww, wh) {
-      // Nalichnik: the pale carved casing Russian windows wear, with a
-      // little crown peak over the lintel.
-      ctx.fillStyle = '#d68a5a';
-      ctx.fillRect(wx - 3, wy - 3, ww + 6, wh + 6);
-      ctx.beginPath();
-      ctx.moveTo(wx + ww / 2 - 7, wy - 3); ctx.lineTo(wx + ww / 2, wy - 9);
-      ctx.lineTo(wx + ww / 2 + 7, wy - 3); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#8a5427';
-      ctx.fillRect(wx - 3, wy + wh + 1, ww + 6, 2);
+    function lantern(lx, ly) {
+      lx = Math.round(lx); ly = Math.round(ly);
+      ctx.fillStyle = BLD.metalDark;
+      ctx.fillRect(lx, ly, 1, 9);
+      warmHalo(lx, ly + 16, 28);
+      // Stepped paper shell, dark end caps and ribs wrapping the round body.
+      ctx.fillStyle = BLD.outline;
+      ctx.fillRect(lx - 3, ly + 8, 6, 16);
+      ctx.fillRect(lx - 5, ly + 11, 10, 10);
+      ctx.fillRect(lx - 6, ly + 13, 12, 6);
+      ctx.fillStyle = BLD.goldDark;
+      ctx.fillRect(lx - 2, ly + 10, 4, 12);
+      ctx.fillRect(lx - 4, ly + 12, 8, 8);
+      ctx.fillRect(lx - 5, ly + 14, 10, 4);
+      ctx.fillStyle = BLD.woodMid;
+      ctx.fillRect(lx - 2, ly + 11, 3, 10);
+      ctx.fillRect(lx - 4, ly + 13, 6, 6);
       if (lit) {
-        ctx.fillStyle = 'rgba(255,184,92,' + (0.10 * night) + ')';
-        ctx.beginPath(); ctx.arc(wx + ww / 2, wy + wh / 2, ww, 0, 6.283); ctx.fill();
-        ctx.fillStyle = 'rgba(255,206,106,' + (0.25 + 0.6 * night * flick) + ')';
-      } else {
-        ctx.fillStyle = '#26303f';
+        var lampAlpha = ctx.globalAlpha;
+        ctx.globalAlpha *= night * flick;
+        ctx.fillStyle = BLD.goldBright;
+        ctx.fillRect(lx - 2, ly + 11, 3, 10);
+        ctx.fillRect(lx - 4, ly + 13, 6, 6);
+        ctx.globalAlpha = lampAlpha;
       }
+      ctx.fillStyle = BLD.woodLight;
+      ctx.fillRect(lx - 3, ly + 13, 1, 5);
+      if (lit) {
+        var edgeAlpha = ctx.globalAlpha;
+        ctx.globalAlpha *= night;
+        ctx.fillStyle = BLD.goldPale;
+        ctx.fillRect(lx - 3, ly + 13, 1, 5);
+        ctx.globalAlpha = edgeAlpha;
+      }
+      ctx.fillStyle = BLD.goldDark;
+      ctx.fillRect(lx - 4, ly + 15, 8, 1);
+      ctx.fillRect(lx + 1, ly + 12, 1, 8);
+      ctx.fillStyle = BLD.metalBase;
+      ctx.fillRect(lx - 3, ly + 8, 6, 2);
+      ctx.fillRect(lx - 2, ly + 22, 4, 1);
+      ctx.fillStyle = BLD.metalLight;
+      ctx.fillRect(lx - 3, ly + 8, 3, 1);
+    }
+    function casing(wx, wy, ww, wh, doorway) {
+      // One carved timber vocabulary for the windows and entrance. Raised
+      // edges catch the same top-left light; the cuts stay warm and recessed.
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(wx - 5, wy - 5, ww + 10, 5);
+      ctx.fillRect(wx - 5, wy, 4, wh);
+      ctx.fillRect(wx + ww + 1, wy, 4, wh);
+      ctx.fillStyle = BLD.woodMid;
+      ctx.fillRect(wx - 4, wy - 4, ww + 8, 3);
+      ctx.fillRect(wx - 4, wy - 1, 3, wh + 1);
+      ctx.fillRect(wx + ww + 1, wy - 1, 3, wh + 1);
+      ctx.fillStyle = BLD.woodLight;
+      ctx.fillRect(wx - 4, wy - 4, ww + 7, 1);
+      ctx.fillRect(wx - 4, wy - 1, 1, wh);
+      ctx.fillRect(wx + ww + 1, wy - 1, 1, wh);
+      ctx.fillStyle = BLD.woodDark;
+      ctx.fillRect(wx - 2, wy + 2, 1, wh - 3);
+      ctx.fillRect(wx + ww + 3, wy + 2, 1, wh - 3);
+      var crown = wx + ww / 2;
+      for (var cr = 0; cr < 5; cr++) {
+        ctx.fillStyle = BLD.woodDark;
+        ctx.fillRect(crown - cr - 1, wy - 10 + cr, cr * 2 + 2, 1);
+        ctx.fillStyle = BLD.woodLight;
+        ctx.fillRect(crown - cr - 1, wy - 11 + cr, cr * 2 + 1, 1);
+      }
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(crown - 1, wy - 7, 2, 2);
+      if (!doorway) {
+        ctx.fillStyle = BLD.woodDeep;
+        ctx.fillRect(wx - 6, wy + wh, ww + 12, 5);
+        ctx.fillStyle = BLD.woodMid;
+        ctx.fillRect(wx - 5, wy + wh + 1, ww + 10, 2);
+        ctx.fillStyle = BLD.woodLight;
+        ctx.fillRect(wx - 5, wy + wh, ww + 9, 1);
+        ctx.fillStyle = BLD.woodDark;
+        ctx.fillRect(wx - 3, wy + wh + 4, 3, 2);
+        ctx.fillRect(wx + ww, wy + wh + 4, 3, 2);
+      }
+    }
+    function win(wx, wy, ww, wh, phase) {
+      warmHalo(wx + ww / 2, wy + wh / 2, ww);
+      casing(wx, wy, ww, wh, false);
+      ctx.fillStyle = BLD.metalDark;
       ctx.fillRect(wx, wy, ww, wh);
-      ctx.strokeStyle = '#3d2820'; ctx.lineWidth = 2;
-      ctx.strokeRect(wx, wy, ww, wh);
-      ctx.beginPath();
-      ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh);
-      ctx.moveTo(wx, wy + wh / 2); ctx.lineTo(wx + ww, wy + wh / 2);
-      ctx.stroke();
+      if (lit) {
+        var pulse = 0.94 + 0.06 * Math.sin(t * 1.9 + phase);
+        ctx.fillStyle = 'rgba(255,206,106,' + ((0.25 + 0.6 * night) * pulse) + ')';
+        ctx.fillRect(wx + 2, wy + 2, ww - 4, wh - 4);
+      } else {
+        // A small sky reflection leaves the glass darker than its casing.
+        ctx.fillStyle = BLD.metalBase;
+        ctx.fillRect(wx + 2, wy + 2, ww - 4, 3);
+        ctx.fillRect(wx + 2, wy + 5, 3, 5);
+        ctx.fillStyle = BLD.metalLight;
+        ctx.fillRect(wx + 3, wy + 2, 4, 1);
+      }
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(wx + ww / 2 - 1, wy, 2, wh);
+      ctx.fillRect(wx, wy + Math.floor(wh * 0.53), ww, 2);
+      strokeRect1(wx, wy, ww, wh, BLD.woodDeep);
+      ctx.fillStyle = BLD.woodBase;
+      ctx.fillRect(wx + ww / 2 - 1, wy + 1, 1, wh - 2);
+      ctx.fillRect(wx + 1, wy + Math.floor(wh * 0.53), ww - 2, 1);
     }
     function eave(yB, half) {
       var yT = yB - 13;
@@ -733,51 +819,91 @@
       ctx.fillRect(cx - half + 22, yB - 3, half * 2 - 44, 3);
       ctx.fillStyle = BLD.woodBase;
       ctx.fillRect(cx - half + 23, yB - 4, half * 2 - 46, 1);
-      // Sparse standing seams, with small catches on their left edges.
+      // Standing seams follow the shallow pitch instead of floating as ticks.
       for (var ex = cx - half + 42; ex < cx + half - 34; ex += 22) {
-        ctx.fillStyle = BLD.redDeep;
-        ctx.fillRect(ex, yT + 4, 1, 5);
-        ctx.fillStyle = BLD.woodBase;
-        ctx.fillRect(ex - 1, yT + 4, 1, 4);
+        var lean = (ex - cx) / Math.max(1, half - 30) * 3;
+        ctx.strokeStyle = BLD.redDeep; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ex, yT + 3);
+        ctx.lineTo(ex + lean, yB - 4); ctx.stroke();
+        ctx.strokeStyle = BLD.woodBase;
+        ctx.beginPath(); ctx.moveTo(ex - 1, yT + 3);
+        ctx.lineTo(ex + lean - 1, yB - 5); ctx.stroke();
       }
       ctx.strokeStyle = BLD.redDeep; ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(cx - half + 22, yB); ctx.lineTo(cx + half - 22, yB);
       ctx.stroke();
-      // Carved fringe board (prichelina): pale sawtooth lacework hanging
-      // off the drip edge, the classic Russian eave trim at pixel size.
+      // A continuous carved fascia supports the little stepped pendants.
+      // Keep the teeth quieter than the window casings and doorway.
+      var fasciaX = cx - half + 24, fasciaW = half * 2 - 48;
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(fasciaX, yB, fasciaW, 5);
+      ctx.fillStyle = BLD.woodBase;
+      ctx.fillRect(fasciaX + 1, yB + 1, fasciaW - 2, 3);
       ctx.fillStyle = BLD.woodMid;
-      for (var fx = cx - half + 24; fx < cx + half - 28; fx += 8) {
-        ctx.beginPath();
-        ctx.moveTo(fx, yB + 1); ctx.lineTo(fx + 4, yB + 6); ctx.lineTo(fx + 8, yB + 1);
-        ctx.closePath(); ctx.fill();
+      ctx.fillRect(fasciaX + 1, yB + 1, fasciaW - 3, 1);
+      for (var fx = fasciaX + 3; fx < fasciaX + fasciaW - 6; fx += 10) {
+        ctx.fillStyle = BLD.woodDark;
+        ctx.fillRect(fx, yB + 4, 5, 2);
+        ctx.fillRect(fx + 1, yB + 6, 3, 2);
+        ctx.fillStyle = BLD.woodMid;
+        ctx.fillRect(fx, yB + 3, 1, 3);
       }
-      ctx.fillStyle = BLD.woodDark;
-      ctx.fillRect(cx - half + 26, yB + 7, half * 2 - 52, 4);
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(fasciaX + 2, yB + 8, fasciaW - 4, 3);
       lantern(cx - half + 4, yB - 7);
       lantern(cx + half - 4, yB - 7);
     }
     function tier(half, top, height) {
       var tx = cx - half, ty = gy - top, tw = half * 2;
-      // Wider boards leave more of the station's red-brown face visible.
-      // A shaded right return gives the tall walls depth without a wash.
-      drawWoodPlanking(tx, ty, tw, height, 8);
+      // Quiet board faces, sparse grain and real corner posts. Suppress the
+      // shared helper's bright stripes so the casings own the lightest timber.
+      drawWoodPlanking(tx, ty, tw, height, 12);
+      for (var board = tx + 1, bi = 0; board < tx + tw - 16; board += 12, bi++) {
+        ctx.fillStyle = BLD.woodBase;
+        ctx.fillRect(board + 1, ty + 3, 1, height - 6);
+        if (bi % 3 !== 0) ctx.fillRect(board, ty + 2, 1, height - 4);
+        if (bi % 4 === 1) {
+          var grainY = ty + 22 + (bi * 13 % Math.max(1, height - 42));
+          ctx.fillStyle = BLD.woodDark;
+          ctx.fillRect(board + 5, grainY, 2, 4);
+          ctx.fillStyle = BLD.woodMid;
+          ctx.fillRect(board + 4, grainY + 3, 1, 3);
+        }
+      }
       ctx.fillStyle = BLD.woodDark;
-      ctx.fillRect(tx + tw - 15, ty + 1, 14, height - 2);
+      ctx.fillRect(tx + tw - 17, ty + 1, 16, height - 2);
       ctx.fillStyle = BLD.woodBase;
       ctx.fillRect(tx + tw - 12, ty + 2, 1, height - 4);
       ctx.fillRect(tx + tw - 5, ty + 2, 1, height - 4);
+      // The head beam's underside and bottom rail join the vertical posts.
       ctx.fillStyle = BLD.woodDark;
-      ctx.fillRect(tx + 1, ty + 1, 4, height - 2);
-      ctx.fillRect(tx + 1, ty + height - 5, tw - 2, 4);
+      ctx.fillRect(tx + 1, ty + 1, tw - 2, 11);
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(tx + 1, ty + 1, tw - 2, 5);
+      ctx.fillStyle = BLD.woodDark;
+      ctx.fillRect(tx + 2, ty + 12, 5, height - 14);
+      ctx.fillRect(tx + tw - 22, ty + 12, 6, height - 14);
+      ctx.fillRect(tx + 1, ty + height - 7, tw - 2, 6);
       ctx.fillStyle = BLD.woodMid;
-      ctx.fillRect(tx + 2, ty + 2, 1, height - 4);
-      ctx.fillRect(tx + 1, ty + height - 6, tw - 17, 1);
+      ctx.fillRect(tx + 2, ty + 13, 2, height - 21);
+      ctx.fillRect(tx + tw - 22, ty + 13, 1, height - 21);
+      ctx.fillRect(tx + 2, ty + height - 7, tw - 19, 1);
+      ctx.fillStyle = BLD.woodDeep;
+      ctx.fillRect(tx + 6, ty + 13, 1, height - 20);
+      ctx.fillRect(tx + tw - 17, ty + 13, 1, height - 20);
+      // Small joinery pegs belong to the framing, rather than every plank.
+      ctx.fillRect(tx + 4, ty + height - 4, 2, 2);
+      ctx.fillRect(tx + tw - 21, ty + height - 4, 2, 2);
       strokeRect1(tx, ty, tw, height, BLD.outline);
     }
 
     // Stone plinth + door step.
     drawStoneFoundation(x - 6, gy - 20, w + 12, 20);
+    ctx.fillStyle = BLD.stoneDark;
+    ctx.fillRect(x + w - 13, gy - 19, 18, 18);
+    ctx.fillStyle = BLD.stoneLight;
+    ctx.fillRect(x - 5, gy - 20, w - 8, 1);
     ctx.fillStyle = BLD.stoneDark;
     ctx.fillRect(x - 6, gy - 10, w + 12, 1);
     ctx.fillStyle = BLD.stoneBase;
@@ -792,16 +918,16 @@
     tier(38, 356, 62);
 
     // Windows before the eaves so glow halos sit over the wood cleanly.
-    win(cx - 40, gy - 194, 22, 30); win(cx + 18, gy - 194, 22, 30);
-    win(cx - 11, gy - 274, 22, 30);
-    win(cx - 8, gy - 344, 16, 26);
+    win(cx - 40, gy - 182, 22, 30, 0.4); win(cx + 18, gy - 182, 22, 30, 2.1);
+    win(cx - 11, gy - 264, 22, 30, 3.8);
+    win(cx - 8, gy - 332, 16, 26, 5.2);
 
     eave(gy - 118, 104);
     eave(gy - 208, 88);
     eave(gy - 288, 72);
     eave(gy - 356, 58);
 
-    // Tent roof + copper cap + the red star (glows at night).
+    // Tent roof, folded sheet courses, copper cap and a fixed red star.
     ctx.fillStyle = BLD.redDark;
     ctx.beginPath();
     ctx.moveTo(cx - 46, gy - 365); ctx.lineTo(cx, gy - 436);
@@ -826,37 +952,54 @@
     ctx.moveTo(cx - 1, gy - 433); ctx.lineTo(cx - 44, gy - 365);
     ctx.moveTo(cx - 1, gy - 432); ctx.lineTo(cx - 23, gy - 368);
     ctx.stroke();
+    for (var course = 1; course <= 3; course++) {
+      var roofY = gy - 436 + course * 18;
+      var roofK = course * 18 / 71;
+      ctx.strokeStyle = BLD.woodDark; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx - 45 * roofK + 2, roofY);
+      ctx.lineTo(cx - 22 * roofK, roofY + 1); ctx.stroke();
+      ctx.strokeStyle = BLD.redDeep;
+      ctx.beginPath(); ctx.moveTo(cx - 22 * roofK, roofY + 1);
+      ctx.lineTo(cx + 44 * roofK - 1, roofY + 1); ctx.stroke();
+      ctx.fillStyle = BLD.woodMid;
+      ctx.fillRect(Math.round(cx - 42 * roofK + 2), roofY - 1, 3, 1);
+    }
+    ctx.fillStyle = BLD.outline;
+    ctx.fillRect(cx - 4, gy - 445, 8, 1);
+    ctx.fillRect(cx - 7, gy - 444, 14, 3);
+    ctx.fillRect(cx - 9, gy - 441, 18, 6);
+    ctx.fillRect(cx - 3, gy - 459, 6, 15);
     ctx.fillStyle = BLD.goldDark;
-    ctx.beginPath(); ctx.arc(cx, gy - 436, 9, Math.PI, 0); ctx.fill();
-    ctx.fillRect(cx - 2, gy - 458, 4, 14);
+    ctx.fillRect(cx - 6, gy - 443, 12, 3);
+    ctx.fillRect(cx - 8, gy - 440, 16, 4);
+    ctx.fillRect(cx - 2, gy - 458, 4, 15);
     ctx.fillStyle = BLD.goldBase;
-    ctx.fillRect(cx - 7, gy - 440, 5, 1);
+    ctx.fillRect(cx - 5, gy - 443, 5, 1);
+    ctx.fillRect(cx - 7, gy - 440, 6, 2);
     ctx.fillRect(cx - 2, gy - 458, 1, 13);
-    if (lit) {
-      ctx.fillStyle = 'rgba(226,75,74,' + (0.20 * night) + ')';
-      ctx.beginPath(); ctx.arc(cx, gy - 466, 17, 0, 6.283); ctx.fill();
-    }
-    ctx.fillStyle = lit ? '#e24b4a' : '#a32d2d';
-    ctx.beginPath();
-    for (var si = 0; si < 10; si++) {
-      var ang = -Math.PI / 2 + si * Math.PI / 5;
-      var rr = (si % 2 === 0) ? 7 : 3;
-      var sxp = cx + Math.cos(ang) * rr, syp = gy - 466 + Math.sin(ang) * rr;
-      if (si === 0) ctx.moveTo(sxp, syp); else ctx.lineTo(sxp, syp);
-    }
-    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = BLD.goldPale;
+    ctx.fillRect(cx - 5, gy - 443, 2, 1);
+    drawRedStar(cx, gy - 466, 7, -0.08);
 
     // Vertical «БАНЯ» board hanging under the first eave (stacked letters).
-    ctx.strokeStyle = '#3a2c1c'; ctx.lineWidth = 2;
+    ctx.strokeStyle = BLD.metalDark; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(cx - 62, gy - 118); ctx.lineTo(cx - 62, gy - 112); ctx.stroke();
     if (lit) {
       ctx.fillStyle = 'rgba(255,184,92,' + (0.07 * night) + ')';
       ctx.fillRect(cx - 84, gy - 116, 44, 96);
     }
-    ctx.fillStyle = '#241810'; ctx.fillRect(cx - 76, gy - 112, 28, 88);
-    ctx.strokeStyle = '#b5723a'; ctx.lineWidth = 2;
-    ctx.strokeRect(cx - 75, gy - 111, 26, 86);
-    ctx.fillStyle = lit ? '#f0c66a' : '#e0b060';
+    ctx.fillStyle = BLD.woodDeep; ctx.fillRect(cx - 76, gy - 112, 28, 88);
+    strokeRect1(cx - 76, gy - 112, 28, 88, BLD.outline);
+    ctx.fillStyle = BLD.woodMid;
+    ctx.fillRect(cx - 75, gy - 111, 26, 1);
+    ctx.fillRect(cx - 75, gy - 111, 1, 86);
+    ctx.fillStyle = BLD.woodDark;
+    ctx.fillRect(cx - 50, gy - 110, 1, 85);
+    ctx.fillRect(cx - 74, gy - 26, 25, 1);
+    ctx.fillStyle = BLD.goldBase;
+    ctx.fillRect(cx - 73, gy - 109, 2, 2);
+    ctx.fillRect(cx - 53, gy - 109, 2, 2);
+    ctx.fillStyle = lit ? BLD.goldPale : BLD.goldBright;
     ctx.font = 'bold 16px "Commit Mono", monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Б', cx - 62, gy - 100);
@@ -868,7 +1011,6 @@
     // and weighted skirts below the ties. The cloth rests when fully open.
     var dw = banyaDoorX1 - banyaDoorX0;
     var dh = BANYA_DOOR_Y1 - BANYA_DOOR_Y0;
-    var cxD = (banyaDoorX0 + banyaDoorX1) / 2;
     var ct = bathDoorT * bathDoorT * (3 - 2 * bathDoorT);
     var clothY = BANYA_DOOR_Y0 + 5, hemY = BANYA_DOOR_Y1 - 6;
     ctx.fillStyle = BLD.outline;
@@ -953,35 +1095,43 @@
     ctx.fillStyle = BLD.goldBase;
     ctx.fillRect(banyaDoorX0 - 3, BANYA_DOOR_Y0, 3, 4);
     ctx.fillRect(banyaDoorX1, BANYA_DOOR_Y0, 3, 4);
-    // Nalichnik casing: the pale carved door surround, in the same
-    // language as the tower's window casings: side boards standing on
-    // the step, a head board, and the little crown peak.
-    ctx.fillStyle = '#d68a5a';
-    ctx.fillRect(banyaDoorX0 - 5, BANYA_DOOR_Y0 - 4, 4, dh - 2);
-    ctx.fillRect(banyaDoorX1 + 1, BANYA_DOOR_Y0 - 4, 4, dh - 2);
-    ctx.fillRect(banyaDoorX0 - 5, BANYA_DOOR_Y0 - 8, dw + 10, 5);
-    ctx.beginPath();
-    ctx.moveTo(cxD - 8, BANYA_DOOR_Y0 - 8);
-    ctx.lineTo(cxD, BANYA_DOOR_Y0 - 14);
-    ctx.lineTo(cxD + 8, BANYA_DOOR_Y0 - 8);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#8a5427';                      // carved shadow lines
-    ctx.fillRect(banyaDoorX0 - 2, BANYA_DOOR_Y0 - 4, 1, dh - 2);
-    ctx.fillRect(banyaDoorX1 + 1, BANYA_DOOR_Y0 - 4, 1, dh - 2);
-    ctx.fillRect(banyaDoorX0 - 5, BANYA_DOOR_Y0 - 4, dw + 10, 1);
+    casing(banyaDoorX0, BANYA_DOOR_Y0, dw, dh - 6, true);
     lantern(banyaDoorX0 - 11, BANYA_DOOR_Y0 - 2);
 
     // Lived-in props: a bench on the GROUND beside the tower, and a rain
     // barrel on the plinth right of the door.
-    ctx.fillStyle = '#54381f';
+    ctx.fillStyle = BLD.woodDeep;
     ctx.fillRect(x - 48, gy - 9, 3, 9); ctx.fillRect(x - 24, gy - 9, 3, 9);
-    ctx.fillStyle = '#b96b48'; ctx.fillRect(x - 52, gy - 12, 34, 4);
-    ctx.fillStyle = '#2c1408'; ctx.fillRect(x - 52, gy - 8, 34, 1);
-    ctx.fillStyle = '#6e4526'; ctx.fillRect(cx + 68, gy - 40, 16, 20);
-    ctx.fillStyle = '#4a5560';
-    ctx.fillRect(cx + 67, gy - 36, 18, 2); ctx.fillRect(cx + 67, gy - 26, 18, 2);
-    ctx.fillStyle = '#1f4f9e';
-    ctx.beginPath(); ctx.ellipse(cx + 76, gy - 40, 7, 2.5, 0, 0, 6.283); ctx.fill();
+    ctx.fillStyle = BLD.woodBase;
+    ctx.fillRect(x - 48, gy - 8, 1, 8); ctx.fillRect(x - 24, gy - 8, 1, 8);
+    ctx.fillStyle = BLD.outline; ctx.fillRect(x - 53, gy - 13, 36, 5);
+    ctx.fillStyle = BLD.woodMid; ctx.fillRect(x - 52, gy - 12, 34, 3);
+    ctx.fillStyle = BLD.woodLight; ctx.fillRect(x - 52, gy - 12, 33, 1);
+    ctx.fillStyle = BLD.woodDark; ctx.fillRect(x - 22, gy - 11, 4, 2);
+    ctx.fillStyle = BLD.woodDeep; ctx.fillRect(x - 52, gy - 9, 34, 1);
+
+    // Staves turn around a shaded cylinder; hoops sit proud of the wood.
+    var barrelX = cx + 68;
+    ctx.fillStyle = BLD.outline; ctx.fillRect(barrelX, gy - 40, 16, 20);
+    ctx.fillStyle = BLD.woodDark; ctx.fillRect(barrelX + 1, gy - 39, 14, 18);
+    ctx.fillStyle = BLD.woodBase; ctx.fillRect(barrelX + 2, gy - 39, 6, 18);
+    ctx.fillStyle = BLD.woodMid; ctx.fillRect(barrelX + 2, gy - 38, 1, 16);
+    ctx.fillStyle = BLD.woodDeep;
+    ctx.fillRect(barrelX + 7, gy - 38, 1, 17);
+    ctx.fillRect(barrelX + 12, gy - 38, 2, 17);
+    ctx.fillStyle = BLD.woodBase; ctx.fillRect(barrelX + 14, gy - 38, 1, 17);
+    for (var hoop = 0; hoop < 2; hoop++) {
+      var hoopY = gy - 36 + hoop * 10;
+      ctx.fillStyle = BLD.metalDark; ctx.fillRect(barrelX - 1, hoopY, 18, 3);
+      ctx.fillStyle = BLD.metalBase; ctx.fillRect(barrelX, hoopY, 16, 1);
+      ctx.fillStyle = BLD.metalLight; ctx.fillRect(barrelX, hoopY, 5, 1);
+    }
+    ctx.fillStyle = BLD.outline;
+    ctx.beginPath(); ctx.ellipse(barrelX + 8, gy - 40, 8, 3, 0, 0, 6.283); ctx.fill();
+    ctx.fillStyle = BLD.waterBase;
+    ctx.beginPath(); ctx.ellipse(barrelX + 8, gy - 40, 6, 1.5, 0, 0, 6.283); ctx.fill();
+    ctx.fillStyle = BLD.waterLight; ctx.fillRect(barrelX + 4, gy - 41, 5, 1);
+    ctx.fillStyle = BLD.woodMid; ctx.fillRect(barrelX + 1, gy - 40, 1, 2);
 
     // Warm spill on the door step while the curtain is open (drawShopDoorGlow
     // pattern at plinth size; subtle, the door is the invitation).
