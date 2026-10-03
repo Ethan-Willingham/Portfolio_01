@@ -2,6 +2,7 @@
 // allocation happens merely by importing this module.
 export const VERSION = '1';
 export const FIXED_DT = 1 / 60;
+export const PLAYBACK_RATES = Object.freeze([1, 4, 12]);
 export const ROUTE = Object.freeze([
   { id: 'soap-film', title: 'Soap film', file: 'soap-film-room.js', assets: 'soap-film' },
   { id: 'negative-temperature', title: 'Superfluid', file: 'negative-temperature-room.js', assets: 'negative-temperature' },
@@ -184,14 +185,21 @@ export class RouteClock {
 export class AmbientClock {
   constructor() { this.last = null; this.accumulator = 0; this.droppedSeconds = 0; this.maxSteps = 3; }
   reset() { this.last = null; this.accumulator = 0; }
-  frame(now, enabled, step) {
+  frame(now, enabled, step, { rate = 1, budgetMs = Infinity } = {}) {
     if (!enabled) { this.reset(); return 0; }
     if (this.last === null) { this.last = now; return 0; }
     const delta = Math.max(0, (now - this.last) / 1000); this.last = now;
-    this.accumulator += Math.min(delta, .1); this.droppedSeconds += Math.max(0, delta - .1);
+    rate = PLAYBACK_RATES.includes(rate) ? rate : 1;
+    this.accumulator += Math.min(delta, .1) * rate; this.droppedSeconds += Math.max(0, delta - .1) * rate;
+    const limit = this.maxSteps * rate, started = performance.now();
     let count = 0;
-    while (this.accumulator >= FIXED_DT && count < this.maxSteps) { this.accumulator -= FIXED_DT; if (step() === false) { this.reset(); break; } count++; }
-    if (this.accumulator > FIXED_DT * this.maxSteps) { this.droppedSeconds += this.accumulator - FIXED_DT; this.accumulator = FIXED_DT; }
+    // Fast playback requests more of the same fixed steps, then yields for
+    // input and presentation. Slow devices never accrue an unbounded backlog.
+    while (this.accumulator >= FIXED_DT && count < limit) {
+      if (count && performance.now() - started >= budgetMs) break;
+      this.accumulator -= FIXED_DT; if (step() === false) { this.reset(); break; } count++;
+    }
+    if (this.accumulator > FIXED_DT * limit) { this.droppedSeconds += this.accumulator - FIXED_DT; this.accumulator = FIXED_DT; }
     return count;
   }
 }

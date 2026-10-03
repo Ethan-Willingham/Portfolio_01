@@ -17,8 +17,9 @@
 .descent-caption > :last-child { font: 1.4rem/1.2 var(--font-heading); color: var(--text); }
 .descent-rail { position: absolute; bottom: 0; inset-inline: 0; height: 2px; }
 .descent-rail i { display: block; width: 0; height: 100%; background: var(--accent); opacity: .5; }
-.descent-toolbar { padding: .65rem .8rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; border-top: 1px solid var(--rule); }
-.descent-actions { display: flex; gap: .35rem; flex-wrap: wrap; }
+.descent-toolbar { flex-wrap: wrap; padding: .65rem .8rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; border-top: 1px solid var(--rule); }
+.descent-actions { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; flex: 1 1 260px; }
+#descent-speed { min-width: 82px; font-variant-numeric: tabular-nums; }
 .descent-piece button, .descent-piece select, .descent-piece input[type="text"] { min-width: 44px; min-height: 44px; padding: .6rem .8rem; border: 1px solid var(--rule); border-radius: 3px; background: var(--bg); color: var(--text); font: .8rem/1.2 var(--font-body); }
 .descent-piece button { cursor: pointer; }
 .descent-piece button:hover { border-color: var(--accent); color: var(--accent-hover); }
@@ -60,7 +61,7 @@
   .descent-edition { font-size: .55rem; }
   .descent-hero { margin: 1.5rem 0; }
   .descent-view { height: min(57vh, 450px); min-height: 290px; }
-  .descent-toolbar { padding: .45rem; gap: .3rem; }
+  .descent-toolbar { flex-wrap: wrap; padding: .45rem; gap: .3rem; }
   .descent-piece button { padding-inline: .55rem; font-size: .72rem; }
   .descent-panel { padding: 1rem; }
   .descent-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
