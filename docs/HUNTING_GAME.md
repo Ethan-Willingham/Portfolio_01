@@ -10,6 +10,11 @@ watching a huge field, rushing the sun across the sky, and catching a brief
 animal opportunity before it passes. Version 5 replaces the camp planner,
 shop, walking, stand interaction and tracking screens with that direct loop.
 The current art is generated pixel art and can accept owner-drawn replacements.
+On 2026-10-03 the owner directed every visual part of the game to follow the
+14 paintings on `gallery.html`. Before any visual work, read
+`hunting-style/README.md` and assemble the appropriate reference packet.
+`hunting-style/FIRST_MAP.md` prepares the first base-scenery pass. This reference
+stage does not itself replace the current renderer, interface or animal art.
 
 ## Sources
 

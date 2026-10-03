@@ -84,7 +84,12 @@ when changing them so deployed edits bypass stale caches.
 
 **Hunting Game**, the JavaScript port of the owner's Unity hunting prototype,
 lives in `hunting-game.html`, `hunting-game.css`, and `js/hunting-*.js`.
-Read `docs/HUNTING_GAME.md` for the ballistics, art, and checks. Its original
+Read `docs/HUNTING_GAME.md` for the ballistics, art, and checks.
+**For every hunting visual task, also read `docs/hunting-style/README.md` and use
+its painting catalog and reference-packet workflow. The owner directed the entire
+game's style, including every map, animal and UI state, to follow the 14 paintings
+on `gallery.html` (2026-10-03). Historical pixel art is not the target for new art.
+The next scenery task is prepared in `docs/hunting-style/FIRST_MAP.md`.** Its original
 pixel art and editable Aseprite sources live in `assets/hunting/`. The current
 deer art uses `deer-[1-5]-v4.png`, with boar in `boar-v3.png`. Generated masters
 and prompts live in `source-v2/`, `source-v3/` and `source-v4/`; see `docs/HUNTING_ART.md` and
