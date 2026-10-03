@@ -155,6 +155,14 @@ registered crop, giving the terrain about 6183 by 3481 pixels of effective
 density. Only intersecting scope tiles are drawn, with at most six decoded
 images retained. Do not replace this with an enlargement of the overview.
 
+Version 11 samples these same sources into reusable canvases at the actual
+display resolution. Scope canvases include a guard area for small camera
+movements. Rebuild on a size, zoom, tile or substantial camera change. Keep live
+sky marks, wildlife, projectiles and the reticle separate. The three display
+buffers are limited to 13 million pixels; the six-image detail limit still
+applies. This preserves native scope detail and source color while reducing
+repeated resampling. See `PERFORMANCE.md` for measurements and checks.
+
 Owner correction, 2026-10-03: keep the artwork's original brightness and color.
 Version 10 draws painted sky, terrain, tiles and stand directly from their
 source images. Do not reintroduce clock-dependent dimming, saturation filters,

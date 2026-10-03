@@ -8,6 +8,19 @@ are asset history. Their pixel-art prompts and normalization settings do not
 define the new painterly target. The first scenery brief is
 `hunting-style/FIRST_MAP.md`.
 
+## Version 11, reuse display-resolution scenery
+
+The owner requested better FPS without changing the painted scene. The renderer
+now caches raw sky, terrain and stand at the display's existing resolution.
+Scope caches include extra coverage for panning, and invalidate when zoom, size,
+loaded detail or camera coverage changes. Live sun, wildlife, aiming and shots
+still draw each frame. The HUD writes only values that change.
+
+No assets were regenerated, reduced or recolored. The 2560 by 1440 display cap,
+native detail tiles and version 10 exposure correction remain active. The
+120 browser checks cover source colors, real input and bounded cache memory.
+`hunting-style/PERFORMANCE.md` records the before/after measurements and commands.
+
 ## Version 10, preserve the painting's exposure
 
 The owner rejected the remaining artificial darkness at 05:30. The version 9
