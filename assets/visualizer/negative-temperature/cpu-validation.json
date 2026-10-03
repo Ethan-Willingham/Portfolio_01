@@ -1,0 +1,39 @@
+{
+  "fftRoundTripRMS": 1.5766434083177342e-16,
+  "planeWaveRMS": 1.918004359092712e-16,
+  "normRelativeDrift": 1.3100631690576847e-14,
+  "energyErrors": [
+    0.000005042553234857472,
+    0.0000012608766108979097,
+    3.1523405685796035e-7
+  ],
+  "dtHalvingFieldRatio": 4.000541304343349,
+  "windingSigns": [
+    {
+      "x": 7.25,
+      "y": -0.25,
+      "sign": -1
+    },
+    {
+      "x": -7.25,
+      "y": 0.25,
+      "sign": 1
+    }
+  ],
+  "resolvedCoreDensityGate": "Both singular cores at plaquette centers detected",
+  "organizationFixture": {
+    "c2": 1,
+    "componentSizes": [
+      4,
+      4
+    ],
+    "largestCluster": 4,
+    "clustered": true
+  },
+  "dampingNormError": 3.3639757646142243e-14,
+  "paddleWork": {
+    "change": 3.910296123099073,
+    "work": 3.910296162226461,
+    "residual": -3.912738799627391e-8
+  }
+}

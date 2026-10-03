@@ -1,0 +1,55 @@
+.nt-page .site-wrapper { max-width: 1120px; }
+.nt-page .post-header { padding-bottom: 0; }
+.nt-hero { margin: 1.2rem 0 2rem; }
+.nt-hero .u-title { font-size: clamp(2.8rem, 7.4vw, 5rem); }
+.nt-hero .u-dek { max-width: none; }
+.nt-piece { border: 1px solid var(--rule); background: var(--bg-raised); }
+.nt-stage { position: relative; height: clamp(310px, 57vh, 560px); overflow: hidden; }
+#nt-canvas { display: block; width: 100%; height: 100%; }
+#nt-fallback { position: absolute; inset: 0; }
+#nt-fallback img { width: 100%; height: 100%; object-fit: contain; }
+.nt-stage-label { position: absolute; top: 20px; left: 22px; font: .7rem/1.4 var(--font-mono); color: var(--text-dim); pointer-events: none; }
+.nt-status { position: absolute; inset: auto 20px 24px; text-align: center; font: .85rem/1.5 var(--font-body); color: var(--text); }
+.nt-scale { position: absolute; right: 22px; bottom: 20px; font: .6rem/1.6 var(--font-mono); color: var(--text-faint); pointer-events: none; }
+.nt-scale span { display: block; width: 70px; height: 5px; border: solid var(--text-faint); border-width: 0 1px 1px; margin: 0 0 4px auto; }
+.nt-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--rule); }
+.nt-controls { display: flex; gap: 4px; }
+.nt-piece button, .nt-options select, .nt-options input[type=text] { font: .8rem/1.3 var(--font-body); color: var(--text); background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 9px 12px; }
+.nt-piece button { cursor: pointer; }
+.nt-piece button:hover, .nt-piece button[aria-expanded=true] { border-color: var(--accent); color: var(--accent); }
+.nt-piece button:disabled { opacity: .5; cursor: wait; }
+.nt-instruments { padding: 20px; border-top: 1px solid var(--rule); }
+.nt-piece [hidden] { display: none !important; }
+.nt-options { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; }
+.nt-options label { display: grid; gap: 5px; font: .75rem/1.5 var(--font-body); color: var(--text-dim); }
+.nt-options input[type=text] { width: 160px; font-family: var(--font-mono); }
+.nt-options .nt-check { display: flex; align-items: center; min-height: 44px; }
+.nt-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.nt-readouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 18px; margin: 18px 0; }
+.nt-readouts > div { border-top: 1px solid var(--rule); padding: 12px 0; min-width: 0; }
+.nt-readouts dt { font: .65rem/1.5 var(--font-mono); color: var(--text-faint); }
+.nt-readouts dd { font: .85rem/1.7 var(--font-mono); color: var(--text); overflow-wrap: anywhere; }
+.nt-configuration summary { min-height: 44px; font: .8rem/44px var(--font-body); cursor: pointer; color: var(--text-dim); }
+.nt-configuration pre { overflow-x: auto; font: .7rem/1.7 var(--font-mono); color: var(--text-dim); padding-bottom: 12px; }
+.nt-prose { max-width: 780px; margin: 2rem auto; }
+.nt-note { font: .85rem/1.6 var(--font-body); color: var(--text-dim); margin-top: 12px; }
+.nt-piece:fullscreen, .nt-piece.nt-fullscreen { width: 100vw; height: 100dvh; max-width: none; display: flex; flex-direction: column; background: var(--bg-raised); }
+.nt-piece.nt-fullscreen { position: fixed; inset: 0; z-index: 1000; }
+.nt-piece:fullscreen .nt-stage, .nt-piece.nt-fullscreen .nt-stage { height: auto; flex: 1; min-height: 0; }
+.nt-piece:fullscreen .nt-instruments, .nt-piece.nt-fullscreen .nt-instruments { max-height: 42dvh; overflow-y: auto; }
+.nt-piece:fullscreen .nt-toolbar, .nt-piece.nt-fullscreen .nt-toolbar { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .nt-hero { margin-bottom: 1.5rem; }
+  .nt-stage { height: 350px; }
+  .nt-toolbar { padding: 8px; }
+  .nt-piece button { padding-inline: 10px; font-size: .75rem; }
+  .nt-readouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nt-instruments { padding: 14px; }
+  .nt-stage-label { left: 14px; top: 14px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .nt-hero { margin: .6rem 0 1rem; }
+  .nt-hero .u-title { font-size: 2.8rem; }
+  .nt-stage { height: 280px; }
+}
+@media (prefers-reduced-motion: reduce) { .nt-page { scroll-behavior: auto; } }
