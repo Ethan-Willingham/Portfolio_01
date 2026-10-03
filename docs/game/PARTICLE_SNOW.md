@@ -62,11 +62,13 @@ The initial dusting uses two or three closely spaced rows.
 
 Scene loading restores nearby stored grains and primes atmospheric weather before
 revealing the view. Bathhouse entry and exit, recovery and teleport use the same
-gate. If ordinary travel outruns stored material streaming, its first visible
-restoration opens the cover. During play, new flakes and raindrops are emitted
+gate. Ordinary travel restores stored water and snow in bounded batches while
+play and held controls continue. During play, new flakes and raindrops are emitted
 only outside the viewport, including when a storm strengthens. Existing visible
 particles finish their motion normally. Run `node tools/sluice-material-arrival.mjs`
 for real WebGPU save/load, bath transitions, revisits and recovery checks.
+Add `--travel` to check uninterrupted surface driving, reversal and restoration
+of stored water, snow and legacy ponds. Add `--mobile` for landscape phone checks.
 
 Snowfall samples one moving world-space field, with a simulation window padded
 160 world pixels beyond the view. Three settling speeds and independently

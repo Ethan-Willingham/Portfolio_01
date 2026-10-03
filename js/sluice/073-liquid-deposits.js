@@ -111,7 +111,6 @@
           }
           if (px < x0 || px > x1 || py < y0 || py > y1) continue;
           if (bathMode && typeof bathArrivalHolds === 'function' && bathArrivalHolds(px, py)) continue;
-          if (typeof coverStoredMaterial === 'function') coverStoredMaterial(px, py);
           if (addLiquidParticle(data[j], px, py, 0, 0, 0) < 0) break;
           var end = data.length - 3;
           data[j] = data[end]; data[j + 1] = data[end + 1]; data[j + 2] = data[end + 2];

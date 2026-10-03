@@ -9,13 +9,16 @@ import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port=Number(process.env.PORT || 8854),debugPort=port+1000;
 const mobile=process.argv.includes('--mobile');
+const travel=process.argv.includes('--travel');
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-arrival-'));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let chrome,ws,id=0;
 const pending=new Map(),errors=[];
 const probe=`
 window.__arrivalRun=function(code){return eval(code);};
-window.__arrivalReveals=[];window.__arrivalLate=[];window.__arrivalBirths=[];
+window.__arrivalReveals=[];window.__arrivalLate=[];window.__arrivalBirths=[];window.__arrivalLoads=[];
+var arrivalBegin=SluiceLoading.begin;
+SluiceLoading.begin=function(label){window.__arrivalLoads.push(label);return arrivalBegin.apply(this,arguments);};
 function arrivalSnapshot(){
  var visible=function(x,y){return x>=cam.x&&x<cam.x+screenW&&y>=cam.y&&y<cam.y+screenH;};
  var pending=[0,0,0],live=[0,0,0];
@@ -47,6 +50,61 @@ async function game(code){return ev('__arrivalRun('+JSON.stringify(code)+')');}
 async function until(expression,label,timeout=90000){const start=Date.now();while(Date.now()-start<timeout){if(await ev(expression))return;await sleep(100);}throw Error(label+' '+JSON.stringify(await ev('window.SluiceLoading&&SluiceLoading.report()')));}
 async function ready(){await until("window.__arrivalRun&&__arrivalRun(\"introPhase==='done'\")&&!SluiceLoading.active()",'scene did not reveal');assert.equal(await ev('window.__bootErr||null'),null);}
 function check(name,value){assert.ok(value,name);console.log('PASS '+name);}
+async function streamingTravel(){
+ const restored=await game(`(function(){
+  cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=true;
+  for(var i=liquidCount-1;i>=0;i--)removeLiquidParticle(i);
+  mineralLiquidReset();rainReset(true,true);snow.parked=[];
+  __arrivalLoads=[];__arrivalReveals=[];keys.ArrowRight=true;dpad.right=true;
+  var x=cam.x+screenW/2,y=cam.y+screenH/3,start={x:player.x,y:player.y,clock:timeOfDay};
+  for(var n=0;n<8000;n++)mineralLiquidPark(2,x+n%100*1.25,y+Math.floor(n/100)*1.25);
+  for(var n=0;n<1500;n++)rain.parked.push(x+n%100*1.25,y+Math.floor(n/100)*1.25);
+  for(var n=0;n<1500;n++)snowStore(x+n%100*1.4,y+Math.floor(n/100)*1.4,17,-23);
+  for(var pass=0;pass<3;pass++){
+   mineralLiquidClock=0;mineralLiquidTick(0);rainScan(0);snowScan(0,0,true,true);
+  }
+  var typed=0,water=0,powder=0,velocity=true;
+  for(var i=0;i<liquidCount;i++){
+   if(liquidType[i]===2)typed++;
+   else if(liquidType[i]===5){powder++;velocity=velocity&&liquidVX[i]===17&&liquidVY[i]===-23;}
+   else if(liquidOrigin[i]===RAIN_ORIGIN)water++;
+  }
+  return {phase:introPhase,loads:__arrivalLoads.slice(),reveals:__arrivalReveals.length,
+   held:keys.ArrowRight&&dpad.right,stationary:player.x===start.x&&player.y===start.y&&timeOfDay===start.clock,
+   counts:[typed,water,powder],velocity:velocity,pending:[Object.keys(mineralLiquidParked).length,rain.parked.length,snow.parked.length]};
+ })()`);
+ console.log('TRAVEL_RESTORE',JSON.stringify(restored));
+ check('ordinary restoration leaves the loading screen closed',restored.phase==='done'&&restored.loads.length===0&&restored.reveals===0);
+ check('ordinary restoration preserves held keyboard and touch controls',restored.held);
+ check('bounded batches conserve all typed water and snow',JSON.stringify(restored.counts)==='[8000,1500,1500]'&&restored.pending.every(n=>n===0));
+ check('restored snow retains its velocity',restored.velocity);
+ check('residency does not move the rig or world clock',restored.stationary);
+ await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?snow=1&nosave=1&nopause=1'});await ready();
+ await game(`__arrivalLoads=[];__arrivalReveals=[];player.fuel=1e6;player.hull=1e6;if(gamePaused)resumeGame();`);
+ const startX=await game('player.x');
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowRight',code:'ArrowRight',windowsVirtualKeyCode:39});await sleep(5000);
+ const outbound=await game('({x:player.x,held:keys.ArrowRight,phase:introPhase})');
+ await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowRight',code:'ArrowRight',windowsVirtualKeyCode:39});
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowLeft',code:'ArrowLeft',windowsVirtualKeyCode:37});await sleep(5000);
+ const returned=await game('({x:player.x,held:keys.ArrowLeft,phase:introPhase,loads:__arrivalLoads.slice()})');
+ await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowLeft',code:'ArrowLeft',windowsVirtualKeyCode:37});
+ console.log('SURFACE_DRIVE',JSON.stringify({startX,outbound,returned}));
+ check('surface drive and reversal move the rig',outbound.x>startX+100&&returned.x<outbound.x-100);
+ check('surface drive and reversal preserve held controls',outbound.held&&returned.held);
+ check('surface travel never starts scene loading',outbound.phase==='done'&&returned.phase==='done'&&returned.loads.length===0);
+ await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?rain=0&snow=0&nosave=1&nopause=1'});await ready();
+ const pond=await game(`(function(){
+  cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=true;
+  var pond=surfacePonds.filter(function(p){return !p.rainFed;})[0];
+  if(!pond)return null;
+  cam.x=(pond.cL+pond.cR+1)*TILE/2-screenW/2;cam.y=SKY_ROWS*TILE-screenH/2;
+  drainSurfacePond(pond);__arrivalLoads=[];keys.ArrowRight=true;dpad.right=true;
+  var before=liquidCount,need=surfacePondNeed(pond),filled=fillSurfacePond(pond);
+  return {filled:filled,need:need,added:liquidCount-before,held:keys.ArrowRight&&dpad.right,phase:introPhase,loads:__arrivalLoads.slice()};
+ })()`);
+ console.log('POND_RESTORE',JSON.stringify(pond));
+ check('legacy ponds restore completely without loading or clearing input',pond&&pond.filled&&pond.need===pond.added&&pond.need>0&&pond.held&&pond.phase==='done'&&pond.loads.length===0);
+}
 try{
  await new Promise((r,j)=>{server.once('error',j);server.listen(port,'127.0.0.1',r);});
  chrome=spawn(path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'),['--headless=new','--mute-audio','--enable-unsafe-webgpu','--use-angle=metal','--no-first-run','--user-data-dir='+profile,'--remote-debugging-port='+debugPort,'about:blank'],{stdio:'ignore'});
@@ -57,6 +115,7 @@ try{
  await send('Emulation.setDeviceMetricsOverride',{width:mobile?932:1440,height:mobile?430:900,deviceScaleFactor:1,mobile});
  await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?snow=1'});await ready();
  check('fresh snow world is populated before reveal',await ev('__arrivalReveals[0].pending.every(n=>n===0)&&__arrivalReveals[0].live[2]>600'));
+ if(travel){await streamingTravel();}else{
  // Build an actual envelope with multiple restoration batches in each store.
  const expected=await game(`(function(){
  cancelAnimationFrame(gameRafId);gameRafId=0;gamePaused=true;
@@ -94,12 +153,13 @@ try{
  check('snow ramp creates no flakes in front of the user',await ev('__arrivalBirths.length===0'));
  await game(`rain.climate.kind='rain';weather.pcp=.85;rain.field.strength=.85;`);await sleep(500);
  check('rain ramp creates no drops in front of the user',await ev('__arrivalBirths.length===0'));
- await game(`__arrivalReveals=[];mineralLiquidPark(2,cam.x+screenW/2,cam.y+screenH/2);mineralLiquidClock=0;mineralLiquidTick(0);`);await ready();
- check('ordinary visible residency is covered before adding material',await ev('__arrivalReveals.length===1&&__arrivalReveals[0].pending.every(n=>n===0)&&__arrivalLate.length===0'));
+ const liveRestore=await game(`__arrivalReveals=[];__arrivalLoads=[];keys.ArrowRight=true;var before=liquidCount;mineralLiquidPark(2,cam.x+screenW/2,cam.y+screenH/2);mineralLiquidClock=0;mineralLiquidTick(0);({added:liquidCount===before+1,held:keys.ArrowRight,phase:introPhase});`);
+ check('ordinary visible residency continues without loading or clearing input',liveRestore.added&&liveRestore.held&&liveRestore.phase==='done'&&await ev('__arrivalReveals.length===0&&__arrivalLoads.length===0'));
  await game(`__arrivalReveals=[];respawnAtTown(0);`);await ready();
  check('town recovery also prepares parked material',await ev('__arrivalReveals.length===1&&__arrivalReveals[0].pending.every(n=>n===0)'));
  await game(`__arrivalReveals=[];player.y=(SKY_ROWS+80)*TILE;teleporters=1;activateTeleporter();`);await ready();
  check('teleport destination is prepared before reveal',await ev('__arrivalReveals.length===1&&__arrivalReveals[0].pending.every(n=>n===0)'));
+ }
  check('browser has no runtime errors',errors.length===0);
 }finally{
  for(const p of pending.values())p.reject(Error('test cleanup'));pending.clear();
