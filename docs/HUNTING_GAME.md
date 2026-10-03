@@ -55,8 +55,9 @@ Owls and squirrels add movement to the scene alongside deer and boar. They
 have distinct behavior and silhouettes. Ambient wildlife does not create an
 automatic pause or an endless slow-time window.
 
-The first primary click raises the scope around that point. Move the pointer
-to adjust the sight, then click again to fire. Scope and Aim / Fire offer the
+The first primary click raises the scope around that point. Hold WASD to pan
+the zoomed view, move the pointer to adjust the sight, then click again to fire.
+Scope and Aim / Fire offer the
 same two-step action on touchscreens. Raising a scope slows rushed time to
 normal time so the player can aim; it does not pause wildlife. A shot keeps
 the scope raised while the projectile flies, with a wide flight inset, then
@@ -107,6 +108,10 @@ screen.y = 144 + 300 * (12 - h) / depth
 
 Scope magnification is 6x around the selected sight. Pointer input uses the
 inverse of the same projection and resolves to a sight ray at depth 100.
+WASD moves the scope across the wide field while keeping the reticle at its
+current position in the lens. The sight ray moves with the view, so the shot
+still follows the visible reticle. Diagonal movement has the same speed as
+horizontal or vertical movement, and the scope stays within the wide view.
 Rendering and collisions use each animal's own physical size and sprite.
 The renderer draws the scene at the final magnified scale, so scoped animals
 retain their source detail instead of enlarging an already tiny field image.
@@ -135,8 +140,10 @@ See `HUNTING_ART.md` for asset history.
 
 Keyboard input is scoped to the game and ignores text and select inputs.
 F and Space hold fast-forward. Q or right-click toggles the scope, R reloads,
-and P or Escape pauses. The visible controls
-offer equivalent actions without requiring a keyboard.
+WASD pans while the scope is raised, and P or Escape pauses. Scope movement
+stops on key release, pause, focus loss or lowering the scope, and is locked
+while a round is in flight. The visible controls cover time, scope activation,
+shooting and pause without requiring a keyboard.
 
 Touch aim uses pointer capture and dragging. Aim / Fire raises the scope on
 its first activation and fires on the next. Hold controls clear on release,
@@ -179,7 +186,8 @@ finite time easing.
 
 Browser checks verify immediate field entry, sun movement, finite arrival
 easing, opportunities that can pass, real two-click scope shots, inverse
-projection, scope lens bounds, touch aiming, pause, focus loss, held-input
+projection, WASD scope movement and shot alignment, scope lens bounds,
+touch aiming, pause, focus loss, held-input
 cleanup after a focus change, stalled frames, pending recoveries, fullscreen,
 records and reload. Closing More offscreen keeps the field paused. The checks
 also inspect desktop, portrait, narrow-phone and
@@ -188,5 +196,5 @@ landscape layouts for overflow and usable controls.
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v5-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v6-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.

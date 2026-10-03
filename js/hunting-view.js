@@ -69,6 +69,17 @@
       const at = baseProject(aim);
       this.camera = { x: aim.x, y: aim.y, h: aim.h || 0, zoom: 6, screenX: at.x, screenY: at.y };
     }
+    panScope(moveX, moveY, dt) {
+      if (this.camera.zoom <= 1 || !(dt > 0) || !(moveX || moveY)) return false;
+      const length = Math.max(1, Math.hypot(moveX, moveY));
+      const speed = 300 / this.camera.zoom;
+      const x = clamp(this.camera.screenX + moveX / length * speed * dt, 0, W);
+      const y = clamp(this.camera.screenY + moveY / length * speed * dt, 0, H);
+      if (x === this.camera.screenX && y === this.camera.screenY) return false;
+      this.camera.screenX = x; this.camera.screenY = y;
+      Object.assign(this.camera, unproject({ x: W / 2, y: H / 2 }, this.camera));
+      return true;
+    }
     addEffect(event) {
       if (!event.point || !['shot', 'miss', 'vitals', 'wound', 'recovered'].includes(event.type)) return;
       this.effects.push({ ...event, left: event.type === 'shot' ? .16 : .8, duration: event.type === 'shot' ? .16 : .8 });

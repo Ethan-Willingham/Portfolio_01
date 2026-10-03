@@ -6,18 +6,27 @@ const http = require('node:http');
 const { chromium } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v5-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v6-qa';
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const errors = [], missing = [];
 const hooks = `let testAim = null;
+function testSight(d) {
+ const mask=world.animalArt(d),size=world.animalSize(d),man=world.hunter,depth=d.y;
+ const u=d.facingRight?mask.vitalsX:1-mask.vitalsX;
+ const targetX=d.x+(u-.5)*size.width;
+ const strength=world.wind*(world.options.windScale ?? 1)*T.windStrength;
+ let x=targetX,t=Math.hypot(x,depth)/man.muzzleSpeed;
+ for(let i=0;i<24;i++){x=targetX-.5*strength*t*t;t=Math.hypot(x,depth)/man.muzzleSpeed;}
+ return {x:x*100/depth,y:100,h:man.height+(mask.vitalsY*size.height+.5*T.gravity*t*t-man.height)*100/depth};
+}
 window.__huntTest = {
  ready: () => !!art && !!view && !!world,
  state: () => ({phase, time: world.time, minute: campaign.state.minute, day: campaign.day,
   x: world.hunter.x, y: world.hunter.y, height: world.hunter.height,
   ammo: world.hunter.ammo, shots: world.shots, recovered: world.recovered,
   scoped: scopeToggle, zoom: view.camera.zoom, guide, holds: holds.size, keys: [...keys], visible,
-  aimPixel:HuntingView.project(aim,view.camera),
+  aimPixel:HuntingView.project(aim,view.camera), camera:{...view.camera},
   opportunity: world.opportunity, opportunityLeft, pace, records: campaign.state.records,
   deerLevel: campaign.state.deerLevel, region: campaign.state.selected, species: world.species,
   credits:campaign.state.credits,owned:campaign.state.owned,tracks:campaign.state.tracks,windScale:world.options.windScale,
@@ -50,16 +59,12 @@ window.__huntTest = {
   world.wind=wind; opportunityLeft=0; shotViewLeft=0;
   const d=world.spawn(0,depth,species);
   Object.assign(d,{facingRight:true,state:'grazing',pause:999,visit:999,targetX:0,targetY:depth});
-  world.events=[]; seenOpportunity=world.opportunity; const mask=world.animalArt(d), size=world.animalSize(d), man=world.hunter;
-  const targetX=d.x+(mask.vitalsX-.5)*size.width;
-  const strength=world.wind*(world.options.windScale ?? 1)*T.windStrength;
-  let x=targetX,t=Math.hypot(x,depth)/man.muzzleSpeed;
-  for(let i=0;i<24;i++){x=targetX-.5*strength*t*t;t=Math.hypot(x,depth)/man.muzzleSpeed;}
-  testAim={x:x*100/depth,y:100,h:man.height+(mask.vitalsY*size.height+.5*T.gravity*t*t-man.height)*100/depth};
+  world.events=[]; seenOpportunity=world.opportunity; testAim=testSight(d);
   aim={...testAim}; scopeToggle=false; view.scope(false,aim); updateUI(); draw();
   return window.__huntTest.target();
  },
  target: () => {
+  testAim=testSight(world.deer[0]);
   const p=HuntingView.project(testAim,view.camera),r=canvas.getBoundingClientRect();
   return {x:r.left+p.x*r.width/T.width,y:r.top+p.y*r.height/T.height};
  },
@@ -143,6 +148,8 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
   await page.mouse.click(target.x,target.y);
   check('first pointer click raises the scope without firing', await page.evaluate(() => __huntTest.state().zoom===6 && __huntTest.state().shots===0));
   check('scoped pointer projection is invertible', await page.evaluate(() => __huntTest.projection()<1e-8));
+  await page.keyboard.down('d'); await page.evaluate(()=>__huntTest.step(.2)); await page.keyboard.up('d');
+  await page.keyboard.down('w'); await page.evaluate(()=>__huntTest.step(.15)); await page.keyboard.up('w');
   if(species==='deer'&&level===1&&depth===80)await page.screenshot({path:path.join(dump,'scope-aim.png')});
   target = await page.evaluate(() => __huntTest.target());
   await page.mouse.click(target.x,target.y);
@@ -196,7 +203,38 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     let lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
     const lens=await page.locator('#hunt-canvas').boundingBox();await page.mouse.move(lens.x+lens.width-2,lens.y+2);
     check('pointer movement outside the scope stays within the visible lens',await page.evaluate(()=>{const p=__huntTest.state().aimPixel;return Math.hypot(p.x-320,p.y-180)<=162.01;}));
+    lensTarget=await page.evaluate(()=>__huntTest.fixture());await page.mouse.click(lensTarget.x,lensTarget.y);
+    for(const [key,axis,sign] of [['w','screenY',-1],['a','screenX',-1],['s','screenY',1],['d','screenX',1]]) {
+      const start=await state(page);
+      await page.keyboard.down(key);await page.evaluate(()=>__huntTest.step(.25));await page.keyboard.up(key);
+      const moved=await state(page);
+      check('WASD '+key.toUpperCase()+' pans the raised scope in the intended direction',
+        moved.zoom===6&&(moved.camera[axis]-start.camera[axis])*sign>10);
+      check('the reticle and inverse sight remain aligned while panning '+key.toUpperCase(),
+        Math.hypot(moved.aimPixel.x-start.aimPixel.x,moved.aimPixel.y-start.aimPixel.y)<1e-8&&await page.evaluate(()=>__huntTest.projection()<1e-8));
+    }
+    const diagonalStart=await state(page);
+    await page.keyboard.down('w');await page.keyboard.down('d');await page.evaluate(()=>__huntTest.step(.25));await page.keyboard.up('w');await page.keyboard.up('d');
+    const diagonalEnd=await state(page);
+    check('diagonal scope movement has the same speed as one direction',Math.abs(Math.hypot(diagonalEnd.camera.screenX-diagonalStart.camera.screenX,diagonalEnd.camera.screenY-diagonalStart.camera.screenY)-12.5)<1e-7);
+    await page.evaluate(()=>__huntTest.step(.25));const releasedScope=await state(page);
+    check('releasing WASD stops scope movement',releasedScope.camera.screenX===diagonalEnd.camera.screenX&&releasedScope.camera.screenY===diagonalEnd.camera.screenY);
+    await page.screenshot({path:path.join(dump,'scope-wasd.png')});
+    await page.keyboard.down('d');await page.keyboard.press('p');const panPaused=await state(page);
+    await page.evaluate(()=>__huntTest.step(.5));const panStill=await state(page);
+    check('pause clears a held scope direction and freezes its view',panStill.phase==='paused'&&!panStill.keys.length&&panStill.camera.screenX===panPaused.camera.screenX);
+    await page.keyboard.up('d');await page.keyboard.press('Escape');
+    await page.keyboard.down('w');await page.evaluate(()=>window.dispatchEvent(new Event('blur')));const panBlur=await state(page);
+    check('focus loss clears scope movement',panBlur.phase==='paused'&&!panBlur.keys.length);
+    await page.keyboard.up('w');await page.locator('#hunt-start').click();
+    await page.keyboard.down('d');await page.evaluate(()=>__huntTest.step(10));await page.keyboard.up('d');
+    await page.keyboard.down('w');await page.evaluate(()=>__huntTest.step(10));await page.keyboard.up('w');const edgeScope=await state(page);
+    check('scope movement stays inside the wide field at its edges',edgeScope.camera.screenX===640&&edgeScope.camera.screenY===0);
+    await page.keyboard.down('a');await page.keyboard.press('q');const lowered=await state(page);
+    check('lowering the scope clears movement without moving the hunter',lowered.zoom===1&&!lowered.keys.includes('a')&&lowered.x===0&&lowered.y===0);await page.keyboard.up('a');
     await pointerShot(page);
+    const shotCamera=await state(page);await page.keyboard.down('d');await page.evaluate(()=>__huntTest.step(.05));await page.keyboard.up('d');
+    check('WASD cannot move the shot view during bullet flight',await page.evaluate(expected=>{const s=__huntTest.state();return s.camera.screenX===expected.screenX&&s.camera.screenY===expected.screenY;},shotCamera.camera));
     await page.screenshot({path:path.join(dump,'scope-shot.png')});
     await page.evaluate(()=>__huntTest.step(.2)); const flight=await state(page);
     check('bullet flight preserves visible scope detail',flight.zoom===6&&flight.bullets.length===1);
