@@ -59,10 +59,11 @@
   }
   class View {
     constructor(canvas, sprites, scene) {
-      this.canvas = canvas; this.g = canvas.getContext('2d'); this.sprites = sprites;
+      this.canvas = canvas; this.g = canvas.getContext('2d', { alpha: false }); this.sprites = sprites;
       this.camera = normal(); this.effects = []; this.trails = []; this.time = 0;
       this.scopePan = { x: 0, y: 0 };
       this.scene = scene; this.detailUse = 0; this.activeDetail = [];
+      this.rasters = new Map(); this.rasterBuilds = 0;
       this.detailTiles = new Map((scene?.tiles || []).map(tile => [tile.id, { ...tile, state: 'idle', image: null, used: 0 }]));
       this.onArtReady = null;
       // Warm the common center-field targets while the compact overview is already playable.
@@ -142,47 +143,82 @@
         delete this.sprites[tile.id];
       }
     }
+    paintedRaster(g, name, paint, revision = '', foreground = false) {
+      const c = foreground ? normal() : this.camera, a = anchor(c);
+      const sx = this.canvas.width / W, sy = this.canvas.height / H;
+      const mx = c.zoom > 1 ? Math.round(96 * sx) : 0, my = c.zoom > 1 ? Math.round(54 * sy) : 0;
+      const width = this.canvas.width + mx * 2, height = this.canvas.height + my * 2;
+      let raster = this.rasters.get(name);
+      if (!raster) {
+        const canvas = document.createElement('canvas');
+        raster = { canvas, g: canvas.getContext('2d'), revision: null }; this.rasters.set(name, raster);
+      }
+      let dx = (a.x - raster.x) * c.zoom * sx, dy = (a.y - raster.y) * c.zoom * sy;
+      if (raster.canvas.width !== width || raster.canvas.height !== height || raster.zoom !== c.zoom ||
+          raster.revision !== revision || Math.abs(dx) > mx * .75 || Math.abs(dy) > my * .75) {
+        if (raster.canvas.width !== width || raster.canvas.height !== height) { raster.canvas.width = width; raster.canvas.height = height; }
+        const p = raster.g; p.setTransform(1, 0, 0, 1, 0, 0); p.clearRect(0, 0, width, height);
+        p.setTransform(sx * c.zoom, 0, 0, sy * c.zoom, mx + (W / 2 - a.x * c.zoom) * sx, my + (H / 2 - a.y * c.zoom) * sy);
+        p.imageSmoothingEnabled = true; p.imageSmoothingQuality = 'high'; paint(p);
+        raster.x = a.x; raster.y = a.y; raster.zoom = c.zoom; raster.revision = revision;
+        this.rasterBuilds++; dx = dy = 0;
+      }
+      // Copy already sampled display pixels. The guard area lets a moving lens
+      // reuse its painting without rescaling the source on every pointer frame.
+      g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.drawImage(raster.canvas, mx + dx, my + dy, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height);
+      g.restore();
+    }
+    releaseRaster(name) {
+      const raster = this.rasters.get(name);
+      if (raster) { raster.canvas.width = raster.canvas.height = 0; this.rasters.delete(name); }
+    }
     paintedTerrain(g, tone) {
       const c = this.camera, a = anchor(c), image = this.sprites[c.zoom > 1 ? 'birch-underpaint' : 'birch-terrain'];
       if (!image) { this.terrain(g, tone, false); return; }
-      g.save(); g.translate(W / 2 - a.x * c.zoom, H / 2 - a.y * c.zoom); g.scale(c.zoom, c.zoom);
       // Register the generated 44.4% skyline to the 40% projected horizon.
       // Uniform scaling keeps brushwork undistorted and the bottom stays filled.
       const fit = (1 - geometry.horizon / H) / (1 - (this.scene?.horizon || .444));
       const left = (W - W * fit) / 2, top = H - H * fit;
-      g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      g.drawImage(image, left, top, W * fit, H * fit);
       this.activeDetail = [];
       if (c.zoom > 1) {
-        const radius = H * .45 / c.zoom;
+        const radius = (H * .45 + 96) / c.zoom;
         for (const tile of this.detailTiles.values()) {
           const [x, y, w, h] = tile.rect, tx = left + x * W * fit, ty = top + y * H * fit;
           const tw = w * W * fit, th = h * H * fit;
           if (tx > a.x + radius || tx + tw < a.x - radius || ty > a.y + radius || ty + th < a.y - radius) continue;
           this.activeDetail.push(tile.id); this.requestDetail(tile);
-          if (tile.state === 'ready') g.drawImage(this.sprites[tile.id], tx, ty, tw, th);
         }
         this.trimDetail();
       }
-      g.restore();
+      const ready = this.activeDetail.filter(id => this.detailTiles.get(id).state === 'ready');
+      this.paintedRaster(g, 'terrain', p => {
+        p.drawImage(image, left, top, W * fit, H * fit);
+        for (const id of ready) {
+          const [x, y, w, h] = this.detailTiles.get(id).rect;
+          p.drawImage(this.sprites[id], left + x * W * fit, top + y * H * fit, w * W * fit, h * H * fit);
+        }
+      }, ready.join(','));
     }
     stand(g, tone) {
       if (this.camera.zoom > 1) return;
       const image = this.sprites['lookout-stand'];
       if (!image) return;
       // Near timber stays in the player's foreground, outside the scope's lens.
-      g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(image, 0, 0, W, H); g.restore();
+      this.paintedRaster(g, 'stand', p => p.drawImage(image, 0, 0, W, H), '', true);
     }
     backdrop(g, tone, minute, painted = false) {
       const c = this.camera, a = anchor(c), zoom = c.zoom;
       g.save(); g.translate(W / 2 - a.x * zoom, H / 2 - a.y * zoom); g.scale(zoom, zoom);
-      const sky = g.createLinearGradient(0, 0, 0, H * .53);
-      sky.addColorStop(0, tone.sky); sky.addColorStop(.7, mix('#52695e', '#b7c3ac', tone.daylight));
-      sky.addColorStop(1, tone.warm > .15 ? mix('#d4c4a0', '#d9978c', tone.warm * .65) : tone.horizon);
-      g.fillStyle = sky; g.fillRect(-W * 3, -H * 3, W * 7, H * 7);
+      if (!painted || a.x - W / (2 * zoom) < 0 || a.x + W / (2 * zoom) > W || a.y - H / (2 * zoom) < 0 || a.y + H / (2 * zoom) > H) {
+        const sky = g.createLinearGradient(0, 0, 0, H * .53);
+        sky.addColorStop(0, tone.sky); sky.addColorStop(.7, mix('#52695e', '#b7c3ac', tone.daylight));
+        sky.addColorStop(1, tone.warm > .15 ? mix('#d4c4a0', '#d9978c', tone.warm * .65) : tone.horizon);
+        g.fillStyle = sky; g.fillRect(-W * 3, -H * 3, W * 7, H * 7);
+      }
       if (painted) {
         const image = this.sprites['birch-sky'];
-        if (image) { g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(image, 0, 0, W, H); }
+        if (image) this.paintedRaster(g, 'sky', p => p.drawImage(image, 0, 0, W, H));
       }
       if (tone.daylight < .6) {
         g.globalAlpha = (1 - tone.daylight) * .65; g.fillStyle = palette.cream;
@@ -328,6 +364,8 @@
       // There is no tiny overview image stretched into a magnified scene.
       g.setTransform(this.canvas.width / W, 0, 0, this.canvas.height / H, 0, 0); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.clearRect(0, 0, W, H);
       const tone = this.tone(minute), painted = world.backdrop !== 'marsh';
+      if (this.camera.zoom > 1) this.releaseRaster('stand');
+      if (!painted) { this.releaseRaster('sky'); this.releaseRaster('terrain'); }
       // Painted scenery keeps its authored exposure and color at every clock time.
       this.backdrop(g, tone, minute, painted);
       if (painted) this.paintedTerrain(g, tone); else this.terrain(g, tone, true);

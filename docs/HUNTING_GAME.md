@@ -16,7 +16,8 @@ Birch Clearing uses an oil-painted scene, with an
 open meadow, clouded sky and a visible wooden hunting stand. The owner asked
 for a calm, easy level-one feeling. `hunting-style/FIRST_MAP.md` records its
 composition. Version 9 adds native scope detail. Version 10 removes artificial
-dimming and tinting so the painted scenery keeps its source colors;
+dimming and tinting so the painted scenery keeps its source colors. Version 11
+caches scenery at display resolution and avoids unchanged UI writes;
 `assets/hunting/source-v9/ASSET_BRIEF.md` records production and visual review.
 Animals, Cypress scenery and the remaining interface await their own passes.
 
@@ -210,6 +211,7 @@ NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs --check
 node tools/hunting-art-reference.cjs --check
 NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
+NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs --benchmark
 ```
 
 Campaign checks cover save compatibility, deer unlocks and retained historical
@@ -229,6 +231,12 @@ and live sun movement. Raw source composites are compared with actual sky,
 field and stand pixels at 05:30, 06:47, midday and night. Four scenery targets
 verify loaded 6x detail, unchanged colors across the lens, six-image cache limits
 and native density; a Retina capture verifies the 2560 by 1440 display cap.
+Performance regression checks verify that unchanged controls cause no DOM writes,
+stationary scenery and small scope movements reuse sampled pixels, and scenery
+buffers remain below 13 million pixels. The benchmark runs the real animation
+loop in Chrome for Testing and WebKit, measuring wide view, steady scope and
+continuous scope panning. See `hunting-style/PERFORMANCE.md` for the version 11
+comparison, memory budget and repeatable baseline command.
 Captures cover dawn, noon, dusk and night. Closing More
 offscreen keeps the field paused. The checks
 also inspect desktop, portrait, narrow-phone and
@@ -237,5 +245,5 @@ landscape layouts for overflow and usable controls.
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v10-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v11-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.

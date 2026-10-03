@@ -2,7 +2,11 @@
   'use strict';
   const { TUNING: T, World } = HuntingPhysics;
   const { Campaign, REGIONS, DEER_LEVELS, animalArt, animalName, SAVE_KEY, period, activity } = HuntingCampaign;
-  const $ = id => document.getElementById('hunt-' + id);
+  const elements = new Map();
+  const $ = id => { if (!elements.has(id)) elements.set(id, document.getElementById('hunt-' + id)); return elements.get(id); };
+  function setText(id, value) { const element = $(id); if (element.textContent !== value) element.textContent = value; }
+  function setProperty(id, name, value) { const element = $(id); if (element[name] !== value) element[name] = value; }
+  function setAttribute(id, name, value) { const element = $(id), text = String(value); if (element.getAttribute(name) !== text) element.setAttribute(name, text); }
   const game = $('game'), canvas = $('canvas'), keys = new Set(), holds = new Map(), touchAim = new Set();
   let campaign, storageOK = true;
   try { campaign = new Campaign(JSON.parse(localStorage.getItem(SAVE_KEY))); }
@@ -42,23 +46,23 @@
     $('message').dataset.result = type; messageUntil = performance.now() + seconds * 1000;
   }
   function updateUI() {
-    $('clock').textContent = campaign.time; $('day').textContent = 'Day ' + campaign.day;
-    $('period').textContent = period(campaign.state.minute); $('mode').textContent = REGIONS[campaign.state.selected].name;
-    $('recovered').textContent = campaign.state.records.length;
+    setText('clock', campaign.time); setText('day', 'Day ' + campaign.day);
+    setText('period', period(campaign.state.minute)); setText('mode', REGIONS[campaign.state.selected].name);
+    setText('recovered', String(campaign.state.records.length));
     if (!world) return;
     const man = world.hunter, flight = world.bullets.length > 0, recovering = world.deer.some(animal => animal.bleed > 0);
-    $('ammo').textContent = man.reload > 0 ? 'Loading' : man.ammo + ' / ' + T.magazine;
-    $('wind').textContent = Math.abs(world.wind) < .05 ? 'Calm' : (world.wind > 0 ? 'Right ' : 'Left ') + Math.abs(world.wind).toFixed(1);
-    $('speed').textContent = phase !== 'running' ? 'Stopped' : flight ? 'Flight' : waiting() ? Math.round(pace.clock) + 'x time' : '1x time';
-    $('speed').dataset.slow = String(waiting() && opportunityLeft > 0 && !flight);
-    $('wait').setAttribute('aria-pressed', String(waiting()));
-    $('wait').disabled = phase !== 'running' || flight || scopeToggle;
-    $('scope').disabled = phase !== 'running' || flight || shotViewLeft > 0;
-    $('fire').disabled = phase !== 'running' || man.reload > 0 || flight || shotViewLeft > 0;
-    $('fire').textContent = man.reload > 0 ? 'Loading...' : scopeToggle ? 'Shoot' : 'Aim';
-    $('scope').textContent = scopeToggle ? 'Lower scope' : 'Scope'; $('scope').setAttribute('aria-pressed', String(scopeToggle));
-    $('pause').disabled = !['running', 'paused'].includes(phase); $('pause').textContent = phase === 'paused' ? 'Resume' : 'Pause';
-    $('menu').disabled = phase === 'loading'; $('region').disabled = flight || recovering; $('deer-level').disabled = flight || recovering;
+    setText('ammo', man.reload > 0 ? 'Loading' : man.ammo + ' / ' + T.magazine);
+    setText('wind', Math.abs(world.wind) < .05 ? 'Calm' : (world.wind > 0 ? 'Right ' : 'Left ') + Math.abs(world.wind).toFixed(1));
+    setText('speed', phase !== 'running' ? 'Stopped' : flight ? 'Flight' : waiting() ? Math.round(pace.clock) + 'x time' : '1x time');
+    setAttribute('speed', 'data-slow', waiting() && opportunityLeft > 0 && !flight);
+    setAttribute('wait', 'aria-pressed', waiting());
+    setProperty('wait', 'disabled', phase !== 'running' || flight || scopeToggle);
+    setProperty('scope', 'disabled', phase !== 'running' || flight || shotViewLeft > 0);
+    setProperty('fire', 'disabled', phase !== 'running' || man.reload > 0 || flight || shotViewLeft > 0);
+    setText('fire', man.reload > 0 ? 'Loading...' : scopeToggle ? 'Shoot' : 'Aim');
+    setText('scope', scopeToggle ? 'Lower scope' : 'Scope'); setAttribute('scope', 'aria-pressed', scopeToggle);
+    setProperty('pause', 'disabled', !['running', 'paused'].includes(phase)); setText('pause', phase === 'paused' ? 'Resume' : 'Pause');
+    setProperty('menu', 'disabled', phase === 'loading'); setProperty('region', 'disabled', flight || recovering); setProperty('deer-level', 'disabled', flight || recovering);
     if (phase === 'running' && performance.now() > messageUntil) {
       const text = flight ? 'Watch the round fall and drift.' : scopeToggle ? 'Move toward the lens edge to look around. Bring the sight toward the center to steady your shot.' : waiting() && opportunityLeft > 0 ? 'Something moved. Release to stop rushing past it.' : 'Hold Fast-forward to watch the field. Click an animal to raise your scope.';
       message(text, '', 1);

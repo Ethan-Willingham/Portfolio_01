@@ -1,0 +1,178 @@
+{
+  "date": "2026-10-03",
+  "baseline_commit": "b06ca85b4af87dd7664ff10299852f8a15ae22b0",
+  "conditions": {
+    "hardware": "MacBookPro18,3",
+    "headless": true,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "device_pixel_ratio": 2,
+    "canvas": {
+      "width": 2560,
+      "height": 1440
+    },
+    "duration_per_mode_ms": 2500
+  },
+  "before": [
+    {
+      "browser": "chrome",
+      "mode": "wide",
+      "fps": 58.703725889541154,
+      "frames": 147,
+      "frame_p95": 48,
+      "draw_median": 0.10000002384185791,
+      "draw_p95": 0.20000004768371582,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2058,
+      "raster_builds": 0
+    },
+    {
+      "browser": "chrome",
+      "mode": "scope",
+      "fps": 61.298411813875724,
+      "frames": 154,
+      "frame_p95": 33.80000000000018,
+      "draw_median": 0.19999992847442627,
+      "draw_p95": 0.2999999523162842,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2311,
+      "raster_builds": 0
+    },
+    {
+      "browser": "chrome",
+      "mode": "pan",
+      "fps": 59.405151104377644,
+      "frames": 149,
+      "frame_p95": 33.399999999999636,
+      "draw_median": 0.10000002384185791,
+      "draw_p95": 0.20000004768371582,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2235,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "wide",
+      "fps": 59.90415335463259,
+      "frames": 150,
+      "frame_p95": 17,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2100,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "scope",
+      "fps": 60.27944111776447,
+      "frames": 151,
+      "frame_p95": 17,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2266,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "pan",
+      "fps": 60.01589825119237,
+      "frames": 151,
+      "frame_p95": 18,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2265,
+      "raster_builds": 0
+    }
+  ],
+  "after": [
+    {
+      "browser": "chrome",
+      "mode": "wide",
+      "fps": 119.98246103559613,
+      "frames": 301,
+      "frame_p95": 9,
+      "draw_median": 0.19999992847442627,
+      "draw_p95": 0.2999999523162842,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 1,
+      "raster_builds": 0
+    },
+    {
+      "browser": "chrome",
+      "mode": "scope",
+      "fps": 119.9760047990402,
+      "frames": 300,
+      "frame_p95": 9.099999999999909,
+      "draw_median": 0.19999992847442627,
+      "draw_p95": 0.2999999523162842,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2,
+      "raster_builds": 0
+    },
+    {
+      "browser": "chrome",
+      "mode": "pan",
+      "fps": 118.00350821240633,
+      "frames": 296,
+      "frame_p95": 9,
+      "draw_median": 0.10000002384185791,
+      "draw_p95": 0.20000004768371582,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 0,
+      "raster_builds": 17
+    },
+    {
+      "browser": "webkit",
+      "mode": "wide",
+      "fps": 60,
+      "frames": 150,
+      "frame_p95": 18,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 0,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "scope",
+      "fps": 59.6,
+      "frames": 149,
+      "frame_p95": 18,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "pan",
+      "fps": 57.78992581023038,
+      "frames": 148,
+      "frame_p95": 17,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 1,
+      "raster_builds": 16
+    }
+  ]
+}

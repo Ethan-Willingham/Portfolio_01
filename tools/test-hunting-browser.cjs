@@ -3,10 +3,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
-const { chromium } = require('playwright');
+const { execFileSync } = require('node:child_process');
+const { chromium, webkit } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v10-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v11-qa';
+const baselineIndex=process.argv.indexOf('--baseline'),baseline=baselineIndex>=0?process.argv[baselineIndex+1]:null;
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const errors = [], missing = [];
@@ -32,6 +34,19 @@ window.__huntTest = {
   name, width:art.sprites[name].naturalWidth,height:art.sprites[name].naturalHeight,complete:art.sprites[name].complete})),
  detailState: () => ({density:art.scene.effective_width,active:view.activeDetail.map(id=>({id,state:view.detailTiles.get(id).state})),
   resident:[...view.detailTiles.values()].filter(t=>t.image).length}),
+ rasterState: () => ({builds:view.rasterBuilds,buffers:view.rasters.size,
+  pixels:[...view.rasters.values()].reduce((n,r)=>n+r.canvas.width*r.canvas.height,0)}),
+ rasterReuse: pan => {
+  draw(false);const before=view.rasterBuilds;
+  if(pan)view.panScope({x:440,y:180},.04);
+  for(let i=0;i<30;i++)draw(false);
+  return view.rasterBuilds-before;
+ },
+ stableHudWrites: () => {
+  const observer=new MutationObserver(()=>{});observer.observe(game,{subtree:true,childList:true,attributes:true});
+  updateUI();observer.takeRecords();for(let i=0;i<30;i++)updateUI();
+  const changes=observer.takeRecords().length;observer.disconnect();return changes;
+ },
  sourceColorError: () => {
   // Compare the artwork without live celestial marks. Allow two RGB steps for
   // GPU/CPU canvas sampling differences after a readback switches its backend.
@@ -77,6 +92,26 @@ window.__huntTest = {
   bullets: world.bullets.map(b => ({age:b.age, vz:b.vz, height:b.height, wind:b.wind,
    dx:b.dx, speed:b.speed, origin:b.origin, at:HuntingPhysics.position(b,b.age), trail:b.trail}))}),
  stop: () => {cancelAnimationFrame(raf); raf=0;},
+ measure: (duration,pan=false) => new Promise(resolve => {
+  cancelAnimationFrame(raf);raf=0;previous=0;active=true;
+  const original=view.draw,cpu=[],intervals=[],builds=view.rasterBuilds||0;let last=0,start=0,mutations=0;
+  const observer=new MutationObserver(records=>{mutations+=records.length;});
+  observer.observe(game,{subtree:true,childList:true,attributes:true});
+  view.draw=function(...args){const before=performance.now();const result=original.apply(this,args);cpu.push(performance.now()-before);return result;};
+  if(pan){scopePointer.active=true;scopePointer.type='mouse';scopePointer.point={x:465,y:180};}
+  raf=requestAnimationFrame(frame);
+  const sample=time=>{
+   if(!start)start=time;if(last)intervals.push(time-last);last=time;
+   if(time-start<duration){requestAnimationFrame(sample);return;}
+   cancelAnimationFrame(raf);raf=0;view.draw=original;stopScopeInput();
+   mutations+=observer.takeRecords().length;observer.disconnect();
+   const quantile=(values,p)=>values.slice().sort((a,b)=>a-b)[Math.floor((values.length-1)*p)]||0;
+   resolve({fps:intervals.length*1000/(time-start),frames:intervals.length,
+    frame_p95:quantile(intervals,.95),draw_median:quantile(cpu,.5),draw_p95:quantile(cpu,.95),
+    width:canvas.width,height:canvas.height,hud_mutations:mutations,raster_builds:(view.rasterBuilds||0)-builds});
+  };
+  requestAnimationFrame(sample);
+ }),
  loop: () => {cancelAnimationFrame(raf); window.dispatchEvent(new Event('focus')); previous=0; raf=requestAnimationFrame(frame);},
  step: seconds => {cancelAnimationFrame(raf); raf=0; advance(seconds); updateUI(); draw();},
  stalled: seconds => {cancelAnimationFrame(raf);active=true;previous=1000;frame(1000+seconds*1000);cancelAnimationFrame(raf);raf=0;previous=0;},
@@ -161,6 +196,8 @@ const server = http.createServer((req, res) => {
   if (!file.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
   try {
     let data = fs.readFileSync(file);
+    if(baseline&&['js/hunting-game.js','js/hunting-view.js'].includes(path.relative(root,file)))
+      data=execFileSync('git',['show',baseline+':'+path.relative(root,file)],{cwd:root});
     if (file.endsWith('/js/hunting-game.js')) {
       const source = data.toString();
       if (!source.includes('// TEST_HOOKS:')) throw new Error('Missing QA insertion marker.');
@@ -214,6 +251,26 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
   try {
     await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
     const url='http://127.0.0.1:'+server.address().port+'/hunting-game.html';
+    if(process.argv.includes('--benchmark')) {
+      const measurements=[];
+      for(const [name,engine,options] of [['chrome',chromium,{executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'}],['webkit',webkit,{}]]) {
+        browser=await engine.launch({headless:true,...options});
+        const context=await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:2});
+        const page=await setup(context,url);await page.evaluate(()=>__huntTest.showcase());
+        for(const [mode,pan] of [['wide',false],['scope',false],['pan',true]]) {
+          if(mode!=='wide'){
+            await page.evaluate(()=>__huntTest.sceneFocus(350,235));
+            await page.waitForFunction(()=>{const d=__huntTest.detailState();return d.active.length&&d.active.every(t=>t.state==='ready');});
+          }
+          const result={browser:name,mode,...await page.evaluate(pan=>__huntTest.measure(2500,pan),pan)};
+          measurements.push(result);console.log(JSON.stringify(result));
+        }
+        await browser.close();browser=null;
+      }
+      fs.writeFileSync(path.join(dump,'benchmark.json'),JSON.stringify(measurements,null,2)+'\n');
+      assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
+      return;
+    }
     browser=await chromium.launch({headless:true,executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'});
     const desktop=await browser.newContext({viewport:{width:1440,height:1000}});
     const page=await setup(desktop,url);
@@ -226,6 +283,8 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     check('desktop painting renders at display resolution while projection stays logical',await page.locator('#hunt-canvas').evaluate(c=>
       c.width>640&&c.width>=Math.min(2560,Math.floor(c.getBoundingClientRect().width))));
     check('wide pointer projection is invertible',await page.evaluate(()=>__huntTest.projection()<1e-8));
+    check('unchanged controls do not rewrite the DOM every frame',await page.evaluate(()=>__huntTest.stableHudWrites()===0));
+    check('a stationary wide view reuses its sampled scenery',await page.evaluate(()=>__huntTest.rasterReuse(false)===0));
     await page.screenshot({path:path.join(dump,'wide-field.png')});
     await page.evaluate(()=>__huntTest.showcase());await page.screenshot({path:path.join(dump,'sunny-field.png')});
     fs.writeFileSync(path.join(dump,'sunny-field-canvas.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
@@ -247,6 +306,10 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
       fs.writeFileSync(path.join(dump,'detail-'+name+'.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
     }
     check('panning keeps at most six decoded detail images',await page.evaluate(()=>__huntTest.detailState().resident<=6));
+    await page.evaluate(()=>__huntTest.sceneFocus(350,235));
+    await page.waitForFunction(()=>__huntTest.detailState().active.every(t=>t.state==='ready'));
+    check('small scope movement reuses the guard area',await page.evaluate(()=>__huntTest.rasterReuse(true)===0));
+    check('display caches stay within three buffers and 13 million pixels',await page.evaluate(()=>{const s=__huntTest.rasterState();return s.buffers<=3&&s.pixels<=13000000;}));
     await page.evaluate(()=>__huntTest.quiet());
     check('default arrival locations are visible in the perspective field',await page.evaluate(()=>__huntTest.arrivalBounds()));
     await page.evaluate(()=>{__huntTest.quiet();__huntTest.clock(360);});
@@ -445,6 +508,7 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     await crisp.waitForFunction(()=>{const d=__huntTest.detailState();return d.active.length&&d.active.every(t=>t.state==='ready');});
     check('Retina scope uses the full capped display canvas',await crisp.locator('#hunt-canvas').evaluate(c=>c.width===2560&&c.height===1440));
     check('Retina scope loads native detail within the six-image budget',await crisp.evaluate(()=>{const s=__huntTest.detailState();return s.density>=6000&&s.resident<=6;}));
+    check('Retina scenery caching respects the same memory budget',await crisp.evaluate(()=>{const s=__huntTest.rasterState();return s.buffers<=3&&s.pixels<=13000000;}));
     fs.writeFileSync(path.join(dump,'retina-scope.png'),Buffer.from(await crisp.evaluate(()=>__huntTest.screenshot()),'base64'));
     check('scripts have no page errors and all local assets load',!errors.length&&!missing.length);
     console.log('Passed checks: '+passedChecks);
