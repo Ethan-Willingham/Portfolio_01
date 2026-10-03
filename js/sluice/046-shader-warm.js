@@ -423,6 +423,15 @@
         skySlimes.push(s);
       }
       skySlimeDraw();
+      var guest = Object.assign({}, skySlimes[1], { x: x, y: y + 30, age: 9 }), g = { s: guest, soak: 9 };
+      bathSkinInit(g);
+      guest.age = 9; guest._bathMorph = 0.5;
+      skySlimeDrawBody(guest);
+      var liveFlakes = bathSkinFlakes;
+      try {
+        bathSkinFlakes = []; bathSkinDetach(guest, skySlimeCrustPlates(guest)[12]);
+        bathSkinDrawFlakes(ctx);
+      } finally { bathSkinFlakes = liveFlakes; }
 
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool

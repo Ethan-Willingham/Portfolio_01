@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.154';
+  var GAME_VERSION = 'v28.156';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -5931,6 +5931,15 @@
         skySlimes.push(s);
       }
       skySlimeDraw();
+      var guest = Object.assign({}, skySlimes[1], { x: x, y: y + 30, age: 9 }), g = { s: guest, soak: 9 };
+      bathSkinInit(g);
+      guest.age = 9; guest._bathMorph = 0.5;
+      skySlimeDrawBody(guest);
+      var liveFlakes = bathSkinFlakes;
+      try {
+        bathSkinFlakes = []; bathSkinDetach(guest, skySlimeCrustPlates(guest)[12]);
+        bathSkinDrawFlakes(ctx);
+      } finally { bathSkinFlakes = liveFlakes; }
 
       siphon = Object.assign({}, liveSiphon);
       siphonAvailable = function () { return true; };  // loading normally hides this tool
@@ -13659,14 +13668,14 @@
 
   // Read the waterline beside a solid visitor, whose own collider has
   // displaced all particles from its interior. Sparse spray is not a pool.
-  function liquidSampleBall(x, y, radius) {
+  function liquidSampleBall(x, y, radius, type) {
     var rowH = 4, span = radius * 1.8, top = y - span;
     var rows = Math.ceil(span * 2 / rowH), bins = new Array(rows);
     for (var b = 0; b < rows; b++) bins[b] = 0;
     var inner = radius + 2, outer = radius * 1.75;
     var vx = 0, vy = 0, count = 0;
     for (var i = 0; i < liquidCount; i++) {
-      if (liquidType[i] === 5) continue;
+      if (liquidType[i] === 5 || (type !== undefined && liquidType[i] !== type)) continue;
       var dx = Math.abs(liquidX[i] - x), row = Math.floor((liquidY[i] - top) / rowH);
       if (dx < inner || dx > outer || row < 0 || row >= rows) continue;
       bins[row]++;
@@ -16088,7 +16097,7 @@
     bathThermalReset(); bathSiloReset();
     bathScalePop(); bathSteamPop();
     hearthRoomReset();
-    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
+    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0; bathSkinFlakes.length = 0;
     bathTransitionSerial++;
     bathMode = false; bathRoomReady = false; bathFading = false; bathSyncCollision();
     if (typeof document !== 'undefined') bathLayerVis(false);
@@ -16255,6 +16264,7 @@
     s.vx = 0; s.vy = 0; s.entry = 0; s.wet = 0; s._trail = [];
     s.visit = 'inside';
     var g = { s: s, slot: slot, st: 'arrive', t: 0, paid: false, served: false, soak: 0 };
+    bathSkinInit(g);
     bathGuests.push(g);
     bathBeginHop(g, (slot ? 22.5 : 20.75) * TILE, F.fr * TILE - s.r, 0.7, 22, 'wait');
     if (!bathIntroSeen) {
@@ -16277,12 +16287,16 @@
       bathSetNotice(bathWater < BATH_MIN_WATER ? 'Pour water into the tub with the hose.' : bathThermalTemperature() > 48 ? 'The water is too hot. Let it cool, or mix in cold water.' : 'Place fuel, cast sparks from the striker, and let the water warm.');
       return false;
     }
-    // Admission uses the shared warm bath. No guest recipe is charged.
+    return bathStartGuest(g);
+  }
+  function bathStartGuest(g) {
+    if (g.st !== 'wait' || g.paid || bathTool.held === g || gamePaused || bathFading || !bathCanServe()) return false;
+    // A waiting visitor chooses the ready bath, including while we mine.
     g.served = true;
     bathBeginHop(g, (BATH_FLOORS[0].tubs[0][0] - 0.1) * TILE,
-      (BATH_FLOORS[0].fr - 1) * TILE - g.s.r, 0.85, 52, 'plunge');
+      (BATH_FLOORS[0].fr - 1) * TILE - g.s.r, 0.65, 52, 'plunge');
     bathNoticeT = 0;
-    sfxPlay('ui-confirm');
+    if (bathMode) sfxPlay('ui-confirm');
     saveNow('bath-order');
     return true;
   }
@@ -16321,10 +16335,11 @@
     return true;
   }
   function bathGuestTick(dt) {
-    if (!ENABLE_BATH || !(dt > 0) || gameOver || gameWon) return;
+    if (!ENABLE_BATH || !(dt > 0) || gameOver || gameWon || gamePaused) return;
     dt = Math.min(dt, 0.1);
     bathOperationsTick(dt);
     bathToolTick(dt);
+    bathSkinFlakeTick(dt);
     bathNoticeT = Math.max(0, bathNoticeT - dt);
     bathGuestColliders.length = 0;
     for (var f = bathFloats.length - 1; f >= 0; f--) {
@@ -16333,8 +16348,9 @@
     }
     for (var i = bathGuests.length - 1; i >= 0; i--) {
       var g = bathGuests[i], s = g.s, oldX = s.x, oldY = s.y;
+      var oldContour = bathMode ? bathGuestContour(s) : null;
       g.t += dt; s.age += dt;
-      s._bathMorph = skySlimeClamp((g.soak / BATH_VISIT.seconds - 0.7) / 0.3, 0, 1);
+      if (g.st === 'wait' && !g.paid) bathStartGuest(g);
       var physical = !!g.manual;
       if (physical) {
         bathToolGuestTick(g, dt);
@@ -16347,24 +16363,14 @@
         if (k >= 1) {
           g.st = h.next; g.t = 0; g.hop = null; s.squashV = 2;
           s._ground = g.st === 'wait' || g.st === 'leave';
-          if (g.st === 'soak') {
-            s.wet = 0.6;
-            bathSplashWater(g, 45);
-            if (bathMode) bathSplashPoof(s.x, bathWaterline(), 0.6);
-          }
+          if (g.st === 'soak') { g.manual = true; physical = true; s.vx = 45; s.vy = 70; }
         }
       } else if (g.st === 'plunge') {
         var curve = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]);
-        bathBeginHop(g, (g.slot ? 38 : 35.5) * TILE, bathWaterline() + 6, 0.95, 74, 'soak');
+        bathBeginHop(g, (g.slot ? 38 : 35.5) * TILE, curve.y0 - s.r - 12, 0.85, 74, 'soak');
       } else if (g.st === 'soak') {
-        if (bathCanServe()) g.soak = Math.min(BATH_VISIT.seconds, g.soak + dt);
-        g.splash = (g.splash || 0) + dt;
-        if (g.splash >= 1.4) { g.splash = 0; bathSplashWater(g, 12); }
-        var waterline = bathWaterline();
-        s.x = (g.slot ? 38 : 35.5) * TILE + Math.sin(g.t * 0.65 + s.seed * 6) * 13;
-        s.y = waterline + 6 + Math.sin(g.t * 1.7 + s.seed * 8) * 3.5;
-        s.wet = 0.6;
-        if (g.soak >= BATH_VISIT.seconds) bathFinishGuest(g);
+        // Older scripted soaks migrate onto the same physical path.
+        g.manual = true; physical = true; bathToolGuestTick(g, dt);
       } else if (g.st === 'leave') {
         s.wet = 0;
         bathBeginHop(g, 20.5 * TILE, BATH_FLOORS[0].fr * TILE - s.r, 0.85, 32, 'exit');
@@ -16373,11 +16379,11 @@
         continue;
       }
       if (!physical) { s.vx = (s.x - oldX) / dt; s.vy = (s.y - oldY) / dt; }
-      s.settled = g.st === 'wait' || g.st === 'soak';
+      if (physical) bathGuestSoakTick(g, dt);
+      if (!physical) s.settled = g.st === 'wait';
       skySlimeExpression(s, Math.min(dt, 1 / 60));
       if (g.st === 'soak') s.eye = 0.2 + Math.sin(g.t * 0.8) * 0.035;
-      if (bathMode) bathGuestColliders.push({ x: s.x, y: s.y, hw: s.r, hh: s.r,
-        vx: s.vx, vy: s.vy, pts: null });
+      if (bathMode) bathGuestColliders.push(bathGuestBoundary(s, oldContour, dt));
     }
     bathToolCollider();
   }
@@ -16399,6 +16405,7 @@
     bathServe(nearest.s.id); return true;
   }
   function bathDrawGuests() {
+    bathSkinDrawFlakes(ctx);
     ctx.save();
     for (var w = 0; w < bathWetFloor.length; w++) {
       var wet = bathWetFloor[w];
@@ -16471,14 +16478,14 @@
       floors: bathFloorsOwned.slice(), ready: bathRoomReady, supplies: bathSupplies.slice(),
       guests: bathGuests.map(function (g) {
         return { s: skySlimeRecord(g.s), slot: g.slot, st: g.st, t: g.t, paid: g.paid,
-          served: g.served, soak: g.soak, manual: !!g.manual, hop: g.hop ? Object.assign({}, g.hop) : null };
+          served: g.served, soak: g.soak, skin: g.skin, manual: !!g.manual, hop: g.hop ? Object.assign({}, g.hop) : null };
       }) };
   }
   function bathServiceRestore(data) {
     if (typeof bathArrivalReset === 'function') bathArrivalReset();
     bathToolReset();
     bathThermalReset(); bathSiloReset();
-    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0;
+    bathGuests.length = 0; bathGuestColliders.length = 0; bathFloats.length = 0; bathSkinFlakes.length = 0;
     bathRoomReady = false; bathSyncCollision(); banyaX = -1; bathFoundationReady = false; bathDrainT = 0;
     bathFloorsOwned = [true, false, false, false, false];
     bathSupplies = [0, 0, 0, 0, 0];
@@ -16524,6 +16531,7 @@
       }
       if (g.paid) s.bathed = true;
       if (g.paid && g.st === 'soak') g.st = 'leave';
+      bathSkinInit(g, Array.isArray(src.skin) ? src.skin : null);
       s.visit = 'inside'; bathGuests.push(g);
       // Save migrations and interrupted transitions cannot duplicate a visitor.
       for (var j = skySlimes.length - 1; j >= 0; j--) if (skySlimes[j].id === s.id) skySlimes.splice(j, 1);
@@ -16886,6 +16894,112 @@
     select: bathSiloSelect, selectLiquid: bathSiloSelectLiquid, count: bathLiquidCount,
     deposit: bathSiloDeposit, depositRig: bathSiloDepositRig, withdraw: bathSiloWithdraw,
     emit: bathSiloEmit, save: bathSiloSave, restore: bathSiloRestore };
+  /* ---- Wet crust: local peeling and the exposed, uneven gel boundary ---- */
+  var bathSkinFlakes = [];
+
+  function bathSkinInit(g, saved) {
+    var plates = skySlimeCrustPlates(g.s);
+    g.skin = plates.map(function (plate, i) {
+      var src = saved && saved[i];
+      var wet = src ? skySlimeClamp(Number(src.wet) || 0, 0, 1) : g.soak / BATH_VISIT.seconds;
+      var peel = src ? skySlimeClamp(Number(src.peel) || 0, 0, 1) : bathSkinPeel(plate, wet);
+      return { wet: wet, peel: peel };
+    });
+    g.s._bathSkin = g.skin;
+    g.s._bathMorph = g.skin.reduce(function (sum, patch) { return sum + patch.peel; }, 0) / Math.max(1, g.skin.length);
+  }
+  function bathSkinPeel(plate, wet) {
+    return skySlimeClamp((wet - 0.05 - plate.tough * 0.16) / (0.32 + plate.tough * 0.30), 0, 1);
+  }
+  function bathSkinTick(g, dt, earning) {
+    if (!g.skin) bathSkinInit(g);
+    var s = g.s, plates = skySlimeCrustPlates(s), ca = Math.cos(s.angle), sa = Math.sin(s.angle);
+    var total = 0, line = s._bathLine === undefined ? bathWaterline() : s._bathLine;
+    for (var i = 0; i < g.skin.length; i++) {
+      var patch = g.skin[i], plate = plates[i], before = patch.peel;
+      if (earning && patch.peel < 1) {
+        var y = s.y + (plate.x * sa + plate.y * ca) * s.r / 60;
+        var immersed = skySlimeClamp((y - line + 3) / 6, 0, 1);
+        // Soaked cracks wick water into the upper coat. The submerged plates
+        // loosen first; their individual thickness leaves islands of hard skin.
+        var wick = 0.30 + 0.90 * skySlimeClamp((g.soak / BATH_VISIT.seconds - 0.12) / 0.60, 0, 1);
+        patch.wet = Math.min(1, patch.wet + dt / BATH_VISIT.seconds * (wick + immersed * (1.8 - wick)));
+        patch.peel = Math.max(before, bathSkinPeel(plate, patch.wet));
+        if (before < 1 && patch.peel >= 1 && bathMode) bathSkinDetach(s, plate);
+      }
+      total += patch.peel;
+    }
+    s._bathMorph = total / Math.max(1, g.skin.length);
+  }
+  function bathGuestSoakTick(g, dt) {
+    var held = bathTool.held === g;
+    var earning = !g.paid && !held && g.s.wet > 0.25 && bathCanServe();
+    if (earning) { g.served = true; g.soak = Math.min(BATH_VISIT.seconds, g.soak + dt); }
+    bathSkinTick(g, dt, earning);
+    if (!g.paid && g.soak >= BATH_VISIT.seconds && g.s._bathMorph >= 0.999) bathFinishGuest(g);
+  }
+  function bathSkinDetach(s, plate) {
+    var ca = Math.cos(s.angle), sa = Math.sin(s.angle), scale = s.r / 60;
+    var dx = (plate.x * ca - plate.y * sa) * scale, dy = (plate.x * sa + plate.y * ca) * scale;
+    if (bathSkinFlakes.length >= 72) bathSkinFlakes.shift();
+    bathSkinFlakes.push({ x: s.x + dx, y: s.y + dy, vx: s.vx * 0.25 + dx * 1.4,
+      vy: s.vy * 0.15 + dy * 0.6 - 8, angle: s.angle, spin: (plate.tough - 0.5) * 3,
+      tone: plate.tone, life: 7, points: plate.points.map(function (p) {
+        return { x: (p.x - plate.x) * scale * 0.7, y: (p.y - plate.y) * scale * 0.7 };
+      }) });
+  }
+  function bathSkinFlakeTick(dt) {
+    var c = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]), line = bathWaterline();
+    for (var i = bathSkinFlakes.length - 1; i >= 0; i--) {
+      var f = bathSkinFlakes[i]; f.life -= dt;
+      if (f.life <= 0) { bathSkinFlakes.splice(i, 1); continue; }
+      var wet = bathWater > 0 && f.y > line && f.x > c.x0 && f.x < c.x1;
+      f.vy += (wet ? 18 : SKY_SLIME_GRAVITY) * dt;
+      f.vx *= Math.exp(-dt * (wet ? 2.5 : 0.2)); f.vy *= Math.exp(-dt * (wet ? 2 : 0.1));
+      var q = bathToolProject(f.x + f.vx * dt, f.y + f.vy * dt, f.vx, f.vy, 2);
+      f.x = q[0]; f.y = q[1]; f.vx = q[2]; f.vy = q[3]; f.angle += f.spin * dt;
+    }
+  }
+  function bathSkinDrawFlakes(c) {
+    for (var i = 0; i < bathSkinFlakes.length; i++) {
+      var f = bathSkinFlakes[i];
+      c.save(); c.globalAlpha *= Math.min(1, f.life); c.translate(f.x, f.y); c.rotate(f.angle);
+      c.beginPath();
+      for (var j = 0; j < f.points.length; j++) {
+        var p = f.points[j]; if (!j) c.moveTo(p.x, p.y); else c.lineTo(p.x, p.y * 0.45);
+      }
+      c.closePath(); c.fillStyle = SKY_SLIME_RAMP[f.tone]; c.fill();
+      c.strokeStyle = SKY_SLIME_RAMP[1]; c.lineWidth = 0.6; c.stroke(); c.restore();
+    }
+  }
+  function bathGuestContour(s) {
+    var plates = s._bathSkin ? skySlimeCrustPlates(s) : null, pts = [], ca = Math.cos(s.angle), sa = Math.sin(s.angle);
+    for (var n = 0; n < 32; n++) {
+      var a = n / 32 * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a), soft = s.bathed ? 1 : 0;
+      if (plates && !s.bathed) {
+        var x = (dx * ca + dy * sa) * 57, y = (-dx * sa + dy * ca) * 57, best = Infinity;
+        for (var i = 0; i < plates.length; i++) {
+          var pdx = x - plates[i].x, pdy = y - plates[i].y, d = pdx * pdx + pdy * pdy;
+          if (d < best) { best = d; soft = skySlimeClamp((s._bathSkin[i].peel - 0.45) / 0.55, 0, 1); }
+        }
+      }
+      var radial = s.r * (1 + soft * (-0.06 + 0.045 * Math.sin(a * 3 + s.seed * 6.28) +
+        0.025 * Math.cos(a * 5 - s.seed * 9) + (1 - (s._bathMorph || 0)) *
+        (0.09 * Math.sin(s.age * 3.2 + a * 2) + Math.max(0, dy) * 0.07)));
+      pts.push({ x: s.x + dx * radial, y: s.y + dy * radial });
+    }
+    return pts;
+  }
+  function bathGuestBoundary(s, oldContour, dt) {
+    var contour = bathGuestContour(s), pts = [], hw = 0, hh = 0;
+    for (var i = 0; i < contour.length; i++) {
+      var p = contour[i], old = oldContour && oldContour[i];
+      pts.push(p.x, p.y, old ? skySlimeClamp((p.x - old.x) / dt, -650, 650) : s.vx,
+        old ? skySlimeClamp((p.y - old.y) / dt, -650, 650) : s.vy);
+      hw = Math.max(hw, Math.abs(p.x - s.x)); hh = Math.max(hh, Math.abs(p.y - s.y));
+    }
+    return { x: s.x, y: s.y, hw: hw, hh: hh, vx: s.vx, vy: s.vy, mvx: s.vx, mvy: s.vy, pts: pts };
+  }
   /* ---- Conserved bath heat, copper exchange and condensed water vapor ----
      Reduced thermal grid coupled to the existing particle momentum solver.
      World motion is unchanged. Energy is kJ, time seconds, temperature C;
@@ -17546,16 +17660,27 @@
   function bathToolGuestTick(g, dt) {
     var s = g.s, t = bathTool, held = t.held === g;
     var b = bathToolBounds(), c = b.curve, line = bathWaterline();
+    var sample = bathMode && typeof liquidSampleBall === 'function' ? liquidSampleBall(s.x, s.y, s.r, 0) : null;
+    // Live guests read dense water beside their displaced volume. Parked
+    // offscreen water retains the same conserved cavity-volume waterline.
+    if (sample) line = sample.surface;
+    s._bathLine = line;
+    var currentX = sample && isFinite(sample.surface) ? sample.vx : 0;
+    var currentY = sample && isFinite(sample.surface) ? sample.vy : 0;
+    s._bathFlowX = (s._bathFlowX || 0) + (currentX - (s._bathFlowX || 0)) * (1 - Math.exp(-dt * 2));
+    s._bathFlowY = (s._bathFlowY || 0) + (currentY - (s._bathFlowY || 0)) * (1 - Math.exp(-dt * 2));
     var steps = Math.max(1, Math.ceil(dt * 120)), h = dt / steps;
     for (var n = 0; n < steps; n++) {
       var inBowl = s.x > c.x0 + s.r && s.x < c.x1 - s.r;
-      var wet = inBowl && bathWater > 0 ? Math.max(0, Math.min(1, (s.y + s.r - line) / (2 * s.r))) : 0;
-      s.vy += 300 * (1 - 1.9 * wet) * h;
+      var wet = inBowl && bathWater > 0 ? skySlimeSubmerged(s, line, sample ? sample.bottom : Infinity) : 0;
+      s.vy += SKY_SLIME_GRAVITY * (1 - wet / 0.72) * h;
       if (held) {
         s.vx += ((t.x - s.x) * 180 - s.vx * 22) * h;
         s.vy += ((t.y + s.r + 8 - s.y) * 180 - s.vy * 22) * h;
       }
-      s.vx *= Math.exp(-h * (0.45 + wet * 2.8)); s.vy *= Math.exp(-h * wet * 2.4);
+      var drag = Math.exp(-h * wet * (3.5 + Math.hypot(s.vx, s.vy) * 0.018));
+      s.vx = s.vx * Math.exp(-h * 0.45) * drag + s._bathFlowX * (1 - drag) * 0.08;
+      s.vy = s.vy * drag + s._bathFlowY * (1 - drag) * 0.08;
       // The hose pushes guests along its live stream; their boundary pushes water.
       if (t.mode === 'hose' && t.output > 0) {
         var dx = Math.sin(t.tilt), dy = Math.cos(t.tilt);
@@ -17568,7 +17693,14 @@
       s.vx = Math.max(-650, Math.min(650, s.vx)); s.vy = Math.max(-650, Math.min(650, s.vy));
       var q = bathToolProject(s.x + s.vx * h, s.y + s.vy * h, s.vx, s.vy, s.r);
       s.x = q[0]; s.y = q[1]; s.vx = q[2]; s.vy = q[3];
-      s.wet = wet;
+      s.wet = wet; s._ground = wet < 0.01 && Math.abs(s.vy) < 1;
+      s.angle += (s.spin || 0) * h; s.spin *= Math.exp(-wet * h * 2);
+      if (!s._bathEntryWet && wet > 0.08 && !held) {
+        s._bathEntryWet = true;
+        if (bathMode && typeof liquidToolImpulse === 'function')
+          liquidToolImpulse(s.x, line, s.r * 1.9, s.vx * 0.2, Math.min(90, Math.max(0, s.vy)) * 0.35);
+        if (bathMode) bathSplashPoof(s.x, line, 0.6);
+      }
     }
     // Keep two guests from occupying the same fluid boundary.
     for (var i = 0; i < bathGuests.length; i++) {
@@ -17581,8 +17713,6 @@
     }
     if (!held && s.wet > 0.25) {
       g.st = 'soak';
-      if (bathCanServe()) { g.served = true; g.soak = Math.min(BATH_VISIT.seconds, g.soak + dt); }
-      if (g.soak >= BATH_VISIT.seconds) { g.manual = false; bathFinishGuest(g); }
     } else g.st = held || s.wet > 0 || Math.hypot(s.vx, s.vy) > 10 ? 'play' : 'wait';
     s.settled = !held && Math.hypot(s.vx, s.vy) < 3;
     return true;
@@ -17590,13 +17720,17 @@
   function bathToolCollider() {
     if (!bathMode || hearthView !== 'bath' || !bathTool.mode || bathFading) return;
     var t = bathTool, r = t.mode === 'claw' ? 17 : 12;
-    bathGuestColliders.push({ x: t.x, y: t.y, hw: r, hh: r, vx: t.vx, vy: t.vy, pts: null });
+    bathGuestColliders.push(bathToolCircleBoundary(t.x, t.y, r, t.vx, t.vy));
     if (t.mode === 'claw') for (var side = -1; side <= 1; side += 2) {
       var x = side * (13 + t.jaw * 18), y = 36;
-      bathGuestColliders.push({ x: t.x + x * Math.cos(t.tilt) + y * Math.sin(t.tilt),
-        y: t.y - x * Math.sin(t.tilt) + y * Math.cos(t.tilt),
-        hw: 7, hh: 7, vx: t.vx, vy: t.vy, pts: null });
+      bathGuestColliders.push(bathToolCircleBoundary(t.x + x * Math.cos(t.tilt) + y * Math.sin(t.tilt),
+        t.y - x * Math.sin(t.tilt) + y * Math.cos(t.tilt), 7, t.vx, t.vy));
     }
+  }
+  function bathToolCircleBoundary(x, y, r, vx, vy) {
+    var pts = [];
+    for (var i = 0; i < 16; i++) { var a = i / 16 * Math.PI * 2; pts.push(x + Math.cos(a) * r, y + Math.sin(a) * r, vx, vy); }
+    return { x: x, y: y, hw: r, hh: r, vx: vx, vy: vy, mvx: vx, mvy: vy, pts: pts };
   }
   function bathToolDrawRail(c, b) {
     // This fixed rail is part of the room even when the working head is stowed.
@@ -17667,10 +17801,31 @@
     c.restore();
   }
 
-  // CPU fallback uses the same circular moving boundaries as the GPU registry.
+  // CPU fallback projects onto the same changing contours as the GPU registry.
   function bathToolProjectLiquid(x, y, vx, vy, r) {
     for (var i = 0; i < bathGuestColliders.length; i++) {
       var g = bathGuestColliders[i], dx = x - g.x, dy = y - g.y;
+      if (Math.abs(dx) > g.hw + r || Math.abs(dy) > g.hh + r) continue;
+      if (g.pts && g.pts.length >= 12) {
+        var inside = false, best = Infinity, qx = 0, qy = 0, nx = 0, ny = 0, bvx = 0, bvy = 0;
+        for (var j = 0; j < g.pts.length; j += 4) {
+          var k = (j + 4) % g.pts.length, ax = g.pts[j], ay = g.pts[j + 1], bx = g.pts[k], by = g.pts[k + 1];
+          if ((ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax) inside = !inside;
+          var ex = bx - ax, ey = by - ay, length2 = ex * ex + ey * ey;
+          var t = skySlimeClamp(((x - ax) * ex + (y - ay) * ey) / Math.max(0.0001, length2), 0, 1);
+          var px = ax + ex * t, py = ay + ey * t, d2 = (x - px) * (x - px) + (y - py) * (y - py);
+          if (d2 < best) {
+            best = d2; qx = px; qy = py; var length = Math.sqrt(Math.max(0.0001, length2));
+            nx = ey / length; ny = -ex / length;
+            bvx = g.pts[j + 2] * (1 - t) + g.pts[k + 2] * t;
+            bvy = g.pts[j + 3] * (1 - t) + g.pts[k + 3] * t;
+          }
+        }
+        if (!inside && best >= r * r) continue;
+        x = qx + nx * r; y = qy + ny * r;
+        var inward = Math.min(0, (vx - bvx) * nx + (vy - bvy) * ny);
+        vx -= nx * inward; vy -= ny * inward; continue;
+      }
       var distance = Math.hypot(dx, dy), radius = g.hw + r;
       if (distance >= radius) continue;
       var nx = distance > 0.001 ? dx / distance : 0;
@@ -74184,26 +74339,30 @@
 
   // Bath departure animation uses the new material immediately upon the
   // completed soak. Its physical resident is created at the surface door.
-  function surfaceSlimeDrawGuest(s) {
+  function surfaceSlimeDrawGuest(s, hideEye) {
     var r = s.r, pulse = Math.sin(s.age * 5.3 + s.seed * 7) * 0.035;
     var hue = surfaceSlimeHues[Math.floor(s.seed * 5) % 5];
     var m = s._softEye;
     if (!m) m = s._softEye = { seed: s.seed, hue: hue, blink: s.blink || 0, age: s.age };
     surfaceSlimeEyeTick(m, s.x, s.y, r, Math.max(0, Math.min(0.05, s.age - m.age)), null, null);
     m.age = s.age; m.blink = s.blink || 0;
-    ctx.save(); ctx.translate(s.x, s.y); ctx.scale(1 + pulse, 1 - pulse);
+    ctx.save(); ctx.translate(s.x, s.y);
+    if (!s._bathSkin || s.bathed) ctx.scale(1 + pulse, 1 - pulse);
     ctx.beginPath();
+    var contour = s._bathSkin && !s.bathed ? bathGuestContour(s) : null;
     for (var n = 0; n <= 40; n++) {
       var angle = n / 40 * Math.PI * 2;
       var radial = r * 0.94 * (1 + 0.045 * Math.sin(angle * 3 + s.seed * 6.28) +
         0.025 * Math.cos(angle * 5 - s.seed * 9));
       var x = Math.cos(angle) * radial, y = Math.sin(angle) * radial;
+      if (contour) { var p = contour[Math.floor(n / 40 * contour.length) % contour.length]; x = p.x - s.x; y = p.y - s.y; }
       if (n === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.closePath();
     var gel = ctx.createLinearGradient(0, -r, 0, r);
     gel.addColorStop(0, 'hsl(' + hue + ',42%,81%)'); gel.addColorStop(1, 'hsl(' + hue + ',34%,44%)');
-    ctx.fillStyle = gel; ctx.fill(); surfaceSlimeFace(m, r);
+    ctx.fillStyle = gel; ctx.fill();
+    if (!hideEye) surfaceSlimeFace(m, r);
     ctx.restore();
   }
 
@@ -74999,15 +75158,9 @@
     skySlimeRigLast = { x: player.x, y: player.y };
   }
 
-  function skySlimeCrust(s) {
-    if (s._crust) return s._crust;
-    // Bake each guest's crust once. A circular cutout contains broad broken
-    // plates and chipped edges; the texture rolls with the collision body.
-    var sprite = document.createElement('canvas'); sprite.width = sprite.height = 128;
-    var c = sprite.getContext('2d'), r = 60;
-    c.translate(64, 64);
-    c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
-    c.fillStyle = SKY_SLIME_RAMP[1]; c.fillRect(-64, -64, 128, 128);
+  function skySlimeCrustPlates(s) {
+    if (s._plates) return s._plates;
+    var plates = [];
     var random = (Math.floor(s.seed * 2147483646) + 1) >>> 0;
     function next() { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random / 4294967296; }
     var sites = [];
@@ -75035,16 +75188,37 @@
         }
         points = clipped;
       }
-      if (!points.length) continue;
-      var tone = 2 + Math.floor(next() * 3);
-      c.beginPath(); c.moveTo(points[0].x, points[0].y);
-      for (var p = 1; p < points.length; p++) c.lineTo(points[p].x, points[p].y);
-      c.closePath(); c.fillStyle = SKY_SLIME_RAMP[tone]; c.fill();
-      c.strokeStyle = SKY_SLIME_RAMP[1]; c.lineWidth = 1.4; c.stroke();
-      c.beginPath(); c.moveTo(points[0].x + 0.7, points[0].y - 0.7);
-      c.lineTo(points[1].x + 0.7, points[1].y - 0.7);
-      c.strokeStyle = SKY_SLIME_RAMP[Math.min(5, tone + 1)]; c.lineWidth = 0.9; c.stroke();
+      // Trim the actual scale geometry to the skin, including flakes.
+      for (var side = 0; side < 32 && points.length; side++) {
+        var angle = (side + 0.5) * Math.PI * 2 / 32, nx = Math.cos(angle), ny = Math.sin(angle);
+        var clipped = [];
+        for (var j = 0; j < points.length; j++) {
+          var a = points[j], b = points[(j + 1) % points.length];
+          var da = a.x * nx + a.y * ny - 60, db = b.x * nx + b.y * ny - 60;
+          if (da <= 0) clipped.push(a);
+          if ((da < 0) !== (db < 0)) { var t = da / (da - db); clipped.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }); }
+        }
+        points = clipped;
+      }
+      if (points.length < 3) continue;
+      var centerX = 0, centerY = 0;
+      for (var j = 0; j < points.length; j++) { centerX += points[j].x; centerY += points[j].y; }
+      plates.push({ points: points, x: centerX / points.length, y: centerY / points.length,
+        tone: 2 + Math.floor(next() * 3), tough: next() });
     }
+    s._plates = plates; return plates;
+  }
+
+  function skySlimeCrust(s) {
+    if (s._crust) return s._crust;
+    var sprite = document.createElement('canvas'); sprite.width = sprite.height = 128;
+    var c = sprite.getContext('2d'); c.translate(64, 64);
+    c.beginPath(); c.arc(0, 0, 60, 0, Math.PI * 2); c.clip();
+    c.fillStyle = SKY_SLIME_RAMP[1]; c.fillRect(-64, -64, 128, 128);
+    var plates = skySlimeCrustPlates(s);
+    for (var i = 0; i < plates.length; i++) skySlimeDrawPlate(c, plates[i]);
+    var random = (Math.floor(s.seed * 2147483646) + 1) >>> 0;
+    function next() { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random / 4294967296; }
     for (var f = 0; f < 27; f++) {
       var a = next() * Math.PI * 2, d = Math.sqrt(next()) * 58;
       var x = Math.cos(a) * d, y = Math.sin(a) * d, size = 1.5 + next() * 2.5;
@@ -75055,13 +75229,40 @@
     s._crust = sprite; return sprite;
   }
 
-  function skySlimeDrawBody(s) {
-    var morph = ENABLE_JELLO ? (s.bathed ? 1 : s._bathMorph || 0) : 0;
-    if (morph > 0) {
-      ctx.save(); ctx.globalAlpha *= morph; surfaceSlimeDrawGuest(s); ctx.restore();
+  function skySlimeDrawPlate(c, plate, wet) {
+    var points = plate.points;
+    c.beginPath(); c.moveTo(points[0].x, points[0].y);
+    for (var p = 1; p < points.length; p++) c.lineTo(points[p].x, points[p].y);
+    c.closePath(); c.fillStyle = SKY_SLIME_RAMP[plate.tone]; c.fill();
+    if (wet > 0) {
+      c.save(); c.globalAlpha *= wet * 0.25; c.fillStyle = SKY_SLIME_RAMP[0]; c.fill(); c.restore();
     }
-    if (morph >= 1) return;
-    ctx.save(); ctx.globalAlpha *= 1 - morph; skySlimeDrawRockBody(s); ctx.restore();
+    c.strokeStyle = SKY_SLIME_RAMP[1]; c.lineWidth = 1.4; c.stroke();
+    c.beginPath(); c.moveTo(points[0].x + 0.7, points[0].y - 0.7);
+    c.lineTo(points[1].x + 0.7, points[1].y - 0.7);
+    c.strokeStyle = SKY_SLIME_RAMP[Math.min(5, plate.tone + 1)]; c.lineWidth = 0.9; c.stroke();
+  }
+  function skySlimeDrawBody(s) {
+    if (ENABLE_JELLO && s.bathed) { surfaceSlimeDrawGuest(s); return; }
+    if (!ENABLE_JELLO || !s._bathSkin) { skySlimeDrawRockBody(s); return; }
+    // Opaque islands peel off an already soft core. No whole-body crossfade.
+    surfaceSlimeDrawGuest(s, true);
+    var plates = skySlimeCrustPlates(s);
+    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.scale(s.r / 60, s.r / 60);
+    ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.clip();
+    for (var i = 0; i < plates.length; i++) {
+      var patch = s._bathSkin[i], plate = plates[i]; if (patch.peel >= 1) continue;
+      var lift = skySlimeClamp((patch.peel - 0.12) / 0.88, 0, 1);
+      ctx.save(); ctx.translate(plate.x, plate.y);
+      ctx.rotate((plate.tough - 0.5) * lift * 0.7);
+      // The curling free edge shrinks toward its attached hinge, leaving
+      // broad gel gaps while neighboring scales remain solid and fitted.
+      ctx.scale(1 - lift * 0.80, 1 - lift * 0.55); ctx.translate(-plate.x, -plate.y);
+      skySlimeDrawPlate(ctx, plate, patch.wet);
+      ctx.restore();
+    }
+    ctx.restore();
+    ctx.save(); ctx.translate(s.x, s.y); skySlimeDrawRockEye(s); ctx.restore();
   }
 
   function skySlimeDrawRockBody(s) {
@@ -75082,6 +75283,10 @@
     ctx.beginPath(); ctx.arc(0, 0, s.r, 0, Math.PI * 2);
     ctx.fillStyle = shade; ctx.fill();
     ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1; ctx.stroke();
+    skySlimeDrawRockEye(s);
+    ctx.restore();
+  }
+  function skySlimeDrawRockEye(s) {
     // The whole craft eye briefly pinches into a cartoon crease. A fast
     // close and softer reopen read as a blink without adding a fleshy lid.
     var ex = -s.r * 0.055, ey = -s.r * 0.08, er = s.r * s.eyeSize;
@@ -75095,7 +75300,7 @@
       ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(ex - er * 0.78, ey);
       ctx.quadraticCurveTo(ex, ey + er * 0.2, ex + er * 0.78, ey); ctx.stroke();
-      ctx.restore(); return;
+      return;
     }
     ctx.translate(ex, ey); ctx.scale(1, 1 - shut); ctx.translate(-ex, -ey);
     ctx.fillStyle = SKY_SLIME_RAMP[0];
@@ -75109,7 +75314,6 @@
     if (d > limit) { px *= limit / d; py *= limit / d; }
     ctx.fillStyle = SKY_SLIME_RAMP[0];
     ctx.beginPath(); ctx.arc(ex + px, ey + py, er * 0.44, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
   }
 
   function skySlimeDraw() {

@@ -749,15 +749,9 @@
     skySlimeRigLast = { x: player.x, y: player.y };
   }
 
-  function skySlimeCrust(s) {
-    if (s._crust) return s._crust;
-    // Bake each guest's crust once. A circular cutout contains broad broken
-    // plates and chipped edges; the texture rolls with the collision body.
-    var sprite = document.createElement('canvas'); sprite.width = sprite.height = 128;
-    var c = sprite.getContext('2d'), r = 60;
-    c.translate(64, 64);
-    c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
-    c.fillStyle = SKY_SLIME_RAMP[1]; c.fillRect(-64, -64, 128, 128);
+  function skySlimeCrustPlates(s) {
+    if (s._plates) return s._plates;
+    var plates = [];
     var random = (Math.floor(s.seed * 2147483646) + 1) >>> 0;
     function next() { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random / 4294967296; }
     var sites = [];
@@ -785,16 +779,37 @@
         }
         points = clipped;
       }
-      if (!points.length) continue;
-      var tone = 2 + Math.floor(next() * 3);
-      c.beginPath(); c.moveTo(points[0].x, points[0].y);
-      for (var p = 1; p < points.length; p++) c.lineTo(points[p].x, points[p].y);
-      c.closePath(); c.fillStyle = SKY_SLIME_RAMP[tone]; c.fill();
-      c.strokeStyle = SKY_SLIME_RAMP[1]; c.lineWidth = 1.4; c.stroke();
-      c.beginPath(); c.moveTo(points[0].x + 0.7, points[0].y - 0.7);
-      c.lineTo(points[1].x + 0.7, points[1].y - 0.7);
-      c.strokeStyle = SKY_SLIME_RAMP[Math.min(5, tone + 1)]; c.lineWidth = 0.9; c.stroke();
+      // Trim the actual scale geometry to the skin, including flakes.
+      for (var side = 0; side < 32 && points.length; side++) {
+        var angle = (side + 0.5) * Math.PI * 2 / 32, nx = Math.cos(angle), ny = Math.sin(angle);
+        var clipped = [];
+        for (var j = 0; j < points.length; j++) {
+          var a = points[j], b = points[(j + 1) % points.length];
+          var da = a.x * nx + a.y * ny - 60, db = b.x * nx + b.y * ny - 60;
+          if (da <= 0) clipped.push(a);
+          if ((da < 0) !== (db < 0)) { var t = da / (da - db); clipped.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }); }
+        }
+        points = clipped;
+      }
+      if (points.length < 3) continue;
+      var centerX = 0, centerY = 0;
+      for (var j = 0; j < points.length; j++) { centerX += points[j].x; centerY += points[j].y; }
+      plates.push({ points: points, x: centerX / points.length, y: centerY / points.length,
+        tone: 2 + Math.floor(next() * 3), tough: next() });
     }
+    s._plates = plates; return plates;
+  }
+
+  function skySlimeCrust(s) {
+    if (s._crust) return s._crust;
+    var sprite = document.createElement('canvas'); sprite.width = sprite.height = 128;
+    var c = sprite.getContext('2d'); c.translate(64, 64);
+    c.beginPath(); c.arc(0, 0, 60, 0, Math.PI * 2); c.clip();
+    c.fillStyle = SKY_SLIME_RAMP[1]; c.fillRect(-64, -64, 128, 128);
+    var plates = skySlimeCrustPlates(s);
+    for (var i = 0; i < plates.length; i++) skySlimeDrawPlate(c, plates[i]);
+    var random = (Math.floor(s.seed * 2147483646) + 1) >>> 0;
+    function next() { random = (Math.imul(random, 1664525) + 1013904223) >>> 0; return random / 4294967296; }
     for (var f = 0; f < 27; f++) {
       var a = next() * Math.PI * 2, d = Math.sqrt(next()) * 58;
       var x = Math.cos(a) * d, y = Math.sin(a) * d, size = 1.5 + next() * 2.5;
@@ -805,13 +820,40 @@
     s._crust = sprite; return sprite;
   }
 
-  function skySlimeDrawBody(s) {
-    var morph = ENABLE_JELLO ? (s.bathed ? 1 : s._bathMorph || 0) : 0;
-    if (morph > 0) {
-      ctx.save(); ctx.globalAlpha *= morph; surfaceSlimeDrawGuest(s); ctx.restore();
+  function skySlimeDrawPlate(c, plate, wet) {
+    var points = plate.points;
+    c.beginPath(); c.moveTo(points[0].x, points[0].y);
+    for (var p = 1; p < points.length; p++) c.lineTo(points[p].x, points[p].y);
+    c.closePath(); c.fillStyle = SKY_SLIME_RAMP[plate.tone]; c.fill();
+    if (wet > 0) {
+      c.save(); c.globalAlpha *= wet * 0.25; c.fillStyle = SKY_SLIME_RAMP[0]; c.fill(); c.restore();
     }
-    if (morph >= 1) return;
-    ctx.save(); ctx.globalAlpha *= 1 - morph; skySlimeDrawRockBody(s); ctx.restore();
+    c.strokeStyle = SKY_SLIME_RAMP[1]; c.lineWidth = 1.4; c.stroke();
+    c.beginPath(); c.moveTo(points[0].x + 0.7, points[0].y - 0.7);
+    c.lineTo(points[1].x + 0.7, points[1].y - 0.7);
+    c.strokeStyle = SKY_SLIME_RAMP[Math.min(5, plate.tone + 1)]; c.lineWidth = 0.9; c.stroke();
+  }
+  function skySlimeDrawBody(s) {
+    if (ENABLE_JELLO && s.bathed) { surfaceSlimeDrawGuest(s); return; }
+    if (!ENABLE_JELLO || !s._bathSkin) { skySlimeDrawRockBody(s); return; }
+    // Opaque islands peel off an already soft core. No whole-body crossfade.
+    surfaceSlimeDrawGuest(s, true);
+    var plates = skySlimeCrustPlates(s);
+    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.angle); ctx.scale(s.r / 60, s.r / 60);
+    ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.clip();
+    for (var i = 0; i < plates.length; i++) {
+      var patch = s._bathSkin[i], plate = plates[i]; if (patch.peel >= 1) continue;
+      var lift = skySlimeClamp((patch.peel - 0.12) / 0.88, 0, 1);
+      ctx.save(); ctx.translate(plate.x, plate.y);
+      ctx.rotate((plate.tough - 0.5) * lift * 0.7);
+      // The curling free edge shrinks toward its attached hinge, leaving
+      // broad gel gaps while neighboring scales remain solid and fitted.
+      ctx.scale(1 - lift * 0.80, 1 - lift * 0.55); ctx.translate(-plate.x, -plate.y);
+      skySlimeDrawPlate(ctx, plate, patch.wet);
+      ctx.restore();
+    }
+    ctx.restore();
+    ctx.save(); ctx.translate(s.x, s.y); skySlimeDrawRockEye(s); ctx.restore();
   }
 
   function skySlimeDrawRockBody(s) {
@@ -832,6 +874,10 @@
     ctx.beginPath(); ctx.arc(0, 0, s.r, 0, Math.PI * 2);
     ctx.fillStyle = shade; ctx.fill();
     ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1; ctx.stroke();
+    skySlimeDrawRockEye(s);
+    ctx.restore();
+  }
+  function skySlimeDrawRockEye(s) {
     // The whole craft eye briefly pinches into a cartoon crease. A fast
     // close and softer reopen read as a blink without adding a fleshy lid.
     var ex = -s.r * 0.055, ey = -s.r * 0.08, er = s.r * s.eyeSize;
@@ -845,7 +891,7 @@
       ctx.strokeStyle = SKY_SLIME_RAMP[0]; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(ex - er * 0.78, ey);
       ctx.quadraticCurveTo(ex, ey + er * 0.2, ex + er * 0.78, ey); ctx.stroke();
-      ctx.restore(); return;
+      return;
     }
     ctx.translate(ex, ey); ctx.scale(1, 1 - shut); ctx.translate(-ex, -ey);
     ctx.fillStyle = SKY_SLIME_RAMP[0];
@@ -859,7 +905,6 @@
     if (d > limit) { px *= limit / d; py *= limit / d; }
     ctx.fillStyle = SKY_SLIME_RAMP[0];
     ctx.beginPath(); ctx.arc(ex + px, ey + py, er * 0.44, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
   }
 
   function skySlimeDraw() {

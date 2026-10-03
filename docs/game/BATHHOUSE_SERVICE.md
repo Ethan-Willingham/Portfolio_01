@@ -30,8 +30,8 @@ normally. `?bath=0` and `?bath=1` override the setting for that page load.
    Work the bellows for more heat and turn the grate crank to sift pale ash.
 5. Open the liquid control, select water and aim the hose into the tub. Hold to
    pour (use POUR on touch). Three silos beside the building store carried liquids.
-   Tap the waiting visitor itself at 30 to 48 C, or press E / Enter.
-   It soaks, pays, and returns outside.
+   Waiting visitors jump in automatically once the bath has at least 40 L
+   at 30 to 48 C. They soak, shed their crust, pay, and return outside.
 
 The forge and its crafting requirement are retired. New and returning games
 receive a supplied striker. Old stored iron, forge fuel, and unfinished work
@@ -67,7 +67,7 @@ actual fuel bodies while pale ash sifts through the slots.
 - B: work the bellows.
 - F: select flint and steel, then drag to strike.
 - A: turn the travelling grate.
-- E / Enter: admit a ready visitor.
+- E / Enter: admit a ready visitor immediately; waiting visitors also enter on their own.
 - W: open the liquid stores and selection tray.
 - Escape: stow the selected tool or close a tray, then leave the bath.
 
@@ -268,15 +268,23 @@ Service remains available throughout the day and night.
 ## Bath-born residents (v28.57)
 
 New games have no starter residents. Existing saved residents remain in place.
-A completed warm bath changes a rocky guest into the same
-kind of creature. Its shell fades during the last part of the soak, and its
-surface body spawns at the door after departure. It keeps its visitor identity,
+A warm bath gradually changes a rocky guest into the same kind of creature.
+Each fitted crust plate wets and loosens separately. Submerged scales soften
+first; water wicks through their cracks into the upper coat. The scales curl,
+peel away and drift down as small flakes. Exposed gel moves between remaining
+hard islands, so a visitor can have a soft hanging patch beside intact crust.
+The changing outline displaces real GPU water and the CPU comparison solver.
+Gravity, submerged area, water drag, currents and the hose move bathing guests;
+they no longer follow a scripted bobbing path. Only warm, sufficiently submerged,
+unheld time advances the soak and peeling. Detached flakes use a bounded visual
+pool and do not add or remove water. Reloading retains each plate's wetting and
+peeling progress. After the complete soak and shell loss, the surface body
+spawns at the door after departure. It keeps its visitor identity,
 stays in the world, and saves separately from the rocky population. Reloading
 does not add starter residents. The payment still happens once per completed bath.
 Unhardening preserves the incoming visitor's individual radius through departure
-and saves. The exposed soft core uses 94% of that radius, as in the bath's shell
-fade. Manually placed residents and older saves use the sky visitors' 22 to 27 pixel
-radius range instead of the previous, larger 24 to 29 range.
+and saves. The resident keeps the exposed core's 94% radius. Manually placed
+residents and older saves use the sky visitors' 22 to 27 pixel radius range instead of the previous, larger 24 to 29 range.
 
 These are 37-point deformable meshes in the existing XPBD solver. Their
 softly irregular radial rest shape, spring network and pressure constraints govern collisions
@@ -488,6 +496,7 @@ and remove only the former pool footprints. No pearl production is restored.
 - `078-hearth-station.js`: responsive basin/firebox layout, fuel controls and burn readings.
 - `079-forge-resources.js`: mining flint, supply reservation, protected shiny ores.
 - `074-bath-service.js`: real bath heat/water, guests, permanent drains, migration.
+- `074-bath-skin.js`: local wetting, uneven scale peeling, bounded flakes and shared contours.
 
 Run `node tools/test-hearth-physics.cjs`, `node tools/test-forge-resources.cjs`,
 and `node tools/test-bathhouse.cjs` for fixed-step contacts, material conservation,
@@ -523,3 +532,9 @@ particles debit finite liquid inventory.
 
 Run `node tools/test-bath-overflow.cjs` for inlet conservation, above-threshold
 pours, legacy lip migration and save-time spill removal.
+
+`BUNDLE=1 node tools/bath-guest-soak-smoke.mjs` verifies automatic entry,
+actual GPU water displacement and buoyancy, exposed gel beside retained scales,
+flakes, held and cold pauses, partial-bath saves, one payment, landscape mobile
+and the portrait gate. The bathhouse unit suite checks two automatic guests and
+partial crust restoration at 30, 60 and 144 Hz.
