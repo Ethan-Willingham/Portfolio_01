@@ -82,7 +82,7 @@ try{
  check('GPU solver draws restored material',reveal.gpu);
  await sleep(650);check('saved material does not trickle into the visible resumed scene',await ev('__arrivalLate.length===0'));
  await game(`var curve=bathTubCurve(BATH_FLOORS[0],BATH_FLOORS[0].tubs[0]);for(var n=0;n<4200;n++)mineralLiquidPark(2,(curve.x0+curve.x1)/2-62+n%100*1.25,curve.y0+curve.D-8-Math.floor(n/100)*1.25);bathEnter();`);await until('__arrivalRun("bathMode&&!bathFading&&introPhase===\'done\'")','bath did not open');
- check('bath entry restores the saved tub before reveal',await ev('__arrivalReveals.at(-1).pending.every(n=>n===0)&&__arrivalReveals.at(-1).live[0]>=4200')); 
+ check('bath entry restores the saved tub before reveal',await ev('__arrivalReveals.at(-1).pending.every(n=>n===0)&&__arrivalReveals.at(-1).live[0]>=4200'));
  // Exercise every parked store on exit, preserving its positions and mass.
  const exitMass=await game(`for(var i=liquidCount-1;i>=0;i--){if(liquidType[i]===5)snowStore(liquidX[i],liquidY[i],liquidVX[i],liquidVY[i]);else if(liquidOrigin[i]===RAIN_ORIGIN)rain.parked.push(liquidX[i],liquidY[i]);else mineralLiquidPark(liquidType[i],liquidX[i],liquidY[i]);removeLiquidParticle(i);}__arrivalLate=[];var mass=__particleSnow.stats().mass;bathExit();mass;`);
  await until('__arrivalRun("!bathMode")','bath did not exit');await ready();
@@ -99,7 +99,7 @@ try{
  await game(`__arrivalReveals=[];respawnAtTown(0);`);await ready();
  check('town recovery also prepares parked material',await ev('__arrivalReveals.length===1&&__arrivalReveals[0].pending.every(n=>n===0)'));
  await game(`__arrivalReveals=[];player.y=(SKY_ROWS+80)*TILE;teleporters=1;activateTeleporter();`);await ready();
- check('teleport destination is prepared before reveal',await ev('__arrivalReveals.length===1&&__arrivalReveals[0].pending.every(n=>n===0)')); 
+ check('teleport destination is prepared before reveal',await ev('__arrivalReveals.length===1&&__arrivalReveals[0].pending.every(n=>n===0)'));
  check('browser has no runtime errors',errors.length===0);
 }finally{
  for(const p of pending.values())p.reject(Error('test cleanup'));pending.clear();
