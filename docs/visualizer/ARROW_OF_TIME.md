@@ -40,15 +40,15 @@ is one-dimensional. We do not transfer that exact solution to this 2D orbit.
 
 ## Authored preparation
 
-Three original geometrical motifs are constructed at cell centers: an hourglass,
-concentric rings, and a window. Their dimensions and inequalities are in
-`motifAt`. Constructor version 2 measures both coordinates in lattice-height
-units, so circles and the hourglass keep their proportions on rectangular grids.
-Square-grid bit patterns remain the same as version 1. Each is perturbed by the specified coordinate weave:
+Three original drawings are constructed at cell centers: a moth with patterned
+wings and a crescent moon, a seven-petal bloom, and an orbital silhouette. Their
+dimensions and inequalities are in `motifAt`. Constructor version 3 measures
+both coordinates in lattice-height units to retain their proportions on
+rectangular grids. The legacy motifs remain accepted by the CPU helper. Each is perturbed by the specified coordinate weave:
 
 ```text
 r = (col^2 + 3*row^2 + 7*col*row + 11*col + 13*row + phase) mod 127
-phase = 0, 19, or 38 for hourglass, rings, or window
+phase = 0, 19, or 38 for moth, bloom, or orbit
 flip the motif's base sign where r < 9
 initialize x = y
 ```
@@ -62,13 +62,13 @@ A flip is accepted only if it strictly reduces the distance to the target and
 keeps at most 16 motif disagreements in its 8x8 block. The evolution itself
 never uses this preparation search and never changes its rule.
 
-Measured initial presets, constructor version 2, default 768x512:
+Measured initial presets, constructor version 3, default 768x512:
 
-| Motif | Checksum of both packed layers | E/J | Magnetization | Flippable | Neighbor correlation | Mean line run | Block entropy estimator |
-|---|---|---:|---:|---:|---:|---:|---:|
-| Hourglass | `ea908929` | -556092 | 0.702571 | 3.8966% | 0.707108 | 6.8284 cells | 0.400807 |
-| Rings | `68449415` | -556092 | 0.657898 | 3.5777% | 0.707108 | 6.8284 cells | 0.393177 |
-| Window | `4870b299` | -556092 | 0.717178 | 3.4632% | 0.707108 | 6.8284 cells | 0.396219 |
+| Motif | E/J | Magnetization | Flippable | Neighbor correlation | Mean line run | Block entropy estimator |
+|---|---:|---:|---:|---:|---:|---:|
+| Moth | -556092 | 0.443420 | 4.0993% | 0.707108 | 6.8284 cells | 0.405879 |
+| Bloom | -556092 | 0.693868 | 3.7102% | 0.707108 | 6.8284 cells | 0.399151 |
+| Orbit | -556092 | 0.769379 | 3.6062% | 0.707108 | 6.8284 cells | 0.393293 |
 
 For all three, `E/(NJ)=-1.414215087890625`. The infinite-volume equilibrium
 Ising reference is `E_c/(NJ)=-sqrt(2)` and `k_B*T_c/J=2/log(1+sqrt(2))`.
@@ -84,15 +84,48 @@ steps. A two-second turning hold precedes 4320 inverse steps. At 24 updates per
 ambient second each direction lasts three minutes. A full comparison of both
 computed fields verifies the arrival; the returned state holds for 12 seconds.
 Only afterward does the room explicitly reset to the next authored motif.
+A custom drawing repeats its own sequence until another image is selected.
 The last two seconds fade the image toward the page background and the next
 motif enters over two seconds. These display fades do not alter any spin.
 The initial opening and the arrival verification are fully visible.
 
 The loop has intentional revisits and authored resets. It is not advertised
-as mathematically nonrepeating. No saved frame, initial-image substitution,
-frame history, or texture feedback drives the return. The initial byte fields
-are retained exclusively for comparison. The GPU solver contains no initial
-reference buffer or backward-frame cache.
+as mathematically nonrepeating. Normal playback computes every forward or
+inverse update; no cached image or texture feedback drives it. Timeline seeking
+uses the explicit checkpoints described below. The initial byte fields remain
+available for the full comparison.
+
+### Timeline and drawing
+
+The visible range slider spans positions 0 through 8640. Its first half is
+4320 forward steps and its second half is the matching inverse sequence. The
+clock labels describe the nominal six minutes of evolution and exclude the
+opening and turning holds. Dragging pauses playback; Play continues at the
+chosen position. Keyboard arrows, Home, and End use the native range control.
+Seeked images are fully visible, including the start of a later cycle.
+Diagnostics are marked stale during a drag and refreshed on release.
+
+During initialization, the GPU computes all 4320 forward states and saves both
+packed layers every 32 steps, including both endpoints. It then computes all
+4320 inverse updates and compares both complete fields with the initial state.
+The 136 checkpoints use 13,369,344 bytes at 768x512. A seek copies the nearest
+preceding checkpoint and performs at most 31 forward updates. Inverse positions
+also execute a forward/inverse pair to establish the adjacent state used for
+interpolation. Images are rendered from these computed bits at the current
+viewport size and colors; there is no video or rendered-frame cache. A return
+after seeking is labeled in the recorded comparison so it is distinguishable
+from an uninterrupted physical traversal.
+
+The drawing pad is a 384x256 transparent mask with a round brush, an eraser,
+Clear, and the original Moth template. Mouse and touch share pointer events.
+Arrow keys move a keyboard brush and Enter toggles its pen. Render drawing
+thresholds alpha above 96, expands the mask to the selected lattice by nearest
+cell sampling, and applies the same deterministic weave and preparation search.
+The original sketch is retained at coarse scales, with microscopic changes to
+activate the rule. Custom image energy is measured rather than assumed to reach
+the equilibrium reference. Custom states can be exported as complete packed
+arrays even though their source sketch is not persisted across page reloads.
+Custom configuration ids include their packed-state checksum.
 
 The renderer builds an exact hierarchy of paired positive-spin counts from
 both fields: the local observable is `(x+y)/2`. A layer swap by itself therefore
@@ -112,8 +145,10 @@ levels. This keeps microscopic detail sharper than the original level-1.3,
 renormalization-group calculation. Zoom is bounded to 1 through 4. The camera
 retains its framing on return. Square cells keep the motif's proportions;
 narrow viewports crop the outer lattice while preserving the central motif.
-The green and gold hues encode negative-spin density. They carry no spectral
-meaning. The brighter hue was reduced to linear RGB `(0.38,0.322,0.214)`.
+The two adjustable inks encode negative-spin density, blended vertically in
+linear RGB. The default copper `#d9978c` and blue `#8fb3c7` are arbitrary colors,
+not physical spectra. The page background and interface retain the site tokens.
+Changing colors does not alter the spins or require rebuilding the sequence.
 
 The room renders linear RGB radiance into the host's `rgba16float` target and
 multiplies it by host exposure. The standalone host uses unit exposure, a single
@@ -153,16 +188,16 @@ The room snapshot reports the API/version/model, full control counters, units,
 quality, seed provenance, parameters, measured quantities, diagnostic age,
 configuration id, and exact return result. `debugReadback` additionally returns
 both complete byte and packed fields with the control state captured at the same
-GPU submission. `setRate`, `setZoom`, `restart`, and `measure` are optional
+GPU submission. `setRate`, `setZoom`, `restart`, `seek`, and `measure` are optional
 standalone extensions to the required interface. The slow readback is suitable
 for correctness checks, not frame-by-frame rendering.
 
 Save exact state exports row-aligned packed arrays, checksum, constructor id,
 version, quality, parameters, direction, phase, cycle, preset index, cumulative
 steps, orbit position, forward/inverse counters, hold time, fractional update
-accumulator, active seconds, rate, zoom, and host pause/clock/adaptation counters.
+accumulator, active seconds, rate, zoom, and host pause/clock/adaptation counters plus both linear-RGB ink colors.
 `decodeReplay` validates a saved record and restores its microscopic fields.
-Version-1 and version-2 packed records remain readable. For example, inside a
+Version-1, version-2, and version-3 packed records remain readable. For example, inside a
 host with an existing device:
 
 ```js
@@ -196,7 +231,7 @@ Resize and intersection observers, DOM listeners, GPU buffers/textures, the
 animation request, and the host-owned device are released on page exit.
 Missing WebGPU, missing adapter, shader failure, or device loss produces an
 explicitly labeled still generated from the same CPU-prepared starting state.
-The still uses a separate simple five-cell box filter and is not a recording
+The still uses a separate simple three-cell box filter and is not a recording
 or an alternative running model. Native fullscreen has a fixed-panel fallback.
 Buttons and inputs use native keyboard behavior, visible focus, and 44px targets.
 There is no compulsory camera motion. Portrait and landscape are supported.
@@ -223,9 +258,9 @@ fixtures (committed separately under this room's assets), packing/padding, and
 forward/inverse sequences for ten sizes. Every step in those CPU sequences
 checks energy, with zero tolerance. The rectangular production tiers execute
 96 forward and 96 inverse steps. During forward steps 73 to 96, paired-layer
-density changes at 572,785 cells compared with 1,097,117 single-layer changes
-at 768x512, a 47.8% reduction. At 1024x768 the corresponding counts are
-1,144,264 and 2,167,025, a 47.2% reduction. These are measured cell changes,
+density changes at 578,790 cells compared with 1,120,298 single-layer changes
+at 768x512, a 48.3% reduction. At 1024x768 the corresponding counts are
+1,148,653 and 2,253,060, a 49.0% reduction. These are measured cell changes,
 not a photosensitivity certification.
 
 The GPU suite compares full byte arrays and packed words against the CPU at
@@ -235,10 +270,16 @@ step, and long 4320-forward/4320-inverse returns at all four larger sizes.
 The solver computes those returns without any initial-reference dependency.
 For all nine sizes, the previous-state rendering at interpolation zero must
 match the pre-update image exactly, in both directions; midpoint interpolation
-must stay within its endpoint radiances.
+must stay within its endpoint radiances. Prepared timelines are checked against
+an independent solver at nonsequential and word-boundary positions for all nine
+sizes, including continuation under inverse updates.
 The browser run watches three complete scored phrases at accelerated wall
 pacing using all scheduled solver steps. The arrival's rendered interior pixels
-must also match startup exactly; the adjacent progress hairline is excluded.
+must also match startup exactly. The browser additionally checks start, middle,
+and end seeking; rapid pointer changes; keyboard seeking; Play after seeking;
+drawing and two color controls; custom CPU/GPU preparation equivalence; and
+the full custom-image return. A separate run covers touch drawing, keyboard
+drawing, an empty pad, erasing, and a custom-image device-loss still.
 
 The browser suite checks 1440x900, 390x844, and 844x390, Instruments, pause/resume,
 Restart, reduced motion, bounded zoom, state export and replay, native and fallback
@@ -262,23 +303,25 @@ latency outliers; these are retained in p95 rather than removed.
 
 | Lattice | Work | GPU median / p95, ms | Submission/completion median / p95, ms |
 |---|---|---:|---:|
-| 256x256 | One microscopic update | 0.00301 / 0.00339 | 0.50 / 0.50 for 24 updates |
-| 256x256 | Scene fragment render | 0.26907 / 0.32795 | 0.80 / 0.80 including hierarchy |
-| 512x512 | One microscopic update | 0.00403 / 0.01209 | 0.70 / 1.30 for 24 updates |
-| 512x512 | Scene fragment render | 0.98586 / 2.21638 | 1.90 / 3.70 including hierarchy |
-| 768x512 | One microscopic update | 0.00420 / 0.07115 | 1.10 / 4.50 for 24 updates |
-| 768x512 | Scene fragment render | 0.40699 / 1.96976 | 1.30 / 2.70 including hierarchy |
-| 1024x768 | One microscopic update | 0.00444 / 0.00822 | 0.70 / 1.60 for 24 updates |
-| 1024x768 | Scene fragment render | 0.37499 / 1.62185 | 1.40 / 2.50 including hierarchy |
+| 256x256 | One microscopic update | 0.00314 / 0.00380 | 0.50 / 0.70 for 24 updates |
+| 256x256 | Scene fragment render | 0.32799 / 0.42391 | 0.90 / 1.00 including hierarchy |
+| 512x512 | One microscopic update | 0.00685 / 0.00845 | 0.60 / 0.80 for 24 updates |
+| 512x512 | Scene fragment render | 0.75882 / 0.96836 | 1.40 / 1.80 including hierarchy |
+| 768x512 | One microscopic update | 0.00797 / 0.01929 | 0.60 / 1.10 for 24 updates |
+| 768x512 | Scene fragment render | 1.03178 / 1.14036 | 1.70 / 2.10 including hierarchy |
+| 1024x768 | One microscopic update | 0.00965 / 0.01740 | 0.70 / 1.00 for 24 updates |
+| 1024x768 | Scene fragment render | 1.02769 / 1.16452 | 1.70 / 2.10 including hierarchy |
 
 The default is now 768x512. High quality at 1024x768 is also measured and
 available. The doubled paired-count hierarchy still fits the frame budget on
-this hardware. The initial energy matches the requested reference but
+this hardware. The six measured default-resolution seeks, including complete
+packed readback, took 1.6 to 2.0 ms. They are a small latency sample rather than
+a cross-device guarantee. The initial energy matches the requested reference but
 criticality and cross-vendor exact replay remain unproved. There are no
 unfinished room-contract requirements.
 Full machine-readable [verification results](../../assets/visualizer/arrow-of-time/verification.json)
 include the numerical checks and the three completed physical phrases.
 
-Owned files: `arrow-of-time-lab.html`, `arrow-of-time.css`, the four
+Owned files: `arrow-of-time-lab.html`, `arrow-of-time.css`, the five
 `js/arrow-of-time*.js` modules, this document, the room's `fixtures.json` and
 `verification.json`, and the two `tools/test-arrow-of-time-*` harnesses.

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { evolve, neighbors, prepare, energyTwice, pack, unpack, compare, measure, checksum } from '../js/arrow-of-time-model.js';
+import { evolve, neighbors, prepare, energyTwice, pack, unpack, compare, measure, checksum, PRESETS } from '../js/arrow-of-time-model.js';
 const state = (width, height, a, b) => ({ width, height, x: Int8Array.from({ length: width * height }, (_, i) => (a >>> i & 1) * 2 - 1), y: Int8Array.from({ length: width * height }, (_, i) => (b >>> i & 1) * 2 - 1) });
 assert.deepEqual(neighbors(0, 4, 4), [3, 1, 12, 4]);
 assert.deepEqual(neighbors(15, 4, 4), [14, 12, 11, 3]);
@@ -37,7 +37,7 @@ for (const [w, h] of [[2, 2], [30, 6], [32, 8], [34, 10], [64, 16], [66, 4], [25
   assert.ok(compare(s, original).exact); assert.equal(checksum(pack(s.x, w, h), pack(s.y, w, h)), checksum(pack(original.x, w, h), pack(original.y, w, h)));
   console.log(`PASS ${w}x${h} packing and ${steps}+${steps} exact steps`);
 }
-for (const id of ['hourglass', 'rings', 'window']) {
+for (const id of PRESETS) {
   const s = prepare(256, 256, id), m = measure(s); assert.ok(m.flippableFraction > .03); assert.ok(Math.abs(m.energyPerSite + Math.SQRT2) < .001);
   console.log(id, JSON.stringify(m));
 }
@@ -53,3 +53,6 @@ for (const [width,height] of [[768,512],[1024,768]]) {
   assert.ok(changesPair<changesX);for(let k=0;k<96;k++)state=evolve(state,-1);assert.ok(compare(state,initial).exact);
   console.log(`PASS ${width}x${height} 96+96 exact steps; paired display changes ${changesPair} / single-layer changes ${changesX}`);
 }
+
+const drawing={width:24,height:16,mask:Uint8Array.from({length:384},(_,i)=>Number(Math.abs(i%24-12)<3||Math.abs(Math.floor(i/24)-8)<2))};
+const custom=prepare(96,64,'custom',drawing);assert.deepEqual(prepare(96,64,'custom',drawing).x,custom.x);let drawn=custom;for(let k=0;k<128;k++)drawn=evolve(drawn);for(let k=0;k<128;k++)drawn=evolve(drawn,-1);assert.ok(compare(drawn,custom).exact);assert.throws(()=>prepare(96,64,'custom',{width:24,height:16,mask:[]}),/complete mask/);console.log('PASS user drawing preparation, exact return and invalid mask');
