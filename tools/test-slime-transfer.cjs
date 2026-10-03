@@ -49,6 +49,46 @@ for(const fps of [30,60,144]) {
   assert(s.vy>w.player.vy,'both fall after the landing, with the ball separating faster');
   flights.push({fps,rigVY:w.player.vy,ballVY:s.vy,recoil});
 }
+// Side bumps and rising headers keep the original dribble sweep: recoil
+// changes velocity for the next flight update, without shortening the touch.
+const dribbles=[];
+for(const fps of [30,60,144])for(const kind of ['side-left','side-right','header']) {
+  const {w,s}=fixture({floor:1024,gravity:0}),dt=1/fps;
+  if(kind==='header') {
+    Object.assign(w.player,{vy:-160});
+    Object.assign(s,{y:200+26*.18-25.506-.3,vy:40});
+  } else {
+    const dir=kind==='side-left'?-1:1;
+    Object.assign(w.player,{vx:dir*200});
+    Object.assign(s,{x:500+dir*44.806,y:220.8,vx:dir*40});
+  }
+  w.skySlimeRigLast={x:w.player.x,y:w.player.y};
+  w.player.x+=w.player.vx*dt;w.player.y+=w.player.vy*dt;
+  const predictedX=w.player.x,predictedY=w.player.y,oldVX=w.player.vx,oldVY=w.player.vy;
+  w.player.renderX=w.player.x-4;w.player.renderY=w.player.y+6;
+  let correctionX=0,correctionY=0,hits=0;
+  const contact=w.skySlimePlayer;
+  w.skySlimePlayer=function(b,x,y,vx,vy) {
+    const oldX=w.player.x,oldY=w.player.y,oldRigX=w.player.vx,oldRigY=w.player.vy;
+    const normal=w.skySlimeRigContact(b,x,y);
+    contact(b,x,y,vx,vy);
+    correctionX+=w.player.x-oldX;correctionY+=w.player.y-oldY;
+    if(Math.hypot(w.player.vx-oldRigX,w.player.vy-oldRigY)>.001) {
+      hits++;
+      assert(normal.ny<=.000001,'dribbling touches the side or roof');
+    }
+  };
+  w.skySlimeTick(dt);
+  assert.equal(hits,1,'a dribble transfers momentum once');
+  assert(Math.hypot(w.player.vx-oldVX,w.player.vy-oldVY)>30,'dribble retains physical recoil velocity');
+  close(w.player.x,predictedX+correctionX,'side dribble retains the original frame sweep');
+  close(w.player.y,predictedY+correctionY,'header retains the original frame sweep');
+  close(w.player.renderX-w.player.x,-4,'dribble preserves horizontal sprite lag');
+  close(w.player.renderY-w.player.y,6,'dribble preserves vertical sprite lag');
+  if(kind==='header')assert(s.vy< -230,'header retains the strong upward ball rebound');
+  else assert(Math.abs(s.vx)>175,'side dribble retains the ball shot');
+  dribbles.push({fps,kind,rigVX:w.player.vx,rigVY:w.player.vy});
+}
 // Landing on a descending ball, followed by its ground rebound, must pass
 // the load back through successive physical contacts. Check the full relay.
 const relays=[];
@@ -87,7 +127,7 @@ for(const fps of [30,60,144,240]) {
 }
 assert(Math.max(...relays.map(r=>r.peak))/Math.min(...relays.map(r=>r.peak))<1.05,
   'relay strength varies less than five percent across refresh rates');
-// The rig can hit a ceiling or wall only AFTER an airborne recoil. These
+// A top or oblique landing can hit a ceiling or wall AFTER recoil. These
 // surfaces did not intersect its original frame path handled by update().
 for(const direction of ['ceiling','wall'])for(const fps of [30,60,144]) {
   const {w,s}=fixture({floor:1024,gravity:0});
@@ -99,7 +139,7 @@ for(const direction of ['ceiling','wall'])for(const fps of [30,60,144]) {
   } else {
     w.solidAt=(x,y)=>x<=488;
     Object.assign(w.player,{x:489,y:200,vx:0,vy:0});
-    Object.assign(s,{x:544,y:220.8,vx:-600});
+    Object.assign(s,{x:535,y:242,vx:-600,vy:-600});
   }
   w.skySlimeRigLast={x:w.player.x,y:w.player.y};
   w.skySlimeTick(1/fps);
@@ -116,5 +156,5 @@ for(const direction of ['ceiling','wall'])for(const fps of [30,60,144]) {
   w.skySlimePlayer(s,489,470,0,0);
   assert(w.player.vy>50&&s.vy> -40,'earlier airborne roof shares recoil despite the grounded endpoint flag');
 }
-console.log('AIRBORNE',flights); console.log('FALLING RELAY',relays);
+console.log('AIRBORNE',flights); console.log('DRIBBLES',dribbles); console.log('FALLING RELAY',relays);
 console.log('PASS: relative momentum, remaining-frame recoil, falling ground relay, render continuity, ceiling/wall boundaries and swept roof support.');

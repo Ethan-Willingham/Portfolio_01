@@ -681,6 +681,7 @@
     if (Math.hypot(rigX - previous.x, rigY - previous.y) > Math.max(100, dt * 1000)) previous = { x: rigX, y: rigY };
     var rigVX = (rigX - previous.x) / dt, rigVY = (rigY - previous.y) / dt;
     var impulseVX = player.vx || 0, impulseVY = player.vy || 0;
+    var motionVX = 0, motionVY = 0;
     var renderX = player.renderX, renderY = player.renderY;
     var rigTouched = false;
     var jet = skySlimeJetFrame();
@@ -707,14 +708,13 @@
         if (s._trail[ti].life <= 0) s._trail.splice(ti, 1);
       }
     }
-    // Replay the predicted frame from its start, then let each collision
-    // change the remaining trajectory. Keeping the original falling path
-    // after recoil made the miner keep pressing on a ball already in flight.
+    // Headers and side bumps keep the original dribble sweep. A landing
+    // changes the remaining trajectory immediately, so its ground return
+    // can pass back through the miner without the old downward overrun.
     player.x = previous.x; player.y = previous.y;
     for (var step = 0; step < steps; step++) {
       for (var axis = 0; axis < 2; axis++) {
-        var travel = ((axis ? rigVY : rigVX) + ((axis ? player.vy : player.vx) || 0) -
-          (axis ? impulseVY : impulseVX)) * h;
+        var travel = ((axis ? rigVY : rigVX) + (axis ? motionVY : motionVX)) * h;
         var travelX = axis ? 0 : travel, travelY = axis ? travel : 0;
         // update() already handled terrain on the original path. After a
         // ball changes that path, sweep the new motion against terrain too.
@@ -727,15 +727,15 @@
           }
           travelX *= lo; travelY *= lo;
           if (axis) {
-            player.vy = 0; impulseVY = rigVY;
+            player.vy = 0; impulseVY = rigVY; motionVY = -rigVY;
             player.onGround = travel > 0;
             player.onCeiling = travel < 0;
-          } else { player.vx = 0; impulseVX = rigVX; }
+          } else { player.vx = 0; impulseVX = rigVX; motionVX = -rigVX; }
         }
         player.x += travelX; player.y += travelY;
       }
       skySlimeJetStep(jet, h, player.x - rigX, player.y - rigY,
-        rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
+        rigVX + motionVX, rigVY + motionVY);
       for (var si = 0; si < skySlimes.length; si++) {
         var b = skySlimes[si];
         b.age += h; b._impactT = Math.max(0, b._impactT - h);
@@ -775,8 +775,16 @@
         b.x += b.vx * h; b.y += b.vy * h;
         skySlimeTerrain(b);
         var contactX = player.x, contactY = player.y, contactVX = player.vx, contactVY = player.vy;
+        var landingContact = skySlimeRigContact(b, player.x, player.y);
         skySlimePlayer(b, player.x, player.y,
           rigVX + (player.vx || 0) - impulseVX, rigVY + (player.vy || 0) - impulseVY);
+        // Keep recoil in every momentum solve. Only a guest beneath the
+        // tracks carries it into this frame's remaining motion; dribbling
+        // applies its recoil on the next flight update, as it did before.
+        if (landingContact && landingContact.ny > 0.000001) {
+          motionVX += (player.vx || 0) - (contactVX || 0);
+          motionVY += (player.vy || 0) - (contactVY || 0);
+        }
         if (player.x !== contactX || player.y !== contactY ||
             player.vx !== contactVX || player.vy !== contactVY) rigTouched = true;
         if (typeof surfaceSlimeRockContact === 'function') surfaceSlimeRockContact(b, h);
