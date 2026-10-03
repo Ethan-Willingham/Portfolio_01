@@ -1,0 +1,88 @@
+{
+  "closed": {
+    "relativeMassError": 2.220446049250313e-16,
+    "minNm": 154.00445921796694,
+    "maxNm": 1115.3840960193609,
+    "steps": 1000
+  },
+  "closedFullSolver": {
+    "relativeMassError": 1.4414389943824857e-7,
+    "thicknessRangeNm": [
+      599.9903564453125,
+      600.0121459960938
+    ],
+    "seconds": 8
+  },
+  "projection": 7.436031447278363e-7,
+  "buoyancy": {
+    "meanLowerCenterV": -0.000004253991876083963,
+    "direction": "up, negative screen y"
+  },
+  "dt": {
+    "rmsNm40vs20": 0.0023602953629401845,
+    "rmsNm20vs10": 0.001145164690669018
+  },
+  "grid": {
+    "rmsNm32vs64": 1.5480159641574254,
+    "rmsNm64vs128": 1.1167953368908459
+  },
+  "precisionRmsNm": 0.0005362042291594519,
+  "ovalMapping": {
+    "roundTripError": 4.440892098500626e-16,
+    "aspectRatio": 1.618033988749895
+  },
+  "compatibility": {
+    "thinPersistentState": "intact",
+    "defaultRoomRenewalCycle": 2
+  },
+  "stir": {
+    "divergenceMaxPerSecond": 0.0000011175870895385742,
+    "maxSpeedMetersPerSecond": 0.02500000037252903,
+    "thicknessRmsNm": 7.403067492710569
+  },
+  "heater10": {
+    "temperatureRangeC": [
+      11.817071914672852,
+      22.237211227416992
+    ]
+  },
+  "heater50": {
+    "temperatureRangeC": [
+      21.816740036010742,
+      45.769004821777344
+    ]
+  },
+  "heaterResponse": {
+    "temperatureRmsC": 9.286161283603075,
+    "verticalVelocityRmsMetersPerSecond": 0.00004419281021294861
+  },
+  "persistent": {
+    "step": 15000,
+    "time": 600.0000000000342,
+    "state": "intact",
+    "cycle": 1,
+    "thicknessRangeNm": [
+      428.92254638671875,
+      751.888427734375
+    ],
+    "temperatureRangeC": [
+      22.00120735168457,
+      28.768600463867188
+    ],
+    "divergenceMaxPerSecond": 0.0000010928488336503506,
+    "pressureResidualMetersInverseSecondsInverse": 0.00021856976673007011,
+    "pressureCycles": 1,
+    "maxSpeedMetersPerSecond": 0.004973693285137415,
+    "volumeM3": 1.7146258954620362e-8,
+    "filmVolumeM3": 1.7146258954620362e-8,
+    "rimVolumeM3": 0,
+    "evaporatedM3": 0,
+    "drainedM3": 0,
+    "replenishedM3": 1.7146253186416627e-8,
+    "resetDiscardedM3": 0,
+    "massBalanceErrorM3": 5.768203734967707e-15,
+    "hole": null,
+    "relativeMassError": 3.3641190715283006e-7,
+    "modelSeconds": 600.0000000000342
+  }
+}

@@ -1,0 +1,645 @@
+{
+  "adapter": {
+    "description": "Not exposed",
+    "vendor": "apple",
+    "architecture": "metal-3",
+    "isFallbackAdapter": false
+  },
+  "layouts": [
+    {
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "stage": {
+        "x": 41,
+        "y": 95.796875,
+        "width": 1358,
+        "height": 729,
+        "top": 95.796875,
+        "right": 1399,
+        "bottom": 824.796875,
+        "left": 41
+      },
+      "buttons": [
+        {
+          "width": 50.984375,
+          "height": 44,
+          "right": 103.984375,
+          "left": 53,
+          "bottom": 877.796875
+        },
+        {
+          "width": 56.6875,
+          "height": 44,
+          "right": 165.671875,
+          "left": 108.984375,
+          "bottom": 877.796875
+        },
+        {
+          "width": 55.171875,
+          "height": 44,
+          "right": 517.671875,
+          "left": 462.5,
+          "bottom": 877.796875
+        },
+        {
+          "width": 63.09375,
+          "height": 44,
+          "right": 753.125,
+          "left": 690.03125,
+          "bottom": 877.796875
+        },
+        {
+          "width": 94.84375,
+          "height": 44,
+          "right": 1075.421875,
+          "left": 980.578125,
+          "bottom": 877.796875
+        },
+        {
+          "width": 84.125,
+          "height": 44,
+          "right": 1387,
+          "left": 1302.875,
+          "bottom": 877.796875
+        }
+      ],
+      "filmWidthCSS": 1075.99260251868,
+      "filmAspectRatio": 1.618033988749895
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scroll": 390,
+      "stage": {
+        "x": 21,
+        "y": 115.859375,
+        "width": 348,
+        "height": 608,
+        "top": 115.859375,
+        "right": 369,
+        "bottom": 723.859375,
+        "left": 21
+      },
+      "buttons": [
+        {
+          "width": 44,
+          "height": 44,
+          "right": 71,
+          "left": 27,
+          "bottom": 774.859375
+        },
+        {
+          "width": 46.890625,
+          "height": 44,
+          "right": 117.890625,
+          "left": 71,
+          "bottom": 774.859375
+        },
+        {
+          "width": 52.859375,
+          "height": 44,
+          "right": 149.234375,
+          "left": 96.375,
+          "bottom": 823.859375
+        },
+        {
+          "width": 60.28125,
+          "height": 44,
+          "right": 363,
+          "left": 302.71875,
+          "bottom": 823.859375
+        },
+        {
+          "width": 82.671875,
+          "height": 44,
+          "right": 200.5625,
+          "left": 117.890625,
+          "bottom": 774.859375
+        },
+        {
+          "width": 72.625,
+          "height": 44,
+          "right": 363,
+          "left": 290.375,
+          "bottom": 774.859375
+        }
+      ],
+      "filmWidthCSS": 334.08,
+      "filmAspectRatio": 1.618033988749895
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "scroll": 844,
+      "stage": {
+        "x": 33,
+        "y": 55,
+        "width": 778,
+        "height": 260,
+        "top": 55,
+        "right": 811,
+        "bottom": 315,
+        "left": 33
+      },
+      "buttons": [
+        {
+          "width": 50.984375,
+          "height": 44,
+          "right": 95.984375,
+          "left": 45,
+          "bottom": 368
+        },
+        {
+          "width": 56.6875,
+          "height": 44,
+          "right": 157.671875,
+          "left": 100.984375,
+          "bottom": 368
+        },
+        {
+          "width": 55.171875,
+          "height": 44,
+          "right": 323.234375,
+          "left": 268.0625,
+          "bottom": 368
+        },
+        {
+          "width": 63.09375,
+          "height": 44,
+          "right": 537.984375,
+          "left": 474.890625,
+          "bottom": 368
+        },
+        {
+          "width": 94.84375,
+          "height": 44,
+          "right": 673.859375,
+          "left": 579.015625,
+          "bottom": 368
+        },
+        {
+          "width": 84.125,
+          "height": 44,
+          "right": 799,
+          "left": 714.875,
+          "bottom": 368
+        }
+      ],
+      "filmWidthCSS": 317.1346617949794,
+      "filmAspectRatio": 1.618033988749895
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "stage": {
+        "x": 41,
+        "y": 95.796875,
+        "width": 1358,
+        "height": 729,
+        "top": 95.796875,
+        "right": 1399,
+        "bottom": 824.796875,
+        "left": 41
+      },
+      "buttons": [
+        {
+          "width": 50.984375,
+          "height": 44,
+          "right": 103.984375,
+          "left": 53,
+          "bottom": 877.796875
+        },
+        {
+          "width": 56.6875,
+          "height": 44,
+          "right": 165.671875,
+          "left": 108.984375,
+          "bottom": 877.796875
+        },
+        {
+          "width": 55.171875,
+          "height": 44,
+          "right": 517.671875,
+          "left": 462.5,
+          "bottom": 877.796875
+        },
+        {
+          "width": 63.09375,
+          "height": 44,
+          "right": 753.125,
+          "left": 690.03125,
+          "bottom": 877.796875
+        },
+        {
+          "width": 94.84375,
+          "height": 44,
+          "right": 1075.421875,
+          "left": 980.578125,
+          "bottom": 877.796875
+        },
+        {
+          "width": 84.125,
+          "height": 44,
+          "right": 1387,
+          "left": 1302.875,
+          "bottom": 877.796875
+        }
+      ],
+      "filmWidthCSS": 1075.99260251868,
+      "filmAspectRatio": 1.618033988749895
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scroll": 390,
+      "stage": {
+        "x": 21,
+        "y": 115.859375,
+        "width": 348,
+        "height": 608,
+        "top": 115.859375,
+        "right": 369,
+        "bottom": 723.859375,
+        "left": 21
+      },
+      "buttons": [
+        {
+          "width": 44,
+          "height": 44,
+          "right": 71,
+          "left": 27,
+          "bottom": 774.859375
+        },
+        {
+          "width": 46.890625,
+          "height": 44,
+          "right": 117.890625,
+          "left": 71,
+          "bottom": 774.859375
+        },
+        {
+          "width": 52.859375,
+          "height": 44,
+          "right": 149.234375,
+          "left": 96.375,
+          "bottom": 823.859375
+        },
+        {
+          "width": 60.28125,
+          "height": 44,
+          "right": 363,
+          "left": 302.71875,
+          "bottom": 823.859375
+        },
+        {
+          "width": 82.671875,
+          "height": 44,
+          "right": 200.5625,
+          "left": 117.890625,
+          "bottom": 774.859375
+        },
+        {
+          "width": 72.625,
+          "height": 44,
+          "right": 363,
+          "left": 290.375,
+          "bottom": 774.859375
+        }
+      ],
+      "filmWidthCSS": 334.08,
+      "filmAspectRatio": 1.618033988749895
+    }
+  ],
+  "gpuReference": {
+    "maxLinearRGBError": 0.00005907743896289841,
+    "cases": [
+      {
+        "shape": "square",
+        "maxLinearRGBError": 0.00005083965592111994
+      },
+      {
+        "shape": "oval",
+        "maxLinearRGBError": 0.00005907743896289841
+      }
+    ],
+    "tolerance": 0.0001,
+    "samples": 18,
+    "scope": "GPU spectral lookup, bilinear thickness reconstruction, gamut mapping and linear target; hydrodynamics run on CPU"
+  },
+  "defaultPerformance": {
+    "apiVersion": 1,
+    "id": "soap-film",
+    "title": "Soap film",
+    "model": "Closed flat Boussinesq MAC flow with conservative thickness transport and user momentum impulses",
+    "representativeScaleMeters": 0.16,
+    "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
+    "sources": [
+      "https://doi.org/10.1103/PhysRevLett.100.144501",
+      "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
+      "https://cie.co.at/datatable/cie-standard-illuminant-d65",
+      "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
+    ],
+    "persistent": true,
+    "presentation": {
+      "shape": "oval",
+      "aspectRatio": 1.618033988749895,
+      "geometry": "square computational domain; oval uses a full-domain coordinate map"
+    },
+    "stirCount": 0,
+    "heaterC": 34,
+    "numericalStepCount": 2730,
+    "simulationTime": 63.3600000000044,
+    "simulationTimeUnits": "seconds in the closed reduced model",
+    "parameters": {
+      "lengthMeters": 0.16,
+      "dtSeconds": 0.04,
+      "viscosity": 0.000001,
+      "thermalDiffusivity": 0.0000012,
+      "gravity": 9.81,
+      "expansionPerKelvin": 0.0002,
+      "dragPerSecond": 1,
+      "ambientC": 22,
+      "heatingKelvin": 12,
+      "coolingPerSecond": 0.025,
+      "evaporationNmPerSecond": 0,
+      "drainageSpeedMetersPerSecond": 0,
+      "drainageReferenceNm": 800,
+      "ruptureNm": -1,
+      "gammaNewtonPerMeter": 0.03,
+      "densityKgPerM3": 1000,
+      "ruptureSlowdown": 240,
+      "restSeconds": 5,
+      "autoRenew": false,
+      "viewingAngleDegrees": 18
+    },
+    "quality": "low",
+    "requestedQuality": "low",
+    "adaptiveReductions": 0,
+    "workBudget": 2,
+    "droppedAmbientSeconds": 0,
+    "grid": [
+      128,
+      128
+    ],
+    "seed": "51a9f17c",
+    "seedProvenance": "offline deterministic hexadecimal seed; no random forcing or external beacon",
+    "diagnosticAgeSeconds": 0,
+    "diagnostics": {
+      "step": 2730,
+      "time": 63.3600000000044,
+      "state": "intact",
+      "cycle": 1,
+      "thicknessRangeNm": [
+        147.9637451171875,
+        1108.665771484375
+      ],
+      "temperatureRangeC": [
+        21.996292114257812,
+        33.89200210571289
+      ],
+      "divergenceMaxPerSecond": 0.000010384246706962585,
+      "pressureResidualMetersInverseSecondsInverse": 0.008307397365570068,
+      "pressureCycles": 1,
+      "maxSpeedMetersPerSecond": 0.00820882711559534,
+      "volumeM3": 1.7145178527688982e-8,
+      "filmVolumeM3": 1.7145178527688982e-8,
+      "rimVolumeM3": 0,
+      "evaporatedM3": 0,
+      "drainedM3": 0,
+      "replenishedM3": 1.7145183804488184e-8,
+      "resetDiscardedM3": 0,
+      "massBalanceErrorM3": -5.276799201818292e-15,
+      "hole": null
+    },
+    "performance": {
+      "solverCPU": {
+        "medianMs": 9.199999928474426,
+        "p95Ms": 9.400000095367432,
+        "samples": 240
+      },
+      "opticalCompositeCPUEncode": {
+        "medianMs": 0,
+        "p95Ms": 0.10000002384185791,
+        "samples": 225
+      },
+      "opticalCompositeGPU": {
+        "medianMs": 0.286705,
+        "p95Ms": 0.328537,
+        "samples": 93
+      },
+      "timestampQueries": true
+    },
+    "elapsedConvention": "one ambient second equals one model second while caught up; bounded work can slow wall-clock playback",
+    "precision": "Float32 state, JavaScript Float64 arithmetic",
+    "host": {
+      "paused": true,
+      "visible": true,
+      "offscreen": false,
+      "loopRunning": false,
+      "error": null,
+      "playbackSpeed": 3,
+      "canvas": [
+        1358,
+        729
+      ],
+      "renderCPU": {
+        "medianMs": 0,
+        "p95Ms": 0.20000004768371582,
+        "samples": 225
+      },
+      "finalDisplayGPU": {
+        "medianMs": 0.378536,
+        "p95Ms": 0.416286,
+        "samples": 93
+      },
+      "queueReadbackLatency": {
+        "medianMs": 1.2999999523162842,
+        "p95Ms": 2.5999999046325684,
+        "samples": 93
+      }
+    },
+    "adapter": {
+      "description": "Not exposed",
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "isFallbackAdapter": false
+    }
+  },
+  "playback": [
+    {
+      "requestedSpeed": 1,
+      "wallSeconds": 3.0016000000238416,
+      "modelSeconds": 2.9999999999996234,
+      "actualSpeed": 0.999466950951424
+    },
+    {
+      "requestedSpeed": 3,
+      "wallSeconds": 3.0118000000715255,
+      "modelSeconds": 9.039999999998201,
+      "actualSpeed": 3.0015273257797714
+    }
+  ],
+  "interaction": {
+    "stirs": 13,
+    "thicknessRmsNm": 49.892359298952584,
+    "volumeChangeM3": 0
+  },
+  "adaptation": {
+    "reduced": true,
+    "beforeGrid": [
+      256,
+      256
+    ],
+    "afterGrid": [
+      128,
+      128
+    ],
+    "volumeError": -5.137919878309824e-18,
+    "timeError": 0
+  },
+  "networkLoss": "Cached local lookup continues without network",
+  "lowPerformance": {
+    "apiVersion": 1,
+    "id": "soap-film",
+    "title": "Soap film",
+    "model": "Closed flat Boussinesq MAC flow with conservative thickness transport and user momentum impulses",
+    "representativeScaleMeters": 0.16,
+    "scaleMeaning": "side length of the square frame, an assumed apparatus dimension",
+    "sources": [
+      "https://doi.org/10.1103/PhysRevLett.100.144501",
+      "https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer",
+      "https://cie.co.at/datatable/cie-standard-illuminant-d65",
+      "https://pages.nist.gov/SCATMECH/code/filmtran.cpp"
+    ],
+    "persistent": true,
+    "presentation": {
+      "shape": "oval",
+      "aspectRatio": 1.618033988749895,
+      "geometry": "square computational domain; oval uses a full-domain coordinate map"
+    },
+    "stirCount": 0,
+    "heaterC": 10,
+    "numericalStepCount": 1502,
+    "simulationTime": 60.0799999999989,
+    "simulationTimeUnits": "seconds in the closed reduced model",
+    "parameters": {
+      "lengthMeters": 0.16,
+      "dtSeconds": 0.04,
+      "viscosity": 0.000001,
+      "thermalDiffusivity": 0.0000012,
+      "gravity": 9.81,
+      "expansionPerKelvin": 0.0002,
+      "dragPerSecond": 1,
+      "ambientC": 22,
+      "heatingKelvin": -12,
+      "coolingPerSecond": 0.025,
+      "evaporationNmPerSecond": 0,
+      "drainageSpeedMetersPerSecond": 0,
+      "drainageReferenceNm": 800,
+      "ruptureNm": -1,
+      "gammaNewtonPerMeter": 0.03,
+      "densityKgPerM3": 1000,
+      "ruptureSlowdown": 240,
+      "restSeconds": 5,
+      "autoRenew": false,
+      "viewingAngleDegrees": 18
+    },
+    "quality": "low",
+    "requestedQuality": "medium",
+    "adaptiveReductions": 1,
+    "workBudget": 1,
+    "droppedAmbientSeconds": 0,
+    "grid": [
+      128,
+      128
+    ],
+    "seed": "51a9f17c",
+    "seedProvenance": "offline deterministic hexadecimal seed; no random forcing or external beacon",
+    "diagnosticAgeSeconds": 0,
+    "diagnostics": {
+      "step": 1502,
+      "time": 60.0799999999989,
+      "state": "intact",
+      "cycle": 1,
+      "thicknessRangeNm": [
+        147.7997589111328,
+        1117.699462890625
+      ],
+      "temperatureRangeC": [
+        9.989556312561035,
+        22.042264938354492
+      ],
+      "divergenceMaxPerSecond": 0.0000010477378964424133,
+      "pressureResidualMetersInverseSecondsInverse": 0.0008288770914077759,
+      "pressureCycles": 1,
+      "maxSpeedMetersPerSecond": 0.00043897682917304337,
+      "volumeM3": 1.714511344649792e-8,
+      "filmVolumeM3": 1.714511344649792e-8,
+      "rimVolumeM3": 0,
+      "evaporatedM3": 0,
+      "drainedM3": 0,
+      "replenishedM3": 1.7145111057674885e-8,
+      "resetDiscardedM3": 0,
+      "massBalanceErrorM3": 2.3888230337578386e-15,
+      "hole": null
+    },
+    "performance": {
+      "solverCPU": {
+        "medianMs": 4.699999928474426,
+        "p95Ms": 4.800000071525574,
+        "samples": 240
+      },
+      "opticalCompositeCPUEncode": {
+        "medianMs": 0,
+        "p95Ms": 0.10000002384185791,
+        "samples": 4
+      },
+      "opticalCompositeGPU": {
+        "medianMs": 0.302829,
+        "p95Ms": 0.302829,
+        "samples": 1
+      },
+      "timestampQueries": true
+    },
+    "elapsedConvention": "one ambient second equals one model second while caught up; bounded work can slow wall-clock playback",
+    "precision": "Float32 state, JavaScript Float64 arithmetic",
+    "host": {
+      "paused": true,
+      "visible": true,
+      "offscreen": false,
+      "loopRunning": true,
+      "error": null,
+      "playbackSpeed": 3,
+      "canvas": [
+        1358,
+        729
+      ],
+      "renderCPU": {
+        "medianMs": 0,
+        "p95Ms": 0.10000002384185791,
+        "samples": 240
+      },
+      "finalDisplayGPU": {
+        "medianMs": 0.378037,
+        "p95Ms": 0.416286,
+        "samples": 106
+      },
+      "queueReadbackLatency": {
+        "medianMs": 1.2999999523162842,
+        "p95Ms": 3,
+        "samples": 106
+      }
+    },
+    "adapter": {
+      "description": "Not exposed",
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "isFallbackAdapter": false
+    }
+  },
+  "deviceLoss": "Caught and replaced by labelled still",
+  "errors": [],
+  "checks": "Persistent oval, mouse and native touch stirring, temperature and manual Clear, faster 3x playback, viewport-filling stage and visible controls, pause, keyboard, instruments, angle, resize, desktop, portrait and landscape, fullscreen, hidden and offscreen suspension, reduced motion, touch sample, seed replay, missing WebGPU, offline continuity"
+}

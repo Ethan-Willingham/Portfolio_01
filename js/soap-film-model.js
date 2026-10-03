@@ -3,7 +3,7 @@ export const parameters = Object.freeze({ lengthMeters: .16, dtSeconds: .04, vis
   thermalDiffusivity: 1.2e-6, gravity: 9.81, expansionPerKelvin: 2e-4, dragPerSecond: 1,
   ambientC: 22, heatingKelvin: 12, coolingPerSecond: .025, evaporationNmPerSecond: .7,
   drainageSpeedMetersPerSecond: .000055, drainageReferenceNm: 800, ruptureNm: 18,
-  gammaNewtonPerMeter: .03, densityKgPerM3: 1000, ruptureSlowdown: 240, restSeconds: 5 });
+  gammaNewtonPerMeter: .03, densityKgPerM3: 1000, ruptureSlowdown: 240, restSeconds: 5, autoRenew: true });
 const mc = (a, b) => a * b <= 0 ? 0 : Math.sign(a) * Math.min(2 * Math.abs(a), 2 * Math.abs(b), Math.abs((a + b) / 2));
 export function initialThickness(x, y, phase) { return 140 + 980 * y ** .85 + 45 * Math.sin(2 * Math.PI * x + phase) * Math.sin(Math.PI * y) + 18 * Math.sin(4 * Math.PI * x) * Math.sin(2 * Math.PI * y); }
 function level(n, Type) { return { n, p: new Type(n*n), b: new Type(n*n), r: new Type(n*n) }; }
@@ -15,6 +15,7 @@ export class FilmModel {
     this.u = new Type((n+1)*n); this.v = new Type(n*(n+1)); this.u1 = new Type(this.u.length); this.v1 = new Type(this.v.length);
     this.fx = new Type(this.u.length); this.fy = new Type(this.v.length); this.limit = new Type(n*n); this.plus = new Type(n*n); this.drainFlux = new Type(n*(n+1));
     this.levels = []; for (let m=n; m>=4; m>>=1) this.levels.push(level(m, Type));
+    this.stirPsi=new Type((n+1)*(n+1));this.stirCount=0;
     this.steps = 0; this.time = 0; this.cycle = 0; this.events = []; this.evap = 0; this.drain = 0; this.replenished = 0; this.discarded = 0;
     this.rimVolume = 0; this.reset();
   }
@@ -33,6 +34,29 @@ export class FilmModel {
     return (a[b]*(1-tx)+a[j*w+c]*tx)*(1-ty)+(a[d*w+i]*(1-tx)+a[d*w+c]*tx)*ty;
   }
   velocity(x,y) {const n=this.n; return [this.sample(this.u,n+1,n,x,y-.5),this.sample(this.v,n,n+1,x-.5,y)];}
+  setTemperatureC(value){
+    if(!Number.isFinite(value))return;
+    const next=Math.max(0,Math.min(60,value))-this.p.ambientC,delta=next-this.p.heatingKelvin;
+    this.p.heatingKelvin=next;
+    for(let y=0;y<this.n;y++)for(let x=0;x<this.n;x++)this.t[y*this.n+x]+=delta*Math.exp(-((1-(y+.5)/this.n)/.12));
+  }
+  stir({x,y,dx=0,dy=0,tap=false}){
+    if(![x,y,dx,dy].every(Number.isFinite))return;
+    x=Math.max(0,Math.min(1,x));y=Math.max(0,Math.min(1,y));
+    // A compact streamfunction impulse has a divergence-free MAC curl.
+    // Drag injects local momentum; a tap starts a small circulating eddy.
+    const {n,stirPsi:psi}=this,L=this.p.lengthMeters,r=.075*L,cx=x*L,cy=y*L;
+    const current=this.velocity(x*n,y*n),distance=Math.hypot(dx,dy),speed=Math.min(.012,distance*.5);
+    const vx=distance?dx/distance*speed-current[0]*.35:0,vy=distance?dy/distance*speed-current[1]*.35:0;
+    psi.fill(0);
+    const x0=Math.max(1,Math.floor((x-.23)*n)),x1=Math.min(n-1,Math.ceil((x+.23)*n)),y0=Math.max(1,Math.floor((y-.23)*n)),y1=Math.min(n-1,Math.ceil((y+.23)*n));
+    for(let j=y0;j<=y1;j++)for(let i=x0;i<=x1;i++){const X=i*this.dx-cx,Y=j*this.dx-cy,q=(X*X+Y*Y)/(r*r),fade=Math.exp(-q*.5)*Math.max(0,1-q/9)**2;psi[j*(n+1)+i]=((vx*Y-vy*X)+(tap?.008*r:0))*fade;}
+    for(let j=Math.max(0,y0-1);j<=Math.min(n-1,y1);j++)for(let i=x0;i<=x1;i++)this.u[j*(n+1)+i]+=(psi[(j+1)*(n+1)+i]-psi[j*(n+1)+i])/this.dx;
+    for(let j=y0;j<=y1;j++)for(let i=Math.max(0,x0-1);i<=Math.min(n-1,x1);i++)this.v[j*n+i]-=(psi[j*(n+1)+i+1]-psi[j*(n+1)+i])/this.dx;
+    let max=0;for(const v of this.u)max=Math.max(max,Math.abs(v));for(const v of this.v)max=Math.max(max,Math.abs(v));
+    if(max>.025){const scale=.025/max;for(let i=0;i<this.u.length;i++)this.u[i]*=scale;for(let i=0;i<this.v.length;i++)this.v[i]*=scale;}
+    this.stirCount++;
+  }
   smooth(l, iterations) {
     const {n,p,b}=l;
     for(let k=0;k<iterations;k++) for(let parity=0;parity<2;parity++) for(let y=0;y<n;y++) for(let x=(y+parity)&1;x<n;x+=2) {
@@ -107,7 +131,7 @@ export class FilmModel {
     this.steps++;this.time+=dt;this.age+=dt;
   }
   advance(dt) {
-    if(this.state==='rest'){this.time+=dt;this.age+=dt;if(this.age>=this.p.restSeconds)this.reset();return;}
+    if(this.state==='rest'){this.time+=dt;this.age+=dt;if(this.p.autoRenew&&this.age>=this.p.restSeconds)this.reset();return;}
     if(this.state==='rupturing'){
       this.time+=dt;this.age+=dt;this.hole.radius+=this.hole.speed*dt/this.p.ruptureSlowdown;
       for(let y=0;y<this.n;y++)for(let x=0;x<this.n;x++){const i=y*this.n+x;if(Math.hypot((x+.5)/this.n-this.hole.x,(y+.5)/this.n-this.hole.y)<this.hole.radius/this.p.lengthMeters){this.rimVolume+=this.h[i]*this.dx*this.dx*1e-9;this.h[i]=0;}}
