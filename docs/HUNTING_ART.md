@@ -6,7 +6,37 @@ by instruction of 2026-10-03. Use its catalog and reference packets before
 creating or changing any hunting visual. The version 2 to 5 descriptions below
 are asset history. Their pixel-art prompts and normalization settings do not
 define the new painterly target. The first scenery brief is
-`hunting-style/FIRST_MAP.md`; the game has not been restyled by the reference stage.
+`hunting-style/FIRST_MAP.md`.
+
+## Version 8, painted first scene
+
+Birch Clearing uses an original oil-painted meadow, separate clouded sky and a
+transparent wooden stand foreground, generated with the built-in imagegen tool
+from the catalog's Constable, Daubigny, Michel and Caravaggio references. Fresh
+hunts open at 08:00 for a bright, calm first field; existing saved clocks survive.
+The sun, moon, animals, scope and ballistics remain live.
+
+- `assets/hunting/source-v8/{terrain,sky,stand}.png`: native generated masters.
+- `assets/hunting/source-v8/prompts.json`: all production and correction prompts.
+- `assets/hunting/source-v8/ASSET_BRIEF.md`: reference jobs, registration and review.
+- `assets/hunting/source-v8/exports.json`: exact dimensions and SHA-256 fingerprints.
+- `assets/hunting/{birch-terrain,birch-sky,lookout-stand}-v8.webp`: runtime layers.
+
+Rebuild with `NODE_PATH=/path/to/node_modules node tools/build-hunting-scene.cjs`.
+Use `--check` to verify the masters, transparency corridors and runtime manifest.
+Exports use smooth Lanczos resizing, WebP quality 95 and alpha quality 100.
+They preserve soft alpha and paint detail. The older pixel-art builder is only
+for historical assets. Existing deer and boar still use their established masks;
+this scene pass does not turn those sprites into the final animal style.
+
+The display canvas follows viewport resolution and device pixel ratio, capped at
+4x the logical dimensions. The 6x scope samples the native scene layers rather
+than a small overview bitmap. Clock-dependent layer buffers adjust brightness,
+color temperature and broad meadow light while retaining paint relationships.
+The close stand stays out of the magnified view. Cypress retains its procedural
+landscape and shares the new stand foreground.
+
+## Version 2 history
 
 The owner requested replacing the first port's artwork on 2026-09-30.
 The replacement uses the built-in imagegen tool, with one generation each

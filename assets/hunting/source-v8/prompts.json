@@ -1,0 +1,90 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-10-03",
+  "catalog": "docs/hunting-style/gallery-reference.json",
+  "catalog_schema_version": 1,
+  "generations": [
+    {
+      "name": "terrain-initial",
+      "prompt": "Use case: stylized-concept\nAsset type: high-resolution transparent terrain layer for a playable hunting game's first scene, wide 16:9 composition.\nPrimary request: Paint an original, peaceful level-one birch clearing seen from a raised wooden hunting stand over a very wide meadow. This asset is ONLY the land and trees; the stand and sky will be separate layers.\nInput images: Image 1 (Constable's Salisbury Cathedral) supplies connected irregular foliage, a quiet sunlit meadow, naturalistic oil brushwork and asymmetrical composition. Image 2 (Daubigny's Hamlet of Optevoz) supplies subdued rural distance and grouped foliage. Borrow their paint treatment and light, not their buildings or subjects.\nStyle/medium: convincing naturalistic European oil painting, broad connected landscape shapes, visible purposeful painterly strokes and gentle atmospheric perspective, selective bark and plant detail. Not pixel art, not a photograph, not a glossy digital fantasy painting.\nComposition/framing: exactly 16:9 wide canvas, preferably 3840 by 2160. Keep the distant flat meadow horizon at 40 percent down from the top. Above that horizon the open sky must be ACTUAL transparency, including holes in the foliage, never a checkerboard painting. The meadow fills the entire lower 60 percent to the bottom corners, opaque. A graceful group of pale birches with dark bark marks and irregular olive crowns frames the extreme left; their inner edges stay within the left 18 percent except a few fine upper branches. A much lower and smaller grove sits near the right edge, leaving the central 65 to 75 percent open. The central field is mostly short olive and sage grass with warm ochre touches and soft irregular bands of sunlight and tree shadow. Subdued blue-green distant trees and low gentle hills sit near the 40-percent horizon; avoid tall trees across the central view. The viewer is elevated about 12 meters above the meadow, looking outward, not down at a small garden; foreground land occupies the bottom of the picture but there is no looming plant wall. A faint narrow pale-earth animal trail may arc off-center into the distance. Plants at the two lower corners have some specific brush detail. Do not add an interior or railing to this terrain layer.\nLighting/mood: soft clear morning daylight, welcoming and tranquil, no ominous forest, no storm. Warm and cool planes coexist, with gentle cool shadows and restrained cream birch highlights. Preserve a quiet readable hunting corridor through the central field.\nConstraints: Only terrain and trees on a transparent background; no painted sky, clouds, sun, moon, animals, people, buildings, cathedral, cottage, road, fence, hunting stand, weapon, text, border, frame, age cracks, signature or UI. Preserve the wide canvas registration and horizon. Grass must stay short enough to see deer legs and boar. Avoid repeating geometric trees, identical leaf stamps, tiny uniform noise, flat cel shading and large central obstacles.",
+      "references": [
+        "salisbury",
+        "optevoz"
+      ],
+      "alpha": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-f508077f-dc9f-4dd7-99ed-0a69675e77cf.png"
+    },
+    {
+      "name": "terrain",
+      "prompt": "Edit this transparent terrain layer, preserving its naturalistic oil brushwork, birch placement, muted olive and ochre colors, open gentle meadow and original wide 16:9 framing. Correct its geometric registration for a game camera: the flat distant meadow horizon in the CENTER must be at exactly 40% of total image height, not the current approximately 47%. Move the low distant tree line up to the 40% horizon and extend the same continuous meadow underneath it. Maintain genuine clear alpha above the skyline and in all foliage holes. Fully opaque meadow must cover the full width below 42% of the frame. Preserve birches and leafy crowns at side edges, but keep the central field open and the grass short. Eliminate any colored fringe outside opaque trees at the alpha boundary. Do not shrink the whole image or add borders. No sky, buildings, sun, animals, people, stand, weapon or text. Keep the full lower meadow and corner vegetation, use natural brush painting to extend the ground behind the revised horizon, and keep this a calm welcoming first-level field.",
+      "references": [
+        "terrain-initial"
+      ],
+      "alpha": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-799fb7a7-7195-4f06-8b6a-f16b2230ec14.png"
+    },
+    {
+      "name": "sky",
+      "prompt": "Use case: stylized-concept\nAsset type: a separate high-resolution painted sky layer for the first level of a hunting game.\nPrimary request: Paint a peaceful open morning sky with a small number of large, naturally irregular, soft cream and warm-gray cloud masses, open muted blue passages, and luminous pale air. Naturalistic European oil painting, with the real breadth, connected cloud volumes, subtle warm/cool planes and varied purposeful brushwork seen in the reference paintings. A welcoming easy-first-field mood, no menace.\nInput images: Image 1 (Constable's Salisbury Cathedral) is the main reference for cloud painting, soft edges and luminous open daylight; Image 2 (Georges Michel's Plowed Field) is a secondary reference for large cloud forms and spacious weather, but do not borrow its darkness or heavy storm mood.\nComposition/framing: wide 16:9 canvas, preferably 3840 by 2160, completely filled edge to edge with SKY ONLY. No terrain or horizon line. Broad open blue passages, with several cream cloud banks predominantly toward the upper edges and one or two lower soft banks. Leave the upper central sky fairly open for a live sun to travel across at runtime. This image will sit behind a terrain layer whose horizon is 40 percent down the view, so the upper 40 percent must form a complete pleasant sky in its own right. The bottom half is also sky and atmospheric light, becoming paler toward the bottom; no gradient-only empty half. Use restrained highlights rather than glaring pure white.\nMaterials/textures: oil pigment brushwork across broad colored sky planes, cloud marks following volume, variation in edge softness. No noisy grain filter, aged cracks, museum frame, digital glow or watercolor paper.\nConstraints: Opaque sky background, no sun, moon, stars, celestial disc, birds, animals, landscape, hills, trees, water, buildings, objects, text, signature or UI. No baked directional shaft or bright orb, since the moving sun is rendered separately. Calm daylight, not a storm or sunset.",
+      "references": [
+        "salisbury",
+        "plowed-field"
+      ],
+      "alpha": false,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-f44ff52c-b9fc-44ba-9bd5-f68b154abf28.png"
+    },
+    {
+      "name": "stand-initial",
+      "prompt": "Use case: stylized-concept\nAsset type: a high-resolution transparent foreground overlay for a first-person hunting game, registered to a wide 16:9 view.\nPrimary request: The player is sitting INSIDE a raised simple wooden hunting stand, looking out across a field. Paint only the very close wooden stand foreground on actual transparent alpha: a weathered timber shooting rail across the bottom, two sturdy narrow side posts clipped by the extreme left and right edges, small diagonal supporting braces confined to the corners, and a few floorboards at the very bottom that clearly recede away from the viewer. The rail has a visible flat worn top where a rifle could rest. This should read as a functional elevated woodland hunting stand, not a picture frame, fence seen from outside, balcony ornament or theater proscenium.\nInput images: the supplied Caravaggio Musicians painting is a rendering reference only, for honey-colored wooden material, modeled warm and cool planes, close foreground mass, selective firm edges, dark worn crevices and restrained cream highlights. Do not copy instruments or figures. Paint as naturalistic oil on canvas to match a tranquil Constable-like birch meadow.\nComposition/framing: exactly 16:9 canvas, preferably 3840 by 2160. Preserve full-canvas registration. The CENTRAL OPENING AND ENTIRE SKY AND FIELD AREA are transparent. The horizontal shooting rail top sits at 84 percent down the image, and the main rail face occupies roughly 84 to 90 percent. Floorboards occupy only the bottom 10 percent. Side posts are very narrow, only the outer 4 to 6 percent of the left and right edges, and start no higher than about 25 percent down the image. Braces stay at the two lower corners. Keep at least the central 85 percent of the width and top 80 percent of the height completely unobstructed. No roof or upper beam. Timber is strong and real but understated: visible grain, knots, worn edges and a couple dark iron fasteners, with gentle oblique highlights from morning light. Keep shadows colored umber and olive, wood warm muted walnut and ochre, not orange or pitch black. Avoid perfectly symmetrical artificial border appearance; use slightly varied practical construction.\nConstraints: genuine transparent background, no checkerboard pixels, no sky, terrain, trees, grass, people, hands, weapon, equipment, animals, labels, sign, text, signature, canvas cracks, border, ornate frame or UI. No separate exterior view of the stand. Only close timber rail, corner posts and bottom floor from the inside at human eye level. Soft painterly surface with enough detail for a large display, not pixel art, cartoon or photorealistic render.",
+      "references": [
+        "musicians"
+      ],
+      "alpha": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-52a07949-e9c5-4ce4-8e8c-f97d4abbdaf0.png"
+    },
+    {
+      "name": "stand-revision",
+      "prompt": "Edit this full-frame transparent first-person wooden hunting-stand overlay. Preserve its convincing warm muted oil-painted timber, grain, modeling, simple functional construction and full 16:9 canvas. Crucial layout correction: LOWER the horizontal shooting rail from the current 68% position to exactly 84% of total canvas height. The thick rail and boards below it should occupy only the bottom 16% of the canvas. The top edge of the rail must be at y=84%, leaving the central opening fully transparent from top down to 83%. Floorboards belong only in the bottom 6% and lower-corner diagonal braces only below the rail. Keep the narrow posts at the extreme outer 5% on each side, clipped by canvas edges, starting about25% down. The tall side posts may stay, but the large frontboard and rail must be much lower to give a wide unobstructed field of view. Redesign/repaint the shortened bottom construction naturally, do not just stretch the wood. Clean the alpha cutout so edges have no bright yellow, red or colored fringe. No painted field, vegetation, sky, rifle, hands, people, roof, top beam, text or frame. It must read as sitting inside a raised practical hunting stand with a low shooting rest, not a picture frame. Actual transparency throughout the opening, no black backing or checkerboard.",
+      "references": [
+        "stand-initial"
+      ],
+      "alpha": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-be459f03-47a3-4efe-818a-96db3d7d7fea.png"
+    },
+    {
+      "name": "stand",
+      "prompt": "Create a NEW transparent 16:9 oil-painted game foreground: first-person view from inside a wooden elevated hunting stand. Almost the entire image is EMPTY genuine transparent alpha. At the VERY BOTTOM, place a single weathered walnut shooting-rest beam: its TOP EDGE IS AT 86 PERCENT of image height (y=810 on a 941px tall canvas). Only the bottom14% contains this narrow horizontal timber and a sliver of floorboards below. Do NOT put the beam at the middle, two thirds, or three quarters of the image. The bottom14% restriction is essential for gameplay visibility. Two narrow worn vertical posts at the extreme left and right edges, outer4% width only, rise from the beam up to30% canvas height. Small corner braces are BELOW the beam. Center90% width must be absolutely clear from top to85% canvas height. Warm ochre and umber timber modeled with restrained highlights, selective hand-painted grain and a few dark iron nails. Use the supplied Caravaggio painting for wood modeling and naturalistic oil paint treatment, not its figures or instruments. Keep the scene simple and understated, practical wooden shooting platform viewed from inside, no ornate frame. Absolutely no yellow or red fringes, no bright colored edge artifacts: all timber edges should be natural wood colors. Genuine transparent alpha, no background, no sky, no field, no grass, no animals, no people, no weapon, no roof, no top beam, no labels, no signature. Wide canvas, low rail and only edge posts.",
+      "references": [
+        "musicians"
+      ],
+      "alpha": true,
+      "original_path": "/Users/ethan/.codex/generated_images/01a10245-ddad-7492-a7c6-d0d3a4547252/exec-240bac7c-5fe1-45af-8ae1-c162b8a1d12b.png"
+    }
+  ],
+  "painting_references": [
+    {
+      "id": "musicians",
+      "title": "The Musicians",
+      "source": "assets/images/The Musicians - Caravaggio.jpg",
+      "sha256": "82d57c6e26834154dd2c76717f300dfab12a77da8d8d4d917b73674108dd3683"
+    },
+    {
+      "id": "plowed-field",
+      "title": "Landscape with a Plowed Field and a Village",
+      "source": "assets/images/Landscape with a Plowed Field and a Village - Georges Michel.jpg",
+      "sha256": "d1521a54c4743aabafb5e76aa8957bd27982157f41e03589619dd9e6133a8b51"
+    },
+    {
+      "id": "salisbury",
+      "title": "Salisbury Cathedral from Lower Marsh Close",
+      "source": "assets/images/Salisbury Cathedral from Lower Marsh Close - John Constable - oil on canvas.jpg",
+      "sha256": "db6123b6dcf2c6beabeff8a622e46409a045ddd8e26fafda99c9077ede270d69"
+    },
+    {
+      "id": "optevoz",
+      "title": "The Hamlet of Optevoz",
+      "source": "assets/images/The Hamlet of Optevoz - Charles-François Daubigny.jpg",
+      "sha256": "e135677154b3510cb0eae46d00b6f9cce0513aef494920c5fd064c1bde3be308"
+    }
+  ]
+}

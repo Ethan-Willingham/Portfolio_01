@@ -138,9 +138,18 @@ labels stay real text. Reuse the existing watching, time and shooting flow.
 
 ## Rendering and asset migration
 
-This stage establishes references only. Current game scripts, art and gameplay
-are still the existing implementation. The planned first visual task is the base
-scenery in `FIRST_MAP.md`, followed by the remaining game surfaces in later work.
+Birch Clearing now uses the first painted scene, with separate sky, transparent
+landscape and close wooden hunting-stand layers. Its masters, prompts and review
+live in `assets/hunting/source-v8/`. `tools/build-hunting-scene.cjs` exports smooth
+WebP imagery without the old palette or binary-alpha conversion. The logical
+projection stays at 640 by 360; display rendering uses the viewport and device
+pixel ratio, capped at 2560 by 1440. The landscape's source skyline is registered
+to the projected horizon with uniform scaling. Sky and scenery share the scope's
+camera, while the stand stays in the unscoped foreground.
+
+The scene is the first step, described in `FIRST_MAP.md`. Cypress scenery, animals,
+ambient wildlife, the interface and effects still need their own painting passes.
+Use the relevant packet for each pass and preserve the live hunting loop.
 
 The old builder forces nearest-neighbor resizing, palette quantization and binary
 alpha. Those were pixel-art choices. Do not send new painterly masters through

@@ -39,13 +39,13 @@
   const number = (n, fallback, lo, hi) => Number.isFinite(n) ? clamp(n, lo, hi) : fallback;
   const hash = seed => { let n = seed >>> 0; n = Math.imul(n ^ n >>> 16, 0x21f0aaad); n = Math.imul(n ^ n >>> 15, 0x735a2d97); return ((n ^ n >>> 15) >>> 0) / 4294967296; };
   function fresh() {
-    return { version: 1, minute: 330, credits: 160, owned: [], regions: ['birch'], equipped: 'starter',
+    return { version: 1, minute: 480, credits: 160, owned: [], regions: ['birch'], equipped: 'starter',
       dogAlong: true, selected: 'birch', deerLevel: 1, records: [], tracks: [], nextId: 1, outings: 0, shots: 0 };
   }
   function sanitize(raw) {
     const s = fresh();
     if (!raw || raw.version !== 1) return s;
-    s.minute = number(raw.minute, 330, 0, 5256000);
+    s.minute = number(raw.minute, s.minute, 0, 5256000);
     s.credits = Math.round(number(raw.credits, 160, 0, 10000000));
     s.owned = [...new Set((Array.isArray(raw.owned) ? raw.owned : []).filter(id => has(ITEMS, id)))];
     s.regions = ['birch', ...new Set((Array.isArray(raw.regions) ? raw.regions : []).filter(id => id === 'cypress'))];

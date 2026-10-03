@@ -24,7 +24,11 @@
     const stage = $('stage'), scale = Math.min(stage.clientWidth / T.width, stage.clientHeight / T.height);
     canvas.style.width = Math.max(1, Math.floor(T.width * scale)) + 'px';
     canvas.style.height = Math.max(1, Math.floor(T.height * scale)) + 'px';
+    const renderScale = Math.max(1, Math.min(4, scale * Math.min(2, window.devicePixelRatio || 1)));
+    const width = Math.round(T.width * renderScale), height = Math.round(T.height * renderScale);
+    if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
     stopScopeInput();
+    draw();
   }
   new ResizeObserver(fitCanvas).observe($('stage'));
   function waiting() { return phase === 'running' && (keys.has('f') || keys.has(' ') || holds.size > 0); }

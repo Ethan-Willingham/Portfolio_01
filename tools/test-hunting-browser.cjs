@@ -6,7 +6,7 @@ const http = require('node:http');
 const { chromium } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v7-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v8-qa';
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 const errors = [], missing = [];
@@ -28,6 +28,8 @@ function testPointer(point) {
 }
 window.__huntTest = {
  ready: () => !!art && !!view && !!world,
+ sceneAssets: () => ['birch-terrain','birch-sky','lookout-stand'].map(name => ({
+  name, width:art.sprites[name].naturalWidth,height:art.sprites[name].naturalHeight,complete:art.sprites[name].complete})),
  state: () => ({phase, time: world.time, minute: campaign.state.minute, day: campaign.day,
   x: world.hunter.x, y: world.hunter.y, height: world.hunter.height,
   ammo: world.hunter.ammo, shots: world.shots, recovered: world.recovered,
@@ -77,7 +79,9 @@ window.__huntTest = {
  pointer: point => testPointer(point),
  clock: minute => {campaign.state.minute=minute;updateUI();draw();},
  sunCenter: () => {
-  draw(false);const p=canvas.getContext('2d').getImageData(0,0,T.width,T.height).data;
+  draw(false);const sample=document.createElement('canvas');sample.width=T.width;sample.height=T.height;
+  const g=sample.getContext('2d');g.drawImage(canvas,0,0,T.width,T.height);
+  const p=g.getImageData(0,0,T.width,T.height).data;
   let sx=0,sy=0,count=0;
   for(let y=0;y<T.height/2;y++)for(let x=0;x<T.width;x++){
    const i=(y*T.width+x)*4;if(p[i]>=235&&p[i+1]>=220&&p[i+2]>=188){sx+=x;sy+=y;count++;}
@@ -176,6 +180,10 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     check('the old camp, shop, walking and tracking UI is removed',await page.evaluate(()=>!document.querySelector('#hunt-camp,#hunt-embark,#hunt-track-search,[data-tab],[data-move]')));
     check('the wide field starts with an owl and a squirrel',await page.evaluate(()=>['owl','squirrel'].every(k=>__huntTest.state().critters.some(c=>c.kind===k))));
     check('desktop controls fit and meet 44-pixel targets',await noOverflow(page));
+    check('the painted scene loads full-resolution sky, terrain and stand layers',await page.evaluate(()=>
+      __huntTest.sceneAssets().every(a=>a.complete&&a.width>=1600&&a.width/a.height===16/9)));
+    check('desktop painting renders at display resolution while projection stays logical',await page.locator('#hunt-canvas').evaluate(c=>
+      c.width>640&&c.width>=Math.min(2560,Math.floor(c.getBoundingClientRect().width))));
     check('wide pointer projection is invertible',await page.evaluate(()=>__huntTest.projection()<1e-8));
     await page.screenshot({path:path.join(dump,'wide-field.png')});
     await page.evaluate(()=>__huntTest.showcase());await page.screenshot({path:path.join(dump,'sunny-field.png')});
@@ -198,6 +206,10 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
     await page.evaluate(()=>__huntTest.clock(720)); const midday=await page.evaluate(()=>__huntTest.screenshot());
     check('the real clock visibly changes the sun and field light',sunrise!==midday);
     fs.writeFileSync(path.join(dump,'noon-field.png'),Buffer.from(midday,'base64'));
+    for(const [name,minute] of [['dawn',330],['dusk',1110],['night',1350]]) {
+      await page.evaluate(minute=>__huntTest.clock(minute),minute);
+      fs.writeFileSync(path.join(dump,name+'-field.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
+    }
     await page.evaluate(()=>{__huntTest.quiet();__huntTest.clock(1439);});
     await page.keyboard.down('f'); await page.evaluate(()=>__huntTest.step(.2)); await page.keyboard.up('f');
     check('the field stays playable across midnight without a camp gate',(await state(page)).phase==='running'&&(await state(page)).day===2);

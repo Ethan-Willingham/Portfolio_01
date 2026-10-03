@@ -9,12 +9,14 @@ The owner clarified the design on 2026-10-02: a simple lookout game about
 watching a huge field, rushing the sun across the sky, and catching a brief
 animal opportunity before it passes. Version 5 replaces the camp planner,
 shop, walking, stand interaction and tracking screens with that direct loop.
-The current art is generated pixel art and can accept owner-drawn replacements.
 On 2026-10-03 the owner directed every visual part of the game to follow the
 14 paintings on `gallery.html`. Before any visual work, read
 `hunting-style/README.md` and assemble the appropriate reference packet.
-`hunting-style/FIRST_MAP.md` prepares the first base-scenery pass. This reference
-stage does not itself replace the current renderer, interface or animal art.
+Version 8 implements Birch Clearing as the first oil-painted scene, with an
+open meadow, clouded sky and a visible wooden hunting stand. The owner asked
+for a calm, easy level-one feeling. `hunting-style/FIRST_MAP.md` records its
+composition and `assets/hunting/source-v8/ASSET_BRIEF.md` records production.
+Animals, Cypress scenery and the remaining interface await their own passes.
 
 ## Sources
 
@@ -28,6 +30,8 @@ stage does not itself replace the current renderer, interface or animal art.
 - `assets/hunting/*-v3.png`: cypress field, boar, dog and tracking illustration.
 - `assets/hunting/deer-[1-5]-v4.png`: five four-legged whitetail buck sprites.
 - `assets/hunting/source-v2/`, `source-v3/`, `source-v4/`: masters and full prompts.
+- `assets/hunting/*-v8.webp`, `source-v8/`: painted scene layers, masters and review.
+- `tools/build-hunting-scene.cjs`: smooth scene export and transparency verification.
 - `tools/build-hunting-art.cjs`: repeatable asset normalization, requires Sharp.
 - `assets/hunting/source/*.aseprite`: original Unity art, retained as history.
 - `tools/export-hunting-art.mjs`: legacy Aseprite export.
@@ -48,6 +52,7 @@ Hold Fast forward, F or Space to move the day along. The sun travels visibly
 across the sky from the same clock used by the simulation and saved time.
 Dawn, daylight, dusk and night change the light. The clock can continue through
 the night into the next day without a camp screen or departure gate.
+Fresh saves start at 08:00 in Birch Clearing; existing saves keep their clock.
 
 A newly arriving animal gives a 2.4-second real-time easing window while
 fast-forward is held. It reduces both clock and animal speed without stopping
@@ -105,8 +110,10 @@ The game does not model real hunting, market prices or species biology.
 ## Ballistics and projection
 
 The lookout uses world x across the field, world y as depth and h as height.
-The eye and muzzle are 12 world units above the ground. The base canvas is
-640 by 360, with a focal length of 300 and horizon at y = 144. Projection is:
+The eye and muzzle are 12 world units above the ground. Logical coordinates are
+640 by 360, with a focal length of 300 and horizon at y = 144. The backing canvas
+follows display size and device pixel ratio, capped at 2560 by 1440. Pointer
+coordinates still use the logical view. Projection is:
 
 ```text
 screen.x = 320 + 300 * x / depth
@@ -191,6 +198,7 @@ node --check js/hunting-physics.js
 node --check js/hunting-view.js
 node --check js/hunting-game.js
 node tools/test-hunting-campaign.cjs
+NODE_PATH=/path/to/node_modules node tools/build-hunting-scene.cjs --check
 NODE_PATH=/path/to/node_modules node tools/test-hunting-game.cjs
 NODE_PATH=/path/to/node_modules node tools/test-hunting-browser.cjs
 ```
@@ -207,12 +215,14 @@ projection, mouse scope movement and shot alignment, a steady aiming center,
 soft acceleration, diagonal speed, zoom and re-entry continuity, scope lens
 bounds, touch aiming and pan release, pause, focus loss, held-input
 cleanup after a focus change, stalled frames, pending recoveries, fullscreen,
-records and reload. Closing More offscreen keeps the field paused. The checks
+records and reload. Scene checks verify native painted layers, display resolution
+and live sun movement; captures cover dawn, noon, dusk and night. Closing More
+offscreen keeps the field paused. The checks
 also inspect desktop, portrait, narrow-phone and
 landscape layouts for overflow and usable controls.
 
 The local QA server inserts inspection helpers at `TEST_HOOKS`; public scripts
 expose no test-state API. The harness owns a Chrome for Testing process through
 `/Users/ethan/.local/bin/agent-chrome-for-testing`, closes it in `finally`, and
-writes screenshots to `/tmp/hunting-game-v7-qa`. Never launch the owner's
+writes screenshots to `/tmp/hunting-game-v8-qa`. Never launch the owner's
 personal Chrome with headless or debugging flags.
