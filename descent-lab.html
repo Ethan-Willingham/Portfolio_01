@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#303931">
+  <meta name="robots" content="noindex">
+  <title>Descent</title>
+  <meta property="og:title" content="Descent">
+  <meta property="og:description" content="A silent journey through a soap film, a superfluid, hydrogen and a gauge field.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ethanwillingham.com/descent-lab.html">
+  <meta name="description" content="Four physical models share a frame and a slow, silent route. A comparison prototype.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="descent.css?v=1">
+</head>
+<body class="descent-page">
+  <div class="site-wrapper">
+    <header class="post-header"><a class="post-back" href="./">Home</a><span class="descent-edition">Comparison prototype / 06</span></header>
+    <main>
+      <header class="u-hero descent-hero"><h1 class="u-title">Descent</h1><p class="u-dek">Four models. One slow journey.</p></header>
+      <section id="descent" class="descent-piece" aria-label="Descent visualizer" aria-busy="true">
+        <div class="descent-view" id="descent-view">
+          <canvas id="descent-canvas" aria-label="Live physical model" tabindex="0"></canvas>
+          <img id="descent-still" src="assets/visualizer/descent/hydrogen-still.png" width="800" height="500" loading="eager" alt="Calculated still of the probability density of a hydrogen 1s and 2p superposition" hidden>
+          <div class="descent-message" id="descent-message" role="status"><p id="descent-message-title">Opening the first room</p><p id="descent-message-detail">Checking WebGPU and the four room modules.</p></div>
+          <div class="descent-caption" aria-hidden="true"><span id="descent-number">Interim study</span><span id="descent-caption-title">Hydrogen</span></div>
+          <div class="descent-rail" aria-hidden="true"><i id="descent-progress"></i></div>
+        </div>
+        <div class="descent-toolbar">
+          <div class="descent-actions"><button type="button" id="descent-pause">Pause</button><button type="button" id="descent-instruments" aria-expanded="false" aria-controls="descent-panel">Instruments</button><button type="button" id="descent-restart">Restart</button></div>
+          <button type="button" id="descent-fullscreen" aria-pressed="false">Fullscreen</button>
+        </div>
+        <div class="descent-notice" id="descent-notice" role="status">Checking the route.</div>
+        <div class="descent-panel" id="descent-panel" hidden>
+          <div class="descent-controls">
+            <label>Room<select id="descent-room"><option value="soap-film">Soap film</option><option value="negative-temperature">Superfluid</option><option value="hydrogen-exactly">Hydrogen</option><option value="qcd-lava-lamp">Gauge vacuum</option><option value="descent-bootstrap">Hydrogen interim study</option></select></label>
+            <label>Route position<input id="descent-position" type="range" min="0" max="719" value="0" step="1"><output id="descent-position-label" for="descent-position">0:00 / about 12:00</output></label>
+            <label class="descent-check"><input id="descent-auto" type="checkbox" checked>Automatic journey</label>
+            <label>Quality<select id="descent-quality"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></label>
+            <label id="descent-hydrogen-control" hidden>Hydrogen state<select id="descent-hydrogen-mode"><option value="spectral">Low-n superposition</option><option value="revival">Rydberg packet (about 48 nm)</option></select></label>
+            <label class="descent-seed-input">Offline seed (hex)<input id="descent-seed" type="text" minlength="16" maxlength="64" pattern="[0-9a-fA-F]{16,64}" spellcheck="false" autocomplete="off"></label>
+            <div class="descent-seed-actions"><button id="descent-apply-seed" type="button">Use seed</button><button id="descent-beacon" type="button">Use verified beacon</button></div>
+          </div>
+          <p id="descent-seed-origin"></p><p id="descent-replay"></p>
+          <dl id="descent-diagnostics" class="descent-diagnostics"></dl>
+          <details class="descent-raw"><summary>Room snapshot and resource counts</summary><pre id="descent-snapshot"></pre></details>
+          <div id="descent-dependencies" class="descent-dependencies"></div>
+          <p class="descent-small">The route clock measures watching time. A room's solver clock has its own units. Moving the route slider chooses a room and starts it from its seed; it does not seek a simulation into the past.</p>
+        </div>
+      </section>
+      <div class="post-body descent-reading">
+        <p id="descent-explanation">A soap film, a superfluid, a hydrogen atom and a gauge field can share a frame without sharing an equation. Descent moves between them with dark rests. The journey is editorial; each room keeps its own clock, colors and scale.</p>
+        <p class="descent-scale" id="descent-scale">Scales are labeled per model, without a continuous size ruler.</p>
+        <div class="descent-source-links" id="descent-sources" aria-label="Current room sources"></div>
+        <details class="u-collapse"><summary class="u-collapse-s">How this prototype works</summary><div class="descent-method"><p>The proposed route spends 170 seconds in each room, with ten seconds for fades and a rest. A measured event may extend a stay to 210 seconds. Transitions change presentation, never solver coefficients.</p><p>The interim hydrogen study evolves a normalized 1s and 2p state analytically. Brightness encodes probability density, not emitted light. Its 36-second beat is slowed for watching. The no-WebGPU image is a CPU calculation of that same state at zero phase.</p><p>Rooms draw linear radiance into a shared format. Descent applies one Reinhard display mapping and one sRGB transfer. It adds no bloom, fluid warp, dither or sound. Repeated visits begin with a seed derived from the route cycle. GPU replay may differ across devices. The analytic study shares a time law, but visitors are not synchronized to a world clock.</p><p><a href="docs/visualizer/DESCENT.md">Technical notes and integration evidence</a></p></div></details>
+      </div>
+    </main>
+    <footer class="site-footer"><p>A comparison prototype by Ethan Willingham.</p></footer>
+  </div>
+  <script type="module" src="js/descent.js?v=1"></script>
+</body>
+</html>
