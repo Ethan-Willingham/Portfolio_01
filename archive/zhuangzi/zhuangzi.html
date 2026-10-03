@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Zhuangzi, the Book That Laughs</title>
-  <meta name="description" content="A cook finds the gaps in an ox; a philosopher dreams he&#39;s a butterfly. Zhuangzi&#39;s stories question the distinctions we rely on to make sense of things.">
-  <meta property="og:title" content="The Zhuangzi, the Book That Laughs">
-  <meta property="og:description" content="A cook finds the gaps in an ox; a philosopher dreams he&#39;s a butterfly. Zhuangzi&#39;s stories question the distinctions we rely on to make sense of things.">
+  <title>The Zhuangzi</title>
+  <meta name="description" content="A cook finds room for his knife; a useless tree survives the axe. The Zhuangzi asks how to live without making your judgments the measure of everything.">
+  <meta property="og:title" content="The Zhuangzi">
+  <meta property="og:description" content="A cook finds room for his knife; a useless tree survives the axe. The Zhuangzi asks how to live without making your judgments the measure of everything.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/zhuangzi/zhuangzi.html">
@@ -29,525 +29,251 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=20261002c">
   <style>
-  /* ============================================================
-     THE ZHUANGZI, THE BOOK THAT LAUGHS
-     Approach B, the One-Reading Walk. The page is read top to
-     bottom: nine keystone passages in Brook Ziporyn's translation,
-     each unpacked in plain language, with collapsible side panels
-     that stack the other translators on the three famously
-     compressed lines. Sits in the site shell (forest green,
-     parchment, Century Supra / Segoe UI / Commit Mono). Source
-     fragments need a CJK fallback face. No em dashes.
-     ============================================================ */
-  :root {
-    --measure: 760px;                 /* reading column */
-    --zh-font: "Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
-    --early:  #cf9f78;                 /* pre-1920 translators */
-    --mid:    #bc9d65;                 /* mid-century */
-    --modern: #9ec79a;                 /* modern, and Ziporyn the spine */
-    --ease: cubic-bezier(0.23, 1, 0.32, 1);
-  }
-  html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-  .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
-
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.2rem); line-height: 1.02; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 44ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
-
-  /* ---------- PROSE SECTIONS ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.4rem, 5vw, 3.4rem) var(--gutter) 0; }
-  .sec p, .prose p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .sec .lede { font-size: 1.22rem; line-height: 1.62; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px){ .sec .lede { font-size: 1.3rem; } }
-  .sec strong, .prose strong { font-weight: 600; color: var(--text-bright); }
-  .sec em, .prose em { font-style: italic; }
-  .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
-  .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-
-  /* ---------- STICKY STATION RAIL ---------- */
-  .walkbar { position: sticky; top: 0; z-index: 30; max-width: var(--measure); margin: clamp(2.4rem,5vw,3.4rem) auto 0; padding: 0.6rem var(--gutter); display: flex; align-items: center; gap: 0.6rem 0.9rem; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
-  .walk-nav { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.15rem; transition: border-color .2s, color .2s; }
-  .walk-nav:hover:not(:disabled){ border-color: var(--accent); color: var(--accent-hover); }
-  .walk-nav:disabled { opacity: 0.3; cursor: default; }
-  .walk-jump { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 0.6rem; background: transparent; border: none; cursor: pointer; padding: 0.25rem 0.4rem; border-radius: 8px; text-align: left; color: var(--text-bright); }
-  .walk-jump:hover { background: rgba(255,255,255,0.05); }
-  .walk-jump #walk-stno { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); flex: none; }
-  .walk-jump #walk-stlabel { font-family: var(--font-heading); font-size: 1.06rem; line-height: 1.15; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .walk-jump::after { content: "\25BE"; font-size: 0.7rem; color: var(--text-faint); margin-left: -0.2rem; transition: transform .2s; }
-  .walkbar.is-open .walk-jump::after { transform: rotate(180deg); }
-  .walk-count { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--text-faint); flex: none; }
-  .walk-count b { color: var(--accent); font-weight: 400; }
-
-  .walkpop { position: fixed; top: 3.35rem; left: 50%; transform: translateX(-50%); z-index: 29; width: min(var(--measure), calc(100% - 2 * var(--gutter))); max-height: 76vh; overflow: hidden auto; border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.42); }
-  .walkpop[hidden] { display: none; }
-  .walkpop > button { display: flex; width: 100%; align-items: baseline; gap: 0.8rem; text-align: left; padding: 0.6rem 0.9rem; background: var(--bg-raised); border: none; border-bottom: 1px solid var(--rule); color: var(--text-dim); cursor: pointer; transition: background .15s, color .15s; }
-  .walkpop > button:first-child { border-radius: 10px 10px 0 0; }
-  .walkpop > button:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
-  .walkpop > button:hover { background: rgba(255,255,255,0.06); color: var(--text-bright); }
-  .walkpop > button.is-cur { color: var(--text-bright); box-shadow: inset 3px 0 0 var(--accent); }
-  .walkpop-n { font-family: var(--font-mono); font-size: 0.74rem; color: var(--accent); flex: none; width: 1.2rem; }
-  .walkpop-name { font-family: var(--font-heading); font-size: 1.04rem; flex: 1 1 auto; }
-  .walkpop-tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); flex: none; }
-
-  /* ---------- A STATION ---------- */
-  .station { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem,5vw,3.8rem) var(--gutter) 0; scroll-margin-top: 4rem; }
-  .station-k { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
-  .station-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.5rem); line-height: 1.08; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 0 1.2rem; text-wrap: balance; }
-
-  /* the featured Ziporyn passage: where you meet the actual words */
-  .passage { margin: 0 0 1.5rem; padding: 1.3rem 1.5rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 14px; background: linear-gradient(180deg, rgba(212,196,160,0.06), rgba(212,196,160,0.02)); }
-  .passage-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.7rem; }
-  .passage-t { font-family: var(--font-heading); font-size: 1.18rem; line-height: 1.62; color: var(--text-bright); }
-  .passage-t p { margin: 0 0 0.85em; text-wrap: pretty; }
-  .passage-t p:last-child { margin-bottom: 0; }
-  .passage-t .sp { color: var(--text-dim); }       /* speaker tag inside a passage */
-  @media (min-width: 720px){ .passage-t { font-size: 1.24rem; } }
-
-  /* the unpacking sits in .prose (scoped so kit components stay intact) */
-  .prose { margin: 0; }
-
-  /* ---------- TRANSLATION SIDEBAR (the 3 compressed lines) ---------- */
-  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
-  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
-  .stack > summary::-webkit-details-marker { display: none; }
-  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
-  .stack[open] > summary::before { content: "\2212"; }
-  .stack > summary:hover { color: var(--accent-hover); }
-  .stack-body { padding: 0 1.1rem 1.1rem; }
-  .stack-zh { font-family: var(--zh-font); font-size: clamp(1.3rem, 4vw, 1.7rem); line-height: 1.7; color: var(--text-bright); letter-spacing: 0.05em; margin: 0 0 0.2rem; }
-  .stack-gloss { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.04em; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.5; text-transform: none; }
-  .stack-gloss em { color: var(--text-dim); font-style: italic; }
-  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .stack-v:first-of-type { border-top: none; }
-  .stack-early  { border-left-color: var(--early); }
-  .stack-mid    { border-left-color: var(--mid); }
-  .stack-modern { border-left-color: var(--modern); }
-  .stack-feat { background: rgba(158,199,154,0.06); }
-  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
-  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
-  .stack-vn .star { color: var(--modern); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
-  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
-  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
-
-  /* ---------- the figure (Lu Zhi painting) ---------- */
-  .station .u-figure { margin-top: 0.4rem; }
-  .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
-  .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
-  .pfig figcaption { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em; line-height: 1.5; color: var(--text-faint, var(--text-dim)); margin-top: 0.7rem; }
-  @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
-
-  /* ---------- closing / colophon ---------- */
-  .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.6rem auto 0; }
-  .sechead { font-family: var(--font-heading); font-weight: 700; font-size: 1.7rem; color: var(--text-bright); margin: 0 0 0.8rem; letter-spacing: -0.01em; }
-  .src-list { font-family: var(--font-body); font-size: 0.96rem; line-height: 1.6; color: var(--text-dim); }
-  .src-list li { margin-bottom: 0.5em; }
-  .src-list b { color: var(--text); font-weight: 600; }
-  .colo-note.colo-note { font-size: 0.92rem; color: var(--text-faint); }
-
-  /* ---------- mobile ---------- */
-  @media (max-width: 560px){
-    /* phones: the body already supplies the side gutter, so drop the duplicate
-       column padding here (it was doubling up to ~40px of dead space). */
-    body { padding-left: 0; padding-right: 0; }
-    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
-    .walk-jump #walk-stlabel { font-size: 0.98rem; }
-  }
+    :root { --zz-measure: 760px; --zz-copy: 64ch; --zz-frame: 58rem; }
+    body.zhuangzi-page { padding-inline: 0; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    .zz-shell { width: 100%; max-width: var(--zz-frame); margin: 0 auto; padding-inline: var(--gutter); }
+    .zhuangzi-page .post-back { display: block; width: 100%; max-width: var(--zz-measure); margin-inline: auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-inline: var(--gutter); }
+    .zz-hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 4rem); max-width: 61rem; padding-block: clamp(4.5rem, 11svh, 7rem); text-align: center; }
+    .zz-hero .u-title { max-width: 10ch; margin-inline: auto; font-size: clamp(3.7rem, 12vw, 7.5rem); line-height: .94; letter-spacing: -.035em; text-wrap: balance; }
+    .zz-hero .u-dek { max-width: 49ch; margin: 1.6rem auto 0; font-size: 1.24rem; line-height: 1.58; font-style: normal; text-wrap: pretty; }
+    .zz-hero .u-meta { justify-content: center; margin-top: 1.6rem; padding-top: 0; border-top: 0; gap: .5em 1.05em; letter-spacing: .11em; }
+    .zz-scroll { display: block; margin-top: 2.8rem; color: var(--text-dim); opacity: .68; font-variant: small-caps; letter-spacing: .22em; font-size: .82rem; }
+    .zz-layer { padding-block: clamp(4.5rem, 8svh, 6.5rem); border-top: 1px solid var(--rule); }
+    .zz-layer-tag { display: flex; align-items: center; justify-content: center; gap: .8rem; margin: 0 0 1.1rem; font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); }
+    .zz-layer-tag b { color: var(--accent); font-weight: 400; }
+    .zz-h2 { max-width: 22ch; margin: 0 auto; font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
+    .zz-intro { max-width: 49ch; margin: 1rem auto 0; font-size: 1.22rem; line-height: 1.5; font-style: italic; color: var(--text-dim); text-align: center; text-wrap: pretty; }
+    .zz-plain { max-width: var(--zz-copy); margin: 2.6rem auto 0; }
+    .zz-plain p { margin: 0 0 1.15em; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); text-wrap: pretty; }
+    .zz-plain p:last-child { margin-bottom: 0; }
+    #summary .zz-plain p:first-child::first-letter { float: left; padding: .06em .12em 0 0; color: var(--accent); font-size: 3.4em; line-height: .74; font-weight: 700; }
+    .zz-plain a, .zz-body a, .zz-context a, .zz-sources a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--s-gold-hair); }
+    .zz-plain a:hover, .zz-body a:hover, .zz-context a:hover, .zz-sources a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+    .zz-page-nav { display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 2.4rem auto 0; font-family: var(--font-mono); font-size: .7rem; line-height: 1.5; }
+    .zz-page-nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); text-underline-offset: .3em; }
+    .zz-concepts { max-width: var(--zz-copy); margin: clamp(2.8rem, 6vw, 4.2rem) auto 0; border-top: 1px solid var(--rule); }
+    .zz-concept { scroll-margin-top: 1rem; border-bottom: 1px solid var(--rule); }
+    .zz-concept > summary { list-style: none; min-height: 6rem; padding: 1.45rem 1rem; cursor: pointer; }
+    .zz-summary-heading { display: grid; grid-template-columns: 3.2rem 1fr 1.8rem; gap: 1rem; align-items: start; margin: 0; font-weight: 400; }
+    .zz-concept > summary::-webkit-details-marker { display: none; }
+    .zz-n { padding-top: .25rem; font-family: var(--font-mono); font-size: .72rem; color: var(--accent); }
+    .zz-statement { display: block; font-family: var(--font-heading); font-size: clamp(1.3rem, 3vw, 1.65rem); line-height: 1.26; color: var(--text-bright); text-wrap: balance; }
+    .zz-place { display: block; margin-top: .35rem; font-family: var(--font-mono); font-size: .63rem; line-height: 1.4; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+    .zz-mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; margin-top: .05rem; border: 1px solid var(--rule); border-radius: 50%; color: var(--accent); font-family: var(--font-mono); font-size: 1rem; line-height: 1; }
+    .zz-mark::before { content: '+'; }
+    .zz-concept[open] { margin-block: 1.1rem; border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 12px; background: var(--s-surface); }
+    .zz-concept[open] .zz-mark::before { content: '−'; }
+    .zz-concept:not([open]):has(+ .zz-concept[open]) { border-bottom-color: transparent; }
+    .zz-concepts:has(> .zz-concept[open]:first-child) { border-top-color: transparent; }
+    .zz-body { padding: .1rem 3.2rem clamp(2.7rem, 6vw, 4.2rem); }
+    .zz-body p { margin: 0 0 1.15em; font-size: 1.14rem; line-height: 1.72; text-wrap: pretty; }
+    .zz-body p:last-child { margin-bottom: 0; }
+    .zz-quote { margin: 1.5rem 0; padding-left: 1.2rem; border-left: 2px solid var(--accent); }
+    .zz-quote p { color: var(--text-bright); font-size: 1.3rem; line-height: 1.55; }
+    .zz-quote cite { display: block; margin-top: .65rem; font-family: var(--font-mono); font-style: normal; font-size: .65rem; line-height: 1.5; color: var(--text-faint); }
+    .zz-painting { max-width: 25rem; margin: 1.8rem auto; }
+    .zz-painting picture, .zz-painting img { display: block; width: 100%; height: auto; border-radius: 3px; }
+    .zz-painting figcaption { margin-top: .7rem; font-family: var(--font-mono); font-size: .65rem; line-height: 1.6; color: var(--text-faint); }
+    .zz-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.8rem, 5vw, 3.6rem); max-width: var(--zz-copy); margin: 2.6rem auto 0; }
+    .zz-context { padding-top: 1rem; border-top: 1px solid var(--s-gold-hair); }
+    .zz-context h3 { margin: 0 0 .75rem; font-family: var(--font-heading); font-size: 1.42rem; line-height: 1.25; color: var(--text-bright); }
+    .zz-context p { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.7; }
+    .zz-context p:last-child { margin-bottom: 0; }
+    .zz-limit { max-width: var(--zz-copy); margin: clamp(4.5rem, 9vw, 7rem) auto 0; padding-top: clamp(3.5rem, 7vw, 5rem); border-top: 1px solid var(--accent); }
+    .zz-sources { max-width: var(--zz-copy); margin: 3rem auto 0; }
+    .zz-sources .u-collapse-list { columns: 2; column-gap: 2.5rem; }
+    .zz-sources li { break-inside: avoid; }
+    .zhuangzi-page .u-next, .zhuangzi-page .site-footer-inner { width: 100%; max-width: var(--zz-measure); margin-inline: auto; }
+    .zhuangzi-page .site-footer-inner { font-family: var(--font-body); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+    @media (max-width: 720px) { .zz-context-grid { grid-template-columns: 1fr; } .zz-sources .u-collapse-list { columns: 1; } }
+    @media (max-width: 560px) {
+      .zz-layer { padding-block: 3.4rem; }
+      .zz-concept > summary { padding-block: 1.15rem; }
+      .zz-summary-heading { grid-template-columns: 2.25rem 1fr 1.65rem; gap: .65rem; }
+      .zz-body { padding: .1rem 1rem 3rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print { .zz-hero { min-height: 0; padding-block: 2rem; } .zz-scroll, .zz-page-nav, .zz-mark { display: none; } .zz-layer { padding-block: 2rem; } .zz-concept { break-inside: avoid; } }
   </style>
 </head>
-<body>
+<body class="zhuangzi-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+  <a href="/archive.html" class="post-back"><span class="pb-label">In Progress</span></a>
 
-  <a href="/archive.html" class="post-back ll-back"><span class="pb-label">In Progress</span></a>
-
-  <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The Zhuangzi, the book that laughs</h1>
-    <p class="hero-dek">A cook keeps his knife sharp by finding the gaps. A philosopher wakes unsure whether he dreamed the butterfly or it dreamed him. Zhuangzi lets the stories do the questioning.</p>
-    <p class="hero-meta">Reading guide <span class="sep">/</span> <b>9 passages</b> in the Inner Chapters and beyond <span class="sep">/</span> translation: <b>Brook Ziporyn</b> <span class="sep">/</span> ~25 min read</p>
+  <header class="u-hero zz-hero zz-shell">
+    <h1 class="u-title">The Zhuangzi</h1>
+    <p class="u-dek">A useless tree lives out its years. A skilled cook knows when to slow down. The Zhuangzi asks what happens when the world won&rsquo;t fit the way you think it should.</p>
+    <p class="u-meta"><b>The Inner Chapters and beyond</b> <span class="u-sep">/</span> 13 min read</p>
+    <span class="zz-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main>
-    <!-- ============================ INTRO ============================ -->
-    <section class="sec">
-      <p class="lede">The Zhuangzi is a book of short, wild stories, written in China around 300 BCE. In one, a fish too big to measure turns into a bird and flies to the end of the world. In another, a cook carves an ox for nineteen years without ever dulling his knife. In the most famous, a man wakes from a dream of being a butterfly and cannot tell, now, which one he is. The stories are funny on purpose. They are also some of the sharpest thinking anyone has done about how a mind boxes itself in.</p>
-
-      <p>The book is named for its presumed author, Zhuang Zhou, though almost nothing about him can be confirmed from outside it. The one early biography is a short sketch by the historian Sima Qian, and even that looks pieced together from anecdotes in the Zhuangzi. He came from a place called Meng, held a minor job, and turned down at least one offer of high office because he would rather, he said, be a live turtle dragging its tail through the mud than a sacred dead one enshrined in a temple. His regular sparring partner is Hui Shi, a famous logician, who shows up to lose arguments.</p>
-
-      <p>The text we have is 33 chapters, and they are not one author's. The first seven, the Inner Chapters, are the oldest, the most coherent, and the ones most plausibly Zhuang Zhou's own. The rest, the Outer and Miscellaneous chapters, are by later followers and rival schools, gathered and trimmed into final shape around 300 CE by an editor named Guo Xiang, who cut a sprawling 52-chapter version down to the 33 we read. So this is less a single book than an anthology that grew up around a voice. This walk stays mostly in the Inner Chapters, with three of the best stories from later on.</p>
-
-      <p>The translation throughout is <strong>Brook Ziporyn's</strong> (Hackett, 2009 and 2020). Most translators turn Zhuangzi into a solemn sage. Ziporyn keeps him funny, which turns out to be the point. When a character is named for a joke, he translates the joke: the god of primordial chaos is <em>Chaotic Blob</em>, the two meddling gods are <em>Swoosh</em> and <em>Oblivion</em>, and the tree too foul to bother cutting is the <em>Stinktree</em>. He renders the Tao as <em>the Course</em>, the way you would talk about a river's course or letting something run its course. Each stop below gives you his words first, then unpacks them.</p>
-
-      <aside class="u-callout">
-        <p class="u-callout-k">The whole book on one page</p>
-        <p class="u-callout-body">The diagnosis: we are boxed in by fixed perspectives, by rigid right and wrong, by the cult of being useful, by the dread of death, and by the exhausting effort of the deliberate self. The cure: wander freely, treat every perspective as a real view from somewhere, drop into flow, empty the self, and go along with the transformation, including the last one. Nine stops, in reading order. Where a famous line has been translated a dozen ways, open the panel to see the spread.</p>
-      </aside>
+    <section class="zz-layer zz-shell" id="summary" aria-labelledby="summary-title">
+      <p class="zz-layer-tag"><b>01</b> Summary</p>
+      <h2 class="zz-h2" id="summary-title">The Zhuangzi, in plain English</h2>
+      <div class="zz-plain">
+        <p>A tree survives because nobody can make anything out of it. Its wood is crooked, so the carpenters leave it alone. In the Zhuangzi, something everyone calls a failure turns out to have a life of its own. The book keeps asking who gets to decide what a thing is for, and what happens to it once they do.</p>
+        <p>It asks the same question about people. A ruler wants useful subjects. A teacher wants good students. You want to be a certain kind of person, and you judge each day by whether you&rsquo;re becoming one. Those expectations can help you live, or make you spend your life defending a picture of yourself. Zhuangzi is especially interested in the moment when a useful judgment hardens into a demand that everything obey it.</p>
+        <p>Chapter 2 describes a mind wearing itself out over what to accept and what to reject. We learn distinctions and use them to settle new questions. The way things look to us begins to feel like the way things simply are. Winning an argument may convince the people who already share your standards; the chapter asks who could settle it for everyone else.</p>
+        <p>The book gives this problem to animals as well as philosophers. A small bird laughs at the enormous Peng, which needs a vast wind to carry it south. The small bird can reach the next branch. Its experience cannot account for Peng&rsquo;s life. Peng has limits too: without enough wind, it cannot fly. Seeing farther doesn&rsquo;t make it independent of the world. The chapter keeps looking for a freedom that won&rsquo;t collapse when praise, success, or favorable conditions disappear.</p>
+        <p><em>Dao</em>, also spelled Tao, means a way or course. Here it can name a way of doing something and the larger course of things happening and changing. Zhuangzi turns disputes over which way to follow toward the question of how well someone can respond to what is in front of them. Cook Ding has learned an ox&rsquo;s structure so thoroughly that his knife moves through its openings. When he reaches a difficult place, he becomes cautious. His skill includes knowing when ease has ended.</p>
+        <p>In chapter 4, Yan Hui wants to advise a violent ruler. The imagined Confucius warns that arriving full of righteous plans could get him killed. He tells Yan Hui to fast his mind: loosen the judgments that make him hear only what he already expects. Yan Hui still has to notice whether the ruler will listen, whether speech is possible, and when to stop. Good intentions do not give him control over the other person.</p>
+        <p>The freedom the book calls <em>wandering</em> involves moving through such situations without fastening your whole life to one outcome. Its people still cook, talk, teach, and care for others. What changes is their dependence on being recognized as right, useful, successful, or complete. Chapter 5 gives authority to people with amputated feet and appearances others despise. Those who meet them discover a steadiness their judgments about bodies had hidden. A person&rsquo;s capacity to sustain a life need not match their rank or appearance.</p>
+        <p>The hardest case is your own body. It changes, gets sick, and dies. In chapter 6, an ill man imagines his arm becoming a rooster: then he could use it to announce the dawn. If the process that gave you this body changes it, can you meet the change without insisting that you must always remain this particular person? Elsewhere Zhuangzi sings after his wife&rsquo;s death. He says he grieved at first, then considered her death within the changes that had brought her into life. It offers no evidence that she is still conscious somewhere.</p>
+        <p>The butterfly dream brings the uncertainty home. While dreaming, Zhuang Zhou is a butterfly and knows nothing of Zhou. Awake, he is Zhou and wonders whether the butterfly might be dreaming him. The passage still says there is a distinction between them. It unsettles his confidence that his present experience can explain every other state from outside.</p>
+        <p>These stories leave room for more than one reading. Some readers find a mystical unity beneath the distinctions; others find a demand to remain open because no human standpoint is final. The book often makes a confident speaker ridiculous, or gives Confucius advice that disrupts the teaching associated with him. Even a lesson as attractive as the safety of uselessness gets challenged later, when a goose is killed precisely because it is useless. The reader has to keep judging, with fewer guarantees.</p>
+      </div>
+      <nav class="zz-page-nav" aria-label="On this page">
+        <a href="#passages">Read the passages</a>
+        <a href="#context">The book and its history</a>
+        <a href="#limits">What remains difficult</a>
+      </nav>
     </section>
 
-    <!-- ======================= STICKY STATION RAIL ======================= -->
-    <nav class="walkbar" id="walkbar" aria-label="The walk">
-      <button class="walk-nav" id="walk-prev" aria-label="Previous stop">&lsaquo;</button>
-      <button class="walk-jump" id="walk-jump" aria-label="Jump to a stop" aria-haspopup="true">
-        <span id="walk-stno">Stop 1</span>
-        <span id="walk-stlabel">The fish that becomes a bird</span>
-      </button>
-      <button class="walk-nav" id="walk-next" aria-label="Next stop">&rsaquo;</button>
-      <span class="walk-count" id="walk-count"><b>1</b> / 9</span>
-    </nav>
-    <div class="walkpop" id="walkpop" hidden role="menu" aria-label="All stops"></div>
-
-    <!-- ============================ STATION 1 ============================ -->
-    <section class="station" id="st-fish-bird" data-label="The fish that becomes a bird" data-tag="Chapter 1">
-      <p class="station-k">Stop 1 <span style="color:var(--text-faint)">/</span> Wandering Far and Unfettered</p>
-      <h2 class="station-h">The fish that becomes a bird</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 1, the opening</p>
-        <div class="passage-t">
-          <p>There is a fish in the Northern Oblivion named Kun, and this Kun is quite huge, spanning who knows how many thousands of miles. He transforms into a bird named Peng, and this Peng has quite a back on him, stretching who knows how many thousands of miles. When he rouses himself and soars into the air, his wings are like clouds draped across the heavens.</p>
-          <p>The cicada and the fledgling dove laugh at him, saying, "We scurry up into the air, leaping from the elm to the sandalwood tree, and when we don't quite make it we just plummet to the ground. What's all this about ascending ninety thousand miles and heading south?" ... Such is the difference between the large and the small.</p>
-        </div>
+    <section class="zz-layer zz-shell" id="passages" aria-labelledby="passages-title">
+      <p class="zz-layer-tag"><b>02</b> Close reading</p>
+      <h2 class="zz-h2" id="passages-title">Where the ideas come from</h2>
+      <p class="zz-intro">Open a story to follow its argument. Chapter links lead to the text.</p>
+      <div class="zz-concepts">
+        <details class="zz-concept" id="st-fish-bird">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">01</span><span><span class="zz-statement">The bird that needs the wind</span><span class="zz-place">Chapter 1</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Kun, an immense fish, becomes Peng, an immense bird. Smaller creatures laugh at its journey because they can&rsquo;t imagine needing to go so far. Peng still needs deep enough air, just as a large boat needs deep water.</p>
+          <p>The chapter then considers people who seem freer than most. One is unmoved by public praise and blame. Another can ride the wind. Even the wind-rider still needs something to ride. The question becomes how to live when those conditions change. <a href="https://ctext.org/zhuangzi/enjoyment-in-untroubled-ease">Read chapter 1.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-useless">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">02</span><span><span class="zz-statement">Useful to whom?</span><span class="zz-place">Chapters 1, 4, and 20</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Hui Shi complains that a huge, crooked tree is useless. Zhuangzi suggests resting beneath it. Its failure as timber makes that possible. In chapter 4, another tree explains the fate of its useful neighbors: their fruit and wood invite people to damage them. Calling something useful usually means useful to someone who wants to take something from it.</p>
+          <p>Chapter 20 complicates the lesson. A useless tree survives, but a goose that cannot sound an alarm is chosen for dinner. A disciple asks which example they should follow. The reply warns against occupying a fixed position between usefulness and uselessness, too. No label reliably tells you how to survive the next situation. <a href="https://en.wikisource.org/wiki/Chuang_Tz%C5%AD_(Giles)/Chapter_20">Read the tree and goose together.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-axis">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">03</span><span><span class="zz-statement">The mind that has to be right</span><span class="zz-place">Chapter 2</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>The chapter first shows judgment as a form of strain. The mind shoots out like a weapon to decide a question, then clings to its decision. The description makes certainty feel costly before the argument asks whether it is justified.</p>
+          <p><em>Shi</em> and <em>fei</em> can distinguish this from not-this, affirmation from denial, and right from wrong. A thing is &ldquo;this&rdquo; from here and &ldquo;that&rdquo; from there. In disputes, each party likewise treats its own starting point as decisive. The image of the <em>pivot of the Dao</em> offers a way to respond without being trapped on one side of that opposition. How far this goes is disputed: it can suggest openness to changing perspectives, or a deeper unity behind them. Neither reading makes every decision disappear. <a href="https://ctext.org/zhuangzi/adjustment-of-controversies">Read chapter 2.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-butterfly">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">04</span><span><span class="zz-statement">The butterfly and the waking man</span><span class="zz-place">Chapter 2, the ending</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>In the dream, the butterfly is content. It has no thought of being Zhou. Waking replaces that certainty with another one, but Zhou can now ask a question the butterfly never asked: which experience gives him the final account of who he is?</p>
+          <blockquote class="zz-quote">
+            <p>Between a man and a butterfly there is necessarily a barrier. The transition is called Metempsychosis.</p>
+            <cite>Herbert Giles, 1889, <a href="https://en.wikisource.org/wiki/Chuang_Tz%C5%AD_(Giles)/Chapter_2">chapter 2</a></cite>
+          </blockquote>
+          <p>That last word imports the idea of a soul passing between bodies. Robert Eno instead ends: &ldquo;this is what we call the transformation of things!&rdquo; Both versions preserve a distinction between Zhou and the butterfly. A reading that says everything is an illusion has to explain why the passage insists on that distinction.</p>
+          <figure class="zz-painting">
+            <picture><source srcset="assets/zhuangzi-butterfly-luzhi.webp" type="image/webp"><img src="assets/zhuangzi-butterfly-luzhi.jpg" alt="A scholar resting beneath a tree beside a rocky bank in Lu Zhi&rsquo;s ink painting." loading="lazy" width="1478" height="1500"></picture>
+            <figcaption>Lu Zhi, <em>Zhuangzi Dreaming of a Butterfly</em>, Ming dynasty. Asian Art Museum, San Francisco. Public domain.</figcaption>
+          </figure>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-cook">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">05</span><span><span class="zz-statement">Cook Ding knows when to slow down</span><span class="zz-place">Chapter 3</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Cook Ding&rsquo;s knife has lasted nineteen years. He follows the spaces in the ox rather than hacking through bones. The lord watching him hears advice about caring for life in those movements.</p>
+          <blockquote class="zz-quote">
+            <p>What I love is the Course, going beyond mere skill.</p>
+            <cite>Brook Ziporyn, <em>The Complete Writings</em>, <a href="https://ctext.org/zhuangzi/nourishing-the-lord-of-life">chapter 3</a></cite>
+          </blockquote>
+          <p>The difficult joint matters as much as the graceful cutting. He attends closely and slows down. Watson&rsquo;s version makes the change explicit: &ldquo;whenever I come to a complicated place&rdquo; he will &ldquo;work very slowly.&rdquo; Experience lets him respond to resistance, including resistance that interrupts his usual ease. <a href="https://afe.easia.columbia.edu/ps/cup/zhuangzi_caring_for_life.pdf">Read Watson&rsquo;s complete story.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-fasting">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">06</span><span><span class="zz-statement">Empty enough to hear someone</span><span class="zz-place">Chapters 4 and 6</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Yan Hui wants to reform a ruler whose violence is killing his subjects. Confucius warns that displaying his own goodness against the ruler&rsquo;s wickedness may inflame the danger. Yan Hui keeps proposing approaches; Confucius keeps finding what they assume in advance. Fasting the mind asks him to receive the encounter without making those assumptions its conditions.</p>
+          <p>The Chinese <em>xin</em>, often translated &ldquo;heart-mind,&rdquo; includes feeling, judgment, and the direction of action. Emptying it need not mean ceasing to think. On Chris Fraser&rsquo;s reading, fixed aims and expectations give way to attention that can respond to the situation. Chapter 6 goes further with &ldquo;sitting in forgetfulness,&rdquo; where Yan Hui describes letting go of bodily and intellectual distinctions. These passages do not supply a step-by-step meditation method. <a href="https://ctext.org/zhuangzi/man-in-the-world-associated-with">Read Yan Hui&rsquo;s dangerous assignment.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-bodies">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">07</span><span><span class="zz-statement">The people others dismiss</span><span class="zz-place">Chapter 5</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Wang Tai has lost a foot, yet attracts followers to rival Confucius. Another amputee, Shentu Jia, challenges an official who carries his rank into the place where they study. The official sees a punishment and assumes it tells him who the person is.</p>
+          <p>The chapter also describes Ai Tai Tuo, whose appearance initially repels people. Those who remain with him come to trust him. The term <em>de</em>, translated as virtue, power, or potency, concerns the capacity these people have despite the marks others judge them by. Their bodies aren&rsquo;t repaired to earn them a place in the story. <a href="https://ctext.org/zhuangzi/seal-of-virtue-complete">Read chapter 5.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-death">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">08</span><span><span class="zz-statement">A life that cannot keep its shape</span><span class="zz-place">Chapters 6 and 18</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Chapter 6 describes friends who can face bodily change without treating it as an insult. One imagines his arm becoming a rooster or a crossbow. Another dying man compares himself to metal in a great foundry. Metal that insisted on becoming one particular sword would be troublesome material; why insist that transformation must keep producing him as a human?</p>
+          <p>In chapter 18, Hui Shi finds Zhuangzi singing and beating a vessel after his wife dies. He objects on behalf of their shared life. Zhuangzi answers that he did feel grief, then thought back through the changes preceding her birth and forward into death. The account redirects his mourning; it cannot establish what happens after death. It also leaves Hui Shi&rsquo;s objection worth hearing: does this response give enough weight to the particular person who has been lost? <a href="https://en.wikisource.org/wiki/Chuang_Tz%C5%AD_(Giles)/Chapter_18">Read their exchange.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-fish-bridge">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">09</span><span><span class="zz-statement">Hui Shi has a point about the fish</span><span class="zz-place">Chapter 17</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>On a bridge, Zhuangzi remarks on the fishes&rsquo; enjoyment. Hui Shi asks how someone who isn&rsquo;t a fish can know it. Zhuangzi asks how Hui Shi, who isn&rsquo;t Zhuangzi, can know what Zhuangzi knows. Hui Shi accepts the symmetry and presses his argument: their difference is exactly why Zhuangzi cannot know the fish.</p>
+          <p>Zhuangzi&rsquo;s final reply turns the question toward the place he knows it from: here, above the river. It can be read as wordplay, an evasion, or an appeal to knowledge available through a shared situation. It does not logically dispose of Hui Shi&rsquo;s objection. The scene lets the reader feel the difference between enjoying what is happening and demanding a justification for that enjoyment. <a href="https://ctext.org/zhuangzi/autumn-floods">Read the end of chapter 17.</a></p>
+          </div>
+        </details>
+        <details class="zz-concept" id="st-hundun">
+          <summary><h3 class="zz-summary-heading"><span class="zz-n" aria-hidden="true">10</span><span><span class="zz-statement">The help that kills its recipient</span><span class="zz-place">Chapter 7, the ending</span></span><span class="zz-mark" aria-hidden="true"></span></h3></summary>
+          <div class="zz-body">
+          <p>Hundun, whose name evokes undivided chaos, is a generous host. Two rulers decide to repay him. People have seven openings for seeing, hearing, eating, and breathing. Hundun has none, so they set about correcting him.</p>
+          <blockquote class="zz-quote">
+            <p>... but on the seventh day Hun Tun died.</p>
+            <cite>Herbert Giles, 1889, <a href="https://en.wikisource.org/wiki/Chuang_Tz%C5%AD_(Giles)/Chapter_7">chapter 7</a></cite>
+          </blockquote>
+          <p>The preceding passage compares the mind to a mirror, responding to what arrives without holding on to it. Hundun&rsquo;s friends do the opposite: they bring a settled idea of what he should be. Their kindness makes the story more troubling. They have no wish to hurt him, and still cannot recognize that their improvement is destroying their host.</p>
+          </div>
+        </details>
       </div>
-
-      <div class="prose">
-        <p>The book opens at maximum scale. A fish too big to measure becomes a bird too big to measure, and sets off on a ninety-thousand-mile flight to the far side of the world. Then the small birds laugh. Why would anyone go to all that trouble? You can get to the next tree on one hop.</p>
-        <p>The point is not that big beats small. It is that the quail genuinely cannot see what the great bird is doing. From the branch, ninety thousand miles is gibberish. "A small consciousness cannot keep up with a vast consciousness," Zhuangzi says, "short duration cannot keep up with long duration. The morning mushroom knows nothing of the noontide; the winter cicada knows nothing of the spring and autumn." Every creature mistakes the size of its own view for the size of the world.</p>
-        <p>There is a joke buried in the names, and Ziporyn keeps it. Kun, the world-spanning fish, is named with a character that means fish roe, a single egg, the tiniest speck in the sea. The biggest thing in the ocean is called Minnow. The chapter is titled, in his rendering, "Wandering Far and Unfettered." The bird that goes far is the picture of a mind that is not fenced in by its own scale.</p>
-      </div>
-
-      <aside class="u-aside">
-        <p>The first lesson is about your own eyes. The quail is not wrong about its branch. It is wrong that the branch is the whole sky.</p>
-      </aside>
     </section>
 
-    <!-- ============================ STATION 2 ============================ -->
-    <section class="station" id="st-useless" data-label="The use of the useless" data-tag="Chapters 1 &amp; 4">
-      <p class="station-k">Stop 2 <span style="color:var(--text-faint)">/</span> Hui Shi's complaints</p>
-      <h2 class="station-h">The use of the useless</h2>
+    <section class="zz-layer zz-shell" id="context" aria-labelledby="context-title">
+      <p class="zz-layer-tag"><b>03</b> Context</p>
+      <h2 class="zz-h2" id="context-title">The book and its history</h2>
+      <div class="zz-context-grid">
+        <article class="zz-context">
+          <h3 id="authorship">A name, several authors</h3>
+          <p><em>Zhuangzi</em> means Master Zhuang. Zhuang Zhou probably lived in the late fourth century BCE, during China&rsquo;s Warring States period. Almost no biographical details can be independently confirmed. Stories in which he refuses office or faces death are literary scenes, rather than verified episodes from his life.</p>
+          <p>The received work has seven Inner, fifteen Outer, and eleven Miscellaneous chapters. The Inner Chapters are traditionally associated with Zhuang Zhou, but even their authorship and unity remain disputed.</p>
+        </article>
+        <article class="zz-context">
+          <h3 id="transmission">An edited inheritance</h3>
+          <p>The surviving edition comes through Guo Xiang, a commentator who died in 312 CE. He reports reducing a 52-chapter collection to 33. The whole collection he worked from is lost, so his editorial decisions cannot all be checked.</p>
+          <p>Zhuangzi and the <a href="/tao-te-ching.html">Tao Te Ching</a> later became foundational works of Daoism. That pairing does not establish that Zhuang Zhou was Laozi&rsquo;s student. This page focuses on the Inner Chapters, with later stories identified by chapter.</p>
+        </article>
+      </div>
 
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 1, Huizi and the Stinktree</p>
-        <div class="passage-t">
-          <p><span class="sp">Huizi:</span> "I have a huge tree that people call the Stinktree. The trunk is swollen and gnarled, impossible to align with any plumb line or ink. The branches are twisted and bent, impossible to align to any T-square or carpenter's arc. Even if it were growing right in the road, a carpenter would not give it so much as a second glance. And your words are similarly big but useless, which is why they are rejected by everyone who hears them."</p>
-          <p><span class="sp">Zhuangzi:</span> "You, on the other hand, have this big tree and you worry that it's useless. How you could loaf and wander, doing a whole lot of nothing there at its side! How far-flung and unfettered you'd be, dozing there beneath it! It will never be cut down by ax or saw. Nothing will harm it. Since it has nothing for which it can be used, what could entrap or afflict it?"</p>
+      <section class="zz-limit" id="limits" aria-labelledby="limits-title">
+        <h2 class="zz-h2" id="limits-title">What remains difficult</h2>
+        <div class="zz-plain">
+          <p>Recognizing the limits of your judgments can make you less cruel and more attentive. It does not automatically tell you when to resist someone. Yan Hui&rsquo;s ruler is harming people. Advice that helps Yan Hui survive the encounter may leave those people unprotected. The Zhuangzi offers searching accounts of personal freedom; it gives a reader less guidance on building institutions that restrain violent power.</p>
+          <p>Its treatment of death creates another tension. Cook Ding teaches how to preserve a life. The dying figures ask how to accept losing one. Care for life might include recognizing its limits, but these are different demands. Singing after a death may express acceptance; for someone still mourning, it may sound like a refusal to acknowledge the loss.</p>
+          <p>Nor is every extraordinary person in these pages an attainable model. Some are described as immune to fire or able to ride clouds. Whether those figures depict spiritual realization, provoke us to imagine another way of living, or parody claims to perfect wisdom remains part of the disagreement over how to read it.</p>
         </div>
-      </div>
+      </section>
 
-      <div class="prose">
-        <p>Hui Shi, the logician, keeps arriving with the same complaint. He grew a gourd too big to use as a dipper, so he smashed it. He has a tree too gnarled to cut into planks, so it is worthless. Both times he is calling Zhuangzi's ideas the same thing: impressively large, and good for nothing.</p>
-        <p>Zhuangzi just flips the frame. Make the giant gourd into a boat and float around on a lake. Leave the useless tree standing and nap in its shade, because no carpenter will ever fell it, so it gets to live out its whole life. The useless tree is the only one in the forest that dies of old age.</p>
-        <p>To a Taoist, usefulness is a kind of danger. The straight tree is cut for timber. The tasty animal is eaten. "The cinnamon tree is edible, and thus it gets chopped down. The lacquer tree is useful, and thus it is cut down." Being good for something means being used up by someone. The chapter four version ends with the line the whole theme hangs on: <em>"Everyone knows how useful usefulness is, but no one seems to know how useful uselessness is."</em></p>
-      </div>
-
-      <aside class="u-aside">
-        <p>This is the book's quiet shot at the cult of being useful. What is good for nothing is the one thing nobody can use up.</p>
-      </aside>
-    </section>
-
-    <!-- ============================ STATION 3 ============================ -->
-    <section class="station" id="st-axis" data-label="The axis of the Way" data-tag="Chapter 2">
-      <p class="station-k">Stop 3 <span style="color:var(--text-faint)">/</span> Equalizing Assessments of Things</p>
-      <h2 class="station-h">The axis of the Way</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 2, the pivot</p>
-        <div class="passage-t">
-          <p>A state where "this" and "not-this," right and wrong, are no longer coupled as opposites is called the Course as axis, the axis of all courses. When this axis finds its place in the center, it responds to all the endless things it confronts, thwarted by none. For it has an endless supply of "rights," and an endless supply of "wrongs."</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>Chapter two is the hard one, and the center of the book. Its target is the little word "this." Everything you call "this" someone else calls "that." Every right has a wrong stuck to it like the other end of a stick. What counts as right depends entirely on where you are standing. In Zhuangzi's day the Confucians and the Mohists, the two great schools, spent their lives proving each other wrong, each affirming exactly what the other denied.</p>
-        <p>His move is not to pick a side. It is to step off the line. He calls the still point the axis of all courses. Stop being pinned to one position, and you can meet an endless run of rights and wrongs without being thrown by any of them, the way a door on its hinge swings open to whatever comes.</p>
-        <p>Then the monkeys. A keeper tells his monkeys he will give them three nuts in the morning and four at night. They are furious. Fine, he says, four in the morning and three at night. They are delighted. Same seven nuts. The only thing that changed was the order, and it flipped rage into joy. We are the monkeys: the facts hold still, and our verdict swings wildly with the framing. The sage, Zhuangzi says, "uses various rights and wrongs to harmonize," and stays put at the center of the wheel. He calls it Walking Two Roads.</p>
-      </div>
-
-      <aside class="u-aside">
-        <p>It is not that nothing is true. Every view is a real view from somewhere, including yours, and the mistake is treating your own as the whole map. "Heaven and earth are born together with me," he writes, "and the ten thousand things and I are one."</p>
-      </aside>
-    </section>
-
-    <!-- ============================ STATION 4 ============================ -->
-    <section class="station" id="st-butterfly" data-label="The butterfly dream" data-tag="Chapter 2">
-      <p class="station-k">Stop 4 <span style="color:var(--text-faint)">/</span> the end of Chapter 2</p>
-      <h2 class="station-h">The butterfly dream</h2>
-
-      <figure class="pfig">
-        <picture><source type="image/webp" srcset="assets/zhuangzi-butterfly-luzhi.webp"><img src="assets/zhuangzi-butterfly-luzhi.jpg" width="1478" height="1500" loading="eager" decoding="async" alt="A Ming-dynasty ink painting on tan silk: a robed man sleeps on a rock by a low riverbank, head on his hand, while two butterflies flutter above him under a drooping willow, a distant mountain at left."></picture>
-        <figcaption>Lu Zhi, <em>Zhuangzi Dreaming of a Butterfly</em> (Ming dynasty). Public domain.</figcaption>
-      </figure>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 2, the last lines</p>
-        <div class="passage-t">
-          <p>Once Zhuang Zhou dreamt he was a butterfly, fluttering about joyfully just as a butterfly would. He followed his whims exactly as he liked and knew nothing about Zhuang Zhou. Suddenly he awoke, and there he was, the startled Zhuang Zhou in the flesh. He did not know if Zhou had been dreaming he was a butterfly, or if a butterfly was now dreaming it was Zhou.</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>It is four sentences, and it is the most famous thing in the book. Zhuang Zhou dreams he is a butterfly, perfectly happy, with no memory of being Zhuang Zhou. He wakes, and he is Zhuang Zhou again. Then the catch: how does he know which is the dream? Maybe he is a man who dreamed he was a butterfly. Maybe he is a butterfly, right now, dreaming it is a man.</p>
-        <p>It is not spooky for its own sake. It lands the chapter. If you cannot tell from the inside whether you are the dreamer or the dream, then the hard line you draw around "me" is softer than it feels. And here Ziporyn keeps the ending honest where gentler translators smooth it. He will not melt the man and the butterfly into a cozy oneness. Zhou and the butterfly, he insists, "count as two distinct identities, as two quite different beings." They really are different. And one becomes the other anyway. That becoming, one thing turning into another, is what Zhuangzi calls the transformation of things, and it is the note the whole book will end on.</p>
-      </div>
-
-      <details class="stack">
-        <summary>The last sentence, seven ways</summary>
-        <div class="stack-body">
-          <p class="stack-zh" lang="zh">周與胡蝶，則必有分矣。此之謂物化。</p>
-          <p class="stack-gloss">The closing phrase is two characters, <em>wu hua</em> (物化), literally "thing-transformation." Watch what each translator does with it, and with the gap between the man and the butterfly.</p>
-
-          <div class="stack-v stack-modern stack-feat">
-            <div class="stack-vh"><span class="stack-vn">Brook Ziporyn <span class="star">featured</span></span><span class="stack-vy">2020</span></div>
-            <div class="stack-vt">"Now surely Zhou and a butterfly count as two distinct identities, as two quite different beings! And just this is what is meant when we speak of transformation of any one being into another, of the transformation of all things."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">A. C. Graham</span><span class="stack-vy">1981</span></div>
-            <div class="stack-vt">"Between Chou and the butterfly there was necessarily a dividing; just this is what is meant by the transformation of things."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">Victor Mair</span><span class="stack-vy">1994</span></div>
-            <div class="stack-vt">"Now, there must be a difference between Chou and the butterfly. This is called the transformation of things."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">Robert Eno</span><span class="stack-vy">2019</span></div>
-            <div class="stack-vt">"Surely there is a difference between Zhou and a butterfly. This is what we call the transformation of things!"</div>
-          </div>
-          <div class="stack-v stack-mid">
-            <div class="stack-vh"><span class="stack-vn">Burton Watson</span><span class="stack-vy">1968</span></div>
-            <div class="stack-vt">"Between Chuang Chou and a butterfly there must be some distinction! This is called the Transformation of Things."</div>
-          </div>
-          <div class="stack-v stack-early">
-            <div class="stack-vh"><span class="stack-vn">James Legge</span><span class="stack-vy">1891</span></div>
-            <div class="stack-vt">"But between K&acirc;u and a butterfly there must be a difference. This is a case of what is called the Transformation of Things."</div>
-          </div>
-          <div class="stack-v stack-early">
-            <div class="stack-vh"><span class="stack-vn">Herbert Giles</span><span class="stack-vy">1889</span></div>
-            <div class="stack-vt">"Between a man and a butterfly there is necessarily a barrier. The transition is called Metempsychosis."</div>
-          </div>
-
-          <p class="stack-gloss" style="margin-top:1rem">Giles reaches for <em>Metempsychosis</em>, importing the transmigration of souls from Greek and Buddhist thought, a whole afterlife the Chinese never mentions. Ziporyn keeps it bare: things turn into other things. The distance between those two readings is the distance you have to translate across on every page of this book.</p>
-        </div>
+      <details class="u-collapse zz-sources" id="sources">
+        <summary class="u-collapse-s">Sources, translations, and the limits of this reading</summary>
+        <ol class="u-collapse-list">
+          <li><b>The received text.</b> The <a href="https://ctext.org/zhuangzi">Chinese Text Project</a> provides the Chinese with James Legge&rsquo;s translation. References here use received chapter numbers. Stories are paraphrased unless marked as quotations.</li>
+          <li><b>The Inner Chapters.</b> <a href="https://scholarworks.iu.edu/iuswrrest/api/core/bitstreams/5dc89a23-c6bf-4190-a1e4-6762dc5359cc/content">Robert Eno&rsquo;s translation and notes</a>, Indiana University, 2019. The butterfly&rsquo;s closing sentence quoted here comes from chapter 2.</li>
+          <li><b>Cook Ding.</b> Brook Ziporyn, <a href="https://hackettpublishing.com/philosophy/asian-philosophy/zhuangzi-the-complete-writings"><em>Zhuangzi: The Complete Writings</em></a>, 2020, chapter 3, supplies the short Course quotation. The caution and slowing are checked against <a href="https://afe.easia.columbia.edu/ps/cup/zhuangzi_caring_for_life.pdf">Burton Watson&rsquo;s translation</a>, reproduced by Columbia&rsquo;s Asia for Educators.</li>
+          <li><b>The older wording.</b> Herbert Giles, <a href="https://en.wikisource.org/wiki/Chuang_Tz%C5%AD_(Giles)"><em>Chuang Tzŭ</em></a>, 1889, chapters 2 and 7. Giles&rsquo;s explanatory commentary, including his claims about souls and God, is not treated as the Chinese text.</li>
+          <li><b>History and rival readings.</b> Chad Hansen&rsquo;s <a href="https://plato.stanford.edu/entries/zhuangzi/">Stanford Encyclopedia of Philosophy entry</a> explains the uncertain authorship, Guo Xiang&rsquo;s edition, and disputes about knowledge and perspective. Its philosophical account is one interpretation.</li>
+          <li><b>Attention and forgetting.</b> Chris Fraser, <a href="https://cjfraser.net/images/2013/08/Fraser_Heart-FastingForgetting.pdf">&ldquo;Heart-Fasting, Forgetting, and Using the Heart Like a Mirror&rdquo;</a>. The account of responsive attention draws on his interpretation.</li>
+          <li><b>Scope.</b> This is a reading of selected connected themes, rather than a translation or an account of every chapter. The criticisms in the final section are this page&rsquo;s judgments. </li>
+          <li><b>Painting.</b> The illustration shows Lu Zhi&rsquo;s <em>Zhuangzi Dreaming of a Butterfly</em>, in the Asian Art Museum, San Francisco.</li>
+        </ol>
       </details>
-    </section>
-
-    <!-- ============================ STATION 5 ============================ -->
-    <section class="station" id="st-cook" data-label="Cook Ding's blade" data-tag="Chapter 3">
-      <p class="station-k">Stop 5 <span style="color:var(--text-faint)">/</span> The Primacy of Nourishing Life</p>
-      <h2 class="station-h">Cook Ding and the blade that never dulls</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 3, carving the ox</p>
-        <div class="passage-t">
-          <p>The cook put down his knife and said, "What I love is the Course, going beyond mere skill. When I first started cutting up oxen, all I saw for three years was oxen, and yet still I was unable to see all there was to see in an ox. But now I encounter it with the imponderable spirit in me rather than scrutinizing it with the eyes. ... I have been using this same blade for nineteen years, cutting up thousands of oxen, and yet it is still as sharp as if it had just come off the whetstone. For the joints have spaces within them, and the very edge of the blade has no thickness at all. When what has no thickness enters into an empty space, it is vast and open, with more than enough room for the play of the blade."</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>This is the flagship. A cook butchers an ox for the king, and it is a dance: every cut lands on the beat, the knife rings like music. The king is amazed. The cook explains that it is not skill, it is the Course. A beginner sees a whole ox and hacks. After three years he stopped seeing "the ox" and started seeing the gaps, the spaces between the joints where a blade can pass without resistance. Now he does not even look. He goes by the spirit.</p>
-        <p>A clumsy cook wrecks a knife in a month, a good one in a year. His blade has carved thousands of oxen over nineteen years and it is still razor sharp, because it never hits anything. It only travels through the openings that were already there. That is the state the whole book is reaching for. It is not laziness, and it is not gritted effort. It is total absorption, the point where the deliberate self drops out and the work does itself.</p>
-        <p>The king gets it. "From hearing the cook's words," he says, "I have learned how to nourish life." Living well is finding the gaps and not forcing the rest.</p>
-      </div>
-
-      <details class="stack">
-        <summary>"I go by the spirit," seven ways</summary>
-        <div class="stack-body">
-          <p class="stack-zh" lang="zh">臣以神遇，而不以目視。</p>
-          <p class="stack-gloss">"I meet it with <em>shen</em> (神) and do not look with the eyes." That one word, <em>shen</em>, is the whole problem: spirit, mind, daemon, life-force. Six translators, six metaphysics.</p>
-
-          <div class="stack-v stack-modern stack-feat">
-            <div class="stack-vh"><span class="stack-vn">Brook Ziporyn <span class="star">featured</span></span><span class="stack-vy">2020</span></div>
-            <div class="stack-vt">"I encounter it with the imponderable spirit in me rather than scrutinizing it with the eyes."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">A. C. Graham</span><span class="stack-vy">1981</span></div>
-            <div class="stack-vt">"Nowadays, I am in touch through the daemonic in me, and do not look with the eye."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">Victor Mair</span><span class="stack-vy">1994</span></div>
-            <div class="stack-vt">"Today, I meet the ox with my spirit rather than looking at it with my eyes. My sense organs stop functioning and my spirit moves as it pleases."</div>
-          </div>
-          <div class="stack-v stack-mid">
-            <div class="stack-vh"><span class="stack-vn">Burton Watson</span><span class="stack-vy">1968</span></div>
-            <div class="stack-vt">"Now I go at it by spirit and don't look with my eyes. Perception and understanding have come to a stop and spirit moves where it wants."</div>
-          </div>
-          <div class="stack-v stack-mid">
-            <div class="stack-vh"><span class="stack-vn">Thomas Merton</span><span class="stack-vy">1965</span></div>
-            <div class="stack-vt">"But now I see nothing with the eye. My whole being apprehends. My senses are idle. The spirit free to work without plan follows its own instinct."</div>
-          </div>
-          <div class="stack-v stack-early">
-            <div class="stack-vh"><span class="stack-vn">James Legge</span><span class="stack-vy">1891</span></div>
-            <div class="stack-vt">"Now I deal with it in a spirit-like manner, and do not look at it with my eyes. The use of my senses is discarded, and my spirit acts as it wills."</div>
-          </div>
-
-          <p class="stack-gloss" style="margin-top:1rem">Graham's "daemonic" leans on an old English word for an indwelling power, almost a possession. Merton, working not from the Chinese but from Giles, dissolves the word entirely: "my whole being apprehends." Same character, and the cook is either inspired, entranced, or simply all there.</p>
-        </div>
-      </details>
-    </section>
-
-    <!-- ============================ STATION 6 ============================ -->
-    <section class="station" id="st-empty" data-label="How to empty out" data-tag="Chapters 4 &amp; 6">
-      <p class="station-k">Stop 6 <span style="color:var(--text-faint)">/</span> the inside job</p>
-      <h2 class="station-h">How to empty out</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 4, the fasting of the mind</p>
-        <div class="passage-t">
-          <p>"Let your hearkening stay positioned at the ears, your mind going no further than meshing there like a tally. The vital energy is then a vacuity, a waiting for the presence of whatever thing may come. The Course alone is the gathering of this vacuity. This vacuity is the fasting of the mind."</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>The book has two famous instructions for the work you do on the inside, and both run the same direction, which is down. The first is the fasting of the mind. You fast the body by not eating; you fast the mind by not grabbing. Confucius (whom Zhuangzi loves to draft as a mouthpiece for distinctly un-Confucian ideas) tells his student to stop listening with his ears, then to stop listening even with his mind, until what is left is a kind of open emptiness, "a waiting for the presence of whatever thing may come."</p>
-        <p>The second is sitting and forgetting. The same student keeps reporting progress, and it is all subtraction. I have forgotten kindness and duty, he says. Good, says Confucius, but not yet. I have forgotten ritual and music. Good, not yet. Finally: <em>"I just sit and forget."</em> Forget what? The body, the senses, the whole machinery of the deliberate self, "dispersing my physical form and ousting my understanding," he says, "until I am the same as the Transforming Openness." The teacher, stunned, asks to become the student's student.</p>
-        <p>Both exercises empty out the calculating self to make room for everything else. Ziporyn elsewhere gives the cleanest image of the result: the realized mind "is like a mirror, rejecting nothing, welcoming nothing, responding but not storing."</p>
-      </div>
-
-      <aside class="u-aside">
-        <p>The cure is not more wisdom. It is removing the self that keeps getting in the way.</p>
-      </aside>
-    </section>
-
-    <!-- ============================ STATION 7 ============================ -->
-    <section class="station" id="st-hundun" data-label="The emperor with no holes" data-tag="Chapter 7">
-      <p class="station-k">Stop 7 <span style="color:var(--text-faint)">/</span> the end of the Inner Chapters</p>
-      <h2 class="station-h">The emperor with no holes</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 7, the last story</p>
-        <div class="passage-t">
-          <p>The emperor of the southern sea was called Swoosh. The emperor of the northern sea was called Oblivion. The emperor of the middle was called Chaotic Blob. Swoosh and Oblivion would sometimes meet in the territory of Chaotic Blob, who always waited on them quite well. They decided to repay Chaotic Blob for such bounteous virtue. "All men have seven holes in them, by means of which they see, hear, eat, and breathe," they said. "But this one alone has none. Let's drill him some." So every day they drilled another hole.</p>
-          <p>Seven days later, Chaotic Blob was dead.</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>The Inner Chapters end on a small, grim joke. Two emperors are treated well by a third, the emperor of the center, whose name, Hundun, means chaos: the undivided lump before the world has any parts. To repay his kindness, the two notice he is missing the seven holes everyone else has, two eyes, two ears, two nostrils, a mouth, and decide to do him a favor. One hole a day. On the seventh day he is dead. That is the whole story.</p>
-        <p>It is the dark twin of Cook Ding: the same blade, used the opposite way. The two gods are certain they are helping. They are applying their obvious standard, everyone should have holes, to the one thing that was whole precisely because it did not. Every distinction you carve, every improvement you impose, kills a little of the wholeness it works on.</p>
-        <p>The book that opened with a fish turning happily into a bird closes its core on a warning about what happens when you cannot leave a thing alone.</p>
-      </div>
-    </section>
-
-    <!-- ============================ STATION 8 ============================ -->
-    <section class="station" id="st-fish-bridge" data-label="The fish on the bridge" data-tag="Chapter 17">
-      <p class="station-k">Stop 8 <span style="color:var(--text-faint)">/</span> Autumn Waters, an Outer chapter</p>
-      <h2 class="station-h">The fish on the bridge</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 17, on the bridge over the Hao</p>
-        <div class="passage-t">
-          <p><span class="sp">Zhuangzi:</span> "The minnows swim about so freely, following the openings wherever they take them. Such is the happiness of fish."</p>
-          <p><span class="sp">Huizi:</span> "You are not a fish, so whence do you know the happiness of fish?"</p>
-          <p><span class="sp">Zhuangzi:</span> "You are not I, so whence do you know I don't know the happiness of fish?"</p>
-          <p><span class="sp">Zhuangzi, finally:</span> "Let's go back to the starting point. You said, 'Whence do you know the happiness of fish?' Since your question was premised on your knowing that I know it, I must know it from right here, up above the Hao River."</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>Zhuangzi and Hui Shi the logician are back, leaning on a bridge. Look how happy the fish are, says Zhuangzi. Hui Shi pounces, because that is what logicians do: you are not a fish, so how could you know what a fish enjoys? You are not me, says Zhuangzi, so how do you know I don't know? Hui Shi springs the trap shut: exactly, I am not you and cannot know your mind, which proves my point, you are not a fish and cannot know its mind.</p>
-        <p>And then Zhuangzi cheats, beautifully. Go back to the start, he says: when you asked how I know, you had already granted that I know, and only asked where. I know it from right here, up above the Hao. It is a dodge and a real argument at the same time. He turns Hui Shi's own grammar against him.</p>
-        <p>But the deeper reply is the one he leaves unsaid. The same wall Hui Shi builds to keep Zhuangzi out of the fish's mind keeps Hui Shi out of every mind but his own. Take "you can't know another mind" all the way and you have sealed yourself in a box of one. Zhuangzi would rather just enjoy the fish.</p>
-      </div>
-
-      <details class="stack">
-        <summary>Zhuangzi's comeback, six ways</summary>
-        <div class="stack-body">
-          <p class="stack-zh" lang="zh">子非魚，安知魚之樂？</p>
-          <p class="stack-gloss">"You are not a fish, how do you know the joy of fish?" The fun is in the comeback. Zhuangzi answers a "how do you know" with a "you already knew that I knew," and the pun on <em>where</em> he knows it. Watch each translator land it.</p>
-
-          <div class="stack-v stack-modern stack-feat">
-            <div class="stack-vh"><span class="stack-vn">Brook Ziporyn <span class="star">featured</span></span><span class="stack-vy">2020</span></div>
-            <div class="stack-vt">"Since your question was premised on your knowing that I know it, I must know it from right here, up above the Hao River."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">A. C. Graham</span><span class="stack-vy">1981</span></div>
-            <div class="stack-vt">"When you said 'Whence do you know that the fish are happy?' you asked me the question already knowing that I knew. I knew it from up above the Hao."</div>
-          </div>
-          <div class="stack-v stack-modern">
-            <div class="stack-vh"><span class="stack-vn">Victor Mair</span><span class="stack-vy">1994</span></div>
-            <div class="stack-vt">"When you said, 'How do you know what the joy of fishes is?' you asked me because you already knew that I knew. I know it by strolling over the Hao."</div>
-          </div>
-          <div class="stack-v stack-mid">
-            <div class="stack-vh"><span class="stack-vn">Burton Watson</span><span class="stack-vy">1968</span></div>
-            <div class="stack-vt">"You asked me how I know what fish enjoy, so you already knew that I knew it when you asked the question. I know it by standing here beside the Hao."</div>
-          </div>
-          <div class="stack-v stack-early">
-            <div class="stack-vh"><span class="stack-vn">James Legge</span><span class="stack-vy">1891</span></div>
-            <div class="stack-vt">"You knew that I knew it, and yet you put your question to me, well, I know it (from our enjoying ourselves together) over the H&acirc;o." (Legge calls the minnows "thryssas.")</div>
-          </div>
-          <div class="stack-v stack-early">
-            <div class="stack-vh"><span class="stack-vn">Herbert Giles</span><span class="stack-vy">1889</span></div>
-            <div class="stack-vt">"Let us go back to your original question. You asked me how I knew in what consists the pleasure of fishes. Your very question shows that you knew I knew."</div>
-          </div>
-        </div>
-      </details>
-    </section>
-
-    <!-- ============================ STATION 9 ============================ -->
-    <section class="station" id="st-death" data-label="Drumming on a pot" data-tag="Chapters 18 &amp; 32">
-      <p class="station-k">Stop 9 <span style="color:var(--text-faint)">/</span> going along with the transformation</p>
-      <h2 class="station-h">Drumming on a pot</h2>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 18, the death of his wife</p>
-        <div class="passage-t">
-          <p>When Zhuangzi's wife died, Huizi went to offer his condolences. He found Zhuangzi squatting on the floor singing, accompanying himself by pounding on an overturned washtub.</p>
-          <p><span class="sp">Zhuangzi:</span> "When this one first died, how could I not feel grief just like anyone else? But then I considered closely how it had all begun: previously, before she was born, there was no life there. Not only no life: no physical form. Not only no physical form: not even energy. Then in the course of some heedless mingling mishmash a change occurred and there was energy, and then this energy changed and there was a physical form, and then this form changed and there was life. Now there has been another change and she is dead. This is how she participates in the making of the spring and the autumn, of the winter and the summer."</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>The deepest place the book goes is death, and it goes there laughing. When Zhuangzi's wife dies, Hui Shi comes to mourn and finds him sitting on the ground, banging on a tub and singing. Hui Shi is appalled: she raised your children, grew old with you, and you are drumming? Of course I grieved at first, Zhuangzi says. But then he traced her backward, past her life, past her body, past the very energy a body is made of, to nothing at all, and watched the whole sequence run forward again and then turn one more time into death. She is not gone. She has turned, the way a season turns. To wail over it, he decides, would make him look "like someone without any understanding of fate. So I stopped."</p>
-        <p>This is going along with the transformation, the cure the whole book has been building toward, aimed now at the one change nobody wants. And he held himself to it at the end. Dying, Zhuangzi told his students to skip the funeral:</p>
-      </div>
-
-      <div class="passage">
-        <p class="passage-k">Ziporyn / Chapter 32, his own death</p>
-        <div class="passage-t">
-          <p>"I will have Heaven and Earth for my coffin and crypt, the sun and moon for my paired jades, the stars and constellations for my round and oblong gems, all creatures for my tomb gifts and pallbearers. My funeral accoutrements are already fully prepared! What could possibly be added?"</p>
-          <p><span class="sp">His students feared the crows would eat him. Zhuangzi:</span> "Above ground I'll be eaten by crows and vultures, below ground by ants and crickets. Now you want to rob the one to feed the other. What brazen favoritism!"</p>
-        </div>
-      </div>
-
-      <div class="prose">
-        <p>If the Tao Te Ching is the solemn manual, this is the laughter, and by the last page you see the laughter was the argument all along. A man who can crack a joke at his own funeral has already done the thing the book set out to teach. He has stopped clinging to being one particular thing, and gone along, lightly, with the turning of everything into everything else.</p>
-      </div>
-
-      <aside class="u-aside">
-        <p>The fish became a bird. The man dreamed he was a butterfly. The wife became the spring and the autumn. It is all one story, and the punchline is that there was never anything to be afraid of losing, because you were never only the one thing.</p>
-      </aside>
-    </section>
-
-    <!-- ============================ COLOPHON ============================ -->
-    <hr class="u-divider">
-    <section class="sec">
-      <h2 class="sechead">Where the text comes from</h2>
-      <p>The featured translation throughout is <strong>Brook Ziporyn's</strong>, quoted from his complete <em>Zhuangzi: The Complete Writings</em> (Hackett, 2020), which grew out of his earlier <em>Essential Writings</em> (Hackett, 2009). The side panels stack his rendering against the other major English translators on the three lines where they most famously diverge. Every quotation is verbatim and every translator is named.</p>
-      <ul class="src-list">
-        <li><b>The featured walk</b> is Brook Ziporyn, <em>Zhuangzi: The Complete Writings</em> (Hackett, 2020).</li>
-        <li><b>The comparison panels</b> stack Burton Watson (1968), A. C. Graham (1981), James Legge (1891), Herbert Giles (1889), Victor Mair (1994), Thomas Merton (1965, who worked from Giles rather than the Chinese), and Robert Eno (2019).</li>
-        <li><b>The Chinese</b> is the received text, from the <a href="https://ctext.org/zhuangzi">Chinese Text Project</a>, which also carries Legge's parallel translation.</li>
-        <li><b>On who wrote it:</b> the background on the Inner, Outer, and Miscellaneous chapters draws on the <a href="https://plato.stanford.edu/entries/zhuangzi/">Stanford Encyclopedia of Philosophy</a>, A. C. Graham's stratification of the text, and Sima Qian's brief biography in the <em>Records of the Grand Historian</em>.</li>
-      </ul>
-      <p>The 33 chapters are not the work of one hand. The Inner Chapters (1 to 7) are the oldest core and the part most plausibly by Zhuang Zhou himself; the Outer and Miscellaneous chapters are later, by followers and rival schools, which Graham sorted into Primitivists, Yangists, and Syncretists. The 33-chapter shape was fixed around 300 CE by the editor Guo Xiang, who cut it down from a longer 52-chapter version. Stops 8 and 9 leave the Inner Chapters for three of the best later stories, and say so where they do.</p>
-      <p>The breakdowns are mine. Most of the modern translations are still in copyright; they appear here in short excerpts, for comparison and study, with every translator named.</p>
-      <p class="colo-note">The painting on the homepage card and at the butterfly dream is Lu Zhi's <em>Zhuangzi Dreaming of a Butterfly</em> (Ming dynasty, Asian Art Museum of San Francisco), in the public domain.</p>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
-      <a href="/">&copy; 2026 Ethan Willingham</a>
-    </div>
+    <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a></div>
   </footer>
-
   <script src="/js/main.js"></script>
   <script src="/js/backtotop.js"></script>
-  <script src="/js/zhuangzi.js" defer></script>
+  <script src="/js/zhuangzi.js?v=20261002" defer></script>
 </body>
 </html>
