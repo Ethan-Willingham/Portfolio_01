@@ -773,7 +773,7 @@
       w._shadowClipped=true;
       for(const s of w.shelves)if(!w._visible||w._visible({x:s.cx,y:s.cy},150))drawFurnitureShadow(g,s,w);
       const b=w.body;
-      if(!w.fall&&(!w.level.campaign||w.isFloor(b)&&!w.edge.risk)){const height=Math.max(0,(b.z||0)-(w.ground?.lastHeight||0));groundPoly(g,circle(onGround(local(b,14,0)),23+height*.04,12+height*.02).map(onGround),P.dark,.12*Math.exp(-height/40));
+      if((!w.fall||w.fall.shopperOnly)&&(!w.level.campaign||w.isFloor(b)&&!w.edge.risk)){const height=Math.max(0,(b.z||0)-(w.ground?.lastHeight||0));groundPoly(g,circle(onGround(local(b,14,0)),23+height*.04,12+height*.02).map(onGround),P.dark,.12*Math.exp(-height/40));
       groundPoly(g,circle(onGround(w.shopper||local(b,-16,1)),6,5).map(onGround),P.dark,.22);
       groundPoly(g,Stock.hull([local(b,-20,-5),local(b,-12,5),local(b,4,13),local(b,-4,2)]).map(onGround),P.dark,.09);}
       for(let i=0;i<4;i++){const tire=Physics.casterPoint(b,w.wheels[i],i,0,0,4),floor=w.level.campaign?w.floorAt(tire):{height:0};if(floor){const height=Math.max(0,tire.z-floor.height-4);groundPoly(g,circle({...tire,z:floor.height},4+height*.018,2.8+height*.012),P.dark,.27*Math.exp(-height/24));}}

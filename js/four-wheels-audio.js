@@ -222,7 +222,7 @@
       this.active = true; this.cancelSleep();
       const ac = this.context, now = ac.currentTime, b = world.body;
       const loaded = world.wheels.filter(w => w.load > .02 && w.surface?.kind);
-      const ground = !world.fall && !world.ground.airborne && loaded.length > 0;
+      const ground = (!world.fall||world.fall.shopperOnly) && !world.ground.airborne && loaded.length > 0;
       const counts = new Map();
       for (const w of loaded) counts.set(w.surface.kind, (counts.get(w.surface.kind) || 0) + 1);
       const kind = [...counts].sort((a, z) => z[1] - a[1])[0]?.[0] || 'dirt';

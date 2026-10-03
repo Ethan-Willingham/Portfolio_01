@@ -155,7 +155,7 @@
   function catchPose(world){const c=world.level.sections[world.roomIndex],back=world.practice?c.index:c.back,target=world.level.sections[back];return {pose:{...target.start},gate:target.startGate,chapter:back,distance:target.startDistance};}
   const numbers=(o)=>Object.fromEntries(Object.entries(o).filter(([k,v])=>typeof v==='number'&&Number.isFinite(v)||typeof v==='string'||typeof v==='boolean'));
   function snapshot(w){return {version:VERSION,wheelMode:w.wheelMode,body:numbers(w.body),wheels:w.wheels.map(q=>({...numbers({...q,fixed:undefined}),coating:{...q.coating}})),gait:numbers(w.gait),time:w.time,gate:w.gate,peak:w.peak,falls:w.falls,messes:w.messes,roomIndex:w.roomIndex,fall:w.fall?JSON.parse(JSON.stringify(w.fall)):null,
-    shelves:w.shelves.map(numbers),objects:w.objects.map(numbers),items:w.stock.items.map(p=>({...numbers(p),shelfId:p.shelf?.id??null})),liquids:[...w.stock.liquids].map(([kind,l])=>({kind,cells:[...l.cells]})),stats:{...w.stock.stats},doors:w.trackDoors.map(numbers),ground:numbers(w.ground),edge:numbers(w.edge),circuit:numbers(w.circuit),terrainStats:numbers(w.terrainStats),shopper:numbers(w.shopper),ragdoll:w.ragdoll?JSON.parse(JSON.stringify(w.ragdoll)):null};}
+    shelves:w.shelves.map(numbers),objects:w.objects.map(numbers),items:w.stock.items.map(p=>({...numbers(p),shelfId:p.shelf?.id??null})),liquids:[...w.stock.liquids].map(([kind,l])=>({kind,cells:[...l.cells]})),stats:{...w.stock.stats},doors:w.trackDoors.map(numbers),ground:numbers(w.ground),edge:numbers(w.edge),circuit:numbers(w.circuit),terrainStats:numbers(w.terrainStats),shopper:numbers(w.shopper),shopperHang:w.shopperHang,ragdoll:w.ragdoll?JSON.parse(JSON.stringify(w.ragdoll)):null};}
   function restore(w,s){
     const legacy=s?.version===1,oldTilt=s?.version===2;
     if(legacy&&s.body&&Array.isArray(s.wheels)){s=JSON.parse(JSON.stringify(s));s.version=VERSION;s.body={...numbers(w.body),...s.body};s.wheels=s.wheels.map((q,i)=>({...numbers(w.wheels[i]),...q}));s.gate=Math.min(w.level.gates.length,s.gate);s.ground=numbers(w.ground);s.edge=numbers(w.edge);s.circuit=numbers(w.circuit);s.terrainStats=numbers(w.terrainStats);}
@@ -181,6 +181,7 @@
     if(s.fall&&!legacy&&(!Number.isFinite(s.fall.plane)||s.fall.impactTime!==null&&(!Number.isFinite(s.fall.impactTime)||s.fall.impactTime<0)))return false;
     if(s.fall&&(!valid(numbers(s.fall))||!['time','vz','pitch','roll'].every(k=>Number.isFinite(s.fall[k]))||!['lake','cliff'].includes(s.fall.kind)||!s.fall.catch||!Number.isInteger(s.fall.catch.chapter)||!w.level.sections[s.fall.catch.chapter]))return false;
     if(!legacy&&!oldTilt&&(!typed(s.shopper,w.shopper)||s.shopper.feet<0||s.shopper.feet>1||s.shopper.grip<0||s.shopper.grip>1||Math.abs(s.shopper.z)>2000))return false;
+    if(s.shopperHang!==undefined&&(!Number.isFinite(s.shopperHang)||s.shopperHang<0||s.shopperHang>.55)||s.fall?.shopperOnly!==undefined&&typeof s.fall.shopperOnly!=='boolean')return false;
     if(s.ragdoll!=null&&(!s.fall||!Terrain.validRagdoll(s.ragdoll)))return false;
     apply(w.body,s.body);s.wheels.forEach((q,i)=>{apply(w.wheels[i],q);w.wheels[i].coating={...q.coating};});apply(w.gait,s.gait);
     Object.assign(w,{time:s.time,gate:s.gate,peak:s.peak,falls:s.falls,messes:s.messes,roomIndex:s.roomIndex,fall:s.fall?{...numbers(s.fall),impactTime:s.fall.impactTime??null,plane:s.fall.plane??(s.fall.kind==='lake'?-50:-100),catch:null}:null});
@@ -198,6 +199,7 @@
       if(!w.isFloor(b)){const back=catchPose(w);Object.assign(b,back.pose,{vx:0,vy:0,omega:0});w.gate=back.gate;w.roomIndex=back.chapter;Terrain.init(w,w.terrainGeometry);}
     }
     if(legacy||oldTilt)Terrain.initShopper(w);else apply(w.shopper,s.shopper);
+    w.shopperHang=s.shopperHang??0;
     w.ragdoll=s.ragdoll?JSON.parse(JSON.stringify(s.ragdoll)):null;
     w.setWheelMode(s.wheelMode);w.stock.surfaceClock=0;w.distance=progress(w);w.walls=w.activeWalls();return true;
   }

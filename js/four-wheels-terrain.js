@@ -91,7 +91,7 @@
   function initShopper(w){
     const b=w.body,c=Math.cos(b.a),s=Math.sin(b.a),x=b.x-16*c,y=b.y-16*s,floor=w.floorAt({x,y});
     w.shopper={x,y,z:(floor?.height??b.z)+18,vx:b.vx,vy:b.vy,vz:b.vz,leanX:0,leanY:0,leanVX:0,leanVY:0,feet:floor?1:0,crouch:0,grip:1};
-    w.ragdoll=null;
+    w.ragdoll=null;w.shopperHang=0;
   }
   // Pelvis, chest, head, then paired hips, shoulders, elbows, hands, knees,
   // ankles. The torso is braced; the limbs keep independent momentum.
@@ -120,6 +120,12 @@
     w.ragdoll={nodes,lengths:RAG_PAIRS.map(([i,j])=>Math.hypot(pose[i].x-pose[j].x,pose[i].y-pose[j].y,pose[i].z-pose[j].z)),time:0,impactTime:null};
     p.feet=0;p.grip=0;w.ground.feet=0;
     w.emit('shopper-launch',{x:p.x,y:p.y,z:p.z});
+  }
+  function beginFall(w,shopperOnly=false){
+    const b=w.body,p=shopperOnly?w.shopper:b,hazard=w.hazardAt(p),back=w.catchPose();
+    w.fall={kind:hazard.kind,shopperOnly,time:0,vz:b.vz,pitch:b.pitch,roll:b.rollTilt,catch:back,impactTime:null,plane:hazard.kind==='lake'?-50:-100};
+    releaseShopper(w);w.falls++;w.messes++;w.lostDistance=Math.max(0,w.distance-back.distance);
+    w.emit('fall',{kind:hazard.kind,x:p.x,y:p.y,seconds:0,lost:w.lostDistance,catch:back.chapter});
   }
   function validRagdoll(r){
     return r&&Array.isArray(r.nodes)&&r.nodes.length===15&&r.nodes.every(n=>n&&['x','y','z','vx','vy','vz'].every(k=>Number.isFinite(n[k])&&Math.abs(n[k])<20000)&&typeof n.supported==='boolean')&&Array.isArray(r.lengths)&&r.lengths.length===RAG_PAIRS.length&&r.lengths.every(n=>Number.isFinite(n)&&n>.01&&n<70)&&Number.isFinite(r.time)&&r.time>=0&&r.time<30&&(r.impactTime===null||Number.isFinite(r.impactTime)&&r.impactTime>=0&&r.impactTime<=r.time);
@@ -228,7 +234,7 @@
     const list=contacts(w),active=[];let spatial=0,boostCount=0,impact=0;
     w.wheels.forEach(q=>q.load=0);
     for(const q of list){
-      const k=kinematics(b,q.x,q.y,q.z);const floor=w.fall?{height:w.fall.plane,gx:0,gy:0,grip:.65}:w.floorAt(k.p);q.k=k;q.floor=floor;
+      const k=kinematics(b,q.x,q.y,q.z);const floor=w.fall&&!w.fall.shopperOnly?{height:w.fall.plane,gx:0,gy:0,grip:.65}:w.floorAt(k.p);q.k=k;q.floor=floor;
       if(q.wheel>=0&&floor){spatial++;w.wheels[q.wheel].groundZ=floor.height;}
       if(!floor)continue;
       const gap=k.p.z-floor.height;
@@ -236,7 +242,7 @@
       // below the top cannot teleport through the underside of the platform.
       if(gap>1.3)continue;
       let wall=null;
-      if(gap< -4&&!w.fall){
+      if(gap< -4&&(!w.fall||w.fall.shopperOnly)){
         let best=null;
         for(let i=0;i<8;i++){const a=i*Math.PI/4,nx=Math.cos(a),ny=Math.sin(a);for(let distance=2;distance<=24;distance+=2)if(!w.isFloor({x:k.p.x+nx*distance,y:k.p.y+ny*distance})){if(!best||distance<best.distance)best={nx,ny,distance};break;}}
         if(best&&(!w.isFloor(b)||b.z<ground.lastHeight-20)){wall={x:best.nx,y:best.ny,z:0};q.side=true;q.sideDepth=best.distance;}
@@ -271,7 +277,7 @@
     storeAttitude(b,{w:attitudeNow.w-rx*attitudeNow.x-ry*attitudeNow.y,x:attitudeNow.x+rx*attitudeNow.w+ry*attitudeNow.z,y:attitudeNow.y+ry*attitudeNow.w-rx*attitudeNow.z,z:attitudeNow.z+rx*attitudeNow.y-ry*attitudeNow.x});
     ground.flightTime=ground.airborne?ground.flightTime+dt:0;
     if(ground.count){
-      if(!w.fall)ground.lastHeight=active.reduce((sum,q)=>sum+q.floor.height,0)/active.length;
+      if(!w.fall||w.fall.shopperOnly)ground.lastHeight=active.reduce((sum,q)=>sum+q.floor.height,0)/active.length;
       if(!w.fall&&wasAirborne&&ground.hangTime>.12){w.terrainStats.landings++;w.emit('land',{x:b.x,y:b.y,impact});}
       ground.hangTime=0;
     }else ground.hangTime+=dt;
@@ -282,13 +288,19 @@
     const risk=spatial<4&&!ground.airborne?clamp((4-spatial)/3+Math.abs(b.rollTilt)*.3,0,1):0;
     let threat=w.edge.threat||risk>.3;if(!w.fall&&threat&&spatial===4&&ground.count>=3){w.terrainStats.saves++;w.emit('save-edge',{x:b.x,y:b.y});threat=false;}
     w.edge={risk,count:spatial,threat};
-    // Falls become committed only after the body really drops beneath the lip.
-    // Until then the usual drive, pull, brake and contact forces remain active.
-    if(!w.fall&&((b.z<ground.lastHeight-38&&ground.airborne))){
-      const hazard=w.hazardAt(b),back=w.catchPose();w.fall={kind:hazard.kind,time:0,vz:b.vz,pitch:b.pitch,roll:b.rollTilt,catch:back,impactTime:null,plane:hazard.kind==='lake'?-50:-100};
-      releaseShopper(w);w.falls++;w.messes++;w.lostDistance=Math.max(0,w.distance-back.distance);w.emit('fall',{kind:hazard.kind,x:b.x,y:b.y,seconds:0,lost:w.lostDistance,catch:back.chapter});
+    // Brief stumbles can replant. A shopper left hanging from a supported cart
+    // releases independently, without removing the cart's road contacts.
+    if(!w.fall){
+      const floor=w.floorAt(person),dangling=person.feet===0&&ground.count>=2&&!ground.airborne&&person.z<ground.lastHeight+24&&(!floor||person.z<floor.height+8);
+      w.shopperHang=dangling?Math.min(.55,(w.shopperHang||0)+dt):0;
+      if(w.shopperHang>=.55)beginFall(w,true);
+    }
+    // A cart can still follow its shopper over the lip during the same fall.
+    if((!w.fall||w.fall.shopperOnly)&&b.z<ground.lastHeight-38&&ground.airborne){
+      if(w.fall){w.fall.shopperOnly=false;w.fall.impactTime=null;}else beginFall(w);
     }
     if(w.fall){const f=w.fall;f.time+=dt;f.vz=b.vz;
+      if(f.shopperOnly){if(w.ragdoll.impactTime!==null&&w.ragdoll.impactTime>.4||f.time>3.5)recover(w);return;}
       const bottom=Math.min(...list.map(q=>kinematics(b,q.x,q.y,q.z).p.z));
       if(f.impactTime===null&&(bottom<=f.plane+.1||active.some(q=>q.impulse>0))){f.impactTime=0;f.impactSpeed=impact;b.vx*=.65;b.vy*=.65;w.emit('fall-impact',{kind:f.kind,x:b.x,y:b.y,impact:f.impactSpeed});}
       if(f.impactTime!==null){f.impactTime+=dt;b.vx*=Math.exp(-2*dt);b.vy*=Math.exp(-2*dt);}

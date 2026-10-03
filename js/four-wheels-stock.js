@@ -458,7 +458,7 @@
         const base=w.level.campaign&&nearCart?w.floorAt({x:s.cx,y:s.cy},false)?.height??0:0;
         const shape=!nearCart?[]:w.level.campaign?geo.cartHull(b,base,base+s.height):geo.corners(b);
         const hits = [shape.length>=3?polygonContact(shape, poly):null];
-        const p = w.shopper||geo.point(b, geo.BODY.personX, 0); hits.push(circlePolygon(p.x, p.y, geo.BODY.personRadius, poly));
+        const p = w.shopper||geo.point(b, geo.BODY.personX, 0); hits.push(w.ragdoll?null:circlePolygon(p.x, p.y, geo.BODY.personRadius, poly));
         hits.forEach((h, i) => { if (h) {this.prepareHit(s,h,w.level.campaign?Math.min(s.height,i===0?22:15):i===0?22:15);if(w.level.campaign)h.cartZ=i===0?geo.contactHeight(shape,h):p.z+7;this.hitShelf(s,h,i===1&&w.shopper?w.shopperContact(h,s):w.impulse(h,s));} });
         if(nearCart)w.wheels.forEach((wheel, i) => {
           const h = polygonContact(geo.casterCorners(b, wheel, i), shelfPolygon(s));
@@ -495,7 +495,7 @@
         if (p.z-(b.z||0) > 6 && p.z-(b.z||0) < 26) { const h = polygonContact(geo.corners(b), poly); if (h) { const speed = Math.hypot(p.vx - b.vx, p.vy - b.vy); w.impulse(h, p); this.breakProduct(p, speed); } }
         if (Math.abs(p.z-(b.z||0)) < 6) {
           const person = geo.point(b, geo.BODY.personX, 0), shoe = circlePolygon(person.x, person.y, geo.BODY.personRadius, poly);
-          if (shoe) w.impulse(shoe, p);
+          if (shoe&&!w.ragdoll) w.impulse(shoe, p);
           w.wheels.forEach((wheel, i) => {
             if (p.broken) return;
             const h = polygonContact(geo.casterCorners(b, wheel, i), boxPolygon(p, p.length, p.width));

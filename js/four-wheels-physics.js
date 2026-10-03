@@ -477,7 +477,7 @@
       this.syncFixedWheels();
       this.trickHit=false;
       this.time += dt;
-      if(this.fall){this.fallStep(dt);this.tricks.step(dt,{},true);return;}
+      if(this.fall){if(!this.fall.shopperOnly){this.fallStep(dt);this.tricks.step(dt,{},true);return;}input={};}
       this.walls = this.activeWalls();
       this.boundaryContacts.forEach(c => { c.life -= dt; });
       this.boundaryContacts = this.boundaryContacts.filter(c => c.life > 0);
@@ -533,7 +533,7 @@
           if(contact&&shape)contact.cartZ=contactHeight(shape,contact);
           const hits = [contact];
           const person = this.shopper||point(b, BODY.personX, 0);
-          hits.push(this.wallOverlaps(rect,person.z||0,29)?circleRect(person.x, person.y, BODY.personRadius, rect):null);
+          hits.push(!this.ragdoll&&this.wallOverlaps(rect,person.z||0,29)?circleRect(person.x, person.y, BODY.personRadius, rect):null);
           for (let k = 0; k < hits.length; k++) {
             const h = hits[k];
             if (!h) continue;
@@ -594,7 +594,7 @@
         const cart = boxContact(b, touch), person = point(b, BODY.personX, 0);
         if (cart) this.boundaryContact(wall, cart, 'cart');
         const shopper = circleRect(person.x, person.y, BODY.personRadius, touch);
-        if (shopper) this.boundaryContact(wall, shopper, 'shopper');
+        if (shopper&&!this.ragdoll) this.boundaryContact(wall, shopper, 'shopper');
         this.wheels.forEach((wheel, i) => {
           const pose = casterPose(b, wheel, i), hit = polygonRectContact(casterCorners(b, wheel, i), pose, pose.a, touch);
           if (hit) this.boundaryContact(wall, hit, 'wheel:' + i);
@@ -662,10 +662,10 @@
         if(d.broken)continue;
         d.omega+=-2.5*wrap(d.a-d.rest)*dt;d.omega*=Math.exp(-1.8*dt);d.a=wrap(d.a+d.omega*dt);
         if(Math.abs(wrap(d.a-d.rest))>1.65){d.a=wrap(d.rest+Math.sign(wrap(d.a-d.rest))*1.65);d.omega*= -.08;}
-        if(this.fall||Math.hypot(this.body.x-d.cx,this.body.y-d.cy)>d.length+65)continue;
+        if(this.fall&&!this.fall.shopperOnly||Math.hypot(this.body.x-d.cx,this.body.y-d.cy)>d.length+65)continue;
         const base=this.floorAt({x:d.cx,y:d.cy},false)?.height??0,poly=Course.doorPolygon(d),shape=cartHull(b,base,base+40),cartHit=shape.length>=3?Stock.polygonContact(shape,poly):null,person=this.shopper||point(b,BODY.personX,0);
         if(cartHit)cartHit.cartZ=contactHeight(shape,cartHit);
-        const personHit=person.z+17>base&&person.z-10<base+40?Stock.circlePolygon(person.x,person.y,BODY.personRadius,poly):null;
+        const personHit=!this.ragdoll&&person.z+17>base&&person.z-10<base+40?Stock.circlePolygon(person.x,person.y,BODY.personRadius,poly):null;
         if(personHit)personHit.cartZ=person.z+7;
         const hits=[cartHit,personHit];
         let impact=0,closing=0;

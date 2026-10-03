@@ -205,7 +205,12 @@ geometry meets the lower plane, and frame and tire contacts produce the rebound
 and tumble before the catch returns it.
 
 When the drop becomes committed, the shopper releases the handle with an upward
-and outward pop. Fifteen physical joints carry the launch velocity and spin;
+and outward pop. A shopper stuck without footing beside a supported cart also
+releases after 0.55 seconds. The cart keeps its road contacts, collisions and
+rolling momentum while only the shopper tumbles, then both return to the usual
+catch. Brief slips can still replant, and airborne jumps do not start the hanging
+timer. The timer and shopper-only fall survive pause and saved-run reloads.
+Fifteen physical joints carry the launch velocity and spin;
 a braced torso, free elbows and knees, gravity, bone constraints and floor
 contacts produce the tumble and rebound. The cart falls independently. A short
 launch cue and a soft thud or splash follow the physical events. The camera

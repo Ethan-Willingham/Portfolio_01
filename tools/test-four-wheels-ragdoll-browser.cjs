@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..'),dump=process.env.DUMP||'/tmp/cart-ragdol
 const hooks=`
  window.__ragTest={
   stop:()=>{cancelAnimationFrame(raf);raf=0;},
-  edge:kind=>{prepare(new World(Course.build(kind==='lake'?3:6)));run();__ragTest.stop();Object.assign(world.body,kind==='lake'?{x:1680,y:1100,a:0,vx:65,vy:0,omega:0}:{x:710,y:722,a:Math.PI/2,vx:0,vy:3,omega:0});CartTerrain.init(world,world.terrainGeometry);world.wheels.forEach(q=>q.a=world.body.a);draw();},
+  edge:kind=>{prepare(new World(Course.build(kind==='lake'?3:6)));run();__ragTest.stop();Object.assign(world.body,kind==='lake'?{x:1680,y:1100,a:0,vx:65,vy:0,omega:0}:kind==='dangling'?{x:710,y:733,a:-Math.PI/2,vx:0,vy:0,omega:0}:{x:710,y:722,a:Math.PI/2,vx:0,vy:3,omega:0});CartTerrain.init(world,world.terrainGeometry);world.wheels.forEach(q=>q.a=world.body.a);draw();},
   step:seconds=>{__ragTest.stop();for(let i=0;i<Math.ceil(seconds*120)&&phase==='running';i++){world.step(1/120,controls());events();tickEffects(1/120);}draw();},
   commit:()=>{__ragTest.stop();for(let i=0;i<600&&!world.fall;i++){world.step(1/120,controls());events();tickEffects(1/120);}draw();},
   state:()=>({phase,run:Course.snapshot(world),input:controls()}),
@@ -28,13 +28,14 @@ async function touch(page,context,start,isWebKit){
   const label=phone?'phone':'desktop',context=await browser.newContext({viewport:phone?{width:852,height:393}:{width:1280,height:720},hasTouch:phone,isMobile:phone});await context.route('https://www.googletagmanager.com/**',r=>r.abort());
   if(process.env.CART_REMOTE_URL)await context.route('**/js/four-wheels.js?*',async route=>{const response=await route.fetch();assert.ok(response.ok());await route.fulfill({response,body:instrument(await response.text())});});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>!!window.__ragTest);await page.evaluate(()=>document.fonts.ready);
-  for(const kind of ['cliff','lake']){
+  for(const kind of ['cliff','lake','dangling']){
    await page.evaluate(kind=>__ragTest.edge(kind),kind);
    if(phone)await touch(page,context,true,isWebKit);else await page.keyboard.down('w');
    check(label+' actual input pushes toward '+kind,(await state(page)).input.push>.9);
    await page.evaluate(()=>__ragTest.commit());if(phone)await touch(page,context,false,isWebKit);else await page.keyboard.up('w');
    check(label+' '+kind+' releases a jointed shopper',(await state(page)).run.ragdoll?.nodes.length===15);
-   for(const dt of [.2,.2,.25,.35]){await page.evaluate(dt=>__ragTest.step(dt),dt);const s=await state(page),time=s.run.ragdoll?.time.toFixed(2);check(label+' '+kind+' joints remain in camera at '+time,(await page.evaluate(()=>__ragTest.visible())).every(p=>p.x>0&&p.x<p.width&&p.y>0&&p.y<p.height));await page.screenshot({path:path.join(dump,label+'-'+kind+'-'+time+'.png')});}
+   if(kind==='dangling')check(label+' only the dangling shopper falls',(await state(page)).run.fall.shopperOnly===true&&(await state(page)).run.ground.count===4);
+   for(const dt of kind==='dangling'?[.2,.2,.25,.35,.5,.4]:[.2,.2,.25,.35]){await page.evaluate(dt=>__ragTest.step(dt),dt);const s=await state(page),time=s.run.ragdoll?.time.toFixed(2);if(kind==='dangling')check(label+' cart stays supported through the tumble',s.run.ground.count===4&&Math.abs(s.run.body.z)<.1&&s.run.fall.shopperOnly);check(label+' '+kind+' joints remain in camera at '+time,(await page.evaluate(()=>__ragTest.visible())).every(p=>p.x>0&&p.x<p.width&&p.y>0&&p.y<p.height));await page.screenshot({path:path.join(dump,label+'-'+kind+'-'+time+'.png')});}
    const before=await state(page),first=await page.evaluate(()=>__ragTest.render()),second=await page.evaluate(()=>__ragTest.render());check(label+' drawing freezes ragdoll pose',first===second&&JSON.stringify(before.run.ragdoll)===JSON.stringify((await state(page)).run.ragdoll));
    await page.locator('#cart-pause').click();const paused=await state(page);await page.evaluate(()=>__ragTest.step(.4));check(label+' pause freezes every joint',JSON.stringify(paused.run.ragdoll)===JSON.stringify((await state(page)).run.ragdoll));
    await page.reload();await page.waitForFunction(()=>!!window.__ragTest);check(label+' Continue restores the exact tumble',JSON.stringify(paused.run.ragdoll)===JSON.stringify((await state(page)).run.ragdoll));

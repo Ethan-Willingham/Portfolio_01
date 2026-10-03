@@ -5,6 +5,21 @@ const step=(w,s,input={})=>{for(let i=0;i<Math.ceil(s*120);i++)w.step(1/120,inpu
 const commit=w=>{for(let i=0;i<600&&!w.fall;i++)w.step(1/120,{push:1});assert.ok(w.fall&&w.ragdoll);};
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
 function check(name,fn){fn();console.log('PASS '+name);}
+const hanging=mode=>{const w=make('cliff',mode);Object.assign(w.body,{x:710,y:733,a:-Math.PI/2,vx:0,vy:0,omega:0});T.init(w,w.terrainGeometry);w.wheels.forEach(q=>q.a=w.body.a);w.syncFixedWheels();return w;};
+for(const mode of ['all-swivel','front-swivel'])check('a stuck dangling shopper pops while the cart stays on the road with '+mode,()=>{
+ const w=hanging(mode),cart={...w.body};assert.equal(w.shopper.feet,0);assert.equal(w.floorAt(w.shopper),null);step(w,.25);assert.equal(w.ragdoll,null,'a short recovery window remains');step(w,.35);assert.ok(w.fall?.shopperOnly&&w.ragdoll);assert.equal(w.falls,1);assert.equal(w.shopper.grip,0);
+ step(w,.6,{push:1,turn:1,brake:1});assert.ok(w.shopper.z>40&&distance(w.shopper,w.body)>60);assert.equal(w.ground.count,4);assert.equal(w.ground.airborne,false);assert.ok(Math.abs(w.body.z-cart.z)<.01&&Math.hypot(w.body.x-cart.x,w.body.y-cart.y)<1,'the cart retains real road support');assert.equal(w.events.filter(e=>e.type==='fall-impact').length,0,'the parked cart never hits the lower plane');
+ step(w,3);assert.equal(w.fall,null);assert.equal(w.ragdoll,null);assert.equal(w.falls,1);assert.equal(w.roomIndex,0);assert.equal(w.shopperHang,0);
+});
+check('the dangling grace period and shopper-only tumble survive saves',()=>{
+ const w=hanging();step(w,.3);const waiting=structuredClone(C.snapshot(w)),r=hanging();assert.ok(C.restore(r,waiting));assert.equal(r.shopperHang,w.shopperHang);step(w,.4);step(r,.4);assert.deepEqual(r.body,w.body);assert.deepEqual(r.ragdoll,w.ragdoll);assert.ok(w.fall.shopperOnly);
+ const airborne=structuredClone(C.snapshot(w)),continued=hanging();assert.ok(C.restore(continued,airborne));step(w,.4,{push:1,turn:1,brake:1});step(continued,.4);assert.deepEqual(continued.body,w.body);assert.deepEqual(continued.ragdoll,w.ragdoll);
+ for(const change of [s=>s.shopperHang=-1,s=>s.shopperHang=2,s=>s.fall.shopperOnly='yes']){const bad=structuredClone(airborne);change(bad);assert.equal(C.restore(hanging(),bad),false);}
+ const old=structuredClone(waiting);delete old.shopperHang;const upgraded=hanging();assert.ok(C.restore(upgraded,old));assert.equal(upgraded.shopperHang,0);
+});
+check('a cart following its released shopper over the lip counts one fall',()=>{
+ const w=hanging();step(w,.6);assert.ok(w.fall.shopperOnly);Object.assign(w.body,{x:710,y:790,z:-40,vx:0,vy:15,vz:-10});w.ground.lastHeight=0;step(w,1/120);assert.equal(w.fall.shopperOnly,false);assert.equal(w.falls,1);step(w,4);assert.equal(w.fall,null);assert.equal(w.falls,1);
+});
 check('a recoverable edge overhang never releases the shopper',()=>{const w=make();step(w,.15);assert.equal(w.ragdoll,null);step(w,1.5,{push:-1});assert.equal(w.falls,0);assert.equal(w.ragdoll,null);assert.ok(w.body.y<705);});
 for(const kind of ['cliff','lake'])for(const mode of ['all-swivel','front-swivel'])check(kind+' launches, tumbles, lands and catches with '+mode,()=>{
  const w=make(kind,mode);commit(w);const start={...w.shopper},initialUp=w.ragdoll.nodes[1].z-w.ragdoll.nodes[0].z,identity=[w.body,w.wheels,w.stock],initialNodes=structuredClone(w.ragdoll.nodes);assert.equal(w.shopper.grip,0);assert.equal(w.shopper.feet,0);assert.ok(w.ragdoll.nodes[0].vz>100);
