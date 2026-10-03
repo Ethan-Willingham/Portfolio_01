@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-03",
+  "conditions": {
+    "hardware": "MacBookPro18,3",
+    "headless": true,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "device_pixel_ratio": 2,
+    "canvas": {
+      "width": 2560,
+      "height": 1440
+    },
+    "duration_per_mode_ms": 2500
+  },
+  "measurements": [
+    {
+      "browser": "chrome",
+      "mode": "wide",
+      "fps": 120,
+      "frames": 300,
+      "frame_p95": 8.900000000000091,
+      "draw_median": 0.20000004768371582,
+      "draw_p95": 0.30000007152557373,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 3,
+      "raster_builds": 0
+    },
+    {
+      "browser": "chrome",
+      "mode": "scope",
+      "fps": 120,
+      "frames": 300,
+      "frame_p95": 8.899999999999636,
+      "draw_median": 0.19999992847442627,
+      "draw_p95": 0.2999999523162842,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2,
+      "raster_builds": 0
+    },
+    {
+      "browser": "chrome",
+      "mode": "pan",
+      "fps": 119.99202710783337,
+      "frames": 301,
+      "frame_p95": 9,
+      "draw_median": 0.20000004768371582,
+      "draw_p95": 0.3999999761581421,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 44,
+      "raster_builds": 15
+    },
+    {
+      "browser": "webkit",
+      "mode": "wide",
+      "fps": 60.98047030689518,
+      "frames": 153,
+      "frame_p95": 19,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 0,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "scope",
+      "fps": 61.925689172992406,
+      "frames": 155,
+      "frame_p95": 18,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 2,
+      "raster_builds": 0
+    },
+    {
+      "browser": "webkit",
+      "mode": "pan",
+      "fps": 57.88032850997262,
+      "frames": 148,
+      "frame_p95": 19,
+      "draw_median": 0,
+      "draw_p95": 1,
+      "width": 2560,
+      "height": 1440,
+      "hud_mutations": 43,
+      "raster_builds": 16
+    }
+  ],
+  "purpose": "Post-repair FPS verification with unchanged renderer and tile budgets."
+}

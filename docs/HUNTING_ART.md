@@ -8,6 +8,28 @@ are asset history. Their pixel-art prompts and normalization settings do not
 define the new painterly target. The first scenery brief is
 `hunting-style/FIRST_MAP.md`.
 
+## Version 13, repair the reported center-field vegetation
+
+The owner flagged the scope's oversized hooked plants and artificial-looking
+tree line. A registered repaint replaces that weed cluster with low meadow
+grass and joins the abrupt ridge step behind the central tree. It retains the
+open field, tree locations, light bands and bright source colors. The selected
+edit uses Constable and Homer references with the built-in imagegen tool.
+`assets/hunting/source-v13/ASSET_BRIEF.md` contains the full production record,
+selection review and matched scope comparison.
+
+The repair crosses four existing tiles. The export builder replaces old paint
+inside the repair's feathered coverage, including newly opened sky gaps, then
+exports those four tiles at the existing 1664 by 936 size. It reuses the other
+ten version 9 tiles. The current manifest and overview are `birch-detail-v13.json`
+and `birch-terrain-v13.webp`. Fourteen tiles, the six-image cache and display
+sampling stay in use; the repair adds no runtime layer or per-frame draw work.
+
+Rebuild the current scene with `NODE_PATH=/path/to/node_modules node
+tools/build-hunting-detail.cjs`. Use `--check` for current fingerprints and
+`--version 9 --check` for the unchanged original assets. `--scenery-review` on
+the browser harness captures the exact reported scenery and the repair edges.
+
 ## Version 11, reuse display-resolution scenery
 
 The owner requested better FPS without changing the painted scene. The renderer
@@ -61,7 +83,7 @@ remain registered to the version 8 underpainting.
 - `assets/hunting/birch-terrain-v9.webp`: 2048 by 1152 wide overview.
 - `assets/hunting/birch-detail-v9.json`: source hashes, placement and native density.
 
-Rebuild with `NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs`.
+Rebuild this historical version with `NODE_PATH=/path/to/node_modules node tools/build-hunting-detail.cjs --version 9`.
 Its `--check` verifies all native masters, runtime dimensions and fingerprints.
 It performs registration, smooth downsampling and edge compositing. It does not
 synthesize painted content or enlarge the old source to invent detail.

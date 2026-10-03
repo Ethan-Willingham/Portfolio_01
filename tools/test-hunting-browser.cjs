@@ -7,7 +7,7 @@ const { execFileSync } = require('node:child_process');
 const { chromium, webkit } = require('playwright');
 const { Campaign, SAVE_KEY } = require('../js/hunting-campaign.js');
 const root = path.resolve(__dirname, '..');
-const dump = process.env.DUMP || '/tmp/hunting-game-v12-qa';
+const dump = process.env.DUMP || '/tmp/hunting-game-v13-qa';
 const baselineIndex=process.argv.indexOf('--baseline'),baseline=baselineIndex>=0?process.argv[baselineIndex+1]:null;
 fs.mkdirSync(dump, { recursive: true });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
@@ -287,6 +287,24 @@ async function pointerShot(page, species='deer', level=1, depth=80, wind=.7) {
   try {
     await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
     const url='http://127.0.0.1:'+server.address().port+'/hunting-game.html';
+    if(process.argv.includes('--scenery-review')) {
+      browser=await chromium.launch({headless:true,executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'});
+      const context=await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:2});
+      const page=await setup(context,url);
+      await page.evaluate(()=>{__huntTest.quiet();__huntTest.clock(407);});
+      fs.writeFileSync(path.join(dump,'wide.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
+      for(const [name,x,y] of [['reported',320,155],['left-edge',288,158],['right-edge',376,158],['lower-edge',330,215]]) {
+        await page.evaluate(({x,y})=>__huntTest.sceneFocus(x,y),{x,y});
+        await page.waitForFunction(()=>{const d=__huntTest.detailState();return d.active.length&&d.active.every(t=>t.state==='ready');});
+        fs.writeFileSync(path.join(dump,'scope-'+name+'.png'),Buffer.from(await page.evaluate(()=>__huntTest.screenshot()),'base64'));
+      }
+      await page.evaluate(()=>__huntTest.sceneFocus(320,155));
+      await page.screenshot({path:path.join(dump,'scope-interface.png')});
+      const retina=await state(page);
+      fs.writeFileSync(path.join(dump,'scene-state.json'),JSON.stringify(retina,null,2)+'\n');
+      check('scenery review loads all intersecting native tiles without page errors',errors.length===0&&missing.length===0);
+      return;
+    }
     if(process.argv.includes('--benchmark')) {
       const measurements=[];
       for(const [name,engine,options] of [['chrome',chromium,{executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'}],['webkit',webkit,{}]]) {

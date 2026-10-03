@@ -1,0 +1,296 @@
+{
+  "version": 13,
+  "horizon": 0.444,
+  "overview": "assets/hunting/birch-terrain-v13.webp",
+  "underpaint": "assets/hunting/birch-terrain-v8.webp",
+  "overview_sha256": "e25e12bc2f5d93b75f768f127aa17b6593d91adad402cdd5dfcfab6d30659f3c",
+  "source": "assets/hunting/source-v8/terrain.png",
+  "source_sha256": "8e6825725915e7121c367956b3f86a4f18b1f2d165f4001799760465334abbab",
+  "effective_width": 6183,
+  "effective_height": 3481,
+  "tiles": [
+    {
+      "id": "terrain-0-0",
+      "row": 0,
+      "col": 0,
+      "rect": [
+        -0.009569377990430622,
+        -0.009564293304994687,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-0-0.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 1056572,
+      "input_sha256": "a4c1416b67e5c05b833ee42e2112c7bc03621fde59355fe80da2e354506e9fe5",
+      "source_sha256": "5687352e93d53b2bc00f1379214a5789862a34d5256dd79a67fac5922b74481d",
+      "sha256": "8e697f7d0c0068fb689fea58562cd84387eedce7d5e41fe2bb44f6c3768dee84"
+    },
+    {
+      "id": "terrain-0-1",
+      "row": 0,
+      "col": 1,
+      "rect": [
+        0.24043062200956938,
+        -0.009564293304994687,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-0-1.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 228692,
+      "input_sha256": "6f375e8392cb747c34eb347c1a6ca8ed450ab069f8a5b646a433b84293da6024",
+      "source_sha256": "a2a1673c0a3c4e094d59dea63bdf4df7d6747835eaec80b6bf3e9c1f0c46ffd6",
+      "sha256": "966a032751fd7e66d0472abd7359fb040bf1ae4b3d8aba7f9403c2065a9b897a"
+    },
+    {
+      "id": "terrain-1-0",
+      "row": 1,
+      "col": 0,
+      "rect": [
+        -0.009569377990430622,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-1-0.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 1083646,
+      "input_sha256": "57ab8f92a937a9df30a4fbaaec19f8809355f9a8524b083f6502132140192b6e",
+      "source_sha256": "4097dad407f5bb777a5d0da5d84600928b9d9dac029ce5842a6745f8ba81a5ad",
+      "sha256": "7699541db9dfc6d66a1d9b96aca6775eccb0e6b586a3e20c8350da96b37774fb"
+    },
+    {
+      "id": "terrain-1-1",
+      "row": 1,
+      "col": 1,
+      "rect": [
+        0.24043062200956938,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v13/terrain-1-1.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 395530,
+      "input_sha256": "7c108303d4a6f77c69c8f1a336c9835c1329925089010fd4c37b94e8785dbfaa",
+      "source_sha256": "260cb68dc37d1e130bb391d5b376b1caafb3bc8809b12ca5a03e394467bfe7ad",
+      "sha256": "a5902077288b835f8c6897765606b9dd1eb131c515c297b5bf322aaf6822024c",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-1-2",
+      "row": 1,
+      "col": 2,
+      "rect": [
+        0.4904306220095694,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v13/terrain-1-2.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 299230,
+      "input_sha256": "b67f642f97b6de5330a3c6bc69dcd98c41240ad645dc49f42ed32db254d77c12",
+      "source_sha256": "bc32e2e092052ade6b58e789f04cb6d229e84f8123c33e9a3552712b4be8d09c",
+      "sha256": "fbf6a5a5a16d5b4b6ffed9d4a1ad90afcad4e40447d70f94f5bb4bd9220781ee",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-1-3",
+      "row": 1,
+      "col": 3,
+      "rect": [
+        0.7404306220095693,
+        0.24017003188097769,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-1-3.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 692838,
+      "input_sha256": "623eb93d72d19efc704a4c37268a5e33b1060194fe94d2e4bfbd3650884cd7f8",
+      "source_sha256": "a4b6ee772aa9149de09bbd5a3419a4a5e95396f40cfca1388cdb2352e8663ab5",
+      "sha256": "3efbdfb56efdd718b843afea4f1ef966ed22076aec6475c74a90829267638b0b"
+    },
+    {
+      "id": "terrain-2-0",
+      "row": 2,
+      "col": 0,
+      "rect": [
+        -0.009569377990430622,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-2-0.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 840708,
+      "input_sha256": "ab5962805e0d070738cf0464fcdd29b31acf42bc1b97754ab8ffb9fc99a4b4af",
+      "source_sha256": "e1200d6965d5471fd7fa3b809523ee5abfec28b274b372e54c560503f9022f10",
+      "sha256": "438d38a962b9f30dc238acd094d5e33da68e2c596183e01bdb77f6ea476eb943"
+    },
+    {
+      "id": "terrain-2-1",
+      "row": 2,
+      "col": 1,
+      "rect": [
+        0.24043062200956938,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v13/terrain-2-1.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 813558,
+      "input_sha256": "6a6951be935ef61ccf88dcdd1c403ad6b218d1cdaef2f459fcf157a1a2c24bf0",
+      "source_sha256": "0a32e65ae858d44b4109f555aa30b21fa3d5c585d87a281607e3e40fda687433",
+      "sha256": "163e24057324f5328c37c1eb07f1285ea6b83214e697a5da0697abdc07c03e35",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-2-2",
+      "row": 2,
+      "col": 2,
+      "rect": [
+        0.4904306220095694,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v13/terrain-2-2.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 788846,
+      "input_sha256": "4b16f19974f0a77da252113c9d9674f30380d345901788ab7c5da23e4568e5bd",
+      "source_sha256": "285de2191defce5624220e3533dcf0dfb1061e67f91d831d6303f4809f50790d",
+      "sha256": "162302fee295c97e37e73989c2e9b6e1fd0e8f9cac02e11b42e653ef41da50e7",
+      "repairs": [
+        "center-repair"
+      ]
+    },
+    {
+      "id": "terrain-2-3",
+      "row": 2,
+      "col": 3,
+      "rect": [
+        0.7404306220095693,
+        0.48990435706695007,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-2-3.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 914290,
+      "input_sha256": "72fa4306642588287b4483428ecba3d17968eb9380ccbdab08182dbb26a6c207",
+      "source_sha256": "60b6bb9b7e093690eb22fa8d540621478a354a910513c244e6cfdbfbd683697d",
+      "sha256": "06d67cf23026679e8f6b1717b27c79fca4d1ba79bfd398055aa16451c24e0e4d"
+    },
+    {
+      "id": "terrain-3-0",
+      "row": 3,
+      "col": 0,
+      "rect": [
+        -0.009569377990430622,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-3-0.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 847174,
+      "input_sha256": "2a34e7e81a67f72b4a139dc0dc54954cc0c88ce0d6a15defdbba9187e80c931b",
+      "source_sha256": "4d77c9a546dd583bb0cef01607d01a901ed59863f1147f3c749918850b55bf3c",
+      "sha256": "1c1759956915257e97e1f982aa37f07dce94786462e113e3aaee110bb2b06c3f"
+    },
+    {
+      "id": "terrain-3-1",
+      "row": 3,
+      "col": 1,
+      "rect": [
+        0.24043062200956938,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-3-1.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 960348,
+      "input_sha256": "e812418a4c4eaf2f92a03741695a9e3a0525d8efd9e34c4d3df2efc60986dae9",
+      "source_sha256": "d2a8e9dc8b4b83c4b0797846237b3842df9e12e63eb648815d6b62a6ef04e367",
+      "sha256": "70465f16b4b4306d817f47a023407cec0dd077e85b84db4baa8264d48a846e95"
+    },
+    {
+      "id": "terrain-3-2",
+      "row": 3,
+      "col": 2,
+      "rect": [
+        0.4904306220095694,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-3-2.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 848364,
+      "input_sha256": "5836c7c9eeb444137931e78ec9ba9966aaab658165de917469c29a20db1be621",
+      "source_sha256": "05538f75cad29082f6965fe53d1d90d4452073e954fd304390d16ed1cc7c4474",
+      "sha256": "94fed4c19bc5ba9de503d9df727ed5a83ac43f78f7311b0cf3fee6e661035195"
+    },
+    {
+      "id": "terrain-3-3",
+      "row": 3,
+      "col": 3,
+      "rect": [
+        0.7404306220095693,
+        0.7396386822529224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "file": "assets/hunting/detail-v9/terrain-3-3.webp",
+      "width": 1664,
+      "height": 936,
+      "bytes": 846736,
+      "input_sha256": "c56cde7995e09b99f3d03841e08b23eedb8d5207f68e45d90a8550460dcfd63e",
+      "source_sha256": "f30f5ecbeba3c599488a756feaf479ba1ae0e22ce1f4234309ba7bbf27346bcc",
+      "sha256": "814d87b397a966b830cf14d2e70b46c188ee85fc20db89dad389abb4ab61796e"
+    }
+  ],
+  "repairs": [
+    {
+      "id": "center-repair",
+      "input": "assets/hunting/source-v13/inputs/center-before.png",
+      "master": "assets/hunting/source-v13/tiles/terrain-center-repair.png",
+      "density_input_size": [
+        450,
+        253
+      ],
+      "rect": [
+        0.3827751196172249,
+        0.37194473963868224,
+        0.26913875598086123,
+        0.2688629117959617
+      ],
+      "input_sha256": "8b8b377d3c91a7715c6de55c44dfeeed35f514378ed5b03542dcfafddf63aa4c",
+      "source_sha256": "bbfc10ccebb5d4e2e2fcb91ba04054b62a0e94a2fd10e15df2af8e3bb52ffb6f"
+    }
+  ]
+}
