@@ -2398,7 +2398,7 @@
   }
 
   function uiCoversDomEffectLayers() {
-    return !!(UI_NEW && ((shopState !== 'closed') || gameOver || gameWon));
+    return !!(UI_NEW && ((shopState !== 'closed') || (gameOver && !deathSceneCapture) || gameWon));
   }
 
   function setDomEffectLayerHidden(layer, hidden) {

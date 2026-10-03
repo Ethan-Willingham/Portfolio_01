@@ -242,16 +242,27 @@
   function bathToolGuestTick(g, dt) {
     var s = g.s, t = bathTool, held = t.held === g;
     var b = bathToolBounds(), c = b.curve, line = bathWaterline();
+    var sample = bathMode && typeof liquidSampleBall === 'function' ? liquidSampleBall(s.x, s.y, s.r, 0) : null;
+    // Live guests read dense water beside their displaced volume. Parked
+    // offscreen water retains the same conserved cavity-volume waterline.
+    if (sample) line = sample.surface;
+    s._bathLine = line;
+    var currentX = sample && isFinite(sample.surface) ? sample.vx : 0;
+    var currentY = sample && isFinite(sample.surface) ? sample.vy : 0;
+    s._bathFlowX = (s._bathFlowX || 0) + (currentX - (s._bathFlowX || 0)) * (1 - Math.exp(-dt * 2));
+    s._bathFlowY = (s._bathFlowY || 0) + (currentY - (s._bathFlowY || 0)) * (1 - Math.exp(-dt * 2));
     var steps = Math.max(1, Math.ceil(dt * 120)), h = dt / steps;
     for (var n = 0; n < steps; n++) {
       var inBowl = s.x > c.x0 + s.r && s.x < c.x1 - s.r;
-      var wet = inBowl && bathWater > 0 ? Math.max(0, Math.min(1, (s.y + s.r - line) / (2 * s.r))) : 0;
-      s.vy += 300 * (1 - 1.9 * wet) * h;
+      var wet = inBowl && bathWater > 0 ? skySlimeSubmerged(s, line, sample ? sample.bottom : Infinity) : 0;
+      s.vy += SKY_SLIME_GRAVITY * (1 - wet / 0.72) * h;
       if (held) {
         s.vx += ((t.x - s.x) * 180 - s.vx * 22) * h;
         s.vy += ((t.y + s.r + 8 - s.y) * 180 - s.vy * 22) * h;
       }
-      s.vx *= Math.exp(-h * (0.45 + wet * 2.8)); s.vy *= Math.exp(-h * wet * 2.4);
+      var drag = Math.exp(-h * wet * (3.5 + Math.hypot(s.vx, s.vy) * 0.018));
+      s.vx = s.vx * Math.exp(-h * 0.45) * drag + s._bathFlowX * (1 - drag) * 0.08;
+      s.vy = s.vy * drag + s._bathFlowY * (1 - drag) * 0.08;
       // The hose pushes guests along its live stream; their boundary pushes water.
       if (t.mode === 'hose' && t.output > 0) {
         var dx = Math.sin(t.tilt), dy = Math.cos(t.tilt);
@@ -264,7 +275,14 @@
       s.vx = Math.max(-650, Math.min(650, s.vx)); s.vy = Math.max(-650, Math.min(650, s.vy));
       var q = bathToolProject(s.x + s.vx * h, s.y + s.vy * h, s.vx, s.vy, s.r);
       s.x = q[0]; s.y = q[1]; s.vx = q[2]; s.vy = q[3];
-      s.wet = wet;
+      s.wet = wet; s._ground = wet < 0.01 && Math.abs(s.vy) < 1;
+      s.angle += (s.spin || 0) * h; s.spin *= Math.exp(-wet * h * 2);
+      if (!s._bathEntryWet && wet > 0.08 && !held) {
+        s._bathEntryWet = true;
+        if (bathMode && typeof liquidToolImpulse === 'function')
+          liquidToolImpulse(s.x, line, s.r * 1.9, s.vx * 0.2, Math.min(90, Math.max(0, s.vy)) * 0.35);
+        if (bathMode) bathSplashPoof(s.x, line, 0.6);
+      }
     }
     // Keep two guests from occupying the same fluid boundary.
     for (var i = 0; i < bathGuests.length; i++) {
@@ -277,8 +295,6 @@
     }
     if (!held && s.wet > 0.25) {
       g.st = 'soak';
-      if (bathCanServe()) { g.served = true; g.soak = Math.min(BATH_VISIT.seconds, g.soak + dt); }
-      if (g.soak >= BATH_VISIT.seconds) { g.manual = false; bathFinishGuest(g); }
     } else g.st = held || s.wet > 0 || Math.hypot(s.vx, s.vy) > 10 ? 'play' : 'wait';
     s.settled = !held && Math.hypot(s.vx, s.vy) < 3;
     return true;
@@ -286,13 +302,17 @@
   function bathToolCollider() {
     if (!bathMode || hearthView !== 'bath' || !bathTool.mode || bathFading) return;
     var t = bathTool, r = t.mode === 'claw' ? 17 : 12;
-    bathGuestColliders.push({ x: t.x, y: t.y, hw: r, hh: r, vx: t.vx, vy: t.vy, pts: null });
+    bathGuestColliders.push(bathToolCircleBoundary(t.x, t.y, r, t.vx, t.vy));
     if (t.mode === 'claw') for (var side = -1; side <= 1; side += 2) {
       var x = side * (13 + t.jaw * 18), y = 36;
-      bathGuestColliders.push({ x: t.x + x * Math.cos(t.tilt) + y * Math.sin(t.tilt),
-        y: t.y - x * Math.sin(t.tilt) + y * Math.cos(t.tilt),
-        hw: 7, hh: 7, vx: t.vx, vy: t.vy, pts: null });
+      bathGuestColliders.push(bathToolCircleBoundary(t.x + x * Math.cos(t.tilt) + y * Math.sin(t.tilt),
+        t.y - x * Math.sin(t.tilt) + y * Math.cos(t.tilt), 7, t.vx, t.vy));
     }
+  }
+  function bathToolCircleBoundary(x, y, r, vx, vy) {
+    var pts = [];
+    for (var i = 0; i < 16; i++) { var a = i / 16 * Math.PI * 2; pts.push(x + Math.cos(a) * r, y + Math.sin(a) * r, vx, vy); }
+    return { x: x, y: y, hw: r, hh: r, vx: vx, vy: vy, mvx: vx, mvy: vy, pts: pts };
   }
   function bathToolDrawRail(c, b) {
     // This fixed rail is part of the room even when the working head is stowed.
@@ -363,10 +383,31 @@
     c.restore();
   }
 
-  // CPU fallback uses the same circular moving boundaries as the GPU registry.
+  // CPU fallback projects onto the same changing contours as the GPU registry.
   function bathToolProjectLiquid(x, y, vx, vy, r) {
     for (var i = 0; i < bathGuestColliders.length; i++) {
       var g = bathGuestColliders[i], dx = x - g.x, dy = y - g.y;
+      if (Math.abs(dx) > g.hw + r || Math.abs(dy) > g.hh + r) continue;
+      if (g.pts && g.pts.length >= 12) {
+        var inside = false, best = Infinity, qx = 0, qy = 0, nx = 0, ny = 0, bvx = 0, bvy = 0;
+        for (var j = 0; j < g.pts.length; j += 4) {
+          var k = (j + 4) % g.pts.length, ax = g.pts[j], ay = g.pts[j + 1], bx = g.pts[k], by = g.pts[k + 1];
+          if ((ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax) inside = !inside;
+          var ex = bx - ax, ey = by - ay, length2 = ex * ex + ey * ey;
+          var t = skySlimeClamp(((x - ax) * ex + (y - ay) * ey) / Math.max(0.0001, length2), 0, 1);
+          var px = ax + ex * t, py = ay + ey * t, d2 = (x - px) * (x - px) + (y - py) * (y - py);
+          if (d2 < best) {
+            best = d2; qx = px; qy = py; var length = Math.sqrt(Math.max(0.0001, length2));
+            nx = ey / length; ny = -ex / length;
+            bvx = g.pts[j + 2] * (1 - t) + g.pts[k + 2] * t;
+            bvy = g.pts[j + 3] * (1 - t) + g.pts[k + 3] * t;
+          }
+        }
+        if (!inside && best >= r * r) continue;
+        x = qx + nx * r; y = qy + ny * r;
+        var inward = Math.min(0, (vx - bvx) * nx + (vy - bvy) * ny);
+        vx -= nx * inward; vy -= ny * inward; continue;
+      }
       var distance = Math.hypot(dx, dy), radius = g.hw + r;
       if (distance >= radius) continue;
       var nx = distance > 0.001 ? dx / distance : 0;

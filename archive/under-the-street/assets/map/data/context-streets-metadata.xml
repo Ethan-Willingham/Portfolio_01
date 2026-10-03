@@ -1,0 +1,742 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>Norman Anderson</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                		
+        
+        <rpPosName>GIS Technical Lead ITS4</rpPosName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntPhone>
+                                				
+                
+                <voiceNum>651-201-2483</voiceNum>
+                                			
+            
+            </cntPhone>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>658 Cedar Street</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55155</postCode>
+                                				
+                
+                <eMailAdd>gisinfo.mngeo@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20260618</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_mngeo/trans_road_centerlines_open/FeatureServer</linkage>
+                                			
+                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                        		
+            
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/516/trans_road_centerlines_open.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>Road Centerlines, Compiled from Opt-In Open Data Counties, Minnesota</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2026-06-18</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>This dataset is a compilation of road centerline data from Minnesota suppliers that have opted-in for their road centerline data to be included in this dataset. 
+
+It includes the following 55 counties (46 suppliers) that have opted-in to share their data openly as of the publication date of this dataset: Metropolitan Emergency Services Board (10 county), Aitkin County, Anoka County, Becker County, Benton County, Big Stone County, Carlton County, Carver County, Cass County, Chippewa County, Chisago County, Clay County, Clearwater County, Cook County, Crow Wing County, Dakota County, Douglas County, Faribault County, Fillmore County, Hennepin County, Houston County, Isanti County, Itasca County, Jackson County, Koochiching County, Lac qui Parle County, Lake County, Lake of the Woods County, Le Sueur County, Lyon County, Marshall County, McLeod County, Morrison County, Mower County, Murray County, Olmsted County, Otter Tail County, Pipestone County, Polk County, Pope County, Ramsey County, Renville County, Rice County, Rock County, Saint Louis County, Scott County, Sherburne County, Stearns County, Steele County, Stevens County, Wabasha County, Waseca County, Washington County, Winona County, Wright County, Yellow Medicine County
+
+
+The two sources of road centerline data are the Minnesota Next Generation 9-1-1 (NG9-1-1) Program, in collaboration with local data suppliers, and the MetroGIS Road Centerlines (Geospatial Advisory Council Schema) which is on the Minnesota Geospatial Commons:
+
+The Minnesota NG9-1-1 Program enterprise database provides the data outside of the Metro Region which is provide by the suppliers. The data have been aggregated into a single dataset which implements the MN NG9-1-1 GIS Data Model (https://ng911gis-minnesota.hub.arcgis.com/documents/79beb1f9bde84e84a0fa9b74950f7589/about ). 
+
+Only data which have meet the requirements for supporting NG9-1-1 are in the statewide aggregate GIS data. MnGeo extracts the available data, applies domain translations, and transforms it to UTM Zone 15 to comply with the GAC road centerline attribute schema: https://www.mngeo.state.mn.us/committee/standards/roadcenterline/index.html. 
+
+The MetroGIS Road Centerlines data was created by a joint collaborative project involving the technical and managerial GIS staff from the the Metropolitan Counties (Anoka, Carver, Chisago, Dakota, Hennepin, Isanti, Ramsey, Scott, Sherburne, and Washington), the Metropolitan Emergency Services Board, MetroGIS and the Metropolitan Council. The data are pulled from the Minnesota Geospatial Commons: https://gisdata.mn.gov/dataset/us-mn-state-metrogis-trans-road-centerlines-gac
+
+‘Supplier’ is a term used throughout this document. A supplier will typically be a county, but it could also be a public safety answering point (PSAP), region, or tribal nation. The supplier is the agency which provides the individual datasets for the aggregated dataset. The trans_road_centerlines_open_metadata feature layer will contain the geometry/shape of the supplier boundaries, supplier name, supplier type, and feature count. 
+
+Aggregation Process:
+1. Extract NG9-1-1 data from the Department of Public Safety (DPS) Enterprise database.
+2. Download the latest MetroGIS data from the Geospatial Commons.
+3. Extract, Translate, and Load (ETL) the DPS data to the GAC schema.
+4. Combine NG9-1-1 data with MetroGIS data.
+5. Filter the data for the Opt-In Open data counties&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Road Centerlines Compiled from Opt-In Open Data.pdf&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/516/Road Centerlines Compiled from Opt-In Open Data.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/516/trans_road_centerlines_open.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/516/trans_road_centerlines_open.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/516/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>Road Centerline data has been identified as a foundational data layer for Minnesota and provides benefits for many operational uses. This dataset was developed to enable Minnesota state agency personnel to perform statewide geospatial analysis, research, and mapping for internal purposes. The dataset provides Road Centerline data in a common coordinate system and with a common attribute scheme (the GAC Road Centerline Data standard). The dataset is updated quarterly.</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="007">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Norman Anderson</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Geospatial Information Office (MnGeo)</rpOrgName>
+                        			
+            
+            <rpPosName>GIS Technical Lead ITS4</rpPosName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntPhone>
+                                        					
+                    
+                    <voiceNum>651-201-2483</voiceNum>
+                                        				
+                
+                </cntPhone>
+                                				
+                
+                <cntAddress addressType="malling and physical">
+                                        					
+                    
+                    <delPoint>658 Cedar Street</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55155</postCode>
+                                        					
+                    
+                    <eMailAdd>gisinfo.mngeo@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="006">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota, MN, Metropolitan Emergency Services Board, Aitkin County, Anoka County, Becker County, Benton County, Big Stone County, Carlton County, Carver County, Cass County, Chippewa County, Chisago County, Clay County, Clearwater County, Cook County, Crow Wing County, Dakota County, Douglas County, Faribault County, Fillmore County, Hennepin County, Houston County, Isanti County, Itasca County, Jackson County, Koochiching County, Lac qui Parle County, Lake County, Lake of the Woods County, Le Sueur County, Lyon County, Marshall County, McLeod County, Morrison County, Mower County, Murray County, Olmsted County, Otter Tail County, Pipestone County, Polk County, Pope County, Ramsey County, Renville County, Rice County, Rock County, Saint Louis County, Scott County, Sherburne County, Stearns County, Steele County, Stevens County, Wabasha County, Waseca County, Washington County, Winona County, Wright County, Yellow Medicine County</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>transportation, road, centerline</keyword>
+                        			
+            
+            <thesaName>
+                                				
+                
+                <resTitle>ISO 19115 Topic Category
+</resTitle>
+                                			
+            
+            </thesaName>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>transportation</keyword>
+            <keyword>road</keyword>
+            <keyword>centerline</keyword>
+            <keyword>Minnesota</keyword>
+            <keyword>MN</keyword>
+            <keyword>Metropolitan Emergency Services Board</keyword>
+            <keyword>Aitkin County</keyword>
+            <keyword>Anoka County</keyword>
+            <keyword>Becker County</keyword>
+            <keyword>Benton County</keyword>
+            <keyword>Big Stone County</keyword>
+            <keyword>Carlton County</keyword>
+            <keyword>Carver County</keyword>
+            <keyword>Cass County</keyword>
+            <keyword>Chippewa County</keyword>
+            <keyword>Chisago County</keyword>
+            <keyword>Clay County</keyword>
+            <keyword>Clearwater County</keyword>
+            <keyword>Cook County</keyword>
+            <keyword>Crow Wing County</keyword>
+            <keyword>Dakota County</keyword>
+            <keyword>Douglas County</keyword>
+            <keyword>Faribault County</keyword>
+            <keyword>Fillmore County</keyword>
+            <keyword>Hennepin County</keyword>
+            <keyword>Houston County</keyword>
+            <keyword>Isanti County</keyword>
+            <keyword>Itasca County</keyword>
+            <keyword>Jackson County</keyword>
+            <keyword>Koochiching County</keyword>
+            <keyword>Lac qui Parle County</keyword>
+            <keyword>Lake County</keyword>
+            <keyword>Lake of the Woods County</keyword>
+            <keyword>Le Sueur County</keyword>
+            <keyword>Lyon County</keyword>
+            <keyword>Marshall County</keyword>
+            <keyword>McLeod County</keyword>
+            <keyword>Morrison County</keyword>
+            <keyword>Mower County</keyword>
+            <keyword>Murray County</keyword>
+            <keyword>Olmsted County</keyword>
+            <keyword>Otter Tail County</keyword>
+            <keyword>Pipestone County</keyword>
+            <keyword>Polk County</keyword>
+            <keyword>Pope County</keyword>
+            <keyword>Ramsey County</keyword>
+            <keyword>Renville County</keyword>
+            <keyword>Rice County</keyword>
+            <keyword>Rock County</keyword>
+            <keyword>Saint Louis County</keyword>
+            <keyword>Scott County</keyword>
+            <keyword>Sherburne County</keyword>
+            <keyword>Stearns County</keyword>
+            <keyword>Steele County</keyword>
+            <keyword>Stevens County</keyword>
+            <keyword>Wabasha County</keyword>
+            <keyword>Waseca County</keyword>
+            <keyword>Washington County</keyword>
+            <keyword>Winona County</keyword>
+            <keyword>Wright County</keyword>
+            <keyword>Yellow Medicine County</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>MnGeo's data disclaimer: https://mn.gov/mngeo/gis-data-and-maps/disclaimer.jsp
+
+Users should consult county websites for original county data for the most up-to-date and accurate Road Centerline data.</useLimit>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <aggrInfo>
+                        			
+            
+            <aggrDSName>
+                                				
+                
+                <resTitle>Road Centerline Aggregation Metadata feature layer
+Parcel Aggregation Metadata Layer (plan_parcels_metadata_layer): Contains more information about each county data source.
+
+Parcels, Compiled from Open Data Counties: https://gisdata.mn.gov/dataset/plan-parcels-open</resTitle>
+                                			
+            
+            </aggrDSName>
+                        			
+            
+            <assocType>
+                                				
+                
+                <AscTypeCd value="001">
+				</AscTypeCd>
+                                			
+            
+            </assocType>
+                        		
+        
+        </aggrInfo>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.23</westBL>
+                                        					
+                    
+                    <eastBL>-89.53</eastBL>
+                                        					
+                    
+                    <northBL>49.37</northBL>
+                                        					
+                    
+                    <southBL>43.5</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>The edit_date is the date of the last substantial change to the data record including geospatial edits.</exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2026-06-13</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Minnesota</suppInfo>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                		
+        
+        <report type="DQQuanAttAcc">
+                        			
+            
+            <measDesc>Unknown and varies by supplier (see supplier description in abstract).
+
+The dataset represents a best eﬀort to aggregate the two data sources into the common attribute schema of the Road Centerline Data Standard for Minnesota:
+
+Sources:
+1) MetroGIS Road Centerlines – refer to metadata and the county contacts listed on the resource in the Minnesota Geospatial Commons for more information: https://resources.gisdata.mn.gov/pub/gdrs/data/pub/us_mn_state_metrogis/trans_road_centerlines_gac/metadata/metadata.html
+
+2) Minnesota NG9-1-1 Program Road Centerlines are in the Minnesota NG9-1-1 GIS data schema which is a hybrid of the NENA NG9-1-1 GIS Data Model and the Road Centerline Data Standard for Minnesota. The data is translated to the GAC road centerline standard. 
+
+Two field classifications in the Minnesota  NG9-1-1 Road Centerlines schema affect attribute accuracy: First, fields which are used for both NENA and Minnesota Geospatial Advisory Council schema are validated by the NG9-1-1 program against the NENA requirements. Second, fields which apply to the Minnesota Geospatial Advisory Council schema only and are reviewed for character length (will the field’s value fit in the destination field). These fields are passed through to the MN NG9-1-1 enterprise database unvalidated but are retained in the NG9-1-1 enterprise database for this aggregate dataset.
+</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQConcConsis">
+                        			
+            
+            <measDesc>This dataset does not strictly conform to the GAC standard for road centerline data. Certain fields mandated by the standard (or required under certain conditions) may not be present in the source data and may not be safely inferred through the compilation processing.
+
+For the MetroGIS Road Centerlines data, users should consult the metadata on the Minnesota Geospatial Commons: https://gisdata.mn.gov/dataset/us-mn-state-metrogis-trans-road-centerlines-gac
+
+The data extracted from the Minnesota NG9-1-1 GIS Data Validation &amp; Aggregation Portal have been validated on the data fields that are used for NG9-1-1. The fields not used for NG9-1-1 are only reviewed for field value length compliance. Domains are not enforced for (GAC only) non NG9-1-1 fields.
+
+Both the underlying data quality and the processing program are under active development. If errors are noticed, please contact us so we can improve our data processing.
+</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQCompOm">
+                        			
+            
+            <measDesc>This dataset is under active development. 
+
+Please refer to the MetroGIS Road Centerlines data metadata: https://gisdata.mn.gov/dataset/us-mn-state-metrogis-trans-road-centerlines-gac
+
+There has been no edge matching between NG9-1-1 and MetroGIS data.
+</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Unknown and varies by county.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="vertical" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Not applicable.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <dataLineage>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>DATA SOURCES
+
+Source Road Centerline data is provided by two sources: the Minnesota NG9-1-1 Program enterprise database, and MetroGIS Road Centerlines posted on the Minnesota Geospatial Commons.
+
+DATA PROCESSING
+
+The data compilation process is performed using a script developed and maintained by MnGeo staff. The script contains methods for compiling data, along with attribute field maps that associate county source file attribute fields to attribute fields in the destination standardized layer.
+
+The script applies a considerable amount of processing. Both the underlying data quality and the processing program are under active development. If errors are noticed in the dataset, please contact us so we can improve our data processing.
+
+The distribution version of the fgdb is compressed to help reduce the data footprint.
+
+Users could consult county websites for the source data with the most up-to-date and accurate road centerline data.</stepDesc>
+                                			
+            
+            </prcStep>
+                        		
+        
+        </dataLineage>
+                	
+    
+    </dqInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>https://mn.gov/mngeo/gis-data-and-maps/standards/mgmg/</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <overview>
+                        			
+            
+            <eaover>Not all attribute fields are populated by each supplier. Information about the attributes can be found in the Minnesota Geospatial Advisory Council's (GAC) road centerline data standard for Minnesota: https://www.mngeo.state.mn.us/committee/standards/roadcenterline/index.html
+
+Field Name,Alias,Data Type,Length
+roadseg_id,Road Segment Unique Identifier,Text,254
+route_id,Route ID,Text,18
+route_sys,Route System,Text,2
+route_dir,Route Direction,Text,1
+loc_state,Local to State,Text,10
+prime_stat,Primary Status,Text,10
+st_pre_mod,Street Name Pre Modifier,Text,15
+st_pre_dir,Street Name Pre Directional,Text,9
+st_pre_typ,Street Name Pre Type,Text,35
+st_pre_sep,Street Name Pre Separator,Text,20
+st_name,Street Name,Text,60
+st_pos_typ,Street Name Post Type,Text,15
+st_pos_dir,Street Name Post Directional,Text,9
+st_pos_mod,Street Name Post Modifier,Text,15
+st_concat,Street Name Full,Text,150
+st_name_a1,Alternate Street Name 1,Text,150
+a1_msag_v,Alt 1 Legitimate MSAG Value,Text,7
+st_name_a2,Alternate Street Name 2,Text,150
+a2_msag_v,Alt 2 Legitimate MSAG Value,Text,7
+st_name_a3,Alternate Street Name 3,Text,150
+a3_msag_v,Alt 3 Legitimate MSAG Value,Text,7
+add_fr_l,Left From Address,Long,
+add_to_l,Left To Address,Long,
+add_fr_r,Right From Address,Long,
+add_to_r,Right To Address,Long,
+parity_l,Left Parity,Text,4
+parity_r,Right Parity,Text,4
+zip_l,Left Zip Code,Text,5
+zip_r,Right Zip Code,Text,5
+ctu_name_l,Left CTU Name,Text,100
+ctu_name_r,Right CTU Name,Text,100
+ctu_id_l,Left CTU Code,Text,8
+ctu_id_r,Right CTU Code,Text,8
+postcomm_l,Left Postal Community Name,Text,40
+postcomm_r,Right Postal Community Name,Text,40
+co_code_l,Left County Code,Text,5
+co_code_r,Right County Code,Text,5
+co_name_l,Left County Name,Text,40
+co_name_r,Right County Name,Text,40
+state_l,Left State Code,Text,2
+state_r,Right State Code,Text,2
+elev_from,Elevation From,Long,
+elev_to,Elevation To,Long,
+oneway,One Way,Text,1
+speed_imp,Impedance Speed,Long,
+emerg_acc,Emergency Access,Text,10
+routespeed,Routing Speed,Long,
+route_num,Route Number,Text,5
+cartoclass,Road Cartographic Class,Text,15
+gis911poc,911 GIS Point-of-Contact,Text,75
+esn_l,Left Emergency Service Number,Text,5
+esn_r,Right Emergency Service Number,Text,5
+psap_l,Left PSAP Code,Text,5
+psap_r,Right PSAP Code,Text,5
+msag_c_l,Left MSAG Community Name,Text,30
+msag_c_r,Right MSAG Community Name,Text,30
+valid_l,Validation Left,Text,10
+valid_r,Validation Right,Text,10
+verror_911,911 Validation Error,Text,10
+lst_predir,Legacy Street Name Pre Directional,Text,2
+lst_name,Legacy Street Name,Text,75
+lst_type,Legacy Street Name Type,Text,4
+lst_posdir,Legacy Street Name Post Directional,Text,2
+status,Lifecycle Status,Text,20
+eff_date,Effective Date,Date,
+ret_date,Retired Date,Date,
+edit_org,Editing Organization,Text,40
+edit_date,Edit Date,Date,
+funcls_fed,Functional Class - Federal,Text,1
+funcls_met,Functional Class - Metro,Text,3
+surf_type,Surface Type,Text,32
+num_lanes,Number of Lanes,Long,
+comments,Comments,Text,254
+
+Note: the Minnesota NG9-1-1 Data Model: https://ng911gis-minnesota.hub.arcgis.com/documents/79beb1f9bde84e84a0fa9b74950f7589</eaover>
+                        		
+        
+        </overview>
+                	
+    
+    </eainfo>
+        	
+    
+    <Esri>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                	
+    
+    </Esri>
+        
+
+</metadata>

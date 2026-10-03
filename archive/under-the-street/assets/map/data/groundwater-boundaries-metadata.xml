@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata xml:lang="en">
+        	
+    
+    <Esri>
+                		
+        
+        <CreaDate>20261002</CreaDate>
+                		
+        
+        <CreaTime>03135000</CreaTime>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                		
+        
+        <SyncOnce>TRUE</SyncOnce>
+                	
+    
+    </Esri>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>Data Desk</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Pollution Control Agency (MPCA)</rpOrgName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>520 Lafayette Rd N</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55155</postCode>
+                                				
+                
+                <eMailAdd>datadesk.mpca@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20211203</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://gis.data.mn.gov/maps/minnesota::minnesota-groundwater-contamination-atlas/about</linkage>
+                                			
+            
+            </onLineSrc>
+                        		
+            
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/324/env_mn_gw_contamination_atlas.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>Minnesota Groundwater Contamination Atlas</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2020-07-09</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Remediation Division, Minnesota Pollution Control Agency</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Remediation Division, Minnesota Pollution Control Agency</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>The Minnesota Groundwater Contamination Atlas GIS data allows users to view groundwater areas of concern for sites in remediation programs. The data does not map areas of risk to the health of the communities. If there are potential health risks associated with a groundwater area of concern, proper remediation treatments or activities are implemented to protect human health.
+&lt;br /&gt;&lt;br /&gt;
+The six different layers in the geodatabase work together to represent what is shown on the site story maps in the Atlas. MPCA hydrogeologists reviewed many reports and data files, then used geographic information systems technology and professional judgment to map these areas. The dashed and solid outlines for these mapped areas represent two different levels of certainty. The solid outline represents area of concern boundaries that are more certain, while the dashed outline represents area of concern boundaries that are less certain.
+&lt;br /&gt;&lt;br /&gt;
+The MN Groundwater Contamination Atlas geodatabase includes the following datasets:
+&lt;ul&gt;
+&lt;li&gt;&lt;a href='https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_mn_gw_contamination_atlas/FeatureServer/2/metadata?format=default&amp;f=html' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Atlas sites&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_mn_gw_contamination_atlas/FeatureServer/1/metadata?format=default&amp;f=html' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Atlas sites no contamination area&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_mn_gw_contamination_atlas/FeatureServer/0/metadata?format=default&amp;f=html' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Atlas wells contamination results summary&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_mn_gw_contamination_atlas/FeatureServer/5/metadata?format=default&amp;f=html' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Atlas cotamination areas of concern&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_mn_gw_contamination_atlas/FeatureServer/3/metadata?format=default&amp;f=html' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Atlas contamination boundaries&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_mn_gw_contamination_atlas/FeatureServer/4/metadata?format=default&amp;f=html' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Atlas potential source areas&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/324/env_mn_gw_contamination_atlas.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/324/env_mn_gw_contamination_atlas.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/324/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>This data resource shows groundwater contamination across Minnesota from MPCA data.</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="005">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Data Desk</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Pollution Control Agency (MPCA)</rpOrgName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntAddress addressType="both">
+                                        					
+                    
+                    <delPoint>520 Lafayette Rd N</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55155</postCode>
+                                        					
+                    
+                    <eMailAdd>datadesk.mpca@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="010">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <graphOver>
+                        			
+            
+            <bgFileName>https://www.pca.state.mn.us/data/minnesota-groundwater-contamination-atlas</bgFileName>
+                        		
+        
+        </graphOver>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>area of concern, groundwater</keyword>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>area of concern</keyword>
+            <keyword>groundwater</keyword>
+            <keyword>Minnesota</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <Consts>
+                                				
+                
+                <useLimit>If you obtain data from the MPCA, it is understood that you and/or your organization have the right to use them for any purpose. If you modify the data, you should document those changes in a metadata record that should accompany all redistributed data. If you transmit or provide these data in any form to another user, the data should be accompanied by all documentation provided with the original data set including the full metadata record.</useLimit>
+                                			
+            
+            </Consts>
+                        		
+        
+        </resConst>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>For data or maps created by the Minnesota Pollution Control Agency and delivered online or by physical media. Limitations: Although extensive effort has been made to produce error-free and complete data, all geographic information has limitations due to the scale, resolution, date and interpretation of the original source materials. Users should consult available data documentation (metadata) for this particular data to determine limitations and the precision to which the data depict distance, direction, location or other geographic characteristics. Data may be subject to change without prior notification. No warranty: Data is provided "as is," without any warranty whatsoever, including but not limited to any warranty as to performance, merchantability or fitness for any particular purpose. Liability: The entire risk as to the results of the use of this data is assumed by the user. The MPCA is not responsible for any interpretation or conclusions made by those who acquire or use it. The MPCA shall not be liable for any direct, indirect, special, incidental, compensatory or consequential damages or third-party claims resulting from the use of this data, even if the MPCA has been advised of the possibility of such potential loss or damage. In states that do not allow the exclusion or limitation of incidental or consequential damages, this data may not be used. Redistribution conditions: In obtaining this data from the MPCA, it is understood that individuals or organizations have the right to use it for any internal purpose. If data is modified, changes should be documented in a metadata record that should accompany all redistributed data. If data is transmitted or provided in any form to another user, the data should be accompanied by a copy of this disclaimer and all documentation provided with the original data set, including the full metadata record. Data delivered on electronic media: If data has been requested from the MPCA on magnetic media, CD or any other physical media, the MPCA will deliver it in the computer-readable format agreed upon with the requestor. The MPCA will reissue data if it is unreadable by correctly adjusted computer input devices or when the media is delivered in a damaged condition. Requests for reissue of this digital data product must be made within 30 days of the date shipped from the MPCA.</useLimit>
+                                				
+                
+                <accessConsts>
+                                        					
+                    
+                    <RestrictCd value="008">
+					</RestrictCd>
+                                        				
+                
+                </accessConsts>
+                                				
+                
+                <othConsts>None.</othConsts>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.23</westBL>
+                                        					
+                    
+                    <eastBL>-89.53</eastBL>
+                                        					
+                    
+                    <northBL>49.37</northBL>
+                                        					
+                    
+                    <southBL>43.5</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>The data receive daily updates to reflect the most current information available. In aggregate, the data were collected throughout the existence of MPCA’s Remediation Program. Individual records are collected throughout the life-cycle of a Remediation Program interest. Several date fields contained in the data describe when an individual record was last collected or the location information was modified. </exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2022-01-12</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                		
+        
+        <report type="DQConcConsis">
+                        			
+            
+            <measDesc>None planned.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQCompOm">
+                        			
+            
+            <measDesc>Complete.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Various levels of accuracy.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="vertical" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Various levels of accuracy.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <dataLineage>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>This dataset has been exported from the MPCA's enterprise databases (Tempo and EQuIS) and reflects our knowledge of these features at the time of export. </stepDesc>
+                                			
+            
+            </prcStep>
+                        		
+        
+        </dataLineage>
+                	
+    
+    </dqInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>http://www.mngeo.state.mn.us/committee/standards/mgmg/metadata.htm</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <overview>
+                        			
+            
+            <eaover>Look to the metadata for each feature class in this geodatabase for attribute information.</eaover>
+                        		
+        
+        </overview>
+                	
+    
+    </eainfo>
+        
+
+</metadata>

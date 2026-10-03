@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata xml:lang="en">
+        	
+    
+    <Esri>
+                		
+        
+        <CreaDate>20261003</CreaDate>
+                		
+        
+        <CreaTime>00193600</CreaTime>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                		
+        
+        <SyncOnce>TRUE</SyncOnce>
+                	
+    
+    </Esri>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>	Source Water Protection Unit Staff</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Department of Health - Environmental Health Division</rpOrgName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntPhone>
+                                				
+                
+                <voiceNum>651- 201-4700</voiceNum>
+                                				
+                
+                <faxNum>651-201-4701</faxNum>
+                                			
+            
+            </cntPhone>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>P.O box 64975</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55164-0975</postCode>
+                                				
+                
+                <eMailAdd>mnit.gis.mdh@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20220721</mdDateSt>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>Well Information from County Well Index for the General Public</resTitle>
+                        			
+            
+            <date>
+                                				
+                
+                <pubDate>2019-06-17</pubDate>
+                                			
+            
+            </date>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Department of Health - Environmental Health Division - Source Water Protection Unit</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Geological Survey and Minnesota Department of Health (2019), Minnesota County Well Index [computer file], Minnesota Department of Health, St. Paul, Minn.</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>The County Well Index (CWI) geodatabase was developed by the Minnesota Geological Survey (MGS) and is maintained in cooperation with the Minnesota Department of Health (MDH). CWI contains basic information for over 511,000 water-wells, and borings drilled in Minnesota. The data is derived from water-well contractors' logs of geologic materials encountered during drilling. Confirmed locations and geologic well records are available for over 325,000 of the wells. Available data also includes casing, screen and pump information. This dataset does not include public water supply wells. 
+
+This data resource is a regularly updated copy of the database and is maintained by MNIT Services.&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/207/water_well_information_non_pws.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/207/water_well_information_non_pws.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/207/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>This dataset was developed with the intention of protecting the drinking water supply. MGS and MDH's Well Management Program protect both public health and groundwater by assuring the proper construction of new wells and borings, and the proper sealing of unused wells and borings.
+
+Public water supply well locations are restricted information and are therefore not included in this dataset. 
+
+</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="001">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Source Water Protection Unit Staff</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Department of Health - Environmental Health Division</rpOrgName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntPhone>
+                                        					
+                    
+                    <voiceNum>(651) 201-4700</voiceNum>
+                                        					
+                    
+                    <faxNum>(651) 201-4701</faxNum>
+                                        				
+                
+                </cntPhone>
+                                				
+                
+                <cntAddress addressType="postal">
+                                        					
+                    
+                    <delPoint>P.O box 64975</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55164-0975</postCode>
+                                        					
+                    
+                    <eMailAdd>mnit.gis.mdh@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="001">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>Minnesota, MN</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>inlandWaters, environment, health, Emergency response area, drinking water supply management area, wellhead protection, drinking water, capture zone, groundwatershed</keyword>
+                        			
+            
+            <thesaName>
+                                				
+                
+                <resTitle>MDH Spatial Data Archive Keyword Thesaurus</resTitle>
+                                			
+            
+            </thesaName>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>inlandWaters</keyword>
+            <keyword>environment</keyword>
+            <keyword>health</keyword>
+            <keyword>Emergency response area</keyword>
+            <keyword>drinking water supply management area</keyword>
+            <keyword>wellhead protection</keyword>
+            <keyword>drinking water</keyword>
+            <keyword>capture zone</keyword>
+            <keyword>groundwatershed</keyword>
+            <keyword>Minnesota</keyword>
+            <keyword>MN</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <Consts>
+                                				
+                
+                <useLimit>None. Please check sources, scale, accuracy, currentness and other available information. Please confirm that you are using the most recent copy of both data and metadata.  Acknowledgement of the publisher would be appreciated.</useLimit>
+                                			
+            
+            </Consts>
+                        		
+        
+        </resConst>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>See access and use constraints information.
+Geospatial data is provided "as-is". MDH makes no warranty, expressed or implied, and disclaims all implied warranties of the data for any purpose. MDH also does not warrant that the geospatial data is error free. The geospatial data was developed for MDH internal business purposes. MDH shall not be liable for any activity involving the geospatial data with respect to the following: a.) Lost profits, lost savings or any other consequential damages; b.) The fitness of the geospatial data for a particular purpose; or c.) The installation of the geospatial data, its use or the results obtained.</useLimit>
+                                				
+                
+                <accessConsts>
+                                        					
+                    
+                    <RestrictCd value="008">
+					</RestrictCd>
+                                        				
+                
+                </accessConsts>
+                                				
+                
+                <othConsts>None.</othConsts>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <aggrInfo>
+                        			
+            
+            <aggrDSName>
+                                				
+                
+                <resTitle>County Well Index</resTitle>
+                                			
+            
+            </aggrDSName>
+                        			
+            
+            <assocType>
+                                				
+                
+                <AscTypeCd value="001">
+				</AscTypeCd>
+                                			
+            
+            </assocType>
+                        		
+        
+        </aggrInfo>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.23</westBL>
+                                        					
+                    
+                    <eastBL>-89.53</eastBL>
+                                        					
+                    
+                    <northBL>49.37</northBL>
+                                        					
+                    
+                    <southBL>43.5</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>Date metadata was last updated.</exDesc>
+                        			
+            
+            <tempEle>
+                                				
+                
+                <TempExtent>
+                                        					
+                    
+                    <exTemp>
+                                                						
+                        
+                        <TM_Instant>
+                                                        							
+                            
+                            <tmPosition>2022-07-21</tmPosition>
+                                                        						
+                        
+                        </TM_Instant>
+                                                					
+                    
+                    </exTemp>
+                                        				
+                
+                </TempExtent>
+                                			
+            
+            </tempEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Minnesota</suppInfo>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                	
+    
+    </dqInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>http://www.mngeo.state.mn.us/committee/standards/mgmg/metadata.htm</linkage>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <overview>
+                        			
+            
+            <eaover>More information about the data in CWI is available at the citation link.
+
+Attribute information can be found at the following location. 
+http://mgsweb2.mngs.umn.edu/cwi_doc/cwiCodeTables.htm</eaover>
+                        			
+            
+            <eadetcit>http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm</eadetcit>
+                        		
+        
+        </overview>
+                	
+    
+    </eainfo>
+        
+    
+    <distInfo>
+                
+        <distTranOps>
+                        
+            <onLineSrc>
+                                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_health/water_well_information_non_pws/FeatureServer</linkage>
+                                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+            
+    </distInfo>
+        
+    <distInfo>
+                
+        <distTranOps>
+                        
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/207/water_well_information_non_pws.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+            
+    </distInfo>
+    
+</metadata>

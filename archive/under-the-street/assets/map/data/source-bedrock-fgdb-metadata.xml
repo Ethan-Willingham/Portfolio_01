@@ -1,0 +1,47 @@
+﻿<?xml version="1.0"?><metadata><idinfo><citation><citeinfo><origin>Minnesota Geological Survey</origin><title>Geologic Map of Minnesota - Bedrock Geology (MGS Map S-21)</title><pubinfo><publish>Minnesota Geological Survey</publish></pubinfo><pubdate>2011</pubdate><onlink>http://conservancy.umn.edu/handle/11299/101466</onlink></citeinfo></citation><descript><supplinf>Minnesota, statewide</supplinf><abstract>This map is a new construct that incorporates existing geologic maps where prior mappers had adequate ground control, and new interpretations based on drill hole, geophysical, and unpublished data where they did not. The interpretation differs significantly from previous maps to reflect new data and accommodate scale. It portrays our current geologic understanding of the temporal and geographic distribution of units within major Precambrian terranes and of the Phanerozoic strata. The western part of the mapped Precambrian terrane is inferred largely from geophysical maps, anchored locally by drilling. In many places, contacts are drawn between units of the same or similar apparent rock type (and same unit label); these are recognized as geometrically distinct, though geophysically or lithologically similar. Digital files corresponding to this map allow removal of Cretaceous, Paleozoic, and some parts of Mesoproterozoic strata to reveal an interpretation of the underlying Precambrian bedrock.
+
+Note: This publication supersedes the bedrock geologic map elements of MGS Open-File OF10-02. Other components of OF10-02 are still valid, including the state-wide maps of bedrock topography, depth to bedrock, and outcrop locations, and the geochronology shapefiles.</abstract><purpose>To produce a general descriptive layer of bedrock geology for the state, based on best available information as of 2011. </purpose></descript><status><progress>Complete</progress><update>Unknown</update></status><keywords><place><placekey>Minnesota</placekey></place><theme><themekt>ISO 19115 Topic Category</themekt><themekey>geoscientificInformation, bedrock, geology, bedrock geology, compilation, Precambrian, Paleozoic</themekey></theme></keywords><accconst>None.</accconst><timeperd><timeinfo><sngdate><caldate>2011</caldate></sngdate></timeinfo><current>Based on best available information as of 2011.</current></timeperd><useconst>Credit given to the Minnesota Geological Survey.  Suggested Citation: Jirsa, Mark A.; Boerboom, Terrence J.; Chandler, V.W.; Mossler, John H.; Runkel, Anthony C.; Setterholm, Dale R. (2011). S-21 Geologic Map of Minnesota-Bedrock Geology. Minnesota Geological Survey. Retrieved from the University of Minnesota Digital Conservancy, http://purl.umn.edu/101466.  </useconst><crossref><citeinfo><title>Map: 'Geologic Map of Minnesota - Bedrock Geology', Minnesota Geological Survey Map S-21, 2011,  is the basis for this data set.
+
+For a complete listing of MGS State Map Series Maps, Reports, and GIS Data, see http://conservancy.umn.edu/handle/11299/59725
+
+ U of M Digital Conservancy information on this map is at http://conservancy.umn.edu/handle/11299/101466</title></citeinfo></crossref><spdom><bounding><westbc>-97.23</westbc><eastbc>-89.53</eastbc><northbc>49.37</northbc><southbc>43.5</southbc></bounding></spdom><ptcontac><cntinfo><cntperp><cntorg>Minnesota Geological Survey</cntorg><cntper>Richard S. Lively</cntper></cntperp><cntpos>Geologic Information Systems</cntpos><cntaddr><addrtype>Mailing and Physical</addrtype><address>2609 Territorial Road</address><city>St. Paul</city><state>MN</state><postal>55114</postal></cntaddr><cntvoice>612-626-3103</cntvoice><cntemail>lively@umn.edu</cntemail></cntinfo></ptcontac></idinfo><distinfo><stdorder><ordering>Primary distribution of PDF Map, GIS data, report, and supplementary information is through the University of Minnesota Libraries Digital Conservancy http://conservancy.umn.edu/handle/11299/101466 (also available through Online Linkage below. 
+
+GIS Data Distribution is also available through the Minnesota Geospatial Commons. See  https://gisdata.mn.gov/dataset/geos-bedrock-geology-mn
+
+Commons download includes an additional GIS .lyr file created by the Minnesota DNR. 
+
+Paper map product is available from the Minnesota Geological Survey Map Store (612) 626-2969.</ordering></stdorder><resdesc>MGS State Map Series S-21 (geos-bedrock-geology-mn)</resdesc><distrib><cntinfo><cntperp><cntorg>Minnesota Geological Survey</cntorg><cntper>Richard S. Lively</cntper></cntperp><cntpos>Geologic Information Systems</cntpos><cntaddr><addrtype>mailing and physical</addrtype><address>2609 Territorial Road</address><city>St. Paul</city><state>MN</state><postal>55114</postal></cntaddr><cntvoice>612-626-3103</cntvoice><cntemail>lively@umn.edu</cntemail></cntinfo></distrib></distinfo><metainfo><metstdn>Minnesota Geographic Metadata Guidelines</metstdn><metstdv>1.2</metstdv><metextns><onlink>http://www.mngeo.state.mn.us/committee/standards/mgmg/metadata.htm</onlink></metextns><metd>20150901</metd><metc><cntinfo><cntperp><cntorg>Minnesota Geological Survey</cntorg><cntper>Richard S. Lively</cntper></cntperp><cntpos>Geologic Information Systems</cntpos><cntaddr><addrtype>mailing and physical</addrtype><address>2609 Territorial Road</address><city>St. Paul</city><state>MN</state><postal>55114</postal></cntaddr><cntvoice>612-626-3103</cntvoice><cntemail>lively@umn.edu</cntemail></cntinfo></metc></metainfo><eainfo><overview><eaover>Files available include:
+
+PDF files:
+
+metadata folder contains pdf files of metadata for each major gis file of S21
+S21.pdf -- a PDF file of the S21 map plate including explanatory text and ancillary graphics. Scaled to 1:500,000.
+S21text.pdf -- a PDF file of the text and graphics on the map plate
+
+GIS data files:
+
+dikes -- dike l ocations (line) 
+form_line -- linear features derived from aeromagnetic data (line) 
+ju_pg -- Jurassic units (polygon) 
+ka_pg -- Cretaceous Albian unit (polygon) 
+kc_pg -- Cretaceous Coleraine formation  (polygon) 
+kew_pg_under_lksup -- igneous units projected under Lake Superior (polygon) 
+kew_sed_cover -- Keweenawan sediment cover under Lake Superior (polygon)
+ku_pg --  Cretaceous sediments, undivided (polygon) 
+mncomdt -- Minnesota Counties (polygon) 
+mnoutln -- Outline of the state of Minnesota (polygon) 
+pz_fault -- Paleozoic faults (line) 
+pz_pg -- Paleozoic geologic units (polygon) 
+s21_pcln -- Precambrian contacts and faults (line) 
+s21_pcpg -- Precambrian geologic units (polygon) 
+
+GIS .lyr files:
+
+dikes.lyr -- Esri legend file to color dikes
+form_line.lyr -- Esri legend file to color the form lines
+kew_pg_under_lksup.lyr -- Esri legend file to color igneous units under Lake Superior
+Paleozoic bedrock.lyr -- Esri legend file to color the Paleozoic geology
+Precambrian bedrock.lyr -- Esri legend file to color the Precambrian geology map
+Precambrian Contacts; Faults.lyr -- Esri legend file to set the line style for contacts and faults
+
+</eaover><eadetcit>For more description on map units depicted on the map, see S21_text.pdf.  For description of attributes included in the individual data sets see the appropriate .pdf file under the "metadata" folder.</eadetcit></overview></eainfo><dataqual><logic>Not available</logic><complete>Complete</complete><posacc><horizpa><horizpar>See metadata .pdfs for individual GIS layers for information on how the layers were produced.  See the sections entitled "Accuracy of Map Units" and "Horizontal Positional Accuracy".</horizpar></horizpa><vertacc><vertaccr>See metadata .pdfs for individual GIS layers for information on how the layers were produced.  See the section entitled "Summary of procedures for compiling data used to create map".</vertaccr></vertacc></posacc><attracc><attraccr>See metadata .pdfs for individual GIS layers for information on how the layers were produced.  See the section entitled "Accuracy of Map Units".</attraccr></attracc><lineage><procstep><procdesc>See metadata .pdfs for individual GIS layers for information on how the layers were produced.  See the section entitled "Summary of procedures for compiling data used to create map".</procdesc></procstep></lineage></dataqual><spref><horizsys><planar><gridsys><gridsysn>Universal Transverse Mercator</gridsysn><utm><utmzone>15</utmzone></utm></gridsys><planci><plandu>meters</plandu></planci></planar><geodetic><horizdn>NAD83</horizdn><ellips>GRS80</ellips></geodetic></horizsys></spref></metadata>

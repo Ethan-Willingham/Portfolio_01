@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><metadata xml:lang="en">
+    	
+    <Esri>
+        		
+        <CreaDate>20260501</CreaDate>
+        		
+        <CreaTime>13531000</CreaTime>
+        		
+        <ArcGISFormat>1.0</ArcGISFormat>
+        		
+        <SyncOnce>TRUE</SyncOnce>
+        		
+        <MapLyrSync>TRUE</MapLyrSync>
+        	
+    </Esri>
+    	
+    <dataIdInfo>
+        		
+        <idCitation>
+            			
+            <resTitle>
+			</resTitle>
+            		
+        </idCitation>
+        		
+        <idAbs/>
+        		
+        <idPurp>Service Line Inventory for the City of Minneapolis</idPurp>
+        		
+        <idCredit/>
+        		
+        <searchKeys>
+            			
+            <keyword>Water Distribution</keyword>
+            			
+            <keyword>Minneapolis</keyword>
+            		
+        </searchKeys>
+        		
+        <resConst>
+            			
+            <Consts>
+                				
+                <useLimit/>
+                			
+            </Consts>
+            		
+        </resConst>
+        	
+    <dataExt><geoEle><GeoBndBox><westBL>-93.4374</westBL><eastBL>-93.0907</eastBL><northBL>45.0593</northBL><southBL>44.8791</southBL></GeoBndBox></geoEle></dataExt></dataIdInfo>
+    	
+    <Binary>
+        		
+        <Thumbnail>
+            			
+            <Data EsriPropertyType="PictureX">iVBORw0KGgoAAAANSUhEUgAAAMgAAACFCAYAAAAenrcsAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAA
+JwAAACcBKgmRTwAAAW1JREFUeJzt1bERACAQwzAK9l/5WQDMAlKZ3pc9M7OAq32fAYHAhweBIBAI
+AoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKB
+IBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQ
+CAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgC
+gSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEg
+EAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAI
+AoEgEAgCgSAQCAKBIBAIAoEgEAgCgSAQCAKBIBAIAoEgEFhvB8sYBhEjajlzAAAAAElFTkSuQmCC
+</Data>
+            		
+        </Thumbnail>
+        	
+    </Binary>
+    
+</metadata>

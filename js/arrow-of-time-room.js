@@ -1,5 +1,5 @@
-import { MODEL, PRESETS, PRESET_VERSION, prepare, compare, measure, pack, checksum } from './arrow-of-time-model.js?v=3';
-import { createQ2RGPU } from './arrow-of-time-gpu.js?v=3';
+import { MODEL, PRESETS, PRESET_VERSION, prepare, compare, measure, pack, checksum } from './arrow-of-time-model.js?v=4';
+import { createQ2RGPU } from './arrow-of-time-gpu.js?v=4';
 export const roomInfo = {
   apiVersion: 1, id: 'arrow-of-time', title: 'Arrow of time', model: MODEL,
   representativeScaleMeters: null, scaleMeaning: 'Abstract lattice cells; no physical length is assigned.',
@@ -87,7 +87,7 @@ export async function createRoom({ device, seed, quality = 'medium', assetBaseUR
     async debugReadback() { const state = await read(); return { ...state, x: [...state.x], y: [...state.y], packedX: [...state.packedX], packedY: [...state.packedY], replay: { apiVersion: 1, id: roomInfo.id, model: MODEL, quality, seed: seed || null, seedProvenance: 'unused host seed', configurationId: initial.configurationId, width, height, presetVersion: PRESET_VERSION, ...state.control } }; },
     async measure() { await read(); },
     setRate(value) { if (![24, 96, 768].includes(value)) throw new RangeError('Unsupported playback pacing.'); rate = value; },
-    setZoom(value) { zoom = Math.max(1, Math.min(4, Number(value) || 1)); },
+    setZoom(value) { zoom = Math.max(.4, Math.min(8, Number(value) || 1)); },
     async seek(position) {
       if (disposed || !timeline?.exactReturn) throw new Error('The timeline is not ready.');
       if (!Number.isInteger(position) || position < 0 || position > 2 * stepsPerPhrase) throw new RangeError('Timeline position is out of bounds.');

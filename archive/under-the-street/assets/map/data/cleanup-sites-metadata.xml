@@ -1,0 +1,1280 @@
+<?xml version="1.0" encoding="UTF-8"?><metadata xml:lang="en">
+        	
+    
+    <Esri>
+                		
+        
+        <CreaDate>20261002</CreaDate>
+                		
+        
+        <CreaTime>03190300</CreaTime>
+                		
+        
+        <ArcGISFormat>1.0</ArcGISFormat>
+                		
+        
+        <SyncOnce>TRUE</SyncOnce>
+                		
+        
+        <DataProperties>
+                        			
+            
+            <itemProps>
+                                				
+                
+                <imsContentType>002</imsContentType>
+                                			
+            
+            </itemProps>
+                        		
+        
+        </DataProperties>
+                	
+    
+    </Esri>
+        	
+    
+    <mdChar>
+                		
+        
+        <CharSetCd value="004">
+		</CharSetCd>
+                	
+    
+    </mdChar>
+        	
+    
+    <mdHrLv>
+                		
+        
+        <ScopeCd value="005">
+		</ScopeCd>
+                	
+    
+    </mdHrLv>
+        	
+    
+    <mdContact>
+                		
+        
+        <rpIndName>Data Desk</rpIndName>
+                		
+        
+        <rpOrgName>Minnesota Pollution Control Agency (MPCA)</rpOrgName>
+                		
+        
+        <rpCntInfo>
+                        			
+            
+            <cntAddress addressType="both">
+                                				
+                
+                <delPoint>520 Lafayette Rd N</delPoint>
+                                				
+                
+                <city>St. Paul</city>
+                                				
+                
+                <adminArea>MN</adminArea>
+                                				
+                
+                <postCode>55155</postCode>
+                                				
+                
+                <eMailAdd>datadesk.mpca@state.mn.us</eMailAdd>
+                                			
+            
+            </cntAddress>
+                        		
+        
+        </rpCntInfo>
+                		
+        
+        <role>
+                        			
+            
+            <RoleCd value="007">
+			</RoleCd>
+                        		
+        
+        </role>
+                	
+    
+    </mdContact>
+        	
+    
+    <mdDateSt>20170323</mdDateSt>
+        	
+    
+    <distInfo>
+                		
+        
+        <distributor>
+                        			
+            
+            <distorCont>
+                                				
+                
+                <rpIndName>Ben Gosack</rpIndName>
+                                				
+                
+                <rpOrgName>Minnesota IT Services, partnering with Pollution Control Agnecy (MNIT@MPCA)</rpOrgName>
+                                				
+                
+                <rpPosName>Spatial Data Manager</rpPosName>
+                                				
+                
+                <rpCntInfo>
+                                        					
+                    
+                    <cntPhone>
+                                                						
+                        
+                        <voiceNum>651-757-2337</voiceNum>
+                                                					
+                    
+                    </cntPhone>
+                                        					
+                    
+                    <cntAddress addressType="both">
+                                                						
+                        
+                        <delPoint>520 Lafayette Rd N</delPoint>
+                                                						
+                        
+                        <city>St. Paul</city>
+                                                						
+                        
+                        <adminArea>MN</adminArea>
+                                                						
+                        
+                        <postCode>55155</postCode>
+                                                						
+                        
+                        <eMailAdd>ben.gosack@state.mn.us</eMailAdd>
+                                                					
+                    
+                    </cntAddress>
+                                        				
+                
+                </rpCntInfo>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="005">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </distorCont>
+                        			
+            
+            <distorOrdPrc>
+                                				
+                
+                <ordInstr>This data can be downloaded from the Minnesota Geospatial Commons at:https://gisdata.mn.gov/dataset/env-my-neighborhood
+            </ordInstr>
+                                			
+            
+            </distorOrdPrc>
+                        			
+            
+            <distorFormat>
+                                				
+                
+                <formatName>Shapefile in Zip Archive</formatName>
+                                			
+            
+            </distorFormat>
+                        		
+        
+        </distributor>
+                		
+        
+        <distTranOps>
+                        			
+            
+            <onLineSrc>
+                                				
+                
+                <linkage>https://enterprise.gisdata.mn.gov/aghost/rest/services/us_mn_state_pca/env_my_neighborhood/FeatureServer</linkage>
+                                			
+                
+                <orName>Service URL</orName>
+                            
+            </onLineSrc>
+                        		
+            
+            <onLineSrc>
+                                
+                <linkage>https://operations.gis.data.mn.gov/api/publicdownload/download/326/env_my_neighborhood.gpkg</linkage>
+                                
+                <orName>Geopackage</orName>
+                            
+            </onLineSrc>
+                    
+        </distTranOps>
+                	
+    
+    </distInfo>
+        	
+    
+    <dataIdInfo>
+                		
+        
+        <idCitation>
+                        			
+            
+            <resTitle>What's In My Neighborhood Sites</resTitle>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Pollution Control Agency</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="006">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <citRespParty>
+                                				
+                
+                <rpOrgName>Minnesota Pollution Control Agency</rpOrgName>
+                                				
+                
+                <role>
+                                        					
+                    
+                    <RoleCd value="010">
+					</RoleCd>
+                                        				
+                
+                </role>
+                                			
+            
+            </citRespParty>
+                        			
+            
+            <presForm>
+                                				
+                
+                <PresFormCd value="005">
+				</PresFormCd>
+                                			
+            
+            </presForm>
+                        			
+            
+            <presForm>
+                                				
+                
+                <fgdcGeoform>vector digital data</fgdcGeoform>
+                                			
+            
+            </presForm>
+                        		
+        
+        </idCitation>
+                		
+        
+        <idAbs>The MPCA's What's in My Neighborhood contains a wide variety of environmental information about your community. This includes potentially contaminated sites, permits, licenses, registrations, inspections, and closed enforcement activities.
+&lt;br /&gt;&lt;br /&gt;
+Potentially contaminated sites: Since the early 1980s when major federal and state cleanup programs were created, the MPCA has been aggressively searching for and helping to clean up contaminated properties, from very small to large. This website contains a searchable inventory of those properties, as well as sites that have already been cleaned up and those currently being investigated or cleaned up.
+&lt;br /&gt;&lt;br /&gt;
+Environmental permits and registrations: This Web application also contains a searchable inventory of businesses that have applied for and received different types of environmental permits and registrations from the MPCA.
+&lt;br /&gt;&lt;br /&gt;
+Methods for creating site locations have different levels of precision. The most accurate locations use coordinates from GPS (global positioning system). Coordinates are also derived using the site's street address, zip code or public land survey information. Some MPCA sites are not mapped. These are generally activities that are mobile, like ships with ballast water permits. 
+&lt;br /&gt;&lt;br /&gt;
+Additional What's in My Neighborhood resources: 
+&lt;ul&gt;
+&lt;li&gt;&lt;a href='https://www.pca.state.mn.us/data/whats-my-neighborhood' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;What's in My Neighborhood Homepage&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://webapp.pca.state.mn.us/wimn/search' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;What's in My Neighborhood Application&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://experience.arcgis.com/experience/8258f05029bd45cb95add35e450c92e6' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;What's in My Neighborhood Web Map&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://pca-gis02.pca.state.mn.us/arcgis/services/WIMN/wimn_tempo/MapServer/WMSServer?request=GetCapabilities&amp;service=WMS' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;OpenGIS Web Map Service (WMS)&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='https://pca-gis02.pca.state.mn.us/arcgis/rest/services/WIMN/sites/MapServer' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;ESRI ArcGIS Server Map Service&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='http://services.pca.state.mn.us/wimn' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;What's in My Neighborhood API&lt;/a&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href='http://services.pca.state.mn.us/api/doc/v1/wimn/sites' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Sample Route Documentation - What's in My Neighborhood API&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href='http://services.pca.state.mn.us/api/v1/wimn/sites?searchString=TCAAP&amp;format=text' target='_blank' rel='nofollow ugc noopener noreferrer'&gt;Sample Route Request - What's in My Neighborhood API&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;br /&gt;&lt;div style='display:flex; flex-direction:column; gap:10px;'&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;my_neighborhood_sites.csv&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/326/my_neighborhood_sites.csv' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Geopackage&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/326/env_my_neighborhood.gpkg' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Data Download&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/326/env_my_neighborhood.zip' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style='align-items:center; background-color:#f7f7f7; border-radius:6px; display:flex; justify-content:space-between; padding:8px 12px;'&gt;&lt;span&gt;&lt;strong&gt;Metadata PDF&lt;/strong&gt;&lt;/span&gt;&lt;a style='background-color:#003865; border-radius:4px; color:#fff; padding:10px;' target='_blank' href='https://operations.gis.data.mn.gov/api/publicdownload/download/326/metadata.pdf' rel='nofollow ugc noopener noreferrer'&gt;&lt;strong&gt;Download&lt;/strong&gt;&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</idAbs>
+                		
+        
+        <idPurp>The data set was created as part of the Minnesota Pollution Control Agency's What's in My Neighborhood web application, which allows for public access to sites with environmental cleanup, pollution prevention,  permitted, registered, or licensed activities.</idPurp>
+                		
+        
+        <idStatus>
+                        			
+            
+            <ProgCd value="001">
+			</ProgCd>
+                        		
+        
+        </idStatus>
+                		
+        
+        <idPoC>
+                        			
+            
+            <rpIndName>Data Desk</rpIndName>
+                        			
+            
+            <rpOrgName>Minnesota Pollution Control Agency (MPCA)</rpOrgName>
+                        			
+            
+            <rpCntInfo>
+                                				
+                
+                <cntAddress addressType="mailling and physical">
+                                        					
+                    
+                    <delPoint>520 Lafayette Rd N</delPoint>
+                                        					
+                    
+                    <city>St. Paul</city>
+                                        					
+                    
+                    <adminArea>MN</adminArea>
+                                        					
+                    
+                    <postCode>55155</postCode>
+                                        					
+                    
+                    <eMailAdd>datadesk.mpca@state.mn.us</eMailAdd>
+                                        				
+                
+                </cntAddress>
+                                			
+            
+            </rpCntInfo>
+                        			
+            
+            <role>
+                                				
+                
+                <RoleCd value="007">
+				</RoleCd>
+                                			
+            
+            </role>
+                        		
+        
+        </idPoC>
+                		
+        
+        <resMaint>
+                        			
+            
+            <maintFreq>
+                                				
+                
+                <MaintFreqCd value="009">
+				</MaintFreqCd>
+                                			
+            
+            </maintFreq>
+                        		
+        
+        </resMaint>
+                		
+        
+        <graphOver>
+                        			
+            
+            <bgFileName>withheld</bgFileName>
+                        		
+        
+        </graphOver>
+                		
+        
+        <placeKeys>
+                        			
+            
+            <keyword>minnesota</keyword>
+                        		
+        
+        </placeKeys>
+                		
+        
+        <themeKeys>
+                        			
+            
+            <keyword>mpca, environment, permit, registration, license, cleanup, superfund, RCRA, CERCLIS, brownfield, tank, leak, spill, NPDES, SDS, feedlot, landfill, solid waste, hazardous waste, dump, stormwater, MS4, environmental review, remediation, wastewater, toxics reduction, permit, MPCA, registration, notification, investigation, contaminated property</keyword>
+                        		
+        
+        </themeKeys>
+                		
+        
+        <searchKeys>
+                        			
+            
+            			
+            
+            		
+        
+            <keyword>mpca</keyword>
+            <keyword>environment</keyword>
+            <keyword>permit</keyword>
+            <keyword>registration</keyword>
+            <keyword>license</keyword>
+            <keyword>cleanup</keyword>
+            <keyword>superfund</keyword>
+            <keyword>RCRA</keyword>
+            <keyword>CERCLIS</keyword>
+            <keyword>brownfield</keyword>
+            <keyword>tank</keyword>
+            <keyword>leak</keyword>
+            <keyword>spill</keyword>
+            <keyword>NPDES</keyword>
+            <keyword>SDS</keyword>
+            <keyword>feedlot</keyword>
+            <keyword>landfill</keyword>
+            <keyword>solid waste</keyword>
+            <keyword>hazardous waste</keyword>
+            <keyword>dump</keyword>
+            <keyword>stormwater</keyword>
+            <keyword>MS4</keyword>
+            <keyword>environmental review</keyword>
+            <keyword>remediation</keyword>
+            <keyword>wastewater</keyword>
+            <keyword>toxics reduction</keyword>
+            <keyword>permit</keyword>
+            <keyword>MPCA</keyword>
+            <keyword>registration</keyword>
+            <keyword>notification</keyword>
+            <keyword>investigation</keyword>
+            <keyword>contaminated property</keyword>
+            <keyword>minnesota</keyword>
+        </searchKeys>
+                		
+        
+        <resConst>
+                        			
+            
+            <Consts>
+                                				
+                
+                <useLimit>Redistribution Conditions: If you obtain data from the MPCA, it is understood that you and/or your organization have the right to use them for any purpose. If you transmit or provide these data in any form to another user, the data should be accompanied by all documentation provided with the original data set including the full metadata record.</useLimit>
+                                			
+            
+            </Consts>
+                        		
+        
+        </resConst>
+                		
+        
+        <resConst>
+                        			
+            
+            <LegConsts>
+                                				
+                
+                <useLimit>Limitations: Although extensive effort has been made to produce error-free and complete data, all geographic information has limitations due to the scale, resolution, date and interpretation of the original source materials. Users should consult available data documentation (metadata) for this particular data to determine limitations and the precision to which the data depict distance, direction, location or other geographic characteristics. Data may be subject to change without prior notification.
+
+No warranty: Data is provided "as is," without any warranty whatsoever, including but not limited to any warranty as to performance, merchantability or fitness for any particular purpose.
+
+Liability: The entire risk as to the results of the use of this data is assumed by the user. The MPCA is not responsible for any interpretation or conclusions made by those who acquire or use it. The MPCA shall not be liable for any direct, indirect, special, incidental, compensatory or consequential damages or third-party claims resulting from the use of this data, even if the MPCA has been advised of the possibility of such potential loss or damage. In states that do not allow the exclusion or limitation of incidental or consequential damages, this data may not be used.
+        </useLimit>
+                                			
+            
+            </LegConsts>
+                        		
+        
+        </resConst>
+                		
+        
+        <aggrInfo>
+                        			
+            
+            <aggrDSName>
+                                				
+                
+                <resTitle>None</resTitle>
+                                			
+            
+            </aggrDSName>
+                        			
+            
+            <assocType>
+                                				
+                
+                <AscTypeCd value="001">
+				</AscTypeCd>
+                                			
+            
+            </assocType>
+                        		
+        
+        </aggrInfo>
+                		
+        
+        <spatRpType>
+                        			
+            
+            <SpatRepTypCd value="001">
+			</SpatRepTypCd>
+                        		
+        
+        </spatRpType>
+                		
+        
+        <envirDesc>ESRI ArcCatalog 9.3.1.1850</envirDesc>
+                		
+        
+        <dataExt>
+                        			
+            
+            <geoEle>
+                                				
+                
+                <GeoBndBox>
+                                        					
+                    
+                    <exTypeCode>true</exTypeCode>
+                                        					
+                    
+                    <westBL>-97.260405</westBL>
+                                        					
+                    
+                    <eastBL>-89.512062</eastBL>
+                                        					
+                    
+                    <northBL>49.365608</northBL>
+                                        					
+                    
+                    <southBL>43.436257</southBL>
+                                        				
+                
+                </GeoBndBox>
+                                			
+            
+            </geoEle>
+                        		
+        
+        </dataExt>
+                		
+        
+        <dataExt>
+                        			
+            
+            <exDesc>Site locations and attributes are updated on a continual basis as new information is obtained.  Data in the distributed data files is current as of the creation date of the file.</exDesc>
+                        		
+        
+        </dataExt>
+                		
+        
+        <suppInfo>Minnesota</suppInfo>
+                	
+    
+    </dataIdInfo>
+        	
+    
+    <dqInfo>
+                		
+        
+        <dqScope>
+                        			
+            
+            <scpLvl>
+                                				
+                
+                <ScopeCd value="005">
+				</ScopeCd>
+                                			
+            
+            </scpLvl>
+                        		
+        
+        </dqScope>
+                		
+        
+        <report type="DQQuanAttAcc">
+                        			
+            
+            <measDesc>Attribute information comes from multiple sources, including information submitted by the site owner, information determined by MPCA staff, and information derived based on the location of the site.
+
+The accuracy of this information has not been verified.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQConcConsis">
+                        			
+            
+            <measDesc>No known issues with logical consistency for this point data set.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report type="DQCompOm">
+                        			
+            
+            <measDesc>At this time, this data set does not contain a feature for every site in the What's In My Neighborhood application.  There is an ongoing effort to improve data completeness and quality.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="horizontal" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Coordinates for these features were collected using a variety of methods of varying accuracy.  The 'COORD_METH' column in the attribute table describes the method used to determine the coordinate for each feature.
+
+A description of the coordinate collection values found in the 'COORD_METH' column can be found in the 'Attributes' section of this document.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <report dimension="vertical" type="DQAbsExtPosAcc">
+                        			
+            
+            <measDesc>Not applicable.  The features in this data set do not contain Z (vertical) values.</measDesc>
+                        		
+        
+        </report>
+                		
+        
+        <dataLineage>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>Coordinates for these features were collected using a variety of methods of varying accuracy.  The 'COORD_METH' column in the attribute table describes the method used to determine the coordinate for each feature.
+
+A description of the coordinate collection values found in the 'COORD_METH' column can be found in the 'Entities and Attributes' section of this document.</stepDesc>
+                                			
+            
+            </prcStep>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>Metadata imported.</stepDesc>
+                                				
+                
+                <stepDateTm>2009-07-17T22:33:38</stepDateTm>
+                                				
+                
+                <stepSrc type="used">
+                                        					
+                    
+                    <srcCitatn>
+                                                						
+                        
+                        <resAltTitle>withheld</resAltTitle>
+                                                					
+                    
+                    </srcCitatn>
+                                        				
+                
+                </stepSrc>
+                                			
+            
+            </prcStep>
+                        			
+            
+            <prcStep>
+                                				
+                
+                <stepDesc>Metadata imported.</stepDesc>
+                                				
+                
+                <stepDateTm>2009-09-03T14:04:31</stepDateTm>
+                                				
+                
+                <stepSrc type="used">
+                                        					
+                    
+                    <srcCitatn>
+                                                						
+                        
+                        <resAltTitle>withheld</resAltTitle>
+                                                					
+                    
+                    </srcCitatn>
+                                        				
+                
+                </stepSrc>
+                                			
+            
+            </prcStep>
+                        		
+        
+        </dataLineage>
+                	
+    
+    </dqInfo>
+        	
+    
+    <spatRepInfo>
+                		
+        
+        <VectSpatRep>
+                        			
+            
+            <geometObjs>
+                                				
+                
+                <geoObjTyp>
+                                        					
+                    
+                    <GeoObjTypCd value="004">
+					</GeoObjTypCd>
+                                        				
+                
+                </geoObjTyp>
+                                				
+                
+                <geoObjCnt>99810</geoObjCnt>
+                                			
+            
+            </geometObjs>
+                        		
+        
+        </VectSpatRep>
+                	
+    
+    </spatRepInfo>
+        	
+    
+    <spatRepInfo>
+                		
+        
+        <Indref>Latitude and Longitude columns contain values expressed as geographic coordinates in decimal degrees, using WGS84 as the spheroid/datum.
+
+EPSG:4326</Indref>
+                	
+    
+    </spatRepInfo>
+        	
+    
+    <mdExtInfo>
+                		
+        
+        <extOnRes>
+                        			
+            
+            <linkage>http://www.gis.state.mn.us/stds/metadata.htm</linkage>
+                        			
+            
+            <orName>ESRI Metadata Profile</orName>
+                        		
+        
+        </extOnRes>
+                	
+    
+    </mdExtInfo>
+        	
+    
+    <eainfo>
+                		
+        
+        <detailed>
+                        			
+            
+            <enttyp>
+                                				
+                
+                <enttypl>env_my_neighborhood</enttypl>
+                                			
+            
+            </enttyp>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>OBJECTID</attrlabl>
+                                				
+                
+                <attrdef>Internal feature number</attrdef>
+                                				
+                
+                <attrdefs>ESRI</attrdefs>
+                                				
+                
+                <attrdomv>
+                                        					
+                    
+                    <udom>Sequential unique whole numbers that are automatically generated. Not consistent across different versions of the data.</udom>
+                                        				
+                
+                </attrdomv>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>SHAPE</attrlabl>
+                                				
+                
+                <attrdef>Feature geometry</attrdef>
+                                				
+                
+                <attrdefs>ESRI</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>SITE_ID</attrlabl>
+                                				
+                
+                <attrdef>The site's system ID</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>NAME</attrlabl>
+                                				
+                
+                <attrdef>The site's name</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ACTIVE_FLAG</attrlabl>
+                                				
+                
+                <attrdef>Indicates whether site is active or not ('Y' or 'N')</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ADDRESS_STREET</attrlabl>
+                                				
+                
+                <attrdef>Street address of physical location of site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ADDRESS_CITY</attrlabl>
+                                				
+                
+                <attrdef>City of physical location of site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ADDRESS_STATE</attrlabl>
+                                				
+                
+                <attrdef>State of physical location of site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ADDRESS_ZIP</attrlabl>
+                                				
+                
+                <attrdef>Zip Code of physical location of site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>CITY</attrlabl>
+                                				
+                
+                <attrdef>City in which site is located - derived from feature location</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>COUNTY</attrlabl>
+                                				
+                
+                <attrdef>County in which site is located - derived from feature location</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>CONG_DISTRICT</attrlabl>
+                                				
+                
+                <attrdef>US Congressional district code - derived from feature location</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>SENATE_DISTRICT</attrlabl>
+                                				
+                
+                <attrdef>MN senate district - derived from feature location</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>HOUSE_DISTRICT</attrlabl>
+                                				
+                
+                <attrdef>MN house district - derived from feature location</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>HUC8</attrlabl>
+                                				
+                
+                <attrdef>USGS 8-digit watershed code - derived from feature location</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>WATERSHED_NAME</attrlabl>
+                                				
+                
+                <attrdef>Name of MN DNR major watershed associated with the USGS 8-digit watershed</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>SITE_URL</attrlabl>
+                                				
+                
+                <attrdef>URL for MPCA What's In My Neighborhood application page for this site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ACTIVITY</attrlabl>
+                                				
+                
+                <attrdef>MPCA activity of interest at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>ACTIVITY_LIST</attrlabl>
+                                				
+                
+                <attrdef>Comma-delimited list of MPCA activities of interest at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>MPCA_ID</attrlabl>
+                                				
+                
+                <attrdef>MPCA ID associated with an activity at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>MPCA_ID_LIST</attrlabl>
+                                				
+                
+                <attrdef>Comma-delimited list of MPCA IDs associated with activities at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PROGRAM_CODE_LIST</attrlabl>
+                                				
+                
+                <attrdef>Comma-delimited list of codes for programs associated with activities at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PROGRAM_NAME</attrlabl>
+                                				
+                
+                <attrdef>Name of the MPCA program associated with activities at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>PROGRAM_NAME_LIST</attrlabl>
+                                				
+                
+                <attrdef>Comma-delimited list of names of MPCA programs associated with activities at the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>INDUSTRIAL_CLASSIFICATION</attrlabl>
+                                				
+                
+                <attrdef>Primary industrial classification associated with the site</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>IC_FLAG</attrlabl>
+                                				
+                
+                <attrdef>indicates the presence of institutional controls at the site. ('Y' or 'N') These are administrative and legal controls that help minimize the potential for human exposure to contamination.</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>LATITUDE</attrlabl>
+                                				
+                
+                <attrdef>decimal degrees - coordinate y value (WGS84)</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>LONGITUDE</attrlabl>
+                                				
+                
+                <attrdef>decimal degrees - coordinate x value (WGS84)</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>COORD_COLLECT_METHOD_CODE</attrlabl>
+                                				
+                
+                <attrdef>code representing the method used to derive the location coordinates</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        			
+            
+            <attr>
+                                				
+                
+                <attrlabl>COORD_COLLECT_METHOD_NAME</attrlabl>
+                                				
+                
+                <attrdef>Description of the method used to derive the location coordinates</attrdef>
+                                				
+                
+                <attrdefs>MPCA</attrdefs>
+                                			
+            
+            </attr>
+                        		
+        
+        </detailed>
+                		
+        
+        <overview>
+                        			
+            
+            <eadetcit>None</eadetcit>
+                        		
+        
+        </overview>
+                	
+    
+    </eainfo>
+        
+
+</metadata>

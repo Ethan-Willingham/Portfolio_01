@@ -46,6 +46,72 @@ async function fit(page) {
   for (const b of geometry.buttons) assert.ok(b.width >= 44 && b.height >= 44);
   assert.ok(geometry.canvas[0] > 100 && geometry.canvas[1] > 100);
 }
+async function turnWithMouse(page, dx, dy) {
+  const box = await page.locator('#hx-canvas').boundingBox();
+  await page.mouse.move(box.x + box.width * .5, box.y + box.height * .5);
+  await page.mouse.down(); assert.ok((await snap(page)).cameraDragging);
+  await page.mouse.move(box.x + box.width * .5 + dx, box.y + box.height * .5 + dy, { steps: 10 });
+  await page.mouse.up(); assert.equal((await snap(page)).cameraDragging, false);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+async function checkRotation(page) {
+  await page.evaluate(() => HydrogenExactly.seek(50));
+  const before = await page.evaluate(() => HydrogenExactly.debugReadback());
+  const imageBefore = await page.locator('#hx-canvas').screenshot();
+  await turnWithMouse(page, 220, -100);
+  const turned = await snap(page); assert.notEqual(turned.parameterValues.yaw,before.parameterValues.yaw); assert.notEqual(turned.parameterValues.tilt,before.parameterValues.tilt);
+  assert.equal(turned.numericalStepCount,before.numericalStepCount); assert.equal(turned.scoreSeconds,before.scoreSeconds); assert.ok(turned.paused);
+  assert.ok(!imageBefore.equals(await page.locator('#hx-canvas').screenshot())); await shot(page,'rotated-3d');
+  const after = await page.evaluate(() => HydrogenExactly.debugReadback());
+  assert.deepEqual(after.probes,before.probes); assert.equal(after.spatialCapturedMass,before.spatialCapturedMass);
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowUp');
+  assert.notEqual((await snap(page)).parameterValues.yaw,turned.parameterValues.yaw);
+  await page.keyboard.press('Home'); assert.ok(Math.abs((await snap(page)).parameterValues.yaw-.1)<1e-12);
+  for (const tilt of [0,Math.PI/2,-Math.PI/2,Math.PI]) {
+    await page.evaluate(tilt => HydrogenExactly.setCamera({yaw:Math.PI/2,tilt}),tilt);
+    await shot(page, tilt===0?'edge-on-3d':tilt===Math.PI/2?'overhead-3d':tilt===-Math.PI/2?'underneath-3d':'flipped-3d');
+  }
+  // Capture keeps a drag alive outside the canvas, then releases it on cancel.
+  await page.locator('#hx-canvas').evaluate(e => e.addEventListener('pointerdown',event => window.hydrogenTestPointer=event.pointerId,{once:true}));
+  const box = await page.locator('#hx-canvas').boundingBox(); await page.mouse.move(box.x+12,box.y+box.height*.5); await page.mouse.down();
+  const captureBefore = (await snap(page)).parameterValues.yaw;
+  await page.mouse.move(box.x-15,box.y+box.height*.5,{steps:3}); assert.notEqual((await snap(page)).parameterValues.yaw,captureBefore);
+  await page.locator('#hx-canvas').evaluate(e => e.dispatchEvent(new PointerEvent('pointercancel',{pointerId:window.hydrogenTestPointer,bubbles:true})));
+  assert.equal((await snap(page)).cameraDragging,false); await page.mouse.up();
+  await page.locator('#hx-instruments-toggle').click(); await page.locator('#hx-view').selectOption('soft');
+  await page.locator('#hx-instruments-toggle').click(); await turnWithMouse(page,40,20);
+  await page.locator('#hx-instruments-toggle').click(); await page.locator('#hx-reset-view').click();
+  assert.ok(Math.abs((await snap(page)).parameterValues.tilt-.92)<1e-12);
+  await page.locator('#hx-view').selectOption('section'); assert.equal(await page.locator('#hx-canvas').getAttribute('data-rotatable'),'false'); assert.ok(await page.locator('#hx-reset-view').isDisabled());
+  await page.locator('#hx-view').selectOption('volume'); await page.locator('#hx-instruments-toggle').click();
+  await page.locator('#hx-fullscreen').click(); await turnWithMouse(page,40,-20);
+  const fullCamera=(await snap(page)).parameterValues; await page.locator('#hx-fullscreen').click(); assert.equal((await snap(page)).parameterValues.yaw,fullCamera.yaw);
+  await page.evaluate(() => HydrogenExactly.resetView());
+  await page.locator('#hx-play').click(); const liveScore=(await snap(page)).scoreSeconds;
+  await turnWithMouse(page,60,30); await page.waitForTimeout(200);
+  assert.equal((await snap(page)).paused,false); assert.ok((await snap(page)).scoreSeconds>liveScore);
+  await page.locator('#hx-play').click();
+  const hiddenBox=await page.locator('#hx-canvas').boundingBox(); await page.mouse.move(hiddenBox.x+100,hiddenBox.y+100); await page.mouse.down();
+  assert.ok((await snap(page)).cameraDragging);
+  await page.evaluate(() => { Object.defineProperty(document,'hidden',{configurable:true,value:true}); document.dispatchEvent(new Event('visibilitychange')); });
+  assert.equal((await snap(page)).cameraDragging,false); await page.mouse.up();
+  await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); HydrogenExactly.resetView(); });
+  pass('Mouse, keyboard, capture cancellation, fullscreen and all camera angles work without evolving the paused wavefunction');
+  pass('Dragging preserves active playback, and hiding the page releases a captured drag');
+  const touchContext=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+  const touch=await open(touchContext), session=await touchContext.newCDPSession(touch);
+  await touch.evaluate(() => HydrogenExactly.seek(50)); const touchBefore=await snap(touch);
+  const touchBox=await touch.locator('#hx-canvas').boundingBox(), x=touchBox.x+touchBox.width*.5, y=touchBox.y+touchBox.height*.5;
+  const scroll=await touch.evaluate(() => scrollY);
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+55,y:y-65}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const touchAfter=await snap(touch); assert.notEqual(touchAfter.parameterValues.yaw,touchBefore.parameterValues.yaw); assert.notEqual(touchAfter.parameterValues.tilt,touchBefore.parameterValues.tilt);
+  assert.equal(touchAfter.scoreSeconds,touchBefore.scoreSeconds); assert.equal(touchAfter.numericalStepCount,touchBefore.numericalStepCount); assert.equal(await touch.evaluate(() => scrollY),scroll); assert.equal(touchAfter.cameraDragging,false);
+  await shot(touch,'touch-rotated-3d',false); await session.detach(); await touchContext.close();
+  pass('Real touch drag rotates the portrait 3D field at DPR 2, without scrolling or overriding reduced motion');
+  await page.evaluate(() => HydrogenExactly.seek(0));
+}
 (async () => { try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   browser = await chromium.launch({ headless: true, executablePath: '/Users/ethan/.local/bin/agent-chrome-for-testing', args: ['--enable-unsafe-webgpu'] });
@@ -61,6 +127,8 @@ async function fit(page) {
   const framing = await page.locator('#hx-demo').evaluate(e => ({ width: e.clientWidth, stageHeight: e.querySelector('.hx-stage').clientHeight, bottom: e.getBoundingClientRect().bottom, screen: [innerWidth,innerHeight] }));
   assert.ok(framing.width >= framing.screen[0]*.9 && framing.stageHeight >= framing.screen[1]*.7 && framing.bottom <= framing.screen[1]);
   report.framing = framing; pass('Large default canvas and playback controls fit the first desktop screen');
+  await checkRotation(page);
+  if (process.env.HYDROGEN_ROTATION_ONLY) { assert.deepEqual(errors,[]); report.errors=errors; await context.close(); fs.writeFileSync(path.join(output,'rotation.json'),JSON.stringify(report,null,2)+'\n'); return; }
   if (process.env.HYDROGEN_PRESENTATION_ONLY) {
     await page.locator('#hx-instruments-toggle').click(); await page.evaluate(() => HydrogenExactly.seek(50));
     const state = await page.evaluate(() => HydrogenExactly.debugReadback());

@@ -14,54 +14,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>What's Under a Twin Cities Street</title>
-  <meta name="description" content="Bassett Creek runs through a 1.7-mile tunnel under Minneapolis. A map and guide to the fiber, gas, power, drains, and sewer tunnels beneath the Twin Cities.">
+  <meta name="description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and a guide to each system.">
   <meta property="og:title" content="What's Under a Twin Cities Street">
-  <meta property="og:description" content="Bassett Creek runs through a 1.7-mile tunnel under Minneapolis. A map and guide to the fiber, gas, power, drains, and sewer tunnels beneath the Twin Cities.">
+  <meta property="og:description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and a guide to each system.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/under-the-street/under-the-street.html">
-  <meta property="og:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg">
+  <meta property="og:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-3">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="A dark map of the Twin Cities metro with real buried infrastructure drawn in: green sewer interceptors, brick-red transmission lines, gold treatment plants.">
+  <meta property="og:image:alt" content="The Twin Cities map showing electric transmission lines, substations and generating sites, with Minneapolis and Saint Paul labeled.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-3">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/style.css">
   <style>
-  /* ============================================================
-     WHAT'S UNDER A TWIN CITIES STREET
-     A descent. The page reads top to bottom the way the ground is
-     stacked: pavement, comms, gas, power, storm, sanitary, rock.
-     The organizing color system is the real one: the national
-     utility-marking paint code that gets sprayed on the street
-     before any dig (orange comms, yellow gas, red electric, green
-     sewer), mapped onto the site's muted categorical accent set.
-     Desktop gets a sticky depth rail on the left that tracks the
-     reader's position; mobile drops the rail and keeps a mono
-     depth chip on each section head. Page background stays the
-     locked site green; the descent mood rides the per-layer accent
-     and the cross-section art, not the page color.
-     The centerpiece is a real map: a dependency-free canvas
-     renderer over real GIS lines (MCES interceptors, MnDOT roads,
-     DNR water, OSM transmission), lazy-loaded from assets/map/.
-     No em dashes.
-     ============================================================ */
+  /* Systems guide and public-data explorer. Colors use the shared palette;
+     article navigation follows systems rather than a fixed burial order. */
   :root {
     --measure: 760px;
     /* the dig-paint code, capped to the site's categorical band */
     --mark-comms: #cf9f78;   /* orange   = communications */
     --mark-gas:   #dfc288;   /* yellow   = gas */
     --mark-elec:  #b8796d;   /* red      = electric */
-    --mark-storm: #8fb3c7;   /* blue     = water in the wrong place */
+    --mark-water: #8fb3c7;  /* blue     = drinking water */
+    --mark-storm: #8fb3c7;  /* blue     = stormwater map layer */
     --mark-sewer: #6f9a6c;   /* green    = sewer */
     --mark-rock:  #b79bc4;   /* purple   = the rock itself (off-code) */
   }
   html { overflow-x: hidden; overscroll-behavior-x: none; }
-  body { overflow-x: hidden; }
+  body { overflow-x: clip; }
 
   .top-nav { max-width: calc(var(--measure) + 14rem); margin: 0 auto 0.4rem; padding: 1.1rem var(--gutter, 1.5rem) 0; }
   .top-nav .post-back { position: static; display: inline-block; padding: 0; margin: 0; background: none; }
@@ -73,7 +58,7 @@
   .descent { max-width: calc(var(--measure) + 14rem); margin: 0 auto; padding: 0 var(--gutter, 1.5rem); display: grid; grid-template-columns: 5.2rem minmax(0, 1fr); gap: 0 2.2rem; }
   .descent > .col { grid-column: 2; max-width: var(--measure); min-width: 0; }
 
-  /* the depth rail (desktop only) */
+  /* section navigation (desktop only) */
   .rail { grid-column: 1; grid-row: 1 / span 99; position: relative; }
   .rail-inner { position: sticky; top: 4.5rem; display: flex; flex-direction: column; gap: 0; padding: 0.4rem 0 0.6rem; border-left: 1px solid var(--rule); }
   .rail-stop { display: block; padding: 0.52rem 0 0.52rem 0.85rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; color: var(--text-faint); text-decoration: none; border-left: 2px solid transparent; margin-left: -1.5px; line-height: 1.3; }
@@ -85,148 +70,6 @@
   /* ---------------- hero ---------------- */
   .u-hero { margin-top: 1.6rem; }
 
-  /* ---------------- the real map: a floating app screen ----------------
-     The map chrome follows one recipe (the family.co school, translated to
-     the site palette): a rounded framed screen that fits the viewport,
-     translucent blurred cards floating over it, list rows with real toggle
-     switches, pill buttons, sentence case, Segoe + Supra only. */
-  .ummap { width: 100vw; margin: 2.6rem 0 0.6rem; }  /* pinned to the viewport by under-map.js */
-  .um-stage { position: relative; width: min(1160px, calc(100% - 3rem)); margin: 0 auto;
-    height: clamp(440px, calc(100vh - 12rem), 630px);
-    height: clamp(440px, calc(100svh - 12rem), 630px);
-    background: #100e0b; border: 1px solid rgba(232,226,214,0.14); border-radius: 16px; overflow: hidden;
-    box-shadow: inset 0 1px 0 rgba(232,226,214,0.07), 0 3px 12px rgba(0,0,0,0.45), 0 34px 80px rgba(0,0,0,0.55); }
-  .um-stage canvas { position: absolute; inset: 0; touch-action: none; cursor: grab; }
-  .um-stage canvas:active { cursor: grabbing; }
-  .um-stage canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .um-stage:fullscreen { width: 100%; height: 100%; border-radius: 0; border: none; }
-  .um-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: var(--font-body); font-size: 0.85rem; color: var(--text-faint); margin: 0; pointer-events: none; }
-
-  /* the shared glass surface */
-  .um-card { background: rgba(21,19,15,0.86); -webkit-backdrop-filter: blur(16px) saturate(1.05); backdrop-filter: blur(16px) saturate(1.05);
-    border: 1px solid rgba(232,226,214,0.10); border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(232,226,214,0.06), 0 2px 6px rgba(0,0,0,0.34), 0 16px 40px rgba(0,0,0,0.42); }
-  .ummap :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  /* left: the layers card */
-  .um-left { position: absolute; top: 0.9rem; left: 0.9rem; width: min(322px, calc(100% - 5.2rem)); max-height: calc(100% - 1.8rem); z-index: 4; pointer-events: none; }
-  .um-left > * { pointer-events: auto; }
-  .um-layers summary { list-style: none; display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-heading); font-weight: 700; font-size: 1.04rem; letter-spacing: -0.01em; color: var(--text-bright); padding: 0.7rem 1rem 0.66rem; cursor: pointer; }
-  .um-layers summary::-webkit-details-marker { display: none; }
-  .um-layers summary::after { content: ""; width: 7px; height: 7px; border-right: 1.7px solid var(--text-faint); border-bottom: 1.7px solid var(--text-faint); transform: translateY(-2px) rotate(45deg); margin-left: auto; margin-right: 0.15rem; transition: transform 0.2s ease; }
-  .um-layers[open] summary::after { transform: translateY(1px) rotate(-135deg); }
-  .um-lbody { border-top: 1px solid rgba(232,226,214,0.07); padding: 0.45rem 0.5rem 0.55rem;
-    max-height: 560px; max-height: min(66svh, 560px);
-    overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(232,226,214,0.22) transparent; }
-  .um-lbody::-webkit-scrollbar { width: 8px; }
-  .um-lbody::-webkit-scrollbar-thumb { background: rgba(232,226,214,0.18); border-radius: 999px; }
-  .um-lgroup { margin: 0; padding: 0.75rem 0.6rem 0.3rem; font-family: var(--font-body); font-weight: 700; font-size: 0.6rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--text-faint); }
-  .um-lgroup:first-child { padding-top: 0.35rem; }
-
-  /* one layer = one list row with a switch */
-  .um-lrow { display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left; background: none; border: none; border-radius: 12px; padding: 0.35rem 0.55rem; cursor: pointer; transition: background 0.15s ease; }
-  .um-lrow:hover { background: rgba(232,226,214,0.055); }
-  .um-lrow:active { background: rgba(232,226,214,0.085); }
-  .um-lrow i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--pc); box-shadow: 0 0 9px color-mix(in oklab, var(--pc) 55%, transparent); transition: opacity 0.15s ease, box-shadow 0.15s ease; }
-  .um-lt { flex: 1; min-width: 0; }
-  .um-lt b { display: block; font-family: var(--font-body); font-weight: 600; font-size: 0.84rem; line-height: 1.25; color: var(--text); transition: color 0.15s ease; }
-  .um-lt small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-body); font-size: 0.69rem; line-height: 1.35; color: var(--text-faint); margin-top: 1px; }
-  .um-sw { flex: none; position: relative; width: 30px; height: 18px; border-radius: 999px; background: rgba(232,226,214,0.16); transition: background 0.18s ease; }
-  .um-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #a4a293; box-shadow: 0 1px 2px rgba(0,0,0,0.35); transition: transform 0.18s ease, background 0.18s ease; }
-  .um-lrow[aria-pressed="true"] .um-sw { background: var(--pc); }
-  .um-lrow[aria-pressed="true"] .um-sw::after { transform: translateX(12px); background: #f5f1ea; }
-  .um-lrow[aria-pressed="false"] i { opacity: 0.3; box-shadow: none; }
-  .um-lrow[aria-pressed="false"] .um-lt b { color: var(--text-faint); }
-  .um-lrow-off { cursor: default; }
-  .um-lrow-off:hover, .um-lrow-off:active { background: none; }
-  .um-lrow-off i { opacity: 0.45; box-shadow: none; }
-  .um-lrow-off .um-lt b { color: var(--text-dim); }
-  .um-na { flex: none; font-family: var(--font-body); font-weight: 600; font-size: 0.6rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); border: 1px solid rgba(232,226,214,0.14); border-radius: 999px; padding: 0.16rem 0.5rem; }
-
-  /* fly-to select */
-  .um-flyto { display: block; padding: 0.4rem 0.55rem 0.25rem; }
-  .um-flyto > span { display: block; font-family: var(--font-body); font-weight: 600; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.3rem 0.15rem; }
-  .um-places { display: block; width: 100%; font-family: var(--font-body); font-weight: 500; font-size: 0.84rem; color: var(--text); background-color: rgba(232,226,214,0.07); border: 1px solid rgba(232,226,214,0.10); border-radius: 12px; padding: 0.48rem 2rem 0.48rem 0.75rem; appearance: none; -webkit-appearance: none; cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a4a293' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 10px auto; transition: background-color 0.15s ease, border-color 0.15s ease; }
-  .um-places:hover { background-color: rgba(232,226,214,0.11); }
-  .um-places option { background: #17140f; color: var(--text); }
-
-  /* legend */
-  .um-keyd { border-top: 1px solid rgba(232,226,214,0.07); margin-top: 0.4rem; }
-  .um-keyd summary { list-style: none; display: flex; align-items: center; font-family: var(--font-body); font-weight: 600; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); padding: 0.5rem 0.7rem 0.45rem 0.7rem; cursor: pointer; transition: color 0.15s ease; }
-  .um-keyd summary::-webkit-details-marker { display: none; }
-  .um-keyd summary:hover { color: var(--text-dim); }
-  .um-keyd summary::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid var(--text-faint); border-bottom: 1.5px solid var(--text-faint); transform: translateY(-1px) rotate(45deg); margin-left: auto; margin-right: 0.15rem; transition: transform 0.2s ease; }
-  .um-keyd[open] summary::after { transform: translateY(1px) rotate(-135deg); }
-  .um-keygrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.42rem 0.75rem; padding: 0.05rem 0.7rem 0.7rem; max-height: 180px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(232,226,214,0.22) transparent; }
-  .um-ki { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-body); font-size: 0.7rem; line-height: 1.3; color: var(--text-dim); min-width: 0; }
-  .um-ki .kl { width: 20px; height: 0; display: inline-block; flex: none; }
-  .um-ki .kd { width: 0.56rem; height: 0.56rem; border-radius: 50%; background: var(--kc); display: inline-block; flex: none; }
-  .um-ki .kd.kr { background: none; border: 1.6px solid var(--kc); }
-  .um-ki .kd.kdia { border-radius: 0; transform: rotate(45deg) scale(0.9); }
-  .um-ki .kd.ksq { border-radius: 0; }
-
-  /* right: the inspector card */
-  .um-panel { position: absolute; top: 0.9rem; right: 0.9rem; width: min(316px, calc(100% - 5.2rem)); max-height: calc(100% - 12.5rem); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(232,226,214,0.22) transparent; z-index: 6; padding: 1rem 1.05rem 1.05rem; transition: opacity 0.22s ease, transform 0.22s ease; }
-  @starting-style { .um-panel { opacity: 0; transform: translateY(8px) scale(0.98); } }
-  .um-pimg { position: relative; margin: -1rem -1.05rem 0.7rem; overflow: hidden; background: #0c0b09; border-radius: 18px 18px 0 0; }
-  .um-pimg img { display: block; width: 100%; height: 132px; object-fit: cover; }
-  .um-pcredit { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.1rem 0.7rem 0.3rem; background: linear-gradient(to top, rgba(8,11,9,0.82), rgba(8,11,9,0)); font-family: var(--font-body); font-size: 0.58rem; letter-spacing: 0.01em; color: rgba(245,241,234,0.72); }
-  .um-panel h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--text-bright); margin: 0.3rem 1.5rem 0.55rem 0; }
-  .um-pk { display: flex; align-items: center; gap: 0.45rem; font-family: var(--font-body); font-weight: 600; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin: 0; }
-  .um-pk::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--pk); box-shadow: 0 0 8px color-mix(in oklab, var(--pk) 55%, transparent); flex: none; }
-  .um-prow { display: flex; justify-content: space-between; gap: 1rem; font-family: var(--font-body); font-size: 0.78rem; color: var(--text-faint); border-top: 1px solid rgba(232,226,214,0.07); padding: 0.36rem 0; }
-  .um-prow b { color: var(--text); font-weight: 600; }
-  .um-pblurb { font-family: var(--font-body); font-size: 0.85rem; line-height: 1.55; color: var(--text-dim); margin: 0.5rem 0 0; }
-  .um-pact { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
-  .um-pact button { flex: 1; font-family: var(--font-body); font-weight: 600; font-size: 0.78rem; border: none; border-radius: 999px; padding: 0.5rem 0.9rem; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease; }
-  .um-pact button:active { transform: scale(0.97); }
-  .um-b1 { background: var(--accent); color: #232b25; }
-  .um-b1:hover { background: var(--accent-hover); }
-  .um-b2 { background: rgba(232,226,214,0.09); color: var(--text); }
-  .um-b2:hover { background: rgba(232,226,214,0.15); }
-  .um-pclose { position: absolute; top: 0.6rem; right: 0.6rem; width: 26px; height: 26px; display: grid; place-items: center; background: rgba(232,226,214,0.08); border: none; border-radius: 50%; color: var(--text-dim); font-size: 0.95rem; line-height: 1; cursor: pointer; padding: 0; transition: background 0.15s ease, color 0.15s ease; }
-  .um-pclose:hover { background: rgba(232,226,214,0.15); color: var(--text-bright); }
-
-  /* bottom right: fullscreen + zoom pill */
-  .um-ctrl { position: absolute; right: 0.9rem; bottom: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; z-index: 5; }
-  .um-ctrl button { display: grid; place-items: center; width: 42px; height: 42px; background: none; border: none; color: var(--text); cursor: pointer; padding: 0; transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease; }
-  .um-ctrl button:hover { background: rgba(232,226,214,0.08); color: var(--text-bright); }
-  .um-ctrl button:active { transform: scale(0.94); }
-  .um-ctrl svg { width: 16px; height: 16px; display: block; }
-  .um-cbtn { border-radius: 50%; }
-  .um-zoom { display: flex; flex-direction: column; border-radius: 999px; overflow: hidden; }
-  .um-zoom button + button { border-top: 1px solid rgba(232,226,214,0.08); }
-
-  /* bottom left: the basemap tile, always previewing the other map */
-  .um-basethumb { position: absolute; left: 0.9rem; bottom: 0.9rem; z-index: 3; width: 92px; padding: 0; border: 1px solid rgba(232,226,214,0.14); border-radius: 14px; overflow: hidden; cursor: pointer; background: #17140f; box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.35); transition: border-color 0.15s ease, transform 0.12s ease; }
-  .um-basethumb:hover { border-color: rgba(232,226,214,0.34); }
-  .um-basethumb:active { transform: scale(0.97); }
-  .um-basethumb img { display: block; width: 100%; height: 60px; object-fit: cover; }
-  .um-basethumb span { position: absolute; left: 0; right: 0; bottom: 0; padding: 1rem 0.5rem 0.32rem; background: linear-gradient(to top, rgba(10,14,11,0.88), rgba(10,14,11,0)); font-family: var(--font-body); font-weight: 600; font-size: 0.66rem; letter-spacing: 0.03em; color: #f5f1ea; }
-
-  /* readouts */
-  .um-scale { position: absolute; left: 50%; transform: translateX(-50%); bottom: 1rem; border-left: 1px solid rgba(245,241,234,0.6); border-right: 1px solid rgba(245,241,234,0.6); border-bottom: 1px solid rgba(245,241,234,0.6); height: 0.4rem; font-family: var(--font-body); font-weight: 600; font-size: 0.66rem; letter-spacing: 0.04em; color: rgba(245,241,234,0.85); text-align: center; line-height: 0.1; padding-top: 0.1rem; z-index: 2; pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
-  .um-shed { position: absolute; left: 50%; transform: translateX(-50%); bottom: 2.5rem; margin: 0; color: var(--text); border-radius: 999px; padding: 0.5rem 1.15rem; font-family: var(--font-body); font-weight: 500; font-size: 0.84rem; z-index: 5; max-width: min(78%, 30rem); text-align: center; }
-
-  @media (max-width: 700px) {
-    .um-stage { width: calc(100% - 1.2rem); height: clamp(420px, calc(100vh - 6.5rem), 760px); height: clamp(420px, calc(100svh - 6.5rem), 760px); border-radius: 16px; }
-    .um-left { top: 0.6rem; left: 0.6rem; width: min(294px, calc(100% - 4.9rem)); }
-    .um-lbody { max-height: 380px; max-height: min(46svh, 380px); }
-    .um-panel { top: auto; left: 0.6rem; right: 0.6rem; bottom: 0.6rem; width: auto; max-height: 380px; max-height: min(46svh, 380px); z-index: 7; }
-    .um-ctrl { right: 0.6rem; bottom: 0.6rem; }
-    .um-basethumb { left: 0.6rem; bottom: 0.6rem; width: 80px; }
-    .um-basethumb img { height: 52px; }
-    .um-shed { bottom: 4.9rem; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .ummap * { transition: none !important; animation: none !important; }
-  }
-
-  .um-credit { width: min(1160px, calc(100% - 3rem)); margin: 0.8rem auto 0; font-family: var(--font-body); font-size: 0.82rem; line-height: 1.6; color: var(--text-faint); }
-  @media (max-width: 700px) { .um-credit { width: calc(100% - 1.2rem); } }
-
   /* ---------------- the paint key ---------------- */
   .paintkey { margin: 2.2rem 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 1.1rem 0 1.2rem; }
   .paintkey-k { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); margin: 0 0 0.75rem; }
@@ -237,10 +80,10 @@
 
   /* ---------------- layer sections ---------------- */
   .layer { margin-top: 4.2rem; scroll-margin-top: 3.2rem; }
-  .layer-head { border-top: 2px solid var(--lc, var(--rule-strong)); padding-top: 0.85rem; }
+  .layer-head { border-top: 2px solid var(--lc, var(--line-mid)); padding-top: 0.85rem; }
   .layer-band { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
   .layer-k { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--lc, var(--accent)); margin: 0; }
-  .layer-depth { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 999px; padding: 0.18rem 0.7rem; white-space: nowrap; }
+  .layer-depth { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-faint); border: 1px solid var(--rule); border-radius: 999px; padding: 0.18rem 0.7rem; max-width: 100%; white-space: normal; line-height: 1.5; }
   .layer h2 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 4.6vw, 2.15rem); line-height: 1.12; letter-spacing: -0.015em; color: var(--text-bright); margin: 0.45rem 0 0.4rem; text-wrap: balance; }
   .layer .sub { font-style: italic; font-family: var(--font-heading); font-size: 1.14rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.35rem; text-wrap: pretty; }
 
@@ -259,9 +102,15 @@
     .layer p { font-size: 1.06rem; }
   }
 
+  .u-entry-links { display: flex; flex-wrap: wrap; gap: 0.6rem 1.5rem; margin: 1.1rem 0 0; }
+  .u-entry-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font: 600 0.9rem/1.4 var(--font-body); text-underline-offset: 0.25em; }
+  .layer .section-map-link { font-size: 0.86rem; margin-top: 1.4rem; }
+  .layer .section-map-link a { display: inline-flex; align-items: center; min-height: 44px; }
+  .u-callout { margin-block: 3rem 0; }
   /* sources */
   .srcs { margin: 4rem 0 2rem; }
   </style>
+  <link rel="stylesheet" href="under-map.css?v=20261003-3">
 </head>
 <body>
   <script src="/js/archive-banner.js"></script>
@@ -270,15 +119,16 @@
   <nav class="top-nav"><a class="post-back" href="/"><span class="pb-label">Home</span></a></nav>
 
   <div class="descent">
-    <aside class="rail" aria-hidden="true">
+    <aside class="rail" aria-label="In this guide">
       <div class="rail-inner" id="rail">
-        <a class="rail-stop" href="#street" data-for="street" style="--stopc:var(--accent)"><b>0 ft</b>the street</a>
-        <a class="rail-stop" href="#comms" data-for="comms" style="--stopc:var(--mark-comms)"><b>shallow</b>fiber</a>
-        <a class="rail-stop" href="#gas" data-for="gas" style="--stopc:var(--mark-gas)"><b>mains</b>gas</a>
-        <a class="rail-stop" href="#power" data-for="power" style="--stopc:var(--mark-elec)"><b>ducts</b>power</a>
-        <a class="rail-stop" href="#storm" data-for="storm" style="--stopc:var(--mark-storm)"><b>drains</b>storm</a>
-        <a class="rail-stop" href="#sewer" data-for="sewer" style="--stopc:var(--mark-sewer)"><b>tunnels</b>sewer</a>
-        <a class="rail-stop" href="#rock" data-for="rock" style="--stopc:var(--mark-rock)"><b>rock</b>the falls</a>
+        <a class="rail-stop" href="#street" data-for="street" style="--stopc:var(--accent)"><b>The guide</b>overview</a>
+        <a class="rail-stop" href="#water" data-for="water" style="--stopc:var(--mark-water)"><b>Water</b>river to tap</a>
+        <a class="rail-stop" href="#comms" data-for="comms" style="--stopc:var(--mark-comms)"><b>Internet</b>networks</a>
+        <a class="rail-stop" href="#gas" data-for="gas" style="--stopc:var(--mark-gas)"><b>Gas and heat</b>mains</a>
+        <a class="rail-stop" href="#power" data-for="power" style="--stopc:var(--mark-elec)"><b>Power</b>lines and cables</a>
+        <a class="rail-stop" href="#storm" data-for="storm" style="--stopc:var(--mark-storm)"><b>Stormwater</b>creeks and drains</a>
+        <a class="rail-stop" href="#sewer" data-for="sewer" style="--stopc:var(--mark-sewer)"><b>Sewage</b>interceptors</a>
+        <a class="rail-stop" href="#rock" data-for="rock" style="--stopc:var(--mark-rock)"><b>The falls</b>limestone and sand</a>
       </div>
     </aside>
 
@@ -287,218 +137,260 @@
       <header class="u-hero">
         <p class="u-eyebrow">Field guide · Minneapolis and St. Paul</p>
         <h1 class="u-title">What's Under a Twin Cities Street</h1>
-        <p class="u-dek">A creek runs through a 1.7-mile tunnel under Minneapolis. Around it are the pipes and cables that serve both cities.</p>
-        <p class="u-meta">A field guide <span class="u-sep">/</span> <b>18 sources</b> <span class="u-sep">/</span> 8 min read</p>
+        <p class="u-dek">Bassett Creek runs under downtown Minneapolis. The water, drains, gas pipes and cables around it belong to different systems.</p>
+        <p class="u-meta">A field guide <span class="u-sep">/</span> <b>27 primary sources</b> <span class="u-sep">/</span> 8 min read</p><p class="u-entry-links"><a href="#undermap">Explore the map</a><a href="#street">Read the guide</a></p>
       </header>
 
-      <section class="ummap" id="undermap" aria-label="An interactive map of real Twin Cities buried infrastructure">
-        <div class="um-stage">
-          <canvas tabindex="0" aria-label="Map canvas. Drag to pan, scroll or pinch to zoom; arrow keys pan, plus and minus zoom, 0 resets."></canvas>
-          <p class="um-status">This map needs JavaScript.</p>
+<section class="ummap" id="undermap" aria-labelledby="um-title">
+  <div class="um-shell">
+    <header class="um-head">
+      <div>
+        <h2 id="um-title">Explore the systems</h2>
+        <p class="um-summary">Public records for Minneapolis, St. Paul and the surrounding region.</p>
+      </div>
+      <a class="um-source-link" href="#map-data">Source data</a>
+    </header>
 
-          <div class="um-left">
-            <details class="um-card um-layers">
-              <summary>Map layers</summary>
-              <div class="um-lbody">
-                <p class="um-lgroup">The surface</p>
-                <button class="um-lrow" type="button" data-um-toggle="roads" aria-pressed="true" style="--pc:#8f9184"><i></i><span class="um-lt"><b>Roads</b><small>Context only</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="pavement" aria-pressed="false" style="--pc:#dfc288"><i></i><span class="um-lt"><b>Street condition</b><small>Minneapolis pavement scored worst to best (zoom in)</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <p class="um-lgroup">Comms + gas</p>
-                <button class="um-lrow" type="button" data-um-toggle="comms" aria-pressed="true" style="--pc:var(--mark-comms)"><i></i><span class="um-lt"><b>Fiber + data centers</b><small>Where the networks meet; route maps aren't public</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="exch" aria-pressed="true" style="--pc:#cf9f78"><i></i><span class="um-lt"><b>Telephone exchanges</b><small>Central offices from the copper telephone network</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="gas" aria-pressed="true" style="--pc:var(--mark-gas)"><i></i><span class="um-lt"><b>Gas transmission</b><small>The high-pressure feeders (OSM); street mains stay unpublished</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <p class="um-lgroup">Power</p>
-                <button class="um-lrow" type="button" data-um-toggle="elec" aria-pressed="true" style="--pc:var(--mark-elec)"><i></i><span class="um-lt"><b>Electric</b><small>OSM lines by voltage; coverage of local feeders is partial</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="pplants" aria-pressed="true" style="--pc:#ece5d3"><i></i><span class="um-lt"><b>Power plants</b><small>Mapped sites, sized by reported megawatts</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <p class="um-lgroup">Water</p>
-                <button class="um-lrow" type="button" data-um-toggle="water" aria-pressed="true" style="--pc:#8fb3c7"><i></i><span class="um-lt"><b>Drinking water</b><small>Treatment plants; the mains maps are access-gated</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="hydrants" aria-pressed="true" style="--pc:#d9978c"><i></i><span class="um-lt"><b>Hydrants</b><small>Minneapolis hydrant locations (zoom in)</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="towers" aria-pressed="true" style="--pc:#8fb3c7"><i></i><span class="um-lt"><b>Water towers</b><small>Elevated water storage for pressure and demand</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="dams" aria-pressed="true" style="--pc:#8fb3c7"><i></i><span class="um-lt"><b>Dams + locks</b><small>River control structures and navigation locks</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <p class="um-lgroup">Storm drains</p>
-                <button class="um-lrow" type="button" data-um-toggle="storm" aria-pressed="true" style="--pc:var(--mark-storm)"><i></i><span class="um-lt"><b>Storm drains</b><small>Published Minneapolis inlets; no St. Paul inlet data here</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="bstreams" aria-pressed="true" style="--pc:#8fb3c7"><i></i><span class="um-lt"><b>Buried streams</b><small>Creeks now running underground in storm tunnels (DNR)</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <p class="um-lgroup">Sanitary (deep)</p>
-                <button class="um-lrow" type="button" data-um-toggle="san" aria-pressed="true" style="--pc:var(--mark-sewer)"><i></i><span class="um-lt"><b>Sanitary sewer</b><small>Regional interceptors and plants; street mains aren't published</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="meters" aria-pressed="false" style="--pc:var(--mark-sewer)"><i></i><span class="um-lt"><b>Flow meters</b><small>Where the Met Council measures the interceptor flow</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <p class="um-lgroup">The rock</p>
-                <button class="um-lrow" type="button" data-um-toggle="bdepth" aria-pressed="false" style="--pc:#cf9f78"><i></i><span class="um-lt"><b>Depth to bedrock</b><small>Estimated from well logs, grouped into grid cells</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="bedrock" aria-pressed="false" style="--pc:#b79bc4"><i></i><span class="um-lt"><b>Bedrock geology</b><small>Mapped rock formations beneath the soil</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <button class="um-lrow" type="button" data-um-toggle="wells" aria-pressed="false" style="--pc:#a4a293"><i></i><span class="um-lt"><b>Water wells</b><small>A sample of the drilled wells, by depth and aquifer</small></span><span class="um-sw" aria-hidden="true"></span></button>
-                <label class="um-flyto"><span>Fly to</span>
-                  <select class="um-places" data-um-places>
-                    <option value="">Choose a place&hellip;</option>
-                    <option value="-93.2570,44.9806,15.6">St. Anthony Falls + the dike</option>
-                    <option value="-93.04547,44.92526,14.9">Metro sewage plant</option>
-                    <option value="-93.8426,45.33094,15.2">Monticello nuclear</option>
-                    <option value="-93.2577,44.9738,15.8">US Bank Stadium</option>
-                    <option value="-93.27868,45.04322,15.4">Minneapolis water works</option>
-                    <option value="-93.25458,44.97141,16.0">The 511 Building</option>
-                  </select>
-                </label>
-                <details class="um-keyd">
-                  <summary>Legend</summary>
-                  <div class="um-keygrid">
-              <span class="um-ki"><i class="kl" style="border-top:2.4px solid #cd8b78"></i>345 kV backbone</span>
-              <span class="um-ki"><i class="kl" style="border-top:1.9px solid #c48371"></i>230 kV</span>
-              <span class="um-ki"><i class="kl" style="border-top:1.4px solid #b8796d"></i>115 to 161 kV</span>
-              <span class="um-ki"><i class="kl" style="border-top:1px solid rgba(184,121,109,0.6)"></i>sub-100 kV</span>
-              <span class="um-ki"><i class="kl" style="border-top:1px dashed rgba(184,121,109,0.45)"></i>local feeder (zoom in)</span>
-              <span class="um-ki"><i class="kl" style="border-top:2px solid #7fb27a"></i>gravity sewer</span>
-              <span class="um-ki"><i class="kl" style="border-top:2px dashed #7fb27a"></i>forcemain, pumped</span>
-              <span class="um-ki"><i class="kl" style="border-top:2px dotted #7fb27a"></i>siphon, dives under rivers</span>
-              <span class="um-ki"><i class="kl" style="border-top:1px dashed rgba(111,154,108,0.45)"></i>abandoned sewer</span>
-              <span class="um-ki"><i class="kd" style="--kc:#dfc288"></i>treatment plant</span>
-              <span class="um-ki"><i class="kd kr" style="--kc:#8fb3c7"></i>drinking water</span>
-              <span class="um-ki"><i class="kd ksq" style="--kc:rgba(143,179,199,0.8)"></i>storm inlet (Mpls)</span>
-              <span class="um-ki"><i class="kd kdia" style="--kc:#cf9f78"></i>data center</span>
-              <span class="um-ki"><i class="kd ksq" style="--kc:rgba(184,121,109,0.7)"></i>substation</span>
-              <span class="um-ki"><i class="kd" style="--kc:#b79bc4"></i>nuclear</span>
-              <span class="um-ki"><i class="kd" style="--kc:#b8796d"></i>coal</span>
-              <span class="um-ki"><i class="kd" style="--kc:#dfc288"></i>gas</span>
-              <span class="um-ki"><i class="kd" style="--kc:#8fb3c7"></i>hydro</span>
-              <span class="um-ki"><i class="kd" style="--kc:#ece5d3"></i>solar</span>
-                  </div>
-                </details>
-              </div>
-            </details>
-          </div>
+    <nav class="um-topics" aria-label="Choose a system">
+      <button type="button" data-um-topic="tour" aria-pressed="true">Start here<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="water" aria-pressed="false">Drinking water<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="wastewater" aria-pressed="false">Sewage<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="storm" aria-pressed="false">Rain &amp; river<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="power" aria-pressed="false">Power<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="gas" aria-pressed="false">Gas &amp; heat<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="networks" aria-pressed="false">Internet<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="ground" aria-pressed="false">Ground<span class="um-topic-count" aria-hidden="true"></span></button>
+    </nav>
 
-          <aside class="um-panel um-card" hidden aria-live="polite"></aside>
+    <div class="um-topic-copy">
+      <h3>Start with a place</h3>
+      <p>Choose a stop to see the system it belongs to, the published records and a photograph when one is available.</p>
+    </div>
 
-          <div class="um-ctrl">
-            <button class="um-cbtn um-card" type="button" data-um-zoom="full" aria-label="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/><path d="M15 20h5v-5"/></svg></button>
-            <div class="um-zoom um-card">
-              <button type="button" data-um-zoom="in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-              <button type="button" data-um-zoom="out" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-              <button type="button" data-um-zoom="home" aria-label="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg></button>
-            </div>
-          </div>
+    <div class="um-location-controls">
+      <label class="um-city-jump" for="um-city"><span>Go to a city</span><select id="um-city"><option value="metro">Twin Cities region</option><option value="minneapolis">Minneapolis</option><option value="saintPaul">Saint Paul</option><option value="bloomington">Bloomington</option><option value="eagan">Eagan</option><option value="maplewood">Maplewood</option><option value="westSaintPaul">West Saint Paul</option></select></label>
+      <form class="um-address-form" aria-label="Find an address on the map">
+        <label for="um-address">Find an address</label>
+        <div class="um-address-row"><input id="um-address" type="search" placeholder="Street number, street and city" maxlength="200" autocomplete="off" spellcheck="false"><button type="submit">Find</button></div>
+      </form>
+    </div>
+    <div class="um-address-output" hidden>
+      <p role="status"></p><div class="um-address-matches"></div>
+      <p class="um-address-source">Location search: <a href="https://arcgis.metc.state.mn.us/server/rest/services/Locators/AddressPointsMetro/GeocodeServer">MetroGIS address points, Metropolitan Council</a>.</p>
+    </div>
 
-          <button class="um-basethumb" type="button" data-um-basethumb aria-label="Switch to satellite view">
-            <picture><source type="image/webp" srcset="assets/map/base-sat.webp"><img src="assets/map/base-sat.jpg" alt="" width="92" height="60" loading="lazy"></picture>
-            <span>Satellite</span>
-          </button>
-          <span class="um-scale" aria-hidden="true"></span>
-          <p class="um-shed um-card" hidden></p>
+    <details class="um-layers">
+      <summary>Map details <small>Layers and legend</small></summary>
+      <div class="um-inactive" hidden><button type="button" data-um-inactive aria-pressed="false">Include inactive records</button><p>Show reported former, removed, planned or offline assets alongside operating records.</p></div>
+      <div class="um-layer-list" aria-label="Optional map layers"></div>
+      <div class="um-legend" aria-label="Map legend"></div>
+    </details>
+
+    <div class="um-map-key" aria-label="Map color key" hidden></div>
+
+    <div class="um-explorer">
+      <div class="um-browser">
+        <label class="um-search" for="um-search">
+          <span>Find a place in this system</span>
+          <input id="um-search" type="search" placeholder="Name, type or record ID" autocomplete="off" spellcheck="false" aria-controls="um-results">
+        </label>
+        <div class="um-browse-controls" aria-label="Places to show" hidden>
+          <button type="button" data-um-scope="view" aria-pressed="false">In this view</button>
+          <button type="button" data-um-scope="all" aria-pressed="true">Browse records</button>
         </div>
-        <p class="um-credit">Drag to pan; scroll or pinch to zoom. Hover or tap a feature for details. Tap open ground to see its wastewater service area.</p>
-        <p class="um-credit">Sources: regional sewers and facilities, Met Council; roads, MnDOT; water and buried streams, DNR/Met Council; hydrants, storm inlets, and pavement scores, Minneapolis; wells and estimated bedrock depth, Minnesota County Well Index; geology, Minnesota Geological Survey. Power, gas transmission, towers, exchanges, data centers, dams, and locks: &copy; OpenStreetMap contributors (ODbL). Internet exchange: PeeringDB. Satellite imagery: USGS and MnGeo.</p>
-        <p class="um-credit">Coverage varies by layer. This map has no street-level gas, water, or sewer mains, and only partial electric distribution data. Minneapolis has more city utility data here than St. Paul. A blank area doesn't mean nothing is buried there.</p>
-      </section>
+        <p class="um-results-heading" id="um-results-heading" aria-live="polite">Places to begin</p>
+        <p class="um-browse-note" hidden></p>
+        <div class="um-results" id="um-results" aria-labelledby="um-results-heading"></div>
+        <button class="um-results-more" type="button" hidden>Show more places</button>
+        <aside class="um-panel" hidden aria-label="Place details"></aside>
+      </div>
 
-      <section class="layer" id="street" style="--lc:var(--accent)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Layer zero</p><span class="layer-depth">0 ft</span></div>
-          <h2>A creek under downtown</h2>
-        </div>
-        <p>Bassett Creek flows underground for 1.7 miles before reaching the Mississippi below St. Anthony Falls. Above ground, it passes through Plymouth, Golden Valley, Crystal, and Minneapolis. Downtown, you can cross it without seeing any water. <span class="u-src"><a href="https://bassettcreekwmo.org/lakes-streams/main-stem-bassett-creek">Bassett Creek WMC</a></span></p>
-        <p>Communications cables share space beneath the street with gas mains, electric ducts, water pipes, and drains. Some sewers run much deeper, through sandstone tunnels. Their depths and positions vary from block to block. The sections below move from shallow cables toward the deeper tunnels and the rock around them.</p>
-        <p>The spray paint before a street excavation tells you which utilities are there. Orange marks communications, yellow gas, red electric, green sewers and drains, and blue drinking water. Minnesota's locate process runs through Gopher State One Call. <span class="u-src"><a href="https://gopherstateonecall.org/state-laws/">GSOC</a></span> The section colors borrow from that code; stormwater gets blue here to distinguish it from sewage.</p>
-        <div class="paintkey" aria-label="The utility marking colors, which are also this post's sections">
-          <p class="paintkey-k">Utilities by paint color</p>
-          <div class="paintkey-row">
-            <a class="paint" href="#comms" style="--pc:var(--mark-comms)">orange · comms</a>
-            <a class="paint" href="#gas" style="--pc:var(--mark-gas)">yellow · gas</a>
-            <a class="paint" href="#power" style="--pc:var(--mark-elec)">red · electric</a>
-            <a class="paint" href="#storm" style="--pc:var(--mark-storm)">blue and green · storm</a>
-            <a class="paint" href="#sewer" style="--pc:var(--mark-sewer)">green · sewer</a>
-            <a class="paint" href="#rock" style="--pc:var(--mark-rock)">bedrock · off-code</a>
-          </div>
-        </div>
-      </section>
+      <div class="um-stage">
+        <canvas tabindex="0" aria-label="Map of public Twin Cities infrastructure records" aria-describedby="maphelp"></canvas>
+        <p class="um-status" role="status">This map needs JavaScript. The article and sources are below.</p>
+        <div class="um-tooltip" hidden aria-hidden="true"></div>
 
-      <section class="layer" id="comms" style="--lc:var(--mark-comms)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Orange paint</p><span class="layer-depth">shallow conduit</span></div>
-          <h2>Where the fiber goes</h2>
-          <p class="sub">Street cables connect to buildings where networks exchange traffic.</p>
+        <div class="um-basemap" aria-label="Map background">
+          <button type="button" data-um-base="map" aria-pressed="true">Map</button>
+          <button type="button" data-um-base="sat" aria-pressed="false">Aerial</button>
         </div>
-        <p>Fiber often runs in shallow conduit, a plastic duct that lets crews install or replace cable without reopening the whole street. The small access boxes in the boulevard are called handholes. Unlike a water pipe, fiber doesn't need protection from freezing.</p>
-        <p>Several networks meet at the 511 Building, at 511 11th Avenue South near the stadium. It's a carrier hotel, a building where different providers connect their equipment. Cologix's MIN1 facility hosts MICE, the Midwest Internet Cooperative Exchange. <span class="u-src"><a href="https://cologix.com/data-centers/minneapolis/min1/">Cologix</a></span> <span class="u-src"><a href="https://www.peeringdb.com/ix/446">PeeringDB</a></span> When providers exchange traffic there, a connection between local customers can stay in Minneapolis rather than pass through another city.</p>
-        <div class="seam"><p>During the 2007 I-35W bridge collapse, overloaded phone networks made communication difficult. Minneapolis's municipal Wi-Fi network helped responders communicate while it was still being rolled out. <span class="u-src"><a href="https://web.archive.org/web/20070914161811/http://www.computerworld.com/action/article.do?command=viewArticleBasic&amp;articleId=9028978">Computerworld, 2007</a></span></p></div>
-      </section>
 
-      <section class="layer" id="gas" style="--lc:var(--mark-gas)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Yellow paint</p><span class="layer-depth">street mains</span></div>
-          <h2>Gas mains and frozen ground</h2>
-          <p class="sub">The gas network has to meet its highest demand during the coldest weather.</p>
+        <div class="um-ctrl" aria-label="Map controls">
+          <button type="button" data-um-zoom="out" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <button type="button" data-um-zoom="in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button type="button" data-um-zoom="home" aria-label="Show the Twin Cities"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>
+          <button type="button" data-um-zoom="full" aria-label="Expand map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg></button>
         </div>
-        <p>CenterPoint Energy, formerly Minnegasco, supplies much of the metro's natural gas. Its street mains feed smaller service pipes into buildings. Natural gas has no smell of its own; utilities add an odorant to help people detect leaks. The familiar rotten-egg smell comes from that additive. <span class="u-src"><a href="https://www.centerpointenergy.com/en-us/business/safety/natural-gas-leaks/what-to-do-if-you-smell-gas?sa=mn">CenterPoint</a></span></p>
-        <p>Minnesota's building code sets frost-protection depths for footings, the bases of foundations: 3 feet 6 inches in the southern zone, including the metro, and 5 feet in the northern zone. These are default construction requirements; actual frost depth varies, and utilities have their own burial requirements. <span class="u-src"><a href="https://www.revisor.mn.gov/rules/1303.1600/">MN Rules 1303.1600</a></span> In the street itself, water freezing in cracks helps break the pavement apart.</p>
-        <div class="seam"><p>Gas demand rises as furnaces run longer. Pipe capacity and pressure have to cover that winter peak, including mornings when much of the metro is heating at once.</p></div>
-      </section>
 
-      <section class="layer" id="power" style="--lc:var(--mark-elec)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Red paint</p><span class="layer-depth">poles, vaults, duct banks</span></div>
-          <h2>Power under downtown</h2>
-          <p class="sub">Overhead wires in many neighborhoods; ducts and vaults downtown.</p>
-        </div>
-        <p>Many residential blocks get electricity from overhead wires. Downtown, cables run through concrete duct banks, groups of conduits buried together. Vaults below the sidewalk give crews access to cable connections and equipment. Underground networks can have multiple feeds, allowing an alternate path when a cable fails.</p>
-        <p>Xcel Energy supplies both cities. Its Minnesota generating plants include Monticello, upstream on the Mississippi, and Prairie Island, downstream near Red Wing. Both are nuclear plants. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Xcel_Energy">Xcel overview</a></span></p>
-        <p>Local electric generation began at St. Anthony Falls in 1882 with a Brush central power station. The Hennepin Island hydro plant followed in 1908 and still generates power for Xcel. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">Falls history</a></span> <span class="u-src"><a href="https://en.wikipedia.org/wiki/Hennepin_Island_Hydroelectric_Plant">Hennepin Island</a></span></p>
-        <div class="seam"><p>Both downtowns also have district heating: central plants send heat to buildings through buried pipes. District Energy St. Paul uses hot water, with wood waste supplying part of its heat. Minneapolis has its own steam and hot-water network. <span class="u-src"><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">District Energy St. Paul</a></span> <span class="u-src"><a href="https://en.wikipedia.org/wiki/District_heating">District heating</a></span></p></div>
-      </section>
+        <span class="um-scale" aria-hidden="true"></span>
+      </div>
+    </div>
 
-      <section class="layer" id="storm" style="--lc:var(--mark-storm)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Green paint · blue on this page</p><span class="layer-depth">pipes and tunnels</span></div>
-          <h2>Storm drains go to the river</h2>
-          <p class="sub">Rain and snowmelt usually reach a lake or river without passing through a sewage plant.</p>
-        </div>
-        <p>Storm drains collect rain and snowmelt from streets and carry it toward lakes and rivers. They're separate from the pipes that take household sewage to treatment plants. Runoff may pass through ponds or other stormwater controls, but it generally doesn't get sewage treatment.</p>
-        <p>Road salt follows that route. It dissolves in meltwater and carries chloride into lakes, streams, and groundwater. The Minnesota Pollution Control Agency says a teaspoon of salt can contaminate five gallons of water, and removing chloride once it's dispersed is impractical. <span class="u-src"><a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></span></p>
-        <p>The Old Bassett Creek Tunnel carries stormwater from north Minneapolis. Between 2017 and 2020, crews cleared accumulated sediment and debris from it. <span class="u-src"><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></span> Some local storm tunnels are large enough to walk through; Greg Brick documents them in <i>Subterranean Twin Cities</i>. <span class="u-src"><a href="https://openlibrary.org/works/OL28366067W">Brick</a></span></p>
-      </section>
+    <dialog class="um-photo-dialog" aria-labelledby="um-photo-title">
+      <header><h3 id="um-photo-title">Photograph</h3><button type="button" data-photo-close>Close photograph</button></header>
+      <div class="um-photo-full"></div>
+    </dialog>
 
-      <section class="layer" id="sewer" style="--lc:var(--mark-sewer)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">down to tunnel depth</span></div>
-          <h2>Sewer tunnels in sandstone</h2>
-          <p class="sub">The St. Peter Sandstone was soft enough to excavate by hand.</p>
-        </div>
-        <p>Along parts of the Mississippi gorge, hard Platteville limestone lies above the softer St. Peter Sandstone. The sandstone is mostly quartz sand, weakly cemented together. <span class="u-src"><a href="https://en.wikipedia.org/wiki/St._Peter_Sandstone">St. Peter Sandstone</a></span> Crews excavated sewer and utility tunnels through it by hand. Brick's book also describes Schieks Cave, a natural cave beneath downtown Minneapolis reached through the sewers. <span class="u-src"><a href="https://openlibrary.org/works/OL28366067W">Brick, Subterranean Twin Cities</a></span> <span class="u-grade u-grade-b">book source</span></p>
-        <p>City sewer pipes feed regional interceptors, the larger pipes and tunnels that carry wastewater to treatment plants. Much of the flow from Minneapolis and St. Paul reaches the Metro facility near Pig's Eye Lake. The Met Council reports an average of 172 million gallons a day there, serving 1.8 million people. Other parts of the metro drain to other plants, as the map shows. <span class="u-src"><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Met Council</a></span></p>
-        <p>Before treatment began, city sewers discharged directly into the Mississippi. By the 1920s, an estimated three million cubic yards of sewage sludge had settled above the Ford Dam. The plant opened in 1938, the first to serve a major metropolitan area on the Mississippi. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p>
-        <p>The old combined sewers carried rainwater and sewage in the same pipe. Heavy rain could overload them and send untreated waste through overflow outlets to the river. Minneapolis began substantial separation work in the 1960s and accelerated it in 1986. By the end of that program, 8 of the original 34 overflow regulators remained. Later work addressed the remaining connections; in 2018 the city requested termination of its combined-sewer overflow permit. <span class="u-src"><a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">City of Minneapolis</a></span> <span class="u-src"><a href="https://lims.minneapolismn.gov/RCA/2075">2018 council record</a></span></p>
-        <div class="seam"><p>In June 1987, a mayfly hatch near the airport left Interstate 494 covered in insects. The highway closed while snowplows cleared them. MDH describes the hatch as evidence of the river's improving water quality. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p></div>
-      </section>
+    <div class="um-help">
+      <p id="maphelp">Choose a place, or use the map. Arrow keys move the map; + and - zoom; 0 resets. Enter inspects the map center. On a phone, scroll normally or turn on map dragging.</p>
+      <button type="button" data-um-interact aria-pressed="false">Enable map dragging</button>
+    </div>
 
-      <section class="layer" id="rock" style="--lc:var(--mark-rock)">
-        <div class="layer-head">
-          <div class="layer-band"><p class="layer-k">Below the limestone</p><span class="layer-depth">the riverbed</span></div>
-          <h2>The wall beneath St. Anthony Falls</h2>
-          <p class="sub">A concrete wall built in 1876 keeps water from eroding the sandstone beneath the falls.</p>
-        </div>
-        <p>The limestone ledge at St. Anthony Falls rests on sandstone that water can wash away. Erosion beneath the ledge threatened the falls and the waterpower used by Minneapolis's mills. In October 1869, the river broke into the Eastman tunnel, an excavation beneath the riverbed, and washed out sandstone around it. Part of Hennepin Island collapsed. <span class="u-src"><a href="https://www.mvp.usace.army.mil/Home/Projects/Article/626089/engineering-the-falls-the-corps-of-engineers-role-at-st-anthony-falls/">Army Corps of Engineers</a></span></p>
-        <p>The Corps eventually built a concrete cutoff wall beneath the limestone. Finished in 1876, it stretched 1,850 feet across the river and reached about 40 feet into the sandstone. It blocked water from passing under the falls and cutting new channels. <span class="u-src"><a href="https://www.mvp.usace.army.mil/Home/Projects/Article/626089/engineering-the-falls-the-corps-of-engineers-role-at-st-anthony-falls/">Army Corps of Engineers</a></span></p>
-        <p>The Corps also covered the falls with a sloping apron, completed in 1880 and later rebuilt in concrete. That's the slope you see from the Stone Arch Bridge. The cutoff wall remains buried beneath the limestone upstream. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span> <span class="u-src"><a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">Falls history</a></span></p>
-      </section>
+    <details class="um-navigation">
+      <summary>Move the map without dragging</summary>
+      <div class="um-pan-controls" aria-label="Move the map">
+        <button type="button" data-um-pan="n">North</button>
+        <button type="button" data-um-pan="w">West</button>
+        <button type="button" data-um-pan="e">East</button>
+        <button type="button" data-um-pan="s">South</button>
+      </div>
+    </details>
+
+    <details class="um-data" id="map-data">
+      <summary>Sources and downloads</summary>
+      <p>Coverage depends on who publishes the records. City inventories, regional networks and well records cover different areas. A blank part of the map does not mean there is nothing below it.</p>
+      <div class="um-source-controls" aria-label="Datasets to show">
+        <button type="button" data-um-source-scope="current" aria-pressed="true">This system</button>
+        <button type="button" data-um-source-scope="all" aria-pressed="false">All datasets</button>
+        <button type="button" data-um-source-scope="earlier" aria-pressed="false">Reference snapshots</button>
+      </div>
+      <label class="um-source-search"><span>Find a dataset</span><input type="search" placeholder="Dataset name or area" autocomplete="off" spellcheck="false"></label>
+      <p class="um-source-count" aria-live="polite"></p>
+      <div class="um-datasets" aria-label="Published datasets and downloadable map data"></div>
+      <p class="um-source-foot">Street centerlines: <a href="https://www.arcgis.com/home/item.html?id=515028a0cb3a42e0b6470b2af035121c">MnGeo and participating counties</a>. Community-mapped facilities: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors, ODbL</a>. Aerial imagery: <a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USGS / USDA</a> and <a href="https://www.mngeo.state.mn.us/chouse/wms/geo_image_server.html">MnGeo</a>. Photograph credits appear beside each photograph. <a href="assets/map/datasets.json" download>Download the full source manifest</a>.</p>
+    </details>
+  </div>
+</section>
+
+
+<section class="layer" id="street" style="--lc:var(--accent)"><div class="layer-head"><h2>A creek under downtown</h2></div>
+  <p>Bassett Creek reaches the Mississippi through tunnels beneath Minneapolis. One route carries the creek's normal flow; an older route carries neighborhood runoff and takes some creek water during heavy rain. <span class="u-src"><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></span></p>
+  <p>The pipes under a street have different destinations. Drinking water arrives from treatment plants. Sewage leaves for another set of plants. Rainwater goes toward lakes and rivers. Cables and gas mains connect the same buildings to other networks.</p>
+  <p>The paint before an excavation identifies the utility: blue for drinking water, green for sewers and drains, orange for communications, red for electricity, and yellow for gas, oil, steam or propane. These are the actual marking colors. The map uses muted colors, with blue for stormwater and purple for geology. Its colors describe the layers here, while the paint outside follows the locate code. <span class="u-src"><a href="https://gopherstateonecall.org/what-do-the-marks-mean/">Gopher State One Call</a></span></p>
+  <p>There is no fixed order from shallow to deep. A city storm tunnel can run through sandstone far below a water main. The map shows the public records available for each system; the article explains what moves through it.</p><div class="paintkey" aria-label="Utility marking colors"><p class="paintkey-k">The paint outside</p><div class="paintkey-row"><a class="paint" href="#water" style="--pc:var(--mark-water)">blue · drinking water</a><a class="paint" href="#comms" style="--pc:var(--mark-comms)">orange · communications</a><a class="paint" href="#gas" style="--pc:var(--mark-gas)">yellow · gas and heat</a><a class="paint" href="#power" style="--pc:var(--mark-elec)">red · electricity</a><a class="paint" href="#storm" style="--pc:var(--mark-sewer)">green · drains and sewer</a></div></div>
+</section>
+
+<section class="layer" id="water" style="--lc:var(--mark-water)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Blue paint</p><span class="layer-depth">mains and service pipes</span></div>
+    <h2>From the river to the tap</h2>
+    <p class="sub">Both cities use the Mississippi. They take different routes to the street.</p>
+  </div>
+  <p>Minneapolis pumps river water into its treatment system in Fridley. It softens the water, filters it at Fridley or Columbia Heights, and disinfects it before delivery. Fridley uses granular activated carbon filters; Columbia Heights uses <a href="https://en.wikipedia.org/wiki/Ultrafiltration">ultrafiltration</a>, membranes that hold back small particles. The city's <a href="https://en.wikipedia.org/wiki/Water_distribution_system">distribution system</a> includes about 1,000 miles of water mains. <span class="u-src"><a href="https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/">Minneapolis</a></span></p>
+  <p>St. Paul pumps Mississippi water from Fridley through a chain of lakes and conduits before it reaches the McCarrons plant in Maplewood. Vadnais Lake is the last lake before the plant. This is still source water, before the treatment that makes it drinking water. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS treatment process</a></span> <span class="u-src"><a href="https://www.stpaul.gov/sites/default/files/2021-06/WSP_Saint%20Paul_1975-6227_05-02-2019%20Public%20Version.pdf">2019 supply plan, figure I.C-2</a></span></p>
+  <p>McCarrons brought its new treatment facilities online in 2025. The plant softens and clarifies the water, filters it through carbon and sand, then adds chlorine and ammonia to make <a href="https://en.wikipedia.org/wiki/Monochloramine">chloramine</a>, a disinfectant that lasts through the distribution system. New equipment can also add ozone when needed. <span class="u-src"><a href="https://www.stpaul.gov/news/saint-paul-regional-water-services-turns-new-mccarrons-water-treatment-plant-ushering-new-era">2025 opening</a></span> <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS</a></span></p>
+  <p>A service line is the smaller pipe between the street main and a building's meter. Some older ones are <a href="https://en.wikipedia.org/wiki/Lead_service_line">lead service lines</a>. The Minneapolis inventory shown here contains 99,774 published connection points. Its classes describe pipe material, rather than the amount of lead in someone's drinking water. An unknown record means the material has not been established. <span class="u-src"><a href="https://services.arcgis.com/afSMGVsC7QlRK1kZ/ArcGIS/rest/services/ServiceLineInventory_Public/FeatureServer/0">City inventory</a></span> St. Paul's replacement program has its own address map. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS</a></span></p>
+<p class="section-map-link"><a href="#undermap" data-map-topic="water">Explore this system on the map</a></p>
+</section>
+
+<section class="layer" id="comms" style="--lc:var(--mark-comms)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Orange paint</p><span class="layer-depth">cables and conduit</span></div>
+    <h2>Where the networks meet</h2>
+    <p class="sub">Fiber in the street leads to buildings where providers connect.</p>
+  </div>
+  <p>The 511 Building, at 511 11th Avenue South, is a <a href="https://en.wikipedia.org/wiki/Colocation_centre">carrier hotel</a>: several network operators keep equipment in the same building. Cologix's MIN1 facility there hosts MICE, the Midwest Internet Cooperative Exchange. An <a href="https://en.wikipedia.org/wiki/Internet_exchange_point">internet exchange</a> lets participating networks pass traffic directly between them. <span class="u-src"><a href="https://www.cologix.com/data-centers/minneapolis/min1/">Cologix MIN1</a></span></p>
+  <p>Eagan publishes <a href="https://en.wikipedia.org/wiki/Optical_fiber_cable">fiber cable</a> records separately from utility paths. Both are on this map. A path by itself does not establish that a cable has been laid or that a provider offers service along it. <span class="u-src"><a href="https://cityofeagan.maps.arcgis.com/apps/webappviewer/index.html?id=514dc132f418488d817f6cf71b71bbb7">Eagan public map</a></span></p>
+<p class="section-map-link"><a href="#undermap" data-map-topic="networks">Explore this system on the map</a></p>
+</section>
+
+<section class="layer" id="gas" style="--lc:var(--mark-gas)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Yellow paint</p><span class="layer-depth">gas and heat pipes</span></div>
+    <h2>Gas to the building, heat from a plant</h2>
+    <p class="sub">A district heating pipe carries heat already made elsewhere.</p>
+  </div>
+  <p>CenterPoint supplies natural gas in Minneapolis; St. Paul gets gas from Xcel. <span class="u-src"><a href="https://www.minneapolismn.gov/government/departments/health/sustainability-homes-environment/sustainability/energy-utility-franchise-agreements/">Minneapolis utilities</a></span> <span class="u-src"><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">St. Paul utilities</a></span> Street mains feed smaller service pipes into buildings. The gas itself has no smell; utilities add an odorant so a leak can be noticed. <span class="u-src"><a href="https://www.centerpointenergy.com/en-us/business/safety/natural-gas-leaks/what-to-do-if-you-smell-gas?sa=mn">CenterPoint</a></span></p>
+  <p>Both downtowns also have <a href="https://en.wikipedia.org/wiki/District_heating">district heating</a>. St. Paul's system sends hot water through underground pipes. A heat exchanger transfers its heat to a building's own water circuit; the district water returns to the plant to be heated again. Wood waste supplies part of the heat. <span class="u-src"><a href="https://www.districtenergy.com/services/how-it-works/">District Energy St. Paul</a></span> <span class="u-src"><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></span></p>
+  <p>Downtown Minneapolis has a separate Cordia system. It supplies steam for heat and chilled water for cooling, with 39,000 feet of steam and hot-water distribution and 24,900 feet of chilled-water distribution. Those pipes carry thermal energy rather than drinking water. <span class="u-src"><a href="https://cordiaenergy.com/locations/minneapolis/">Cordia system profile</a></span></p>
+<p class="section-map-link"><a href="#undermap" data-map-topic="gas">Explore this system on the map</a></p>
+</section>
+
+<section class="layer" id="power" style="--lc:var(--mark-elec)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Red paint</p><span class="layer-depth">overhead and underground</span></div>
+    <h2>Two kinds of power line</h2>
+    <p class="sub">Transmission links substations. Distribution reaches buildings.</p>
+  </div>
+  <p>The large lines on the map belong to the <a href="https://en.wikipedia.org/wiki/Electric_power_transmission">transmission system</a>, which moves power between generating plants and substations. The smaller <a href="https://en.wikipedia.org/wiki/Electric_power_distribution">distribution system</a> delivers it to customers. A transmission-line map does not show every street cable or say that every line is buried.</p>
+  <p>Minneapolis does have underground transmission. Xcel's North Loop project describes existing 115-kilovolt cables between the Aldrich and West River Road substations, with part of the system needing relocation for the proposed Blue Line extension. Xcel's published replacement routes are proposals. <span class="u-src"><a href="https://xcelenergytransmission.com/projects/minneapolis-underground-transmission-project/">Xcel project record</a></span></p>
+<p class="section-map-link"><a href="#undermap" data-map-topic="power">Explore this system on the map</a></p>
+</section>
+
+<section class="layer" id="storm" style="--lc:var(--mark-storm)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">drains, culverts and tunnels</span></div>
+    <h2>Rain has its own route</h2>
+    <p class="sub">A deep tunnel can carry stormwater rather than sewage.</p>
+  </div>
+  <p><a href="https://en.wikipedia.org/wiki/Storm_drain">Storm drains</a> collect rain and snowmelt from streets and carry it toward lakes and rivers. Runoff may pass through ponds or other controls, but it generally does not pass through a sewage treatment plant. Road salt follows the runoff: dissolved chloride reaches surface water and groundwater, where removing it is impractical. MPCA says a teaspoon of salt can contaminate five gallons of water. <span class="u-src"><a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></span></p>
+  <p>Bassett Creek's old and new tunnels do different work. The old 1.5-mile tunnel was completed in 1923. It now mostly drains 870 acres of Minneapolis, with creek flow entering during heavy rain. Its 2018 and 2020 cleanouts removed 1,735 tons of sediment from 1,933 feet of tunnel. <span class="u-src"><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></span> <span class="u-src"><a href="https://www.mwmo.org/news/uncovering-condition-old-bassett-creek-tunnel/">1923 completion</a></span></p>
+  <p>The new system includes a double <a href="https://en.wikipedia.org/wiki/Culvert">box culvert</a>, two adjoining passages mostly 11 feet high and 11 feet wide. This part was built in 1992 near the Cedar Lake Trail, in an open excavation ranging from ground level to 20 feet deep. A roughly 30-foot drop takes water into the deeper Third Avenue Tunnel. Farther downstream, the Second Street section was excavated in sandstone as much as 80 feet below the street. Those depths describe different parts of the new system. <span class="u-src"><a href="https://www.bassettcreekwmo.org/download_file/view/720550e9-eb72-46aa-865d-0aec666002f7/167">2025 engineering report, p. 6</a></span> <span class="u-src"><a href="https://bassettcreekwmo.org/news/celebrating-50-years-formation-bassett-creek-watershed-manag">BCWMC history</a></span></p>
+  <p>The Central City tunnels are another stormwater system. The city places them about 70 feet below the streets and says they collect runoff from nearly all of downtown. A new parallel tunnel beneath Washington Avenue South, between Nicollet Mall and Chicago Avenue, was completed in 2024. <span class="u-src"><a href="https://www.minneapolismn.gov/government/projects/central-city-tunnel/">Minneapolis</a></span></p>
+<p class="section-map-link"><a href="#undermap" data-map-topic="storm">Explore this system on the map</a></p>
+</section>
+
+<section class="layer" id="sewer" style="--lc:var(--mark-sewer)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">local pipes and regional interceptors</span></div>
+    <h2>Where sewage goes</h2>
+    <p class="sub">City sewers feed a larger regional network.</p>
+  </div>
+  <p>Local <a href="https://en.wikipedia.org/wiki/Sanitary_sewer">sanitary sewers</a> feed regional interceptors, the larger pipes and tunnels that carry wastewater to treatment plants. The Metro facility near Pig's Eye Lake receives wastewater from 66 communities through 389 miles of interceptors. It serves about 1.8 million people and treats an average of 172 million gallons a day. Other parts of the region drain to other plants. <span class="u-src"><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></span></p>
+  <p>Before the plant opened in 1938, sewage went straight into the Mississippi. By the 1920s, an estimated three million cubic yards of sewage sludge had accumulated above the Ford Dam. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH historical account</a></span></p>
+  <p>The older <a href="https://en.wikipedia.org/wiki/Combined_sewer">combined sewers</a> carried rainwater and sewage in the same pipe. Rain could fill them faster than the interceptors could drain them, sending untreated overflow to the river. Minneapolis accelerated separation work in 1986. In 2018, after years of disconnecting roof drains from sanitary sewers, repairing pipes and building storm drains, it sought termination of its combined-sewer overflow permit. The city reported no river overflows in 10 of the preceding 11 years, with two small events in 2010. <span class="u-src"><a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">Minneapolis history</a></span> <span class="u-src"><a href="https://lims.minneapolismn.gov/RCA/2075">2018 council record</a></span></p>
+<div class="seam"><p>In June 1987, a mayfly hatch near the airport left Interstate 494 covered in insects. The highway closed while snowplows cleared them. MDH describes the hatch as evidence of the river's improving water quality. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p></div>
+<p class="section-map-link"><a href="#undermap" data-map-topic="wastewater">Explore this system on the map</a></p>
+</section>
+
+<section class="layer" id="rock" style="--lc:var(--mark-rock)">
+  <div class="layer-head">
+    <div class="layer-band"><p class="layer-k">Limestone and sandstone</p><span class="layer-depth">the riverbed</span></div>
+    <h2>The buried wall at the falls</h2>
+    <p class="sub">The Corps built it to keep water from washing away the rock beneath St. Anthony Falls.</p>
+  </div>
+  <p>At the falls, hard <a href="https://en.wikipedia.org/wiki/Platteville_Formation">Platteville limestone</a> lies above softer <a href="https://en.wikipedia.org/wiki/St._Peter_Sandstone">St. Peter Sandstone</a>, with a thinner shale layer between them. Water can erode the sandstone and leave the limestone unsupported. In October 1869, the river broke into the <a href="https://en.wikipedia.org/wiki/Eastman_tunnel">Eastman tunnel</a>, a waterpower excavation under the riverbed, and enlarged the opening until part of Hennepin Island collapsed. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span></p>
+  <p>The Army Corps of Engineers built a concrete wall beneath the limestone. Finished in November 1876, it stretched 1,850 feet across the river and reached as much as 39 feet below the limestone. The wall remains buried at the falls, helping stop water from opening new passages through the sandstone. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span></p>
+<p>The Corps completed a sloping apron over the falls in 1880. Today the visible slope is a concrete spillway. You can see it from the Stone Arch Bridge. The cutoff wall remains buried beneath the limestone upstream. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span></p>
+<p class="section-map-link"><a href="#undermap" data-map-topic="ground">Explore this system on the map</a></p>
+</section>
+
+<aside class="u-callout">
+  <p class="u-callout-k">What the map can show</p>
+  <p>These are public records from different owners, dates and scales. Some layers show individual assets; others show regional routes or service areas. A missing line means it is absent from this dataset. The street can still have a pipe or cable there.</p>
+</aside>
 
       <div class="srcs">
         <details class="u-collapse">
           <summary class="u-collapse-s">Sources</summary>
           <ol class="u-collapse-list">
-            <li><b>Bassett Creek's route and 1.7-mile tunnel.</b> <a href="https://bassettcreekwmo.org/lakes-streams/main-stem-bassett-creek">Bassett Creek Watershed Management Commission</a></li>
-            <li><b>Minnesota utility-locate law.</b> <a href="https://gopherstateonecall.org/state-laws/">Gopher State One Call</a></li>
-            <li><b>MICE and the 511 Building.</b> <a href="https://cologix.com/data-centers/minneapolis/min1/">Cologix MIN1</a> · <a href="https://www.peeringdb.com/ix/446">PeeringDB</a></li>
-            <li><b>Municipal Wi-Fi in the I-35W bridge collapse.</b> Computerworld, Aug 3, 2007. <a href="https://web.archive.org/web/20070914161811/http://www.computerworld.com/action/article.do?command=viewArticleBasic&amp;articleId=9028978">archived copy</a> · <a href="https://en.wikipedia.org/wiki/I-35W_Mississippi_River_bridge">context</a></li>
-            <li><b>Natural gas odorant.</b> <a href="https://www.centerpointenergy.com/en-us/business/safety/natural-gas-leaks/what-to-do-if-you-smell-gas?sa=mn">CenterPoint Energy</a></li>
-            <li><b>Frost footing depths, 42 in southern zone, 60 in northern.</b> Minnesota Rules 1303.1600. <a href="https://www.revisor.mn.gov/rules/1303.1600/">revisor.mn.gov</a></li>
-            <li><b>Xcel Energy service area and nuclear plants.</b> <a href="https://en.wikipedia.org/wiki/Xcel_Energy">en.wikipedia.org</a></li>
-            <li><b>St. Anthony Falls: 1882 central station and concrete apron.</b> <a href="https://en.wikipedia.org/wiki/Saint_Anthony_Falls">en.wikipedia.org</a></li>
-            <li><b>Hennepin Island hydro plant (1908, still operating).</b> <a href="https://en.wikipedia.org/wiki/Hennepin_Island_Hydroelectric_Plant">en.wikipedia.org</a></li>
-            <li><b>District heating and St. Paul's wood-waste fuel.</b> <a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">District Energy St. Paul</a> · <a href="https://en.wikipedia.org/wiki/District_heating">district heating overview</a></li>
-            <li><b>Chloride contamination from road salt.</b> <a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></li>
-            <li><b>Old Bassett Creek Tunnel cleanout, 2017 to 2020.</b> <a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">Mississippi Watershed Management Organization</a></li>
-            <li><b>St. Peter Sandstone geology.</b> <a href="https://en.wikipedia.org/wiki/St._Peter_Sandstone">en.wikipedia.org</a></li>
-            <li><b>Hand-carved tunnels and Schieks Cave.</b> Greg Brick, <i>Subterranean Twin Cities</i>, University of Minnesota Press, 2009. <a href="https://openlibrary.org/works/OL28366067W">openlibrary.org</a></li>
-            <li><b>Metro facility: service area and average daily flow.</b> <a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Met Council</a></li>
-            <li><b>Metro Plant history, river sludge, and the 1987 mayfly hatch.</b> Minnesota Dept. of Health, Waterline (historical account). <a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">health.state.mn.us</a></li>
-            <li><b>Minneapolis combined sewer separation timeline.</b> <a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">minneapolismn.gov</a> · <a href="https://lims.minneapolismn.gov/RCA/2075">2018 permit action</a></li>
-            <li><b>Eastman tunnel collapse and the 1876 cutoff wall.</b> <a href="https://www.mvp.usace.army.mil/Home/Projects/Article/626089/engineering-the-falls-the-corps-of-engineers-role-at-st-anthony-falls/">Army Corps of Engineers</a> · <a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></li>
+            <li><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></li>
+            <li><a href="https://gopherstateonecall.org/what-do-the-marks-mean/">Gopher State One Call</a></li>
+            <li><a href="https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/">Minneapolis</a></li>
+            <li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS treatment process</a></li>
+            <li><a href="https://www.stpaul.gov/sites/default/files/2021-06/WSP_Saint%20Paul_1975-6227_05-02-2019%20Public%20Version.pdf">2019 supply plan, figure I.C-2</a></li>
+            <li><a href="https://www.stpaul.gov/news/saint-paul-regional-water-services-turns-new-mccarrons-water-treatment-plant-ushering-new-era">2025 opening</a></li>
+            <li><a href="https://services.arcgis.com/afSMGVsC7QlRK1kZ/ArcGIS/rest/services/ServiceLineInventory_Public/FeatureServer/0">City inventory</a></li>
+            <li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS</a></li>
+            <li><a href="https://www.cologix.com/data-centers/minneapolis/min1/">Cologix MIN1</a></li>
+            <li><a href="https://cityofeagan.maps.arcgis.com/apps/webappviewer/index.html?id=514dc132f418488d817f6cf71b71bbb7">Eagan public map</a></li>
+            <li><a href="https://www.minneapolismn.gov/government/departments/health/sustainability-homes-environment/sustainability/energy-utility-franchise-agreements/">Minneapolis utilities</a></li>
+            <li><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">St. Paul utilities</a></li>
+            <li><a href="https://www.centerpointenergy.com/en-us/business/safety/natural-gas-leaks/what-to-do-if-you-smell-gas?sa=mn">CenterPoint</a></li>
+            <li><a href="https://www.districtenergy.com/services/how-it-works/">District Energy St. Paul</a></li>
+            <li><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></li>
+            <li><a href="https://cordiaenergy.com/locations/minneapolis/">Cordia system profile</a></li>
+            <li><a href="https://xcelenergytransmission.com/projects/minneapolis-underground-transmission-project/">Xcel project record</a></li>
+            <li><a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></li>
+            <li><a href="https://www.mwmo.org/news/uncovering-condition-old-bassett-creek-tunnel/">1923 completion</a></li>
+            <li><a href="https://www.bassettcreekwmo.org/download_file/view/720550e9-eb72-46aa-865d-0aec666002f7/167">2025 engineering report, p. 6</a></li>
+            <li><a href="https://bassettcreekwmo.org/news/celebrating-50-years-formation-bassett-creek-watershed-manag">BCWMC history</a></li>
+            <li><a href="https://www.minneapolismn.gov/government/projects/central-city-tunnel/">Minneapolis</a></li>
+            <li><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></li>
+            <li><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH historical account</a></li>
+            <li><a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">Minneapolis history</a></li>
+            <li><a href="https://lims.minneapolismn.gov/RCA/2075">2018 council record</a></li>
+            <li><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></li>
           </ol>
         </details>
       </div>
@@ -509,7 +401,7 @@
   </div>
 
   <script>
-    // Depth rail: highlight the section currently in view (desktop only).
+    // Section navigation: highlight the section currently in view (desktop only).
     (function () {
       var rail = document.getElementById('rail');
       if (!rail || !('IntersectionObserver' in window)) return;
@@ -543,7 +435,9 @@
       }, { passive: true });
     })();
   </script>
-  <script src="under-map.js?v=20261002" defer></script>
+  <script src="under-data.js?v=20261003-3" defer></script>
+  <script src="under-map.js?v=20261003-3" defer></script>
+  <script src="under-locate.js?v=20261003-3" defer></script>
   <script src="/js/backtotop.js"></script>
 
 

@@ -135,10 +135,11 @@ fn densityNormal(p:vec3<f32>) -> vec3<f32> {
   let aspect=u.view.x/u.view.y;
   // Frame the occupied orbit rather than the entire finite integration box.
   let portrait=aspect<1.0 && u.view.w<0.5;
-  var xy=v.uv*select(0.78,0.51,portrait)*vec2<f32>(max(aspect,1.0),max(1.0/aspect,1.0));
+  let tilt=u.view.z-select(0.0,0.32,portrait);
+  let span=select(max(select(0.78,0.51,portrait),0.86*abs(sin(tilt))),0.78,u.view.w>0.5);
+  var xy=v.uv*span*vec2<f32>(max(aspect,1.0),max(1.0/aspect,1.0));
   if (aspect<1.0 && u.view.w<0.5) { xy=vec2<f32>(xy.y,-xy.x); }
   let yaw=u.camera.x;
-  let tilt=select(u.view.z,0.6,portrait);
   let right=vec3<f32>(cos(yaw),sin(yaw),0.0);
   let up=vec3<f32>(-sin(yaw)*sin(tilt),cos(yaw)*sin(tilt),cos(tilt));
   let forward=cross(right,up);

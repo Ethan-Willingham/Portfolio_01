@@ -1303,6 +1303,7 @@
     deathInfo = info || null;
     deathPhaseT = 0;
     deathManifest = buildDeathManifest();
+    beginDeathSequence();
     for (var key in keys) keys[key] = false;
     touch.active = false;
     dpad.left = dpad.right = dpad.up = dpad.down = false;
