@@ -1,4 +1,4 @@
-// Compare v4 and v5 displays of one actual field, then boot both native browsers.
+// Compare v4 and the current surface display of one field, then boot both native browsers.
 const fs = require('node:fs'), http = require('node:http'), path = require('node:path'), assert = require('node:assert/strict');
 const { chromium, webkit } = require('playwright');
 const root = path.resolve(__dirname, '..'), output = path.join(root, 'assets/visualizer/negative-temperature');
@@ -16,11 +16,14 @@ let browser;
   const url = `http://127.0.0.1:${server.address().port}`;
   try {
     browser = await chromium.launch({ executablePath: '/Users/ethan/.local/bin/agent-chrome-for-testing', headless: true, args: ['--enable-unsafe-webgpu'] });
+    let state;
+    if (process.argv.includes('--browser-only')) state=JSON.parse(fs.readFileSync(path.join(output,'surface-validation.json'),'utf8'));
+    else {
     const page = await browser.newPage({ viewport: { width: 1358, height: 612 }, deviceScaleFactor: 2 });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     await page.goto(url);
-    const state = await page.evaluate(async oldShader => {
-      const { createRoom } = await import('./js/negative-temperature-room.js?v=5');
+    state = await page.evaluate(async oldShader => {
+      const { createRoom } = await import('./js/negative-temperature-room.js?v=6');
       const adapter = await navigator.gpu.requestAdapter(), device = await adapter.requestDevice();
       device.addEventListener('uncapturederror', event => window.renderErrors.push(event.error.message));
       window.renderErrors = []; let descriptor;
@@ -64,7 +67,7 @@ let browser;
     await page.screenshot({ path:path.join(output,'sharpness-before-v4.png') });
     await page.evaluate(() => comparison.draw(false));
     await page.screenshot({ path:path.join(output,'fallback.png') });
-    await page.screenshot({ path:path.join(output,'sharpness-after-v5.png') });
+    await page.screenshot({ path:path.join(output,'surface-v6.png') });
     const verification = await page.evaluate(async () => {
       const {draw,room,device,target} = comparison, times=[];
       for(let i=0;i<29;i++){const start=performance.now();await draw(false,1,false);if(i>=4)times.push(performance.now()-start);}
@@ -80,23 +83,35 @@ let browser;
     assert.deepEqual(verification.errors,[]);assert.deepEqual(errors,[]);
     assert.ok(verification.linearExposureRatio.every(r=>Math.abs(r-2)<.01));
     Object.assign(state,verification); await page.evaluate(()=>{comparison.room.dispose();comparison.target.destroy();comparison.context.unconfigure();comparison.device.destroy();});await page.close();
+    }
     state.browserChecks=[];
     async function boot(engine) {
       const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}),errors=[];
-      page.on('pageerror',error=>errors.push(error.message));await page.goto(url+'/negative-temperature-lab.html?v=5');
+      page.on('pageerror',error=>errors.push(error.message));await page.goto(url+'/negative-temperature-lab.html?v=6');
       await page.waitForFunction(()=>document.getElementById('nt-piece').getAttribute('aria-busy')==='false',undefined,{timeout:45000});
       const first=await page.evaluate(()=>({activity:NegativeTemperature.activity(),snapshot:NegativeTemperature.snapshot(),status:document.getElementById('nt-status').textContent}));
       assert.equal(first.activity.fallback,false,first.status);assert.equal(first.snapshot.numericalStepCount,12000);
-      if(engine==='Chrome')await page.screenshot({path:path.join(output,'sharpness-page-v5.png'),fullPage:true});
+      if(engine==='Chrome')await page.screenshot({path:path.join(output,'surface-page-v6.png'),fullPage:true});
       await page.locator('#nt-play').click();await page.waitForTimeout(1500);await page.locator('#nt-play').click();
       const after=await page.evaluate(()=>NegativeTemperature.snapshot());assert.ok(after.numericalStepCount>12000);assert.deepEqual(errors,[]);
+      await page.locator('#nt-instruments-button').click();
+      assert.equal(await page.locator('#nt-view').inputValue(),'density');
+      const captures={};
+      for(const mode of ['density','contours','phase','velocity']){
+        await page.locator('#nt-view').selectOption(mode);
+        captures[mode]=require('node:crypto').createHash('sha256').update(await page.locator('#nt-canvas').screenshot()).digest('hex');
+      }
+      assert.equal(new Set(Object.values(captures)).size,4,'Surface, contours, phase and velocity must be distinct views.');
+      await page.locator('#nt-view').selectOption('density');
+      await page.locator('#nt-instruments-button').click();
+      assert.deepEqual(errors,[]);
       const views=[];
-      for(const viewport of [{width:390,height:844},{width:844,height:390}]){await page.setViewportSize(viewport);await page.waitForFunction(()=>{const c=document.getElementById('nt-canvas'),b=c.getBoundingClientRect();return c.width>=b.width*2-1&&c.height>=b.height*2-1;});const view=await page.evaluate(()=>{const c=document.getElementById('nt-canvas'),b=c.getBoundingClientRect();return{width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,pixels:[c.width,c.height],css:[b.width,b.height]};});assert.equal(view.overflow,false);assert.ok(view.pixels[0]>=view.css[0]*2-1);assert.ok(view.pixels[1]>=view.css[1]*2-1);views.push(view);}
-      state.browserChecks.push({engine,openingSteps:first.snapshot.numericalStepCount,afterMotionSteps:after.numericalStepCount,backend:first.snapshot.diagnosticsBackend,views,errors});await page.close();
+      for(const viewport of [{width:390,height:844},{width:844,height:390}]){await page.setViewportSize(viewport);await page.waitForFunction(()=>{const c=document.getElementById('nt-canvas'),b=c.getBoundingClientRect();const dpr=Math.min(2.5,Math.max(2,devicePixelRatio||1));return Math.abs(c.width-Math.round(b.width*dpr))<=1&&Math.abs(c.height-Math.round(b.height*dpr))<=1;});const view=await page.evaluate(()=>{const c=document.getElementById('nt-canvas'),b=c.getBoundingClientRect();return{width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,pixels:[c.width,c.height],css:[b.width,b.height]};});assert.equal(view.overflow,false);assert.ok(view.pixels[0]>=view.css[0]*2-1);assert.ok(view.pixels[1]>=view.css[1]*2-1);views.push(view);}
+      state.browserChecks.push({engine,openingSteps:first.snapshot.numericalStepCount,afterMotionSteps:after.numericalStepCount,backend:first.snapshot.diagnosticsBackend,viewHashes:captures,views,errors});await page.close();
     }
     await boot('Chrome');await browser.close();browser=null;
     browser=await webkit.launch({headless:true});await boot('WebKit');
-    fs.writeFileSync(path.join(output,'sharpness-validation.json'),JSON.stringify(state,null,2));
+    fs.writeFileSync(path.join(output,'surface-validation.json'),JSON.stringify(state,null,2));
     console.log(JSON.stringify({hash:state.hash,time:state.time,render:state.render,linearExposureRatio:state.linearExposureRatio,browserChecks:state.browserChecks}));
   } finally { await browser?.close();await new Promise(resolve=>server.close(resolve)); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

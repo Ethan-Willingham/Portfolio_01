@@ -24,8 +24,8 @@
       </header>
       <section id="nt-piece" class="nt-piece" aria-label="Live superfluid visualization" aria-busy="true">
         <div class="nt-stage">
-          <canvas id="nt-canvas" tabindex="0" aria-label="Condensate density with equal-density contours. Dark cores are vortices. Space pauses or resumes; F opens fullscreen."></canvas>
-          <picture id="nt-fallback" hidden><source srcset="assets/visualizer/negative-temperature/fallback.webp?v=5" type="image/webp"><img src="assets/visualizer/negative-temperature/fallback.png?v=5" alt="A recorded density image from this Gross-Pitaevskii solver, with dark vortex cores and equal-density contours in an elliptical condensate." loading="eager"></picture>
+          <canvas id="nt-canvas" tabindex="0" aria-label="Condensate density with illustrative surface lighting. Dark cores are vortices. Space pauses or resumes; F opens fullscreen."></canvas>
+          <picture id="nt-fallback" hidden><source srcset="assets/visualizer/negative-temperature/fallback.webp?v=6" type="image/webp"><img src="assets/visualizer/negative-temperature/fallback.png?v=6" alt="A recorded density image from this Gross-Pitaevskii solver, with surface highlights and dark vortex cores in an elliptical condensate." loading="eager"></picture>
           <p class="nt-stage-label" id="nt-phase">Preparing the field</p>
           <p class="nt-status" id="nt-status" role="status">Preparing a condensate with imaginary-time evolution.</p>
           <div class="nt-scale" aria-hidden="true"><span></span>10 model units</div>
@@ -40,7 +40,7 @@
         </div>
         <div class="nt-instruments" id="nt-instruments" hidden>
           <div class="nt-options">
-            <label>View<select id="nt-view"><option value="density">Density and contours</option><option value="phase">Cyclic phase</option><option value="velocity">Density and velocity</option></select></label>
+            <label>View<select id="nt-view"><option value="density">Surface lighting</option><option value="contours">Density contours</option><option value="phase">Cyclic phase</option><option value="velocity">Density and velocity</option></select></label>
             <label class="nt-check"><input id="nt-signs" type="checkbox">Show vortex signs</label>
             <label>Replay seed<input id="nt-seed" type="text" value="180106951" inputmode="text" pattern="[0-9a-fA-F]{1,64}" maxlength="64" aria-describedby="nt-seed-note"></label>
             <button id="nt-export" type="button">Save diagnostics</button>
@@ -50,7 +50,7 @@
           <details class="nt-configuration"><summary>Model configuration</summary><pre id="nt-configuration"></pre></details>
           <p class="nt-note" id="nt-adapter"></p>
           <p class="nt-note">Energy includes the moving paddles, which do work on the field. Real-time evolution has no damping or norm correction. Candidate annihilations are estimates between samples.</p>
-          <p class="nt-note">Fine lines follow equal density. Warm circles mark positive winding; blue circles mark negative winding. Phase hue is a smooth, constant-lightness OKLab color wheel, an encoding rather than emitted light.</p>
+          <p class="nt-note">Surface lighting follows density slopes; its highlights are illustrative. The contour view marks equal density. Warm circles mark positive winding; blue circles mark negative winding. Phase hue is a smooth, constant-lightness OKLab color wheel, an encoding rather than emitted light.</p>
         </div>
       </section>
       <div class="post-body nt-prose">
@@ -88,7 +88,7 @@
       const heartbeat = () => { clearTimeout(timer); timer = setTimeout(unavailable, 30000); };
       piece.addEventListener('negative-temperature-progress', heartbeat);
       heartbeat();
-      import('./js/negative-temperature.js?v=5').catch(error => { console.error('Superfluid startup:', error); unavailable(); }).finally(() => {
+      import('./js/negative-temperature.js?v=6').catch(error => { console.error('Superfluid startup:', error); unavailable(); }).finally(() => {
         clearTimeout(timer); piece.removeEventListener('negative-temperature-progress', heartbeat);
       });
     })();

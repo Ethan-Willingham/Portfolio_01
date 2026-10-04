@@ -1,0 +1,222 @@
+{
+  "date": "2026-10-03",
+  "adapter": {
+    "vendor": "apple",
+    "architecture": "metal-3"
+  },
+  "parameters": {
+    "grid": 512,
+    "side": 64,
+    "g": 2,
+    "bulkDensity": 1,
+    "chemicalPotential": 2,
+    "radiusX": 24,
+    "radiusY": 17,
+    "wallWidth": 0.8,
+    "wallHeight": 12,
+    "dt": 0.004,
+    "preparationDt": 0.04,
+    "preparationSteps": 1600,
+    "paddleAmplitude": 10,
+    "paddleSigmaX": 7.5,
+    "paddleSigmaY": 0.55,
+    "paddleX": 24,
+    "paddleStartY": 22,
+    "paddleSpeed": 0.5,
+    "stirStart": 12,
+    "sweepDuration": 44,
+    "withdrawalDuration": 16,
+    "phraseDuration": 540,
+    "solverUnitsPerSecond": 3,
+    "standaloneStartTime": 48,
+    "damping": 0,
+    "detectionRadius": 0.89,
+    "detectionDensity": 0.08,
+    "clusterLink": 7,
+    "clusterMinimum": 4,
+    "clusterCorrelation": 0.55
+  },
+  "time": 149.99999999999767,
+  "steps": 37500,
+  "hash": "102785c0bcf51bae88438cdfd237cf8d22466827e7badaa3ace593ceef89be99",
+  "diagnostics": {
+    "norm": 1097.9126028590335,
+    "energy": 1451.6254975059917,
+    "kinetic": 244.7300995293751,
+    "interaction": 1101.0402639906167,
+    "potential": 105.85513398599974,
+    "edgeNormFraction": 0.00007353146071341368,
+    "positive": 5,
+    "negative": 5,
+    "circulation": 0,
+    "circulationUnits": "quanta of 2 pi in the detected region",
+    "vortices": [
+      {
+        "x": -10.4375,
+        "y": -9.6875,
+        "sign": 1
+      },
+      {
+        "x": 10.4375,
+        "y": -9.0625,
+        "sign": -1
+      },
+      {
+        "x": 13.8125,
+        "y": -5.4375,
+        "sign": -1
+      },
+      {
+        "x": -13.6875,
+        "y": -4.8125,
+        "sign": 1
+      },
+      {
+        "x": -9.5625,
+        "y": -4.4375,
+        "sign": 1
+      },
+      {
+        "x": 9.4375,
+        "y": -4.0625,
+        "sign": -1
+      },
+      {
+        "x": 0.1875,
+        "y": -3.3125,
+        "sign": -1
+      },
+      {
+        "x": 0.8125,
+        "y": -3.3125,
+        "sign": 1
+      },
+      {
+        "x": 12.9375,
+        "y": -1.0625,
+        "sign": -1
+      },
+      {
+        "x": -12.8125,
+        "y": -0.8125,
+        "sign": 1
+      }
+    ],
+    "c2": 0.7,
+    "componentSizes": [
+      4,
+      4,
+      1,
+      1
+    ],
+    "largestCluster": 4,
+    "clustered": true,
+    "measuredStep": 37500,
+    "measuredSimulationTime": 149.99999999999767,
+    "normDrift": -0.007259138037775781,
+    "conservativeEnergyDrift": 0,
+    "estimatedAnnihilations": 0,
+    "annihilationCaveat": "Candidate opposite-sign disappearances within 3 units between samples; edge loss and motion can be missed.",
+    "temperature": null,
+    "temperatureStatus": "Temperature not estimated",
+    "energyCaveat": "Spectral kinetic energy. Moving paddles do work; imaginary preparation changes norm and energy. No real-time damping or normalization."
+  },
+  "dimensions": {
+    "width": 2716,
+    "height": 1224
+  },
+  "presentation": "One linear Reinhard and sRGB transfer, matching the standalone host.",
+  "errors": [],
+  "linearExposureRatio": [
+    2,
+    2,
+    2
+  ],
+  "render": {
+    "median": 1.2999999523162842,
+    "p95": 1.399999976158142,
+    "samples": 25,
+    "warmups": 4,
+    "units": "ms, single render including CPU submission and queue completion"
+  },
+  "browserChecks": [
+    {
+      "engine": "Chrome",
+      "openingSteps": 12000,
+      "afterMotionSteps": 12750,
+      "backend": "module worker",
+      "viewHashes": {
+        "density": "4d6b0ce256a124fd0f1493d51af9e15fb9c1e22cb51feadb38d0c31e5fbe34c8",
+        "contours": "caeac7a94a2119e08b786554f0118d642bb5b0534a7931ddd975017a7bf3f468",
+        "phase": "962750f865984b094c859e4e8ce17294621798ceec43ac87d166fd10e7e15fdd",
+        "velocity": "8a8c4c29419f3dfcf6da61a60cf2af1ced89a796d5112b0523b725cbde7059d9"
+      },
+      "views": [
+        {
+          "width": 390,
+          "overflow": false,
+          "pixels": [
+            696,
+            840
+          ],
+          "css": [
+            348,
+            420
+          ]
+        },
+        {
+          "width": 844,
+          "overflow": false,
+          "pixels": [
+            1556,
+            640
+          ],
+          "css": [
+            778,
+            320
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "engine": "WebKit",
+      "openingSteps": 12000,
+      "afterMotionSteps": 13037,
+      "backend": "module worker",
+      "viewHashes": {
+        "density": "ee16ca9bd7994c89a91f83fdc0025186f791165e8b824f0add572507db8105d2",
+        "contours": "97a5f1888fee61f57578a3344bf2f011be2ace93ced6e72f59930da96d37a499",
+        "phase": "e7a087ca0b655047d2de77b1c4b224429778d7fdf572db75cc067be31f897922",
+        "velocity": "bf6fbbeef5adefe8999c9be743b8694d5e7ef6cedd5ae95b1e146d18b45ddffa"
+      },
+      "views": [
+        {
+          "width": 390,
+          "overflow": false,
+          "pixels": [
+            696,
+            840
+          ],
+          "css": [
+            348,
+            420
+          ]
+        },
+        {
+          "width": 844,
+          "overflow": false,
+          "pixels": [
+            1556,
+            640
+          ],
+          "css": [
+            778,
+            320
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

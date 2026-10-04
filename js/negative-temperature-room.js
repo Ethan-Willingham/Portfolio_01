@@ -47,6 +47,16 @@ fn lab(l:f32,a:f32,b:f32)->vec3f{
   let color=lab(.77,chroma*cos(phase),chroma*sin(phase));
   let luminosity=1.6*pow(rho,1.25)*smoothstep(.015,.045,rho);
   var scene=vec3f(.004,.007,.006)+color*luminosity;
+  // Illustrative surface lighting from the measured density slope. Convert
+  // screen derivatives to model units so resizing does not change the relief.
+  let pixelToModel=min(v.size.x,v.size.y)/(2.*v.span);
+  let slope=vec2f(dpdx(rho),-dpdy(rho))*pixelToModel;
+  let normal=normalize(vec3f(-slope*1.8,1.));
+  let light=normalize(vec3f(-.45,.65,.8));
+  let diffuse=.38+.62*max(dot(normal,light),0.);
+  let halfway=normalize(light+vec3f(0.,0.,1.));
+  let shine=.75*pow(max(dot(normal,halfway),0.),48.);
+  if(v.mode<.5){scene=vec3f(.004,.007,.006)+(color*diffuse+vec3f(.7,.65,.55)*shine)*luminosity;}
   // Equal-density contours, spaced by 0.1 in model density, with screen-pixel
   // antialiasing. The slope mask suppresses contour noise in a flat field.
   let pixelSlope=fwidth(rho);
@@ -54,8 +64,8 @@ fn lab(l:f32,a:f32,b:f32)->vec3f{
   let distance=abs(fract((rho-.035)/.1+.5)-.5)*.1;
   let stroke=max(pixelSlope*.55,.000001);
   let contour=(1.-smoothstep(stroke,stroke*1.8,distance))*smoothstep(.025,.07,densitySlope)*smoothstep(.06,.12,rho);
-  if(v.mode<.5){scene*=1.-.36*contour;}
-  if(v.mode>1.5 && rho>.08){
+  if(v.mode>2.5){scene*=1.-.36*contour;}
+  if(v.mode>1.5 && v.mode<2.5 && rho>.08){
     // j = Im(conj(psi) grad psi); safe v = j/rho, no tracers.
     let gradx=(at(ij+vec2i(1,0))-at(ij-vec2i(1,0)))*v.n/(2.*v.side);
     let grady=(at(ij+vec2i(0,1))-at(ij-vec2i(0,1)))*v.n/(2.*v.side);
@@ -192,7 +202,7 @@ export async function createRoom({ device, seed = DEFAULT_SEED, quality = 'mediu
         diagnostics: diag, diagnosticsBackend: worker ? 'module worker' : 'main thread', diagnosticsFallbackReason: workerFailure, assetBaseURL: assetURL };
     },
     async debugReadback() { await diagnostics(); const { field, time, steps } = await solver.readbackState(); return { field, grid: p.grid, parameters: { ...p }, time, steps, diagnostics: diag }; },
-    setDisplay({ mode = 'density', signs: enabled = false }) { displayMode = ({ density: 0, phase: 1, velocity: 2 })[mode] ?? 0; showSigns = enabled; },
+    setDisplay({ mode = 'density', signs: enabled = false }) { displayMode = ({ density: 0, phase: 1, velocity: 2, contours: 3 })[mode] ?? 0; showSigns = enabled; },
     // Test/recording accelerator: exactly the same real-time solver sequence.
     async debugAdvance(count, onProgress) { const total = count; while (count > 0 && !disposed) { const batch = Math.min(32, count); solver.advance(batch); count -= batch; await withDeadline(device.queue.onSubmittedWorkDone(), 15000, 'The GPU stopped responding while stirring the field.'); onProgress?.({ completed: total - count, total }); } await diagnostics(); },
     dispose() { if (disposed) return; disposed = true; if (pendingMeasurement) { clearTimeout(pendingMeasurement.timer); pendingMeasurement.reject(new Error('Room disposed.')); pendingMeasurement = null; } worker?.terminate(); solver.dispose(); view.destroy(); signs.destroy(); },
