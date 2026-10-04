@@ -65,7 +65,7 @@ function buildSections(post, file) {
   if (!existsSync(file)) return;
   let html = readFileSync(file, 'utf8');
   // The collection uses short card labels; search displays the revised article title.
-  if (post.hub === 'inner-life') {
+  if (post.hub === 'inner-life' || post.url === 'plato.html') {
     const title = attr(html, /<meta property="og:title" content="([^"]+)"/);
     if (title) post.title = stripToText(title);
   }

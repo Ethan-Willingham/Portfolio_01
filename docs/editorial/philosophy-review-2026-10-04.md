@@ -1,5 +1,7 @@
 # Philosophy collection editorial review
 
+This report records the initial collection revision. The later [Socrates and Plato context revision](socrates-context-revision-2026-10-04.md) expands and restructures that article for readers with no prior philosophy background; its current wording and length differ from the table below.
+
 Fourteen posts received separate editorial assignments using GPT-6.1 Sol with extra-high reasoning, followed by an independent second review. Each assignment checked the original passages, substantive claims and interpretations, then rewrote and separately edited the prose.
 
 The first passes recorded 452 source checks. The counted text fell from 63,597 to 31,820 words, a 50% reduction. These are editorial and passage counts, not a claim that every philosophical dispute is settled. The full evidence and remaining limits are recorded in [the source audit](philosophy-source-audit-2026-10-04.json).
