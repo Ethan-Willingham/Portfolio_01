@@ -146,12 +146,6 @@ const SHELF = {
      same day to stand on the shelf by itself. */
   singles: [
     {
-      href: 'the-body-rhymes.html', title: 'The Body Rhymes', thumb: 'the-body-rhymes.jpg',
-      date: '2026-06-21', dateDisplay: '21 Jun 2026',
-      alt: 'A newborn baby wrapped in a pale blanket.',
-      desc: "A newborn boy can produce milk. Some infant reflexes can return after brain damage. A short look at the overlaps between birth and aging, and their limits.",
-    },
-    {
       href: 'the-other-side.html', title: 'The Other Side', thumb: 'the-other-side.jpg',
       date: '2026-07-02', dateDisplay: '2 Jul 2026',
       alt: "An artist's impression of a star torn into a glowing streak as it falls toward a black hole, a dark disc against red clouds of gas.",
