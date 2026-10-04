@@ -1,15 +1,8 @@
-/* gen-hubs.mjs  -  generate the collection hub pages, the Longform collection
-   page, and rewrite the homepage's card list (lift the collection's posts off
-   the homepage; the collection itself is a header link, not a card).
-   Idempotent: safe to re-run any time, e.g. after flipping a member from soon to
-   live. Run from the repo root: node tools/gen-hubs.mjs   Then re-run
-   tools/wrap-picture.mjs on the hubs + shelf + index.html to restore the WebP
-   <picture> wrapping, and tools/build-search-index.mjs. No em dashes.
-   Also the source of truth for collection membership: tools/gen-post-nav.mjs
-   imports HUBS/SHELF from here to stamp each member post's endcap nav, so
-   importing this module must stay side-effect free (writes run only when the
-   file is executed directly, see the isMain guard at the bottom).
-   Use --hub=inner-life to generate one hub without changing the shelf or homepage. */
+/* Generate the In Progress collection pages and refresh the standalone homepage cards.
+   Membership lives in HUBS. Homepage cards and their original GitHub creation
+   commits live in homepage-posts.json, with dates in America/Chicago.
+   Use --hub=<slug> to generate just one collection, or --homepage for cards only.
+   Imports are side-effect free. Re-run wrap-picture and build-search-index after generation. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -20,7 +13,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
    first, so the era column reads top-to-bottom as a timeline. Live members come
    before the greyed "coming soon" ones. A live member is
    {href,title,thumb,era,year,desc}; a planned one is {title,era,year,desc,soon}.
-   A hub marked inProgress is not carded on the Longform shelf. Its page carries
+   A hub marked inProgress is listed on archive.html. Its page carries
    the amber in-progress banner and its members are flagged in the search index,
    so the collection reads as unfinished instead of finished. Its posts stay live
    at their normal URLs; nothing moves into /archive.
@@ -31,7 +24,7 @@ const soon = (title, era, year, desc) => ({ title, era, year, desc, soon: true }
 
 const HUBS = [
   {
-    slug: 'religion', title: 'The Sacred Books',
+    slug: 'religion', title: 'The Sacred Books', inProgress: true,
     card: { thumb: 'guru-granth-sahib.jpg', alt: 'An illuminated page of the Guru Granth Sahib, with Gurmukhi script framed by orange, blue, and gold flowers.',
       desc: "Read beyond the familiar verses. From the Torah to the Guru Granth Sahib, these posts follow what each book says and where its English translations disagree." },
     lead: "Most of us know these books by a few famous lines. These readings follow the stories and ideas around them, including the difficult passages and disagreements over translation.",
@@ -48,7 +41,7 @@ const HUBS = [
     ],
   },
   {
-    slug: 'philosophy', title: "How to Think, and What's Real",
+    slug: 'philosophy', title: "How to Think, and What's Real", inProgress: true,
     card: { thumb: 'aristotle.jpg', alt: "Rembrandt's painting of Aristotle resting a hand on a bust of Homer.",
       desc: "What can we know, and how should we live? Read the arguments from Plato to David Deutsch, with enough of the original text to judge them for yourself." },
     lead: "What makes a good life? What gives a government the right to rule? These readings follow the answers closely enough that you can see where you agree, and where you don't.",
@@ -99,45 +92,9 @@ const HUBS = [
       live("the-other-hours.html", "The Other Hours", "the-other-hours.jpg", "the rest", 4, "Blood pressure can be high without symptoms. Read about sleep, smoking, screening, and the limits of popular recovery treatments, then use the checklist to choose a place to start."),
     ],
   },
-  {
-    slug: 'career', title: 'Career',
-    card: { thumb: 'all-in.jpg', alt: "Two oarsmen in Thomas Eakins's painting The Biglin Brothers Racing pull in unison across calm water.",
-      desc: "How to manage a team, run a warehouse with software, and keep a customer after the sale. Guides built around the problems that come up at work." },
-    lead: "Hiring good people, getting software to work on a warehouse floor, and helping a customer get what they paid for. Notes from the work I know.",
-    members: [
-      live('all-in.html', "People can meet every requirement and still hold back their best work. Managing professionals means making room for judgment while staying clear about responsibility and the problems you need solved."),
-      live('warehouse.html', "Stock on a shelf may already belong to another order. Warehouse software tracks what's available and directs each move, from receiving a delivery to putting a parcel on a truck."),
-      live('customer-success.html', "The software is live, but a supervisor still copies orders into a spreadsheet. Customer success starts by finding that gap and helping the customer get the result they bought."),
-    ],
-  },
 ];
 
-const SHELF = {
-  path: 'boring-stuff',
-  title: 'Longform',
-  /* the Admont library image (owner reimaged it 2026-07-12: the library, not
-     the vegetables). Now used only for the collection page's og:image; the
-     homepage links to the collection with a header link instead of carding it. */
-  thumb: 'boring-stuff.jpg',
-  credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
-  alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
-  cardDesc: "Longer readings on old books and the work of everyday life. Pick a collection, or start with a question you already have.",
-  /* only the finished collections. philosophy, staying-alive,
-     and inner-life moved to the In Progress index (archive.html); they carry
-     inProgress above. */
-  hubOrder: ['career', 'religion'],
-  /* The Book With No Blood Test moved to the In Progress index 2026-09-24
-     (archive/no-blood-test/). The Other Side came out of The Inner Life the
-     same day to stand on the shelf by itself. */
-  singles: [
-    {
-      href: 'the-other-side.html', title: 'The Other Side', thumb: 'the-other-side.jpg',
-      date: '2026-07-02', dateDisplay: '2 Jul 2026',
-      alt: "An artist's impression of a star torn into a glowing streak as it falls toward a black hole, a dark disc against red clouds of gas.",
-      desc: "A cup needs both clay and empty space. My reading of the Tao Te Ching starts with that dependence, then asks what it might mean for the self.",
-    },
-  ],
-};
+const STANDALONE_POSTS = JSON.parse(readFileSync(join(ROOT, 'tools/homepage-posts.json'), 'utf8'));
 
 /* oldest first, live before coming-soon */
 const ordered = (members) => [...members].sort((a, b) => (a.soon ? 1 : 0) - (b.soon ? 1 : 0) || a.year - b.year);
@@ -165,11 +122,11 @@ const memberCard = (m, i) => m.soon
 
 /* An in-progress hub loads the shared banner as the first child of <body> (same
    contract as the pages under /archive), and its back-link points at the In
-   Progress index instead of the Longform shelf it is no longer listed on. */
+   Progress index instead of the homepage. */
 const hubPage = (h) => {
   const banner = h.inProgress ? '\n  <script src="/js/archive-banner.js"></script>' : '';
-  const backHref = h.inProgress ? 'archive.html' : 'boring-stuff.html';
-  const backLabel = h.inProgress ? 'In Progress' : 'Longform';
+  const backHref = h.inProgress ? 'archive.html' : '/';
+  const backLabel = h.inProgress ? 'In Progress' : 'Home';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -233,99 +190,38 @@ ${ordered(h.members).map(memberCard).join('\n')}
 };
 
 const liveCount = (h) => h.members.filter((m) => !m.soon).length;
-const shelfHubs = SHELF.hubOrder.map((slug) => HUBS.find((h) => h.slug === slug));
-if (shelfHubs.some((h) => !h)) throw new Error('SHELF.hubOrder names a missing hub');
-const shelfCount = shelfHubs.reduce((sum, h) => sum + liveCount(h), 0) + SHELF.singles.length;
-const shelfLead = "Longer readings on old books and the work of everyday life. Pick a collection, or start with a question you already have.";
-
-const shelfHubCard = (h, i) => `        <li class="article-list-item fade-in">
-          <a class="article-item is-collection" href="${h.slug}.html">
-            <span class="article-item-thumb"><img src="assets/thumbs/${h.card.thumb}" width="600" height="400" loading="${i === 0 ? 'eager' : 'lazy'}" decoding="async" alt="${h.card.alt}"></span>
-            <span class="article-item-date">Collection &middot; ${liveCount(h)} posts</span>
-            <h2 class="article-item-title">${h.title}</h2>
-            <p class="article-item-description">${h.card.desc}</p>
-          </a>
-        </li>`;
-
-const shelfSingleCard = (p) => `        <li class="article-list-item fade-in">
+function updateHomepage() {
+  let html = readFileSync(join(ROOT, 'index.html'), 'utf8');
+  const removed = new Set([
+    ...HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)),
+    ...HUBS.map((h) => h.slug + '.html'),
+    ...STANDALONE_POSTS.map((p) => p.href),
+    'boring-stuff.html', 'career.html',
+  ]);
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cards = (html.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [])
+    .filter((li) => !removed.has((li.match(/href="([^"]+)"/) || [])[1]));
+  for (const p of STANDALONE_POSTS) {
+    cards.push(`        <li class="article-list-item fade-in" data-keywords="${esc(p.keywords)}">
           <a class="article-item" href="${p.href}">
-            <span class="article-item-thumb"><img src="assets/thumbs/${p.thumb}" width="600" height="400" loading="lazy" decoding="async" alt="${p.alt}"></span>
+            <span class="article-item-thumb">
+              <!-- First published in GitHub commit ${p.createdCommit}, ${p.createdAt}. -->
+              ${p.credit ? `<!-- thumbnail: ${esc(p.credit)} -->\n              ` : ''}<picture><source type="image/webp" srcset="assets/thumbs/${p.thumb.replace(/\.jpg$/, '.webp')}"><img src="assets/thumbs/${p.thumb}" width="600" height="400" loading="lazy" decoding="async" alt="${esc(p.alt)}"></picture>
+            </span>
             <time class="article-item-date" datetime="${p.date}">${p.dateDisplay}</time>
-            <h2 class="article-item-title">${p.title}</h2>
-            <p class="article-item-description">${p.desc}</p>
+            <h2 class="article-item-title">${esc(p.title)}</h2>
+            <p class="article-item-description">${esc(p.desc)}</p>
           </a>
-        </li>`;
+        </li>`);
+  }
+  const date = (li) => (li.match(/datetime="([^"]+)"/) || [, ''])[1];
+  cards.sort((a, b) => date(b).localeCompare(date(a)));
+  const list = cards.map((li, i) => li.replace(/loading="(?:lazy|eager)"/g, `loading="${i === 0 ? 'eager' : 'lazy'}"`)).join('\n');
+  html = html.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, `<ul class="article-list">\n${list}\n      </ul>`);
+  writeFileSync(join(ROOT, 'index.html'), html);
+  console.log('homepage:', cards.length, 'posts, newest first');
+}
 
-const shelfPage = () => `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#303931">
-  <title>${SHELF.title} | Ethan Willingham</title>
-  <meta name="description" content="${shelfLead}">
-  <meta property="og:title" content="${SHELF.title}">
-  <meta property="og:description" content="${shelfLead}">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Ethan Willingham">
-  <meta property="og:url" content="https://ethanwillingham.com/${SHELF.path}.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/${SHELF.thumb}">
-  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="collection.css">
-</head>
-<body>
-  <div class="site-wrapper">
-    <header class="site-header">
-      <h1 class="site-name">${SHELF.title}</h1>
-      <p class="site-tagline">${shelfLead}</p>
-      <div class="home-search">
-        <div class="hs-field-wrap">
-          <label class="hs-field">
-            <svg class="hs-mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><line x1="15.6" y1="15.6" x2="21" y2="21" stroke-linecap="round"/></svg>
-            <input class="hs-input" type="search" data-search-scope="${SHELF.path}" placeholder="Search" aria-label="Search ${SHELF.title}" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hs-panel" aria-autocomplete="list" aria-haspopup="listbox">
-            <span class="hs-hint" aria-hidden="true">Search</span>
-          </label>
-          <div class="hs-panel" id="hs-panel" role="listbox" aria-label="Search results"></div>
-        </div>
-        <span class="hs-links">
-          <a class="hs-about" href="/">Home</a>
-          <a class="hs-about" href="about.html">About</a>
-        </span>
-      </div>
-      <p class="hs-readout" role="status" aria-live="polite"></p>
-    </header>
-    <main>
-      <ul class="article-list">
-${shelfHubs.map(shelfHubCard).concat(SHELF.singles.map(shelfSingleCard)).join('\n')}
-      </ul>
-    </main>
-    <footer class="site-footer">
-      <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><span class="ftr-links"><a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a></span></div>
-    </footer>
-  </div>
-  <script src="js/search.js"></script>
-  <script>
-  (function () { var root = document.querySelector('.home-search'); var input = root && root.querySelector('.hs-input'); if (!input) return; input.addEventListener('focus', function () { root.classList.add('is-open'); }); input.addEventListener('blur', function () { setTimeout(function () { if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open'); }, 160); }); })();
-  </script>
-  <script src="js/backtotop.js"></script>
-</body>
-</html>
-`;
-
-/* ---- homepage surgery: drop the collection's posts + old hub/collection cards
-   off the homepage. The collection is reached from a header link, not a card, so
-   nothing is added back. REMOVE includes the collection path so a re-run also
-   clears any stale card. ----------------------------------------------------- */
-const REMOVE = new Set([
-  ...HUBS.flatMap((h) => h.members.filter((m) => !m.soon).map((m) => m.href)),
-  ...HUBS.map((h) => h.slug + '.html'),
-  ...SHELF.singles.map((p) => p.href),
-  SHELF.path + '.html',
-]);
 
 /* ---- run the generation only when executed directly (node tools/gen-hubs.mjs),
    never as an import side effect (gen-post-nav.mjs imports the data above). --- */
@@ -334,25 +230,11 @@ if (isMain) {
   const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
   const selectedHub = hubArg && HUBS.find((h) => h.slug === hubArg.slice(6));
   if (hubArg && !selectedHub) throw new Error(`Unknown hub: ${hubArg.slice(6)}`);
-  const targets = selectedHub ? [selectedHub] : HUBS;
+  const targets = process.argv.includes('--homepage') ? [] : selectedHub ? [selectedHub] : HUBS;
   targets.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + liveCount(h) + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
   if (!selectedHub) {
-    writeFileSync(join(ROOT, SHELF.path + '.html'), shelfPage());
-    console.log('wrote', SHELF.path + '.html', '(' + shelfCount + ' posts in ' + shelfHubs.length + ' collections + ' + SHELF.singles.length + ' single)');
-
-    let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
-    const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
-    let removed = 0;
-    const keptLis = allLis.filter((li) => {
-      const href = (li.match(/href="([^"]+)"/) || [])[1];
-      if (href && REMOVE.has(href)) { removed++; return false; }
-      return true;
-    });
-    const newList = keptLis.join('\n');
-    idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
-    writeFileSync(join(ROOT, 'index.html'), idx);
-    console.log('homepage: removed ' + removed + ' collection post/old-hub cards, kept ' + keptLis.length + ' (collection is a header link, no card)');
+    updateHomepage();
   }
 }
 
-export { HUBS, SHELF, ordered, liveCount };
+export { HUBS, STANDALONE_POSTS, ordered, liveCount };

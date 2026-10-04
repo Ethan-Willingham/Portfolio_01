@@ -183,18 +183,17 @@ for (const block of cardBlocks) {
 // pages instead of on the homepage. Pull each hub's member links, tag them with
 // the hub slug (so a hub page's own search scopes to its posts, and the homepage
 // search still finds them as non-archived), and index their real text.
-// A hub listed on the In Progress index instead of the Longform shelf gets its
+// A hub listed on the In Progress index instead of the homepage gets its
 // members flagged `inprogress` (from the actual In Progress collection cards), so
 // the In Progress search finds them and the UI ranks and marks them like the
 // archived posts. They are NOT `archived`: the files never moved, the URLs are
 // live, and the homepage search still finds them.
-const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'staying-alive', 'career'];
+const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'staying-alive'];
 const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
 const selectedHub = hubArg && hubArg.slice(6);
 if (hubArg && !HUB_SLUGS.includes(selectedHub)) throw new Error(`Unknown hub: ${selectedHub}`);
 const progressIndexHtml = existsSync(join(ROOT, 'archive.html')) ? readFileSync(join(ROOT, 'archive.html'), 'utf8') : '';
 const IN_PROGRESS_HUBS = new Set([...progressIndexHtml.matchAll(/<a class="article-item is-collection" href="([^"]+)\.html"/g)].map(m => m[1]));
-const BORING_HUBS = new Set(HUB_SLUGS.filter((s) => !IN_PROGRESS_HUBS.has(s)));
 for (const slug of HUB_SLUGS) {
   const hubFile = join(ROOT, slug + '.html');
   if (!existsSync(hubFile)) continue;
@@ -209,35 +208,9 @@ for (const slug of HUB_SLUGS) {
       date: '', dateDisplay: '',
       desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
       thumb: attr(block, /<img[^>]*src="([^"]+)"/),
-      keywords: '', hub: slug, hubs: BORING_HUBS.has(slug) ? [slug, 'boring-stuff'] : [slug], sections: [],
+      keywords: '', hub: slug, hubs: [slug], sections: [],
     };
     if (IN_PROGRESS_HUBS.has(slug)) post.inprogress = true;
-    buildSections(post, join(ROOT, href));
-    posts.push(post);
-    seen.add(href);
-  }
-}
-
-// Direct posts on the Boring Stuff shelf. Collection cards are skipped because
-// their child posts were indexed above and tagged with both their collection
-// slug and the parent shelf slug.
-const shelfFile = join(ROOT, 'boring-stuff.html');
-if (existsSync(shelfFile)) {
-  const shelfHtml = readFileSync(shelfFile, 'utf8');
-  const inner = (shelfHtml.match(/<ul class="article-list">([\s\S]*?)<\/ul>/) || [, ''])[1];
-  for (const block of inner.split(/<li class="article-list-item/).slice(1)) {
-    const href = attr(block, /<a class="article-item" href="([^"]+)"/);
-    const slug = href && href.replace(/\.html$/, '');
-    if (!href || !/\.html$/.test(href) || HUB_SLUGS.includes(slug) || seen.has(href)) continue;
-    const post = {
-      url: href,
-      title: stripToText(attr(block, /<h2 class="article-item-title">([\s\S]*?)<\/h2>/)),
-      date: attr(block, /datetime="([^"]+)"/),
-      dateDisplay: stripToText(attr(block, /<time[^>]*>([\s\S]*?)<\/time>/)),
-      desc: stripToText(attr(block, /<p class="article-item-description">([\s\S]*?)<\/p>/)),
-      thumb: attr(block, /<img[^>]*src="([^"]+)"/),
-      keywords: '', hub: 'boring-stuff', hubs: ['boring-stuff'], sections: [],
-    };
     buildSections(post, join(ROOT, href));
     posts.push(post);
     seen.add(href);

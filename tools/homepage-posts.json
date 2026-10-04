@@ -1,0 +1,51 @@
+[
+  {
+    "href": "customer-success.html",
+    "thumb": "customer-success.jpg",
+    "date": "2026-07-09",
+    "dateDisplay": "9 Jul 2026",
+    "createdCommit": "d1770ddcd0efcbb6e09afd39ef4bcc069972c37f",
+    "createdAt": "2026-07-09T21:15:32-05:00",
+    "alt": "A man and three boys sailing a small boat in Winslow Homer's Breezing Up (A Fair Wind).",
+    "keywords": "customers software adoption retention implementation customer success work sale",
+    "title": "The Work After the Sale",
+    "desc": "The software is live, but a supervisor still copies orders into a spreadsheet. Customer success starts by finding that gap and helping the customer get the result they bought."
+  },
+  {
+    "href": "the-other-side.html",
+    "title": "The Other Side",
+    "thumb": "the-other-side-saturn.jpg",
+    "date": "2026-07-02",
+    "dateDisplay": "2 Jul 2026",
+    "createdCommit": "1f0bd51bb3bd1bf6aab3550a0e7865fc75d3410e",
+    "createdAt": "2026-07-02T07:01:23-05:00",
+    "alt": "Saturn seen from its shadow, a dark globe rimmed with sunlight inside luminous gold and blue rings.",
+    "credit": "NASA/JPL-Caltech/SSI, The Day the Earth Smiled (PIA17172), Cassini, 19 July 2013. https://science.nasa.gov/photojournal/the-day-the-earth-smiled/",
+    "desc": "A cup needs both clay and empty space. My reading of the Tao Te Ching starts with that dependence, then asks what it might mean for the self.",
+    "keywords": "tao te ching self named nameless clay cup empty space philosophy essay"
+  },
+  {
+    "href": "warehouse.html",
+    "thumb": "warehouse.jpg",
+    "date": "2026-05-30",
+    "dateDisplay": "30 May 2026",
+    "createdCommit": "8684bdfa8ce0c858c0561e6ee56da8a4335abeeb",
+    "createdAt": "2026-05-30T07:42:27-05:00",
+    "alt": "Rows of stacked shipping containers with blue, turquoise, red, and yellow doors.",
+    "keywords": "warehouse WMS operations inventory fulfillment supply chain logistics software",
+    "title": "The Brain Behind the Warehouse",
+    "desc": "Stock on a shelf may already belong to another order. Warehouse software tracks what's available and directs each move, from receiving a delivery to putting a parcel on a truck."
+  },
+  {
+    "href": "all-in.html",
+    "thumb": "all-in.jpg",
+    "date": "2026-05-29",
+    "dateDisplay": "29 May 2026",
+    "createdCommit": "fb5a117c0879bb4121784b92c791c9f0dc65c744",
+    "createdAt": "2026-05-29T19:25:55-05:00",
+    "alt": "Two oarsmen racing across calm water in Thomas Eakins's The Biglin Brothers Racing.",
+    "keywords": "management managing professionals leadership people work trust teams responsibility",
+    "title": "All In: Managing Professionals",
+    "desc": "People can meet every requirement and still hold back their best work. Managing professionals means making room for judgment while staying clear about responsibility and the problems you need solved."
+  }
+]

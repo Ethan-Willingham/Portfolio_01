@@ -3,7 +3,7 @@
    wrapping at the end, plus the collection itself and Home), and its top back
    link points at the collection it lives in instead of Home, so a reader who
    finishes a post is never left at a dead end and never loses their place in
-   the tree. The single shelf post gets a shelf-flavoured endcap.
+   the tree. Standalone homepage posts link directly back to Home.
    Use --hub=inner-life to stamp only one collection's members.
 
    Data comes from tools/gen-hubs.mjs (the one source of truth for collection
@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HUBS, SHELF, ordered } from './gen-hubs.mjs';
+import { HUBS, STANDALONE_POSTS, ordered } from './gen-hubs.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -65,7 +65,11 @@ function stamp(file, endcap, backHref, backLabel, inProgress) {
   let html = readFileSync(path, 'utf8');
 
   // Respect posts that use only their own Home link and footer.
-  if (/<body\b[^>]*\bdata-post-nav="none"/i.test(html)) return `ok ${file} (navigation disabled)`;
+  if (/<body\b[^>]*\bdata-post-nav="none"/i.test(html)) {
+    const updated = setBanner(html, !!inProgress);
+    if (updated !== html) writeFileSync(path, updated);
+    return `ok ${file} (navigation disabled)`;
+  }
   const before = html;
 
   // 1) replace or insert the endcap block, just above the site footer. Strip any
@@ -101,7 +105,7 @@ const report = [];
 const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
 const selectedHub = hubArg && HUBS.find((h) => h.slug === hubArg.slice(6));
 if (hubArg && !selectedHub) throw new Error(`Unknown hub: ${hubArg.slice(6)}`);
-for (const h of selectedHub ? [selectedHub] : HUBS) {
+for (const h of process.argv.includes('--standalone') ? [] : selectedHub ? [selectedHub] : HUBS) {
   const members = ordered(h.members).filter((m) => !m.soon);
   const hubHref = `${h.slug}.html`;
   members.forEach((m, i) => {
@@ -118,13 +122,15 @@ for (const h of selectedHub ? [selectedHub] : HUBS) {
   });
 }
 
-for (const p of selectedHub ? [] : SHELF.singles) {
-  const endcap = endcapHTML(
-    'More in Longform',
-    `${SHELF.path}.html`, SHELF.title,
-    [{ href: '/', label: 'Home' }],
-  );
-  report.push(stamp(p.href, endcap, `${SHELF.path}.html`, SHELF.title));
+for (const p of selectedHub ? [] : STANDALONE_POSTS) {
+  const path = join(ROOT, p.href);
+  let html = readFileSync(path, 'utf8');
+  html = setBanner(html, false).replace(/[ \t]*(?:<!-- endcap nav,[\s\S]*?-->\s*)?<nav class="u-next"[\s\S]*?<\/nav>\n/g, '')
+    .replace(/(<a\s+href=")[^"]*("\s+class="post-back[^"]*")/g, '$1/$2')
+    .replace(/(<a\s+class="post-back[^"]*"\s+href=")[^"]*(")/g, '$1/$2')
+    .replace(/(<a[^>]*class="post-back[^"]*"[^>]*>\s*<span class="pb-label">)[^<]*(<\/span>)/g, '$1Home$2');
+  writeFileSync(path, html);
+  report.push(`ok ${p.href} (standalone)`);
 }
 
 const bad = report.filter((r) => !r.startsWith('ok'));

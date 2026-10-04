@@ -25,6 +25,7 @@ const SKIP = [
   /^sfx-/,              // sfx prompt/publish/test tools
   /^(edit|blog-edit|post-builder)\.html$/, // editors and builders
   /^404\.html$/,        // the not-found page itself
+  /^(boring-stuff|career)\.html$/, // retired category redirects
   /^ocean\/index\.html$/, // redirect stub for /ocean/
   /^lucky\.html$/,      // easter egg, found by luck not by search
   /^mc_/,               // raw scratch captures

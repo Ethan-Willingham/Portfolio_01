@@ -16,12 +16,12 @@
   "use strict";
   if (document.querySelector(".arc-banner")) return; // never double-insert
 
-  // Recounted 2026-10-02 from search-index.json: 24 archived posts
-  // and 38 in-progress posts, out of 85 indexed posts in all.
-  // How Long Can You Live is now a standalone post on In Progress.
-  var ARCHIVED = 62;
-  var TOTAL = 85;
-  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 73
+  // Recounted 2026-10-04 from search-index.json: 24 archived posts
+  // and 43 in-progress posts, out of 80 indexed posts in all.
+  // Sacred Books and Philosophy are on In Progress; Career posts stand alone.
+  var ARCHIVED = 67;
+  var TOTAL = 80;
+  var PCT = Math.round((ARCHIVED / TOTAL) * 100); // 84
 
   var css =
     ".arc-banner{font-family:var(--font-body,'Segoe UI',system-ui,sans-serif);" +

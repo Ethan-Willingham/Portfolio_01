@@ -108,11 +108,14 @@ values when changing them.
 The portfolio pages and their assets (~50 live posts now; this lists the structure,
 not every page):
 
-- `index.html` holds the 12 curated homepage cards plus the site search; most posts
-  live under one of the hub/section pages instead: `boring-stuff.html` (the shelf),
-  `religion.html`, `philosophy.html`, `inner-life.html`,
-  `staying-alive.html`, and `career.html`. A post is either a homepage card OR a hub
-  member, never both.
+- `index.html` holds standalone homepage posts and site search, ordered newest
+  first by their original publication dates. The former Career posts and
+  `the-other-side.html` appear individually. Their GitHub creation commits and
+  America/Chicago dates live in `tools/homepage-posts.json`.
+- `archive.html` (In Progress) also lists the reading collections:
+  `religion.html`, `philosophy.html`, `inner-life.html`, and `staying-alive.html`.
+  Longform and Career category pages are retired; their old URLs redirect.
+  A post is either a homepage card or a collection member, never both.
 - Demo/visualization posts: `gallery.html`, `particle-life.html`, `particles.html`,
   `daylight-globe.html`, `optional-body.html`, `random-galaxy.html`, `ocean.html`, and
   `grand-motherload.html` (the playable **Sluice** game; see the game section above).
