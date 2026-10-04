@@ -13,10 +13,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Star Signs, X-Rayed</title>
-  <meta name="description" content="A working natal-chart machine that takes itself apart. Compute your real chart from real astronomy, then see exactly who decided each meaning, when, and whether any of it points at anything real.">
+  <meta name="description" content="Try an approximate birth chart, compare signs and house systems, and see what a generic personality reading and a blinded astrology test can actually establish.">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="Star Signs, X-Rayed">
-  <meta property="og:description" content="Compute your real birth chart from real astronomy, then watch every meaning get traced to who invented it, when, and whether it points at anything real.">
+  <meta property="og:description" content="Try an approximate birth chart, compare signs and house systems, and see what a generic personality reading and a blinded astrology test can actually establish.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/star-signs/star-signs.html">
@@ -38,15 +38,12 @@
        ============================================================ */
     html, body { overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; }
     .ss-page {
-      --ink:#E8E2D6; --dim:#9aa294; --faint:#828a7d; --bright:#F5F1EA;
-      --accent:#D4C4A0; --accent-2:#EDE0C0; --accent-weak:rgba(212,196,160,.12);
-      --panel:#1e2420; --bar:#232a25; --field:#262d27;
-      --line:#3c463d; --line-soft:#333c34; --hover:rgba(245,241,234,.05);
-      background:
-        radial-gradient(120% 75% at 50% -8%, #36412f 0%, rgba(28,33,28,0) 55%),
-        radial-gradient(90% 60% at 88% 4%, rgba(212,196,160,.07) 0%, rgba(28,33,28,0) 50%),
-        #2a322b;
-      background-attachment: fixed;
+      --ink:var(--text); --dim:var(--text-dim); --faint:var(--text-faint); --bright:var(--text-bright);
+      --accent-2:var(--accent-hover); --accent-weak:rgba(212,196,160,.12);
+      --panel:var(--bg-raised); --bar:color-mix(in srgb, var(--bg-raised), var(--bg) 30%);
+      --field:color-mix(in srgb, var(--bg-raised), var(--bg) 45%);
+      --line:var(--rule); --line-soft:var(--rule); --hover:rgba(245,241,234,.05);
+      background: var(--bg);
       color: var(--ink);
       font-family: var(--font-body);
     }
@@ -68,8 +65,31 @@
       text-transform:uppercase; color: var(--accent); margin:0 0 .7rem; }
     .ss-sec { margin: clamp(3.5rem,9vw,6rem) 0 0; }
 
-    /* ---- hero ---- */
-    .ss-hero { padding: clamp(2.5rem,8vw,5rem) 0 1rem; }
+    /* ---- editorial reading column ---- */
+    .ss-page .site-wrapper { max-width: 1000px; }
+    .ss-prose, .ss-body { margin-inline:auto; max-width:64ch; font-family:var(--font-heading); font-size:1.27rem; line-height:1.72; }
+    .ss-page .ss-prose p, .ss-page .ss-body { font-family:var(--font-heading); font-size:1.27rem; line-height:1.72; }
+    .ss-page .ss-sec { border-top:1px solid var(--rule); padding-top:clamp(2.5rem,6vw,4rem); }
+    .ss-sec > .ss-kicker, .ss-sec > .ss-h2 { text-align:center; }
+    .ss-h2 { margin-bottom:1rem; }
+    .ss-barnum { margin-inline:auto; }
+    .ss-more { margin-top:2rem; border-top:1px solid var(--line); padding-top:1rem; }
+    .ss-more > summary { cursor:pointer; font-family:var(--font-heading); font-size:1.25rem; color:var(--accent); }
+    .ss-more .ss-prose { margin-top:1.5rem; }
+    .ss-prow { width:100%; background:none; border:none; font-family:var(--font-mono); text-align:left; }
+    .ss-prov a { color:var(--accent); text-decoration:underline; }
+    .ss-input-help { width:100%; margin:0; font-family:var(--font-mono); font-size:11px; line-height:1.6; color:var(--dim); }
+    .ss-fld #ss-off { width:100px; }
+    .ss-missing { font-size:11px!important; color:var(--dim)!important; }
+    .ss-prow:focus-visible, .ss-btn:focus-visible, .ss-stars button:focus-visible, .ss-seg button:focus-visible {
+      outline:2px solid var(--accent); outline-offset:2px; }
+    .ss-btn:disabled { cursor:default; opacity:.5; }
+    .ss-share-text { box-sizing:border-box; width:100%; margin-top:1rem; padding:.8rem; min-height:10rem;
+      font-family:var(--font-mono); font-size:.85rem; line-height:1.6; background:var(--panel); color:var(--text); border:1px solid var(--rule); }
+    @media (max-width:480px) {
+      .ss-big3 { flex-wrap:wrap; } .ss-b3 { min-width:100px; } .ss-b3 .v { flex-wrap:wrap; }
+      .ss-cmp { overflow-x:auto; } .ss-cmp th, .ss-cmp td { padding:7px 5px; font-size:10px; }
+    }
 
     /* ---- Barnum opener ---- */
     .ss-card { background: var(--panel); border:1px solid var(--line); border-radius:14px;
@@ -192,8 +212,8 @@
     .ss-prose p.lead { font-size:1.22rem; color:var(--bright); }
     .ss-prose h3 { font-family:var(--font-heading); font-weight:400; color:var(--bright); font-size:1.35rem;
       letter-spacing:-.01em; margin:2.2rem 0 .6rem; }
-    .ss-prose a, .ss-src a { color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(212,196,160,.32); transition:border-color .2s, color .2s; }
-    .ss-prose a:hover, .ss-src a:hover { color:var(--accent-2); border-color:var(--accent-2); }
+    .ss-prose a, .ss-body a, .ss-reveal a, .ss-src a { color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(212,196,160,.32); transition:border-color .2s, color .2s; }
+    .ss-prose a:hover, .ss-body a:hover, .ss-reveal a:hover, .ss-src a:hover { color:var(--accent-2); border-color:var(--accent-2); }
     .ss-prose em { color:var(--bright); font-style:italic; }
     .ss-pull { font-family:var(--font-heading); font-style:italic; color:var(--accent); font-size:1.3rem;
       line-height:1.45; border-left:2px solid var(--line); padding:.1rem 0 .1rem 1.1rem; margin:1.8rem 0; max-width:48ch; }
@@ -215,7 +235,7 @@
     .ss-src ol { margin:0; padding-left:1.3rem; }
     .ss-src li { font-family:var(--font-body); font-size:.92rem; line-height:1.55; color:var(--dim); margin:0 0 .45rem; }
 
-    /* ---- Radin teardown ---- */
+    /* ---- optional evidence details ---- */
     .ss-claim { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:1.3rem 1.5rem; margin:1.4rem 0; max-width:680px; }
     .ss-claim .q { font-family:var(--font-heading); font-style:italic; font-size:1.25rem; line-height:1.45; color:var(--bright); margin:0; }
     .ss-claim .cite { font-family:var(--font-mono); font-size:11px; color:var(--faint); margin:.7rem 0 0; }
@@ -227,7 +247,7 @@
     .ss-step summary:hover { background:var(--hover); }
     .ss-step .vq { font-family:var(--font-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
       border:1px solid var(--line); border-radius:5px; padding:2px 7px; color:var(--dim); margin-left:auto; }
-    .ss-step .vq.no { color:#ce9278; border-color:#6e4a3a; }
+    .ss-step .vq.no { color:var(--warn); border-color:var(--rule-strong); }
     .ss-step .body { padding:0 14px 13px; font-family:var(--font-body); font-size:1rem; line-height:1.62; color:var(--dim); }
     .ss-step .body a { color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(212,196,160,.3); }
     .ss-verdict { margin-top:1.2rem; padding:1rem 1.3rem; border-left:2px solid var(--accent); background:var(--accent-weak);
@@ -238,22 +258,22 @@
     .ss-share { margin-top:1.6rem; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .ss-share-out { font-family:var(--font-mono); font-size:11px; color:var(--faint); }
 
-    /* ---- world-class date / time pickers (popovers are portaled to <body>) ---- */
+    /* ---- date / time pickers (popovers are portaled to <body>) ---- */
     .ss-page .pk-trigger { display:inline-flex; align-items:center; gap:8px; cursor:pointer; min-width:150px;
       font-family:var(--font-mono); font-size:12.5px; color:var(--bright); background:var(--field);
       border:1px solid var(--line); border-radius:6px; padding:7px 10px; user-select:none;
       transition:border-color .14s, box-shadow .14s; }
     .ss-page .pk-trigger:hover { border-color:var(--accent); }
     .ss-page .pk-trigger.open, .ss-page .pk-trigger:focus-visible { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak); }
-    .ss-page .pk-trigger .pk-i { margin-left:auto; color:var(--dim); font-size:13px; line-height:1; }
+    .ss-page .pk-trigger .pk-i { margin-left:auto; width:6px; height:6px; border-right:1px solid var(--dim); border-bottom:1px solid var(--dim); transform:rotate(45deg); }
     .ss-page .pk-trigger.muted { color:var(--faint); }
     .ss-bn-ask .pk-trigger { min-width:170px; }
 
-    .pk-pop { position:fixed; z-index:200; display:none; background:var(--ss-panel,#1e2420);
-      border:1px solid var(--ss-line,#3c463d); border-radius:12px; padding:10px;
-      box-shadow:0 24px 60px -28px rgba(0,0,0,.9); color:var(--ss-ink,#E8E2D6);
-      --ss-accent:#D4C4A0; --ss-weak:rgba(212,196,160,.14); --ss-hover:rgba(245,241,234,.05);
-      --ss-dim:#9aa294; --ss-faint:#828a7d; --ss-bright:#F5F1EA; font-family:var(--font-mono); }
+    .pk-pop { position:fixed; z-index:200; display:none; background:var(--bg-raised);
+      border:1px solid var(--rule); border-radius:12px; padding:10px;
+      box-shadow:0 24px 60px -28px rgba(0,0,0,.9); color:var(--text);
+      --ss-accent:var(--accent); --ss-weak:rgba(212,196,160,.14); --ss-hover:rgba(245,241,234,.05);
+      --ss-ink:var(--text); --ss-dim:var(--text-dim); --ss-faint:var(--text-faint); --ss-bright:var(--text-bright); font-family:var(--font-mono); }
     .pk-pop.show { display:block; }
     .pk-pop.tpop.show { display:flex; gap:8px; }
 
@@ -268,47 +288,61 @@
     .pk-wd { text-align:center; font-size:9px; letter-spacing:.03em; color:var(--ss-faint); padding:3px 0; text-transform:uppercase; }
     .pk-day { all:unset; cursor:pointer; height:32px; display:flex; align-items:center; justify-content:center;
       font-size:12px; color:var(--ss-ink); border-radius:6px; transition:background .1s,color .1s; }
+    .pk-day:disabled { opacity:.25; cursor:default; }
     .pk-day:hover { background:var(--ss-hover); }
     .pk-day.oth { color:var(--ss-faint); opacity:.45; }
-    .pk-day.today { box-shadow:inset 0 0 0 1px var(--ss-line,#3c463d); }
+    .pk-day.today { box-shadow:inset 0 0 0 1px var(--rule); }
     .pk-day.foc { box-shadow:inset 0 0 0 1px var(--ss-accent); }
-    .pk-day.sel { background:var(--ss-accent); color:#23291f; }
+    .pk-day.sel { background:var(--ss-accent); color:var(--bg-raised); }
 
     .pk-months { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:8px; width:238px; }
     .pk-mo { all:unset; cursor:pointer; text-align:center; font-size:11.5px; color:var(--ss-ink); padding:9px 0; border-radius:6px; transition:background .12s,color .12s; }
     .pk-mo:hover { background:var(--ss-hover); } .pk-mo.on { background:var(--ss-weak); color:var(--ss-accent); }
     .pk-years { max-height:148px; overflow-y:auto; display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
-      border-top:1px solid var(--ss-line,#3c463d); padding-top:8px; width:238px; }
+      border-top:1px solid var(--rule); padding-top:8px; width:238px; }
     .pk-yr { all:unset; cursor:pointer; text-align:center; font-size:11.5px; color:var(--ss-ink); padding:7px 0; border-radius:6px; transition:background .12s,color .12s; }
-    .pk-yr:hover { background:var(--ss-hover); } .pk-yr.on { background:var(--ss-accent); color:#23291f; }
+    .pk-yr:hover { background:var(--ss-hover); } .pk-yr.on { background:var(--ss-accent); color:var(--bg-raised); }
 
     .pk-col { display:flex; flex-direction:column; }
     .pk-collab { font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--ss-faint); text-align:center; margin-bottom:5px; }
     .pk-scroll { height:158px; overflow-y:auto; width:50px; display:flex; flex-direction:column; gap:2px; scrollbar-width:thin; }
     .pk-opt { all:unset; cursor:pointer; text-align:center; font-size:12px; color:var(--ss-ink); padding:6px 0; border-radius:6px; transition:background .1s; }
-    .pk-opt:hover { background:var(--ss-hover); } .pk-opt.on { background:var(--ss-accent); color:#23291f; }
+    .pk-opt:hover { background:var(--ss-hover); } .pk-opt.on { background:var(--ss-accent); color:var(--bg-raised); }
     .pk-ampm { display:flex; flex-direction:column; gap:5px; justify-content:center; padding-left:2px; }
-    .pk-ap { all:unset; cursor:pointer; text-align:center; font-size:11px; color:var(--ss-dim); border:1px solid var(--ss-line,#3c463d); border-radius:6px; padding:9px 12px; transition:background .12s,color .12s,border-color .12s; }
+    .pk-ap { all:unset; cursor:pointer; text-align:center; font-size:11px; color:var(--ss-dim); border:1px solid var(--rule); border-radius:6px; padding:9px 12px; transition:background .12s,color .12s,border-color .12s; }
     .pk-ap.on { background:var(--ss-weak); color:var(--ss-accent); border-color:var(--ss-accent); }
     .pk-noknow { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; color:var(--dim); cursor:pointer; user-select:none; white-space:nowrap; }
     .pk-noknow input { accent-color:var(--accent); width:13px; height:13px; }
+    .ss-stars button, .ss-btn, .ss-seg button, .ss-prow, .ss-adv, .pk-trigger,
+    .pk-day, .pk-mo, .pk-yr, .pk-opt, .pk-ap, .pk-arrow, .pk-title { min-height:44px; box-sizing:border-box; }
+    .ss-stars button { min-width:44px; text-align:center; }
+    .ss-page .ss-inputs input:not([type="checkbox"]) { min-height:44px; box-sizing:border-box; }
+    .pk-noknow { min-height:44px; }
+    .ss-b3 .v { flex-wrap:wrap; }
+    .pk-grid { grid-template-columns:repeat(7,44px); }
+    .pk-months, .pk-years { width:314px; }
+    .pk-arrow { width:44px; }
+    .ss-more, .ss-src, .ss-trace { max-width:64ch; margin-inline:auto; font-family:var(--font-heading); font-size:1.27rem; }
+    @media (max-width:480px) {
+      .ss-prow { grid-template-columns:24px minmax(0,1fr) minmax(0,1.55fr) 24px; gap:6px; }
+      .ss-ip-bar .lhs { flex-wrap:wrap; }
+    }
 </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body class="ss-page">
+<body class="ss-page editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="site-wrapper">
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
     <main>
-      <!-- HERO -->
-      <section class="ss-hero">
-        <p class="ss-eyebrow fade-in">An interactive autopsy</p>
-        <h1 class="ss-h1 fade-in" style="animation-delay:.05s">Star Signs, X-Rayed</h1>
-        <p class="ss-hook fade-in" style="animation-delay:.1s">The horoscope you know is younger than the radio. Here is a working one that takes itself apart.</p>
-      </section>
+      <header class="u-hero editorial-hero ss-hero">
+        <h1 class="u-title">Star Signs, X-Rayed</h1>
+        <p class="u-dek">A birth chart can locate Jupiter without telling you whether you're lucky. Try the calculations, compare their conventions, and see what happens when a reading ignores your birthday.</p>
+        <p class="u-meta">3 min main read <span class="u-sep">/</span> Optional chart and source details</p>
+      </header>
 
-      <!-- BARNUM OPENER: prove the mechanism on the reader first -->
-      <section class="ss-barnum ss-card fade-in" id="ss-barnum" style="animation-delay:.15s">
+      <section class="ss-barnum ss-card" id="ss-barnum" aria-label="Generic reading demonstration">
         <div class="ss-bn-ask">
           <div>
             <label>When were you born?</label>
@@ -323,169 +357,119 @@
         </div>
         <div class="ss-reveal" id="ss-bn-reveal">
           <p id="ss-bn-reveal-text"></p>
-          <p class="src">This is the Forer effect. In 1948 the psychologist Bertram Forer gave his students what each believed was a personal personality test result. It was one paragraph, identical for everyone, assembled from a newsstand astrology book. They rated its accuracy 4.26 out of 5.</p>
-          <button class="ss-btn" id="ss-bn-tochart" type="button" style="margin-top:.4rem">Now see your real chart &darr;</button>
+          <p class="src">This custom paragraph illustrates the Forer, or Barnum, effect. In <a href="https://criticalthinkingtext.wordpress.com/wp-content/uploads/2015/04/forer_the-fallacy-of-personal-validation_1949.pdf">Forer's 1949 paper</a>, 39 students completed a test and then received identical, individually named sketches containing 13 statements, drawn largely from an astrology book. Their sketch ratings averaged 4.26 on a scale from 0 to 5. That demonstrates the weakness of personal recognition as a test of accuracy; it doesn't by itself test natal astrology.</p>
+          <button class="ss-btn" id="ss-bn-tochart" type="button">See the birth chart</button>
         </div>
       </section>
 
-      <!-- THE MACHINE -->
-      <section class="ss-sec" id="ss-machine">
-        <p class="ss-kicker">The machine</p>
-        <h2 class="ss-h2">Your actual chart, from actual astronomy</h2>
-        <p class="ss-body dim" style="margin:.7rem 0 1.4rem">No lookup tables. This computes where the Sun, Moon, and planets really were, then labels each reading with who decided what it means, and when. Click any row to open its paper trail.</p>
+      <section class="ss-sec" id="ss-machine" aria-labelledby="ss-machine-title">
+        <p class="ss-kicker">The chart</p>
+        <h2 class="ss-h2" id="ss-machine-title">Positions, then interpretations</h2>
+        <p class="ss-body dim" style="margin-block:.7rem 1.4rem">Enter a Gregorian date from 1900 through 2099. The wheel estimates positions as seen from Earth's center. Open a body row for sample astrological keywords and a historical note.</p>
 
         <div class="ss-ip" id="ss-ip"></div>
+        <noscript><p class="ss-body">The chart and reading demonstration need JavaScript. The essay and sources are available below.</p></noscript>
 
-        <!-- house disagreement lives just under the panel -->
         <div class="ss-cmp" id="ss-cmp-wrap" hidden>
-          <p class="ss-kicker" style="margin-top:1.4rem">They cannot agree where your planets live</p>
-          <p class="ss-body dim" style="margin:.5rem 0 1rem; font-size:1rem">The signs are 2,000 years old. The houses are a running argument. Here is your chart under the three most common systems; the highlighted planets land in a different house depending on which 20th-century scheme you trust.</p>
+          <p class="ss-kicker" style="margin-top:1.4rem">House comparison</p>
+          <p class="ss-body dim" style="margin-block:.5rem 1rem">Houses divide the chart relative to the horizon. Whole sign uses the entire rising sign as house one; Equal starts at the rising degree. <a href="https://s3.amazonaws.com/arena-attachments/2412065/9e1d5a9ac6b31d4fca9a4725090447e9.pdf?1531266521=">Both have ancient precedents</a>. Placidus divides daily motion by time and was <a href="https://www.skyscript.co.uk/houprob4.html">popularized in the seventeenth century</a>. Highlighted entries change house when the rule changes.</p>
           <div id="ss-cmp"></div>
         </div>
+
+        <details class="ss-more">
+          <summary>What this calculator assumes</summary>
+          <div class="ss-prose">
+            <p>An <em>ephemeris</em> gives celestial positions over time. This one uses <a href="https://stjarnhimlen.se/comp/ppcomp.html">Paul Schlyter's simplified formulae</a>. They omit corrections such as the travel time of light and small changes in Earth's orientation. Whole-degree readouts suit a demonstration; they don't certify which side of a boundary a planet occupies.</p>
+            <p>All body positions here are <em>geocentric</em>, viewed from Earth's center. In particular, the Moon's position from a specific place on Earth's surface can differ. The rising sign, or Ascendant, is the point of the ecliptic on the eastern horizon. An incorrect birth time or UTC offset can substantially change it.</p>
+            <p>City presets supply rounded coordinates and modern standard-time offsets. They don't look up daylight saving or historical time zones. Check the offset in force at birth. Unknown-time mode uses local noon, samples positions across that calendar date, and hides the Ascendant and houses. Sampling can flag changing signs; it cannot recover the birth instant.</p>
+            <p>Placidus becomes problematic near the polar circles. This implementation uses Equal above 66 degrees north or south, or if its iterative calculation fails to converge, and labels that substitution. Its house assignments use ecliptic longitude alone. They are an illustration of the conventions, not a full astrological house-position calculation. The <a href="https://www.astro.com/swisseph/swephprg.htm">Swiss Ephemeris manual</a> describes the more complete calculations.</p>
+          </div>
+        </details>
       </section>
 
-      <!-- ESSAY: provenance -->
-      <section class="ss-sec" id="ss-history">
-        <p class="ss-kicker">Where every meaning came from</p>
-        <h2 class="ss-h2">A 4,000-year-old machine, built in layers</h2>
+      <section class="ss-sec" id="ss-history" aria-labelledby="ss-history-title">
+        <p class="ss-kicker">Signs and the sky</p>
+        <h2 class="ss-h2" id="ss-history-title">Three labels for the Sun</h2>
         <div class="ss-prose" style="margin-top:1rem">
-          <p class="lead">Pull any thread in the panel above and it runs back to a specific room and a specific person. The twelve signs are Babylonian bookkeeping. Their personalities are mostly Greek. And the daily horoscope you actually picture, the one sorted by birth date, is younger than the radio.</p>
-          <p>None of that is an accusation. It is just provenance, the same thing you would want to know about a painting or a law. Here is the paper trail, layer by layer.</p>
+          <p>In the tropical zodiac, Aries begins at the March equinox and each sign spans 30 degrees of the <em>ecliptic</em>, the Sun's apparent annual path. Sidereal zodiacs also use equal signs, with a starting point tied to the stars. Their chosen offsets differ. The panel uses an approximate Fagan-Bradley offset, about 25 degrees today, rather than treating one sidereal convention as the uniquely correct sky.</p>
+          <p>Astronomical constellations are unequal regions. Under the <a href="https://iauarchive.eso.org/public/themes/constellations/">IAU boundaries</a>, the Sun's path crosses <a href="https://nightsky.jpl.nasa.gov/media/documents/resources/0SolSysManual.pdf#page=71">thirteen, including Ophiuchus</a>. The panel's constellation label is only a fixed modern month-and-day guide. It ignores the entered year and time, so it cannot establish your birth constellation near an entry date.</p>
+          <p>Precession, the slow change in Earth's axis direction, shifts the equinox against the stars. That doesn't make a tropical astrologer's chart an accidentally outdated star map: the seasonal starting point is deliberate, and <a href="https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Ptolemy/Tetrabiblos/1B%2A.html#22">Ptolemy explicitly favored it</a>. The fair question is whether the chosen coordinates predict something about a person.</p>
+          <p>The interpretations changed too. Ptolemy's <em>Tetrabiblos</em>, written in the second century CE, records planetary rulerships and qualities such as heat and moisture. It isn't the source of every modern description of an Aries or a Gemini. The panel labels its personality words as sample modern shorthand and keeps the historical records separate.</p>
         </div>
 
-        <ol class="ss-tl" style="list-style:none">
-          <li class="ss-tl-item minor">
-            <div class="ss-tl-date">c. 1000 BCE</div>
-            <div class="ss-tl-h">The raw sky: MUL.APIN</div>
-            <div class="ss-tl-b">Babylonian scribes catalogue the stars along the Moon's path in the <a href="https://en.wikipedia.org/wiki/MUL.APIN">MUL.APIN</a> tablets: eighteen constellations, of unequal size. Not a zodiac yet, just the parts list.</div>
-          </li>
-          <li class="ss-tl-item">
-            <div class="ss-tl-date">c. 420 to 400 BCE</div>
-            <div class="ss-tl-h">Babylon cuts the pie into twelve</div>
-            <div class="ss-tl-b">Astronomers divide the ecliptic into <a href="https://en.wikipedia.org/wiki/Zodiac">twelve equal 30-degree signs</a>, one for each schematic 30-day month. The math reason is a calendar, not a cosmos. The figures are Mesopotamian and ancient: the Bull of Heaven, the Great Twins, the Lion, the Goat-Fish and the Water-Pourer (both faces of the water-god <a href="https://en.wikipedia.org/wiki/Capricornus">Ea</a>).</div>
-          </li>
-          <li class="ss-tl-item">
-            <div class="ss-tl-date">c. 130 BCE</div>
-            <div class="ss-tl-h">Hipparchus notices the sky is sliding</div>
-            <div class="ss-tl-b">Comparing his measurements with older ones, the Greek astronomer <a href="https://en.wikipedia.org/wiki/Hipparchus">Hipparchus</a> discovers the precession of the equinoxes. The signs are pinned to the seasons; the constellations are not. From here, they slowly drift apart.</div>
-          </li>
-          <li class="ss-tl-item">
-            <div class="ss-tl-date">c. 150 CE</div>
-            <div class="ss-tl-h">Ptolemy writes the personalities down</div>
-            <div class="ss-tl-b">In Roman Alexandria, Ptolemy's <a href="https://en.wikipedia.org/wiki/Tetrabiblos">Tetrabiblos</a> systematizes the character we still use: which planet rules which sign, the "benefic" and "malefic" planets, and the warm, cold, wet and dry qualities borrowed from Greek physics. He did not invent it. He codified a Hellenistic synthesis so well that it held authority for over a thousand years.</div>
-          </li>
-          <li class="ss-tl-item minor">
-            <div class="ss-tl-date">8th to 12th c.</div>
-            <div class="ss-tl-h">Kept alive in Arabic, returned to Europe</div>
-            <div class="ss-tl-b">As Europe forgets it, scholars in the Islamic world preserve and extend the system, then it comes back west through translation. The chart survives the fall of the empire that named it.</div>
-          </li>
-          <li class="ss-tl-item minor">
-            <div class="ss-tl-date">1781 / 1846 / 1930</div>
-            <div class="ss-tl-h">Three new planets, three new meanings</div>
-            <div class="ss-tl-b">Telescopes find Uranus, Neptune, and Pluto. Astrology assigns each a personality after the fact and hands it a sign to rule: Uranus takes Aquarius from Saturn, Neptune takes Pisces from Jupiter, Pluto takes Scorpio from Mars. Pluto was demoted to a dwarf planet in 2006; astrology kept it.</div>
-          </li>
-          <li class="ss-tl-item">
-            <div class="ss-tl-date">1930</div>
-            <div class="ss-tl-h">The sky officially stops matching</div>
-            <div class="ss-tl-b">The <a href="https://earthsky.org/astronomy-essentials/sun-in-ophiuchus-november-30-to-december-18/">International Astronomical Union</a> draws hard constellation borders. The Sun now demonstrably crosses thirteen of them, including Ophiuchus, which the twelve-sign zodiac simply leaves out.</div>
-          </li>
-          <li class="ss-tl-item">
-            <div class="ss-tl-date">August 1930</div>
-            <div class="ss-tl-h">The newspaper horoscope is born</div>
-            <div class="ss-tl-b">The <em style="font-style:normal;color:var(--bright)">Sunday Express</em> runs <a href="https://en.wikipedia.org/wiki/R._H._Naylor">R. H. Naylor</a>'s feature on the newborn Princess Margaret, "What the Stars Foretell." A follow-up appeared to predict a British aircraft disaster days before the R101 airship crashed, and Naylor won a weekly column.</div>
-          </li>
-          <li class="ss-tl-item">
-            <div class="ss-tl-date">by 1937</div>
-            <div class="ss-tl-h">"Your Stars," the format you know</div>
-            <div class="ss-tl-b">To cover every reader with one column, Naylor groups his forecasts by birth-date sign. Twelve little paragraphs, one for everybody. The Sun-sign horoscope, the thing most people mean by "astrology," is a newspaper circulation trick from the 1930s.</div>
-          </li>
-        </ol>
-
-        <div class="ss-prose">
-          <h3>The part that surprises people: the personalities are Greek</h3>
-          <p>The picture of the twins is Babylonian. "Gemini is quick, talkative, two-faced" is not. That gloss is Hellenistic, the work of Greek-speaking astrologers in Roman Egypt who mapped each sign onto a ruling planet and a set of qualities drawn from <a href="https://en.wikipedia.org/wiki/Tetrabiblos">Greek physics</a>. So a sign trait is a Greek interpretation of a Babylonian drawing of a Mesopotamian myth. Old, yes. Handed down from the dawn of time, no.</p>
-
-          <p class="ss-pull">Your dateline sign and the actual sky now disagree by almost a whole sign. The horoscope never updated.</p>
-
-          <h3>The sky moved out from under it</h3>
-          <p>Western astrology uses the <a href="https://en.wikipedia.org/wiki/Sidereal_and_tropical_astrology">tropical zodiac</a>, which nails 0 degrees of Aries to the spring equinox. But precession, the thing Hipparchus caught, keeps sliding the equinox against the stars. In the roughly two thousand years since the signs were fixed, they have drifted about 24 degrees from the constellations they are named for. That is why the panel above can show your Sun as a "dateline" sign, a "real sky" sign, and an actual IAU constellation, and get three different answers from one birthday.</p>
-
-          <h3>So what is left?</h3>
-          <p>A genuinely beautiful artifact. The zodiac is one of the longest-running collaborative projects in human history, edited by Babylonian scribes, Greek physicists, Arabic scholars, and a London newspaperman with a deadline. What it is not is a readout of the sky as it is now, or a description of you that was written with you in mind. Every meaning in your chart has an author and a date. The next section asks the harder question: does any of it actually predict anything?</p>
-        </div>
-
-        <div class="ss-src">
-          <h4>Sources</h4>
-          <ol>
-            <li>The 12-sign equal zodiac, c. 420 to 400 BCE, and MUL.APIN, c. 1000 BCE: <a href="https://en.wikipedia.org/wiki/Zodiac">Zodiac</a> and <a href="https://en.wikipedia.org/wiki/Babylonian_star_catalogues">Babylonian star catalogues</a>. The figures of Capricorn and Aquarius as the water-god Ea: <a href="https://en.wikipedia.org/wiki/Capricornus">Capricornus</a>, <a href="https://en.wikipedia.org/wiki/Aquarius_(constellation)">Aquarius</a>. Libra split from the Scorpion's claws by Rome: <a href="https://en.wikipedia.org/wiki/Libra_(constellation)">Libra</a>.</li>
-            <li>Hipparchus and the discovery of precession, 2nd century BCE: <a href="https://en.wikipedia.org/wiki/Hipparchus">Hipparchus</a>, <a href="https://en.wikipedia.org/wiki/Axial_precession">axial precession</a>.</li>
-            <li>Ptolemy's Tetrabiblos codifying rulerships, qualities, and the benefic/malefic scheme, c. 150 CE: <a href="https://en.wikipedia.org/wiki/Tetrabiblos">Tetrabiblos</a>.</li>
-            <li>Tropical versus sidereal zodiac, the ~24-degree drift, and the IAU's 13 constellations including Ophiuchus: <a href="https://en.wikipedia.org/wiki/Sidereal_and_tropical_astrology">sidereal and tropical astrology</a>, <a href="https://earthsky.org/astronomy-essentials/sun-in-ophiuchus-november-30-to-december-18/">EarthSky</a>.</li>
-            <li>R. H. Naylor, the <em>Sunday Express</em>, and the 1930 origin of the newspaper horoscope: <a href="https://en.wikipedia.org/wiki/R._H._Naylor">R. H. Naylor</a>; background in <a href="https://lithub.com/on-the-birth-of-princess-margaret-and-the-rise-of-astrology-as-we-know-it/">Lit Hub</a>.</li>
+        <details class="ss-more">
+          <summary>How the chart acquired its layers</summary>
+          <ol class="ss-tl" style="list-style:none">
+            <li class="ss-tl-item">
+              <div class="ss-tl-date">Late fifth century BCE</div>
+              <div class="ss-tl-h">Equal signs in Babylonia</div>
+              <div class="ss-tl-b">The uniform zodiac made calculation easier by dividing the celestial band into twelve equal parts. Its structure parallels a schematic year of twelve 30-day months. Historian <a href="https://peachv.org/images/MuslimGeo/BabyAstroZodiacSteele.pdf">John Steele</a> traces it through astronomical and astrological tablets. Earlier constellation lists were a different system; the equal zodiac didn't simply shrink them to twelve.</div>
+            </li>
+            <li class="ss-tl-item">
+              <div class="ss-tl-date">Second century CE</div>
+              <div class="ss-tl-h">An influential Greek synthesis</div>
+              <div class="ss-tl-b"><a href="https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Ptolemy/Tetrabiblos/1B%2A.html">Ptolemy, Book I</a>, presents the Sun as heating and drying, Mars as excessively drying, and Jupiter as temperate. His explanations belong to an ancient physical theory. He also records inherited rulerships, rather than supplying a date when each present-day personality trait was invented.</div>
+            </li>
+            <li class="ss-tl-item">
+              <div class="ss-tl-date">1781 / 1846 / 1930</div>
+              <div class="ss-tl-h">New bodies enter the chart</div>
+              <div class="ss-tl-b">The discoveries of <a href="https://science.nasa.gov/uranus/facts/">Uranus</a>, <a href="https://science.nasa.gov/neptune/facts/">Neptune</a>, and <a href="https://science.nasa.gov/dwarf-planets/pluto/facts/">Pluto</a> gave later astrologers new objects to interpret. Their assigned meanings developed after discovery. Those dates are astronomical milestones, not moments when astrologers unanimously settled a meaning.</div>
+            </li>
+            <li class="ss-tl-item">
+              <div class="ss-tl-date">1930s</div>
+              <div class="ss-tl-h">Horoscopes become a mass-market column</div>
+              <div class="ss-tl-b">R. H. Naylor's feature on Princess Margaret appeared in the <em>Sunday Express</em> on August 24, 1930. Historian <a href="https://researchspace.bathspa.ac.uk/1453/1/Nicholas%20Campion%20-%202004.pdf#page=145">Nicholas Campion</a> describes the move from birth-date forecasts toward familiar Sun-sign profiles. Astrology and published forecasts already existed; this was a change in audience and format.</div>
+            </li>
+            <li class="ss-tl-item">
+              <div class="ss-tl-date">1928 / 1930</div>
+              <div class="ss-tl-h">Astronomers standardize constellation boundaries</div>
+              <div class="ss-tl-b">The IAU approved Eugène Delporte's boundaries in 1928; they were published in 1930. They formalized regions for naming astronomical objects. They didn't move the Sun, add a new star pattern, or suddenly make tropical signs stop matching constellations.</div>
+            </li>
           </ol>
-        </div>
+        </details>
       </section>
 
-      <!-- SIDEBAR: is any of it real -->
-      <section class="ss-sec" id="ss-real">
-        <p class="ss-kicker">Is any of it real?</p>
-        <h2 class="ss-h2">A casino, a full moon, and a number that vanished</h2>
+      <section class="ss-sec" id="ss-real" aria-labelledby="ss-real-title">
+        <p class="ss-kicker">Testing the prediction</p>
+        <h2 class="ss-h2" id="ss-real-title">Can a chart identify its person?</h2>
         <div class="ss-prose" style="margin-top:1rem">
-          <p>Forget the daily horoscope. Take astrology's strongest-looking empirical claim instead: that the Moon measurably changes our luck. It is concrete, it comes with statistics, and it is checkable. Watch what happens when you check it.</p>
+          <p>A full natal chart uses more information than a newspaper Sun sign. Testing only twelve birthday labels wouldn't fairly test that stronger claim. A useful experiment gives astrologers complete charts, hides identifying clues, and asks them to distinguish the people those charts describe.</p>
+          <p>In <a href="https://muller.lbl.gov/papers/Astrology-Carlson.pdf">Shawn Carlson's 1985 experiment</a>, astrologers helped design a blinded matching task. Each chart came with three California Personality Inventory profiles, one belonging to its subject. They expected at least 50 percent correct first choices. The result was 40 of 116, about 34 percent, close to the one-third chance rate.</p>
+          <p>That result counts against their claim under those conditions. It doesn't test every kind of astrology, and a personality inventory doesn't capture an entire life. Carlson also declined to draw a negative conclusion from the study's separate self-recognition test: participants had trouble identifying their own inventory profiles, which undermined that method.</p>
+          <p>The opening reading demonstrates another problem. A description can feel accurate while failing to distinguish you from anyone else. A conversation prompted by a horoscope may still be useful to its reader, but that usefulness doesn't establish that the planets supplied the information.</p>
         </div>
-
-        <div class="ss-claim">
-          <p class="q">"Casino payouts run about two points higher near the full moon. Four of the five biggest jackpots at one Las Vegas casino fell on full-moon days. The odds of that by chance are one in 22 million."</p>
-          <p class="cite">Announced 1996; published as Radin &amp; Rebman, "Seeking psi in the casino," and in the book <em>The Conscious Universe</em>.</p>
-        </div>
-
-        <p class="ss-body dim" style="max-width:680px; font-size:1rem; margin:.2rem 0 0">Tap each question. This is the whole method: it is what to ask of any claim that the cosmos is steering your life.</p>
 
         <ul class="ss-trace">
-          <li><details class="ss-step"><summary>Who said it, and where was it published? <span class="vq">specialty journal</span></summary>
-            <div class="body">The parapsychology researcher Dean Radin, with Jannine Rebman, in the <a href="https://psi-encyclopedia.spr.ac.uk/articles/psi-financial-gain">Journal of the Society for Psychical Research</a> (1998), and in Radin's popular book <em>The Conscious Universe</em> (1997). That journal is peer-reviewed only within parapsychology; the claim never ran in a mainstream science venue.</div></details></li>
-          <li><details class="ss-step"><summary>What did they say was causing it? <span class="vq no">psychokinesis</span></summary>
-            <div class="body">Not luck, not crowd psychology. The proposed mechanism was psychokinesis: gamblers' minds nudging the dice and cards, supposedly helped by the calmer geomagnetic field around a full moon. The explanation requires the conclusion you are trying to test.</div></details></li>
-          <li><details class="ss-step"><summary>How strong was the effect, really? <span class="vq no">"nearly significant"</span></summary>
-            <div class="body">In the paper itself, the lunar correlation was only reported as <em>nearly</em> significant. The one correlation that reached significance was for tidal forces, not the Moon's phase. And the famous "one in 22 million" is a coincidence count from four jackpots in a single casino over four years, not a real statistic.</div></details></li>
-          <li><details class="ss-step"><summary>Did it replicate? <span class="vq no">no</span></summary>
-            <div class="body">This is the one that matters, and the answer is no. When Eckhard <a href="https://www.researchgate.net/publication/228675638_Solar-periodic_full_moon_effect_in_the_Fourmilab_RetroPsychoKinesis_Project_experiment_data_An_exploratory_study">Etzold (2005)</a> tested the same full-moon hypothesis against a much larger independent dataset of about 200,000 trials, an early pass seemed to confirm it, then with fresh data the effect reversed sign and vanished. That is the textbook signature of a false positive, not a real phenomenon.</div></details></li>
+          <li><details class="ss-step"><summary>How did the matching test hide clues? <span class="vq">blinded</span></summary>
+            <div class="body">Names were replaced with codes. Charts omitted explicit birth dates and places, and competing inventory profiles were matched by sex. Advising astrologers approved the inventory as covering relevant traits. See the original paper's experimental design and double-blind procedures, pages 420 to 423.</div></details></li>
+          <li><details class="ss-step"><summary>What limits remain? <span class="vq">scope</span></summary>
+            <div class="body">The task used selected practitioners, a specific questionnaire, and the charts that were returned. Fewer participants completed the work than planned. It tests chart-to-profile matching without a consultation, so a claim about a different practice needs its own test. The limit doesn't turn this result into evidence that the matching claim worked.</div></details></li>
         </ul>
-
-        <div class="ss-verdict"><p>A real researcher, real data, and a genuinely thrilling number, all of which evaporated the moment someone fed in new data. That is not a scandal. It is what most "the cosmos affects you" findings look like once you trace them, including, in miniature, every line of your horoscope.</p></div>
-
-        <div class="ss-prose" style="margin-top:2rem">
-          <h3>And it is not a lone bad study</h3>
-          <p>The broader question, whether the Moon moves human behavior at all, is one of the most thoroughly answered in social science, and the answer is no. The landmark <a href="https://pubmed.ncbi.nlm.nih.gov/3885282/">1985 meta-analysis</a> by Rotton and Kelly pooled 37 studies of the supposed "lunar lunacy" effect and found the Moon's phase explained less than one percent of the variance in behavior. Half of the studies that had claimed an effect contained statistical errors. The authors concluded that further research was unnecessary. Modern work on births, emergency-room visits, psychiatric admissions, and crime agrees: nothing. Even the "the Moon moves the stock market" finance papers are tiny, contested, and treated as data-mining artifacts.</p>
-
-          <p class="ss-pull">The full moon you remember is the one where something happened. The hundreds where nothing did never made it into memory.</p>
-
-          <h3>So why does everyone believe it?</h3>
-          <p>For reasons that are about us, not the sky. Once you expect full moons to be strange, you notice and file the nights that confirm it and forget the rest, the twin habits of <a href="https://www.scientificamerican.com/article/lunacy-and-the-full-moon/">illusory correlation and confirmation bias</a>. In one study, psychiatric nurses who believed in the effect simply wrote more notes about odd behavior on full-moon nights, manufacturing the very evidence they expected. That same machinery, recognizing yourself in a description vague enough to fit anyone, is exactly what made the paragraph at the top of this page feel personal.</p>
-
-          <p>So keep the test, not the claim. Is it peer-reviewed in a real venue? Did it replicate with new data? Is the proposed mechanism independent of the conclusion? Is the effect actually large? The casino full moon fails all four. Your horoscope was never built to be tested at all. That is the difference, and it is the whole point.</p>
-        </div>
-
-        <div class="ss-src">
-          <h4>Sources</h4>
-          <ol>
-            <li>The casino claim and its primary write-up: Radin &amp; Rebman, "Seeking psi in the casino" (1998), via the <a href="https://psi-encyclopedia.spr.ac.uk/articles/psi-financial-gain">SPR Psi Encyclopedia</a>; original 1996 press in the <a href="https://lasvegassun.com/news/1996/jul/29/study-says-full-moon-can-bring-gamblers-better-luc/">Las Vegas Sun</a>.</li>
-            <li>The failed replication: <a href="https://www.researchgate.net/publication/228675638_Solar-periodic_full_moon_effect_in_the_Fourmilab_RetroPsychoKinesis_Project_experiment_data_An_exploratory_study">Etzold (2005)</a>, in which the effect reversed sign and disappeared with new data.</li>
-            <li>The meta-analysis: Rotton &amp; Kelly, "Much ado about the full moon," <em>Psychological Bulletin</em> (1985), <a href="https://pubmed.ncbi.nlm.nih.gov/3885282/">PubMed</a>.</li>
-            <li>Why the belief persists (illusory correlation, confirmation bias, the nurses' notes study): <a href="https://www.scientificamerican.com/article/lunacy-and-the-full-moon/">Scientific American</a>.</li>
-          </ol>
-        </div>
       </section>
 
-      <!-- CLOSING: honest share -->
-      <section class="ss-sec" id="ss-end">
-        <div class="ss-prose">
-          <h3 style="margin-top:0">Take the honest version with you</h3>
-          <p>Your chart is a beautiful, four-thousand-year-old object, and it was not written about you. Both of those can be true. Here is the version worth sharing.</p>
+      <section class="ss-sec" id="ss-end" aria-labelledby="ss-end-title">
+        <h2 class="ss-h2" id="ss-end-title">Keep the calculation with its limits</h2>
+        <div class="ss-prose" style="margin-top:1rem">
+          <p>The copied summary includes the date, time assumption, and approximate signs you entered here. It makes no personality forecast. A more accurate ephemeris could improve those positions; showing that they predict your character would still require a separate experiment.</p>
         </div>
         <div class="ss-share">
-          <button class="ss-btn" id="ss-share-btn" type="button">Copy my honest chart</button>
-          <span class="ss-share-out" id="ss-share-out"></span>
+          <button class="ss-btn" id="ss-share-btn" type="button">Copy chart summary</button>
+          <span class="ss-share-out" id="ss-share-out" role="status" aria-live="polite"></span>
+        </div>
+        <textarea class="ss-share-text" id="ss-share-text" aria-label="Chart summary to copy" readonly hidden></textarea>
+
+        <div class="ss-src">
+          <h4>Sources and calculation notes</h4>
+          <ol>
+            <li><a href="https://criticalthinkingtext.wordpress.com/wp-content/uploads/2015/04/forer_the-fallacy-of-personal-validation_1949.pdf">Forer (1949)</a>, pages 120 to 121 and Table 1. The displayed paragraph is a custom example, not his original sketch.</li>
+            <li><a href="https://muller.lbl.gov/papers/Astrology-Carlson.pdf">Carlson (1985)</a>, <em>Nature</em> 318, pages 419 to 425, especially Table 2 and the conclusions separating the two tests.</li>
+            <li><a href="https://peachv.org/images/MuslimGeo/BabyAstroZodiacSteele.pdf">Steele (2018)</a>, sections 2 to 5, on Babylonian constellations, equal signs, and their changing names.</li>
+            <li><a href="https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Ptolemy/Tetrabiblos/1B%2A.html">Ptolemy, <em>Tetrabiblos</em>, Book I</a>, translated by F. E. Robbins: chapters 4 to 5 on planetary qualities, 17 on rulerships, and 22 on the seasonal zodiac.</li>
+            <li><a href="https://researchspace.bathspa.ac.uk/1453/1/Nicholas%20Campion%20-%202004.pdf#page=145">Campion (2004)</a>, chapter 7, pages 142 to 145, on the development of newspaper forecasts.</li>
+            <li><a href="https://iauarchive.eso.org/public/themes/constellations/">IAU constellation history and charts</a>; <a href="https://nightsky.jpl.nasa.gov/media/documents/resources/0SolSysManual.pdf#page=71">NASA/JPL's constellation guide</a>, page 71. The calendar guide here is approximate and isn't a boundary calculation.</li>
+            <li><a href="https://stjarnhimlen.se/comp/ppcomp.html">Schlyter's formulae</a>; <a href="https://www.astro.com/swisseph/swephprg.htm">Swiss Ephemeris manual</a>; <a href="https://github.com/aloistr/swisseph/blob/master/sweph.h">Fagan-Bradley reference epoch</a>. The panel's linear sidereal offset uses about 24.7403 degrees at J2000.</li>
+            <li><a href="https://s3.amazonaws.com/arena-attachments/2412065/9e1d5a9ac6b31d4fca9a4725090447e9.pdf?1531266521=">James Holden on ancient house division</a>, pages 21 to 22; <a href="https://www.skyscript.co.uk/houprob4.html">Deborah Houlding on Placidus</a>. Historical interpretations are contested, particularly when reconstructing ancient practice.</li>
+          </ol>
         </div>
       </section>
 
@@ -500,8 +484,8 @@
 
   <datalist id="ss-cities"></datalist>
 
-  <script src="/js/star-signs.js"></script>
-  <script src="/js/star-signs-page.js"></script>
+  <script src="/js/star-signs.js?v=20261003b"></script>
+  <script src="/js/star-signs-page.js?v=20261003b"></script>
   <script src="/js/main.js"></script>
   <script src="/js/backtotop.js"></script>
 </body>

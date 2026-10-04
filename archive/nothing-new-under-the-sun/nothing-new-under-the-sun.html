@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>There's Nothing New Under the Sun</title>
-  <meta name="description" content="Every age believes it is the strangest one. None ever is. A sourced, illustrated case that you feel with the same instrument as everyone who ever lived, that circumstance barely moves the inner life, and that the one lever you actually hold is the oldest piece of advice there is.">
+  <meta name="description" content="Old complaints, changing circumstances and advice about caring for others. An illustrated essay with research limits and passages from twelve traditions.">
   <meta property="og:title" content="There's Nothing New Under the Sun">
-  <meta property="og:description" content="You run the same emotional instrument as every human who ever lived. Circumstance barely moves it, the doom you feel is as old as writing, and the one lever you actually hold is the oldest advice there is. Sourced and illustrated.">
+  <meta property="og:description" content="Old complaints, changing circumstances and advice about caring for others. An illustrated essay with research limits and passages from twelve traditions.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/nothing-new-under-the-sun/nothing-new-under-the-sun.html">
@@ -43,7 +43,7 @@
      on this site so the reader feels at home. No em dashes anywhere.
      ============================================================ */
   :root {
-    --measure: 760px;                 /* reading column */
+    --measure: 48.5rem;                 /* reading column */
     --wide: 1080px;                   /* breakout width for big visuals */
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
     --c-gold:  #D4C4A0;
@@ -298,87 +298,146 @@
 
   /* ---------- ANIMATION + REDUCED MOTION ---------- */
   @media (prefers-reduced-motion: no-preference) {
-    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
-    .reveal.in { opacity: 1; transform: none; }
+    .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .js .reveal.in { opacity: 1; transform: none; }
   }
   @media print {
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
   }
+
+  /* Reading rhythm shared with the site's sacred-text essays. */
+  .sec { box-sizing: border-box; width: 100%; max-width: calc(64ch + var(--gutter) + var(--gutter)); font-family: var(--font-heading); font-size: 1.27rem; }
+  .sec-h { margin: 0 0 2rem; text-align: center; font-size: clamp(1.9rem, 5vw, 2.65rem); }
+  .sec-h::before { content: ""; display: block; width: 3rem; height: 1px; background: var(--rule); margin: 0 auto 2.8rem; }
+  .sec.first .sec-h::before { display: none; }
+  .sec p, .sec li { font-size: 1.27rem; line-height: 1.72; }
+  .sec p.lede { font-size: 1.27rem; line-height: 1.72; }
+  .hero-figure { box-sizing: border-box; margin: 0 auto 1rem; }
+  .hero-cap { margin-inline: auto; }
+  .u-collapse { margin: 2rem 0; padding: .35rem 1.2rem; }
+  .optional-body { padding-bottom: 1.2rem; font-family: var(--font-body); }
+  .optional-body p, .optional-body li { font-size: 1rem; line-height: 1.6; }
+  .u-collapse .tool { margin: .5rem 0 1rem; }
+  .tool-head { flex-wrap: wrap; }
+  .tool-head h4 { text-align: left; }
+  .tool-source { display: inline-block; margin-top: .8rem; font-size: .94rem; line-height: 1.5; }
+  .tool .tm-events button, .tool .gr-chip { min-height: 44px; }
+  .tool .wv-r .wv-v { font-size: clamp(1.45rem, 4.5vw, 2rem); }
+  .tool .wv-r { min-width: 0; }
+  .wv-readouts { gap: 1rem; }
+  .tool input[type=range] { display: block; width: 100%; min-height: 44px; }
+  .word-choice { margin-top: 1rem; }
+  .word-choice label { display: block; margin-bottom: .4rem; }
+  .word-choice select { width: 100%; min-height: 44px; padding: .4rem .6rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel-2); color: var(--text); font: 1rem var(--font-body); }
+  .tm-chart { overflow-x: auto; }
+  #tm-svg { min-width: 650px; }
+  .dials-plane { overflow-x: auto; touch-action: pan-x; }
+  #dp-svg { min-width: 460px; }
+  .gr-paraphrase-label { color: var(--text-dim); font-family: var(--font-mono); font-size: .68rem !important; letter-spacing: .06em; text-transform: uppercase; }
+  .gr-card .gr-quote { font-size: 1.4rem; line-height: 1.45; }
+  .table-scroll { overflow-x: auto; }
+  .evidence-table { border-collapse: collapse; width: 100%; font-size: .96rem; line-height: 1.55; }
+  .evidence-table caption { text-align: left; margin-bottom: 1rem; color: var(--text-dim); }
+  .evidence-table th, .evidence-table td { padding: .8rem .65rem; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  .evidence-table th { font-weight: 600; color: var(--text-bright); }
+  .evidence-table td:nth-child(2) { font-family: var(--font-mono); }
+  #sources .method-notes { columns: 1; font-size: 1rem; line-height: 1.6; }
+  #sources .method-notes li { margin-bottom: 1.2rem; font-size: inherit; line-height: inherit; }
+  .site-footer { margin-top: 4rem; }
+  @media (max-width: 600px) {
+    .sec { padding-inline: 20px; }
+    .hero-figure { padding-inline: 20px; }
+    .optional-body .tool-body { padding: .9rem .8rem 1rem; }
+    .u-collapse { padding-inline: .7rem; }
+    .sec p, .sec p.lede { font-size: 1.16rem; line-height: 1.72; }
+    .tool .wv-readouts { grid-template-columns: 1fr; }
+    .evidence-table th, .evidence-table td { padding-inline: .35rem; }
+  }
   </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
-
-  <a href="/" class="post-back nn-back"><span class="pb-label">Home</span></a>
-
-  <!-- ===================== HERO ===================== -->
-  <header class="u-hero" style="max-width:var(--wide);margin:0 auto;padding:1rem var(--gutter) 0;">
-    <p class="u-eyebrow">The oldest story there is</p>
+  <a href="/" class="post-back nn-back editorial-back"><span class="pb-label">Home</span></a>
+  <header class="u-hero editorial-hero">
     <h1 class="u-title">There's Nothing New Under the Sun</h1>
-    <p class="u-dek">You run on the same wiring as everyone who ever lived, and it barely registers your circumstances. Every age is sure it's the strangest one ever, full of feelings nobody felt before. None ever is.</p>
-    <p class="u-meta">Sourced and illustrated <span class="u-sep">/</span> <b>Every claim cited, every image public domain</b></p>
-
-    <figure class="hero-figure reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
-      <!-- The motif made literal: Munch's aula sun, the one object every era shares. -->
-      <img src="assets/photos/munch-sun-960.webp" srcset="assets/photos/munch-sun-480.webp 480w, assets/photos/munch-sun-960.webp 960w, assets/photos/munch-sun-1600.webp 1600w" sizes="(max-width: 1128px) 100vw, 1080px" width="1600" height="928" fetchpriority="high" decoding="async" alt="Edvard Munch's The Sun: a blinding white-gold sun over a fjord, its rays detonating across the whole sky in streaks of gold, blue and rose.">
-      <figcaption class="hero-cap" id="hero-fig-cap">Edvard Munch painted it twenty-six feet wide for a university wall in Oslo. The one object every human who ever lived has stood under.
+    <p class="u-dek">Old worries, changing lives, and a piece of advice I still want to follow.</p>
+    <p class="u-meta">6 min main essay <span class="u-sep">/</span> <b>Optional tools and sources</b></p>
+  </header>
+<figure class="hero-figure wrap reveal" id="hero-fig" aria-labelledby="hero-fig-cap">
+      <img src="assets/photos/munch-sun-960.webp" srcset="assets/photos/munch-sun-480.webp 480w, assets/photos/munch-sun-960.webp 960w, assets/photos/munch-sun-1600.webp 1600w" sizes="(max-width: 1128px) 100vw, 1080px" width="1600" height="928" loading="eager" fetchpriority="high" decoding="async" alt="Edvard Munch's The Sun: a blinding white-gold sun over a fjord, its rays detonating across the whole sky in streaks of gold, blue and rose.">
+      <figcaption class="hero-cap" id="hero-fig-cap">Edvard Munch's <i>The Sun</i>, painted for the University of Oslo aula.
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Solen_av_Edvard_Munch.jpg">Edvard Munch, The Sun (1911), University of Oslo aula. Public domain.</a></span>
       </figcaption>
     </figure>
-  </header>
-
   <main id="essay">
-
-    <!-- ===================== 1. DOOM ===================== -->
-    <section id="doom" class="sec first reveal">
-      <span class="sec-kicker">The oldest panic</span>
-      <h2 class="sec-h">The end has always been near</h2>
-      <p class="lede">Right now, someone is explaining that these are the end times. That no era was ever this crazy. People have said this for as long as we've had writing. Every one of them was dead sure. Every one of them woke up the next day anyway.</p>
-      <p>We even reach for the same proof every time. You know the one. <em>Kids these days love luxury, they have terrible manners and no respect for authority.</em> It gets pinned on Socrates. Socrates never said it. A student made it up in 1907, summing up the way old people have always groused about the young, and within fifteen years a newspaper slapped Socrates's name on it. The most popular proof that today's kids are uniquely rotten is a fake. The complaint it's copying is real, and about 2,700 years old.</p>
-
-      <figure class="photo reveal">
+<section id="doom" class="sec first reveal"><h2 class="sec-h">An old complaint, with a borrowed author</h2><p class="lede">The complaint about children loving luxury and disrespecting their elders often gets assigned to Socrates. Its wording comes from a book published in 1907.</p>
+<p>In <a href="https://www.gutenberg.org/cache/epub/63644/pg63644-images.html">Kenneth John Freeman's <i>Schools of Hellas</i> (1907), page 74</a>, it is his summary of complaints about ancient Greek children. It is Freeman's wording, not a quotation from Socrates.</p>
+<p>Predictions of disaster need the same care. A dated prophecy, a misunderstood calendar and a danger people work to avert need different kinds of evidence. A catalogue of failures cannot establish that the next danger is harmless.</p><figure class="photo reveal">
         <img src="assets/martin-wrath-960.webp" srcset="assets/martin-wrath-480.webp 480w, assets/martin-wrath-960.webp 960w, assets/martin-wrath-1600.webp 1600w" sizes="(max-width: 800px) 100vw, 760px" width="1600" height="1032" loading="lazy" decoding="async" alt="John Martin's painting The Great Day of His Wrath: a dark mountainous landscape collapsing into fire and lightning, tiny human figures tumbling into a red abyss.">
-        <figcaption>John Martin, The Great Day of His Wrath (1851 to 1853). Every generation paints its own end of the world. This one is Victorian.</figcaption>
+        <figcaption>John Martin, <i>The Great Day of His Wrath</i> (c. 1851). A Victorian painting of the Last Judgment.</figcaption>
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:John_Martin_-_The_Great_Day_of_His_Wrath_-_Google_Art_Project.jpg">John Martin, Tate Britain, public domain</a></span>
-      </figure>
-
-      <!-- INTERACTIVE: doomsday almanac (a clickable run of failed end-of-world predictions across ~2,000 years) -->
-      <div class="tool reveal" id="almanac">
+      </figure><details class="u-collapse" id="almanac-notes"><summary class="u-collapse-s">Open the disaster almanac</summary><div class="optional-body"><div class="tool reveal" id="almanac">
         <div class="tool-head"><h4>The doomsday almanac</h4><span class="tool-tag">interactive</span></div>
         <div class="tool-body">
-          <p class="alm-intro">Every one of these was, for someone entirely sincere, the certain end of the world. Tap any year.</p>
+          <p class="alm-intro">Four disaster expectations with different reasons and outcomes. Select a date. Entries are evenly spaced, without a time scale.</p>
           <div class="alm-track">
-            <svg viewBox="0 0 1000 90" id="alm-svg" role="group" aria-label="A timeline of failed end-of-the-world predictions. Select a year to read it.">
+            <svg viewBox="0 0 1000 90" id="alm-svg" role="group" aria-label="Four historical disaster expectations. Select a date to read the evidence and the limits.">
               <line x1="40" y1="34" x2="960" y2="34" class="v-grid-s"/>
               <g id="alm-beads"></g>
             </svg>
           </div>
           <div class="alm-card" id="alm-card" aria-live="polite"></div>
           <div class="alm-tally">
-            <span><b id="alm-count">0</b>endings foretold</span>
-            <span><b class="alm-zero">0</b>of them arrived</span>
+            <span><b id="alm-count">4</b>documented cases</span>
+
           </div>
-          <p class="tool-rail">Somewhere today, by someone entirely sincere, a thirteenth is being calculated.</p>
+          <p class="tool-rail">The source links support each case. They do not form a probability estimate for future disaster.</p>
         </div>
       </div>
+<noscript><p>The date selector needs JavaScript. The <a href="https://files.gao.gov/reports/105184/index.html">GAO account of Y2K</a> explains why prevented failures are different from false predictions.</p></noscript>
       <script>
       (function () {
         'use strict';
         var DATA = [
-          {lab:"~50", y:"Around 50 AD", who:"Paul of Tarsus", claim:"The Lord would return within the lifetime of people then alive. “We who are alive, who are left.”", after:"That generation lived and died like any other. The letters became scripture."},
-          {lab:"156", y:"156 AD", who:"Montanus", claim:"The heavenly New Jerusalem was about to descend onto the plain at Pepuza, in Asia Minor.", after:"It never came down. Today no one can even agree where Pepuza was."},
-          {lab:"1000", y:"The year 1000", who:"Latin Christendom", claim:"The thousandth year since Christ would bring the Last Judgment.", after:"January 1st arrived on schedule. Later writers played up the panic, but the dread itself was real."},
-          {lab:"1260", y:"1260", who:"Joachim of Fiore", claim:"History’s final chapter, the Age of the Spirit, would dawn by the year 1260.", after:"1260 came and went. His followers simply moved the date forward."},
-          {lab:"1534", y:"1534", who:"The Anabaptists of Münster", claim:"Christ would return at Easter, and Münster would be the New Jerusalem. They seized the city to wait for him.", after:"The siege ended in 1535 with the leaders tortured and their bodies hung in iron cages from the church tower, where the cages still hang."},
-          {lab:"1844", y:"October 22, 1844", who:"The Millerites", claim:"Tens of thousands of William Miller’s followers gave away their belongings for the Second Coming.", after:"They named the next morning the Great Disappointment. Most quietly went back to their farms."},
-          {lab:"1910", y:"1910", who:"Halley’s Comet", claim:"Earth would pass through the comet’s tail, whose cyanogen gas would “snuff out all life on the planet.”", after:"People bought comet pills and gas masks. The tail was thinner than a laboratory vacuum. Everyone woke up."},
-          {lab:"1914", y:"1914", who:"The Watch Tower", claim:"The present world order would end in the battle of Armageddon.", after:"A world war came instead. The date was revised to 1925, and then to 1975."},
-          {lab:"1997", y:"March 1997", who:"Heaven’s Gate", claim:"A spacecraft hidden in the tail of Comet Hale-Bopp would lift believers off a doomed Earth.", after:"Thirty-nine people died to catch it. The Earth was not doomed."},
-          {lab:"2000", y:"January 1, 2000", who:"Y2K", claim:"A two-digit date bug would ripple through the world’s computers and pull civilization down at midnight.", after:"Engineers spent years and billions fixing it first, and the lights stayed on. The one doom that may have failed because we believed it."},
-          {lab:"2011", y:"May 21, 2011", who:"Harold Camping", claim:"The Rapture would come on May 21st, a date he worked out from the year of Noah’s flood.", after:"When the day passed he recalculated for October. October passed too. He apologized."},
-          {lab:"2012", y:"December 21, 2012", who:"The Maya calendar", claim:"The end of the 13th b’ak’tun would bring a global cataclysm.", after:"The Maya foretold nothing of the kind. The date was just where one of their long counts rolled over, like an odometer reaching all zeros."}
-        ];
+  {
+    "lab": "1910",
+    "y": "1910",
+    "who": "Halley's Comet",
+    "claim": "Earth passed through the comet's tail, a prospect that caused some public unease.",
+    "after": "NASA records the passage and some public anxiety, without establishing a universal expectation of extinction.",
+    "url": "https://www.nasa.gov/history/955-years-ago-halleys-comet-and-the-battle-of-hastings/",
+    "source": "NASA's historical account"
+  },
+  {
+    "lab": "2000",
+    "y": "January 1, 2000",
+    "who": "The Y2K computer fault",
+    "claim": "Two-digit year fields could make computers misread 2000. This was a real engineering problem, not an end-times prophecy.",
+    "after": "GAO credits extensive remediation with averting major failures. A danger prevented by work is a poor example of a danger that never existed.",
+    "url": "https://files.gao.gov/reports/105184/index.html",
+    "source": "GAO: The Year 2000 Computing Challenge"
+  },
+  {
+    "lab": "2011",
+    "y": "May 21, 2011",
+    "who": "Harold Camping",
+    "claim": "Camping and Family Radio announced a date for the return of Christ.",
+    "after": "In a 2012 statement, Camping acknowledged the prediction was wrong and apologized. This is a failed dated prediction; it does not settle the broader religious belief.",
+    "url": "https://www.radiosurvivor.com/2012/03/in-new-statement-harold-camping-admits-family-radio-was-wrong-to-predict-rapture/",
+    "source": "Camping's statement, reproduced by Radio Survivor"
+  },
+  {
+    "lab": "2012",
+    "y": "December 21, 2012",
+    "who": "A modern Maya-calendar scare",
+    "claim": "Popular disaster stories attached a catastrophe to a cycle in the Maya Long Count calendar.",
+    "after": "NASA explained before the date that a calendar cycle was not a prediction of catastrophe. Calling this a Maya doomsday prophecy misattributes the modern story.",
+    "url": "https://www.jpl.nasa.gov/blog/2009/11/2012-a-scientific-reality-check",
+    "source": "NASA/JPL: A Scientific Reality Check"
+  }
+];
         var beads = document.getElementById('alm-beads');
         var card = document.getElementById('alm-card');
         if (!beads || !card) return;
@@ -391,19 +450,20 @@
           var who = document.createElement('div'); who.className = 'ac-who'; who.textContent = d.who;
           var cl = document.createElement('p'); cl.className = 'ac-claim'; cl.textContent = d.claim;
           var af = document.createElement('p'); af.className = 'ac-after';
-          var b = document.createElement('b'); b.textContent = 'The morning after. ';
+          var b = document.createElement('b'); b.textContent = 'What the source supports. ';
           af.appendChild(b); af.appendChild(document.createTextNode(d.after));
           card.appendChild(yr); card.appendChild(who); card.appendChild(cl); card.appendChild(af);
+          var source = document.createElement("a"); source.href = d.url; source.textContent = d.source; source.className = "tool-source"; card.appendChild(source);
         }
         function select(i) {
-          if (sel >= 0 && nodes[sel]) nodes[sel].classList.remove('on');
-          sel = i; nodes[i].classList.add('on'); render(i);
+          if (sel >= 0 && nodes[sel]) { nodes[sel].classList.remove('on'); nodes[sel].setAttribute('aria-pressed', 'false'); }
+          sel = i; nodes[i].classList.add('on'); nodes[i].setAttribute('aria-pressed', 'true'); render(i);
         }
         DATA.forEach(function (d, i) {
           var x = x0 + (x1 - x0) * (n === 1 ? 0.5 : i / (n - 1));
           var g = document.createElementNS(NS, 'g');
           g.setAttribute('class', 'alm-bead-hit'); g.setAttribute('tabindex', '0');
-          g.setAttribute('role', 'button'); g.setAttribute('aria-label', d.y + ': ' + d.who);
+          g.setAttribute('role', 'button'); g.setAttribute('aria-pressed', 'false'); g.setAttribute('aria-label', d.y + ': ' + d.who);
           var spark = document.createElementNS(NS, 'line');
           spark.setAttribute('class', 'alm-spark'); spark.setAttribute('x1', x); spark.setAttribute('y1', cy - 13); spark.setAttribute('x2', x); spark.setAttribute('y2', cy + 13);
           var hit = document.createElementNS(NS, 'circle');
@@ -420,35 +480,21 @@
         document.getElementById('alm-count').textContent = n;
         select(0);
       })();
-      </script>
+      </script></div></details></section>
 
-      <aside class="u-callout u-aside">
-        <p class="u-callout-k">The fair objection</p>
-        <p class="u-callout-body"><b>This doesn't mean we're safe.</b> A smoke alarm that's gone off at burnt toast a hundred times still can't tell you the kitchen isn't on fire tonight. Every doom before 1945 was about God or a misread calendar. The new ones, nuclear weapons, climate, engineered viruses, are real, and they only have to be right once. Don't trust the feeling of doom. Do look hard at each real danger on its own.</p>
-      </aside>
-    </section>
-
-    <!-- ===================== 2. THE INSTRUMENT ===================== -->
-    <section id="instrument" class="sec reveal">
-      <span class="sec-kicker">The instrument</span>
-      <h2 class="sec-h">You feel with the same kit as everyone who ever lived</h2>
-      <p class="lede">The wiring is old. Really old. The fear circuit that fires when a car swerves at you is almost the same one a rat has. It was built long before there were any humans around to be scared. And the full range of what a person can feel got handed out, unchanged, to the pharaohs and to you.</p>
-      <p>For four hundred years, people have tried to list the basic feelings, and they keep landing on a tiny number. Descartes counted six. Spinoza got it down to three. Scientists today think the base is just two dials: good or bad, and calm or worked up. Everything else gets built on top of those, in the moment. Nobody agrees on the exact count, and that's the honest catch. What nobody disputes is that the set is small, it's ancient, and every person who ever lived was issued the same one.</p>
-
-      <figure class="photo portrait reveal">
-        <img src="assets/darwin-emotions-960.webp" srcset="assets/darwin-emotions-480.webp 480w, assets/darwin-emotions-960.webp 960w, assets/darwin-emotions-1600.webp 1600w" sizes="(max-width: 480px) 90vw, 28rem" width="1600" height="2895" loading="lazy" decoding="async" alt="A plate from Darwin's 1872 book: two old photographs of people performing strong emotion, a man with hands raised in astonishment and a woman with a face of terror.">
-        <figcaption>The first book to photograph the basic feelings: Darwin's, from 1872. The collars are Victorian. The faces are yours.</figcaption>
+<section id="instrument" class="sec reveal"><h2 class="sec-h">An old body, a particular life</h2><p class="lede">An old painting can make fear or tenderness recognizable. It cannot establish that everyone feels the same amount, in the same way.</p>
+<p>A defensive response is only part of fear. Neuroscientist Joseph LeDoux <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3600914/">distinguishes what animal experiments reveal about responses to danger from what they can establish about subjective feeling</a>. Similar biology leaves the subjective experience unanswered.</p>
+<p>Pleasantness and arousal describe aspects of feeling. Lisa Feldman Barrett's <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5390700/">theory of constructed emotion</a> gives concepts and context an important role. It is one theoretical account, with no undisputed final count of the human feelings.</p><figure class="photo portrait reveal">
+        <img src="assets/darwin-emotions-960.webp" srcset="assets/darwin-emotions-480.webp 480w, assets/darwin-emotions-960.webp 960w, assets/darwin-emotions-1600.webp 1600w" sizes="(max-width: 480px) 90vw, 28rem" width="1600" height="2895" loading="lazy" decoding="async" alt="Plate VII from Darwin's 1872 book: one figure has both hands raised; a second face has an open mouth, with electrodes held against it.">
+        <figcaption>Plate VII from Charles Darwin's <i>The Expression of the Emotions in Man and Animals</i> (1872). The photographs illustrate his argument; a photograph alone cannot settle what a person feels.</figcaption>
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Expression_of_the_Emotions_Plate_VII.png">Charles Darwin, 1872, public domain</a></span>
-      </figure>
-
-      <!-- INTERACTIVE: the two dials (valence x arousal plane; drag the marker, the nearest feeling lights up) -->
-      <div class="tool reveal" id="dials">
-        <div class="tool-head"><h4>The two dials</h4><span class="tool-tag">interactive</span></div>
+      </figure><details class="u-collapse" id="feeling-map-notes"><summary class="u-collapse-s">Explore a two-dimensional illustration</summary><div class="optional-body"><div class="tool reveal" id="dials">
+        <div class="tool-head"><h4>One map of feeling</h4><span class="tool-tag">interactive</span></div>
         <div class="tool-body">
-          <p class="alm-intro">Drag the dot, or tap a feeling. Wherever you land is just a spot on two dials: how good or bad it feels, and how stirred up or calm.</p>
+          <p class="alm-intro">Drag the dot, or choose a word using the map or menu. This illustration uses pleasantness and arousal, two dimensions used in some theories of affect.</p>
           <div class="dials-wrap">
             <div class="dials-plane">
-              <svg viewBox="0 0 520 410" id="dp-svg" role="group" aria-label="A map of feelings on two axes, pleasant to unpleasant and worked up to calm. Drag the marker, or select a feeling, to move through the space.">
+              <svg viewBox="0 0 520 410" id="dp-svg" role="group" aria-label="An illustrative map of feeling words, using pleasantness and arousal. Drag the marker or select a word. Positions are not measured data.">
                 <g id="dp-static"></g>
                 <g id="dp-emos"></g>
                 <g id="dp-marker"></g>
@@ -464,11 +510,13 @@
                 <div class="dg-lbl"><span>calm</span><span>worked up</span></div>
                 <div class="dg-track"><span class="dg-mid"></span><span class="dg-fill" id="dg-aro"></span></div>
               </div>
-              <p class="dr-note">Every name you know is a pin in this one square. The kit is two dials. The words are just how your language chose to cut it up.</p>
+              <div class="word-choice"><label for="dp-choice">Choose a word</label><select id="dp-choice" aria-label="Choose a word on the illustrative emotion map"></select></div>
+              <p class="dr-note">Word positions are chosen for this page. The nearest label is illustrative, with no measured score or diagnosis.</p>
             </div>
           </div>
         </div>
       </div>
+<noscript><p>The map needs JavaScript. Pleasantness and arousal can describe aspects of feeling, but neither identifies the whole experience.</p></noscript>
       <script>
       (function () {
         'use strict';
@@ -501,8 +549,9 @@
         axlbl(CX, Y1 + 22, 'middle', 'calm');
 
         // emotion points (clickable)
-        var emoG = document.getElementById('dp-emos'), emoNodes = [];
+        var emoG = document.getElementById('dp-emos'), emoNodes = [], choice = document.getElementById('dp-choice');
         EMO.forEach(function (d, i) {
+          var option = document.createElement('option'); option.value = i; option.textContent = d.n; choice.appendChild(option);
           var px = vx(d.v), py = ay(d.a);
           var g = mk('g', {class: 'dp-emo-hit', tabindex: '0', role: 'button', 'aria-label': d.n});
           g.appendChild(mk('circle', {cx: px, cy: py, r: 16, fill: 'transparent'}));
@@ -538,7 +587,7 @@
           gauge(valFill, v, '#9ec79a', '#d9978c');
           gauge(aroFill, a, '#dfc288', '#8fb3c7');
           var ni = nearest(v, a);
-          nearEl.textContent = EMO[ni].n;
+          nearEl.textContent = EMO[ni].n; choice.value = ni;
           emoNodes.forEach(function (g, i) { g.classList.toggle('near', i === ni); });
         }
         function setTo(v, a) { update(Math.max(-1, Math.min(1, v)), Math.max(-1, Math.min(1, a))); }
@@ -560,30 +609,21 @@
         svg.addEventListener('pointerup', endDrag);
         svg.addEventListener('pointercancel', endDrag);
 
+        choice.addEventListener('change', function () { var item = EMO[Number(choice.value)]; setTo(item.v, item.a); });
         setTo(0.62, -0.28); // open on "content"
       })();
-      </script>
+      </script></div></details></section>
 
-      <aside class="u-callout u-aside">
-        <p class="u-callout-k">Where this overstates</p>
-        <p class="u-callout-body"><b>It's the same dials in everyone, but not the exact same named feelings.</b> Where anger stops and contempt starts is partly taught to you, by your language and your culture. Show the famous wide-eyed "fear face" to people on the Trobriand Islands and they don't see fear. They see someone about to attack. The dials are shared. The words for them are local.</p>
-      </aside>
-    </section>
-
-    <!-- ===================== 3. THE TREADMILL ===================== -->
-    <section id="treadmill" class="sec reveal">
-      <span class="sec-kicker">The treadmill</span>
-      <h2 class="sec-h">And you slide back to where you started</h2>
-      <p class="lede">Win the lottery, and a year or two later you're about as happy as you were before. You even enjoy small treats a little less. Lose the use of your legs, and slowly, never all the way, you climb back to most of where you were. Whatever happens to you, there's a pull back toward normal, and it never really lets go.</p>
-
-      <!-- INTERACTIVE: the hedonic treadmill (pick a life event, watch happiness spike then slide back) -->
-      <div class="tool reveal breakout" id="treadmill-tool">
-        <div class="tool-head"><h4>The treadmill</h4><span class="tool-tag">interactive</span></div>
+<section id="treadmill" class="sec reveal"><h2 class="sec-h">Getting used to things has limits</h2><p class="lede">The new house becomes the house. A pleasure loses its novelty. Does that mean we eventually return to where we began, whatever happens?</p>
+<p>The famous <a href="https://gwern.net/doc/psychology/1978-brickman.pdf">1978 lottery study</a> does not show that journey. Researchers interviewed 22 lottery winners, 22 controls and 29 people with spinal-cord injuries once. Winners' current happiness was not significantly different from the controls'; their enjoyment of ordinary pleasures was lower. The injured group reported lower current happiness. Nobody's happiness had been measured before the event. The study compared people; it did not track their return to an earlier level.</p>
+<p>A <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Lucas-Scollon_2006.pdf">2006 review</a> argued that this treadmill account needed revision. Studies tracking people through marriage, widowhood and unemployment found differences in adaptation and lasting changes in well-being. Their averages cannot give an individual a recovery timetable.</p>
+<p>A larger <a href="https://www.nber.org/papers/w24667">Swedish lottery study</a> found a lasting effect of wealth. Prize amounts were randomly assigned within lottery groups. Survey responses 5 to 22 years later showed a lasting improvement in life satisfaction with larger wins. Estimated effects on happiness and mental health were smaller and not statistically distinguishable from zero. Satisfaction with life as a whole differed from reported happiness.</p><details class="u-collapse" id="adaptation-notes"><summary class="u-collapse-s">Compare three schematic adaptation paths</summary><div class="optional-body"><div class="tool reveal" id="treadmill-tool">
+        <div class="tool-head"><h4>Three possible adaptation patterns</h4><span class="tool-tag">interactive</span></div>
         <div class="tool-body">
-          <p class="alm-intro">Pick something life-changing, and watch what your happiness does over the ten years after.</p>
+          <p class="alm-intro">Select a schematic pattern. These curves illustrate possibilities, with invented heights and rates. They predict no event, person or recovery time.</p>
           <div class="tm-events" id="tm-events"></div>
           <div class="tm-chart">
-            <svg viewBox="0 0 720 320" id="tm-svg" role="img" aria-label="A chart of happiness over the ten years after a major life event. It jumps at the event, then slides back toward the level where it started.">
+            <svg viewBox="0 0 720 320" id="tm-svg" role="img" aria-label="Schematic adaptation curves in arbitrary units. Select full, partial or persistent change. No curve is a forecast or measured result.">
               <g id="tm-grid"></g>
               <path id="tm-curve" class="tm-curve"></path>
               <g id="tm-endg"></g>
@@ -595,6 +635,7 @@
           </div>
         </div>
       </div>
+<noscript><p>The curve selector needs JavaScript. Full adaptation, partial adaptation and a persistent change are different possibilities; this page assigns no measured rate to them.</p></noscript>
       <script>
       (function () {
         'use strict';
@@ -608,31 +649,49 @@
         function py(h) { return PYc - h * SY; }
         var GOOD = '#D4C4A0', BAD = '#d9978c';
         var EV = [
-          {k:'lottery', btn:'Win the lottery', name:'You win the lottery', peak:1.0, settle:0.05, tau:1.2, good:true,
-           verdict:'The biggest high there is. A year or two later, you are basically back where you started. You even enjoy small everyday things a little less than before.'},
-          {k:'raise', btn:'Get a big raise', name:'You get a big raise', peak:0.55, settle:0.05, tau:1.0, good:true,
-           verdict:'Up, and then quietly gone. Day to day, your mood drifts back to its old level within about a year.'},
-          {k:'house', btn:'Buy the dream house', name:'You buy the dream house', peak:0.62, settle:0.04, tau:1.3, good:true,
-           verdict:'The new place just becomes the normal place. A year or two on, the lift is gone and you are back to baseline.'},
-          {k:'married', btn:'Get married', name:'You get married', peak:0.7, settle:0.08, tau:1.5, good:true,
-           verdict:'A real glow around the wedding, then a slow settling. On average, people are about as happy a few years in as they were before.'},
-          {k:'job', btn:'Lose your job', name:'You lose your job', peak:-0.7, settle:-0.18, tau:2.0, good:false,
-           verdict:'It only comes back part of the way. Even after you find a new job, your baseline sits lower than it did. This is one of the dents that does not fully heal.'},
-          {k:'spouse', btn:'Lose a spouse', name:'You lose your spouse', peak:-0.95, settle:-0.12, tau:4.0, good:false,
-           verdict:'The deepest fall, and the slowest climb back. It takes about eight years to get close, and some people never do. Bouncing back is the rule, but grief is the big exception.'}
-        ];
+  {
+    "k": "full",
+    "btn": "Full return",
+    "name": "A return toward the starting level",
+    "peak": 0.85,
+    "settle": 0,
+    "tau": 1.5,
+    "good": true,
+    "verdict": "The change fades in this drawing. Complete adaptation is one possible pattern, not a promise that a lottery win, marriage or loss follows this curve."
+  },
+  {
+    "k": "partial",
+    "btn": "Partial return",
+    "name": "Some recovery, with a remaining change",
+    "peak": -0.85,
+    "settle": -0.3,
+    "tau": 2,
+    "good": false,
+    "verdict": "The drawing leaves a lasting difference. Its size and speed are chosen for clarity; they are not estimates for grief, disability or unemployment."
+  },
+  {
+    "k": "persistent",
+    "btn": "Persistent change",
+    "name": "A sustained change in the level",
+    "peak": 0.65,
+    "settle": 0.65,
+    "tau": 1,
+    "good": true,
+    "verdict": "This drawing keeps the change. Evidence for lasting improvements in life satisfaction is one reason the simple treadmill story needs revision."
+  }
+];
         function mk(tag, a) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); return e; }
 
         // grid: baseline + ticks
         var grid = document.getElementById('tm-grid');
         grid.appendChild(mk('line', {class: 'tm-base', x1: px(T_PRE), y1: py(0), x2: px(T_MAX), y2: py(0)}));
-        var bl = mk('text', {class: 'tm-glabel', x: px(T_PRE) + 6, y: py(0) - 8, 'text-anchor': 'start'}); bl.textContent = 'where you started'; grid.appendChild(bl);
-        [[0, 'the event'], [5, '5 years'], [10, '10 years']].forEach(function (t) {
+        var bl = mk('text', {class: 'tm-glabel', x: px(T_PRE) + 6, y: py(0) - 8, 'text-anchor': 'start'}); bl.textContent = 'starting level'; grid.appendChild(bl);
+        [[0, 'event'], [5, 'later'], [10, 'later still']].forEach(function (t) {
           grid.appendChild(mk('line', {class: 'tm-tick', x1: px(t[0]), y1: PY0, x2: px(t[0]), y2: PY1}));
           var tx = mk('text', {class: 'tm-glabel', x: px(t[0]), y: PY1 + 16, 'text-anchor': 'middle'}); tx.textContent = t[1]; grid.appendChild(tx);
         });
-        var up = mk('text', {class: 'tm-glabel', x: PX0 - 4, y: py(0.9), 'text-anchor': 'end'}); up.textContent = 'happier'; grid.appendChild(up);
-        var dn = mk('text', {class: 'tm-glabel', x: PX0 - 4, y: py(-0.9), 'text-anchor': 'end'}); dn.textContent = 'worse'; grid.appendChild(dn);
+        var up = mk('text', {class: 'tm-glabel', x: PX0 - 4, y: py(0.9), 'text-anchor': 'end'}); up.textContent = 'higher'; grid.appendChild(up);
+        var dn = mk('text', {class: 'tm-glabel', x: PX0 - 4, y: py(-0.9), 'text-anchor': 'end'}); dn.textContent = 'lower'; grid.appendChild(dn);
 
         var curve = document.getElementById('tm-curve');
         var endg = document.getElementById('tm-endg');
@@ -648,8 +707,8 @@
         }
         function select(i) {
           var e = EV[i];
-          if (sel >= 0 && nodes[sel]) nodes[sel].classList.remove('on');
-          sel = i; nodes[i].classList.add('on');
+          if (sel >= 0 && nodes[sel]) { nodes[sel].classList.remove('on'); nodes[sel].setAttribute('aria-pressed', 'false'); }
+          sel = i; nodes[i].classList.add('on'); nodes[i].setAttribute('aria-pressed', 'true');
           var col = e.good ? GOOD : BAD;
           curve.setAttribute('d', pathFor(e));
           curve.setAttribute('stroke', col);
@@ -677,287 +736,256 @@
 
         var evWrap = document.getElementById('tm-events');
         EV.forEach(function (e, i) {
-          var b = document.createElement('button'); b.type = 'button'; b.textContent = e.btn;
+          var b = document.createElement('button'); b.type = 'button'; b.textContent = e.btn; b.setAttribute('aria-pressed', 'false');
           b.addEventListener('click', function () { select(i); });
           evWrap.appendChild(b); nodes[i] = b;
         });
         select(0);
       })();
-      </script>
+      </script></div></details></section>
 
-      <aside class="u-callout u-aside">
-        <p class="u-callout-k">The floor is real</p>
-        <p class="u-callout-body"><b>This isn't a promise that everything heals.</b> Some things don't. Losing a spouse drops people hard, and it takes about eight years to climb back, if they ever do. A long stretch of unemployment leaves you lower than before, even after you find work. Chronic pain, loneliness, and depression all hold you down. Bouncing back is the rule. But it has cruel exceptions, and they land hardest on the people already carrying the most.</p>
-      </aside>
-    </section>
+<section id="leveling" class="sec reveal"><h2 class="sec-h">Money matters. The question matters too.</h2><p class="lede">A herder can value his life highly without owning the things a wealthy American owns. Similar ratings would still leave us far short of showing equal inner lives.</p>
+<p>The original <a href="https://emmons.faculty.ucdavis.edu/wp-content/uploads/sites/90/2015/08/1985_1happiness-wealthy.pdf">Forbes study</a> received answers from 49 wealthy respondents and 62 comparison respondents. The wealthy group reported higher average well-being. A later <a href="https://doi.org/10.1007/s10902-005-5683-8">study of 127 Maasai participants</a>, interviewed orally in Kenya, found generally positive life satisfaction. Their samples, questions and settings make a direct comparison difficult.</p>
+<p>A <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10013834/">2023 reanalysis of smartphone reports from 33,391 employed US adults</a> found that daily emotional well-being rose with the logarithm of household income for most participants. Flattening above roughly $100,000 appeared among the least happy fifth. The overall association was small. This self-selected sample and its correlations cannot tell you what a raise would do to you.</p>
+<p>Household income differs from wealth in assets. The findings leave room for misery among the rich, but undermine a universal claim that the rich and the comfortable are equally happy.</p><details class="u-collapse" id="historical-comparison"><summary class="u-collapse-s">Read the Forbes and Maasai comparison carefully</summary><div class="optional-body"><p>The often-repeated pair, 5.8 for the Forbes group and 5.7 for the Maasai, appears in a <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Seligman_2004.pdf">2004 review, Table 1</a>. It combines separate studies. It is not a single survey of all 400 wealthy people and a matched group of herders.</p>
+<div class="table-scroll"><table class="evidence-table"><caption>The review's historical figures, with their limits</caption><thead><tr><th scope="col">Review entry</th><th scope="col">Reported mean</th><th scope="col">What needs care</th></tr></thead><tbody><tr><th scope="row">Forbes 400</th><td>5.8</td><td>The original wealthy sample had 49 respondents. Its 5.82 is a seven-point rating of happiness, separate from a life-satisfaction question.</td></tr><tr><th scope="row">Maasai</th><td>5.7</td><td>The review cites an unpublished 2003 source. The published 2005 paper instead reports 5.4 on the five-item life-satisfaction scale. The discrepancy is unresolved here.</td></tr></tbody></table></div>
+<p>Even identical means would not show identical inner lives. Different questions, translations, recruitment and populations limit the comparison. “People with almost nothing” also mistakes low cash income for an absence of cattle, relationships or a valued way of life.</p></div></details><details class="u-collapse" id="income-model-notes"><summary class="u-collapse-s">Try a logarithmic income axis</summary><div class="optional-body"><div class="tool reveal" id="wealth-tool">
+  <div class="tool-head"><h4>What a logarithmic income axis means</h4><span class="tool-tag">interactive</span></div>
+  <div class="tool-body">
+    <p class="alm-intro">Move the slider through six doublings of an example annual household income. Equal distances represent equal proportional changes. This is arithmetic, with no predicted happiness score.</p>
+    <div class="wv-readouts">
+      <div class="wv-r wealth"><span class="wv-k">example annual income</span><span class="wv-v" id="wv-wealth">$80,000</span><span class="wv-sub" id="wv-mult">8 times $10,000</span></div>
+      <div class="wv-r feel"><span class="wv-k">doublings from $10,000</span><span class="wv-v" id="wv-sat">3.00</span><span class="wv-sub" id="wv-band">logarithmic position</span></div>
+    </div>
+    <label for="wv-slider">Choose an example income</label>
+    <input type="range" id="wv-slider" min="0" max="1000" value="500" aria-describedby="wv-punch">
+    <div class="wv-meter"><div class="wv-meter-lbl">income axis, not a happiness scale</div><div class="wv-bar"><div class="wv-fill" id="wv-fill"></div><div id="wv-ticks"></div><div class="wv-you" id="wv-you"></div></div></div>
+    <p class="wv-punch" id="wv-punch">Doubling $20,000 to $40,000 takes the same space as doubling $80,000 to $160,000. Equal space does not mean an equal effect on well-being.</p>
+  </div>
+</div>
+<noscript><p>The slider needs JavaScript. Its axis runs from $10,000 to $640,000 in six equal doublings. It assigns no happiness score.</p></noscript>
+<script>
+(function () {
+  'use strict';
+  var sl = document.getElementById('wv-slider'); if (!sl) return;
+  var ticks = document.getElementById('wv-ticks');
+  [[0, '$10k'], [50, '$80k'], [100, '$640k']].forEach(function (t) {
+    var line = document.createElement('div'); line.className = 'wv-tick'; line.style.left = t[0] + '%'; ticks.appendChild(line);
+    var label = document.createElement('div'); label.className = 'wv-ticklbl'; label.style.left = t[0] + '%'; label.textContent = t[1];
+    if (t[0] === 0) label.style.transform = 'none'; if (t[0] === 100) label.style.transform = 'translateX(-100%)'; ticks.appendChild(label);
+  });
+  function update() {
+    var fraction = Number(sl.value) / 1000, doublings = fraction * 6, multiple = Math.pow(2, doublings), amount = 10000 * multiple;
+    document.getElementById('wv-wealth').textContent = '$' + Math.round(amount).toLocaleString('en-US');
+    document.getElementById('wv-mult').textContent = multiple.toFixed(2) + ' times $10,000';
+    document.getElementById('wv-sat').textContent = doublings.toFixed(2);
+    document.getElementById('wv-fill').style.width = (fraction * 100) + '%';
+    document.getElementById('wv-you').style.left = (fraction * 100) + '%';
+    sl.setAttribute('aria-valuetext', 'Example annual income ' + Math.round(amount).toLocaleString('en-US') + ' dollars, ' + doublings.toFixed(2) + ' doublings from 10,000 dollars');
+  }
+  sl.addEventListener('input', update); update();
+})();
+</script></div></details></section>
 
-    <!-- ===================== 4. THE LEVELING / PROOF ===================== -->
-    <section id="leveling" class="sec reveal">
-      <span class="sec-kicker">The proof</span>
-      <h2 class="sec-h">The billionaire and the herder come out even</h2>
-      <p class="lede">Ask the 400 richest Americans how happy they are with their lives, on a scale of one to seven. They say 5.8. Now ask the Maasai in East Africa, who herd cattle, live in homes made of dung, and have no electricity or running water. They say 5.7.</p>
-      <div class="stat-bartab-row">
-        <div class="stat-bartab"><div class="stat-num">5.8</div><p class="stat-label">the Forbes 400, life satisfaction, 1 to 7</p></div>
-        <div class="stat-bartab"><div class="stat-num">5.7</div><p class="stat-label">the Maasai, same scale, same survey</p></div>
-      </div>
-      <p>The richest people alive and a people with almost nothing come out a tenth of a point apart. Money comes in a range so huge it's hard to picture. Happiness comes in a tiny one. Whatever all that money is buying, it mostly isn't this.</p>
-
-      <!-- INTERACTIVE: wealth vs feeling (drag wealth across its whole range; satisfaction barely moves above the floor) -->
-      <div class="tool reveal" id="wealth-tool">
-        <div class="tool-head"><h4>Wealth against feeling</h4><span class="tool-tag">interactive</span></div>
-        <div class="tool-body">
-          <p class="alm-intro">Drag your fortune from almost nothing to the richest people alive, and watch your own rating of your life.</p>
-          <div class="wv-readouts">
-            <div class="wv-r wealth"><span class="wv-k">your wealth</span><span class="wv-v" id="wv-wealth">$50k</span><span class="wv-sub" id="wv-mult">about the median</span></div>
-            <div class="wv-r feel"><span class="wv-k">your rating of your life</span><span class="wv-v" id="wv-sat">5.4<em>/ 7</em></span><span class="wv-sub" id="wv-band">comfortable</span></div>
-          </div>
-          <input type="range" id="wv-slider" min="0" max="1000" value="260" aria-label="Your wealth, from almost nothing to billionaire">
-          <div class="wv-meter">
-            <div class="wv-meter-lbl">where that puts your life satisfaction (1 to 7)</div>
-            <div class="wv-bar">
-              <div class="wv-fill" id="wv-fill"></div>
-              <div id="wv-ticks"></div>
-              <div class="wv-you" id="wv-you"></div>
-            </div>
-          </div>
-          <p class="wv-punch" id="wv-punch"></p>
-        </div>
-      </div>
-      <script>
-      (function () {
-        'use strict';
-        var sl = document.getElementById('wv-slider');
-        if (!sl) return;
-        var Lmin = 2.48, Lspan = 8.52; // $300 to $100B on a log10 scale
-        function satOf(L) { var s = 5.85 - 2.95 * Math.exp(-(L - Lmin) * 0.9); return Math.max(2.9, Math.min(5.85, s)); }
-        function pct(s) { return (s - 1) / 6 * 100; }
-        function fmt(w) {
-          if (w >= 1e9) return '$' + (w / 1e9 >= 100 ? Math.round(w / 1e9) : (w / 1e9).toFixed(1)) + 'B';
-          if (w >= 1e6) return '$' + (w / 1e6).toFixed(1) + 'M';
-          if (w >= 1e3) return '$' + Math.round(w / 1e3) + 'k';
-          return '$' + Math.round(w);
-        }
-        function mult(w) {
-          var m = w / 50000;
-          if (m < 0.5) return 'a sliver of the median';
-          if (m < 1.5) return 'about the median income';
-          if (m < 1000) return Math.round(m) + '× the median';
-          return Math.round(m).toLocaleString() + '× the median';
-        }
-        function band(s) { return s < 3.4 ? 'in real deprivation' : s < 4.8 ? 'getting by' : s < 5.6 ? 'comfortable' : 'as content as the scale goes'; }
-        function punch(s) {
-          if (s < 3.6) return 'This is the only stretch where money truly buys feeling. Climbing out of deprivation is the part that moves the needle.';
-          if (s < 5.5) return 'Most of the lift is already behind you. From here, vast increases in wealth buy almost nothing.';
-          return 'You could multiply this fortune a thousandfold and the rating would barely twitch. <b>The herder with almost nothing is standing right beside you.</b>';
-        }
-        // reference ticks
-        var ticks = document.getElementById('wv-ticks');
-        [[2.9, 'the destitute · 2.9', 0], [5.7, '', 0], [5.8, 'herder 5.7 / billionaire 5.8', 1]].forEach(function (t) {
-          var x = pct(t[0]);
-          var line = document.createElement('div'); line.className = 'wv-tick'; line.style.left = x + '%'; ticks.appendChild(line);
-          if (t[1]) { var lab = document.createElement('div'); lab.className = 'wv-ticklbl'; lab.style.left = (t[2] ? pct(5.75) : x) + '%'; lab.textContent = t[1]; ticks.appendChild(lab); }
-        });
-        var wEl = document.getElementById('wv-wealth'), mEl = document.getElementById('wv-mult'),
-            sEl = document.getElementById('wv-sat'), bEl = document.getElementById('wv-band'),
-            fill = document.getElementById('wv-fill'), you = document.getElementById('wv-you'), pEl = document.getElementById('wv-punch');
-        function update() {
-          var p = (+sl.value) / 1000, L = Lmin + p * Lspan, w = Math.pow(10, L), s = satOf(L);
-          wEl.textContent = fmt(w);
-          mEl.textContent = mult(w);
-          sEl.innerHTML = s.toFixed(1) + '<em>/ 7</em>';
-          bEl.textContent = band(s);
-          fill.style.width = pct(s) + '%';
-          you.style.left = pct(s) + '%';
-          pEl.innerHTML = punch(s);
-        }
-        sl.addEventListener('input', update);
-        update();
-      })();
-      </script>
-
-      <aside class="u-callout u-aside">
-        <p class="u-callout-k">Two true exceptions</p>
-        <p class="u-callout-body"><b>Money does still buy one thing.</b> When you stop and rate your whole life at once, that score keeps climbing with income, even after your day-to-day mood has flattened out. And the tie only holds once your basic needs are met. Push things low enough and happiness really does collapse: the homeless in these same studies score about 2.9. Being poor is genuinely worse. What's a myth is the idea that the rich are happier than the merely comfortable.</p>
-      </aside>
-    </section>
-
-    <!-- ===================== 5. THE THREE THINGS ===================== -->
-    <section id="three" class="sec reveal">
-      <span class="sec-kicker">The math of a life</span>
-      <h2 class="sec-h">Two things are handed to you. One is not.</h2>
-      <p class="lede">Take a life apart and most of it comes down to two things you never picked. The genes you were born with, and the home you grew up in. Together they explain a lot, maybe half of your basic mood and a good chunk of the rest. But they don't add up to the whole thing. There's a third piece.</p>
-
-      <figure class="viz reveal" aria-label="Three inputs to a life. Your genes and your upbringing are dealt to you and fixed. How you treat others is the one dial you can still move.">
-        <figcaption>The three things you are made of</figcaption>
-        <div class="viz-sub">Two are handed to you and fixed. The third is the only dial you still hold.</div>
+<section id="three" class="sec reveal"><h2 class="sec-h">What was handed to you</h2><p class="lede">You did not choose your parents or your childhood. You do make choices now, including how you treat people. Much sits between the two.</p>
+<p>Health, work and the place you live can limit your choices. Other people's choices can alter yours. Genes and upbringing do not take fixed shares of a life, leaving generosity everything left over.</p><figure class="viz reveal" aria-label="A reflective framework: inheritance, past experience and choices now. This is not an exhaustive or measured model of well-being.">
+        <figcaption>Some things received, some things chosen</figcaption>
+        <div class="viz-sub">A framework for reflection, not a division of happiness into percentages.</div>
         <svg viewBox="0 0 720 250" role="img">
-          <text x="16" y="61" class="v-cap" font-size="16">Your genes</text>
+          <text x="16" y="61" class="v-cap" font-size="16">Inheritance</text>
           <line x1="210" y1="56" x2="600" y2="56" class="v-grid-s"/>
           <circle cx="372" cy="56" r="8" fill="#8fb3c7" opacity="0.75"/>
-          <text x="620" y="60" class="v-axis-t">GIVEN</text>
+          <text x="620" y="60" class="v-axis-t">RECEIVED</text>
 
-          <text x="16" y="130" class="v-cap" font-size="16">Your upbringing</text>
+          <text x="16" y="130" class="v-cap" font-size="16">Past experience</text>
           <line x1="210" y1="125" x2="600" y2="125" class="v-grid-s"/>
           <circle cx="452" cy="125" r="8" fill="#b79bc4" opacity="0.75"/>
-          <text x="620" y="129" class="v-axis-t">GIVEN</text>
+          <text x="620" y="129" class="v-axis-t">RECEIVED</text>
 
-          <text x="16" y="199" class="v-cap" font-size="16">How you treat others</text>
+          <text x="16" y="199" class="v-cap" font-size="16">Choices now</text>
           <line x1="210" y1="194" x2="600" y2="194" stroke="#9ec79a" stroke-width="1.5" opacity="0.45"/>
-          <text x="210" y="215" class="v-axis-t" fill="#8d978c">all for yourself</text>
-          <text x="600" y="215" text-anchor="end" class="v-axis-t" fill="#8d978c">in service of others</text>
+          <text x="210" y="215" class="v-axis-t" fill="#8d978c">many constraints</text>
+          <text x="600" y="215" text-anchor="end" class="v-axis-t" fill="#8d978c">some room to act</text>
           <circle cx="405" cy="194" r="15" fill="#9ec79a" opacity="0.18"/>
           <circle cx="405" cy="194" r="9" fill="#9ec79a"/>
           <polyline points="384,188 378,194 384,200" fill="none" stroke="#9ec79a" stroke-width="1.6" opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>
           <polyline points="426,188 432,194 426,200" fill="none" stroke="#9ec79a" stroke-width="1.6" opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="620" y="198" class="v-axis-t" fill="#9ec79a">YOURS</text>
+          <text x="620" y="198" class="v-axis-t" fill="#9ec79a">IN PART</text>
         </svg>
-        <p class="viz-note"><b>Your genes and your upbringing</b> are set before you get a vote, and they explain a lot. The third dial, how much you turn toward other people instead of yourself, is the one you can still move. The next part is why it matters so much more than you'd expect.</p>
-      </figure>
+        <p class="viz-note">Decorative markers, with no measured size or weight. These influences overlap.</p>
+      </figure><p>Given the room I have, what am I going to do for another person? I want to keep that question without making kindness the only choice that matters.</p></section>
 
-      <p>The first two are locked in before you get a say. The third is the only part you actually control, and it turns out to be the part that changes how you feel the most. Not your circumstances, which you just get used to. The one thing that keeps paying off is how you treat other people.</p>
-    </section>
-
-    <!-- ===================== 6. THE LEVER ===================== -->
-    <section id="lever" class="sec reveal">
-      <span class="sec-kicker">The third thing</span>
-      <h2 class="sec-h">The one lever you actually hold</h2>
-      <p class="lede">Of everything inside you, the one part you can actually move is which way you're facing. Toward yourself, or toward everyone else. And out of every lever scientists have tested, this is the one that keeps winning.</p>
-      <p>The longest study of human life ever run has followed people for more than 85 years. Its clearest finding is not money, or fame, or cholesterol. It's that the warmth of your relationships, more than anything else they measured, predicts how healthy and happy you'll be at the end of your life. Loneliness is about as bad for you as smoking 15 cigarettes a day.</p>
-      <div class="stat-bartab-row">
-        <div class="stat-bartab"><div class="stat-num">15</div><p class="stat-label">cigarettes a day: the mortality risk that matches chronic loneliness</p></div>
-      </div>
-      <p>And the thing the old traditions always insisted on turns out to be true. People who volunteer live longer, but only if they do it for other people. Do it to feel good about yourself and the benefit disappears. Alcoholics Anonymous said it in one line back in 1939, long before any data backed it up: <em>selfishness is the root of our trouble.</em> The fix was to be of service. But if you give to get something back, it doesn't work. You have to actually mean it.</p>
-
-      <figure class="photo portrait reveal">
+<section id="lever" class="sec reveal"><h2 class="sec-h">Other people matter</h2><p class="lede">Relationships belong in the evidence about living well. They also matter for reasons that a happiness score cannot settle.</p>
+<p>A <a href="https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1000316">2010 review combined 148 prospective studies of social relationships and mortality</a>. Stronger relationships were associated with better survival. These were observational studies, with varying measures and adjustments. They support taking connection seriously, without assigning each lonely person an equivalent number of cigarettes.</p>
+<p>In a <a href="https://www.hbs.edu/ris/Publication%20Files/Norton_Michael_Spending%20money%20on%20others%20promotes%20happiness_ddd17e6e-fc21-438f-811e-62561cc97a18.pdf">2008 experiment</a>, 46 participants were randomly assigned $5 or $20 to spend on themselves or on others. Those assigned to spend on others reported greater happiness that evening, controlling for their morning rating. It measured one evening's happiness, without establishing lasting benefits or testing pure motives.</p>
+<p>Alcoholics Anonymous makes a moral claim in <a href="https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt5.pdf">chapter 5 of its <i>Big Book</i></a>: self-centeredness is at the root of the troubles it describes. I take it as an instruction, rather than a diagnosis of everyone's suffering.</p><figure class="photo portrait reveal">
         <img src="assets/vangogh-samaritan-960.webp" srcset="assets/vangogh-samaritan-480.webp 480w, assets/vangogh-samaritan-960.webp 960w, assets/vangogh-samaritan-1600.webp 1600w" sizes="(max-width: 480px) 90vw, 28rem" width="1600" height="1953" loading="lazy" decoding="async" alt="Van Gogh's painting The Good Samaritan: in swirling blues and yellows, a man strains to lift a wounded traveler up onto a waiting horse.">
-        <figcaption>Vincent van Gogh, The Good Samaritan (1890). The oldest advice there is, in one picture: a stranger lifting another stranger onto his own horse.</figcaption>
+        <figcaption>Vincent van Gogh, <i>The Good Samaritan</i> (1890), after Delacroix. The wounded traveler needs another person to lift him onto the horse.</figcaption>
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Vincent_van_Gogh_-_The_Good_Samaritan,_1890_-_Google_Art_Project.jpg">Vincent van Gogh, 1890, public domain</a></span>
-      </figure>
+      </figure><p>The traveler still needs lifting. That is the part of the old advice I want to keep, even without a promise of personal reward.</p></section>
 
-      <aside class="u-callout u-aside">
-        <p class="u-callout-k">Stated honestly</p>
-        <p class="u-callout-body"><b>Most of this is correlation.</b> Happy, healthy people can just afford to be more generous, so the cause and effect isn't nailed down. The clean experiments (give a stranger five dollars, do a week of small kindnesses) show a real lift, but a small one. And helping with no limits has its own trap: the burned-out caregiver, the martyr. So the honest version is smaller, and still amazing. Of the things you can actually control, how you treat people is one of the best-proven ways to change your own life.</p>
-      </aside>
-    </section>
-
-    <!-- ===================== 7. THE WAY OUT / LANDING ===================== -->
-    <section id="wayout" class="sec reveal">
-      <span class="sec-kicker">Nothing new, including this</span>
-      <h2 class="sec-h">Everyone already knew the way out</h2>
-      <p class="lede">Treat other people the way you want to be treated. Don't do to your neighbor what you'd hate done to you. The same line shows up, in almost the same words, in about fourteen traditions across four thousand years. It's scratched on Egyptian papyrus. It's in the mouths of the Buddha, Confucius, Hillel, and Jesus.</p>
-      <p>Nobody copied it down a chain from one person. People who never met, on every continent, kept landing on the exact same rule. The best advice we've ever come up with is also the advice we've come up with the most times. That's not a coincidence to explain away. That's just what it looks like when something is true.</p>
-
-      <!-- INTERACTIVE: the golden-rule map (the same rule across a dozen traditions, each found alone) -->
-      <div class="tool reveal" id="goldenrule">
-        <div class="tool-head"><h4>One rule, many tongues</h4><span class="tool-tag">interactive</span></div>
+<section id="wayout" class="sec reveal"><h2 class="sec-h">Similar advice, different texts</h2><p class="lede"><a href="https://www.biblegateway.com/passage/?search=Matthew%207%3A12&amp;version=KJV">Matthew</a> asks us to do for others what we want done for ourselves. <a href="https://www.sefaria.org/Shabbat.31a.6?lang=bi">Hillel</a> and <a href="https://classics.mit.edu/Confucius/analects.3.3.html">Confucius</a> warn against doing what we would hate to receive. The <a href="https://accesstoinsight.org/tipitaka/kn/dhp/dhp.10.budd.html">Dhammapada</a> applies comparison with ourselves to violence. There is a family resemblance.</p>
+<p>Action and restraint ask different things of us. A brother, a neighbor and every creature can be different circles of concern. The traditions give the advice different reasons and place it beside different obligations.</p>
+<p>The selector compares passages through labeled paraphrases and English sources. Similar wording alone cannot establish independent invention, borrowing, or agreement between whole traditions.</p><details class="u-collapse" id="tradition-notes"><summary class="u-collapse-s">Compare twelve passages</summary><div class="optional-body"><div class="tool reveal" id="goldenrule">
+        <div class="tool-head"><h4>Related advice in twelve traditions</h4><span class="tool-tag">interactive</span></div>
         <div class="tool-body">
-          <p class="alm-intro">The same instruction, found alone by people who never met, across four thousand years and three continents. Tap any tradition.</p>
+          <p class="alm-intro">Select a tradition to read a plain-English paraphrase, its text location and an English source. These are related instructions, not interchangeable quotations or a claim of independent invention.</p>
           <div class="gr-grid" id="gr-grid"></div>
           <div class="gr-card" id="gr-card" aria-live="polite"></div>
-          <p class="tool-rail">One rule, said two ways: most as “do,” a few as “do not.” <b>They really do agree, but the wording isn't identical,</b> and the scholar who wrote the book on it says exactly that. The small differences are half the fun.</p>
+          <p class="tool-rail">Some ask for action; some forbid harm; some ask you to share another person's good fortune or loss. Their surrounding arguments and the people or creatures they include also differ.</p>
         </div>
       </div>
+<noscript><p>The selector needs JavaScript. Compare <a href="https://classics.mit.edu/Confucius/analects.3.3.html">Analects 15.24</a>, <a href="https://www.biblegateway.com/passage/?search=Matthew%207%3A12&amp;version=KJV">Matthew 7:12</a> and <a href="https://accesstoinsight.org/tipitaka/kn/dhp/dhp.10.budd.html">Dhammapada 129 to 130</a> directly. These instructions differ in form and context.</p></noscript>
       <script>
       (function () {
         'use strict';
         var grid = document.getElementById('gr-grid'), card = document.getElementById('gr-card');
         if (!grid || !card) return;
         var DATA = [
-          {trad:'Ancient Egypt', date:'c. 1800 BCE', form:'do', quote:'Do for one who may do for you, that you may cause him thus to do.', note:'From the Tale of the Eloquent Peasant, often called the oldest written version.'},
-          {trad:'Hinduism', date:'c. 400 BCE', form:'do not', quote:'One should never do to another what one regards as hurtful to one’s own self.', note:'The Mahabharata, called there “the sum of duty.”'},
-          {trad:'Confucianism', date:'c. 500 BCE', form:'do not', quote:'What you do not wish for yourself, do not do to others.', note:'Confucius, the Analects. He named the principle shu, reciprocity.'},
-          {trad:'Zoroastrianism', date:'c. 500 BCE', form:'do not', quote:'Whatever is disagreeable to yourself, do not do unto others.', note:'The Shayast-na-Shayast.'},
-          {trad:'Jainism', date:'c. 500 BCE', form:'do', quote:'A man should wander about treating all creatures as he himself would be treated.', note:'The Sutrakritanga.'},
-          {trad:'Judaism', date:'c. 500 BCE', form:'do', quote:'Love your neighbor as yourself.', note:'Leviticus. Centuries later Hillel: “What is hateful to you, do not do to your neighbor. That is the whole Torah.”'},
-          {trad:'Greece', date:'c. 400 BCE', form:'do not', quote:'Do not do to others what would anger you if done to you by others.', note:'Isocrates, to the young king Nicocles.'},
-          {trad:'Christianity', date:'c. 30 CE', form:'do', quote:'Do to others as you would have them do to you.', note:'The Sermon on the Mount, the Gospel of Matthew.'},
-          {trad:'Buddhism', date:'c. 100 CE', form:'do not', quote:'Hurt not others in ways that you yourself would find hurtful.', note:'The Udanavarga.'},
-          {trad:'Islam', date:'c. 630 CE', form:'do', quote:'None of you truly believes until he wishes for his brother what he wishes for himself.', note:'A saying of the Prophet, collected by an-Nawawi.'},
-          {trad:'Taoism', date:'c. 1100 CE', form:'do', quote:'Regard your neighbor’s gain as your own gain, and your neighbor’s loss as your own loss.', note:'The T’ai Shang Kan Ying P’ien.'},
-          {trad:'Baha’i Faith', date:'19th century', form:'do', quote:'Choose thou for thy neighbor that which thou choosest for thyself.', note:'Baha’u’llah.'}
-        ];
+  {
+    "trad": "Ancient Egypt",
+    "date": "The Eloquent Peasant, second petition",
+    "form": "reciprocity",
+    "quote": "Act well toward someone who may respond in kind.",
+    "note": "A plea for justice addressed to an official, with reciprocity and reward in view. Paraphrased from R. B. Parkinson's translation; this is not a claim that Egypt had the first golden rule.",
+    "url": "https://www.britishmuseum.org/sites/default/files/2022-10/Hieroglyphs_unlocking_ancient_Egypt_Eloquent_Peasant_full_text.pdf"
+  },
+  {
+    "trad": "Hinduism",
+    "date": "Mahabharata 13, section CXIII",
+    "form": "restraint",
+    "quote": "Do not do to another what you would find harmful to yourself.",
+    "note": "The passage also asks the reader to care for other creatures. Paraphrased from Kisari Mohan Ganguli's translation of the Anusasana Parva.",
+    "url": "https://sacred-texts.com/hin/m13/m13b078.htm"
+  },
+  {
+    "trad": "Confucianism",
+    "date": "Analects 15.24",
+    "form": "restraint",
+    "quote": "Do not impose on others what you would not want for yourself.",
+    "note": "Confucius gives reciprocity as a principle for a whole life. Paraphrased from James Legge's translation.",
+    "url": "https://classics.mit.edu/Confucius/analects.3.3.html"
+  },
+  {
+    "trad": "Zoroastrianism",
+    "date": "Dadestan-i Denig 94.5",
+    "form": "restraint",
+    "quote": "Do not do to another what would be bad for you.",
+    "note": "This is a passage in a Pahlavi text, not a securely dated saying from Zoroaster himself. Paraphrased from E. W. West's translation.",
+    "url": "https://www.avesta.org/mp/dd42.htm"
+  },
+  {
+    "trad": "Jainism",
+    "date": "Sutrakritanga 1.11.33",
+    "form": "care",
+    "quote": "Treat every creature as you would want to be treated.",
+    "note": "The instruction appears in a discussion of monastic conduct and includes creatures beyond human neighbors. Paraphrased from Hermann Jacobi's translation.",
+    "url": "https://sacred-texts.com/jai/sbe45/sbe4559.htm"
+  },
+  {
+    "trad": "Judaism",
+    "date": "Babylonian Talmud, Shabbat 31a.6",
+    "form": "restraint",
+    "quote": "Do not do to another what is hateful to you.",
+    "note": "Hillel answers a prospective convert, then tells him to study the rest of the Torah. Paraphrased from the William Davidson Talmud edition.",
+    "url": "https://www.sefaria.org/Shabbat.31a.6?lang=bi"
+  },
+  {
+    "trad": "Greece",
+    "date": "Isocrates, Nicocles 61",
+    "form": "restraint",
+    "quote": "Do not do to others what angers you when they do it to you.",
+    "note": "Isocrates puts this advice in a king's address to his subjects. Its context includes obedience to the monarch. Paraphrased from George Norlin's translation.",
+    "url": "https://cts.perseids.org/read/greekLit/tlg0010/tlg014/perseus-eng2/61-64"
+  },
+  {
+    "trad": "Christianity",
+    "date": "Matthew 7:12",
+    "form": "action",
+    "quote": "Do for others what you would want them to do for you.",
+    "note": "In Matthew's Sermon on the Mount, Jesus links the instruction to the law and the prophets. Paraphrased from the King James Version.",
+    "url": "https://www.biblegateway.com/passage/?search=Matthew%207%3A12&version=KJV"
+  },
+  {
+    "trad": "Buddhism",
+    "date": "Dhammapada 129 to 130",
+    "form": "nonviolence",
+    "quote": "Remembering that others fear harm as you do, neither kill nor cause killing.",
+    "note": "The passage applies comparison with oneself to violence and the value of life. Paraphrased from Acharya Buddharakkhita's translation.",
+    "url": "https://accesstoinsight.org/tipitaka/kn/dhp/dhp.10.budd.html"
+  },
+  {
+    "trad": "Islam",
+    "date": "Sahih al-Bukhari 13",
+    "form": "care",
+    "quote": "Love for your brother what you love for yourself.",
+    "note": "The hadith connects this attitude to faith. The English source adds Muslim in parentheses before brother. That gloss deserves attention when comparing the scope of these passages. Paraphrased from the linked translation.",
+    "url": "https://sunnah.com/bukhari:13"
+  },
+  {
+    "trad": "Taoism",
+    "date": "Tai Shang Kan Ying Pien, virtuous conduct",
+    "form": "sympathy",
+    "quote": "Share another person's good fortune and loss as though they were your own.",
+    "note": "The Book of Recompenses places this sympathy among instructions for virtuous conduct, with spiritual rewards and penalties. Paraphrased from Frederic Henry Balfour's translation.",
+    "url": "https://sacred-texts.com/tao/ttx/ttx11.htm"
+  },
+  {
+    "trad": "Baha'i Faith",
+    "date": "Gleanings, section CXXV",
+    "form": "restraint",
+    "quote": "Do not wish for others what you would not wish for yourself.",
+    "note": "Baha'u'llah gives this instruction to the seeker alongside humility and other disciplines. Paraphrased from Shoghi Effendi's translation.",
+    "url": "https://www.bahai.org/library/authoritative-texts/bahaullah/gleanings-writings-bahaullah/7"
+  }
+];
         var motionOK = window.matchMedia && window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
         var sel = -1, chips = [];
         function render(i) {
           var d = DATA[i];
           card.textContent = '';
-          var q = document.createElement('p'); q.className = 'gr-quote'; q.textContent = '“' + d.quote + '”';
+          var q = document.createElement('p'); q.className = 'gr-quote'; q.textContent = d.quote;
           var meta = document.createElement('div'); meta.className = 'gr-meta';
           var tr = document.createElement('span'); tr.className = 'gr-trad'; tr.textContent = d.trad;
           var dt = document.createElement('span'); dt.className = 'gr-date'; dt.textContent = d.date;
-          var fm = document.createElement('span'); fm.className = 'gr-form ' + (d.form === 'do' ? 'do' : 'dont'); fm.textContent = 'the “' + d.form + '” form';
+          var fm = document.createElement('span'); fm.className = 'gr-form ' + (d.form === 'restraint' ? 'dont' : 'do'); fm.textContent = d.form;
           meta.appendChild(tr); meta.appendChild(dt); meta.appendChild(fm);
           var nt = document.createElement('p'); nt.className = 'gr-note'; nt.textContent = d.note;
-          card.appendChild(q); card.appendChild(meta); card.appendChild(nt);
+          var label = document.createElement("p"); label.className = "gr-paraphrase-label"; label.textContent = "In plain English (paraphrase)";
+          card.appendChild(label); card.appendChild(q); card.appendChild(meta); card.appendChild(nt);
+          var source = document.createElement("a"); source.href = d.url; source.textContent = "Read the English source"; source.className = "tool-source"; card.appendChild(source);
         }
         function select(i) {
-          if (sel >= 0 && chips[sel]) chips[sel].classList.remove('on');
-          sel = i; chips[i].classList.add('on'); render(i);
+          if (sel >= 0 && chips[sel]) { chips[sel].classList.remove('on'); chips[sel].setAttribute('aria-pressed', 'false'); }
+          sel = i; chips[i].classList.add('on'); chips[i].setAttribute('aria-pressed', 'true'); render(i);
         }
         DATA.forEach(function (d, i) {
-          var b = document.createElement('button'); b.type = 'button'; b.className = 'gr-chip'; b.textContent = d.trad;
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'gr-chip'; b.textContent = d.trad; b.setAttribute('aria-pressed', 'false');
           if (motionOK) { b.style.animation = 'grpop 0.5s var(--ease) backwards'; b.style.animationDelay = (i * 0.045) + 's'; }
           b.addEventListener('click', function () { select(i); });
           grid.appendChild(b); chips[i] = b;
         });
         select(0);
       })();
-      </script>
-
-      <figure class="photo portrait reveal">
+      </script></div></details><figure class="photo portrait reveal">
         <img src="assets/fayum-man-960.webp" srcset="assets/fayum-man-480.webp 480w, assets/fayum-man-960.webp 960w, assets/fayum-man-1600.webp 1600w" sizes="(max-width: 480px) 90vw, 28rem" width="1600" height="2619" loading="lazy" decoding="async" alt="A Fayum mummy portrait: a bearded young man of Roman-era Egypt, painted on a wooden panel, looking directly out at the viewer with dark, present eyes.">
-        <figcaption>A man from Roman Egypt, painted on his coffin about 1,800 years ago. Same feelings as you. Same wiring. He just got here first.</figcaption>
+        <figcaption>A portrait from Roman Egypt. The face invites recognition, but the painting cannot tell us what his inner life was like.</figcaption>
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Fayum_mummy_portrait,_male_(circa_2nd_century),_Christie%27s_02.jpg">Fayum mummy portrait, c. 2nd century AD, public domain</a></span>
-      </figure>
+      </figure><p>The title comes from <a href="https://www.biblegateway.com/passage/?search=Ecclesiastes%201%3A9&amp;version=KJV">Ecclesiastes 1:9</a>. For me, it is a reminder that the world did not begin with my worries. It gives me no measurement of another person's feelings.</p>
+<p>Treating another person with care remains something I want to do. What that person needs may differ from what I would want in their place. The old instruction still leaves that question open.</p></section>
 
-      <p>So that's the whole thing. The doom you feel, everyone has felt it. The feelings you feel came in the same small kit everyone got, and they max out at the same ceiling for everyone. Two of the three things that made you were handed to you, the same way they're handed to everybody. As far as anyone can measure, you are equal to every human who ever lived. Nobody is having a richer time of it on the inside than you are.</p>
-      <p>Which leaves the third thing. The one lever. The one part that was ever really yours. And the instructions for it have been sitting in plain sight, in every language, the whole time. There's nothing new under the sun, including the way out.</p>
-
-      <hr class="u-divider">
-    </section>
-
-    <!-- ===================== SOURCES ===================== -->
-    <section id="sources" class="sec">
-      <span class="sec-kicker">The fine print</span>
-      <h2 class="sec-h">Sources, and how to read them</h2>
-      <p class="lede">Every claim here points to real research, cited where it shows up. Here's the full list, strongest evidence first in each group. Where it's one study, or mixed, or still up in the air, the text says so instead of pretending to be sure.</p>
-
-      <ol>
-        <li class="shead">The end is always near</li>
-        <li value="1"><b>Quote Investigator.</b> "The Children Now Love Luxury" is not Socrates; it traces to Kenneth John Freeman, Cambridge dissertation, 1907. <a href="https://quoteinvestigator.com/2010/05/01/misbehave/">quoteinvestigator.com</a></li>
-        <li value="2"><b>Britannica.</b> 10 failed doomsday predictions (Millerites 1844, Halley's Comet 1910, Camping 2011, and more). <a href="https://www.britannica.com/list/10-failed-doomsday-predictions">britannica.com</a></li>
-        <li value="3"><b>Cohn, N. (1957).</b> <i>The Pursuit of the Millennium.</i> The recurring shape of apocalyptic movements. <a href="https://en.wikipedia.org/wiki/The_Pursuit_of_the_Millennium">overview</a></li>
-        <li value="4"><b>Ord, T. (2020).</b> <i>The Precipice.</i> The honest counter: genuinely novel risk since 1945. <a href="https://theprecipice.com/">theprecipice.com</a></li>
-        <li class="shead">The same instrument</li>
-        <li value="5"><b>Barrett, L. F. (2017).</b> How Emotions Are Made; core affect as valence by arousal. <a href="https://academic.oup.com/scan/article/12/1/1/2823712">SCAN</a></li>
-        <li value="6"><b>Barrett, Adolphs, et al. (2019).</b> Emotional expressions reconsidered. <i>Psych Sci in the Public Interest.</i> <a href="https://journals.sagepub.com/doi/10.1177/1529100619832930">journal</a></li>
-        <li value="7"><b>Crivelli, et al. (2016).</b> The fear face read as threat among the Trobrianders. <i>PNAS.</i> <a href="https://www.pnas.org/content/113/44/12403">pnas.org</a></li>
-        <li value="8"><b>LeDoux, J. (2012).</b> Conserved survival circuits across mammals. <i>Prog Brain Res.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3600914/">PMC3600914</a></li>
-        <li class="shead">The treadmill and the leveling</li>
-        <li value="9"><b>Brickman, Coates & Janoff-Bulman (1978).</b> Lottery winners and accident victims. <i>JPSP.</i> <a href="https://gwern.net/doc/psychology/1978-brickman.pdf">PDF</a></li>
-        <li value="10"><b>Diener, Lucas & Scollon (2006).</b> Beyond the hedonic treadmill (set points can move). <i>Am Psychologist.</i> <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Lucas-Scollon_2006.pdf">PDF</a></li>
-        <li value="11"><b>Lucas, et al. (2003, 2004).</b> Widowhood and unemployment durably lower the set point. <a href="https://www.apa.org/pubs/journals/releases/psp-843527.pdf">marital</a> / <a href="https://bura.brunel.ac.uk/bitstream/2438/926/1/02-16.pdf">unemployment</a></li>
-        <li value="12"><b>Diener & Seligman (2004).</b> "Beyond Money"; Forbes 400 (5.8) vs Maasai (5.7), homeless (2.9). <i>PSPI.</i> <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Seligman_2004.pdf">PDF</a></li>
-        <li value="13"><b>Kahneman & Deaton (2010).</b> Income improves life evaluation but not daily mood past a point. <i>PNAS.</i> <a href="https://www.pnas.org/doi/10.1073/pnas.1011492107">pnas.org</a></li>
-        <li class="shead">The three things, and the lever</li>
-        <li value="14"><b>Lykken & Tellegen (1996).</b> Happiness is roughly 50 percent heritable (twins). <i>Psych Science.</i> <a href="https://journals.sagepub.com/doi/10.1111/j.1467-9280.1996.tb00355.x">journal</a></li>
-        <li value="15"><b>Waldinger & Schulz (2023).</b> The Good Life; Harvard Study of Adult Development. <a href="https://www.robertwaldinger.com/post/what-harvard-s-study-of-adult-development-reveals-about-happiness">summary</a></li>
-        <li value="16"><b>Holt-Lunstad, et al. (2010).</b> Social connection and mortality (the "15 cigarettes" finding). <i>PLoS Medicine.</i> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2910600/">PMC2910600</a></li>
-        <li value="17"><b>Konrath, et al. (2012).</b> Volunteering extends life only for other-oriented motives. <i>Health Psych.</i> <a href="https://www.apa.org/pubs/journals/releases/hea-31-1-87.pdf">PDF</a></li>
-        <li value="18"><b>Dunn, Aknin & Norton (2008).</b> Spending on others raises happiness (RCT). <i>Science.</i> <a href="https://www.science.org/doi/10.1126/science.1150952">science.org</a></li>
-        <li value="19"><b>AA (1939).</b> "Selfishness, self-centeredness, that we think is the root of our troubles." <i>Big Book, ch. 5.</i> <a href="https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt5.pdf">PDF</a></li>
-        <li value="20"><b>Brown & Rohrer (2020).</b> The honest caveat: the "40 percent" happiness pie is not sound. <i>J Happiness Studies.</i> <a href="https://link.springer.com/article/10.1007/s10902-019-00128-4">Springer</a></li>
-        <li class="shead">The way out, found everywhere</li>
-        <li value="21"><b>Wattles, J. (1996).</b> <i>The Golden Rule</i> (Oxford). The rule across traditions, with its honest differences. <a href="https://global.oup.com/academic/product/the-golden-rule-9780195110364">OUP</a></li>
-        <li value="22"><b>Hillel; Confucius; Matthew; Nawawi; Mahabharata.</b> Sourced cross-tradition table. <a href="https://en.wikipedia.org/wiki/Golden_Rule">overview</a></li>
-        <li value="23"><b>Henrich, et al. (2005).</b> Fairness in 15 small-scale societies: everywhere, but locally tuned. <i>BBS.</i> <a href="https://pubmed.ncbi.nlm.nih.gov/16372952/">PubMed</a></li>
-      </ol>
-
-      <hr class="u-divider">
-    </section>
-
+<section id="sources" class="sec reveal"><h2 class="sec-h">Sources and methods</h2><details class="u-collapse" id="research-notes"><summary class="u-collapse-s">Open the research notes</summary><div class="optional-body"><p>These notes describe the methods behind the claims above.</p>
+<ol class="method-notes">
+<li><b>1978 lottery and injury study.</b> Small, one-time interviews, with retrospective and anticipated ratings. The injury sample differed in age and recruitment. It cannot measure a pre-event baseline or long-term recovery. <a href="https://gwern.net/doc/psychology/1978-brickman.pdf">Original paper</a>.</li>
+<li><b>Adaptation review.</b> Diener, Lucas and Scollon (2006) review earlier research and propose changes to set-point theory. Their synthesis is not a new randomized trial. <a href="https://labs.psychology.illinois.edu/~ediener/Documents/Diener-Lucas-Scollon_2006.pdf">Original review</a>.</li>
+<li><b>Swedish lottery evidence.</b> The 2018 working-paper version, later published in 2020, reports 3,362 respondents and a 69 percent response rate. Within-lottery randomization supports a causal estimate of prize size for these players. It does not make them a random sample of all people or establish effects of losing money. <a href="https://www.nber.org/papers/w24667.pdf">Full working paper</a>.</li>
+<li><b>Wealth and culture.</b> The Forbes survey was mailed to 100 addressable members of the 1983 list, with 49 responses. The later Maasai sample used word-of-mouth recruitment, trained translators and a five-item life-satisfaction scale. Neither supports an individual prediction. <a href="https://emmons.faculty.ucdavis.edu/wp-content/uploads/sites/90/2015/08/1985_1happiness-wealthy.pdf">Forbes paper</a>; <a href="https://doi.org/10.1007/s10902-005-5683-8">Maasai paper</a>; <a href="https://www.psychologicalscience.org/observer/income-and-happiness">Diener's own 2005 warning about the comparison</a>.</li>
+<li><b>Income and daily feeling.</b> The 2023 collaboration reanalyzed reports collected in 2009 to 2015 from employed adults aged 18 to 65. Its quantile results describe different parts of the well-being distribution. The roughly $100,000 point is not a present-day universal threshold. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10013834/">Full paper</a>.</li>
+<li><b>Connection and survival.</b> The 2010 meta-analysis includes 308,849 participants. The combined odds ratio for survival was 1.50 for stronger versus weaker social relationships. That is not “50 percent longer life,” an individual probability, or a loneliness-only estimate. <a href="https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1000316">Full review</a>.</li>
+<li><b>Spending on others.</b> The 2008 paper also includes observational studies; the main text here describes its randomized experiment. The outcome was self-reported happiness that evening, not mortality or durable recovery. <a href="https://www.hbs.edu/ris/Publication%20Files/Norton_Michael_Spending%20money%20on%20others%20promotes%20happiness_ddd17e6e-fc21-438f-811e-62561cc97a18.pdf">Full paper</a>.</li>
+<li><b>Texts and illustrations.</b> The almanac and tradition selector link their sources on each card. Religious paraphrases are this page's wording, not new translations from the original languages. The emotion map and adaptation curves are illustrations. The income slider demonstrates a mathematical scale; none of the tools scores a person's well-being.</li>
+</ol></div></details></section>
   </main>
-
   <footer class="site-footer">
     <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
       <a href="/">&copy; 2026 Ethan Willingham</a>
@@ -967,7 +995,7 @@
   <script src="/js/main.js"></script>
   <script src="/js/backtotop.js"></script>
   <script>
-  /* Reveal on scroll. The CSS hides .reveal only when motion is welcome, so under
+  /* Reveal on scroll. The CSS hides .reveal only with JavaScript and when motion is welcome, so under
      reduced-motion everything is visible already and this just no-ops. */
   (function () {
     'use strict';

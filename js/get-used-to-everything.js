@@ -4,7 +4,7 @@
    Two independent pieces, each guarded so one failing cannot
    break the other:
      1. scroll-reveal + figure draw-in animations
-     2. the Troxler fading demo
+     2. a stationary Troxler-style stimulus and a fixation timer
    No em dashes anywhere.
    ============================================================ */
 (function () {
@@ -32,7 +32,7 @@
     setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
   })();
 
-  /* ---------- 2. TROXLER FADING DEMO ---------- */
+  /* ---------- 2. FIXATION DEMO ---------- */
   (function () {
     var stage = document.getElementById('tx-stage');
     if (!stage) return;
@@ -60,28 +60,43 @@
       stage.appendChild(el);
     });
 
-    var fadeTimer = null;
+    var fixationTimer = null;
+    var shifted = false;
+    var dotElements = stage.querySelectorAll('.tx-dot');
     function setState(t) { if (state) state.textContent = t; }
-
-    function fade() {
-      stage.classList.add('faded');
-      startBtn.classList.add('is-on');
-      setState('fading, hold your gaze');
-      clearTimeout(fadeTimer);
-      fadeTimer = setTimeout(function () { setState('gone'); }, 6200);
-    }
-    function restore() {
-      clearTimeout(fadeTimer);
-      stage.classList.remove('faded');
+    function stopTimer() {
+      clearTimeout(fixationTimer);
+      fixationTimer = null;
       startBtn.classList.remove('is-on');
-      setState('ready');
+      startBtn.setAttribute('aria-pressed', 'false');
     }
-
-    startBtn.addEventListener('click', fade);
-    resetBtn.addEventListener('click', restore);
-    /* any movement over the stage refreshes the image, exactly like a microsaccade */
-    stage.addEventListener('pointermove', function () {
-      if (stage.classList.contains('faded')) restore();
+    function startFixation() {
+      stopTimer();
+      startBtn.classList.add('is-on');
+      startBtn.setAttribute('aria-pressed', 'true');
+      setState('Fixating: display unchanged');
+      /* Timing the exercise does not measure visibility or alter the stimulus. */
+      fixationTimer = setTimeout(function () {
+        stopTimer();
+        setState('Time ended: display unchanged');
+      }, 30000);
+    }
+    function refreshPattern() {
+      stopTimer();
+      shifted = !shifted;
+      for (var i = 0; i < dotElements.length; i++) {
+        var offset = shifted ? (i % 2 ? 3 : -3) : 0;
+        dotElements[i].style.left = (dots[i].x + offset) + '%';
+      }
+      setState('Pattern refreshed');
+    }
+    startBtn.addEventListener('click', startFixation);
+    resetBtn.addEventListener('click', refreshPattern);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && fixationTimer !== null) {
+        stopTimer();
+        setState('Timer stopped');
+      }
     });
   })();
 })();

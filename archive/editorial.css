@@ -1,0 +1,94 @@
+/* The archived essays use the same opening scale as the sacred-book readings.
+   Load after page-local styles so earlier cover designs do not change the title. */
+.editorial-page .editorial-hero {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 61rem;
+  min-height: calc(100svh - 7rem);
+  margin: 0 auto;
+  padding: clamp(3.5rem, 9svh, 6rem) var(--gutter);
+  gap: 0;
+  text-align: center;
+}
+/* Traditional wrappers already inherit the body's responsive side gutter. */
+.editorial-page .site-wrapper .editorial-hero { padding-inline: 0; }
+.editorial-page .editorial-hero .u-title {
+  max-width: 13ch;
+  margin: 0 auto;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(3.45rem, 11vw, 6.9rem);
+  line-height: .94;
+  letter-spacing: -.035em;
+  color: var(--text-bright);
+  text-wrap: balance;
+}
+.editorial-page .editorial-hero .u-dek {
+  max-width: 54ch;
+  margin: 1.6rem auto 0;
+  font-family: var(--font-heading);
+  font-size: 1.24rem;
+  line-height: 1.58;
+  font-style: normal;
+  color: var(--text-dim);
+  text-wrap: pretty;
+}
+.editorial-page .editorial-hero .u-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .5em 1.05em;
+  max-width: 54ch;
+  margin: 1.6rem auto 0;
+  padding-top: 0;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  line-height: 1.5;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.editorial-page .editorial-hero .u-meta b {
+  font-weight: 400;
+  color: var(--accent);
+}
+.editorial-page .editorial-hero .u-meta .u-sep { opacity: .4; }
+.editorial-page .editorial-back {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 7vw, 5rem) var(--gutter) 0;
+}
+.editorial-page .editorial-hero .editorial-scroll {
+  position: static;
+  display: block;
+  margin-top: 2.8rem;
+  font-family: var(--font-heading);
+  font-size: .82rem;
+  font-variant: small-caps;
+  letter-spacing: .22em;
+  color: var(--text-dim);
+  opacity: .68;
+}
+@media (max-width: 600px) {
+  .editorial-page .editorial-hero {
+    min-height: calc(100svh - 5rem);
+    padding-top: clamp(2.8rem, 8svh, 4rem);
+    padding-bottom: clamp(3rem, 8svh, 4.5rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editorial-page .editorial-hero,
+  .editorial-page .editorial-hero > * {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

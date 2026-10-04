@@ -12,19 +12,20 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Number: Where Work Becomes Optional</title>
-  <meta name="description" content="There is a dollar amount above which your savings out-earn your spending forever and work becomes optional. The math behind the threshold, the climb from ordinary American debt, the tax mechanics on the far side, and every catch the brochure leaves out. Sourced throughout.">
+  <title>The Number: How Much Would You Need to Retire?</title>
+  <meta name="description" content="Estimate a retirement savings target from spending, then test how income, debt and returns affect the saving schedule. A working calculator, withdrawal research and 2026 US tax examples, with the assumptions beside them.">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <meta property="og:title" content="The Number: Where Work Becomes Optional">
-  <meta property="og:description" content="There is a dollar amount above which work becomes optional. Roughly 25 times your yearly spending. The math, the 15-to-25-year climb out of ordinary debt, the 0% tax bracket waiting on the far side, and every catch the brochure leaves out.">
+  <meta property="og:title" content="The Number: How Much Would You Need to Retire?">
+  <meta property="og:description" content="Estimate a retirement savings target from spending, then test how income, debt and returns affect the saving schedule. A working calculator, withdrawal research and 2026 US tax examples, with the assumptions beside them.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/the-number/the-number.html">
-  <meta property="og:image" content="https://ethanwillingham.com/archive/the-number/assets/the-number-og.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image" content="https://ethanwillingham.com/archive/the-number/assets/the-number.jpg">
+  <meta property="og:image:width" content="600">
+  <meta property="og:image:height" content="400">
+  <meta name="twitter:title" content="The Number: How Much Would You Need to Retire?">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/archive/the-number/assets/the-number-og.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/archive/the-number/assets/the-number.jpg">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -45,10 +46,10 @@
     .post-header { text-align: center; max-width: 760px; margin-left: auto; margin-right: auto; }
 
     /* Reading column */
-    .tn-read { max-width: 700px; margin-left: auto; margin-right: auto; }
-    .tn-read p { font-family: var(--font-body); font-size: 1.17rem; line-height: 1.74; color: var(--text); margin: 0 0 1.1em; text-wrap: pretty; }
+    .tn-read { width: 100%; max-width: 64ch; font-family: var(--font-heading); font-size: 1.27rem; margin-left: auto; margin-right: auto; }
+    .tn-read p { font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); margin: 0 0 1.1em; text-wrap: pretty; }
     .tn-read p strong, .tn-read p b { color: var(--text-bright); font-weight: 600; }
-    .tn-read ul, .tn-read ol { font-family: var(--font-body); font-size: 1.13rem; line-height: 1.68; color: var(--text); margin: 0 0 1.2em; padding-left: 1.4em; }
+    .tn-read ul, .tn-read ol { font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); margin: 0 0 1.2em; padding-left: 1.4em; }
     .tn-read li { margin-bottom: 0.55em; }
     .tn-read li::marker { color: var(--accent); }
     .tn-read a { color: var(--text); text-decoration: underline; text-decoration-color: rgba(212,196,160,0.5); text-underline-offset: 2px; }
@@ -56,13 +57,18 @@
     .tn-read h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.38rem; color: var(--text-bright); line-height: 1.25; margin: 2.4rem 0 0.65rem; }
 
     /* Lead */
-    .tn-lead p { font-size: 1.27rem; line-height: 1.66; }
+    .tn-lead p { font-size: 1.27rem; line-height: 1.72; }
+    .tn-reference { margin-block: 1.8rem; border-block: 1px solid var(--rule); padding-block: 1rem; }
+    .tn-reference summary { font-family: var(--font-heading); color: var(--text-bright); font-size: 1.2rem; cursor: pointer; }
+    .tn-reference[open] summary { margin-bottom: 1.2rem; }
+    .tn-reference .tn-tablewrap { max-width: 100%; }
+    .tn-reference .tn-tablenote { margin: 1rem 0; }
     .tn-lead .drop { color: var(--text-bright); }
 
     /* Section dividers (centered title between rules) */
     .tn-act { display: flex; align-items: center; gap: 1.1rem; margin: 5.6rem auto 2.2rem; max-width: 880px; }
     .tn-act::before, .tn-act::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
-    .tn-act-inner { text-align: center; flex: none; max-width: 32em; }
+    .tn-act-inner { text-align: center; flex: 0 1 auto; min-width: 0; max-width: 32em; }
     .tn-kick { display: block; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
     .tn-act h2 { font-family: var(--font-heading); font-size: clamp(1.6rem, 3.4vw, 2rem); font-weight: 700; color: var(--text-bright); line-height: 1.12; letter-spacing: -0.01em; margin: 0; }
     .tn-act .tn-sub { font-family: var(--font-body); font-style: italic; font-size: 0.97rem; color: var(--text-dim); margin: 0.4rem 0 0; }
@@ -73,7 +79,7 @@
     .tn-src a:hover { color: var(--accent-hover); }
 
     /* Tables */
-    .tn-tablewrap { max-width: 760px; margin: 1.9rem auto; overflow-x: auto; }
+    .tn-tablewrap { width: 100%; max-width: 760px; margin: 1.9rem auto; overflow-x: auto; }
     .tn-tablenote { max-width: 760px; margin: -0.9rem auto 1.8rem; font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-dim); line-height: 1.6; }
     .tn-eng td.u-num { white-space: normal; line-height: 1.5; }
 
@@ -91,14 +97,14 @@
     .tn-photo-narrow { max-width: 540px; }
 
     /* Calculator */
-    .tn-calc { max-width: 760px; margin: 2.4rem auto; padding: 1.6rem 1.7rem 1.4rem; border: 1px solid var(--rule); border-radius: 14px; background: #2a322b; }
+    .tn-calc { box-sizing: border-box; width: 100%; max-width: 760px; margin: 2.4rem auto; padding: 1.6rem 1.7rem 1.4rem; border: 1px solid var(--rule); border-radius: 14px; background: #2a322b; }
     .tn-calc h3 { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--text-bright); margin: 0.15rem 0 0.4rem; }
     .tn-calc-intro { font-family: var(--font-body); font-size: 1rem; line-height: 1.6; color: var(--text-dim); margin: 0 0 1.2rem; }
     .tn-slider { display: block; margin-bottom: 1.05rem; }
     .tn-slider-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.2rem 1rem; margin-bottom: 0.4rem; }
     .tn-slider-name { font-family: var(--font-body); font-size: 1.02rem; color: var(--text); }
     .tn-slider-name small { display: block; font-size: 0.8rem; color: var(--text-dim); }
-    .tn-inwrap { display: flex; align-items: baseline; flex: none; margin-left: auto; }
+    .tn-inwrap { display: flex; flex-wrap: wrap; align-items: baseline; flex: 0 1 auto; min-width: 0; max-width: 100%; margin-left: auto; }
     .tn-unit { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); margin: 0 1px; }
     .tn-eq { margin: 0 7px; }
     .tn-fix { font-family: var(--font-mono); font-size: 1.12rem; color: var(--accent-hover); }
@@ -153,7 +159,12 @@
     @media (max-width: 620px) {
       .tn-kpis { grid-template-columns: 1fr; }
       .tn-calc { padding: 1.2rem 1.1rem 1.1rem; }
-      .tn-minor { grid-template-columns: 1fr; }
+      .tn-minor { grid-template-columns: minmax(0, 1fr); }
+      .tn-slider-row { min-width: 0; }
+      .tn-slider-name { width: 100%; }
+      .tn-act { gap: 0.55rem; }
+      .tn-act-inner { max-width: 100%; }
+      .tn-src { white-space: normal; }
       .tn-preset { margin-left: 0; }
     }
     @media (max-width: 520px) {
@@ -163,7 +174,7 @@
        throws, a chart half again as large, bigger readouts. */
     @media (min-width: 1100px) {
       .tn-calc { max-width: 1044px; padding: 2rem 2.4rem 1.7rem; }
-      .tn-mains { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem 2.6rem; }
+      .tn-mains { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.2rem 2.6rem; }
       .tn-kpi-val { font-size: 2.05rem; }
       .tn-deal { font-size: 1.34rem; padding: 1rem 1.3rem; }
       .tn-verdict { font-size: 1.12rem; }
@@ -179,73 +190,57 @@
     }
   </style>
   <noscript><style>.tn-rev { opacity: 1 !important; transform: none !important; }</style></noscript>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
-    <header class="u-hero fade-in">
-      <h1 class="u-title">The Number: Where Work Becomes Optional</h1>
-      <p class="u-dek">There is a dollar amount above which work becomes optional. The math, the climb, and everything the brochure leaves out.</p>
+    <header class="u-hero editorial-hero fade-in">
+      <h1 class="u-title">The Number: How Much Would You Need to Retire?</h1>
+      <p class="u-dek">A retirement savings target starts with what you spend. The calculator shows a possible saving schedule; the research explains what that number can and cannot tell you.</p>
+      <p class="u-meta">15 min main read, plus calculator and optional references <span class="u-sep">/</span> Checked October 3, 2026</p>
     </header>
 
     <figure class="post-hero fade-in" style="animation-delay: 0.08s;">
-      <img src="assets/hero-b25-line.webp" width="2000" height="1000" alt="Rows of olive-drab B-25 bombers on an outdoor assembly line under a deep blue sky, with a single worker standing among them, Kansas City, 1942." decoding="async">
-      <figcaption>The outdoor B-25 line at North American Aviation, Kansas City, October 1942. Every index-fund dollar buys a slice of scenes like this one. Kodachrome by Alfred Palmer, Office of War Information. <a href="https://commons.wikimedia.org/wiki/File:B-25_bombers_on_the_outdoor_assembly_line_at_North_American_Aviation,_Incorporated,_almost_ready_for_their_first_test_flight,_Kansas_City,_Kansas.jpg">Library of Congress, public domain</a>.</figcaption>
+      <img src="assets/hero-b25-line.webp" width="2000" height="1000" loading="eager" alt="Rows of olive-drab B-25 bombers on an outdoor assembly line under a deep blue sky, with a single worker standing among them, Kansas City, 1942." decoding="async">
+      <figcaption>The outdoor B-25 line at North American Aviation, Kansas City, October 1942. Color photograph by Alfred Palmer, Office of War Information. <a href="https://commons.wikimedia.org/wiki/File:B-25_bombers_on_the_outdoor_assembly_line_at_North_American_Aviation,_Incorporated,_almost_ready_for_their_first_test_flight,_Kansas_City,_Kansas.jpg">Library of Congress, public domain</a>.</figcaption>
     </figure>
 
     <main>
 
-      <div class="tn-read tn-lead fade-in" style="animation-delay: 0.05s;">
-        <p><span class="drop">You have about 90,000 hours of work in you.</span> That is the standard estimate for a full working life, and it is the largest block of waking time you will ever spend on any one thing. <span class="tn-src"><a href="https://www.wiley.com/en-us/Happiness+at+Work:+Maximizing+Your+Psychological+Capital+for+Success+-p-9781119965749">Pryce-Jones 2010</a></span></p>
-        <p>There is a dollar amount that buys most of those hours back. Below it, you work because you must. Above it, your savings earn more in an average year than you spend, and on the historical record they keep doing it for the rest of your life. Reach it once and the well refills faster than you drink from it.</p>
-        <p>This is a field guide to that threshold. The math, the climb from a normal American starting point (a car loan, a student loan, a credit card, no famous degree), the strangely gentle taxes waiting on the far side, and every catch, because a guide that skips the catches is a sales pitch. None of it takes luck or brilliance. It takes a paycheck worth saving and two boring decisions repeated for 15 to 25 years.</p>
-      </div>
-
-      <!-- ============================ THE THRESHOLD ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">01</span><h2 id="threshold">The Threshold</h2><p class="tn-sub">Why 25 times your spending is the line, and why the line is built on a disaster.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p>In 1994 a financial planner named William Bengen fed every retirement year since 1926 into one blunt question: sell a fixed, inflation-adjusted slice of a stock-and-bond portfolio every year, and how big can the slice be without going broke inside 30 years, even starting at the worst moment in a century? The answer came back just over 4 percent. <span class="tn-src"><a href="https://robberger.com/research/determining-withdrawal-rates-using-historical-data/">Bengen 1994</a></span> A 1998 Trinity University study checked the work, and the "4% rule" was born. <span class="tn-src"><a href="https://www.aaii.com/journal/199802/feature.pdf">Trinity 1998</a></span></p>
-        <p>Flip the 4 percent over and the whole plan is one line: <strong>the threshold is 25 times your yearly spending.</strong> Spend $40,000 a year and your number is $1 million. Spend $100,000 and it is $2.5 million. Not income. Spending. The cheaper your life, the closer the line stands.</p>
-        <p>And 4 percent is not the expected case. It is the catastrophe case, calibrated to October 1968, the unluckiest retirement month in modern history. Across all the other start years the rate that would have worked averaged about 7 percent <span class="tn-src"><a href="https://www.morningstar.com/retirement/whats-safe-retirement-withdrawal-rate-2026">Morningstar 2025</a></span>, Bengen's own 2025 revision raised even the worst case to 4.7 <span class="tn-src"><a href="https://www.bankrate.com/retirement/revised-4-percent-rule/">Bankrate 2025</a></span>, and the median retiree who ran the rule for 30 years ended <strong>2.8 times richer than the day they quit</strong>. <span class="tn-src"><a href="https://www.kitces.com/blog/url-upside-potential-sequence-of-return-risk-in-retirement-median-final-wealth/">Kitces 2019</a></span></p>
-        <blockquote class="u-pq">The average over the last 100 years, believe it or not, is 7 percent.<cite class="u-pq-cite">Bill Bengen, creator of the 4% rule, on the withdrawal rate history would actually have allowed</cite></blockquote>
-        <p>The machine itself is nothing exotic: a plain total-market index fund, roughly 10 percent a year over the last century, about 7 after inflation, with horrible decades hiding inside the average. <span class="tn-src"><a href="https://investor.vanguard.com/investor-resources-education/article/fueling-the-fire-movement-updating-the-4-rule-for-early-retirees">Vanguard 2021</a></span> You spend 4 points; the rest stays in to fight inflation and absorb the bad years. One honest asterisk: people retiring for 50 years rather than 30, into expensive markets, should plan on 3.25 to 3.5 percent, which moves the line from 25 times spending to about 29. <span class="tn-src"><a href="https://earlyretirementnow.com/safe-withdrawal-rate-series/">Jeske, ERN</a></span> The catches section returns to this.</p>
-      </div>
-
-      <!-- ============================ THE DIAL ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">02</span><h2 id="dial">The Dial</h2><p class="tn-sub">The threshold is not one number. It is a dial, and you choose where it stops.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p>Because the number is 25 times <em>your</em> spending, there is no single finish line; every notch on the dial is a different life. The featured row, $2.5 million paying $100,000 a year, out-earns the median American household, which works full time for $83,730. <span class="tn-src"><a href="https://www.census.gov/library/publications/2025/demo/p60-286.html">Census 2025</a></span></p>
-      </div>
-
-      <div class="tn-tablewrap tn-rev">
-        <table class="u-table">
-          <thead><tr><th>The pile</th><th>Pays yearly</th><th>Monthly</th><th>What it is</th></tr></thead>
-          <tbody>
-            <tr><td class="u-num">$1,000,000</td><td class="u-num">$40,000</td><td class="u-num">$3,333</td><td>Lean. Covered, careful, no margin for a taste for boats. Top 18% of households. <span class="u-dim">Roughly 1 in 6 US households is here, counting home equity.</span></td></tr>
-            <tr><td class="u-num">$1,500,000</td><td class="u-num">$60,000</td><td class="u-num">$5,000</td><td>Solid. A paid-off-house, normal-car version of comfort.</td></tr>
-            <tr class="u-feature"><td class="u-num">$2,500,000</td><td class="u-num">$100,000</td><td class="u-num">$8,333</td><td>Comfortable. More than the median household earns by working. Top 8% or so of households.</td></tr>
-            <tr><td class="u-num">$5,000,000</td><td class="u-num">$200,000</td><td class="u-num">$16,667</td><td>Rich. The no-compromises version. Top 3 to 4%.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="tn-tablenote">Payouts at the 4% rule. Nervous, or retiring very young? Use 3.5% instead: multiply spending by 29 rather than 25. Percentiles from the Federal Reserve's 2022 Survey of Consumer Finances. <span class="tn-src"><a href="https://dqydj.com/net-worth-percentiles/">DQYDJ / Fed SCF</a></span></p>
-
-      <div class="tn-read tn-rev">
-        <p>Read it bottom-up and it stops being a rich-person fantasy. Every notch buys hours back: at $300,000 the portfolio quietly pays your rent, at $1 million you could shrug off a layoff, at $2.5 million the alarm clock is decorative. For scale, the median American household, home equity included, holds <strong>$192,700</strong>: about a fifth of the way up the table's first row. <span class="tn-src"><a href="https://dqydj.com/net-worth-percentiles/">Fed SCF 2022</a></span></p>
-      </div>
-
-      <!-- ============================ FIND YOUR NUMBER ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">03</span><h2 id="calculator">Find Your Number</h2><p class="tn-sub">Pick the income you want, see exactly what has to change to get it, and race the median American household.</p></div></div>
-
-      <div class="tn-calc tn-rev" id="calculator-panel">
-        <h3>Where is your line?</h3>
-        <p class="tn-calc-intro">Drag the sliders or type straight over the numbers. Everything runs in today's dollars, so inflation is already handled. The small <span style="color:var(--accent-hover)">&#9650;</span> marks under the tracks are the US median or average for that dial, so you can see where you stand against the country as you go.</p>
+<div class="tn-read tn-lead fade-in">
+<p>A $1 million portfolio gives you a $40,000 first-year withdrawal at 4%. That is the useful part of the retirement rule. It does not tell you whether $40,000 covers your life, whether the portfolio survives fifty years, or whether you can stop working today.</p>
+<p>This guide turns spending into a savings target, then shows how income, debt and returns change the time needed to reach it. The calculator is a simplified projection. The tax examples are for the United States, checked October 3, 2026.</p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">01</span><h2 id="threshold">What the 4% rule tested</h2><p class="tn-sub">A historical result for a particular portfolio and retirement length.</p></div></div>
+<div class="tn-read tn-rev">
+<p>William Bengen's 1994 study tested portfolios against past US stock, Treasury and inflation data. A first-year withdrawal of 4% of the starting balance, followed by inflation adjustments to that dollar amount, lasted at least thirty years in every start-year scenario he examined. His illustrative portfolio held half stocks and half intermediate-term Treasuries and was rebalanced annually. <span class="tn-src"><a href="https://obj.portfolioconstructionforum.edu.au/articles_perspectives/retailinvestor.org_pdf_Bengen1.pdf">Bengen 1994</a></span></p>
+<p>The distinction matters: on $1 million, the first withdrawal is $40,000. If inflation is 3%, the second is $41,200, whatever the portfolio is worth then. This is a spending rule that may consume principal, rather than a claim that investments earn a steady 4%. The later Trinity study tested different stock-and-bond mixes and payout periods. It excluded taxes and transaction costs. <span class="tn-src"><a href="https://www.aaii.com/journal/199802/feature.pdf">Cooley, Hubbard and Walz 1998</a></span></p>
+<p>The arithmetic is simple: <strong>annual portfolio withdrawals divided by the initial withdrawal rate equal the starting portfolio target.</strong> At 4%, that is twenty-five times the amount you withdraw. A $40,000 withdrawal target needs $1 million; $100,000 needs $2.5 million. Include withdrawal taxes, insurance and irregular expenses in that budget.</p>
+<p>For a longer retirement, compare lower rates too. The calculator offers 3.5% and 3.25%, requiring about 28.6 and 30.8 times annual withdrawals. Those are scenarios to investigate, not guarantees for a fifty-year retirement. A lower rate cannot eliminate market risk.</p>
+<p>Bengen's later 4.7% result also has an allocation attached. His September 2025 research describes 55% stocks, 40% bonds and 5% cash as the book's baseline, then tests higher stock allocations. It does not justify taking 4.7% from a single stock fund. <span class="tn-src"><a href="https://www.bengenfs.com/wp-content/uploads/RESEARCH-REPORT-1-2025-09-18-Optimizing-Asset-Allocation-During-Retirement.pdf">Bengen 2025</a></span></p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">02</span><h2 id="dial">What the target buys</h2><p class="tn-sub">These are withdrawals before tax, rather than guaranteed investment income.</p></div></div>
+<div class="tn-tablewrap tn-rev"><table class="u-table">
+<thead><tr><th>Invested portfolio</th><th>First-year withdrawal</th><th>Monthly equivalent</th><th>Budget to test</th></tr></thead>
+<tbody>
+<tr><td class="u-num">$1,000,000</td><td class="u-num">$40,000</td><td class="u-num">$3,333</td><td>A lean budget in many places. Housing and healthcare may take much of it.</td></tr>
+<tr><td class="u-num">$1,500,000</td><td class="u-num">$60,000</td><td class="u-num">$5,000</td><td>More room for recurring expenses, still dependent on housing and household size.</td></tr>
+<tr class="u-feature"><td class="u-num">$2,500,000</td><td class="u-num">$100,000</td><td class="u-num">$8,333</td><td>A larger budget, with taxes and exceptional expenses still to account for.</td></tr>
+<tr><td class="u-num">$5,000,000</td><td class="u-num">$200,000</td><td class="u-num">$16,667</td><td>A high spending allowance. The withdrawal rule has the same limits.</td></tr>
+</tbody></table></div>
+<p class="tn-tablenote">Calculated at a 4% initial withdrawal rate, with monthly figures rounded. At 3.5%, the same portfolios support smaller initial withdrawals.</p>
+<div class="tn-read tn-rev">
+<p>These targets count assets available to fund retirement. A house you plan to keep living in cannot also pay the grocery bill. The Federal Reserve measured median family net worth at $192,900 in its 2022 survey, including housing and other nonfinancial assets; median financial assets among families holding them were $39,000. Neither figure describes a retirement-ready portfolio. <span class="tn-src"><a href="https://www.federalreserve.gov/publications/files/scf23.pdf">Fed SCF 2022, tables 2 and 3</a></span></p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">03</span><h2 id="calculator">Estimate your number</h2><p class="tn-sub">Change the assumptions and compare the resulting saving schedules.</p></div></div>
+<div class="tn-calc tn-rev" id="calculator-panel">
+        <h3>Your spending target and saving schedule</h3>
+        <p class="tn-calc-intro">Drag the sliders or type over the numbers. The model uses today's buying power and a constant return. It estimates accumulation only, with no simulation of retirement withdrawals or chance of success. Figures and reference data checked October 3, 2026.</p>
 
         <div class="tn-mains">
         <label class="tn-slider">
@@ -254,50 +249,50 @@
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:15.5%"><span>US median $72,330</span></span></span>
         </label>
         <label class="tn-slider">
-          <span class="tn-slider-row"><span class="tn-slider-name">Spending <small>all of it: rent, car, food, fun. The yearly side is the passive income you are buying.</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spend-n" value="3,700" style="width:4.6em" aria-label="Monthly spending in dollars, typed"><span class="tn-unit">/mo</span><span class="tn-unit tn-eq">=</span><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spendyr-n" value="44,400" style="width:5.4em" aria-label="Yearly spending, the passive income you want, typed"><span class="tn-unit">/yr</span></span></span>
+          <span class="tn-slider-row"><span class="tn-slider-name">Spending <small>living costs; exclude payments on the debt entered below, which the model pays separately</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spend-n" value="3,700" style="width:4.6em" aria-label="Monthly spending in dollars, typed"><span class="tn-unit">/mo</span><span class="tn-unit tn-eq">=</span><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-spendyr-n" value="44,400" style="width:5.4em" aria-label="Yearly living spending in dollars, typed"><span class="tn-unit">/yr</span></span></span>
           <input type="range" id="tn-spend" min="800" max="20000" step="50" value="3700" aria-label="Monthly spending in dollars">
           <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:29.9%"><span>US average $6,545</span></span></span>
         </label>
         <label class="tn-slider">
-          <span class="tn-slider-row"><span class="tn-slider-name">The income you want <small>per year, without working; stays glued to your spending until you change it</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-want-n" value="44,400" aria-label="Yearly passive income you want, typed"><span class="tn-unit">/yr</span></span></span>
-          <input type="range" id="tn-want" min="20000" max="400000" step="100" value="44400" aria-label="Yearly passive income you want">
-          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:21.1%"><span>the $100K life</span></span></span>
+          <span class="tn-slider-row"><span class="tn-slider-name">Retirement withdrawals you want <small>per year before withdrawal taxes; linked to current spending until you change it</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-want-n" value="44,400" aria-label="Yearly retirement withdrawal target, typed"><span class="tn-unit">/yr</span></span></span>
+          <input type="range" id="tn-want" min="20000" max="400000" step="100" value="44400" aria-label="Yearly retirement withdrawal target">
+          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench" style="left:21.1%"><span>withdraw $100K/year</span></span></span>
         </label>
         <label class="tn-slider">
-          <span class="tn-slider-row"><span class="tn-slider-name">Investments and cash <small>everything you own that is not a debt</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-inv-n" value="10,000" aria-label="Current investments and cash in dollars, typed"></span></span>
+          <span class="tn-slider-row"><span class="tn-slider-name">Investments and cash <small>retirement funding only; exclude your home, car and emergency reserve</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-inv-n" value="10,000" aria-label="Current investments and cash in dollars, typed"></span></span>
           <input type="range" id="tn-inv" min="0" max="2000000" step="5000" value="10000" aria-label="Current investments and cash in dollars">
-          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench lo" style="left:9.6%"><span>median net worth $192,700</span></span></span>
+          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench lo" style="left:1.95%"><span>2022 median financial assets $39K</span></span></span>
         </label>
         <label class="tn-slider">
-          <span class="tn-slider-row"><span class="tn-slider-name">Debt <small>cards, car, student loans, all of it</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-debt-n" value="40,000" aria-label="Total debt in dollars, typed"></span></span>
+          <span class="tn-slider-row"><span class="tn-slider-name">Debt <small>the balances you want the model to repay before new investing</small></span><span class="tn-inwrap"><span class="tn-fix">$</span><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein" id="tn-debt-n" value="40,000" aria-label="Total debt in dollars, typed"></span></span>
           <input type="range" id="tn-debt" min="0" max="600000" step="1000" value="40000" aria-label="Total debt in dollars">
-          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench lo" style="left:15%"><span>avg car+student+cards $90K</span></span></span>
+          <span class="tn-benchrow" aria-hidden="true"><span class="tn-bench lo" style="left:6.7%"><span>example $40K debt</span></span></span>
         </label>
         <label class="tn-slider">
-          <span class="tn-slider-row"><span class="tn-slider-name">When you want it <small>years from now; stays glued to your own pace until you drag it</small></span><span class="tn-inwrap"><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein pct" id="tn-when-n" value="28" aria-label="Years until you want the number, typed"><span class="tn-unit">yrs &middot; <span id="tn-when-yr">2054</span></span></span></span>
+          <span class="tn-slider-row"><span class="tn-slider-name">When you want it <small>years from now; follows the projection until you change it</small></span><span class="tn-inwrap"><input type="text" inputmode="numeric" autocomplete="off" class="tn-typein pct" id="tn-when-n" value="28" aria-label="Years until you want the number, typed"><span class="tn-unit">yrs &middot; <span id="tn-when-yr">2054</span></span></span></span>
           <input type="range" id="tn-when" min="5" max="50" step="1" value="28" aria-label="Years until you want the number">
         </label>
         </div>
 
         <div class="tn-minor">
           <label class="tn-slider">
-            <span class="tn-slider-row"><span class="tn-slider-name">Debt interest rate <small>blended, on the dial above</small></span><span class="tn-inwrap"><input type="text" inputmode="decimal" autocomplete="off" class="tn-typein pct" id="tn-rdebt-n" value="9" aria-label="Debt interest rate percent, typed"><span class="tn-fix">%</span></span></span>
+            <span class="tn-slider-row"><span class="tn-slider-name">Debt interest rate <small>nominal APR; simplified monthly interest, with 3% inflation</small></span><span class="tn-inwrap"><input type="text" inputmode="decimal" autocomplete="off" class="tn-typein pct" id="tn-rdebt-n" value="9" aria-label="Debt interest rate percent, typed"><span class="tn-fix">%</span></span></span>
             <input type="range" id="tn-rdebt" min="0" max="30" step="0.5" value="9" aria-label="Debt interest rate percent">
           </label>
           <label class="tn-slider">
-            <span class="tn-slider-row"><span class="tn-slider-name">Investment return <small>per year, after inflation</small></span><span class="tn-inwrap"><input type="text" inputmode="decimal" autocomplete="off" class="tn-typein pct" id="tn-rinv-n" value="5" aria-label="Real investment return percent, typed"><span class="tn-fix">%</span></span></span>
-            <input type="range" id="tn-rinv" min="2" max="8" step="0.25" value="5" aria-label="Real investment return percent">
+            <span class="tn-slider-row"><span class="tn-slider-name">Investment return <small>per year, after inflation, investment taxes and fees</small></span><span class="tn-inwrap"><input type="text" inputmode="decimal" autocomplete="off" class="tn-typein pct" id="tn-rinv-n" value="5" aria-label="Real investment return percent, typed"><span class="tn-fix">%</span></span></span>
+            <input type="range" id="tn-rinv" min="0" max="8" step="0.25" value="5" aria-label="Real investment return percent">
           </label>
         </div>
 
         <div class="tn-rowline">
-          <span class="tn-seg-label">Finish line</span>
-          <div class="tn-seg" role="group" aria-label="Withdrawal rule for the finish line">
+          <span class="tn-seg-label">Initial withdrawal rate</span>
+          <div class="tn-seg" role="group" aria-label="Initial withdrawal rate used to estimate the target">
             <button type="button" data-mult="25" class="on">4% rule &middot; &times;25</button>
-            <button type="button" data-mult="29">3.5% &middot; &times;29</button>
-            <button type="button" data-mult="31">3.25% &middot; &times;31</button>
+            <button type="button" data-mult="28.571428571428573">3.5% &middot; &times;28.6</button>
+            <button type="button" data-mult="30.76923076923077">3.25% &middot; &times;30.8</button>
           </div>
-          <button type="button" class="tn-preset" id="tn-preset">Load the median American household</button>
+          <button type="button" class="tn-preset" id="tn-preset">Load the reference example</button>
         </div>
 
         <p class="tn-deal"><span id="tn-deal">&nbsp;</span></p>
@@ -305,25 +300,23 @@
         <div class="tn-infl" id="tn-infl" style="display:none"></div>
 
         <div class="tn-kpis" aria-live="polite">
-          <div class="tn-kpi"><span class="tn-kpi-label">You save</span><span class="tn-kpi-val" id="tn-rate">32%</span><span class="tn-kpi-sub" id="tn-rate-sub">of take-home pay</span></div>
-          <div class="tn-kpi tn-kpi-main"><span class="tn-kpi-label">Your number</span><span class="tn-kpi-val" id="tn-num">$1,110,000</span><span class="tn-kpi-sub" id="tn-num-sub">25 &times; yearly spending</span></div>
-          <div class="tn-kpi"><span class="tn-kpi-label">Years to reach it</span><span class="tn-kpi-val" id="tn-years">28</span><span class="tn-kpi-sub" id="tn-years-sub">from today</span></div>
+          <div class="tn-kpi"><span class="tn-kpi-label">Available surplus</span><span class="tn-kpi-val" id="tn-rate">32%</span><span class="tn-kpi-sub" id="tn-rate-sub">of take-home pay</span></div>
+          <div class="tn-kpi tn-kpi-main"><span class="tn-kpi-label">Portfolio target</span><span class="tn-kpi-val" id="tn-num">$1,110,000</span><span class="tn-kpi-sub" id="tn-num-sub">25 &times; yearly spending</span></div>
+          <div class="tn-kpi"><span class="tn-kpi-label">Projected years</span><span class="tn-kpi-val" id="tn-years">28</span><span class="tn-kpi-sub" id="tn-years-sub">from today</span></div>
         </div>
         <p class="tn-compare" id="tn-compare">&nbsp;</p>
         <p class="tn-verdict" id="tn-verdict">&nbsp;</p>
 
-        <div class="tn-chart" id="tn-chart" role="img" aria-label="Projection of your net worth over the coming years toward your finish line, with the median US household plotted on the same axes for comparison."></div>
-        <div class="tn-legend"><span><i style="background:#EDE0C0"></i>you</span><span><i style="background:#8A9A8A"></i>median US household</span><span><i style="background:repeating-linear-gradient(90deg,#D4C4A0 0 5px,transparent 5px 9px)"></i>your number</span></div>
+        <div class="tn-chart" id="tn-chart" role="img" aria-label="Constant-return projection of financial assets minus modeled debt toward your portfolio target, with a synthetic reference example for comparison."></div>
+        <div class="tn-legend"><span><i style="background:#EDE0C0"></i>you</span><span><i style="background:#8A9A8A"></i>reference example</span><span><i style="background:repeating-linear-gradient(90deg,#D4C4A0 0 5px,transparent 5px 9px)"></i>your number</span></div>
 
-        <p class="tn-foot">Assumptions: investments earn your chosen real return (default 5%, the long-run record with a haircut); spare dollars kill the debt first while it costs more than the return, otherwise it rides; the finish line is yearly spending times the multiple you picked. Benchmarks: median household take-home $72,330 <span class="tn-src"><a href="https://www.census.gov/library/stories/2025/09/post-tax-income.html">Census 2025</a></span>, average household spending $6,545 a month <span class="tn-src"><a href="https://www.bls.gov/news.release/cesan.nr0.htm">BLS 2024</a></span>, median net worth $192,700 <span class="tn-src"><a href="https://dqydj.com/net-worth-percentiles/">Fed SCF 2022</a></span>, saving rate near 4.5% <span class="tn-src"><a href="https://fred.stlouisfed.org/series/PSAVERT">BEA / FRED</a></span>. Method follows the standard early-retirement math. <span class="tn-src"><a href="https://www.mrmoneymustache.com/2012/01/13/the-shockingly-simple-math-behind-early-retirement/">Mr. Money Mustache 2012</a></span></p>
+        <p class="tn-foot"><strong>Model:</strong> monthly contributions and constant real returns, default 5%, chosen as an illustration. All surplus pays modeled debt first, then enters investments; existing investments stay invested. Debt APR is converted to today's dollars using assumed 3% inflation. Keep minimum payments affordable: this model does not reproduce a lender's repayment schedule. Income, spending and saving keep pace with inflation. The target excludes Social Security and pensions and has no retirement horizon. It is not a result of a withdrawal backtest.<br><strong>Reference example:</strong> $72,330 annual post-tax household income (2024 Census), $39,000 financial assets (2022 Fed median among holders), no debt, and an assumed 4.5% saving rate. This combination is synthetic, not a measured median household. The spending-track marker is $78,535 divided by twelve, the BLS 2024 average for consumer units; it includes categories such as pension contributions that differ from this tool's living-cost input. <span class="tn-src"><a href="https://www.census.gov/library/stories/2025/09/post-tax-income.html">Census</a></span> <span class="tn-src"><a href="https://www.federalreserve.gov/publications/files/scf23.pdf">Fed</a></span> <span class="tn-src"><a href="https://www.bls.gov/news.release/cesan.nr0.htm">BLS</a></span></p>
       </div>
-
-      <div class="tn-read tn-rev">
-        <p>Notice what the dials never ask: your job title, your degree, your opinion of the market. The machine runs on one quantity, <strong>the gap between what you earn and what you spend</strong>, and the curve below is the entire relationship.</p>
-      </div>
-
-      <figure class="tn-fig tn-rev">
-        <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Curve showing years until financial independence by savings rate: the average American at about five percent is on a 66 year plan, 10 percent takes 51 years, 25 percent takes 32, 50 percent takes 17, 65 percent takes about 10.">
+<div class="tn-read tn-rev">
+<p>The gap between income and spending controls contributions. It also constrains what the calculator can tell you: a constant-return curve cannot show a layoff, a rent increase or a market crash. Try several returns and budgets before treating its date as useful.</p>
+</div>
+<figure class="tn-fig tn-rev">
+        <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustrative accumulation curve at a constant 5 percent real return: saving 5 percent takes about 66 years to a 25-times-spending target, 10 percent takes 51, 25 percent takes 32, 50 percent takes 17, and 65 percent takes 10.">
           <text x="64" y="18" font-family="Commit Mono, monospace" font-size="11" fill="#B8B2A2">years until the number, starting from zero</text>
           <g stroke="#4A544B" stroke-width="1" opacity="0.55">
             <line x1="64" y1="282" x2="672" y2="282"/><line x1="64" y1="240" x2="672" y2="240"/><line x1="64" y1="198" x2="672" y2="198"/><line x1="64" y1="156" x2="672" y2="156"/><line x1="64" y1="114" x2="672" y2="114"/><line x1="64" y1="72" x2="672" y2="72"/>
@@ -346,231 +339,183 @@
             <text x="634" y="344" text-anchor="middle">80%</text>
             <text x="368" y="370" text-anchor="middle" fill="#D4C4A0">share of take-home pay you save</text>
           </g>
-          <polyline points="64.0,46.8 102.0,109.8 140.0,143.4 178.0,168.6 216.0,189.6 254.0,206.4 292.0,219.0 330.0,231.6 368.0,244.2 406.0,252.6 444.0,263.1 482.0,271.5 520.0,279.9 558.0,288.3 596.0,294.6 634.0,300.9 672.0,307.2" fill="none" stroke="#D4C4A0" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <polyline points="64.0,47.8 102.0,108.3 140.0,144.1 178.0,169.8 216.0,189.9 254.0,206.5 292.0,220.7 330.0,233.1 368.0,244.2 406.0,254.2 444.0,263.4 482.0,271.8 520.0,279.7 558.0,287.1 596.0,294.0 634.0,300.6 672.0,306.8" fill="none" stroke="#D4C4A0" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
           <g fill="#EDE0C0">
-            <circle cx="102" cy="109.8" r="4"/><circle cx="216" cy="189.6" r="4"/><circle cx="406" cy="252.6" r="4"/><circle cx="520" cy="279.9" r="4"/>
+            <circle cx="102" cy="108.3" r="4"/><circle cx="216" cy="189.9" r="4"/><circle cx="406" cy="254.2" r="4"/><circle cx="520" cy="279.7" r="4"/>
           </g>
-          <circle cx="64" cy="46.8" r="5" fill="#C98B7B"/>
+          <circle cx="64" cy="47.8" r="5" fill="#C98B7B"/>
           <g font-family="Commit Mono, monospace" font-size="11.5" fill="#F5F1EA">
-            <text x="78" y="42" fill="#C98B7B">the average American (saves ~4.5%): the 66+ year plan</text>
+            <text x="78" y="42" fill="#C98B7B">save 5%: 66 years (illustration)</text>
             <text x="112" y="104">save 10%: 51 years</text>
             <text x="226" y="184">25%: 32 years</text>
             <text x="416" y="247">50%: 17 years</text>
-            <text x="530" y="272">65%: 10.5 years</text>
+            <text x="530" y="272">65%: 10 years</text>
           </g>
         </svg>
-        <figcaption class="tn-figcap">The savings rate is the whole game. The red dot is the country: the US personal saving rate has hovered near 4.5 percent for years and fell to 2.6 in April 2026. <span class="tn-src"><a href="https://fred.stlouisfed.org/series/PSAVERT">BEA / FRED</a></span> Curve assumes 5% real returns and the 4% rule. <span class="tn-src"><a href="https://www.mrmoneymustache.com/2012/01/13/the-shockingly-simple-math-behind-early-retirement/">Mr. Money Mustache 2012</a></span></figcaption>
+        <figcaption class="tn-figcap">Calculated from zero, with no debt, constant 5% real annual returns, contributions at each year-end and a target of twenty-five times spending. These are model outputs, not typical American retirement dates. The interactive calculator instead uses monthly contributions.</figcaption>
       </figure>
-
-      <div class="tn-read tn-rev">
-        <p>A typical American sits on that red dot, which is why "work until you drop" feels like a law of nature. It is not a law. It is a savings rate, and unlike the market it is fully in your hands: move it to 50 percent and the same paycheck, the same market, the same country delivers freedom in 17 years.</p>
-      </div>
-
-      <!-- ============================ THE TAXES ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">04</span><h2 id="taxes">The Part Nobody Believes</h2><p class="tn-sub">The tax code punishes paychecks and pampers patience. This is the section that sounds illegal and is not.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p>A single worker earning $100,000 in 2026 sends the federal government about $20,820 between income tax and the payroll tax in every check. <span class="tn-src"><a href="https://taxfoundation.org/data/all/federal/2026-tax-brackets/">Tax Foundation 2026</a></span> A retired couple selling $120,000 of long-held index funds to live on that same year can owe <strong>exactly $0</strong>.</p>
-        <p>No offshore anything, just three published rules. Only the <em>gain</em> is income: shares bought for $60,000 and sold for $120,000 are $60,000 of income. The standard deduction erases a couple's first $32,200. And long-term capital gains have an entire <strong>0% federal bracket</strong>, covering taxable income up to $98,900 for a couple in 2026. <span class="tn-src"><a href="https://www.kiplinger.com/taxes/irs-updates-capital-gains-tax-thresholds">Kiplinger 2025</a> <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill">IRS 2025</a></span> Stack the three and a couple can realize $131,100 in gains in a year and pay nothing. Payroll tax never touches investment income at all.</p>
-        <p>The deeper machinery is published too. The <strong>Roth conversion ladder</strong> moves old 401(k) money out during no-salary years in standard-deduction-sized slices, tax on each slice: $0. <span class="tn-src"><a href="https://www.madfientist.com/how-to-access-retirement-funds-early/">Mad Fientist</a></span> The HSA deducts going in, grows untaxed, and reimburses decades-old medical receipts tax-free, no time limit. <span class="tn-src"><a href="https://www.fidelity.com/learning-center/smart-money/are-hsa-contributions-tax-deductible">Fidelity</a></span> And health-insurance subsidies key to reported income, never wealth: a couple holding $2.5 million who engineer $60,000 of income can collect roughly $26,000 a year in premium help while a couple earning $85,000 in wages gets $0. Those are the rules as written. <span class="tn-src"><a href="https://www.irs.gov/pub/irs-drop/rp-25-25.pdf">IRS Rev. Proc. 2025-25</a> <a href="https://www.kff.org/affordable-care-act/how-will-the-loss-of-enhanced-premium-tax-credits-affect-older-adults/">KFF 2026</a></span></p>
-        <h3>The billionaire tier, for scale</h3>
-        <p>All of that is the retail version of <strong>buy, borrow, die</strong>: the very rich never sell (unsold gains are not income), borrow against the pile to live (loans are not income either), then die, at which point the law resets the heirs' cost basis and the lifetime gain vanishes from the income tax. <span class="tn-src"><a href="https://bipartisanpolicy.org/explainer/paying-the-2025-tax-bill-step-up-in-basis-and-securities-backed-lines-of-credit/">Bipartisan Policy Center 2024</a></span> Leaked IRS files put numbers on it: the 25 richest Americans grew $401 billion wealthier over five years and paid about 3.4 cents of income tax per dollar of it. <span class="tn-src"><a href="https://www.propublica.org/article/the-secret-irs-files-trove-of-never-before-seen-records-reveal-how-the-wealthiest-avoid-income-tax">ProPublica 2021</a></span> (That arithmetic divides tax by wealth growth, which is not how income tax is defined; the definitional gap is the entire trick.) You do not need their lawyers. The 0% bracket, the ladder, and the HSA work best at exactly your scale. The system taxes wages like a vice and patience like a virtue; the only question on offer is which side of it you stand on.</p>
-      </div>
-
-      <!-- ============================ THE STARTING LINE ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">05</span><h2 id="start">The Starting Line</h2><p class="tn-sub">What broke-ish normal looks like in America right now, and the exact order to escape it.</p></div></div>
-
-      <figure class="tn-photo tn-rev">
+<div class="tn-read tn-rev">
+<p>Saving half of take-home pay reaches that illustrative target in about seventeen years. That rate is feasible for some high-income households and unavailable to many others. Rent, caregiving, disability, debt and wages constrain the gap. Changing a slider is easier than changing those conditions.</p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">04</span><h2 id="taxes">What gets taxed</h2><p class="tn-sub">The account and the income type matter as much as the amount withdrawn.</p></div></div>
+<div class="tn-read tn-rev">
+<p>Consider two simplified 2026 examples. A single employee under 65, earning $100,000 with no pretax contributions or credits, owes $13,170 in federal income tax using the standard deduction, plus $7,650 in employee Social Security and Medicare taxes: $20,820 altogether. A married couple, both under 65, selling $120,000 of stock with a $60,000 cost basis can owe $0 in federal income tax if the shares were held over a year and they have no other income. Different filing statuses and income types make this a tax illustration, not a like-for-like retirement budget. <span class="tn-src"><a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf">IRS 2026 tables</a></span> <span class="tn-src"><a href="https://www.irs.gov/taxtopics/tc751">IRS payroll rates</a></span></p>
+<p>Only the $60,000 gain is income in that sale. The couple's $32,200 standard deduction leaves $27,800 of taxable income, within the 2026 married-joint 0% long-term capital-gains bracket of $98,900. With no other income, that deduction and bracket allow up to $131,100 of long-term stock gains at a zero federal income-tax rate. Ordinary income uses deduction and bracket space too. State taxes can still apply. <span class="tn-src"><a href="https://www.irs.gov/taxtopics/tc409">IRS capital gains</a></span> <span class="tn-src"><a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf">IRS 2026 limits</a></span></p>
+<h3>Roth conversions need a withdrawal plan</h3>
+<p>A Roth conversion moves pretax retirement money into a Roth account and generally includes it in that year's ordinary income. Low-income years may make conversion cheaper; unused deductions can sometimes cover the taxable amount. Conversions can also increase the tax on capital gains and reduce health-insurance subsidies. There is no universal tax-free conversion allowance. <span class="tn-src"><a href="https://www.irs.gov/publications/p590a">IRS Publication 590-A</a></span></p>
+<p>Before age 59&frac12;, a conversion ladder also needs money for the waiting period. Taxable converted amounts generally have a separate five-tax-year clock before withdrawal avoids the 10% early-distribution tax, unless an exception applies. Roth IRA ordering rules distribute regular contributions first, then conversions, then earnings. Tax-free earnings have another qualification test, generally requiring the Roth five-year period and age 59&frac12;. These clocks are easy to confuse. <span class="tn-src"><a href="https://www.irs.gov/publications/p590b">IRS Publication 590-B</a></span></p>
+<h3>HSA receipts can stay useful</h3>
+<p>An eligible health savings account can receive federally deductible contributions, grow without annual federal income tax, and reimburse qualified medical expenses tax-free. You can defer reimbursement without a time limit, but the expense must follow the HSA's establishment. Keep receipts; it must not have been reimbursed elsewhere or taken as an itemized deduction. State treatment can differ. <span class="tn-src"><a href="https://www.irs.gov/publications/p969">IRS Publication 969</a></span> <span class="tn-src"><a href="https://www.irs.gov/pub/irs-drop/n-04-50.pdf">IRS Notice 2004-50, Q39</a></span></p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">05</span><h2 id="start">Debt before the target</h2><p class="tn-sub">A portfolio calculation is useful only after the monthly bills fit.</p></div></div>
+<figure class="tn-photo tn-rev">
         <img src="assets/moneylender-1514.webp" width="1240" height="1168" alt="A 1514 oil painting of a moneylender weighing gold coins at a table while his wife, turning a page of an illuminated book, watches the coins." loading="lazy" decoding="async">
-        <figcaption class="tn-figcap">The Moneylender and His Wife, Quentin Massys, 1514. Compounding has been staring households down for five centuries; the only question is which side of the table you sit on. <a href="https://commons.wikimedia.org/wiki/File:Massysm_Quentin_%E2%80%94_The_Moneylender_and_his_Wife_%E2%80%94_1514.jpg">Louvre, public domain</a>.</figcaption>
+        <figcaption class="tn-figcap">The Moneylender and His Wife, Quentin Massys, 1514. <a href="https://commons.wikimedia.org/wiki/File:Massysm_Quentin_%E2%80%94_The_Moneylender_and_his_Wife_%E2%80%94_1514.jpg">Louvre, public domain</a>.</figcaption>
       </figure>
-
-      <div class="tn-read tn-rev">
-        <p>This path does not start at zero; for most people it starts below it. The American averages right now: a <strong>$767 monthly payment</strong> on a $43,582 new-car loan (1 in 5 new-car buyers signs for $1,000 or more), a <strong>$39,547 student loan</strong> that takes the average borrower 20 years to clear, and <strong>$6,768 riding on credit cards</strong> at roughly 21.5% interest, which 47% of cardholders carry month to month. <span class="tn-src"><a href="https://www.lendingtree.com/auto/debt-statistics/">Experian via LendingTree 2026</a> <a href="https://www.edmunds.com/industry/press/more-than-1-in-5-new-car-shoppers-committed-to-1000-monthly-payments-in-q4-2025-according-to-edmunds.html">Edmunds 2026</a> <a href="https://educationdata.org/student-loan-debt-statistics">Education Data Initiative 2026</a> <a href="https://www.bankrate.com/credit-cards/news/credit-card-debt-report/">Bankrate 2026</a></span> Meanwhile 37% of American adults could not cover a $400 surprise with cash. <span class="tn-src"><a href="https://www.federalreserve.gov/publications/2026-economic-well-being-of-us-households-in-2025-executive-summary.htm">Federal Reserve SHED 2026</a></span></p>
-        <p>The credit card is the threshold's evil twin: compounding pointed at you. A $7,000 balance at 22%, paid at the issuer's minimums, takes about <strong>22 years</strong> to die and costs nearly $12,000 in interest. <span class="tn-src"><a href="https://www.bankrate.com/credit-cards/news/fed-cut-wont-help-credit-card-debtors/">Bankrate 2025</a></span> Flip that around and it is the best investment you will ever be offered: paying off a 22% card is a guaranteed, tax-free 22% return. The market averages 10 and guarantees nothing.</p>
-        <h3>The order of operations</h3>
-        <p>Every serious money flowchart lands on the same sequence:</p>
-        <ol>
-          <li><strong>Take the full 401(k) match.</strong> An instant 50 to 100% return; one in four workers leaves part of it on the table, about $1,336 a year in declined free pay. <span class="tn-src"><a href="https://www.shrm.org/topics-tools/news/benefits-compensation/one-four-workers-miss-full-401k-match">Financial Engines 2015</a></span></li>
-          <li><strong>Kill everything above ~8% interest,</strong> highest rate first. This is the guaranteed 22% at work.</li>
-          <li><strong>Bank 3 to 6 months of expenses</strong> in boring cash. This is what keeps a flat tire from refilling the credit card.</li>
-          <li><strong>Fill the tax-advantaged buckets:</strong> Roth IRA, HSA if eligible, then more 401(k).</li>
-          <li><strong>Everything else into one total-market index fund,</strong> automatically, every month, in a plain taxable account. This bucket funds the years before 59&frac12;.</li>
-        </ol>
-        <p>That list is the entire required reading. The rest of the industry is commentary, much of it sold at 1% a year, which sounds like nothing and is catastrophic: on a 50-year horizon, a 1% fee cuts the 4% rule's success odds from 36% to 8.6%. <span class="tn-src"><a href="https://investor.vanguard.com/investor-resources-education/article/fueling-the-fire-movement-updating-the-4-rule-for-early-retirees">Vanguard 2021</a></span> The index fund charges 0.03.</p>
-      </div>
-
-      <!-- ============================ THE CLIMB ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">06</span><h2 id="climb">The Climb</h2><p class="tn-sub">Frugality is the throttle. Income is the engine. Here is where the income comes from without a famous degree.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p>Now the first dose of no-free-lunch: the savings rate is mostly about income. The bottom fifth of households spend more than they make, not from foolishness but because there is nothing left to save; the top fifth save 15 to 25% without heroics. <span class="tn-src"><a href="https://www.bls.gov/news.release/cesan.nr0.htm">BLS Consumer Expenditures 2025</a></span> Skipping a daily latte saves $1,825 a year. One $10,000 raise, saved and invested at 7%, is roughly <strong>$632,000 after 25 years</strong>. You cannot frugal your way out of a salary problem.</p>
-        <p>So the honest plan has a step the brochures skip: become unusually useful at something that pays. That category is far wider than the college-or-bust story admits; about 5.7 million Americans earn six figures with no bachelor's degree. <span class="tn-src"><a href="https://www.lendingtree.com/debt-consolidation/no-degree-six-figures-study/">LendingTree 2023</a></span> Government medians, not fantasies:</p>
-      </div>
-
-      <div class="tn-tablewrap tn-rev">
-        <table class="u-table">
-          <thead><tr><th>Path</th><th>Median pay</th><th>The toll</th></tr></thead>
-          <tbody>
-            <tr><td>Elevator mechanic</td><td class="u-num">$106,580</td><td>4-year apprenticeship, paid from day one, $0 tuition. Top tenth clear $149K. Highest odds in America of a no-degree six-figure job: 47.5% get there.</td></tr>
-            <tr><td>Air traffic controller</td><td class="u-num">$144,580</td><td>No degree required; the FAA pays you during the academy. Hard age-31 application cutoff.</td></tr>
-            <tr><td>Nuclear reactor operator</td><td class="u-num">$122,610</td><td>High school diploma plus employer training and a federal license. The worst-paid tenth still make about $99K.</td></tr>
-            <tr><td>Radiation therapist</td><td class="u-num">$101,990</td><td>2-year associate degree.</td></tr>
-            <tr><td>Registered nurse</td><td class="u-num">$93,600</td><td>2-year community-college ADN, roughly $10-20K all-in, same license as the 4-year grads. The metro-area spread runs $90K (Texas) to $188K (San Francisco).</td></tr>
-            <tr><td>Dental hygienist</td><td class="u-num">$94,260</td><td>Associate degree.</td></tr>
-            <tr><td>Power-line installer</td><td class="u-num">$92,560</td><td>Utility apprenticeship, paid training.</td></tr>
-            <tr><td>Tech sales (AE)</td><td class="u-num">$200,000 OTE</td><td>No degree gate, no tuition. The toll is brutal turnover: about a third of entry-level reps wash out or move on each year.</td></tr>
-            <tr><td>Military, 20 years</td><td class="u-num">~$37,200/yr pension</td><td>Pension for life starting around age 40, plus a free degree (GI Bill) and a zero-down home loan.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="tn-tablenote">Medians from the Bureau of Labor Statistics, May 2024 survey, via the Labor Department's CareerOneStop profiles. Sales figures are median on-target earnings from 12,638 verified reps. <span class="tn-src"><a href="https://www.careeronestop.org/Toolkit/Careers/Occupations/occupation-profile.aspx?onetcode=47402100&amp;location=US">BLS / CareerOneStop 2024</a> <a href="https://www.repvue.com/salaries/account-executive">RepVue 2026</a> <a href="https://www.cnbc.com/2025/09/04/jobs-with-the-most-workers-who-earn-100k-without-a-bachelors-degree.html">CNBC 2025</a></span></p>
-
-      <figure class="tn-photo tn-rev">
-        <img src="assets/vega-worker-1942.webp" width="1920" height="1460" alt="A worker in a red headscarf and plaid shirt checking rows of electrical assemblies at a workbench, in saturated 1942 Kodachrome color." loading="lazy" decoding="async">
-        <figcaption class="tn-figcap">Checking electrical assemblies at Vega Aircraft, Burbank, June 1942. Paid to learn a skill that pays: the table's whole argument, eighty years early. Kodachrome by Alfred Palmer. <a href="https://commons.wikimedia.org/wiki/File:Woman_aircraft_worker,_Vega_Aircraft_Corporation,_Burbank,_Calif,_Shown_checking_electrical_assemblies.jpg">Library of Congress, public domain</a>.</figcaption>
+<div class="tn-read tn-rev">
+<p>The Federal Reserve's 2025 household survey found that 63% of adults would cover a hypothetical $400 emergency entirely with cash, savings or a credit card paid off at the next statement. The other 37% is not a measure of everyone unable to pay; some would borrow or use another method. It does show why a long investment plan needs a short-term reserve. <span class="tn-src"><a href="https://www.federalreserve.gov/publications/2026-economic-well-being-of-us-households-in-2025-executive-summary.htm">Fed SHED 2025</a></span></p>
+<p>A $7,000 card balance at a 22% APR incurs about $128 of interest in its first month under a simple APR-divided-by-twelve calculation. Paying principal reduces that charge. Minimum-payment payoff times depend on the issuer's formula and future rates; a single twenty-two-year estimate cannot describe every card.</p>
+<h3>A workable saving order</h3>
+<ol>
+<li>Keep essential bills and minimum debt payments current, and build enough cash to avoid borrowing for the next ordinary surprise.</li>
+<li>Check an employer retirement match, its contribution limit and vesting rules. A match can be valuable, but it is plan-specific.</li>
+<li>Direct extra debt payments to the highest interest rate. Avoiding a 22% card charge is a much firmer benefit than hoping for a stock return.</li>
+<li>Build a reserve suited to your employment and obligations. Then choose retirement accounts according to eligibility, taxes, fees and the age when you need access.</li>
+<li>Automate investing in a diversified portfolio. A taxable account can help fund years before retirement-account access is straightforward.</li>
+</ol>
+<p>Fees belong in the return assumption. With no additional deposits, $100,000 compounding at 5% for forty years becomes about $704,000; at 4%, about $480,000. That calculated difference illustrates a one-percentage-point reduction in annual net return. Check both fund costs and advisory charges. <span class="tn-src"><a href="https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/mutual-fund-and-etf-fees-and-expenses-investor-bulletin">SEC fee guide</a></span></p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">06</span><h2 id="climb">Income and time</h2><p class="tn-sub">A raise helps only to the extent that it becomes additional saving.</p></div></div>
+<div class="tn-read tn-rev">
+<p>An extra $10,000 saved at each year-end for twenty-five years grows to about $632,000 at a constant 7% return. That is a calculated example before taxes and fees. A $10,000 gross raise produces less after tax, and the example is in nominal dollars unless 7% is explicitly a real return.</p>
+<p>Training or changing employers can improve the gap, but admission, tuition, physical demands and local openings matter. The following occupations offer routes that can avoid a bachelor's degree. Their median wages describe established workers, not new entrants.</p>
+</div>
+<details class="tn-read tn-rev tn-reference"><summary>Occupation examples and entry requirements</summary>
+<div class="tn-tablewrap"><table class="u-table"><thead><tr><th>Path</th><th>Annual median wage</th><th>Entry and constraints</th></tr></thead><tbody><tr><td><a href="https://www.bls.gov/ooh/construction-and-extraction/elevator-installers-and-repairers.htm">Elevator mechanic</a></td><td class="u-num">$109,910</td><td>Typically a four-year apprenticeship with paid on-the-job training; most states require a license.</td></tr>
+<tr><td><a href="https://www.bls.gov/ooh/transportation-and-material-moving/air-traffic-controllers.htm">Air traffic controller</a></td><td class="u-num">$148,080</td><td>FAA entry-level applicants must be under 31. Academy training is paid; medical, testing and experience requirements apply.</td></tr>
+<tr><td><a href="https://www.bls.gov/ooh/production/power-plant-operators-distributors-and-dispatchers.htm">Nuclear reactor operator</a></td><td class="u-num">$122,890</td><td>Extensive training, experience and an NRC license. Shift work and continuing examinations.</td></tr>
+<tr><td><a href="https://www.bls.gov/ooh/healthcare/radiation-therapists.htm">Radiation therapist</a></td><td class="u-num">$105,310</td><td>Usually an associate or bachelor's degree; most states require licensing or certification.</td></tr>
+<tr><td><a href="https://www.bls.gov/ooh/healthcare/registered-nurses.htm">Registered nurse</a></td><td class="u-num">$97,550</td><td>Associate, bachelor's or approved diploma routes, plus licensure. Employers may prefer a bachelor's degree.</td></tr>
+<tr><td><a href="https://www.bls.gov/ooh/healthcare/dental-hygienists.htm">Dental hygienist</a></td><td class="u-num">$98,100</td><td>Usually an associate degree; programs typically take three years. All states require licensing.</td></tr>
+<tr><td><a href="https://www.bls.gov/ooh/installation-maintenance-and-repair/line-installers-and-repairers.htm">Power-line installer</a></td><td class="u-num">$95,320</td><td>Technical instruction and on-the-job training; apprenticeships are common. Dangerous work and emergency callouts.</td></tr>
+<tr><td>Technology sales</td><td>Check the offer</td><td>Separate guaranteed base pay from commission at quota. A posted on-target figure is not assured income; education requirements vary.</td></tr>
+<tr><td>Military career</td><td>Plan-specific pension</td><td>Separate retirement eligibility and pay rules from current salary. Service obligations and retirement system determine the result. <a href="https://www.militaryonesource.mil/resources/millife-guides/retirement-transition/">Military OneSource</a></td></tr>
+</tbody></table></div><p class="tn-tablenote">The seven wage figures are BLS May 2025 national medians, checked October 3, 2026. They are gross wages. Each occupation links to its pay and entry requirements; the <a href="https://www.faa.gov/atc-hiring">FAA hiring page</a> supplies the entry-level age and academy details.</p>
+</details>
+<figure class="tn-photo tn-rev">
+        <img src="assets/vega-worker-1942.webp" width="1920" height="1460" alt="A worker in a floral blouse uses a hand tool to check bundles of electrical cable at Vega Aircraft in 1942." loading="lazy" decoding="async">
+        <figcaption class="tn-figcap">Checking electrical assemblies at Vega Aircraft, Burbank, June 1942. Color photograph by David Bransby. <a href="https://www.loc.gov/item/2017878866/">Library of Congress, public domain</a>.</figcaption>
       </figure>
-
-      <div class="tn-read tn-rev">
-        <p>The pattern in the table: apprenticeships pay you to learn instead of charging you, the two-year healthcare licenses are the cheapest legitimate tickets to $90K in the economy, and sales charges in stress what it waives in tuition. In all of them the raises live at other employers: job switchers out-earn stayers in most years on the Atlanta Fed's tracker. <span class="tn-src"><a href="https://www.atlantafed.org/chcs/wage-growth-tracker">Atlanta Fed</a></span> Loyalty is a fine feeling and a poor strategy.</p>
-        <h3>The slowest mile is the first one</h3>
-        <p>One warning, because it breaks more people than any crash: at a $20,000-a-year saving pace with 7% returns, the first $100,000 takes <strong>4.3 years</strong>. The last $100,000 before the first million takes <strong>1.2</strong>. Same effort, same market; by the back half the portfolio's own growth out-earns your deposits.</p>
-      </div>
-
-      <figure class="tn-fig tn-rev">
+<div class="tn-read tn-rev">
+<p>Compounding also changes the contribution schedule. With $20,000 a year deposited monthly and a constant 7% effective annual return, the first $100,000 takes about 4.3 years. The step from $900,000 to $1 million takes about 1.2. These figures assume no taxes, fees or interruptions. A real market can delay either step.</p>
+</div>
+<figure class="tn-fig tn-rev">
         <svg viewBox="0 0 700 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart of years needed for each one hundred thousand dollars on the way to one million: 4.3 years for the first, shrinking to 1.2 years for the last.">
           <g font-family="Commit Mono, monospace" font-size="11.5" fill="#B8B2A2" text-anchor="end">
             <text x="138" y="44">to $100K</text><text x="138" y="75">to $200K</text><text x="138" y="106">to $300K</text><text x="138" y="137">to $400K</text><text x="138" y="168">to $500K</text><text x="138" y="199">to $600K</text><text x="138" y="230">to $700K</text><text x="138" y="261">to $800K</text><text x="138" y="292">to $900K</text><text x="138" y="323">to $1M</text>
           </g>
           <g fill="#D4C4A0">
-            <rect x="150" y="26" width="507.4" height="18" rx="2"/>
-            <rect x="150" y="57" width="389.4" height="18" rx="2"/>
-            <rect x="150" y="88" width="318.6" height="18" rx="2"/>
-            <rect x="150" y="119" width="259.6" height="18" rx="2"/>
-            <rect x="150" y="150" width="224.2" height="18" rx="2"/>
-            <rect x="150" y="181" width="212.4" height="18" rx="2"/>
-            <rect x="150" y="212" width="177.0" height="18" rx="2"/>
-            <rect x="150" y="243" width="165.2" height="18" rx="2"/>
-            <rect x="150" y="274" width="141.6" height="18" rx="2"/>
-            <rect x="150" y="305" width="141.6" height="18" rx="2" fill="#EDE0C0"/>
+            <rect x="150" y="26" width="509.5" height="18" rx="2"/>
+            <rect x="150" y="57" width="393.8" height="18" rx="2"/>
+            <rect x="150" y="88" width="321.0" height="18" rx="2"/>
+            <rect x="150" y="119" width="271.0" height="18" rx="2"/>
+            <rect x="150" y="150" width="234.5" height="18" rx="2"/>
+            <rect x="150" y="181" width="206.7" height="18" rx="2"/>
+            <rect x="150" y="212" width="184.8" height="18" rx="2"/>
+            <rect x="150" y="243" width="167.1" height="18" rx="2"/>
+            <rect x="150" y="274" width="152.4" height="18" rx="2"/>
+            <rect x="150" y="305" width="140.2" height="18" rx="2" fill="#EDE0C0"/>
           </g>
           <g font-family="Commit Mono, monospace" font-size="11.5" fill="#F5F1EA">
-            <text x="648" y="40" text-anchor="end" fill="#2a322b">4.3 yrs</text>
-            <text x="545" y="71">3.3</text>
-            <text x="474" y="102">2.7</text>
-            <text x="415" y="133">2.2</text>
-            <text x="380" y="164">1.9</text>
-            <text x="368" y="195">1.8</text>
-            <text x="333" y="226">1.5</text>
-            <text x="321" y="257">1.4</text>
-            <text x="297" y="288">1.2</text>
-            <text x="297" y="319" fill="#EDE0C0">1.2</text>
-          </g>
+<text x="648.0" y="40" text-anchor="end" fill="#2a322b">4.3 yrs</text>
+<text x="549.8" y="71">3.3</text>
+<text x="477.0" y="102">2.7</text>
+<text x="427.0" y="133">2.3</text>
+<text x="390.5" y="164">2.0</text>
+<text x="362.7" y="195">1.8</text>
+<text x="340.8" y="226">1.6</text>
+<text x="323.1" y="257">1.4</text>
+<text x="308.4" y="288">1.3</text>
+<text x="296.2" y="319" fill="#EDE0C0">1.2</text>
+</g>
         </svg>
-        <figcaption class="tn-figcap">Years per $100,000 at a $20,000-a-year saving pace, 7% returns. The millionth dollar arrives 3.5&times; faster than the hundred-thousandth.</figcaption>
+        <figcaption class="tn-figcap">Calculated time for each $100,000 increment with monthly deposits totaling $20,000 a year and a constant 7% effective annual return, before taxes and fees. Dollars here are nominal.</figcaption>
       </figure>
-
-      <blockquote class="u-pq tn-rev">The first $100,000 is a bitch, but you gotta do it. I don't care what you have to do.<cite class="u-pq-cite">Charlie Munger, to a Berkshire shareholder, as recounted in the authorized biography <a href="https://www.mymoneyblog.com/charlie-munger-the-first-100000-is-the-most-difficult.html" style="color:inherit">Damn Right! (2000)</a></cite></blockquote>
-
-      <!-- ============================ THE PEOPLE ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">07</span><h2 id="people">People Who Actually Did It</h2><p class="tn-sub">Not founders. Not heirs. A janitor, three secretaries, and 665,000 quiet accounts.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p><strong>Ronald Read</strong> pumped gas in Brattleboro, Vermont, then swept floors at JCPenney. He pinned his coat shut with safety pins; a diner regular once paid his bill assuming he was broke. He died in 2014 holding a five-inch stack of stock certificates, at least 95 dividend-paying blue chips held for decades, worth <strong>$8 million</strong>, most of it left to the local hospital and library. <span class="tn-src"><a href="https://www.cnbc.com/2015/02/09/heres-how-a-janitor-amassed-an-8m-fortune.html">CNBC 2015</a></span> <strong>Grace Groner</strong> turned three $60 shares of Abbott and 75 years of reinvested dividends into <strong>$7 million</strong>. <span class="tn-src"><a href="https://www.csmonitor.com/Business/new-economy/2010/0305/Secret-millionaire-donates-her-fortune-to-Lake-Forest-College.-Here-s-how-she-did-it">CS Monitor 2010</a></span> <strong>Sylvia Bloom</strong>, a Brooklyn legal secretary, mirrored her bosses' trades in small size for 67 years and left <strong>$9 million</strong>. <span class="tn-src"><a href="https://www.cnbc.com/2018/05/08/how-a-96-year-old-secretary-amassed-a-secret-8-million-fortune.html">CNBC 2018</a></span> <strong>Anne Scheiber</strong>, an IRS auditor who never earned more than about $4,000 a year, compounded $5,000 for 50 years into <strong>$22 million</strong>, all willed to fund scholarships for women. <span class="tn-src"><a href="https://www.spokesman.com/stories/1995/dec/04/frugal-irs-worker-bequeaths-22-million/">AP 1995</a></span></p>
-        <p>Those are the romantic outliers. The mass-produced version is duller and better documented: nearly 1 in 5 US households clears $1 million counting home equity, the country mints more than 1,000 new millionaires a day <span class="tn-src"><a href="https://dqydj.com/millionaires-in-america/">DQYDJ / Fed SCF</a> <a href="https://www.ubs.com/global/en/media/display-page-ndp/en-20250618-gwr-2025.html">UBS 2025</a></span>, and Fidelity counts <strong>665,000 401(k) millionaires</strong> in the plans it runs: average age 59, about 26 years of contributions, roughly 17% of pay saved, ordinary funds. <span class="tn-src"><a href="https://www.investmentnews.com/retirement-planning/vanguard-fidelity-data-show-new-record-highs-in-401k-savings/265542">Fidelity via InvestmentNews 2026</a></span> The largest millionaire survey ever run (10,000 of them, by a firm that sells exactly this message) found the top professions were engineer, accountant, teacher, manager, attorney; 79% inherited nothing; a third never had a single six-figure year. <span class="tn-src"><a href="https://www.ramseysolutions.com/retirement/the-national-study-of-millionaires-research">Ramsey 2018</a></span> The honest counterweight: the famous retire-at-30 bloggers were mostly high earners, and the mass-produced millionaire is 59, not 35. The machine works at ordinary incomes. It just runs on a longer clock.</p>
-      </div>
-
-      <!-- ============================ THE ENGINES ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">08</span><h2 id="engines">Where the Money Sits</h2><p class="tn-sub">Five engines that turn a pile into a paycheck, and the floor under all of them.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p>A pile is not a paycheck until something converts it. The catch column is load-bearing.</p>
-      </div>
-
-      <div class="tn-tablewrap tn-rev">
-        <table class="u-table tn-eng">
-          <thead><tr><th style="width:21%">Engine</th><th style="width:27%">Pays</th><th>The catch</th></tr></thead>
-          <tbody>
-            <tr class="u-feature"><td>Total-market index fund, 4% withdrawals</td><td class="u-num">~4%/yr, rises with inflation</td><td>The default every number above assumes. No guarantees in any given decade; over the 15 years through 2024, 89.5% of paid professionals lost to it. <span class="tn-src"><a href="https://www.spglobal.com/spdji/en/documents/spiva/spiva-us-year-end-2024.pdf">SPIVA 2024</a></span></td></tr>
-            <tr><td>TIPS ladder</td><td class="u-num">~4.7%/yr, inflation-proof, US-guaranteed, 30 years</td><td>Built to hit zero in year 30. There is no year 31. <span class="tn-src"><a href="https://tipswatch.com/">Tipswatch 2026</a></span></td></tr>
-            <tr><td>Annuity, bought at 60</td><td class="u-num">~$75,000/yr per $1M, for life</td><td>Checks are frozen nominal dollars; inflation halves their bite in ~24 years. So good and so unpopular it has its own paradox, the annuity puzzle. <span class="tn-src"><a href="https://www.immediateannuities.com/annuity-rates/by-age.html">ImmediateAnnuities 2026</a></span></td></tr>
-            <tr><td>Rental property</td><td class="u-num">~7% yields</td><td>A job stapled to an asset: roughly 96 hours a year per property, and the water heater fails at 2 a.m. on principle. The hands-off REIT fund pays ~3.6% and never calls. <span class="tn-src"><a href="https://www.attomdata.com/news/market-trends/single-family-rental/2026-single-family-rental-market-report/">ATTOM 2026</a> <a href="https://www.hemlane.com/resources/cost-time-property-management/">Hemlane</a></span></td></tr>
-            <tr><td>Dividend funds</td><td class="u-num">3 to 3.4% in cash</td><td>Feels like free money; is mathematically the company selling pieces of itself on your behalf. Chasing yield trades away growth.</td></tr>
-            <tr><td>Social Security, the floor</td><td class="u-num">avg $2,081/mo</td><td>The forgotten asset: every $1,000 a month of benefit does the job of $300,000 of portfolio, and early retirees still collect at 67. The pile only has to carry you there, not to 100, alone. <span class="tn-src"><a href="https://www.kiplinger.com/retirement/social-security/what-is-the-average-social-security-check-by-age">Kiplinger 2026</a></span></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="tn-tablenote">Rates and yields are 2026 figures, sourced in their rows.</p>
-
-      <!-- ============================ NO FREE LUNCH ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">09</span><h2 id="catch">No Free Lunch</h2><p class="tn-sub">The blunt section. Read it twice; the brochure version of this plan omits all of it.</p></div></div>
-
-      <figure class="tn-photo tn-rev">
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">07</span><h2 id="people">What the success stories show</h2><p class="tn-sub">Documented wealth is evidence of an outcome, not of its probability.</p></div></div>
+<div class="tn-read tn-rev">
+<p>Large fortunes have been accumulated on ordinary salaries. The familiar stories often describe people investing into old age and leaving money at death, rather than funding decades of early retirement. They also omit the savers who bought unsuccessful companies.</p>
+</div>
+<details class="tn-read tn-rev tn-reference"><summary>Four examples, with their limits</summary>
+<p><strong>Ronald Read</strong>, a gas-station attendant and janitor, left an estate worth nearly $8 million. Brattleboro Memorial Hospital described his long-held investments when naming a pavilion for him. <span class="tn-src"><a href="https://myemail.constantcontact.com/working-bmh---September-2022-newsletter.html?aid=EbbK2HO9ftA&amp;soid=1105166336521">BMH 2022</a></span></p>
+<p><strong>Grace Groner</strong>, an Abbott secretary, left more than $7 million to a foundation supporting Lake Forest College students. The college traces it to an initial $180 stock investment. That successful concentration in one employer is an outcome, not a diversification strategy. <span class="tn-src"><a href="https://www.lakeforest.edu/news/alumna-grace-groner-31-gives-7-million-to-lake-forest-college">Lake Forest College 2010</a></span></p>
+<p><strong>Sylvia Bloom</strong> worked as a legal secretary for sixty-seven years and bought small amounts of stocks her employer bought. Henry Street Settlement's account describes her gift and the scholarship fund it created. <span class="tn-src"><a href="https://www.henrystreet.org/wp-content/uploads/2018/11/Newsletter-FINAL-Fall-2018.pdf">Henry Street 2018</a></span></p>
+<p><strong>Anne Scheiber</strong>, a retired IRS employee, left $22 million for women's scholarships in 1995. The Associated Press reported the bequest; Yeshiva University describes the continuing fund. The often-repeated claim that the entire fortune began with only $5,000 is not needed to understand that gift. <span class="tn-src"><a href="https://www.spokesman.com/stories/1995/dec/04/frugal-irs-worker-bequeaths-22-million/">AP 1995</a></span> <span class="tn-src"><a href="https://www.yu.edu/admissions/apply/scheiber">Yeshiva University</a></span></p>
+</details>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">08</span><h2 id="engines">How assets fund spending</h2><p class="tn-sub">Withdrawal, yield and annuity payout are different quantities.</p></div></div>
+<div class="tn-read tn-rev">
+<p>A dividend is a payment from a company; a portfolio withdrawal may also involve selling shares. A bond ladder or annuity can return some of your original principal. Comparing their cash payments as if they were the same investment return makes the larger number look better than it is.</p>
+</div>
+<div class="tn-tablewrap tn-rev"><table class="u-table tn-eng"><thead><tr><th>Source</th><th>What it does</th><th>What to account for</th></tr></thead><tbody>
+<tr class="u-feature"><td>Diversified stock-and-bond portfolio</td><td>Fund spending from dividends, interest and sales.</td><td>A withdrawal rate sets a spending policy. Asset allocation and the order of returns affect how long it lasts.</td></tr>
+<tr><td>TIPS ladder</td><td>Schedule inflation-linked Treasury principal and interest.</td><td>Match maturities to spending. A ladder that spends principal ends on its final maturity; extending the horizon costs more. Selling early exposes you to market prices. <a href="https://www.treasurydirect.gov/marketable-securities/tips/">TreasuryDirect</a></td></tr>
+<tr><td>Lifetime annuity</td><td>Buy a contractual stream of payments.</td><td>Quote the actual age, survivor option and inflation protection. A fixed nominal payment loses buying power; insurer solvency and limited access to principal matter. <a href="https://www.investor.gov/introduction-investing/investing-basics/investment-products/annuities">SEC annuity guide</a></td></tr>
+<tr><td>Rental property</td><td>Collect rent after operating costs.</td><td>Gross rental yield excludes maintenance, vacancies, financing and taxes. Management is work, whether you do it or pay someone else.</td></tr>
+<tr><td>Dividend funds</td><td>Distribute cash from stock holdings.</td><td>Dividends can be cut. A high yield alone says little about future total return or retirement safety.</td></tr>
+<tr><td>Social Security</td><td>Provide benefits if your work record qualifies.</td><td>SSA estimated an average retired-worker benefit of $2,071 a month for January 2026. Your record and claiming age determine yours. <a href="https://www.ssa.gov/faqs/en/questions/KA-01903.html">SSA estimate</a></td></tr>
+</tbody></table></div>
+<div class="tn-read tn-rev">
+<p>Social Security needs its own timeline. You can generally claim retirement benefits from 62; full retirement age is 67 for people born in 1960 or later. Stopping work early can lower benefits because the calculation uses your highest thirty-five years of earnings, including zeros when you have fewer. Check an estimate with future earnings set to your actual plan. The calculator above leaves benefits out rather than treating them as money available today. <span class="tn-src"><a href="https://www.ssa.gov/benefits/retirement/planner/agereduction.html">SSA claiming ages</a></span> <span class="tn-src"><a href="https://www.ssa.gov/benefits/retirement/planner/stopwork.html">SSA stopping work</a></span></p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">09</span><h2 id="catch">What the projection leaves out</h2><p class="tn-sub">Start with the risks that would force a change in spending.</p></div></div>
+<figure class="tn-photo tn-rev">
         <img src="assets/crash-1929.webp" width="1520" height="1197" alt="A dense crowd of men in suits and hats filling the street outside the New York Stock Exchange on October 24, 1929." loading="lazy" decoding="async">
-        <figcaption class="tn-figcap">Wall Street, October 24, 1929. The 4% rule is calibrated so that even the people in this photograph, had they just retired, would not have run out. <a href="https://commons.wikimedia.org/wiki/File:Crowds_gathering_outside_New_York_Stock_Exchange.jpg">Public domain</a>.</figcaption>
+        <figcaption class="tn-figcap">Wall Street, October 24, 1929. Associated Press photograph. <a href="https://commons.wikimedia.org/wiki/File:Crowds_gathering_outside_New_York_Stock_Exchange.jpg">Public domain</a>.</figcaption>
       </figure>
-
-      <div class="tn-read tn-rev">
-        <h3>The goalpost moves while you run</h3>
-        <p>Every figure here is in today's dollars, and today's dollars melt. At 3% inflation the sticker price of the $2.5 million life reads closer to <strong>$5 million</strong> in 25 years. <span class="tn-src"><a href="https://www.minneapolisfed.org/about-us/monetary-policy/inflation-calculator/consumer-price-index-1913-">Minneapolis Fed CPI</a></span> Wages and returns inflate too, so the real math holds. But do not tattoo a nominal number anywhere. The line you are walking toward is painted on a treadmill.</p>
-        <h3>The order of returns can betray you</h3>
-        <p>A January 2000 retiree with $2.4 million on the 4% playbook sat at about $1.1 million by age 80, despite perfectly normal average returns after the crash years. Same average, ruinous order. <span class="tn-src"><a href="https://247wallst.com/personal-finance/2026/05/29/62-year-old-retirees-2-4m-portfolio-could-drop-to-1-1m-by-80-in-the-wrong-market/">24/7 Wall St 2026</a></span> And the trap aims at you personally: bull markets are what shove portfolios across the line, so "I just hit my number" and "stocks are expensive" tend to arrive in the same envelope. They have rarely been more expensive than now; the market's long-run valuation gauge sits near 40, exceeded in 140 years of data only by December 1999. <span class="tn-src"><a href="https://www.multpl.com/shiller-pe">Shiller CAPE</a></span> The defenses are dull: hold a couple of years in cash and bonds, skip the inflation raise in crash years (that habit alone lifts 50-year success odds to about 90%), or work one more year. <span class="tn-src"><a href="https://investor.vanguard.com/investor-resources-education/article/fueling-the-fire-movement-updating-the-4-rule-for-early-retirees">Vanguard 2021</a></span></p>
-        <h3>Healthcare is the boss fight</h3>
-        <p>Quit before 65 and you leave employer insurance a decade before Medicare. An unsubsidized couple in their late 50s now pays roughly <strong>$31,500 a year in premiums</strong>, with a bad-year ceiling above $50,000; the pandemic-era subsidy boosts expired at the end of 2025 and 2026 premiums jumped the most in eight years. <span class="tn-src"><a href="https://www.kff.org/affordable-care-act/how-will-the-loss-of-enhanced-premium-tax-credits-affect-older-adults/">KFF 2026</a></span> At the 4% rule that premium line is an entire million dollars of portfolio doing nothing but buying insurance. The income-managed subsidy from the tax section softens it. Budget for the ugly version anyway.</p>
-        <h3>The spreadsheet has no cell for your life</h3>
-        <p>Divorce costs the average person <strong>77% of their wealth</strong>. <span class="tn-src"><a href="https://news.osu.edu/divorce-drops-a-persons-wealth-by-77-percent-study-finds/">Ohio State 2005</a></span> A child runs about $311,000 through age 17, college not included. <span class="tn-src"><a href="https://www.brookings.edu/articles/its-getting-more-expensive-to-raise-children-and-government-isnt-doing-much-to-help/">Brookings 2022</a></span> More than 1 in 4 of today's 20-year-olds becomes disabled before retirement age. <span class="tn-src"><a href="https://www.ssa.gov/disabilityfacts/facts.html">SSA</a></span> And roughly 4 in 10 retirees left work earlier than planned, mostly health and layoffs, not victory laps. <span class="tn-src"><a href="https://www.ebri.org/docs/default-source/rcs/2026-rcs/rcs_26-fs-2.pdf">EBRI 2026</a></span> The plan quietly assumes a body, a marriage, and an employer that all hold for 25 straight years. Insure what you can, hold the rest loosely.</p>
-        <h3>The odds, stated plainly</h3>
-        <p>Only 13% of American retirees got out before 55, and most of that 13% did not choose the date. <span class="tn-src"><a href="https://www.ebri.org/docs/default-source/rcs/2026-rcs/rcs_26-fs-2.pdf">EBRI 2026</a></span> Most people who start this road step off it: the median saver is on the 60-year plan, and one bad divorce undoes a decade. The road is strange among hard roads, though: you keep every mile you walk. Quit at $300,000 and you still own a machine that pays your rent forever.</p>
-        <h3>You will need something to retire to</h3>
-        <p>The least expected failure mode is winning. The problem moves from money to meaning, and profiles of early retirees who went back to work read identically; "I was bored out of my mind" is a direct quote from one who lasted five months. <span class="tn-src"><a href="https://www.cnbc.com/2024/02/15/40-year-old-who-retired-and-only-lasted-5-months-it-was-boring.html">CNBC 2024</a></span> The number buys back your 90,000 hours and then asks, with a straight face, what they were for.</p>
-        <h3>The predators sell this exact dream</h3>
-        <p>"Passive income" is the most profitable phrase in the scam economy precisely because everything above is true enough to believe. The FTC's recent docket: $25 million taken by an "AI-powered" storefront scheme, settlements against course-sellers promising $1,000 to $3,000 a month on autopilot, and MLM plans where, by some analyses, more than 99% of participants lose money. <span class="tn-src"><a href="https://www.ftc.gov/news-events/news/press-releases/2024/09/ftc-announces-crackdown-deceptive-ai-claims-schemes">FTC 2024</a> <a href="https://www.ftc.gov/news-events/news/press-releases/2026/04/publishingcom-pay-15-million-misleading-consumers-about-how-much-income-they-could-earn-using">FTC 2026</a></span> Even the famous Einstein line about compound interest is fake; an ad copywriter wrote it. <span class="tn-src"><a href="https://quoteinvestigator.com/2019/09/09/interest/">Quote Investigator 2019</a></span> The real machine has no webinar, no mentor, and no urgency. If someone is selling you passive income, you are the income.</p>
-        <aside class="u-callout">
-          <p class="u-callout-k">The loudest objection</p>
-          <p class="u-callout-body">Suze Orman, asked about early retirement on a 2018 podcast: "I hate it. I hate it. I hate it." Her number is $5 million, maybe $10 million, because a single catastrophe can burn $350,000 a year. <span class="tn-src"><a href="https://affordanything.com/153-hate-fire-movement-suze-orman/">Afford Anything 2018</a></span> She is pricing every disaster striking at once, which is how you get a number nobody reaches. But she is gesturing at the same tail risks listed above. The sane landing spot is between her and the brochure: a real cushion, real insurance, and flexibility.</p>
-        </aside>
-      </div>
-
-      <!-- ============================ THE DEAL ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">10</span><h2 id="citizen">The Deal Underneath</h2><p class="tn-sub">Where the 7% actually comes from, and why the plan requires you to be worth paying.</p></div></div>
-
-      <figure class="tn-photo tn-photo-narrow tn-rev">
-        <img src="assets/hine-mechanic-1920.webp" width="1280" height="1782" alt="A machinist bent over a large wrench, tightening a bolt at the center of a huge circular steam pump, photographed in 1920." loading="lazy" decoding="async">
-        <figcaption class="tn-figcap">Powerhouse mechanic, Lewis Hine, 1920. An index fund's return is a small rent collected on millions of workdays like this one. <a href="https://commons.wikimedia.org/wiki/File:Lewis_Hine_Power_house_mechanic_working_on_steam_pump.jpg">National Archives, public domain</a>.</figcaption>
+<div class="tn-read tn-rev">
+<h3>Losses near retirement</h3>
+<p>Sequence risk means that returns arrive in an order that harms a withdrawing portfolio. Selling shares after early losses leaves fewer shares to recover, even when the long-run average return looks acceptable. Cash and bonds, a lower initial withdrawal or spending adjustments can reduce the pressure, but none makes a stock portfolio certain. Bengen's paper began by showing why averages alone were insufficient. <span class="tn-src"><a href="https://obj.portfolioconstructionforum.edu.au/articles_perspectives/retailinvestor.org_pdf_Bengen1.pdf">Bengen 1994</a></span></p>
+<p>Decide which expenses you could reduce before testing a flexible withdrawal policy. Skipping an inflation increase is a real spending cut when prices rise. A method that succeeds by reducing spending may fail your personal minimum budget.</p>
+<h3>Inflation and fees</h3>
+<p>At an assumed 3% annual inflation rate, $2.5 million in today's buying power corresponds to about $5.23 million twenty-five years from now. That is calculated compounding, not an inflation forecast. The calculator holds real income and spending constant, so the nominal dollars saved must rise too. Wage growth does not necessarily keep up.</p>
+<h3>Health insurance before Medicare</h3>
+<p>Price coverage for your household and ZIP code before leaving employer insurance. Include premiums, the plan's out-of-pocket limit and expenses outside covered services. Medicare generally begins at 65, and it has premiums and coverage gaps of its own. A national premium estimate cannot price your retirement. <span class="tn-src"><a href="https://www.medicare.gov/basics/get-started-with-medicare">Medicare eligibility</a></span></p>
+<p>For 2026, Marketplace premium tax credits generally require household income from 100% through 400% of the applicable poverty guideline, along with other eligibility conditions. For a two-person household in the contiguous states and DC, 2026 coverage uses the 2025 guideline of $21,150, giving an upper income limit of $84,600. Alaska and Hawaii differ. A couple with $85,000 of Marketplace income is over that limit; $60,000 may qualify, but the subsidy amount depends on local benchmark premiums and eligibility. <span class="tn-src"><a href="https://www.irs.gov/affordable-care-act/individuals-and-families/questions-and-answers-on-the-premium-tax-credit">IRS premium tax credit FAQ</a></span> <span class="tn-src"><a href="https://www.healthcare.gov/glossary/federal-poverty-level-fpl/">HealthCare.gov guidelines</a></span></p>
+<p>Marketplace income is modified adjusted gross income, rather than taxable income after the standard deduction. Capital gains, taxable conversions and tax-exempt interest count; wealth itself is not the eligibility test. Affordable employer coverage or Medicare eligibility can disqualify you. From tax year 2026, excess advance premium credits have no repayment cap, making accurate income estimates especially consequential. <span class="tn-src"><a href="https://www.healthcare.gov/income-and-household-information/income/">HealthCare.gov income</a></span> <span class="tn-src"><a href="https://www.irs.gov/affordable-care-act/individuals-and-families/questions-and-answers-on-the-premium-tax-credit">IRS eligibility and repayment</a></span></p>
+<h3>Changes in the household</h3>
+<p>A child, separation, disability or caring for a parent can change both spending and earning capacity. Rather than assigning each a national dollar cost, rerun the budget with the obligations you could face. Insurance and cash reserves protect some risks; a retirement date that assumes uninterrupted work still needs a fallback.</p>
+<h3>Promises of effortless income</h3>
+<p>In its 2024 case against Ascend Ecom, the FTC alleged at least $25 million in losses from an online-storefront scheme marketed with AI and passive-income claims. Scrutinize the return guarantee and what the automation actually does. <span class="tn-src"><a href="https://www.ftc.gov/news-events/news/press-releases/2024/09/ftc-announces-crackdown-deceptive-ai-claims-schemes">FTC complaint announcement</a></span></p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">10</span><h2 id="citizen">What an investment return represents</h2><p class="tn-sub">The portfolio owns claims on businesses and borrowers.</p></div></div>
+<figure class="tn-photo tn-photo-narrow tn-rev">
+        <img src="assets/hine-mechanic-1920.webp" width="1280" height="1782" alt="A mechanic bends over a large wrench beside a circular steam pump, photographed by Lewis Hine in 1920." loading="lazy" decoding="async">
+        <figcaption class="tn-figcap">Powerhouse mechanic, Lewis Hine, 1920. <a href="https://commons.wikimedia.org/wiki/File:Lewis_Hine_Power_house_mechanic_working_on_steam_pump.jpg">National Archives, public domain</a>.</figcaption>
       </figure>
-
-      <div class="tn-read tn-rev">
-        <p>Where does the magic return actually come from? Jack Bogle, who invented the index fund in 1976, decomposed a century of stock returns at the end of his life: of the market's 9.6% a year from 1900 to 2005, <strong>9.5 points came from dividends and earnings growth</strong>. Real companies, making real things, sold by real employees; speculation contributed 0.1. <span class="tn-src"><a href="https://corporate.vanguard.com/content/corporatesite/us/en/corp/articles/50-years-50-facts-indexing-since-1976.html">Vanguard 2026</a> <a href="https://www.morningstar.com/markets/bogles-reasonable-expectations-market-returns">Morningstar / Bogle</a></span> So the return you would live on is rent paid on other people's workdays, and the price of admission is decades of your own: produce more than you consume, hand the surplus to the productive world, and the productive world pays you back. That is the whole deal. There is no free lunch in it. There is something better: a fair one, priced in patience, available to people who were never going to be founders or heirs.</p>
-      </div>
-
-      <!-- ============================ HISTORY ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">11</span><h2 id="history">A Short History of the Idea</h2><p class="tn-sub">For the record: none of this is new.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <p>A Wall Street analyst named Joe Dominguez retired in 1969, at 31, on $70,000; his 1992 book <em>Your Money or Your Life</em> gave the idea its bones (money is life energy, and enough is a number) <span class="tn-src"><a href="https://www.pbs.org/kcts/affluenza/show/joe.html">PBS</a></span>, Bengen supplied the 4 percent in 1994, a blog made it a movement in 2011, and the main subreddit now has 2.4 million members trading spreadsheets at all hours. <span class="tn-src"><a href="https://gummysearch.com/r/financialindependence/">GummySearch 2026</a></span> Fifty-seven years of fashion cycles, and the arithmetic has not moved: spend less than you earn, buy the boring thing, wait.</p>
-      </div>
-
-      <!-- ============================ MONDAY ============================ -->
-      <div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">12</span><h2 id="monday">What To Do Monday</h2><p class="tn-sub">The whole guide, reduced to five moves and a closing argument.</p></div></div>
-
-      <div class="tn-read tn-rev">
-        <ol>
-          <li><strong>Capture the full 401(k) match this week.</strong> Five minutes in an HR portal for a guaranteed 50 to 100% return.</li>
-          <li><strong>List every debt by interest rate.</strong> Minimums on all, every spare dollar at the highest rate. Anything above 20% is a five-alarm fire.</li>
-          <li><strong>Open one total-market index fund and automate a monthly buy,</strong> even a small one. The amount matters less than the wiring.</li>
-          <li><strong>Raise your income on purpose.</strong> Ask, switch employers, apprentice into one of the table's trades, take the license. The raise out-compounds the coupons.</li>
-          <li><strong>Check the sliders once a year.</strong> Not once a day. The machine runs on decades and ignores weeks.</li>
-        </ol>
-        <p>And if the full 25-year road never gets walked, here is the secret the blunt section was building toward: <strong>this is the rare hard road where every mile is paid in advance.</strong> A dead credit card is a 22% raise on that money forever. A year of expenses in the bank changes how you talk to your boss. $100,000 invested by 25 grows to roughly $1.5 million by 65 in today's dollars <em>even if you never save another cent</em>. <span class="tn-src"><a href="https://walletburst.com/tools/coast-fire-calc/">Coast FIRE math</a></span> Since the 1920s, no one who bought the whole US market and held it 20 years has ever lost money, including the person who bought in 1929. <span class="tn-src"><a href="https://fourpillarfreedom.com/heres-how-the-sp-500-has-performed-since-1928/">Four Pillar Freedom</a></span></p>
-        <p class="tn-closer">Work is 90,000 hours. The threshold is 25 times your spending. Everything else is the climb.</p>
-      </div>
+<div class="tn-read tn-rev">
+<p>Shareholders receive dividends and may sell their ownership claims at a different price. Bondholders receive promised interest and principal, subject to the issuer's ability to pay. Workers and productive businesses make those claims valuable, but investors also face competition, failure and changes in what buyers will pay. An index fund spreads ownership across many securities; it cannot fix the return in advance.</p>
+<p>The businesses and borrowers you hold affect expected return and risk. Choosing that allocation sits between the spending calculation and a usable retirement plan.</p>
+</div>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">11</span><h2 id="history">Where the idea came from</h2><p class="tn-sub">A short reference, separate from the calculation.</p></div></div>
+<details class="tn-read tn-rev tn-reference"><summary>Dominguez and the early-retirement idea</summary>
+<p>Joe Dominguez retired from Wall Street work in 1969 at 31 with $70,000 saved. PBS's profile describes his thirty-year approach: live on the interest, keep expenses low and volunteer. He and Vicki Robin later wrote <em>Your Money or Your Life</em>. His Treasury-based plan differs from the stock-and-bond withdrawal research and from the calculator here. <span class="tn-src"><a href="https://www.pbs.org/kcts/affluenza/show/joe.html">PBS profile</a></span></p>
+</details>
+<div class="tn-act tn-rev"><div class="tn-act-inner"><span class="tn-kick">12</span><h2 id="monday">What to check next</h2><p class="tn-sub">Turn the estimate into a budget you can test.</p></div></div>
+<div class="tn-read tn-rev">
+<ol>
+<li>Use a year's actual spending, including annual bills and repairs, to set a retirement budget. Add the taxes and insurance that would replace payroll deductions.</li>
+<li>List investable assets separately from housing, reserves and debts. Check when each account can fund spending.</li>
+<li>Compare more than one return and withdrawal rate. Then test an actual retirement horizon with an allocation-specific withdrawal model.</li>
+<li>Use your own Social Security estimate and local insurance quote. Revisit both as the planned date gets closer.</li>
+</ol>
+<p>The calculator can estimate a saving schedule. It cannot determine how much of your spending will be optional after a bad market decade, or how long you will need the portfolio to last.</p>
+</div>
 
     </main>
 
     <footer class="site-footer">
       <div class="site-footer-inner">
         <a href="/">&copy; 2026 Ethan Willingham</a>
-        <span class="src">Figures are 2024-2026 and sourced inline. This is a hobbyist's sourced map, not financial advice.</span>
+        <span class="src">Research and US rules checked October 3, 2026. Examples have stated assumptions. This is a hobbyist's guide, not individual financial advice.</span>
       </div>
     </footer>
   </div>
@@ -591,10 +536,10 @@
       var S = { inc: 65000, spend: 3700, want: null, when: null, inv: 10000, debt: 40000, rdebt: 9, rinv: 5, mult: 25 };
       var NOWYR = new Date().getFullYear();
 
-      /* The median American household, sourced in the panel footer:
-         take-home $72,330 (Census 2025, post-tax), saving at the national
-         average rate near 4.5% (BEA), net worth $192,700 (Fed SCF 2022). */
-      var MEDIAN = { inc: 72330, spend: 5756, inv: 192700, debt: 0 };
+      /* Synthetic reference example: 2024 median post-tax income, 2022
+         median financial assets among holders, assumed 4.5% saving, no debt.
+         These values are not one measured household. */
+      var MEDIAN = { inc: 72330, spend: 72330 * 0.955 / 12, inv: 39000, debt: 0 };
 
       var CONTROLS = [
         { key: 'inc',   slider: 'tn-inc',   typed: 'tn-inc-n',   money: true },
@@ -619,24 +564,24 @@
       }
       function fmtTyped(c, v) { return c.money ? Math.round(v).toLocaleString('en-US') : String(v); }
       function parseTyped(c, raw) {
-        var v = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
-        if (isNaN(v)) return null;
+        var v = parseFloat(String(raw).replace(/[^0-9.\-]/g, ''));
+        if (!isFinite(v)) return null;
         if (c.money) v = Math.round(v);
         if (c.key === 'spend') v = Math.max(100, v);
         if (c.key === 'want') v = Math.max(1200, v);
         if (c.key === 'when') v = Math.min(80, Math.max(1, Math.round(v)));
         if (c.key === 'rdebt') v = Math.min(60, Math.max(0, v));
-        if (c.key === 'rinv') v = Math.min(12, Math.max(0, v));
-        return Math.max(0, v);
+        if (c.key === 'rinv') return Math.min(12, Math.max(-20, v));
+        return Math.min(1e9, Math.max(0, v));
       }
 
-      /* Monthly simulation in today's dollars. Debt and investments are
-         tracked separately: while the debt rate beats the return, every
-         spare dollar attacks the debt (avalanche); cheaper debt rides.
-         Returns the net-worth series plus crossing times in years. */
+      /* Monthly accumulation in today's dollars. A conservative simplification:
+         surplus pays all modeled debt before new investing. Existing assets
+         stay invested. Convert nominal APR to real monthly debt growth using
+         3% inflation. This does not model contractual minimum payments. */
       function simCore(surplus, inv0, debt0, rInvPct, rDebtPct, target, capYears) {
         var rI = Math.pow(1 + rInvPct / 100, 1 / 12) - 1;
-        var rD = Math.pow(1 + rDebtPct / 100, 1 / 12) - 1;
+        var rD = (1 + rDebtPct / 1200) / Math.pow(1.03, 1 / 12) - 1;
         var inv = inv0, debt = debt0;
         var pts = [inv - debt];
         var debtFree = debt0 <= 0 ? 0 : -1;
@@ -647,7 +592,7 @@
           inv *= (1 + rI);
           var s = surplus;
           if (s >= 0) {
-            if (debt > 0 && rDebtPct >= rInvPct) { var pay = Math.min(s, debt); debt -= pay; s -= pay; }
+            if (debt > 0) { var pay = Math.min(s, debt); debt -= pay; s -= pay; }
             inv += s;
           } else {
             inv += s;
@@ -673,14 +618,14 @@
          years to the line on that decaying pace. */
       function frozenPace(surplusMo, target) {
         var rI = Math.pow(1 + S.rinv / 100, 1 / 12) - 1;
-        var rD = Math.pow(1 + S.rdebt / 100, 1 / 12) - 1;
+        var rD = (1 + S.rdebt / 1200) / Math.pow(1.03, 1 / 12) - 1;
         var k = Math.pow(1 / 1.03, 1 / 12);
         var inv = S.inv, debt = S.debt, f = 1;
         if (inv - debt >= target) return 0;
         for (var m = 1; m <= 1200; m++) {
           debt *= (1 + rD); inv *= (1 + rI); f *= k;
           var s = surplusMo * f;
-          if (debt > 0 && S.rdebt >= S.rinv) { var pay = Math.min(s, debt); debt -= pay; s -= pay; }
+          if (debt > 0) { var pay = Math.min(s, debt); debt -= pay; s -= pay; }
           inv += s;
           if (debt <= 0.5) debt = 0;
           if (inv - debt >= target) return m / 12;
@@ -715,7 +660,7 @@
         var X = function (yr) { return padL + (yr / T) * iw; };
         var Y = function (v) { return padT + (1 - (v - ymin) / (ymax - ymin)) * ih; };
 
-        var step = [10e3, 25e3, 50e3, 100e3, 250e3, 500e3, 1e6, 2.5e6, 5e6, 10e6].filter(function (s) { return (ymax - ymin) / s <= 6; })[0] || 10e6;
+        var step = [10e3, 25e3, 50e3, 100e3, 250e3, 500e3, 1e6, 2.5e6, 5e6, 10e6].filter(function (s) { return (ymax - ymin) / s <= 6; })[0] || Math.pow(10, Math.ceil(Math.log((ymax - ymin) / 5) / Math.LN10));
         var grid = '', glabels = '';
         for (var g = Math.ceil(ymin / step) * step; g <= ymax; g += step) {
           var gy = Y(g).toFixed(1);
@@ -754,8 +699,8 @@
            BELOW the target line, after it ABOVE. So: the number label takes
            the side away from the crossing, the crossing label sits in the
            empty above-line quadrant left of its dot (flipping below-right
-           when the dot hugs the left edge), and debt-gone sits below the
-           zero line right of its dot where the curve has already left. */
+           when the dot hugs the left edge), and the debt-payoff mark sits at the
+           matching value on the net-assets curve. */
         var tyN = Y(you.target);
         var hitIn = isFinite(you.hitYrs) && you.hitYrs > 0 && you.hitYrs <= T;
         var hx = hitIn ? X(you.hitYrs) : -1;
@@ -770,7 +715,7 @@
             '<text x="' + (hitFlip ? hx + 9 : hx - 9).toFixed(1) + '" y="' + (hitFlip ? tyN + 17 : tyN - 9).toFixed(1) + '" text-anchor="' + (hitFlip ? 'start' : 'end') + '" fill="#EDE0C0">the line &middot; yr ' + yearsLabel(you.hitYrs) + '</text>';
         }
         if (you.pts[0] < 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0 && you.debtFreeYrs <= T) {
-          var zx = X(you.debtFreeYrs), zy = Y(0);
+          var zx = X(you.debtFreeYrs), zy = Y(you.pts[Math.round(you.debtFreeYrs * 12)]);
           var dbBelow = zy + 18 <= padT + ih - 4;
           var dbRight = zx <= padL + iw - 170;
           marks += '<circle cx="' + zx.toFixed(1) + '" cy="' + zy.toFixed(1) + '" r="4" fill="#c7a66f"/>' +
@@ -780,7 +725,7 @@
         var medEndV = med.pts[Math.min(T * 12, med.pts.length - 1)];
         var medLabelY = Math.min(padT + ih - 8, Math.max(padT + 12, Y(medEndV) + 18));
         if (Math.abs(medLabelY - (tyN - 7)) < 15) medLabelY = tyN + 16;
-        var medLabel = '<text x="' + (W - padR) + '" y="' + medLabelY.toFixed(1) + '" text-anchor="end" fill="#8A9A8A">median US household</text>';
+        var medLabel = '<text x="' + (W - padR) + '" y="' + medLabelY.toFixed(1) + '" text-anchor="end" fill="#8A9A8A">reference example</text>';
 
         $('tn-chart').innerHTML =
           '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
@@ -810,7 +755,7 @@
         }
 
         $('tn-num').textContent = fmt(target);
-        $('tn-num-sub').innerHTML = S.mult + ' &times; the income you want';
+        $('tn-num-sub').innerHTML = (Math.round(S.mult * 10) / 10) + ' &times; annual withdrawals';
         $('tn-rate').textContent = (rate > 0 ? Math.round(rate * 100) : 0) + '%';
         $('tn-rate-sub').textContent = rate >= 0 ? 'of take-home pay' : 'spending beats income';
 
@@ -822,53 +767,54 @@
 
         /* Glue the when dial to the computed pace until the user drags it,
            and keep its calendar-year readout honest either way. */
-        if (S.when === null && isFinite(yrs) && yrs > 0) {
+        if (S.when === null) {
           var wnSl = $('tn-when'), wnTy = $('tn-when-n');
-          var yShow = Math.max(1, Math.round(yrs));
-          wnSl.value = Math.min(+wnSl.max, Math.max(+wnSl.min, yShow));
-          if (document.activeElement !== wnTy) wnTy.value = String(yShow);
+          if (isFinite(yrs) && yrs > 0) {
+            var yShow = Math.max(1, Math.round(yrs));
+            wnSl.value = Math.min(+wnSl.max, Math.max(+wnSl.min, yShow));
+            if (document.activeElement !== wnTy) wnTy.value = String(yShow);
+          } else if (document.activeElement !== wnTy) {
+            wnTy.value = 'n/a';
+          }
         }
         var Dcal = S.when !== null ? S.when : (isFinite(yrs) && yrs > 0 ? Math.round(yrs) : null);
         $('tn-when-yr').textContent = Dcal === null ? 'n/a' : String(NOWYR + Dcal);
 
-        /* The point of the whole panel, stated as one sentence: want this
-           much a year without working, you must stack this much. */
-        var dealLine = 'Want <strong>' + fmt(wantYr) + ' a year</strong> without working? You need <strong>' + fmt(target) + '</strong> invested. ';
+        /* Annual withdrawals divided by the selected rate set the target. */
+        var dealLine = 'At a <strong>' + (Math.round(10000 / S.mult) / 100) + '% initial withdrawal rate</strong>, <strong>' + fmt(wantYr) + ' a year</strong> corresponds to a <strong>' + fmt(target) + '</strong> portfolio target. ';
 
         if (yrs === 0) {
           yearsEl.textContent = '0';
-          subEl.textContent = 'you are past it';
-          deal.innerHTML = dealLine + '<strong>You already have it.</strong>';
-          verdict.innerHTML = 'You are across the line: the pile pays your ' + fmt(wantYr) + ' a year forever, without an alarm clock. The rest of this page is a victory lap.';
+          subEl.textContent = 'target met today';
+          deal.innerHTML = dealLine + '<strong>Your entered assets minus debt meet this target.</strong>';
+          verdict.innerHTML = 'Meeting this target does not establish a safe retirement. Check the portfolio allocation, retirement length, account access, taxes and spending flexibility. This calculator has not tested withdrawals after retirement.';
         } else if (S.inc - spendYr <= 0 && isFinite(yrs)) {
           /* Deficit, but the existing pile out-earns it; the sim, not the
              paycheck, decides. Rare and fragile, so the copy says so. */
           var yc = yearsLabel(yrs);
           yearsEl.textContent = String(yc);
-          subEl.textContent = 'carried by compounding';
-          deal.innerHTML = dealLine + 'Saving <strong>$0 a month</strong>, the pile you already have carries it alone in <strong>' + yc + ' years</strong>.';
-          verdict.innerHTML = 'Spending beats income, yet the investments out-earn the gap, so the line still arrives in about ' + yc + ' years on compounding alone. A fragile way to travel: one wider deficit stalls it, and any monthly saving at all would bring it decades closer.';
+          subEl.textContent = 'constant-return scenario';
+          deal.innerHTML = dealLine + 'With no new saving, the assumed growth of existing assets reaches it in about <strong>' + yc + ' years</strong>, after funding any spending deficit.';
+          verdict.innerHTML = 'This result relies on the entered return covering the spending gap. Losses or a larger deficit can reverse it. It is a constant-return scenario, not a prediction.';
         } else if (S.inc - spendYr <= 0) {
-          yearsEl.textContent = 'never';
-          subEl.textContent = 'no gap, no climb';
-          deal.innerHTML = dealLine + 'Saving <strong>$0 a month</strong>, it never arrives.';
-          verdict.innerHTML = 'Spending equals (or beats) income, so nothing compounds' + (S.debt > 0 ? ' and the debt grows on its own' : '') + '. The dial only moves on the gap between the two. Open a $200 monthly gap and a date appears; the climb sections are about widening it.';
+          yearsEl.textContent = '>100';
+          subEl.textContent = 'not reached in model';
+          deal.innerHTML = dealLine + 'With no new saving, the target is not reached within the 100-year calculation.';
+          verdict.innerHTML = 'Current income does not fund new saving. Existing investments can still gain or lose value, and debt may keep growing. Test an affordable spending or income change; the tool cannot choose one for you.';
         } else if (!isFinite(yrs)) {
-          yearsEl.textContent = 'never';
-          subEl.textContent = 'debt outruns the surplus';
-          deal.innerHTML = dealLine + 'At these rates it never arrives: <strong>the debt wins.</strong>';
-          verdict.innerHTML = 'The <strong>' + S.rdebt + '% debt grows faster than your whole surplus</strong>, so the pile never starts. Widen the gap or knock the rate down (refinance, consolidate, negotiate); every dollar thrown at that debt earns a guaranteed ' + S.rdebt + '%.';
+          yearsEl.textContent = '>100';
+          subEl.textContent = 'not reached in model';
+          deal.innerHTML = dealLine + 'The target is not reached within 100 years at the entered rates and saving pace.';
+          verdict.innerHTML = 'A small surplus, low return or costly debt can prevent a crossing. The 100-year cap is a calculation limit, not a claim that the target can never be reached.';
         } else {
           var y = yearsLabel(yrs);
           yearsEl.textContent = String(y);
           subEl.textContent = S.debt > 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0 ? ('debt gone in ' + yearsLabel(you.debtFreeYrs) + ' yrs') : 'from today';
-          deal.innerHTML = dealLine + 'Saving <strong>' + fmt((S.inc - spendYr) / 12) + ' a month</strong>, you have it in <strong>' + y + ' years</strong>.';
+          deal.innerHTML = dealLine + 'At <strong>' + fmt((S.inc - spendYr) / 12) + ' a month</strong> for debt and investment contributions, the constant-return model reaches it in about <strong>' + y + ' years</strong>.';
           var notes = [];
-          if (S.debt > 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0) notes.push('The debt dies in year ' + yearsLabel(you.debtFreeYrs) + ' and the curve turns upward.');
-          if (S.debt > 0 && S.rdebt < S.rinv) notes.push('Your cheap debt rides along instead of being attacked; the line still arrives.');
-          if (target >= 2500000) notes.push('That pile is the comfortable tier of the dial.');
-          if (rate >= 0.5) notes.push('A 50%+ savings rate is the express lane.');
-          if (!notes.length) notes.push('Lower spending moves the line twice: less to need forever, more saved every month.');
+          if (S.debt > 0 && isFinite(you.debtFreeYrs) && you.debtFreeYrs > 0) notes.push('Modeled debt is repaid in year ' + yearsLabel(you.debtFreeYrs) + ', then the surplus goes into investments.');
+          if (!notes.length) notes.push('Lower current spending increases contributions. Lower retirement withdrawals reduce the target; these are separate settings once you edit the withdrawal dial.');
+          notes.push('Actual returns vary. Reaching the target does not verify retirement sustainability.');
           verdict.innerHTML = notes.join(' ');
         }
 
@@ -888,7 +834,7 @@
               var req = requiredMonthly(h, target);
               return 'in ' + h + ' yrs: <strong>' + (isFinite(req) ? fmt(req) + '/mo' : 'not reachable') + '</strong>';
             });
-            planEl.innerHTML = (isFinite(yrs) ? 'Want it sooner? Drag the when dial, or: ' : 'What it takes: saving ') + parts.join(' &middot; ') + ' <span class="dim2">(you save ' + fmt(curMo) + '/mo now)</span>';
+            planEl.innerHTML = (isFinite(yrs) ? 'Want it sooner? Drag the when dial, or: ' : 'What it takes: saving ') + parts.join(' &middot; ') + ' <span class="dim2">(available surplus ' + fmt(curMo) + '/mo now)</span>';
             planEl.style.display = '';
           }
         } else {
@@ -896,12 +842,12 @@
           var reqW = requiredMonthly(S.when, target);
           var lineW;
           if (!isFinite(reqW)) {
-            lineW = 'By <strong>' + calW + '</strong> (' + S.when + ' yrs): not reachable from here even banking $80,000 a month. That date needs a smaller number or more runway.';
+            lineW = 'By <strong>' + calW + '</strong> (' + S.when + ' yrs): the model does not reach this target within its $80,000/month contribution search limit. Compare a smaller target or a later date.';
           } else {
             var reqR = Math.ceil(reqW / 10) * 10;
             var diffW = reqR - curMo;
-            lineW = 'To have it by <strong>' + calW + '</strong> (' + S.when + ' yrs) takes <strong>' + fmt(reqR) + '/mo</strong>';
-            if (diffW > 5) lineW += ', which is <strong>' + fmt(diffW) + '/mo more</strong> than the ' + fmt(curMo) + ' you save now.';
+            lineW = 'In this model, reaching it by <strong>' + calW + '</strong> (' + S.when + ' yrs) takes <strong>' + fmt(reqR) + '/mo</strong>';
+            if (diffW > 5) lineW += ', which is <strong>' + fmt(diffW) + '/mo more</strong> than your current surplus of ' + fmt(curMo) + '.';
             else if (diffW < -5) lineW += '; at your current ' + fmt(curMo) + '/mo you are <strong>ahead of that date</strong>' + (isFinite(yrs) && yrs > 0 ? ' (on pace for year ' + yearsLabel(yrs) + ')' : '') + '.';
             else lineW += ', almost exactly your current pace.';
           }
@@ -917,15 +863,15 @@
         if (yrs !== 0 && isFinite(Hh) && Hh > 1.5) {
           var nominal = target * Math.pow(1.03, Hh);
           var calY = NOWYR + Math.round(Hh);
-          var html = '<span class="tn-infl-k">Inflation, in plain English</span>' +
-            'In <strong>' + calY + '</strong> the statement will not say ' + fmt(target) + '. It will say about <strong>' + fmt(nominal) + '</strong>: same buying power, bigger sticker, because at 3% a year that is simply what today&#39;s ' + fmt(target) + ' will be called by then. So does inflation mean saving more than this page says? <strong>No, on one condition.</strong> Everything here runs in today&#39;s dollars on after-inflation returns, so the plan absorbs inflation by itself as long as your monthly saving rises with prices too: hold the share of an inflating paycheck, not the dollar figure.';
+          var html = '<span class="tn-infl-k">Illustration at 3% inflation</span>' +
+            'In <strong>' + calY + '</strong>, today&#39;s <strong>' + fmt(target) + '</strong> target would have a nominal equivalent of about <strong>' + fmt(nominal) + '</strong> if inflation averaged 3%. This is an assumption, not a forecast. The main projection holds real saving constant, so the nominal monthly contribution must rise with prices. Your wages may not keep up.';
           if (curMo > 5 && isFinite(yrs) && yrs > 1.5) {
             var fz = frozenPace(curMo, target);
             if (!isFinite(fz)) {
-              html += ' Freeze it at a flat ' + fmt(curMo) + '/mo for good and the line drifts out of reach entirely.';
+              html += ' Keeping the nominal contribution fixed at ' + fmt(curMo) + '/mo does not reach the target within the 100-year calculation.';
             } else {
               var slip = fz - yrs;
-              if (slip >= 0.75) html += ' Freeze it at a flat ' + fmt(curMo) + '/mo for good and your arrival slips from year ' + yearsLabel(yrs) + ' to about <strong>year ' + yearsLabel(fz) + '</strong>: ' + (Math.round(slip * 10) / 10) + ' years donated to inflation.';
+              if (slip >= 0.75) html += ' Holding nominal contributions at ' + fmt(curMo) + '/mo changes the modeled crossing from year ' + yearsLabel(yrs) + ' to about <strong>year ' + yearsLabel(fz) + '</strong>: ' + (Math.round(slip * 10) / 10) + ' additional years under these assumptions.';
             }
           }
           infl.innerHTML = html;
@@ -935,17 +881,16 @@
         }
 
         var medTxt;
-        if (!isFinite(med.hitYrs)) medTxt = 'never reaches it';
-        else medTxt = 'about ' + Math.round(med.hitYrs) + ' years from its own line';
-        $('tn-compare').innerHTML = 'the median US household, run through the same machine: ' + medTxt;
+        if (!isFinite(med.hitYrs)) medTxt = 'not reached within 100 modeled years';
+        else medTxt = 'its own target in about ' + Math.round(med.hitYrs) + ' modeled years';
+        $('tn-compare').innerHTML = 'Synthetic reference example under the same return assumption: ' + medTxt;
 
         var chartYears = isFinite(yrs) && yrs > 0 ? yrs + 2 : (yrs === 0 ? 12 : 45);
         var T = Math.min(60, Math.max(10, Math.ceil(chartYears / 5) * 5));
         drawChart(you, med, T);
       }
 
-      /* The yearly twin of the spending dial: the passive income you are
-         shopping for. Monthly stays canonical; either field edits the other. */
+      /* Monthly spending stays canonical; either spending field edits the other. */
       var spendYrIn = $('tn-spendyr-n');
       function syncSpendYr() {
         if (document.activeElement !== spendYrIn) spendYrIn.value = Math.round(S.spend * 12).toLocaleString('en-US');
@@ -968,13 +913,17 @@
           if (c.key === 'spend') syncSpendYr();
           update();
         });
-        ty.addEventListener('blur', function () { ty.value = fmtTyped(c, S[c.key]); });
+        ty.addEventListener('blur', function () {
+          if (c.key === 'when' && S.when === null) { update(); return; }
+          var value = c.key === 'want' && S.want === null ? S.spend * 12 : S[c.key];
+          ty.value = fmtTyped(c, value);
+        });
       });
 
       spendYrIn.addEventListener('input', function () {
         var v = parseFloat(String(spendYrIn.value).replace(/[^0-9.]/g, ''));
-        if (isNaN(v)) return;
-        S.spend = Math.max(100, v / 12);
+        if (!isFinite(v)) return;
+        S.spend = Math.min(1e9 / 12, Math.max(100, v / 12));
         var sl = $('tn-spend');
         sl.value = Math.min(+sl.max, Math.max(+sl.min, Math.round(S.spend)));
         var mo = $('tn-spend-n');
@@ -994,7 +943,7 @@
 
       $('tn-preset').addEventListener('click', function () {
         S.inc = MEDIAN.inc; S.spend = MEDIAN.spend; S.inv = MEDIAN.inv; S.debt = MEDIAN.debt;
-        S.want = null; S.when = null; /* the median household wants what it spends, on its own pace; re-glue both dials */
+        S.want = null; S.when = null; /* Reset links between current spending, withdrawal target and projected time. */
         CONTROLS.forEach(function (c) {
           if (!(c.key in MEDIAN)) return;
           var sl = $(c.slider), ty = $(c.typed);

@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Five Hundred Children, No Books</title>
-  <meta name="description" content="Leave 500 children on an island for two hundred years with no religion handed down, no scripture and no holy books, and they will almost certainly build a faith of their own. Not the same beliefs, the same underlying structure. Laid out with the evidence, from child psychology to real castaways.">
+  <meta name="description" content="Would children raised without inherited religion invent a faith? An island thought experiment, child psychology and historical cases, with their limits kept visible.">
   <meta property="og:title" content="Five Hundred Children, No Books">
-  <meta property="og:description" content="Leave 500 children on an island for two hundred years with no religion handed down, no scripture to inherit. The odds are they build a faith of their own. Not the same gods, the same architecture: an order above the self, ritual, specialists, and rites for the dead. Here is why we can almost say it before we look.">
+  <meta property="og:description" content="Would children raised without inherited religion invent a faith? An island thought experiment, child psychology and historical cases, with their limits kept visible.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/five-hundred-children/five-hundred-children.html">
@@ -25,6 +25,7 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ethanwillingham.com/archive/five-hundred-children/assets/five-hundred-children-og.jpg">
+  <link rel="canonical" href="https://ethanwillingham.com/archive/five-hundred-children/five-hundred-children.html">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -167,170 +168,132 @@
     .photo, .guesses, .duo { break-inside: avoid; }
     a { color: #161616; }
   }
+  /* Editorial reading contract. The shared stylesheet owns the opening. */
+  .sec { max-width: 760px; padding-top: clamp(4.5rem, 8vw, 6rem); }
+  .sec + .sec::before { content: ""; display: block; border-top: 1px solid var(--rule); margin-bottom: clamp(3rem, 6vw, 4.5rem); }
+  .sec p:not(.img-credit):not(.u-sechead-k):not(.src-note) { font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; }
+  .sec .u-sechead { text-align: center; align-items: center; margin-bottom: 2rem; }
+  .sec .u-sechead-k::before { display: none; }
+  .sec .u-sechead-h { max-width: 24ch; margin-inline: auto; }
+  .map { border-radius: 0; background: none; }
+  #sources ol { font-size: .94rem; line-height: 1.6; columns: 1; }
+  #sources li { margin-bottom: .9em; }
+  #sources .src-note { font-family: var(--font-heading); font-size: 1.1rem; line-height: 1.72; }
+  .sec p.img-credit { font-family: var(--font-body); font-size: .78rem; line-height: 1.5; color: var(--text-faint); }
+  .afterlife-figure svg { display: block; width: 100%; height: auto; }
+  @media (min-width: 1140px) {
+    .sec .breakout { margin-left: calc((760px - var(--wide)) / 2); margin-right: calc((760px - var(--wide)) / 2); }
+  }
   </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
   <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
 
   <!-- ============================ HERO ============================ -->
-  <header class="u-hero">
-    <p class="u-eyebrow">A field guide to where religion comes from</p>
+  <header class="u-hero editorial-hero">
     <h1 class="u-title">Five Hundred Children, No Books</h1>
-    <p class="u-dek">Leave them on an island for two hundred years with no religion handed down, no gods and no scripture to inherit. Come back, and the odds are they have built a faith of their own. We can almost say so before we look.</p>
-    <p class="u-meta">Grounded in science, respectful, and it takes no side on whether God is real. <b>Thirty-seven sources cited.</b> <span class="u-sep">/</span> Last reviewed June 2026.</p>
+    <p class="u-dek">Would children raised without an inherited religion build a faith? The island is imaginary. The evidence tests a few of the ingredients.</p>
+    <p class="u-meta">An essay <span class="u-sep">/</span> 12 min read, plus sources <span class="u-sep">/</span> Reviewed October 2026</p>
   </header>
 
   <main id="guide">
 
-    <!-- ============================ MAP ============================ -->
-    <aside class="map reveal" aria-label="What is inside this guide">
+    <aside class="map" aria-label="What is inside this essay">
       <p class="map-kicker">What is inside</p>
-      <p class="map-note">One question, answered from a few directions. The claim is narrow on purpose: separated people do not rebuild the same beliefs, they rebuild the same underlying shape. The beliefs really do differ, and the piece says so plainly. About a twenty-five minute read.</p>
-      <div class="map-stats">
-        <span class="map-stat"><b>500</b> children, no books, two centuries</span>
-        <span class="map-stat"><b>1492</b> the year the result came in</span>
-        <span class="map-stat"><b>37</b> sources cited</span>
-      </div>
+      <p class="map-note">The island is a thought experiment. The studies test particular intuitions; the historical cases show what people made from traditions they already had.</p>
       <ul class="u-toc-list">
-        <li><a class="u-toc-row" href="#akron"><span class="u-toc-name"><span class="u-toc-n">01</span>Two men in Akron built a religion by accident</span><span class="u-toc-m">the engine</span></a></li>
-        <li><a class="u-toc-row" href="#guess"><span class="u-toc-name"><span class="u-toc-n">02</span>Everyone guesses the wrong parts</span><span class="u-toc-m">the reveal</span></a></li>
-        <li><a class="u-toc-row" href="#children"><span class="u-toc-name"><span class="u-toc-n">03</span>The youngest children give it away</span><span class="u-toc-m">the mechanism</span></a></li>
-        <li><a class="u-toc-row" href="#twice"><span class="u-toc-name"><span class="u-toc-n">04</span>The experiment already ran, at planetary scale</span><span class="u-toc-m">isolation</span></a></li>
-        <li><a class="u-toc-row" href="#islands"><span class="u-toc-name"><span class="u-toc-n">05</span>We have run this smaller, and faster</span><span class="u-toc-m">small and fast</span></a></li>
-        <li><a class="u-toc-row" href="#dissent"><span class="u-toc-name"><span class="u-toc-n">06</span>The tradition that would not surrender</span><span class="u-toc-m">the dissenter</span></a></li>
-        <li><a class="u-toc-row" href="#squid"><span class="u-toc-name"><span class="u-toc-n">07</span>Nobody calls a squid eye a human eye</span><span class="u-toc-m">the frame</span></a></li>
-        <li><a class="u-toc-row" href="#deletion"><span class="u-toc-name"><span class="u-toc-n">08</span>They banned the gods, and something grew back</span><span class="u-toc-m">deletion</span></a></li>
-        <li><a class="u-toc-row" href="#volunteers"><span class="u-toc-name"><span class="u-toc-n">09</span>The people rebuilding it on purpose</span><span class="u-toc-m">on purpose</span></a></li>
-        <li><a class="u-toc-row" href="#receipt"><span class="u-toc-name"><span class="u-toc-n">10</span>The receipt from Akron</span><span class="u-toc-m">subtraction</span></a></li>
-        <li><a class="u-toc-row" href="#installed"><span class="u-toc-name"><span class="u-toc-n">11</span>The oldest line in all the books</span><span class="u-toc-m">the close</span></a></li>
+        <li><a class="u-toc-row" href="#akron"><span class="u-toc-name"><span class="u-toc-n">01</span>An island with no inherited religion</span><span class="u-toc-m">the question</span></a></li>
+        <li><a class="u-toc-row" href="#guess"><span class="u-toc-name"><span class="u-toc-n">02</span>What would count as religion?</span><span class="u-toc-m">definitions</span></a></li>
+        <li><a class="u-toc-row" href="#children"><span class="u-toc-name"><span class="u-toc-n">03</span>What the children actually tell us</span><span class="u-toc-m">psychology</span></a></li>
+        <li><a class="u-toc-row" href="#twice"><span class="u-toc-name"><span class="u-toc-n">04</span>The Americas were never a blank slate</span><span class="u-toc-m">history</span></a></li>
+        <li><a class="u-toc-row" href="#islands"><span class="u-toc-name"><span class="u-toc-n">05</span>Three cases with three different limits</span><span class="u-toc-m">comparisons</span></a></li>
+        <li><a class="u-toc-row" href="#dissent"><span class="u-toc-name"><span class="u-toc-n">06</span>The Gathas ask for a choice</span><span class="u-toc-m">differences</span></a></li>
+        <li><a class="u-toc-row" href="#squid"><span class="u-toc-name"><span class="u-toc-n">07</span>Similar forms, several possible causes</span><span class="u-toc-m">the analogy</span></a></li>
+        <li><a class="u-toc-row" href="#deletion"><span class="u-toc-name"><span class="u-toc-n">08</span>Ritual can survive without belief</span><span class="u-toc-m">secular life</span></a></li>
+        <li><a class="u-toc-row" href="#volunteers"><span class="u-toc-name"><span class="u-toc-n">09</span>A temple built for grief</span><span class="u-toc-m">the memorial</span></a></li>
+        <li><a class="u-toc-row" href="#receipt"><span class="u-toc-name"><span class="u-toc-n">10</span>What AA kept from its inheritance</span><span class="u-toc-m">the program</span></a></li>
+        <li><a class="u-toc-row" href="#installed"><span class="u-toc-name"><span class="u-toc-n">11</span>What the island leaves open</span><span class="u-toc-m">the close</span></a></li>
       </ul>
     </aside>
 
-    <!-- ============================ 01 AKRON ============================ -->
     <section id="akron" class="sec first" aria-labelledby="akron-h">
-      <div class="u-sechead"><p class="u-sechead-k">The engine</p><h2 id="akron-h" class="u-sechead-h">Two men in Akron built a religion by accident</h2></div>
-      <p class="lede">In 1935, in Akron, Ohio, two men who could not stop drinking built something shaped exactly like a religion. They were not trying to.</p>
+      <div class="u-sechead"><p class="u-sechead-k">The question</p><h2 id="akron-h" class="u-sechead-h">An island with no inherited religion</h2></div>
 
-      <p>It had confession, making amends, surrender, a core text, and a room full of people who showed up every week. The one thing it never pinned down was God. You got to decide for yourself who, or what, you were praying to.</p>
+      <p class="lede">Nobody has tested whether five hundred children, raised without an inherited religion, would invent one. I expect they would develop some religious beliefs and practices. The evidence gives reasons for that expectation, but it cannot tell us what they would believe or how long it would take.</p>
 
-      <figure class="photo reveal">
-        <picture>
-          <source type="image/webp" srcset="assets/akron.webp">
-          <img src="assets/akron.jpg" width="1280" height="960" loading="eager" decoding="async" alt="The white clapboard front of Dr. Bob's House, a two-story home on a residential street in Akron, Ohio.">
-        </picture>
-        <figcaption class="photo-cap">The house in Akron where the early meetings were held. Nothing on the outside marks it as the start of anything.</figcaption>
-        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Dr._Bob%27s_House.jpg">Dr. Bob's House, Akron</a>. Photo by Nyttend, released to the public domain, via Wikimedia Commons.</p>
-      </figure>
+      <p>Imagine an island where the children have language, food, shelter, care and one another. They grow up, have children of their own, and remain there for two hundred years. No scripture arrives. Nobody teaches them about gods or an afterlife. Would their descendants have a religion?</p>
 
-      <p>They did not start from nothing.</p>
-
-      <p>It came out of the Oxford Group, a popular Christian movement of the day built on confession and surrendering your life to God. In 1934 a newly sober member named Ebby Thacher carried its message to an old drinking friend, a New York stockbroker named Bill Wilson. Bill joined the group and got sober within weeks. The next year he met Dr. Bob Smith, an Akron surgeon who had been going to the same meetings for two years and still could not stop drinking. <span class="u-src"><a href="https://www.aa.org/aa-history">AA history</a></span> Talking with Bill is what finally got Dr. Bob sober, and a few years later the thing the two of them built broke away from the Oxford Group. They did not invent a religion from scratch. They took an inherited one and boiled it down, keeping what worked and cutting what they could not use.</p>
-
-      <p>What makes this rare is that we can watch it happen. The dates are known, the writing survives, and people who were in the room are still alive.</p>
-
-      <p>It got boiled down under brutal pressure. It had to work for people whose lives were on the line, drinkers who would relapse, and some of them die, if it let them down.</p>
-
-      <p class="turn">So it kept only what actually worked. That test is the key to everything that follows.</p>
-
-      <p>Which sets up the one question this piece is about. Put 500 children on an island with no religion handed down, no gods, no scripture, no holy book of any kind, and come back in 200 years. Would they have built a faith of their own?</p>
-
-      <p>They get everything else: each other, language, the whole island, two centuries to fill. The only thing taken away is a religion to inherit. That is the only condition the question needs.</p>
+      <p>This is an imagined community, not a proposal for an experiment. Even its premises need help: language, child care and rules for living together already carry culture. We can subtract familiar religious teaching on paper. We cannot assume we have subtracted everything that might shape a faith.</p>
 
       <figure class="photo tall reveal">
         <picture>
           <source type="image/webp" srcset="assets/island-air.webp">
-          <img src="assets/island-air.jpg" width="1100" height="1589" loading="lazy" decoding="async" alt="A small island ringed by pale reef and dark ocean, seen from high above in space.">
+          <img src="assets/island-air.jpg" width="1100" height="1589" loading="eager" decoding="async" alt="A small island ringed by pale reef and dark ocean, seen from high above in space.">
         </picture>
-        <figcaption class="photo-cap">An untouched island. No god has ever been preached here, and no scripture has ever washed ashore.</figcaption>
+        <figcaption class="photo-cap">Henderson Island, photographed from space. The island in this essay is imaginary; this photograph is an illustration.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:NASA_HendersonIsland.jpg">Uninhabited Henderson Island, South Pacific</a>, from the International Space Station. NASA, public domain.</p>
       </figure>
 
-      <hr class="u-divider">
-    </section>
-
-    <!-- ============================ 02 PREDICTION GAME ============================ -->
-    <section id="guess" class="sec" aria-labelledby="guess-h">
-      <div class="u-sechead"><p class="u-sechead-k">The reveal</p><h2 id="guess-h" class="u-sechead-h">Everyone guesses the wrong parts</h2></div>
-
-      <p>You have probably heard a rougher version of this bet. Comedians like Ricky Gervais love it: burn every book on Earth, and in a thousand years the science books come back exactly the same, while the holy books come back totally different, or not at all. <span class="u-src"><a href="https://www.rawstory.com/2017/02/ricky-gervais-perfectly-explains-difference-between-science-and-religion-to-colbert-in-fascinating-exchange/">the bet</a></span> Agree with all of it. Then look at the half of that sentence everyone skips: something always grows back, it is just never the same something. That something is what this piece is chasing. The question is old. A philosopher in the 1100s wrote a story about a child raised alone on an island who reasons his own way to God. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Hayy_ibn_Yaqdhan">Hayy</a></span> We are asking a smaller, more answerable version. Not which god they land on. What shape.</p>
-
-      <p>First, clear out two assumptions. One: plenty of people who tick "no religion" on a survey still believe in some higher power or spiritual force, though how many varies a lot by country. <span class="u-src"><a href="https://www.pewresearch.org/religion/2025/09/04/many-religious-nones-around-the-world-hold-spiritual-beliefs/">Pew</a></span> Two: the idea that a religion needs one holy book is mostly a Christian, Jewish, and Muslim thing. Plenty of traditions run on practice instead, and some have no text at all.</p>
-
-      <p>Picture it for a second. If religion really is something every group of humans builds, you could almost name what the island kids end up with before we check a single fact. No need to write anything down, just notice the first few things you reach for.</p>
-
-      <p>Here is what the evidence actually supports. Cut-off groups land on the same structure, not the same beliefs.</p>
-
-      <p>The things that show up almost everywhere are few, and humbler than what you would picture. A sense that unseen spirits are in things. Group ritual. Usually someone whose job is to tend it, and usually some careful way of dealing with the dead. At the size of 500 people, this is not temples and priests. It is one person who slips into a trance to heal, spirits felt in the weather and the trees, and a dance on a moonless night. The big pyramids and the calendars come later, once there are crowds. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4958132/">foragers</a></span></p>
-
-      <p>Almost everyone reaches for the specifics first: a particular god, heaven, prayer. Those are exactly the things real religions fight each other over, along with a savior, sin, and sacred law. None of them make the universal cut.</p>
-
-      <p>So anything specific enough to argue about is the part that changes from place to place. The parts that show up everywhere are the ones you would skip right over, because they feel too obvious to mention.</p>
-
-      <p class="turn">The universal parts of religion are the parts nobody preaches about.</p>
-
-      <p>A harder admission. Even the inner feeling you might assume is universal, that the self is the main problem and surrender is the cure, is not. It came later and in fewer places, and we are about to meet the tradition that flat-out rejected it.</p>
-
-      <p>So the skeleton is universal and the beliefs are local. That is a big claim, which means it had better show up out in the real world, not just in a thought experiment.</p>
-
-      <hr class="u-divider">
-    </section>
-
-    <!-- ============================ CHILDREN ============================ -->
-    <section id="children" class="sec" aria-labelledby="children-h">
-      <div class="u-sechead"><p class="u-sechead-k">The mechanism</p><h2 id="children-h" class="u-sechead-h">The youngest children give it away</h2></div>
-
-      <p>We do not have to wait the two hundred years. Psychologists have run pieces of this experiment on children who were never taught the answer, and the children keep tipping their hand.</p>
-
-      <p>Start with the dead. In one study a puppet alligator eats a mouse, and the children are asked what is still true of it. The great majority of the youngest, three to five years old, correctly say its brain has stopped working. Then they say it is still hungry, still wants to go home, still loves its mother. <span class="u-src"><a href="https://www.scientificamerican.com/article/never-say-die/">dead mouse</a></span></p>
-
-      <p>The body stops, and the mind, they feel, does not. The part that should not happen if this were simply taught: the belief is strongest in the youngest and fades as they grow. The afterlife is not poured in. It is the starting intuition that culture later prunes back.</p>
-
-      <figure class="photo reveal" aria-label="A line chart: the share of children who said a just-eaten mouse was still hungry, still wanted its mother and still knew things, highest in three to five year olds and falling through childhood.">
-        <svg viewBox="0 0 720 380" role="img" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;">
-          <title>What the youngest children said about the dead mouse</title>
-          <desc>The share of children attributing continued feelings, wants and knowledge to a mouse that has just been eaten, plotted against age. It is highest in three to five year olds and declines through childhood.</desc>
-          <line x1="96" y1="52" x2="96" y2="300" stroke="#5f6d5a" stroke-width="1.5"/>
-          <line x1="96" y1="300" x2="676" y2="300" stroke="#5f6d5a" stroke-width="1.5"/>
-          <path d="M 156 92 C 300 110, 372 160, 440 204 C 520 254, 600 284, 622 290" fill="none" stroke="var(--sec-accent, #dfc288)" stroke-width="3.4" stroke-linecap="round"/>
-          <circle cx="156" cy="92" r="6.5" fill="var(--sec-accent, #dfc288)"/>
-          <circle cx="622" cy="290" r="6.5" fill="var(--sec-accent, #dfc288)"/>
-          <text x="96" y="38" text-anchor="start" font-family="var(--font-mono, monospace)" font-size="12.5" fill="#9aa78f" letter-spacing="0.05em">SAID THE DEAD MOUSE STILL FELT, WANTED, KNEW</text>
-          <text x="156" y="326" text-anchor="middle" font-family="var(--font-mono, monospace)" font-size="13" fill="#9aa78f">ages 3 to 5</text>
-          <text x="622" y="326" text-anchor="middle" font-family="var(--font-mono, monospace)" font-size="13" fill="#9aa78f">older children</text>
-          <text x="180" y="86" text-anchor="start" font-family="var(--font-body, sans-serif)" font-size="15" fill="#d6dccb">the great majority</text>
-          <text x="430" y="356" text-anchor="middle" font-family="var(--font-body, sans-serif)" font-style="italic" font-size="15" fill="#9aa78f">more years, more schooling, less of the belief</text>
-        </svg>
-        <figcaption class="photo-cap">The youngest know the body has stopped and feel the mind has not. The intuition runs highest before school and gets pruned with age, the opposite of something taught.</figcaption>
-        <p class="img-credit">Chart drawn after J. M. Bering and D. F. Bjorklund (2004), the developmental emergence of afterlife reasoning. Schematic, direction faithful to the finding.</p>
+      <p>Alcoholics Anonymous offers a useful contrast. It began in Akron in 1935 after Bill Wilson met Dr. Bob Smith. Both had been involved with the Oxford Group, a Christian fellowship. Their new recovery program adapted an inheritance rather than starting without one. <span class="u-src"><a href="https://www.aa.org/the-start-and-growth-of-aa">AA history</a></span></p>
+<figure class="photo reveal">
+        <picture>
+          <source type="image/webp" srcset="assets/akron.webp">
+          <img src="assets/akron.jpg" width="1280" height="960" loading="lazy" decoding="async" alt="The white clapboard front of Dr. Bob's House, a two-story home on a residential street in Akron, Ohio.">
+        </picture>
+        <figcaption class="photo-cap">Dr. Bob's House in Akron, where early AA members met. The fellowship grew out of an existing Christian movement.</figcaption>
+        <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Dr._Bob%27s_House.jpg">Dr. Bob's House, Akron</a>. Photo by Nyttend, released to the public domain, via Wikimedia Commons.</p>
       </figure>
 
-      <p>Now the world outside the body. Ask young children why rocks are pointy and many will tell you it is so animals will not sit on them. Mountains, rivers, clouds, they tend to treat the whole of nature as made on purpose, for something. The researcher who found this calls them intuitive theists. <span class="u-src"><a href="https://journals.sagepub.com/doi/10.1111/j.0956-7976.2004.00672.x">teleology</a></span> It turns up in officially atheist China too, so it is not a Sunday-school habit.</p>
-
-      <p>It is not something we outgrow so much as learn to override. Press professional physical scientists for a fast answer and they slide back into it, endorsing that trees make oxygen so that animals can breathe at nearly double the rate they do at leisure. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23067062/">scientists</a></span> The default is never deleted. It is only sat on.</p>
-
-      <p>The ritual has a visible root too. Show a child a box opened with a few useful moves and a few pointless ones, a tap on the lid, a wave of the hand, and the child copies all of it, the useless steps included. A chimpanzee, who can see the steps are useless, drops them. <span class="u-src"><a href="https://www.pnas.org/doi/10.1073/pnas.0704452104">overimitation</a></span> We are the animal that copies the whole procedure on faith, which is the only way a rite survives a generation intact, and Kalahari children do it exactly as readily as children in a lab.</p>
-
-      <p>Belief runs downhill, as one cognitive scientist put it. It is the path of least resistance for the minds we already have, and disbelief is the effortful work against the grain. <span class="u-src"><a href="https://www.nature.com/articles/4551038a">Boyer</a></span></p>
-
-      <p class="turn">The skeleton is not preached into them. It is the shape the mind takes when nobody is steering.</p>
-
-      <p>Now the strongest argument against everything I just said. Raise one single child with no culture at all, the cognitive scientists Konika Banerjee and Paul Bloom argue, and you would not get God out the other end. <span class="u-src"><a href="https://www.cell.com/trends/cognitive-sciences/fulltext/S1364-6613(12)00266-5">Tarzan</a></span> The mental biases are raw material, not a religion, and a real creed needs a culture to grow in.</p>
-
-      <p>That is right, and it is the whole reason the island has five hundred children and two centuries, not one feral child and an afternoon. The biases supply the shape. The crowd and the years supply the rest. Their gods will be their own invention. The reaching for one was packed before they sailed.</p>
-
-      <hr class="u-divider">
+      <p>AA adapts an inheritance. The island removes one. They ask different questions.</p>
     </section>
 
-    <!-- ============================ 03 TWICE ============================ -->
+    <section id="guess" class="sec" aria-labelledby="guess-h">
+      <div class="u-sechead"><p class="u-sechead-k">Definitions</p><h2 id="guess-h" class="u-sechead-h">What would count as religion?</h2></div>
+
+      <p>If a funeral, a shared song or a coming-of-age ceremony is enough to count, the island prediction becomes easy. Those practices need no supernatural belief. I mean something more specific: shared beliefs about gods, spirits or other sacred realities, expressed in practices that a community passes on.</p>
+
+      <p>That working definition still has awkward edges. A community may treat its ancestors as present in daily life without dividing the world into a religious part and a secular one. A humanist funeral can mark a death without making any claim about a surviving soul. Resemblance is a reason to compare them, not to give them the same name.</p>
+
+      <p>One cross-cultural study coded seven religious traits in thirty-three hunter-gatherer societies, using ethnographic accounts. All were coded as having animism, belief that natural beings or phenomena have intentions or a vital force. Other traits, including afterlife beliefs, ritual specialists and creator gods, varied. The authors then used genetic and linguistic relationships to model earlier states of these traditions. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4958132/">forager study</a></span></p>
+<p>That is evidence of a widespread pattern in a defined sample. It does not show how unexposed children would begin, and present-day hunter-gatherers are not living copies of the distant past. Even here, the proposed universal bundle comes apart.</p>
+    </section>
+
+    <section id="children" class="sec" aria-labelledby="children-h">
+      <div class="u-sechead"><p class="u-sechead-k">Psychology</p><h2 id="children-h" class="u-sechead-h">What the children actually tell us</h2></div>
+
+      <p>Children can find a purpose where an adult sees a physical cause. In Deborah Kelemen's 1999 study, forty-eight elementary-school children and sixteen undergraduates chose explanations for properties of unfamiliar animals and natural objects. Younger children more often accepted purpose-based accounts of nonliving things, such as pointy rocks existing so animals would not sit on them. This is teleology, explaining something by what it is for. <span class="u-src"><a href="https://www.bu.edu/cdl/files/2013/08/1999_Kelemen_PointyRocks.pdf">pointy rocks</a></span></p>
+<p>Those children were already growing up in a culture. The task compared explanations supplied by a researcher; it did not observe children inventing a creator god. A separate experiment with eighty physical scientists found more acceptance of inaccurate purpose-based explanations under time pressure. That measures a reasoning tendency, not a hidden religious commitment. <span class="u-src"><a href="https://joshuarottman.com/uploads/8/2/7/9/8279307/kelemenrottmanseston_jepgwsuppmat_professional_scientists_2013.pdf">scientists</a></span></p>
+<p>Afterlife reasoning is more complicated than the idea that young children believe and schooling gradually removes it. Bering and Bjorklund's 2004 abstract reports that children could distinguish biological death from continued mental activity, with different patterns across ages and types of question. Older children and adults still attributed some knowledge, emotions and desires to the dead. That is the result available in the abstract; I could not inspect the full paper's methods. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/14979762/">afterlife study</a></span></p>
+<figure class="photo afterlife-figure" aria-label="Conceptual diagram separating questions about the body from questions about the mind after death">
+        <svg viewBox="0 0 600 350" role="img" xmlns="http://www.w3.org/2000/svg" aria-labelledby="afterlife-title afterlife-desc">
+          <title id="afterlife-title">What an afterlife interview asks</title>
+          <desc id="afterlife-desc">Separate questions ask whether bodily and mental functions continue after death. Answers vary by the function, age, culture and wording. This is a conceptual diagram, not a graph of measured results.</desc>
+          <g fill="none" stroke="var(--rule)" stroke-width="1.5"><rect x="20" y="25" width="560" height="115" rx="4"/><rect x="20" y="160" width="560" height="115" rx="4"/></g>
+          <g font-family="var(--font-body)" fill="var(--text)">
+            <text x="45" y="67" font-size="26">The body</text>
+            <text x="45" y="110" font-size="24">Does it still eat or breathe?</text>
+            <text x="45" y="202" font-size="26">The mind</text>
+            <text x="45" y="245" font-size="24">Does it still know, want or love?</text>
+            <text x="300" y="319" text-anchor="middle" font-size="22" fill="var(--text-dim)">Different questions can get different answers.</text>
+          </g>
+        </svg>
+        <figcaption class="photo-cap">A conceptual distinction used in afterlife research. There is no single curve showing belief fading as children get older.</figcaption>
+        <p class="img-credit">Diagram for this essay. See Bering and Bjorklund (2004) and Watson-Jones and colleagues (2017) in the sources.</p>
+      </figure>
+
+      <p>A later study interviewed children, adolescents and adults in Texas and Vanuatu after a death story framed in either medical or religious terms. It found cultural and framing differences, including continued bodily functions in some Vanuatu responses. The questions people have heard, and the way an interviewer asks, can affect their answers. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10676006/">cultural comparison</a></span></p>
+<p>Children also copy unnecessary actions. In one experiment, sixty-three children aged three to five watched an adult open unfamiliar objects after training to spot pointless steps. Many still copied those steps. This overimitation can help explain how a precise procedure gets passed on. The experiment used objects and demonstrations, not worship, and it does not establish that faithful copying has only one cause. <span class="u-src"><a href="https://cogdevlab.yale.edu/sites/default/files/files/overimitation%202007.pdf">overimitation</a></span></p>
+<p>These findings give religion some plausible raw material: purpose-seeking, thoughts about minds after death, and careful social learning. They leave the decisive step untested. A tendency that makes a belief easy to learn is not the same as a tendency that generates a whole religion without teaching.</p>
+    </section>
+
     <section id="twice" class="sec" aria-labelledby="twice-h">
-      <div class="u-sechead"><p class="u-sechead-k">Isolation</p><h2 id="twice-h" class="u-sechead-h">The experiment already ran, at planetary scale</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">History</p><h2 id="twice-h" class="u-sechead-h">The Americas were never a blank slate</h2></div>
 
-      <p>It already ran once, across half the planet. People walked into the Americas and then grew up completely cut off from everyone else for more than ten thousand years. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Peopling_of_the_Americas">peopling</a></span></p>
-
-      <p>When the two halves of humanity finally met again in 1492, both sides had temples, priesthoods, ritual sacrifice, ceremonies for their ancestors, and beliefs about what happens after you die. <strong>The same basic setup, built twice, with no way to copy from each other.</strong></p>
+      <p>The Americas make the island question tempting. The monuments are there to compare: a pyramid in Mexico, a temple in Greece. People separated by an ocean built places for communal worship.</p>
 
       <figure class="photo breakout reveal">
         <div class="duo">
@@ -343,326 +306,181 @@
             <img src="assets/parthenon.jpg" loading="lazy" decoding="async" alt="The marble columns of the Parthenon standing on the Athenian Acropolis.">
           </picture>
         </div>
-        <figcaption class="photo-cap">Two civilizations that never met, reaching upward the same way. The gods at the top were not the same gods.</figcaption>
+        <figcaption class="photo-cap">The Pyramid of the Sun at Teotihuacan and the Parthenon at Athens. Similar public monuments do not establish independent origins for the beliefs behind them.</figcaption>
         <p class="img-credit">Left: <a href="https://commons.wikimedia.org/wiki/File:Sun_Pyramid_05_2015_Teotihuacan_3304.JPG">Pyramid of the Sun, Teotihuacan</a> by Mario Roberto Dur&aacute;n Ortiz, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Right: <a href="https://commons.wikimedia.org/wiki/File:Parthenon_from_west.jpg">the Parthenon, Athens</a>, public domain. Both via Wikimedia Commons.</p>
       </figure>
 
-      <p>On one side of the ocean: stepped pyramids and a priest-run calendar in Mexico, and in the Andes, mummified ancestors who were fed, dressed, and carried out to be asked for advice as if they were still alive. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4543117/">Andean mummies</a></span> On the other side of the world, the same jobs being done under different names, for different gods.</p>
+      <p>But the people who settled the Americas arrived with cultures. Their descendants inherited, changed and exchanged traditions. Shared human ancestry includes cultural ancestry; it is not just a shared kind of brain. Calling the Americas a second blank-slate experiment erases the very inheritance we need to understand.</p>
 
-      <p>A few honest caveats. Norse sailors did reach Newfoundland around 1000 AD, the case for later Polynesian contact is real but debated, and the Americas were never one single religion. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Pre-Columbian_transoceanic_contact_theories">contact</a></span> They held thousands of them.</p>
-
-      <p>That sprawl is the point, not a problem. The specific beliefs went off in every direction, while the same underlying frame kept showing up.</p>
-
-      <p>And neither side actually started from zero.</p>
-
-      <p>Both inherited the same basic human kit: the same hands, and the same brain wired to read other people's minds and to see intent behind events. So this is not a clean blank-slate test. It is two branches of humanity building on one shared inheritance. Even so, they built the same structure.</p>
-
-      <p>That is the experiment at planet scale. It has also run small.</p>
-
-      <hr class="u-divider">
+      <p>Nor was 1492 the first contact across the Atlantic. Researchers dated wood worked with metal tools at the Norse site of L'Anse aux Meadows to 1021, using a known radiocarbon event and tree rings. Genetic research also supports pre-European contact between Polynesian and Native American populations. Neither result tells us how a particular religious practice originated. <span class="u-src"><a href="https://www.nature.com/articles/s41586-021-03972-8">Norse evidence</a></span> <span class="u-src"><a href="https://www.nature.com/articles/s41586-020-2487-2">Pacific evidence</a></span></p>
+<p>The comparison cannot supply two independent groups starting with no religious history and reaching the same result.</p>
     </section>
 
-    <!-- ============================ ISLANDS ============================ -->
     <section id="islands" class="sec" aria-labelledby="islands-h">
-      <div class="u-sechead"><p class="u-sechead-k">Small and fast</p><h2 id="islands-h" class="u-sechead-h">We have run this smaller, and faster</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">Comparisons</p><h2 id="islands-h" class="u-sechead-h">Three cases with three different limits</h2></div>
 
-      <p>The planetary case is grand but slow, and nobody alive watched it happen. There are smaller runs you can almost watch, much closer to the size of the island.</p>
+      <p>The Tongan castaways had Christian schooling. Their survival cannot tell us what children raised without religion would believe. <span class="u-src"><a href="https://www.theguardian.com/books/2020/may/09/the-real-lord-of-the-flies-what-happened-when-six-boys-were-shipwrecked-for-15-months">reported recollections</a></span></p>
 
-      <p>Put children alone on an island and the story everyone reaches for is Lord of the Flies, the slide into savagery. It happened for real once. In 1965 six boys from a Tongan boarding school were marooned on the rock of Ata for fifteen months. <span class="u-src"><a href="https://www.theguardian.com/books/2020/may/09/the-real-lord-of-the-flies-what-happened-when-six-boys-were-shipwrecked-for-15-months">Ata</a></span> They did not come apart. They split the work in pairs, kept a fire burning for more than a year, settled quarrels with a forced timeout, and began and ended each day with song and prayer.</p>
-
-      <p>The honest catch: they were schoolboys who carried their faith out there with them, so this is structure held together under pressure, not invented from nothing. But strip away the church and the school, and the kids rebuilt the rhythm at once, the singing, the prayer, the sacred fire they never let go out, from whatever they already had in their heads.</p>
-
-      <p>For invention closer to scratch, look at Tanna, in Vanuatu. Within roughly a decade either side of the war, a new religion assembled itself there in plain sight, around a figure called John Frum: prophets, a holy day, sacred red crosses, and men who still drill in formation waiting for him to come back. <span class="u-src"><a href="https://www.smithsonianmag.com/history/in-john-they-trust-109294882/">John Frum</a></span> It grew its own specialists and its own calendar, and it is kept today, long after the wartime cargo that sparked it stopped arriving. Asked why he had waited nineteen years for John with nothing to show, one man said Christians had waited two thousand for Christ.</p>
-
-      <figure class="photo reveal">
+      <p>John Frum on Tanna developed among people already living with local traditions, missionaries and colonial rule. Jean Guiart's field study cites reports of the movement from 1941, before wartime American military bases reshaped the region. A new movement grew out of a complicated history. <span class="u-src"><a href="https://horizon.documentation.ird.fr/exl-doc/pleins_textes/divers15-08/13114.pdf#page=172">Tanna field study</a></span></p>
+<figure class="photo reveal">
         <picture>
           <source type="image/webp" srcset="assets/johnfrum.webp">
           <img src="assets/johnfrum.jpg" width="1280" height="853" loading="lazy" decoding="async" alt="A tall red wooden cross standing in a clearing on Tanna island, the sacred symbol of the John Frum movement.">
         </picture>
-        <figcaption class="photo-cap">A John Frum cross on Tanna, 1967. The movement grew its own holy day, its own marching order, and its own patient waiting, all within living memory.</figcaption>
+        <figcaption class="photo-cap">A John Frum ceremonial cross on Tanna, photographed in 1967. The movement developed among people with local traditions and a history of contact.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:JohnFrumCrossTanna1967.jpg">John Frum ceremonial cross, Tanna</a> by Tim Ross, 1967, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>And for children building real structure from nothing, the cleanest case is not on an island at all. When deaf children in Nicaragua were first gathered together in the late 1970s with no shared language, they made one. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Nicaraguan_Sign_Language">Nicaragua</a></span> Inside a decade they had a full grammar, and it was the youngest children, not the adults, who built its deepest parts. Put enough young minds in a room with a blank where a system should be, and they fill it.</p>
-
-      <p class="turn">Order in days, a language in a decade, a faith inside one lifetime. The blank never stays blank.</p>
-
-      <p>None of these is the clean experiment. The boys ran on a faith they carried, and Nicaragua built a language, not a creed. But the boys show the rhythm returns at once, Nicaragua shows children invent deep structure on their own, and Tanna shows a whole religion can assemble in a decade from the parts lying around. Lay them end to end and the two-hundred-year island looks like the easy case, not the hard one.</p>
-
-      <p>That is all scaffolding, though. What about the inner content, the diagnosis of what is actually wrong with us?</p>
-
-      <hr class="u-divider">
+      <p>Nicaraguan Sign Language shows something else. A 2004 study compared thirty deaf signers from successive school cohorts with ten hearing Spanish speakers. Later cohorts more often separated a movement's manner and path into successive signs. Children helped develop the structure of an emerging language within a communicating community. <span class="u-src"><a href="https://semantics.uchicago.edu/kennedy/classes/sum08/myths/senghas_kita_ozyurek.pdf">sign-language study</a></span></p>
+<p>The castaways retained a faith, Tanna transformed traditions, and deaf Nicaraguans developed a language. Putting them in a row does not turn them into three replications of the island.</p>
     </section>
 
-    <!-- ============================ 04 DISSENT ============================ -->
     <section id="dissent" class="sec" aria-labelledby="dissent-h">
-      <div class="u-sechead"><p class="u-sechead-k">The dissenter</p><h2 id="dissent-h" class="u-sechead-h">The tradition that would not surrender</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">Differences</p><h2 id="dissent-h" class="u-sechead-h">The Gathas ask for a choice</h2></div>
 
-      <p>One ancient religion broke that inner pattern completely. Zoroastrianism, the old faith of Persia, has a set of founding hymns called the Gathas, and they never once tell you to surrender. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Gathas">Gathas</a></span> Their whole world is a war: truth against the Lie, order against the chaos eating away at it.</p>
-
-      <figure class="photo reveal">
+      <p>The Gathas, hymns central to Zoroastrian worship, ask people to choose between truth and falsehood. Yasna 30 links that choice to thought, words and actions. It gives moral choice a prominent place. But the hymns also contain prayers for divine help: Yasna 28 opens with a petition to Mazda. Reducing this tradition to a refusal to surrender would miss those prayers. <span class="u-src"><a href="https://www.avesta.org/yasna/yasna.htm#gathas">Yasna 30 and 28</a></span></p>
+<figure class="photo reveal">
         <picture>
           <source type="image/webp" srcset="assets/faravahar.webp">
           <img src="assets/faravahar.jpg" width="1280" height="960" loading="lazy" decoding="async" alt="A carved stone relief of the Faravahar, a bearded figure rising from a winged disc, at Persepolis.">
         </picture>
-        <figcaption class="photo-cap">The emblem of a faith that told its people to fight the Lie, not to yield to it.</figcaption>
+        <figcaption class="photo-cap">A winged figure at Persepolis, commonly called the Faravahar. The Gathas ask people to choose truth over falsehood.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Persepolis_-_carved_Faravahar.JPG">Faravahar relief, Persepolis</a> by Napishtim, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>It tells you to fight. The great sin it names is deceit. Not the proud, grasping ego that so many later religions treat as the enemy, but lying itself. Pick truth, fight the Lie, take a side. That is a genuinely different theory of what is wrong with people, not a different accent on the same one.</p>
-
-      <p>Take it as the best evidence that the inner beliefs never converged. <strong>Different religions really do disagree about what is broken in us.</strong> That is exactly why the frame is the part that repeats, and the beliefs are not.</p>
-
-      <p>Now a twist. This religion is tiny today, maybe a hundred and ten thousand people left. <span class="u-src"><a href="https://www.fezana.org/files/Demographics/Zworld6Sep12.pdf">demographics</a></span></p>
-
-      <p>But it may have planted some enormous ideas that later spread across the Near East: heaven and hell, a final judgment, a cosmic enemy (the devil), and a savior still to come. Those same features show up later in Judaism, then Christianity, then Islam. The link is genuinely debated, and nobody is sure exactly when the Gathas were composed. <span class="u-src"><a href="https://www.iranicaonline.org/articles/eschatology-i/">eschatology</a></span></p>
-
-      <p>Follow that out. If those ideas all flowed from one source, then the famous agreement between Judaism, Christianity, and Islam is not three separate witnesses backing each other up. It is one witness, quoted three times.</p>
-
-      <p>Which means the real question is not what religions share. It is how you count them.</p>
-
-      <hr class="u-divider">
+      <p>A confession, a prayer and a moral demand can mean different things in different traditions. Their visible similarities do not settle whether the self is corrupt, whether there is a creator, or what salvation would mean. </p>
     </section>
 
-    <!-- ============================ 05 SQUID ============================ -->
     <section id="squid" class="sec" aria-labelledby="squid-h">
-      <div class="u-sechead"><p class="u-sechead-k">The frame</p><h2 id="squid-h" class="u-sechead-h">Nobody calls a squid eye a human eye</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">The analogy</p><h2 id="squid-h" class="u-sechead-h">Similar forms, several possible causes</h2></div>
 
-      <p>The right way to think about this is not that all religions are secretly one religion. The biologists have a better name for it: convergent evolution.</p>
-
-      <p>Take eyes. Basic light-sensing eyes evolved on their own dozens of separate times. The camera eye, the kind you are reading this with, got built from scratch at least twice: once in our line, and once in the squid's. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Evolution_of_the_eye">eye evolution</a></span> A squid eye and a human eye do the same job by totally different routes, and no biologist calls them the same eye.</p>
-
-      <figure class="photo reveal">
+      <p>Convergent evolution offers an analogy for similar forms arising along different histories. Vertebrate and cephalopod camera eyes both focus light onto a retina, although those retinas are arranged differently. An octopus's photoreceptors face the incoming light; ours face the other way. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6971404/">octopus eye review</a></span></p>
+<figure class="photo reveal">
         <span class="plate"><img src="assets/eyes.svg" width="1855" height="1056" loading="lazy" decoding="async" alt="A labeled diagram comparing a vertebrate eye and an octopus eye, showing the vertebrate's inverted retina and its blind spot, which the octopus eye does not have."></span>
-        <figcaption class="photo-cap">Same engineering, separate inventions. The cephalopod eye on the right even skips the blind spot ours is stuck with.</figcaption>
+        <figcaption class="photo-cap">Vertebrate and octopus eyes. Both focus light, but their retinas are arranged differently. The comparison is an analogy, not evidence about the origin of religion.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Evolution_eye.svg">Vertebrate (left) and octopus (right) eye</a> by Caerbannog, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p class="turn">Religion is a slot humans keep refilling, not one truth wearing a hundred disguises.</p>
+      <p>Religion adds a problem the eye diagram cannot solve: people teach, travel, translate and borrow. To distinguish independent invention from inheritance, we need evidence about those routes. Similarity alone will not do it.</p>
 
-      <p>And the part that complicates even that. Both of those eyes get switched on in the embryo by the very same ancient gene, inherited from a shared ancestor far too simple to have eyes at all. <span class="u-src"><a href="https://www.cell.com/AJHG/fulltext/S0168-9525(99)01776-X">Pax6</a></span> Different on the surface, the same underneath. Separated cultures are just like that: free to differ up top, all running on the same human brain down below.</p>
+      <p>Nor can we count broad labels such as Indian, Chinese and Native American as independent witnesses with no shared roots. Each label covers many histories and communities. Related scriptures also carry earlier teachings forward. A count of matching ideas has to account for that transmission before it can tell us anything about convergence.</p>
 
-      <p>The frame has to cover the ugly stuff too. Human sacrifice grew up on both sides of the ocean, with no contact between them. Convergence predicts the grim repeats just as easily as the beautiful ones. A single loving truth behind all religions cannot explain the altars at all.</p>
-
-      <p>There is a real fight among scholars here. One camp (call them the perennialists, like the writers Aldous Huxley and Huston Smith) said all the great traditions are climbing toward the same summit. Critics like Stephen Prothero fired back that what they teach differs far more than the thin patch they share. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Stephen_Prothero">Prothero</a></span></p>
-
-      <p>And how you count matters. Related scriptures are not independent witnesses. The Bible, the Quran, the Book of Mormon, and yes, AA, are all one family tree. The Sikh and Baha'i scriptures openly blend earlier ones. They are new branches of the same family, not fresh voices from outside it.</p>
-
-      <p>The witnesses that actually count are the family trees with no shared root that still landed on the same skeleton: the Indian, the Chinese, and the Native American traditions, set against the Near Eastern one. Count it that strict way and the overlap shrinks rather than grows, which is exactly why the little that does overlap is worth taking seriously.</p>
-
-      <p>A claim this loose deserves a fair challenge. Once you subtract the beliefs, is the leftover skeleton just the word "religion" stretched over any group of humans? A football crowd has its rituals and its priests too. So let me say plainly what would prove me wrong. It is not having a community, or a hierarchy, or big shared feelings. It is one specific, less obvious bundle: a careful way of handling the dead, a way of dealing with unseen spirits, and someone set apart to tend it. Find a society with thriving sports and politics and none of that, and the claim sinks.</p>
-
-      <p>The closest thing to that society on record is contested, but worth meeting. According to the linguist who lived with them for years, the Piraha people of the Amazon have no creation story, no gods, and no word for God, and they actually turned their own missionary into an atheist. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Pirah%C3%A3_people">Piraha</a></span> And yet they are surrounded by spirits that walk out of the forest to warn them and boss them around, and the whole village will line up on the riverbank to watch one. They dropped the beliefs and kept the structure. Even the hardest case to find is not a clean miss.</p>
-
-      <p>Isolation was one way to test all this. The last century ran a very different one.</p>
-
-      <hr class="u-divider">
+      <p>A claim that every society has the same religious skeleton needs a stable definition. If we keep expanding the skeleton whenever a counterexample appears, we make it impossible to test. A secular ceremony must be allowed to count as secular.</p>
     </section>
 
-    <!-- ============================ 06 DELETION ============================ -->
     <section id="deletion" class="sec" aria-labelledby="deletion-h">
-      <div class="u-sechead"><p class="u-sechead-k">Deletion</p><h2 id="deletion-h" class="u-sechead-h">They banned the gods, and something grew back</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">Secular life</p><h2 id="deletion-h" class="u-sechead-h">Ritual can survive without belief</h2></div>
 
-      <p>In the twentieth century, several governments tried to delete religion outright, by force: the Soviet Union, Albania (which started enforcing state atheism in 1967 and bragged that it was the world's first atheist state), China during the Cultural Revolution, and the Khmer Rouge in Cambodia. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Irreligion_in_Albania">Albania</a></span></p>
-
-      <figure class="photo reveal">
+      <p>The Soviet state restricted religious institutions and promoted atheism. After its collapse, Orthodox identification in Russian surveys rose from 31 percent in 1991 to 72 percent in 2008. Monthly attendance was still only 7 percent in 2008. Identification, belief and practice are different measures; a rise in one does not mean all three returned together. <span class="u-src"><a href="https://www.pewresearch.org/religion/2014/02/10/russians-return-to-religion-but-not-to-church/">survey and methods</a></span></p>
+<figure class="photo reveal">
         <picture>
           <source type="image/webp" srcset="assets/deletion.webp">
           <img src="assets/deletion.jpg" width="1280" height="882" loading="lazy" decoding="async" alt="A long line of people waiting in a public square to enter Lenin's Mausoleum in Moscow.">
         </picture>
-        <figcaption class="photo-cap">The line to view an embalmed leader, kept and visited like a relic. The form outlived the gods it replaced.</figcaption>
+        <figcaption class="photo-cap">Visitors waiting to enter Lenin's Mausoleum in Moscow, 1969. Calling this a religious scene is an interpretation of the photograph.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:V%C3%B6r%C3%B6s_t%C3%A9r,_sorban_%C3%A1ll%C3%B3k_a_Lenin_mauz%C3%B3leumhoz._Fortepan_18313.jpg">The queue at Lenin's Mausoleum, Moscow, 1969</a>. Fortepan / Pohl P&aacute;lma, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>What grew back was either the old religion returning, or brand-new things cut to the exact same pattern. An embalmed leader kept like a holy relic, filed past in a slow line. Sacred texts and parades. Heresy, confession, and public self-criticism. One man's face hoisted into the empty seat at the top.</p>
-
-      <p>The vocabulary changed and the furniture stayed. A canon, a clergy of officials, holy days, relics, and a doctrine you could be punished for doubting.</p>
-
-      <p>But be precise about what actually came back, because it complicates the easy story. Where the buried faith was Orthodox, it surged. Russian Orthodox identification climbed from about a third of the country in 1991 to roughly three quarters two decades later. <span class="u-src"><a href="https://www.pewresearch.org/religion/2017/05/10/religious-belief-and-national-belonging-in-central-and-eastern-europe/">Pew</a></span> But where the pressure fell hardest and longest, belief stayed dead. East Germany is about the least religious population ever measured. A majority there say they not only do not believe in God, they never did. <span class="u-src"><a href="https://www.norc.org/content/dam/norc-org/pdfs/Beliefs_about_God_Report.pdf">ISSP</a></span></p>
-
-      <p>That is the sharper finding, not a hole in the argument. The belief did not refill, but the slot did. The state had pushed a secular coming-of-age rite, the Jugendweihe, to replace church confirmation, a public vow with speeches and flowers and no god in it. It outlived the state that built it. Around a third of eastern German teenagers still pass through it, more than are confirmed in the churches. <span class="u-src"><a href="https://fowid.de/meldung/unterschaetzung-jugendweihezahlen">Jugendweihe</a></span></p>
-
-      <p class="turn">Ban the gods and the rites grow back, sometimes with the state in the empty chair, sometimes as a vow with no god left in it at all.</p>
-
-      <p>Convergence predicts exactly this. A blank, religion-free future does not.</p>
-
-      <p>Force was one way to test all this. Freedom is another, and it gives the same answer.</p>
-
-      <hr class="u-divider">
+      <p>The same automatic-return story fails in former East Germany. In the 2008 International Social Survey Programme, about 52 percent of respondents there said they did not believe in God. That was the highest proportion among the thirty countries and territories compared in Tom Smith's report. It was a dated comparison of belief in God, not a measurement of every form of spirituality. <span class="u-src"><a href="https://www.norc.org/content/dam/norc-org/pdfs/Beliefs_about_God_Report.pdf">ISSP report</a></span></p>
+<p>The Jugendweihe, a secular coming-of-age ceremony, continued after German reunification. Its history reaches back before the East German state, which later tied it to a socialist pledge. A present-day organizer describes participation as voluntary and open across worldviews. <span class="u-src"><a href="https://jugendweihe-bb.de/verein/geschichte/">organizer's history</a></span></p>
+<p>That survival tells us a ceremony can remain useful after the political setting changes. It does not demonstrate that religion secretly returned. People can want a public way to mark adulthood while continuing to disbelieve in God.</p>
     </section>
 
-    <!-- ============================ VOLUNTEERS ============================ -->
     <section id="volunteers" class="sec" aria-labelledby="volunteers-h">
-      <div class="u-sechead"><p class="u-sechead-k">No one forcing it</p><h2 id="volunteers-h" class="u-sechead-h">The people rebuilding it on purpose</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">The memorial</p><h2 id="volunteers-h" class="u-sechead-h">A temple built for grief</h2></div>
 
-      <p>That was the slot getting refilled under force. The stranger evidence is the same slot filling back in with nobody forcing anything at all, among people who walked away from religion and then went looking for the shape again on their own.</p>
-
-      <p>Every summer in the Nevada desert a crew raises a wooden temple the size of a cathedral. For a week it fills with photographs, letters, and the ashes of the dead, left by strangers who share no creed. Then, at a festival famous for its noise, they burn it in total silence. <span class="u-src"><a href="https://burningman.org/programs/burning-man-arts/grants/temple/brc-temple-grant-history/">the Temple</a></span> Nobody set out to build a rite for the dead. They built one anyway, because the hole was there.</p>
-
-      <figure class="photo reveal">
+      <p>The Temple at Burning Man began with a death. In 2000, David Best and Jack Haye brought the Temple of the Mind to the event. When fellow builder Michael Hefflin died in a motorcycle accident, it became a memorial to him. Other participants began leaving remembrances of their own dead. <span class="u-src"><a href="https://burningman.org/black-rock-city/bring-your-art/art-grants-programs/temple/brc-temple-grant-history/">Temple history</a></span></p>
+<figure class="photo reveal">
         <picture>
           <source type="image/webp" srcset="assets/temple.webp">
           <img src="assets/temple.jpg" width="1280" height="956" loading="lazy" decoding="async" alt="A wooden wall inside the Burning Man Temple densely covered with handwritten messages, photographs, and notes left for the dead.">
         </picture>
-        <figcaption class="photo-cap">Messages left for the dead inside the Temple at Burning Man, 2011. A week later the whole structure, and everything written on it, is burned without a word.</figcaption>
+        <figcaption class="photo-cap">Memorial messages at the Burning Man Temple, 2011. The event's Temple tradition began with a memorial to a builder who died.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Burning_Man_2011_Victor_Grigas_Temple_messages_IMG_4657.JPG">Messages at the Burning Man Temple</a> by Victor Grigas, 2011, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>The same reflex is everywhere once you look for it. In Scotland, humanist weddings led by celebrants now outnumber the ones held in any church. <span class="u-src"><a href="https://www.humanism.scot/2023/07/20/humanist-weddings-dwarfed-christian-ceremonies-in-2022-national-records-of-scotland/">celebrants</a></span> Strangers meet in Death Cafes to talk their way toward dying. And the most self-consciously rational givers, asked to settle on a number, landed on ten percent, then noted in their own pledge that it matches the old religious tithe. <span class="u-src"><a href="https://www.givingwhatwecan.org/faq/why-is-the-pledge-10">tithe</a></span></p>
+      <p>The Burning Man Project describes the Temple as a space for people of any religion or none. Participants leave photographs, inscriptions and mementos; the Temple is then burned in silence. This is an intentionally maintained memorial practice, with its own history.</p>
 
-      <p>But watch which versions last, because it sharpens the whole argument. The straight copies that ask little tend to thin out. A wave of godless congregations modeled right down to the Sunday service swelled to dozens of chapters and then faded within a few years. <span class="u-src"><a href="https://www.theatlantic.com/health/archive/2019/07/secular-churches-rethink-their-sales-pitch/594109/">assembly</a></span> The ones that hold are the ones that cost something. Nineteenth-century communes that demanded real sacrifice outlasted the easygoing ones several times over, but only when the demands were bound to the sacred. <span class="u-src"><a href="https://journals.sagepub.com/doi/10.1177/1069397103037002003">communes</a></span></p>
-
-      <p class="turn">The structure always grows back. Only the costly kind puts down roots.</p>
-
-      <p>One last case ran that filter all the way to the end, and it is the only one we can read line by line.</p>
-
-      <hr class="u-divider">
+      <p>It matters to the island question because it shows that a shared creed is not required for a shared response to grief. It also makes the definition problem unavoidable. A rite for the dead can carry religious meaning for one participant and no supernatural claim for another.</p>
     </section>
 
-    <!-- ============================ 07 RECEIPT ============================ -->
     <section id="receipt" class="sec" aria-labelledby="receipt-h">
-      <div class="u-sechead"><p class="u-sechead-k">Subtraction</p><h2 id="receipt-h" class="u-sechead-h">The receipt from Akron</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">The program</p><h2 id="receipt-h" class="u-sechead-h">What AA kept from its inheritance</h2></div>
 
-      <p>Come back to Akron one more time. It was never an island, of course, never cut off from anything.</p>
-
-      <p>What Bill Wilson later boiled down to six points ran roughly like this: admit you are beaten, lean on a higher power, take a moral inventory, confess it to another person, make amends to the people you harmed, and carry the same help to others who still suffer. <span class="u-src"><a href="https://www.aacle.org/origin-of-the-twelve-steps/">six steps</a></span> The exact wording was never fixed.</p>
-
-      <figure class="photo reveal">
+      <p>AA's practices make the inheritance visible. In a later account of the program before the Twelve Steps, Bill Wilson recalled admitting defeat, taking a moral inventory, confessing shortcomings, making restitution, helping others and praying for help. This was his retrospective summary, not a fixed six-step text used from the first meeting. <span class="u-src"><a href="https://www.aacle.org/origin-of-the-twelve-steps/">Wilson's account</a></span></p>
+<figure class="photo reveal">
         <picture>
           <source type="image/webp" srcset="assets/grace.webp">
           <img src="assets/grace.jpg" width="950" height="655" loading="lazy" decoding="async" alt="Men and women bowing their heads to say grace around an outdoor table at a 1940 New Mexico fair.">
         </picture>
-        <figcaption class="photo-cap">Saying grace, Pie Town, New Mexico, 1940. A circle, a practice, and a higher power left undefined. The program kept about that much.</figcaption>
+        <figcaption class="photo-cap">Saying grace before a meal in Pie Town, New Mexico, 1940. Shared prayer can accompany ordinary meals as well as formal worship.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Saying_grace_before_the_barbeque_dinner_at_the_New_Mexico_Fair._Pie_Town,_New_Mexico,_October_1940.jpg">Saying grace before the barbecue dinner, Pie Town, New Mexico</a>. Russell Lee, Farm Security Administration, 1940, Library of Congress, public domain.</p>
       </figure>
 
-      <p>AA did not reinvent the universal core from scratch. It inherited the inner stuff, the broken self and the surrender, straight from its Christian parent.</p>
-
-      <p>What it shows is the other road to the skeleton. Not building up in isolation, but paring down under pressure.</p>
-
-      <p>The filter was merciless: it had to work for hardened skeptics whose lives were on the line. So it threw out the specific doctrine and kept three things, a higher power left undefined, a practice, and a group of people. Undefined on purpose. The exact phrase is "a higher power as you understand it," which is how an atheist and a believer can kneel in the same room.</p>
-
-      <p class="turn">That is the doctrine-free skeleton again, reached by subtraction.</p>
-
-      <p>Even the one famous later line fits. Acceptance, the calm of the Serenity Prayer, is among the weakest of the supposed universals across the scriptures, and the fellowship added it afterward, circulating it by 1941. <span class="u-src"><a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">serenity</a></span></p>
-
-      <p>Two men solving an urgent problem kept the load-bearing parts and shed the rest. Isolation built the skeleton in the Americas. Subtraction uncovered it in Akron.</p>
-
-      <p>So what, exactly, did the island children reach?</p>
-
-      <hr class="u-divider">
+      <p>The published Twelve Steps retain God, prayer and a spiritual awakening, alongside inventory and amends. They qualify God with the words "as we understood Him." That leaves room for differing understandings; it does not make the text free of theology. <span class="u-src"><a href="https://www.aa.org/sites/default/files/literature/assets/p-10_howitworks.pdf">the Twelve Steps</a></span></p>
+<p>A program's survival cannot prove that only its effective elements survived. That would require comparing the effects of those elements, not reading their history backward from success. AA shows an inherited religious practice adapted for recovery. It gives us no controlled test of which parts of religion humans need.</p>
     </section>
 
-    <!-- ============================ 08 INSTALLED ============================ -->
     <section id="installed" class="sec" aria-labelledby="installed-h">
-      <div class="u-sechead"><p class="u-sechead-k">The close</p><h2 id="installed-h" class="u-sechead-h">The oldest line in all the books</h2></div>
+      <div class="u-sechead"><p class="u-sechead-k">The close</p><h2 id="installed-h" class="u-sechead-h">What the island leaves open</h2></div>
 
-      <p>They would have arrived at the oldest claim in all the holy books: that something inside a person comes already written.</p>
+      <p>Religious texts have their own accounts of what people bring into the world. Romans 2:14 and 2:15 describes people without the law doing what it requires, with its work written on their hearts. Quran 30:30 speaks of the natural disposition in which God created people. These are claims inside traditions, not results from developmental psychology. <span class="u-src"><a href="https://www.biblegateway.com/passage/?search=Romans%202%3A14-15&amp;version=NRSVUE">Romans</a></span> <span class="u-src"><a href="https://quran.com/30/30">Quran</a></span></p>
+<p>A believer may understand human capacities as part of creation. A nonbeliever may understand them through natural history. Finding a psychological route to a belief does not, by itself, decide whether the belief is true. I do not think the island can settle whether God is real.</p>
 
-      <p>Tradition after tradition reports the same hunch in its own words: a law written on the heart, the Islamic fitra (the sense of God you are supposedly born with), the Buddha-nature, an inner light. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Fitra">fitra</a></span> But notice they do not agree on what is written there. Fitra says God did the writing. Buddha-nature says there is no god at all.</p>
-
-      <p>So this is not one more shared belief. It is many traditions reporting that something feels pre-installed, and then disagreeing completely about who, if anyone, installed it.</p>
-
-      <p>That leaves a fork in the road, and the honest thing is to leave it open. Either it was installed by plain human nature, or by something standing behind human nature. This piece genuinely does not know, and it will not use its own science-first lens to tip the scale for you.</p>
-
-      <p>So come back to the island in 200 years. The children will have built rituals, and people to lead them, and a sense of something above them, and a careful way of dealing with their dead. They never inherited any of your religions, so the names will all be wrong and the stories will be new.</p>
+      <p>My expectation is that the descendants would develop repeated ceremonies, ways to mourn, and perhaps beliefs about spirits or continued life after death. I would not put a probability on the last part. The research does not supply one.</p>
 
       <figure class="photo reveal">
         <picture>
           <source type="image/webp" srcset="assets/island-dusk.webp">
           <img src="assets/island-dusk.jpg" width="1280" height="800" loading="lazy" decoding="async" alt="The black silhouette of a single broad tree on an island at dusk, against a pink and blue sky over still water.">
         </picture>
-        <figcaption class="photo-cap">Two hundred years is not long. It is long enough.</figcaption>
+        <figcaption class="photo-cap">An island in the Mekong at dusk. The thought experiment ends with a prediction we cannot check.</figcaption>
         <p class="img-credit"><a href="https://commons.wikimedia.org/wiki/File:Silhouette_of_an_island_at_dusk_with_blue_and_pink_clouds_in_Don_Det_Si_Phan_Don_Laos.jpg">Dusk over an island in the Mekong, Don Det, Laos</a> by Basile Morin, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via Wikimedia Commons.</p>
       </figure>
 
-      <p>They will have done it to hold the part of a person you cannot point to. You already have a word for that part. I am going to let you be the one to say it.</p>
+      <p>Two hundred years gives the imaginary community time to change. It gives us no evidence of what the descendants would actually say when asked about their dead.</p>
     </section>
 
-    <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and what I was careful about</h2></div>
-      <p class="src-note">The argument here is deliberately narrow: separated people converge on the same structure, never on the same beliefs. Before publishing, every load-bearing claim was run through an adversarial fact-check whose job was to refute it. Two corrections made it in: the famous figure for the independent evolution of eyes counts light-sensors, not complex eyes, and those eyes still share one ancient control gene; and the early fellowship's six points are Bill Wilson's later summary, never a fixed list. A later expansion kept three more dents in plain view: where state atheism fell hardest, in East Germany, the belief never came back and only the secular rite did; the recurring skeleton is humbler at the scale of a few hundred people than the temples of 1492 imply; and the strongest objection, that one isolated child would not invent God, is left standing in the text rather than smoothed away.</p>
-      <details class="u-collapse">
-        <summary class="u-collapse-s">The full list, thirty-seven sources, grouped by claim</summary>
-      <div class="legend">
-        <span><span class="u-grade u-grade-a">solid</span> primary or strong consensus</span>
-        <span><span class="u-grade u-grade-b">good</span> reliable secondary</span>
-        <span><span class="u-grade u-grade-c">contested</span> genuinely debated, flagged in text</span>
-      </div>
+      <div class="u-sechead"><p class="u-sechead-k">Sources</p><h2 id="sources-h" class="u-sechead-h">Evidence and limits</h2></div>
 
-      <h3>The fellowship</h3>
-      <ol>
-        <li><b>Alcoholics Anonymous.</b> The start and growth of A.A. (founding, 1935, Oxford Group). <a href="https://www.aa.org/aa-history">aa.org</a></li>
-        <li><b>History of Alcoholics Anonymous.</b> Separation from the Oxford Group, New York c.1937, Akron c.1939. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/History_of_Alcoholics_Anonymous">wikipedia.org</a></li>
-        <li><b>A.A. Cleveland.</b> Origin of the Twelve Steps, and the earlier word-of-mouth program. <a href="https://www.aacle.org/origin-of-the-twelve-steps/">aacle.org</a></li>
-        <li><b>Alcoholics Anonymous (SMF-129).</b> Origin of the Serenity Prayer, circulating in A.A. by 1941. <a href="https://www.aa.org/sites/default/files/literature/assets/smf-129_en.pdf">aa.org</a></li>
-      </ol>
+      <p class="src-note">The sources support different kinds of statements: laboratory findings, historical accounts, models and religious teachings. None observes the island community imagined here. The prediction is my judgment; it is not a measured probability.</p>
 
-      <h3>The Americas, in isolation</h3>
-      <ol start="5">
-        <li><b>Peopling of the Americas.</b> Arrival at least ~15,000 years ago; long isolation. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Peopling_of_the_Americas">wikipedia.org</a></li>
-        <li><b>Kuitems M, et al. (2021).</b> Evidence for European presence in the Americas in AD 1021 (L'Anse aux Meadows). <i>Nature</i>. <a href="https://www.nature.com/articles/s41586-021-03972-8">nature.com</a></li>
-        <li><b>Pre-Columbian transoceanic contact theories.</b> Polynesian contact, real but debated. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Pre-Columbian_transoceanic_contact_theories">wikipedia.org</a></li>
-        <li><b>Previgliano CH, et al.</b> Frozen mummies from Andean mountaintop shrines (ancestor rites, capacocha). <i>PMC</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4543117/">ncbi.nlm.nih.gov</a></li>
-      </ol>
-
-      <h3>The dissenter, and counting witnesses</h3>
-      <ol start="9">
-        <li><b>Gathas.</b> Asha versus Druj, active struggle against the Lie; dating unsettled. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Gathas">wikipedia.org</a></li>
-        <li><b>Encyclopaedia Iranica.</b> Eschatology i: Zoroastrian, and the contested question of influence. <a href="https://www.iranicaonline.org/articles/eschatology-i/">iranicaonline.org</a></li>
-        <li><b>Rivetna R (FEZANA, 2012).</b> The Zarathushti world, a demographic picture (~111,000 to 122,000). <a href="https://www.fezana.org/files/Demographics/Zworld6Sep12.pdf">fezana.org</a></li>
-        <li><b>Prothero S (2010).</b> God Is Not One. The differing diagnoses against perennialism. <a href="https://en.wikipedia.org/wiki/Stephen_Prothero">summary</a></li>
-      </ol>
-
-      <h3>The frame, and the receiver</h3>
-      <ol start="13">
-        <li><b>Evolution of the eye.</b> Independent origins of light-sensors; camera eyes in vertebrates and cephalopods. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Evolution_of_the_eye">wikipedia.org</a></li>
-        <li><b>Gehring WJ (1999).</b> Pax6, mastering eye morphogenesis and eye evolution (deep homology). <i>Trends in Genetics</i>. <a href="https://www.cell.com/AJHG/fulltext/S0168-9525(99)01776-X">cell.com</a></li>
-        <li><b>Pew Research Center (2025).</b> Many religious "nones" around the world hold spiritual beliefs. <a href="https://www.pewresearch.org/religion/2025/09/04/many-religious-nones-around-the-world-hold-spiritual-beliefs/">pewresearch.org</a></li>
-      </ol>
-
-      <h3>Deletion, and the pre-installed</h3>
-      <ol start="16">
-        <li><b>Irreligion in Albania.</b> State atheism from 1967, codified 1976. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Irreligion_in_Albania">wikipedia.org</a></li>
-        <li><b>Fitra.</b> Innate disposition, oriented toward God. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Fitra">wikipedia.org</a></li>
-        <li><b>Inner Light; Buddha-nature.</b> The Quaker inner light, and the Mahayana seed of awakening with no creator god. <i>Britannica</i>. <a href="https://www.britannica.com/topic/Inner-Light">britannica.com</a></li>
-      </ol>
-
-      <h3>The children, and the mechanism</h3>
-      <ol start="19">
-        <li><b>Bering JM, Bjorklund DF (2004).</b> The natural emergence of afterlife reasoning as a developmental regularity; the dead-mouse studies. <i>Developmental Psychology</i> 40(2). <a href="https://www.scientificamerican.com/article/never-say-die/">overview</a></li>
-        <li><b>Kelemen D (2004).</b> Are children "intuitive theists"? Promiscuous teleology, replicated in atheist China by Rottman et al. (2017). <i>Psychological Science</i> 15(5). <a href="https://journals.sagepub.com/doi/10.1111/j.0956-7976.2004.00672.x">sagepub.com</a></li>
-        <li><b>Kelemen D, Rottman J, Seston R (2013).</b> Professional physical scientists fall back on purpose under time pressure. <i>J. Exp. Psychology: General</i> 142(4). <a href="https://pubmed.ncbi.nlm.nih.gov/23067062/">pubmed.gov</a></li>
-        <li><b>Lyons DE, et al. (2007).</b> The hidden structure of overimitation; Kalahari replication, Nielsen &amp; Tomaselli (2010). <i>PNAS</i> 104(50). <a href="https://www.pnas.org/doi/10.1073/pnas.0704452104">pnas.org</a></li>
-        <li><b>Boyer P (2008).</b> Religion: bound to believe? Belief as the cognitive path of least resistance. <i>Nature</i> 455. <a href="https://www.nature.com/articles/4551038a">nature.com</a></li>
-        <li><b>Banerjee K, Bloom P (2013).</b> Would Tarzan believe in God? The dissent: a lone child needs culture for theism. <i>Trends in Cognitive Sciences</i> 17(1). <a href="https://www.cell.com/trends/cognitive-sciences/fulltext/S1364-6613(12)00266-5">cell.com</a></li>
-      </ol>
-
-      <h3>Smaller islands, and faster</h3>
-      <ol start="25">
-        <li><b>Bregman R (2020).</b> The real Lord of the Flies: six Tongan boys on Ata, 1965 to 1966, with Pacific critiques of the telling. <i>The Guardian</i>. <a href="https://www.theguardian.com/books/2020/may/09/the-real-lord-of-the-flies-what-happened-when-six-boys-were-shipwrecked-for-15-months">theguardian.com</a></li>
-        <li><b>John Frum movement, Tanna.</b> A cargo religion assembled within a decade: prophets, a holy day, drilling. <i>Smithsonian</i>. <a href="https://www.smithsonianmag.com/history/in-john-they-trust-109294882/">smithsonianmag.com</a></li>
-        <li><b>Senghas A, Kita S, Ozyurek A (2004).</b> Deaf children create Nicaraguan Sign Language; the youngest build the grammar. <i>Science</i> 305. <a href="https://en.wikipedia.org/wiki/Nicaraguan_Sign_Language">summary</a></li>
-      </ol>
-
-      <h3>Rebuilt on purpose</h3>
-      <ol start="28">
-        <li><b>Burning Man Project; Gilmore L (2010).</b> The Temple, built and burned each year as a rite for the dead. <i>Theater in a Crowded Fire</i>. <a href="https://burningman.org/programs/burning-man-arts/grants/temple/brc-temple-grant-history/">burningman.org</a></li>
-        <li><b>Humanist Society Scotland (2023).</b> Humanist weddings now outnumber church ceremonies; National Records of Scotland data. <a href="https://www.humanism.scot/2023/07/20/humanist-weddings-dwarfed-christian-ceremonies-in-2022-national-records-of-scotland/">humanism.scot</a></li>
-        <li><b>Giving What We Can.</b> The ten percent pledge, and its stated link to the religious tithe. <a href="https://www.givingwhatwecan.org/faq/why-is-the-pledge-10">givingwhatwecan.org</a></li>
-        <li><b>Hill F (2019).</b> The rise and fade of the godless congregation (Sunday Assembly). <i>The Atlantic</i>. <a href="https://www.theatlantic.com/health/archive/2019/07/secular-churches-rethink-their-sales-pitch/594109/">theatlantic.com</a></li>
-        <li><b>Sosis R, Bressler ER (2003).</b> Religious communes outlived secular ones; costly demands worked only when sanctified. <i>Cross-Cultural Research</i> 37(2). <a href="https://journals.sagepub.com/doi/10.1177/1069397103037002003">sagepub.com</a></li>
-      </ol>
-
-      <h3>Where deletion stuck, and the scale</h3>
-      <ol start="33">
-        <li><b>Pew Research Center (2017).</b> Religious belief and national belonging in Central and Eastern Europe; the Orthodox revival. <a href="https://www.pewresearch.org/religion/2017/05/10/religious-belief-and-national-belonging-in-central-and-eastern-europe/">pewresearch.org</a></li>
-        <li><b>Smith TW (2012).</b> Beliefs about God across time and countries (ISSP); East Germany the least believing surveyed. <i>NORC</i>. <a href="https://www.norc.org/content/dam/norc-org/pdfs/Beliefs_about_God_Report.pdf">norc.org</a></li>
-        <li><b>fowid (2018).</b> Jugendweihe participation undercounted in official figures; the rite outliving the state. <a href="https://fowid.de/meldung/unterschaetzung-jugendweihezahlen">fowid.de</a></li>
-        <li><b>Peoples HC, Duda P, Marlowe FW (2016).</b> Hunter-gatherers and the origins of religion; animism universal, high gods rare. <i>Human Nature</i> 27. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4958132/">ncbi.nlm.nih.gov</a></li>
-        <li><b>Everett DL (2008); Nevins, Pesetsky &amp; Rodrigues (2009).</b> The Pirahã, no gods but everyday spirits; the corpus is contested. <a href="https://en.wikipedia.org/wiki/Pirah%C3%A3_people">summary</a></li>
-      </ol>
+      <details class="u-collapse"><summary class="u-collapse-s">Evidence and access limits, grouped by claim</summary>
+        <h3>History and practice</h3>
+        <ol>
+          <li><b>Alcoholics Anonymous.</b> <a href="https://www.aa.org/the-start-and-growth-of-aa">The Start and Growth of A.A.</a>. The fellowship's own history of its beginnings and Oxford Group connection.</li>
+          <li><b>Bill Wilson, via AA Cleveland.</b> <a href="https://www.aacle.org/origin-of-the-twelve-steps/">Origin of the Twelve Steps</a>. A retrospective account of the earlier oral program.</li>
+          <li><b>Alcoholics Anonymous.</b> <a href="https://www.aa.org/sites/default/files/literature/assets/p-10_howitworks.pdf">How It Works</a>. The published Twelve Steps. This is a program text, not an effectiveness study.</li>
+        </ol>
+        <h3>Psychology and comparison</h3>
+        <ol>
+          <li><b>Kelemen (1999).</b> <a href="https://www.bu.edu/cdl/files/2013/08/1999_Kelemen_PointyRocks.pdf">Why Are Rocks Pointy?</a>. Methods and relevant results inspected in full text. Supplied explanation choices test reasoning in culturally situated children.</li>
+          <li><b>Kelemen, Rottman and Seston (2013).</b> <a href="https://joshuarottman.com/uploads/8/2/7/9/8279307/kelemenrottmanseston_jepgwsuppmat_professional_scientists_2013.pdf">Professional physical scientists display tenacious teleological tendencies</a>. Methods and relevant results inspected in full text. A speeded judgment task, not a test of religious belief.</li>
+          <li><b>Bering and Bjorklund (2004).</b> <a href="https://pubmed.ncbi.nlm.nih.gov/14979762/">The natural emergence of reasoning about the afterlife</a>. Abstract only. The full-paper link was inaccessible. No numerical curve or claim of unexposed children rests on it.</li>
+          <li><b>Watson-Jones and colleagues (2017).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10676006/">Does the Body Survive Death?</a>. Methods and relevant results inspected in full text. Death narratives and interviews in the United States and Vanuatu; responses depended on context.</li>
+          <li><b>Lyons, Young and Keil (2007).</b> <a href="https://cogdevlab.yale.edu/sites/default/files/files/overimitation%202007.pdf">The hidden structure of overimitation</a>. Methods and relevant results inspected in full text. Copying object-use demonstrations is relevant to transmission, not proof of religious origins.</li>
+          <li><b>Peoples, Duda and Marlowe (2016).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4958132/">Hunter-Gatherers and the Origins of Religion</a>. Methods and relevant results inspected in full text. Ethnographic coding and a model of population relationships, rather than an experiment with religion removed.</li>
+          <li><b>Senghas, Kita and Ozyurek (2004).</b> <a href="https://semantics.uchicago.edu/kennedy/classes/sum08/myths/senghas_kita_ozyurek.pdf">Children Creating Core Properties of Language</a>. Methods and relevant results inspected in full text. Compares motion expressions across cohorts, not the emergence of an entire grammar in a fixed decade.</li>
+        </ol>
+        <h3>History and interpretation</h3>
+        <ol>
+          <li><b>Kuitems and colleagues (2021).</b> <a href="https://www.nature.com/articles/s41586-021-03972-8">Evidence for European presence in the Americas in 1021</a>. Methods and relevant results inspected in full text. Dates worked wood at one Norse site.</li>
+          <li><b>Ioannidis and colleagues (2020).</b> <a href="https://www.nature.com/articles/s41586-020-2487-2">Native American gene flow into Polynesia</a>. Article findings read; full methods were not accessible. Genetic evidence of contact does not identify transmitted beliefs.</li>
+          <li><b>Rutger Bregman (2020).</b> <a href="https://www.theguardian.com/books/2020/may/09/the-real-lord-of-the-flies-what-happened-when-six-boys-were-shipwrecked-for-15-months">The Tongan castaways</a>. Reported recollections.</li>
+          <li><b>Jean Guiart (1956).</b> <a href="https://horizon.documentation.ird.fr/exl-doc/pleins_textes/divers15-08/13114.pdf#page=172">Un siecle et demi de contacts culturels a Tanna</a>. Selected introductory and historical pages inspected in full text, especially printed pages 151 and 152. Field research and colonial records, with their perspectives and limits.</li>
+          <li><b>Paul Raffaele (2006).</b> <a href="https://www.smithsonianmag.com/history/in-john-they-trust-109294882/">In John They Trust</a>. Reporting from Tanna, with interviews and historical context. The movement did not begin without traditions.</li>
+          <li><b>Yasna 28 and 30.</b> <a href="https://www.avesta.org/yasna/yasna.htm#gathas">The Gathas</a>. The edition attributes its Gathas translation to Christian Bartholomae. Read alongside the prayers in Yasna 28.</li>
+          <li><b>Hanke and Kelber (2020).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6971404/">The Eye of the Common Octopus</a>. Anatomical review accessed in full text. Used for the eye comparison, not as a model of cultural history.</li>
+        </ol>
+        <h3>Secular rites and religious claims</h3>
+        <ol>
+          <li><b>Pew Research Center (2014).</b> <a href="https://www.pewresearch.org/religion/2014/02/10/russians-return-to-religion-but-not-to-church/">Russians Return to Religion, But Not to Church</a>. Analysis and methods read. Repeated representative adult samples distinguish identity from attendance.</li>
+          <li><b>Tom W. Smith (2012).</b> <a href="https://www.norc.org/content/dam/norc-org/pdfs/Beliefs_about_God_Report.pdf">Beliefs about God across Time and Countries</a>. Report, question wording and tables read. Its 2008 comparison is not a current ranking of all societies.</li>
+          <li><b>Jugendweihe Berlin/Brandenburg.</b> <a href="https://jugendweihe-bb.de/verein/geschichte/">History of the Jugendweihe</a>. The organizer's history and description of its present ceremony. No national participation rate is claimed.</li>
+          <li><b>Burning Man Project.</b> <a href="https://burningman.org/black-rock-city/bring-your-art/art-grants-programs/temple/brc-temple-grant-history/">Temple History and Meaning</a>. The project's account of the memorial origin and continuing burn.</li>
+          <li><b>Romans 2:14 and 2:15; Quran 30:30.</b> <a href="https://www.biblegateway.com/passage/?search=Romans%202%3A14-15&amp;version=NRSVUE">Religious accounts of human nature</a>. Romans read in NRSVUE; <a href="https://quran.com/30/30">Quran</a> read in Mustafa Khattab's translation. These passages describe beliefs within their traditions.</li>
+        </ol>
       </details>
     </section>
 

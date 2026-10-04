@@ -1,18 +1,15 @@
 /* ============================================================================
    star-signs.js  --  the engine behind "Star Signs, X-Rayed"
 
-   Two jobs live in this file:
+   A compact educational ephemeris based on Paul Schlyter's low-precision
+   formulae (https://stjarnhimlen.se/comp/ppcomp.html). It calculates approximate
+   geocentric ecliptic positions, angles and three house conventions. The page
+   supports Gregorian dates in 1900 through 2099, within the useful period of
+   the included Pluto series. Small errors can change a sign near its boundary.
+   This is not a precision ephemeris or evidence for personality predictions.
 
-   1. A small from-scratch ephemeris. Given a birth date, time, and place it
-      works out where the Sun, Moon, and the planets actually were on the
-      ecliptic, plus the Ascendant, Midheaven, and the house cusps. The method
-      is Paul Schlyter's low-precision series ("How to compute planetary
-      positions"), good to roughly an arcminute for the Sun and a degree or so
-      for the outer planets. That is far finer than astrology needs: a zodiac
-      sign is a 30 degree bin, so we only ever have to land in the right slice.
-
-   2. The page wiring (further down, guarded by `typeof document`). The engine
-      half exports itself for node, so the math can be tested without a browser.
+   The engine exports itself for node so its calculations can be checked
+   independently of the page UI.
 
    No dependencies, no build step, plain `var`. Same house rules as the rest of
    the site.
@@ -35,8 +32,8 @@
     'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
   ];
-  var SIGN_GLYPH = ['♈', '♉', '♊', '♋', '♌', '♍',
-                    '♎', '♏', '♐', '♑', '♒', '♓'];
+  var SIGN_LABEL = ['Ari', 'Tau', 'Gem', 'Can', 'Leo', 'Vir',
+                    'Lib', 'Sco', 'Sag', 'Cap', 'Aqu', 'Pis'];
 
   // Tropical longitude (0 = the March-equinox point) -> sign, degree-in-sign.
   function placeOnZodiac(lon) {
@@ -46,22 +43,17 @@
       lon: lon,
       sign: SIGNS[idx],
       signIndex: idx,
-      glyph: SIGN_GLYPH[idx],
+      label: SIGN_LABEL[idx],
       deg: lon - idx * 30                 // 0..30 within the sign
     };
   }
 
-  /* ---- time: Schlyter's day number ----------------------------------------
-     d = days since the epoch 2000 Jan 0.0 UT (i.e. 1999-12-31 00:00 UT).
-     `utHours` is the Universal Time of day as a decimal hour. The integer-
-     division terms are written with Math.floor on purpose; they are the exact
-     Gregorian day-count Schlyter specifies. -------------------------------- */
+  /* ---- time: days since 1999-12-31 00:00 UT ------------------------------
+     UTC calendar arithmetic avoids the one-day error in Schlyter's shorter
+     formula during January and February 1900. Offsets may cross midnight. */
   function dayNumber(year, month, day, utHours) {
-    var d = 367 * year
-          - Math.floor((7 * (year + Math.floor((month + 9) / 12))) / 4)
-          + Math.floor((275 * month) / 9)
-          + day - 730530;
-    return d + (utHours || 0) / 24;
+    return (Date.UTC(year, month - 1, day) - Date.UTC(1999, 11, 31)) / 86400000
+      + (utHours || 0) / 24;
   }
 
   function obliquity(d) { return 23.4393 - 3.563e-7 * d; }  // ecliptic tilt, deg
@@ -263,7 +255,7 @@
   /* ---- Ascendant, Midheaven, sidereal time ------------------------------- */
   function siderealMC(d, utHours, lonEastDeg, obl) {
     var s = sunGeo(d);
-    var gmst0 = rev(s.mLon + 180);            // GMST at 0h UT, in degrees
+    var gmst0 = rev(s.mLon + 180);            // Schlyter's continuously varying GMST0
     var lst = rev(gmst0 + utHours * 15.0 + lonEastDeg);  // local sidereal, deg
     var ramc = lst;                            // RA of the meridian
     var mc = rev(atan2d(sind(ramc), cosd(ramc) * cosd(obl)));
@@ -278,10 +270,10 @@
   }
 
   /* ---- house systems ------------------------------------------------------
-     Whole Sign  : the oldest scheme. House 1 is the entire sign the Ascendant
+     Whole Sign  : an ancient scheme. House 1 is the entire sign the Ascendant
                    falls in; the rest follow, one sign each.
      Equal       : house 1 starts exactly on the Ascendant degree; +30 each.
-     Placidus    : the modern default. Divides the semidiurnal/seminocturnal
+     Placidus    : a widely used time-based scheme. Divides the semidiurnal/seminocturnal
                    arcs by time. Undefined toward the poles, so we fall back to
                    Equal above ~66 degrees latitude. -------------------------- */
   function housesWhole(asc) {
@@ -295,7 +287,7 @@
     return c;
   }
   function housesPlacidus(ramc, mc, asc, latDeg, obl) {
-    if (Math.abs(latDeg) > 66) return housesEqual(asc);  // degenerate near poles
+    if (Math.abs(latDeg) > 66) return { cusps: housesEqual(asc), fallback: 'latitude above 66 degrees' };
 
     function eclFromRA(ra) { return rev(atan2d(sind(ra), cosd(ra) * cosd(obl))); }
     function declOf(lon) { return asind(sind(obl) * sind(lon)); }
@@ -307,6 +299,7 @@
     // recompute the semi-arc, repeat. (Derived from the hour-angle of each
     // cusp as a fraction of its day arc; offsets fold in the 60/120 turns for
     // the below-horizon eastern cusps.)
+    var failed = false;
     function solve(offset, mult) {
       var ra = ramc + offset + mult * 90;          // first guess
       for (var k = 0; k < 40; k++) {
@@ -315,6 +308,7 @@
         if (Math.abs(rev180(raNew - ra)) < 1e-7) { ra = raNew; break; }
         ra = raNew;
       }
+      if (k === 40) failed = true;
       return eclFromRA(ra);
     }
 
@@ -332,17 +326,18 @@
     c[7] = rev(c[1] + 180);           // 8  opposite 2
     c[8] = rev(c[2] + 180);           // 9  opposite 3
 
-    for (var h = 0; h < 12; h++) if (!isFinite(c[h])) return housesEqual(asc);
-    return c;
+    for (var h = 0; h < 12; h++) if (!isFinite(c[h])) failed = true;
+    if (failed) return { cusps: housesEqual(asc), fallback: 'cusp solver did not converge' };
+    return { cusps: c, fallback: null };
   }
 
   /* ---- aspects ------------------------------------------------------------ */
   var ASPECTS = [
-    { name: 'conjunction', angle: 0, orb: 8, glyph: '☌' },
-    { name: 'sextile', angle: 60, orb: 5, glyph: '⚹' },
-    { name: 'square', angle: 90, orb: 7, glyph: '□' },
-    { name: 'trine', angle: 120, orb: 7, glyph: '△' },
-    { name: 'opposition', angle: 180, orb: 8, glyph: '☍' }
+    { name: 'conjunction', angle: 0, orb: 8 },
+    { name: 'sextile', angle: 60, orb: 5 },
+    { name: 'square', angle: 90, orb: 7 },
+    { name: 'trine', angle: 120, orb: 7 },
+    { name: 'opposition', angle: 180, orb: 8 }
   ];
   function findAspects(bodies) {
     var out = [];
@@ -353,7 +348,7 @@
           var diff = Math.abs(sep - ASPECTS[a].angle);
           if (diff <= ASPECTS[a].orb) {
             out.push({ a: bodies[i].key, b: bodies[j].key, type: ASPECTS[a].name,
-                       glyph: ASPECTS[a].glyph, orb: +diff.toFixed(2) });
+                       orb: +diff.toFixed(2) });
           }
         }
       }
@@ -361,15 +356,14 @@
     return out;
   }
 
-  /* ---- precession: tropical vs sidereal ----------------------------------
-     The signs are tropical (pinned to the equinox). The constellations have
-     drifted ~24 degrees since the scheme was fixed (~130 BCE), so the Sun is
-     now most often "one sign back" from the dateline horoscope. We report the
-     gap with the Fagan-Bradley ayanamsha. ---------------------------------- */
+  /* ---- a linear Fagan-Bradley sidereal comparison ------------------------
+     The Swiss Ephemeris source defines 24.042044444 degrees at B1950, not
+     J2000. Its mean J2000 value is about 24.7403 degrees. The linear rate here
+     is an approximation, not Swiss Ephemeris's full precession calculation.
+     Sidereal signs remain twelve equal bins, not IAU constellations. */
   function ayanamsha(d) {
-    // Fagan/Bradley: ~24.042 deg at J2000, precessing ~50.29"/yr.
-    var years = d / 365.25;
-    return 24.0420 + (50.29 / 3600) * years;
+    var years = (d - 1.5) / 365.25;  // Noon UT on 2000-01-01 is this approximation's reference.
+    return 24.7403 + (50.29 / 3600) * years;
   }
 
   /* ---- the whole chart ---------------------------------------------------- */
@@ -378,10 +372,31 @@
 
   function computeChart(opts) {
     // opts: { year, month, day, hour, minute, tzOffsetHours, latDeg, lonEastDeg, houseSystem }
-    var hour = (opts.hour || 0) + (opts.minute || 0) / 60;
-    var utHours = hour - (opts.tzOffsetHours || 0);
-    // utHours can fall outside 0..24 across the date line; the day number math
-    // already folds the fractional day in, so just pass it through.
+    function numberIn(v, lo, hi) { return typeof v === 'number' && isFinite(v) && v >= lo && v <= hi; }
+    var hourPart = opts.hour === undefined ? 0 : opts.hour;
+    var minute = opts.minute === undefined ? 0 : opts.minute;
+    var off = opts.tzOffsetHours === undefined ? 0 : opts.tzOffsetHours;
+    if (!numberIn(opts.year, 1900, 2099) || opts.year % 1 ||
+        !numberIn(opts.month, 1, 12) || opts.month % 1 ||
+        !numberIn(opts.day, 1, 31) || opts.day % 1 ||
+        new Date(Date.UTC(opts.year, opts.month - 1, opts.day)).getUTCMonth() !== opts.month - 1) {
+      throw new RangeError('Choose a valid Gregorian date from 1900 through 2099.');
+    }
+    if (!numberIn(hourPart, 0, 23) || hourPart % 1 || !numberIn(minute, 0, 59) || minute % 1) {
+      throw new RangeError('Choose a valid time.');
+    }
+    if (!numberIn(off, -14, 14)) throw new RangeError('Enter a UTC offset from -14 to +14 hours.');
+    var hasLat = opts.latDeg !== null && opts.latDeg !== undefined;
+    var hasLon = opts.lonEastDeg !== null && opts.lonEastDeg !== undefined;
+    if (hasLat !== hasLon || (hasLat && (!numberIn(opts.latDeg, -90, 90) || Math.abs(opts.latDeg) === 90 ||
+        !numberIn(opts.lonEastDeg, -180, 180)))) {
+      throw new RangeError('Enter latitude between -90 and +90 (excluding the poles), and longitude from -180 to +180.');
+    }
+    if (opts.houseSystem && ['whole', 'equal', 'placidus'].indexOf(opts.houseSystem) < 0) {
+      throw new RangeError('Choose a supported house system.');
+    }
+    var hour = hourPart + minute / 60;
+    var utHours = hour - off;
     var d = dayNumber(opts.year, opts.month, opts.day, utHours);
     var obl = obliquity(d);
 
@@ -389,20 +404,21 @@
       var g = geocentric(name, d);
       var z = placeOnZodiac(g.lon);
       return { key: name, lon: g.lon, lat: g.lat, dist: g.r,
-               sign: z.sign, signIndex: z.signIndex, glyph: z.glyph, deg: z.deg };
+               sign: z.sign, signIndex: z.signIndex, label: z.label, deg: z.deg };
     });
 
-    var hasPlace = isFinite(opts.latDeg) && isFinite(opts.lonEastDeg) && opts.latDeg !== null;
-    var angles = null, houses = null;
+    var hasPlace = hasLat && hasLon;
+    var angles = null, houses = null, houseFallback = null;
+    var sys = opts.houseSystem || 'whole', effectiveHouseSystem = sys;
     if (hasPlace) {
       var sid = siderealMC(d, utHours, opts.lonEastDeg, obl);
       var asc = ascendant(sid.ramc, opts.latDeg, obl);
       var ascZ = placeOnZodiac(asc), mcZ = placeOnZodiac(sid.mc);
       angles = { asc: asc, mc: sid.mc, ascSign: ascZ, mcSign: mcZ, lst: sid.lst };
-      var sys = opts.houseSystem || 'whole';
-      var cusps = sys === 'equal' ? housesEqual(asc)
-                : sys === 'placidus' ? housesPlacidus(sid.ramc, sid.mc, asc, opts.latDeg, obl)
-                : housesWhole(asc);
+      var placidus = sys === 'placidus' ? housesPlacidus(sid.ramc, sid.mc, asc, opts.latDeg, obl) : null;
+      var cusps = placidus ? placidus.cusps : sys === 'equal' ? housesEqual(asc) : housesWhole(asc);
+      houseFallback = placidus ? placidus.fallback : null;
+      if (houseFallback) effectiveHouseSystem = 'equal';
       houses = cusps.map(function (c) { return placeOnZodiac(c); });
       // tag each body with the house it falls in
       bodies.forEach(function (b) { b.house = houseOf(b.lon, cusps); });
@@ -414,6 +430,7 @@
     return {
       d: d, obl: obl, ut: utHours, ayanamsha: ayan,
       bodies: bodies, angles: angles, houses: houses, aspects: aspects,
+      houseFallback: houseFallback, effectiveHouseSystem: effectiveHouseSystem,
       sun: bodies[0], moon: bodies[1], rising: angles ? angles.ascSign : null
     };
   }
@@ -429,7 +446,7 @@
 
   /* ---- export the engine for node + the page ----------------------------- */
   var ENGINE = {
-    SIGNS: SIGNS, SIGN_GLYPH: SIGN_GLYPH, ASPECTS: ASPECTS, BODY_ORDER: BODY_ORDER,
+    SIGNS: SIGNS, SIGN_LABEL: SIGN_LABEL, ASPECTS: ASPECTS, BODY_ORDER: BODY_ORDER,
     dayNumber: dayNumber, obliquity: obliquity, geocentric: geocentric,
     placeOnZodiac: placeOnZodiac, ascendant: ascendant, siderealMC: siderealMC,
     ayanamsha: ayanamsha, computeChart: computeChart, rev: rev

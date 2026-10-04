@@ -9,41 +9,34 @@
   if (typeof StarSigns === 'undefined') return;
   var E = StarSigns;
 
-  var PLANET = { sun:'☉', moon:'☽', mercury:'☿', venus:'♀', mars:'♂',
-    jupiter:'♃', saturn:'♄', uranus:'♅', neptune:'♆', pluto:'♇' };
+  var PLANET = { sun:'Su', moon:'Mo', mercury:'Me', venus:'Ve', mars:'Ma',
+    jupiter:'Ju', saturn:'Sa', uranus:'Ur', neptune:'Ne', pluto:'Pl' };
   var NAME = { sun:'Sun', moon:'Moon', mercury:'Mercury', venus:'Venus', mars:'Mars',
     jupiter:'Jupiter', saturn:'Saturn', uranus:'Uranus', neptune:'Neptune', pluto:'Pluto' };
 
-  /* who decided each planet means what, and when */
+  /* Sample modern shorthand is interpretive, not a measured personality.
+     The historical notes identify records, not an inventor of every trait. */
+  var PTOLEMY = 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Ptolemy/Tetrabiblos/1B%2A.html#17';
   var PLANET_PROV = {
-    sun:     ['vitality, the core self', 'A luminary since Babylonian astronomy; its dignity in Leo is fixed by Ptolemy.', '~150 CE'],
-    moon:    ['moods, instinct, the body', 'The second luminary; Babylonian, refined by the Hellenistic astrologers.', '~150 CE'],
-    mercury: ['the mind, speech, trade', 'Named for the messenger; rule of Gemini and Virgo set by Ptolemy.', '~150 CE'],
-    venus:   ['love, beauty, what you value', 'Inherits the Mesopotamian Inanna / Ishtar lineage; rules Taurus and Libra in Ptolemy.', '~150 CE'],
-    mars:    ['drive, anger, conflict', "Ptolemy's lesser malefic; ruler of Aries (and, before Pluto, Scorpio).", '~150 CE'],
-    jupiter: ['luck, growth, excess', "Ptolemy's greater benefic; ruler of Sagittarius and Pisces.", '~150 CE'],
-    saturn:  ['limits, time, discipline', "Ptolemy's greater malefic; ruler of Capricorn and Aquarius.", '~150 CE'],
-    uranus:  ['disruption, the new', 'Discovered 1781 by Herschel; its meaning is modern, written in after the fact, and it took Aquarius from Saturn.', '1781'],
-    neptune: ['dreams, dissolution, illusion', 'Discovered 1846; meaning assigned in the 20th century, and it took Pisces from Jupiter.', '1846'],
-    pluto:   ['power, death, rebirth', 'Found 1930; meaning is mid-20th-century, and it took Scorpio from Mars. Demoted to a dwarf planet in 2006; astrology kept it.', '1930'] };
-
-  /* the 12 signs: trait, then where the trait actually comes from */
+    sun: ['self-expression, vitality', 'Traditional ruler of Leo.', PTOLEMY],
+    moon: ['moods, habits', 'Traditional ruler of Cancer.', PTOLEMY],
+    mercury: ['thought, speech', 'Traditional ruler of Gemini and Virgo.', PTOLEMY],
+    venus: ['affection, pleasure', 'Traditional ruler of Taurus and Libra.', PTOLEMY],
+    mars: ['initiative, conflict', 'Traditional ruler of Aries and Scorpio.', PTOLEMY],
+    jupiter: ['growth, good fortune', 'Traditional ruler of Sagittarius and Pisces.', PTOLEMY],
+    saturn: ['limits, responsibility', 'Traditional ruler of Capricorn and Aquarius.', PTOLEMY],
+    uranus: ['change, independence', 'Discovered in 1781. Its astrological meanings are later additions.', 'https://science.nasa.gov/uranus/facts/'],
+    neptune: ['imagination, illusion', 'Discovered in 1846. Its astrological meanings are later additions.', 'https://science.nasa.gov/neptune/facts/'],
+    pluto: ['power, transformation', 'Discovered in 1930, classified as a dwarf planet in 2006. Its inclusion is an astrological convention.', 'https://science.nasa.gov/dwarf-planets/pluto/facts/']
+  };
   var SIGN_PROV = {
-    Aries:['initiative, heat, the first move','Babylonian "Hired Man", the ram; the fiery, cardinal, Mars-ruled character is Ptolemy.'],
-    Taurus:['steadiness, appetite, the material','The Bull of Heaven, among the oldest constellations; Venus-ruled, fixed earth in Ptolemy.'],
-    Gemini:['talk, cleverness, duality','The Babylonian Great Twins; the "mercurial" intellect is the Hellenistic Mercury assignment.'],
-    Cancer:['home, mood, protection','Babylonian; the crab and the Moon link, watery and cardinal, codified by Ptolemy.'],
-    Leo:['pride, display, the self','The lion, ancient; Sun-ruled, fixed-fire royalty is Hellenistic.'],
-    Virgo:['order, service, analysis','The grain maiden (Mesopotamian Shala); Mercury-ruled, mutable earth in Ptolemy.'],
-    Libra:['balance, fairness, the other','Once the Scorpion\'s claws; Rome split off the Scales. Venus-ruled.'],
-    Scorpio:['depth, control, intensity','The ancient scorpion; Mars-ruled, then Pluto after 1930, fixed water.'],
-    Sagittarius:['freedom, meaning, the horizon','The archer-centaur; Jupiter-ruled, mutable fire in Ptolemy.'],
-    Capricorn:['ambition, structure, time','The sea-goat, Sumerian (Enki); Saturn-ruled, cardinal earth.'],
-    Aquarius:['ideas, distance, the group','The water-pourer, Babylonian (GU.LA); Saturn-ruled, then Uranus after 1781.'],
-    Pisces:['empathy, drift, the unseen','The two fish; Jupiter-ruled, then Neptune after 1846, mutable water.'] };
+    Aries: 'initiative', Taurus: 'steadiness', Gemini: 'curiosity', Cancer: 'care',
+    Leo: 'expression', Virgo: 'order', Libra: 'balance', Scorpio: 'intensity',
+    Sagittarius: 'exploration', Capricorn: 'ambition', Aquarius: 'independence', Pisces: 'sensitivity'
+  };
 
-  /* which constellation the Sun is ACTUALLY in, by IAU boundaries (entry dates).
-     Note Ophiuchus, the 13th, which the zodiac deletes. */
+  /* A rough present-era calendar guide, not an IAU boundary calculation.
+     Entry dates vary with year and time; do not use this for a boundary birth. */
   var IAU = [[120,'Capricornus'],[216,'Aquarius'],[311,'Pisces'],[418,'Aries'],
     [513,'Taurus'],[621,'Gemini'],[720,'Cancer'],[810,'Leo'],[916,'Virgo'],
     [1030,'Libra'],[1123,'Scorpius'],[1129,'Ophiuchus'],[1217,'Sagittarius']];
@@ -83,7 +76,7 @@
   var CITY_MAP = {}; CITIES.forEach(function (c) { CITY_MAP[c[0].toLowerCase()] = c; });
 
   function $(id) { return document.getElementById(id); }
-  function degTxt(b) { return Math.floor(b.deg) + '°'; }
+  function degTxt(b) { return 'about ' + Math.floor(b.deg) + '°'; }
 
   /* ---------------- the chart wheel ---------------- */
   function wheelSVG(c) {
@@ -91,7 +84,7 @@
     var asc = c.angles ? c.angles.asc : 0;
     function pos(L, r) { var a = (180 - (L - asc)) * Math.PI / 180;
       return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; }
-    var s = '<svg width="268" height="268" viewBox="0 0 268 268" style="position:relative;z-index:1" role="img" aria-label="Your natal chart wheel">';
+    var s = '<svg width="268" height="268" viewBox="-16 -16 300 300" style="position:relative;z-index:1" role="img" aria-label="Approximate tropical chart wheel">';
     s += ring(cx, cy, R, 'var(--line)', 1);
     s += ring(cx, cy, rSign + 9, 'var(--line)', .6);
     s += ring(cx, cy, rPlanet - 14, 'var(--line)', .4);
@@ -101,19 +94,33 @@
       var p = pos(bL, R), pi = pos(bL, rPlanet - 14);
       s += line(pi, p, 'var(--line)', .5, 1);
       var gc = pos(bL + 15, rSign);
-      s += txt(gc[0], gc[1] + 5, E.SIGN_GLYPH[(((bL / 30) % 12) + 12) % 12], 16, 'var(--dim)');
+      s += txt(gc[0], gc[1] + 5, E.SIGN_LABEL[(((bL / 30) % 12) + 12) % 12], 9, 'var(--dim)');
     }
     if (c.angles) {
       angleMark(c.angles.asc, 'ASC');
       angleMark(c.angles.mc, 'MC');
     }
+    var usedLabels = [];
     c.bodies.forEach(function (b) {
-      var t1 = pos(b.lon, rTick), t2 = pos(b.lon, rTick - 6), g = pos(b.lon, rPlanet);
+      var t1 = pos(b.lon, rTick), t2 = pos(b.lon, rTick - 6), g = planetLabel(b.lon);
       s += line(t1, t2, 'var(--dim)', 1, 1);
       s += txt(g[0], g[1] + 4, PLANET[b.key], 13, 'var(--accent)');
     });
     s += '</svg>';
     return s;
+
+    function planetLabel(lon) {
+      var radii = [rPlanet, rPlanet - 19, rPlanet - 38, rPlanet + 18], best, bestGap = -1;
+      for (var i = 0; i < radii.length; i++) {
+        var candidate = pos(lon, radii[i]), gap = Infinity;
+        usedLabels.forEach(function (p) {
+          gap = Math.min(gap, Math.pow(p[0] - candidate[0], 2) + Math.pow(p[1] - candidate[1], 2));
+        });
+        if (gap > bestGap) { best = candidate; bestGap = gap; }
+        if (gap >= 18 * 18) break;
+      }
+      usedLabels.push(best); return best;
+    }
 
     function angleMark(L, label) {
       var a1 = pos(L, R), a2 = pos(L, rPlanet - 14), lp = pos(L, R + 11);
@@ -131,7 +138,7 @@
     return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" font-size="' + size + '" fill="' + col + '" font-family="var(--font-mono)">' + t + '</text>';
   }
 
-  /* ---------------- world-class pickers ---------------- */
+  /* ---------------- date and time pickers ---------------- */
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var WD = ['S','M','T','W','T','F','S'];
@@ -144,6 +151,7 @@
       var left = Math.max(8, Math.min(r.left, window.innerWidth - pw - 8));
       var top = r.bottom + 6;
       if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+      top = Math.max(8, Math.min(top, Math.max(8, window.innerHeight - ph - 8)));
       pop.style.left = left + 'px'; pop.style.top = top + 'px';
     }
     var onOutside, onKey;
@@ -176,7 +184,7 @@
     var hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.id = hiddenId;
     var trig = document.createElement('button'); trig.type = 'button'; trig.className = 'pk-trigger';
     trig.setAttribute('aria-label', 'Choose date');
-    trig.innerHTML = '<span class="pk-val"></span><span class="pk-i" aria-hidden="true">&#9662;</span>';
+    trig.innerHTML = '<span class="pk-val"></span><span class="pk-i" aria-hidden="true"></span>';
     mount.appendChild(hidden); mount.appendChild(trig);
     var pop = document.createElement('div'); pop.className = 'pk-pop'; pop.setAttribute('role', 'dialog');
     document.body.appendChild(pop);
@@ -196,11 +204,12 @@
       for (var i = 0; i < 42; i++) {
         var cur = new Date(view.y, view.m, 1 - first + i);
         var inM = cur.getMonth() === view.m, cls = 'pk-day';
+        var outside = cur.getFullYear() < 1900 || cur.getFullYear() > 2099;
         if (!inM) cls += ' oth';
         if (sameDay(cur, sel.y, sel.m, sel.d)) cls += ' sel';
         if (sameDay(cur, TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate())) cls += ' today';
         if (sameDay(cur, foc.getFullYear(), foc.getMonth(), foc.getDate())) cls += ' foc';
-        h += '<button type="button" class="' + cls + '" data-date="' +
+        h += '<button type="button"' + (outside ? ' disabled' : '') + ' class="' + cls + '" data-date="' +
           cur.getFullYear() + '-' + z2(cur.getMonth() + 1) + '-' + z2(cur.getDate()) + '">' + cur.getDate() + '</button>';
       }
       pop.innerHTML = h + '</div>';
@@ -211,7 +220,7 @@
       h += '<div class="pk-months">';
       for (var m = 0; m < 12; m++) h += '<button type="button" class="pk-mo' + (m === view.m ? ' on' : '') + '" data-m="' + m + '">' + MON[m] + '</button>';
       h += '</div><div class="pk-years">';
-      for (var y = 1900; y <= TODAY.getFullYear(); y++) h += '<button type="button" class="pk-yr' + (y === view.y ? ' on' : '') + '" data-y="' + y + '">' + y + '</button>';
+      for (var y = 1900; y <= 2099; y++) h += '<button type="button" class="pk-yr' + (y === view.y ? ' on' : '') + '" data-y="' + y + '">' + y + '</button>';
       pop.innerHTML = h + '</div>';
       var on = pop.querySelector('.pk-yr.on'); if (on) on.scrollIntoView({ block: 'center' });
     }
@@ -219,7 +228,7 @@
     var ctl = popController(trig, pop, render);
 
     function pick(dateStr) {
-      var q = dateStr.split('-'); sel = { y: +q[0], m: +q[1] - 1, d: +q[2] };
+      var q = dateStr.split('-'); if (+q[0] < 1900 || +q[0] > 2099) return; sel = { y: +q[0], m: +q[1] - 1, d: +q[2] };
       view = { y: sel.y, m: sel.m }; foc = new Date(sel.y, sel.m, sel.d);
       commit(); ctl.close(); trig.focus(); if (onChange) onChange();
     }
@@ -227,8 +236,8 @@
     pop.addEventListener('click', function (e) {
       var t = e.target.closest('button'); if (!t) return;
       var a = t.getAttribute('data-a');
-      if (a === 'pm') { view.m--; if (view.m < 0) { view.m = 11; view.y--; } renderDays(); ctl.place(); return; }
-      if (a === 'nm') { view.m++; if (view.m > 11) { view.m = 0; view.y++; } renderDays(); ctl.place(); return; }
+      if (a === 'pm') { if (view.y === 1900 && view.m === 0) return; view.m--; if (view.m < 0) { view.m = 11; view.y--; } renderDays(); ctl.place(); return; }
+      if (a === 'nm') { if (view.y === 2099 && view.m === 11) return; view.m++; if (view.m > 11) { view.m = 0; view.y++; } renderDays(); ctl.place(); return; }
       if (a === 'pick') { mode = 'pick'; renderPick(); ctl.place(); return; }
       if (a === 'days') { mode = 'days'; renderDays(); ctl.place(); return; }
       if (t.classList.contains('pk-mo')) { view.m = +t.getAttribute('data-m'); mode = 'days'; renderDays(); ctl.place(); return; }
@@ -239,7 +248,8 @@
     pop.addEventListener('keydown', function (e) {
       if (mode !== 'days') return;
       var step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
-      if (step) { e.preventDefault(); foc = new Date(foc.getFullYear(), foc.getMonth(), foc.getDate() + step);
+      if (step) { e.preventDefault(); var next = new Date(foc.getFullYear(), foc.getMonth(), foc.getDate() + step);
+        if (next.getFullYear() < 1900 || next.getFullYear() > 2099) return; foc = next;
         view = { y: foc.getFullYear(), m: foc.getMonth() }; renderDays(); ctl.place(); return; }
       if (e.key === 'Enter') { e.preventDefault();
         pick(foc.getFullYear() + '-' + z2(foc.getMonth() + 1) + '-' + z2(foc.getDate())); }
@@ -257,7 +267,7 @@
     var hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.id = hiddenId;
     var trig = document.createElement('button'); trig.type = 'button'; trig.className = 'pk-trigger';
     trig.setAttribute('aria-label', 'Choose time');
-    trig.innerHTML = '<span class="pk-val"></span><span class="pk-i" aria-hidden="true">&#9662;</span>';
+    trig.innerHTML = '<span class="pk-val"></span><span class="pk-i" aria-hidden="true"></span>';
     var know = document.createElement('label'); know.className = 'pk-noknow';
     know.innerHTML = '<input type="checkbox"> don’t know';
     var wrap = document.createElement('div'); wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '5px';
@@ -267,7 +277,7 @@
     document.body.appendChild(pop);
 
     function label() {
-      if (!known) return 'unknown';
+      if (!known) return 'unknown (noon used)';
       var ap = h24 >= 12 ? 'PM' : 'AM', h12 = h24 % 12; if (h12 === 0) h12 = 12;
       return z2(h12) + ':' + z2(mn) + ' ' + ap;
     }
@@ -298,7 +308,7 @@
     });
     trig.addEventListener('click', function () { if (!known) return; ctl.isOpen() ? ctl.close() : ctl.open(); });
     know.querySelector('input').addEventListener('change', function () {
-      known = !this.checked; trig.classList.toggle('muted', !known);
+      known = !this.checked; trig.classList.toggle('muted', !known); trig.disabled = !known;
       if (!known) ctl.close(); commit(); if (onKnown) onKnown(known);
     });
 
@@ -310,27 +320,27 @@
 
   /* ---------------- panel state + build ---------------- */
   var datePicker, timePicker;
-  var state = { sys: 'whole', lat: 40.71, lon: -74.01, off: -5, hasPlace: true, timeKnown: true };
+  var state = { sys: 'whole', lat: 40.71, lon: -74.01, off: -5, hasPlace: true, timeKnown: true, placeError: '' };
 
   function buildPanel() {
     var ip = $('ss-ip');
     ip.innerHTML =
       '<div class="ss-ip-bar"><div class="lhs"><span class="ss-dot"></span>' +
-        '<span class="ss-ip-title">Natal chart</span><span class="ss-stamp" id="ss-stamp"></span></div>' +
+        '<span class="ss-ip-title">Approximate natal chart</span><span class="ss-stamp" id="ss-stamp"></span></div>' +
         '<div class="ss-seg" id="ss-seg" role="group" aria-label="House system">' +
-          '<button data-sys="whole" class="on">Whole</button>' +
-          '<button data-sys="equal">Equal</button>' +
-          '<button data-sys="placidus">Placidus</button></div></div>' +
+          '<button type="button" data-sys="whole" class="on">Whole</button>' +
+          '<button type="button" data-sys="equal">Equal</button>' +
+          '<button type="button" data-sys="placidus">Placidus</button></div></div>' +
       '<div class="ss-inputs">' +
         '<div class="ss-fld"><label>Birth date</label><div id="ss-date-mount"></div></div>' +
         '<div class="ss-fld"><label>Birth time</label><div id="ss-time-mount"></div></div>' +
         '<div class="ss-fld ss-place"><label for="ss-city">Birthplace</label><input id="ss-city" list="ss-cities" placeholder="city" value="New York, USA"></div>' +
-        '<button class="ss-adv" id="ss-adv" type="button">coords</button>' +
+        '<div class="ss-fld"><label for="ss-off">UTC offset (hours)</label><input id="ss-off" type="number" min="-14" max="14" step="any" value="-5"></div>' +
+        '<button class="ss-adv" id="ss-adv" type="button">Coordinates</button>' +
         '<div class="ss-coords" id="ss-coords">' +
-          '<div class="ss-fld"><label for="ss-lat">Lat °N</label><input id="ss-lat" type="number" step="0.01" value="40.71"></div>' +
-          '<div class="ss-fld"><label for="ss-lon">Lon °E</label><input id="ss-lon" type="number" step="0.01" value="-74.01"></div>' +
-          '<div class="ss-fld"><label for="ss-off">UTC ±h</label><input id="ss-off" type="number" step="0.5" value="-5"></div>' +
-        '</div></div>' +
+          '<div class="ss-fld"><label for="ss-lat">Lat °N</label><input id="ss-lat" type="number" min="-89.9999" max="89.9999" step="any" value="40.71"></div>' +
+          '<div class="ss-fld"><label for="ss-lon">Lon °E</label><input id="ss-lon" type="number" min="-180" max="180" step="any" value="-74.01"></div>' +
+        '</div><p class="ss-input-help">City presets use modern standard time. Enter the offset actually in force at birth, including daylight saving and historical changes. East is positive; west is negative.</p></div>' +
       '<div class="ss-ip-body"><div class="ss-wheel"><div class="glow"></div><div id="ss-wheel"></div></div>' +
         '<div class="ss-read"><div class="ss-big3" id="ss-big3"></div><div class="ss-tbl" id="ss-table"></div></div></div>' +
       '<div class="ss-xray" id="ss-precess"></div>' +
@@ -357,32 +367,46 @@
       state.sys = b.getAttribute('data-sys');
       [].forEach.call(this.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
       update();
-      if (!$('ss-cmp-wrap').hidden) renderCompare();
     });
     $('ss-adv').addEventListener('click', function () { $('ss-coords').classList.toggle('show'); });
     $('ss-city').addEventListener('input', onCity);
-    ['ss-lat', 'ss-lon', 'ss-off'].forEach(function (id) {
+    ['ss-lat', 'ss-lon'].forEach(function (id) {
       $(id).addEventListener('input', function () {
-        state.lat = parseFloat($('ss-lat').value); state.lon = parseFloat($('ss-lon').value);
-        state.off = parseFloat($('ss-off').value);
-        state.hasPlace = isFinite(state.lat) && isFinite(state.lon);
-        update();
+        $('ss-city').value = ''; state.placeError = ''; readCoordinates(); update();
       });
     });
+    $('ss-off').addEventListener('input', function () { state.off = readNumber('ss-off'); update(); });
     $('ss-scrub').addEventListener('input', function () {
       var m = +this.value; timePicker.setValue(z2(Math.floor(m / 60)) + ':' + z2(m % 60)); update();
     });
     onCity(); syncScrubFromTime();
   }
 
+  function readNumber(id) {
+    var value = $(id).value.trim(); return value === '' ? NaN : Number(value);
+  }
+  function readCoordinates() {
+    state.lat = readNumber('ss-lat'); state.lon = readNumber('ss-lon');
+    var empty = $('ss-lat').value.trim() === '' && $('ss-lon').value.trim() === '';
+    state.hasPlace = !empty;
+    state.placeError = empty ? '' : (!isFinite(state.lat) || !isFinite(state.lon) ||
+      Math.abs(state.lat) >= 90 || Math.abs(state.lon) > 180)
+      ? 'Enter latitude between -90 and +90 (excluding the poles), and longitude from -180 to +180.' : '';
+  }
   function onCity() {
     var v = ($('ss-city').value || '').trim().toLowerCase();
-    var c = CITY_MAP[v];
+    var c = CITY_MAP[v]; state.placeError = '';
     if (c) {
       state.lat = c[1]; state.lon = c[2]; state.off = c[3]; state.hasPlace = true;
       $('ss-lat').value = c[1]; $('ss-lon').value = c[2]; $('ss-off').value = c[3];
-    } else if (v === '') {
-      state.hasPlace = false;
+    } else {
+      state.hasPlace = false; state.lat = null; state.lon = null;
+      $('ss-lat').value = ''; $('ss-lon').value = '';
+      state.off = v ? NaN : 0; $('ss-off').value = v ? '' : '0';
+      if (v) {
+        state.placeError = 'Choose a listed city, or enter coordinates and the birth UTC offset.';
+        $('ss-coords').classList.add('show');
+      }
     }
     update();
   }
@@ -393,7 +417,9 @@
 
   function readOpts() {
     var d = ($('ss-date').value || '1990-06-15').split('-');
-    var t = ($('ss-time').value || '12:00').split(':');
+    var t = (state.timeKnown ? $('ss-time').value : '12:00').split(':');
+    if (state.placeError) throw new RangeError(state.placeError);
+    if (!isFinite(state.off)) throw new RangeError('Enter the birth UTC offset. Blank is not UTC.');
     var angles = state.hasPlace && state.timeKnown;  // Ascendant + houses need both a place and a known time
     return { year:+d[0], month:+d[1], day:+d[2], hour:+t[0], minute:+t[1] || 0,
       tzOffsetHours: state.off, houseSystem: state.sys,
@@ -403,70 +429,94 @@
 
   /* ---------------- render ---------------- */
   function update() {
-    var o = readOpts(), c = E.computeChart(o);
+    var o, c;
+    $('ss-share-out').textContent = '';
+    $('ss-share-text').hidden = true;
+    try { o = readOpts(); c = E.computeChart(o); }
+    catch (error) {
+      $('ss-wheel').innerHTML = ''; $('ss-big3').textContent = 'Chart needs valid inputs.';
+      $('ss-table').innerHTML = ''; $('ss-precess').textContent = '';
+      $('ss-stamp').textContent = 'Input incomplete';
+      $('ss-note').textContent = error.message; $('ss-scrub').disabled = true;
+      $('ss-scrub-read').textContent = ''; $('ss-share-btn').disabled = true;
+      if (!$('ss-cmp-wrap').hidden) $('ss-cmp').textContent = error.message;
+      return;
+    }
+    $('ss-share-btn').disabled = false;
     $('ss-wheel').innerHTML = wheelSVG(c);
     $('ss-stamp').textContent = o.year + '-' + pad(o.month) + '-' + pad(o.day) +
-      (c.angles ? ' · ' + Math.abs(state.lat).toFixed(1) + (state.lat >= 0 ? '°N' : '°S') : ' · no birthplace');
+      (c.angles ? ' · ' + Math.abs(state.lat).toFixed(1) + (state.lat >= 0 ? '°N' : '°S')
+        : state.timeKnown ? ' · no birthplace' : ' · noon assumed');
 
     var sun = c.sun, moon = c.moon, rising = c.rising;
-    $('ss-big3').innerHTML =
-      b3('☉', 'Sun', sun.sign, degTxt(sun)) +
-      b3('☽', 'Moon', moon.sign, degTxt(moon)) +
-      (rising ? b3('ASC', 'Rising', rising.sign, Math.floor(rising.deg) + '°')
-              : '<div class="ss-b3"><div class="k"><span class="g">ASC</span>Rising</div><div class="v" style="font-size:11px;color:var(--dim)">' +
-                (state.timeKnown ? 'add birthplace' : 'needs birth time') + '</div></div>');
+    $('ss-big3').innerHTML = b3('', 'Sun', sun.sign, degTxt(sun)) + b3('', 'Moon', moon.sign, degTxt(moon)) +
+      (rising ? b3('', 'Rising', rising.sign, degTxt(rising))
+        : '<div class="ss-b3"><div class="k">Rising</div><div class="v ss-missing">' +
+          (state.timeKnown ? 'needs birthplace' : 'needs birth time') + '</div></div>');
 
     $('ss-table').innerHTML = c.bodies.map(function (b) {
       var pv = PLANET_PROV[b.key];
-      return '<div class="ss-prow" data-k="' + b.key + '">' +
-          '<span class="pg">' + PLANET[b.key] + '</span>' +
-          '<span class="pn">' + NAME[b.key] + '</span>' +
-          '<span class="ps">' + b.sign + ' ' + degTxt(b) + '</span>' +
-          '<span class="ph">' + (b.house ? 'H' + b.house : '') + '</span></div>' +
-        '<div class="ss-prov" data-k="' + b.key + '"><b>' + NAME[b.key] + '</b> rules ' + pv[0] + '. ' +
-          SIGN_PROV[b.sign][1] + ' <span class="when">Meaning fixed: ' + pv[2] + '.</span></div>';
+      return '<button type="button" class="ss-prow" data-k="' + b.key + '" aria-expanded="false" aria-controls="ss-prov-' + b.key + '">' +
+        '<span class="pg">' + PLANET[b.key] + '</span><span class="pn">' + NAME[b.key] + '</span>' +
+        '<span class="ps">' + b.sign + ' ' + degTxt(b) + '</span><span class="ph">' + (b.house ? 'H' + b.house : '') + '</span></button>' +
+        '<div class="ss-prov" id="ss-prov-' + b.key + '"><b>Sample modern keywords:</b> ' + pv[0] +
+        '. For ' + b.sign + ': ' + SIGN_PROV[b.sign] + '. <b>Historical note:</b> ' + pv[1] +
+        ' <a href="' + pv[2] + '">' + (b.key === 'uranus' || b.key === 'neptune' || b.key === 'pluto' ? 'Discovery record' : 'Ptolemy, I.17') + '</a>.</div>';
     }).join('');
     [].forEach.call($('ss-table').querySelectorAll('.ss-prow'), function (row) {
-      row.addEventListener('click', function () { row.classList.toggle('open'); });
+      row.addEventListener('click', function () {
+        var open = row.classList.toggle('open'); row.setAttribute('aria-expanded', String(open));
+      });
     });
 
-    // precession: the three Suns
     var sid = E.placeOnZodiac(sun.lon - c.ayanamsha);
-    var iau = iauSun(o.month, o.day);
-    var flip = (sid.sign !== sun.sign) || (iau !== sun.sign);
-    $('ss-precess').innerHTML = '<span class="ss-xlab">Your Sun, three ways</span>' +
-      '<span class="ss-pill">Dateline sign <b>' + sun.sign + ' ' + degTxt(sun) + '</b></span>' +
-      '<span class="ss-pill ' + (sid.sign !== sun.sign ? 'alt' : '') + '">Real sky <b>' + sid.sign + ' ' + Math.floor(sid.deg) + '°</b></span>' +
-      '<span class="ss-pill ' + (iau !== sun.sign ? 'alt' : '') + '">Constellation <b>' + iau + '</b></span>' +
-      (flip ? '<span class="ss-xlab" style="flex:1;text-align:right">precession has moved the sky</span>' : '');
+    $('ss-precess').innerHTML = '<span class="ss-xlab">Sun labels, different conventions</span>' +
+      '<span class="ss-pill">Tropical <b>' + sun.sign + '</b></span>' +
+      '<span class="ss-pill alt">Sidereal (Fagan-Bradley) <b>' + sid.sign + '</b></span>' +
+      '<span class="ss-pill">Calendar constellation guide <b>' + iauSun(o.month, o.day) + '</b></span>' +
+      '<span class="ss-xlab">Constellation label is approximate, not computed for this birth.</span>';
 
-    // scrubber readout
-    if (c.angles) {
-      $('ss-scrub-read').innerHTML = 'Rising sign <b>' + rising.sign + '</b> · drag the slider to watch it change';
-      $('ss-scrub').disabled = false;
-    } else if (!state.timeKnown) {
-      $('ss-scrub-read').innerHTML = 'Birth time unknown, so the rising sign and houses are hidden';
-      $('ss-scrub').disabled = true;
-    } else {
-      $('ss-scrub-read').innerHTML = 'Add a birthplace to see your rising sign';
-      $('ss-scrub').disabled = true;
+    $('ss-scrub').disabled = !c.angles;
+    $('ss-scrub-read').textContent = c.angles ? 'Drag to see the rising sign change with birth time.' :
+      !state.timeKnown ? 'Unknown time: rising sign and houses hidden.' : 'Add a birthplace to see the rising sign.';
+
+    var note = 'Approximate geocentric positions, shown in whole degrees. A position near a sign boundary may fall in the neighboring sign. ';
+    var near = c.bodies.filter(function (b) { return b.deg < .25 || b.deg > 29.75; }).map(function (b) { return NAME[b.key]; });
+    if (rising && (rising.deg < .25 || rising.deg > 29.75)) near.push('Rising sign');
+    if (near.length) note += 'Within this demo\'s quarter-degree caution band: ' + near.join(', ') + '. ';
+    if (!state.timeKnown) {
+      var signs = uncertainSigns(o);
+      note += 'Birth time unknown: local noon at the entered UTC offset is assumed. ' +
+        (signs.length ? 'Signs that change in samples across this date: ' + signs.join('; ') + '. ' :
+          'No sign changes found in samples across this date, but the birth instant remains unknown. ') +
+        'The Moon moves especially quickly. Rising sign and houses are omitted. ';
     }
-
-    // honest note
-    var note;
     if (c.angles) {
-      note = 'Positions are real astronomy (Schlyter\'s ephemeris), accurate to well under a degree. The rising sign and houses depend on the exact birth minute and a clean timezone; we use a fixed modern UTC offset, so a daylight-saving or historical-zone error of an hour can nudge the Ascendant. ' +
-        '<button class="ss-adv" id="ss-cmp-btn" type="button" style="display:inline">compare the three house systems →</button>';
-    } else if (!state.timeKnown) {
-      note = 'Without a birth time the Sun and planets are still right (the Moon is approximate), but the rising sign and houses, which turn a full circle every day, cannot be placed. That gap is exactly why astrologers fuss over your precise birth minute.';
-    } else {
-      note = 'Sun, Moon, and planets need only your date and time. Add a birthplace for the Ascendant and houses.';
+      note += 'Rising sign and houses depend on time, place and the birth UTC offset. ';
+      if (c.houseFallback) note += 'Placidus is replaced by Equal here (' + c.houseFallback + '). ';
+      if (Math.abs(state.lat) > 66) note += 'At high latitudes, horizon geometry also needs care. ';
+      note += '<button class="ss-adv" id="ss-cmp-btn" type="button">Compare house systems</button>';
     }
     $('ss-note').innerHTML = note;
     var cb = $('ss-cmp-btn');
     if (cb) cb.addEventListener('click', function () {
-      var w = $('ss-cmp-wrap'); w.hidden = !w.hidden; if (!w.hidden) { renderCompare(); w.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+      var w = $('ss-cmp-wrap'); w.hidden = !w.hidden;
+      if (!w.hidden) { renderCompare(); w.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
     });
+    if (!$('ss-cmp-wrap').hidden) renderCompare();
+  }
+  function uncertainSigns(o) {
+    var samples = [0, 6, 12, 18, 23], found = {};
+    samples.forEach(function (hour) {
+      var c = E.computeChart({ year:o.year, month:o.month, day:o.day, hour:hour,
+        minute:hour === 23 ? 59 : 0, tzOffsetHours:o.tzOffsetHours, latDeg:null, lonEastDeg:null });
+      c.bodies.forEach(function (b) {
+        if (!found[b.key]) found[b.key] = [];
+        if (found[b.key].indexOf(b.sign) < 0) found[b.key].push(b.sign);
+      });
+    });
+    return E.BODY_ORDER.filter(function (key) { return found[key].length > 1; })
+      .map(function (key) { return NAME[key] + ' (' + found[key].join(' / ') + ')'; });
   }
   function pad(n) { return ('0' + n).slice(-2); }
   function b3(g, k, sign, deg) {
@@ -476,22 +526,25 @@
 
   /* ---------------- house disagreement ---------------- */
   function renderCompare() {
-    if (!state.hasPlace) { $('ss-cmp').innerHTML = '<p class="ss-body dim" style="font-size:1rem">Add a birthplace first.</p>'; return; }
+    if (!state.timeKnown) { $('ss-cmp').textContent = 'A known birth time is needed to compare houses.'; return; }
+    if (!state.hasPlace) { $('ss-cmp').textContent = 'Add a birthplace to compare houses.'; return; }
     var o = readOpts();
     var sys = ['whole', 'equal', 'placidus'];
     var charts = sys.map(function (s) { o.houseSystem = s; return E.computeChart(o); });
     var rows = E.BODY_ORDER.map(function (k, i) {
       var hs = charts.map(function (c) { return c.bodies[i].house; });
       var diff = !(hs[0] === hs[1] && hs[1] === hs[2]);
-      return '<tr><td class="pn">' + PLANET[k] + ' ' + NAME[k] + '</td>' +
+      return '<tr><td class="pn">' + NAME[k] + '</td>' +
         hs.map(function (h) { return '<td class="' + (diff ? 'diff' : '') + '">House ' + h + '</td>'; }).join('') + '</tr>';
     }).join('');
-    $('ss-cmp').innerHTML = '<table><thead><tr><th>Planet</th><th>Whole sign</th><th>Equal</th><th>Placidus</th></tr></thead><tbody>' +
-      rows + '</tbody></table>';
+    $('ss-cmp').innerHTML = '<table><thead><tr><th>Body</th><th>Whole sign</th><th>Equal</th><th>' +
+      (charts[2].houseFallback ? 'Equal fallback' : 'Placidus') + '</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      (charts[2].houseFallback ? '<p class="ss-input-help">Placidus uses Equal in this demo: ' + charts[2].houseFallback + '.</p>' : '');
   }
 
   /* ---------------- Barnum opener ---------------- */
-  var FORER = 'You have a great need for other people to like and admire you, yet you tend to be critical of yourself. You have a great deal of unused capacity you have not turned to your advantage. Disciplined and self-controlled outside, you tend to be worried and insecure inside. At times you have serious doubts about whether you have made the right decision. You prefer a certain amount of variety and grow dissatisfied when hemmed in. You pride yourself on being an independent thinker, and you do not accept others’ claims without proof. But you have found it unwise to be too frank in revealing yourself to others.';
+  // A custom generic reading, not a quotation from Forer's 13-item sketch.
+  var FORER = 'You want your efforts to be noticed, though praise can make you uncomfortable. Some decisions still bother you after everyone else has moved on. You like having a plan, but resent a routine that leaves no room to change your mind. People who know you well see a different side from people you have just met. You can name things you have handled well and things you wish you had done differently.';
   function initBarnum() {
     createDatePicker($('ss-bn-date-mount'), 'ss-bn-date', '1990-06-15', function () {});
     var go = $('ss-bn-go'), dateEl = $('ss-bn-date'),
@@ -500,7 +553,7 @@
     var sign = '';
     for (var i = 1; i <= 5; i++) {
       var btn = document.createElement('button');
-      btn.textContent = '★'; btn.setAttribute('role', 'radio'); btn.setAttribute('aria-label', i + ' of 5');
+      btn.type = 'button'; btn.textContent = '★'; btn.setAttribute('role', 'radio'); btn.setAttribute('aria-checked', 'false'); btn.setAttribute('aria-label', i + ' of 5');
       btn.dataset.n = i; stars.appendChild(btn);
     }
     stars.addEventListener('mouseover', function (e) { if (e.target.dataset.n) litUpTo(+e.target.dataset.n); });
@@ -508,21 +561,23 @@
     stars.addEventListener('click', function (e) {
       if (!e.target.dataset.n) return;
       var n = +e.target.dataset.n; litUpTo(n, true);
-      revealText.innerHTML = 'Every word of that was generic, and you gave it ' + n + (n === 1 ? ' star' : ' stars') +
-        '. It is the same paragraph for a ' + sign + ', a Scorpio, and everyone else; you may have recognized yourself anyway. ' +
-        'That flash of recognition, not the sky, is the engine under every horoscope. Now let us build your real chart and trace where each piece of it came from.';
+      revealText.textContent = 'You rated it ' + n + ' out of 5. Your birthday changes the label, but everyone gets the same paragraph. ' +
+        'Recognition alone cannot tell us whether a reading was made for us. This is a demonstration, not a measurement of your personality or a controlled test of astrology.';
       reveal.classList.add('show');
     });
     function litUpTo(n, lock) {
       [].forEach.call(stars.children, function (b) { b.classList.toggle('lit', +b.dataset.n <= n); });
-      if (lock) stars._locked = n;
+      if (lock) { stars._locked = n; [].forEach.call(stars.children, function (b) { b.setAttribute('aria-checked', String(+b.dataset.n === n)); }); }
       else if (stars._locked) [].forEach.call(stars.children, function (b) { b.classList.toggle('lit', +b.dataset.n <= stars._locked); });
     }
     go.addEventListener('click', function () {
+      stars._locked = 0; litUpTo(0);
+      [].forEach.call(stars.children, function (b) { b.setAttribute('aria-checked', 'false'); });
+      reveal.classList.remove('show'); revealText.textContent = '';
       var d = (dateEl.value || '1990-06-15').split('-');
       var c = E.computeChart({ year:+d[0], month:+d[1], day:+d[2], hour:12, minute:0, tzOffsetHours:0, latDeg:null, lonEastDeg:null });
       sign = c.sun.sign;
-      reading.innerHTML = '<span style="color:var(--accent);font-style:normal;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase">Reading for a ' + sign + '</span><br>' + FORER;
+      reading.innerHTML = '<span style="color:var(--accent);font-style:normal;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase">Reading labeled ' + sign + '</span><br>' + FORER;
       reading.classList.add('show');
       rate.classList.add('show');
     });
@@ -531,24 +586,34 @@
     });
   }
 
-  /* ---------------- honest share ---------------- */
+  /* ---------------- chart summary and truthful clipboard status ---------- */
   function initShare() {
     var btn = $('ss-share-btn'); if (!btn) return;
     btn.addEventListener('click', function () {
-      var o = readOpts(), c = E.computeChart(o);
-      var iau = iauSun(o.month, o.day);
-      var txt = 'My Sun is in tropical ' + c.sun.sign + ', which today sits in the constellation ' + iau + '. ' +
-        'The personality pinned to it was codified by Ptolemy around 150 CE and packaged for newspapers in the 1930s. ' +
-        'As far as the evidence goes it predicts nothing, and I read it anyway. (via ethanwillingham.com/star-signs)';
-      var done = function () { $('ss-share-out').textContent = 'Copied'; };
+      var o, c;
+      try { o = readOpts(); c = E.computeChart(o); }
+      catch (error) { $('ss-share-out').textContent = error.message; return; }
+      var txt = 'Approximate tropical chart for ' + o.year + '-' + pad(o.month) + '-' + pad(o.day) +
+        ', ' + pad(o.hour) + ':' + pad(o.minute) + ' with a UTC offset of ' + (o.tzOffsetHours >= 0 ? '+' : '') + o.tzOffsetHours + ' hours' +
+        (state.timeKnown ? '.' : ' (local noon assumed; birth time unknown).') +
+        ' Sun: ' + c.sun.sign + '. Moon: ' + c.moon.sign + '.' +
+        (c.rising ? ' Rising: ' + c.rising.sign + '. Houses: ' + c.effectiveHouseSystem +
+          (c.houseFallback ? ' (Placidus fallback)' : '') + '.' : ' Rising sign and houses omitted.') +
+        (!state.timeKnown ? ' Signs may change during the birth date.' : '') +
+        ' This is a calculation demonstration, not a personality prediction. ' +
+        'https://ethanwillingham.com/archive/star-signs/star-signs.html';
+      var preview = $('ss-share-text'); preview.value = txt; preview.hidden = false;
+      $('ss-share-out').textContent = 'Copying...';
+      function done(success) {
+        $('ss-share-out').textContent = success ? 'Copied.' : 'Copy failed. Select the text below to copy it yourself.';
+      }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(txt).then(done, function () { legacyCopy(txt); done(); });
-      } else { legacyCopy(txt); done(); }
+        navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(legacyCopy(preview)); });
+      } else { done(legacyCopy(preview)); }
     });
-    function legacyCopy(txt) {
-      var t = document.createElement('textarea'); t.value = txt;
-      t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t);
-      t.select(); try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t);
+    function legacyCopy(preview) {
+      preview.focus(); preview.select();
+      try { return document.execCommand('copy') === true; } catch (error) { return false; }
     }
   }
 

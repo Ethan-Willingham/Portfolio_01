@@ -128,7 +128,7 @@
         var items = Array.prototype.filter.call(toc.querySelectorAll(FOCUS), function (el) { return el.offsetParent !== null; });
         if (!items.length) return;
         var first = items[0], last = items[items.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === toc)) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     });
@@ -154,6 +154,7 @@
       var id; try { id = document.getElementById(decodeURIComponent(h.slice(1))); } catch (er) { return; }
       if (id) { setTimeout(function () { openToHash(h); }, 0); }
     });
+    window.addEventListener('hashchange', function () { openToHash(location.hash); });
     if (location.hash) setTimeout(function () { openToHash(location.hash); }, 60);
   }
 
@@ -267,352 +268,92 @@
 })();
 
 
-/* module: cry-curves.js */
-/* ============================================================
-   THE FIRST YEAR, charts: the normal crying curve and the
-   crying-peak / abusive-head-trauma overlay.
-   Modules: cry-curve, cry-aht (two FY.viz functions, one file).
-   Data: Vermillet et al., Child Development 2022;93(4):1201 to 1222
-   (PMC9541248; meta-analysis of 57 studies, 17 countries, N=7,580)
-   for the cry curve; AAP "Abusive Head Trauma" technical report,
-   Pediatrics 2025;155(3):e2024070457 (with Barr 2006) for the AHT
-   incidence, peak timing, and mortality.
-   No external libraries. No em dashes anywhere.
-   ============================================================ */
+
+/* Editorial charts: observed points, straight interpolation, and accessible tables. */
 (function () {
   'use strict';
-  var FY = (window.FY = window.FY || { viz: {}, tool: {} });
-  var S = FY.svg;
-  if (!S) { if (window.console) console.warn('cry-curves: FY.svg helper missing'); return; }
-  var P = S.palette;
-
-  /* ---- shared geometry for the 720 x 380 frame ---- */
-  var W = 720, H = 380;
-  var M = { t: 30, r: 26, b: 52, l: 58 };
-  var X0 = M.l, X1 = W - M.r;          /* plot box left/right */
-  var Y0 = M.t, Y1 = H - M.b;          /* plot box top/bottom */
-  var WK_MAX = 27;                     /* weeks of age on the x-axis */
-  var TAB = { 'font-variant-numeric': 'tabular-nums' };  /* tabular mono numerals */
-
-  /* The pooled fuss-plus-cry curve from Vermillet 2022.
-     The paper fits a smooth double-exponential whose modeled peak is
-     3.97 weeks (95% CrI 2.64 to 5.50) over an asymptote A0 = 40.4
-     min/day, with a 1-to-2-week intercept near 99 min/day; the highest
-     binned mean is 126 min/day (SD 61) at 5 to 6 weeks. We draw the
-     smooth model as the line and overlay the binned weighted means as
-     dots, exactly as the deep dive recommends (the bins are noisy and
-     not perfectly monotonic). The smooth model below is sampled so its
-     peak sits at ~5 weeks near 126 to keep the line and the headline
-     binned peak visually consistent. */
-  function crySmooth(wk) {
-    var A0 = 40.4;                 /* asymptote, min/day (Vermillet A0) */
-    var rise = 86 * (1 - Math.exp(-wk / 1.6));   /* fast rise from birth */
-    var fall = Math.exp(-Math.pow(Math.max(wk - 5, 0) / 6.2, 1.05)); /* decay after the peak */
-    return A0 + rise * fall;
-  }
-
-  /* Binned weighted means with an approximate middle-80% band
-     (mean +/- 1.2816 x pooled SD, clipped at 0), recomputed from the
-     Vermillet OSF study-level data and validated against the paper.
-     Columns: week (bin midpoint), weighted mean, ~10th, ~90th, k, N. */
-  var BINS = [
-    { wk: 1.5,  mean: 86.8,  lo: 16,  hi: 157, k: 12, n: 1231 },
-    { wk: 3.5,  mean: 89.2,  lo: 16,  hi: 162, k: 11, n: 949 },
-    { wk: 5.5,  mean: 125.9, lo: 47,  hi: 204, k: 30, n: 5928 },
-    { wk: 7.5,  mean: 77.7,  lo: 13,  hi: 142, k: 14, n: 853 },
-    { wk: 9.5,  mean: 100.4, lo: 29,  hi: 171, k: 4,  n: 694 },
-    { wk: 11.5, mean: 51.1,  lo: 10,  hi: 92,  k: 11, n: 909 },
-    { wk: 15.0, mean: 66.1,  lo: 1,   hi: 131, k: 14, n: 2059 },
-    { wk: 20.0, mean: 34.3,  lo: 0,   hi: 88,  k: 3,  n: 383 },
-    { wk: 25.0, mean: 62.1,  lo: 2,   hi: 122, k: 9,  n: 800 }
-  ];
-
-  var Y_MAX = 220;  /* min/day axis top, leaves headroom over the ~205 band */
-
-  /* ---- small drawing utilities ---- */
-  function fmt(n) { return (Math.round(n)).toString(); }
-
-  function frame(svg, yMax, yUnitLabel) {
-    var sx = S.scale(0, WK_MAX, X0, X1);
-    var sy = S.scale(0, yMax, Y1, Y0);
-    var g = S.el('g', null, svg);
-
-    /* horizontal gridlines + y ticks */
-    var yStep = yMax <= 120 ? 30 : 50;
-    for (var y = 0; y <= yMax + 0.5; y += yStep) {
-      S.el('line', { x1: X0, y1: sy(y), x2: X1, y2: sy(y), class: 'viz-grid', opacity: y === 0 ? 0.85 : 0.4 }, g);
-      g.appendChild(S.text(X0 - 8, sy(y) + 3.5, fmt(y), 'viz-axis', Object.assign({ 'text-anchor': 'end' }, TAB)));
-    }
-    /* x ticks every 4 weeks */
-    for (var w = 0; w <= WK_MAX; w += 4) {
-      S.el('line', { x1: sx(w), y1: Y1, x2: sx(w), y2: Y1 + 4, class: 'viz-grid', opacity: 0.6 }, g);
-      var t = S.text(sx(w), Y1 + 18, fmt(w), 'viz-axis', Object.assign({ 'text-anchor': 'middle' }, TAB));
-      g.appendChild(t);
-    }
-    /* axis titles */
-    var ax = S.text((X0 + X1) / 2, H - 10, 'Age in weeks', 'viz-axis', { 'text-anchor': 'middle' });
-    g.appendChild(ax);
-    var ay = S.text(0, 0, yUnitLabel, 'viz-axis', { 'text-anchor': 'middle', transform: 'translate(' + (X0 - 42) + ' ' + ((Y0 + Y1) / 2) + ') rotate(-90)' });
-    g.appendChild(ay);
-    return { sx: sx, sy: sy, g: g };
-  }
-
-  /* Build a sampled smooth path across the week axis. */
-  function smoothPts(sx, sy, fn) {
-    var pts = [];
-    for (var w = 0; w <= WK_MAX; w += 0.5) pts.push([sx(w), sy(fn(w))]);
-    return pts;
-  }
-
-  /* Append a data table (accessible fallback). headers: array; rows: array of arrays. */
-  function dataTable(fig, caption, headers, rows) {
-    var tbl = document.createElement('table');
-    tbl.className = 'viz-data';
-    var cap = document.createElement('caption'); cap.textContent = caption; tbl.appendChild(cap);
-    var thead = document.createElement('thead'); var htr = document.createElement('tr');
-    headers.forEach(function (h) { var th = document.createElement('th'); th.scope = 'col'; th.textContent = h; htr.appendChild(th); });
-    thead.appendChild(htr); tbl.appendChild(thead);
-    var tb = document.createElement('tbody');
-    rows.forEach(function (r) {
-      var tr = document.createElement('tr');
-      r.forEach(function (c, i) {
-        var cell = document.createElement(i === 0 ? 'th' : 'td');
-        if (i === 0) cell.scope = 'row';
-        cell.textContent = c;
-        tr.appendChild(cell);
+  var FY = window.FY, S = FY.svg, P = S.palette;
+  FY.dataPlot = function (fig, cfg) {
+    var W = 720, H = cfg.height || 380, svg = S.make(W, H);
+    var x0 = cfg.bars ? 170 : 58, x1 = W - 72, y0 = 58, y1 = H - 52;
+    var xs = S.scale(cfg.xmin || 0, cfg.xmax || 1, x0, x1);
+    var ys = S.scale(0, cfg.ymax || 1, y1, y0);
+    svg.setAttribute('aria-label', cfg.title + '. ' + cfg.description);
+    svg.appendChild(S.text(W / 2, 23, cfg.title, 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 14 }));
+    if (cfg.bars) {
+      var step = (y1 - y0) / cfg.rows.length;
+      cfg.rows.forEach(function (r, i) {
+        var cy = y0 + step * (i + .5), color = P.gold;
+        svg.appendChild(S.text(x0 - 8, cy + 4, r[0], 'viz-axis', { 'text-anchor': 'end' }));
+        S.el('rect', { x: x0, y: cy - step * .28, width: xs(r[1]) - x0, height: step * .56, fill: color, rx: 2 }, svg);
+        svg.appendChild(S.text(xs(r[1]) + 7, cy + 4, '$' + r[1].toLocaleString('en-US'), 'viz-axis', {}));
       });
-      tb.appendChild(tr);
-    });
-    tbl.appendChild(tb);
-    fig.appendChild(tbl);
-  }
-
-  function note(fig, html) {
-    var p = document.createElement('p');
-    p.className = 'viz-note';
-    p.innerHTML = html;
-    fig.appendChild(p);
-  }
-
-  /* ============================================================
-     1) cry-curve: the normal infant crying trajectory
-     ============================================================ */
-  FY.viz['cry-curve'] = function (fig) {
-    if (!fig) return;
-    var svg = S.make(W, H);
-
-    var sx = S.scale(0, WK_MAX, X0, X1);
-    var sy = S.scale(0, Y_MAX, Y1, Y0);
-
-    /* shaded spread band: approximate middle 80% of babies, from the
-       per-bin ~10th/~90th (normal-approximation reconstruction). */
-    var hiPts = BINS.map(function (b) { return [sx(b.wk), sy(b.hi)]; });
-    var loPts = BINS.map(function (b) { return [sx(b.wk), sy(b.lo)]; });
-    var bandD = S.line(hiPts) + ' ' + loPts.reverse().map(function (p, i) { return (i === 0 ? 'L' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ') + ' Z';
-
-    /* grid + axes drawn first so data sits on top */
-    var fr = frame(svg, Y_MAX, 'Minutes of crying a day');
-    var g = fr.g;
-
-    S.el('path', { d: bandD, fill: P.gold, 'fill-opacity': 0.12, stroke: 'none' }, g);
-
-    /* the smooth modeled curve */
-    var curve = smoothPts(fr.sx, fr.sy, crySmooth);
-    S.el('path', { d: S.line(curve), fill: 'none', stroke: P.gold, 'stroke-width': 2.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, g);
-
-    /* binned weighted means as dots */
-    BINS.forEach(function (b) {
-      S.el('circle', { cx: fr.sx(b.wk), cy: fr.sy(b.mean), r: 3.1, fill: P.goldHi, stroke: P.parch, 'stroke-width': 0.6 }, g);
-    });
-
-    /* peak marker at 5 to 6 weeks, ~126 min/day */
-    var pkX = fr.sx(5.5), pkY = fr.sy(125.9);
-    S.el('line', { x1: pkX, y1: Y1, x2: pkX, y2: pkY, stroke: P.dim, 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.7 }, g);
-    S.el('circle', { cx: pkX, cy: pkY, r: 4.4, fill: 'none', stroke: P.goldHi, 'stroke-width': 1.6 }, g);
-    var lblPk = S.text(pkX + 8, pkY - 8, 'Peak ~126 min/day at 5 to 6 weeks', 'viz-label', { fill: P.goldHi });
-    g.appendChild(lblPk);
-
-    /* asymptote guide near 40 min/day */
-    var asY = fr.sy(40);
-    S.el('line', { x1: fr.sx(13), y1: asY, x2: X1, y2: asY, stroke: P.ok, 'stroke-width': 1, 'stroke-dasharray': '2 4', opacity: 0.8 }, g);
-    var lblAs = S.text(X1 - 4, asY - 6, 'settles toward ~40 min/day', 'viz-axis', Object.assign({ 'text-anchor': 'end', fill: P.ok }, {}));
-    g.appendChild(lblAs);
-
-    /* legend */
-    var lg = S.el('g', { transform: 'translate(' + (X0 + 8) + ' ' + (Y0 + 4) + ')' }, g);
-    S.el('rect', { x: 0, y: -8, width: 14, height: 10, fill: P.gold, 'fill-opacity': 0.18, stroke: 'none' }, lg);
-    lg.appendChild(S.text(20, 0, 'middle ~80% of babies', 'viz-axis', {}));
-    g.appendChild(lg);
-
-    svg.setAttribute('aria-label',
-      'Line chart of average daily infant crying in minutes per day by week of age, from Vermillet 2022 ' +
-      '(meta-analysis, 57 studies, 17 countries, 7,580 infants). Crying rises from about 87 minutes a day in the ' +
-      'first two weeks to a peak near 126 minutes a day at 5 to 6 weeks, then falls and settles toward an asymptote ' +
-      'of about 40 minutes a day by the middle of the year. A shaded band shows the approximate middle 80 percent of ' +
-      'babies, which at the peak runs from roughly 47 to 204 minutes a day.');
-
-    fig.appendChild(svg);
-
-    note(fig,
-      'The peak is a hill everyone climbs and comes down. Daily crying rises to about ' +
-      '<b>126 minutes a day at 5 to 6 weeks</b>, then declines toward roughly <b>40 minutes a day</b>. ' +
-      'The shaded band is the approximate middle 80 percent of babies: some healthy babies cry under an hour, ' +
-      'some well over three. If your baby is on this curve, your baby is normal. ' +
-      'Source: Vermillet et al., Child Development 2022;93(4):1201 to 1222 (meta-analysis of 57 studies, 17 countries, ' +
-      'N=7,580); spread band reconstructed from the study-level data (approximate middle 80 percent).');
-
-    dataTable(fig,
-      'Average daily fuss-plus-cry by age (Vermillet 2022, weighted means with approximate middle-80% band)',
-      ['Age (weeks)', 'Mean (min/day)', '~10th', '~90th', 'Studies (k)', 'Infants (N)'],
-      BINS.map(function (b) { return [fmt(b.wk), fmt(b.mean), fmt(b.lo), fmt(b.hi), fmt(b.k), b.n.toLocaleString('en-US')]; })
-    );
-  };
-
-  /* ============================================================
-     2) cry-aht: the crying peak and the shaken-baby peak
-     ============================================================ */
-  /* The AHT curve is a SHAPE, not invented per-month counts. The AAP 2025
-     technical report (citing Barr 2006) states the crying curve is
-     paralleled by AHT incidence, with the AHT hospitalization peak about
-     4 weeks AFTER the crying peak (so ~9 to 10 weeks, about 2 months); a
-     rigorous Washington State study adds a smaller second peak near 8
-     months (~34 weeks). We draw the documented shape on a separate
-     "relative incidence" track and footnote it, while the real,
-     citable numbers (25 to 35 per 100,000 per year, etc.) live in the
-     note, aria-label, and table. */
-  function ahtShape(wk) {
-    /* primary peak ~9.5 weeks (4 wk after the 5.5 wk crying peak) */
-    var a = Math.exp(-Math.pow((wk - 9.5) / 5.0, 2));
-    /* smaller secondary peak ~34 weeks (about 8 months), ~35% height */
-    var b = 0.35 * Math.exp(-Math.pow((wk - 34) / 6.0, 2));
-    return Math.min(1, a + b);
-  }
-  var AHT_WK_MAX = 40;  /* extend to ~9 months so the second peak shows */
-
-  FY.viz['cry-aht'] = function (fig) {
-    if (!fig) return;
-    var svg = S.make(W, H);
-
-    /* x-axis runs to 40 weeks here so the 8-month second peak is visible */
-    var sx = S.scale(0, AHT_WK_MAX, X0, X1);
-    var syCry = S.scale(0, Y_MAX, Y1, Y0);       /* left axis: crying min/day */
-    var syAht = S.scale(0, 1.08, Y1, Y0);        /* right axis: relative AHT */
-    var g = S.el('g', null, svg);
-
-    /* gridlines + left ticks (crying minutes) */
-    for (var y = 0; y <= Y_MAX + 0.5; y += 50) {
-      S.el('line', { x1: X0, y1: syCry(y), x2: X1, y2: syCry(y), class: 'viz-grid', opacity: y === 0 ? 0.85 : 0.35 }, g);
-      g.appendChild(S.text(X0 - 8, syCry(y) + 3.5, fmt(y), 'viz-axis', Object.assign({ 'text-anchor': 'end', fill: P.gold }, TAB)));
+    } else {
+      (cfg.xticks || []).forEach(function (v) {
+        S.el('line', { x1: xs(v), y1: y0, x2: xs(v), y2: y1, class: 'viz-grid', opacity: .35 }, svg);
+        svg.appendChild(S.text(xs(v), y1 + 18, String(v), 'viz-axis', { 'text-anchor': 'middle' }));
+      });
+      (cfg.yticks || []).forEach(function (v) {
+        S.el('line', { x1: x0, y1: ys(v), x2: x1, y2: ys(v), class: 'viz-grid', opacity: .35 }, svg);
+        svg.appendChild(S.text(x0 - 9, ys(v) + 4, String(v), 'viz-axis', { 'text-anchor': 'end' }));
+      });
+      cfg.series.forEach(function (trace, i) {
+        var color = [P.gold, P.sky, P.emerg][i], points = trace.points.map(function (p) { return [xs(p[0]), ys(p[1])]; });
+        S.el('path', { d: S.line(points), fill: 'none', stroke: color, 'stroke-width': 2 }, svg);
+        points.forEach(function (p) { S.el('circle', { cx: p[0], cy: p[1], r: cfg.schematic ? 0 : 4, fill: color }, svg); });
+        svg.appendChild(S.text(x0 + i * 210, 42, trace.label, 'viz-axis', { fill: color }));
+      });
+      svg.appendChild(S.text((x0 + x1) / 2, H - 9, cfg.xLabel, 'viz-axis', { 'text-anchor': 'middle' }));
+      svg.appendChild(S.text(0, 0, cfg.yLabel, 'viz-axis', { 'text-anchor': 'middle', transform: 'translate(16 ' + ((y0 + y1) / 2) + ') rotate(-90)' }));
     }
-    /* x ticks every 4 weeks, plus a months helper row */
-    for (var w = 0; w <= AHT_WK_MAX; w += 4) {
-      S.el('line', { x1: sx(w), y1: Y1, x2: sx(w), y2: Y1 + 4, class: 'viz-grid', opacity: 0.6 }, g);
-      g.appendChild(S.text(sx(w), Y1 + 18, fmt(w), 'viz-axis', Object.assign({ 'text-anchor': 'middle' }, TAB)));
-    }
-    g.appendChild(S.text((X0 + X1) / 2, H - 10, 'Age in weeks', 'viz-axis', { 'text-anchor': 'middle' }));
-    g.appendChild(S.text(0, 0, 'Crying (min/day)', 'viz-axis', { 'text-anchor': 'middle', fill: P.gold, transform: 'translate(' + (X0 - 42) + ' ' + ((Y0 + Y1) / 2) + ') rotate(-90)' }));
-    g.appendChild(S.text(0, 0, 'AHT incidence (relative)', 'viz-axis', { 'text-anchor': 'middle', fill: P.emerg, transform: 'translate(' + (X1 + 16) + ' ' + ((Y0 + Y1) / 2) + ') rotate(-90)' }));
-
-    /* crying curve (gold), sampled across the wider axis */
-    var cryPts = [];
-    for (var c = 0; c <= AHT_WK_MAX; c += 0.5) cryPts.push([sx(c), syCry(crySmooth(c))]);
-    S.el('path', { d: S.line(cryPts), fill: 'none', stroke: P.gold, 'stroke-width': 2.2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.92 }, g);
-
-    /* AHT relative-incidence curve (contained red), filled lightly under */
-    var ahtPts = [];
-    for (var a = 0; a <= AHT_WK_MAX; a += 0.5) ahtPts.push([sx(a), syAht(ahtShape(a))]);
-    S.el('path', { d: S.area(ahtPts, Y1), fill: P.emerg, 'fill-opacity': 0.08, stroke: 'none' }, g);
-    S.el('path', { d: S.line(ahtPts), fill: 'none', stroke: P.emerg, 'stroke-width': 2.2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, g);
-
-    /* peak markers: crying ~5.5 wk, AHT ~9.5 wk */
-    var cpX = sx(5.5), cpY = syCry(125.9);
-    S.el('circle', { cx: cpX, cy: cpY, r: 3.6, fill: 'none', stroke: P.goldHi, 'stroke-width': 1.4 }, g);
-    g.appendChild(S.text(cpX, cpY - 10, 'crying peaks ~6 weeks', 'viz-axis', { 'text-anchor': 'middle', fill: P.goldHi }));
-
-    var apX = sx(9.5), apY = syAht(1);
-    S.el('circle', { cx: apX, cy: apY, r: 3.6, fill: 'none', stroke: P.emerg, 'stroke-width': 1.6 }, g);
-    g.appendChild(S.text(apX + 6, apY - 8, 'shaking peaks ~2 months', 'viz-label', { fill: P.emerg }));
-
-    /* second AHT peak note at ~8 months */
-    var s2X = sx(34), s2Y = syAht(0.35);
-    g.appendChild(S.text(s2X, s2Y - 9, 'smaller 2nd peak ~8 mo', 'viz-axis', { 'text-anchor': 'middle', fill: P.emerg, opacity: 0.85 }));
-
-    /* legend */
-    var lg = S.el('g', { transform: 'translate(' + (X0 + 8) + ' ' + (Y0 + 2) + ')' }, g);
-    S.el('line', { x1: 0, y1: -3, x2: 18, y2: -3, stroke: P.gold, 'stroke-width': 2.4 }, lg);
-    lg.appendChild(S.text(24, 0, 'normal crying', 'viz-axis', { fill: P.gold }));
-    S.el('line', { x1: 130, y1: -3, x2: 148, y2: -3, stroke: P.emerg, 'stroke-width': 2.4 }, lg);
-    lg.appendChild(S.text(154, 0, 'abusive head trauma', 'viz-axis', { fill: P.emerg }));
-
-    svg.setAttribute('aria-label',
-      'Overlay chart of two curves by infant age. The normal crying curve peaks near 126 minutes a day at 5 to 6 ' +
-      'weeks. The abusive-head-trauma incidence curve, drawn as relative incidence, parallels it but peaks about 4 ' +
-      'weeks later, near 2 months, with a smaller second peak around 8 months. Abusive head trauma affects about 25 ' +
-      'to 35 infants per 100,000 per year under age 1, roughly 1,300 US cases a year, and about 1 in 4 die. The hardest ' +
-      'crying and the greatest danger fall close together. When you feel overwhelmed, put the baby down somewhere safe ' +
-      'and walk away. Sources: Vermillet 2022 and the AAP 2025 abusive head trauma technical report.');
-
     fig.appendChild(svg);
-
-    note(fig,
-      'The hardest stretch of crying and the moment infants are most in danger sit almost on top of each other. ' +
-      'Abusive head trauma (shaking) affects about <b>25 to 35 infants per 100,000 each year</b> under age 1 ' +
-      '(up to 40 by the most rigorous methods), roughly <b>1,300 US cases a year</b>, and about <b>1 in 4 die</b>. ' +
-      'Crying is normal and it is not your fault. When you feel yourself losing control, ' +
-      '<b>put the baby down somewhere safe, on the back in the crib, walk away to calm down, and check back every ' +
-      '5 to 10 minutes.</b> It is always OK to put the baby down, and to ask for help. ' +
-      'The AHT curve here is drawn as relative incidence to match the documented shape (peak about 4 weeks after the ' +
-      'crying peak, with a smaller second peak near 8 months); the counts above are the real figures. ' +
-      'Sources: Vermillet et al., Child Development 2022 (crying); AAP "Abusive Head Trauma in Infants and Children," ' +
-      'Pediatrics 2025;155(3):e2024070457, with Barr 2006 (incidence and peak timing).');
-
-    dataTable(fig,
-      'Crying peak vs abusive head trauma (the curves and the real numbers)',
-      ['Measure', 'Value', 'Source'],
-      [
-        ['Crying peak', '~126 min/day at 5 to 6 weeks', 'Vermillet 2022'],
-        ['Crying settles to', '~40 min/day by mid-year', 'Vermillet 2022'],
-        ['AHT peak (hospitalization)', '~4 weeks after crying peak (~2 months)', 'AAP 2025 / Barr 2006'],
-        ['AHT second peak', '~8 months (smaller)', 'Washington State study'],
-        ['AHT incidence, under age 1', '25 to 35 per 100,000 per year (up to 40)', 'AAP 2025'],
-        ['AHT incidence, ages 1 to 2', '~3.8 per 100,000 per year', 'AAP 2025'],
-        ['US cases per year', '~1,300', 'NCSBS'],
-        ['Mortality', '10 to 20 percent (about 1 in 4 die)', 'AAP 2025 / CDC']
-      ]
-    );
+    var note = document.createElement('p'); note.className = 'viz-note'; note.innerHTML = cfg.note; fig.appendChild(note);
+    var table = document.createElement('table'); table.className = 'viz-data';
+    var caption = document.createElement('caption'); caption.textContent = cfg.title; table.appendChild(caption);
+    var thead = document.createElement('thead'), header = document.createElement('tr');
+    cfg.headers.forEach(function (label) { var th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.appendChild(th); });
+    thead.appendChild(header); table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    cfg.rows.forEach(function (row) { var tr = document.createElement('tr'); row.forEach(function (value, i) { var td = document.createElement(i ? 'td' : 'th'); if (!i) td.scope = 'row'; td.textContent = value; tr.appendChild(td); }); tbody.appendChild(tr); });
+    table.appendChild(tbody); fig.appendChild(table);
   };
 })();
 
 
-/* module: death-injury.js */
-/* ============================================================
-   THE FIRST YEAR, death and injury charts module.
-   Two visualizations for the risk-landscape domain:
-     FY.viz["death-maps"]  side-by-side stacked bars of where children
-                           die: a GLOBAL under-5 panel (with the neonatal
-                           vs post-neonatal split) and a US infant inset
-                           on a clearly separate scale. The two scales are
-                           never blended.
-     FY.viz["injury-age"]  ranked bars of the leading causes of death for
-                           infants (under 1) vs toddlers (ages 1 to 4),
-                           showing unintentional injury rise from #4 to #1,
-                           with the within-infant-injury suffocation note.
-   Every number is real and cited in the viz-note and aria-label.
-   Framework-free, defensive, no console errors. No em dashes anywhere.
+(function () {
+  'use strict';
+  var FY = window.FY;
+  FY.viz['cry-curve'] = function (fig) {
+    FY.dataPlot(fig, {
+      title: 'Selected published averages of crying and fussing',
+      description: 'Weighted means from Vermillet 2022: 126 minutes at five to six weeks, 66 at thirteen to seventeen weeks, and 34 at eighteen to twenty-two weeks. Straight lines connect these selected means. No infant normal range is plotted.',
+      xmax: 26, ymax: 150, xticks: [0, 5, 10, 15, 20, 25], yticks: [0, 30, 60, 90, 120, 150],
+      xLabel: 'Age in weeks (interval midpoints)', yLabel: 'Crying plus fussing, minutes per day',
+      series: [{ label: 'Selected weighted means', points: [[5.5,126],[15,66],[20,34]] }],
+      headers: ['Age interval', 'Weighted mean, minutes/day'], rows: [['5 to 6 weeks',126],['13 to 17 weeks',66],['18 to 22 weeks',34]],
+      note: 'These are three means reported in the paper, drawn at each age interval’s midpoint. Lines are straight interpolation, not the authors’ fitted model. The 57 studies varied greatly in country, sample and parent reporting, especially at later ages. Averages cannot determine whether a particular baby’s crying is normal. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9541248/">Vermillet et al. 2022, results and methods</a>.'
+    });
+  };
+  FY.viz['cry-aht'] = function (fig) {
+    var cry = [], harm = [];
+    for (var w=0;w<=40;w+=.5) {
+      cry.push([w,Math.exp(-Math.pow((w-5.5)/6,2))]);
+      harm.push([w,Math.exp(-Math.pow((w-10)/6,2))+.3*Math.exp(-Math.pow((w-34)/6,2))]);
+    }
+    FY.dataPlot(fig, {
+      title: 'Crying and abusive head trauma: a schematic',
+      description: 'Illustrative profiles only. The curves and their relative heights are not measured incidence or a prediction of risk. They illustrate early crying and a later early-infancy peak in abusive head trauma.',
+      xmax: 40, ymax: 1.2, xticks: [0,8,16,24,32,40], yticks: [], schematic: true,
+      xLabel: 'Age in weeks', yLabel: 'Illustrative profiles, no risk scale',
+      series: [{ label: 'Illustrative crying profile',points:cry},{label:'Illustrative trauma profile',points:harm}],
+      headers:['What is shown','What it means'], rows:[['Curves','Illustrations, not a measured dataset'],['Relative heights','Arbitrary; do not compare rates'],['Care action','Put the baby safely down and get help before frustration escalates']],
+      note:'The AAP report discusses the association between crying and abusive head trauma. This drawing illustrates timing; its widths and heights are chosen for the diagram and are not data. It cannot establish that crying causes an injury or predict a family’s risk. If frustration builds, put the baby on their back in an empty crib, step away briefly and call someone to take over. Never shake a baby. <a href="https://publications.aap.org/pediatrics/article/155/3/e2024070457/201049/Abusive-Head-Trauma-in-Infants-and-Children">AAP abusive head trauma technical report, 2025</a>.'
+    });
+  };
+})();
 
-   Sourcing and corrections applied (see corrections-to-apply.md):
-   - Global under-5 leading-cause shares are the UN IGME report Fig 8
-     WORLD column (prematurity ~15%, lower respiratory infections /
-     pneumonia ~16%, birth asphyxia / trauma ~11%), NOT the 18/13/10
-     figures (those are the sub-Saharan Africa column and were wrongly
-     attributed to the press release). The neonatal interior (preterm 36%,
-     intrapartum 21%) is from the UNICEF/WHO press release (18 Mar 2026);
-     the remaining neonatal causes follow the WHO / GBD lineage.
-   - Totals 4.9M under-5 and 2.3M neonatal (about 47%) and malaria as the
-     top post-neonatal killer at 17% are UN IGME 2024 data (cite the 2025
-     edition, which still carries 4.9M / 2.3M for 2024).
-   - The US inset is the 2023 linked birth/infant death file (NVSR 74-7).
-   ============================================================ */
+/* module: death-injury.js */
+/* Global under-five cause estimates and US infant or toddler registered counts have separate methods, populations and dates. Global 2024 cause shares are prematurity 18%, pneumonia 13%, birth asphyxia or trauma 10%. Neonatal totals are separate from the cause stack. Sources are linked beside the charts. */
 (function () {
   'use strict';
   var FY = (window.FY = window.FY || { viz: {}, tool: {} });
@@ -670,18 +411,18 @@
     var svg = S.make(W, H);
 
     /* ---- GLOBAL under-5, 2024 (UN IGME). Shares of ALL under-5 deaths. ----
-       Leaders are the corrected report Fig 8 WORLD values; the remainder is
+       Leaders are rounded report and UNICEF cause shares for 2024; the remainder is
        the transparent arithmetic balance, labeled "all other causes." The
        neonatal-origin leaders (prematurity, birth asphyxia) sit at the
        bottom; the post-neonatal infection leader (pneumonia) above them. */
     var GLOBAL = [
-      { label: 'Prematurity', v: 15, col: P.plum,  band: 'neonatal' },
-      { label: 'Birth asphyxia / trauma', v: 11, col: P.sky, band: 'neonatal' },
-      { label: 'Pneumonia (LRI)', v: 16, col: P.call, band: 'post' },
-      { label: 'All other causes', v: 58, col: P.dim, band: 'mixed' }
+      { label: 'Prematurity', v: 18, col: P.plum,  band: 'neonatal' },
+      { label: 'Birth asphyxia / trauma', v: 10, col: P.sky, band: 'neonatal' },
+      { label: 'Pneumonia (LRI)', v: 13, col: P.call, band: 'post' },
+      { label: 'All other causes', v: 59, col: P.dim, band: 'mixed' }
     ];
     var GLOBAL_TOTAL = 4.9; /* million */
-    var NEONATAL_SHARE = 47; /* percent of under-5 (2.3M of 4.9M) */
+    /* Neonatal totals are reported separately, not encoded in the cause stack. */
 
     /* ---- US infants, 2023 (NVSR 74-7). Shares of ALL US infant deaths. ----
        The five leading causes plus the balance. */
@@ -705,7 +446,7 @@
     var gx = 250, ux = 470; /* bar left edges */
 
     /* panel super-titles */
-    add(svg, S.text(W / 2, 20, 'Two babies, two maps: where children die', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 15 }));
+    add(svg, S.text(W / 2, 20, 'Selected causes in two age groups', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 15 }));
     add(svg, S.text(gx + barW / 2, 40, 'WORLD, under age 5', 'viz-label', { 'text-anchor': 'middle', fill: P.goldHi, 'font-size': 12.5 }));
     add(svg, S.text(gx + barW / 2, 54, comma(Math.round(GLOBAL_TOTAL * 1000)) + ',000 deaths (2024)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
     add(svg, S.text(ux + barW / 2, 40, 'UNITED STATES, infants', 'viz-label', { 'text-anchor': 'middle', fill: P.goldHi, 'font-size': 12.5 }));
@@ -719,10 +460,10 @@
     /* percent axis ticks down the far left, shared composition scale */
     [0, 25, 50, 75, 100].forEach(function (g) {
       var yy = y(g);
-      add(svg, S.el('line', { x1: gx - 38, y1: yy, x2: gx - 34, y2: yy, stroke: P.rule, 'stroke-width': 1, opacity: 0.7 }));
-      add(svg, S.text(gx - 42, yy + 3.5, String(g), 'viz-axis', { 'text-anchor': 'end' }));
+      add(svg, S.el('line', { x1: 46, y1: yy, x2: 50, y2: yy, stroke: P.rule, 'stroke-width': 1, opacity: 0.7 }));
+      add(svg, S.text(42, yy + 3.5, String(g), 'viz-axis', { 'text-anchor': 'end' }));
     });
-    add(svg, S.text(gx - 58, (plotT + plotB) / 2, 'share of deaths (%)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, transform: 'rotate(-90 ' + (gx - 58) + ' ' + ((plotT + plotB) / 2) + ')' }));
+    add(svg, S.text(16, (plotT + plotB) / 2, 'share of deaths (%)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, transform: 'rotate(-90 16 ' + ((plotT + plotB) / 2) + ')' }));
 
     /* generic stacked-bar drawer, returns nothing; labels each segment that
        is tall enough to hold text and tags small ones to the side. */
@@ -741,7 +482,7 @@
         var lx = labelSide === 'left' ? x0 - 8 : x0 + barW + 8;
         var anchor = labelSide === 'left' ? 'end' : 'start';
         if (h >= 12) {
-          add(svg, S.text(lx, midY + 3.5, d.label, 'viz-axis', { 'text-anchor': anchor, fill: P.parch, 'font-size': 10.5 }));
+          add(svg, S.text(lx, midY + 3.5, d.label.replace('Short gestation / LBW', 'Short gestation').replace('Maternal complications', 'Maternal comp.'), 'viz-axis', { 'text-anchor': anchor, fill: P.parch, 'font-size': 10.5 }));
         }
         acc += d.v;
       });
@@ -751,48 +492,24 @@
     stack(GLOBAL, gx, 'left');
     stack(US, ux, 'right');
 
-    /* GLOBAL: mark the neonatal vs post-neonatal split as a bracket on the
-       inner edge of the global bar (47% of under-5 deaths are newborns). */
-    var splitY = y(NEONATAL_SHARE);
-    add(svg, S.el('line', { x1: gx + barW, y1: splitY, x2: gx + barW + 14, y2: splitY, stroke: P.goldHi, 'stroke-width': 1.5 }));
-    add(svg, S.el('line', { x1: gx + barW + 14, y1: plotB, x2: gx + barW + 14, y2: splitY, stroke: P.goldHi, 'stroke-width': 1.5, opacity: 0.7 }));
-    add(svg, S.text(gx + barW + 18, (plotB + splitY) / 2 - 4, 'neonatal', 'viz-axis', { 'text-anchor': 'start', fill: P.goldHi, 'font-size': 10 }));
-    add(svg, S.text(gx + barW + 18, (plotB + splitY) / 2 + 8, '47% (2.3M)', 'viz-axis', { 'text-anchor': 'start', fill: P.dim, 'font-size': 9.5 }));
-
-    /* US: highlight that congenital anomalies sit at the TOP here but the
-       BOTTOM globally (the headline divergence). A small caret note. */
+    /* Keep the US rate and global age range beneath the separate bars. */
     add(svg, S.text(ux + barW / 2, plotB + 20, 'IMR ' + US_IMR.toFixed(2) + ' / 1,000', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, 'font-size': 10 }));
-    add(svg, S.text(gx + barW / 2, plotB + 20, 'infections lead', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, 'font-size': 10 }));
+    add(svg, S.text(gx + barW / 2, plotB + 20, 'age range: under 5', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, 'font-size': 10 }));
 
     /* ---- accessibility + attach ---- */
-    svg.setAttribute('aria-label',
-      'Two stacked bars on clearly separate scales showing where children die, globally versus in the United States. ' +
-      'Left, world deaths under age 5 in 2024 total 4.9 million, of which 2.3 million, about 47 percent, are newborns in the first 28 days. ' +
-      'The leading causes as a share of all under-5 deaths are pneumonia or lower respiratory infections about 16 percent, prematurity about 15 percent, and birth asphyxia or trauma about 11 percent, with all other causes about 58 percent. ' +
-      'Within the newborn band, complications of preterm birth are about 36 percent and complications of labour and delivery about 21 percent; malaria is the single largest killer after the newborn period at 17 percent of deaths in ages 1 to 59 months. ' +
-      'Right, on a separate scale, United States infant deaths in 2023 total 20,162, an infant mortality rate of 5.61 per 1,000 live births. ' +
-      'The leading causes are congenital anomalies 20.0 percent, short gestation or low birth weight 14.5 percent, SIDS 7.2 percent, unintentional injury 6.4 percent, and maternal complications 5.7 percent. ' +
-      'The point: globally the top killers are preventable infections, while in the United States they are congenital anomalies, prematurity, and SIDS, so the US is not a miniature of the world. ' +
-      'Sources: UN IGME Levels and Trends in Child Mortality 2025 edition (2024 data) and CDC NVSR volume 74 number 7.');
+    svg.setAttribute('aria-label', 'Two cause-composition bars with different age ranges and totals. Estimated global under-five deaths in 2024: prematurity 18 percent, pneumonia 13 percent, birth asphyxia or trauma 10 percent, remainder 59 percent. US registered infant deaths in 2023: congenital anomalies 20 percent, short gestation or low birth weight 14.5 percent, SIDS 7.2 percent, injury 6.4 percent, maternal complications 5.7 percent, remainder 46.2 percent.');
     add(fig, svg);
 
-    note(fig,
-      'The United States is not a miniature of the world. Globally the leading killers of young children are preventable infections (pneumonia, malaria, diarrhoea) layered on prematurity and birth complications; in the United States the leaders are congenital anomalies, prematurity, and SIDS, with injury close behind. ' +
-      'The two bars use entirely separate scales: the left is 100% of 4.9 million under-5 deaths worldwide, the right is 100% of 20,162 US infant deaths. Nearly half of the global toll (47%, about 2.3 million) is newborns in the first month. ' +
-      '<span class="src">Sources: UN Inter-agency Group for Child Mortality Estimation, <i>Levels &amp; Trends in Child Mortality</i> (2025 edition, 2024 data; totals 4.9M under-5 and 2.3M neonatal), with world cause shares from the report Fig 8 WORLD column and the UNICEF/WHO release of 18 Mar 2026 for the neonatal split (preterm 36%, intrapartum 21%) and malaria (17% of ages 1 to 59 months); neonatal interior otherwise follows the WHO / GBD lineage. US inset: Ely DM, Driscoll AK, <i>Infant Mortality in the United States, 2023</i>, National Vital Statistics Reports 74(7), NCHS, 12 Jun 2025.</span>');
+    note(fig, 'The global total is an estimate for children under five; the US total is registered deaths before one year. Rounded cause shares and definitions differ. About 2.3 million of the estimated 4.9 million global deaths occurred in the first twenty-eight days; this age total is separate from the cause stack. Neither bar is a personal risk estimate. <span class="src"><a href="https://data.unicef.org/wp-content/uploads/2026/05/UNIGME-Child-Mortality-Report-2025.pdf">UN IGME Report 2025</a>, released in 2026, 2024 estimates and cause-of-death methods; <a href="https://www.cdc.gov/nchs/data/nvsr/nvsr74/nvsr74-07.pdf">CDC NVSR 74-7</a>, Table 3, 2023 registered deaths.</span>');
 
     dataTable(fig, 'World deaths under age 5, 2024 (UN IGME): share of all under-5 deaths',
       ['Cause', 'Share of under-5'],
       [
-        ['Pneumonia / lower respiratory infections', '16%'],
-        ['Prematurity (preterm birth complications)', '15%'],
-        ['Birth asphyxia / trauma (intrapartum)', '11%'],
-        ['All other causes (diarrhoea, malaria, congenital, injury, measles, sepsis, etc.)', '58%'],
+        ['Pneumonia / lower respiratory infections', '13%'],
+        ['Prematurity (preterm birth complications)', '18%'],
+        ['Birth asphyxia / trauma (intrapartum)', '10%'],
+        ['All other causes (diarrhoea, malaria, congenital, injury, measles, sepsis, etc.)', '59%'],
         ['Memo: neonatal (first 28 days)', '47% (2.3M of 4.9M)'],
-        ['Memo: within neonatal, preterm complications', '36%'],
-        ['Memo: within neonatal, intrapartum complications', '21%'],
-        ['Memo: malaria, share of ages 1 to 59 months', '17% (largest in that band)'],
-        ['Memo: severe acute malnutrition, ages 1 to 59 months', '5% (over 100,000)']
       ]);
 
     dataTable(fig, 'United States infant deaths, 2023 (NVSR 74-7): leading causes',
@@ -817,8 +534,8 @@
     var W = 720, H = 380;
     var svg = S.make(W, H);
 
-    /* WISQARS 2022 leading-cause counts. Injury is flagged so it reads as
-       the through-line. SIDS here is the death-certificate R95 line. */
+    /* NCHS final 2022 death-certificate counts, NVSR73(10), Tables1/2.
+       SIDS is the underlying-cause R95 category. */
     var UNDER1 = [
       { label: 'Congenital anomalies', v: 3970, injury: false },
       { label: 'Short gestation', v: 2884, injury: false },
@@ -828,8 +545,8 @@
     var AGE14 = [
       { label: 'Unintentional injury', v: 1288, injury: true, rank: '#1' },
       { label: 'Congenital anomalies', v: 441, injury: false },
-      { label: 'Cancer', v: 393, injury: false },
-      { label: 'Homicide', v: 180, injury: false }
+      { label: 'Homicide', v: 343, injury: false },
+      { label: 'Cancer', v: 266, injury: false }
     ];
 
     /* shared horizontal value scale so the two panels are directly
@@ -853,7 +570,7 @@
     }
 
     /* title */
-    add(svg, S.text(W / 2, 20, 'What actually kills babies, by age', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 15 }));
+    add(svg, S.text(W / 2, 20, 'Leading causes of death, by age', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 15 }));
     add(svg, S.text(W / 2, 38, 'Leading causes of death, US 2022 (deaths)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
 
     /* panel band geometry: split the plot into two stacked groups */
@@ -903,26 +620,24 @@
 
     /* ---- accessibility + attach ---- */
     svg.setAttribute('aria-label',
-      'Two ranked bar panels of the leading causes of death by age in the United States, 2022, from CDC WISQARS. ' +
-      'For infants under 1 year, the leaders are congenital anomalies 3,970 deaths, short gestation 2,884, SIDS 1,529, and unintentional injury 1,354, which ranks fourth. ' +
-      'For ages 1 to 4, unintentional injury is now first at 1,288 deaths, ahead of congenital anomalies 441, cancer 393, and homicide 180. ' +
-      'So injury rises from the fourth to the first leading cause between infancy and the toddler years. ' +
-      'Within infant unintentional-injury deaths, suffocation is 85 percent, almost all of it accidental suffocation and strangulation in bed. ' +
-      'Source: CDC WISQARS, 10 Leading Causes of Death by Age Group, United States, 2022.');
+      'Two ranked bar panels of leading underlying causes of death in the United States, 2022, from the NCHS final death-certificate report. ' +
+      'For infants under 1 year: congenital anomalies 3,970 deaths, short gestation 2,884, SIDS 1,529, unintentional injury 1,354. ' +
+      'For ages 1 to 4: unintentional injury 1,288, congenital anomalies 441, homicide 343, cancer 266. ' +
+      'Ranked counts describe historical populations, not an individual child’s risk.');
     add(fig, svg);
 
     note(fig,
-      'The leading threat changes shape as your baby grows. In the first year the top killers are medical (congenital anomalies, prematurity, SIDS) and unintentional injury sits fourth; by ages 1 to 4 those recede and injury becomes the number-one cause of death. ' +
-      'The reason this matters early: within infant injury, about 85% (85.4%, 991 deaths) is suffocation, and most of that is accidental suffocation and strangulation in bed, the same sleep-environment hazard the safe-sleep rules target. ' +
-      '<span class="src">Source: CDC WISQARS, <i>10 Leading Causes of Death by Age Group, United States, 2022</i> (National Vital Statistics System, NCHS). Within-injury mechanism split (suffocation 85.4%, 855 of 991 in bed) from a WISQARS mechanism analysis, PMC5568777.</span>');
+      'Unintentional injury ranks fourth among infant causes and first at ages 1 to 4 in these 2022 US counts. Rankings compare eligible underlying-cause categories; they are not a child’s individual risk. Infant sleep-environment deaths and older children’s injuries need different prevention measures. ' +
+      '<span class="src"><a href="https://stacks.cdc.gov/view/cdc/164020/cdc_164020_DS1.pdf">NCHS, Deaths: Leading Causes for 2022, Tables 1 and 2</a>.</span>');
 
-    dataTable(fig, 'Leading causes of death, infants under 1, US 2022 (WISQARS)',
+    dataTable(fig, 'Leading underlying causes of death, infants under 1, US 2022 (NCHS)',
       ['Rank', 'Cause', 'Deaths'],
       UNDER1.map(function (d, i) { return [String(i + 1), d.label, comma(d.v)]; }));
 
-    dataTable(fig, 'Leading causes of death, ages 1 to 4, US 2022 (WISQARS)',
+    dataTable(fig, 'Leading underlying causes of death, ages 1 to 4, US 2022 (NCHS)',
       ['Rank', 'Cause', 'Deaths'],
       AGE14.map(function (d, i) { return [String(i + 1), d.label, comma(d.v)]; }));
+
   };
 })();
 
@@ -931,12 +646,12 @@
 /* ============================================================
    THE FIRST YEAR, feeding charts module.
    Two visualizations for the feeding domain:
-     FY.viz["bf-duration"]  the US breastfeeding duration cliff plus
+     FY.viz["bf-duration"]  the US2022 breastfeeding survey outcomes;
                             the 20th-century V-then-climb curve.
      FY.viz["milk-storage"] the CDC milk-storage rule of fours
                             reference infographic.
-   Every number is real and cited in the viz-note and aria-label.
-   Framework-free, defensive, no console errors. No em dashes anywhere.
+   Global estimates and registered US counts have different methods and age ranges.
+   See the linked current sources and dated labels.
    ============================================================ */
 (function () {
   'use strict';
@@ -979,125 +694,33 @@
 
   /* ====================================================================== */
   /* 1. FY.viz["bf-duration"]                                                */
-  /*    Left panel: the modern duration cliff (2022 birth cohort, CDC NIS).  */
-  /*    Right panel: the 20th-century V-then-climb initiation curve.         */
+  /*    Selected modern measures, 2022 birth cohort, CDC NIS-Child.         */
   /* ====================================================================== */
   FY.viz['bf-duration'] = function (fig) {
     if (!fig) return;
-    var W = 720, H = 380;
-    var svg = S.make(W, H);
-
-    /* ---- data, all real and cited ---- */
-    /* Modern cliff: CDC National Immunization Survey-Child, 2022 birth cohort. */
-    var cliff = [
-      { key: 'ever', label: 'Ever', sub: 'breastfed', v: 85.7, col: P.gold },
-      { key: 'any6', label: 'Any at', sub: '6 months', v: 62.1, col: P.sky },
-      { key: 'excl6', label: 'Exclusive', sub: 'to 6 mo', v: 27.9, col: P.plum },
-      { key: 'any12', label: 'Any at', sub: '12 months', v: 40.8, col: P.sky }
+    var W = 720, H = 330, svg = S.make(W, H);
+    var rows = [
+      { label: 'Ever breastfed', v: 85.7, ci: 0.9, col: P.gold },
+      { label: 'Any at 6 months', v: 62.1, ci: 1.1, col: P.sky },
+      { label: 'Any at 12 months', v: 40.8, ci: 1.1, col: P.sky },
+      { label: 'Exclusive through 6 months', v: 27.9, ci: 1.0, col: P.plum }
     ];
-    /* Century V-curve: initiation, stitched (fertility surveys + Ross + CDC NIS). */
-    var curve = [
-      { yr: 1936, v: 77.0, src: 'IOM (1936 to 40 cohort)' },
-      { yr: 1972, v: 22.0, src: 'fertility-survey nadir' },
-      { yr: 1982, v: 61.9, src: 'Ross peak' },
-      { yr: 1989, v: 52.2, src: 'Ross trough' },
-      { yr: 2001, v: 69.5, src: 'Ross' },
-      { yr: 2022, v: 85.7, src: 'CDC NIS' }
-    ];
-
-    /* ---- layout: two panels side by side ---- */
-    var padT = 26, padB = 58;
-    var midGap = 44;
-    var leftX0 = 50, leftX1 = 330;            /* bar panel */
-    var rightX0 = 330 + midGap, rightX1 = W - 16; /* line panel */
-    var plotT = padT, plotB = H - padB;
-
-    /* panel titles */
-    add(svg, S.text((leftX0 + leftX1) / 2, 16, 'Where families fall off (2022)', 'viz-label', { 'text-anchor': 'middle', fill: P.parch }));
-    add(svg, S.text((rightX0 + rightX1) / 2, 16, 'A century of breastfeeding (initiation)', 'viz-label', { 'text-anchor': 'middle', fill: P.parch }));
-
-    /* ===== LEFT: the duration cliff bars ===== */
-    var yMax = 100;
-    var ly = S.scale(0, yMax, plotB, plotT);
-    /* y gridlines + labels 0..100 */
-    [0, 25, 50, 75, 100].forEach(function (g) {
-      var yy = ly(g);
-      add(svg, S.el('line', { x1: leftX0, y1: yy, x2: leftX1, y2: yy, class: 'viz-grid', opacity: g === 0 ? 0.9 : 0.4 }));
-      add(svg, S.text(leftX0 - 6, yy + 3.5, String(g), 'viz-axis', { 'text-anchor': 'end' }));
+    var x = S.scale(0, 100, 225, 670);
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      var xx = x(v);
+      add(svg, S.el('line', { x1: xx, y1: 35, x2: xx, y2: 274, class: 'viz-grid' }));
+      add(svg, S.text(xx, 296, v + '%', 'viz-axis', { 'text-anchor': 'middle' }));
     });
-    add(svg, S.text(leftX0 - 34, (plotT + plotB) / 2, 'percent', 'viz-axis', { 'text-anchor': 'middle', transform: 'rotate(-90 ' + (leftX0 - 34) + ' ' + ((plotT + plotB) / 2) + ')' }));
-
-    var n = cliff.length;
-    var band = (leftX1 - leftX0) / n;
-    var bw = Math.min(46, band * 0.62);
-    cliff.forEach(function (d, i) {
-      var cx = leftX0 + band * (i + 0.5);
-      var top = ly(d.v);
-      add(svg, S.el('rect', { x: cx - bw / 2, y: top, width: bw, height: Math.max(0, plotB - top), rx: 2, fill: d.col, opacity: 0.92 }));
-      /* value label above bar */
-      add(svg, S.text(cx, top - 5, d.v.toFixed(1).replace(/\.0$/, '') + '%', 'viz-axis', { 'text-anchor': 'middle', fill: P.goldHi }));
-      /* two-line category label below axis */
-      add(svg, S.text(cx, plotB + 16, d.label, 'viz-axis', { 'text-anchor': 'middle' }));
-      add(svg, S.text(cx, plotB + 29, d.sub, 'viz-axis', { 'text-anchor': 'middle' }));
+    rows.forEach(function (d, i) {
+      var yy = 54 + i * 58;
+      add(svg, S.text(215, yy + 20, d.label, 'viz-axis', { 'text-anchor': 'end' }));
+      add(svg, S.el('rect', { x: x(0), y: yy, width: x(d.v) - x(0), height: 29, rx: 2, fill: d.col }));
+      add(svg, S.text(x(d.v) + 7, yy + 20, d.v + '%', 'viz-axis', { fill: P.goldHi }));
     });
-
-    /* ===== RIGHT: the V-then-climb line ===== */
-    var rx = S.scale(1936, 2022, rightX0, rightX1);
-    var ry = S.scale(0, 100, plotB, plotT);
-    /* y grid (shared 0..100, labels on the right edge to avoid clutter) */
-    [0, 25, 50, 75, 100].forEach(function (g) {
-      var yy = ry(g);
-      add(svg, S.el('line', { x1: rightX0, y1: yy, x2: rightX1, y2: yy, class: 'viz-grid', opacity: g === 0 ? 0.9 : 0.4 }));
-      add(svg, S.text(rightX1 + 4, yy + 3.5, String(g), 'viz-axis', { 'text-anchor': 'start' }));
-    });
-    /* x ticks at decade-ish anchors */
-    [1940, 1960, 1980, 2000, 2020].forEach(function (yr) {
-      var xx = rx(yr);
-      add(svg, S.text(xx, plotB + 16, String(yr), 'viz-axis', { 'text-anchor': 'middle' }));
-      add(svg, S.el('line', { x1: xx, y1: plotB, x2: xx, y2: plotB + 4, class: 'viz-grid', opacity: 0.6 }));
-    });
-
-    var pts = curve.map(function (d) { return [rx(d.yr), ry(d.v)]; });
-    /* faint fill under the curve */
-    add(svg, S.el('path', { d: S.area(pts, plotB), fill: P.gold, opacity: 0.08 }));
-    add(svg, S.el('path', { d: S.line(pts), fill: 'none', stroke: P.gold, 'stroke-width': 2.2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-
-    /* mark + annotate the nadir (1972, 22%) and the first peak (1982, 61.9%) */
-    curve.forEach(function (d) {
-      var px = rx(d.yr), py = ry(d.v);
-      var isMark = d.yr === 1972 || d.yr === 1982 || d.yr === 2022;
-      add(svg, S.el('circle', { cx: px, cy: py, r: isMark ? 3.6 : 2.4, fill: isMark ? P.goldHi : P.gold, stroke: '#2a322b', 'stroke-width': 1 }));
-    });
-    /* nadir callout */
-    var nx = rx(1972), nyy = ry(22);
-    add(svg, S.text(nx + 2, nyy + 16, 'nadir 22% (1972)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
-    /* peak callout */
-    var pkx = rx(1982), pky = ry(61.9);
-    add(svg, S.text(pkx + 4, pky - 8, 'peak 61.9% (1982)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
-    /* modern endpoint */
-    add(svg, S.text(rx(2022), ry(85.7) - 8, '85.7% (2022)', 'viz-axis', { 'text-anchor': 'end', fill: P.goldHi }));
-
-    /* ---- accessibility + attach ---- */
-    svg.setAttribute('aria-label',
-      'Two panels on US breastfeeding. Left, the 2022 duration cliff from the CDC National Immunization Survey: 85.7 percent of infants are ever breastfed, but only 62.1 percent are still getting any breast milk at 6 months, 40.8 percent at 12 months, and just 27.9 percent are exclusively breastfed to 6 months. Right, a century of initiation falls from 77 percent in the late 1930s to a nadir of 22 percent in 1972, climbs to a 61.9 percent peak in 1982, dips to about 52 percent by 1989, and rises again to 85.7 percent by 2022, showing breastfeeding tracks culture, not nature.');
+    svg.setAttribute('aria-label', 'US 2022 birth cohort, CDC National Immunization Survey-Child. Ever breastfed 85.7 percent, any breast milk at six months 62.1 percent, any at twelve months 40.8 percent, exclusive through six months 27.9 percent. These selected measures do not locate a precise drop or establish a cause.');
     add(fig, svg);
-
-    note(fig,
-      'High start, steep fall. Most US babies start breastfeeding, but exclusive breastfeeding to 6 months and any breastfeeding at a year are far lower, and the steepest drop sits around the 6-month return-to-work cliff. The century curve shows the same behavior nearly vanished by 1972 and was rebuilt by culture and policy. ' +
-      '<span class="src">Source: CDC National Immunization Survey-Child, 2022 birth cohort (ever 85.7%, any at 6 mo 62.1%, exclusive to 6 mo 27.9%, any at 12 mo 40.8%); historical initiation from IOM <i>Nutrition During Lactation</i> (1991), the Ross Mothers Survey, and CDC NIS.</span>');
-
-    dataTable(fig, 'US breastfeeding, 2022 birth cohort (percent)',
-      ['Measure', 'Percent'],
-      [
-        ['Ever breastfed', '85.7'],
-        ['Any breast milk at 6 months', '62.1'],
-        ['Any breast milk at 12 months', '40.8'],
-        ['Exclusively breastfed to 6 months', '27.9']
-      ]);
-
-    dataTable(fig, 'US breastfeeding initiation over the century (percent)',
-      ['Year', 'Initiation', 'Series'],
-      curve.map(function (d) { return [String(d.yr), d.v.toFixed(1), d.src]; }));
+    note(fig, 'Dated estimates for the US 2022 birth cohort, based on recalled feeding histories in a telephone survey of households with children aged 19 to 35 months. Exclusive means breast milk without other liquids or solids. The table gives the reported half-widths of 95% confidence intervals. These measures describe feeding at selected stages, without identifying why families continued or stopped. <span class="src">Sources: <a href="https://www.cdc.gov/breastfeeding-data/survey/results.html">CDC national results</a> and <a href="https://www.cdc.gov/breastfeeding-data/survey/methodology.html">survey methods</a>. Newer cohorts are available at the results link.</span>');
+    dataTable(fig, 'US breastfeeding, 2022 birth cohort', ['Measure', 'Percent', 'Half 95% CI (percentage points)'], rows.map(function (d) { return [d.label, String(d.v), String(d.ci)]; }));
   };
 
   /* ====================================================================== */
@@ -1167,8 +790,8 @@
     add(fig, svg);
 
     note(fig,
-      'A quick reference: 4 hours on the counter, 4 days in the fridge, about 6 months in the freezer (up to 12 acceptable). Thawed milk lasts 24 hours, warmed milk 2 hours, and you never refreeze. Store toward the back, not the door, and do not microwave. ' +
-      '<span class="src">Source: CDC, Breast Milk Storage and Preparation (updated March 25, 2026), cross-checked against ABM Clinical Protocol #8 (2017), which allows longer fridge times for very cleanly expressed milk.</span>');
+      'For freshly expressed milk: up to four hours at 25 C or colder, four days refrigerated, and about six months frozen for best quality (up to twelve acceptable). Once completely thawed in the refrigerator, use within twenty-four hours; once warmed or brought to room temperature, within two hours. Do not refreeze or microwave. The care team may give a different storage plan for a sick or premature infant. ' +
+      '<span class="src"><a href="https://www.cdc.gov/breastfeeding/breast-milk-preparation-and-storage/handling-breastmilk.html">CDC, Breast Milk Storage and Preparation</a> (updated August 14, 2026; reviewed March 25, 2026).</span>');
 
     dataTable(fig, 'CDC milk-storage guidelines, freshly expressed milk',
       ['Location or step', 'Limit', 'Temperature'],
@@ -1191,8 +814,8 @@
    An overlay of the WHO and CDC median (50th percentile)
    weight-for-age curves, birth to 24 months. The two lines
    nearly coincide at 6 months, then the CDC reference median
-   runs about 6 to 7 percent heavier by 12 months because the
-   CDC 2000 sample was largely formula-fed, while the WHO 2006
+   runs about 6 to 7 percent heavier by 12 months. The references
+   differ in study populations, feeding criteria and methods. WHO
    standard is built from healthy, predominantly breastfed
    babies. That is why a breastfed baby can look like it "fell
    off the curve" when the chart, not the baby, changed.
@@ -1219,7 +842,7 @@
      than the ~8 percent you get from the half-month-older raw row).
 
    The age-matched gap this reproduces (deep dive, computed
-   2026-06-01, grade A): boys 6 mo WHO 7.934 vs CDC 7.897
+   2026-06-01, source-linked): boys 6 mo WHO 7.934 vs CDC 7.897
    (-0.5%); boys 12 mo WHO 9.648 vs CDC 10.310 (+0.662 kg,
    +6.9%); girls 6 mo WHO 7.297 vs CDC 7.211 (-1.2%); girls
    12 mo WHO 8.948 vs CDC 9.516 (+0.568 kg, +6.4%).
@@ -1415,9 +1038,9 @@
     svg.appendChild(S.text((X0 + X1) / 2, 18, 'Median weight-for-age: WHO standard vs CDC reference', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 13 }));
     var lg = S.el('g', { transform: 'translate(' + X0 + ' 34)' }, svg);
     S.el('line', { x1: 0, y1: -3, x2: 20, y2: -3, stroke: P.gold, 'stroke-width': 2.6 }, lg);
-    lg.appendChild(S.text(26, 0, 'WHO standard (mostly breastfed)', 'viz-axis', { fill: P.gold }));
+    lg.appendChild(S.text(26, 0, 'WHO growth standard', 'viz-axis', { fill: P.gold }));
     S.el('line', { x1: 270, y1: -3, x2: 290, y2: -3, stroke: P.call, 'stroke-width': 2.4, 'stroke-dasharray': '6 4' }, lg);
-    lg.appendChild(S.text(296, 0, 'CDC reference (mostly formula-fed)', 'viz-axis', { fill: P.call }));
+    lg.appendChild(S.text(296, 0, 'CDC 2000 reference', 'viz-axis', { fill: P.call }));
 
     /* ---- accessibility, updated per sex ---- */
     function updateAria(d) {
@@ -1428,8 +1051,8 @@
         'Line chart overlaying median weight-for-age from birth to 24 months for ' + sexWord + ', the WHO Child Growth Standard against the CDC 2000 reference. ' +
         'At 6 months the two medians nearly coincide (WHO ' + w6.toFixed(2) + ' kg, CDC ' + c6.toFixed(2) + ' kg, a difference of ' + d.gap6 + '). ' +
         'By 12 months the CDC reference median runs heavier: WHO ' + w12.toFixed(2) + ' kg versus CDC ' + c12.toFixed(2) + ' kg, a gap of ' + d.gap12kg + ' kg, about ' + d.gap12pct + '. ' +
-        'The WHO standard is built from healthy, predominantly breastfed babies; the CDC reference sample was largely formula-fed. ' +
-        'This is why a breastfed baby can look like it fell off the curve when the chart, not the baby, changed.');
+        'The references have different study populations, feeding criteria and methods. ' +
+        'These population medians do not establish the cause of an individual baby’s growth pattern. Interpret the baby’s measurements and trend with their clinician.');
     }
 
     /* attach: controls first (above the svg), then the figure caption is
@@ -1438,10 +1061,7 @@
     fig.appendChild(svg);
     draw();
 
-    note(fig,
-      'Same baby, two charts. The clinic chart under age 2 (the <b>WHO standard</b>, solid) is built from healthy, mostly breastfed babies; many online charts use the older <b>CDC reference</b> (dashed), built largely from formula-fed babies. The two medians agree closely at 6 months, but by 12 months the CDC line runs about <b>6 to 7 percent heavier</b> (' +
-      'boys +0.66 kg / +6.9%, girls +0.57 kg / +6.4%). So a breastfed baby tracking the WHO chart perfectly can look like it "fell off the curve" on a CDC chart. The chart changed, not the baby. ' +
-      '<span class="src">Source: WHO Child Growth Standards 2006 and CDC 2000 reference, weight-for-age median (LMS M value) by sex; WHO files via CDC (cdc.gov/growthcharts/who-data-files.htm), CDC infant file wtageinf.csv; CDC medians age-matched to integer months by linear interpolation. Computed 2026.</span>');
+    note(fig, 'The US CDC recommends WHO growth standards from birth to age two. WHO and CDC charts differ in their study populations, feeding criteria and construction; the difference cannot be assigned entirely to feeding. At twelve months the age-matched CDC median is about 6 to 7 percent heavier. These are population references, not targets or proof that a child is thriving. WHO values are published monthly medians; CDC medians are linearly interpolated from half-month rows, and the lines connect selected three-month points. <span class="src"><a href="https://www.cdc.gov/growthcharts/who-data-files.htm">WHO files</a>; <a href="https://www.cdc.gov/growthcharts/data/zscore/wtageinf.csv">CDC infant LMS file</a>; <a href="https://www.cdc.gov/growth-chart-training/hcp/using-growth-charts/who-using.html">CDC chart guidance</a></span>');
 
     /* accessible fallback: mirrors the section noscript table, both sexes */
     dataTable(fig, 'Median weight-for-age (kg), WHO standard vs CDC reference, age-matched',
@@ -1465,10 +1085,10 @@
                                consumption) at age 5, with the
                                LEAP-Trio durability point at ~age 13.
      FY.viz["colic-remedies"]  an evidence scorecard of marketed colic
-                               and gas remedies: measured effect plus
-                               strength-of-recommendation (SOR) grade.
-   Every number is real and cited in the viz-note and aria-label.
-   Framework-free, defensive, no console errors. No em dashes anywhere.
+                               and gas remedies: selected findings with
+                               source-specific outcomes and limits.
+   Global estimates and registered US counts have different methods and age ranges.
+   See the linked current sources and dated labels.
    ============================================================ */
 (function () {
   'use strict';
@@ -1542,12 +1162,12 @@
 
     /* panel titles */
     add(svg, S.text((leftX0 + leftX1) / 2, 16, 'Peanut allergy at age 5 (LEAP)', 'viz-label', { 'text-anchor': 'middle', fill: P.parch }));
-    add(svg, S.text((rightX0 + rightX1) / 2, 16, 'Still protected at age 13 (LEAP-Trio)', 'viz-label', { 'text-anchor': 'middle', fill: P.parch }));
+    add(svg, S.text((rightX0 + rightX1) / 2, 16, 'Follow-up at mean age 13 (LEAP-Trio)', 'viz-label', { 'text-anchor': 'middle', fill: P.parch }));
 
     /* shared y domain 0..20 percent (max observed value is 17.2) */
     var yMax = 20;
 
-    /* ===== LEFT: paired before/after bars ===== */
+    /* ===== LEFT: randomized-group comparison at age 5 ===== */
     var ly = S.scale(0, yMax, plotB, plotT);
     [0, 5, 10, 15, 20].forEach(function (g) {
       var yy = ly(g);
@@ -1614,14 +1234,15 @@
     add(svg, S.el('rect', { x: rightX0 + 6, y: plotT + 18, width: 10, height: 10, rx: 2, fill: P.ok }));
     add(svg, S.text(rightX0 + 20, plotT + 27, 'ate peanut early', 'viz-axis', { 'text-anchor': 'start', fill: P.dim }));
 
-    /* ---- accessibility + attach ---- */
     svg.setAttribute('aria-label',
-      'Two panels on early peanut introduction from the LEAP trial of high-risk infants. Left, peanut allergy at age 5 was 17.2 percent in children who avoided peanut versus 3.2 percent in children who ate peanut from infancy, about an 81 percent relative reduction. Right, the protection lasted into adolescence: at a mean age of 13 the LEAP-Trio follow-up found 15.4 percent allergic in the avoidance group versus 4.4 percent in the early-eating group, a 71 percent relative reduction.');
+      'LEAP trial peanut allergy at age 5: 17.2 percent in avoidance versus 3.2 percent in consumption. Infants entered at 4 to less than 11 months with severe eczema, egg allergy, or both; baseline skin testing and food challenges determined suitability. Infants with skin-test wheals greater than 4 millimeters were excluded. ' +
+      'LEAP-Trio follow-up at mean age 13 found 15.4 percent versus 4.4 percent among 497 children with outcome data, of 640 originally randomized. Subsequent diets were not randomized. The endpoints use different retained samples; connecting lines do not establish an individual trajectory or a home-challenge protocol.');
     add(fig, svg);
 
     note(fig,
-      'Eating peanut early, and keeping it in the diet, cut peanut allergy at age 5 by about 80 to 81 percent in high-risk infants, and the protection held into the teen years even without strict ongoing dosing. This reversed decades of advice to delay allergens. The trial enrolled infants with severe eczema or egg allergy, so families with a high-risk baby should ask their doctor about timing. ' +
-      '<span class="src">Source: Du Toit et al., LEAP, New England Journal of Medicine 2015;372:803 (overall intention-to-treat, age 5: 17.2% avoidance vs 3.2% consumption); durability from LEAP-Trio, NEJM Evidence 2024;3(7):EVIDoa2300311 (mean age ~13: 15.4% vs 4.4%, 71% relative reduction).</span>');
+      'LEAP randomly assigned 640 high-risk infants, aged 4 to less than 11 months with severe eczema, egg allergy, or both. Baseline skin testing and clinician-supervised challenges mattered: infants with wheals greater than 4 mm were excluded, and those who reacted to the consumption-group baseline challenge were told to avoid peanut. These are trial results, not instructions for a home challenge. Families with a high-risk infant should discuss assessment and introduction with their clinician. ' +
+      'LEAP-Trio enrolled 508 original participants and determined allergy status in 497, at a mean age of 13. Food challenge established most outcomes; intake history and a biomarker prediction model supplied others. After LEAP-On, diets were unrestricted for nonallergic participants. The lower allergy rate remained associated with the original assignment; this follow-up did not randomize later diets or guarantee a lifetime result. ' +
+      '<span class="src"><a href="https://media.mycme.com/documents/115/du_toit_2015_28582.pdf">Du Toit et al., LEAP 2015, original paper mirror</a>; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12875682/">LEAP-Trio 2024, original follow-up</a>.</span>');
 
     dataTable(fig, 'LEAP peanut allergy by group (percent allergic)',
       ['Timepoint', 'Avoided peanut', 'Ate peanut early'],
@@ -1633,80 +1254,53 @@
 
   /* ====================================================================== */
   /* 2. FY.viz["colic-remedies"]                                             */
-  /*    A graded evidence scorecard: each marketed colic or gas remedy with  */
-  /*    its measured effect and a strength-of-recommendation (SOR) grade.    */
-  /*    Rows drawn as a clean ledger; SOR shown as a colored chip.           */
+  /*    Selected findings from maternal-diet and probiotic trials, with  */
+  /*    its measured outcome, population and uncertainty.    */
+  /*    Rows state study-specific results rather than invented evidence grades.           */
   /* ====================================================================== */
   FY.viz['colic-remedies'] = function (fig) {
     if (!fig) return;
-    var W = 720, H = 380;
+    var W = 720, H = 318;
     var svg = S.make(W, H);
-
-    /* Each row: remedy, the measured effect, an SOR grade, and a verdict tone.
-       grade drives the chip color; tone is "good" / "weak" / "none". */
     var rows = [
-      { remedy: 'Low-allergen maternal diet', detail: '137 vs 51 min/day crying (breastfed)', grade: 'A', tone: 'good' },
-      { remedy: 'Hydrolyzed formula', detail: 'significant crying reduction (formula-fed)', grade: 'A', tone: 'good' },
-      { remedy: 'L. reuteri DSM 17938', detail: '-25.4 min/day overall; -61 in breastfed only', grade: 'B', tone: 'weak' },
-      { remedy: 'Simethicone (gas drops)', detail: 'no better than placebo', grade: 'X', tone: 'none' },
-      { remedy: 'Gripe water', detail: 'no trial data; may cause harm', grade: '?', tone: 'none' },
-      { remedy: 'Burping', detail: 'no benefit (aRR 0.64, NS); more spit-up', grade: 'X', tone: 'none' }
+      { intervention: 'Maternal low-allergen diet, one-week trial',
+        finding: '74% versus 37% achieved at least 25% less crying/fussing',
+        scope: 'Hill 2005: 90 completers, exclusively breastfed; 48-hour diaries' },
+      { intervention: 'L. reuteri DSM 17938, overall pooled estimate',
+        finding: 'Day 21: -25.4 minutes/day (95% CI -47.3 to -3.5)',
+        scope: 'Sung 2018: four trials, 345 infants; adjusted change difference' },
+      { intervention: 'L. reuteri DSM 17938, breastfed subgroup',
+        finding: 'Day 21: -46.4 minutes/day (95% CI -67.2 to -25.5)',
+        scope: 'Formula-fed evidence came from one trial and was insufficient' }
     ];
-
-    function chipColor(tone) {
-      if (tone === 'good') return P.ok;
-      if (tone === 'weak') return P.call;
-      return P.emerg;
-    }
-    function gradeText(g) {
-      if (g === 'A') return 'SOR A';
-      if (g === 'B') return 'SOR B';
-      if (g === 'X') return 'no benefit';
-      return 'no data';
-    }
-
-    /* title */
-    add(svg, S.text(W / 2, 22, 'Colic and gas remedies: does it beat placebo?', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 15 }));
-    add(svg, S.text(W / 2, 40, 'Measured effect and strength-of-recommendation grade', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
-
-    /* ledger layout */
-    var marg = 16;
-    var top = 58;
-    var rowH = 48;
-    var gap = 6;
-    var colChipX = W - marg - 96; /* left edge of the grade chip column */
-    var chipW = 96, chipH = 26;
-
+    add(svg, S.text(W / 2, 23, 'Selected colic-treatment trial findings', 'viz-label', {
+      'text-anchor': 'middle', fill: P.parch, 'font-size': 15
+    }));
+    add(svg, S.text(W / 2, 43, 'Different interventions, outcomes and populations', 'viz-axis', {
+      'text-anchor': 'middle', fill: P.dim
+    }));
     rows.forEach(function (d, i) {
-      var y = top + i * (rowH + gap);
-      var cy = y + rowH / 2;
-      var col = chipColor(d.tone);
-      /* row card */
-      add(svg, S.el('rect', { x: marg, y: y, width: W - marg * 2, height: rowH, rx: 8, fill: 'rgba(0,0,0,0.16)', stroke: P.rule, 'stroke-width': 1 }));
-      /* left accent keyed to the verdict */
-      add(svg, S.el('rect', { x: marg, y: y, width: 5, height: rowH, rx: 2.5, fill: col }));
-      /* remedy name */
-      add(svg, S.text(marg + 18, cy - 3, d.remedy, 'viz-label', { 'text-anchor': 'start', fill: P.parch, 'font-size': 13 }));
-      /* measured effect, dim, mono-friendly */
-      add(svg, S.text(marg + 18, cy + 14, d.detail, 'viz-axis', { 'text-anchor': 'start', fill: P.dim, 'font-size': 11 }));
-      /* grade chip */
-      add(svg, S.el('rect', { x: colChipX, y: cy - chipH / 2, width: chipW, height: chipH, rx: 13, fill: 'rgba(0,0,0,0.22)', stroke: col, 'stroke-width': 1.4 }));
-      add(svg, S.text(colChipX + chipW / 2, cy + 4, gradeText(d.grade), 'viz-label', { 'text-anchor': 'middle', fill: col, 'font-size': 12 }));
+      var y = 60 + i * 78;
+      add(svg, S.el('rect', { x: 16, y: y, width: W - 32, height: 70, rx: 8,
+        fill: 'rgba(0,0,0,0.16)', stroke: P.rule, 'stroke-width': 1 }));
+      add(svg, S.text(32, y + 21, d.intervention, 'viz-label', {
+        'text-anchor': 'start', fill: P.parch, 'font-size': 13
+      }));
+      add(svg, S.text(32, y + 40, d.finding, 'viz-axis', {
+        'text-anchor': 'start', fill: P.dim, 'font-size': 12
+      }));
+      add(svg, S.text(32, y + 58, d.scope, 'viz-axis', {
+        'text-anchor': 'start', fill: P.dim, 'font-size': 11
+      }));
     });
-
-    /* ---- accessibility + attach ---- */
-    svg.setAttribute('aria-label',
-      'An evidence scorecard for infant colic and gas remedies. A maternal low-allergen diet (137 versus 51 minutes of crying a day) and extensively hydrolyzed formula both rate strength of recommendation A. The probiotic L. reuteri DSM 17938 reduces crying by about 25 minutes a day overall and about 61 minutes in breastfed infants and rates B, breastfed only. Simethicone gas drops are no better than placebo, gripe water has no trial data and may cause harm, and burping does not reduce colic and increases spit-up.');
+    svg.setAttribute('aria-label', 'Selected study-specific colic-treatment findings. In Hill’s one-week maternal-diet trial, 74 percent versus 37 percent of ninety completing exclusively breastfed infants achieved at least a 25 percent reduction in crying and fussing recorded over forty-eight hours. Sung’s four-trial meta-analysis included 345 infants: the adjusted day-twenty-one change difference was minus 25.4 minutes per day overall, with a 95 percent confidence interval from minus 47.3 to minus 3.5, and minus 46.4 in the breastfed subgroup, with an interval from minus 67.2 to minus 25.5. Formula-fed evidence was insufficient. These findings are not general treatment instructions.');
     add(fig, svg);
-
-    note(fig,
-      'Most marketed colic cures do not beat placebo. The two interventions with the strongest evidence target a cow-milk-protein-allergy subset: a low-allergen diet for breastfeeding parents and hydrolyzed formula for formula-fed babies. The probiotic L. reuteri helps breastfed infants only, and is still just a weak recommendation. Simethicone, gripe water, and routine burping are the classic marketing-as-science traps. Reassurance and soothing come first; colic is the high end of the normal crying curve, not a disease. ' +
-      '<span class="src">Source: American Family Physician, "Infantile Colic" (Oct 1, 2015) SOR table; L. reuteri pooled effect from Sung et al., Pediatrics 2018;141(1):e20171811 (-25.4 min/day, breastfed NNT 2.6) with the 61 min/day breastfed subgroup from AFP 2015; burping from Kaur et al. 2015 (adjusted RR 0.64, not significant).</span>');
-
-    dataTable(fig, 'Colic and gas remedies, measured effect and grade',
-      ['Remedy', 'Measured effect', 'Grade'],
-      rows.map(function (d) { return [d.remedy, d.detail, gradeText(d.grade)]; }));
+    note(fig, 'Hill randomized 107 mother-infant pairs; ninety completed the seven-day study. Mothers could not be blinded to their diet, and crying/fussing was recorded in parental diaries. Sung pooled individual data from four double-blind trials of the specific strain L. reuteri DSM 17938. Its figures are adjusted between-group differences in change from baseline, rather than raw before-and-after minutes. Only one trial supplied formula-fed infants; results should not be generalized to other strains or all infants. Assessment of feeding, growth and illness comes first. Discuss a suspected allergy or a probiotic trial with the clinical team. <span class="src"><a href="https://pubmed.ncbi.nlm.nih.gov/16263986/">Hill 2005, DOI 10.1542/peds.2005-0147</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/29279326/">Sung 2018, DOI 10.1542/peds.2017-1811</a></span>');
+    dataTable(fig, 'Selected colic-treatment trial findings and population limits',
+      ['Intervention', 'Finding', 'Population and measurement'],
+      rows.map(function (d) { return [d.intervention, d.finding, d.scope]; }));
   };
+
 })();
 
 
@@ -1733,7 +1327,7 @@
   var DATA = [
     { name: 'Sitting without support',    p1: 3.8, med: 5.9,  p99: 9.2  },
     { name: 'Standing with assistance',   p1: 4.8, med: 7.4,  p99: 11.4 },
-    { name: 'Hands and knees crawling',   p1: 5.2, med: 8.3,  p99: 13.5, note: '4.3% of healthy babies skip it' },
+    { name: 'Hands and knees crawling',   p1: 5.2, med: 8.3,  p99: 13.5, note: '4.3% were not observed to crawl in this study cohort' },
     { name: 'Walking with assistance',    p1: 5.9, med: 9.0,  p99: 13.7 },
     { name: 'Standing alone',             p1: 6.9, med: 10.8, p99: 16.9 },
     { name: 'Walking alone',              p1: 8.2, med: 12.0, p99: 17.6 }
@@ -1776,13 +1370,13 @@
         x1: gxp, y1: m.top - 4, x2: gxp, y2: m.top + plotH,
         class: 'viz-grid', stroke: P.rule, 'stroke-width': 1
       }, gx);
-      FY.svg.text(gxp, m.top + plotH + 20, String(t), 'viz-axis', { 'text-anchor': 'middle' });
+      svg.appendChild(FY.svg.text(gxp, m.top + plotH + 20, String(t), 'viz-axis', { 'text-anchor': 'middle' }));
     }
 
     // X axis title.
-    FY.svg.text(m.left + plotW / 2, m.top + plotH + 42, 'Age in months', 'viz-label', {
+    svg.appendChild(FY.svg.text(m.left + plotW / 2, m.top + plotH + 42, 'Age in months', 'viz-label', {
       'text-anchor': 'middle', fill: P.dim
-    });
+    }));
 
     // Baseline rule under the bars (the x axis line itself).
     FY.svg.el('line', {
@@ -1801,11 +1395,11 @@
       var col = colors[i % colors.length];
 
       // Milestone name in the left gutter, right aligned to the bars.
-      FY.svg.text(m.left - 12, cy + 4, d.name, 'viz-axis', {
+      svg.appendChild(FY.svg.text(m.left - 12, cy + 4, d.name, 'viz-axis', {
         'text-anchor': 'end', fill: P.parch
-      });
+      }));
 
-      // The 1st-to-99th range bar (the "band of normal").
+      // The published reference interval, not a diagnostic boundary.
       FY.svg.el('rect', {
         x: x0, y: cy - barH / 2, width: Math.max(1, x1 - x0), height: barH,
         rx: barH / 2, ry: barH / 2,
@@ -1820,9 +1414,9 @@
       FY.svg.el('circle', { cx: xm, cy: cy, r: 4.5, fill: col, stroke: '#1c241e', 'stroke-width': 1 }, bars);
 
       // Median value, just past the right end of the band, in mono numerals.
-      FY.svg.text(x1 + 8, cy + 4, mo(d.med), 'viz-axis', {
+      svg.appendChild(FY.svg.text(x1 + 8, cy + 4, mo(d.med), 'viz-axis', {
         'text-anchor': 'start', fill: P.dim
-      });
+      }));
     });
 
     // ---- Small inline legend (band = range, dot = median) ----
@@ -1830,21 +1424,21 @@
     var lgy = m.top - 10;
     var lgx = m.left;
     FY.svg.el('rect', { x: lgx, y: lgy - 5, width: 26, height: 10, rx: 5, ry: 5, fill: P.dim, 'fill-opacity': 0.22, stroke: P.dim, 'stroke-opacity': 0.7, 'stroke-width': 1 }, lg);
-    FY.svg.text(lgx + 32, lgy + 4, '1st to 99th percentile', 'viz-axis', { fill: P.dim });
+    svg.appendChild(FY.svg.text(lgx + 32, lgy + 4, '1st to 99th percentile', 'viz-axis', { fill: P.dim }));
     var dotx = lgx + 196;
     FY.svg.el('circle', { cx: dotx, cy: lgy, r: 4.5, fill: P.dim, stroke: '#1c241e', 'stroke-width': 1 }, lg);
-    FY.svg.text(dotx + 10, lgy + 4, 'median', 'viz-axis', { fill: P.dim });
+    svg.appendChild(FY.svg.text(dotx + 10, lgy + 4, 'median', 'viz-axis', { fill: P.dim }));
 
     // ---- Accessible spoken summary with the key numbers ----
     svg.setAttribute('aria-label',
       'Range bars of six WHO gross-motor milestones on a months axis, each spanning the 1st to 99th percentile with the median marked. ' +
       'Sitting without support, 3.8 to 9.2 months (median 5.9). ' +
       'Standing with assistance, 4.8 to 11.4 months (median 7.4). ' +
-      'Hands and knees crawling, 5.2 to 13.5 months (median 8.3), and 4.3 percent of healthy babies skip it. ' +
+      'Hands and knees crawling, 5.2 to 13.5 months (median 8.3), and 4.3 percent were not observed to crawl in this study cohort. ' +
       'Walking with assistance, 5.9 to 13.7 months (median 9.0). ' +
       'Standing alone, 6.9 to 16.9 months (median 10.8). ' +
       'Walking alone, 8.2 to 17.6 months (median 12.0). ' +
-      'Normal is a band, not a line. Source: WHO Motor Development Study, MGRS, Acta Paediatrica 2006.');
+      'These are reference-population percentiles, not limits for seeking assessment. Source: WHO Motor Development Study, MGRS, Acta Paediatrica 2006.');
 
     // Append the svg after the existing figcaption.
     fig.appendChild(svg);
@@ -1852,10 +1446,7 @@
     // ---- Reassuring caption plus source ----
     var note = document.createElement('p');
     note.className = 'viz-note';
-    note.textContent = 'Normal is a band, not a line. Walking alone is normal anywhere from 8 to 17.6 months. ' +
-      'Each bar shows where perfectly healthy babies land (1st to 99th percentile); the dot is about average. ' +
-      'Being later than the dot is common and usually nothing. The order is loose too, and 4.3 percent of healthy babies never crawl on hands and knees. ' +
-      'Source: WHO Motor Development Study (MGRS), Windows of Achievement for six gross-motor milestones, Acta Paediatrica 2006, Suppl 450:86 to 95 (n=816; Ghana, India, Norway, Oman, USA).';
+    note.textContent = 'The bars show published first-to-ninety-ninth percentile ages in the selected WHO study population, with the median marked. They do not define every healthy child or establish a safe deadline for referral. Discuss a missed milestone, asymmetry or any lost skill promptly with the clinician. Source: WHO Motor Development Study, Acta Paediatrica 2006, Supplement 450:86 to 95.';
     fig.appendChild(note);
 
     // ---- Accessible data table fallback (the underlying numbers) ----
@@ -1897,54 +1488,7 @@
 
 
 /* module: money-mh.js */
-/* ============================================================
-   THE FIRST YEAR, money and maternal-mental-health charts module.
-   Three visualizations for the caregiver / logistics domain:
-     FY.viz["childcare-cost"]  ranked bars putting US average infant
-                               care ($13,128, 2024) next to the things
-                               it now exceeds: median rent, in-state
-                               public college tuition, and the childcare
-                               workforce's own median wage, plus the
-                               childcare-prices-vs-CPI inflation gap.
-     FY.viz["paid-leave"]      a sorted bar of paid leave for mothers by
-                               country, measured in full-rate-equivalent
-                               weeks (OECD PF2.1, April 2025), with the
-                               United States alone at zero and a note on
-                               the within-US state lottery.
-     FY.viz["maternal-mh"]     a ranked cause bar of US pregnancy-related
-                               death with mental-health conditions on top
-                               (the single largest category, ~23%, mostly
-                               preventable), and a note that the danger
-                               runs late, about a third of deaths falling
-                               in the 43-day-to-1-year postpartum window.
-   Every number is real and cited in the viz-note and aria-label.
-   Framework-free, defensive, clean console. No em dashes anywhere.
-
-   Sourcing and corrections applied (see corrections-to-apply.md):
-   - Childcare national average $13,128 and "+29% childcare vs +22% CPI,
-     2020 to 2024" are Child Care Aware of America 2024 Price of Care
-     (the figures the dataset-viz-plan pins). The 2025 CCAoA report
-     (released 2026-05-14) updates the average to $13,184 and the single-
-     parent share to 33%; we lead with the 2024 figures the plan calls
-     for and footnote the 2025 refresh so nothing is stale.
-   - "Exceeds rent in 49 states" is the CCAoA two-children-vs-rent
-     comparison; "more than in-state college tuition in 38 to 41 states"
-     spans EPI (38 states + DC, 2023 data) and CCAoA (41 states + DC,
-     2024), a real vintage-driven range, shown as a range not one number.
-   - Paid-leave weeks are the OECD Family Database PF2.1.A full-rate-
-     equivalent (FRE) weeks for mothers, "applicable as of April 2025."
-     FRE = weeks x average payment rate, the apples-to-apples measure.
-     The US is the only OECD country with no national paid leave (0.0).
-   - Maternal mental-health share: lead figure ~23% of pregnancy-related
-     deaths (CDC MMRC, 2017 to 2019, 36 states), the single largest
-     category, ~84% of all pregnancy-related deaths preventable and the
-     mental-health deaths essentially all preventable (Trost 2021,
-     37 of 37). We also note the newer pooled 2017 to 2021 MMRC headline
-     of 26.3% (released Dec 2023). Late-window timing: about a third of
-     all pregnancy-related deaths fall 43 days to 1 year postpartum
-     (37.8% in 2022), and the mental-health deaths cluster even later
-     (63% in that window, Trost 2021).
-   ============================================================ */
+/* Selected historical center-based infant childcare prices, OECD full-rate-equivalent leave comparisons and rounded 2017 to 2019 maternal mortality review categories. Dates, eligibility and denominator limits are stated in the chart notes. */
 (function () {
   'use strict';
   var FY = (window.FY = window.FY || { viz: {}, tool: {} });
@@ -1998,104 +1542,8 @@
   /*    honestly as a vintage-driven range, never a single fabricated count. */
   /* ====================================================================== */
   FY.viz['childcare-cost'] = function (fig) {
-    if (!fig) return;
-    var W = 720, H = 380;
-    var svg = S.make(W, H);
-
-    /* The comparison set. Infant care is the hero bar; the others are the
-       annual benchmarks it has overtaken in most states. Dollar values are
-       national figures from the captured datasets. */
-    var INFANT = 13128;          /* CCAoA 2024 national average infant care */
-    var RENT = 15216;            /* DOL NDCP median annual rent (2022) for context */
-    var TUITION = 11560;         /* approx US average in-state public 4yr tuition+fees */
-    var WAGE = 33140;            /* CCAoA 2024 childcare-worker median annual wage */
-
-    var BARS = [
-      { label: 'Infant care (US average)', v: INFANT, hero: true,
-        tag: 'exceeds rent in 49 states; more than college in 38 to 41' },
-      { label: 'Childcare worker median pay', v: WAGE, hero: false,
-        tag: 'two children in care = 44% to 100%+ of this wage' },
-      { label: 'Median annual rent', v: RENT, hero: false,
-        tag: 'NDCP median (2022)' },
-      { label: 'In-state public college (yr)', v: TUITION, hero: false,
-        tag: 'average tuition + fees' }
-    ];
-
-    var maxV = WAGE; /* the childcare wage is the widest bar */
-    var labelW = 196;
-    var x0 = labelW, x1 = W - 116;
-    var x = S.scale(0, maxV, x0, x1);
-    var plotTop = 78, plotBot = H - 118;
-
-    /* titles */
-    add(svg, S.text(W / 2, 20, 'Infant care costs more than rent, and often more than college', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 14.5 }));
-    add(svg, S.text(W / 2, 38, 'US average annual infant care vs the costs it has overtaken', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
-
-    /* dollar gridlines every $10k */
-    [0, 10000, 20000, 30000].forEach(function (g) {
-      if (g > maxV) return;
-      var xx = x(g);
-      add(svg, S.el('line', { x1: xx, y1: plotTop - 6, x2: xx, y2: plotBot, class: 'viz-grid', opacity: g === 0 ? 0.9 : 0.35 }));
-      add(svg, S.text(xx, plotBot + 16, g === 0 ? '$0' : '$' + (g / 1000) + 'k', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, 'font-size': 9.5 }));
-    });
-    add(svg, S.text((x0 + x1) / 2, plotBot + 32, 'Annual cost (US dollars)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
-
-    /* the bars */
-    var rowH = (plotBot - plotTop) / BARS.length;
-    var barH = Math.min(26, rowH * 0.5);
-    BARS.forEach(function (d, i) {
-      var cy = plotTop + rowH * (i + 0.5);
-      var col = d.hero ? P.emerg : (d.label.indexOf('worker') !== -1 ? P.plum : P.sky);
-      add(svg, S.text(x0 - 10, cy + 3.5, d.label, 'viz-axis', { 'text-anchor': 'end', fill: d.hero ? P.goldHi : P.parch, 'font-size': 11 }));
-      add(svg, S.el('rect', { x: x0, y: cy - barH / 2, width: Math.max(1, x(d.v) - x0), height: barH, rx: 2, fill: col, opacity: d.hero ? 0.95 : 0.78, stroke: d.hero ? P.goldHi : 'none', 'stroke-width': d.hero ? 1 : 0 }));
-      add(svg, S.text(x(d.v) + 8, cy + 3.5, usd(d.v), 'viz-axis', { 'text-anchor': 'start', fill: d.hero ? P.emerg : P.goldHi, 'font-size': 11 }));
-      /* small caption under each bar */
-      add(svg, S.text(x0 + 2, cy + barH / 2 + 12, d.tag, 'viz-axis', { 'text-anchor': 'start', fill: P.dim, 'font-size': 9 }));
-    });
-
-    /* inflation inset, bottom band: childcare +29% vs CPI +22% (2020 to 2024) */
-    var insetTop = plotBot + 46, insetH = 30;
-    var ix0 = x0, ix1 = ix0 + 150;
-    var ixs = S.scale(0, 29, ix0, ix1);
-    add(svg, S.text(ix0 - 10, insetTop + 4, 'Price growth', 'viz-axis', { 'text-anchor': 'end', fill: P.parch, 'font-size': 10 }));
-    add(svg, S.text(ix0 - 10, insetTop + 16, '2020 to 2024', 'viz-axis', { 'text-anchor': 'end', fill: P.dim, 'font-size': 9 }));
-    /* CPI bar (reference) then childcare bar (above it) */
-    add(svg, S.el('rect', { x: ix0, y: insetTop - 4, width: ixs(22) - ix0, height: 10, rx: 1.5, fill: P.dim, opacity: 0.6 }));
-    add(svg, S.text(ixs(22) + 6, insetTop + 4.5, 'overall CPI +22%', 'viz-axis', { 'text-anchor': 'start', fill: P.dim, 'font-size': 9.5 }));
-    add(svg, S.el('rect', { x: ix0, y: insetTop + 9, width: ixs(29) - ix0, height: 10, rx: 1.5, fill: P.call, opacity: 0.9 }));
-    add(svg, S.text(ixs(29) + 6, insetTop + 17.5, 'childcare +29%', 'viz-axis', { 'text-anchor': 'start', fill: P.call, 'font-size': 9.5 }));
-
-    /* the 7% affordability benchmark callout */
-    add(svg, S.text(W - 12, insetTop + 4, 'Affordable = 7% of income', 'viz-axis', { 'text-anchor': 'end', fill: P.ok, 'font-size': 9.5 }));
-    add(svg, S.text(W - 12, insetTop + 16, '(HHS benchmark, essentially', 'viz-axis', { 'text-anchor': 'end', fill: P.dim, 'font-size': 9 }));
-    add(svg, S.text(W - 12, insetTop + 27, 'no state meets it for infants)', 'viz-axis', { 'text-anchor': 'end', fill: P.dim, 'font-size': 9 }));
-
-    /* ---- accessibility + attach ---- */
-    svg.setAttribute('aria-label',
-      'Ranked bars comparing the US average annual cost of center-based infant care with the costs it now exceeds. ' +
-      'Average infant care is 13,128 dollars in 2024, which exceeds median rent in 49 states and is more than in-state public college tuition in 38 to 41 states. ' +
-      'For comparison, the median annual pay of a childcare worker is 33,140 dollars, median annual rent is about 15,216 dollars, and average in-state public college tuition and fees are about 11,560 dollars per year. ' +
-      'Two children in center care cost 44 percent to over 100 percent of a childcare worker’s wage. ' +
-      'Childcare prices rose about 29 percent from 2020 to 2024, faster than overall inflation of about 22 percent. ' +
-      'The federal affordability benchmark is 7 percent of family income, which essentially no state meets for infant care. ' +
-      'Sources: Child Care Aware of America 2024 Price of Care; US Department of Labor National Database of Childcare Prices; Economic Policy Institute.');
-    add(fig, svg);
-
-    note(fig,
-      'In the United States the average price of center-based infant care is about ' + usd(INFANT) + ' a year (2024), more than median rent in 49 states and more than a year of in-state public college tuition in 38 to 41 states (the range reflects which year’s data you use). ' +
-      'It is a bind, not a windfall: the people who provide the care earn a median of about ' + usd(WAGE) + ', so two children in care can cost more than a teacher makes. Prices have outrun inflation (childcare +29% vs overall CPI +22%, 2020 to 2024), and the federal affordability mark of 7% of family income is met essentially nowhere for infants. ' +
-      '<span class="src">Sources: Child Care Aware of America, <i>Catalyzing Growth: 2024 Price of Care</i> (national average $13,128; childcare-worker median wage $33,140; childcare +29% vs CPI +22%, 2020 to 2024; exceeds rent in 49 states and college tuition in 41 states + DC). US Department of Labor, Women’s Bureau, <i>National Database of Childcare Prices</i> (Sept 2024; median annual rent $15,216, 2022). Economic Policy Institute, <i>Child care costs in the United States</i> (March 2025, 2023 data; more than in-state public college in 38 states + DC). The 7% affordability benchmark is the US Dept of Health and Human Services standard. Note: the 2025 CCAoA report (released 2026-05-14) updates the national average to $13,184 and the single-parent share to 33%.</span>');
-
-    dataTable(fig, 'US average annual costs compared (national figures)',
-      ['Item', 'Annual cost', 'Note'],
-      [
-        ['Center-based infant care (US average, 2024)', usd(INFANT), 'Exceeds rent in 49 states; > college in 38 to 41'],
-        ['Childcare worker median pay (2024)', usd(WAGE), 'Two kids in care = 44% to 100%+ of this'],
-        ['Median annual rent (NDCP, 2022)', usd(RENT), 'Federal county-level dataset'],
-        ['In-state public college tuition + fees (yr)', usd(TUITION), 'Average; infant care tops it in most states'],
-        ['Childcare price growth, 2020 to 2024', '+29%', 'vs overall CPI +22%'],
-        ['Affordability benchmark (HHS)', '7% of income', 'Essentially unmet for infants nationwide']
-      ]);
+    var rows = [['Mississippi',7696],['Alabama',8632],['South Dakota',8632],['Texas',11349],['Florida',13011],['Ohio',13780],['New York',20439],['California',22628],['Maryland',25321],['District of Columbia',26193],['Massachusetts',26343]];
+    FY.dataPlot(fig,{bars:true,height:480,xmax:28000,title:'Annual center-based infant care: selected states',description:'2024 report values from Child Care Aware of America, Table I. Statewide averages are historical and not a current provider quote.',rows:rows,headers:['State','Annual infant center price, USD'],note:'These eleven selected values come from Table I of the 2024 affordability analysis. The report mixes 2025 survey responses with older market-rate data for states that did not respond, including several shown here. It is a dated comparison, not a current price quote or a national infant average. The original rent comparison described two children in care, not one infant. <a href="https://info.childcareaware.org/hubfs/Affordability_Analysis_2024.pdf">Child Care Aware of America, Table I and methodology</a>.'});
   };
 
   /* ====================================================================== */
@@ -2104,7 +1552,7 @@
   /*    weeks, OECD PF2.1.A (April 2025). FRE = weeks x average payment rate */
   /*    so a long low-paid entitlement and a short well-paid one compare     */
   /*    honestly. The United States is the lone bar at zero. A note covers   */
-  /*    the within-US "geographic lottery" of state programs.                */
+  /*    eligibility and the distinction from calendar weeks.                */
   /* ====================================================================== */
   FY.viz['paid-leave'] = function (fig) {
     if (!fig) return;
@@ -2123,8 +1571,6 @@
       { c: 'Australia', v: 9.2 },
       { c: 'United States', v: 0.0, us: true }
     ];
-    var OECD_AVG_LEN = 54.9; /* OECD average total maternity+parental length, weeks */
-
     var maxV = 82.1;
     var labelW = 150;
     var x0 = labelW, x1 = W - 70;
@@ -2132,7 +1578,7 @@
     var plotTop = 74, plotBot = H - 92;
 
     /* titles */
-    add(svg, S.text(W / 2, 20, 'The United States is the rich-world outlier on paid leave', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 14.5 }));
+    add(svg, S.text(W / 2, 20, 'Selected national paid-leave provisions', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 14.5 }));
     add(svg, S.text(W / 2, 38, 'Paid leave for mothers, full-rate-equivalent weeks (OECD, 2025)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
 
     /* week gridlines every 20 */
@@ -2157,35 +1603,23 @@
       } else {
         /* US: draw a zero tick and an emphatic label, no bar to draw */
         add(svg, S.el('line', { x1: x0, y1: cy - barH / 2, x2: x0, y2: cy + barH / 2, stroke: P.emerg, 'stroke-width': 2 }));
-        add(svg, S.text(x0 + 7, cy + 3.5, '0.0  (no national paid leave)', 'viz-axis', { 'text-anchor': 'start', fill: P.emerg, 'font-size': 11 }));
+        add(svg, S.text(x0 + 7, cy + 3.5, '0.0  (national comparison)', 'viz-axis', { 'text-anchor': 'start', fill: P.emerg, 'font-size': 11 }));
       }
     });
 
-    /* OECD-average reference marker on the weeks axis, drawn faint */
-    var avgX = x(Math.min(OECD_AVG_LEN, maxV));
-    add(svg, S.el('line', { x1: avgX, y1: plotTop - 6, x2: avgX, y2: plotBot, stroke: P.gold, 'stroke-width': 1, 'stroke-dasharray': '3 4', opacity: 0.55 }));
-    add(svg, S.text(avgX, plotTop - 10, 'OECD avg length ' + OECD_AVG_LEN + ' wks', 'viz-axis', { 'text-anchor': 'middle', fill: P.gold, 'font-size': 9 }));
-
     /* ---- accessibility + attach ---- */
     svg.setAttribute('aria-label',
-      'A sorted bar chart of paid leave for mothers measured in full-rate-equivalent weeks, the OECD apples-to-apples measure equal to weeks of leave times the average payment rate, applicable as of April 2025. ' +
-      'Estonia leads with 82.1 weeks, then Norway 39.3, Germany 38.2, Sweden 34.4, Canada 20.1, the United Kingdom 11.7, and Australia 9.2. ' +
-      'The United States is alone at zero: it is the only OECD country with no statutory paid leave on a national basis. ' +
-      'For reference, the OECD average total maternity and parental leave length is about 54.9 weeks. ' +
-      'Within the United States, paid leave is a geographic lottery: 14 states plus the District of Columbia run mandatory paid family and medical leave programs, while roughly 36 states leave new parents with only the federal floor of 12 weeks of unpaid leave. ' +
-      'Source: OECD Family Database, PF2.1, parental leave systems.');
+      'Selected OECD national paid-leave provisions available to mothers as of April 2025, in full-rate-equivalent weeks: Estonia 82.1, Norway 39.3, Germany 38.2, Sweden 34.4, Canada 20.1, United Kingdom 11.7, Australia 9.2 and United States zero. ' +
+      'Values use a claimant earning the national average. They are not calendar durations or a guarantee of individual eligibility. US state and employer benefits are outside this national comparison.');
     add(fig, svg);
 
     note(fig,
-      'Measured in full-rate-equivalent weeks (weeks of leave multiplied by how much of normal pay they replace), the United States is the only OECD country at zero: it has no statutory paid leave on a national basis. ' +
-      'Peers range from Australia’s 9.2 and the UK’s 11.7 up to Estonia’s 82.1 full-pay-equivalent weeks. The full-rate measure is the fair one: it shrinks the UK’s 39 calendar weeks to 11.7 because most are paid at a low flat rate. ' +
-      'And inside the US, leave is a lottery by address. As of 2026, 14 states plus DC run mandatory paid family and medical leave (commonly 12 weeks of bonding at 80% to 90% of pay), while about 36 states offer only the federal floor: 12 weeks unpaid, under the FMLA, for the roughly 56% of workers who even qualify. ' +
-      '<span class="src">Source: OECD Family Database, PF2.1 <i>Parental leave systems</i> (table PF2.1.A, mothers, full-rate-equivalent weeks, applicable as of April 2025; the OECD notes the US is the only member with no national statutory paid leave). US state count and FMLA reach: Bipartisan Policy Center state PFML tracker (updated 2026-04-23; 14 states + DC) and US DOL FMLA survey (about 56% of workers eligible).</span>');
+      'Full-rate-equivalent weeks multiply paid duration by the average replacement rate for a claimant earning the national average. The measure includes maternity, parental and home-care leave available to mothers, excluding leave reserved for fathers. It is not a calendar duration or an entitlement for every parent. Some countries calculate replacement from net earnings, others from gross earnings. US state, employer and occupation-specific benefits need separate checks. ' +
+      '<span class="src"><a href="https://webfs.oecd.org/els-com/Family_Database/PF2_1_Parental_leave_systems.pdf">OECD PF2.1.A, column 9 and methodology, rules applicable in April 2025</a>.</span>');
 
     dataTable(fig, 'Paid leave for mothers, full-rate-equivalent weeks (OECD PF2.1.A, 2025)',
       ['Country', 'Full-rate-equivalent weeks'],
-      DATA.map(function (d) { return [d.c, d.us ? '0.0 (none nationally)' : d.v.toFixed(1)]; })
-        .concat([['OECD average total length (memo)', OECD_AVG_LEN + ' weeks']]));
+      DATA.map(function (d) { return [d.c, d.us ? '0.0 (national comparison)' : d.v.toFixed(1)]; }));
   };
 
   /* ====================================================================== */
@@ -2227,7 +1661,7 @@
     var plotTop = 76, plotBot = H - 96;
 
     /* titles */
-    add(svg, S.text(W / 2, 20, 'Mental health is the leading cause of maternal death', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 14.5 }));
+    add(svg, S.text(W / 2, 20, '2017 to 2019 review: mental-health conditions lead', 'viz-label', { 'text-anchor': 'middle', fill: P.parch, 'font-size': 14.5 }));
     add(svg, S.text(W / 2, 38, 'US pregnancy-related deaths by underlying cause (CDC, 2017 to 2019)', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }));
 
     /* percent gridlines every 5 */
@@ -2250,59 +1684,30 @@
       add(svg, S.text(x(d.v) + 8, cy + 3.5, (d.v % 1 ? d.v.toFixed(1) : d.v) + '%', 'viz-axis', { 'text-anchor': 'start', fill: d.lead ? P.emerg : P.goldHi, 'font-size': 11 }));
     });
 
-    /* "largest category, mostly preventable" flag on the lead bar */
-    var leadCy = plotTop + rowH * 0.5;
-    add(svg, S.text(x(23) + 38, leadCy + 3.5, 'largest category', 'viz-axis', { 'text-anchor': 'start', fill: P.emerg, 'font-size': 10, 'font-family': 'var(--font-heading)', 'font-weight': '700' }));
 
     /* preventability + late-window callout band along the bottom */
     var by = plotBot + 48;
     add(svg, S.el('rect', { x: x0, y: by - 10, width: x1 - x0, height: 1, fill: P.rule, opacity: 0.5 }));
-    add(svg, S.text(x0, by + 6, '~' + PREVENTABLE + '% of all pregnancy-related deaths are judged preventable;', 'viz-note', { 'text-anchor': 'start', fill: P.parch, 'font-size': 10.5 }));
-    add(svg, S.text(x0, by + 20, 'the mental-health deaths are essentially all preventable, and they cluster LATE:', 'viz-note', { 'text-anchor': 'start', fill: P.parch, 'font-size': 10.5 }));
-    add(svg, S.text(x0, by + 34, 'about a third of all deaths fall 43 days to 1 year postpartum, after the 6-week visit.', 'viz-note', { 'text-anchor': 'start', fill: P.call, 'font-size': 10.5 }));
+    add(svg, S.text(x0, by + 6, 'Historical review data from thirty-six states, 2017 to 2019.', 'viz-note', { 'text-anchor': 'start', fill: P.parch, 'font-size': 10.5 }));
+    add(svg, S.text(x0, by + 20, 'More than 80% were judged preventable in that review.', 'viz-note', { 'text-anchor': 'start', fill: P.parch, 'font-size': 10.5 }));
+    add(svg, S.text(x0, by + 34, 'Pregnancy-related complications can occur through the whole year after birth.', 'viz-note', { 'text-anchor': 'start', fill: P.call, 'font-size': 10.5 }));
 
     /* ---- accessibility + attach ---- */
-    svg.setAttribute('aria-label',
-      'A ranked bar chart of United States pregnancy-related deaths by underlying cause, from CDC Maternal Mortality Review Committees, 2017 to 2019, across 36 states. ' +
-      'Mental-health conditions, meaning suicide plus overdose and substance use, are the single largest category at about 23 percent, ahead of hemorrhage 14 percent, cardiac and coronary conditions 13 percent, infection 9 percent, thrombotic embolism 9 percent, and cardiomyopathy 9 percent, with all other causes about 23 percent. ' +
-      'About 84 percent of all pregnancy-related deaths are judged preventable, and the mental-health deaths are essentially all preventable, with 37 of 37 reviewed deaths in one study deemed preventable. ' +
-      'The danger runs late: about a third of all pregnancy-related deaths, 37.8 percent in 2022, fall in the window from 43 days to 1 year after birth, after the usual six-week checkup, and 63 percent of the mental-health deaths fall in that late window. ' +
-      'A newer pooled figure for 2017 to 2021 puts the mental-health share at 26.3 percent, still the leading category. ' +
-      'Sources: CDC Maternal Mortality Review Committees via MMRIA; Trost et al., Health Affairs 2021.');
+    svg.setAttribute('aria-label', 'Rounded cause shares in pregnancy-related deaths reviewed by committees in thirty-six US states, 2017 to 2019. Mental-health conditions were the largest specific category, about twenty-three percent. The chart is historical and not a current national mortality rate. More than eighty percent were judged preventable in that review, rather than in every pregnancy.');
     add(fig, svg);
 
-    note(fig,
-      'In the United States the single leading underlying cause of pregnancy-related death is mental-health conditions, meaning suicide plus overdose and substance use, at about 23% of deaths (2017 to 2019, 36 states), ahead of hemorrhage and cardiac causes. A newer pooled count for 2017 to 2021 puts the share at 26.3%, still the largest category. ' +
-      'This makes mental health a hard safety issue, not a soft one: about 84% of all pregnancy-related deaths are judged preventable, and the mental-health deaths are essentially all preventable (37 of 37 in one review). ' +
-      'And the danger runs late. About a third of all pregnancy-related deaths fall 43 days to 1 year after birth (37.8% in 2022), and 63% of the mental-health deaths land in that late window, after the standard six-week checkup has ended. Vigilance and support need to run through the whole first year. ' +
-      '<span class="src">Sources: CDC Maternal Mortality Review Committees via MMRIA (2017 to 2019, 36 states; mental-health conditions ~23%, the leading category; ~84% of pregnancy-related deaths preventable; newer pooled 2017 to 2021 headline 26.3%, released Dec 2023). Cause ranking and late-window share (43 to 365 days = 37.8% in 2022) from CDC MMRC. Mental-health-death detail: Trost SL et al., “Preventing Pregnancy-Related Mental Health Deaths,” <i>Health Affairs</i> 2021;40(10):1551-1559 (46 of 421 deaths, 37 of 37 preventable, suicide 63% / overdose 24%, 63% in the 43-to-365-day window). Educational synthesis, not medical advice.</span>');
+    note(fig, 'This historical chart describes pregnancy-related deaths reviewed by committees in thirty-six states during 2017 to 2019. Cause shares are rounded, and not every state supplied every year. Mental-health conditions were the largest specific category. The CDC reported more than eighty percent judged preventable; this does not guarantee that any individual outcome is preventable. Continue mental and physical health follow-up throughout the year. <span class="src"><a href="https://archive.cdc.gov/www_cdc_gov/media/releases/2022/p0919-pregnancy-related-deaths.html">CDC 2022 summary of 2017 to 2019 data</a>; <a href="https://www.cdc.gov/maternal-mortality/php/data-research/mmria-methods/">review methods</a></span>');
 
     dataTable(fig, 'US pregnancy-related deaths by underlying cause (CDC MMRC, 2017 to 2019)',
       ['Cause', 'Share of pregnancy-related deaths'],
       CAUSES.map(function (d) { return [d.label, (d.v % 1 ? d.v.toFixed(1) : d.v) + '%']; })
-        .concat([
-          ['Memo: all pregnancy-related deaths preventable', '~' + PREVENTABLE + '%'],
-          ['Memo: mental-health deaths preventable (Trost)', '100% (37 of 37)'],
-          ['Memo: all deaths in 43-day-to-1-year window (2022)', LATE_WINDOW + '%'],
-          ['Memo: mental-health deaths in that late window', MH_LATE + '%'],
-          ['Memo: newer pooled mental-health share (2017 to 2021)', '26.3% (leading)']
-        ]));
+        );
   };
 })();
 
 
 /* module: mortality-pendulum.js */
-/* ============================================================
-   THE FIRST YEAR, chart module: mortality-pendulum.js
-   Two visualizations for the culture-history domain:
-     FY.viz["infant-mortality"]  long-run US infant mortality, ~1900 to 2023,
-                                  with a pre-1915 estimate band and a Black/White inset note.
-     FY.viz["advice-pendulum"]    a horizontal time ribbon of dominant advice eras
-                                  and the rules that later reversed.
-   Framework-free. Dark forest-green theme. No em dashes anywhere.
-   Every number is real and sourced (CDC/NCHS vital statistics; Singh & Yu PMC6487507;
-   primary publication dates verified in deepdives/history-of-advice.md).
-   ============================================================ */
+/* Selected historical mortality points and historical advice examples. Early mortality estimates and registration areas differ from later national data. Lines join selected points; they do not supply annual observations or identify a cause. */
 (function () {
   'use strict';
   var FY = (window.FY = window.FY || { viz: {}, tool: {} });
@@ -2353,600 +1758,85 @@
     return t;
   }
 
-  /* =========================================================================
-     1. FY.viz["infant-mortality"]
-     US infant deaths per 1,000 live births. The honest treatment the deep-dive
-     insists on: draw the pre-1915 region as an ESTIMATE BAND (about 100, true
-     national likely about 140), not a confident point, and plot the reliable
-     registration series only from 1915 (99.9) down to 5.61 in 2023. A small
-     inset note carries the Black/White gap (1915 white 99.0, Black 184.9, 1916).
-     ========================================================================= */
+  /* Selected registered historical rates and a separate period-linked series.
+     No pre-registration estimate band or historical race comparison. */
   FY.viz['infant-mortality'] = function (fig) {
     if (!fig) return;
-
-    /* Registration-based series, per 1,000 live births. Sources:
-       CDC MMWR 1999 "Healthier Mothers and Babies"; Tavia Gordon NCHS
-       "Mortality in the United States 1900 to 1950"; Singh & Yu PMC6487507;
-       CDC NVSR/Data Briefs (2017, 2021 to 2024). The 2022 uptick (5.44 to 5.60)
-       is kept so the line is honestly NOT monotonic. */
-    var series = [
-      { y: 1915, v: 99.9 },
-      { y: 1933, v: 58.1 },
-      { y: 1950, v: 29.2 },
-      { y: 1960, v: 26.0 },
-      { y: 1970, v: 20.0 },
-      { y: 1980, v: 12.6 },
-      { y: 1990, v: 9.2 },
-      { y: 1997, v: 7.2 },
-      { y: 2000, v: 6.9 },
-      { y: 2010, v: 6.1 },
-      { y: 2017, v: 5.8 },
-      { y: 2021, v: 5.44 },
-      { y: 2022, v: 5.60 },
-      { y: 2023, v: 5.61 }
+    var historical = [
+      { y: 1915, v: 99.9 }, { y: 1933, v: 58.1 }, { y: 1950, v: 29.2 },
+      { y: 1960, v: 26.0 }, { y: 1970, v: 20.0 }, { y: 1980, v: 12.6 },
+      { y: 1990, v: 9.2 }, { y: 1997, v: 7.2 }, { y: 2000, v: 6.9 },
+      { y: 2010, v: 6.15 }
     ];
-    /* The pre-1915 region is an estimate, by design. Registration-area estimate
-       about 100 (1900); true national probably nearer 140 (Preston & Haines). */
-    var preEstLow = 100, preEstHigh = 140, preYear = 1900;
-
-    var W = 720, H = 380;
-    var m = { t: 30, r: 22, b: 52, l: 56 };
-    var iw = W - m.l - m.r, ih = H - m.t - m.b;
-    var svg = S.make(W, H);
-
-    var x = S.scale(1895, 2025, m.l, m.l + iw);
-    var y = S.scale(0, 150, m.t + ih, m.t); /* 0 at bottom, 150 at top */
-
-    /* gridlines + y axis (per 1,000) -------------------------------------- */
-    var yTicks = [0, 25, 50, 75, 100, 125, 150];
-    yTicks.forEach(function (t) {
-      var yp = y(t);
-      S.el('line', { x1: m.l, y1: yp, x2: m.l + iw, y2: yp, class: 'viz-grid' }, svg);
-      S.text(m.l - 8, yp + 3.5, String(t), 'viz-axis', { 'text-anchor': 'end' }).setAttribute('font-variant-numeric', 'tabular-nums');
+    var linked = [{ y: 2017, v: 5.79 }, { y: 2021, v: 5.44 }, { y: 2022, v: 5.61 }, { y: 2023, v: 5.61 }];
+    var W = 720, H = 370, svg = S.make(W, H);
+    var x = S.scale(1915, 2025, 58, 692), y = S.scale(0, 110, 310, 30);
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      S.el('line', { x1: 58, y1: y(v), x2: 692, y2: y(v), class: 'viz-grid' }, svg);
+      svg.appendChild(S.text(48, y(v) + 4, String(v), 'viz-axis', { 'text-anchor': 'end' }));
     });
-    /* x axis decade ticks -------------------------------------------------- */
-    var xTicks = [1900, 1920, 1940, 1960, 1980, 2000, 2020];
-    xTicks.forEach(function (t) {
-      var xp = x(t);
-      S.el('line', { x1: xp, y1: m.t + ih, x2: xp, y2: m.t + ih + 5, stroke: P.rule, 'stroke-width': 1 }, svg);
-      S.text(xp, m.t + ih + 20, "'" + String(t).slice(2), 'viz-axis', { 'text-anchor': 'middle' }).setAttribute('font-variant-numeric', 'tabular-nums');
+    [1915, 1933, 1950, 1975, 2000, 2023].forEach(function (v) {
+      svg.appendChild(S.text(x(v), 333, String(v), 'viz-axis', { 'text-anchor': 'middle' }));
     });
-    /* axis labels ---------------------------------------------------------- */
-    S.text(m.l, m.t - 14, 'deaths per 1,000 live births', 'viz-axis', { 'text-anchor': 'start', fill: P.dim });
-    S.text(m.l + iw, m.t + ih + 44, 'year', 'viz-axis', { 'text-anchor': 'end', fill: P.dim });
-
-    /* pre-1915 ESTIMATE BAND (dashed, hatched feel via low opacity) -------- */
-    var bandX0 = x(1895), bandX1 = x(1915);
-    S.el('rect', {
-      x: bandX0, y: y(preEstHigh), width: (bandX1 - bandX0), height: (y(preEstLow) - y(preEstHigh)),
-      fill: P.dim, opacity: 0.14
-    }, svg);
-    /* the two estimate edges as dashed lines */
-    [preEstLow, preEstHigh].forEach(function (v) {
-      S.el('line', { x1: bandX0, y1: y(v), x2: bandX1, y2: y(v), stroke: P.dim, 'stroke-width': 1.25, 'stroke-dasharray': '4 3', opacity: 0.85 }, svg);
-    });
-    /* connector from the estimate band into the first registration point */
-    S.el('line', { x1: bandX1, y1: y(preEstLow), x2: x(1915), y2: y(99.9), stroke: P.dim, 'stroke-width': 1, 'stroke-dasharray': '2 3', opacity: 0.7 }, svg);
-    /* band label */
-    S.text(x(preYear), y(preEstHigh) - 8, 'estimate', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-style', 'italic');
-    S.text(x(preYear), y(preEstHigh) + 8, 'no national', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim });
-    S.text(x(preYear), y(preEstHigh) + 20, 'registration', 'viz-axis', { 'text-anchor': 'middle', fill: P.dim });
-
-    /* reliable series: area fill + line ----------------------------------- */
-    var pts = series.map(function (d) { return [x(d.y), y(d.v)]; });
-    var y0 = y(0);
-    S.el('path', { d: S.area(pts, y0), fill: P.gold, opacity: 0.12 }, svg);
-    S.el('path', { d: S.line(pts), fill: 'none', stroke: P.gold, 'stroke-width': 2.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
-
-    /* emphasis dots + labels at the key endpoints ------------------------- */
-    function dot(d, label, dx, dy, anchor, cls) {
-      var px = x(d.y), py = y(d.v);
-      S.el('circle', { cx: px, cy: py, r: 3.4, fill: P.goldHi, stroke: '#1d241e', 'stroke-width': 1 }, svg);
-      if (label) {
-        var tx = S.text(px + (dx || 0), py + (dy || 0), label, cls || 'viz-axis', { 'text-anchor': anchor || 'start', fill: P.parch });
-        tx.setAttribute('font-variant-numeric', 'tabular-nums');
-      }
+    svg.appendChild(S.text(58, 16, 'Deaths under age one per 1,000 live births', 'viz-axis'));
+    function plot(rows, color) {
+      S.el('path', { d: S.line(rows.map(function (d) { return [x(d.y), y(d.v)]; })), fill: 'none', stroke: color, 'stroke-width': 2.4 }, svg);
+      rows.forEach(function (d) { S.el('circle', { cx: x(d.y), cy: y(d.v), r: 3, fill: color }, svg); });
     }
-    dot(series[0], '99.9 (1915)', 8, -6, 'start');
-    dot({ y: 1950, v: 29.2 }, '29.2 (1950)', 8, -4, 'start');
-    dot(series[series.length - 1], '5.61 (2023)', -6, -10, 'end');
-
-    /* framing headline along the floor ------------------------------------ */
-    S.text(x(1962), y(0) - 8, 'In 1900 roughly 1 in 10 US infants died before age 1; today about 1 in 180.',
-      'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-style', 'italic');
-
-    /* sober Black / White inset note (upper right) ------------------------ */
-    var inX = m.l + iw - 6, inY = m.t + 8;
-    var ig = S.el('g', {}, svg);
-    S.el('line', { x1: inX - 150, y1: inY + 4, x2: inX - 132, y2: inY + 4, stroke: P.emerg, 'stroke-width': 2.2 }, ig);
-    S.text(inX - 128, inY + 7.5, '1916 gap: Black 184.9', 'viz-axis', { 'text-anchor': 'start', fill: P.emerg }).setAttribute('font-variant-numeric', 'tabular-nums');
-    S.text(inX - 128, inY + 20, 'vs White 99.0 per 1,000', 'viz-axis', { 'text-anchor': 'start', fill: P.dim }).setAttribute('font-variant-numeric', 'tabular-nums');
-    S.text(inX - 128, inY + 32, 'the gap never closed', 'viz-axis', { 'text-anchor': 'start', fill: P.dim }).setAttribute('font-style', 'italic');
-
-    svg.setAttribute('aria-label',
-      'Line chart of US infant mortality per 1,000 live births. The pre-1915 region is drawn as an estimate band, about 100 in 1900 with the true national rate likely near 140, because there was no national birth registration. The reliable registration series falls from 99.9 in 1915 to 29.2 in 1950 to 5.61 in 2023. In 1900 roughly 1 in 10 US infants died before age 1; today about 1 in 180. A sober racial gap persisted: in 1916 the Black rate was 184.9 versus 99.0 for White infants.');
-
+    plot(historical, P.gold);
+    plot(linked, P.sky);
+    svg.appendChild(S.text(x(1915) + 8, y(99.9) - 7, '99.9 (1915)', 'viz-axis', { fill: P.parch }));
+    svg.appendChild(S.text(x(1950) + 8, y(29.2) - 8, '29.2 (1950)', 'viz-axis', { fill: P.parch }));
+    svg.appendChild(S.text(x(2023) - 4, y(5.61) - 15, '5.61 (2023, linked)', 'viz-axis', { 'text-anchor': 'end', fill: P.sky }));
+    svg.setAttribute('aria-label', 'Selected registered US infant mortality rates. Historical series: 99.9 deaths per 1,000 live births in the 1915 registration area, 58.1 in 1933 and 29.2 in 1950, falling to 6.15 in 2010. Separate period-linked series: 5.79 in 2017, 5.44 in 2021, 5.61 in 2022 and 5.61 in 2023. Early registration coverage changed; these are dated population rates, not individual predictions or estimates of an intervention effect.');
     appendAfterCaption(fig, svg);
-
-    fig.appendChild(noteEl(
-      'The thing parents fear most became roughly 20 times rarer within living memory, mostly through clean water and milk, sanitation, antibiotics, and vaccines, not stricter parenting. ' +
-      'The years before 1915 are shown as an estimate, not a line, because there was no national birth registration then. ' +
-      'Source: CDC MMWR 1999 "Healthier Mothers and Babies"; Tavia Gordon, NCHS; Singh and Yu, PMC6487507 (the 1916 Black/White figures); CDC NVSR and Data Briefs (2017 to 2024; 2023 final 5.61, the 2022 uptick from 5.44 to 5.60 is real).'
-    ));
-
-    fig.appendChild(dataTable(
-      'US infant mortality, deaths per 1,000 live births',
-      ['Year', 'Rate per 1,000'],
-      [
-        ['~1900 (estimate)', 'about 100 (registration area); true national likely ~140'],
-        ['1915', '99.9'],
-        ['1916 (by race)', 'White 99.0, Black 184.9'],
-        ['1933', '58.1'],
-        ['1950', '29.2'],
-        ['1960', '26.0'],
-        ['1970', '20.0'],
-        ['1980', '12.6'],
-        ['1990', '9.2'],
-        ['1997', '7.2'],
-        ['2000', '6.9'],
-        ['2010', '6.1'],
-        ['2017', '5.8'],
-        ['2021', '5.44'],
-        ['2022', '5.60'],
-        ['2023', '5.61']
-      ]
-    ));
+    fig.appendChild(noteEl('Gold: selected points from the NCHS historical vital-registration series. Its early registration area expanded; national birth-registration coverage began in 1933. Blue: selected points from the separate period-linked birth/infant-death series, which links certificates and weights unlinked records. Small differences between these data systems are expected. Lines connect selected years, rather than showing every annual fluctuation. This chart does not assign a causal share to medical care, feeding or a campaign. Sources: <a href="https://data.cdc.gov/National-Center-for-Health-Statistics/NCHS-Infant-and-neonatal-mortality-rates-United-St/epev-k6ss">NCHS historical table</a>; <a href="https://www.cdc.gov/nchs/data/nvsr/nvsr74/nvsr74-07.pdf">2023 period-linked report, methods and Table 1</a>.'));
+    fig.appendChild(dataTable('Selected registered infant mortality rates', ['Year', 'Deaths per 1,000 live births', 'Data series'], historical.map(function (d) { return [String(d.y), String(d.v), d.y < 1933 ? 'Historical, changing registration area' : 'Historical vital registration']; }).concat(linked.map(function (d) { return [String(d.y), String(d.v), 'Period-linked birth/infant-death']; }))));
   };
 
-  /* =========================================================================
-     2. FY.viz["advice-pendulum"]
-     A horizontal time ribbon of dominant advice eras and the rules that later
-     reversed, so a parent can locate any rule they were just handed. Each marker
-     is a confirmed primary publication date (verified in history-of-advice.md).
-     ========================================================================= */
+  /* Three verified official initiative dates, without uniform advice eras. */
   FY.viz['advice-pendulum'] = function (fig) {
     if (!fig) return;
-
-    /* Era spans (background bands). Dates verified in the deep-dive. */
-    var eras = [
-      { from: 1890, to: 1945, label: 'Schedule and detachment', color: P.sky },
-      { from: 1946, to: 1979, label: 'Warmth and "trust yourself"', color: P.ok },
-      { from: 1980, to: 2025, label: 'Evidence and safe sleep', color: P.plum }
-    ];
-
-    /* The dated markers the spec names, each with the reversal it represents.
-       side: 1 places the flag above the spine, -1 below, to avoid label collisions. */
+    var W = 720, H = 252, svg = S.make(W, H);
     var marks = [
-      { y: 1913, name: 'Truby King', rule: 'feed by the clock, four-hourly, minimal cuddling', side: 1, c: P.sky },
-      { y: 1928, name: 'Watson', rule: '"never hug and kiss them"', side: -1, c: P.sky },
-      { y: 1946, name: 'Spock', rule: '"trust yourself," responsive warmth', side: 1, c: P.ok },
-      { y: 1953, name: 'Bowlby', rule: 'attachment: contact and a secure base', side: -1, c: P.ok },
-      { y: 1981, name: 'WHO Code', rule: 'restrict formula marketing (adopted 118 to 1)', side: 1, c: P.plum },
-      { y: 1991, name: 'BFHI', rule: 'Ten Steps to support breastfeeding (revised 2018)', side: -1, c: P.plum },
-      { y: 1994, name: 'Back to Sleep', rule: 'put babies on their backs (renamed Safe to Sleep, 2012)', side: 1, c: P.call, stem: 86 }
+      { year: '1981', name: 'International Code of Marketing of Breast-milk Substitutes', detail: 'World Health Assembly adopts the Code', color: P.plum },
+      { year: '1991', name: 'WHO/UNICEF Baby-friendly Hospital Initiative', detail: 'Breastfeeding support in maternity and newborn services', color: P.ok },
+      { year: '1994', name: 'NICHD Back to Sleep campaign', detail: 'Back sleeping to reduce SIDS risk; expanded in 2012', color: P.sky }
     ];
-
-    var W = 720, H = 380;
-    var m = { t: 30, r: 24, b: 46, l: 24 };
-    var iw = W - m.l - m.r;
-    var svg = S.make(W, H);
-    /* S.text() builds a <text> node but does NOT append it (S.el does the
-       appending). This chart must append each label itself, or every era,
-       year, and marker label is silently dropped. */
-    function T(tx, ty, str, cls, attrs) { var t = S.text(tx, ty, str, cls, attrs); svg.appendChild(t); return t; }
-
-    var x = S.scale(1905, 2000, m.l + 8, m.l + iw - 8);
-    var spineY = m.t + (H - m.t - m.b) / 2;
-
-    /* era background bands ------------------------------------------------- */
-    eras.forEach(function (e) {
-      var x0 = x(Math.max(1905, e.from)), x1 = x(Math.min(2000, e.to));
-      S.el('rect', { x: x0, y: m.t + 6, width: Math.max(0, x1 - x0), height: (H - m.t - m.b - 12), fill: e.color, opacity: 0.09, rx: 6 }, svg);
-      T((x0 + x1) / 2, m.t + 18, e.label, 'viz-axis', { 'text-anchor': 'middle', fill: e.color, opacity: 0.95 });
+    S.el('line', { x1: 96, y1: 49, x2: 96, y2: 205, stroke: P.rule, 'stroke-width': 2 }, svg);
+    marks.forEach(function (d, i) {
+      var yy = 49 + i * 78;
+      svg.appendChild(S.text(76, yy + 5, d.year, 'viz-label', { 'text-anchor': 'end', fill: P.goldHi }));
+      S.el('circle', { cx: 96, cy: yy, r: 5, fill: d.color }, svg);
+      svg.appendChild(S.text(116, yy + 4, d.name, 'viz-label', { fill: P.parch }));
+      svg.appendChild(S.text(116, yy + 24, d.detail, 'viz-axis', { fill: P.dim }));
     });
-
-    /* the century spine ---------------------------------------------------- */
-    S.el('line', { x1: x(1905), y1: spineY, x2: x(2000), y2: spineY, stroke: P.rule, 'stroke-width': 2 }, svg);
-
-    /* decade ticks on the spine ------------------------------------------- */
-    var dTicks = [1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000];
-    dTicks.forEach(function (t) {
-      var xp = x(t);
-      S.el('line', { x1: xp, y1: spineY - 4, x2: xp, y2: spineY + 4, stroke: P.rule, 'stroke-width': 1 }, svg);
-      T(xp, H - m.b + 16, String(t), 'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-variant-numeric', 'tabular-nums');
-    });
-
-    /* markers: a stem from the spine to a stacked, wrapped label ----------- */
-    var lineH = 12;
-    function wrap(str, max) {
-      var words = String(str).split(' '), lines = [], cur = '';
-      words.forEach(function (w) {
-        var test = cur ? cur + ' ' + w : w;
-        if (test.length > max && cur) { lines.push(cur); cur = w; } else { cur = test; }
-      });
-      if (cur) lines.push(cur);
-      return lines;
-    }
-
-    marks.forEach(function (mk) {
-      var xp = x(mk.y);
-      var dir = mk.side;
-      var stem = mk.stem || 30; /* spine to first text row; crowded markers drop to a longer lane */
-      var yTip = spineY + dir * stem;
-
-      /* stem + node */
-      S.el('line', { x1: xp, y1: spineY, x2: xp, y2: yTip, stroke: mk.c, 'stroke-width': 1.4, opacity: 0.85 }, svg);
-      S.el('circle', { cx: xp, cy: spineY, r: 4, fill: mk.c, stroke: '#1d241e', 'stroke-width': 1 }, svg);
-
-      /* keep labels inside the frame horizontally */
-      var anchor = 'middle';
-      if (xp < m.l + 64) anchor = 'start';
-      else if (xp > m.l + iw - 64) anchor = 'end';
-
-      /* title row (name + year), then wrapped rule rows reading away from the spine */
-      var tName = T(xp, yTip + (dir > 0 ? 0 : -2), mk.name + ' ' + mk.y, 'viz-label', { 'text-anchor': anchor, fill: P.parch });
-      tName.setAttribute('font-variant-numeric', 'tabular-nums');
-
-      var ruleLines = wrap(mk.rule, 22);
-      ruleLines.forEach(function (ln, i) {
-        var ry;
-        if (dir > 0) ry = yTip + 14 + i * lineH;
-        else ry = yTip - 16 - (ruleLines.length - 1 - i) * lineH;
-        T(xp, ry, ln, 'viz-axis', { 'text-anchor': anchor, fill: P.dim });
-      });
-    });
-
-    /* a quiet "the pendulum swings" caption inside the frame -------------- */
-    T(x(1952), H - m.b + 32, 'schedule to warmth to evidence: the dominant advice reversed direction more than once in a century',
-      'viz-axis', { 'text-anchor': 'middle', fill: P.dim }).setAttribute('font-style', 'italic');
-
-    svg.setAttribute('aria-label',
-      'A horizontal century time ribbon of dominant infant-care advice and the rules that later reversed. ' +
-      'Truby King in 1913 prescribed feeding by the clock with minimal cuddling. Watson in 1928 advised "never hug and kiss them." ' +
-      'Spock in 1946 said "trust yourself" and encouraged responsive warmth. Bowlby in the 1950s established attachment theory. ' +
-      'The WHO Code of 1981 restricted formula marketing, adopted 118 to 1. The Baby-Friendly Hospital Initiative launched in 1991. ' +
-      'Back to Sleep in 1994 told parents to place babies on their backs, later renamed Safe to Sleep in 2012. ' +
-      'The expert consensus on how to feed, hold, and put a baby to sleep flipped at least four times in 100 years.');
-
+    svg.setAttribute('aria-label', 'Selected official infant-care initiatives, 1981 to 1994. Dates mark adoption or launch, not uniform eras, reversals of every rule, or proof of each initiative’s effect. 1981, World Health Assembly adopts the breast-milk-substitute marketing Code. 1991, WHO and UNICEF launch the Baby-friendly Hospital Initiative. 1994, NICHD launches Back to Sleep, expanded to Safe to Sleep in 2012.');
     appendAfterCaption(fig, svg);
-
-    fig.appendChild(noteEl(
-      'If the rule you were just handed feels absolute, remember it is recent and local. Within one century the dominant US advice reversed on schedule (rigid to responsive), affection (forbidden to encouraged), and sleep position (back to front to back). That is permission to hold the rule you were just handed a little more loosely. ' +
-      'Source: primary publication dates verified in deepdives/history-of-advice.md (Truby King, "Feeding and Care of Baby," 1913; Watson and Rayner, 1928; Spock, "Baby and Child Care," July 14, 1946; Bowlby attachment work, 1950s; WHO International Code, adopted May 21, 1981; BFHI launched 1991, Ten Steps revised 2018; US "Back to Sleep" 1994, renamed "Safe to Sleep" 2012).'
-    ));
-
-    fig.appendChild(dataTable(
-      'A century of infant-care advice and the rules that reversed',
-      ['Year', 'Marker', 'The reversal it represents'],
-      [
-        ['1913', 'Truby King', 'on-cue to four-hourly by the clock; cuddle to minimal contact'],
-        ['1928', 'Watson', 'affection to "never hug and kiss them"'],
-        ['1946', 'Spock', 'training the baby to "trust yourself," responsive warmth'],
-        ['1950s', 'Bowlby', 'behaviorist detachment to attachment and a secure base'],
-        ['1981', 'WHO Code', 'formula as modern to restricting formula marketing (118 to 1, US sole no)'],
-        ['1991', 'BFHI', 'launch of the Ten Steps to Successful Breastfeeding (revised 2018)'],
-        ['1994', 'Back to Sleep', 'front to back sleeping (renamed Safe to Sleep, 2012)']
-      ]
-    ));
+    fig.appendChild(noteEl('Dates mark the adoption or launch of these three initiatives. They do not divide infant care into uniform historical eras, establish that all advice reversed, or measure an initiative’s effect. Sources: <a href="https://www.who.int/publications-detail-redirect/9241541601">WHO Code history</a>; <a href="https://www.unicef.org/media/95191/file/Baby-friendly-hospital-initiative-implementation-guidance-2018.pdf">WHO/UNICEF implementation guidance</a>; <a href="https://safetosleep.nichd.nih.gov/campaign/history">NICHD campaign history</a>.'));
+    fig.appendChild(dataTable('Selected official infant-care initiatives', ['Year', 'Initiative', 'Purpose'], marks.map(function (d) { return [d.year, d.name, d.detail]; })));
   };
+
 })();
 
 
-/* module: newt.js */
-/* ============================================================
-   THE FIRST YEAR, chart: the newborn weight-loss nomogram.
-   Module: newt (one FY.viz function).
-   "Is my baby losing too much weight?" Percentile curves of percent
-   weight loss (y, drawn as a real downward dip) versus hours of age
-   (x, 0 to 72), with separate vaginal and cesarean families, the
-   50th/75th/90th/95th percentile shape, and a 10 percent danger line.
-   Excessive loss = crossing the 90th (vaginal) or 75th (cesarean).
-   Data: Flaherman VJ, Schaefer EW, Kuzniewicz MW, Li SX, Walsh EM,
-   Paul IM, "Early Weight Loss Nomograms for Exclusively Breastfed
-   Newborns," Pediatrics 2015;135(1):e16 to e23 (NEWT, newbornweight.org);
-   cohort 161,471 newborns, 108,907 exclusively breastfed (83,433 vaginal,
-   25,474 cesarean), 14 Kaiser NorCal hospitals.
-   The published TEXT gives only the median digits (section 2.2 of the
-   deep dive); the 75th/90th/95th values are read from the paper's Figure 2
-   (section 2.3) and are approximate. The curves drawn here are SMOOTH
-   ILLUSTRATIVE shapes anchored to those captured points, not the exact
-   published nomogram. No external libraries. No em dashes anywhere.
-   ============================================================ */
-(function () {
+
+(function(){
   'use strict';
-  var FY = (window.FY = window.FY || { viz: {}, tool: {} });
-  var S = FY.svg;
-  if (!S) { if (window.console) console.warn('newt: FY.svg helper missing'); return; }
-  var P = S.palette;
-
-  /* ---- frame geometry, 720 x 380 ---- */
-  var W = 720, H = 380;
-  var M = { t: 30, r: 150, b: 52, l: 56 };   /* wide right margin for the legend */
-  var X0 = M.l, X1 = W - M.r;                 /* plot box left/right */
-  var Y0 = M.t, Y1 = H - M.b;                 /* plot box top/bottom */
-  var HR_MAX = 72;                            /* hours of age on the x-axis */
-  var LOSS_MAX = 13;                          /* percent-loss axis bottom (drawn downward) */
-  var TAB = { 'font-variant-numeric': 'tabular-nums' };  /* tabular mono numerals */
-
-  /* ------------------------------------------------------------------
-     Captured anchor points (percent weight loss) at 24 / 48 / 72 hours.
-     Vaginal medians are the PUBLISHED digits (Flaherman 2015 text:
-     4.2% at 24h, 7.1% at 48h, 6.4% at 72h). Cesarean medians are the
-     PUBLISHED digits (4.9% at 24h, 8.0% at 48h, 8.6% at 72h). The
-     75th/90th/95th are figure-reads from the paper's Figure 2.
-     Order per row: [p50, p75, p90, p95].
-     ------------------------------------------------------------------ */
-  var ANCHORS = {
-    vaginal: {
-      24: [4.2, 5.5, 6.5, 7.0],
-      48: [7.1, 8.5, 9.5, 10.0],
-      72: [6.4, 8.5, 10.0, 11.0]
-    },
-    cesarean: {
-      24: [4.9, 6.0, 7.0, 7.5],
-      48: [8.0, 9.5, 10.5, 11.0],
-      72: [8.6, 10.5, 11.5, 12.0]
-    }
-  };
-
-  /* The percentile bands we draw, with which is the "excessive-loss"
-     line for each delivery mode (the curve that crosses 10 percent). */
-  var PCTS = [
-    { key: 50, label: '50th' },
-    { key: 75, label: '75th' },
-    { key: 90, label: '90th' },
-    { key: 95, label: '95th' }
-  ];
-
-  /* ------------------------------------------------------------------
-     Smooth illustrative curve through the three captured hours.
-     We use a monotone-ish Catmull-Rom-flavored interpolation that
-     also respects the documented shapes: vaginal nadir near 48 to 60h
-     (so the 72h median sits ABOVE the 48h median, i.e. less loss),
-     cesarean nadir near 72h (still deepening at 72h). We sample at
-     0,6,12,...,72 and pin h=0 to 0 percent loss (birth weight).
-     ------------------------------------------------------------------ */
-  function curveFor(mode, pct) {
-    var a = ANCHORS[mode];
-    /* control points: birth (0,0) then the three captured hours */
-    var cp = [
-      { h: 0,  v: 0 },
-      { h: 24, v: a[24][pctIndex(pct)] },
-      { h: 48, v: a[48][pctIndex(pct)] },
-      { h: 72, v: a[72][pctIndex(pct)] }
-    ];
-    var out = [];
-    for (var h = 0; h <= HR_MAX + 0.001; h += 4) {
-      out.push([h, sampleMonotone(cp, h)]);
-    }
-    return out;
-  }
-  function pctIndex(pct) { return pct === 50 ? 0 : pct === 75 ? 1 : pct === 90 ? 2 : 3; }
-
-  /* Piecewise cubic (Fritsch-Carlson monotone-ish) through control
-     points, falling back to a smooth Hermite. Keeps the curve from
-     overshooting the captured anchors while still bending naturally,
-     so the vaginal rebound after 48h and the cesarean late nadir both
-     read correctly. */
-  function sampleMonotone(cp, x) {
-    var n = cp.length;
-    if (x <= cp[0].h) return cp[0].v;
-    if (x >= cp[n - 1].h) return cp[n - 1].v;
-    var i = 0;
-    while (i < n - 1 && x > cp[i + 1].h) i++;
-    var p0 = cp[i], p1 = cp[i + 1];
-    var hSeg = p1.h - p0.h;
-    var t = (x - p0.h) / hSeg;
-    /* secant slopes */
-    var dPrev = i > 0 ? (p0.v - cp[i - 1].v) / (p0.h - cp[i - 1].h) : (p1.v - p0.v) / hSeg;
-    var dHere = (p1.v - p0.v) / hSeg;
-    var dNext = i < n - 2 ? (cp[i + 2].v - p1.v) / (cp[i + 2].h - p1.h) : dHere;
-    /* tangents averaged from neighbors, clamped to avoid overshoot */
-    var m0 = clampSlope((dPrev + dHere) / 2, dPrev, dHere);
-    var m1 = clampSlope((dHere + dNext) / 2, dHere, dNext);
-    var t2 = t * t, t3 = t2 * t;
-    var h00 = 2 * t3 - 3 * t2 + 1;
-    var h10 = t3 - 2 * t2 + t;
-    var h01 = -2 * t3 + 3 * t2;
-    var h11 = t3 - t2;
-    return h00 * p0.v + h10 * hSeg * m0 + h01 * p1.v + h11 * hSeg * m1;
-  }
-  function clampSlope(m, a, b) {
-    /* keep the tangent within ~3x the local secants so it cannot
-       overshoot into a non-physical bump between anchors */
-    var lo = Math.min(a, b) * 3, hi = Math.max(a, b) * 3;
-    if (m < lo) return lo; if (m > hi) return hi; return m;
-  }
-
-  /* ---- small helpers (match the other modules) ---- */
-  function fmt(n) { return (Math.round(n)).toString(); }
-  function note(fig, html) { var p = document.createElement('p'); p.className = 'viz-note'; p.innerHTML = html; fig.appendChild(p); return p; }
-  function dataTable(fig, caption, headers, rows) {
-    var t = document.createElement('table'); t.className = 'viz-data';
-    if (caption) { var cap = document.createElement('caption'); cap.textContent = caption; t.appendChild(cap); }
-    var thead = document.createElement('thead'); var htr = document.createElement('tr');
-    headers.forEach(function (h) { var th = document.createElement('th'); th.scope = 'col'; th.textContent = h; htr.appendChild(th); });
-    thead.appendChild(htr); t.appendChild(thead);
-    var tb = document.createElement('tbody');
-    rows.forEach(function (r) {
-      var tr = document.createElement('tr');
-      r.forEach(function (c, i) {
-        var cell = document.createElement(i === 0 ? 'th' : 'td');
-        if (i === 0) cell.scope = 'row';
-        cell.textContent = c; tr.appendChild(cell);
-      });
-      tb.appendChild(tr);
-    });
-    t.appendChild(tb); fig.appendChild(t); return t;
-  }
-
-  /* ============================================================
-     newt: the weight-loss percentile nomogram
-     ============================================================ */
-  FY.viz['newt'] = function (fig) {
-    if (!fig) return;
-    var svg = S.make(W, H);
-
-    /* scales: y is percent loss, drawn DOWNWARD (0 at top, deeper loss
-       lower) so the chart looks like the real dip a parent watches. */
-    var sx = S.scale(0, HR_MAX, X0, X1);
-    var sy = S.scale(0, LOSS_MAX, Y0, Y1);   /* note: 0 maps to top, LOSS_MAX to bottom */
-
-    var g = S.el('g', null, svg);
-
-    /* ---- horizontal gridlines + y ticks (percent loss) ---- */
-    for (var y = 0; y <= LOSS_MAX + 0.001; y += 2) {
-      var gy = sy(y);
-      S.el('line', { x1: X0, y1: gy, x2: X1, y2: gy, class: 'viz-grid', opacity: y === 0 ? 0.85 : 0.35 }, g);
-      g.appendChild(S.text(X0 - 8, gy + 3.5, y === 0 ? '0' : '-' + fmt(y), 'viz-axis', Object.assign({ 'text-anchor': 'end' }, TAB)));
-    }
-    /* ---- x ticks every 12 hours ---- */
-    for (var x = 0; x <= HR_MAX; x += 12) {
-      var gx = sx(x);
-      S.el('line', { x1: gx, y1: Y1, x2: gx, y2: Y1 + 4, class: 'viz-grid', opacity: 0.6 }, g);
-      g.appendChild(S.text(gx, Y1 + 18, fmt(x), 'viz-axis', Object.assign({ 'text-anchor': 'middle' }, TAB)));
-    }
-    /* day markers under the hours, for orientation */
-    [[24, 'day 1'], [48, 'day 2'], [72, 'day 3']].forEach(function (d) {
-      g.appendChild(S.text(sx(d[0]), Y1 + 31, d[1], 'viz-axis', { 'text-anchor': 'middle', fill: P.dim, opacity: 0.8 }));
-    });
-
-    /* ---- axis titles ---- */
-    g.appendChild(S.text((X0 + X1) / 2, H - 6, 'Hours of age', 'viz-axis', { 'text-anchor': 'middle' }));
-    g.appendChild(S.text(0, 0, 'Percent of birth weight lost', 'viz-axis', { 'text-anchor': 'middle', transform: 'translate(' + (X0 - 42) + ' ' + ((Y0 + Y1) / 2) + ') rotate(-90)' }));
-
-    /* ---- the 10 percent danger line ---- */
-    var dangerY = sy(10);
-    S.el('line', { x1: X0, y1: dangerY, x2: X1, y2: dangerY, stroke: P.emerg, 'stroke-width': 1.6, 'stroke-dasharray': '6 4', opacity: 0.92 }, g);
-    g.appendChild(S.text(X0 + 6, dangerY - 6, '10% line: a careful feeding look', 'viz-label', { fill: P.emerg }));
-
-    /* ------------------------------------------------------------------
-       Draw each delivery-mode family. The "excessive-loss" percentile
-       (90th vaginal, 75th cesarean) is the bold solid curve; the others
-       are thinner. A faint fill sits between the median and the
-       excessive curve to read the family as a band.
-       ------------------------------------------------------------------ */
-    function drawFamily(mode, col, excessivePct, dash) {
-      var fam = S.el('g', null, g);
-
-      /* band between 50th and the excessive percentile */
-      var med = curveFor(mode, 50).map(function (p) { return [sx(p[0]), sy(p[1])]; });
-      var exc = curveFor(mode, excessivePct).map(function (p) { return [sx(p[0]), sy(p[1])]; });
-      var bandD = S.line(med) + ' ' + exc.slice().reverse().map(function (p) { return 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ') + ' Z';
-      S.el('path', { d: bandD, fill: col, 'fill-opacity': 0.07, stroke: 'none' }, fam);
-
-      /* each percentile line */
-      PCTS.forEach(function (pc) {
-        var pts = curveFor(mode, pc.key).map(function (p) { return [sx(p[0]), sy(p[1])]; });
-        var isExc = pc.key === excessivePct;
-        S.el('path', {
-          d: S.line(pts), fill: 'none', stroke: col,
-          'stroke-width': isExc ? 2.6 : 1.3,
-          'stroke-dasharray': isExc ? '' : dash,
-          'stroke-linejoin': 'round', 'stroke-linecap': 'round',
-          opacity: isExc ? 1 : 0.7
-        }, fam);
-        /* tiny percentile label at the 72h (right) end of each line */
-        var last = pts[pts.length - 1];
-        g.appendChild(S.text(last[0] + 5, last[1] + 3.2, pc.label, 'viz-axis', Object.assign({ 'text-anchor': 'start', fill: col, opacity: isExc ? 1 : 0.75 }, TAB)));
-      });
-
-      /* dot the published median anchors (the hard, in-text numbers) */
-      [24, 48, 72].forEach(function (h) {
-        var v = ANCHORS[mode][h][0];
-        S.el('circle', { cx: sx(h), cy: sy(v), r: 2.8, fill: col, stroke: '#22291f', 'stroke-width': 0.8 }, fam);
-      });
-
-      /* mark where the excessive curve crosses the 10 percent line */
-      var crossH = crossesTen(mode, excessivePct);
-      if (crossH != null) {
-        S.el('circle', { cx: sx(crossH), cy: dangerY, r: 4.2, fill: 'none', stroke: col, 'stroke-width': 1.8 }, fam);
-      }
-      return fam;
-    }
-
-    /* find the first hour where a percentile curve reaches 10 percent loss */
-    function crossesTen(mode, pct) {
-      var pts = curveFor(mode, pct);
-      for (var i = 1; i < pts.length; i++) {
-        if (pts[i - 1][1] < 10 && pts[i][1] >= 10) {
-          var t = (10 - pts[i - 1][1]) / (pts[i][1] - pts[i - 1][1]);
-          return pts[i - 1][0] + t * (pts[i][0] - pts[i - 1][0]);
-        }
-        if (pts[i][1] >= 10 && pts[i - 1][1] >= 10) return pts[i - 1][0];
-      }
-      return null;
-    }
-
-    /* cesarean first (sits a touch deeper), then vaginal on top */
-    drawFamily('cesarean', P.sky, 75, '3 3');
-    drawFamily('vaginal', P.gold, 90, '4 3');
-
-    /* ------------------------------------------------------------------
-       Legend in the right margin: the two families and what each
-       "excessive" line means.
-       ------------------------------------------------------------------ */
-    var lg = S.el('g', { transform: 'translate(' + (X1 + 16) + ' ' + (Y0 + 6) + ')' }, g);
-    lg.appendChild(S.text(0, 0, 'Excessive loss', 'viz-label', { fill: P.parch }));
-    /* vaginal */
-    S.el('line', { x1: 0, y1: 18, x2: 20, y2: 18, stroke: P.gold, 'stroke-width': 2.6 }, lg);
-    lg.appendChild(S.text(26, 21, 'Vaginal', 'viz-axis', { fill: P.gold }));
-    lg.appendChild(S.text(0, 35, 'crossing the 90th', 'viz-axis', { fill: P.dim }));
-    /* cesarean */
-    S.el('line', { x1: 0, y1: 56, x2: 20, y2: 56, stroke: P.sky, 'stroke-width': 2.6 }, lg);
-    lg.appendChild(S.text(26, 59, 'Cesarean', 'viz-axis', { fill: P.sky }));
-    lg.appendChild(S.text(0, 73, 'crossing the 75th', 'viz-axis', { fill: P.dim }));
-    /* thin-line key */
-    S.el('line', { x1: 0, y1: 94, x2: 20, y2: 94, stroke: P.dim, 'stroke-width': 1.3, 'stroke-dasharray': '4 3' }, lg);
-    lg.appendChild(S.text(26, 97, '50/75/90/95th', 'viz-axis', Object.assign({ fill: P.dim }, TAB)));
-    /* median-dot key */
-    S.el('circle', { cx: 10, cy: 113, r: 2.8, fill: P.parch }, lg);
-    lg.appendChild(S.text(26, 116, 'published median', 'viz-axis', { fill: P.dim }));
-    /* 10% line key */
-    S.el('line', { x1: 0, y1: 132, x2: 20, y2: 132, stroke: P.emerg, 'stroke-width': 1.6, 'stroke-dasharray': '6 4' }, lg);
-    lg.appendChild(S.text(26, 135, '10% danger line', 'viz-axis', { fill: P.emerg }));
-
-    /* ---- accessibility ---- */
-    svg.setAttribute('aria-label',
-      'Percentile curves of newborn weight loss, percent of birth weight lost versus hours of age from 0 to 72, ' +
-      'from the NEWT study (Flaherman 2015, 161,471 newborns, 108,907 exclusively breastfed). Two families are shown. ' +
-      'Vaginally born babies lose a median of about 4.2 percent at 24 hours and about 7.1 percent at 48 hours, then ' +
-      'start to climb back. Cesarean-born babies lose a median of about 4.9 percent at 24 hours, 8.0 percent at 48 ' +
-      'hours, and 8.6 percent at 72 hours, bottoming out later. A dashed line marks 10 percent loss, the classic ' +
-      'point for a careful feeding look. Loss is called excessive when a vaginal baby crosses the 90th percentile or ' +
-      'a cesarean baby crosses the 75th percentile, the curves that reach the 10 percent line. Almost 5 percent of ' +
-      'vaginal and almost 10 percent of cesarean babies cross 10 percent by 48 hours, and more than a quarter of ' +
-      'cesarean babies do by 72 hours. The curves are smooth illustrations of the published nomogram. ' +
-      'Most babies are back to birth weight by 10 to 14 days.');
-
-    fig.appendChild(svg);
-
-    /* ---- reassuring note + source ---- */
-    note(fig,
-      'The dip has a bottom. Most babies lose the most weight around day 2 to 3, then climb back, and are usually ' +
-      'back to birth weight by 10 to 14 days. The dashed <b>10% line</b> is the classic "look harder" mark; a baby ' +
-      'crossing it, or steadily climbing <em>up</em> through the percentiles, is the one who earns a closer feeding ' +
-      'look. The exact figures are in the table below. ' +
-      '<span class="src">Source: Flaherman et al., Pediatrics 2015 (NEWT, newbornweight.org); 161,471 newborns. ' +
-      'Published medians are exact; the 75th, 90th, and 95th curves are smooth illustrations read from Figure 2 of ' +
-      'the paper, not the exact lines, and do not apply to formula-fed babies, who lose less.</span>');
-
-    /* ---- accessible data table (the underlying anchors) ---- */
-    dataTable(fig,
-      'Percent of birth weight lost by hours of age and delivery mode (Flaherman 2015; 50th is published, 75/90/95th read from Figure 2)',
-      ['Hours', 'Vaginal 50th', 'Vaginal 75th', 'Vaginal 90th', 'Vaginal 95th', 'Cesarean 50th', 'Cesarean 75th', 'Cesarean 90th', 'Cesarean 95th'],
-      [24, 48, 72].map(function (h) {
-        var v = ANCHORS.vaginal[h], c = ANCHORS.cesarean[h];
-        return [
-          h + ' h',
-          v[0].toFixed(1) + '%', v[1].toFixed(1) + '%', v[2].toFixed(1) + '%', v[3].toFixed(1) + '%',
-          c[0].toFixed(1) + '%', c[1].toFixed(1) + '%', c[2].toFixed(1) + '%', c[3].toFixed(1) + '%'
-        ];
-      })
-    );
+  var FY=window.FY;
+  FY.viz['newt'] = function(fig){
+    var controls=document.createElement('div'); controls.className='seg';controls.setAttribute('role','group');controls.setAttribute('aria-label','Delivery method');fig.appendChild(controls);
+    var plot=document.createElement('div');fig.appendChild(plot);
+    var selected='vaginal',buttons={};
+    ['vaginal','cesarean'].forEach(function(mode){var b=document.createElement('button');b.type='button';b.textContent=mode==='vaginal'?'Vaginal birth':'Cesarean birth';b.addEventListener('click',function(){selected=mode;draw();});controls.appendChild(b);buttons[mode]=b;});
+    function draw(){
+      Object.keys(buttons).forEach(function(k){buttons[k].classList.toggle('on',k===selected);buttons[k].setAttribute('aria-pressed',k===selected?'true':'false');});
+      plot.textContent='';
+      var points=selected==='vaginal'?[[24,4.2],[48,7.1],[72,6.4]]:[[24,4.9],[48,8],[72,8.6],[96,5.8]];
+      FY.dataPlot(plot,{title:'Early weight loss: published median anchors',description:'Selected median weight-loss estimates for exclusively breastfed newborns. Lines connect reported anchors; there are no reconstructed infant percentiles or diagnostic thresholds.',xmax:96,ymax:12,xticks:[0,24,48,72,96],yticks:[0,3,6,9,12],xLabel:'Hours after birth',yLabel:'Loss from birth weight, percent',series:[{label:selected==='vaginal'?'Vaginal birth':'Cesarean birth',points:points}],headers:['Hours after birth','Median loss, percent'],rows:points,note:'Reported median anchors from the Northern California hospital cohort, born at least 36 weeks in 2009 to 2013. Weights after supplemental feeding or discharge were excluded, and the analysis also excluded extreme changes. Lines are straight interpolation, not the complete NEWT nomogram. A median does not establish adequate feeding. Ten percent loss needs assessment, and a feeding problem can occur below it. <a href="https://www.newbornweight.org/wp-content/uploads/2016/12/2015_Breastfed-nomogram_Pediatrics.pdf">Flaherman et al. 2015, methods and results</a>.'});
+    }draw();
   };
 })();
-
 
 /* module: ppd-charts.js */
 /* module: ppd-charts.js  (FY.viz.ppd-spectrum, FY.viz.paternal-ppd) */
@@ -2975,59 +1865,35 @@
     var note = document.createElement('p'); note.className = 'viz-note'; note.innerHTML = noteHTML + (srcHTML ? ' <span class="src">' + srcHTML + '</span>' : '');
     fig.appendChild(note);
     var tbl = document.createElement('table'); tbl.className = 'viz-data';
-    tbl.innerHTML = '<thead><tr><th>Condition</th><th>Frequency</th></tr></thead><tbody>' + data.map(function (d) { return '<tr><td>' + d[0] + '</td><td>' + (d[3] || d[1] + '%') + '</td></tr>'; }).join('') + '</tbody>';
+    tbl.innerHTML = '<thead><tr><th>Sample</th><th>Estimate</th></tr></thead><tbody>' + data.map(function (d) { return '<tr><td>' + d[0] + '</td><td>' + (d[3] || d[1] + '%') + '</td></tr>'; }).join('') + '</tbody>';
     fig.appendChild(tbl);
   }
 
   FY.viz['ppd-spectrum'] = function (fig) {
     hbars(fig, [
-      ['Baby blues (transient)', 80, P.dim, 'up to 80%'],
-      ['Perinatal anxiety symptoms', 15, P.gold],
-      ['Screen-positive depression (EPDS)', 14, P.gold, '~1 in 7'],
-      ['Depressive symptoms (PRAMS screen)', 13.2, P.gold],
-      ['Perinatal OCD', 6, P.gold, '2 to 9%'],
-      ['Postpartum psychosis', 0.15, P.emerg, '1 to 2 / 1,000']
-    ], 90, [0, 20, 40, 60, 80],
-      'Postpartum mood spectrum frequencies: baby blues up to 80 percent, anxiety about 15 percent, screen-positive depression about 1 in 7, PRAMS depressive symptoms 13.2 percent, OCD 2 to 9 percent, and postpartum psychosis 1 to 2 per 1,000 births.',
-      'The famous numbers measure different things: symptoms on a brief screen, screen-positive then interview-confirmed, and diagnosed in the chart. Psychosis is rare but a true emergency.',
-      '<a href="https://www.cdc.gov/mmwr/volumes/69/wr/mm6919a2.htm">CDC PRAMS</a>; Wisner 2013');
+      ['All 31 reporting sites', 13.2, P.gold, '13.2%'],
+      ['Illinois', 9.7, P.gold, '9.7%'],
+      ['Mississippi', 23.5, P.gold, '23.5%']
+    ], 30, [0, 10, 20, 30],
+      'Selected 2018 PRAMS postpartum depressive-symptom estimates: all 31 reporting sites 13.2 percent, Illinois 9.7 percent and Mississippi 23.5 percent. These are weighted survey estimates of symptoms, not clinical diagnoses or current national prevalence.',
+      'PRAMS surveyed women with recent live births two to six months postpartum, averaging four months. These 31 sites met a weighted response-rate threshold of 55 percent. Symptoms meant answering always or often to either of two adapted PHQ-2 questions. Differences between sites can reflect their populations as well as reporting. The figures do not measure anxiety, OCD or psychosis, and a symptom screen needs further assessment.',
+      '<a href="https://www.cdc.gov/mmwr/volumes/69/wr/mm6919a2.htm">CDC, 2018 PRAMS methods and Table 1</a>');
   };
 
   FY.viz['paternal-ppd'] = function (fig) {
     hbars(fig, [
-      ['Fathers, overall (Paulson 2010)', 10.4, P.sky],
-      ['Fathers, peak at 3 to 6 months', 25.6, P.sky, '~1 in 4'],
-      ['Fathers, overall (updated meta)', 8.4, P.sky],
-      ['Mothers, for comparison (PRAMS)', 13.2, P.gold]
+      ['All included father samples', 10.4, P.sky, '10.4%'],
+      ['3 to 6 month subgroup', 25.6, P.sky, '25.6%']
     ], 30, [0, 10, 20, 30],
-      'Paternal perinatal depression averages about 10.4 percent overall, peaking near 25.6 percent (1 in 4) at three to six months postpartum, an updated meta-analysis puts the overall figure at 8.4 percent.',
-      'Partner depression is real and common, and unlike the mother’s early peak it tends to climb across the first year, which is why screening fathers around the six-month visit makes sense.',
-      '<a href="https://jamanetwork.com/journals/jama/fullarticle/186336">Paulson &amp; Bazemore 2010</a>');
+      'Paulson and Bazemore 2010 pooled paternal-depression estimates: 10.4 percent overall, with a 95 percent confidence interval of 8.5 to 12.7 percent; 25.6 percent for the three-to-six-month subgroup, with an interval of 17.3 to 36.1 percent. Different study groups do not establish an individual trajectory.',
+      'The review included 43 studies and 28,004 fathers, with varied settings and definitions: 40 studies used self-report measures and three used interviews. The main analysis used each study\'s earliest measurement. The three-to-six-month subgroup contained only three studies, including two higher-risk samples. Its larger estimate does not show that every father\'s symptoms rise over time or establish a universal screening date. Overall 95 percent confidence interval: 8.5 to 12.7 percent; subgroup: 17.3 to 36.1 percent.',
+      '<a href="https://jamanetwork.com/journals/jama/fullarticle/185905">Paulson &amp; Bazemore 2010, methods and subgroup analysis</a>');
   };
 })();
 
 
 /* module: sleep-cryout-bedshare.js */
-/* ============================================================
-   THE FIRST YEAR, chart modules: sleep-band, bedshare-forest, cryitout.
-   Three charts for the Sleep section, registered onto window.FY.viz.
-   No external libraries. No em dashes. Every number is real and the
-   primary source is cited in each chart's aria-label, viz-note, and
-   accessible data table.
-
-   1) sleep-band     "Sleep is a wide band, not a number." The P2 to P98
-                     total-sleep band birth to 24 months (Iglowstein 2003)
-                     with the NSF 2015 recommended band overlaid.
-   2) bedshare-forest "Clean vs hazardous bed-sharing." A forest plot on a
-                     log odds axis: Blair 2014 no-hazard OR 1.08 (NS) next
-                     to the hazardous contexts (sofa, alcohol, smoker) and
-                     Carpenter 2013 clean-breastfed 5.1 and both-smoke 21.6.
-   3) cryitout       "What the sleep-training trials actually found." A
-                     small-multiples panel (Gradisar 2016): sleep latency
-                     down, cortisol down not up, 12-month attachment no
-                     difference; plus the Park 2022 pooled child-sleep
-                     OR 0.51.
-   ============================================================ */
+/* Published sleep reference intervals, observational bed-sharing associations and selected sleep-trial outcomes. Reference bands are not diagnostic thresholds. Study populations, comparison groups and limits are stated beside each chart. */
 (function () {
   'use strict';
   var FY = (window.FY = window.FY || { viz: {}, tool: {} });
@@ -3053,7 +1919,7 @@
 
     /* ----------------------------------------------------------
        DATA. Iglowstein et al., Pediatrics 2003;111(2):302, Table 1
-       (total sleep per 24 h, hours): mean, 2nd and 98th percentile.
+       (parent-reported time in bed plus daytime sleep): mean and percentiles.
        Table 1 begins at 6 months (no Iglowstein point below 6 mo),
        so the birth-to-3-month end is anchored to the NSF 2015
        recommended newborn range rather than invented Iglowstein data.
@@ -3098,7 +1964,7 @@
       txt(m.left - 8, gy + 4, String(hv), 'viz-axis', { 'text-anchor': 'end', fill: P.dim });
     }
     // y axis title (rotated).
-    txt(14, m.top + plotH / 2, 'Hours of sleep per 24', 'viz-label', {
+    txt(14, m.top + plotH / 2, 'Reported hours per 24h', 'viz-label', {
       'text-anchor': 'middle', fill: P.dim, transform: 'rotate(-90 14 ' + (m.top + plotH / 2) + ')'
     });
 
@@ -3154,7 +2020,7 @@
     var ly = m.top + 6;
     // Iglowstein band swatch.
     S.el('rect', { x: lx, y: ly, width: 22, height: 12, fill: P.gold, 'fill-opacity': 0.20, stroke: P.gold, 'stroke-opacity': 0.85, 'stroke-width': 1 }, svg);
-    txt(lx + 28, ly + 10, 'Real range', 'viz-axis', { fill: P.parch });
+    txt(lx + 28, ly + 10, 'Percentiles', 'viz-axis', { fill: P.parch });
     txt(lx + 28, ly + 23, '(2nd to 98th)', 'viz-axis', { fill: P.dim });
     // Mean line swatch.
     S.el('line', { x1: lx, y1: ly + 40, x2: lx + 22, y2: ly + 40, stroke: P.goldHi, 'stroke-width': 2.2 }, svg);
@@ -3163,34 +2029,22 @@
     // NSF band swatch.
     S.el('rect', { x: lx, y: ly + 56, width: 22, height: 12, fill: P.ok, 'fill-opacity': 0.16, stroke: P.ok, 'stroke-opacity': 0.7, 'stroke-width': 1, 'stroke-dasharray': '4 3' }, svg);
     txt(lx + 28, ly + 66, 'NSF advised', 'viz-axis', { fill: P.parch });
-    txt(lx + 28, ly + 79, 'target band', 'viz-axis', { fill: P.dim });
+    txt(lx + 28, ly + 79, 'recommended', 'viz-axis', { fill: P.dim });
 
     fig.appendChild(svg);
 
     /* ---- aria-label: concise spoken summary with the key numbers ---- */
-    svg.setAttribute('aria-label',
-      'A shaded band of total daily sleep from birth to 24 months. The 2nd-to-98th-percentile range is very wide: ' +
-      'at 6 months the average is 14.2 hours but normal runs from 10.4 to 18.1 hours; at 12 months the average is 13.9 hours, ' +
-      'normal 11.4 to 16.5. The National Sleep Foundation recommended target band is narrower (14 to 17 hours for newborns, ' +
-      '12 to 15 for ages 4 to 11 months, 11 to 14 for ages 1 to 2 years). The point is that there is no single right number. ' +
-      'Source: Iglowstein 2003 (Zurich, n=493) and National Sleep Foundation 2015.');
+    svg.setAttribute('aria-label', 'Parent-reported time in bed plus daytime sleep: selected mean and second-to-ninety-eighth percentile values from the Zurich study, ages six to twenty-four months, alongside separate NSF consensus recommended ranges. These descriptive percentiles are not clinical thresholds.');
 
     /* ---- viz-note: reassuring caption + source ---- */
     var note = el('p', 'viz-note');
-    note.textContent =
-      'There is no single right number of hours. At 6 months, perfectly normal total sleep runs anywhere from about ' +
-      '10.4 to 18.1 hours a day, an eight-hour spread, and the band only narrows slowly. If your baby sleeps less (or more) ' +
-      'than the average and is growing, alert when awake, and generally content, that is almost certainly just their spot in ' +
-      'the band. The greener band is the simple "aim for this" target; the gold band is the honest width of what healthy ' +
-      'babies actually do. Sources: Iglowstein et al., Pediatrics 2003;111(2):302 (Zurich Longitudinal Studies, n=493, total ' +
-      'sleep per 24 hours; band starts at 6 months); National Sleep Foundation consensus, Hirshkowitz et al., Sleep Health ' +
-      '2015;1(1):40 to 43 (recommended ranges).';
+    note.textContent = 'The gold band describes parent-reported time in bed plus daytime sleep in the Zurich study from six months onward; the green band shows separate NSF 2015 consensus recommendations. Lines interpolate selected ages. Neither band can establish that unusual sleep is harmless. Discuss persistent concerns, especially with poor feeding, growth changes, breathing problems or unusual sleepiness. Sources: Iglowstein et al., Pediatrics 2003;111:302; Hirshkowitz et al., Sleep Health 2015;1:40 to 43.';
     fig.appendChild(note);
 
     /* ---- accessible data table fallback ---- */
     var tbl = el('table', 'viz-data');
     var cap = el('caption');
-    cap.textContent = 'Total sleep per 24 hours by age: Iglowstein 2003 mean and 2nd-to-98th percentile band, with the NSF 2015 recommended band.';
+    cap.textContent = 'Parent-reported time in bed plus daytime sleep by age: Iglowstein 2003 mean and 2nd-to-98th percentile band, with the NSF 2015 recommended band.';
     tbl.appendChild(cap);
     var thead = el('thead');
     thead.innerHTML = '<tr><th scope="col">Age (months)</th><th scope="col">Average (h)</th>' +
@@ -3229,19 +2083,11 @@
   FY.viz['bedshare-forest'] = function (fig) {
     if (!fig || typeof fig.appendChild !== 'function') return;
 
-    /* ----------------------------------------------------------
-       DATA. odds ratio (or) with 95% CI [lo, hi].
-       Blair 2014 separated hazardous from non-hazardous bed-sharing
-       and had measured (not imputed) hazard data; its no-hazard OR is
-       not significant. Carpenter 2013 imputed alcohol/drug data and
-       folded sofa deaths into the comparison group; its "clean" OR of
-       5.1 is the AAP's keystone, and the dispute is downstream of that
-       data-quality difference. "clean" = breastfed infant of non-smoking
-       parents with no other hazards.
-       ---------------------------------------------------------- */
+    /* Each study has its own exposure definitions and reference population.
+       Odds ratios cannot be transferred into a personal risk calculator. */
     var ROWS = [
-      { label: 'Clean bed-share, no hazards', sub: 'Blair 2014', or: 1.08, lo: 0.58, hi: 2.01, sig: false, group: 'clean' },
-      { label: 'Clean bed-share, breastfed <3mo', sub: 'Carpenter 2013', or: 5.1, lo: 2.3, hi: 11.4, sig: true, group: 'clean' },
+      { label: 'Without 3 specified hazards', sub: 'Blair 2014', or: 1.08, lo: 0.58, hi: 2.01, sig: false, group: 'clean' },
+      { label: 'Breastfed infant under 3mo', sub: 'Carpenter 2013', or: 5.1, lo: 2.3, hi: 11.4, sig: true, group: 'clean' },
       { label: 'With a smoking parent', sub: 'Blair 2014', or: 4.04, lo: 2.4, hi: 6.8, sig: true, group: 'hazard' },
       { label: 'Sofa or armchair sharing', sub: 'Blair 2014', or: 18.34, lo: 7.1, hi: 47.4, sig: true, group: 'hazard' },
       { label: 'With alcohol over 2 units', sub: 'Blair 2014', or: 18.29, lo: 7.7, hi: 43.5, sig: true, group: 'hazard' },
@@ -3278,11 +2124,11 @@
       txt(gx, m.top + plotH + 20, String(t), 'viz-axis', { 'text-anchor': 'middle', fill: isRef ? P.parch : P.dim });
     });
     // Axis title + the meaning of the reference line.
-    txt(m.left + plotW / 2, m.top + plotH + 42, 'Odds ratio for SIDS vs room-sharing (log scale)', 'viz-label', { 'text-anchor': 'middle', fill: P.dim });
+    txt(m.left + plotW / 2, m.top + plotH + 42, 'SIDS odds ratio: study-specific comparison (log scale)', 'viz-label', { 'text-anchor': 'middle', fill: P.dim });
     txt(X(1), m.top - 14, 'no change (OR 1)', 'viz-axis', { 'text-anchor': 'middle', fill: P.parch });
 
     /* ---- group headers in the left gutter ---- */
-    txt(m.left - 12, m.top - 28, 'A clean bed', 'viz-axis', { 'text-anchor': 'end', fill: P.ok, 'font-weight': '700' });
+    txt(m.left - 12, m.top - 28, 'Selected study contexts', 'viz-axis', { 'text-anchor': 'end', fill: P.ok, 'font-weight': '700' });
     // (placed once; rows themselves carry their study sub-label)
 
     /* ---- rows: whisker (CI) + point (OR) ---- */
@@ -3321,30 +2167,17 @@
     fig.appendChild(svg);
 
     /* ---- aria-label ---- */
-    svg.setAttribute('aria-label',
-      'A forest plot of bed-sharing odds ratios for sudden infant death versus room-sharing, on a log scale, with the no-change line at 1. ' +
-      'Bed-sharing in the absence of any hazard is not significantly different from room-sharing: Blair 2014 odds ratio 1.08 (0.58 to 2.01). ' +
-      'The danger is concentrated in hazardous contexts: a smoking parent 4.04, sofa or armchair sharing 18.34, alcohol over 2 units 18.29, ' +
-      'and both parents smoking 21.6. Carpenter 2013, which imputed missing hazard data, found a clean breastfed-under-3-month odds ratio of 5.1, ' +
-      'the disputed figure. The takeaway: the risk lives in the hazards a parent can act on. Sources: Blair 2014 (PLOS ONE) and Carpenter 2013 (BMJ Open).');
+    svg.setAttribute('aria-label', 'Selected observational associations between bed-sharing contexts and SIDS, on a log odds-ratio axis with confidence intervals. Blair compares with non-co-sleeping overall; Carpenter uses a different population and comparison. Absence of a statistically significant association does not demonstrate safety.');
 
     /* ---- viz-note ---- */
     var note = el('p', 'viz-note');
-    note.textContent =
-      'This is the bed-sharing controversy shown fairly. When all known hazards are removed, the best UK study with measured ' +
-      '(not guessed) hazard data found no significant added risk from bed-sharing (odds ratio 1.08, confidence interval 0.58 to ' +
-      '2.01, which crosses 1). The overwhelming danger sits in specific, avoidable contexts: a sofa or armchair (18.34), alcohol ' +
-      '(18.29), a smoker (4.04), and both parents smoking (21.6). The single contested figure is Carpenter 2013s clean-bed odds ' +
-      'ratio of 5.1, which the authors of the other study attribute to imputed alcohol and drug data and to folding sofa deaths ' +
-      'into the comparison group. The honest, actionable message both camps share: never on a sofa or armchair, and never with ' +
-      'alcohol, smoking, or drugs in the picture. Sources: Blair et al., PLOS ONE 2014;9(9):e107799 (400 cases, 1386 controls); ' +
-      'Carpenter et al., BMJ Open 2013;3(5):e002299 (1472 cases, 4679 controls).';
+    note.textContent = 'The studies use different populations, definitions and comparison groups. Blair’s estimate of 1.08 (0.58 to 2.01) excludes sofa-sharing, smoking and more than two alcohol units, but compares with non-co-sleeping overall, not exclusively room-sharing. It does not prove safety, particularly in young infants. Carpenter’s 5.1 estimate compares breastfed infants under three months with nonsmoking parents and no maternal alcohol or drugs against room-sharing in that low-risk profile. Its 21.6 estimate compares bed-sharing with both parents smoking against the same nonsmoking room-sharing profile, not against room-sharing smokers. Other plotted estimates are context-specific associations, not a transferable personal risk calculator. Follow AAP guidance: back, firm, flat and on a separate infant sleep surface; avoid falling asleep with a baby on a sofa or armchair. Sources: Blair 2014, PLOS ONE e107799; Carpenter 2013, BMJ Open e002299.';
     fig.appendChild(note);
 
     /* ---- accessible data table fallback ---- */
     var tbl = el('table', 'viz-data');
     var cap = el('caption');
-    cap.textContent = 'Bed-sharing odds ratios for SIDS versus room-sharing, with 95% confidence intervals (Blair 2014 and Carpenter 2013).';
+    cap.textContent = 'Selected bed-sharing associations with SIDS, 95% confidence intervals. The studies have different populations and comparison groups.';
     tbl.appendChild(cap);
     var thead = el('thead');
     thead.innerHTML = '<tr><th scope="col">Context</th><th scope="col">Source</th>' +
@@ -3367,7 +2200,7 @@
   /* ============================================================
      3) FY.viz["cryitout"]
      A small-multiples panel of what the sleep-training trials actually
-     found, using the harm camp's own metrics. Three Gradisar 2016
+     found, using the selected outcomes. Three Gradisar 2016
      mini-panels (each an arrow showing direction of effect) plus a
      fourth panel with the Park 2022 pooled child-sleep odds ratio.
      Sources: Gradisar et al., Pediatrics 2016;137(6):e20151486 (RCT,
@@ -3389,24 +2222,24 @@
         verdict: 'DOWN',
         dir: 'down',
         good: true,
-        detail: 'Large drop',
-        stat: "Cohen's d > 0.80",
+        detail: 'Sleep latency improved',
+        stat: 'abstract-reported finding',
         foot: 'Gradisar 2016'
       },
       {
         key: 'cortisol',
         title: 'Stress hormone (cortisol)',
-        verdict: 'DOWN, not up',
-        dir: 'down',
-        good: true,
-        detail: 'Small-to-moderate decline',
-        stat: 'in the active groups',
+        verdict: 'NO RISE DETECTED',
+        dir: 'flat',
+        good: false,
+        detail: 'Measured cortisol declined',
+        stat: 'small trial; limited inference',
         foot: 'Gradisar 2016'
       },
       {
         key: 'attach',
         title: 'Attachment at 12 months',
-        verdict: 'NO DIFFERENCE',
+        verdict: 'NONE DETECTED',
         dir: 'flat',
         good: true,
         detail: 'Strange Situation,',
@@ -3427,7 +2260,7 @@
     function txt(x, y, str, cls, attrs) { var t = S.text(x, y, str, cls, attrs); svg.appendChild(t); return t; }
 
     // Section caption (top).
-    txt(16, 24, "What the trials actually found (using the harm camp's own metrics)", 'viz-label', { fill: P.parch, 'font-weight': '700' });
+    txt(16, 24, "Selected sleep-trial outcomes", 'viz-label', { fill: P.parch, 'font-weight': '700' });
 
     /* ---- Top row: three tiles ---- */
     var pad = 16;
@@ -3438,7 +2271,7 @@
 
     PANELS.forEach(function (d, i) {
       var tx = pad + i * (tileW + gap);
-      var col = d.good ? P.ok : P.emerg;
+      var col = d.good ? P.ok : P.dim;
 
       // tile frame.
       S.el('rect', { x: tx, y: rowTop, width: tileW, height: tileH, rx: 8, ry: 8, fill: '#ffffff', 'fill-opacity': 0.03, stroke: P.rule, 'stroke-width': 1 }, svg);
@@ -3471,7 +2304,7 @@
     var bH = H - by - 30;
     var bx0 = 232, bx1 = W - 28;              // plot x range (leave a left label gutter)
 
-    txt(pad, by + 4, 'Pooled across 10 trials (meta-analysis)', 'viz-label', { fill: P.parch, 'font-weight': '700' });
+    txt(pad, by + 4, 'Child sleep problems (k=5)', 'viz-label', { fill: P.parch, 'font-weight': '700' });
     txt(pad, by + 20, 'Child sleep problems after', 'viz-axis', { fill: P.dim });
     txt(pad, by + 33, 'behavioral sleep training', 'viz-axis', { fill: P.dim });
 
@@ -3505,24 +2338,11 @@
     fig.appendChild(svg);
 
     /* ---- aria-label ---- */
-    svg.setAttribute('aria-label',
-      'A panel of sleep-training trial outcomes. In the Gradisar 2016 randomized trial, time to fall asleep dropped sharply ' +
-      "(Cohen's d greater than 0.80), the stress hormone cortisol went down rather than up in the trained groups, and at the " +
-      '12-month follow-up there was no difference in attachment on the Strange Situation. Pooling 10 trials, Park 2022 found ' +
-      'behavioral sleep training significantly reduced child sleep problems, odds ratio 0.51 (0.37 to 0.69). The honest summary: ' +
-      'it works for sleep and no harm to attachment or stress was detected. Sources: Gradisar 2016 (Pediatrics) and Park 2022 (Scientific Reports).');
+    svg.setAttribute('aria-label', 'Selected outcomes: Gradisar’s small randomized trial, 43 infants aged six to sixteen months, found improved sleep and did not detect adverse cortisol or attachment outcomes. Park’s review included ten trials; the sleep-problem estimate pooled five comparisons, with odds ratio 0.51, confidence interval 0.37 to 0.69. Limited samples and follow-up cannot exclude every possible harm.');
 
     /* ---- viz-note ---- */
     var note = el('p', 'viz-note');
-    note.textContent =
-      "Tested against the fear itself, sleep training holds up. Measured with the harm camp's own yardsticks, the randomized " +
-      'trial found cortisol went down, not up, and at one year there was no difference in attachment; meanwhile time-to-sleep ' +
-      'improved a lot (a large effect). Pooling ten trials, behavioral methods significantly cut child sleep problems (odds ratio ' +
-      '0.51). The honest caveats: this evidence is for babies roughly 6 months and older (it does not apply to newborns), and ' +
-      'pooled across trials the hoped-for boost to maternal mood did not reach significance, so the reliable benefit is the ' +
-      "baby's sleep, not a cure for postnatal depression. No method is mandatory, and not sleep-training is also fine. " +
-      'Sources: Gradisar et al., Pediatrics 2016;137(6):e20151486 (RCT, n=43, ages 6 to 16 months; exact minute values are ' +
-      'paywalled so directions and effect sizes are shown); Park, Kim & Lee, Scientific Reports 2022;12:4172 (meta-analysis of 10 RCTs).';
+    note.textContent = 'Gradisar’s 2016 trial involved 43 infants aged six to sixteen months. Sleep latency improved; measured cortisol declined in the intervention groups, and attachment differences were not detected at follow-up. These results do not establish that training reduces stress or rule out every harm. The Gradisar findings here come from the accessible abstract; the full numerical results were unavailable. The tiles show qualitative findings. Park’s 2022 review included ten trials; five pooled comparisons supplied its reported-sleep-problem estimate (OR 0.51, 0.37 to 0.69), with no significant pooled maternal-depression benefit. Discuss feeding, health and readiness first; these studies do not support newborn sleep training. Sources: Gradisar et al., Pediatrics e20151486; Park et al., Scientific Reports 12:4172.';
     fig.appendChild(note);
 
     /* ---- accessible data table fallback ---- */
@@ -3536,10 +2356,10 @@
     tbl.appendChild(thead);
     var tbody = el('tbody');
     var rows = [
-      ['Time to fall asleep', 'Large decrease', "Cohen's d > 0.80", 'Gradisar 2016'],
-      ['Salivary cortisol (infant stress)', 'Decline (not a rise)', 'small to moderate', 'Gradisar 2016'],
-      ['Attachment at 12 months', 'No difference', 'Strange Situation, ns', 'Gradisar 2016'],
-      ['Child sleep problems (pooled)', 'Significant reduction', 'OR 0.51 (0.37 to 0.69)', 'Park 2022, k=10'],
+      ['Time to fall asleep', 'Improvement reported', 'abstract only; numerical magnitude omitted', 'Gradisar 2016, n=43'],
+      ['Salivary cortisol', 'No adverse response detected', 'declines reported; limited inference', 'Gradisar 2016, n=43'],
+      ['Attachment at 12 months', 'No difference detected', 'Strange Situation, ns', 'Gradisar 2016'],
+      ['Child sleep problems (pooled)', 'Significant reduction', 'OR 0.51 (0.37 to 0.69)', 'Park 2022, k=5; full review includes ten trials'],
       ['Maternal depression (pooled)', 'Not significant', 'EPDS MD -0.22 (-0.68 to 0.25)', 'Park 2022']
     ];
     rows.forEach(function (r) {
@@ -3554,49 +2374,25 @@
 
 
 /* module: suid-cliff.js */
-/* ============================================================
-   THE FIRST YEAR, chart module: suid-cliff
-   The Back to Sleep cliff and the diagnostic scissors.
-   Stacked-area time series of US Sudden Unexpected Infant Death
-   (SUID) per 100,000 live births, 1990 to 2022, split into
-   SIDS, ASSB (accidental suffocation and strangulation in bed),
-   and unknown cause. Annotation flags at 1994 (Back to Sleep),
-   1999 (ICD-10 switch), and the 2020 to 2022 uptick.
-
-   Real anchor points (per 100,000 live births):
-     1990 SUID 154.6  = SIDS 130.3 + unknown 20.9 + ASSB 3.4
-     2015 SUID 92.3   = SIDS 39.3  + unknown 30.0 + ASSB 23.0
-     2022 SUID 100.9  = SIDS 41.7  + unknown 30.8 + ASSB 28.4
-       (2022 split derived from the published composition
-        1,529 SIDS / 1,131 unknown / 1,040 ASSB = ~3,700, which
-        is 41 / 31 / 28 percent of the 100.9 rate.)
-   2015 to 2020 are real year-by-year rates from the CDC
-   2015-2020 paper. 1990 to 2015 and 2020 to 2022 intermediate
-   years are interpolated between the real anchors (noted below).
-
-   Sources: Shapiro-Mendoza / Erck Lambert et al., Pediatrics
-   2018;141(3):e20173519 (PMC6637428) for the 1990 and 2015
-   endpoints; Erck Lambert et al., Pediatrics 2023;151(4):
-   e2022058820 (PMC10091458) for 2015 to 2020 year-by-year;
-   CDC SUID data hub for the 2022 rate (100.9) and composition.
-   US Government public domain (CDC/NCHS). No em dashes.
-   ============================================================ */
+/* Selected SUID anchors, with a 2015-to-2020 period-linked annual series.
+   Other years are interpolated. Different data sources and classifications
+   limit comparisons, and no campaign effect is estimated here. */
 (function () {
   'use strict';
   var FY = (window.FY = window.FY || { viz: {}, tool: {} });
 
-  // Real anchor years (rates per 100,000 live births), components sum to SUID.
-  // 1990 and 2015 from Shapiro-Mendoza 2018; 2015 to 2020 from Erck Lambert
-  // 2023 (Table); 2022 from the CDC data hub (rate 100.9, split from counts).
+  // Published total rates are separate from rounded component sums.
+  // 1990/2022 death-certificate anchors differ from the 2015-to-2020
+  // period-linked series in Shapiro-Mendoza2023, Table1.
   var ANCHORS = [
-    { y: 1990, sids: 130.3, unknown: 20.9, assb: 3.4 },   // PMC6637428 (interp start)
-    { y: 2015, sids: 39.3, unknown: 30.0, assb: 23.0 },   // PMC6637428 endpoint (SUID 92.3)
-    { y: 2016, sids: 37.9, unknown: 31.3, assb: 21.7 },   // PMC10091458
-    { y: 2017, sids: 35.2, unknown: 33.1, assb: 24.5 },   // PMC10091458
-    { y: 2018, sids: 35.0, unknown: 33.4, assb: 22.0 },   // PMC10091458
-    { y: 2019, sids: 33.3, unknown: 30.8, assb: 25.4 },   // PMC10091458
-    { y: 2020, sids: 38.2, unknown: 28.9, assb: 25.0 },   // PMC10091458
-    { y: 2022, sids: 41.7, unknown: 30.8, assb: 28.4 }    // CDC hub (SUID 100.9)
+    { y: 1990, sids: 130.3, unknown: 20.9, assb: 3.4, total: 154.6 },   // PMC6637428 (interp start)
+    { y: 2015, sids: 39.3, unknown: 29.7, assb: 23.1, total: 92.0 }, // Published total differs from rounded component sum
+    { y: 2016, sids: 37.9, unknown: 31.3, assb: 21.7, total: 90.9 },   // PMC10091458
+    { y: 2017, sids: 35.2, unknown: 33.1, assb: 24.5, total: 92.8 },   // PMC10091458
+    { y: 2018, sids: 35.0, unknown: 33.4, assb: 22.0, total: 90.4 },   // PMC10091458
+    { y: 2019, sids: 33.3, unknown: 30.8, assb: 25.4, total: 89.5 },   // PMC10091458
+    { y: 2020, sids: 38.2, unknown: 28.9, assb: 25.0, total: 92.1 },   // PMC10091458
+    { y: 2022, sids: 41.7, unknown: 30.8, assb: 28.4, total: 100.9 }    // CDC hub (SUID 100.9)
   ];
   var anchorYears = {};
   ANCHORS.forEach(function (a) { anchorYears[a.y] = true; });
@@ -3622,7 +2418,7 @@
         sids: sids,
         unknown: unknown,
         assb: assb,
-        suid: sids + unknown + assb,
+        suid: lo.total + (hi.total - lo.total) * t,
         real: !!anchorYears[y]
       });
     }
@@ -3679,7 +2475,8 @@
     // cumulative tops
     var sidsTop = data.map(function (d) { return [sx(d.y), sy(d.sids)]; });
     var unkTop = data.map(function (d) { return [sx(d.y), sy(d.sids + d.unknown)]; });
-    var suidTop = data.map(function (d) { return [sx(d.y), sy(d.sids + d.unknown + d.assb)]; });
+    var stackedTop = data.map(function (d) { return [sx(d.y), sy(d.sids + d.unknown + d.assb)]; });
+    var suidTop = data.map(function (d) { return [sx(d.y), sy(d.suid)]; });
 
     function areaBetween(lowerPts, upperPts) {
       // path: along upper left-to-right, then back along lower right-to-left
@@ -3696,7 +2493,7 @@
     // unknown band (sidsTop to unkTop) in sky
     FY.svg.el('path', { d: areaBetween(sidsTop, unkTop), fill: P.sky, 'fill-opacity': '0.88', stroke: 'none' }, svg);
     // ASSB band (unkTop to suidTop) in plum
-    FY.svg.el('path', { d: areaBetween(unkTop, suidTop), fill: P.plum, 'fill-opacity': '0.9', stroke: 'none' }, svg);
+    FY.svg.el('path', { d: areaBetween(unkTop, stackedTop), fill: P.plum, 'fill-opacity': '0.9', stroke: 'none' }, svg);
 
     // combined SUID spine, drawn bold on top
     FY.svg.el('path', { d: FY.svg.line(suidTop), fill: 'none', stroke: P.goldHi, 'stroke-width': '2', 'stroke-linejoin': 'round' }, svg);
@@ -3759,35 +2556,20 @@
     var smv = FY.svg.text(lx + 96, sumY + 9, '100.9', 'viz-axis', { 'text-anchor': 'end', fill: P.goldHi });
     svg.appendChild(smv);
 
-    // spoken summary with the key numbers
     svg.setAttribute('aria-label',
-      'Stacked area chart of US Sudden Unexpected Infant Death per 100,000 live births, 1990 to 2022, ' +
-      'split into SIDS, accidental suffocation and strangulation in bed (ASSB), and unknown cause. ' +
-      'Combined SUID falls steeply from 154.6 in 1990 (SIDS 130.3, unknown 20.9, ASSB 3.4) after the ' +
-      '1994 Back to Sleep campaign, to about 92 by 2015. After the 1999 switch to ICD-10 coding the SIDS ' +
-      'rate keeps dropping to 39.3 by 2015 while ASSB rises to 23.0 and unknown to 30.0, so much of the ' +
-      'later SIDS decline is relabeling rather than fewer deaths. SUID then rises again to 100.9 in 2022 ' +
-      '(SIDS 41.7, unknown 30.8, ASSB 28.4). Over 1990 to 2015 SIDS fell about 71 percent while ASSB rose ' +
-      'about 671 percent. Source: CDC and NCHS, Shapiro-Mendoza 2018 and Erck Lambert 2023.');
-
-    // attach the svg after the existing figcaption
+      'US sudden unexpected infant death rates per 100,000 live births, selected anchors from 1990 to 2022. SUID includes SIDS, unknown cause, and accidental suffocation and strangulation in bed. ' +
+      'The 1990 death-certificate total is 154.6. The period-linked 2015 total is 92.0, with SIDS 39.3, unknown 29.7 and ASSB 23.1; rounded components need not add exactly to the published total. ' +
+      'The 2022 death-certificate total is 100.9; its rounded component rates are derived from counts. Unmarked years outside 2015 to 2020 are interpolated. Dataset and classification differences limit comparisons; the chart does not isolate any campaign effect.');
     fig.appendChild(svg);
 
-    // reassuring / explanatory caption plus the source
     var note = document.createElement('p');
     note.className = 'viz-note';
-    note.textContent =
-      'The rules work: the steep drop after the 1994 Back to Sleep campaign is a real fall in deaths, ' +
-      'not a coding artifact, because the combined SUID total (the bold line) dropped by nearly half over ' +
-      'the 1990s. The plateau after 1999 is partly relabeling: once the US switched to ICD-10, coroners ' +
-      'shifted cases out of SIDS and into ASSB and unknown, so the combined SUID line is the honest number ' +
-      'to watch. The 2020 to 2022 rise (back to 100.9) is partly a 2019 reporting-practice change and ' +
-      'partly a possible infection link still under study. Real anchor years are marked with dots; 2015 to ' +
-      '2020 are exact yearly rates and the other intermediate years are interpolated between published ' +
-      'anchors. Source: CDC/NCHS via CDC WONDER, synthesized from Shapiro-Mendoza / Erck Lambert et al., ' +
-      'Pediatrics 2018;141(3):e20173519 (1990 and 2015), Erck Lambert et al., Pediatrics 2023;151(4):' +
-      'e2022058820 (2015 to 2020), and the CDC SUID data hub (2022). US Government public domain.';
+    note.textContent = 'SUID combines SIDS, unknown cause and accidental suffocation and strangulation in bed. The 1990 and 2022 anchors come from death-certificate data; the 2015-to-2020 annual series uses period-linked birth/infant-death files. Other years are interpolated, not observed annual values. Published totals are retained separately because rounded component rates may not add exactly. The 2022 split is calculated from published counts and rounded. Cause labels and datasets differ, and this chart cannot isolate a campaign’s effect or explain later changes.';
     fig.appendChild(note);
+    var source = document.createElement('p');
+    source.className = 'viz-note';
+    source.innerHTML = '<a href="https://stacks.cdc.gov/view/cdc/127170/cdc_127170_DS1.pdf">Shapiro-Mendoza et al. 2023, methods and Table 1</a>; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6637428/">Erck Lambert et al. 2018</a>; <a href="https://www.cdc.gov/sudden-infant-death/data-research/data/index.html">CDC SUID data</a>. Sources report historical rates, not individual risk.';
+    fig.appendChild(source);
 
     // accessible data table (real anchor years only, the values that are sourced)
     var table = document.createElement('table');
@@ -3902,13 +2684,13 @@
     perDoseLo: 10, perDoseHi: 15,  /* mg/kg/dose for the displayed check */
     bands: [
       { lb: '6 to 11 lb',  loKg: 2.7,  hiKg: 5.3,  mg: 40,  ml: 1.25 },
-      { lb: '12 to 17 lb', loKg: 5.4,  hiKg: 8.0,  mg: 80,  ml: 2.5 },
-      { lb: '18 to 23 lb', loKg: 8.1,  hiKg: 10.8, mg: 120, ml: 3.75 },
-      { lb: '24 to 35 lb', loKg: 10.9, hiKg: 16.2, mg: 160, ml: 5 },
-      { lb: '36 to 47 lb', loKg: 16.3, hiKg: 21.7, mg: 240, ml: 7.5 },
-      { lb: '48 to 59 lb', loKg: 21.8, hiKg: 27.1, mg: 320, ml: 10 },
-      { lb: '60 to 71 lb', loKg: 27.2, hiKg: 32.6, mg: 400, ml: 12.5 },
-      { lb: '72 to 95 lb', loKg: 32.7, hiKg: 43.5, mg: 480, ml: 15 },
+      { lb: '12 to 17 lb', loKg: 5.4,  hiKg: 7.7,  mg: 80,  ml: 2.5 },
+      { lb: '18 to 23 lb', loKg: 8.1,  hiKg: 10.4, mg: 120, ml: 3.75 },
+      { lb: '24 to 35 lb', loKg: 10.9, hiKg: 15.9, mg: 160, ml: 5 },
+      { lb: '36 to 47 lb', loKg: 16.3, hiKg: 21.3, mg: 240, ml: 7.5 },
+      { lb: '48 to 59 lb', loKg: 21.8, hiKg: 26.8, mg: 320, ml: 10 },
+      { lb: '60 to 71 lb', loKg: 27.2, hiKg: 32.3, mg: 400, ml: 12.5 },
+      { lb: '72 to 95 lb', loKg: 32.7, hiKg: 43.1, mg: 480, ml: 15 },
       { lb: '96+ lb',      loKg: 43.6, hiKg: 999,  mg: 640, ml: 20 }
     ]
   };
@@ -3929,12 +2711,12 @@
        so the chart uses these drops only through the 24 to 35 lb band;
        above that it directs the parent to the children's liquid. */
     bands: [
-      { lb: '12 to 17 lb', loKg: 5.5,  hiKg: 8.0,  mg: 50,  ml: 1.25 },
-      { lb: '18 to 23 lb', loKg: 8.1,  hiKg: 10.8, mg: 75,  ml: 1.875 },
-      { lb: '24 to 35 lb', loKg: 10.9, hiKg: 16.2, mg: 100, ml: 2.5 }
+      { lb: '12 to 17 lb', loKg: 5.4,  hiKg: 7.7,  mg: 50,  ml: 1.25 },
+      { lb: '18 to 23 lb', loKg: 8.1,  hiKg: 10.4, mg: 75,  ml: 1.875 },
+      { lb: '24 to 35 lb', loKg: 10.9, hiKg: 15.9, mg: 100, ml: 2.5 }
     ],
     /* above this weight, infant drops are not the right device */
-    useChildrenAboveKg: 16.2
+    useChildrenAboveKg: 15.9
   };
   var IBU_CHILD = {
     id: 'ibu-child',
@@ -3947,13 +2729,13 @@
     perDayCeil: 40,
     perDoseLo: 10, perDoseHi: 10,
     bands: [
-      { lb: '12 to 17 lb', loKg: 5.5,  hiKg: 8.0,  mg: 50,  ml: 2.5 },
-      { lb: '18 to 23 lb', loKg: 8.1,  hiKg: 10.8, mg: 75,  ml: 3.75 },
-      { lb: '24 to 35 lb', loKg: 10.9, hiKg: 16.2, mg: 100, ml: 5 },
-      { lb: '36 to 47 lb', loKg: 16.3, hiKg: 21.7, mg: 150, ml: 7.5 },
-      { lb: '48 to 59 lb', loKg: 21.8, hiKg: 27.1, mg: 200, ml: 10 },
-      { lb: '60 to 71 lb', loKg: 27.2, hiKg: 32.6, mg: 250, ml: 12.5 },
-      { lb: '72 to 95 lb', loKg: 32.7, hiKg: 43.5, mg: 300, ml: 15 }
+      { lb: '12 to 17 lb', loKg: 5.4,  hiKg: 7.7,  mg: 50,  ml: 2.5 },
+      { lb: '18 to 23 lb', loKg: 8.1,  hiKg: 10.4, mg: 75,  ml: 3.75 },
+      { lb: '24 to 35 lb', loKg: 10.9, hiKg: 15.9, mg: 100, ml: 5 },
+      { lb: '36 to 47 lb', loKg: 16.3, hiKg: 21.3, mg: 150, ml: 7.5 },
+      { lb: '48 to 59 lb', loKg: 21.8, hiKg: 26.8, mg: 200, ml: 10 },
+      { lb: '60 to 71 lb', loKg: 27.2, hiKg: 32.3, mg: 250, ml: 12.5 },
+      { lb: '72 to 95 lb', loKg: 32.7, hiKg: 43.1, mg: 300, ml: 15 }
     ]
   };
 
@@ -4006,11 +2788,6 @@
       var b = drug.bands[i];
       if (kg >= b.loKg && kg <= b.hiKg) return b;
     }
-    /* heavier than the top band: clamp to the top band (the chart's
-       ceiling dose), still a real published value */
-    if (kg > drug.bands[drug.bands.length - 1].hiKg) {
-      return drug.bands[drug.bands.length - 1];
-    }
     return null;
   }
 
@@ -4027,7 +2804,8 @@
       weightKg: null,    /* canonical */
       rawValue: '',      /* what the user typed, in the current unit */
       drug: 'acet',      /* 'acet' | 'ibu' */
-      ibuConc: ''        /* '' (unchosen) | 'infant' | 'child' */
+      ibuConc: '',       /* exact ibuprofen concentration */
+      ageMonths: null
     };
 
     /* ---- head ---- */
@@ -4035,7 +2813,7 @@
     el('h4', { text: 'Fever and pain dose calculator' }, head);
     el('span', {
       class: 'tool-tag',
-      text: 'by weight',
+      text: 'age, weight and bottle strength',
       style: 'font-family:var(--font-body);font-size:0.8rem;color:var(--text-dim);'
     }, head);
 
@@ -4066,6 +2844,13 @@
       style: 'font-family:var(--font-body);font-size:0.78rem;color:var(--text-dim);',
       text: 'Use a recent weight if you have one.'
     }, wWrap);
+
+    var ageWrap = el('div', { style: 'display:flex;flex-direction:column;gap:0.35em;' }, controls);
+    el('label', { for: 'dose-age', text: 'Actual age in months (required)' }, ageWrap);
+    var ageInput = el('input', { id: 'dose-age', type: 'number', min: '0', max: '23', step: '0.1', inputmode: 'decimal', style: 'width:7em;' }, ageWrap);
+    var approvedLabel = el('label', { style: 'display:flex;gap:0.6em;align-items:flex-start;margin-top:1em;font-family:var(--font-body);' }, body);
+    var approved = el('input', { type: 'checkbox', id: 'dose-approved' }, approvedLabel);
+    el('span', { text: 'A clinician has said this medicine is appropriate for my baby and confirmed the dose.' }, approvedLabel);
 
     /* --- medicine select --- */
     var mWrap = el('div', { style: 'display:flex;flex-direction:column;gap:0.35em;' }, controls);
@@ -4098,7 +2883,7 @@
       'and match the <b>concentration printed on the bottle</b> to what you set here. ' +
       'Do not give two products that both contain acetaminophen or both contain ibuprofen, ' +
       'and remember many cough and cold combinations <b>hide acetaminophen</b>. ' +
-      'Dose by weight, not age, and treat for comfort, not to chase a number. ' +
+      'Weight selects a band; actual age determines whether the medicine is appropriate. Treat for comfort. ' +
       'For any suspected overdose or a wrong dose, call <b>US Poison Help, ' + POISON + '</b>, free and 24/7. ' +
       'This calculator follows US hospital charts (160 mg/5 mL acetaminophen; ibuprofen 50 mg/1.25 mL or 100 mg/5 mL); ' +
       'it is a double-check, not a substitute for your bottle label or your doctor.';
@@ -4112,7 +2897,7 @@
       'One old product to throw away: the concentrated <b>80 mg / 0.8 mL infant acetaminophen drops</b> were ' +
       'discontinued in <b>2011</b> because mixing them up with the children’s liquid caused overdoses. ' +
       'If you find an old 80 mg/0.8 mL bottle in a cabinet, discard it; this calculator assumes the single ' +
-      'modern strength, 160 mg / 5 mL.';
+      'US liquid strength, 160 mg / 5 mL. Other countries and products can have different strengths.';
 
     /* ------------------------------------------------------------------
        concentration-select population: only ibuprofen needs a choice.
@@ -4123,11 +2908,11 @@
       clear(concSel);
       if (state.drug === 'acet') {
         concLabel.textContent = 'Concentration';
-        var o = el('option', { value: 'acet', text: 'Liquid 160 mg / 5 mL (only strength)' }, concSel);
+        var o = el('option', { value: 'acet', text: 'US liquid 160 mg / 5 mL' }, concSel);
         o.selected = true;
         concSel.value = 'acet';
         concSel.disabled = true;
-        concHint.textContent = 'Acetaminophen now comes in just one liquid strength.';
+        concHint.textContent = 'Only the stated 160 mg/5 mL product is supported here; check the actual bottle.';
       } else {
         concLabel.textContent = 'Which ibuprofen? (required)';
         concSel.disabled = false;
@@ -4136,7 +2921,7 @@
         el('option', { value: 'infant', text: 'Infant drops 50 mg / 1.25 mL' }, concSel);
         el('option', { value: 'child', text: "Children's liquid 100 mg / 5 mL" }, concSel);
         concSel.value = state.ibuConc || '';
-        concHint.innerHTML = 'Ibuprofen comes in <b>two</b> strengths. Mixing them up is the most common dosing error, ' +
+        concHint.innerHTML = 'Ibuprofen comes in <b>two</b> strengths. Mixing them up can cause a dosing error, ' +
           'so pick the exact bottle.';
       }
     }
@@ -4173,34 +2958,30 @@
           'and for a baby this small call your doctor before giving any fever medicine.');
         return;
       }
-      if (kg > 90) {
+      if (kg > 20) {
         block('That weight is above this infant and child chart. For an older child or adult this size, ' +
           'follow the package directions for their weight or ask a pharmacist.');
         return;
       }
 
-      /* ---------------- ACETAMINOPHEN ---------------- */
-      if (state.drug === 'acet') {
-        /* GATE: under 3 months / under ~12 lb (5.4 kg) => call doctor first */
-        if (kg < 5.4) {
-          block('<b>Call your doctor before giving acetaminophen.</b> At about ' + lbStr() +
-            ', your baby is likely under 3 months old. A fever this young (a rectal temperature of ' +
-            '100.4 °F / 38.0 °C or higher) needs to be <b>evaluated</b>, not just treated at home. ' +
-            'Acetaminophen can be used from birth, but only on a doctor’s direction at this age. ' +
-            'Do not give ibuprofen at all yet.');
-          return;
-        }
-        renderDoseCard(ACET, kg, lbStr());
+      if (state.ageMonths === null || !isFinite(state.ageMonths) || state.ageMonths < 0 || state.ageMonths >= 24) {
+        block('Enter an actual age from birth to under 24 months. Weight cannot tell us a baby’s age.');
         return;
       }
-
-      /* ---------------- IBUPROFEN ---------------- */
-      /* GATE 1: no ibuprofen under 6 months / under ~12 lb (5.5 kg) */
-      if (kg < 5.5) {
-        block('<b>Do not give ibuprofen yet.</b> In the US the firm rule is <b>no ibuprofen before 6 months</b> ' +
-          '(about 12 lb / 5.5 kg). At ' + lbStr() + ', your baby is below that line. Ibuprofen can stress an infant’s ' +
-          'kidneys, especially if the baby is at all dehydrated. Use acetaminophen instead (and if your baby is under ' +
-          '3 months, call your doctor first).');
+      if (state.ageMonths < 3) {
+        block('<b>Contact your clinician.</b> This tool does not dose babies under three months. A rectal temperature of 38C (100.4F) or higher needs immediate assessment, even when the baby looks well. Follow a clinician’s individual instructions.');
+        return;
+      }
+      if (state.drug === 'ibu' && state.ageMonths < 6) {
+        block('<b>No ibuprofen before six months in this US tool.</b> Actual age matters regardless of weight. Discuss any exception with the clinician.');
+        return;
+      }
+      if (!approved.checked) {
+        block('For a child under two, confirm the medicine and dose with a clinician before using this chart.');
+        return;
+      }
+      if (state.drug === 'acet') {
+        renderDoseCard(ACET, kg, lbStr());
         return;
       }
       /* GATE 2: concentration is mandatory for ibuprofen */
@@ -4218,7 +2999,7 @@
          an unmeasurable volume. */
       if (drug === IBU_INFANT && kg > IBU_INFANT.useChildrenAboveKg) {
         block('At ' + lbStr() + ', your baby is above the range the <b>infant drops</b> syringe is marked for ' +
-          '(it only goes to 1.875 mL). Switch the concentration above to the <b>children’s liquid ' +
+          'in this table. Ask your pharmacist about a suitable <b>children’s liquid ' +
           '(100 mg / 5 mL)</b> for a volume you can measure accurately.');
         return;
       }
@@ -4251,16 +3032,6 @@
         'That is <b>' + band.mg + ' mg</b> per dose, ' + drug.intervalText + ', ' +
         '<b>no more than ' + drug.maxDoses + ' doses in 24 hours</b>.';
 
-      /* the daily ceiling, computed from the child's weight */
-      var dailyCeil = Math.round(drug.perDayCeil * kg);
-      var ceil = el('p', {
-        style: 'margin:0.45em 0 0;font-family:var(--font-body);font-size:0.9rem;color:var(--text-dim);line-height:1.5;'
-      }, out);
-      ceil.innerHTML =
-        'Daily ceiling for a ' + lbStr + ' baby: about <b>' + dailyCeil + ' mg of ' +
-        drug.name.toLowerCase() + ' in 24 hours</b> (' + drug.perDayCeil + ' mg/kg/day). ' +
-        'Do not exceed it, and do not add a second product that contains the same medicine.';
-
       /* the band the parent landed in, exactly as the chart prints it */
       var bandLine = el('p', {
         style: 'margin:0.45em 0 0;font-family:var(--font-body);font-size:0.82rem;color:var(--text-dim);'
@@ -4273,7 +3044,7 @@
           style: 'margin:0.45em 0 0;font-family:var(--font-body);font-size:0.85rem;color:var(--text-dim);line-height:1.5;'
         }, out);
         caut.innerHTML = 'Even now, skip ibuprofen if your baby is dehydrated or vomiting a lot, or has chickenpox; ' +
-          'use acetaminophen instead. Give ibuprofen with a little food if it seems to upset the stomach.';
+          'ask the clinician about treatment instead. Give only the confirmed medicine and dose.';
       }
     }
 
@@ -4283,20 +3054,20 @@
     function setUnit(u) {
       if (state.unit === u) return;
       /* convert the visible value so the field tracks the same baby */
-      var cur = parseFloat(weightInput.value);
+      var kg = state.weightKg;
       state.unit = u;
       if (u === 'kg') {
         btnKg.classList.add('on'); btnLb.classList.remove('on');
         btnKg.setAttribute('aria-pressed', 'true'); btnLb.setAttribute('aria-pressed', 'false');
-        weightInput.max = '90';
-        if (isFinite(cur) && cur > 0) weightInput.value = round1(cur / LB_PER_KG);
+        weightInput.max = '20';
+        if (isFinite(kg) && kg > 0) weightInput.value = Math.round(kg * 1000) / 1000;
       } else {
         btnLb.classList.add('on'); btnKg.classList.remove('on');
         btnLb.setAttribute('aria-pressed', 'true'); btnKg.setAttribute('aria-pressed', 'false');
-        weightInput.max = '200';
-        if (isFinite(cur) && cur > 0) weightInput.value = round1(cur * LB_PER_KG);
+        weightInput.max = '44';
+        if (isFinite(kg) && kg > 0) weightInput.value = Math.round(kg * LB_PER_KG * 1000) / 1000;
       }
-      readWeight();
+      render();
     }
 
     function readWeight() {
@@ -4306,6 +3077,8 @@
       render();
     }
 
+    ageInput.addEventListener('input', function () { state.ageMonths = ageInput.value === '' ? null : Number(ageInput.value); render(); });
+    approved.addEventListener('change', render);
     weightInput.addEventListener('input', readWeight);
     btnLb.addEventListener('click', function () { setUnit('lb'); weightInput.focus(); });
     btnKg.addEventListener('click', function () { setUnit('kg'); weightInput.focus(); });
@@ -4344,13 +3117,10 @@
         class: 'src',
         style: 'margin:0.8em 0 0;font-family:var(--font-body);font-size:0.8rem;color:var(--text-dim);line-height:1.5;'
       }, wrap);
-      src.innerHTML =
-        'Doses by weight, not age. Acetaminophen 10 to 15 mg/kg every 4 to 6 hours (max 5 doses/24 h, about 75 mg/kg/day). ' +
-        'Ibuprofen 10 mg/kg every 6 to 8 hours (max 4 doses/24 h, about 40 mg/kg/day), <b>not before 6 months</b>. ' +
-        'Acetaminophen under 3 months only on a doctor’s direction. ' +
-        'Sources: Stanford Children’s acetaminophen and ibuprofen weight-banded tables (Rev. 1/2026); ' +
-        'Children’s Healthcare of Atlanta dose chart (2025); Seattle Children’s / Schmitt table (UH Rainbow), ' +
-        'all adapting the AAP HealthyChildren chart.';
+      src.innerHTML = 'This is a table lookup, not a personalized prescription. Actual age gates apply regardless of weight. AAP advises clinician guidance for acetaminophen under two and no ibuprofen under six months without a clinician. ' +
+        '<a href="https://www.choa.org/-/media/Files/Childrens/teaching-sheets/acetaminophen-and-ibuprofen-dose-chart.pdf">CHOA April 2025 dose chart</a>; ' +
+        '<a href="https://www.healthychildren.org/English/safety-prevention/at-home/medication-safety/Pages/Acetaminophen-for-Fever-and-Pain.aspx">AAP acetaminophen</a>; ' +
+        '<a href="https://www.healthychildren.org/English/safety-prevention/at-home/medication-safety/Pages/Ibuprofen-for-Fever-and-Pain.aspx">AAP ibuprofen</a>. Tables can differ slightly; follow the dose your clinician confirms.';
     }
 
     function tableEl(parent, caption, headers) {
@@ -4440,7 +3210,7 @@
    L = 1 at every age (WHO sets those distributions symmetric).
 
    The engine is unit-testable against WHO's own percentile columns and
-   agrees to better than 0.002 kg. No external libraries. No framework.
+   uses checked monthly coefficients. No external libraries. No framework.
    Clean console. No em dashes anywhere.
    ============================================================ */
 (function () {
@@ -4458,68 +3228,16 @@
      Boys and girls. Anchor months (0/6/12/18/24) match the deep-dive
      capture exactly; the rest are the standard WHO per-month rows.
      ------------------------------------------------------------------ */
-  var WFA_BOYS = [
-    [0.3487, 3.3464, 0.14602], [0.2297, 4.4709, 0.13395], [0.1970, 5.5675, 0.12385],
-    [0.1738, 6.3762, 0.11727], [0.1553, 7.0023, 0.11316], [0.1395, 7.5105, 0.11080],
-    [0.1257, 7.9340, 0.10958], [0.1134, 8.2970, 0.10902], [0.1021, 8.6151, 0.10882],
-    [0.0917, 8.9014, 0.10881], [0.0820, 9.1649, 0.10891], [0.0730, 9.4122, 0.10906],
-    [0.0644, 9.6479, 0.10925], [0.0563, 9.8749, 0.10949], [0.0487, 10.0953, 0.10976],
-    [0.0413, 10.3108, 0.11007], [0.0343, 10.5228, 0.11041], [0.0275, 10.7319, 0.11079],
-    [0.0211, 10.9385, 0.11119], [0.0148, 11.1430, 0.11164], [0.0087, 11.3462, 0.11211],
-    [0.0029, 11.5486, 0.11261], [-0.0028, 11.7504, 0.11314], [-0.0083, 11.9514, 0.11369],
-    [-0.0137, 12.1515, 0.11426]
-  ];
-  var WFA_GIRLS = [
-    [0.3809, 3.2322, 0.14171], [0.1714, 4.1873, 0.13724], [0.0962, 5.1282, 0.13000],
-    [0.0402, 5.8458, 0.12619], [-0.0050, 6.4237, 0.12402], [-0.0430, 6.8985, 0.12274],
-    [-0.0756, 7.2970, 0.12204], [-0.1039, 7.6422, 0.12178], [-0.1288, 7.9487, 0.12181],
-    [-0.1507, 8.2254, 0.12199], [-0.1700, 8.4800, 0.12223], [-0.1872, 8.7192, 0.12247],
-    [-0.2024, 8.9481, 0.12268], [-0.2158, 9.1699, 0.12283], [-0.2278, 9.3870, 0.12294],
-    [-0.2384, 9.6008, 0.12299], [-0.2478, 9.8124, 0.12303], [-0.2562, 10.0226, 0.12306],
-    [-0.2637, 10.2315, 0.12309], [-0.2703, 10.4393, 0.12315], [-0.2762, 10.6464, 0.12323],
-    [-0.2815, 10.8534, 0.12335], [-0.2862, 11.0608, 0.12352], [-0.2903, 11.2688, 0.12371],
-    [-0.2941, 11.4775, 0.12390]
-  ];
+  var WFA_BOYS = [[0.3487, 3.3464, 0.14602], [0.2297, 4.4709, 0.13395], [0.197, 5.5675, 0.12385], [0.1738, 6.3762, 0.11727], [0.1553, 7.0023, 0.11316], [0.1395, 7.5105, 0.1108], [0.1257, 7.934, 0.10958], [0.1134, 8.297, 0.10902], [0.1021, 8.6151, 0.10882], [0.0917, 8.9014, 0.10881], [0.082, 9.1649, 0.10891], [0.073, 9.4122, 0.10906], [0.0644, 9.6479, 0.10925], [0.0563, 9.8749, 0.10949], [0.0487, 10.0953, 0.10976], [0.0413, 10.3108, 0.11007], [0.0343, 10.5228, 0.11041], [0.0275, 10.7319, 0.11079], [0.0211, 10.9385, 0.11119], [0.0148, 11.143, 0.11164], [0.0087, 11.3462, 0.11211], [0.0029, 11.5486, 0.11261], [-0.0028, 11.7504, 0.11314], [-0.0083, 11.9514, 0.11369], [-0.0137, 12.1515, 0.11426]];
+  var WFA_GIRLS = [[0.3809, 3.2322, 0.14171], [0.1714, 4.1873, 0.13724], [0.0962, 5.1282, 0.13], [0.0402, 5.8458, 0.12619], [-0.005, 6.4237, 0.12402], [-0.043, 6.8985, 0.12274], [-0.0756, 7.297, 0.12204], [-0.1039, 7.6422, 0.12178], [-0.1288, 7.9487, 0.12181], [-0.1507, 8.2254, 0.12199], [-0.17, 8.48, 0.12223], [-0.1872, 8.7192, 0.12247], [-0.2024, 8.9481, 0.12268], [-0.2158, 9.1699, 0.12283], [-0.2278, 9.387, 0.12294], [-0.2384, 9.6008, 0.12299], [-0.2478, 9.8124, 0.12303], [-0.2562, 10.0226, 0.12306], [-0.2637, 10.2315, 0.12309], [-0.2703, 10.4393, 0.12315], [-0.2762, 10.6464, 0.12323], [-0.2815, 10.8534, 0.12335], [-0.2862, 11.0608, 0.1235], [-0.2903, 11.2688, 0.12369], [-0.2941, 11.4775, 0.1239]];
 
   /* WHO length-for-age, cm. L = 1 at every age (so only M, S stored). */
-  var LFA_BOYS = [
-    [49.8842, 0.03795], [54.7244, 0.03557], [58.4249, 0.03424], [61.4292, 0.03328],
-    [63.8860, 0.03257], [65.9026, 0.03204], [67.6236, 0.03165], [69.1645, 0.03139],
-    [70.5994, 0.03124], [71.9687, 0.03117], [73.2812, 0.03118], [74.5388, 0.03125],
-    [75.7488, 0.03137], [76.9186, 0.03154], [78.0497, 0.03174], [79.1458, 0.03197],
-    [80.2113, 0.03222], [81.2487, 0.03250], [82.2587, 0.03279], [83.2418, 0.03310],
-    [84.1996, 0.03342], [85.1348, 0.03376], [86.0477, 0.03410], [86.9410, 0.03445],
-    [87.8161, 0.03479]
-  ];
-  var LFA_GIRLS = [
-    [49.1477, 0.03790], [53.6872, 0.03640], [57.0673, 0.03568], [59.8029, 0.03520],
-    [62.0899, 0.03486], [64.0301, 0.03463], [65.7311, 0.03448], [67.2873, 0.03441],
-    [68.7498, 0.03440], [70.1435, 0.03444], [71.4818, 0.03452], [72.7710, 0.03464],
-    [74.0150, 0.03479], [75.2176, 0.03496], [76.3817, 0.03514], [77.5099, 0.03534],
-    [78.6055, 0.03555], [79.6710, 0.03576], [80.7079, 0.03598], [81.7182, 0.03620],
-    [82.7036, 0.03643], [83.6654, 0.03666], [84.6040, 0.03688], [85.5202, 0.03711],
-    [86.4153, 0.03734]
-  ];
+  var LFA_BOYS = [[49.8842, 0.03795], [54.7244, 0.03557], [58.4249, 0.03424], [61.4292, 0.03328], [63.886, 0.03257], [65.9026, 0.03204], [67.6236, 0.03165], [69.1645, 0.03139], [70.5994, 0.03124], [71.9687, 0.03117], [73.2812, 0.03118], [74.5388, 0.03125], [75.7488, 0.03137], [76.9186, 0.03154], [78.0497, 0.03174], [79.1458, 0.03197], [80.2113, 0.03222], [81.2487, 0.0325], [82.2587, 0.03279], [83.2418, 0.0331], [84.1996, 0.03342], [85.1348, 0.03376], [86.0477, 0.0341], [86.941, 0.03445], [87.8161, 0.03479]];
+  var LFA_GIRLS = [[49.1477, 0.0379], [53.6872, 0.0364], [57.0673, 0.03568], [59.8029, 0.0352], [62.0899, 0.03486], [64.0301, 0.03463], [65.7311, 0.03448], [67.2873, 0.03441], [68.7498, 0.0344], [70.1435, 0.03444], [71.4818, 0.03452], [72.771, 0.03464], [74.015, 0.03479], [75.2176, 0.03496], [76.3817, 0.03514], [77.5099, 0.03534], [78.6055, 0.03555], [79.671, 0.03576], [80.7079, 0.03598], [81.7182, 0.0362], [82.7036, 0.03643], [83.6654, 0.03666], [84.604, 0.03688], [85.5202, 0.03711], [86.4153, 0.03734]];
 
   /* WHO head-circumference-for-age, cm. L = 1 at every age. */
-  var HCA_BOYS = [
-    [34.4618, 0.03686], [37.2759, 0.03133], [39.1285, 0.02997], [40.5135, 0.02918],
-    [41.6317, 0.02868], [42.5576, 0.02837], [43.3306, 0.02817], [43.9803, 0.02804],
-    [44.5300, 0.02796], [44.9998, 0.02792], [45.4051, 0.02790], [45.7573, 0.02789],
-    [46.0661, 0.02789], [46.3395, 0.02791], [46.5836, 0.02793], [46.8030, 0.02795],
-    [47.0017, 0.02797], [47.1825, 0.02799], [47.3711, 0.02800], [47.5365, 0.02802],
-    [47.6915, 0.02803], [47.8378, 0.02804], [47.9765, 0.02804], [48.1090, 0.02805],
-    [48.2515, 0.02821]
-  ];
-  var HCA_GIRLS = [
-    [33.8787, 0.03496], [36.5463, 0.03210], [38.2521, 0.03168], [39.5328, 0.03137],
-    [40.5817, 0.03113], [41.4590, 0.03094], [42.1995, 0.03087], [42.8290, 0.03064],
-    [43.3671, 0.03050], [43.8300, 0.03038], [44.2319, 0.03028], [44.5844, 0.03019],
-    [44.8965, 0.03027], [45.1752, 0.03003], [45.4265, 0.02998], [45.6551, 0.02993],
-    [45.8650, 0.02990], [46.0598, 0.02988], [46.2424, 0.02987], [46.4137, 0.02985],
-    [46.5739, 0.02983], [46.7237, 0.02982], [46.8638, 0.02980], [46.9949, 0.02979],
-    [47.1822, 0.02957]
-  ];
+  var HCA_BOYS = [[34.4618, 0.03686], [37.2759, 0.03133], [39.1285, 0.02997], [40.5135, 0.02918], [41.6317, 0.02868], [42.5576, 0.02837], [43.3306, 0.02817], [43.9803, 0.02804], [44.53, 0.02796], [44.9998, 0.02792], [45.4051, 0.0279], [45.7573, 0.02789], [46.0661, 0.02789], [46.3395, 0.02789], [46.5844, 0.02791], [46.806, 0.02792], [47.0088, 0.02795], [47.1962, 0.02797], [47.3711, 0.028], [47.5357, 0.02803], [47.6919, 0.02806], [47.8408, 0.0281], [47.9833, 0.02813], [48.1201, 0.02817], [48.2515, 0.02821]];
+  var HCA_GIRLS = [[33.8787, 0.03496], [36.5463, 0.0321], [38.2521, 0.03168], [39.5328, 0.0314], [40.5817, 0.03119], [41.459, 0.03102], [42.1995, 0.03087], [42.829, 0.03075], [43.3671, 0.03063], [43.83, 0.03053], [44.2319, 0.03044], [44.5844, 0.03035], [44.8965, 0.03027], [45.1752, 0.03019], [45.4265, 0.03012], [45.6551, 0.03006], [45.865, 0.02999], [46.0598, 0.02993], [46.2424, 0.02987], [46.4152, 0.02982], [46.5801, 0.02977], [46.7384, 0.02972], [46.8913, 0.02967], [47.0391, 0.02962], [47.1822, 0.02957]];
 
   /* Measurement registry. Each: label, unit, the two LMS tables (by sex),
      whether L is fixed at 1, and the imperial conversion. */
@@ -4731,25 +3449,13 @@
 
     /* ---------- safety rails (always visible) ---------- */
     var rail = el('div', { class: 'tool-rail' });
-    rail.innerHTML =
-      '<b>Most babies fall somewhere in the band, and that is the point.</b> There is no good or bad ' +
-      'percentile and no target. A baby steadily on the 3rd can be every bit as healthy as one on the 97th. ' +
-      'One point a little off the line is rarely a problem; what a clinician watches is the <b>trend over ' +
-      'several visits</b>, the whole picture (feeding, energy, development), and how the measures relate to ' +
-      'each other, not a single dot. Length especially is noisy: two careful people often differ by ' +
-      'about 0.7 cm, so a single "drop" usually means re-measure, not worry. ' +
-      'This tool is for understanding, not diagnosis. If something feels off, the next step is a conversation ' +
-      'with your pediatrician, not a number from a webpage.';
+    rail.innerHTML = '<b>A percentile alone cannot establish health.</b> Measurement quality, feeding, development and the pattern over time all matter. Very low or high values, a change in trajectory, asymmetry or other concerns need clinical context. Recheck a questionable measurement with the care team; do not dismiss a growth change as measurement error. This plot is an educational reference comparison, not a diagnosis or a target.';
 
     /* a smaller method/source note */
     var srcNote = el('p', {
       class: 'g-src',
       style: 'margin:0.9em 0 0;font-size:0.8rem;color:' + P.dim + ';line-height:1.45',
-      html: 'Uses the WHO Child Growth Standards (the chart US, UK, Canadian, and Australian clinics use under age 2), ' +
-        'weight, length, and head circumference by sex, birth to 24 months. The math is the published WHO LMS method ' +
-        '(z = ((value / M)<sup>L</sup> - 1) / (L &times; S), percentile from the normal curve) and reproduces WHO\'s own ' +
-        'tables to better than 0.002 kg. ' +
-        '<span class="src"><a href="https://www.cdc.gov/growthcharts/who-data-files.htm">WHO via CDC</a></span>'
+      html: 'Uses WHO monthly LMS coefficients for weight, recumbent length and head circumference by sex, birth to twenty-four months. All 150 monthly rows were checked against the linked official files. Between monthly rows the coefficients are linearly interpolated, so intermediate-age results are approximations rather than WHO daily-table values. Measurement and age uncertainty limit interpretation. Premature infants may need another standard. <span class="src"><a href="https://www.cdc.gov/growthcharts/who-data-files.htm">WHO files via CDC</a></span>'
     });
 
     var body = el('div', { class: 'tool-body' }, [controls, out, chartWrap, rail, srcNote]);
@@ -4863,7 +3569,10 @@
       valInput.step = String(m.step[unitState]);
 
       var ageNow = parseFloat(ageInput.value);
-      var weeksEarly = earlyChk.checked ? Math.max(0, Math.min(16, parseInt(weeksInput.value, 10) || 0)) : 0;
+      var weeksEarly = earlyChk.checked ? Number(weeksInput.value) : 0;
+      if (earlyChk.checked && (weeksInput.value === '' || !isFinite(weeksEarly) || weeksEarly < 0 || weeksEarly > 16 || weeksEarly % 1)) {
+        bigLine.textContent = 'Enter whole weeks early from zero to sixteen.'; subLine.textContent = 'For gestational ages outside this tool, use the follow-up team’s chart.'; drawChart(sex, measKey, NaN, NaN, NaN); return;
+      }
       weeksInput.disabled = !earlyChk.checked;
       var correctedAge = ageNow - (weeksEarly / 4.345);  /* months = weeks / (avg weeks per month) */
 
@@ -4879,12 +3588,12 @@
 
       if (!isFinite(ageNow) || ageNow < 0 || ageNow > 24) {
         bigLine.innerHTML = '<span style="color:' + P.dim + '">Enter an age from 0 to 24 months.</span>';
-        subLine.textContent = 'This WHO chart covers birth to 2 years. At the 2-year visit clinics switch to a different chart.';
+        subLine.textContent = 'This WHO chart covers birth to 2 years. Chart choice after two depends on the clinical programme.';
         drawChart(sex, measKey, NaN, NaN, NaN);
         return;
       }
       var ageForCalc = earlyChk.checked && weeksEarly > 0 ? correctedAge : ageNow;
-      if (ageForCalc < 0) ageForCalc = 0;
+      if (ageForCalc < 0) { bigLine.textContent = 'Before the due date, use the care team’s preterm growth chart.'; subLine.textContent = 'A term birth measurement is not a substitute for a preterm standard.'; drawChart(sex, measKey, NaN, NaN, NaN); return; }
 
       if (!isFinite(valueMetric)) {
         bigLine.innerHTML = '<span style="color:' + P.dim + '">Enter a ' + m.label.toLowerCase() + ' value to see the percentile.</span>';
@@ -4920,7 +3629,7 @@
       subLine.innerHTML =
         'z-score ' + (z >= 0 ? '+' : '') + z.toFixed(2) + '. ' +
         'About ' + Math.round(Math.max(0, Math.min(100, pct))) + ' of 100 ' + sexWord + ' the same age measure less. ' +
-        'The median (50th) here is ' + medianShown + '.';
+        'The median (50th) here is ' + medianShown + ageNote + '. This is a reference comparison, not a diagnosis.';
 
       drawChart(sex, measKey, ageForCalc, valueMetric, z);
     }
@@ -4965,19 +3674,11 @@
 /* ============================================================
    THE FIRST YEAR, two interactive tools in one module.
 
-   1) FY.tool['wellbaby-matrix'] : the cross-country well-baby
-      system grid. A responsive table.gtable, one row per country
-      (US, UK, Canada, Australia, Germany, France, Netherlands,
-      Sweden/Finland, Japan, New Zealand, Ireland), columns =
-      number of routine well-child encounters birth to 2 years,
-      the ages, who delivers them (pediatrician vs nurse / health
-      visitor / public-health nurse / GP), whether a home visit is
-      built in, and the parent-held record artifact (the German
-      Gelbes Heft, the French carnet de sante, the Japanese boshi
-      techo, the UK red book, and so on). A country selector
-      highlights the reader's row, and a standing note states the
-      structural finding: the in-home first-days visit is the
-      global norm and the US is the outlier.
+   1) FY.tool['wellbaby-matrix'] : selected official well-child
+      programme summaries. National and local services are named
+      separately. Contacts, delivery and records link to the
+      programme's own guidance. The selector highlights one row;
+      this is not a comparable count or a ranking of health systems.
 
    2) FY.tool['ors'] : an oral-rehydration calculator. Input the
       baby's weight (kg or lb), output the WHO/IMCI rehydration
@@ -4992,18 +3693,10 @@
    controls, degrade gracefully, keep the console clean, and use no
    em dashes.
 
-   Sources (all real, all cited inline and in each aria-label):
-   - Well-baby grid: the cross-country well-baby systems deep-dive,
-     synthesizing the national schedules: Germany G-BA Kinder-
-     Richtlinie (U1 to U9, Gelbes Heft); France service-public.gouv.fr
-     F967 (20 mandatory exams, carnet de sante, PMI); Netherlands
-     JGZ/consultatiebureau + kraamzorg; Sweden BVC (1177.se) and
-     Finland neuvola (thisisFINLAND); Japan Maternal and Child Health
-     Act (boshi techo, 18-month and 3-year checks); Ireland HSE/
-     mychild.ie (public health nurse); New Zealand Well Child
-     Tamariki Ora / Plunket (12 core contacts); plus the US Bright
-     Futures grid and the UK Healthy Child Programme / health-visitor
-     and red book (Personal Child Health Record).
+   Source notes:
+   - Well-baby grid: direct official programme links in each row.
+     Checked 4 October 2026. See the country audit in
+     docs/editorial/2026-10-03/the-first-year-countries.md.
    - ORS: WHO IMCI chart booklet, Plan B (about 75 mL/kg over 4 hours
      for some dehydration) and Plan A (50 to 100 mL per loose stool
      under 2 years); WHO/UNICEF reduced-osmolarity ORS (2003); the
@@ -5031,252 +3724,292 @@
      TOOL 1: the cross-country well-baby matrix.
      ======================================================== */
 
-  // One row per country. Every figure traces to the cross-country
-  // well-baby systems deep-dive and the national schedule it cites.
-  // visits = routine well-child encounters birth to roughly 2 years.
-  // deliverer = who does the bulk of the routine surveillance.
-  // home = the built-in first-days/weeks home visit (the key axis).
-  // record = the parent-held portable record artifact.
+  // These rows describe named programmes, not comparable national totals.
+  // Keep each retained factual claim tied to the direct official links.
   var MATRIX = [
-    {
-      country: 'United States',
-      key: 'us',
-      visits: 'about 8 to 9 by 18 months (11 scheduled by 30 months)',
-      ages: 'newborn, 3 to 5 days, by 1 month, then 2, 4, 6, 9, 12, 15, 18 months (and 24, 30 months)',
-      who: 'Pediatrician (office-based)',
-      home: 'No universal entitlement',
-      homeOK: false,
-      record: 'No single national booklet; records live in the practice EHR and state immunization registries',
-      note: 'The outlier: most well-child visits of any peer, but no universal in-home visit and no national parent-held record.'
-    },
-    {
-      country: 'United Kingdom',
-      key: 'uk',
-      visits: 'about 5 to 6 in the first 2 years',
-      ages: 'new-baby review (10 to 14 days), 6 to 8 weeks (GP), then health-visitor reviews and a 9-to-12-month and 2-to-2.5-year review',
-      who: 'Health visitor (specialist nurse), with GP at the 6-to-8-week check',
-      home: 'Yes, health-visitor home visits',
-      homeOK: true,
-      record: 'The "red book" (Personal Child Health Record, PCHR)',
-      note: 'Nurse-led (the health visitor), with the famous red book carried by the family.'
-    },
-    {
-      country: 'Canada',
-      key: 'ca',
-      visits: 'about 7 to 8 in the first 2 years (Rourke schedule)',
-      ages: 'within days of birth, then 1, 2, 4, 6, 9, 12, 18 months',
-      who: 'Family physician or pediatrician (Rourke Baby Record)',
-      home: 'Varies by province (public-health home visits in many)',
-      homeOK: true,
-      record: 'Provincial child health records; the Rourke Baby Record guides the visits',
-      note: 'Physician-led on the Rourke schedule; public-health home visiting varies by province.'
-    },
-    {
-      country: 'Australia',
-      key: 'au',
-      visits: 'about 7 to 8 checks in the first 2 years',
-      ages: 'home visit in the first 1 to 4 weeks, then 6 to 8 weeks, 4, 6, 12, 18 months (state schedules vary)',
-      who: 'Maternal and child health nurse (state-run), GP for immunisations',
-      home: 'Yes, an early nurse home visit',
-      homeOK: true,
-      record: 'State personal health record (the "blue book" in several states)',
-      note: 'Nurse-led maternal and child health service, with an early home visit and a state-issued personal health record.'
-    },
-    {
-      country: 'Germany',
-      key: 'de',
-      visits: '7 (U1 to U7)',
-      ages: 'U1 at birth, U2 day 3 to 10, U3 week 4 to 5, U4 month 3 to 4, U5 month 6 to 7, U6 month 10 to 12, U7 month 21 to 24',
-      who: 'Pediatrician (Kinderarzt) from U2',
-      home: 'Yes, midwife (Hebamme) home visits',
-      homeOK: true,
-      record: 'The Gelbes Heft (yellow booklet, the Kinderuntersuchungsheft)',
-      note: 'Pediatrician-delivered like the US, but with daily midwife home visits in the first 10 days and the parent-held yellow booklet. U-exams are voluntary nationally, mandatory in Bavaria, Hesse, and Baden-Wurttemberg.'
-    },
-    {
-      country: 'France',
-      key: 'fr',
-      visits: '13 of the 20 legally mandatory exams fall in birth to 2 years',
-      ages: 'within 8 days, 2nd week, then 1, 2, 3, 4, 5, 8, 11, 12, 16 to 18, and 23 to 24 months',
-      who: 'GP or pediatrician, or a PMI centre (free, to age 5)',
-      home: 'For at-risk families via PMI',
-      homeOK: true,
-      record: 'The carnet de sante',
-      note: 'The densest mandatory schedule (100 percent reimbursed); 3 of the exams (8 days, 8 months, 23 to 24 months) send a certificate to the PMI public-health system.'
-    },
-    {
-      country: 'Netherlands',
-      key: 'nl',
-      visits: 'about 8 in year one plus a couple in year two',
-      ages: 'JGZ home visit in the first 14 days, then clinic (consultatiebureau) visits across the first two years (exact count varies by GGD region)',
-      who: 'Youth-health-care nurse (JGZ) plus a doctor (jeugdarts) at some visits',
-      home: 'Yes, a JGZ home visit and the kraamzorg week',
-      homeOK: true,
-      record: 'JGZ youth-health-care records (digital dossier)',
-      note: 'Nurse-and-doctor model, on top of kraamzorg: 24 to 80 hours (about 49 typical) of in-home maternity-nurse care over the first 8 to 10 days.'
-    },
-    {
-      country: 'Sweden / Finland',
-      key: 'se',
-      visits: 'most of Sweden\'s 15 BVC contacts, and part of Finland\'s about 20, fall in years 0 to 2',
-      ages: 'Sweden: first doctor visit about 4 weeks, home visits after birth and about 8 months. Finland: front-loaded neuvola checks in the first year',
-      who: 'Public-health / child-health nurse (BVC nurse; neuvola terveydenhoitaja) with a doctor at anchor visits',
-      home: 'Yes (postnatal home visit common in both)',
-      homeOK: true,
-      record: 'BVC / neuvola records (national handbook; Sweden\'s Rikshandboken)',
-      note: 'The Nordic nurse-led model; near-total uptake (99.7 percent of pregnant people use the Finnish neuvola).'
-    },
-    {
-      country: 'Japan',
-      key: 'jp',
-      visits: 'a 3-to-4-month check plus the legally required 18-month check, plus local extras',
-      ages: 'under-1-month home visit, common 3-to-4-month check, then the mandatory 18-month (and 3-year) checks',
-      who: 'Municipal public-health nurse (hokenshi) and midwife; doctors and dentists at the checks',
-      home: 'Yes, a municipal home visit for babies 1 month or under',
-      homeOK: true,
-      record: 'The boshi techo (Maternal and Child Health Handbook)',
-      note: 'The 18-month and 3-year checks are legally required (Maternal and Child Health Act). The boshi techo, created in 1948, seeded the WHO home-based-records movement and has been exported to 30 to 50-plus countries.'
-    },
-    {
-      country: 'New Zealand',
-      key: 'nz',
-      visits: 'first contact at 4 to 6 weeks, then 8 to 10 weeks, 3 to 4, 5 to 7, 9 to 12, and 15 to 18 months',
-      ages: 'a lead-maternity-carer midwife covers birth to 4 to 6 weeks, then Well Child Tamariki Ora picks up (12 core contacts to age 5)',
-      who: 'Well Child nurse (Plunket and others); GP does the 6-week check',
-      home: 'Yes, the LMC midwife provides postnatal visits',
-      homeOK: true,
-      record: 'The Well Child Tamariki Ora "My Health Book"',
-      note: 'Nurse-delivered; Plunket sees about 80 percent of all new babies in Aotearoa New Zealand.'
-    },
-    {
-      country: 'Ireland',
-      key: 'ie',
-      visits: 'newborn exam plus a PHN home visit, GP checks at 2 and 6 weeks, then PHN developmental checks',
-      ages: 'newborn exam within 72 hours, PHN home visit within 72 hours of discharge, GP at 2 and 6 weeks, PHN at 3 months, then about 7 to 9 and 18 to 24 months',
-      who: 'Public health nurse (PHN) plus the GP for the 2-week and 6-week checks',
-      home: 'Yes, a PHN home visit within 72 hours of discharge',
-      homeOK: true,
-      record: 'HSE child health record ("My Child" materials; mychild.ie)',
-      note: 'A public-health-nurse-plus-GP hybrid; the PHN owns the home visit and the developmental checks.'
-    }
-  ];
+  {
+    "country": "United States (Bright Futures)",
+    "key": "us",
+    "ages": "Newborn; 3 to 5 days; by 1 month; 2, 4, 6, 9, 12, 15, 18 and 24 months. Next: 30 months.",
+    "who": "Primary care team. Ask your practice which visits can happen at home.",
+    "record": "Ask for copies of visit summaries, growth measurements and immunization records.",
+    "note": "The AAP framework has 11 age columns from newborn through 24 months, including the newborn assessment, and 12 through 30 months. These are scheduled ages, not a count of visits every child receives.",
+    "sources": [
+      [
+        "AAP periodicity schedule (2025)",
+        "https://downloads.aap.org/AAP/PDF/periodicity_schedule.pdf"
+      ]
+    ]
+  },
+  {
+    "country": "England (Healthy Child Programme)",
+    "key": "uk",
+    "ages": "Health-visitor reviews: day 1 to 14; 6 to 8 weeks; 9 to 15 months (the 12-month review). Next: 2 to 2.5 years. Physical exams: within 72 hours and at 6 to 8 weeks.",
+    "who": "Health visitor and team for reviews; usually a GP for the 6-to-8-week physical exam. Current guidance prefers early health-visitor reviews at home.",
+    "record": "Personal Child Health Record (PCHR), the red book.",
+    "note": "England has an antenatal review as well as the four postnatal health-visitor reviews. The GP physical exam and vaccine appointments are separate contacts; five reviews is not a total of baby visits through age two.",
+    "sources": [
+      [
+        "England programme (2026)",
+        "https://www.gov.uk/government/publications/delivery-of-the-healthy-child-programme/part-2-health-visiting-ages-0-to-5"
+      ],
+      [
+        "NHS reviews and red book",
+        "https://www.nhs.uk/baby/babys-development/height-weight-and-reviews/baby-reviews/"
+      ]
+    ]
+  },
+  {
+    "country": "Canada: Ontario (selected services)",
+    "key": "ca",
+    "ages": "Enhanced well-baby visit at 18 months. Agree the earlier routine visit schedule with the primary care team.",
+    "who": "Family physician or other health care provider. Healthy Babies Healthy Children offers home visits to parents who need extra support.",
+    "record": "Bring the yellow immunization card to vaccination visits.",
+    "note": "This row describes Ontario's enhanced 18-month visit and targeted home support. It is not a Canadian national visit calendar, and the yellow card is an immunization record rather than a complete health booklet.",
+    "sources": [
+      [
+        "Ontario 18-month visit (PDF)",
+        "https://files.ontario.ca/mccss-enhanced-18-months-well-baby-visit-fact-sheet-en-2022-02-15.pdf"
+      ],
+      [
+        "Ontario home support (PDF)",
+        "https://files.ontario.ca/mccss-healthy-babies-healthy-children-fact-sheet-en-2022-02-14.pdf"
+      ],
+      [
+        "Ontario immunization record (PDF)",
+        "https://files.ontario.ca/moh-well-child-toolkit-tips-for-parents-en.pdf"
+      ]
+    ]
+  },
+  {
+    "country": "Australia: Victoria (MCH)",
+    "key": "au",
+    "ages": "Initial home visit; 2, 4 and 8 weeks; 4, 8, 12, 18 and 24 months. Next: 3.5 years.",
+    "who": "Maternal and child health nurse. First appointment is usually at home, within 2 weeks of birth or arrival home.",
+    "record": "My Health, Learning and Development book, the green book.",
+    "note": "Victoria lists ten Key Ages and Stages contacts through 3.5 years, nine of them through the two-year contact. This is the MCH nurse programme, not the total of medical and vaccine appointments.",
+    "sources": [
+      [
+        "Victoria MCH service",
+        "https://www.betterhealth.vic.gov.au/health/healthyliving/maternal-and-child-health-services"
+      ]
+    ]
+  },
+  {
+    "country": "Germany (U examinations)",
+    "key": "de",
+    "ages": "U1: newborn; U2: day 3 to 10; U3: week 4 to 5; U4: 3rd to 4th month of life; U5: 6th to 7th; U6: 10th to 12th; U7: 21st to 24th.",
+    "who": "Physician-led U examinations. Ask separately about postnatal midwife support.",
+    "record": "Kinderuntersuchungsheft, the Gelbes Heft (yellow booklet); bring the vaccination record too.",
+    "note": "U1 to U7 are seven named examinations. The source uses ordinal months of life; arrange the exact appointment window with the practice. Keep the named U appointments separate from vaccine visits and any additional follow-up.",
+    "sources": [
+      [
+        "G-BA child examinations",
+        "https://www.g-ba.de/themen/methodenbewertung/kinder/"
+      ],
+      [
+        "G-BA booklet (June 2026)",
+        "https://www.g-ba.de/service/versicherteninformationen/untersuchungshefte/"
+      ]
+    ]
+  },
+  {
+    "country": "France (child preventive examinations)",
+    "key": "fr",
+    "ages": "Within 8 days; 2nd week; monthly at 1 to 5 months; 8, 11 and 12 months; 16 to 18 months; 23 to 24 months.",
+    "who": "A physician in a practice or a Protection maternelle et infantile (PMI) service. Ask PMI about local family support.",
+    "record": "Carnet de sante; results may also be recorded in Mon espace sante.",
+    "note": "The current official calendar lists twelve examinations through the 23-to-24-month examination. Extra care and vaccination contacts are not counted in that figure.",
+    "sources": [
+      [
+        "Service Public calendar (2026)",
+        "https://www.service-public.gouv.fr/particuliers/vosdroits/F35490/0"
+      ]
+    ]
+  },
+  {
+    "country": "Netherlands: Gooi en Vechtstreek (JGZ)",
+    "key": "nl",
+    "ages": "Infant clinic contacts are arranged with the family; the regional service allows more or fewer contacts according to need.",
+    "who": "Youth-health physicians, nurses and other team members. A newborn screener visits at home for bloodspot and hearing screening.",
+    "record": "MijnJeugdenGezin.nl parent portal: growth curves, vaccinations and consultation reports.",
+    "note": "This regional service publishes a flexible contact plan. A newborn screening visit and continuing JGZ clinic care are different contacts; the row does not estimate a national visit total or maternity-care hours.",
+    "sources": [
+      [
+        "Regional contact plan",
+        "https://www.ggdgv.nl/opvoeding-en-ouderschap/team-jeugd-en-gezin/contactmomenten/"
+      ],
+      [
+        "JGZ team and newborn screening",
+        "https://www.ggdgv.nl/opvoeding-en-ouderschap/team-jeugd-en-gezin/"
+      ],
+      [
+        "Parent record portal",
+        "https://www.ggdgv.nl/opvoeding-en-ouderschap/team-jeugd-en-gezin/klantportaal-mijnjeugdengezin-nl/"
+      ]
+    ]
+  },
+  {
+    "country": "Sweden (BVC)",
+    "key": "se",
+    "ages": "First contact after coming home; frequent contacts at 2 to 8 weeks; usually monthly at 3 to 5 months; 6, 8, 10, 12 and 18 months. Next: 2.5 to 3 years.",
+    "who": "BVC nurse, with nurse-and-doctor visits at 4 weeks, 6 months and 12 months. First visit is usually at home; the 8-month home visit is not yet available in every region.",
+    "record": "BVC clinical record; many centres also give the child a health book.",
+    "note": "1177 describes early frequency according to need and some regional variation. Ask your BVC which early contacts and home visits are scheduled for your family.",
+    "sources": [
+      [
+        "1177 BVC visits and records",
+        "https://www.1177.se/barn--gravid/vard-och-stod-for-barn/besok-pa-barnavardscentralen-bvc/"
+      ]
+    ]
+  },
+  {
+    "country": "Finland: Helsinki (child health clinic)",
+    "key": "fi",
+    "ages": "1 to 4 and 4 to 6 weeks; 2, 3, 4, 5, 6, 8, 12, 18 and 24 months.",
+    "who": "Public-health nurse; nurse and doctor at 4 to 6 weeks and 4, 8 and 18 months. First-baby appointment is at home; families with previous births attend the clinic.",
+    "record": "Ask the clinic how to obtain the child's measurements, vaccination history and examination results.",
+    "note": "Helsinki lists age-specific checks. Nurse-and-doctor examinations can be joint or separate appointments, so the number of age windows is not necessarily the number of encounters.",
+    "sources": [
+      [
+        "Helsinki age-specific checks",
+        "https://www.hel.fi/en/health-and-social-services/child-and-family-services/helsinki-for-families-with-children/with-a-baby/babys-visits-to-the-child-health-clinic"
+      ]
+    ]
+  },
+  {
+    "country": "Japan: Shinjuku City (Tokyo)",
+    "key": "jp",
+    "ages": "Programme checks named for 3 to 4, 6 to 7 and 9 to 10 months, and 18 months (medical and dental). The 18-month visit can be completed before age two.",
+    "who": "Municipal health centres and contracted medical institutions. Home visitor, such as a midwife or public-health nurse, for babies aged 4 months or younger.",
+    "record": "Mother and Child Health Handbook (Boshi Kenko Techo); use its birth reporting form to request the home visit.",
+    "note": "This is Shinjuku City's programme. Local invitations and voucher windows govern the appointments. Ask the health centre for a replacement invitation or voucher if yours is missing.",
+    "sources": [
+      [
+        "Shinjuku checkups (Japanese)",
+        "https://www.city.shinjuku.lg.jp/soshiki/ushigome-h01_001009.html"
+      ],
+      [
+        "Shinjuku home visit and handbook",
+        "https://www.foreign.city.shinjuku.lg.jp/en/kosodate/sukusuku/"
+      ]
+    ]
+  },
+  {
+    "country": "New Zealand (Well Child Tamariki Ora)",
+    "key": "nz",
+    "ages": "Maternity-carer assessments in the early weeks; Well Child assessments at 4 to 6 and 8 to 10 weeks, 3 to 4, 5 to 7, 9 to 12 and 15 to 18 months. Next window: 2 to 3 years.",
+    "who": "Lead Maternity Carer initially, followed by the Well Child Tamariki Ora provider. Ask your provider where visits will happen.",
+    "record": "Well Child Tamariki Ora My Health Book, with maternity and child assessment pages.",
+    "note": "The six listed Well Child assessment windows before age two are separate from maternity assessments and vaccine appointments. The book also lists a two-to-three-year assessment and a B4 School Check.",
+    "sources": [
+      [
+        "Official My Health Book and assessment windows",
+        "https://healthed.govt.nz/products/well-child-tamariki-ora-my-health-book"
+      ]
+    ]
+  },
+  {
+    "country": "Ireland (HSE child health checks)",
+    "key": "ie",
+    "ages": "Newborn exam within 72 hours; first home contact; GP at 2 and 6 weeks; developmental checks at 3, 9 to 11 and 21 to 24 months.",
+    "who": "Public-health nurse (PHN) and GP. PHN home visit usually during the first 3 days at home; some midwife-led services hand over later.",
+    "record": "Ask the PHN for assessment results and the GP for vaccination records.",
+    "note": "The published HSE programme places the later infant developmental check at 9 to 11 months and the toddler check at 21 to 24 months. Vaccinations and extra follow-up add other contacts.",
+    "sources": [
+      [
+        "HSE: birth to 6 months",
+        "https://www2.hse.ie/babies-children/checks-milestones/health-checks/until-6-months/"
+      ],
+      [
+        "HSE: 6 to 12 months",
+        "https://www2.hse.ie/babies-children/checks-milestones/health-checks/6-12-months/"
+      ],
+      [
+        "HSE: 1 to 2 years",
+        "https://www2.hse.ie/babies-children/checks-milestones/health-checks/1-2-years/"
+      ]
+    ]
+  }
+];
 
   FY.tool['wellbaby-matrix'] = function (mount) {
     if (!mount) return;
-    var P = (FY.svg && FY.svg.palette) || {};
     mount.textContent = '';
-    var ok = P.ok || '#9ec79a';
-    var emerg = P.emerg || '#e98e7f';
-
-    // ---------- Head ----------
     var head = el('div', { class: 'tool-head' }, mount);
-    el('h4', { text: 'The well-baby visit, eleven countries' }, head);
-
+    el('h4', { text: 'Well-child care: ' + MATRIX.length + ' selected programmes' }, head);
     var body = el('div', { class: 'tool-body' }, mount);
-
     el('p', {
       style: 'font-family:var(--font-body);color:var(--text-dim);margin:0 0 0.9em;line-height:1.55;',
-      html: 'How many routine well-child visits a baby gets in the first two years, at what ages, <b>who</b> delivers them, whether a clinician comes <b>into the home</b>, and the single record the family keeps and carries. Pick your country to highlight its row.'
+      text: 'Find the programme, contacts and records relevant to you. Some rows describe a national framework; others name one province, state, city or region. Vaccine appointments, maternity care and extra follow-up can add contacts.'
     }, body);
 
-    // ---------- Country selector ----------
     var selId = 'fy-matrix-country';
     var field = el('div', { style: 'display:flex;flex-wrap:wrap;align-items:center;gap:0.6em;margin-bottom:0.6em;' }, body);
-    el('label', { for: selId, text: 'Highlight my country:' }, field);
-    var sel = el('select', { id: selId, style: 'flex:0 1 18em;min-width:12em;max-width:100%;' }, field);
+    el('label', { for: selId, text: 'Highlight a programme:' }, field);
+    var sel = el('select', { id: selId, style: 'flex:0 1 24em;min-width:12em;max-width:100%;' }, field);
     el('option', { value: '', text: 'None (show all)' }, sel);
-    MATRIX.forEach(function (r) {
-      el('option', { value: r.key, text: r.country }, sel);
-    });
+    MATRIX.forEach(function (r) { el('option', { value: r.key, text: r.country }, sel); });
 
-    // ---------- The responsive table ----------
+    var detail = el('div', {
+      class: 'tool-out', 'aria-live': 'polite',
+      style: 'margin-top:0.4em;min-height:1.5em;font-family:var(--font-body);color:var(--text);line-height:1.55;'
+    }, body);
+    el('p', { style: 'font-family:var(--font-body);font-size:0.9rem;color:var(--text-dim);line-height:1.5;', text: 'Guidance checked 4 October 2026. Contacts cover birth through about age two; later windows are identified. Scroll the table sideways to see all columns.' }, body);
     var wrap = el('div', { class: 'gtable-wrap' }, body);
     var table = el('table', { class: 'gtable' }, wrap);
     el('caption', {
       style: 'text-align:left;font-family:var(--font-body);color:var(--text-dim);padding:0.4em 0;line-height:1.5;',
-      text: 'Routine well-child care, birth to about 2 years. Counts and ages are the national framework; several countries vary by region (Germany by Bundesland, the Netherlands by GGD region, New Zealand by provider).'
+      text: 'Selected well-child programmes'
     }, table);
-
     var thead = el('thead', null, table);
     var htr = el('tr', null, thead);
-    ['Country', 'Visits, birth to 2y', 'The ages', 'Who delivers', 'Home visit', 'The record you keep'].forEach(function (h) {
+    ['Jurisdiction / programme', 'Contacts shown', 'Who and where', 'Records or arrangements', 'Official guidance'].forEach(function (h) {
       el('th', { scope: 'col', text: h }, htr);
     });
-
     var tbody = el('tbody', null, table);
     var rowEls = {};
-    MATRIX.forEach(function (r) {
-      var tr = el('tr', null, tbody);
-      rowEls[r.key] = tr;
-      el('th', { scope: 'row', text: r.country }, tr);
-      el('td', { text: r.visits }, tr);
-      el('td', { text: r.ages }, tr);
-      el('td', { text: r.who }, tr);
-      // The home-visit cell is the load-bearing column; color the answer.
-      var homeTd = el('td', null, tr);
-      var mark = el('span', {
-        text: r.home,
-        style: 'color:' + (r.homeOK ? ok : emerg) + ';font-family:var(--font-heading);'
-      }, homeTd);
-      void mark;
-      el('td', { text: r.record }, tr);
-    });
-
-    // ---------- The live detail line for the chosen country ----------
-    var detail = el('div', {
-      class: 'tool-out',
-      'aria-live': 'polite',
-      style: 'margin-top:0.4em;min-height:1.5em;font-family:var(--font-body);color:var(--text);line-height:1.55;'
-    }, body);
-
-    function clearHL() {
-      MATRIX.forEach(function (r) {
-        var tr = rowEls[r.key];
-        if (tr) tr.classList.remove('hl');
+    function addSources(parent, row) {
+      row.sources.forEach(function (source, index) {
+        if (index) el('br', null, parent);
+        el('a', { href: source[1], text: source[0] }, parent);
       });
     }
+    MATRIX.forEach(function (r) {
+      var tr = el('tr', { 'data-programme': r.key }, tbody);
+      rowEls[r.key] = tr;
+      el('th', { scope: 'row', text: r.country }, tr);
+      el('td', { text: r.ages }, tr);
+      el('td', { text: r.who }, tr);
+      el('td', { text: r.record }, tr);
+      addSources(el('td', null, tr), r);
+    });
 
     function render(key) {
-      clearHL();
+      MATRIX.forEach(function (r) { rowEls[r.key].classList.remove('hl'); });
       detail.textContent = '';
       if (!key) {
-        el('span', {
-          style: 'color:var(--text-dim);',
-          text: 'Ten of these eleven systems send a clinician into the home in the first days to weeks. The United States is the one that does not.'
-        }, detail);
+        el('span', { style: 'color:var(--text-dim);', text: 'Select a programme for its scope and scheduling notes. Each row links directly to its official guidance.' }, detail);
         return;
       }
-      var r = null;
-      for (var i = 0; i < MATRIX.length; i++) { if (MATRIX[i].key === key) { r = MATRIX[i]; break; } }
-      if (!r) return;
-      var tr = rowEls[key];
-      if (tr) {
-        tr.classList.add('hl');
-        if (tr.scrollIntoView) tr.scrollIntoView({ block: 'nearest' });
-      }
-      el('span', { html: '<b>' + r.country + ':</b> ' + r.note }, detail);
+      var row = MATRIX.find(function (r) { return r.key === key; });
+      if (!row) return;
+      rowEls[key].classList.add('hl');
+      el('b', { text: row.country + ': ' }, detail);
+      el('span', { text: row.note }, detail);
+      el('p', { text: 'Contacts: ' + row.ages }, detail);
+      el('p', { text: 'Care: ' + row.who }, detail);
+      el('p', { text: 'Records: ' + row.record }, detail);
+      addSources(el('p', null, detail), row);
     }
-
     sel.addEventListener('change', function () { render(sel.value); });
     render('');
-
-    // ---------- The standing finding ----------
     var rail = el('div', { class: 'tool-rail', role: 'note' }, body);
     el('div', {
-      html: '<b>The home visit is the global norm, and the US is the outlier.</b> Every wealthy country here except the United States sends a midwife or nurse into the home in the first days to weeks (the German Hebamme, the Dutch kraamzorg maternity nurse, the Irish public health nurse, the Nordic and Australian and New Zealand home visits), and hands the family a single portable record they own (the yellow booklet, the carnet de sante, the boshi techo, the red book). The US routes nearly everything through the pediatrician\'s office, has no universal home-visit entitlement, and has no national parent-held record. These are system-design differences, not a quality ranking: outcomes are good under both the pediatrician-led and nurse-led models.'
+      html: '<b>Confirm the next appointment and who follows up.</b> Keep a copy of the baby’s results and vaccination record. Ask how to reach the team between scheduled contacts and how records transfer if you move.'
     }, rail);
-    el('div', {
-      style: 'margin-top:0.5em;font-size:0.82rem;opacity:0.8;font-family:var(--font-body);line-height:1.45;',
-      text: 'Sources: the national well-child schedules, synthesized in the cross-country well-baby systems review. Germany G-BA Kinder-Richtlinie; France service-public.gouv.fr (F967); Netherlands JGZ plus kraamzorg; Sweden 1177.se BVC and Finland neuvola; Japan Maternal and Child Health Act; Ireland HSE / mychild.ie; New Zealand Well Child Tamariki Ora / Plunket; US Bright Futures; UK Healthy Child Programme (red book / PCHR).'
-    }, rail);
-
-    // ---------- Accessible summary on the mount ----------
     mount.setAttribute('role', 'group');
-    mount.setAttribute('aria-label',
-      'Cross-country well-baby visit grid for eleven countries (United States, United Kingdom, Canada, Australia, Germany, France, Netherlands, Sweden and Finland, Japan, New Zealand, Ireland). ' +
-      'For each: the number of routine well-child visits birth to two years, the ages, who delivers them (pediatrician versus nurse, health visitor, public-health nurse, or GP), whether a home visit is built in, and the parent-held record (such as the German Gelbes Heft, French carnet de sante, Japanese boshi techo, or UK red book). ' +
-      'Ten of the eleven systems include a first-days home visit; the United States is the only one with no universal home visit and no national parent-held record. A country selector highlights the reader row. ' +
-      'Source: the national schedules, synthesized in the cross-country well-baby systems review.');
+    mount.setAttribute('aria-label', 'Well-child care in ' + MATRIX.length + ' selected programmes. Choose a named jurisdiction to highlight its contacts, delivery and records. Every row has direct official source links. Programmes differ in scope and are not a national ranking.');
   };
 
   /* ========================================================
@@ -5312,7 +4045,7 @@
 
     // ---------- Head ----------
     var head = el('div', { class: 'tool-head' }, mount);
-    el('h4', { text: 'Oral rehydration (ORS) calculator' }, head);
+    el('h4', { text: 'Clinician-directed ORS plan' }, head);
 
     var body = el('div', { class: 'tool-body' }, mount);
 
@@ -5328,7 +4061,7 @@
       text: 'Call now, do not calculate, if any of these are true'
     }, gate);
     el('div', {
-      html: '<b>This calculator is for a baby OVER 3 months with mild-to-moderate dehydration only.</b> Call your pediatrician or emergency services now, instead of rehydrating at home, if the baby is <b>under 3 months</b>, is <b>too drowsy or floppy to drink</b>, is <b>vomiting everything</b> (cannot keep any fluid down), has <b>no wet diaper for 8 or more hours</b>, has <b>no tears, sunken eyes, or a sunken soft spot</b>, has a <b>skin pinch that goes back very slowly</b>, or has <b>green (bile) or bloody vomit or blood in the stool</b>. These are signs of severe dehydration or a serious problem and need IV fluids or urgent care.'
+      html: '<b>Use this only after a clinician has assessed dehydration and advised WHO Plan B.</b> This page cannot diagnose dehydration. Contact care urgently for a baby under three months, unusual drowsiness, inability to drink, persistent vomiting, much less urine, sunken eyes, green or bloody vomit, or other concerning symptoms. Follow the clinician’s plan and reassessment timing.'
     }, gate);
     el('div', {
       style: 'margin-top:0.4em;font-size:0.82rem;opacity:0.85;',
@@ -5364,6 +4097,13 @@
     var btnKg = el('button', { type: 'button', text: 'kg', class: 'on', 'aria-pressed': 'true' }, seg);
     var btnLb = el('button', { type: 'button', text: 'lb', 'aria-pressed': 'false' }, seg);
 
+    var ageLab = el('div', { style: 'display:flex;flex-direction:column;gap:0.25em;' }, field);
+    el('label', { for: 'fy-ors-age', text: 'Actual age in months' }, ageLab);
+    var ageInput = el('input', { id: 'fy-ors-age', type: 'number', min: '3', max: '23', step: '0.1', style: 'width:7em;' }, ageLab);
+    var planLab = el('label', { style: 'display:flex;gap:0.6em;align-items:flex-start;margin-top:1em;' }, body);
+    var plan = el('input', { type: 'checkbox', id: 'fy-ors-approved' }, planLab);
+    el('span', { text: 'A clinician has assessed my baby, advised WHO Plan B and arranged reassessment. No urgent warning sign is present.' }, planLab);
+
     // ---------- The live output ----------
     var out = el('div', {
       class: 'tool-out',
@@ -5376,19 +4116,24 @@
     function render() {
       out.textContent = '';
       var raw = parseFloat(input.value);
+      var age = ageInput.value === '' ? NaN : Number(ageInput.value);
+      if (!isFinite(age) || age < 3 || age >= 24 || !plan.checked) {
+        el('p', { class: 'blocked', text: 'Enter an age from three to under twenty-four months and confirm a clinician-directed Plan B. If your baby has warning signs, contact care now.' }, out);
+        return;
+      }
 
       if (!input.value || isNaN(raw) || raw <= 0) {
         el('p', {
           style: 'font-family:var(--font-body);color:var(--text-dim);margin:0;line-height:1.55;',
-          text: 'Enter the baby\'s weight to get the ORS amount. The target for mild-to-moderate dehydration is about 75 mL of ORS per kilogram of body weight, given in small frequent sips over 4 hours.'
+          text: 'Enter age and weight, and confirm the clinician-directed plan. No amount is shown until all required information is supplied.'
         }, out);
         return;
       }
 
       var kg = toKg(raw);
 
-      // Out-of-range guard: still compute, but flag a likely typo.
       var oor = (kg < KG_MIN || kg > KG_MAX);
+      if (oor) { el('p', { class: 'blocked', text: 'Weight outside this infant tool. Check the value and unit, then follow the clinician’s individual plan.' }, out); return; }
 
       var total = kg * ML_PER_KG;            // mL over 4 hours (Plan B)
       var totalR = round5(total);            // rounded to the nearest 5 mL
@@ -5438,7 +4183,9 @@
 
     function setUnit(u) {
       if (u === unit) return;
+      var currentKg = toKg(parseFloat(input.value));
       unit = u;
+      if (isFinite(currentKg) && currentKg > 0) input.value = String(Math.round((u === 'kg' ? currentKg : currentKg * LB_PER_KG) * 1000) / 1000);
       var isKg = (u === 'kg');
       btnKg.classList.toggle('on', isKg);
       btnLb.classList.toggle('on', !isKg);
@@ -5451,6 +4198,8 @@
     btnKg.addEventListener('click', function () { setUnit('kg'); });
     btnLb.addEventListener('click', function () { setUnit('lb'); });
     input.addEventListener('input', render);
+    ageInput.addEventListener('input', render);
+    plan.addEventListener('change', render);
     render();
 
     // ---------- The "what counts as ORS" caveat ----------
@@ -5460,13 +4209,13 @@
     }, rail);
     el('div', {
       style: 'margin-top:0.5em;font-size:0.85rem;color:' + accentEmerg + ';font-family:var(--font-body);line-height:1.45;',
-      text: 'If the baby is under 3 months, cannot keep fluids down, will not drink, or shows any severe-dehydration sign above, stop and call now. This tool supports home care for mild-to-moderate dehydration; it does not replace your pediatrician.'
+      text: 'If the baby is under 3 months, cannot keep fluids down, will not drink, or shows any severe-dehydration sign above, stop and call now. This tool calculates a clinician-directed plan. WHO Plan B requires observation and reassessment; a number does not establish suitability for home treatment.'
     }, rail);
 
     // ---------- Accessible summary on the mount ----------
     mount.setAttribute('role', 'group');
     mount.setAttribute('aria-label',
-      'Oral rehydration solution (ORS) calculator for a baby over 3 months with mild-to-moderate dehydration. ' +
+      'Oral rehydration calculation for a clinician-assessed baby from three to under twenty-four months with an advised WHO Plan B. ' +
       'Enter the weight in kilograms or pounds; it returns the target ORS volume at about 75 mL per kilogram of low-osmolarity ORS over 4 hours, in small frequent sips, plus 50 to 100 mL after each loose stool for a child under 2 years, while continuing breastfeeding. ' +
       'Use real ORS, not water, juice, or sports drinks. ' +
       'Hard gate: under 3 months, or any red-flag sign (too drowsy to drink, vomiting everything, no wet diaper for 8 or more hours, no tears or sunken eyes, a skin pinch that returns very slowly, or green or bloody vomit), means call now rather than rehydrate at home. ' +
@@ -5512,10 +4261,10 @@
   // selfcare reuses the gentle "ok" green; advice and 24h share the warm
   // "call" amber but carry distinct labels.
   var TIERS = {
-    t911:    { rank: 1, label: 'Call 911 now', cls: 'emerg', blurb: 'Life-threatening. Call 911 (UK 999) or your local emergency number now. Start CPR if the baby is not breathing and you are trained.' },
+    t911:    { rank: 1, label: 'Call 911 now', cls: 'emerg', blurb: 'Life-threatening. Call 911 (UK 999) or your local emergency number now. If unresponsive and not breathing normally, call emergency services and follow dispatcher CPR instructions.' },
     ter:     { rank: 2, label: 'Go to the ER now', cls: 'emerg', blurb: 'Be seen at an emergency department now, or call 911 if you cannot get there fast or the baby is getting worse.' },
-    t24h:    { rank: 3, label: 'See a doctor within 24 hours', cls: 'call', blurb: 'Call your pediatrician for a same-day or next-day visit; use urgent care or the ER if no appointment is available and you are worried.' },
-    tadvice: { rank: 4, label: 'Call for advice', cls: 'call', blurb: 'Call your pediatrician or nurse advice line within a day or two. Watch for any sign above and re-present if it appears.' },
+    t24h:    { rank: 3, label: 'Contact a clinician today', cls: 'call', blurb: 'Call promptly for assessment today. Use urgent care or the emergency department if timely care is unavailable or the baby is worsening.' },
+    tadvice: { rank: 4, label: 'Call for advice', cls: 'call', blurb: 'Contact your pediatrician or nurse advice line promptly, especially for a young infant. Watch for any sign above and re-present if it appears.' },
     tself:   { rank: 5, label: 'Self-care, watch at home', cls: 'ok', blurb: 'Reasonable to comfort and watch at home with safety-netting. Recheck overnight, keep fluids up, and seek help if any red-flag sign appears or you feel it is getting worse.' }
   };
 
@@ -5528,7 +4277,7 @@
   // ominous in a newborn.
   var OVERRIDE = {
     title: 'Under 3 months: the one non-negotiable rule',
-    body: 'ANY rectal temperature of 38.0 C (100.4 F) or higher in a baby under 3 months is an emergency, no matter how well the baby looks. Do not give a fever medicine and watch; be seen now (under 28 days, treat it as a 911-level reason to go in). A LOW temperature (under 36.0 C / 96.8 F) in a newborn is just as worrying. A young baby can have a serious infection while still feeding and looking calm, which is exactly why the number alone is the trigger.',
+    body: 'ANY rectal temperature of 38.0 C (100.4 F) or higher in a baby under 3 months is an emergency, no matter how well the baby looks. Do not give a fever medicine and watch; be seen now. A LOW temperature (under 36.0 C / 96.8 F) in a newborn is just as worrying. A young baby can have a serious infection while still feeding and looking calm, which is exactly why the number alone is the trigger.',
     src: 'NICE NG143 RED; AAP febrile-infant guideline, Pediatrics 2021;148(2):e2021052228.'
   };
 
@@ -5541,7 +4290,7 @@
     {
       group: 'Fever',
       look: 'Fever, baby UNDER 3 months (any 38.0 C / 100.4 F or higher)',
-      tier: 't911',
+      tier: 'ter',
       feat: 'Any rectal fever 38.0 C (100.4 F) or higher under 3 months is an emergency on its own (under 28 days, go in at once). A low temperature under 36.0 C (96.8 F) in a newborn is equally urgent. This is the override above the whole card.',
       src: 'NICE NG143 RED; AAP 2021'
     },
@@ -5561,9 +4310,9 @@
     },
     {
       group: 'Fever',
-      look: 'Fever in a well, happy baby OVER 3 months with an obvious cold',
+      look: 'Fever in an otherwise well baby OVER 6 months with a mild illness',
       tier: 'tself',
-      feat: 'A happy, drinking, playing baby older than 3 months with a fever and a mild viral illness may need no medicine at all; treat for comfort, not to chase the number. Watch for any red-flag sign, recheck overnight, and call if it persists beyond 2 to 3 days or the baby looks unwell.',
+      feat: 'An otherwise well, drinking baby older than 6 months with a fever and a mild viral illness may need no medicine at all; treat for comfort, not to chase the number. Watch for any red-flag sign, recheck overnight, and call if it persists beyond 2 to 3 days or the baby looks unwell.',
       src: 'NICE NG143 green; AAP/AAFP'
     },
     {
@@ -5583,8 +4332,8 @@
     {
       group: 'Breathing and color',
       look: 'Fast breathing, nasal flaring, or new wheeze with effort',
-      tier: 't24h',
-      feat: 'Count for a full 60 seconds. Fast breathing is 60/min or more at 0 to 6 days, 50/min or more from day 7 to 12 months, and 40/min or more from 12 months to 5 years (WHO IMCI / Managing PSBI 2019). Nasal flaring or a new wheeze with visible effort gets a same-day visit; any breathing pause, blue color, grunting, or severe indrawing jumps to 911.',
+      tier: 'ter',
+      feat: 'Count for a full 60 seconds. WHO uses 60/min or more under 2 months and 50/min or more from 2 to under 12 months. Do not delay care to count if breathing looks difficult. Nasal flaring or a new wheeze with visible effort gets a same-day visit; any breathing pause, blue color, grunting, or severe indrawing jumps to 911.',
       src: 'WHO IMCI; NICE NG143 amber'
     },
     {
@@ -5682,7 +4431,7 @@
       group: 'Injury and ingestion',
       look: 'Possible poisoning or a swallowed button battery or magnets',
       tier: 't911',
-      feat: 'A swallowed button battery or more than one magnet can cause serious internal injury fast: go to the ER now. For a suspected medicine, plant, or chemical swallow, call US Poison Control at 1-800-222-1222 right away (it is free, 24/7, and will tell you whether to watch at home or go in). Call 911 if the baby is drowsy, struggling to breathe, or having a seizure.',
+      feat: 'A suspected swallowed button battery or magnet can cause serious internal injury fast: go to the ER now. For a suspected medicine, plant, or chemical swallow, call US Poison Control at 1-800-222-1222 right away (it is free, 24/7, and will tell you whether to watch at home or go in). Call 911 if the baby is drowsy, struggling to breathe, or having a seizure.',
       src: 'US Poison Control 1-800-222-1222; CPSC (battery/magnet)'
     },
     {
@@ -5893,13 +4642,8 @@
    The grid table is also the accessibility fallback for the per-country
    view, and the schedule list is plain semantic HTML.
 
-   Every age and antigen is real and reconciled from the deep dives
-   (vaccines-schedule-grid.md, vaccines-pain-access-special.md) with the
-   corrections-to-apply.md fixes applied (clesrovimab co-equal 105 mg flat;
-   UK PCV at 16 wk and MenB at 8 + 12 wk; UK MMRV catch-up cohort born on or
-   after 1 Sep 2022; Germany STIKO infant MenB at 2, 4, 12 mo since Jan 2024;
-   the 2026-03-16 injunction restored the June 2024 US schedule).
-   No external libraries. Clean console. No em dashes anywhere.
+   Selected schedules reviewed against linked official sources in October 2026.
+   The local grids omit catch-up and many risk-based rules.
    ============================================================ */
 (function () {
   'use strict';
@@ -5947,27 +4691,27 @@
      ------------------------------------------------------------------ */
   var US_VISITS = [
     {
-      key: 'birth', label: 'Birth', offsetDays: 0, windowText: 'in the hospital',
+      key: 'birth', label: 'Birth', offsetMonths: 0, windowText: 'in the hospital',
       antigens: ['HepB'],
-      note: 'The hepatitis B birth dose is given in the first 24 hours. If the mother carries hepatitis B, the baby also gets HBIG within 12 hours.'
+      note: 'A stable infant at least 2,000 g with a hepatitis-B-negative mother receives vaccine within 24 hours. Positive or unknown maternal status requires a timed protocol starting within 12 hours; HBIG and low-birth-weight rules must be applied by the birth team.'
     },
     {
-      key: '2mo', label: '2 months', offsetDays: 61, windowText: 'around 2 months (a 1 to 2 month visit)',
+      key: '2mo', label: '2 months', offsetMonths: 2, windowText: 'around 2 months (a 1 to 2 month visit)',
       antigens: ['DTaP', 'IPV', 'Hib', 'PCV', 'RV', 'HepB'],
       note: 'The big first round. Often given as a 6-in-1 combination shot plus pneumococcal plus oral rotavirus. The hepatitis B second dose can land at the 1 to 2 month visit.'
     },
     {
-      key: '4mo', label: '4 months', offsetDays: 122, windowText: 'around 4 months',
+      key: '4mo', label: '4 months', offsetMonths: 4, windowText: 'around 4 months',
       antigens: ['DTaP', 'IPV', 'Hib', 'PCV', 'RV'],
       note: 'A near-repeat of the 2-month visit (rotavirus may be a 2-dose or 3-dose series depending on the brand).'
     },
     {
-      key: '6mo', label: '6 months', offsetDays: 183, windowText: 'around 6 months',
-      antigens: ['DTaP', 'PCV', 'RV', 'HepB', 'Influenza'],
-      note: 'Third round, plus the third hepatitis B (any time 6 to 18 months) and the first yearly flu shot from 6 months on. Rotavirus dose 3 only if the 3-dose brand is used.'
+      key: '6mo', label: '6 months', offsetMonths: 6, windowText: 'around 6 months',
+      antigens: ['DTaP', 'IPV', 'Hib', 'PCV', 'RV', 'HepB', 'Influenza'],
+      note: 'IPV and hepatitis B dose three have a 6-to-18-month window; the final hepatitis B dose cannot be before 24 weeks. Hib and rotavirus dose three depend on product. Annual flu starts at six months; children receiving their first flu series generally need two doses at least four weeks apart.'
     },
     {
-      key: '12mo', label: '12 months', offsetDays: 365, windowText: '12 to 15 months',
+      key: '12mo', label: '12 months', offsetMonths: 12, windowText: '12 to 15 months',
       antigens: ['MMR', 'Varicella', 'Hib', 'PCV', 'HepA'],
       note: 'The one-year visit: first MMR and chickenpox, the Hib and pneumococcal boosters, and the first hepatitis A. Second doses of MMR and chickenpox come at 4 to 6 years.'
     }
@@ -5984,110 +4728,587 @@
      province, so it carries a province caveat.
      ------------------------------------------------------------------ */
   var COUNTRIES = {
-    US: {
-      name: 'United States (CDC / AAP)',
-      ages: ['Birth', '2 mo', '4 mo', '6 mo', '12 to 15 mo'],
-      rows: [
-        ['HepB',      'Birth', '1 to 2 mo', '', '6 to 18 mo', ''],
-        ['DTaP',      '', '2 mo', '4 mo', '6 mo', '15 to 18 mo'],
-        ['IPV',       '', '2 mo', '4 mo', '6 to 18 mo', ''],
-        ['Hib',       '', '2 mo', '4 mo', '', '12 to 15 mo'],
-        ['PCV',       '', '2 mo', '4 mo', '6 mo', '12 to 15 mo'],
-        ['RV',        '', '2 mo', '4 mo', '6 mo (if 3-dose)', ''],
-        ['MMR',       '', '', '', '', '12 to 15 mo'],
-        ['Varicella', '', '', '', '', '12 to 15 mo'],
-        ['HepA',      '', '', '', '', '12 to 23 mo'],
-        ['Influenza', '', '', '', 'yearly from 6 mo', ''],
-        ['RSV',       'seasonal: maternal vaccine in pregnancy OR infant antibody (nirsevimab or clesrovimab)', '', '', '', '']
-      ],
-      foot: 'Note: COVID-19 is recommended from 6 months by the AAP; the federal posture is shared clinical decision-making (see the freshness note). RSV: a baby is protected EITHER by the mother’s vaccine in pregnancy OR by a long-acting antibody (nirsevimab 50 or 100 mg, or clesrovimab 105 mg flat), almost never both.'
+    "US": {
+        "name": "United States (CDC / AAP)",
+        "ages": [
+            "Birth",
+            "2 mo",
+            "4 mo",
+            "6 mo",
+            "12 to 15 mo"
+        ],
+        "rows": [
+            [
+                "HepB",
+                "Birth protocol",
+                "1 to 2 mo",
+                "",
+                "6 to 18 mo",
+                ""
+            ],
+            [
+                "DTaP",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                "15 to 18 mo"
+            ],
+            [
+                "IPV",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 to 18 mo",
+                ""
+            ],
+            [
+                "Hib",
+                "",
+                "2 mo",
+                "4 mo",
+                "if 3-dose primary brand",
+                "12 to 15 mo"
+            ],
+            [
+                "PCV",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                "12 to 15 mo"
+            ],
+            [
+                "RV",
+                "",
+                "2 mo",
+                "4 mo",
+                "if 3-dose brand",
+                ""
+            ],
+            [
+                "MMR",
+                "",
+                "",
+                "",
+                "",
+                "12 to 15 mo"
+            ],
+            [
+                "Varicella",
+                "",
+                "",
+                "",
+                "",
+                "12 to 15 mo"
+            ],
+            [
+                "HepA",
+                "",
+                "",
+                "",
+                "",
+                "12 to 23 mo"
+            ],
+            [
+                "Influenza",
+                "",
+                "",
+                "",
+                "annual from 6 mo",
+                ""
+            ],
+            [
+                "RSV",
+                "Seasonal eligibility; maternal vaccine or infant antibody",
+                "",
+                "",
+                "",
+                ""
+            ]
+        ],
+        "foot": "Selected routine antigens, not a complete catch-up schedule. COVID-19 guidance should be checked separately with CDC and AAP. First-season flu often needs two doses at least four weeks apart. Hepatitis B birth timing depends on maternal status and birth weight.",
+        "source": "https://www.cdc.gov/vaccines/hcp/imz-schedules/child-adolescent-notes.html"
     },
-    UK: {
-      name: 'United Kingdom (from 1 Jan 2026)',
-      ages: ['Birth', '8 wk', '12 wk', '16 wk', '12 mo'],
-      rows: [
-        ['HepB',      'at-risk only', '8 wk', '12 wk', '16 wk', '(+18 mo)'],
-        ['DTaP',      '', '8 wk', '12 wk', '16 wk', ''],
-        ['IPV',       '', '8 wk', '12 wk', '16 wk', ''],
-        ['Hib',       '', '8 wk', '12 wk', '16 wk', '(in 6-in-1; separate Hib/MenC dropped)'],
-        ['PCV',       '', '', '12 wk', '', '12 mo'],
-        ['RV',        '', '8 wk', '12 wk', '', ''],
-        ['MenB',      '', '8 wk', '12 wk', '', '12 mo'],
-        ['MMRV',      '', '', '', '', '12 mo (1st), 18 mo (2nd)'],
-        ['Influenza', '', '', '', '', 'nasal from 2 to 3 y'],
-        ['RSV',       'maternal vaccine from 28 weeks of pregnancy; infant nirsevimab only for preterm or high-risk', '', '', '', '']
-      ],
-      foot: 'The UK uses a tidy 3-visit primary course (8, 12, 16 weeks) built around the 6-in-1, with no universal hepatitis B birth dose. From 1 Jan 2026 it gives MMRV (not separate MMR) and pulled the second measles dose earlier to 18 months. PCV moved to 16 weeks and the second MenB dose to 12 weeks on 1 Jul 2025.'
+    "UK": {
+        "name": "United Kingdom (September 2026 schedule)",
+        "ages": [
+            "Birth",
+            "8 wk",
+            "12 wk",
+            "16 wk",
+            "12 mo"
+        ],
+        "rows": [
+            [
+                "HepB",
+                "at-risk birth protocol",
+                "8 wk",
+                "12 wk",
+                "16 wk",
+                ""
+            ],
+            [
+                "DTaP",
+                "",
+                "8 wk",
+                "12 wk",
+                "16 wk",
+                ""
+            ],
+            [
+                "IPV",
+                "",
+                "8 wk",
+                "12 wk",
+                "16 wk",
+                ""
+            ],
+            [
+                "Hib",
+                "",
+                "8 wk",
+                "12 wk",
+                "16 wk",
+                ""
+            ],
+            [
+                "PCV",
+                "",
+                "",
+                "",
+                "16 wk",
+                "12 mo"
+            ],
+            [
+                "RV",
+                "",
+                "8 wk",
+                "12 wk",
+                "",
+                ""
+            ],
+            [
+                "MenB",
+                "",
+                "8 wk",
+                "12 wk",
+                "",
+                "12 mo"
+            ],
+            [
+                "MMRV",
+                "",
+                "",
+                "",
+                "",
+                "12 mo"
+            ],
+            [
+                "Influenza",
+                "",
+                "",
+                "",
+                "clinical risk from 6 mo",
+                ""
+            ],
+            [
+                "RSV",
+                "Maternal vaccine from 28 weeks; infant risk-based programme",
+                "",
+                "",
+                "",
+                ""
+            ]
+        ],
+        "foot": "The eighteen-month six-in-one and MMRV visit applies to the eligible birth cohort (born on or after 1 July 2024). Flu under age two is risk-based; routine preschool flu begins later. At-risk hepatitis B schedules include additional doses and testing.",
+        "source": "https://www.gov.uk/government/publications/the-complete-routine-immunisation-schedule/complete-routine-immunisation-schedule-from-1-july-2026"
     },
-    CA: {
-      name: 'Canada (typical; varies by province)',
-      ages: ['Birth', '2 mo', '4 mo', '6 mo', '12 mo'],
-      rows: [
-        ['HepB',      '', '2 mo', '4 mo', '', '(or in grade 7 in some provinces)'],
-        ['DTaP',      '', '2 mo', '4 mo', '6 mo', '(+18 mo)'],
-        ['IPV',       '', '2 mo', '4 mo', '6 mo', '(+18 mo)'],
-        ['Hib',       '', '2 mo', '4 mo', '6 mo', '(+18 mo)'],
-        ['PCV',       '', '2 mo', '4 mo', '', '12 mo'],
-        ['RV',        '', '2 mo', '4 mo', '6 mo (if 3-dose)', ''],
-        ['MenC',      '', '', '', '', '12 mo'],
-        ['MMR',       '', '', '', '', '12 mo'],
-        ['Varicella', '', '', '', '', '12 to 15 mo'],
-        ['Influenza', '', '', '', 'yearly from 6 mo', ''],
-        ['RSV',       'maternal vaccine OR infant antibody; funding differs sharply by province', '', '', '', '']
-      ],
-      foot: 'Canada has no single national schedule: each province sets its own around NACI advice. A British Columbia baby gets a 6-in-1 and PCV20; an Ontario baby gets a 5-in-1 and gets hepatitis B in grade 7 instead of infancy. Check your province.'
+    "CA": {
+        "name": "Canada: British Columbia example",
+        "ages": [
+            "Birth",
+            "2 mo",
+            "4 mo",
+            "6 mo",
+            "12 mo"
+        ],
+        "rows": [
+            [
+                "HepB",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "DTaP",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "IPV",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "Hib",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "PCV",
+                "",
+                "2 mo",
+                "4 mo",
+                "",
+                "12 mo"
+            ],
+            [
+                "RV",
+                "",
+                "2 mo",
+                "4 mo",
+                "",
+                ""
+            ],
+            [
+                "MenC",
+                "",
+                "2 mo",
+                "",
+                "",
+                "12 mo"
+            ],
+            [
+                "MMR",
+                "",
+                "",
+                "",
+                "",
+                "12 mo"
+            ],
+            [
+                "Varicella",
+                "",
+                "",
+                "",
+                "",
+                "12 mo"
+            ],
+            [
+                "HepA",
+                "",
+                "",
+                "",
+                "6 mo: Indigenous children",
+                ""
+            ],
+            [
+                "Influenza",
+                "",
+                "",
+                "",
+                "annual from 6 mo",
+                ""
+            ],
+            [
+                "RSV",
+                "Check current provincial eligibility and funding",
+                "",
+                "",
+                "",
+                ""
+            ]
+        ],
+        "foot": "This is a British Columbia example, not a Canadian national schedule. Hepatitis A for Indigenous children continues at eighteen months; combination boosters and later doses are outside this first-year grid. Other provinces differ, including hepatitis B, rotavirus and meningococcal timing.",
+        "source": "https://www.canada.ca/en/public-health/services/immunization-vaccines/provincial-territorial-routine-vaccination-programs-infants-children.html"
     },
-    AU: {
-      name: 'Australia (National Immunisation Program)',
-      ages: ['Birth', '6 wk / 2 mo', '4 mo', '6 mo', '12 mo'],
-      rows: [
-        ['HepB',      'Birth', '2 mo', '4 mo', '6 mo', ''],
-        ['DTaP',      '', '2 mo', '4 mo', '6 mo', '(+18 mo)'],
-        ['IPV',       '', '2 mo', '4 mo', '6 mo', ''],
-        ['Hib',       '', '2 mo', '4 mo', '6 mo', '(+18 mo)'],
-        ['PCV',       '', '6 wk', '4 mo', '', '12 mo'],
-        ['RV',        '', '2 mo', '4 mo', '', ''],
-        ['MenB',      '', '2 mo', '4 mo', '', '12 mo'],
-        ['MenACWY',   '', '', '', '', '12 mo'],
-        ['MMR',       '', '', '', '', '12 mo'],
-        ['MMRV',      '', '', '', '', '18 mo'],
-        ['RSV',       'maternal vaccine at 28 to 36 weeks plus state-funded infant nirsevimab', '', '', '', '']
-      ],
-      foot: 'Australia bundles a hepatitis B birth dose with the hexavalent at 2, 4, 6 months, gives meningococcal B to all infants, and since 1 Sep 2025 uses the broader PCV20. Chickenpox is delivered as MMRV at 18 months.'
+    "AU": {
+        "name": "Australia (National Immunisation Program)",
+        "ages": [
+            "Birth",
+            "6 wk / 2 mo",
+            "4 mo",
+            "6 mo",
+            "12 mo"
+        ],
+        "rows": [
+            [
+                "HepB",
+                "Birth",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "DTaP",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "IPV",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "Hib",
+                "",
+                "2 mo",
+                "4 mo",
+                "6 mo",
+                ""
+            ],
+            [
+                "PCV",
+                "",
+                "2 mo (from 6 wk)",
+                "4 mo",
+                "eligible Indigenous / medical risk",
+                "12 mo"
+            ],
+            [
+                "RV",
+                "",
+                "2 mo",
+                "4 mo",
+                "",
+                ""
+            ],
+            [
+                "MenB",
+                "",
+                "eligible Indigenous / risk",
+                "eligible Indigenous / risk",
+                "some medical-risk schedules",
+                "eligible Indigenous / risk"
+            ],
+            [
+                "MenACWY",
+                "",
+                "",
+                "",
+                "",
+                "12 mo"
+            ],
+            [
+                "MMR",
+                "",
+                "",
+                "",
+                "",
+                "12 mo"
+            ],
+            [
+                "Influenza",
+                "",
+                "",
+                "",
+                "annual from 6 mo",
+                ""
+            ],
+            [
+                "RSV",
+                "Maternal vaccine and infant programmes: check eligibility",
+                "",
+                "",
+                "",
+                ""
+            ]
+        ],
+        "foot": "NIP-funded infant MenB is for Aboriginal and Torres Strait Islander children and specified medical-risk groups, rather than every infant; state programmes may add eligibility. Annual flu is funded from six months to under five years; the first series may need two doses. MMRV and further boosters are at eighteen months.",
+        "source": "https://www.health.gov.au/childhood-immunisation/immunisation-schedule?language=aus-P1"
     },
-    WHO: {
-      name: 'WHO (reference schedule)',
-      ages: ['Birth', '6 wk', '10 wk', '14 wk', '9 to 12 mo'],
-      rows: [
-        ['BCG',       'Birth (high-TB countries)', '', '', '', ''],
-        ['HepB',      'Birth dose under 24h', '6 wk', '10 wk', '14 wk', ''],
-        ['DTaP',      '', '6 wk', '10 wk', '14 wk', ''],
-        ['IPV',       '', '6 wk', '10 wk', '14 wk', ''],
-        ['Hib',       '', '6 wk', '10 wk', '14 wk', ''],
-        ['PCV',       '', '6 wk', '10 wk', '14 wk', ''],
-        ['RV',        '', '6 wk', '10 wk', '(brand-dependent)', ''],
-        ['MMR',       '', '', '', '', '9 or 12 mo (measles), 2 doses']
-      ],
-      foot: 'WHO’s reference schedule starts the primary series at 6 weeks (not 8), gives a hepatitis B birth dose, and in low-income settings still uses BCG and oral polio that high-income parents will never see. It is a reference for national programs, not a single country’s schedule.'
+    "WHO": {
+        "name": "WHO: programme guidance",
+        "ages": [
+            "Birth",
+            "Primary series",
+            "Later doses",
+            "Eligibility",
+            "National plan"
+        ],
+        "rows": [
+            [
+                "BCG",
+                "where recommended",
+                "",
+                "",
+                "TB context",
+                "check"
+            ],
+            [
+                "HepB",
+                "within 24 hours",
+                "national series",
+                "",
+                "",
+                "check"
+            ],
+            [
+                "DTaP",
+                "",
+                "can begin at 6 weeks",
+                "boosters",
+                "",
+                "check"
+            ],
+            [
+                "IPV",
+                "",
+                "polio vaccine mix varies",
+                "",
+                "",
+                "check"
+            ],
+            [
+                "Hib",
+                "",
+                "2 or 3 primary doses",
+                "booster depends on scheme",
+                "",
+                "check"
+            ],
+            [
+                "PCV",
+                "",
+                "2 or 3 primary doses",
+                "booster depends on scheme",
+                "",
+                "check"
+            ],
+            [
+                "RV",
+                "",
+                "product-specific age limits",
+                "",
+                "",
+                "check"
+            ],
+            [
+                "MMR",
+                "",
+                "first measles at 9 or 12 mo",
+                "second dose",
+                "",
+                "check"
+            ]
+        ],
+        "foot": "WHO provides options for national programmes, not one universal appointment calendar. Polio may use IPV and oral vaccines in different combinations. Use your country’s actual schedule and product rules.",
+        "source": "https://www.who.int/teams/immunization-vaccines-and-biologicals/policies/who-recommendations-for-routine-immunization---summary-tables"
     },
-    DE: {
-      name: 'Germany (STIKO)',
-      ages: ['Birth', '2 mo', '4 mo', '11 mo', '12 mo'],
-      rows: [
-        ['HepB',      '', '2 mo', '4 mo', '11 mo', '(in 6-in-1)'],
-        ['DTaP',      '', '2 mo', '4 mo', '11 mo', ''],
-        ['IPV',       '', '2 mo', '4 mo', '11 mo', ''],
-        ['Hib',       '', '2 mo', '4 mo', '11 mo', ''],
-        ['PCV',       '', '2 mo', '4 mo', '11 mo', ''],
-        ['RV',        '', '2 mo (from 6 wk)', '4 mo', '', ''],
-        ['MenB',      '', '2 mo', '4 mo', '', '12 mo'],
-        ['MenC',      '', '', '', '', '12 mo'],
-        ['MMR',       '', '', '', '11 mo', ''],
-        ['Varicella', '', '', '', '11 mo', '']
-      ],
-      foot: 'STIKO uses a 2 + 1 primary series (2, 4, and 11 months) for the 6-in-1 and pneumococcal, rather than three close primary doses. Since January 2024 STIKO recommends infant meningococcal B at 2, 4, and 12 months. First MMR and chickenpox come at 11 months.'
+    "DE": {
+        "name": "Germany (STIKO 2026, term infants)",
+        "ages": [
+            "Birth",
+            "2 mo",
+            "4 mo",
+            "11 mo",
+            "12 mo"
+        ],
+        "rows": [
+            [
+                "HepB",
+                "exposure protocol if indicated",
+                "2 mo",
+                "4 mo",
+                "11 mo",
+                ""
+            ],
+            [
+                "DTaP",
+                "",
+                "2 mo",
+                "4 mo",
+                "11 mo",
+                ""
+            ],
+            [
+                "IPV",
+                "",
+                "2 mo",
+                "4 mo",
+                "11 mo",
+                ""
+            ],
+            [
+                "Hib",
+                "",
+                "2 mo",
+                "4 mo",
+                "11 mo",
+                ""
+            ],
+            [
+                "PCV",
+                "",
+                "2 mo",
+                "4 mo",
+                "11 mo",
+                ""
+            ],
+            [
+                "RV",
+                "",
+                "from 6 wk",
+                "product-specific",
+                "",
+                ""
+            ],
+            [
+                "MenB",
+                "",
+                "2 mo",
+                "4 mo",
+                "",
+                "12 mo"
+            ],
+            [
+                "MMR",
+                "",
+                "",
+                "",
+                "11 mo",
+                "second at 15 mo"
+            ],
+            [
+                "Varicella",
+                "",
+                "",
+                "",
+                "11 mo",
+                "second at 15 mo"
+            ],
+            [
+                "RSV",
+                "Nirsevimab timed to first RSV season",
+                "",
+                "",
+                "",
+                ""
+            ]
+        ],
+        "foot": "Premature infants receive an additional three-month dose of the six-in-one and pneumococcal series. The former twelve-month MenC recommendation was removed; MenACWY is now a routine adolescent dose at twelve to fourteen years. Rotavirus has product-specific completion limits.",
+        "source": "https://edoc.rki.de/bitstream/handle/176904/13181/EB-4-2026.pdf"
     }
-  };
+};
 
   var ORDER = ['US', 'UK', 'CA', 'AU', 'WHO', 'DE'];
 
@@ -6102,7 +5323,7 @@
     if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
     return dt;
   }
-  function addDays(dt, n) { var c = new Date(dt.getTime()); c.setDate(c.getDate() + n); return c; }
+  function addMonths(dt, n) { var first = new Date(dt.getFullYear(), dt.getMonth() + n, 1); var last = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate(); return new Date(first.getFullYear(), first.getMonth(), Math.min(dt.getDate(), last)); }
   function startOfToday() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
   function fmtDate(dt) {
     try { return dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
@@ -6181,20 +5402,14 @@
 
     /* ---------- the prominent freshness rail (always visible) ---------- */
     var rail = el('div', 'tool-rail');
-    rail.innerHTML =
-      '<b>Verify the current schedule with your clinician.</b> US infant vaccine policy was unusually unsettled in 2025 to 2026. ' +
-      'A federal court order on 16 March 2026 stayed the reconstituted ACIP’s votes and restored the June 2024 schedule (including ' +
-      'the universal hepatitis B birth dose), and an appeal is pending. The AAP publishes its own 2026 schedule, which keeps all the ' +
-      'routine infant vaccines; the main live difference is COVID-19 in healthy infants (AAP recommends it from 6 months, the federal ' +
-      'posture leans toward shared decision-making). This tool follows the restored CDC schedule plus the AAP. Treat the dates below as ' +
-      'a planning aid and follow the schedule your pediatrician gives you.';
+    rail.innerHTML = '<b>Confirm doses with the current local schedule and the vaccination record.</b> This tool shows selected routine antigens and planning ages. It does not apply catch-up rules, minimum intervals, contraindications or every risk-based recommendation. A date passing does not mean a dose was given. US COVID-19 recommendations differ between CDC and AAP; discuss the current guidance with the clinician.';
     body.appendChild(rail);
 
     /* ---------- source line ---------- */
     var src = el('p');
     src.className = 'asof';
     src.style.cssText = 'margin-top:0.9rem;';
-    src.textContent = 'Schedules as of June 2026. Sources: CDC 2025 child and adolescent schedule (restored by the 2026-03-16 injunction); AAP 2026 schedule; GOV.UK 2026; NACI / provincial schedules; Australia NIP; WHO summary table; Germany STIKO.';
+    src.textContent = 'Schedule sources checked 4 October 2026. Open the selected country’s source below before using the grid.';
     body.appendChild(src);
 
     /* ---------- render logic ---------- */
@@ -6205,6 +5420,7 @@
       var countryKey = cSel.value;
       var country = COUNTRIES[countryKey] || COUNTRIES.US;
       var birth = parseDate(dIn.value);
+      if (dIn.value && (!birth || birth > startOfToday())) { out.appendChild(el('p', 'blocked', 'Enter a valid birth date that is today or earlier. No timeline is calculated for a future date.')); return; }
 
       /* (1) the birthdate-anchored US visit schedule.
          Only shown for the US country (the dated-visit list is built on the
@@ -6247,7 +5463,7 @@
       list.style.cssText = 'list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.7rem;';
 
       US_VISITS.forEach(function (v) {
-        var due = addDays(birth, v.offsetDays);
+        var due = addMonths(birth, v.offsetMonths);
         var past = due < today;
 
         var li = el('li');
@@ -6268,7 +5484,7 @@
           sub.style.cssText = 'font-size:0.82rem; color:var(--text-dim);';
           hd.appendChild(sub);
         }
-        var tag = el('span', null, past ? 'likely done' : 'upcoming');
+        var tag = el('span', null, past ? 'age passed; check record' : 'planning date');
         tag.style.cssText = 'margin-left:auto; font-family:var(--font-mono); font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase; ' +
           'padding:0.12em 0.55em; border-radius:999px; border:1px solid currentColor; ' +
           (past ? 'color:var(--text-dim);' : 'color:var(--ok);');
@@ -6301,7 +5517,7 @@
       // RSV seasonal note (does not fit the dated cadence)
       var rsv = el('p');
       rsv.style.cssText = 'margin:0.8rem 0 0; font-size:0.88rem; color:var(--text-dim); line-height:1.5;';
-      rsv.innerHTML = '<b>RSV protection</b> is seasonal, not a fixed-age dose: a baby is protected either by the mother’s RSV vaccine in pregnancy (32 to 36 weeks in the US) or, if not, by a single long-acting antibody given to the baby (nirsevimab, or clesrovimab 105 mg), almost never both. Yearly <b>flu</b> shots start at 6 months.';
+      rsv.innerHTML = '<b>RSV protection:</b> eligibility depends on season, infant age, maternal vaccination and medical risk. Most infants need either maternal vaccination or an infant antibody. An antibody is generally recommended if maternal vaccination was absent, unknown or less than fourteen days before birth; uncommon exceptions may justify both. Ask the clinician to apply the current CDC protocol. Annual <b>flu</b> begins at six months; the first season may require two doses at least four weeks apart.';
       wrap.appendChild(rsv);
 
       return wrap;
@@ -6376,6 +5592,9 @@
         foot.style.cssText = 'margin:0.6rem 0 0; font-size:0.86rem; color:var(--text-dim); line-height:1.5;';
         section.appendChild(foot);
       }
+      if (country.source) {
+        var sourceLink = el('a', null, 'Official schedule source'); sourceLink.href = country.source; section.appendChild(sourceLink);
+      }
 
       // The "protects against" key, so the one-liners are present in every view.
       var details = el('details', 'deeper srcs');
@@ -6420,7 +5639,7 @@
    FY.viz["vaccines-154m"]: two linked views in one figure.
    (a) the cumulative 154 million deaths averted by vaccination 1974 to 2024,
        with measles vaccine alone about 94 million of them (Shattock 2024).
-   (b) a US measles-cases-by-year mini line ending at 2,288 in 2025 (vs 285 in
+   (b) a US measles-cases-by-year mini line ending at 2,289 in 2025 (vs 285 in
        2024), with kindergarten MMR coverage falling 95.2% to 92.5% through the
        95% herd-immunity threshold.
    Mechanism (the benefit) on the left, live consequence (the canary) on the right.
@@ -6447,12 +5666,12 @@
 
     // (b) US measles cases by year, post-elimination (CDC Measles Cases and
     //     Outbreaks, cdc.gov/measles/data-research, public domain). Endpoints
-    //     2024=285 and 2025=2,288 confirmed in the immunization deep-dives.
+    //     2024=285 and 2025=2,289 confirmed in the immunization deep-dives.
     var cases = [
       [2010, 63], [2011, 220], [2012, 55], [2013, 187], [2014, 667],
       [2015, 188], [2016, 86], [2017, 120], [2018, 375], [2019, 1274],
       [2020, 13], [2021, 49], [2022, 121], [2023, 59], [2024, 285],
-      [2025, 2288]
+      [2025, 2289]
     ];
 
     // Kindergarten MMR coverage, 2-dose, by school year (CDC SchoolVaxView).
@@ -6485,13 +5704,11 @@
 
     /* ---------- Panel headers (one per panel, in the top band) ---------- */
     // Left: the headline IS the bold number, so it never competes with a label.
-    txt(La.x, 30, 'The benefit', 'viz-axis', { fill: P.gold, 'letter-spacing': '0.08em' });
-    txt(La.x - 2, 62, '154M', 'viz-label', { fill: P.goldHi, 'font-size': '34px', 'font-weight': '700', 'font-family': 'var(--font-heading, serif)' });
-    txt(La.x + 86, 50, 'deaths averted', 'viz-axis', { fill: P.parch });
-    txt(La.x + 86, 64, 'by vaccination, 1974 to 2024', 'viz-axis', { fill: P.dim });
+    txt(La.x, 30, 'Modeled deaths averted', 'viz-axis', { fill: P.gold, 'letter-spacing': '0.08em' });
+    txt(La.x, 50, '154 million, 1974 to 2024', 'viz-axis', { fill: P.parch });
 
     // Right: short header line; the axis titles carry the specifics.
-    txt(Rb.x - 42, 30, 'The live consequence', 'viz-axis', { fill: P.gold, 'letter-spacing': '0.08em' });
+    txt(Rb.x - 42, 30, 'Dated US surveillance', 'viz-axis', { fill: P.gold, 'letter-spacing': '0.08em' });
     txt(Rb.x - 42, 50, 'US measles cases per year (gold),', 'viz-axis', { fill: P.parch });
     txt(Rb.x - 42, 64, 'and kindergarten MMR coverage (blue)', 'viz-axis', { fill: P.dim });
 
@@ -6524,8 +5741,8 @@
     S.el('rect', { x: barX, y: yTotalTop, width: barW, height: yMeaslesTop - yTotalTop, fill: P.sky, rx: '2' }, svg);
 
     // In-bar value labels (dark ink on the light fills).
-    txt(barX + barW / 2, (base + yMeaslesTop) / 2 + 4, '94M', 'viz-label', { 'text-anchor': 'middle', fill: '#1d231e', 'font-weight': '700' });
-    txt(barX + barW / 2, (yMeaslesTop + yTotalTop) / 2 + 4, '60M', 'viz-axis', { 'text-anchor': 'middle', fill: '#1d231e', 'font-weight': '700' });
+    txt(barX + barW / 2, (base + yMeaslesTop) / 2 + 4, '94M', 'viz-label', { 'text-anchor': 'middle', style: 'fill:var(--bg)!important', fill: '#1d231e', 'font-weight': '700' });
+    txt(barX + barW / 2, (yMeaslesTop + yTotalTop) / 2 + 4, '60M', 'viz-axis', { 'text-anchor': 'middle', style: 'fill:var(--bg)!important', fill: '#1d231e', 'font-weight': '700' });
 
     // Segment legends to the right of the bar.
     var legX = barX + barW + 12;
@@ -6538,10 +5755,6 @@
     txt(legX + 14, legOy + 2, 'All other', 'viz-axis', { fill: P.parch });
     txt(legX + 14, legOy + 16, 'vaccines', 'viz-axis', { fill: P.dim });
 
-    // The bold headline figure above the bar.
-    txt(barX - 2, yTotalTop - 22, '154', 'viz-label', { fill: P.goldHi, 'font-size': '40px', 'font-weight': '700', 'font-family': 'var(--font-heading, serif)' });
-    txt(barX + 72, yTotalTop - 28, 'million', 'viz-axis', { fill: P.goldHi });
-    txt(barX + 72, yTotalTop - 14, 'lives', 'viz-axis', { fill: P.dim });
 
     // x-axis caption for the left panel.
     txt(La.x, base + 26, 'Cumulative deaths averted (millions)', 'viz-axis', { fill: P.dim });
@@ -6556,7 +5769,7 @@
     var x0 = years[0], x1 = years[years.length - 1];
     var xR = S.scale(x0, x1, Rb.x, Rb.x + Rb.w);
 
-    var maxCases = 2288;            // 2025 record sets the top of the left axis
+    var maxCases = 2289;            // 2025 record sets the top of the left axis
     var yCases = S.scale(0, maxCases, Rb.y + Rb.h, Rb.y);
 
     // Coverage uses a tight right axis (90% to 96%) so the small slip and the
@@ -6589,7 +5802,7 @@
     // Threshold band: shade below 95% to show the herd-immunity gap.
     S.el('rect', { x: covX0, y: threshY, width: covX1 - covX0, height: rbBase - threshY, fill: P.emerg, opacity: '0.07' }, svg);
     S.el('line', { x1: covX0, y1: threshY, x2: Rb.x + Rb.w, y2: threshY, stroke: P.emerg, 'stroke-width': '1', 'stroke-dasharray': '4 3', opacity: '0.8' }, svg);
-    txt(Rb.x + Rb.w, threshY - 4, '95% herd-immunity line', 'viz-axis', { 'text-anchor': 'end', fill: P.emerg });
+    txt(Rb.x + Rb.w, threshY - 4, '95% coverage guide', 'viz-axis', { 'text-anchor': 'end', fill: P.emerg });
 
     var covPts = coverage.map(function (d) { return [xR(d[0]), yCov(d[1])]; });
     S.el('path', { d: S.line(covPts), fill: 'none', stroke: P.sky, 'stroke-width': '2', 'stroke-dasharray': '5 3', 'stroke-linejoin': 'round' }, svg);
@@ -6607,14 +5820,14 @@
     S.el('path', { d: S.area(casePts, rbBase), fill: P.gold, opacity: '0.12' }, svg);
     S.el('path', { d: S.line(casePts), fill: 'none', stroke: P.gold, 'stroke-width': '2.2', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
 
-    // Mark the two endpoints the spec calls out: 2024 (285) and 2025 (2,288).
+    // Mark the two endpoints the spec calls out: 2024 (285) and 2025 (2,289).
     var p2024 = casePts[casePts.length - 2], p2025 = casePts[casePts.length - 1];
     S.el('circle', { cx: p2024[0], cy: p2024[1], r: '3', fill: P.gold }, svg);
     txt(p2024[0] - 4, p2024[1] - 6, '285', 'viz-axis', { 'text-anchor': 'end', fill: P.parch });
     txt(p2024[0] - 4, p2024[1] + 7, 'in 2024', 'viz-axis', { 'text-anchor': 'end', fill: P.dim });
     S.el('circle', { cx: p2025[0], cy: p2025[1], r: '4', fill: P.goldHi, stroke: '#1d231e', 'stroke-width': '1' }, svg);
-    txt(p2025[0] + 5, p2025[1] + 2, '2,288', 'viz-label', { 'text-anchor': 'end', fill: P.goldHi, 'font-weight': '700' });
-    txt(p2025[0] + 5, p2025[1] + 16, 'in 2025', 'viz-axis', { 'text-anchor': 'end', fill: P.dim });
+    txt(p2025[0] + 5, 34, '2,289', 'viz-label', { 'text-anchor': 'end', fill: P.goldHi, 'font-weight': '700' });
+    txt(p2025[0] + 5, 50, 'in 2025', 'viz-axis', { 'text-anchor': 'end', fill: P.dim });
 
     // Flag the 2019 spike for context (largest since elimination until 2025).
     var p2019 = casePts[9];
@@ -6625,24 +5838,16 @@
 
     /* ---------- Accessible spoken summary with the key numbers ---------- */
     svg.setAttribute('aria-label',
-      'Two linked charts. Left: vaccination averted an estimated 154 million deaths from 1974 to 2024, ' +
+      'Two dated charts with different populations. Left: a model estimates vaccination averted an estimated 154 million deaths from 1974 to 2024, ' +
       'with measles vaccine alone accounting for about 94 million, over 60 percent of the total. ' +
-      'Right: US measles cases rose from 285 in 2024 to 2,288 in 2025, the most since 1991, ' +
-      'as kindergarten two-dose MMR coverage slipped from 95.2 percent in 2019 to 2020 down to 92.5 percent in 2024 to 2025, ' +
-      'crossing below the roughly 95 percent measles herd-immunity threshold.');
+      'Right: US measles cases rose from 285 in 2024 to 2,289 in 2025, the most since 1991, ' +
+      'Separately, kindergarten two-dose MMR coverage slipped from 95.2 percent in 2019 to 2020 down to 92.5 percent in 2024 to 2025, ' +
+      'The 95 percent line is an approximate community coverage guide, not an exact national threshold.');
 
     /* ---------- Reassuring / explanatory caption + source ---------- */
     var note = document.createElement('p');
     note.className = 'viz-note';
-    note.textContent =
-      'The mechanism is simple and proven: high coverage starves measles of the susceptible people it ' +
-      'needs to spread. Because measles is so contagious (a basic reproduction number around 12 to 18), ' +
-      'about 95 percent of a community must be immune to stop it, so it is the first disease to come back ' +
-      'when coverage slips. The good news dwarfs the bad: vaccines have averted an estimated 154 million ' +
-      'deaths in 50 years. The 2025 US resurgence (2,288 cases, the most since 1991, about 93 percent in ' +
-      'unvaccinated or unknown-status people) is what a few points of lost coverage looks like, and it is ' +
-      'reversible by getting back above the line. Sources: Shattock et al., The Lancet 2024;403:2307 (WHO ' +
-      'Expanded Programme on Immunization 50-year model); CDC Measles Cases and Outbreaks; CDC SchoolVaxView.';
+    note.textContent = 'The left panel is Shattock’s modeled estimate of deaths averted by vaccination from 1974 to 2024, not a direct count. The right panel retains US annual case counts through 2025 (2,289, preliminary CDC snapshot checked 4 October 2026) and kindergarten coverage through school year 2024 to 2025. They cover different populations and do not quantify a causal effect of the national coverage decline. Community protection depends on local immunity, importations and clustering; 95 percent is a coverage guide, not a guarantee. Sources: Shattock et al., Lancet 2024;403:2307; CDC Measles Cases and Outbreaks; CDC SchoolVaxView.';
     fig.appendChild(note);
 
     /* ---------- Accessible data table (the fallback for the numbers) ---------- */
@@ -6650,7 +5855,7 @@
     tbl.className = 'viz-data';
 
     var capEl = document.createElement('caption');
-    capEl.textContent = 'US measles cases per year with kindergarten 2-dose MMR coverage, plus the 154 million lives-saved breakdown.';
+    capEl.textContent = 'US measles cases per year with kindergarten 2-dose MMR coverage, plus the 154 million modeled deaths-averted breakdown.';
     capEl.style.cssText = 'text-align:left;color:var(--text-dim);font-style:italic;padding:0.2em 0 0.4em;';
     tbl.appendChild(capEl);
 
@@ -6676,7 +5881,7 @@
 
     var tfoot = document.createElement('tfoot');
     tfoot.innerHTML =
-      '<tr><th scope="row">Herd-immunity threshold</th><td>n/a</td><td>~95%</td></tr>' +
+      '<tr><th scope="row">Approximate community coverage target</th><td>n/a</td><td>~95%</td></tr>' +
       '<tr><th scope="row">Lives saved 1974 to 2024 (measles vaccine)</th><td colspan="2">~' + MEASLES_SAVED + ' million</td></tr>' +
       '<tr><th scope="row">Lives saved 1974 to 2024 (all other vaccines)</th><td colspan="2">~' + OTHER_SAVED + ' million</td></tr>' +
       '<tr><th scope="row">Lives saved 1974 to 2024 (total)</th><td colspan="2">' + TOTAL_SAVED + ' million</td></tr>';

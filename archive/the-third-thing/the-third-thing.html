@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>The Third Thing: After Genes and Upbringing, What's Left</title>
-  <meta name="description" content="We argue forever about how much of a person is their genes and how much is how they were raised. Both answers leave out the part that is finally yours. A look at nature, nurture, and the self, through the lens of profoundly well trained service dogs.">
-  <meta property="og:title" content="The Third Thing: After Genes and Upbringing, What's Left">
-  <meta property="og:description" content="Nature, nurture, and the one thing that is actually yours. The science of both, seen through profoundly well trained service dogs, and the place the dog runs out.">
+  <title>The Third Thing: What We Choose</title>
+  <meta name="description" content="Genes and upbringing influence a life. Service dogs, twin research and an old court ruling show why that does not settle the question of moral responsibility.">
+  <meta property="og:title" content="The Third Thing: What We Choose">
+  <meta property="og:description" content="Genes and upbringing influence a life. Service dogs, twin research and an old court ruling show why that does not settle the question of moral responsibility.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/the-third-thing/the-third-thing.html">
@@ -35,10 +35,10 @@
   /* ============================================================
      THE THIRD THING, on nature, nurture, and the self
      A reading essay in the site house style: one centered reading
-     column (~64ch) with full-bleed and wide "breakout" photographs,
-     big-stat anchors, mono section numbers, and a drop cap. Warm ink
+     column (~64ch) with photographs,
+     mono section numbers, and a drop cap. Warm ink
      on the site's forest green. The accent is used sparingly (section
-     numbers, stats, the drop cap, links, pull quotes). Photographs are
+     numbers, the drop cap, links, pull quotes). Photographs are
      clean and borderless, filling the frame.
      No em dashes anywhere.
      ============================================================ */
@@ -68,21 +68,9 @@
   /* hidden on mobile (duplicated from style.css so the page also stands alone) */
   @media (max-width: 700px) { .reading-progress { display: none; } }
 
-  /* ============================ COVER ============================ */
-  .cover { max-width: 54rem; margin: 0 auto; padding: 11svh var(--gutter) 5svh; text-align: center; }
-  .cover .eyebrow { font-variant: small-caps; letter-spacing: 0.26em; font-size: 0.92rem; color: var(--accent); }
-  .cover h1 {
-    font-weight: 700; font-size: clamp(3.6rem, 15vw, 8.5rem); line-height: 0.92;
-    letter-spacing: -0.03em; color: var(--text-bright); margin: 1.1rem 0 0; text-wrap: balance;
-  }
-  .cover .dek {
-    font-size: 1.24rem; line-height: 1.58; color: var(--text-dim);
-    max-width: 50ch; margin: 1.5rem auto 0; text-wrap: pretty;
-  }
-  .scroll-cue { display:block; text-align:center; font-variant: small-caps; letter-spacing: 0.22em; font-size: 0.82rem; color: var(--text-dim); opacity: 0.7; margin-top: 2.6rem; }
-
   /* ===================== ESSAY GRID (content / wide / full) ===================== */
   .essay {
+    font-size: 1.27rem;
     display: grid;
     grid-template-columns:
       [full-start] minmax(var(--gutter), 1fr)
@@ -95,7 +83,7 @@
   .essay > .wide { grid-column: wide; }
   .essay > .full { grid-column: full; }
 
-  .essay p { font-size: 1.22rem; line-height: 1.68; color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .essay p { font-size: 1.27rem; line-height: 1.72; color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .essay p b, .essay p strong { color: var(--text-bright); font-weight: 700; }
   .essay p em, .essay em { font-style: italic; }
   .essay a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(212,196,160,0.32); transition: color 0.2s, border-color 0.2s; }
@@ -109,13 +97,9 @@
   }
 
   /* numbered section */
-  .sec { margin: 7svh 0 0; }
-  .sec-num { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; color: var(--accent); display: block; margin-bottom: 0.5rem; }
-  .sec h2 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.7rem, 4.6vw, 2.3rem); line-height: 1.1; letter-spacing: -0.015em; color: var(--text-bright); margin: 0 0 0.5rem; text-wrap: balance; }
-  .sec .sub { font-style: italic; font-size: 1.18rem; line-height: 1.5; color: var(--text-dim); margin: 0 0 1.4rem; text-wrap: pretty; }
-
-  /* big stat anchor: kit .u-bignum handles styling; margin bridge for essay rhythm */
-  .essay .u-bignum { margin: 2.6rem 0; }
+  .sec { margin: 7svh 0 0; padding-top: clamp(3rem, 7svh, 4.5rem); border-top: 1px solid var(--rule); }
+  .sec-num { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; color: var(--accent); display: block; margin-bottom: 1rem; text-align: center; }
+  .sec h2 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 5vw, 2.55rem); line-height: 1.12; letter-spacing: -0.02em; color: var(--text-bright); margin: 0 auto 2.6rem; text-align: center; text-wrap: balance; }
 
   /* pull quote: kit .u-pq handles styling; margin bridge for essay vertical rhythm */
   .essay .u-pq { margin: 2.4rem 0; }
@@ -134,24 +118,10 @@
     max-width: var(--measure); margin-left: auto; margin-right: auto; padding: 0 var(--gutter); text-align: center;
   }
 
-  /* closing coda */
-  .coda { margin-top: 7svh; }
-  .coda p { font-size: 1.22rem; line-height: 1.68; color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
-  .coda p strong { color: var(--text-bright); }
-
   /* image credits */
   .credit { margin: 4svh 0 0; font-size: 0.86rem; line-height: 1.6; color: var(--text-dim); }
   .credit a { color: var(--text-dim); border-bottom: 1px solid var(--hair); text-decoration: none; }
   .credit a:hover { color: var(--text-bright); }
-
-  /* the plain-spoken takeaway: kit .u-callout handles styling; margin bridge */
-  .essay .u-callout { margin: 1.9rem 0 0; }
-
-  /* big closing statement */
-  .ending { margin: 9svh 0 0; text-align: center; }
-  .ending h2 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.7rem); line-height: 1.18; letter-spacing: -0.015em; color: var(--text-bright); text-wrap: balance; margin: 0 0 1.2rem; }
-  .ending h2 em { color: var(--accent); font-style: italic; }
-  .ending p { font-size: 1.22rem; line-height: 1.68; color: var(--text); max-width: var(--measure); margin: 0 auto; text-wrap: pretty; }
 
   /* "where this comes from": the sources shelf */
   .appendix { margin: 9svh 0 0; padding-top: 2.6rem; border-top: 1px solid var(--hair); }
@@ -168,188 +138,158 @@
 
   /* ===================== REVEAL ON SCROLL (gated: fine pointer + motion only) ===================== */
   @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-    html.js .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out); }
-    html.js .reveal.in { opacity: 1; transform: none; }
+    html.has-reveals .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out); }
+    html.has-reveals .reveal.in { opacity: 1; transform: none; }
   }
 
   /* ===================== MOBILE ===================== */
   @media (max-width: 640px) {
-    .essay p, .coda p { font-size: 1.12rem; }
     figure.photo.portrait { max-width: 320px; }
   }
+  .source-notes summary { min-height: 44px; padding: 0.65rem 0; color: var(--accent); cursor: pointer; font-size: 1.1rem; }
+  .source-notes .shelf { margin-top: 1.6rem; }
+  .shelf .grp h3 { font-family: var(--font-heading); font-size: 1.42rem; line-height: 1.25; letter-spacing: 0; text-transform: none; color: var(--text-bright); }
+  .essay .ap-intro { font-size: 1.06rem; line-height: 1.6; color: var(--text-dim); }
+  .essay .credit { font-size: 0.86rem; line-height: 1.6; color: var(--text-dim); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .reading-progress { transition: none; } }
   </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
-  <div class="reading-progress" id="rp"></div>
+  <div class="reading-progress" id="rp" aria-hidden="true"></div>
 
   <div class="top-nav"><a href="/" class="post-back"><span class="pb-label">Home</span></a></div>
 
   <!-- ============ COVER ============ -->
-  <header class="cover">
-    <div class="eyebrow">Nature, Nurture, and One More Thing</div>
-    <h1>The Third Thing: After Genes and Upbringing, What's Left</h1>
-    <p class="dek">A service dog can be profoundly good and never once choose it. You are the one animal that gets to choose. We fight forever over genes versus upbringing and miss the only part that was ever yours. Here is the science, told through a very good dog.</p>
-    <span class="scroll-cue">scroll</span>
+  <header class="u-hero editorial-hero">
+    <h1 class="u-title">The Third Thing: What We Choose</h1>
+    <p class="u-dek">Genes and upbringing shape a life. A good service dog helps me think about the responsibility we still ask of a person.</p>
+    <p class="u-meta">8 min essay <span class="u-sep">/</span> Optional source notes</p>
+    <span class="editorial-scroll" aria-hidden="true">scroll</span>
   </header>
 
-  <article class="essay">
+  <article class="essay" aria-label="The essay">
 
-    <!-- HERO -->
     <figure class="photo reveal">
       <picture><source type="image/webp" srcset="assets/third-thing/sully.webp"><img src="assets/third-thing/sully.jpg" width="1800" height="1200" loading="eager" decoding="async" alt="Sully, President George H. W. Bush's yellow Labrador service dog, in a Navy sailor's collar beside a brass ship's bell."></picture>
-      <figcaption>This is Sully. He was President George H. W. Bush's service dog, and when the president died, the photo of Sully lying beside the casket went around the world with two words: mission complete. Hold onto one fact about him. Every bit of that goodness was bred and trained into him. He never once chose it. That is where we start.</figcaption>
+      <figcaption>Sully served George H. W. Bush before joining the <a href="https://www.navy.mil/Press-Office/Press-Releases/display-pressreleases/Article/2239048/sully-hw-bush-has-a-new-job-at-walter-reed-medical-center/" target="_blank" rel="noopener">Walter Reed facility-dog program in 2019</a>. His work is the reason for the dog comparison here.</figcaption>
     </figure>
 
-    <!-- ============ LEDE ============ -->
     <div class="lede first reveal">
-      <p>You already know two kinds of people. One of them got every advantage, a good home, money, a real shot, and grew up cruel. The other got nothing, or worse than nothing, and grew up kind. If where you start decided where you end up, that should be impossible. It happens all the time.</p>
-      <p>People have fought over why for a hundred and fifty years. In 1874 a scientist named Francis Galton gave the fight its name: nature versus nurture. One side says you are born who you are. The other says you are built by how you were raised. Both sides miss the same thing. There is a third thing, and it is the only one that was ever really yours. The easiest way to see all three is not a person. It is a dog.</p>
+      <p>An abused child doesn't have to become an abusive parent. <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1939-0025.1987.tb03528.x" target="_blank" rel="noopener">Joan Kaufman and Edward Zigler's 1987 review</a> challenged that expectation. An explanation of how you got here is different from a prediction of everything you'll do next.</p>
+      <p>We inherit tendencies and learn habits before we're old enough to examine them. I think we also have a responsibility to examine them once we can. That's what I mean by the third thing: taking part in the person you're becoming. A well-trained service dog helps me see the distinction, though the dog can only carry the comparison so far.</p>
     </div>
 
-    <!-- ============ 01 THE OLDEST FIGHT ============ -->
-    <section class="sec reveal">
+    <section class="sec reveal" id="inheritance">
       <span class="sec-num">01</span>
-      <h2>The oldest fight</h2>
-      <p class="sub">Two camps, each sure the other is wrong. They are both half right.</p>
-      <p>For a long time the two sides just took turns winning. The "made" camp had the louder slogan. In 1924 a psychologist named John Watson promised that upbringing was everything:</p>
-      <blockquote class="u-pq">Give me a dozen healthy infants and my own world to bring them up in, and I'll guarantee to train any one of them to become any type of specialist I might select, doctor, lawyer, artist, and yes, even beggar-man and thief.<cite class="u-pq-cite">John B. Watson, 1924</cite></blockquote>
-      <p>It is a famous line. The part nobody quotes is the sentence right after it: "I am going beyond my facts, and I admit it." Because the "born" camp had the harder evidence, and it came from identical twins who were split up as babies and raised in different homes. A researcher named Thomas Bouchard spent years tracking these pairs down. Two men, separated as infants, met at thirty-nine and found they had each married a woman named Linda, divorced her, married a Betty, and named a son James Allan. Same genes, different houses, the same life lived twice.</p>
-      <p>Add up enough twins and a number falls out: roughly half of your personality is written in your genes. Intelligence does something stranger. The genes matter <em>more</em> as you age, not less, climbing from about 40 percent in childhood to as much as 80 percent in adulthood. You slowly grow into the person your wiring was always pointing at.</p>
+      <h2>What genes can tell us</h2>
+      <p>Identical twins raised in different homes can resemble one another on measures of personality, interests and intelligence. <a href="https://www.science.org/doi/10.1126/science.2218526" target="_blank" rel="noopener">Thomas Bouchard and his colleagues' Minnesota study</a> helped establish that inherited differences influence psychological differences. The twins still don't live the same life.</p>
+      <p>The statistic used to describe this is <a href="https://medlineplus.gov/genetics/understanding/inheritance/heritability/" target="_blank" rel="noopener">heritability</a>: how much variation in a measured trait, within a particular population and environment, is associated with genetic variation. It doesn't tell you what fraction of a person was made by genes. Nor does a highly heritable trait have to be impossible to change.</p>
       <figure class="photo reveal">
         <picture><source type="image/webp" srcset="assets/third-thing/twins.webp"><img src="assets/third-thing/twins.jpg" width="1800" height="1285" loading="lazy" decoding="async" alt="Two identical twin women in matching U.S. Navy uniforms, side by side, holding certificates."></picture>
-        <figcaption>Identical twins share all their genes. Raised in different homes, they still end up matching on the strangest little things.</figcaption>
+        <figcaption>Twins share much more than a resemblance. Similarities on psychological tests still do not amount to identical lives.</figcaption>
       </figure>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">80<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">How much of the gap in adults' intelligence traces back to genes, up from about 40 percent in kids. The older you get, the louder your wiring speaks.</span><span class="u-bignum-src">twin studies, the "Wilson effect"</span></div>
-      <p>So who won the fight? Both did. The answer is that nature and nurture were never enemies. They are partners. Your genes mostly sit and wait for the world to switch them on. And before the "born" side gets smug, genes are odds, not orders. The famous "warrior gene" that headlines once blamed for violence turns out to predict almost nothing on its own.</p>
-      <aside class="u-callout u-move"><p class="u-callout-k">The point</p><p class="u-callout-body">You are born holding a real hand of cards, a bigger hand than we like to admit, and the world you grow up in deals you more. That is nature and nurture. Both are real. Neither one is the whole game.</p></aside>
+      <p>Upbringing is also bigger than a parenting style. Two children in one home can have different friends, illnesses, chance encounters and relationships with their parents. Researchers call experiences that make siblings different <a href="https://www.psychologyib.com/uploads/1/1/7/5/11758934/bouchard_et_al._1990.pdf" target="_blank" rel="noopener"><em>nonshared environment</em></a>. Estimates of that component can also include measurement error. The part a study hasn't explained is not a measured quantity of free will.</p>
+      <p>Even Bouchard's paper cautions against treating heritability as a reason to dismiss parenting and education. Finding a small effect of shared upbringing in that sample does not tell us what would happen if a child were denied safety, food or schooling.</p>
     </section>
 
-    <!-- ============ 02 A DOG PROVES IT ============ -->
-    <section class="sec reveal">
+    <section class="sec reveal" id="dogs">
       <span class="sec-num">02</span>
-      <h2>A dog proves it</h2>
-      <p class="sub">Why the best trainers on earth bet on breeding and on raising, on purpose.</p>
-      <p>If you want to watch nature and nurture work right in front of you, look at a service dog, because we build one on purpose. Start with nature. Every serious guide-dog school breeds its own dogs instead of taking whatever shows up, because the calm, steady, people-loving temperament the job needs runs in the blood. Pick the right parents and the next litter comes out better. The catch is that breeding only loads the odds. Sequence enough dogs and you find that the breed alone predicts less than ten percent of how any single dog actually behaves. You bet on the bloodline, then you still have to meet the dog.</p>
-      <p>Now raising. A puppy has a short window, roughly three to fourteen weeks old, when the world stamps itself on it for life. Miss that window, the way a puppy mill does, and you get a nervous, jumpy adult that no amount of training fully fixes. Use it, with a volunteer who hauls the pup onto buses and into grocery stores until the chaos of the world feels boring, and you get a dog that can lie still under a restaurant table for two hours. The research holds one quiet twist. The puppies of easy, doting mothers wash out more often than the puppies of mothers who made them work a little for the milk. A soft start is not the gift it looks like.</p>
+      <h2>What the dog reveals</h2>
+      <p>A service dog makes inherited tendencies and learned behavior visible together. At <a href="https://cpb-us-w2.wpmucdn.com/web.sas.upenn.edu/dist/0/236/files/2017/04/Bray-et-al-PNAS-2017-1mmgewk.pdf" target="_blank" rel="noopener">The Seeing Eye</a>, prospective breeding dogs receive guide-dog training and are selected for health and behavior. Their puppies then live with raisers who teach basic obedience and introduce them to ordinary life before formal training. Selecting parents does not finish the job.</p>
+      <p>Breed is a particularly rough guide to the individual. In <a href="https://www.science.org/doi/10.1126/science.abk0639" target="_blank" rel="noopener">Kathleen Morrill and colleagues' 2022 study</a>, breed explained about 9 percent of variation across the surveyed behaviors in the confirmed-purebred analysis. This compares differences among dogs; it does not mean that breeding causes only 9 percent of one dog's behavior. The measures came from owners, whose expectations about breeds can affect their answers.</p>
       <figure class="photo reveal">
         <picture><source type="image/webp" srcset="assets/third-thing/service-dog-shepherd.webp"><img src="assets/third-thing/service-dog-shepherd.jpg" width="1800" height="1200" loading="lazy" decoding="async" alt="A German Shepherd in a tactical vest reading 'SERVICE DOG', standing alert beside its handler on an airfield."></picture>
-        <figcaption>A German Shepherd in a service vest. Picking the breed is a bet that temperament can be inherited. It can.</figcaption>
+        <figcaption>A German Shepherd in a service vest. A breed can suggest tendencies; a working dog still has to be assessed as an individual.</figcaption>
       </figure>
-      <p>So a finished service dog is the whole argument, settled, lying at your feet. Bred for the work, raised for the work, and the result is deeply good. But look closer. The recipe has exactly two ingredients, and for a dog that is the entire story. Sully did not decide to be faithful. He was built faithful and raised faithful, and that is exactly why loving him is so simple. There is nobody in there choosing.</p>
+      <p>Early experience matters, too. The <a href="https://avsab.org/wp-content/uploads/2024/12/Puppy-Socialization-Position-Statement-FINAL.pdf" target="_blank" rel="noopener">American Veterinary Society of Animal Behavior</a> identifies the first three months as the most important period for socialization, meaning safe exposure to unfamiliar people, animals and places. It also recommends continuing afterward. A missed early opportunity can raise the risk of fear and behavior problems. It doesn't make later learning impossible.</p>
       <figure class="photo reveal">
         <picture><source type="image/webp" srcset="assets/third-thing/assistance-puppy.webp"><img src="assets/third-thing/assistance-puppy.jpg" width="1800" height="1390" loading="lazy" decoding="async" alt="A young yellow Labrador puppy in a red assistance-dog-in-training cape, lying calmly on the floor of a train at its handler's feet."></picture>
-        <figcaption>An assistance puppy in training, learning to lie quiet in the noise of the world, during the few weeks it matters most.</figcaption>
+        <figcaption>An assistance puppy learning to settle on a train. Early socialization matters, and learning continues afterward.</figcaption>
       </figure>
-      <aside class="u-callout u-move"><p class="u-callout-k">The point</p><p class="u-callout-body">Nature and nurture are both real and both huge, and a dog is the living proof. A dog is also where the proof runs out, because a dog is only ever those two things.</p></aside>
+      <p>What I love in a good service dog is its steadiness. Breeding and training help make that possible. Dogs also learn, solve problems and make decisions. Appreciating Sully doesn't require denying that ordinary sense of choice.</p>
+      <p>The difference I care about is moral accountability. We don't ask Sully to explain why helping a stranger is right, or to reconsider a principle when it harms someone. We ask that of people. That distinction concerns responsibility, not an extra biological ingredient these studies have detected.</p>
     </section>
 
-    <!-- ============ 03 THE THIRD THING ============ -->
-    <section class="sec reveal">
+    <section class="sec reveal" id="practice">
       <span class="sec-num">03</span>
-      <h2>The third thing</h2>
-      <p class="sub">The ingredient no dog has, and the reason those two people from the start turned out so different.</p>
-      <p>You are not a dog. You get a third ingredient, and it is so small and so constant that it hides in plain sight. You are walking across an empty parking lot, a wrapper slips out of your hand and misses the trash can, and there is nobody around for a hundred feet. Do you go back and pick it up? Nothing rides on that wrapper. Everything rides on the answer, because you will face some tiny version of it a few thousand times this week, and those answers do not disappear. They pile up. They harden into a person.</p>
+      <h2>Character takes practice</h2>
+      <p>Suppose a wrapper misses the trash can in an empty parking lot. Going back for it is an ordinary decision, with no audience and little reward. It gives you one chance to do what you already think is right.</p>
       <figure class="photo portrait reveal">
         <picture><source type="image/webp" srcset="assets/third-thing/litter-hand.webp"><img src="assets/third-thing/litter-hand.jpg" width="1201" height="1800" loading="lazy" decoding="async" alt="A gloved hand reaching down into the grass to pick up a discarded clear plastic bottle, a bag of collected litter behind it."></picture>
-        <figcaption>A whole character in one small act: what you do about the little wrong thing when nobody is watching.</figcaption>
+        <figcaption>Picking up litter is a small example of doing something because you think you should.</figcaption>
       </figure>
-      <p>This is the oldest idea there is. Aristotle put it simply: you are not handed a character, you build one, the way you build a muscle. You become honest by telling the truth on the day it costs you something, then doing it again, until one day there is no decision left, you just are honest. Here is the whole essay in one line: to get the most out of life, you have to put the most in.</p>
-      <p>Chase the easy thing, the comfortable thing, the thing you want, every single time, and a quiet trap closes. You do not get happier. Psychologists have a name for it, the hedonic treadmill: every new comfort becomes your new normal, so you end up right back where you started, wanting more. And the more a person runs from their own pain, the more they tend to hand it to everyone else. There is a blunt phrase for this: hurt people hurt people. The wound you will not face gets passed down to a kid, a partner, a stranger who did nothing to you.</p>
-      <p>Do the opposite, the harder right thing even when no one is watching, and you slowly turn into someone steady and kind, the sort of person other people actually want around. I will not oversell it. The world is not a vending machine where good behavior drops out cash, and plenty of selfish people get rich. Doing right buys you a good life on the inside, not a guaranteed prize on the outside. But it settles the thing that matters most, which is what you do with your own pain, and whether you pass it down or let it stop with you. And here is the best news in this whole essay: most people, when it counts, choose to make it stop.</p>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">70<span class="u-bignum-u">%</span></span><span class="u-bignum-cap">Of people who were abused as children, the share who do NOT go on to abuse their own. The cycle is real, and most people refuse to pass it on.</span><span class="u-bignum-src">Kaufman &amp; Zigler, 1987</span></div>
-      <aside class="u-callout u-move"><p class="u-callout-k">The point</p><p class="u-callout-body">Chasing comfort slowly rots a life, and it spills onto everyone near you. Doing the hard right thing, over and over, slowly builds one. That daily choice is the third thing, and no dog ever has to make it.</p></aside>
+      <p><a href="https://classics.mit.edu/Aristotle/nicomachaen.2.ii.html" target="_blank" rel="noopener">Aristotle, in Book II of the <em>Nicomachean Ethics</em></a>, argues that we become just by doing just acts. He also makes a distinction the habit slogan can miss: an act done accidentally or under instruction is different from an act understood and chosen for its own sake. Repetition matters, but so does the reason for repeating it.</p>
+      <p>That is a useful account of responsibility even if our choices have causes. You don't need to settle the metaphysics of free will before correcting a lie or apologizing for an outburst. Reflection, practice and help from other people are among the ways a life changes.</p>
+      <p>I think a good life asks for this kind of effort. Sometimes it means resisting comfort; sometimes it means accepting care instead of treating suffering as an achievement. The difficult option is not automatically the decent one. Picking up the wrapper is right because the litter shouldn't be left there, not because walking back is unpleasant.</p>
     </section>
 
-    <!-- ============ 04 PAIN IS THE DOOR ============ -->
-    <section class="sec reveal">
+    <section class="sec reveal" id="pain">
       <span class="sec-num">04</span>
-      <h2>Pain is the door</h2>
-      <p class="sub">Why almost nobody changes until it hurts enough.</p>
-      <p>Here is the hard part, and almost every wisdom tradition on earth lands on it: almost nobody reaches for that third thing while life is comfortable. We reach for it when something breaks. The Buddha built his whole teaching on suffering. Saint Paul wrote that suffering makes endurance, endurance makes character, and character makes hope. The Stoics treated hardship like a sparring partner sent to toughen them up. Different centuries, different gods, the same lesson.</p>
-      <blockquote class="u-pq">The impediment to action advances action. What stands in the way becomes the way.<cite class="u-pq-cite">Marcus Aurelius</cite></blockquote>
-      <p>It is the oldest comeback story there is, and you have probably watched it happen. Someone with bad genes and a worse childhood, headed nowhere good, gets hit hard enough by life that they finally turn around, and becomes one of the best people you will ever meet. A criminologist named Shadd Maruna studied people who left crime behind and people who did not, and the surprise was that their pasts looked the same. What was different was the story they told about themselves: the ones who changed stopped blaming everyone else and started owning what came next.</p>
-      <p>This has a cruel edge, though. The pain itself does not make anybody better. Just as often, it just breaks them. The researchers who named "post-traumatic growth" are blunt that the growth comes from the struggle afterward, not from the wound, and that plenty of people get only the wound. There is no rule that you have to hit rock bottom first, and waiting around for one is its own kind of trap. Pain only opens the door. You still have to walk through it, and a lot of people never do.</p>
-      <aside class="u-callout u-move"><p class="u-callout-k">The point</p><p class="u-callout-body">Pain is usually what finally makes a person reach for the third thing. But the pain does not change you. The choice you make after it does.</p></aside>
+      <h2>Pain can prompt change</h2>
+      <p>Pain can make an old way of living harder to defend. I think that's one reason the story of a person turning their life around has such force. But I can't turn that judgment into a rule that almost nobody changes while life is comfortable. Learning from someone else, becoming responsible for a child, or finally having a safe place to live can also give someone a reason to change.</p>
+      <p>In <a href="https://ebible.org/engwebp/ROM05.htm" target="_blank" rel="noopener">Romans 5:3-5</a>, Paul connects suffering with perseverance, character and hope. His hope rests on God's love. That is a Christian account of suffering, not a psychological guarantee that a painful experience will improve you.</p>
+      <p>Psychologists use <em>post-traumatic growth</em> for positive changes people report after struggling with a crisis. <a href="https://doi.org/10.1111/j.1467-9280.2009.02381.x" target="_blank" rel="noopener">Patricia Frazier and colleagues</a> followed students from before to after distressing events. Students' later reports of growth generally did not match changes on questionnaires taken before and after the event. Some scores did improve. Remembering growth and measuring a change over time are different claims.</p>
+      <p><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5308058/" target="_blank" rel="noopener">Cathy Spatz Widom and colleagues' long follow-up of childhood maltreatment</a> found that estimates of transmission differed depending on whether they used agency records, parents' reports or their children's reports. Risk can rise without making an outcome inevitable. Those records don't tell us how many people consciously decided to break a cycle, and they don't reduce prevention to strength of will.</p>
+      <p>I don't want a hopeful argument to become another demand placed on someone who has been hurt. Recovery can require safety, treatment and other people's patience. Continuing to struggle does not mean you refused a lesson that someone else managed to learn.</p>
     </section>
 
-    <!-- ============ 05 THE QUESTIONS NO ONE WANTS TO ANSWER ============ -->
-    <section class="sec reveal">
+    <section class="sec reveal" id="judgment">
       <span class="sec-num">05</span>
-      <h2>The questions no one wants to answer</h2>
-      <p class="sub">If pain is the teacher, the next questions get very uncomfortable. Ask them anyway.</p>
-      <p>If a little hardship is what grows people, then how should you raise a kid, hard or soft? The research is almost rude about it: neither. The clear winner, mapped out by a psychologist named Diana Baumrind, is warm and strict at the same time, high standards wrapped in obvious love. Pure pressure breaks kids. Pure softness leaves them lost. A little stress, with a safe adult to come home to, actually toughens a child; researchers call it a steeling effect. Too much, with nobody to lean on, just wrecks them. And here is the part no one can solve: the exact dose that toughens one child crushes the next, and you usually cannot tell which kind you have until it is too late. There is even good evidence that, inside a normal home, your parenting style matters less to who your kid becomes than you desperately want it to.</p>
-      <p>Then the darkest question of all. If your own genes are loaded toward addiction, or violence, or despair, should you even have kids? People have answered that with a knife, and it was a catastrophe. The same Galton who named "nature versus nurture" also coined the word "eugenics," and the movement that grew out of it forcibly sterilized more than sixty thousand Americans. In 1927 the Supreme Court signed off, eight to one, and Justice Oliver Wendell Holmes wrote the sentence:</p>
-      <blockquote class="u-pq">Three generations of imbeciles are enough.<cite class="u-pq-cite">Oliver Wendell Holmes Jr., 1927</cite></blockquote>
-      <div class="u-bignum reveal"><span class="u-bignum-fig">60,000<span class="u-bignum-u">+</span></span><span class="u-bignum-cap">Americans sterilized by force under eugenics laws. Nazi doctors later pointed to that same U.S. ruling to defend themselves at Nuremberg.</span><span class="u-bignum-src">Buck v. Bell, 1927</span></div>
-      <p>It was all built on a lie. The woman that ruling called feebleminded had simply been locked away to hide a rape, and her daughter went on to make the school honor roll. Your blood is not your sentence. Heritability is a fact about big crowds of people, never a prophecy about you; it deals the cards, it never plays them. (There is even a fringe philosopher, David Benatar, who argues it is wrong to have children at all. He is worth a mention only so we can set him back down.) Nobody is doomed by their ancestry, and believing they are is the exact lie that built those sterilization tables.</p>
-      <aside class="u-callout u-move"><p class="u-callout-k">The point</p><p class="u-callout-body">Raise them warm and strong, and make peace with the fact that there is no perfect formula. And no, your genes are not a reason you, or anyone else, should not be here.</p></aside>
+      <h2>Risk is not a verdict</h2>
+      <p>There is a dangerous step from saying a trait can be inherited to deciding whose children should exist. On May 2, 1927, the Supreme Court upheld Virginia's compulsory-sterilization law in <a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep274/usrep274200/usrep274200.pdf" target="_blank" rel="noopener"><em>Buck v. Bell</em></a>. Carrie Buck challenged the order to sterilize her. Only Justice Pierce Butler dissented.</p>
+      <blockquote class="u-pq">Three generations of imbeciles are enough.<cite class="u-pq-cite">Oliver Wendell Holmes Jr., <em>Buck v. Bell</em>, 274 U.S. 200, 207 (1927)</cite></blockquote>
+      <p>Holmes's opinion describes Carrie, her mother and her young daughter as intellectually disabled using the language of the eugenics movement. It accepts the judgment that Carrie was likely to have children deemed socially inadequate. These are the court's assertions. The opinion does not supply reliable genetic evidence for them.</p>
+      <p>The decision is evidence of what a government was willing to do to a person on the strength of those assertions. It is not a study of inheritance. Even a valid estimate of inherited risk would leave the ethical question intact: what could justify taking away this person's reproductive choice?</p>
+      <p>Family history can be relevant when someone thinks about having children. It doesn't establish a person's worth. Nor can this essay promise that every inherited illness or disability will yield to effort. My argument for responsibility has to allow for limits on what someone can control.</p>
     </section>
 
-    <!-- ============ 06 THE SAME CHANCE ============ -->
-    <section class="sec reveal">
+    <section class="sec reveal" id="belief">
       <span class="sec-num">06</span>
-      <h2>The same chance</h2>
-      <p class="sub">What I can show you, and the one thing I just believe.</p>
-      <p>Step back from all the studies and one big question is left that no study can touch. Is any of this watched? Is there a grain to the world that runs with the kind and against the cruel? Most of humanity has bet yes. Hindus and Buddhists call it karma, the idea that what you do comes back around on its own, with no judge required. The Bible says it shorter, in Galatians: a man reaps what he sows. The Bhagavad Gita gives my favorite version, do the right thing and let go of whatever you get for it.</p>
-      <p>I have to be straight with you, though, because the science here cuts against me. People who badly need the world to be fair end up blaming its victims, deciding the suffering must have somehow earned it. The world is plainly not fair; the rain falls on the good and the cruel alike. And the popular move of saying it all runs "at the quantum level" does not hold up, because no real physics says your mind bends reality. There is a genuine mystery about why we have an inner life at all, but "quantum" is not a fancy word for "spiritual."</p>
-      <p>So here is where I stop reporting and start confessing, and I will label it plainly as belief, not fact. I think there is some kind of moral order, woven in at a level we cannot see yet, and that what you put out into the world is not lost. I think every single person alive gets handed the same offer: the chance to turn, and start living a good life, available the second you want it badly enough to pay for it. And I think the saddest thing about us is the one the research keeps quietly proving, that almost nobody takes the offer until they have hurt enough, and that some people die with it still sitting there, never once reached for.</p>
+      <h2>What I believe</h2>
+      <p>I think there is a moral order to the world, and that what we put into it is not lost. That is a belief. The dog studies don't establish it, and neither do the stories of people who change after suffering.</p>
+      <p>The <a href="https://www.holy-bhagavad-gita.org/chapter/2/verse/47/" target="_blank" rel="noopener"><em>Bhagavad Gita</em>, 2.47</a>, gives the version I find most useful: act without demanding the fruits of the action, and don't use uncertainty about the result as a reason for inaction. Krishna is speaking to Arjuna about duty. My application is narrower: doing right needn't come with a promise that life will pay you back.</p>
+      <p>I also believe the possibility of turning toward a better life should remain open to everyone. That doesn't mean everyone has the same practical chance. Poverty, coercion, illness and the availability of help change what a person can do. If I call someone responsible, I owe them some care in judging what was actually within their reach.</p>
       <figure class="photo reveal">
-        <picture><source type="image/webp" srcset="assets/third-thing/service-dog-portrait.webp"><img src="assets/third-thing/service-dog-portrait.jpg" width="1800" height="1431" loading="lazy" decoding="async" alt="A close, soulful portrait of a black Labrador looking directly into the camera, warm out-of-focus background."></picture>
-        <figcaption>A very good dog. Its goodness was handed to it, bred and raised, with no gap between wanting and doing. That is exactly why loving it is so simple.</figcaption>
+        <picture><source type="image/webp" srcset="assets/third-thing/service-dog-portrait.webp"><img src="assets/third-thing/service-dog-portrait.jpg" width="1800" height="1431" loading="lazy" decoding="async" alt="A close portrait of a black Labrador looking toward the camera against an out-of-focus background."></picture>
+        <figcaption>A black Labrador. I find a good dog easy to love without asking it for a moral explanation.</figcaption>
       </figure>
+      <p>I can't prove that a choice is independent of everything that caused it, or that the universe notices it. The choice still changes what happens to the person on the receiving end.</p>
     </section>
 
-    <!-- ============ ENDING ============ -->
-    <div class="ending reveal">
-      <h2>You don't pick your genes. You don't pick your childhood.<br><em>You get the third thing.</em></h2>
-      <p>That is the good news, not the bad. The dog cannot choose; you can. Sully is good because he was made good, all the way down, and that is exactly why loving him is so simple. You are the other kind of animal, the kind with a gap between what you want and what you do. Everything you really are lives in that gap: the wrapper picked up in the empty lot, the grudge finally set down, the right thing done when nobody is watching and there is no treat coming. Your hand is dealt and your childhood is spent. The third thing is still open. It does not close because you were born wrong, or raised wrong, or have wasted years already. It only closes when you do.</p>
-    </div>
-
-    <!-- ============ SOURCES ============ -->
-    <section class="appendix reveal">
-      <h2>Where this comes from</h2>
-      <p class="ap-intro">Almost nothing here is my own idea. It is a stack of real research and old wisdom pressed into a short essay. If a piece of it stuck with you, here is where it lives in full, and where you can go argue with it.</p>
-      <div class="shelf">
-        <div class="grp">
-          <h3>Nature, nurture, and the dog</h3>
-          <ul>
-            <li><b>Francis Galton</b> coined "nature versus nurture" (1874); <b>John Locke</b>'s blank slate and <b>J. B. Watson</b>'s behaviorism made the case for "raised."</li>
-            <li><b>Thomas Bouchard</b>, the <a href="https://www.science.org/doi/10.1126/science.2218526" target="_blank" rel="noopener">Minnesota Study of Twins Reared Apart</a>, and <b>Robert Plomin</b>, <em>Blueprint</em>, made the case for "born."</li>
-            <li>The <a href="https://www.cambridge.org/core/journals/twin-research-and-human-genetics/article/wilson-effect-the-increase-in-heritability-of-iq-with-age/FF406CC4CF286D78AF72C9E7EF9B5E3F" target="_blank" rel="noopener">Wilson effect</a> (genes matter more with age); <b>Gould</b> and <b>Lewontin</b>, the critics; <b>Matt Ridley</b>, <em>Nature via Nurture</em>.</li>
-            <li>On dogs: the <a href="https://www.science.org/doi/10.1126/science.abk0639" target="_blank" rel="noopener">Darwin's Ark</a> genome study (2022); <b>Goddard &amp; Beilharz</b>, <b>Scott &amp; Fuller</b>, and <b>Emily Bray</b> on breeding and raising.</li>
-          </ul>
+    <section class="appendix reveal" aria-labelledby="sources-title">
+      <h2 id="sources-title">Sources and limits</h2>
+      <p class="ap-intro">The research supports particular claims about inheritance, learning and risk. The argument about responsibility, and the belief in a moral order, are mine.</p>
+      <details class="source-notes">
+        <summary>Read the methods and source notes</summary>
+        <div class="shelf">
+          <div class="grp">
+            <h3>Inheritance and dogs</h3>
+            <ul>
+              <li><b>Bouchard et al. (1990).</b> <a href="https://www.psychologyib.com/uploads/1/1/7/5/11758934/bouchard_et_al._1990.pdf" target="_blank" rel="noopener">Full paper</a>, especially the variance model and discussion of twins' contact and rearing environments. Twins were recruited, not randomly assigned to homes.</li>
+              <li><b>Morrill et al. (2022).</b> <a href="https://www.centrale-canine.fr/sites/default/files/2022-11/Ancestry-inclusive%20dog%20genomics%20challenges%20popular%20breed%20stereotypes.pdf" target="_blank" rel="noopener">Full paper</a>, breed-variance analysis and methods. The result is an average across measured traits, not total genetic influence or a forecast of working-dog success.</li>
+              <li><b>Bray et al. (2017).</b> <a href="https://cpb-us-w2.wpmucdn.com/web.sas.upenn.edu/dist/0/236/files/2017/04/Bray-et-al-PNAS-2017-1mmgewk.pdf" target="_blank" rel="noopener">Guide-dog study</a>. Associations between maternal care and later outcomes could be confounded by inherited temperament. They don't tell human parents to withhold affection.</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <h3>Abuse and growth</h3>
+            <ul>
+              <li><b>Kaufman and Zigler (1987).</b> <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1939-0025.1987.tb03528.x" target="_blank" rel="noopener">Literature review</a>. Its transmission estimate combined studies with different samples, definitions and follow-up periods. It was not a census of survivors or their intentions.</li>
+              <li><b>Widom et al. (2015).</b> <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5308058/" target="_blank" rel="noopener">Prospective follow-up</a> of documented childhood maltreatment and matched comparisons. Informants and surveillance affect the estimates; an agency report is not a complete measure of abuse.</li>
+              <li><b>Frazier et al. (2009).</b> <a href="https://www.researchgate.net/publication/26281342_Does_Self-Reported_Posttraumatic_Growth_Reflect_Genuine_Positive_Change" target="_blank" rel="noopener">Author-uploaded paper</a>. Mostly female undergraduates, a short interval, and self-reported events limit generalization to other trauma survivors.</li>
+            </ul>
+          </div>
+          <div class="grp">
+            <h3>Texts and judgment</h3>
+            <ul>
+              <li><b>Aristotle.</b> <a href="https://classics.mit.edu/Aristotle/nicomachaen.2.ii.html" target="_blank" rel="noopener"><em>Nicomachean Ethics</em>, II.1 and II.4</a>, W. D. Ross translation. Habituation and deliberate action belong to a philosophical account of virtue.</li>
+              <li><b>Paul.</b> <a href="https://ebible.org/engwebp/ROM05.htm" target="_blank" rel="noopener">Romans 5:3-5</a>, World English Bible. <b>Bhagavad Gita.</b> <a href="https://www.holy-bhagavad-gita.org/chapter/2/verse/47/" target="_blank" rel="noopener">2.47</a>, Swami Mukundananda translation and commentary. The essay paraphrases these passages.</li>
+              <li><b><em>Buck v. Bell</em>.</b> <a href="https://tile.loc.gov/storage-services/service/ll/usrep/usrep274/usrep274200/usrep274200.pdf" target="_blank" rel="noopener">Original U.S. Reports opinion</a>, pages 205-208. A primary document for the ruling and its rationale, not confirmation of the family's alleged hereditary condition.</li>
+            </ul>
+          </div>
         </div>
-        <div class="grp">
-          <h3>Character, and how people change</h3>
-          <ul>
-            <li><b>Aristotle</b>, <em>Nicomachean Ethics</em>: you build a character by repetition.</li>
-            <li>The hedonic treadmill (<b>Brickman &amp; Campbell</b>); <b>Roy Baumeister</b> on a <a href="https://www.tandfonline.com/doi/abs/10.1080/17439760.2013.830764" target="_blank" rel="noopener">happy life versus a meaningful one</a>; <b>Adam Grant</b>, <em>Give and Take</em>.</li>
-            <li>The cycle of abuse, and how most people break it (<b>Kaufman &amp; Zigler</b>, 1987); <b>Shadd Maruna</b>, <a href="https://www.ojp.gov/ncjrs/virtual-library/abstracts/making-good-how-ex-convicts-reform-and-rebuild-their-lives" target="_blank" rel="noopener"><em>Making Good</em></a>, on who quits crime and why.</li>
-          </ul>
-        </div>
-        <div class="grp">
-          <h3>Pain and the traditions</h3>
-          <ul>
-            <li>The Buddha's Four Noble Truths; the Stoics, <b>Marcus Aurelius</b> and <b>Epictetus</b>; <b>Paul</b>, Romans 5.</li>
-            <li><b>Tedeschi &amp; Calhoun</b> on <a href="https://en.wikipedia.org/wiki/Post-traumatic_growth" target="_blank" rel="noopener">post-traumatic growth</a>: the growth is in the struggle, not the wound.</li>
-          </ul>
-        </div>
-        <div class="grp">
-          <h3>The hard questions</h3>
-          <ul>
-            <li><b>Diana Baumrind</b> on parenting styles; the "steeling effect" and toxic stress; the orchid and the dandelion (differential susceptibility); <b>Judith Rich Harris</b>, <em>The Nurture Assumption</em>.</li>
-            <li><a href="https://en.wikipedia.org/wiki/Buck_v._Bell" target="_blank" rel="noopener"><em>Buck v. Bell</em></a> (1927) and the eugenics catastrophe; <b>David Benatar</b>, the antinatalist case, named only to set it aside.</li>
-          </ul>
-        </div>
-        <div class="grp">
-          <h3>Karma, and the limits of proof</h3>
-          <ul>
-            <li>Karma in the Hindu and Buddhist traditions; Galatians; the Bhagavad Gita.</li>
-            <li><b>Melvin Lerner</b>, the just-world hypothesis (why we blame victims); <b>David Chalmers</b>, the "hard problem of consciousness."</li>
-          </ul>
-        </div>
-      </div>
+      </details>
     </section>
 
     <p class="credit">Photographs: Sully by Lisa Ferdinando (<a href="https://commons.wikimedia.org/wiki/File:200306-D-BN624-0135_(49631454261).jpg" target="_blank" rel="noopener">U.S. Department of Defense</a>, CC BY 2.0); twins, U.S. Navy (public domain); German Shepherd by Noah Wulf (<a href="https://commons.wikimedia.org/wiki/File:German_Sheperd_Service_Dog_-_Aviation_Nation_2019.jpg" target="_blank" rel="noopener">Wikimedia</a>, CC BY-SA 4.0); Mira puppy by Jeangagnon (<a href="https://commons.wikimedia.org/wiki/File:Chiot_Mira_01.jpg" target="_blank" rel="noopener">Wikimedia</a>, CC BY-SA 3.0); litter by Mikhail Nilov and the Labrador by Paul Groom (<a href="https://www.pexels.com/" target="_blank" rel="noopener">Pexels</a>).</p>
@@ -375,6 +315,8 @@
       if (rp) rp.style.width = pct.toFixed(2) + '%';
     }
     document.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('toggle', onScroll, true);
+    window.addEventListener('resize', onScroll, { passive: true });
     onScroll();
 
     /* reveal on scroll, only where motion is welcome and the pointer is fine.
@@ -382,6 +324,7 @@
     var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     var wantsMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
     if (fine && wantsMotion && 'IntersectionObserver' in window) {
+      document.documentElement.classList.add('has-reveals');
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }

@@ -12,11 +12,11 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>Sure Things: Eighteen Facts Nobody Can Prove</title>
-  <meta name="description" content="Eighteen things we measure to impossible precision, or lean on every day, and still cannot explain or prove. A cinematic, sourced field guide from gravity and time to the placebo effect and the machines we built but do not understand.">
+  <title>Sure Things, Open Questions</title>
+  <meta name="description" content="Eighteen questions, from dark matter and quantum measurement to bicycles and machine learning, with the evidence, mechanisms and limits beside each image.">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
-  <meta property="og:title" content="Sure Things: Eighteen Facts Nobody Can Prove">
-  <meta property="og:description" content="Eighteen things we measure to impossible precision, or lean on every day, and still cannot explain. We photographed a black hole and can't say what gravity is. A clock won't lose a second in 30 billion years and we can't say what time is.">
+  <meta property="og:title" content="Sure Things, Open Questions">
+  <meta property="og:description" content="Eighteen questions, from dark matter and quantum measurement to bicycles and machine learning, with the evidence, mechanisms and limits beside each image.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/sure-things/sure-things.html">
@@ -30,405 +30,346 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/style.css">
   <style>
-    /* ============================================================
-       SURE THINGS, cinematic edition. Self-contained page styles.
-       The site shell (header link, footer, reading bar, fonts,
-       colors) comes from style.css. Below: a wide breakout column,
-       a text-led intro, four acts, and eighteen full-width scenes,
-       each a real public-domain or Creative-Commons image paired
-       with one jaw-dropping fact and the gap underneath it.
-       ============================================================ */
-
-    /* Widen this page beyond the usual reading column for cinema. */
     .site-wrapper { max-width: 1180px; }
-
-    /* Centered reading column for prose passages (intro, coda). */
-    .st-readable { max-width: 700px; margin-left: auto; margin-right: auto; }
-
-    /* Center the post header. The page is widened to 1180px, so the site's
-       default left-aligned header would otherwise float far to the left of the
-       centered reading column and act dividers below it. */
-    .post-header { text-align: center; max-width: 720px; margin-left: auto; margin-right: auto; }
-
-    /* ---- Intro ---- */
-    .st-lead { margin-top: 0.5rem; }
-    .st-lead p { font-family: var(--font-body); font-size: 1.28rem; line-height: 1.62; color: var(--text); margin-bottom: 1.05em; text-wrap: pretty; }
+    .st-readable { max-width: 64ch; margin-inline: auto; }
+    .st-lead p, .st-coda p {
+      font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72;
+      color: var(--text); margin-bottom: 1.05em; text-wrap: pretty;
+    }
     .st-lead p:last-child { margin-bottom: 0; }
-    .st-lead .drop { color: var(--text-bright); }
-    .st-lead em { color: var(--text-bright); font-style: italic; }
-
-    /* ---- Act divider ---- */
-    .act { display: flex; align-items: center; gap: 1.1rem; margin: 6.5rem auto 2.5rem; max-width: 900px; }
+    .act { display: flex; align-items: center; gap: 1.1rem; margin: 6rem auto 2.5rem; max-width: 900px; }
     .act::before, .act::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
     .act-inner { text-align: center; flex: none; }
-    .act-num { display: block; font-family: var(--font-heading); font-size: 1.5rem; font-style: italic; color: var(--accent); line-height: 1; margin-bottom: 0.2rem; }
-    .act-title { font-family: var(--font-heading); font-size: 1.7rem; font-weight: 700; color: var(--text-bright); line-height: 1.1; letter-spacing: -0.01em; }
-    .act-sub { font-family: var(--font-body); font-style: italic; font-size: 0.95rem; color: var(--text-dim); margin-top: 0.3rem; }
-    .act:first-of-type { margin-top: 4rem; }
-
-    /* ---- Scene ---- */
-    .scene { display: grid; grid-template-columns: 1.04fr 0.96fr; gap: 2.8rem; align-items: center; margin: 5.5rem 0; scroll-margin-top: 1.5rem; }
+    .act-num { display: block; font-family: var(--font-heading); font-size: 1.5rem; font-style: italic; color: var(--accent); line-height: 1; margin-bottom: .3rem; }
+    .act-title { font-family: var(--font-heading); font-size: 1.7rem; font-weight: 700; color: var(--text-bright); line-height: 1.15; letter-spacing: -.01em; margin: 0; }
+    .act-sub { font-family: var(--font-heading); font-size: 1rem; color: var(--text-dim); margin-top: .5rem; }
+    .scene { display: grid; grid-template-columns: 1.04fr .96fr; gap: 2.8rem; align-items: center; margin: 5.5rem 0; scroll-margin-top: 1.5rem; }
     .scene:nth-of-type(even) .scene-media { order: 2; }
     .scene:nth-of-type(even) .scene-copy { order: 1; }
-
-    .scene-media { margin: 0; }
-    .scene-media img {
-      width: 100%; height: auto; display: block; border-radius: 8px;
-      border: 1px solid rgba(212,196,160,0.14);
-      box-shadow: 0 18px 50px -22px rgba(0,0,0,0.8);
-      background: var(--bg-raised);
-    }
-    .scene-credit { font-family: var(--font-body); font-size: 0.72rem; color: #8b8675; margin-top: 0.55rem; line-height: 1.4; text-wrap: pretty; }
-    .scene-credit a { color: #9c9683; text-decoration: none; border-bottom: 1px solid transparent; }
-    .scene-credit a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .scene-kicker { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.85rem; }
-    .scene-copy h3 {
-      font-family: var(--font-heading); font-weight: 700; color: var(--text-bright);
-      font-size: clamp(1.6rem, 2.7vw, 2.3rem); line-height: 1.12; letter-spacing: -0.015em;
-      margin-bottom: 0.8rem; text-wrap: balance;
-    }
-    .scene-copy .reveal { font-family: var(--font-body); font-size: 1.08rem; line-height: 1.62; color: var(--text); margin-bottom: 1.1rem; text-wrap: pretty; }
-    .scene-copy .reveal strong { color: var(--accent); font-weight: 600; }
-    .scene-copy .reveal b { color: var(--text-bright); font-weight: 600; }
-    .scene-copy blockquote {
-      margin: 0; padding-left: 1.1em; border-left: 2px solid var(--rule);
-      font-family: var(--font-body); font-style: italic; font-size: 0.97rem; line-height: 1.5; color: var(--text-dim);
-    }
-    .scene-copy blockquote cite { display: block; font-style: normal; font-size: 0.8rem; color: #98927f; margin-top: 0.45em; letter-spacing: 0.01em; }
-    .scene-copy blockquote a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(184,178,162,0.4); }
-    .scene-copy blockquote a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-
-    /* ---- Coda ---- */
-    .st-coda { margin-top: 7rem; padding-top: 2rem; border-top: 1px solid var(--rule); }
-    .st-coda p { font-family: var(--font-body); font-size: 1.15rem; line-height: 1.62; color: var(--text); margin-bottom: 1.05em; text-wrap: pretty; }
-    .st-coda em { color: var(--text-bright); font-style: italic; }
-    .st-note { font-size: 0.95rem; color: var(--text-dim); line-height: 1.55; margin-top: 1.5em; }
-
-    /* ---- Image credits ---- */
-    .st-credits { margin-top: 3rem; padding-top: 1.4rem; border-top: 1px solid var(--rule); }
-    .st-credits h4 { font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.9rem; }
-    .st-credits ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 2rem; }
-    .st-credits li { font-family: var(--font-body); font-size: 0.78rem; color: #97917f; line-height: 1.45; }
-    .st-credits li b { color: var(--text-dim); font-weight: 600; }
-    .st-credits a { color: #97917f; text-decoration: none; border-bottom: 1px solid transparent; }
-    .st-credits a:hover { color: var(--accent); border-bottom-color: var(--accent); }
-
+    .scene-media { margin: 0; min-width: 0; }
+    .scene-media img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--rule); background: var(--bg-raised); }
+    .scene-credit { font-family: var(--font-body); font-size: .8rem; color: var(--text-dim); margin-top: .7rem; line-height: 1.5; text-wrap: pretty; }
+    .scene-credit a, .scene-source a, .st-credits a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: .16em; }
+    .scene-credit a:hover, .scene-source a:hover, .st-credits a:hover { color: var(--accent); }
+    .scene-kicker { font-family: var(--font-mono); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: .85rem; }
+    .scene-copy { min-width: 0; }
+    .scene-copy h3 { font-family: var(--font-heading); font-weight: 700; color: var(--text-bright); font-size: clamp(1.6rem, 2.7vw, 2.3rem); line-height: 1.12; letter-spacing: -.015em; margin-bottom: .8rem; text-wrap: balance; }
+    .scene-copy .reveal { font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; color: var(--text); margin-bottom: 1.1rem; text-wrap: pretty; }
+    .scene-source { font-family: var(--font-body); font-size: .85rem; line-height: 1.55; color: var(--text-dim); }
+    .st-coda { margin-top: 6rem; padding-top: 2rem; border-top: 1px solid var(--rule); }
+    .st-credits { margin-top: 3rem; padding-block: 1.4rem; border-top: 1px solid var(--rule); }
+    .st-credits summary { font-family: var(--font-heading); font-size: 1.15rem; color: var(--text-bright); cursor: pointer; padding-block: .6rem; }
+    .st-credits ul { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: .8rem 2rem; }
+    .st-credits li { font-family: var(--font-body); font-size: .85rem; color: var(--text-dim); line-height: 1.55; }
+    .st-credits li b { color: var(--text); font-weight: 600; }
     @media (max-width: 860px) {
       .scene { grid-template-columns: 1fr; gap: 1.4rem; margin: 4rem 0; }
-      .scene:nth-of-type(even) .scene-media { order: 0; }
-      .scene:nth-of-type(even) .scene-copy { order: 0; }
-      .st-lead p { font-size: 1.15rem; }
-      .act { margin: 5rem auto 2rem; gap: 0.9rem; }
-      /* On desktop .act-inner is flex:none, sized to its widest line (the long
-         act subtitle). On a phone that forces it wider than the screen and
-         clips the title. Let it shrink and wrap, cap it so the flanking rules
-         keep some length, and trim the title so it stays on one line. */
+      .scene:nth-of-type(even) .scene-media, .scene:nth-of-type(even) .scene-copy { order: 0; }
+      .act { margin: 5rem auto 2rem; gap: .9rem; }
       .act-inner { flex-shrink: 1; min-width: 0; max-width: 16rem; }
       .act-title { font-size: 1.45rem; }
-      .act-sub { font-size: 0.9rem; }
       .st-credits ul { grid-template-columns: 1fr; }
     }
-    @media (prefers-reduced-motion: no-preference) {
-      .scene { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2,0.7,0.2,1); }
-      .scene.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
+      .st-motion .scene { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+      .st-motion .scene.in { opacity: 1; transform: none; }
     }
   </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
     <a href="/" class="post-back"><span class="pb-label">Home</span></a>
 
-    <header class="u-hero post-header fade-in">
-      <h1 class="u-title">Sure Things: Eighteen Facts Nobody Can Prove</h1>
-      <p class="u-dek">Eighteen things we measure to absurd precision, or lean on all day, and still cannot explain.</p>
+    <header class="u-hero editorial-hero">
+      <h1 class="u-title">Sure Things, Open Questions</h1>
+      <p class="u-dek">Eighteen questions, with what we know beside what remains open.</p>
+      <p class="u-meta">About 10 minutes <span class="u-sep">·</span> 18 illustrated entries</p>
     </header>
 
     <main>
-      <div class="st-readable st-lead fade-in" style="animation-delay: 0.05s;">
-        <p><span class="drop">Drop your phone and it falls.</span> Every time, for everyone, forever. You would call that proof. There isn't any, in the strict sense, and nobody can tell you what gravity is.</p>
-        <p>Once you notice that gap you start seeing it everywhere. Things we have measured to ten decimal places, or built the whole world on top of, that we still cannot explain or prove. Here are eighteen of the best. <em>Every image below is real.</em> Every fact is sourced. The thing itself is never in question. Only the explanation is missing.</p>
+      <div class="st-readable st-lead">
+        <p>A riderless bicycle can recover from a lean. Equations predict which designs will do it; finding a short physical rule that covers every stable design is harder.</p>
+        <p>Other questions are different. Dark matter's identity is unresolved. Gödel's incompleteness is a proved limit within specified formal systems. These eighteen entries put each question beside what the evidence supports. The captions identify telescope reconstructions, scans, paintings and photographs.</p>
       </div>
 
       <!-- ============================ ACT I ============================ -->
-      <div class="act"><div class="act-inner"><span class="act-num">I</span><span class="act-title">The Cosmos</span><p class="act-sub">The biggest, best-measured things, run by causes we cannot see.</p></div></div>
+      <div class="act"><div class="act-inner"><span class="act-num">I</span><h2 class="act-title">The cosmos</h2><p class="act-sub">Mass, expansion and the early universe.</p></div></div>
 
       <section class="scene" id="gravity">
         <figure class="scene-media">
-          <picture><source type="image/webp" srcset="assets/gravity.webp"><img src="assets/gravity.jpg" alt="The Event Horizon Telescope's first image of a black hole: a glowing orange ring of light bent around a dark shadow, the supermassive black hole at the centre of galaxy M87." loading="eager" decoding="async"></picture>
-          <figcaption class="scene-credit">The first photograph ever taken of a black hole, at the heart of galaxy M87. To catch it, eight radio telescopes on four continents worked as one Earth-sized dish. <a href="https://commons.wikimedia.org/wiki/File:Black_hole_-_Messier_87_crop_max_res.jpg" rel="noopener">Event Horizon Telescope Collaboration, CC BY 4.0</a>.</figcaption>
+          <picture><source type="image/webp" srcset="assets/gravity.webp"><img src="assets/gravity.jpg" alt="Radio reconstruction of M87*: a bright orange ring surrounding a dark black-hole shadow." loading="eager" decoding="async"></picture>
+          <figcaption class="scene-credit">Radio image of M87* reconstructed from 2017 observations and released in 2019. The bright ring surrounds a dark shadow, not a directly photographed event horizon. <a href="https://commons.wikimedia.org/wiki/File:Black_hole_-_Messier_87_crop_max_res.jpg" rel="noopener">Event Horizon Telescope Collaboration, CC BY 4.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 01 · Gravity</p>
-          <h3>We photographed a black hole. We still can't say what gravity is.</h3>
-          <p class="reveal">This is a real photograph of a black hole, <strong>55 million light-years away</strong> and bigger than the whole solar system. Its gravity bends passing light into that ring. Einstein's math called this exact shape <b>a century before anyone could build the camera</b>. Gravity is the best-tested idea in science, and nobody can tell you what it is. Newton refused to guess.</p>
-          <blockquote>"I have not been able to discover the cause of those properties of gravity from phaenomena, and I frame no hypotheses."<cite>Isaac Newton, <a href="https://en.wikipedia.org/wiki/General_Scholium" rel="noopener">Principia</a>, 1713</cite></blockquote>
+          <h3>How does gravity fit with quantum mechanics?</h3>
+          <p class="reveal">General relativity describes gravity through the curvature of spacetime. It predicts how light travels around a black hole, and the reconstructed M87 image agrees within the observations' limits. This black hole is about 55 million light-years away. The unfinished work is a theory reliable when gravity and quantum effects both become strong, as they may near a black hole's center. The image tests gravity in one regime; it doesn't settle every regime.</p>
+          <p class="scene-source">Sources: <a href="https://pure.uva.nl/ws/files/50944584/First_M87_Event_Horizon_Telescope_Results_VI.pdf" rel="noopener">EHT analysis (2019)</a>; <a href="https://arxiv.org/pdf/2211.09902" rel="noopener">Quantum gravity at low energies (2022)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="dark-matter">
         <figure class="scene-media">
-          <picture><source type="image/webp" srcset="assets/dark-matter.webp"><img src="assets/dark-matter.jpg" alt="The Bullet Cluster: two colliding galaxy clusters, with pink X-ray gas separated from the blue map of where most of the mass actually lies, the classic evidence for dark matter." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">The Bullet Cluster: pink is all the visible matter; blue is where the mass really is. <a href="https://commons.wikimedia.org/wiki/File:1e0657_scale.jpg" rel="noopener">X-ray NASA/CXC; lensing map NASA/STScI, Clowe et al.; optical ESO</a>, public domain.</figcaption>
+          <picture><source type="image/webp" srcset="assets/dark-matter.webp"><img src="assets/dark-matter.jpg" alt="Bullet Cluster composite: pink X-ray gas, orange and white galaxies, and blue regions marking gravitational mass inferred from lensing." loading="lazy" decoding="async"></picture>
+          <figcaption class="scene-credit">Bullet Cluster composite: pink is hot gas detected in X-rays; orange and white are galaxies; blue is mass inferred from gravitational lensing. <a href="https://chandra.harvard.edu/photo/2006/1e0657/" rel="noopener">NASA/CXC, NASA/STScI, ESO and Magellan, public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 02 · Dark Matter</p>
-          <h3>Most of the universe is invisible. We only know it's there by its pull.</h3>
-          <p class="reveal">Two clusters of galaxies just crashed through each other. The pink is everything we can see: all the stars, all the gas. The blue is where the weight actually is, mapped by how hard its gravity bends light passing by. The two don't line up. Invisible matter outweighs everything visible <strong>five to one</strong>, and in decades of hunting we have <b>never caught a single particle of it</b>.</p>
-          <blockquote>"It is a strange and mysterious universe. But that's fun."<cite>Vera Rubin, who found the evidence</cite></blockquote>
+          <h3>What is dark matter made of?</h3>
+          <p class="reveal">The Bullet Cluster's hot gas slowed during a collision. The galaxies largely passed through. Astronomers used distortions in more distant galaxies to map the gravitational mass, which stayed mostly with the galaxies. Since the gas holds most of the ordinary matter, that separation is strong evidence for another mass component. The blue patches show an inference from lensing. The measurement constrains dark matter's behavior without identifying what it is.</p>
+          <p class="scene-source">Sources: <a href="https://arxiv.org/pdf/astro-ph/0608407" rel="noopener">Bullet Cluster analysis (2006)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="dark-energy">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/dark-energy.webp"><img src="assets/dark-energy.jpg" alt="The Hubble eXtreme Deep Field: thousands of galaxies of every shape and colour scattered across an almost totally black sky." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">The Hubble eXtreme Deep Field. Nearly every speck is an entire galaxy. <a href="https://commons.wikimedia.org/wiki/File:Hubble_Extreme_Deep_Field_(full_resolution).png" rel="noopener">NASA, ESA, and the HUDF09/XDF Team</a>, public domain.</figcaption>
+          <figcaption class="scene-credit">Hubble eXtreme Deep Field, assembled from many exposures. Nearly every speck is a galaxy. This is a deep view of the sky, not a map of dark energy. <a href="https://commons.wikimedia.org/wiki/File:Hubble_Extreme_Deep_Field_(full_resolution).png" rel="noopener">NASA, ESA and the HUDF09 team, public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 03 · Dark Energy</p>
-          <h3>Every speck here is a galaxy. Something we can't name is blowing them apart.</h3>
-          <p class="reveal">A grain of sand held at arm's length would cover this whole photo. Inside that pinhole of sky sit thousands of galaxies, all flying apart, faster every year, pushed by something that makes up <strong>68% of the universe</strong>. Physicists worked out how strong the push should be. The answer came out wrong by a factor of <b>1 followed by 120 zeros</b>, which has been called the worst prediction in the history of physics.</p>
-          <blockquote>"...a glaring embarrassment."<cite>Sean Carroll, on the cosmological constant</cite></blockquote>
+          <h3>What is accelerating the expansion?</h3>
+          <p class="reveal">In the late 1990s, teams compared the brightness and redshift of distant exploding stars. The results indicated accelerating expansion. A cosmological constant, an energy density of empty space that stays constant as space expands, fits a broad range of observations. In the standard cosmological model, dark energy accounts for roughly two-thirds of the total energy density. Its physical origin remains unsettled. Galaxies held together by gravity aren't being blown apart.</p>
+          <p class="scene-source">Sources: <a href="https://arxiv.org/pdf/astro-ph/9812133" rel="noopener">Supernova measurements (1999)</a>; <a href="https://arxiv.org/html/1807.06209v4" rel="noopener">Planck cosmological parameters (2018)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="big-bang">
         <figure class="scene-media">
-          <picture><source type="image/webp" srcset="assets/big-bang.webp"><img src="assets/big-bang.jpg" alt="The cosmic microwave background: an oval all-sky map mottled with tiny temperature differences, the oldest light in the universe." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">The cosmic microwave background: the whole sky in microwaves, the afterglow of the Big Bang. <a href="https://commons.wikimedia.org/wiki/File:WMAP_2012.png" rel="noopener">NASA / WMAP Science Team</a>, public domain.</figcaption>
+          <picture><source type="image/webp" srcset="assets/big-bang.webp"><img src="assets/big-bang.jpg" alt="Oval all-sky WMAP map showing small temperature variations in the cosmic microwave background." loading="lazy" decoding="async"></picture>
+          <figcaption class="scene-credit">WMAP's nine-year map of microwave-background temperature variations. Colors show small departures from the average after foreground emission was removed. <a href="https://commons.wikimedia.org/wiki/File:WMAP_2012.png" rel="noopener">NASA/WMAP Science Team, public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 04 · The Big Bang</p>
-          <h3>This is the oldest light there is. We can't tell you what came before it.</h3>
-          <p class="reveal">This is the entire sky, photographed in microwaves. The light has been traveling for 13.8 billion years, set loose just <strong>380,000 years</strong> after the beginning, and it is still arriving. On an old TV, about one percent of the static between channels was this exact glow. The theory nails everything that came after the beginning. <b>What banged, and why, it cannot say.</b></p>
-          <blockquote>"In its original form, the Big Bang theory never was a theory of the bang."<cite>Alan Guth, <a href="https://news.mit.edu/3-q-alan-guth-on-new-insights-into-the-big-bang" rel="noopener">MIT</a></cite></blockquote>
+          <h3>What happened before the hot Big Bang?</h3>
+          <p class="reveal">The microwave background reached us from an era when the expanding universe cooled enough to become transparent. Its temperature variations help reconstruct a hot, dense early history. Combining WMAP with other observations gave an age of about 13.8 billion years within the fitted cosmological model. That history doesn't establish an absolute first instant. A theory of the early universe still has to explain whether there was an earlier stage, and whether asking what came before has a physical meaning.</p>
+          <p class="scene-source">Sources: <a href="https://lambda.gsfc.nasa.gov/product/wmap/dr5/pub_papers/nineyear/cosmology/Hinshaw_2013_ApJS_208_19.pdf" rel="noopener">WMAP cosmological analysis (2013)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="cosmic-rays">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/cosmic-rays.webp"><img src="assets/cosmic-rays.jpg" alt="The aurora australis glowing green over the curved limb of the Earth, photographed from the International Space Station." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">An aurora from the ISS, charged particles from space lighting the upper atmosphere. <a href="https://commons.wikimedia.org/wiki/File:Aurora_Australis_From_ISS.JPG" rel="noopener">NASA / ISS Expedition 23</a>, public domain.</figcaption>
+          <figcaption class="scene-credit">Aurora australis photographed from the International Space Station in 2010. An illustration of atmospheric light from charged particles, not the 1991 cosmic-ray event. <a href="https://commons.wikimedia.org/wiki/File:Aurora_Australis_From_ISS.JPG" rel="noopener">NASA, public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 05 · Cosmic Rays</p>
-          <h3>A single invisible particle hit the sky with the punch of a thrown baseball.</h3>
-          <p class="reveal">In 1991 a detector in Utah caught one subatomic particle carrying <strong>48 joules</strong>, a pitched baseball's worth of energy packed into a single proton. That is tens of millions of times more than our biggest accelerator can hand a particle. They named it the Oh-My-God particle and went looking for the cosmic engine that threw it. <b>Nothing in that part of the sky could have.</b></p>
-          <blockquote>"That's the mystery of this, what the heck is going on?"<cite>John Matthews, <a href="https://www.sciencedaily.com/releases/2023/11/231123164708.htm" rel="noopener">Telescope Array</a></cite></blockquote>
+          <h3>Where do the highest-energy cosmic rays come from?</h3>
+          <p class="reveal">On October 15, 1991, the Fly's Eye detector recorded an air shower produced by a cosmic ray. Researchers reconstructed an energy of about 51 joules, roughly a thrown baseball's kinetic energy, in one incoming particle. The uncertainty was about 15 joules; the particle wasn't identified as a proton. Its source was unresolved. Magnetic fields can deflect charged particles, while interactions during their journey limit how far they can travel.</p>
+          <p class="scene-source">Sources: <a href="https://arxiv.org/pdf/astro-ph/9410067" rel="noopener">Fly's Eye event analysis (1995)</a>.</p>
         </div>
       </section>
 
       <!-- ============================ ACT II ============================ -->
-      <div class="act"><div class="act-inner"><span class="act-num">II</span><span class="act-title">The Physical World</span><p class="act-sub">Everyday things, written to many decimals, working for reasons unknown.</p></div></div>
+      <div class="act"><div class="act-inner"><span class="act-num">II</span><h2 class="act-title">The physical world</h2><p class="act-sub">Clocks, materials and moving air.</p></div></div>
 
       <section class="scene" id="time">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/time.webp"><img src="assets/time.jpg" alt="A JILA strontium optical-lattice atomic clock: an intricate optical table criss-crossed by blue laser beams, mirrors and lenses." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">A strontium atomic clock at JILA, the most precise clock ever built. <a href="https://commons.wikimedia.org/wiki/File:17jila003_3d_strontium_atomic_clock.jpg" rel="noopener">G.E. Marti / JILA (NIST)</a>, public domain.</figcaption>
+          <figcaption class="scene-credit">A strontium atomic clock photographed in 2017. The 2025 aluminum-ion result discussed here came from a different instrument. <a href="https://commons.wikimedia.org/wiki/File:17jila003_3d_strontium_atomic_clock.jpg" rel="noopener">G.E. Marti/JILA (NIST), public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 06 · Time</p>
-          <h3>This clock won't lose a second in 30 billion years. We don't know what time is.</h3>
-          <p class="reveal">It would take more than twice the age of the universe for this machine to drift by one second, and that precision lets it watch time bend. Raise a clock like this <strong>a single millimeter</strong> and it ticks faster, because time runs quicker the farther you get from the Earth. Your head is aging faster than your feet, and our clocks can see it. Physics still cannot say what time <b>is</b>, why it runs one way only, or whether the future exists yet.</p>
-          <blockquote>"The past is set in stone while the future can still be altered... all because of entropy."<cite>Sean Carroll, <a href="https://www.scientificamerican.com/article/sean-carroll-entangles-time-and-entropy/" rel="noopener">Scientific American</a></cite></blockquote>
+          <h3>Why does time have a direction?</h3>
+          <p class="reveal">A 2025 aluminum-ion clock reported a fractional systematic uncertainty of 5.5 &times; 10<sup>-19</sup>. That is an uncertainty in its rate, not evidence that the instrument will run for billions of years. Relativity predicts how clock rates change with gravity. The thermodynamic arrow of time concerns entropy, which tends to increase in isolated systems. Why the early universe had the special low-entropy condition that makes this direction possible remains an open cosmological question.</p>
+          <p class="scene-source">Sources: <a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=959906" rel="noopener">Aluminum-ion clock measurements (2025)</a>; <a href="https://arxiv.org/pdf/hep-th/0410270" rel="noopener">The low-entropy problem (2004)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="quantum">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/quantum.webp"><img src="assets/quantum.jpg" alt="Swirling iridescent colour bands on a soap film, the shifting rainbow of thin-film interference." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">Interference on a soap film, the wave nature of light made visible. <a href="https://commons.wikimedia.org/wiki/File:Seifenblasen_--_2020_--_0087.jpg" rel="noopener">Dietmar Rabich, CC BY-SA 4.0</a>.</figcaption>
+          <figcaption class="scene-credit">Colors from interference in a soap film, a classical wave effect used here as an illustration. <a href="https://commons.wikimedia.org/wiki/File:Seifenblasen_--_2020_--_0087.jpg" rel="noopener">Dietmar Rabich, CC BY-SA 4.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 07 · Quantum Mechanics</p>
-          <h3>Reality runs on rules nobody understands. Your phone depends on them.</h3>
-          <p class="reveal">These colours are light interfering with itself. Shrink the same wave down to one electron and it gets strange. The electron goes through <b>two slits at once</b>, unless you watch it, in which case it picks one. A century in, nobody can tell you why looking changes the answer. The theory predicts experiments to <strong>better than ten decimal places</strong>, the most accurate idea humans have ever had, and it runs every microchip on Earth.</p>
-          <blockquote>"I think I can safely say that nobody understands quantum mechanics."<cite>Richard Feynman, 1965</cite></blockquote>
+          <h3>Why does a quantum measurement give one outcome?</h3>
+          <p class="reveal">Quantum theory predicts measurement probabilities with extraordinary success. When a system interacts with a detector and its surroundings, their states become entangled. This suppresses observable interference between alternatives, helping explain everyday classical behavior. It is called decoherence. How that account relates to the single outcome recorded in an experiment is the measurement problem. Interpretations and proposed modifications answer it differently. A person consciously looking at the apparatus isn't required for decoherence.</p>
+          <p class="scene-source">Sources: <a href="https://arxiv.org/pdf/quant-ph/0312059" rel="noopener">Decoherence and the measurement problem (2005)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="turbulence">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/turbulence.webp"><img src="assets/turbulence.jpg" alt="Vincent van Gogh's painting The Starry Night, its sky full of swirling luminous eddies over a sleeping town." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">Vincent van Gogh, <em>The Starry Night</em> (1889), MoMA. <a href="https://commons.wikimedia.org/wiki/File:Vincent_van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg" rel="noopener">Public domain</a>, via Google Art Project.</figcaption>
+          <figcaption class="scene-credit"><em>The Starry Night</em> (1889), oil on canvas. The swirls have invited comparisons with fluid turbulence. <a href="https://commons.wikimedia.org/wiki/File:Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg" rel="noopener">Vincent van Gogh, public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 08 · Turbulence</p>
-          <h3>Van Gogh painted the hardest unsolved problem in classical physics.</h3>
-          <p class="reveal">From an asylum window in 1889, Van Gogh filled this sky with swirls. Physicists later measured how the brightness churns from eddy to eddy, and the statistics <b>matched real turbulent flow</b>. That flow is everywhere: rivers, jet engines, the cream in your coffee. The math behind it has never been cracked. A <strong>million-dollar prize</strong> asks only whether the governing equations always make sense, and it has sat unclaimed since 2000.</p>
-          <blockquote>"Nobody in physics has really been able to analyze it mathematically satisfactorily."<cite>Richard Feynman, <a href="https://www.feynmanlectures.caltech.edu/I_03.html" rel="noopener">Lectures on Physics</a></cite></blockquote>
+          <h3>Can a smooth fluid flow become singular?</h3>
+          <p class="reveal">The Navier-Stokes equations describe velocity and pressure in a fluid with viscosity. They support useful calculations of turbulence, although resolving every small eddy can be prohibitively expensive. A mathematical problem remains open: in a three-dimensional incompressible fluid, do smooth initial conditions always yield a smooth solution, or can a singularity develop? Researchers have compared brightness patterns in The Starry Night with turbulent scaling laws. Those patterns provide no measurement of an actual fluid's velocity.</p>
+          <p class="scene-source">Sources: <a href="https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf" rel="noopener">The mathematical problem</a>; <a href="https://arxiv.org/pdf/2310.03415" rel="noopener">Painting luminance analysis (2024)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="glass">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/glass.webp"><img src="assets/glass.jpg" alt="The blue stained-glass north rose window of Notre-Dame de Paris, a vast wheel of medieval coloured glass." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">The north rose window of Notre-Dame de Paris, 13th-century stained glass. <a href="https://commons.wikimedia.org/wiki/File:North_rose_window_of_Notre-Dame_de_Paris,_Aug_2010.jpg" rel="noopener">Julie Anne Workman, CC BY-SA 3.0</a>.</figcaption>
+          <figcaption class="scene-credit">The north rose window of Notre-Dame, photographed in 2010. This image is a panorama stitched from two frames. <a href="https://commons.wikimedia.org/wiki/File:North_rose_window_of_Notre-Dame_de_Paris,_Aug_2010.jpg" rel="noopener">Julie Anne Workman, CC BY-SA 3.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 09 · Glass</p>
-          <h3>This window is 800 years old. We still can't explain why glass is solid.</h3>
-          <p class="reveal">Zoom into any crystal and the atoms stand in neat rows. Zoom into this medieval glass and they are frozen mid-jumble, <b>arranged like a liquid that simply stopped moving</b>. Why a cooling liquid can lock up rigid without ever snapping into an orderly pattern is unsolved, and a Nobel laureate called it the deepest problem in the physics of solids. The optical fiber carrying this page to you right now is <strong>the same mystery, stretched into a thread</strong>.</p>
-          <blockquote>"The deepest and most interesting unsolved problem in solid state theory is probably... glass."<cite>Philip W. Anderson, <a href="https://www.science.org/doi/10.1126/science.267.5204.1615-e" rel="noopener"><em>Science</em></a>, 1995</cite></blockquote>
+          <h3>What makes a liquid slow down into glass?</h3>
+          <p class="reveal">Glass is an amorphous solid: its atoms lack a crystal's repeating order, yet it resists deformation on ordinary timescales. As a glass-forming liquid cools, rearrangements become so slow that the structure falls out of equilibrium. That accounts for its solidity. The harder question is what drives the enormous slowdown, and whether a hidden equilibrium transition underlies it. Competing accounts emphasize different features of the structure and motion.</p>
+          <p class="scene-source">Sources: <a href="https://arxiv.org/pdf/1303.3542" rel="noopener">The glass-transition problem (2013)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="superconductivity">
         <figure class="scene-media">
-          <picture><source type="image/webp" srcset="assets/superconductivity.webp"><img src="assets/superconductivity.jpg" alt="A small magnet hovering in mid-air above a superconductor cooled by liquid nitrogen, the Meissner effect." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">A magnet levitating above a superconductor, the Meissner effect. <a href="https://commons.wikimedia.org/wiki/File:Stable_Levitation_of_a_magnet_on_a_superconductor.jpg" rel="noopener">Julien Bobroff and Frederic Bouquet, LPS Orsay, CC BY-SA 3.0</a>.</figcaption>
+          <picture><source type="image/webp" srcset="assets/superconductivity.webp"><img src="assets/superconductivity.jpg" alt="A small magnet hovering above a cooled copper-oxide superconductor." loading="lazy" decoding="async"></picture>
+          <figcaption class="scene-credit">A magnet levitating above a cooled copper-oxide superconductor. Magnetic screening and flux pinning help support it. <a href="https://commons.wikimedia.org/wiki/File:Stable_Levitation_of_a_magnet_on_a_superconductor.jpg" rel="noopener">Julien Bobroff and Frédéric Bouquet, LPS Orsay, CC BY-SA 3.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 10 · Superconductivity</p>
-          <h3>We've levitated magnets on a mystery for forty years.</h3>
-          <p class="reveal">That magnet is not falling. Chill certain materials enough and electricity flows through them with exactly <strong>zero resistance</strong>. Start a current circling a loop of superconductor and it will still be going, undiminished, years later. Every MRI machine on Earth runs on this. For the warmer superconductors found in 1986, after four decades and thousands of papers, there is <b>still no agreed theory</b> of why they work.</p>
-          <blockquote>"In 30 years people will still say that the theory is not understood."<cite>A.-M. Tremblay, <a href="https://physicstoday.aip.org/news/cuprate-superconductivity-mechanism-may-be-coming-into-focus" rel="noopener">Physics Today</a></cite></blockquote>
+          <h3>What pairs electrons in warmer superconductors?</h3>
+          <p class="reveal">In conventional superconductors, crystal-lattice vibrations produce an effective attraction between electrons. Their pairs form a collective state with zero electrical resistance. The 1957 BCS theory explains this mechanism. Copper-oxide superconductors also form pairs, but their detailed pairing mechanism remains debated. A 2025 calculation reproduced important pressure and layer trends using electronic interactions. It used approximations and omitted lattice vibrations, so it doesn't close the question for every material.</p>
+          <p class="scene-source">Sources: <a href="https://journals.aps.org/pr/pdf/10.1103/PhysRev.108.1175" rel="noopener">BCS theory (1957)</a>; <a href="https://www.nature.com/articles/s41467-025-56883-x" rel="noopener">Cuprate calculations (2025)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="lightning">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/lightning.webp"><img src="assets/lightning.jpg" alt="A vast, intricately branching bolt of lightning spidering across a deep violet night sky." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">A branching lightning discharge, long exposure. <a href="https://commons.wikimedia.org/wiki/File:CC_lightning,_Albury_NSW.JPG" rel="noopener">Thennicke, CC BY-SA 4.0</a>.</figcaption>
+          <figcaption class="scene-credit">Cloud-to-cloud lightning over Albury, Australia. <a href="https://commons.wikimedia.org/wiki/File:CC_lightning,_Albury_NSW.JPG" rel="noopener">Thennicke, CC BY-SA 4.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 11 · Lightning</p>
-          <h3>Lightning strikes three million times a day. We don't know how it starts.</h3>
-          <p class="reveal">We have flown balloons, rockets, and aircraft straight into thunderstorms to catch the moment a bolt is born. The problem: the strongest electric fields ever measured inside a storm are about <b>ten times too weak</b> to spark anything. Every flash you have ever seen began in a way physics cannot yet account for. One leading suspect is <strong>cosmic rays from deep space</strong>, kicking off each bolt like a struck match.</p>
-          <blockquote>"The most energetic process on the planet... and we have no idea how it works."<cite>Reported in <a href="https://nautil.us/detailed-footage-finally-reveals-what-triggers-lightning-238398" rel="noopener">Nautilus</a>, 2024</cite></blockquote>
+          <h3>What starts the first discharge inside a cloud?</h3>
+          <p class="reveal">A thunderstorm separates electric charge. Lightning discharges some of it through conducting channels in the air. Radio observations have traced rapid positive electrical breakdown at the start of some flashes. Connecting that first activity to cloud conditions is difficult: measured large-scale fields often seem too weak to start ordinary air breakdown. Models involve local field enhancement, ice and water particles, or energetic electrons. Researchers are testing how these processes work together.</p>
+          <p class="scene-source">Sources: <a href="https://www.nature.com/articles/ncomms10721" rel="noopener">Lightning initiation observations (2016)</a>; <a href="https://repository.library.noaa.gov/view/noaa/70860/noaa_70860_DS1.pdf" rel="noopener">Lightning modeling roadmap (2025)</a>.</p>
         </div>
       </section>
 
       <!-- ============================ ACT III ============================ -->
-      <div class="act"><div class="act-inner"><span class="act-num">III</span><span class="act-title">The Living World</span><p class="act-sub">We can read a mind and steer by a magnetic field, and explain neither.</p></div></div>
+      <div class="act"><div class="act-inner"><span class="act-num">III</span><h2 class="act-title">The living world</h2><p class="act-sub">Experience, navigation and relief.</p></div></div>
 
       <section class="scene" id="consciousness">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/consciousness.webp"><img src="assets/consciousness.jpg" alt="Santiago Ramon y Cajal's intricate ink drawing of a large neuron and its branching dendrites in the hippocampus." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">A neuron drawn by hand by Santiago Ramón y Cajal, 1904. <a href="https://commons.wikimedia.org/wiki/File:Celula_gigante_de_la_porcion_inferior_del_asta_de_ammon_Wellcome_L0040799.jpg" rel="noopener">Wellcome Collection, CC BY 4.0</a>.</figcaption>
+          <figcaption class="scene-credit">Ramón y Cajal's drawing of a rabbit hippocampal neuron, published in 1904. <a href="https://commons.wikimedia.org/wiki/File:Celula_gigante_de_la_porcion_inferior_del_asta_de_ammon_Wellcome_L0040799.jpg" rel="noopener">Wellcome Collection, CC BY 4.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 12 · Consciousness</p>
-          <h3>We can read a picture out of your brain. We can't say why it feels like anything.</h3>
-          <p class="reveal">Every branch of this neuron was drawn by hand, around 1900, by a man squinting down a microscope. We have come a long way since. Show someone a photograph, scan their brain, and software can now <b>reconstruct roughly what they are seeing</b> from the activity alone. Mind reading, in a lab, today. Neuroscience still cannot explain why any of that signaling <strong>feels like something from the inside</strong>. Reading the picture out turned out to be the easy part.</p>
-          <blockquote>"There is a whir of information-processing, but there is also a subjective aspect."<cite>David Chalmers, <a href="https://consc.net/papers/facing.html" rel="noopener">on the hard problem</a>, 1995</cite></blockquote>
+          <h3>Why does brain activity feel like anything?</h3>
+          <p class="reveal">In 2011, researchers reconstructed rough versions of movies watched by three participants. They trained a separate model for each person, measured brain activity with fMRI, and built reconstructions using an outside video library. This was constrained visual decoding. Whether explaining perceptual functions also explains subjective experience is disputed. Chalmers's hard problem names that philosophical challenge; it isn't an experimentally established limit on neuroscience.</p>
+          <p class="scene-source">Sources: <a href="https://cs.brown.edu/people/tdean/projects/cortex/course/suggested_reading_list/supplements/documents/NishimotoetalCB-11.pdf" rel="noopener">Movie reconstruction methods (2011)</a>; <a href="https://consc.net/papers/facing.html" rel="noopener">Chalmers's argument (1995)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="magnetoreception">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/magnetoreception.webp"><img src="assets/magnetoreception.jpg" alt="A close portrait of a European robin with its orange-red breast, perched and looking alert." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">A European robin, the classic subject of magnetic-navigation research. <a href="https://commons.wikimedia.org/wiki/File:Erithacus_rubecula_profile.jpg" rel="noopener">Wikimedia Commons, CC BY-SA 4.0</a>.</figcaption>
+          <figcaption class="scene-credit">European robin, photographed in Switzerland in 2022. <a href="https://commons.wikimedia.org/wiki/File:Erithacus_rubecula_profile.jpg" rel="noopener">C-M, CC BY-SA 4.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 13 · Animal Compass</p>
-          <h3>This bird navigates by Earth's magnetic field. We can't find its compass.</h3>
-          <p class="reveal">Put a robin in a windowless room in migration season and it still hops in the direction it should be flying. Reverse the magnetic field around it and <b>the bird turns with it</b>. Fifty years of experiments have put the sense itself beyond doubt. The leading explanation is the wild part: a quantum reaction inside a protein in the eye, which would mean the robin <strong>sees the field</strong>. Nobody has found the sensor.</p>
-          <blockquote>"The primary sensory mechanism behind this remarkable feat is still unclear."<cite>Hore &amp; Mouritsen, <em>Annual Review of Biophysics</em>, 2016</cite></blockquote>
+          <h3>How does a bird's magnetic compass send a signal?</h3>
+          <p class="reveal">Migrating robins can orient using Earth's magnetic field. A candidate sensor is cryptochrome, a light-sensitive protein whose reactions involve electron pairs. In 2021, purified robin Cry4 showed magnetic effects on those reactions. The laboratory fields were much stronger than Earth's; simulations explored the requirements at natural field strengths. Establishing how the protein functions in a living bird, including how it sends a signal to nerves, requires further evidence.</p>
+          <p class="scene-source">Sources: <a href="https://www.nature.com/articles/s41586-021-03618-9" rel="noopener">Cryptochrome experiments (2021)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="placebo">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/placebo.webp"><img src="assets/placebo.jpg" alt="A scatter of plain round white pills on a clean surface." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">Plain pills. <a href="https://unsplash.com/photos/iPl3q-gEGzY" rel="noopener">Hal Gatewood / Unsplash</a>.</figcaption>
+          <figcaption class="scene-credit">Pills used as an illustration. These are not the placebo pills from the IBS trial. <a href="https://unsplash.com/photos/iPl3q-gEGzY" rel="noopener">Hal Gatewood/Unsplash</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 14 · The Placebo Effect</p>
-          <h3>Sugar pills work even when you know they're sugar.</h3>
-          <p class="reveal">The placebo effect is so dependable that every new drug on Earth has to prove it can beat it. Researchers eventually tried being honest. They told patients to their face: these pills are sugar, there is nothing in them. The patients took them anyway and still got better, <strong>59% versus 35%</strong> in one trial. <b>No deception required.</b> Why the truth doesn't break the spell, nobody knows.</p>
-          <blockquote>"The psychological mechanisms underlying... open label placebo are unclear."<cite>Kaptchuk &amp; Miller, <em>BMJ</em>, 2018</cite></blockquote>
+          <h3>How much relief can a treatment ritual produce?</h3>
+          <p class="reveal">In a trial, 80 people with irritable bowel syndrome received openly labeled placebo pills or no pills, with similar clinician contact. After three weeks, 59% of the placebo group reported adequate relief over the preceding week, compared with 35% of controls. Patients knew their assignment and reported their symptoms; this small, short trial didn't establish a cure. Some placebo analgesia has known mechanisms involving the brain's opioid system. Open questions include how expectations, prior learning and clinical care contribute to particular outcomes.</p>
+          <p class="scene-source">Sources: <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0015591" rel="noopener">Open-label IBS trial (2010)</a>; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6725254/" rel="noopener">Opioid-system measurements (2005)</a>.</p>
         </div>
       </section>
 
       <!-- ============================ ACT IV ============================ -->
-      <div class="act"><div class="act-inner"><span class="act-num">IV</span><span class="act-title">The Edge of Reason</span><p class="act-sub">Where proof itself runs out, and the machine that found these images.</p></div></div>
+      <div class="act"><div class="act-inner"><span class="act-num">IV</span><h2 class="act-title">The edge of reason</h2><p class="act-sub">Balance, evidence, proof and learned computation.</p></div></div>
 
       <section class="scene" id="bicycle">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/bicycle.webp"><img src="assets/bicycle.jpg" alt="A vintage high-wheel penny-farthing bicycle with its enormous front wheel and tiny rear wheel." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">An antique high-wheel bicycle. <a href="https://commons.wikimedia.org/wiki/File:Vieille_bicyclette_ou_grand_Bi_-_btv1b9037840k.jpg" rel="noopener">Agence Meurisse / Bibliothèque nationale de France</a>, public domain.</figcaption>
+          <figcaption class="scene-credit">A high-wheel bicycle in a 1920 press photograph, not the experimental vehicle in the 2011 study. <a href="https://commons.wikimedia.org/wiki/File:Vieille_bicyclette_ou_grand_Bi_-_btv1b9037840k.jpg" rel="noopener">Agence Meurisse/BnF, public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 15 · The Bicycle</p>
-          <h3>We've ridden bicycles for 200 years without knowing why they balance.</h3>
-          <p class="reveal">Push a riderless bicycle up to speed and it balances itself. Knock it sideways and it steers into the wobble and recovers, <b>no rider required</b>. For a century the textbooks gave two reasons, the gyroscope of the spinning wheels and the caster-like trail of the front fork. In 2011 engineers built a bicycle that <strong>canceled both effects</strong>. It balanced anyway, and no simple explanation has replaced the broken ones.</p>
-          <blockquote>"We show that neither effect is necessary for self-stability."<cite>Kooijman et al., <em>Science</em>, 2011</cite></blockquote>
+          <h3>What makes a bicycle self-stable?</h3>
+          <p class="reveal">A leaning bicycle can steer into its fall and recover. Models predict stability from its mass distribution and geometry. In 2011, researchers built a riderless bicycle that recovered after they canceled the wheels' gyroscopic effects and gave it negative trail, reversing the usual caster geometry. The experiment ruled out two popular ingredients as necessary for self-stability. The remaining difficulty was a simple physical criterion covering all stable designs. The bicycle's mechanics were understood well enough to design the experiment.</p>
+          <p class="scene-source">Sources: <a href="https://arendschwab.com/assets/pdf/kooijman2011bicycle.pdf" rel="noopener">Self-stability model and experiment (2011)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="reality">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/reality.webp"><img src="assets/reality.jpg" alt="The Flammarion engraving: a traveller kneels at the edge of the world and pushes his head through the dome of the sky to see the machinery beyond." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">The Flammarion engraving, from <em>L'atmosphère</em> (1888). <a href="https://commons.wikimedia.org/wiki/File:FlammarionWoodcut.jpg" rel="noopener">Public domain</a>, via Wikimedia Commons.</figcaption>
+          <figcaption class="scene-credit">An unknown artist's wood engraving, published in Camille Flammarion's <em>L'atmosphère</em> in 1888. <a href="https://commons.wikimedia.org/wiki/File:FlammarionWoodcut.jpg" rel="noopener">Public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 16 · Reality</p>
-          <h3>Nothing you can ever observe can prove this is real.</h3>
-          <p class="reveal">This 1888 engraving shows a traveler poking his head through the edge of the sky to see the machinery behind the world. Four centuries of philosophy have not solved his problem. Every test you could ever run on reality <b>arrives through your senses</b>, and your senses are the very thing in question. Descartes imagined a deceiving demon. We say simulation. <strong>No possible experiment can tell the difference.</strong></p>
-          <blockquote>"I shall suppose that some malicious, powerful, cunning demon has done all he can to deceive me."<cite>René Descartes, <a href="https://www.earlymoderntexts.com/assets/pdfs/descartes1641.pdf" rel="noopener"><em>Meditations</em></a>, 1641</cite></blockquote>
+          <h3>Can observation rule out a perfect deception?</h3>
+          <p class="reveal">Descartes imagined a deceiver supplying false impressions of an external world. A modern version could be a simulation stipulated to reproduce every possible observation. If the alternative gives exactly the same evidence, observation cannot distinguish it. That limit is built into the thought experiment. Particular simulation proposals can be tested if they predict detectable differences. Radical skepticism questions absolute certainty; it supplies no positive evidence that the ordinary world is a deception.</p>
+          <p class="scene-source">Sources: <a href="https://www.earlymoderntexts.com/assets/pdfs/descartes1641.pdf" rel="noopener">Descartes, First Meditation (1641)</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="godel">
         <figure class="scene-media">
           <picture><source type="image/webp" srcset="assets/godel.webp"><img src="assets/godel.jpg" alt="An ouroboros: an alchemical engraving of a serpent curled into a circle, devouring its own tail." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">An ouroboros, the serpent eating its own tail, engraved by Lucas Jennis, 1625. <a href="https://commons.wikimedia.org/wiki/File:Ouroboros_1.jpg" rel="noopener">Public domain</a>.</figcaption>
+          <figcaption class="scene-credit">An ouroboros engraving by Lucas Jennis (1625), used here to illustrate self-reference. <a href="https://commons.wikimedia.org/wiki/File:Ouroboros_1.jpg" rel="noopener">Public domain</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 17 · The Limits of Proof</p>
-          <h3>Some true things can never be proven. That itself was proven.</h3>
-          <p class="reveal">Math was supposed to be the one place where every true thing could, eventually, be proven. In 1931 a 25-year-old named Kurt Gödel ended that, using math itself. Out of nothing but arithmetic he built a statement that says, in effect, "this statement can never be proven." If math proves it, math is broken. If it can't, it is a <b>truth beyond proof</b>. Either way certainty has a hole in it, and Gödel marked exactly where.</p>
-          <blockquote>Any rich-enough consistent system holds statements "which can neither be proved nor disproved" within it.<cite>on <a href="https://plato.stanford.edu/entries/goedel-incompleteness/" rel="noopener">Gödel's incompleteness theorems</a></cite></blockquote>
+          <h3>Can one formal system prove every arithmetic truth?</h3>
+          <p class="reveal">A consistent formal system that includes basic whole-number arithmetic and whose axioms a computer program can list cannot settle every arithmetic statement. The incompleteness theorems establish that some statements can be neither proved nor disproved within that system. This is a demonstrated limit under specified conditions. A statement may become provable in a stronger system, which has its own limits if it meets the same conditions. Gödel didn't show that particular truths must remain beyond every possible proof.</p>
+          <p class="scene-source">Sources: <a href="https://monoskop.org/images/9/93/Kurt_G%C3%B6del_On_Formally_Undecidable_Propositions_of_Principia_Mathematica_and_Related_Systems_1992.pdf" rel="noopener">Gödel's original paper in translation</a>; <a href="https://arxiv.org/html/2210.04502v2" rel="noopener">Gödel-Rosser proof and conditions</a>.</p>
         </div>
       </section>
 
       <section class="scene" id="deep-learning">
         <figure class="scene-media">
-          <picture><source type="image/webp" srcset="assets/deep-learning.webp"><img src="assets/deep-learning.jpg" alt="Diffusion-tensor tractography of a human brain: thousands of rainbow-coloured neural fibre tracts arcing through the head in profile." loading="lazy" decoding="async"></picture>
-          <figcaption class="scene-credit">The brain's wiring, mapped by diffusion-tensor tractography. <a href="https://commons.wikimedia.org/wiki/File:DTI-sagittal-fibers.jpg" rel="noopener">Thomas Schultz, CC BY-SA 3.0</a>.</figcaption>
+          <picture><source type="image/webp" srcset="assets/deep-learning.webp"><img src="assets/deep-learning.jpg" alt="Colored brain fiber tracts inferred from diffusion MRI, arcing through a head in profile." loading="lazy" decoding="async"></picture>
+          <figcaption class="scene-credit">Brain fiber tracts inferred from diffusion MRI. This rendering illustrates biological anatomy, not the workings of an artificial neural network. <a href="https://commons.wikimedia.org/wiki/File:DTI-sagittal-fibers.jpg" rel="noopener">Thomas Schultz, CC BY-SA 3.0</a>.</figcaption>
         </figure>
         <div class="scene-copy">
           <p class="scene-kicker">No. 18 · The Machine</p>
-          <h3>We grew a mind that works, and we can't explain how.</h3>
-          <p class="reveal">Nobody wrote the AI that is reshaping the world. We grew it. Show a neural network enough examples and it wires itself, and no one, <b>not even the people who train them</b>, can fully explain why that works or what is happening inside the finished network. One of them predicted the shapes of proteins well enough to win a Nobel Prize. One of them gathered the images on this page and helped write it. The newest thing we have ever made joins gravity on this list: <strong>used every day, explained by no one</strong>.</p>
-          <blockquote>"No existing theory can guarantee that... gradient descent... can converge to the global minimum."<cite>Simon Du, <a href="https://www.quantamagazine.org/a-new-link-to-an-old-model-could-crack-the-mystery-of-deep-learning-20211011/" rel="noopener">Quanta</a>, 2021</cite></blockquote>
+          <h3>How does a trained network reach a particular answer?</h3>
+          <p class="reveal">People choose a neural network's architecture, training data and objectives, and write its training code. Training adjusts its numerical weights through optimization. Those operations are understood; explaining a large trained network's individual answers is harder. Researchers have extracted interpretable features from a language model and changed its behavior by manipulating some of them. The work examined activations at one middle layer, with substantial reconstruction error and incomplete coverage. An AI helped draft this page and gather its images. Its fluency supplied no guarantee that its claims were right.</p>
+          <p class="scene-source">Sources: <a href="https://www.deeplearningbook.org/contents/mlp.html" rel="noopener">Training and backpropagation</a>; <a href="https://transformer-circuits.pub/2024/scaling-monosemanticity/index.html" rel="noopener">Interpretable features and their limits (2024)</a>.</p>
         </div>
       </section>
 
       <!-- ============================ CODA ============================ -->
-      <div class="st-readable st-coda fade-in">
-        <p>So drop your phone one more time and watch it fall. You are looking at the most reliable, most precisely measured, <em>least understood</em> fact in all of science, and you have just walked past seventeen of its cousins. The edge of what we know is not some far frontier. It runs right through the middle of an ordinary day, through every clock and cathedral window and falling thing.</p>
-        <p>None of this means any of it is fake. The phenomena are as solid as facts get. It is the <em>why</em>, and the final proof, that runs out, and the running-out is exactly where every interesting question still lives.</p>
-        <p class="st-note">A note on honesty: "we can't explain it" here means there is no scientific consensus, not that there are no ideas. Most of these have several competing theories and active research. A few, like the limits of proof or whether reality is real, are matters of logic no experiment can close. Every claim links to its source, and every quote is verbatim. Where a phenomenon is genuinely contested, the wording leans toward "no agreed explanation" rather than "no idea at all."</p>
+      <div class="st-readable st-coda">
+        <p>For the AI that helped write this page, one question is especially practical: can we trace an answer through the trained network well enough to explain why it produced a confident mistake?</p>
       </div>
 
-      <div class="st-readable st-credits">
-        <h4>Image credits</h4>
+      <details class="st-readable st-credits">
+        <summary>Image credits and licenses</summary>
         <ul>
-          <li><b>Gravity</b>: black hole M87*, Event Horizon Telescope Collaboration, CC BY 4.0</li>
-          <li><b>Dark matter</b>: Bullet Cluster, NASA / CXC / STScI, public domain</li>
-          <li><b>Dark energy</b>: Hubble eXtreme Deep Field, NASA / ESA, public domain</li>
-          <li><b>Big Bang</b>: cosmic microwave background, NASA / WMAP Science Team, public domain</li>
-          <li><b>Cosmic rays</b>: aurora from the ISS, NASA, public domain</li>
-          <li><b>Time</b>: strontium atomic clock, G.E. Marti / JILA (NIST), public domain</li>
-          <li><b>Quantum mechanics</b>: soap-film interference, Dietmar Rabich, CC BY-SA 4.0</li>
-          <li><b>Turbulence</b>: <em>The Starry Night</em>, Vincent van Gogh (1889), public domain</li>
-          <li><b>Glass</b>: Notre-Dame north rose window, Julie Anne Workman, CC BY-SA 3.0</li>
-          <li><b>Superconductivity</b>: Meissner effect, Bobroff &amp; Bouquet, LPS Orsay, CC BY-SA 3.0</li>
-          <li><b>Lightning</b>: lightning over Albury, Thennicke, CC BY-SA 4.0</li>
-          <li><b>Consciousness</b>: neuron, Santiago Ramón y Cajal (1904), Wellcome Collection, CC BY 4.0</li>
-          <li><b>Animal compass</b>: European robin, Wikimedia Commons, CC BY-SA 4.0</li>
-          <li><b>Placebo</b>: pills, Hal Gatewood / Unsplash</li>
-          <li><b>Bicycle</b>: antique high-wheel, Agence Meurisse / BnF, public domain</li>
-          <li><b>Reality</b>: Flammarion engraving (1888), public domain</li>
-          <li><b>Limits of proof</b>: ouroboros, Lucas Jennis (1625), public domain</li>
-          <li><b>The machine</b>: brain tractography, Thomas Schultz, CC BY-SA 3.0</li>
+          <li><b>Gravity</b>: M87*, Event Horizon Telescope Collaboration, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</li>
+          <li><b>Dark matter</b>: Bullet Cluster. X-ray: NASA/CXC/CfA/M. Markevitch et al. Optical: NASA/STScI; Magellan/U. Arizona/D. Clowe et al. Lensing: NASA/STScI; ESO WFI; Magellan/U. Arizona/D. Clowe et al. Public domain.</li>
+          <li><b>Dark energy</b>: Hubble eXtreme Deep Field, NASA, ESA, G. Illingworth, D. Magee and P. Oesch (UCSC), R. Bouwens (Leiden), and the HUDF09 team. Public domain.</li>
+          <li><b>Big Bang</b>: NASA/WMAP Science Team, public domain.</li>
+          <li><b>Cosmic rays</b>: aurora from the ISS, NASA, public domain.</li>
+          <li><b>Time</b>: strontium atomic clock, G.E. Marti/JILA (NIST), public domain.</li>
+          <li><b>Quantum mechanics</b>: soap film, Dietmar Rabich, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</li>
+          <li><b>Turbulence</b>: <em>The Starry Night</em>, Vincent van Gogh (1889), public domain. Google Art Project reproduction.</li>
+          <li><b>Glass</b>: Notre-Dame north rose window, Julie Anne Workman, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.</li>
+          <li><b>Superconductivity</b>: levitation demonstration, Julien Bobroff and Frédéric Bouquet, LPS Orsay, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.</li>
+          <li><b>Lightning</b>: cloud-to-cloud lightning over Albury, Thennicke, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</li>
+          <li><b>Consciousness</b>: Santiago Ramón y Cajal's rabbit neuron drawing, published 1904. Wellcome Collection, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</li>
+          <li><b>Animal compass</b>: European robin, C-M, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.</li>
+          <li><b>Placebo</b>: pills, Hal Gatewood, <a href="https://unsplash.com/license">Unsplash License</a>.</li>
+          <li><b>Bicycle</b>: 1920 press photograph, Agence Meurisse/BnF, public domain.</li>
+          <li><b>Reality</b>: anonymous engraving in Flammarion's <em>L'atmosphère</em> (1888), public domain.</li>
+          <li><b>Limits of proof</b>: ouroboros, Lucas Jennis (1625), public domain.</li>
+          <li><b>The machine</b>: tractography rendered by Thomas Schultz; data from Gordon Kindlmann and Andrew Alexander, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.</li>
         </ul>
-      </div>
+      </details>
 
     </main>
 
@@ -442,21 +383,17 @@
   <script src="/js/main.js"></script>
   <script src="/js/backtotop.js"></script>
   <script>
-    /* Scenes rise in as they enter the viewport. Respects reduced-motion via the
-       CSS guard (the .scene base state only sets opacity:0 under no-preference). */
+    /* Animation is an enhancement. Every scene stays visible without JavaScript. */
     (function () {
-      var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!window.matchMedia || !window.matchMedia('(prefers-reduced-motion: no-preference) and (pointer: fine)').matches || !('IntersectionObserver' in window)) return;
       var scenes = document.querySelectorAll('.scene');
-      if (prefersReduced || !('IntersectionObserver' in window)) {
-        scenes.forEach(function (s) { s.classList.add('in'); });
-        return;
-      }
       var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); }
         });
-      }, { rootMargin: '0px 0px -12% 0px', threshold: 0.1 });
-      scenes.forEach(function (s) { io.observe(s); });
+      }, { rootMargin: '0px 0px -12% 0px', threshold: .1 });
+      scenes.forEach(function (scene) { io.observe(scene); });
+      document.documentElement.classList.add('st-motion');
     })();
   </script>
 </body>

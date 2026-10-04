@@ -13,9 +13,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>What's Actually on an MRI Disc</title>
-  <meta name="description" content="I asked for my MRI on a disc and got 1,189 raw images. The 2D slices a radiologist scrolls through, then stacked back into a head and spine you can rotate in 3D.">
+  <meta name="description" content="I asked for my MRI on a disc and got 1,189 image files. Browse 515 selected slices from my brain, neck and lower back, plus two illustrative 3D models.">
   <meta property="og:title" content="What's Actually on an MRI Disc">
-  <meta property="og:description" content="I asked for my MRI on a disc and got 1,189 raw images. The 2D slices a radiologist scrolls through, then stacked back into a head and spine you can rotate in 3D.">
+  <meta property="og:description" content="I asked for my MRI on a disc and got 1,189 image files. Browse 515 selected slices from my brain, neck and lower back, plus two illustrative 3D models.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/mri/mri.html">
@@ -96,39 +96,57 @@
 
     .mri-controls-label { font-family: var(--font-heading); font-size: 0.95rem; color: var(--d-text); min-width: 5.5em; }
 
+    .editorial-page .site-wrapper { max-width: 61rem; }
+    .mri-prose { max-width: 64ch; margin: 0 auto; font-family: var(--font-heading); font-size: 1.27rem; line-height: 1.72; }
+    .mri-prose > h2 { margin: 0 0 1.5rem; padding-left: 0; font-size: clamp(2rem, 5vw, 2.55rem); line-height: 1.12; text-align: center; text-wrap: balance; }
+    .mri-prose > h2::before, .mri-prose > .u-divider::before { display: none; }
+    .mri-prose > .u-divider { border: 0; border-top: 1px solid var(--rule); margin-block: clamp(3.5rem, 7vw, 5rem); }
+    .mri-prose .demo-wrapper { font-family: var(--font-body); }
+    .mri-prose .u-callout-body { font-size: 1.08rem; line-height: 1.7; }
+    .mri-build { margin-block: 2rem; border-block: 1px solid var(--rule); }
+    .mri-build > summary { padding-block: 1.2rem; font-family: var(--font-heading); font-size: 1.3rem; color: var(--text-bright); cursor: pointer; }
+    .mri-build .u-steps { list-style: none; margin: 1rem 0 2rem; padding: 0; }
+    .mri-build .u-step { margin-bottom: 1.3rem; }
+    .mri-build .u-step-p { font-size: 1.08rem; line-height: 1.7; color: var(--text); }
+    .mri-chip, .mri-play, #region-tabs button, #scene-group button { min-height: 44px; }
+    .mri-play { min-width: 5.5em; }
+    .mri-loading.failed::before { display: none; }
+    .mri-loading.failed { padding: 1.5rem; text-align: center; }
   </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <div class="site-wrapper">
 
     <a href="/" class="post-back">Home</a>
 
-    <header class="u-hero fade-in">
+    <header class="u-hero editorial-hero">
       <h1 class="u-title">What's Actually on an MRI Disc</h1>
-      <p class="u-dek">I asked for mine on a disc and got 1,189 raw images of the inside of my own head. Here they are, the 2D slices a radiologist scrolls through, stacked back into a brain and spine you can spin.</p>
+      <p class="u-dek">I asked for my MRI on a disc and got 1,189 image files. Browse 515 selected slices from my brain, neck and lower back, plus two illustrative 3D models.</p>
+      <p class="u-meta">4 min read <span class="u-sep">/</span> 2 min build notes <span class="u-sep">/</span> Interactive viewers</p>
     </header>
 
     <main>
       <article>
-        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+        <div class="post-body mri-prose">
 
-          <p>An MRI does not take a photograph. It measures a number for every little box of tissue across a thin <em>slice</em> of you, moves over a few millimeters, and measures the next one. A scan is a stack of those cross-sections. Mine came home as a silver disc holding three stacks, my <strong>brain</strong>, my <strong>neck</strong>, and my <strong>lower back</strong>, each shot several times over with different settings that make different tissue light up.</p>
+          <p>I asked the hospital for my MRI on a disc and got 1,189 image files. The scan was for numbness down one side, and covered my brain, neck and lower back in one sitting, including a contrast injection. The files were in DICOM (Digital Imaging and Communications in Medicine), the medical-imaging standard that stores images alongside scan settings and patient information.</p>
 
-          <p>The viewer below is those raw slices, straight off the scanner. Pick a region, pick a sequence, and scroll. Spin the mouse wheel, drag up and down, or drag the slider. The little play button runs the stack like a flipbook.</p>
+          <p>The viewer here contains <a href="assets/mri/manifest.json">515 selected slices in 16 series</a>. These are grayscale JPEG exports with a fixed contrast window, the range of signal values mapped to black through white. They don&rsquo;t preserve the full signal range of the DICOM files. Pick a region and series, then scroll, drag or scrub the slider. Play runs through the stack.</p>
 
           <div class="demo-wrapper">
             <div class="demo-header">
               <span class="demo-label">The slices</span>
-              <span class="demo-fps" id="slice-readout">, / ,</span>
+              <span class="demo-fps" id="slice-readout">Loading slices</span>
             </div>
             <div class="mri-stage" id="stage-2d">
-              <canvas id="slice-canvas"></canvas>
+              <canvas id="slice-canvas" aria-label="Selected MRI slice"></canvas>
               <div class="mri-ov mri-ov-tl" id="ov-label">&nbsp;</div>
               <div class="mri-ov mri-ov-tr" id="ov-region">&nbsp;</div>
               <div class="demo-hint" id="hint-2d">scroll, drag, or use the slider</div>
-              <div class="mri-loading" id="loading-2d">loading</div>
+              <div class="mri-loading" id="loading-2d" role="status">Loading slices</div>
             </div>
             <div class="p-controls">
               <div class="controls-top">
@@ -136,101 +154,79 @@
               </div>
               <div class="mri-series-row" id="series-row"></div>
               <div class="p-slider-row">
-                <button class="pl-btn mri-play" id="play-btn" title="Play / pause">&#9654;</button>
-                <input type="range" id="slice-slider" min="0" max="0" value="0" aria-label="slice">
-                <span class="p-slider-val" id="slice-count">,</span>
+                <button class="pl-btn mri-play" id="play-btn" type="button" aria-label="Play slices" aria-pressed="false" disabled>Play</button>
+                <input type="range" id="slice-slider" min="0" max="0" value="0" aria-label="Slice number" disabled>
+                <span class="p-slider-val" id="slice-count">Loading</span>
               </div>
             </div>
           </div>
 
           <hr class="u-divider">
 
-          <h2 class="u-h2">What you are looking at</h2>
+          <h2 class="u-h2">Why the same tissue looks different</h2>
 
-          <p>Each region was scanned with a handful of <em>sequences</em>, the same anatomy re-weighted. On a <strong>T1</strong> image fat is bright and fluid is dark; on a <strong>T2</strong> it flips, so the spinal fluid glows white and the cord stands out as a dark ribbon inside it. <strong>FLAIR</strong> nulls the fluid to show the brain tissue; <strong>STIR</strong> nulls fat to make swelling obvious; <strong>SWI</strong> picks up the faintest trace of blood and iron. Radiologists read the same slice across all of them at once, because a thing that is bright on one and dark on another is telling you what it is made of.</p>
+          <p>MRI detects radio signals from hydrogen nuclei, mainly in water and fat. Magnetic-field gradients encode where those signals came from, and a computer reconstructs the image. It doesn&rsquo;t measure one little box of tissue at a time. Brightness depends on the pulse sequence, its timing and the tissue&rsquo;s magnetic properties, rather than simply its density. <a href="https://www.nibib.nih.gov/science-education/science-topics/magnetic-resonance-imaging-mri">NIH&rsquo;s MRI introduction</a> and <a href="https://academy.siemens-healthineers.com/_/id-id/mr-pulse-sequence-practice-id/">Siemens&rsquo; sequence guide</a> explain the signal and encoding.</p>
 
-          <p>All three got scanned in one sitting because the question was neurological, numbness down one side, and the nerves run the whole length: brain, then the cord through the neck, then the roots in the lower back. So the disc holds one head study and two spine studies, with and without a contrast injection.</p>
+          <p>A sequence is a programmed pattern of radio pulses and gradients. T1 and T2 refer to two ways the signal relaxes after excitation. In ordinary T1-weighted images, fat is usually bright and spinal fluid dark. In T2-weighted images, fluid is usually bright; fat can still be bright unless suppressed. T2 is not a reversal of every shade in T1. <a href="https://catalogimages.wiley.com/images/db/pdf/9781119809449.excerpt.pdf">Lauder and Driscoll&rsquo;s sequence table</a> compares them.</p>
 
-          <aside class="u-callout">
-            <p class="u-callout-k">It is really a map of water</p>
-            <p class="u-callout-body">The signal comes almost entirely from hydrogen nuclei, mostly the protons in water and fat, tipped over by a radio pulse inside a 1.5-tesla magnet and singing back as they relax. Bone is dry and rigid, so it gives almost nothing. That one fact explains why the soft tissue looks so good, and why the next part has a catch.</p>
-          </aside>
+          <p>FLAIR suppresses spinal fluid; STIR and the labels marked FS suppress fat. SWI emphasizes differences in how tissues affect the local magnetic field, useful for seeing veins and iron-rich tissue. <a href="https://catalogimages.wiley.com/images/db/pdf/9781119809449.excerpt.pdf">DWI is sensitive to the motion of water molecules</a>, and MEDIC combines several signal echoes. Post-contrast means images taken after the injection. Axial slices cut across the body; sagittal slices divide left from right; coronal slices divide front from back. These are different acquisitions, so slice 12 in one series needn&rsquo;t match slice 12 in another. <a href="https://academy.siemens-healthineers.com/_/id-id/mr-pulse-sequence-practice-id/">Sequence guide</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/15334582/">original SWI paper</a>.</p>
 
           <hr class="u-divider">
 
-          <h2 class="u-h2">From a stack of photos to a head</h2>
+          <h2 class="u-h2">What the models can show</h2>
 
-          <p>If every slice is a cross-section at a known position, you can stack them back into a solid block of data and view it from any angle. The catch: clinical slices are razor-sharp <em>within</em> the slice but spaced millimeters apart. Crisp like a page, with big gaps between the pages. Stack them naively and you get venetian blinds.</p>
+          <p>The brain below is a processed surface made from T1 images. Its build used neural-network estimates between slices, removed the surrounding skull and scalp, filled the ventricles and closed deep grooves before smoothing the surface. Those edits make it easier to display as a solid object, but alter its shape. It isn&rsquo;t an untouched cortical surface.</p>
 
-          <p>Turning thin, sharp slices into a solid you can rotate is the whole trick, and it gets its own section just below. First, the result: the skull-stripped brain surface, rebuilt from the slices. Drag to rotate, scroll to zoom, and switch between the brain and the spine/torso.</p>
+          <p>The second model is a rough torso envelope from a localizer, a scan used to plan the examination. It doesn&rsquo;t trace individual vertebrae. MRI can show marrow and abnormalities in bone, as well as discs, nerves and the cord; the limits of this model aren&rsquo;t the limits of <a href="https://www.radiologyinfo.org/en/info/spinemr">spine MRI</a>.</p>
+
+          <p>Drag to rotate and scroll to zoom. This viewer draws two finished triangle meshes, not a volume you can cut through to expose the original signal.</p>
 
           <div class="demo-wrapper">
             <div class="demo-header">
-              <span class="demo-label">The reconstruction</span>
+              <span class="demo-label">Illustrative surfaces</span>
               <span class="demo-fps" id="nv-readout">WebGL2</span>
             </div>
             <div class="mri-stage mri-stage-3d" id="stage-3d">
-              <canvas id="nv-canvas"></canvas>
+              <canvas id="nv-canvas" aria-label="Rotatable MRI-derived surface model"></canvas>
               <div class="demo-hint" id="hint-3d">drag to rotate &middot; scroll to zoom</div>
-              <div class="mri-loading" id="loading-3d">initializing 3D</div>
+              <div class="mri-loading" id="loading-3d" role="status">Loading 3D viewer</div>
             </div>
             <div class="p-controls">
               <div class="tilt-row">
                 <span class="mri-controls-label">Region</span>
                 <div class="tilt-group" id="scene-group">
-                  <button class="tilt-btn active" data-scene="brain">Brain</button>
-                  <button class="tilt-btn" data-scene="spine">Spine / torso</button>
+                  <button class="tilt-btn active" data-scene="brain" aria-pressed="true" disabled>Brain</button>
+                  <button class="tilt-btn" data-scene="spine" aria-pressed="false" disabled>Spine / torso</button>
                 </div>
               </div>
               <div class="mri-check-row">
-                <label class="mri-check"><input type="checkbox" id="rotate-chk" checked> Auto-rotate</label>
-                <span class="mri-downloads">take the models: <a href="assets/mri/meshes/brain.glb" download>brain.glb</a> &middot; <a href="assets/mri/meshes/spine.glb" download>torso.glb</a></span>
+                <label class="mri-check"><input type="checkbox" id="rotate-chk" checked disabled> Auto-rotate</label>
+                <span class="mri-downloads">Download: <a href="assets/mri/meshes/brain.glb" download>brain.glb</a> &middot; <a href="assets/mri/meshes/spine.glb" download>torso.glb</a></span>
               </div>
-              <div class="tilt-desc-text" id="nv-caption">Brain: a T1 scan super-resolved to 0.9 mm and skull-stripped into a cortical surface.</div>
+              <div class="tilt-desc-text" id="nv-caption">Brain: processed T1-derived surface. Filled spaces and smoothing alter the anatomy.</div>
             </div>
           </div>
 
-          <hr class="u-divider">
+          <details class="mri-build">
+            <summary>How the web version was made</summary>
+            <ol class="u-steps">
+              <li class="u-step"><span class="u-step-h">Keep compatible slices together.</span><p class="u-step-p">DICOM records <a href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html">image position, orientation and pixel spacing</a>. These locate a slice in the body. Slice thickness and the distance between slice centers are separate measurements. A volume needs a consistent acquisition and geometry; stacking different planes or contrasts together would mix different measurements of the same tissue.</p></li>
+              <li class="u-step"><span class="u-step-h">Export the slice sheets.</span><p class="u-step-p">Each selected series is packed into a JPEG sprite sheet, a grid of slice images. The JavaScript crops one tile onto the canvas. Most tiles are 448 by 448 pixels; the SWI tiles are 240 by 256. These are display dimensions, not measurements of anatomical resolution. The exports contain no physical slice-spacing fields.</p></li>
+              <li class="u-step"><span class="u-step-h">Estimate between slices.</span><p class="u-step-p">For the brain build, I trained a small network on degraded versions of the scan&rsquo;s sharper slices, then used it to estimate detail in the thicker direction on a roughly 0.9 mm grid. That is output spacing, not proof of 0.9 mm anatomical resolution. <a href="https://arxiv.org/pdf/1802.09431">Self-super-resolution research</a> makes the distinction: resampling adds grid points, while missing detail has to be estimated. Correct coordinates allow a 3D display even when the original voxels aren&rsquo;t cubes.</p></li>
+              <li class="u-step"><span class="u-step-h">Make the surface.</span><p class="u-step-p"><a href="https://github.com/MIC-DKFZ/HD-BET">HD-BET</a> estimated a brain mask, separating brain tissue from its surroundings. I filled the ventricles and closed deep grooves, then used marching cubes to turn the mask boundary into triangles. Smoothing and simplification left <strong>120,000 triangles</strong> in the brain mesh. The <a href="https://github.com/niivue/niivue">NiiVue</a> WebGL2 library draws it in the browser. The original images and training logs aren&rsquo;t included in these web assets, so the finished mesh alone can&rsquo;t establish the accuracy of the reconstruction.</p></li>
+            </ol>
+          </details>
 
-          <h2 class="u-h2">From a disc to this, step by step</h2>
+          <h2 class="u-h2">What 1.5 tesla tells us</h2>
 
-          <ol class="u-steps">
-            <li class="u-step"><span class="u-step-h">The disc.</span><p class="u-step-p">The hospital handed me a CD holding <strong>1,189 raw <code>DICOM</code> files</strong>, the universal medical-imaging format. Each file is a single 2D image wrapped in a long header that records, among much else, exactly where in space that slice was taken and how thick it is.</p></li>
-            <li class="u-step"><span class="u-step-h">Read and sort.</span><p class="u-step-p">Python (<code>pydicom</code>) parsed all of them and grouped them into <strong>42 series</strong>, one imaging sequence through one body region. The make-or-break step: sort each stack by its real-world position from the header, <em>not</em> by filename or image number. Sort by filename and the body comes out shuffled.</p></li>
-            <li class="u-step"><span class="u-step-h">The 2D viewer.</span><p class="u-step-p">Each diagnostic series was contrast-windowed and packed into a single image "sprite sheet"; the viewer up top just crops the current slice out of it. Light, and no server.</p></li>
-            <li class="u-step"><span class="u-step-h">The catch with 3D.</span><p class="u-step-p">A clinical scan is built for a radiologist <em>scrolling slices</em>, so they're razor-sharp within the plane (~0.4&nbsp;mm here) but 5 to 6&nbsp;mm apart. A real 3D object needs <em>cube-shaped</em> voxels, equal in all three directions, or the stack looks like venetian blinds.</p></li>
-            <li class="u-step"><span class="u-step-h">Fill the gaps with a neural net.</span><p class="u-step-p">I trained a small network <em>on the scan's own sharp slices</em>, degrading them to imitate the thick direction so it learned to invert that blur, then turned it loose on the through-plane to <em>super-resolve</em> it to roughly <strong>0.9&nbsp;mm cubes</strong>. It trained on this laptop's GPU in about six minutes.</p></li>
-            <li class="u-step"><span class="u-step-h">Carve out a solid brain.</span><p class="u-step-p">A second network (HD-BET) erased the skull and scalp. Then I filled the ventricles and sealed the deep grooves so the brain became a closed <em>solid</em> rather than a see-through web, and <em>marching cubes</em> wrapped a surface around it, smoothed and simplified to about 120,000 triangles for the web.</p></li>
-            <li class="u-step"><span class="u-step-h">Into your browser.</span><p class="u-step-p"><a href="https://github.com/niivue/niivue" target="_blank" rel="noopener">NiiVue</a> (WebGL2) draws the mesh in 3D, entirely client-side from static files.</p></li>
-          </ol>
-
-          <hr class="u-divider">
-
-          <h2 class="u-h2">Why the spine looks like a ghost</h2>
-
-          <p>Because MRI is a map of water, it barely sees bone. Dense cortical bone reads as black, the same as empty air. So the brain reconstructs beautifully, but you cannot pull a crisp skull or a clean stack of vertebrae out of these images the way you can from a CT scan. The spine model here is an honest stylized envelope of the torso, not an anatomical skeleton. The brain is the real prize.</p>
-
-          <hr class="u-divider">
-
-          <h2 class="u-h2">The machine, and how good these pictures are</h2>
-
-          <p>This was a <a href="https://www.siemens-healthineers.com/magnetic-resonance-imaging/0-35-to-1-5t-mri-scanner/magnetom-sola" target="_blank" rel="noopener">Siemens MAGNETOM Sola</a>, a <strong>1.5-tesla</strong> scanner from 2018, a current-generation example of the most common kind of MRI on earth. The "tesla" number is the magnet's field strength, and it is the biggest single lever on image quality: more field means more signal, which means a cleaner picture for the same time in the bore. The rough ladder:</p>
-
-          <ul>
-            <li><strong>0.2 to 0.55&nbsp;T, low field.</strong> Open and accessibility scanners; historically noisy and soft, though modern 0.55&nbsp;T units with AI reconstruction are catching up fast.</li>
-            <li><strong>1.5&nbsp;T, the workhorse.</strong> The large majority of clinical scans on earth. <em>This is mine.</em></li>
-            <li><strong>3&nbsp;T, high field.</strong> Roughly double the signal: sharper images, or the same image faster. Common in academic and newer centers.</li>
-            <li><strong>7&nbsp;T and up, ultra-high.</strong> Cleared for clinical head and limb scans only in 2017, and still rare, mostly research. It resolves fine cortical and vascular detail you simply cannot see at 1.5&nbsp;T. The research frontier runs to 10.5&nbsp;T, and an 11.7&nbsp;T scanner in France has now imaged a living human brain.</li>
-          </ul>
-
-          <p>So mine sits in the middle, but it is a good example of the middle. The slices are genuinely sharp, down to about 0.3&nbsp;mm within the plane, which for 2D brain and spine rivals what a 3&nbsp;T machine produces. Against a 3&nbsp;T or 7&nbsp;T the real gap is high-resolution <em>3D</em>; against old or low-field units it is far ahead. And the honest part: the machine was never the reason the 3D took work, the <em>protocol</em> was. A diagnostic scan deliberately trades 3D for thin, sharp 2D slices, because that is what a radiologist reads. The Sola could have shot a high-resolution 3D sequence in one pass. Nobody ordered one, because nobody needed a 3D model of my head that day. I did.</p>
+          <p>My scan used a Siemens MAGNETOM Sola, a <a href="https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/1-5t-mri-scanner/magnetom-sola">1.5-tesla system</a>. The number is the magnet&rsquo;s field strength. Field strength affects the available signal, but scan time, motion, coils and sequence settings also matter. Clinical MRI uses both 2D and 3D acquisitions. A JPEG export or a smooth model isn&rsquo;t enough to rank this examination against a 3-tesla scan, or to explain why a particular protocol was ordered.</p>
 
           <aside class="u-callout">
-            <p class="u-callout-k">Nothing here can identify me, on purpose</p>
-            <p class="u-callout-body">Every file a hospital hands you is stamped with your name, birth date, and record number. I stripped all of it before anything went on this page. The 3D model carries no identity fields, and the slice images have no text burned in. This is me sharing my own anatomy out of curiosity, not medical advice, and I have made no attempt to diagnose anything in it.</p>
+            <p class="u-callout-k">What was removed before sharing</p>
+            <p class="u-callout-body">I left out the DICOM headers containing my name, birth date and record number. The published slice sheets have no patient text burned into them, and the meshes contain geometry rather than patient identity fields. Removing those fields <a href="https://dicom.nema.org/medical/dicom/current/output/chtml/part15/chapter_E.html">doesn&rsquo;t guarantee anonymity</a>: anatomy can itself carry identifying information. This is my own scan, published under my own name.</p>
           </aside>
 
-          <p class="note">Built from the raw DICOM with Python (pydicom, NumPy, SciPy, scikit-image, nibabel, a neural-net skull-strip, and trimesh for the meshes) and rendered in your browser with <a href="https://github.com/niivue/niivue" target="_blank" rel="noopener">NiiVue</a> and a hand-written slice viewer. No server, no plugins.</p>
+          <p>I haven&rsquo;t tried to diagnose anything from these images. The JPEGs have fixed contrast and compression, and the models include estimated and edited detail. A clinical reading belongs to the original study and the radiologist&rsquo;s report.</p>
 
         </div>
       </article>
@@ -244,6 +240,6 @@
   </div>
 
   <script src="/js/main.js"></script>
-  <script type="module" src="js/mri.js"></script>
+  <script type="module" src="js/mri.js?v=20261003a"></script>
 </body>
 </html>

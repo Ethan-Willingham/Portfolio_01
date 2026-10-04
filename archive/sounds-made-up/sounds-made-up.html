@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Physics That Sounds Made Up</title>
-  <meta name="description" content="A beginner's field guide to the two theories that broke common sense: relativity and quantum mechanics. Why time runs slow on a fast clock, why one particle goes through two slits at once, why two specks of matter share a fate across a galaxy, and why none of it lets you send a message faster than light. Sourced and illustrated.">
+  <meta name="description" content="Moving clocks disagree. Individual electrons build interference patterns. An illustrated guide to relativity and quantum mechanics, with experimental evidence and the limits of each explanation.">
   <meta property="og:title" content="The Physics That Sounds Made Up">
-  <meta property="og:description" content="Time runs slow on a moving clock. One particle goes through two slits at once. Two specks share a fate across a galaxy. None of it sounds real, and it is the most tested science we have. A field guide to relativity and quantum mechanics, one impossible idea at a time.">
+  <meta property="og:description" content="Moving clocks disagree. Individual electrons build interference patterns. An illustrated guide to relativity and quantum mechanics, with experimental evidence and the limits of each explanation.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/sounds-made-up/sounds-made-up.html">
@@ -58,14 +58,6 @@
   body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
 
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
-
-  /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.8rem, 10vw, 5.7rem); line-height: 0.99; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3.1vw, 1.55rem); line-height: 1.48; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
 
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.2rem, 6vw, 4.8rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
@@ -127,8 +119,8 @@
   /* break wide visuals out of the reading column on big screens (margin-based,
      so it never fights the transform used by .reveal) */
   @media (min-width: 1140px) {
-    .fig.wide, .viz { margin-left: calc((var(--measure) - var(--wide)) / 2); margin-right: calc((var(--measure) - var(--wide)) / 2); }
-    .viz.tight { margin-left: calc((var(--measure) - 860px) / 2); margin-right: calc((var(--measure) - 860px) / 2); }
+    .fig.wide, .viz { margin-left: calc((var(--measure) - var(--wide)) / 2 - var(--gutter)); margin-right: calc((var(--measure) - var(--wide)) / 2 - var(--gutter)); }
+    .viz.tight { margin-left: calc((var(--measure) - 860px) / 2 - var(--gutter)); margin-right: calc((var(--measure) - 860px) / 2 - var(--gutter)); }
   }
   .viz svg { display: block; width: 100%; height: auto; overflow: visible; }
   .viz-title.viz-title { font-family: var(--font-heading); font-weight: 700; font-size: 1.18rem; color: var(--text-bright); margin: 0 0 0.15rem; }
@@ -143,9 +135,9 @@
   .anno  { font-family: var(--font-mono); font-size: 13.5px; fill: var(--text-dim); }
   .anno-b{ font-family: var(--font-heading); font-weight: 700; font-size: 17px; fill: var(--text-bright); }
   .mirror{ stroke: var(--text-dim); stroke-width: 5; stroke-linecap: round; }
-  .mirror-ghost{ stroke: var(--rule-strong); stroke-width: 4; stroke-linecap: round; opacity: 0.5; }
-  .draw  { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); }
-  .draw.go { transition: stroke-dashoffset 1.5s var(--ease); stroke-dashoffset: 0; }
+  .mirror-ghost{ stroke: var(--text-dim); stroke-width: 4; stroke-linecap: round; opacity: 0.5; }
+  .draw  { stroke-dasharray: var(--len); stroke-dashoffset: 0; }
+  .draw.go { stroke-dashoffset: 0; }
 
   /* ---------- CALLOUTS (tighten the kit box) ---------- */
   .sec .u-callout:not(.u-move):not(.u-aside) { padding: 18px 22px; border-radius: 14px; box-shadow: none; margin: 1.6rem 0; }
@@ -163,8 +155,12 @@
   .img-credit a { color: var(--text-dim); }
 
   /* ---------- REVEAL ---------- */
-  html.js .reveal { opacity: 0; transform: translateY(16px); }
-  html.js .reveal.in { opacity: 1; transform: none; transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+  @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
+    html.js .reveal { opacity: 0; transform: translateY(16px); }
+    html.js .reveal.in { opacity: 1; transform: none; transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+    html.js .draw { stroke-dashoffset: var(--len); }
+    html.js .draw.go { transition: stroke-dashoffset 1.5s var(--ease); stroke-dashoffset: 0; }
+  }
 
   @media print {
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
@@ -173,94 +169,89 @@
     .sec p, .sec li, .lede { color: #161616; }
     a { color: #161616; }
   }
+  /* The sacred-book reading measure, with the diagrams kept wider. */
+  .sec { font-family: var(--font-heading); }
+  .sec p, .sec li { font-size: 1.27rem; line-height: 1.72; }
+  .sec .u-sechead { align-items: center; text-align: center; border-top: 1px solid var(--rule); padding-top: 2.3rem; margin-bottom: 1.6rem; }
+  .partintro { text-align: center; }
+  .part-d { font-style: normal; margin-left: auto; margin-right: auto; }
+  .sec .viz-title, .sec .viz-sub, .sec .diagram-hint, .sec .src-note { font-family: var(--font-body); }
+  .sec .viz-sub { font-family: var(--font-mono); }
+  .sec .diagram-hint { display: none; font-size: .8rem; line-height: 1.4; margin: .65rem 0 0; color: var(--text-faint); }
+  .diagram-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+  .diagram-scroll:focus-visible { outline: 2px solid var(--sec-accent); outline-offset: 4px; }
+  .viz-cap, .fig figcaption { margin-left: auto; margin-right: auto; }
+  @media (max-width: 800px) {
+    .diagram-scroll svg { min-width: var(--diagram-width); }
+    .sec .diagram-hint { display: block; }
+  }
+  @media print {
+    .diagram-scroll { overflow: visible; }
+    .diagram-scroll svg { min-width: 0; }
+    .sec .diagram-hint { display: none; }
+    html.js .reveal { opacity: 1; transform: none; }
+    .draw { stroke-dashoffset: 0; }
+  }
   </style>
+  <link rel="stylesheet" href="/archive/editorial.css?v=20261003a">
 </head>
-<body>
+<body class="editorial-page">
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
-  <a href="/" class="post-back ll-back"><span class="pb-label">Home</span></a>
+  <a href="/" class="post-back ll-back editorial-back"><span class="pb-label">Home</span></a>
 
   <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">The Physics That Sounds Made Up</h1>
-    <p class="hero-dek">Time runs slow on a moving clock. One particle goes through two doors at once. Two specks of matter share a single fate across the width of a galaxy. None of it sounds real, and all of it is the most carefully tested science we have.</p>
-    <p class="hero-meta">A field guide <span class="sep">/</span> <b>38 sources</b> <span class="sep">/</span> 31 min read</p>
+  <header class="u-hero editorial-hero">
+    <h1 class="u-title">The Physics That Sounds Made Up</h1>
+    <p class="u-dek">Moving clocks disagree. Individual electrons make interference patterns. An illustrated guide to relativity and quantum mechanics, with the experiments and limits kept in view.</p>
+    <p class="u-meta">A field guide / <span id="main-reading-time">19 min</span> main reading / source notes optional</p>
   </header>
 
   <main id="guide">
-
-    <!-- ============================ OPENING ============================ -->
     <section id="open" class="sec first" aria-label="Introduction">
-      <p class="lede">Your phone finds itself on a map by trusting that time runs at slightly different speeds for the satellites overhead and for you down on the ground. Turn that correction off, and your blue dot drifts about six miles off course by the end of the day. <span class="u-src"><a href="https://www.astronomy.ohio-state.edu/pogge.1/Ast162/Unit5/gps.html">GPS &amp; relativity</a></span></p>
-
-      <p>That is not a figure of speech. The atomic clocks aboard GPS satellites tick faster than the ones on Earth, by about 38 millionths of a second every day, and the whole system works only because engineers built the difference in before launch. The reason traces back to a paper Einstein published in 1905, and the paper says something your gut will refuse to accept: there is no universal clock. Time is not a fixed backdrop ticking the same for everyone. It bends.</p>
-
-      <p>That is the thing about modern physics. The headlines sound like nonsense and are true anyway, confirmed to more decimal places than almost anything else in science. The catch is that your common sense was trained on medium-sized things moving at ordinary speeds: a rock, a thrown ball, a car. Step outside that range, to the very fast, the very heavy, or the very small, and the rules you grew up with quietly stop applying.</p>
-
-      <p>It turns out reality runs on two rulebooks. One governs the big and the fast: stars, planets, light, anything moving near the speed limit. That is relativity, and it is mostly one man. The other governs the very small: atoms, electrons, single grains of light. That is quantum mechanics, and it took a dozen people arguing for thirty years. Both are spectacularly well tested. Both are deeply strange. And here is the part nobody has cracked: the two rulebooks contradict each other, and no one knows how to fit them together.</p>
-
-      <p>This is a tour of the strangest ideas in both books, one at a time, with the clearest plain-language picture I could find for each. I am going to keep the analogies honest, which means telling you where each one breaks, because the broken edge is usually where the real strangeness lives.</p>
-
+      <p class="lede">The clocks aboard GPS satellites would gain about 38 millionths of a second a day relative to clocks on the ground if engineers left relativity out of the system. GPS locates a receiver using radio signals' travel times, so those different clock rates have to be accounted for. <span class="u-src"><a href="https://link.springer.com/article/10.12942/lrr-2003-1">GPS timing</a></span></p>
+      <p>Motion and gravity change how much time different clocks record. Individual electrons build interference patterns. Entangled particles produce correlations that no local hidden-variable model can reproduce under the conditions of a Bell test.</p>
+      <p>Relativity and quantum mechanics describe different aspects of the same world. Their effects become conspicuous in different circumstances, but there is no border where one rulebook stops and the other starts. Quantum field theory already combines quantum physics with special relativity. The unfinished part is a complete quantum account of gravity.</p>
+      <p>The eight sections below explain what each result means, how we know it, and where the familiar pictures give out.</p>
       <figure class="pfig reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/solvay.webp"><img src="assets/images/physics/solvay.jpg" width="1600" height="1132" loading="eager" decoding="async" alt="The 1927 Solvay Conference group photograph: 29 physicists in formal dress arranged in three rows, including Einstein seated front-center, with Marie Curie, Niels Bohr, Max Planck, Erwin Schrodinger, Werner Heisenberg and Paul Dirac."></picture>
         <figcaption>The 1927 Solvay Conference. Photo: Benjamin Couprie. Public domain.</figcaption>
       </figure>
     </section>
-
-    <!-- chapter strip -->
     <nav class="chapters" aria-label="Chapters">
-      <span class="lead">Rulebook one, the big and the fast</span>
-      <a href="#light">a speed limit that cheats</a>
-      <a href="#time">moving clocks run slow</a>
-      <a href="#mass">mass is frozen energy</a>
-      <a href="#gravity">gravity is a shape</a>
-      <span class="lead">Rulebook two, the very small</span>
-      <a href="#wave">everything is a wave</a>
-      <a href="#measure">nothing is decided yet</a>
-      <a href="#uncertain">you cannot know it all</a>
-      <a href="#entangle">two particles, one fate</a>
+      <span class="lead">Relativity</span>
+      <a href="#light">light's speed</a><a href="#time">moving clocks</a><a href="#mass">rest energy</a><a href="#gravity">gravity</a>
+      <span class="lead">Quantum mechanics</span>
+      <a href="#wave">interference</a><a href="#measure">superposition</a><a href="#uncertain">uncertainty</a><a href="#entangle">entanglement</a>
     </nav>
-
-    <!-- ============================ PART ONE ============================ -->
     <div class="partintro zone-rel reveal">
-      <p class="part-k">Rulebook one</p>
-      <h2 class="part-h">The big and the fast</h2>
-      <p class="part-d">Everything in this half comes from relativity, two theories Einstein published ten years apart. The whole thing falls out of one stubborn fact about light.</p>
+      <p class="part-k">Part one</p><h2 class="part-h">Relativity</h2>
+      <p class="part-d">Clocks and rulers depend on motion. Gravity changes the geometry in which they measure.</p>
     </div>
-
-    <!-- 01 LIGHT -->
     <section id="light" class="sec zone-rel" aria-labelledby="light-h">
-      <div class="u-sechead"><p class="u-sechead-k">A speed limit that cheats</p><h2 id="light-h" class="u-sechead-h">Light has a speed limit, and it cheats</h2></div>
-
+      <div class="u-sechead"><p class="u-sechead-k">01 / Light</p><h2 id="light-h" class="u-sechead-h">Chasing light doesn't slow it down</h2></div>
       <figure class="portrait reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/einstein.webp"><img src="assets/images/physics/einstein.jpg" width="820" height="1003" loading="lazy" decoding="async" alt="Black-and-white portrait of an older Albert Einstein in 1947, looking into the camera."></picture>
-        <figcaption>Albert Einstein, 1947. He wrote most of rulebook one almost single-handedly. Photo by Orren Jack Turner (public domain).</figcaption>
+        <figcaption>Albert Einstein, 1947. Photo: Orren Jack Turner (public domain).</figcaption>
       </figure>
-
-      <p class="lede">Light travels at about 670 million miles per hour, the same speed for everyone, no matter how fast they are moving toward it or away from it. That second part is the one that breaks things.</p>
-
-      <p>Speeds normally add up. Throw a baseball at 20 mph from a truck doing 60, and someone on the roadside clocks it at 80. Walk toward the front of a moving train and the ground sees the train's speed plus yours. This is so obvious it feels like arithmetic.</p>
-
-      <p>Light refuses to play. Switch on a flashlight and the beam leaves you at the speed of light. Now chase that beam at 99 percent of its speed. Common sense says it should crawl away from you at the leftover one percent. Instead it races off at the full speed of light, exactly as if you had never moved, and a bystander watching the chase measures that same speed too. Run as hard as you like; light always pulls away from you at the one fixed speed, and nobody can ever agree to disagree about what that speed is.</p>
-
-      <p>That nearly broke physics. In 1887, Albert Michelson and Edward Morley built an instrument delicate enough to detect the Earth's motion through space by racing light beams in different directions. They found nothing. The light came back at the same speed every way they pointed it, in every season. <span class="u-src"><a href="https://www.aps.org/apsnews/2007/11/november-1887-michelson-uminiferous-ether">Michelson-Morley</a></span></p>
-
-      <p>Einstein took the strange result at face value and asked what would have to be true for it to make sense. The answer: if everyone measures light at the same speed regardless of how they move, then the things we thought were fixed, the length of a second and the length of a yard, cannot be. They have to stretch and shrink from one observer to the next, by exactly the amount needed to keep light's speed the same for everybody. Speed is distance divided by time. If the speed will not move, distance and time must.</p>
-
-      <p>The limit also does something to you personally: it makes "now" unreachable. Light takes time to arrive, so every sight is history. The hand in front of your face is two billionths of a second old. The Moon is 1.3 seconds ago, the Sun eight minutes, the nearest star four years. The Andromeda galaxy, a faint smudge you can find with your bare eye from a dark yard, is 2.5 million years ago; that light left before our species existed. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Andromeda_Galaxy">Andromeda</a></span> In the old physics you could at least imagine a faster messenger bringing fresher news. The speed limit says there is no faster messenger, for anyone, ever. The past is all there is to look at.</p>
-
+      <p class="lede">Light in a vacuum travels at about 670 million miles per hour. Locally, every inertial observer, one who isn't accelerating, measures that same speed. Moving toward the source or away from it doesn't change the answer. <span class="u-src"><a href="https://physics.nist.gov/cgi-bin/cuu/Value?c">The exact value</a></span></p>
+      <p>At ordinary speeds, addition works well enough. Throw a ball forward at 20 mph from a truck doing 60, and a roadside observer measures almost exactly 80 mph. Replace the ball with a flash of light and the addition fails. Even an observer chasing the flash at 99 percent of light's speed still measures it moving away at the full speed of light.</p>
+      <p>The observers disagree about distances, elapsed times and which distant events happened simultaneously. Those differences fit together so that each gets the same local vacuum light speed. Relativity changes the clock and ruler accounting, rather than leaving a slower beam for the person who chases it. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/I_15.html">Special relativity</a></span></p>
+      <p>A body with nonzero rest mass needs ever more energy as it approaches that speed, and cannot reach it with finite energy. Photons have zero rest mass and already travel at light speed in vacuum.</p>
+      <p>Light's finite speed also gives distance a time cost. We see the Moon about 1.3 seconds ago and the Sun about eight minutes ago. Andromeda is roughly 2.5 million light-years away, so its arriving light began the trip about 2.5 million years ago. It is visible without a telescope from a sufficiently dark sky.</p>
       <figure class="viz tight reveal" aria-labelledby="look-t">
         <p class="viz-title" id="look-t">Every look is a look back</p>
         <p class="viz-sub">How old the light hitting your eye is, right now</p>
-        <svg viewBox="0 0 960 250" role="img" aria-label="A timeline of how old arriving light is, on a stretched scale: your own hand two billionths of a second, the Moon 1.3 seconds, the Sun 8 minutes, the nearest star 4.2 years, the Andromeda galaxy 2.5 million years.">
+        <div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="look-t" style="--diagram-width:960px">
+<svg viewBox="0 0 960 250" role="img" aria-label="A timeline of how old arriving light is, on a stretched scale: a hand about two feet away two billionths of a second, the Moon 1.3 seconds, the Sun 8 minutes, Proxima Centauri 4.2 years, the Andromeda galaxy 2.5 million years.">
           <line class="axisln draw" style="--len:820" x1="70" y1="140" x2="880" y2="140"/>
           <path d="M880,140 l-11,-5.5 l0,11 z" fill="var(--grid-strong)"/>
           <!-- your hand -->
           <line x1="90" y1="132" x2="90" y2="148" stroke="var(--grid-strong)" stroke-width="1.5"/>
           <circle cx="90" cy="140" r="5.5" fill="var(--rel)"/>
           <text class="anno-b" x="78" y="90" text-anchor="start">2 billionths of a second</text>
-          <text class="axs" x="78" y="112" text-anchor="start">your own hand</text>
+          <text class="axs" x="78" y="112" text-anchor="start">a hand about two feet away</text>
           <!-- the Moon -->
           <line x1="386" y1="132" x2="386" y2="148" stroke="var(--grid-strong)" stroke-width="1.5"/>
           <circle cx="386" cy="140" r="5.5" fill="var(--rel)"/>
@@ -274,37 +265,32 @@
           <!-- nearest star -->
           <line x1="656" y1="132" x2="656" y2="148" stroke="var(--grid-strong)" stroke-width="1.5"/>
           <circle cx="656" cy="140" r="5.5" fill="var(--rel)"/>
-          <text class="axs" x="656" y="170" text-anchor="middle">the nearest star</text>
+          <text class="axs" x="656" y="170" text-anchor="middle">Proxima Centauri</text>
           <text class="anno-b" x="656" y="194" text-anchor="middle">4.2 years</text>
           <!-- Andromeda -->
           <line x1="850" y1="132" x2="850" y2="148" stroke="var(--grid-strong)" stroke-width="1.5"/>
           <circle cx="850" cy="140" r="5.5" fill="var(--rel)"/>
           <text class="anno-b" x="880" y="90" text-anchor="end">2.5 million years</text>
           <text class="axs" x="880" y="112" text-anchor="end">the Andromeda galaxy</text>
-          <text class="axs" x="475" y="232" text-anchor="middle" fill="var(--text-faint)">the scale is stretched: each step to the right is ten times longer ago &#8594;</text>
+          <text class="axs" x="475" y="232" text-anchor="middle" fill="var(--text-faint)">logarithmic scale: equal distances represent equal ratios of travel time</text>
         </svg>
-        <figcaption class="viz-cap"><b>Everything you see is the past.</b> Light is fast but not instant, so distance is delay. On a dark night, a bare human eye can catch light older than our species.</figcaption>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+        <figcaption class="viz-cap"><b>Distance is a delay.</b> The hand estimate assumes it is about two feet away. The astronomical times use rounded distances; Proxima Centauri is the nearest star beyond the Sun. Equal horizontal distances represent equal ratios of travel time, approximately. <a href="https://science.nasa.gov/moon/facts/">Moon</a>, <a href="https://science.nasa.gov/sun/facts/">Sun and nearby stars</a>, <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-31/">Andromeda</a>.</figcaption>
       </figure>
-
-      <p>So the speed limit is real, no object and no signal can reach it, let alone pass it, and the price of that limit is that space and time themselves are up for negotiation. The next three ideas are the bill coming due.</p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">one catch</p><p class="u-callout-body"><b>"Nothing travels faster than light" is about things moving through space.</b> Space itself can do as it likes. The expansion of the universe carries distant galaxies away from us faster than light, and that breaks no rule, because they are not racing through space; the space between us is stretching. The unbreakable law is narrower: no object, no signal, no cause and effect can outrun light. <span class="u-src"><a href="https://arxiv.org/abs/astro-ph/0310808">expanding space</a></span></p></aside>
+      <aside class="u-callout u-aside"><p class="u-callout-k">Expansion is a different comparison</p><p class="u-callout-body">Distant galaxies can have recession speeds greater than light's speed when cosmologists compare their changing distances across an expanding universe. That is not a locally measured speed through the observer's laboratory. Expansion obeys general relativity too; it doesn't give matter or messages permission to outrun nearby light. <a href="https://arxiv.org/pdf/astro-ph/0310808">Distances and horizons in cosmology</a>.</p></aside>
     </section>
-
-    <!-- 02 TIME -->
     <section id="time" class="sec zone-rel" aria-labelledby="time-h">
-      <div class="u-sechead"><p class="u-sechead-k">Moving clocks run slow</p><h2 id="time-h" class="u-sechead-h">A moving clock runs slow, for real</h2></div>
-
-      <p class="lede">A clock in motion ticks slower than a clock at rest, and the faster it moves the slower it ticks. This is not an illusion or a glitch in the instrument. Time itself runs slow for the thing that is moving.</p>
-
-      <p>Here is the cleanest way to see why, and it uses nothing but the one fact from the last chapter. Build a clock out of light. Two mirrors face each other, and a pulse of light bounces straight up and down between them; each round trip is one tick. Simple, and its speed is set by the speed of light.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">02 / Time</p><h2 id="time-h" class="u-sechead-h">Moving clocks record less time</h2></div>
+      <p class="lede">In an inertial reference frame, a moving clock accumulates less time between events than the synchronized clocks at rest in that frame. The moving clock's own reading is its <em>proper time</em>. The frame's shared time coordinate is a different thing.</p>
+      <p>A light clock makes the distinction visible. Put a pulse between two facing mirrors and count each round trip as a tick. Watch the clock pass by: while the light crosses the gap, the mirrors move sideways. The pulse follows a longer diagonal path in your frame, at the same light speed. More of your time passes between its ticks.</p>
       <figure class="viz reveal" aria-labelledby="clock-t">
         <p class="viz-title" id="clock-t">The light clock</p>
-        <p class="viz-sub">Why moving makes a clock tick slowly</p>
-        <svg viewBox="0 0 960 400" role="img" aria-label="A light clock at rest, where light bounces straight up and down a short distance, beside the same clock moving fast, where from outside the light traces a longer diagonal zigzag and so takes longer per tick.">
+        <p class="viz-sub">One clock at rest and one moving, measured in the same frame</p>
+        <div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="clock-t" style="--diagram-width:960px">
+<svg viewBox="0 0 960 400" role="img" aria-label="A light clock at rest, where light bounces straight up and down a short distance, beside the same clock moving fast, where from outside the light traces a longer diagonal zigzag and so takes longer per tick.">
           <!-- AT REST -->
-          <text class="anno-b" x="170" y="44" text-anchor="middle">At rest</text>
+          <text class="anno-b" x="170" y="44" text-anchor="middle">At rest in this frame</text>
           <line class="mirror" x1="100" y1="90" x2="240" y2="90"/>
           <line class="mirror" x1="100" y1="320" x2="240" y2="320"/>
           <line class="draw" style="--len:460" x1="170" y1="320" x2="170" y2="90" stroke="var(--rel)" stroke-width="3"/>
@@ -317,7 +303,7 @@
           <line x1="350" y1="70" x2="350" y2="340" stroke="var(--rule)" stroke-width="1"/>
 
           <!-- MOVING -->
-          <text class="anno-b" x="650" y="44" text-anchor="middle">Moving fast</text>
+          <text class="anno-b" x="650" y="44" text-anchor="middle">Moving in this frame</text>
           <!-- ghost mirror positions sliding right -->
           <line class="mirror-ghost" x1="450" y1="90" x2="530" y2="90"/>
           <line class="mirror-ghost" x1="450" y1="320" x2="530" y2="320"/>
@@ -334,63 +320,40 @@
           <text class="anno" x="640" y="382" text-anchor="middle" fill="var(--text-faint)">the whole clock slides this way &#8594;</text>
           <text class="anno" x="650" y="356" text-anchor="middle">one tick, longer path</text>
         </svg>
-        <figcaption class="viz-cap"><b>Same clock, same light, same speed.</b> When the clock moves, the light has to travel a longer diagonal to make the same trip, because the mirrors slide sideways underneath it. Light cannot speed up to cover the extra distance, so each tick simply takes longer. The faster the clock goes, the longer the diagonal, the slower it ticks.</figcaption>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+        <figcaption class="viz-cap"><b>Both drawings use the same outside reference frame.</b> The person traveling with the moving clock sees an ordinary vertical bounce instead.</figcaption>
       </figure>
-
-      <p>Now put that clock on a fast rocket and watch it fly past. From your seat on the ground, the light no longer goes straight up and down, because between leaving the bottom mirror and reaching the top one, the whole clock has slid sideways. So you see the light travel a longer, slanted path. But light cannot speed up to cover the extra ground. It is stuck at the one speed. A longer path at the same speed takes more time, so each tick of the passing clock takes longer. The moving clock runs slow.</p>
-
-      <p>And the light clock is nothing special. Every clock on that rocket runs slow by the same amount: the atomic vibrations, the chemistry, the heartbeat of the astronaut inside. If only the light clock slowed, you could hold it next to a wristwatch and catch the mismatch, and the whole idea would fall apart. What slowed was time itself.</p>
-
+      <p>The traveler sees nothing wrong with their clock. Their heartbeat and other local processes behave normally too. From their inertial frame, your clocks are moving and run slowly instead. This reciprocity doesn't produce a contradiction, because the frames also disagree about which distant clock readings should be compared at the same moment.</p>
+      <p>Clocks can nevertheless reunite with different totals. If one twin travels out and back while the other stays home, their paths through spacetime differ. A calculation along those paths gives the aging difference. You cannot settle that journey by saying each twin was merely moving relative to the other; the returning twin changed direction and reference frames.</p>
       <figure class="portrait reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/gps.webp"><img src="assets/images/physics/gps.jpg" width="1006" height="806" loading="lazy" decoding="async" alt="NASA illustration of a GPS satellite in orbit above Earth, with solar panels extended."></picture>
-        <figcaption>A GPS satellite. Its clock runs fast by about 38 microseconds a day, and the system corrects for it. Illustration: NASA (public domain).</figcaption>
+        <figcaption>A GPS satellite. Without its relativistic correction, the satellite clock would gain about 38 microseconds a day relative to a clock on the ground. Illustration: NASA (public domain).</figcaption>
       </figure>
-
-      <p>You can measure this on an ordinary Tuesday. The atomic clocks in GPS satellites move fast enough, around 8,700 mph, that this effect slows them by about 7 microseconds a day. A second effect from gravity, coming up shortly, pushes the other way and wins, but the motion part is real, predicted, and built into your phone. <span class="u-src"><a href="https://www.nist.gov/news-events/news/2022/05/einsteins-relativity-makes-gps-work">NIST</a></span></p>
-
-      <p>Nature ran the experiment long before we did. The upper atmosphere is constantly making particles called muons, heavy cousins of the electron, when cosmic rays slam into the air about nine miles up. A muon falls apart in about 2.2 millionths of a second on average. Even at nearly the speed of light, that is only enough time to cross a few hundred yards before it disintegrates, so almost none should reach the ground. They reach the ground in floods. From our point of view their internal clock is running slow, stretched by a factor of ten or more, so they live long enough to finish the trip. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Experimental_testing_of_time_dilation">muon survival</a></span> <span class="u-grade u-grade-a">solid</span></p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">the other side of the same coin</p><p class="u-callout-body"><b>From the muon's own point of view, its life is as short as ever.</b> What saves it is that the nine miles of atmosphere ahead are squashed down to a few hundred yards. Time stretching for one observer and distance shrinking for the other are the same fact, seen from two seats. A second is not a fixed amount the universe hands out equally. It is a local measurement, and motion changes it.</p></aside>
-
-      <p>Stack up enough speed for enough hours and a person becomes a measurable time traveler. The cosmonaut Oleg Kononenko has spent 1,111 days of his life in orbit, more than anyone in history, circling at about 17,000 mph. The space station flies low and fast, so unlike a GPS satellite the motion effect wins, and across his career it left him about three hundredths of a second younger than if he had never gone up. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Oleg_Kononenko">Kononenko</a></span> <span class="u-src"><a href="https://en.wikipedia.org/wiki/Time_dilation">time dilation</a></span> <span class="u-grade u-grade-c">rounded</span> That makes him the current record holder for travel into the future. The effect has no ceiling, either. A ship that could hold near the speed of light for a few years of its own time would come home decades later, its crew barely older. Nothing in physics forbids that trip. What relativity never offers is the ride back.</p>
+      <p>GPS needs both kinds of relativity. Satellite motion makes its clocks lose about 7 microseconds a day relative to clocks on Earth. Their higher position in Earth's gravitational field makes them gain about 45. The approximate net gain is 38 microseconds. Engineers account for this nominal offset in the clocks and apply further corrections for the satellites' actual orbits. <span class="u-src"><a href="https://www.astronomy.ohio-state.edu/pogge.1/Ast162/Unit5/gps.html">The rounded figures</a>; <a href="https://link.springer.com/article/10.12942/lrr-2003-1">the full timing model</a></span></p>
+      <p>Cosmic-ray muons give another example. A muon at rest has a mean lifetime of about 2.2 microseconds, not a fixed expiry time. Multiplying that interval by light speed gives about 720 yards. Fast muons can reach the ground from much higher in the atmosphere because more Earth-frame time passes during their proper lifetime. In the muon's frame, the distance through the atmosphere is shorter. These are two descriptions of the same arrivals. <span class="u-src"><a href="https://pdg.lbl.gov/2024/listings/rpp2024-list-muon.pdf">Measured lifetime</a>; <a href="https://www.feynmanlectures.caltech.edu/I_15.html">muons and time dilation</a></span></p>
     </section>
-
-    <!-- 03 MASS -->
     <section id="mass" class="sec zone-rel" aria-labelledby="mass-h">
-      <div class="u-sechead"><p class="u-sechead-k">Mass is frozen energy</p><h2 id="mass-h" class="u-sechead-h">Mass is just energy, sitting still</h2></div>
-
-      <p class="lede">E = mc squared. The most famous equation in the world says mass and energy are the same thing in different clothes, and the exchange rate between them is the speed of light, squared.</p>
-
-      <p>Because the speed of light is an enormous number, and squaring it makes it absurd, a tiny amount of mass is worth a staggering amount of energy. The energy locked inside a single gram of anything, a paperclip, a raisin, is about 21 kilotons of TNT, the scale of the bombs that ended the Second World War. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence">mass-energy</a></span> You cannot easily pry it loose; that is a separate and difficult problem. But it is in there.</p>
-
-      <p>The Sun pries it loose. Deep in its core it fuses hydrogen into helium, and the helium comes out weighing a hair less than the hydrogen that went in. That missing mass leaves as light and heat, exactly as E = mc squared demands. The bookkeeping: the Sun turns about 4 million tons of its own mass into pure energy every second. <span class="u-src"><a href="http://solar-center.stanford.edu/FAQ/Qshrink.html">Stanford Solar Center</a></span> <span class="u-grade u-grade-b">good</span> It has been doing this for four and a half billion years and is barely middle-aged.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">03 / Mass</p><h2 id="mass-h" class="u-sechead-h">Mass comes with rest energy</h2></div>
+      <p class="lede">An object has energy even when it is at rest. The amount is its mass multiplied by the speed of light squared: <em>E<sub>0</sub> = mc<sup>2</sup></em>. The zero matters here: this is rest energy, not an object's total energy in every frame.</p>
+      <p>For one gram, the calculation gives about 90 trillion joules. That is an energy equivalence, not a promise that you can extract that much from any gram of material. Most processes release only a small fraction of the material's rest energy. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/I_16.html">Energy and momentum</a></span></p>
+      <p>In the Sun's core, fusion turns hydrogen nuclei into helium through a chain of reactions. The final products have less rest mass than the starting ingredients. The difference appears as energy, carried initially by particles and radiation; neutrinos take some away directly. The remaining energy eventually helps supply the sunlight leaving the surface. <span class="u-src"><a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">The fusion reactions</a></span></p>
       <figure class="fig wide reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/sun.webp"><img src="assets/images/physics/sun.jpg" width="1400" height="1400" loading="lazy" decoding="async" alt="The Sun photographed in extreme ultraviolet light by NASA's Solar Dynamics Observatory, a glowing gold disk with bright active regions and looping arcs of plasma along the edge."></picture>
-        <figcaption>The Sun in extreme ultraviolet light. Every second, about 4 million tons of it stops being matter and leaves as light. The sunlight on your skin is, very literally, a piece of the Sun that used to have weight. <span class="cred">Credit: NASA / SDO and the AIA science team (public domain).</span></figcaption>
+        <figcaption>The Sun in extreme ultraviolet light. Its sunlight carries away energy equivalent to about 4.7 million US tons of mass per second. This estimate excludes neutrinos and the solar wind. <span class="cred">Credit: NASA / SDO and the AIA science team (public domain).</span></figcaption>
       </figure>
-
-      <p>The equation also runs in the other direction, and the other direction is stranger: most of your mass is not stuff. Weigh the three quarks inside a proton and they account for about one percent of it. The other 99 percent is the energy of the fields that bind them, showing up on the scale as mass. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Proton">proton mass</a></span> The Sun converts matter into energy. You, mostly, are energy already.</p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">the small print</p><p class="u-callout-body"><b>E = mc squared is the headline, not the whole sentence.</b> It is the simple case, for an object sitting still. The fuller equation carries an extra term for motion. Beginners can ignore it; pedants cannot, so now you know it is there.</p></aside>
+      <p>Mass accounting gets less intuitive inside a proton. Adding the rest masses of its three valence quarks does not come close to the proton's measured mass. Most comes from the dynamics of quantum chromodynamics: quark motion, gluon fields and quantum effects in their interactions. Exactly how that total is divided depends on the definitions and calculation scheme. <span class="u-src"><a href="https://arxiv.org/pdf/1808.08677">A lattice calculation of proton mass</a></span></p>
+      <aside class="u-callout u-aside"><p class="u-callout-k">Rest mass and total energy</p><p class="u-callout-body">For a free particle, the full relation is <em>E<sup>2</sup> = p<sup>2</sup>c<sup>2</sup> + m<sup>2</sup>c<sup>4</sup></em>, where <em>p</em> is momentum. At rest, momentum is zero and this reduces to <em>E<sub>0</sub> = mc<sup>2</sup></em>. A photon has zero rest mass and still carries energy and momentum.</p></aside>
     </section>
-
-    <!-- 04 GRAVITY -->
     <section id="gravity" class="sec zone-rel" aria-labelledby="gravity-h">
-      <div class="u-sechead"><p class="u-sechead-k">Gravity is a shape</p><h2 id="gravity-h" class="u-sechead-h">Gravity is the shape of space and time</h2></div>
-
-      <p class="lede">Gravity is not a force tugging objects together. It is the bending of space and time around anything with mass, and things fall because they are coasting along the straightest path through a shape that happens to be curved.</p>
-
-      <p>This is general relativity, Einstein's 1915 sequel, and it is the strangest idea in the first rulebook. Start with the picture you have probably seen: a bowling ball on a stretched rubber sheet, sagging into a dip, with marbles circling the dip like little planets. It is a nice image. It is also wrong in a way worth understanding, because the broken edge is the whole point.</p>
-
-      <p>The rubber-sheet picture cheats twice. First, it explains gravity using gravity: the marbles roll into the dip only because real, ordinary, downward gravity is pulling them onto the sheet. Take that away and nothing rolls anywhere. <span class="u-src"><a href="https://www.askamathematician.com/2010/07/q-whats-up-with-that-bowling-ball-creates-a-dip-in-a-sheet-analogy-of-spacetime-isnt-it-gravity-that-makes-the-dip-in-the-first-place/">why the sheet cheats</a></span> Second, and bigger, it shows space bending but quietly drops time, and for everyday falling it is mostly the bending of time that matters.</p>
-
-      <p>Here is a cleaner picture. Forget the sheet. Imagine two friends standing a few feet apart on the equator, each told to walk due north in a perfectly straight line. Neither ever steers toward the other. Yet as they walk, they drift closer and closer, and at the North Pole they collide. Nothing pulled them together. They walked dead straight the whole way. The surface under them was curved, and on a curved surface, straight paths converge.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">04 / Gravity</p><h2 id="gravity-h" class="u-sechead-h">Free fall follows spacetime's geometry</h2></div>
+      <p class="lede">In general relativity, a freely falling object follows a <em>geodesic</em>, a path set by spacetime's geometry. Near Earth, that path carries a dropped apple toward the ground. An orbit is free fall too: the Moon keeps falling while its sideways motion carries it around us.</p>
+      <p>The familiar rubber sheet with a heavy ball makes curvature easy to draw, but it borrows Earth's gravity to make the ball sink. It also leaves out time. A globe offers a more limited picture: two routes can converge even though neither turns toward the other.</p>
       <figure class="viz tight reveal" aria-labelledby="geo-t">
         <p class="viz-title" id="geo-t">Two straight paths that meet</p>
         <p class="viz-sub">Why "straight" can still bring you together</p>
-        <svg viewBox="0 0 720 430" role="img" aria-label="A globe with two travelers starting apart on the equator, each walking a straight line due north, their paths curving together until they meet at the north pole.">
+        <div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="geo-t" style="--diagram-width:720px">
+<svg viewBox="0 0 720 430" role="img" aria-label="A globe with two travelers starting apart on the equator, each walking a straight line due north, their paths curving together until they meet at the north pole.">
           <!-- globe -->
           <circle cx="360" cy="215" r="155" fill="none" stroke="var(--grid-strong)" stroke-width="1.5"/>
           <ellipse cx="360" cy="215" rx="155" ry="44" fill="none" stroke="var(--grid)" stroke-width="1" stroke-dasharray="4 6"/>
@@ -406,89 +369,62 @@
           <circle cx="440" cy="247" r="6" fill="var(--text-bright)"/>
           <text class="anno" x="250" y="285" text-anchor="middle">start</text>
           <text class="anno" x="470" y="285" text-anchor="middle">start</text>
-          <text class="anno" x="360" y="400" text-anchor="middle" fill="var(--text-faint)">both walk perfectly straight, never turning toward each other</text>
+          <text class="anno" x="360" y="400" text-anchor="middle" fill="var(--text-faint)">northbound great circles converge at the pole</text>
         </svg>
-        <figcaption class="viz-cap"><b>No force is pulling the two travelers together.</b> Each walks a straight line. The curve of the globe does the rest. Gravity works the same way, except the thing that is curved is four-dimensional spacetime, and the part that bends hardest, for slow everyday objects, is time.</figcaption>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+        <figcaption class="viz-cap"><b>Straight paths can converge on a curved surface.</b> These northbound routes follow great circles, the globe's geodesics. The drawing illustrates that geometric idea only. Earth's surface is two-dimensional space; gravity involves paths through four-dimensional spacetime, with time included.</figcaption>
       </figure>
-
-      <p>Gravity is that, in four dimensions. The Earth bends the spacetime around it. You, and a dropped apple, and the Moon overhead are all just coasting along the straightest available path through that curved spacetime, and the paths lean toward the Earth. No force required. The apple is not yanked down; it is following a straight line through a shape that tips toward the ground.</p>
-
-      <p>And the part the trampoline leaves out: the strongest bending, for slow everyday things, is in time, not space. Clocks run slower the deeper they sit in gravity, and an object's natural path through spacetime tips toward wherever time runs slowest. You are being pressed into your chair right now because the floor sits where time runs a hair slower than it does at your head.</p>
-
-      <p>That last sentence is measurable. In 2010, physicists at the US National Institute of Standards and Technology compared two of the best atomic clocks ever built after raising one of them by about a foot. The higher clock, sitting where Earth's gravity is a sliver weaker, ran faster. The gap adds up to roughly 90 billionths of a second over a lifetime, and they measured it across one foot of height. <span class="u-src"><a href="https://www.nist.gov/news-events/news/2010/09/nist-clock-experiment-demonstrates-your-head-older-your-feet">NIST clocks</a></span> <span class="u-grade u-grade-a">solid</span> Your head really does age faster than your feet.</p>
-
-      <p>Point general relativity at something heavy and the predictions turn spectacular, and they keep coming true.</p>
-
-      <h3>The bent starlight</h3>
-      <p>Einstein's theory said the Sun's gravity should bend starlight skimming past it, nudging the stars' apparent positions by 1.75 arcseconds, twice what the old physics allowed. In 1919, an expedition photographed stars near the Sun during a total eclipse and found the shift. It made Einstein famous overnight.</p>
-
+      <p>You standing on the floor are not freely falling. The floor pushes upward, through the electromagnetic interactions between its atoms and yours, preventing the geodesic you would otherwise follow. That support is the weight you feel. Astronauts in orbit feel weightless because they and their spacecraft are falling together. <span class="u-src"><a href="https://www.einstein-online.info/en/spotlight/equivalence_principle/">Free fall and acceleration</a></span></p>
+      <p>Gravity also changes clock comparisons. For clocks held at rest near Earth, a higher clock runs faster than a lower one. The comparison depends on gravitational potential, not simply on how strong the local gravitational pull is. In the weak field near the surface, the fractional rate difference is approximately <em>g</em> times the height difference divided by <em>c<sup>2</sup></em>.</p>
+      <p>In 2010, NIST researchers raised one optical atomic clock by 33 centimeters, about 13 inches, and measured the rate change against another through a fiber link. The same small height difference, maintained for 79 years under comparable conditions, would accumulate about 90 nanoseconds. That last number is a calculation across a specified height and duration, not a lifetime the experiment observed. <span class="u-src"><a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=905055">Original experiment</a>; <a href="https://www.nist.gov/news-events/news/2010/09/nist-clock-experiment-demonstrates-your-head-older-your-feet">NIST explanation</a></span></p>
+      <h3>Light bends too</h3>
+      <p>General relativity predicts a deflection of about 1.75 arcseconds for starlight passing close to the Sun's visible edge. Eclipse expeditions to Principe and Sobral in 1919 compared nearby stars' apparent positions with reference photographs. Their difficult measurements favored Einstein's prediction. The plates were an early test, with substantial uncertainties. <span class="u-src"><a href="https://www.mpg.de/9244824/solar-eclipse-1919">The eclipse observations</a></span></p>
       <figure class="fig narrow reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/eclipse.webp"><img src="assets/images/physics/eclipse.jpg" width="700" height="899" loading="lazy" decoding="async" alt="The 1919 total solar eclipse photographic negative, a dark disk of the eclipsed Sun ringed by faint corona, with short horizontal marks identifying the positions of stars near the Sun."></picture>
-        <figcaption>The actual 1919 eclipse negative. The marked stars sat slightly out of place, shoved aside by the Sun's gravity, just as predicted. <span class="cred">Dyson, Eddington &amp; Davidson, 1919 (public domain).</span></figcaption>
+        <figcaption>A photographic negative from the 1919 eclipse observations. Marks identify stars whose apparent positions could be compared with photographs taken away from the Sun. <span class="cred">Dyson, Eddington &amp; Davidson, 1919 (public domain).</span></figcaption>
       </figure>
-
-      <p>The 1919 photographs were noisy, and there is a long argument about whether Eddington nudged his data toward the answer he was hoping for. Later experiments pinned the bending down to far better precision, so the conclusion stands even though the original plates were rough. <span class="u-src"><a href="https://www.mpg.de/9244824/solar-eclipse-1919">Max Planck Society</a></span> <span class="u-grade u-grade-b">good</span></p>
-
-      <h3>The ring of a galaxy</h3>
-      <p>Bend starlight hard enough and a whole galaxy becomes a lens. Light from something directly behind it gets smeared into a ring. We find them through the telescope, exactly where the theory says they should be.</p>
-
+      <p>At larger distances, a massive foreground galaxy can bend light from a background galaxy into arcs or a ring. The alignment matters: a near-ring is not what every galaxy lens produces.</p>
       <figure class="fig wide reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/einstein-ring.webp"><img src="assets/images/physics/einstein-ring.jpg" width="1014" height="670" loading="lazy" decoding="async" alt="A Hubble image of the Cosmic Horseshoe: a bright blue near-complete ring of light wrapped around a glowing red galaxy at its center."></picture>
-        <figcaption>The Cosmic Horseshoe. That blue ring is a single distant galaxy, its light bent almost all the way around a massive red galaxy sitting between it and us. A lens made of gravity. <span class="cred">Credit: ESA / Hubble &amp; NASA.</span></figcaption>
+        <figcaption>The Cosmic Horseshoe. The blue arc is a distant galaxy seen through the gravitational lens of the nearer red galaxy. <span class="cred">Credit: ESA / Hubble &amp; NASA.</span> <a href="https://esahubble.org/images/potw1151a/">Image details</a>.</figcaption>
       </figure>
-
-      <h3>The hole you can photograph</h3>
-      <p>Pack enough mass into a small enough space and spacetime curves so steeply that not even light, moving at the universe's top speed, can climb back out. That is a black hole, and the boundary of no return is the event horizon. For decades they were just a solution to Einstein's equations that seemed too strange to be real. In April 2019, a network of radio telescopes released the first image of one: the giant black hole at the heart of the galaxy M87, 55 million light-years away and as heavy as six and a half billion Suns. <span class="u-src"><a href="https://www.eso.org/public/news/eso1907/">EHT image</a></span></p>
-
+      <h3>A black hole's shadow</h3>
+      <p>A black hole has an event horizon, a boundary from inside which light cannot escape to distant observers. In 2019, the Event Horizon Telescope collaboration published a radio image of the region around the black hole in M87, about 55 million light-years away. The observations and models indicated a mass of about 6.5 billion Suns. <span class="u-src"><a href="https://www.eso.org/public/news/eso1907/">Observations and image reconstruction</a></span></p>
       <figure class="fig wide reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/m87.webp"><img src="assets/images/physics/m87.jpg" width="1600" height="1600" loading="lazy" decoding="async" alt="The 2019 Event Horizon Telescope image of the M87 black hole: a fuzzy bright orange ring of glowing gas surrounding a dark central shadow."></picture>
-        <figcaption>The first image of a black hole, 2019. The bright ring is superheated gas; the dark center is the hole's shadow. <span class="cred">Credit: Event Horizon Telescope Collaboration (CC BY 4.0).</span></figcaption>
+        <figcaption>The Event Horizon Telescope image published in 2019, reconstructed from 2017 radio observations. Orange shows the emitting region around M87's black hole in false color; the dark center is its shadow, larger than the event horizon. <span class="cred">Credit: Event Horizon Telescope Collaboration (CC BY 4.0).</span></figcaption>
       </figure>
-
-      <p>Two honest caveats, because this image gets oversold. What you are looking at is the shadow, not the horizon itself; the bending of light makes the dark patch larger than the true edge of no return. And it is a radio image stitched together by algorithms, not a snapshot through a lens. It is still, unmistakably, a picture of a black hole.</p>
-
-      <p>One last prediction, because it may be the most absurd of all. When two black holes crash into each other, they shake spacetime hard enough to send ripples spreading outward at the speed of light. In 2015 an instrument called LIGO felt one wash over the Earth: two black holes, about 36 and 29 times the mass of the Sun, that had merged 1.3 billion years ago. The ripple stretched LIGO's two-and-a-half-mile arms by less than one ten-thousandth the width of a proton, and we caught it. <span class="u-src"><a href="https://www.ligo.caltech.edu/page/press-release-gw150914">LIGO</a></span> <span class="u-grade u-grade-a">solid</span></p>
-
-      <aside class="u-callout u-move"><p class="u-callout-k">my read</p><p class="u-callout-body">Mass tells spacetime how to curve; curved spacetime tells matter how to move. That one sentence, from the physicist John Wheeler, is general relativity in fourteen words.</p></aside>
+      <p>The dark patch is the black hole's shadow, enlarged by the bending and capture of light. It is not a direct photograph of the event horizon. The image was reconstructed from radio measurements made by widely separated telescopes, with independent imaging and calibration methods used to check the result.</p>
+      <h3>Ripples measured on Earth</h3>
+      <p>On September 14, 2015, LIGO's two detectors recorded a gravitational-wave signal from merging black holes. Matching the waveform to relativity models gave initial masses of roughly 36 and 29 Suns. The signal reached a strain of about 10<sup>&minus;21</sup>, a fractional change in length. <span class="u-src"><a href="https://arxiv.org/pdf/1602.03837">GW150914, original paper</a></span></p>
+      <p>Each detector has two arms about 2.5 miles long, or 4 kilometers. Multiplying that length by the quoted strain gives a differential arm-length signal on the scale of 4 &times; 10<sup>&minus;18</sup> meters. This is the change in the difference between the arms, not the size of a ripple photographed in space. The researchers compared the two sites, checked environmental disturbances and estimated the chance of a similar noise event using time-shifted data.</p>
     </section>
-
-    <!-- ============================ PART TWO ============================ -->
     <div class="partintro zone-q reveal">
-      <p class="part-k">Rulebook two</p>
-      <h2 class="part-h">The very small</h2>
-      <p class="part-d">Everything so far has still been a world of definite things: the clock ticks slow, but it ticks; the apple falls, but it is somewhere. Shrink down to single particles and even that goes away.</p>
+      <p class="part-k">Part two</p><h2 class="part-h">Quantum mechanics</h2>
+      <p class="part-d">Detections arrive one at a time. Their patterns require probability amplitudes, superposition and entanglement.</p>
     </div>
-
     <section id="q-open" class="sec zone-q" aria-label="Quantum introduction">
-      <p>Down at the scale of atoms and electrons, the strangeness changes character. In the big world, things have definite properties and relativity just bends how different observers measure them. In the small world, things stop having definite properties at all until you look, and the act of looking changes the answer. This is quantum mechanics, and it is the best-tested theory in the history of science. It is also the one that makes working physicists shrug and say nobody really understands why it works, only that it does.</p>
-
+      <p>Quantum mechanics is easiest to meet in experiments with carefully isolated particles. That doesn't make it a law only for small things. The practical problem is preserving the relevant quantum coherence while a system interacts with its surroundings.</p>
       <figure class="fig narrow reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/bubblechamber.webp"><img src="assets/images/physics/bubblechamber.jpg" width="1500" height="2118" loading="lazy" decoding="async" alt="A bubble chamber photograph showing curling and spiraling white tracks left by subatomic particles moving through liquid in a magnetic field."></picture>
-        <figcaption>The small world, caught in the act. Spiraling tracks left by subatomic particles in a bubble chamber, curled by a magnetic field. Each curl is a particle too small to see, betraying itself by the trail it leaves. <span class="cred">Credit: CERN (CC BY 4.0).</span></figcaption>
+        <figcaption>Charged particles leave tracks in a bubble chamber. A magnetic field bends their paths; the photograph records the trails rather than resolving the particles themselves. <span class="cred">Credit: CERN (CC BY 4.0).</span></figcaption>
       </figure>
     </section>
-
-    <!-- 05 WAVE -->
     <section id="wave" class="sec zone-q" aria-labelledby="wave-h">
-      <div class="u-sechead"><p class="u-sechead-k">Everything is a wave</p><h2 id="wave-h" class="u-sechead-h">Everything is a wave until you check</h2></div>
-
-      <p class="lede">Fire single particles, one at a time, at a barrier with two narrow slits in it, and they slowly build up a striped pattern that only waves can make, as if each particle went through both slits at once and rippled into itself on the far side. This is the double-slit experiment, and it is the beating heart of the whole strange business.</p>
-
-      <p>Walk through it slowly, starting with water. Drop two stones in a still pond and the ripples spread and overlap. Where two crests meet, they pile into a bigger crest; where a crest meets a trough, they flatten to nothing. The result is a fixed pattern of busy stripes and calm bands. That adding and cancelling is called interference, and it is the unmistakable signature of waves.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">05 / Interference</p><h2 id="wave-h" class="u-sechead-h">Individual particles build a wave pattern</h2></div>
+      <p class="lede">Send electrons through two narrow slits and record where they land. The screen registers separate dots. After enough detections, those dots can form alternating dense and sparse bands, an interference pattern.</p>
       <figure class="fig wide reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/ripple.webp"><img src="assets/images/physics/ripple.jpg" width="1600" height="1022" loading="lazy" decoding="async" alt="A ripple tank photograph: two sets of circular water waves spreading from two points and overlapping into a pattern of bright and dark fan-shaped bands."></picture>
         <figcaption>Two sources of ripples in a water tank. Where the waves overlap they add and cancel into fixed fan-shaped bands. This is interference, the fingerprint of a wave. <span class="cred">Photo: Wikimedia Commons (CC0 / public domain).</span></figcaption>
       </figure>
-
-      <p>Now do it with light through two slits and you get the same stripes on the far wall: bright bands where the light waves add, dark bands where they cancel. Fine. Light is a wave; that was settled two hundred years ago.</p>
-
-      <p>Here is where it goes wrong. Turn the source down so low that it releases one particle of light at a time, a single photon, with long gaps between them. Each one lands on the far wall as a single dot, one tiny hit, exactly like a particle. So far so sensible. But let the dots pile up over hours, and they slowly assemble themselves into the same striped interference pattern.</p>
-
+      <p>Water waves offer a familiar comparison. Where two waves arrive in step, their displacements add. Where a crest meets a trough, they can cancel. With electrons, the calculation combines <em>probability amplitudes</em>, mathematical quantities whose squared magnitudes give detection probabilities. Add the amplitudes for the alternative paths first, then take the square; the interference appears in that operation. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/III_01.html">The double-slit calculation</a></span></p>
+      <p>You can send the electrons slowly enough that they are individually separated, so the bands cannot be explained by electrons colliding with one another on the way. In a 2013 experiment, Roger Bach and colleagues detected electrons at about one per second and recorded the buildup. A movable mask let them compare one open slit with two. <span class="u-src"><a href="https://arxiv.org/pdf/1210.6243">Experiment and apparatus</a></span></p>
       <figure class="viz reveal" aria-labelledby="slit-t">
         <p class="viz-title" id="slit-t">One dot at a time, into stripes</p>
-        <p class="viz-sub">Single particles fired one by one, where they land on the screen</p>
-        <svg viewBox="0 0 960 360" role="img" aria-label="Three panels showing particle hits on a screen accumulating: with 20 hits the dots look random, with 95 they begin to band, with 420 they form clear vertical interference stripes.">
+        <p class="viz-sub">A schematic buildup of an interference pattern</p>
+        <div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="slit-t" style="--diagram-width:960px">
+<svg viewBox="0 0 960 360" role="img" aria-label="Three panels showing particle hits on a screen accumulating: with 20 hits the dots look random, with 95 they begin to band, with 420 they form clear vertical interference stripes.">
           <g fill="var(--q)">
             <!-- panel 1 -->
             <rect x="70" y="30" width="240" height="300" fill="none" stroke="var(--rule)" stroke-width="1"/>
@@ -504,101 +440,82 @@
             <text class="anno" x="770" y="352" text-anchor="middle" fill="var(--text-dim)">420 hits: clear stripes</text>
           </g>
         </svg>
-        <figcaption class="viz-cap"><b>Each dot is one particle, arriving alone.</b> The first few look scattered. As they accumulate, an interference pattern appears, the same one you would get from overlapping waves. Every lonely particle, with nothing else around to interfere with, lands in a way that respects the stripes. The only thing it has to interfere with is itself.</figcaption>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+        <figcaption class="viz-cap"><b>Illustration, not experimental data.</b> The three panels contain 20, 95 and 420 code-drawn dots, arranged to show how an interference pattern emerges from separate detections. Each detection is localized; the pattern is a property of many repetitions.</figcaption>
       </figure>
-
-      <p>Each lonely photon, with no other photon anywhere near it, lands in a way that obeys the stripes. The only thing it has to interfere with is itself. A single, indivisible particle somehow went through both slits, overlapped with itself like a wave, and then arrived as one dot. Electrons do it too. So do whole atoms, and even molecules built from hundreds of atoms. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/III_01.html">Feynman</a></span> It is not a quirk of light. It is how matter behaves once you get small enough.</p>
-
-      <p>Now the part that should bother you. Put a tiny detector at the slits to catch which one each particle actually goes through. Do that, and the stripes vanish. The particles fall into two plain clumps, one behind each slit, like ordinary pellets. The instant you force the particle to commit to a single path, it stops behaving like a wave. Look, and it is a particle. Do not look, and it is a wave trying every route at once.</p>
-
-      <p>I have to be careful with the word "look," because this is exactly where physics gets hijacked into mysticism. Looking does not mean a conscious human watching. It means any physical interaction that records which way the particle went: a detector, a stray air molecule, a single bounced photon. No mind is required. The universe does not care whether you, personally, were paying attention. It cares only whether the which-way information leaked out into the world. <span class="u-src"><a href="https://plato.stanford.edu/entries/qm-decoherence/">decoherence</a></span></p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">why this is the whole game</p><p class="u-callout-body"><b>A quantum particle is not secretly a tiny pellet on one path you happen not to know.</b> Until something pins it down, it genuinely has no single path, and the proof is sitting on the screen: the routes it did not "choose" interfere with the ones it did. You cannot interfere with a road you never traveled.</p></aside>
-
-      <p>One consequence is worth a short detour. If a particle is really a spread-out wave, then part of that wave can sit on the far side of a wall the particle does not have the energy to climb. Every so often the particle simply turns up over there, having crossed a barrier it had no business crossing. This is quantum tunneling, and it is not a loophole, it is load-bearing. The Sun runs on it: the protons in its core do not actually have enough energy to fuse, and never would, except that they tunnel through the wall between them. The Sun shines because the rules are slightly fuzzy. <span class="u-src"><a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">fusion by tunneling</a></span></p>
-
+      <p>Calling this an electron going through both slits is useful shorthand for the two-path quantum state. It doesn't turn the electron into two little pellets, and the detection pattern alone doesn't settle every interpretation of what happened between source and screen.</p>
+      <p>If an interaction records which slit the electron used, that path information destroys the coherence needed for the full interference pattern. The probabilities then add as alternatives: the sum of two single-slit diffraction patterns, rather than interference between them. Partial path information can reduce the contrast instead of removing it completely. No human eye has to inspect the record for the interaction to matter.</p>
+      <p>Interference also works with larger objects. In 2019, researchers demonstrated it with molecules containing up to about 2,000 atoms, using a three-grating interferometer rather than two literal slits. That is a dated example of the scale experimentalists have reached, not a boundary where quantum mechanics stops. <span class="u-src"><a href="https://pub.math.leidenuniv.nl/~gillrd/Peking/Files/two-slit_expt.pdf">Molecular interference, full paper</a></span></p>
+      <h3>Through a barrier</h3>
+      <p>A quantum wave can extend into a region a classical particle of the same energy cannot enter. If that barrier is finite, an amplitude may survive beyond it, giving a chance of detecting the particle on the other side. This is <em>tunneling</em>. Its energy is conserved through this process.</p>
       <figure class="viz tight reveal" aria-labelledby="tun-t">
-        <p class="viz-title" id="tun-t">The wall does not stop the wave</p>
+        <p class="viz-title" id="tun-t">A wave extends through a finite barrier</p>
         <p class="viz-sub">Quantum tunneling in one picture</p>
-        <svg viewBox="0 0 960 340" role="img" aria-label="A wave approaches a solid barrier, shrinks sharply inside it, and continues on the far side much smaller: the particle usually bounces back, but sometimes turns up beyond a wall it lacked the energy to climb.">
+        <div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="tun-t" style="--diagram-width:960px">
+<svg viewBox="0 0 960 340" role="img" aria-label="A schematic wave amplitude decreases inside a potential barrier higher than the particle energy and continues with smaller amplitude beyond it. The reflected wave is not drawn.">
           <!-- barrier -->
           <rect x="430" y="70" width="110" height="210" fill="var(--panel-2)" stroke="var(--grid-strong)" stroke-width="1.5"/>
-          <text class="anno" x="485" y="54" text-anchor="middle">a wall it cannot climb</text>
+          <text class="anno" x="485" y="54" text-anchor="middle">a barrier it cannot climb</text>
           <!-- incoming wave -->
           <path class="draw" style="--len:700" d="M70,180 Q88,125 106,180 T142,180 T178,180 T214,180 T250,180 T286,180 T322,180 T358,180 T394,180 T430,180" fill="none" stroke="var(--q)" stroke-width="3"/>
-          <text class="anno" x="250" y="100" text-anchor="middle">the particle, as a wave</text>
-          <!-- decay envelope inside the wall -->
+          <text class="anno" x="250" y="100" text-anchor="middle">incoming wave amplitude</text>
+          <!-- decay envelope inside the barrier -->
           <path class="draw" style="--len:200" d="M430,150 C462,158 500,168 540,173" fill="none" stroke="var(--q)" stroke-width="2" stroke-dasharray="4 5" opacity="0.75"/>
           <path class="draw" style="--len:200" d="M430,210 C462,202 500,192 540,187" fill="none" stroke="var(--q)" stroke-width="2" stroke-dasharray="4 5" opacity="0.75"/>
           <!-- transmitted wave -->
           <path class="draw" style="--len:460" d="M540,180 Q558,162 576,180 T612,180 T648,180 T684,180 T720,180 T756,180 T792,180 T828,180 T864,180" fill="none" stroke="var(--q)" stroke-width="2.5"/>
-          <text class="anno" x="715" y="120" text-anchor="middle">a thin tail gets through</text>
-          <text class="axs" x="250" y="312" text-anchor="middle" fill="var(--text-faint)">most of the wave bounces back (not drawn)</text>
+          <text class="anno" x="715" y="120" text-anchor="middle">transmitted wave amplitude</text>
+          <text class="axs" x="250" y="312" text-anchor="middle" fill="var(--text-faint)">reflected wave not shown</text>
         </svg>
-        <figcaption class="viz-cap"><b>The wave's height at any spot sets the odds of finding the particle there.</b> Inside the wall the wave dies off fast, but a little survives to the far side. Most of the time the particle bounces back. Once in a while it is simply beyond the wall, no climbing involved. The thinner the wall, the better the odds.</figcaption>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+        <figcaption class="viz-cap"><b>The curve sketches a wave amplitude, not a particle's route.</b> A barrier higher than the particle's energy makes the amplitude decay inside it. A finite barrier can leave a transmitted wave on the far side. Detection probabilities depend on the amplitude's squared magnitude. The reflected wave is omitted; the drawing is not to scale.</figcaption>
       </figure>
-
-      <p>Tunneling is also in your pocket. Flash memory, the storage in every phone, writes each bit by pushing electrons through a thin insulating wall they do not have the energy to cross. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Flash_memory">flash memory</a></span> Every photo you have ever saved got there by quantum tunneling.</p>
+      <p>Tunneling helps fusion happen in the Sun. Positively charged nuclei repel each other, and ordinary thermal energies in the core give a far too small classical rate for them to get close enough to fuse. Quantum tunneling through the electric barrier raises that rate. The reactions are still rare, especially the first weak-interaction step in the Sun's main fusion chain. <span class="u-src"><a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">Barrier penetration and solar fusion</a></span></p>
     </section>
-
-    <!-- 06 MEASURE -->
     <section id="measure" class="sec zone-q" aria-labelledby="measure-h">
-      <div class="u-sechead"><p class="u-sechead-k">Nothing is decided yet</p><h2 id="measure-h" class="u-sechead-h">Nothing is decided until you measure it</h2></div>
-
+      <div class="u-sechead"><p class="u-sechead-k">06 / Superposition</p><h2 id="measure-h" class="u-sechead-h">A superposition can interfere</h2></div>
       <figure class="portrait reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/schrodinger.webp"><img src="assets/images/physics/schrodinger.jpg" width="280" height="396" loading="lazy" decoding="async" alt="Black-and-white portrait of Erwin Schrodinger in 1933, wearing round glasses and a bow tie."></picture>
-        <figcaption>Erwin Schrodinger, 1933. He invented the famous cat to mock the theory, not to celebrate it. Photo: Nobel Foundation (public domain).</figcaption>
+        <figcaption>Erwin Schrodinger, 1933. His cat thought experiment exposed a problem in applying quantum superposition to a measuring apparatus. Photo: Nobel Foundation (public domain).</figcaption>
       </figure>
-
-      <p class="lede">Before you measure it, a quantum particle is not in one state or another. It is in a blend of all its possible states at once, called a superposition, and measuring it forces it to pick one. The blend is not a gap in your knowledge. It is the particle's actual condition.</p>
-
-      <p>The double-slit already showed you this. "Went through both slits" is a superposition of left-slit and right-slit, held at the same time. But the idea deserves its own name, because it leads to the most famous thought experiment in physics.</p>
-
-      <p>In 1935, Erwin Schrodinger described a cat in a sealed box. Inside is a trace of radioactive material that, over the next hour, has a fifty-fifty chance of decaying. If it decays, it trips a hammer that shatters a vial of poison and kills the cat. Radioactive decay is a quantum event, so until it is measured, the atom sits in a superposition: decayed and not-decayed at once. And here is the trap. The cat's life is wired straight to that atom. So by the rules, before you open the box, the cat is in a superposition too: alive and dead at the same time. <span class="u-src"><a href="https://plato.stanford.edu/entries/qt-issues/">Schrodinger's cat</a></span></p>
-
-      <p>Here is what nearly everyone gets wrong. Schrodinger was not delighted by this. He invented the cat to ridicule the idea. He thought a half-alive, half-dead cat was plainly absurd, and he was pointing at it to say look how ridiculous your theory gets when you scale it up. The cat was a complaint, not a celebration.</p>
-
-      <p>The complaint is fair, and it has a name: the measurement problem. Why do we never see a superposed cat, or a superposed anything bigger than a molecule? The leading answer is decoherence. A single electron can hold a clean blend because it is isolated. A cat is enormous and constantly touching its surroundings: air, light, its own warmth. Every one of those touches is a tiny measurement, leaking out which-way information, and they happen so fast and so relentlessly that any blend collapses to a single outcome almost instantly. The cat is alive or dead within a sliver of a second, long before you open the box, because the universe is already measuring it. The smaller and more isolated a thing is, the longer it can hold the blur. A cat does not stand a chance. <span class="u-src"><a href="https://plato.stanford.edu/entries/qm-decoherence/">decoherence</a></span></p>
-
-      <aside class="u-callout"><p class="u-callout-k">one honest note</p><p class="u-callout-body">Decoherence explains why we never catch the world mid-blend. It does not fully settle the deeper puzzle of why one particular outcome happens instead of the other, and physicists still genuinely disagree about what is going on underneath. The "consciousness collapses reality" version you may have heard is a fringe minority view, not the mainstream one. <span class="u-src"><a href="https://en.wikipedia.org/wiki/Von_Neumann%E2%80%93Wigner_interpretation">on the woo</a></span> Anyone who tells you the measurement problem is solved is picking a side in an argument that is still live.</p></aside>
+      <p class="lede">A quantum state can be a superposition of alternatives, such as the two paths through the slits. That is more than ordinary ignorance about which path a particle took: the alternatives can interfere.</p>
+      <p>Superposition is always relative to the alternatives being considered. A state can have a definite energy and a spread of possible positions, for example. It is inaccurate to say that a particle has no definite properties at all until someone looks.</p>
+      <p>Schrodinger's cat puts the measurement problem in a box. Imagine a radioactive event connected to a device that kills a cat. Choose the setup so there is a 50 percent chance of the event during the waiting period. If the quantum evolution of the atom, device and cat is treated as one uninterrupted process, it produces a superposition of correlated alternatives: undecayed atom with live cat, decayed atom with dead cat. Yet an opened box gives a definite recorded result. What connects those descriptions? <span class="u-src"><a href="https://plato.stanford.edu/entries/qt-issues/">Quantum measurement</a></span></p>
+      <p>Interaction with the environment explains an important part. Light, air and other surroundings become entangled with a large object. Information about its alternatives spreads into degrees of freedom we don't control. When we describe the object alone, interference between those alternatives is suppressed. This process is <em>decoherence</em>. It explains why recovering interference from a cat or a measuring apparatus would be extraordinarily difficult. It does not, by itself, select one outcome from the full superposition. <span class="u-src"><a href="https://arxiv.org/pdf/quant-ph/0312059">Decoherence and its limits</a></span></p>
+      <p>Different accounts handle that remaining issue differently. Collapse models add a physical process to the theory. Other interpretations retain the full state and its branches, or add definite particle positions with nonlocal dynamics. Experiments constrain the proposals where their predictions differ. The usual laboratory predictions don't require consciousness to operate the detector.</p>
     </section>
-
-    <!-- 07 UNCERTAINTY -->
     <section id="uncertain" class="sec zone-q" aria-labelledby="uncertain-h">
-      <div class="u-sechead"><p class="u-sechead-k">You cannot know it all</p><h2 id="uncertain-h" class="u-sechead-h">You cannot know everything at once</h2></div>
-
+      <div class="u-sechead"><p class="u-sechead-k">07 / Uncertainty</p><h2 id="uncertain-h" class="u-sechead-h">Position and momentum have a trade-off</h2></div>
       <figure class="portrait reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/heisenberg.webp"><img src="assets/images/physics/heisenberg.jpg" width="497" height="789" loading="lazy" decoding="async" alt="Black-and-white portrait of a young Werner Heisenberg in 1933, in a suit and tie."></picture>
-        <figcaption>Werner Heisenberg, 1933. His uncertainty principle is routinely explained wrong, even in textbooks. <span class="cred">Bundesarchiv, Bild 183-R57262 / CC BY-SA 3.0.</span></figcaption>
+        <figcaption>Werner Heisenberg, 1933. <span class="cred">Bundesarchiv, Bild 183-R57262 / CC BY-SA 3.0.</span></figcaption>
       </figure>
-
-      <p class="lede">There is a hard limit on how much you can know about a particle at one time. The more precisely you pin down where it is, the more hopelessly fuzzy its speed becomes, and the other way around. This is Heisenberg's uncertainty principle, and the limit is not about clumsy instruments. It is built into what a particle is.</p>
-
-      <p>The usual explanation is wrong, so let me hand you the wrong one first, because you will meet it everywhere. The wrong version says: to see a particle you have to bounce something off it, like light, and the bounce knocks it off course, so measuring its position disturbs its speed. True as far as it goes, but it makes the limit sound like a practical nuisance, as if a gentler instrument could beat it. Nothing can. The limit holds even in principle, even for a perfectly prepared particle that nobody has touched.</p>
-
-      <p>The honest version comes straight out of the last two chapters: a particle is a wave. And here is a fact about every wave, one you can hear.</p>
-
+      <p class="lede">Prepare many particles in the same quantum state and measure their positions. Prepare the state again and measure momenta. The two distributions cannot both be arbitrarily narrow. Their standard deviations obey <em>&Delta;x &Delta;p &ge; &hbar;/2</em>.</p>
+      <p>Here, momentum is mass times velocity for a slow massive particle, and <em>&hbar;</em> is a fixed quantum constant. The inequality concerns the spreads of results for a prepared state. It is not simply a claim that a clumsy position measurement knocks the particle off course. Measurement disturbance is a related question, with its own inequalities. <span class="u-src"><a href="https://plato.stanford.edu/entries/qt-uncertainty/">What the uncertainty relation says</a></span></p>
       <figure class="viz reveal" aria-labelledby="unc-t">
-        <p class="viz-title" id="unc-t">Sharp in one means smeared in the other</p>
-        <p class="viz-sub">The same trade-off you can hear in any sound</p>
-        <svg viewBox="0 0 960 430" role="img" aria-label="Top row, a long pure musical note: spread out in time but a single sharp spike in pitch. Bottom row, a short clap: a sharp spike in time but smeared across all pitches.">
+        <p class="viz-title" id="unc-t">Short in time, broad in frequency</p>
+        <p class="viz-sub">A wave-packet analogy for position and momentum</p>
+        <div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="unc-t" style="--diagram-width:960px">
+<svg viewBox="0 0 960 430" role="img" aria-label="A schematic sound analogy. A long note occupies a broad interval in time and a narrow frequency range. A short clap occupies a brief interval in time and a broad frequency range.">
           <!-- column headers -->
           <text class="anno-b" x="270" y="34" text-anchor="middle">in time</text>
-          <text class="anno-b" x="710" y="34" text-anchor="middle">in pitch</text>
+          <text class="anno-b" x="710" y="34" text-anchor="middle">in frequency</text>
           <line x1="480" y1="20" x2="480" y2="410" stroke="var(--rule)" stroke-width="1"/>
           <line x1="60" y1="220" x2="900" y2="220" stroke="var(--rule)" stroke-width="1"/>
 
           <!-- ROW 1: pure tone -->
-          <text class="anno" x="70" y="120" fill="var(--text-dim)">a long,</text>
-          <text class="anno" x="70" y="138" fill="var(--text-dim)">pure note</text>
+          <text class="anno" x="70" y="120" fill="var(--text-dim)">long</text>
+          <text class="anno" x="70" y="138" fill="var(--text-dim)">note</text>
           <!-- long sine across time -->
           <path d="M120,130 Q140,90 160,130 T200,130 T240,130 T280,130 T320,130 T360,130 T400,130 T440,130" fill="none" stroke="var(--q)" stroke-width="2.5"/>
           <line x1="120" y1="190" x2="450" y2="190" stroke="var(--text-faint)" stroke-width="1"/>
           <text class="axs" x="285" y="208" text-anchor="middle">spread over time</text>
-          <!-- single sharp spike in pitch -->
-          <line x1="700" y1="190" x2="700" y2="70" stroke="var(--q-2)" stroke-width="3"/>
+          <!-- single sharp spike in frequency -->
+          <path d="M650,190 C682,190 689,190 694,120 C697,53 703,53 706,120 C711,190 718,190 750,190" fill="none" stroke="var(--q-2)" stroke-width="2.5"/>
           <line x1="560" y1="190" x2="880" y2="190" stroke="var(--text-faint)" stroke-width="1"/>
-          <text class="axs" x="720" y="208" text-anchor="middle">one sharp pitch</text>
+          <text class="axs" x="720" y="208" text-anchor="middle">narrow frequency range</text>
 
           <!-- ROW 2: clap -->
           <text class="anno" x="70" y="320" fill="var(--text-dim)">a sharp</text>
@@ -606,178 +523,114 @@
           <!-- narrow spike in time -->
           <path d="M120,390 L280,390 Q283,300 286,390 L450,390" fill="none" stroke="var(--q)" stroke-width="2.5"/>
           <line x1="120" y1="390" x2="450" y2="390" stroke="var(--text-faint)" stroke-width="1"/>
-          <text class="axs" x="285" y="408" text-anchor="middle">one sharp instant</text>
+          <text class="axs" x="285" y="408" text-anchor="middle">brief time interval</text>
           <!-- broad hump across pitch -->
           <path d="M560,390 C640,392 660,300 700,300 C740,300 760,392 840,390" fill="none" stroke="var(--q-2)" stroke-width="2.5"/>
           <line x1="560" y1="390" x2="880" y2="390" stroke="var(--text-faint)" stroke-width="1"/>
-          <text class="axs" x="720" y="408" text-anchor="middle">smeared across all pitches</text>
+          <text class="axs" x="720" y="408" text-anchor="middle">broad frequency range</text>
         </svg>
-        <figcaption class="viz-cap"><b>A long flute note has a definite pitch but no definite moment.</b> A clap happens at a definite instant but has no pitch, it is a smear of every frequency at once. You cannot make a sound that is sharp in both. That is not a flaw in your ears. It is what waves are, and a particle is a wave.</figcaption>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+        <figcaption class="viz-cap"><b>A sound analogy, drawn schematically.</b> A long note can have a narrow range of frequencies; a brief clap contains a much wider range. Neither a real note nor a real clap is infinitely sharp. Quantum position and momentum have the same kind of Fourier trade-off.</figcaption>
       </figure>
-
-      <p>A long, pure flute note has a definite pitch. But ask exactly when it happens and there is no answer; it is smeared across its whole duration. Now clap your hands. The clap happens at a definite instant, but it has no pitch at all, it is a sharp click, a smear of every frequency at once. You cannot have both. A sound that is sharp in time is fuzzy in pitch, and a sound that is sharp in pitch is spread out in time. This is not a limitation of your ears. It is what waves are.</p>
-
-      <p>For a quantum particle, position is like the timing and speed is like the pitch, and they trade off in precisely the same way, for precisely the same reason. A particle with a razor-sharp position is a tiny spike of a wave, and a spike, like a clap, is built from a huge spread of speeds. A particle with a razor-sharp speed is a long, even ripple stretched across all of space, with no location to call its own. Pin down one and the other smears. Not from any clumsy nudge; a wave simply cannot be sharp in both at once. <span class="u-src"><a href="https://plato.stanford.edu/entries/qt-uncertainty/">uncertainty principle</a></span></p>
-
-      <p>This trade-off is why atoms exist. By the old physics, an orbiting electron should radiate its energy away and spiral into the nucleus in a fraction of a nanosecond; every atom in the universe should have collapsed almost at once. What saves them is the trade-off above. An electron crammed down onto the nucleus would have a nearly exact position, so its speed would smear enormously, and it would fling itself back out. The size of an atom is the standoff between those two pressures. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/III_02.html">Feynman</a></span> Solid matter has bulk because its electrons refuse to be pinned down.</p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">the real point</p><p class="u-callout-body"><b>Uncertainty is not the universe hiding the numbers from you.</b> The numbers do not exist to be hidden. A particle does not possess a sharp position and a sharp speed at the same instant, any more than a clap possesses a pitch.</p></aside>
+      <p>For a particle, a tightly localized wave packet requires a broad range of momentum components. A narrow momentum distribution requires a wave spread over a larger region. The sound picture shows the same mathematical relationship between a wave and its frequency content. It is an analogy for the spread, not proof that a particle is literally an audible wave.</p>
+      <p>This trade-off helps explain why a hydrogen atom has a finite size. Confining its electron ever closer to the nucleus raises its typical kinetic energy. The attraction lowers the potential energy. The lowest-energy state balances those effects at a finite scale, rather than describing a tiny planet that continually radiates and spirals inward. <span class="u-src"><a href="https://www.feynmanlectures.caltech.edu/III_02.html">An estimate of atomic size</a></span></p>
     </section>
-
-    <!-- 08 ENTANGLE -->
     <section id="entangle" class="sec zone-q" aria-labelledby="entangle-h">
-      <div class="u-sechead"><p class="u-sechead-k">Two particles, one fate</p><h2 id="entangle-h" class="u-sechead-h">Two particles can share a single fate</h2></div>
-
+      <div class="u-sechead"><p class="u-sechead-k">08 / Entanglement</p><h2 id="entangle-h" class="u-sechead-h">The joint state matters</h2></div>
       <figure class="portrait reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/bohr.webp"><img src="assets/images/physics/bohr.jpg" width="760" height="1069" loading="lazy" decoding="async" alt="Black-and-white portrait of Niels Bohr around 1922."></picture>
-        <figcaption>Niels Bohr, around 1922. He spent decades arguing with Einstein about exactly this, and on the physics, he turned out to be right. Photo: public domain.</figcaption>
+        <figcaption>Niels Bohr, around 1922. His disagreements with Einstein helped sharpen the questions that later Bell experiments could test. Photo: public domain.</figcaption>
       </figure>
-
-      <p class="lede">Two particles can be linked so tightly that they no longer have their own separate properties, only a shared one. Measure one and you instantly know the matching result for the other, even if it has drifted to the far side of the galaxy. Einstein hated this so much he called it "spooky action at a distance." He was right that it is spooky, and wrong that it meant the theory was broken.</p>
-
-      <p>The link is called entanglement, and it is the strangest entry in either rulebook, so let me build it carefully, including the analogy everyone reaches for and exactly why it is not enough.</p>
-
-      <p>The tempting picture is a pair of gloves. I take a pair, drop the left one in a box and the right one in another, mail one to Tokyo and keep one here, without peeking. When I open mine and see the right glove, I know on the spot that the Tokyo box holds the left one. No magic, no signal. The gloves were always a left and a right; I simply did not know which was where. Knowledge traveled. Nothing else did.</p>
-
-      <p>If entanglement were only that, nobody would care. The reason it shook physics is that it is provably not that, and pinning down the difference took the single most important piece of reasoning in the field.</p>
-
-      <p>In 1964 a physicist named John Bell found a way to tell the two stories apart with an actual experiment. The idea: take many entangled pairs and measure them, but not always the same way, randomly varying the angle of each measurement. If the particles are like gloves, each carrying a secret answer fixed in advance, and neither can signal the other faster than light, then their results, averaged over many tries and many angles, can only agree up to a certain ceiling. Bell worked out that ceiling exactly. Then he showed that quantum mechanics predicts the particles will sail past it. <span class="u-src"><a href="https://plato.stanford.edu/entries/bell-theorem/">Bell's theorem</a></span></p>
-
+      <p class="lede">Two particles can be prepared in a pure joint quantum state that cannot be factored into separate states for each. That is entanglement. For a pair of spins prepared in a singlet state, measurements along the same axis give opposite results, although either result on its own is random.</p>
+      <p>Opposite answers alone prove very little. Put a left glove and a right glove in separate boxes, and opening one tells you about the other without any action across the distance. Bell's theorem becomes useful when each station can choose among different measurements. A local model, with the measurement choices independent of the hidden variables, faces limits on the combinations of correlations it can produce. Quantum mechanics predicts violations of those limits. <span class="u-src"><a href="https://plato.stanford.edu/entries/bell-theorem/">The theorem and assumptions</a></span></p>
+      <p>One widely used version is the CHSH inequality. Give each station two possible settings and label the outcomes +1 or &minus;1. Combine the four setting-pair correlations into a statistic called <em>S</em>. Local hidden-variable models with independent settings satisfy <em>|S| &le; 2</em>. Quantum mechanics permits up to <em>2&radic;2</em>, about 2.83, with suitable states and settings.</p>
       <figure class="viz tight reveal" aria-labelledby="bell-t">
-        <p class="viz-title" id="bell-t">More agreement than any "decided in advance" can buy</p>
-        <p class="viz-sub">How often the two particles match, as the detectors are turned apart</p>
-        <svg viewBox="0 0 760 470" role="img" aria-label="A chart of how often two particles agree versus the angle between the detectors. The quantum curve bulges above the straight line that is the best any pre-arranged-answer theory can reach.">
-          <!-- axes -->
-          <line class="axisln" x1="90" y1="40" x2="90" y2="400"/>
-          <line class="axisln" x1="90" y1="400" x2="710" y2="400"/>
-          <text class="axs" x="80" y="46"  text-anchor="end">100%</text>
-          <text class="axs" x="80" y="224" text-anchor="end">50%</text>
-          <text class="axs" x="80" y="404" text-anchor="end">0</text>
-          <text class="axs" x="90"  y="424" text-anchor="middle">0&#176;</text>
-          <text class="axs" x="395" y="424" text-anchor="middle">45&#176;</text>
-          <text class="axs" x="700" y="424" text-anchor="middle">90&#176;</text>
-          <text class="axs" x="400" y="452" text-anchor="middle">angle between the two detectors</text>
-          <!-- shaded gap where quantum beats classical -->
-          <path d="M90,40 L140.8,46.2 L191.7,64.1 L242.5,92.7 L293.3,130 L344.2,173.4 L395,220 Z" fill="var(--q)" opacity="0.16"/>
-          <!-- classical straight line -->
-          <line class="draw" style="--len:720" x1="90" y1="40" x2="700" y2="400" stroke="var(--q-2)" stroke-width="2.5" stroke-dasharray="6 5"/>
-          <!-- quantum curve (cos^2) -->
-          <polyline class="draw" style="--len:760" points="90,40 140.8,46.2 191.7,64.1 242.5,92.7 293.3,130 344.2,173.4 395,220 445.8,266.6 496.7,310 547.5,347.3 598.3,375.9 649.2,393.9 700,400" fill="none" stroke="var(--q)" stroke-width="3.5"/>
-          <!-- labels -->
-          <text class="anno" x="150" y="120" fill="var(--q)">what entangled</text>
-          <text class="anno" x="150" y="138" fill="var(--q)">particles do</text>
-          <text class="anno" x="470" y="300" fill="var(--q-2)">best any "answer</text>
-          <text class="anno" x="470" y="318" fill="var(--q-2)">fixed in advance" can do</text>
-        </svg>
-        <figcaption class="viz-cap"><b>The gap is the whole story.</b> Any theory where the answers were set in advance, with no faster-than-light coordination, is stuck at or below the straight line. Quantum particles ride the curve above it. That gap is a real, measurable number, and in the lab, quantum wins every single time. The real proof combines several angles at once; this is the shape of it.</figcaption>
-      </figure>
-
-      <p>So you run it. And nature beats the ceiling, every time, exactly as quantum mechanics says it will. The particles were not gloves with secret answers. They genuinely had no answer until the instant one was measured, and yet when measured, even light-years apart, even with the measurement angles chosen at the last possible moment, their results agree more tightly than any answer-fixed-in-advance story could ever produce. The first careful versions were done by John Clauser in 1972 and Alain Aspect in 1982; by the 2010s the last loopholes were sealed. The three physicists who led that work, Aspect, Clauser, and Anton Zeilinger, shared the 2022 Nobel Prize in Physics. <span class="u-src"><a href="https://www.nobelprize.org/prizes/physics/2022/summary/">2022 Nobel</a></span> <span class="u-grade u-grade-a">solid</span></p>
-
-      <p>Now the discipline this demands, because here is the other thing everyone gets wrong. "Instantly know the result on the far side of the galaxy" sounds like a faster-than-light telephone. It is not, and it provably cannot be. The catch: each measurement, taken on its own, is pure random noise. When I measure my particle I get a random answer; when you measure yours, you get a random answer. Neither of us, staring only at our own stream of results, sees anything but coin flips. The eerie agreement only shows up afterward, when we lay our two lists side by side, and that comparison has to travel between us the slow way, by phone, by email, by something that obeys the speed limit. Entanglement gives you correlation without communication. Spooky, yes. A usable signal, no. The cosmic speed limit holds. <span class="u-src"><a href="https://en.wikipedia.org/wiki/No-communication_theorem">no-communication theorem</a></span></p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">the gap in one line</p><p class="u-callout-body"><b>The gloves were decided before they were mailed.</b> The particles decide at the instant you look, and somehow agree anyway. That gap, between "decided in advance" and "decided on measurement," is the whole of what makes the quantum world quantum.</p></aside>
+<p class="viz-title" id="bell-t">A Bell test combines four correlations</p>
+<p class="viz-sub">CHSH statistic: local bound, quantum limit and one experiment</p>
+<div class="diagram-scroll" tabindex="0" role="region" aria-labelledby="bell-t" style="--diagram-width:760px">
+<svg viewBox="0 0 760 360" role="img" aria-label="A CHSH comparison. Under local hidden-variable models with independent settings, the absolute value of S cannot exceed 2. The ideal quantum limit is 2.83. Hensen and colleagues measured S of 2.42 plus or minus 0.20 in 245 trials in 2015.">
+<rect x="70" y="80" width="413.33" height="205" fill="var(--panel)"/>
+<line class="axisln" x1="70" y1="285" x2="690" y2="285"/>
+<line x1="483.33" y1="60" x2="483.33" y2="285" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="5 5"/>
+<line x1="654.57" y1="60" x2="654.57" y2="285" stroke="var(--q-2)" stroke-width="2" stroke-dasharray="5 5"/>
+<text class="anno-b" x="277" y="110" text-anchor="middle">Local bound: |S| &#8804; 2</text>
+<text class="anno" x="277" y="136" text-anchor="middle">local hidden variables + independent settings</text>
+<text class="anno-b" x="655" y="34" text-anchor="end">Ideal quantum limit</text>
+<text class="anno" x="655" y="56" text-anchor="end">2&#8730;2 &#8776; 2.83</text>
+<line x1="528.80" y1="195" x2="611.47" y2="195" stroke="var(--q)" stroke-width="3"/>
+<line x1="528.80" y1="185" x2="528.80" y2="205" stroke="var(--q)" stroke-width="2"/>
+<line x1="611.47" y1="185" x2="611.47" y2="205" stroke="var(--q)" stroke-width="2"/>
+<circle cx="570.13" cy="195" r="7" fill="var(--q)"/>
+<text class="anno-b" x="570" y="231" text-anchor="middle">Hensen et al.: 2.42 &#177; 0.20</text>
+<text class="anno" x="570" y="254" text-anchor="middle">245 trials, 2015</text>
+<text class="axs" x="70" y="312" text-anchor="middle">0</text>
+<text class="axs" x="276.67" y="312" text-anchor="middle">1</text>
+<text class="axs" x="483.33" y="312" text-anchor="middle">2</text>
+<text class="axs" x="690" y="312" text-anchor="middle">3</text>
+<text class="axs" x="380" y="345" text-anchor="middle">CHSH statistic |S| (dimensionless)</text>
+</svg>
+</div>
+<p class="diagram-hint">Scroll sideways to read the diagram.</p>
+<figcaption class="viz-cap"><b>The bound applies to a combination of settings, not one angle.</b> Two settings at each station yield four correlations. The error bar shows the paper's reported uncertainty, separate from its statistical test of local models. Its conservative analysis gave a probability of at most 0.039 for a result this extreme under that null model. <a href="https://arxiv.org/pdf/1508.05949">Original experiment and methods</a>.</figcaption>
+</figure>
+      <p>In 2015, Bas Hensen and colleagues tested electron spins in diamonds about 0.8 miles apart. A photon signal first heralded an entangled pair. Each station then rapidly chose a setting and read its spin, before light could carry information about that choice to the other station. Reliable spin readout and this timing addressed the detection and locality loopholes together.</p>
+      <p>The 245 trials gave <em>S = 2.42 &plusmn; 0.20</em>. This is statistical evidence against the tested local models, not a claim that every trial violates an inequality. It retains assumptions, including independent setting choices and definite recorded outcomes. Bell tests do not prove that every physical property is created by looking, nor exclude nonlocal hidden-variable theories.</p>
+      <p>Entanglement still cannot send a message faster than light. Either station's own list looks random. Choosing a different measurement at the other station does not change that local outcome distribution into readable information. The correlations emerge when the two lists are compared through an ordinary communication channel. <span class="u-src"><a href="https://arxiv.org/pdf/quant-ph/0212023">Relativistic quantum information and no-signaling</a></span></p>
     </section>
-
-    <!-- ============================ CLOSE ============================ -->
     <section id="close" class="sec" aria-labelledby="close-h">
-      <div class="u-sechead"><p class="u-sechead-k">The unfinished part</p><h2 id="close-h" class="u-sechead-h">Two rulebooks, no master key</h2></div>
-
-      <p class="lede">Both rulebooks are right. Relativity has never failed a test. Quantum mechanics has never failed a test. And the two of them flatly contradict each other.</p>
-
-      <p>Relativity describes a smooth, continuous spacetime, a stage that bends but never jumps. Quantum mechanics describes a jittery world of discrete jumps, blurs, and chance, where nothing is settled until it is measured. For almost everything, this never matters, because the two books govern different sizes. Relativity runs the big stuff; quantum runs the small stuff; the two rarely have to stand in the same room.</p>
-
-      <p>But there are places where something is both very heavy and very small, so both books apply at once, and they hand back nonsense. The center of a black hole. The first instant of the Big Bang. Ask the equations a question about those, and they answer "infinity," which is physics for "I do not know." The two books can be pushed together partway: in 1974 Stephen Hawking mixed quantum rules into curved spacetime and found that black holes should glow faintly and, over spans that dwarf the age of the universe, evaporate to nothing. <span class="u-src"><a href="https://www.nature.com/articles/248030a0">Hawking 1974</a></span> Nobody has detected the glow; for any real black hole it is far too dim. It is a prediction, not an observation. Stitching the two books all the way into a single theory of quantum gravity is the biggest unsolved problem in physics, and it has been open for most of a century. String theory and loop quantum gravity are the best-known attempts. Neither has been confirmed. <span class="u-src"><a href="https://plato.stanford.edu/entries/quantum-gravity/">quantum gravity</a></span></p>
-
-      <p>So that is honestly where we stand. We have two of the most precisely tested theories ever written, they describe a reality that breaks nearly every intuition you were born with, and they do not fit together. Somewhere beneath both of them there is presumably a single, deeper rulebook that would explain why the universe insisted on being this strange. Nobody has read it yet.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">The unfinished part</p><h2 id="close-h" class="u-sechead-h">Gravity still needs a quantum account</h2></div>
+      <p>Special relativity and quantum mechanics already work together in quantum field theory. Researchers can also study quantum fields on an approximately classical curved spacetime. Neither achievement supplies a complete theory in which spacetime's geometry is itself quantum. Proposed approaches to that problem have not yielded an experimentally established successor to general relativity. <span class="u-src"><a href="https://plato.stanford.edu/entries/quantum-gravity/">Quantum gravity</a></span></p>
+      <p>Hawking's calculation is an example of what the intermediate approach can do. Quantum fields on a black-hole background predict thermal radiation reaching distant observers. That prediction <a href="https://home.cern/science/experiments/na63/">has not been directly observed from an astronomical black hole</a>. Large black holes would be colder than today's cosmic microwave background, so they absorb more energy from that background than they emit through this process. <span class="u-src"><a href="https://mai68.org/spip2/IMG/pdf/euclid-cmp-1103899181.pdf">Hawking's 1975 paper</a></span></p>
+      <p>Extrapolating the radiation calculation suggests eventual evaporation in a sufficiently cold environment. The final stage is precisely where its approximation stops being dependable. We don't yet have an established answer for that endpoint.</p>
       <figure class="fig wide reveal">
         <picture><source type="image/webp" srcset="assets/images/physics/jwst.webp"><img src="assets/images/physics/jwst.jpg" width="1600" height="1633" loading="lazy" decoding="async" alt="The James Webb Space Telescope's First Deep Field: thousands of galaxies of every shape and color scattered across a black sky, some smeared into curved arcs by gravitational lensing."></picture>
-        <figcaption>Webb's First Deep Field. Almost every speck here is an entire galaxy; the curved smears are background galaxies lensed by gravity, relativity and the deep field in one frame. We worked out most of how this picture behaves, and still cannot say what happens at the center of one of its black holes. <span class="cred">Credit: NASA, ESA, CSA, and STScI (public domain).</span></figcaption>
+        <figcaption>Webb's First Deep Field. Galaxies fill the image, with some distant galaxies stretched into arcs by the gravity of the foreground cluster. Bright objects with diffraction spikes are foreground stars. <span class="cred">Credit: NASA, ESA, CSA, and STScI (public domain).</span> <a href="https://science.nasa.gov/asset/webb/webbs-first-deep-field-nircam-image/">Image and observing details</a>.</figcaption>
       </figure>
-
-      <p>Your common sense is not wrong, exactly. It is just local, finely tuned for a creature of a certain size, moving at a certain speed, who never had to deal with the very fast, the very heavy, or the very small. The universe was under no obligation to make sense at scales you would never visit. The astonishing thing is not that it turned out strange out there. It is that, with enough patient experiments, we figured out the strangeness anyway.</p>
-
-      <hr class="u-divider">
+      <p>What spacetime does when its own quantum effects become unavoidable remains an open experimental question.</p>
     </section>
-
-    <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and how I kept it honest</h2></div>
-      <p class="src-note">Physics is the friendliest possible subject to fact-check, because the numbers are pinned to primary sources and the experiments are public. Every figure here was checked against the source listed below, and the few places where a popular claim is shaky (the noisy 1919 eclipse data, the rounded "4 million tons," the misread of the uncertainty principle) are flagged in the text rather than smoothed over.</p>
+      <div class="u-sechead"><p class="u-sechead-k">Sources</p><h2 id="sources-h" class="u-sechead-h">Experiments, calculations and illustrations</h2></div>
+      <p class="src-note">The diagrams are explanatory drawings, not measurements. Links beside the claims lead to the relevant experiments or explanations. The notes below identify the calculations behind the rounded numbers and the assumptions that matter for interpreting them.</p>
       <details class="u-collapse">
-        <summary class="u-collapse-s">The full list, 38 sources, grouped by chapter</summary>
-        <div class="legend">
-          <span><span class="u-grade u-grade-a">solid</span> settled / many confirmations</span>
-          <span><span class="u-grade u-grade-b">good</span> well-measured</span>
-          <span><span class="u-grade u-grade-c">rounded</span> illustrative figure</span>
-        </div>
-
-        <h3>Light, time, and motion</h3>
+        <summary class="u-collapse-s">Source notes and calculations</summary>
+        <h3>Light and clocks</h3>
         <ol>
-          <li><b>NIST / CODATA.</b> Speed of light in vacuum (exact, 299,792,458 m/s). <a href="https://physics.nist.gov/cgi-bin/cuu/Value?c">physics.nist.gov</a></li>
-          <li><b>American Physical Society (2007).</b> November 1887: Michelson and Morley report their failure to detect the ether. <a href="https://www.aps.org/apsnews/2007/11/november-1887-michelson-uminiferous-ether">aps.org</a></li>
-          <li><b>Pogge RW, Ohio State University.</b> Real-World Relativity: the GPS Navigation System (the 45, 7, and 38 microsecond figures). <a href="https://www.astronomy.ohio-state.edu/pogge.1/Ast162/Unit5/gps.html">astronomy.ohio-state.edu</a></li>
-          <li><b>NIST (2022).</b> Einstein's Relativity Makes GPS Work. <a href="https://www.nist.gov/news-events/news/2022/05/einsteins-relativity-makes-gps-work">nist.gov</a></li>
-          <li><b>Particle Data Group.</b> Muon mean lifetime (2.197 microseconds). <a href="https://pdg.lbl.gov/2024/listings/rpp2024-list-muon.pdf">pdg.lbl.gov</a></li>
-          <li><b>Experimental testing of time dilation (Rossi-Hall, Frisch-Smith).</b> <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Experimental_testing_of_time_dilation">wikipedia.org</a></li>
-          <li><b>Scientific American.</b> How can galaxies recede faster than light? (expansion of space). <a href="https://www.scientificamerican.com/article/how-can-galaxies-recede-from-us-faster-than-the-speed-of-light/">scientificamerican.com</a></li>
-          <li><b>Davis TM, Lineweaver CH (2004).</b> Expanding Confusion: misconceptions of cosmological horizons. <i>PASA</i>. <a href="https://arxiv.org/abs/astro-ph/0310808">arxiv.org</a></li>
-          <li><b>Andromeda Galaxy</b> (2.5 million light-years away, visible to the naked eye). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Andromeda_Galaxy">wikipedia.org</a></li>
-          <li><b>Time dilation</b> (about 0.005 seconds per six months aboard the ISS). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Time_dilation">wikipedia.org</a></li>
-          <li><b>Oleg Kononenko</b> (career total of 1,111 days in orbit, the record). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Oleg_Kononenko">wikipedia.org</a></li>
+          <li><b>Vacuum light speed.</b> <a href="https://physics.nist.gov/cgi-bin/cuu/Value?c">NIST's exact value</a> is 299,792,458 meters per second, about 670.6 million mph. <a href="https://www.feynmanlectures.caltech.edu/I_15.html">Feynman, volume I, chapter 15</a>, develops frame comparisons, light clocks and time dilation. The light-clock SVG is schematic and has no specified velocity.</li>
+          <li><b>Look-back times.</b> Rounded NASA distances for the <a href="https://science.nasa.gov/moon/facts/">Moon</a>, <a href="https://science.nasa.gov/sun/facts/">Sun and Proxima Centauri</a>, and <a href="https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-31/">Andromeda</a> supply the figure's estimates. Two feet divided by light speed gives about 2 nanoseconds for the hand example. The diagram uses an approximate logarithmic scale.</li>
+          <li><b>GPS.</b> <a href="https://link.springer.com/article/10.12942/lrr-2003-1">Neil Ashby's 2003 review</a> distinguishes proper time from the system's coordinate time and derives the nominal clock offset. The gain from gravity and loss from motion are rounded in <a href="https://www.astronomy.ohio-state.edu/pogge.1/Ast162/Unit5/gps.html">Richard Pogge's university explanation</a>. The post does not turn the clock offset into a universal daily position error.</li>
+          <li><b>Muon lifetime.</b> The <a href="https://pdg.lbl.gov/2024/listings/rpp2024-list-muon.pdf">2024 Particle Data Group listing</a> gives a mean rest lifetime of approximately 2.197 microseconds. Multiplying by light speed gives about 659 meters, or 720 yards. This is a characteristic length calculated from the mean, not a maximum range or a fixed decay deadline.</li>
+          <li><b>Expansion.</b> <a href="https://arxiv.org/pdf/astro-ph/0310808">Davis and Lineweaver (2004)</a> distinguish cosmological recession speeds, locally measured speeds and horizons. Superluminal recession does not by itself imply that a galaxy is unobservable.</li>
+          <li><b>A measured height difference.</b> <a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=905055">Chou and colleagues (2010), Science 329, 1630</a>, compared aluminum-ion optical clocks over a noise-canceled fiber link. Raising one clock by 33 centimeters gave a fractional rate change consistent with <em>g &Delta;h / c<sup>2</sup></em>. Applying that approximation for 79 years gives about 90 nanoseconds, with the height difference held constant and Earth's near-surface conditions assumed. The lifetime extrapolation is also explained in the <a href="https://www.nist.gov/news-events/news/2010/09/nist-clock-experiment-demonstrates-your-head-older-your-feet">NIST release</a>.</li>
         </ol>
-
-        <h3>E = mc squared</h3>
-        <ol start="12">
-          <li><b>Mass-energy equivalence.</b> <i>Wikipedia</i> (the energy in one gram). <a href="https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence">wikipedia.org</a></li>
-          <li><b>Stanford Solar Center.</b> How much mass does the Sun lose? <a href="http://solar-center.stanford.edu/FAQ/Qshrink.html">solar-center.stanford.edu</a></li>
-          <li><b>International Astronomical Union (2015).</b> Resolution B3, nominal solar luminosity. <a href="https://www.iau.org/static/resolutions/IAU2015_English.pdf">iau.org</a></li>
-          <li><b>Proton</b> (quark rest masses are roughly 1 percent of the proton's mass; the rest is field energy). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Proton">wikipedia.org</a></li>
+        <h3>Energy and gravity</h3>
+        <ol start="7">
+          <li><b>Energy accounting.</b> <a href="https://www.feynmanlectures.caltech.edu/I_16.html">Feynman, volume I, chapter 16</a>, gives the energy-momentum relation. For one gram, <em>mc<sup>2</sup></em> is about 8.99 &times; 10<sup>13</sup> joules. <a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">Princeton's stellar-fusion notes</a> describe the reaction chain and the tunneling barrier.</li>
+          <li><b>The Sun's radiated mass-equivalent.</b> The <a href="https://arxiv.org/pdf/1510.07674">IAU's 2015 nominal solar luminosity</a>, 3.828 &times; 10<sup>26</sup> watts, is a standard conversion value. Dividing by <em>c<sup>2</sup></em> gives about 4.26 &times; 10<sup>9</sup> kilograms per second, or 4.7 million US short tons. It is an estimate of the mass-equivalent carried by sunlight, not an exact measurement of the Sun's changing luminosity or all of its mass loss.</li>
+          <li><b>Proton mass.</b> <a href="https://arxiv.org/pdf/1808.08677">Yang and colleagues (2018)</a> use lattice quantum chromodynamics and state their renormalization scheme and uncertainties for the mass decomposition. The post retains the qualitative result without presenting scheme-dependent fractions as universal pieces.</li>
+          <li><b>Free fall.</b> <a href="https://www.einstein-online.info/en/spotlight/equivalence_principle/">Einstein Online's equivalence-principle explanation</a> distinguishes supported observers from freely falling ones. The globe SVG illustrates geodesics on a surface, not the equations of motion in spacetime.</li>
+          <li><b>The 1919 eclipse.</b> The <a href="https://www.mpg.de/9244824/solar-eclipse-1919">Max Planck Society's historical account</a> gives the expeditions, the 1.75-arcsecond prediction and the measurement uncertainties. <a href="https://esahubble.org/images/potw1151a/">ESA / Hubble</a> identifies the Cosmic Horseshoe's lens and background galaxy.</li>
+          <li><b>M87.</b> The <a href="https://www.eso.org/public/news/eso1907/">ESO / Event Horizon Telescope release</a> explains the 2017 radio observations, 2019 publication, shadow, estimated mass and independent reconstruction checks. The displayed image is false-color radio imaging.</li>
+          <li><b>GW150914.</b> The <a href="https://arxiv.org/pdf/1602.03837">original LIGO / Virgo paper</a> defines strain as the differential arm-length change divided by the 4-kilometer arm length. Thus <em>hL</em> at a strain of 10<sup>&minus;21</sup> is approximately 4 &times; 10<sup>&minus;18</sup> meters. Its black-hole masses are waveform-based estimates, not exact counts. Calibration, environmental checks and time-shifted noise estimates enter the detection analysis.</li>
         </ol>
-
-        <h3>General relativity</h3>
-        <ol start="16">
-          <li><b>Max Planck Society.</b> A solar eclipse sheds light on physics (the 1.75-arcsecond prediction; 1919). <a href="https://www.mpg.de/9244824/solar-eclipse-1919">mpg.de</a></li>
-          <li><b>NIST (2010).</b> Clock experiment demonstrates that your head is older than your feet. <a href="https://www.nist.gov/news-events/news/2010/09/nist-clock-experiment-demonstrates-your-head-older-your-feet">nist.gov</a></li>
-          <li><b>The Bowling Ball and the Trampoline.</b> Why the rubber-sheet analogy misleads (Ask a Physicist). <a href="https://www.askamathematician.com/2010/07/q-whats-up-with-that-bowling-ball-creates-a-dip-in-a-sheet-analogy-of-spacetime-isnt-it-gravity-that-makes-the-dip-in-the-first-place/">askamathematician.com</a></li>
-          <li><b>European Southern Observatory (2019).</b> Astronomers capture first image of a black hole (M87, 6.5 billion solar masses). <a href="https://www.eso.org/public/news/eso1907/">eso.org</a></li>
-          <li><b>LIGO / Caltech (2016).</b> Gravitational waves detected 100 years after Einstein's prediction (GW150914). <a href="https://www.ligo.caltech.edu/page/press-release-gw150914">ligo.caltech.edu</a></li>
-          <li><b>Wheeler JA, Ford K (1998).</b> Geons, Black Holes, and Quantum Foam (the "matter tells spacetime how to curve" line).</li>
+        <h3>Quantum experiments and their interpretation</h3>
+        <ol start="14">
+          <li><b>Interference.</b> <a href="https://www.feynmanlectures.caltech.edu/III_01.html">Feynman, volume III, chapter 1</a>, distinguishes adding amplitudes from adding probabilities. <a href="https://arxiv.org/pdf/1210.6243">Bach and colleagues (2013)</a> used a low-intensity electron source, nanometer slits, a movable mask and individual detections to compare one- and two-slit patterns. Their experiment is not the source of this post's drawn dots, nor a which-path detector experiment.</li>
+          <li><b>Large-molecule interference.</b> <a href="https://pub.math.leidenuniv.nl/~gillrd/Peking/Files/two-slit_expt.pdf">Fein and colleagues (2019), full manuscript</a>, studied molecules up to about 2,000 atoms with a three-grating interferometer. They scanned a grating and measured molecular flux, comparing fringe behavior with quantum and classical predictions. This is an example from 2019, not a claim about today's size record.</li>
+          <li><b>Measurement and decoherence.</b> The <a href="https://plato.stanford.edu/entries/qt-issues/">Stanford Encyclopedia's measurement entry</a> describes the problem and alternative accounts. <a href="https://arxiv.org/pdf/quant-ph/0312059">Schlosshauer's review</a> distinguishes suppression of local interference from a physical collapse or selection of one outcome.</li>
+          <li><b>Uncertainty and atoms.</b> The <a href="https://plato.stanford.edu/entries/qt-uncertainty/">Stanford Encyclopedia's uncertainty entry</a> distinguishes the position-momentum standard-deviation relation from disturbance relations. <a href="https://www.feynmanlectures.caltech.edu/III_02.html">Feynman, volume III, chapter 2</a>, estimates hydrogen's finite size from competing kinetic and potential energies. The sound SVG is a schematic Fourier analogy, with no measured sound data.</li>
+          <li><b>Bell's theorem.</b> The <a href="https://plato.stanford.edu/entries/bell-theorem/">Stanford Encyclopedia entry</a> lays out locality and measurement-independence assumptions. The singlet example in the main text is a pure state. More generally, a mixed state is entangled if it cannot be expressed as a <a href="https://arxiv.org/pdf/quant-ph/9703004">mixture of product states</a>. For the convention used here, <em>S = E<sub>00</sub> + E<sub>01</sub> + E<sub>10</sub> &minus; E<sub>11</sub></em>, where each <em>E</em> is the average product of the two &plusmn;1 outcomes at that setting pair. Equivalent sign conventions give the same bound.</li>
+          <li><b>The Hensen experiment.</b> <a href="https://arxiv.org/pdf/1508.05949">Hensen and colleagues (2015)</a> separated stations by 1,280 meters and used heralded entanglement, fast random setting choices and spin readout. The figure distinguishes the theoretical bounds from their measured <em>S = 2.42 &plusmn; 0.20</em>. The paper's conservative null-model probability bound is 0.039; its assumptions and treatment of memory and imperfect randomness matter to that statement.</li>
+          <li><b>No faster-than-light message.</b> <a href="https://arxiv.org/pdf/quant-ph/0212023">Peres and Terno (2004)</a> explain why local quantum operations, with distant outcomes unread, leave the other station's marginal statistics unchanged under the stated relativistic locality conditions.</li>
         </ol>
-
-        <h3>The quantum world</h3>
-        <ol start="22">
-          <li><b>Feynman RP.</b> The Feynman Lectures on Physics, Vol. III, Ch. 1 (the double-slit and complementarity). <a href="https://www.feynmanlectures.caltech.edu/III_01.html">feynmanlectures.caltech.edu</a></li>
-          <li><b>Tonomura A, et al. (1989).</b> Demonstration of single-electron buildup of an interference pattern. <i>Am. J. Phys.</i> <a href="https://pubs.aip.org/aapt/ajp/article/57/2/117/1040594">pubs.aip.org</a></li>
-          <li><b>Physics World (2002).</b> The most beautiful experiment in physics (reader poll). <a href="https://physicsworld.com/a/the-most-beautiful-experiments-in-physics-as-chosen-by-real-physicists/">physicsworld.com</a></li>
-          <li><b>Davisson C, Germer L (1927).</b> Diffraction of electrons by a crystal of nickel. <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Davisson%E2%80%93Germer_experiment">wikipedia.org</a></li>
-          <li><b>Stanford Encyclopedia of Philosophy.</b> Measurement in quantum theory (Schrodinger's cat). <a href="https://plato.stanford.edu/entries/qt-issues/">plato.stanford.edu</a></li>
-          <li><b>Stanford Encyclopedia of Philosophy.</b> The role of decoherence in quantum mechanics. <a href="https://plato.stanford.edu/entries/qm-decoherence/">plato.stanford.edu</a></li>
-          <li><b>Von Neumann-Wigner interpretation</b> (the "consciousness causes collapse" fringe view). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Von_Neumann%E2%80%93Wigner_interpretation">wikipedia.org</a></li>
-          <li><b>Stanford Encyclopedia of Philosophy.</b> The uncertainty principle (Kennard inequality, not measurement disturbance). <a href="https://plato.stanford.edu/entries/qt-uncertainty/">plato.stanford.edu</a></li>
-          <li><b>Astrophysics notes, Princeton.</b> Stellar fusion and quantum tunneling. <a href="https://www.astro.princeton.edu/~gk/A403/fusion.pdf">astro.princeton.edu</a></li>
-          <li><b>Flash memory</b> (bits written by Fowler-Nordheim tunneling). <i>Wikipedia</i>. <a href="https://en.wikipedia.org/wiki/Flash_memory">wikipedia.org</a></li>
-          <li><b>Feynman RP.</b> The Feynman Lectures on Physics, Vol. III, Ch. 2 (the size of an atom from the uncertainty principle). <a href="https://www.feynmanlectures.caltech.edu/III_02.html">feynmanlectures.caltech.edu</a></li>
-        </ol>
-
-        <h3>Entanglement</h3>
-        <ol start="33">
-          <li><b>Einstein A, Podolsky B, Rosen N (1935).</b> Can quantum-mechanical description of physical reality be considered complete? <i>Phys. Rev.</i> 47, 777. <a href="https://link.aps.org/doi/10.1103/PhysRev.47.777">link.aps.org</a></li>
-          <li><b>Stanford Encyclopedia of Philosophy.</b> Bell's theorem (and Bell's own "Bertlmann's socks"). <a href="https://plato.stanford.edu/entries/bell-theorem/">plato.stanford.edu</a></li>
-          <li><b>Nobel Prize in Physics 2022.</b> Aspect, Clauser, and Zeilinger, for experiments with entangled photons. <a href="https://www.nobelprize.org/prizes/physics/2022/summary/">nobelprize.org</a></li>
-          <li><b>No-communication theorem</b> (entanglement cannot transmit information). <i>Wikipedia</i>; Peres &amp; Terno, <i>Rev. Mod. Phys.</i> 76 (2004). <a href="https://en.wikipedia.org/wiki/No-communication_theorem">wikipedia.org</a></li>
-        </ol>
-
-        <h3>The unfinished part</h3>
-        <ol start="37">
-          <li><b>Hawking SW (1974).</b> Black hole explosions? <i>Nature</i> 248, 30. <a href="https://www.nature.com/articles/248030a0">nature.com</a></li>
-          <li><b>Stanford Encyclopedia of Philosophy.</b> Quantum gravity. <a href="https://plato.stanford.edu/entries/quantum-gravity/">plato.stanford.edu</a></li>
+        <h3>The open problem</h3>
+        <ol start="21">
+          <li><b>Quantum gravity.</b> The <a href="https://plato.stanford.edu/entries/quantum-gravity/">Stanford Encyclopedia overview</a> distinguishes quantum fields on classical spacetime from a theory of quantum geometry and discusses the limits of current evidence.</li>
+          <li><b>Hawking radiation.</b> <a href="https://mai68.org/spip2/IMG/pdf/euclid-cmp-1103899181.pdf">Hawking's full 1975 paper, Particle Creation by Black Holes</a>, treats quantum fields on an approximately classical black-hole background. The linked copy is a mirror of the original paper. Its derivation is not evidence of radiation detected from an astronomical black hole, and its approximation does not establish the final evaporation stage. <a href="https://home.cern/science/experiments/na63/">CERN's current experiment overview</a> identifies black-hole Hawking radiation as still undetected.</li>
         </ol>
       </details>
     </section>
-
-    <p class="img-credit">Cover image: the <a href="https://commons.wikimedia.org/wiki/File:Black_hole_-_Messier_87_crop_max_res.jpg">first image of a black hole (M87)</a>, Event Horizon Telescope Collaboration, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Portraits, telescope images, and experiment photographs are individually credited in their captions; all are public domain or Creative Commons. Figures are drawn in code for this post.</p>
+    <p class="img-credit">Cover image: the <a href="https://commons.wikimedia.org/wiki/File:Black_hole_-_Messier_87_crop_max_res.jpg">M87 black-hole image</a>, Event Horizon Telescope Collaboration, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Photographs and illustrations retain their individual credits. The seven SVG diagrams were drawn in code for this post.</p>
   </main>
 
   <footer class="site-footer">
@@ -789,18 +642,20 @@
   <script src="/js/main.js"></script>
   <script src="/js/backtotop.js"></script>
   <script>
-  /* Per-post: scroll-reveal + figure draw-ins. No-JS safe (CSS only hides under
-     html.js), and a 4s watchdog guarantees nothing is ever left hidden. */
+  /* Animate only on fine-pointer devices with motion enabled. Static diagrams
+     remain complete without JavaScript; the watchdog releases hidden reveals. */
   (function () {
     'use strict';
     var reveals = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+    var animate = window.matchMedia('(prefers-reduced-motion: no-preference) and (pointer: fine)').matches;
     function fire(el) {
       el.classList.add('in');
       Array.prototype.slice.call(el.querySelectorAll('.draw')).forEach(function (g, i) {
-        setTimeout(function () { g.classList.add('go'); }, 110 + i * 70);
+        if (animate) setTimeout(function () { g.classList.add('go'); }, 110 + i * 70);
+        else g.classList.add('go');
       });
     }
-    if (!('IntersectionObserver' in window)) {
+    if (!animate || !('IntersectionObserver' in window)) {
       reveals.forEach(fire);
     } else {
       var io = new IntersectionObserver(function (entries) {
