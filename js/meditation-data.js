@@ -1,274 +1,246 @@
-/* ============================================================
-   meditation-data.js
-   The eleven techniques, each mapped on five axes for the
-   explorer in meditation.html:
-     one    what it is (one plain sentence)
-     origin where it came from
-     claims what the tradition claims
-     ev     what the evidence shows  (+ grade: a/b/c/d)
-     how    how to do the core of it (numbered steps)
-     time   how long
-     miss   the common mistakes
-     note   an honest aside (cost, a teacher caveat)
-   Data only. The explorer (js/meditation.js) renders it.
-   Sources are cited in the post's reference list. No em dashes.
-   ============================================================ */
+/* Selected practices for meditation.html. Health evidence is outcome-specific;
+   traditional aims and beginner exercises are described separately. */
 window.MED = {
   fams: {
-    focus:  { label: 'Focus on one thing',    color: '#dfc288' },
-    open:   { label: 'Open awareness',         color: '#8fb3c7' },
-    heart:  { label: 'Heart and compassion',   color: '#d9978c' },
-    breath: { label: 'Working the breath',     color: '#9ec79a' },
-    word:   { label: 'Sacred words',           color: '#b79bc4' }
+    focus: { label: 'Stay with an object', color: '#dfc288' },
+    open: { label: 'Observe experience', color: '#8fb3c7' },
+    heart: { label: 'Practice goodwill', color: '#d9978c' },
+    breath: { label: 'Change the breath', color: '#9ec79a' },
+    word: { label: 'Pray', color: '#b79bc4' }
   },
-
-  /* display order = roughly easiest-to-start first */
   order: ['mindfulness', 'mantra', 'bodyscan', 'breath', 'metta',
           'vipassana', 'zazen', 'tonglen', 'centering', 'jesus', 'dhikr'],
-
   techniques: {
-
     mindfulness: {
       name: 'Mindfulness and MBSR',
       fam: 'open',
       also: 'mindfulness-based stress reduction',
-      object: 'the breath, then whatever arises',
-      one: 'You rest your attention on the breath, and every time it wanders off you notice that and bring it back, on purpose and without scolding yourself.',
-      origin: 'The molecular biologist <b>Jon Kabat-Zinn</b> built the 8-week MBSR course in a hospital basement at the University of Massachusetts in 1979. It is Buddhist insight meditation with the religion taken out, so it could be prescribed to patients in pain. His definition: "paying attention in a particular way: on purpose, in the present moment, and nonjudgmentally."',
-      claims: 'Not enlightenment, just a better relationship with your own experience: less reactivity to stress, pain, and anxiety. You cannot stop the waves, the line goes, but you can learn to surf.',
-      ev: 'The most-studied kind by far. The best meta-analysis found small but real benefits for anxiety, depression, and pain, about the size of an antidepressant. Its clinical offshoot, MBCT, cuts relapse for recurring depression by about a third versus usual care.',
+      object: 'breath, sensations, and thoughts',
+      one: 'Attend to present experience, noticing distraction and your reactions to what you notice.',
+      origin: 'Jon Kabat-Zinn developed <a href="https://www.ummhealth.org/services-treatments/center-mindfulness/mindfulness-programs/mbsr">MBSR at UMass in 1979</a>, drawing on Buddhist practice and yoga. The eight-week secular course includes sitting, body scans, movement, and group teaching.',
+      claims: 'Recognize habitual reactions to stress or pain and respond with more awareness. Breath attention is one exercise within the course.',
+      ev: 'For anxiety disorders, a full MBSR course produced results within a prespecified margin of escitalopram in <a href="https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2798510">a randomized trial</a>. That supports the course for those patients; it does not establish equivalent results from a brief app exercise.',
+      evidenceFor: 'MBSR for anxiety disorders',
       grade: 'b',
       how: [
-        'Sit in a chair or on a cushion, upright but not stiff, "awake, dignified, and relaxed." Feet flat, hands on your thighs.',
-        'Close your eyes, or let them rest half-open with a soft gaze on the floor a few feet ahead.',
-        'Find the breath where you feel it most plainly: the nostrils, the chest, or the belly. Rest your attention there. <b>Do not control the breath</b>, just feel the one already happening.',
-        'Your mind will wander into thoughts, plans, sounds. The instant you notice, name it lightly ("thinking") and walk your attention back to the breath, with no self-criticism.',
-        'That return is the entire exercise. You may do it a hundred times in one sitting. Each one counts, like a rep.'
+        'Sit comfortably, with eyes open or closed.',
+        'Feel the natural breath at the nose, chest, or belly, without changing its pace.',
+        'When attention moves elsewhere, return. A quiet label such as "thinking" may help.',
+        'If attending to breathing is uncomfortable, use sounds or contact with the chair. Stop if distress persists.'
       ],
-      time: 'Start at 10 minutes a day. MBSR builds toward 45. Daily beats long.',
-      miss: 'Trying to empty the mind (the goal is noticing you left and coming back), and beating yourself up on every distraction (the instruction is a kind, matter-of-fact return).',
-      note: 'Free, secular, and the easiest place for most people to start. The 8-week course is taught in hospitals and online worldwide.'
+      time: 'Try a few minutes first',
+      miss: 'Judging the session by how few thoughts occurred.',
+      note: 'The <a href="https://www.ummhealth.org/services-treatments/center-mindfulness/mindfulness-programs/mbsr">full MBSR course</a> asks for roughly 45 to 60 minutes of daily home practice, with weekly classes.'
     },
-
     mantra: {
       name: 'Mantra and TM',
       fam: 'focus',
       also: 'Transcendental Meditation',
-      object: 'a repeated meaningless sound',
-      one: 'You sit with your eyes closed and silently repeat a short, meaningless sound, lightly enough that the repetition can fade on its own and the mind settles inward.',
-      origin: '<b>Maharishi Mahesh Yogi</b> systematized an old Vedic mantra practice into Transcendental Meditation and began teaching it in the 1950s. The Beatles’ 1968 trip to his ashram in Rishikesh made it a household word.',
-      claims: 'That the mind settles past thought into "pure consciousness," a state of deep rest while fully awake, which the movement calls restful alertness. It is sold as effortless: no concentration required.',
-      ev: 'Real but modest. Independent reviews find a few-mmHg drop in blood pressure, no better than other relaxation methods, and the American Heart Association gives it only a cautious nod. Its grand claims, yogic "flying" (cross-legged hopping) and lowering a city’s crime rate by group meditation, are pseudoscience.',
+      object: 'a repeated sound, word, or phrase',
+      one: 'Repeat a word or sound silently. TM teachers assign a mantra and teach its use.',
+      origin: 'Maharishi Mahesh Yogi developed TM in the 1950s from earlier Indian meditation practices. <a href="https://my.clevelandclinic.org/health/treatments/22292-transcendental-meditation">Technique and background</a>. Mantra practice also exists outside this branded course.',
+      claims: 'TM describes deep rest while awake, beyond ordinary thinking. Other mantra traditions give their words religious meaning.',
+      ev: 'A <a href="https://pubmed.ncbi.nlm.nih.gov/35412731/">2022 review</a> found modest average blood-pressure reductions from TM, with effects waning after three months. The <a href="https://www.ahajournals.org/doi/10.1161/CIR.0000000000001356">2025 AHA/ACC guideline</a> allows TM as a possible addition to lifestyle changes or medication. Neither source establishes that any repeated word has the same result.',
+      evidenceFor: 'TM and blood pressure',
       grade: 'c',
       how: [
-        'Sit comfortably, back supported, eyes closed. Sit quietly for a few seconds first.',
-        'Begin to repeat a mantra silently in your mind. TM assigns a Sanskrit sound; a neutral word like "one" works the same way (Herbert Benson showed this at Harvard).',
-        '<b>Effortlessness is the whole game.</b> Do not concentrate on it or hold a rhythm. Let it be faint, vague, even let it change or slip away. That fading is the mind settling.',
-        'When you notice you have drifted into ordinary thoughts, gently come back to the mantra. No annoyance.',
-        'At the end, drop the mantra and sit with closed eyes for two or three minutes before you get up.'
+        'For a generic exercise, sit comfortably and choose a neutral word such as "one." This is not TM instruction.',
+        'Repeat it silently at an easy pace, without changing your breathing.',
+        'When distracted, return to the word without trying to exclude every thought.',
+        'Sit quietly for a moment before getting up.'
       ],
-      time: 'About 20 minutes, twice a day, classically morning and late afternoon.',
-      miss: 'Concentrating or gripping the mantra (it is meant to be loose), and treating a busy mind as failure (noticing and returning is the practice, not an interruption).',
-      note: 'Real TM is trademarked and taught only through a paid course, about $980 in the US, with a "personal" mantra. The mechanics above are free to copy.'
+      time: 'Try five minutes of the generic exercise',
+      miss: 'Assuming similar-looking exercises have been proved interchangeable.',
+      note: 'The <a href="https://www.tm.org/en-us/course-fee">US TM course fee</a> is $980, with income-based rates and possible scholarships. It includes follow-up support; price does not establish efficacy.'
     },
-
     bodyscan: {
       name: 'The body scan',
       fam: 'focus',
-      also: 'sweeping the body',
+      also: 'attention through the body',
       object: 'sensation, region by region',
-      one: 'Lying down, you move your attention slowly through the body, part by part, noticing whatever sensation (or none) is there, without trying to change it.',
-      origin: 'A centerpiece of Kabat-Zinn’s MBSR, and usually the first practice taught. It descends from the body-"sweeping" of the Burmese vipassana lineage (U Ba Khin, Goenka) and from yoga nidra, the lying-down "yogic sleep."',
-      claims: 'To build interoception (the felt sense of your body from inside), to surface and release tension you did not know you held, and to anchor attention in plain sensation rather than thought.',
-      ev: 'Studied as part of MBSR for stress, pain, and sleep; hard to isolate from the rest of the course. The honest read: a reliable way into the body and a calming practice, with the same modest evidence base as mindfulness generally.',
-      grade: 'c',
+      one: 'Move attention through the body, noticing pressure, warmth, tingling, or an area with no clear sensation.',
+      origin: 'A core exercise in MBSR. The <a href="https://ggia.berkeley.edu/practice/body_scan_meditation">Berkeley guide</a> offers seated instructions and audio from university mindfulness teachers.',
+      claims: 'Recognize bodily sensations and tension without immediately trying to change them. Relaxation is optional.',
+      ev: 'In <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11420060/">a 2024 randomized trial</a>, 449 people received a 15-minute body scan and reported less immediate stress than audiobook listeners. The sample was mostly students without mental illness. This does not establish lasting benefit or treatment of an anxiety disorder.',
+      evidenceFor: 'Body scans and immediate self-rated stress',
+      grade: 'b',
       how: [
-        'Lie on your back, legs uncrossed and a little apart, arms slightly away from your sides, palms up, eyes closed.',
-        'Take a few natural breaths and feel the whole body resting, heavy, supported by the floor.',
-        'Bring attention to the toes of your <b>left</b> foot. Notice what is there: warmth, tingling, pressure, or nothing at all. "Nothing" is a real, fine answer.',
-        'On the in-breath, imagine the breath reaching that part; on the out-breath, let it soften and release. Then move on.',
-        'Travel slowly: left foot and leg, right foot and leg, hips, belly, chest, back, arms, hands, shoulders, neck, face, the crown. End by feeling the whole body at once.'
+        'Sit or lie supported. Notice contact with the chair, bed, or floor.',
+        'Attend to your feet, then move through the legs, torso, hands, arms, neck, and face.',
+        'Pause at each region. You do not need to find a particular sensation.',
+        'Return when distracted. Skip uncomfortable areas, or open your eyes and look around.'
       ],
-      time: 'Classic MBSR runs 45 minutes; 20 is plenty to start.',
-      miss: 'Falling asleep (do it sitting, or earlier in the day, not in bed), and trying to force relaxation (you notice tension, you do not make it leave; forcing it just adds more).',
-      note: 'Free and well suited to guided audio while you learn the route.'
+      time: 'Try five minutes',
+      miss: 'Treating the scan as a test of whether you can relax every muscle.',
+      note: 'Try guided audio to follow the route, or sit if lying down makes you sleepy.'
     },
-
     breath: {
       name: 'Breathwork and pranayama',
       fam: 'breath',
-      also: 'slow breathing, the physiological sigh',
-      object: 'the breath itself, deliberately paced',
-      one: 'Instead of just watching the breath, you deliberately shape it, slowing it down and lengthening the exhale, to push your own nervous system toward calm.',
-      origin: 'Two streams. Ancient yogic <b>pranayama</b> (Patanjali’s Yoga Sutras, the fourth of the eight limbs) regulates the breath to steady the mind. And a modern toolkit, from heart-rate-variability research and a 2023 Stanford study, that does the same with plain physiology.',
-      claims: 'A fast, on-demand "off-ramp" from fight-or-flight. The mechanism is real and simple: a long exhale engages the vagus nerve and the parasympathetic ("rest and digest") brake, slowing the heart.',
-      ev: 'The strongest mechanism in this whole guide. A 2023 Stanford trial found 5 minutes a day of slow "cyclic sighing" beat both box breathing and mindfulness for improving mood; slow breathing reliably raises heart-rate variability.',
-      grade: 'b',
+      also: 'paced breathing and yogic breathing',
+      object: 'the pace and pattern of breathing',
+      one: 'Change your breathing deliberately. Slow pacing, holds, and rapid breathing have different risks.',
+      origin: 'Yoga includes breathing techniques called <a href="https://www.nccih.nih.gov/health/yoga-effectiveness-and-safety">pranayama</a>. Modern breathing studies test selected patterns; their results cannot be applied to all yogic breathing.',
+      claims: 'Some methods aim at relaxation or focus; religious yoga gives the breath a wider role.',
+      ev: 'A <a href="https://www.nature.com/articles/s41598-023-49279-8">blinded trial of 400 people</a> found no extra mental-health benefit from slow pacing over matched guidance at a normal pace. A smaller <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947/">cyclic-sighing trial</a> found a mood advantage over brief mindfulness. These results leave the best pattern unsettled.',
+      evidenceFor: 'Brief breathing exercises and mood',
+      grade: 'c',
       how: [
-        'For the fastest reset, the <b>physiological sigh</b>: a normal inhale through the nose, then a second short sip of air to top off the lungs, then a long, slow exhale through the mouth. Repeat for a minute or five.',
-        'For steady calm, <b>slow breathing</b>: in for about 5 seconds, out for about 5 or 6, no holds, around 6 breaths a minute, for 5 minutes.',
-        'For focus under pressure, <b>box breathing</b>: in 4, hold 4, out 4, hold 4.',
-        'For a yogic version, <b>alternate-nostril</b>: thumb closes the right nostril, breathe in left; switch, breathe out right; in right, switch, out left. Keep it gentle.',
-        'In all of them, keep the exhale at least as long as the inhale. That is the lever.'
+        'Sit somewhere safe. Breathe normally, without trying to fill your lungs maximally.',
+        'For slow pacing, try a comfortable inhale and exhale of roughly equal length. Avoid forcing the pacer\'s timing.',
+        'For a double inhale, inhale through the nose, add a small second inhale, then exhale slowly. Avoid straining.',
+        'Return to normal breathing if you feel dizzy, air-hungry, or more anxious.'
       ],
-      time: 'As little as 1 to 5 minutes. It works almost immediately.',
-      miss: 'Forcing or straining (gentle is the point), and confusing this with the intense methods below.',
-      note: 'Hard safety rule: forceful breathing and breath-holds (Wim Hof, kapalabhati, holotropic) can make you faint. Never do them in or near water or while driving, and skip them with heart, lung, or seizure conditions or in pregnancy.'
+      time: 'Try a minute, then check how you feel',
+      miss: 'Expecting a longer exhale to guarantee calm.',
+      note: 'The pacer omits rapid breathing. <a href="https://www.wimhofmethod.com/faq">Forceful breathing and long holds can cause fainting</a>; <a href="https://www.wimhofmethod.com/practice-the-method">never practice them in water or while driving</a>.'
     },
-
     metta: {
       name: 'Loving-kindness',
       fam: 'heart',
-      also: 'metta, the brahmaviharas',
-      object: 'phrases of goodwill',
-      one: 'You silently repeat a few good wishes, first for yourself and then in widening circles to others, deliberately growing goodwill the way you would train any other habit.',
-      origin: 'The Buddhist <b>Metta Sutta</b> and the four brahmaviharas ("divine abodes"). Its modern phrase-by-phrase form was brought west by <b>Sharon Salzberg</b> and the Insight Meditation Society in the 1990s.',
-      claims: 'To soften self-judgment, dissolve ill-will, and build a durable baseline of warmth and connection. It is offered as the direct antidote to fear and resentment.',
-      ev: 'Trials link it to more positive emotion, more social connection, and less self-criticism. Effects are modest and the studies are mostly small, but the direction is consistent.',
+      also: 'metta',
+      object: 'wishes for yourself and others',
+      one: 'Silently wish people well, including yourself. The phrases express an intention even when no warm feeling accompanies them.',
+      origin: 'A Buddhist practice. The <a href="https://www.accesstoinsight.org/tipitaka/kn/snp/snp.1.08.amar.html">Metta Sutta</a> extends goodwill to all living beings. The exercise here follows <a href="https://www.mindful.org/loving-kindness-meditation-with-sharon-salzberg/">Sharon Salzberg</a>, one contemporary teacher.',
+      claims: 'Cultivate goodwill and reduce hostility. Wishing someone well does not require approving their behavior or remaining in contact.',
+      ev: 'A <a href="https://pubmed.ncbi.nlm.nih.gov/18954193/">randomized study of 139 working adults</a> found increases in reported positive emotions after training. The comparison was a waitlist, so it could not separate the exercise from expectations, attention, or meeting a group.',
+      evidenceFor: 'Loving-kindness and positive emotion',
       grade: 'c',
       how: [
-        'Sit comfortably, eyes closed. Bring yourself to mind first.',
-        'Silently repeat a small set of wishes, slowly: <b>"May I be safe. May I be happy. May I be healthy. May I live with ease."</b>',
-        'Move to someone easy to love (a friend, a mentor, even a pet): "May you be safe, happy, healthy, at ease."',
-        'Then a neutral person (a cashier, a stranger on the bus). Then, gently, a difficult person. Then all beings everywhere.',
-        'You are planting an intention, not squeezing out a feeling. Whatever shows up, warmth or boredom or nothing, let it be and keep saying the words.'
+        'Choose yourself or someone whose welfare you can easily wish for.',
+        'Repeat quietly: "May I be safe. May I be happy. May I be healthy. May I live with ease." Adapt the phrases if needed.',
+        'Offer the wishes to another person, then to people you know less well.',
+        'Extend them further if you want. You can leave out a difficult person.'
       ],
-      time: 'About 20 minutes for the full circle; 10 is fine, and on a hard day just do yourself.',
-      miss: 'Forcing the feeling (you repeat the wish, you do not manufacture love on command), and skipping yourself (the tradition starts there on purpose).',
-      note: 'Free. A good complement to a focus practice rather than a full replacement.'
+      time: 'Try a few minutes',
+      miss: 'Demanding a feeling of love, or making the exercise an obligation to forgive harm.',
+      note: 'You can start with someone else if wishes toward yourself feel uncomfortable.'
     },
-
     vipassana: {
       name: 'Vipassana',
       fam: 'open',
-      also: 'insight meditation, Goenka',
-      object: 'the breath, then body sensations',
-      one: 'You sharpen attention on the breath, then sweep it through the body and watch every sensation arise and pass while refusing to react to any of it.',
-      origin: 'Rooted in the Buddha’s <b>Satipatthana Sutta</b>, the four foundations of mindfulness. Today it mostly reaches people through <b>S.N. Goenka’s</b> free 10-day silent course, in the Burmese lineage of U Ba Khin.',
-      claims: 'That by observing sensation with total equanimity you feel, directly, that everything is impermanent (anicca), and you dissolve the deep habits of craving and aversion at their root.',
-      ev: 'The 10-day course produces big reported gains, with mixed-quality research behind them. It is also the kind of intense, deconstructive practice where most of the documented lasting adverse effects show up, so go in informed.',
+      also: 'insight meditation; Goenka-style scanning',
+      object: 'changing sensations and reactions',
+      one: 'Observe experience to understand impermanence and the habits of craving and resistance. Body scanning is one approach.',
+      origin: 'Buddhist insight practice includes several lineages. The <a href="https://www.accesstoinsight.org/tipitaka/mn/mn.010.nysa.html">Satipatthana Sutta</a> attends to body, feelings, mind, and mental phenomena. Goenka courses teach one form.',
+      claims: 'Directly understand how experience changes and weaken craving and aversion. Those are Buddhist aims; a symptom score cannot establish liberation.',
+      ev: 'A <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0216643">survey of regular meditators</a> associated retreats and exclusively deconstructive practices, which examine how experience is constructed, with unpleasant experiences. This was an association, without proof of causation or a comparison of retreat methods.',
+      evidenceFor: 'Retreats and unpleasant experiences',
       grade: 'c',
       how: [
-        'First, <b>anapana</b>: sit upright, eyes closed, and watch the natural breath where it touches the nostrils. Do not control it. Narrow attention to that small patch of skin.',
-        'Once attention is steady, begin the <b>body sweep</b>: move it slowly from the top of the head, part by part, down to the toes, then back up.',
-        'In each spot, observe whatever sensation is there: heat, tingling, pressure, pain, or nothing.',
-        '<b>The cardinal rule is equanimity.</b> Do not chase the pleasant or fight the unpleasant. Just observe, and know it will pass.',
-        'When the mind runs off, bring it back, calmly, and resume the sweep.'
+        'Notice the natural breath without changing it.',
+        'Attend to sensations in a small body region, then move to another.',
+        'Notice a sensation changing, and notice any wish to keep it or make it stop.',
+        'Return when distracted. Change position or stop when needed; equanimity does not require ignoring an injury.'
       ],
-      time: 'Taught in a 10-day residential retreat; at home, 30 to 60 minutes.',
-      miss: 'Reacting to sensations instead of watching them (the reaction is the very habit you are training out), and straining to manufacture a tingle (observe what is actually there).',
-      note: 'The 10-day courses are genuinely free, funded by past students’ donations, with total silence for the first nine days.'
+      time: 'Try a short exercise before considering a retreat',
+      miss: 'Expecting every vipassana school to use the same technique.',
+      note: 'Goenka courses run for <a href="https://www.dhamma.org/en/about/code">ten days, with many hours of daily meditation</a>, funded by donations rather than fees. Read the discipline and screening information before applying.'
     },
-
     zazen: {
       name: 'Zazen',
       fam: 'open',
-      also: 'Zen sitting, shikantaza',
-      object: 'nothing, or a counted breath, or a koan',
-      one: 'You sit in a precise upright posture and, rather than steering the mind, you "just sit," letting thoughts come and go without chasing or fighting them.',
-      origin: 'Chan Buddhism crossing from China into Japanese <b>Zen</b>. <b>Dogen</b> (1200s) centered the Soto school on "just sitting" (shikantaza); the Rinzai school, revived by <b>Hakuin</b>, sits with a koan like "the sound of one hand."',
-      claims: 'In Soto, sitting is not a means to a later enlightenment but enlightenment itself, enacted now. In Rinzai, sustained "Great Doubt" on a koan builds to a sudden breakthrough (kensho).',
-      ev: 'Long-term Zen practitioners show the expected attention and brain signatures, but rigorous clinical trials on zazen specifically are sparse, partly because Zen frames sitting as awakening, not as a health treatment.',
+      also: 'Zen sitting; Soto-style shikantaza',
+      object: 'sitting awareness; methods vary',
+      one: 'Sit upright and allow thoughts to come and go without pursuing them. This is Soto-style shikantaza, or just sitting.',
+      origin: 'Japanese Zen developed from Chinese Chan. <a href="https://www.sotozen.com/eng/about/history/index.html">Soto follows Dogen</a>; <a href="https://zen.rinnou.net/zazen/sitting.html">Rinzai instructions</a> include breath counting. This entry describes one form of Zen sitting.',
+      claims: 'Soto treats sitting as <a href="https://www.sotozen.com/eng/library/key_terms/pdf/key_terms01.pdf">the enactment of awakening</a>, within a religious and ethical practice.',
+      ev: 'The clinical studies above do not test Soto shikantaza specifically. They cannot establish the same anxiety benefits as MBSR.',
+      evidenceFor: 'Shikantaza for anxiety',
       grade: 'd',
       how: [
-        'Sit on a cushion in lotus, half-lotus, kneeling, or a chair, so your two knees and your seat make a stable tripod. Spine erect, crown lifted, chin slightly in.',
-        'Rest the hands in your lap, left palm on right, thumb-tips lightly touching (the "cosmic mudra"). Tongue on the roof of the mouth.',
-        '<b>Keep the eyes half-open</b>, lowered to the floor about three feet ahead, unfocused. Rock gently side to side, then settle.',
-        'To start, count breaths on the exhale: one, two, up to ten, then back to one. Lose count? Just start at one again.',
-        'Later, drop the counting and just sit: let thoughts arise and pass without grabbing them. Alert, upright, going nowhere.'
+        'Use a cushion, kneeling bench, or chair for a stable, comfortable posture.',
+        'Sit upright with relaxed shoulders. Rest one palm on the other, with thumb tips lightly touching.',
+        'Keep your eyes slightly open and lowered. Let breathing proceed naturally.',
+        'Allow thoughts to arise and pass. When caught in one or becoming dull, return to awareness of sitting.'
       ],
-      time: 'A sit runs 25 to 40 minutes; beginners start at 10 to 15.',
-      miss: 'Slumping or closing the eyes (the posture is the practice; both breed drowsiness), and fighting thoughts or trying to go blank (you let them pass, you do not evict them).',
-      note: 'Free. The posture is exacting, so a session at a local Zen center is worth it early on.'
+      time: 'Try a short sitting',
+      miss: 'Forcing lotus posture, or treating just sitting as an instruction to doze.',
+      note: 'These abbreviated <a href="https://www.sotozen.com/eng/zazen/howto/index.html">Soto instructions</a> omit temple forms. A teacher can help with posture and the wider practice.'
     },
-
     tonglen: {
       name: 'Tonglen',
       fam: 'heart',
-      also: 'sending and taking',
-      object: 'suffering, on the breath',
-      one: 'You reverse the usual instinct: on the in-breath you breathe in someone’s suffering, and on the out-breath you send them relief.',
-      origin: 'A Tibetan Buddhist <b>lojong</b> ("mind training") practice carried to Tibet by the Indian master <b>Atisha</b> in the 11th century, and made widely known in the West by <b>Pema Chodron</b> and Chogyam Trungpa.',
-      claims: 'To dismantle self-cherishing, the reflex of putting "me" first and pushing pain away, which Buddhism treats as the root of suffering, and to grow real compassion in its place.',
-      ev: 'A small but encouraging literature, mostly on compassion meditation broadly rather than tonglen alone: more self-compassion, more compassion for others, less anxiety.',
+      also: 'taking and sending',
+      object: 'images of suffering and relief',
+      one: 'Imagine taking in suffering on an inhalation and offering relief on an exhalation. The breath carries an image, not someone else\'s illness.',
+      origin: 'A Tibetan Buddhist compassion practice within lojong, or mind training. This outline follows <a href="https://www.lionsroar.com/how-to-practice-tonglen-meditation/">Pema Chodron\'s teaching</a>.',
+      claims: 'Cultivate compassion by imagining turning toward suffering rather than protecting only yourself.',
+      ev: 'A <a href="https://link.springer.com/article/10.1007/s12671-025-02601-z">2025 randomized study of 60 healthcare workers</a> found an immediate increase in reported compassion after a guided exercise combining tonglen with focused attention. The comparison was a neutral audio story. One session cannot establish lasting benefit for grief or caregiving strain.',
+      evidenceFor: 'Tonglen and immediate compassion',
       grade: 'd',
       how: [
-        'Rest for a moment in stillness, a brief flash of openness before you begin.',
-        'Sync with the breath using texture: breathe <b>in</b> hot, heavy, dark, tight; breathe <b>out</b> cool, light, bright, fresh.',
-        'Bring to mind a specific person who is suffering (start with someone you love). Breathe <b>in</b> their pain, wishing to take it; breathe <b>out</b> relief and ease to them.',
-        'Widen it: everyone, everywhere, caught in that same kind of pain. In with theirs, out with relief.',
-        'If you get stuck or overwhelmed, do it for your own pain and everyone who feels the same. Then return to the simple textures.'
+        'Settle briefly with ordinary breathing.',
+        'Bring to mind someone facing a difficulty you can attend to without becoming overwhelmed.',
+        'With the in-breath, imagine taking in their difficulty as darkness or heaviness. With the out-breath, imagine offering relief.',
+        'If comfortable, extend that wish to others facing the same difficulty. Stop if overwhelmed and look around the room.'
       ],
-      time: 'A few minutes to a full sitting, plus an on-the-spot version any time pain hits.',
-      miss: 'Getting the breath backwards (in takes suffering, out sends relief), and staying abstract (it only bites with a real person and a real pain). Discomfort is expected, not a sign you are doing it wrong.',
-      note: 'Free, and unusually direct for grief, caregiving, or anger. Counterintuitive by design.'
+      time: 'Try a brief, gentle version',
+      miss: 'Interpreting distress as proof that you should push further, or expecting the image to heal another person.',
+      note: 'A teacher can guide this practice. A simple wish of goodwill is another option.'
     },
-
     centering: {
       name: 'Centering prayer',
       fam: 'word',
       also: 'Christian contemplative prayer',
-      object: 'a single "sacred word"',
-      one: 'You sit in silence and, whenever you notice a thought has carried you off, you return ever so gently to one chosen word that stands for your consent to God’s presence.',
-      origin: 'Packaged in the 1970s by three Trappist monks (<b>Thomas Keating</b>, William Meninger, Basil Pennington) from the 14th-century English mystical text <b>The Cloud of Unknowing</b> and the older "negative way" of the desert fathers.',
-      claims: 'Not an experience or a blank mind, but consent: opening to God’s presence and action within. It is preparation for contemplation, which the tradition holds is given, not manufactured.',
-      ev: 'Thin and mixed. The broader research on silent, repetitive prayer points to the same parasympathetic calming as other contemplative practice, but centering prayer specifically is barely studied.',
+      object: 'silence and a word of consent',
+      one: 'Sit in silence. When absorbed in thought, use a chosen word to renew your consent to God\'s presence.',
+      origin: 'A modern Christian method drawing on older contemplative teaching, including The Cloud of Unknowing. Its guidelines come from <a href="https://www.contemplativeoutreach.org.uk/centering-prayer-2/">Contemplative Outreach</a>.',
+      claims: 'Open to God\'s presence and action. The word expresses consent, without promising a spiritual experience.',
+      ev: 'A <a href="https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2021.720824/full">2021 student trial</a> found less reported stress after a centering exercise adapted for people of any or no faith. It used a waitlist comparison and excluded some participants from analysis. This is preliminary evidence, not proof about contemplative prayer generally.',
+      evidenceFor: 'Adapted centering and reported stress',
       grade: 'd',
       how: [
-        'Choose one short sacred word that means "yes" to you: God, Jesus, Abba, Peace, Love, Stillness. Keep the same word.',
-        'Sit comfortably, eyes closed, and silently introduce the word once.',
-        'When you notice you have gotten caught up in a thought (a feeling, an image, even a "spiritual" insight), <b>return ever so gently to the word</b>, then let even the word fade into silence.',
-        'The word is a feather-touch reset, not a chant on a beat. You reach for it only when you notice you have drifted.',
-        'At the end, stay in silence with eyes closed for a couple of minutes.'
+        'Choose a short sacred word, such as God or Jesus, to express your intention.',
+        'Sit comfortably, settle, and introduce the word silently.',
+        'When engaged with thoughts, gently return to the word. Allow it to recede into silence rather than repeating it continuously.',
+        'Remain quietly for a little while before getting up.'
       ],
-      time: 'A minimum of 20 minutes, twice a day, is the standard.',
-      miss: 'Treating the word as a chanted mantra (it is a single gentle reset), and grading the sit by how few thoughts you had (a distracted sit where you kept consenting is a good sit).',
-      note: 'Unlike a mantra, the word is a symbol of intention, not a sound to repeat rhythmically. Free.'
+      time: 'The tradition recommends twenty minutes twice daily',
+      miss: 'Counting repetitions or making an empty mind the measure of the prayer.',
+      note: 'That is a <a href="https://www.contemplativeoutreach.org/2023/04/19/why-is-20-minutes-recommended-for-centering-prayer/">teaching recommendation</a>, not a medical dose. Shorter periods are possible.'
     },
-
     jesus: {
       name: 'The Jesus Prayer',
       fam: 'word',
-      also: 'hesychasm, prayer of the heart',
-      object: 'one repeated sentence',
-      one: 'You repeat one short sentence, slowly and attentively, over and over, until calling on the name of Jesus becomes as constant and unforced as breathing.',
-      origin: 'The Eastern Orthodox tradition of the desert fathers and Mount Athos, gathered in the <b>Philokalia</b> (1782) and carried to lay readers by the Russian classic <b>The Way of a Pilgrim</b>. "Hesychasm" comes from the Greek for stillness.',
-      claims: 'Unceasing prayer made real (it keeps running while you work or sleep), the mind descending into the heart, and ultimately communion with God. The words "have mercy on me, a sinner" are central, not optional.',
-      ev: 'Almost no study isolates it. Rhythmic, breath-linked repetitive prayer in general shows calming effects, but the tradition measures success theologically (humility, ceaseless prayer), not in heart rate.',
+      also: 'Eastern Orthodox prayer',
+      object: 'an invocation of Jesus',
+      one: 'Repeat a prayer for mercy, attending to its meaning. It can accompany ordinary work or a quiet prayer period.',
+      origin: 'An Eastern Orthodox practice described in the Philokalia and The Way of a Pilgrim. <a href="https://www.oca.org/orthodoxy/the-orthodox-faith/spirituality/prayer-fasting-and-almsgiving/the-jesus-prayer">The Orthodox Church in America</a> distinguishes ordinary repetition from guided hesychasm, the discipline of inner stillness.',
+      claims: 'Continual remembrance of God, repentance, and communion with God.',
+      ev: 'A <a href="https://doi.org/10.1037/scp0000154">small randomized trial</a> found lower reported stress from an online Jesus Prayer program than from a waitlist. It studied Christians who chose this program and did not compare it with an active treatment.',
+      evidenceFor: 'A Jesus Prayer program and stress',
       grade: 'd',
       how: [
-        'Sit or stand quietly, head slightly bowed, eyes lowered or closed.',
-        'Repeat, slowly and meaning every word: <b>"Lord Jesus Christ, Son of God, have mercy on me, a sinner."</b> Beginners can shorten it to "Lord Jesus Christ, have mercy on me."',
-        'Optionally pair it with the breath: in on "Lord Jesus Christ, Son of God," out on "have mercy on me, a sinner."',
-        'Many keep count on a knotted prayer rope, one prayer per knot, so the body stays lightly occupied.',
-        'Carry it into the day, in line, on the bus, falling asleep, until it begins to run on its own.'
+        'Sit, stand, or continue a simple daily task. Let your breathing remain natural.',
+        'Say slowly: "Lord Jesus Christ, Son of God, have mercy on me, a sinner." Shorter forms are also used.',
+        'Attend to the request for mercy. When distracted, return to the prayer.',
+        'A prayer rope can help you keep your place. Seek guidance for a prayer rule suited to you.'
       ],
-      time: 'Less a single sit than a daily rule that grows: start with 10 to 15 minutes morning and evening.',
-      miss: 'Treating it as a hollow mantra (you are calling on a person in repentance, which the tradition insists on), and chasing experiences of warmth or light (considered a delusion to seek).',
-      note: 'The advanced breathing-and-heart techniques are taught only under a spiritual father; the simple form above is the safe core.'
+      time: 'Begin with a short prayer period',
+      miss: 'Chasing bodily sensations or treating the words as a content-free relaxation formula.',
+      note: 'The OCA advises a spiritual guide for advanced hesychast breathing and posture. This outline uses ordinary breathing.'
     },
-
     dhikr: {
-      name: 'Sufi dhikr',
+      name: 'Dhikr',
       fam: 'word',
-      also: 'remembrance of God, zikr',
-      object: 'the names of God',
-      one: 'You repeat the name of God or a short Quranic phrase, aloud or silently in the heart, often on the breath, until remembrance of God becomes continuous.',
-      origin: 'Grounded in the Quran’s command to remember God often ("in the remembrance of God do hearts find rest"), and developed into a discipline by the Sufi orders, each transmitting its forms from master to disciple. The whirling of Rumi’s order is one famous form.',
-      claims: 'Presence of the heart and peace, the scrubbing of the heart of all but God, and at its height fana, the passing away of the ego-self in God.',
-      ev: 'A young, mostly small literature, largely from Muslim clinical settings, links rhythmic dhikr to less anxiety, lower cortisol, and better heart-rate variability, the same family of effects as other breath-paced repetition.',
+      also: 'remembrance of God; Sufi forms',
+      object: 'God\'s names and words of remembrance',
+      one: 'Remember God through repeated names or phrases, spoken or silent. Sufi orders teach particular forms within this wider Islamic practice.',
+      origin: 'The Quran calls believers to remember God. This outline follows <a href="https://suficommunities.org/sufi-library/spiritual-practices/remembrance-dhikr/">a Shadhiliyya community</a>, rather than representing all Sufi orders.',
+      claims: 'Turn attention and devotion toward God and purify the heart.',
+      ev: 'A <a href="https://pubmed.ncbi.nlm.nih.gov/40632388/">2025 trial of 54 dialysis patients</a> reported improvements in anxiety and sleep from combined dhikr and salawat, blessings on the Prophet. That combined intervention in one hospital cannot establish general effects of every dhikr practice.',
+      evidenceFor: 'Dhikr with salawat during dialysis',
       grade: 'd',
       how: [
-        'Sit grounded and upright, feet and seat solid, body relaxed. The Quran allows remembrance standing, sitting, or lying down.',
-        'Choose one formula: <b>"Allah"</b>, or <b>"La ilaha illa Allah"</b> (there is no god but God), or one of the 99 Names.',
-        'Repeat it softly, just loud enough to hear, or silently in the heart. Stay with the meaning, not the count.',
-        'A common breath method for "La ilaha illa Allah": draw "La ilaha" in on the in-breath (clearing all else), plant "illa Allah" in the heart on the out-breath.',
-        'Count on a string of 99 beads if it helps you stay present; pause each round and check in with your heart.'
+        'Sit comfortably and turn your intention toward remembrance of God.',
+        'Repeat Allah, or la ilaha illa Allah, there is no god but God, softly enough to hear.',
+        'Attend to the meaning and sound. Keep your breathing comfortable and unforced.',
+        'Use beads if helpful. Ask a teacher about the formula and count customary in that community.'
       ],
-      time: 'A daily set amount (a round of beads, once or twice), carried into ordinary life.',
-      miss: 'Mechanical counting with an absent heart (presence is the whole point), and treating "Allah" as a generic sound (in Islam it is an act of devotion, not a content-neutral mantra).',
-      note: 'The advanced order-specific litanies, the whirling, and heart-center methods are taught only with a teacher’s permission; the simple core above is open to a respectful beginner.'
+      time: 'Ask a teacher about a suitable period',
+      miss: 'Assuming all orders use the same breath pattern, movement, or number of repetitions.',
+      note: 'A generic repeated sound does not preserve this devotional purpose. Specialized litanies and movements need their own teaching.'
     }
-
   }
 };

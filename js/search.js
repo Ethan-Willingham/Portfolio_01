@@ -98,7 +98,7 @@
   function load() {
     if (data || loading) return;
     loading = true;
-    fetch('search-index.json', { cache: 'force-cache' })
+    fetch('search-index.json', { cache: 'no-cache' })
       .then(function (r) { return r.json(); })
       .then(function (j) { prepare(j); loading = false; if (document.activeElement === input && input.value.trim()) run(input.value); })
       .catch(function () { loading = false; });

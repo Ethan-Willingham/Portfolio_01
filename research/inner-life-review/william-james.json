@@ -1,0 +1,151 @@
+{
+  "post": "william-james.html",
+  "review_date": "2026-10-03",
+  "title": "William James on Religious Experience",
+  "word_count_method": "Unicode word tokens in authored main text, excluding markup. Gallery source cards counted once. Article count excludes the Sources section. Hero and footer excluded.",
+  "before_word_counts": {
+    "main_including_source_notes": 4252,
+    "article_excluding_source_notes": 3521
+  },
+  "after_word_counts": {
+    "main_including_source_notes": 2202,
+    "article_excluding_source_notes": 1938
+  },
+  "first_revision_word_counts": {
+    "main_including_source_notes": 2475,
+    "article_excluding_source_notes": 2211
+  },
+  "review_judgments": {
+    "ideas": "The previous essay made James more uniform and conclusive than the book. The new spine follows personal religion, causes versus value, temperaments, conversion, mystical description, limits of authority, and James's adopted supernatural hypothesis. Saintliness supplies concrete consequences by which to assess experience.",
+    "factual_accuracy": "Primary-text distinctions now govern every main claim. Claims that all four mystical marks are required, that conversion has no religious qualification, that James never tried to establish a spiritual reality, and that AA proves the fruits test were corrected or removed.",
+    "prose": "Removed specimen/beetle theater, cooled lava and eruption metaphors, stacked revelation imagery, announced takeaways, rhetorical transitions, bravado about science and believers, repeated one-line recaps, and unsupported claims of historical victory. Retained source-specific examples and direct quotations.",
+    "length": "The source list and AA section were inflated, and several sections repeated the same fruits-versus-roots slogan. Their removal made room for missing saintliness and causal limits. Shortening follows redundancy rather than a fixed length target.",
+    "respect_and_disagreement": "James's sympathies and supernatural over-belief remain visible. Limits are argued on their evidence rather than by treating religious experience as either worthless or automatically revealing."
+  },
+  "major_corrections": [
+    {
+      "topic": "Scope",
+      "correction": "Personal religion is James's chosen subject, not a complete definition of religion or an established claim that institutions are mere residues. The communal setting of even solitary accounts is acknowledged.",
+      "location": "Lecture II, pp. 28 to 40."
+    },
+    {
+      "topic": "Fruits",
+      "correction": "Removed one-test-only framing. James discusses immediate luminousness, philosophical reasonableness and moral helpfulness, and warns that pleasurable drunkenness is contradicted by wider experience. Added his criticism of narrow devotion and defense of risky charity.",
+      "location": "Lecture I, pp. 13 to 21; Lectures XIV and XV, pp. 342 to 357."
+    },
+    {
+      "topic": "Temperament",
+      "correction": "Distinguished involuntary and deliberate healthy-mindedness, temperaments from clinical diagnoses, and a twice-born response from simply being depressed. Explained James's preference without endorsing depression as superior insight.",
+      "location": "Lectures IV and V, pp. 78 to 123; VI and VII, especially pp. 149 to 164."
+    },
+    {
+      "topic": "Conversion",
+      "correction": "Restored the religious-realities qualification omitted by the old quote. Effort versus surrender is not equivalent to slow versus sudden; the types overlap. Removed unsupported claim that most conversions are gradual.",
+      "location": "Lecture IX, p. 189 and pp. 206 to 211; Lecture X."
+    },
+    {
+      "topic": "Mystical marks",
+      "correction": "First two suffice in James's definition; transiency and passivity are less marked. Corrected the duration summary from an hour at most to James's qualified estimate of up to an hour or two. Voluntary preparation is compatible with passivity. All four quoted definitions occur together at the start of the grouped Lectures XVI and XVII.",
+      "location": "Lectures XVI and XVII, pp. 380 to 382."
+    },
+    {
+      "topic": "Authority and supernatural claims",
+      "correction": "Mystical certainty can bind the subject without obliging outsiders to accept it. Similar states support different beliefs. James adopts piecemeal supernaturalism, rather than stopping at neutral description. His hypothesis is distinguished from a conclusion uniquely established by case histories.",
+      "location": "Lectures XVI and XVII, pp. 422 to 427; Lecture XX, pp. 508 to 519; Postscript, pp. 520 to 527."
+    },
+    {
+      "topic": "AA",
+      "correction": "James helped Wilson interpret an earlier experience. Other influences are named in Wilson's own letter. The appendix's educational variety phrase is its own gloss, not a verbatim term in Varieties. Removed claim that AA proves an unspecified experience kept a room of people sober for ninety years, the only-outside-thinker claim, and unneeded certainty about the 1941 printing history.",
+      "location": "Wilson letter to Jung, January 23, 1961; Alcoholics Anonymous, Appendix II, pp. 567 to 568; Markings, Fall 2013, p. 1."
+    },
+    {
+      "topic": "Edition provenance",
+      "correction": "Gutenberg serves a 1917 edition, not the 1902 first edition as claimed previously. A Toronto scan with a 1902 title page was checked. A separate Duke scan cataloged as 1902 proved to be a 1935 reprint and is not cited as the early edition."
+    },
+    {
+      "topic": "Biographical anecdote",
+      "correction": "Removed the French-correspondent reveal, exaggerated discovery timeline and simplified career claims. The argument does not depend on uncertain reconstruction of James's crisis. A directly located Tolstoy case takes its place."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Read each paragraph flat for informational content. Removed performing metaphors and drama; retained concrete nitrous oxide, Tolstoy, Alacoque and charity evidence."
+    },
+    {
+      "pass": 2,
+      "name": "Delete the first paragraph",
+      "result": "Tested removing the opener. It lost a source-specific example connecting James's own experience with his rule about outsiders, so retained it. Cut the next paragraph's generic that-tension transition."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence pass",
+      "result": "Replaced generic claims of what James proved with located arguments and limitations. Deleted ornamental transitions and forced chapter recaps."
+    },
+    {
+      "pass": 4,
+      "name": "Cut 10 percent",
+      "result": "The first complete rewrite contained 2475 words in main. The following sentence edit cut more than 10 percent while adding more concrete saintliness detail."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Verified the four gallery extracts, conversion quotation and the short fruits line against primary text. Checked AA wording directly in its official PDF. Edition years, archive provenance and page locations are named accurately. The strongest causal objection is developed in the evidence section."
+    }
+  ],
+  "checked_urls": [
+    {
+      "url": "https://www.gutenberg.org/files/621/621-h/621-h.html",
+      "use": "Primary complete text, 1917 title page; chapters and quote checking."
+    },
+    {
+      "url": "https://archive.org/details/varietiesofrelig00jameuoft",
+      "use": "1902 edition with verified title page, University of Toronto scan."
+    },
+    {
+      "url": "https://archive.org/download/varietiesofrelig00jameuoft/varietiesofrelig00jameuoft_djvu.txt",
+      "use": "OCR of 1902 scan, cross-check of scope, conversion, fruits punctuation and mystical marks."
+    },
+    {
+      "url": "https://giffordlectures.org/speaker/william-james/",
+      "use": "Institutional lecture history and publication context."
+    },
+    {
+      "url": "https://www.barefootsworld.org/wilsonletter.html",
+      "use": "Primary Wilson letter, transcribed; later recollection of hospital reading and named influences."
+    },
+    {
+      "url": "https://www.aa.org/sites/default/files/2021-11/en_bigbook_appendiceii.pdf",
+      "use": "Official Appendix II; fetched directly and read with pdftotext when web tool received 403."
+    },
+    {
+      "url": "https://www.aa.org/sites/default/files/newsletters/f-151-markings_fall-2013.pdf",
+      "use": "AA Archives institutional account; fetched directly and read with pdftotext when web tool received 403."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:William_James_b1842c.jpg",
+      "use": "Portrait authorship, date, archive and requested credit."
+    },
+    {
+      "url": "https://archive.org/details/varietiesofrelig03jame",
+      "use": "Rejected as a 1902 witness after its scanned title page proved it a 1935 reprint. Used as an additional later-text cross-check only."
+    }
+  ],
+  "remaining_uncertainties": [
+    "Wilson's 1961 letter is accessed through a transcription. It and AA's archives corroborate his attribution of influence, but cannot independently establish the causal origin of his hospital experience. Exact day and disputed delivery details were avoided.",
+    "James's characterizations of historical saints and temperaments are his interpretations. The Alacoque sentence explicitly attributes his judgment to her biography as he presents it.",
+    "The case selection is purposeful rather than representative. Neither prevalence of religious experiences nor clinical efficacy is inferred from it.",
+    "The philosophical objection about identifying a supernatural cause is the review's assessment of the evidence, not a claim that James held no supernatural belief.",
+    "The nitrous oxide reports and four marks establish descriptions and convictions, not a modern validated taxonomy or a common object perceived by all traditions."
+  ],
+  "interactive_review": "js/william-james.js reads authored tale cards from the HTML and contains no duplicate prose. All four source cards, IDs, chips and navigation structure preserved. No JavaScript changes needed; node --check passed. Root is responsible for full browser and visual QA.",
+  "validation": [
+    "node --check js/william-james.js passed",
+    "git diff --check for owned files passed",
+    "title, og:title and h1 verified identical",
+    "No em dash, en dash, encoded dash, prohibited pictograph or hard filler phrase in owned HTML",
+    "All aria-labelledby targets exist; four authored gallery cards present; no duplicate IDs"
+  ],
+  "hub_description": "James's cases include Tolstoy's despair and his own nitrous oxide experiments. He asks what religious experience changes, and whether its effects establish anything about God."
+}

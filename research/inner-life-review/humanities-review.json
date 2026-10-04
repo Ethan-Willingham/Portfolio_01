@@ -1,0 +1,446 @@
+{
+  "review_date": "2026-10-04",
+  "reviewer": "Independent GPT-6.1 Sol agent, xhigh; author of Modern Teachers, excluded from this review",
+  "status": "Five-post independent peer review complete; five findings accepted, applied by root, and verified resolved",
+  "scope": {
+    "posts": [
+      "william-james.html",
+      "fox.html",
+      "frankl.html",
+      "perennial-philosophy.html",
+      "spirituality-of-imperfection.html"
+    ],
+    "written_files": [
+      "research/inner-life-review/humanities-review.json"
+    ],
+    "restriction": "No article, shared-file, staging, commit, push, or reset actions performed by this reviewer."
+  },
+  "method": "Read the full visible text of all five finished HTML articles, including every authored gallery card and source note, and the complete corresponding audit JSONs. Independently checked consequential claims and quotations against selected primary passages through browsing and, where the browser parser failed, public source downloads or previously saved source files. Reviewed argument representation, specificity, length, repeated cautions, manufactured contrasts, universal religion claims, and references to abandoned copy. This is a selective source audit, not a claim to have reread all five complete books.",
+  "overall_conclusion": "No material factual or quotation error found in the reviewed claims. One representation weakness understated the strength of Frankl's happiness claim before evaluating it. Four additional prose findings concerned an abandoned lineage claim, a duplicated survival caution, and two unnecessary cautions in Imperfection. Root applied all five refinements. James and Perennial Philosophy require no correction from this review. The varied examples and distinctions justify the remaining length; no broad compression or further rewrite is recommended.",
+  "priority_scale": {
+    "P2": "Worth fixing before publication: weak argument representation or a distracting remnant of abandoned framing.",
+    "P3": "Targeted editorial improvement; no factual error."
+  },
+  "findings": [
+    {
+      "id": "HUM-01",
+      "post": "frankl.html",
+      "priority": "P2",
+      "original_line": 287,
+      "type": "Argument representation",
+      "finding": "The paragraph originally paraphrased the happiness argument as a modest observation about giving attention to a commitment, then denied that commitment reliably ends distress. The 1984 postscript actually makes the stronger claim that happiness follows automatically once a reason is found. The objection should address that claim and happiness rather than broad distress.",
+      "source_url": "https://antilogicalism.com/wp-content/uploads/2017/07/mans-search-for-meaning.pdf#page=61",
+      "primary_location": "POSTSCRIPT 1984, The Case for a Tragic Optimism; PDF zero-based page 60 / human PDF page 61, extracted web lines 2531 to 2534. This PDF page number is not the printed pagination of every edition.",
+      "exact_primary_sentence": "Once the reason is found, however, one becomes happy automatically.",
+      "proposed_change": "State the automatic happiness claim explicitly, then say the case reports do not demonstrate that guarantee. Keep the concluding protection against blaming a person for continuing unhappiness.",
+      "status": "resolved",
+      "resolution": "Root replaced the paragraph with a faithful paraphrase of the stronger postscript claim and a specific limit on its demonstrated support. Verified current HTML at line 287."
+    },
+    {
+      "id": "HUM-02",
+      "post": "fox.html",
+      "priority": "P2",
+      "original_line": 346,
+      "type": "Abandoned framing",
+      "finding": "The CBT paragraph ended by denying descent from Fox, although the rewrite no longer claimed any historical lineage. The sentence argued against removed copy. The comparison of actual methods remained useful.",
+      "original_sentence": "An interest in thought proves neither descent from Fox nor the Golden Key's effectiveness.",
+      "proposed_change": "Delete the final sentence and retain the concrete comparison of CBT methods with Fox's mental causation claims.",
+      "status": "resolved",
+      "resolution": "Root deleted that sentence. Independently verified the current CBT paragraph ends with the Beck Institute comparison."
+    },
+    {
+      "id": "HUM-03",
+      "post": "frankl.html",
+      "priority": "P3",
+      "original_line": 197,
+      "type": "Duplicated caution in hero",
+      "finding": "The hero ended with a survival disclaimer that the developed opening and Christmas-deaths discussion already justified. It made the opening repeat its qualification before the reader encountered the evidence.",
+      "original_sentence": "His survival cannot prove why others died.",
+      "proposed_change": "Delete that sentence from the hero, keeping the specific reasons to keep living.",
+      "status": "resolved",
+      "resolution": "Verified the current hero ends after the reasons Frankl describes; the substantive survival discussion remains in the body."
+    },
+    {
+      "id": "HUM-04",
+      "post": "spirituality-of-imperfection.html",
+      "priority": "P3",
+      "original_line": 230,
+      "type": "Abandoned framing and unnecessary contrast",
+      "finding": "The bowl paragraph still denied that damage was beneficial and discussed whether the bowl became more valuable. The rewrite no longer asserted either proposition. These sentences retained the correction to old copy as published prose and distracted from the concrete repair.",
+      "original_text": "The visible break is evidence of work, not proof that the damage was beneficial. The photograph tells us nothing about whether the bowl became more valuable.",
+      "proposed_change": "Keep only the two concrete sentences about lacquer, gold, and someone fitting the pieces together.",
+      "status": "resolved",
+      "resolution": "Root made that cut; verified the current bowl paragraph contains only those two concrete repair sentences."
+    },
+    {
+      "id": "HUM-05",
+      "post": "spirituality-of-imperfection.html",
+      "priority": "P3",
+      "original_line": 284,
+      "type": "Generic guardian sentence",
+      "finding": "The Nan-in card added a teacher-infallibility disclaimer that was not needed to interpret this story. Its preceding sentence already explained the visitor's obstacle. The source note separately and appropriately limits the historical status of the telling.",
+      "original_sentence": "Examining an assumption doesn't require treating the teacher as infallible.",
+      "proposed_change": "Delete that final interpretation sentence. Keep the first interpretation sentence and the literary-source note.",
+      "status": "resolved",
+      "resolution": "Root deleted it; verified the current card keeps the first interpretation sentence."
+    }
+  ],
+  "posts": [
+    {
+      "post": "william-james.html",
+      "audit_read": "research/inner-life-review/william-james.json",
+      "conclusion": "No actionable correction found. The post reconstructs James's criteria and cases, preserves his interest in religious experience, and distinguishes experiencer authority from a public obligation to accept its theology. It does not incorrectly present him as either a simple debunker or an uncritical advocate.",
+      "specific_checks": [
+        "Lecture I medical materialism and judgment by fruits",
+        "Volitional and surrender conversion overlap in Lecture IX",
+        "Four marks and nitrous oxide observations in Lectures XVI and XVII",
+        "Three conclusions about mystical authority, divergent interpretations, and dark experiences",
+        "Postscript piecemeal supernaturalism is attributed to James's hypothesis",
+        "The fruits quotation's final punctuation checked against early-edition OCR, rather than assuming the later Gutenberg punctuation is definitive"
+      ],
+      "length_and_voice": "The cases and conceptual distinctions sustain the length. The AA caution is relevant to the evidence problem; an additional last-sentence cut would be optional, too minor to raise as a required finding. No universal religious identity claim remains.",
+      "limits": "This review spot-checked James's primary passages. It did not independently recheck every historical AA archive item in the author's audit.",
+      "reviewed_main_words_before_sources": 1924,
+      "html_sha256_at_audit": "8b1cb0ea5ff629f91ad3cfa379cfe8fce44dc525c33d57324d103da1c62be6e9"
+    },
+    {
+      "post": "fox.html",
+      "audit_read": "research/inner-life-review/fox.json",
+      "conclusion": "No material factual or quotation error found. The rewrite represents Fox's strong mental causation and outcome claims without confusing them with a narrower psychological observation. The independent primary text confirms the apparently surprising dog-fight examples. HUM-02 was applied and verified.",
+      "specific_checks": [
+        "Meekness and the meaning of earth in chapter 2",
+        "Nonresistance, changed consciousness, and the two dog-fight examples in chapter 4",
+        "The claim that true teaching works in chapter 7",
+        "Daily bread includes material necessities and firsthand realization in the appended Lord's Prayer commentary",
+        "The Golden Key discourages problem-monitoring and outlining desired results",
+        "The NCI comparison is limited to the unsupported attitude/cancer-causation claim"
+      ],
+      "length_and_voice": "Distinct practices, textual examples, and the concrete objection justify the length. Removing the lineage sentence eliminates the clearest old-copy remnant.",
+      "limits": "Clinical discussion was checked against the federal cancer source for the exact limited claim, not treated as a systematic review of stress and health. AA reception depends in part on the author's separately documented archival checks.",
+      "reviewed_main_words_before_sources": 1542,
+      "html_sha256_at_audit": "3222e6cf3848b41cd41b1c393b43bae1cb2ba42f2d62d86e9845c45f40bfe98a"
+    },
+    {
+      "post": "frankl.html",
+      "audit_read": "research/inner-life-review/frankl.json",
+      "conclusion": "The camp account and logotherapy argument are accurately distinguished. The revised happiness paragraph now states and evaluates the actual stronger postscript claim. HUM-01 and HUM-03 were applied and verified.",
+      "specific_checks": [
+        "The best-of-us and last-freedoms passages",
+        "Chronology and family losses against the Frankl Institute record",
+        "Christmas deaths are Frankl's recollection and camp-doctor interpretation",
+        "Three ways of discovering meaning include creation/work, experience/love, and attitude to unavoidable suffering",
+        "The primary text tells readers to remove avoidable biological, psychological, or political suffering",
+        "The doctor's bereavement case is a reported individual consultation",
+        "Stimulus/response aphorism is not established as Frankl's wording"
+      ],
+      "length_and_voice": "The remaining survival and capacity qualifications concern different actual claims and should not all be removed as repetition. The hero cut improves the opening. The short concrete case descriptions earn their space.",
+      "limits": "Frankl's account does not establish causes of camp survival or clinical response rates. The PDF transcription inspected here and the 2006 edition identified by the author are distinct objects; paragraph wording was checked, not identical pagination assumed.",
+      "reviewed_main_words_before_sources": 1337,
+      "html_sha256_at_audit": "589ca7b15d3bef4cdf65ab30ddda0271510bbc74f4d294dcbe64cd844a9e7a73"
+    },
+    {
+      "post": "perennial-philosophy.html",
+      "audit_read": "research/inner-life-review/perennial-philosophy.json",
+      "conclusion": "No actionable correction found. The post gives perennialism an actual metaphysical argument, acknowledges Huxley's own identity/similarity qualification, and tests a concrete disputed Buddhist passage. Katz and Forman are presented as competing arguments with remaining questions, rather than a settled academic verdict.",
+      "specific_checks": [
+        "Huxley's four doctrines and Christian grace/identity concession in the 1944 Gita introduction",
+        "Huxley's practice and epistemic argument in the 1945 book introduction",
+        "John of the Cross's window analogy expressly retains distinct natural being",
+        "Suzuki's Lankavatara II.XXVIII explicitly distinguishes tathagata-garbha from the philosophers' ego and uses pedagogical context",
+        "SN 22.59's not-self analysis is not rewritten as divine Self",
+        "The salt example is Chandogya 6.13",
+        "Rumi's verse is located in Masnavi I.30 and retains its Islamic context",
+        "Schuon claims intellectual intuition is infallible",
+        "Katz denies unmediated experience; Forman proposes a specific contentless category and acknowledges limitations"
+      ],
+      "length_and_voice": "The explicit four-claim structure, textual comparison, and methodological dispute sustain the length. Some concise orienting cautions repeat later evidence, but none rose to a meaningful revision request. The ending names a concrete question about identifying the experiences.",
+      "limits": "The article and this review do not settle every historical Buddhist interpretation of buddha-nature. Modern translations are checked as identified translations. The primary texts support the portrayed positions without proving the underlying metaphysics.",
+      "reviewed_main_words_before_sources": 2039,
+      "html_sha256_at_audit": "df3624a1d16fd78257101d6ebcbc7b121b93ea691b6aebfd4457b24aeeca709a"
+    },
+    {
+      "post": "spirituality-of-imperfection.html",
+      "audit_read": "research/inner-life-review/spirituality-of-imperfection.json",
+      "conclusion": "No material folklore, quotation, or edition error found. The revised article accurately retains responsibility alongside imperfection and identifies the five-card selection as editorial rather than claiming all five items are in the book. HUM-04 and HUM-05 were applied and verified.",
+      "specific_checks": [
+        "The publisher's entire publicly embedded chapter 1 excerpt supports the rose and storytelling interpretation",
+        "Book preview pages 24, 60, 159, 187, 219, and 224 support qualified vocabulary, pockets, uncommanded experiences, humility, amends, and retained responsibility",
+        "The later Kurtz/White primary paper identifies the six experiences as drawn from recovery accounts",
+        "Official AA chapter 5 specifies alcohol in Step One, has the inventory and amends sequence, and gives the injury exception",
+        "The progress quotation is exact on printed page 60",
+        "Ward's jug version and the full reproduced Moses 2 translation support the retelling; the offense remains unspecified",
+        "The traditional Simcha Bunim attribution is qualified, with accurate Mishnah and Genesis roots",
+        "The Nan-in retelling matches the published first 101 Zen Stories item without a claim to documented historical dialogue"
+      ],
+      "length_and_voice": "The five different examples and six distinct recovery terms justify the shorter final length. The two accepted cuts reduce the most conspicuous defensive additions. The remaining Moses uncertainty is specific enough to keep.",
+      "limits": "Only the public book excerpt and selected preview snippets were independently available, not the whole book. Modern reproduced folklore texts establish the literary telling and traditional attribution, not witnessed historical events. The medical source supports the diagnosis distinction, not an outcome comparison between treatments.",
+      "reviewed_main_words_before_sources": 1421,
+      "html_sha256_at_audit": "26cf6f500eae184d5ade83fc1637adfcc8b234794a34e2f9c9073118b252dd3c"
+    }
+  ],
+  "sources_checked": [
+    {
+      "url": "https://www.gutenberg.org/files/621/621-h/621-h.html",
+      "posts": [
+        "william-james.html"
+      ],
+      "location": "Lectures I, IX, XVI and XVII; Postscript",
+      "supports": "Criteria, conversion overlap, mystical characteristics and authority, nitrous oxide, darker experiences, and piecemeal supernaturalism.",
+      "limits": "A later-edition transcription; no clinical efficacy evidence."
+    },
+    {
+      "url": "https://archive.org/download/varietiesofrelig00jameuoft/varietiesofrelig00jameuoft_djvu.txt",
+      "posts": [
+        "william-james.html"
+      ],
+      "location": "Early-edition OCR around the fruits quotation",
+      "supports": "The final period in the article's quotation is present in the early edition, unlike a comma in the Gutenberg transcription.",
+      "limits": "Web parser failed; public OCR read with urllib. No claim to a new full facsimile review."
+    },
+    {
+      "url": "https://www.thetbs.org/study-materials/wp-content/uploads/2023/03/The_Sermon_on_the_Mount_The_Key_to_Success_in_Life_Emmet_Fox_z_lib.pdf",
+      "posts": [
+        "fox.html"
+      ],
+      "location": "Chapters 2, 4, 7; appended Lord's Prayer commentary",
+      "supports": "Meekness, mental causation, nonresistance and dog examples, result criterion, daily bread, and forgiveness.",
+      "limits": "A modern digital transcription of the identified book, not an experimental test."
+    },
+    {
+      "url": "https://www.emmetfox.org/booklets/the-golden-key",
+      "posts": [
+        "fox.html"
+      ],
+      "location": "Complete public booklet",
+      "supports": "God-focused procedure, target specificity, avoiding monitoring and outlining, and promised application to troubles.",
+      "limits": "Fox's instruction and promise, not demonstrated causal evidence."
+    },
+    {
+      "url": "https://www.cancer.gov/about-cancer/causes-prevention/risk/myths",
+      "posts": [
+        "fox.html"
+      ],
+      "location": "Attitude and cancer question",
+      "supports": "No convincing evidence links positive or negative attitude with developing or dying from cancer.",
+      "limits": "Does not imply thoughts never affect behavior or coping."
+    },
+    {
+      "url": "https://antilogicalism.com/wp-content/uploads/2017/07/mans-search-for-meaning.pdf",
+      "posts": [
+        "frankl.html"
+      ],
+      "location": "Part One, Logotherapy in a Nutshell, 1984 postscript",
+      "supports": "Camp quotations, reported Christmas interpretation, three meaning routes, avoidable suffering, doctor's case, and the stronger happiness claim.",
+      "limits": "Primary book transcription with 1992 preface. Printed and PDF pagination vary by edition; report wording does not prove causes or general outcomes."
+    },
+    {
+      "url": "https://www.viktorfrankl.org/biography.html",
+      "posts": [
+        "frankl.html"
+      ],
+      "location": "Chronology 1926 to 1946",
+      "supports": "Logotherapy naming, manuscript, deportations, liberation, family losses, and publication chronology.",
+      "limits": "An institutional chronology, not independent clinical efficacy evidence."
+    },
+    {
+      "url": "https://www.viktorfrankl.org/quote_stimulus.html",
+      "posts": [
+        "frankl.html"
+      ],
+      "location": "Complete quote-origin note",
+      "supports": "The stimulus/response aphorism's unconfirmed attribution and Covey's unidentified source.",
+      "limits": "Does not identify the actual author."
+    },
+    {
+      "url": "https://psypolitics.org/2022/01/04/huxleys-introduction-to-the-bhagavad-gita-2022/",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Transcription of Huxley's 1944 introduction, four doctrines and Christian qualification",
+      "supports": "The four metaphysical claims and Huxley's express identity/similarity and grace concession.",
+      "limits": "Third-party reprint of a primary text; host commentary not used."
+    },
+    {
+      "url": "https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Introduction; chapter structure and practice discussion",
+      "supports": "The anthology's selection method and argument that changed moral being changes what one can know.",
+      "limits": "Modern transcription; does not validate its religious synthesis. Also read relevant saved text."
+    },
+    {
+      "url": "https://ccel.org/ccel/john_cross/ascent.all.html",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Book II, chapter 5, especially paragraphs 6 and 7",
+      "supports": "Window participation analogy and the soul's distinct natural being even in union.",
+      "limits": "E. Allison Peers translation. Web page opened; failed find calls followed by reading the saved primary HTML."
+    },
+    {
+      "url": "https://siteofenlightenment.org/Tripitaka/Books/T16n0670/The%20Lankavatara%20Sutra%20(Suzuki)/lanka-chapter-2.htm",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Chapter II, section XXVIII",
+      "supports": "Tathagata-garbha is distinguished from ego teaching and explained through fear of egolessness and skilled instruction.",
+      "limits": "Suzuki's identified translation; one passage does not settle every later school."
+    },
+    {
+      "url": "https://sacred-texts.com/hin/sbe01/sbe01131.htm",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Chandogya Upanishad 6.13",
+      "supports": "Salt in water and the Self teaching are correctly located.",
+      "limits": "Historical Muller translation, not a scientific demonstration."
+    },
+    {
+      "url": "https://github.com/suttacentral/bilara-data/blob/published/translation/en/sujato/sutta/sn/sn22/sn22.59_translation-en-sujato.json",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "SN 22.59, five aggregates and liberation sequence",
+      "supports": "The article's not-self comparison and its refusal to insert a divine Self.",
+      "limits": "Sujato's identified translation; no general claim about every Buddhist metaphysics."
+    },
+    {
+      "url": "https://www.dar-al-masnavi.org/n-I-0019.html",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Masnavi I.30 and adjoining context/notes",
+      "supports": "The Rumi excerpt is located and its Sufi and Quranic setting remains visible.",
+      "limits": "Modern Gamard translation, not an English sentence authored by Rumi."
+    },
+    {
+      "url": "https://en.fschuon.info/?page_id=1347",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Opening interview questions on metaphysical unity and intellectual intuition",
+      "supports": "Schuon explicitly calls intellectual intuition infallible and distinguishes it from reasoning.",
+      "limits": "Author position, not established epistemic fact. Failed web find calls followed by reading saved primary HTML."
+    },
+    {
+      "url": "https://de.scribd.com/document/94115021/Katz-Language-Epistemology-and-Mysticism-pp-22-74",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Language, Epistemology, and Mysticism, especially pages 26 to 27 and discussion of ineffability",
+      "supports": "No unmediated experience and the relation between concepts, training, and experience.",
+      "limits": "Primary essay OCR; conceptual argument, not a measured consensus."
+    },
+    {
+      "url": "https://www.scribd.com/doc/70165808/W-T-Stace-Mysticism-and-Philosophy-Whole-Book",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Mysticism and Philosophy, chapter 2",
+      "supports": "Extrovertive/introvertive distinction and common-core argument are represented as Stace's position.",
+      "limits": "Primary book OCR, not proof of the proposed core."
+    },
+    {
+      "url": "https://ruccs.rutgers.edu/faculty/pylyshyn/TreismanReadings/11-Forman.pdf",
+      "posts": [
+        "perennial-philosophy.html"
+      ],
+      "location": "Printed pages 361, 362, 365",
+      "supports": "The pure consciousness category, distinction from other states, and provisional nature of the case.",
+      "limits": "No text extraction from web parser; visually inspected the saved page images. The article's method question remains fair."
+    },
+    {
+      "url": "https://www.penguinrandomhouse.com/books/96307/the-spirituality-of-imperfection-by-ernest-kurtz-and-katherine-ketcham/",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Publisher metadata and publicly embedded excerpt_text_list sample",
+      "supports": "Both authors, current edition dating, rose story, and the book's storytelling and imperfection argument.",
+      "limits": "The full public excerpt was read from page source with urllib because browser text omitted it. It is not the entire book. Original 1992 dating also appears in the coauthor paper's bibliography."
+    },
+    {
+      "url": "https://books.google.com/books?id=5B5dgtFUuJAC",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Contents and public SearchWithinVolume2 results for religion, forgiveness, humility, pockets, amends, being-at-home",
+      "supports": "Page 24 qualifies the religion usage; 60 has pockets; 159 says experiences cannot be commanded; 187 rejects self-abasement; 219 connects amends; 224 retains responsibility.",
+      "limits": "Read actual public snippets with urllib after browser failures. Search hits are partial passages, not complete chapters or proof that an absent query means a tale is absent."
+    },
+    {
+      "url": "https://doi.org/10.3390/rel6010058",
+      "additional_url": "https://aaagnostica.org/recovery-spirituality/",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Kurtz and White, Recovery Spirituality (2015), sections 6 and 7",
+      "supports": "Mutuality and the six reported experiences, willingness, being forgiven after amends, and belonging through acknowledged limitations.",
+      "limits": "MDPI returned 429; read primary author-text reprint. This is an interpretive account. Its larger assertions of spiritual necessity are not clinical findings."
+    },
+    {
+      "url": "https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt5.pdf",
+      "additional_url": "https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt6.pdf",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Printed pages 59 and 60; chapter 6 amends discussion",
+      "supports": "Step One, inventory and admissions, steps eight and nine, injury exception, exact progress quotation, and practical repair demands.",
+      "limits": "Browser parser failed; public PDFs fetched with urllib and converted with pdftotext. AA's own programmatic text is not an outcome study."
+    },
+    {
+      "url": "https://www.theway.org.uk/Back/s064Ward.pdf",
+      "additional_url": "https://avowofconversation.wordpress.com/2008/11/27/a-leaking-jug/",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Ward, Discernment: A Rare Bird, printed page 12; full reproduced Moses 2 translation",
+      "supports": "Leaking jug, refusal and renewed summons, unseen sins, and forgiveness; no specified offense.",
+      "limits": "Ward's article abbreviates the quotation. The complete reproduced translation confirms the omitted narrative. Literary transmission does not establish the event as witnessed history."
+    },
+    {
+      "url": "https://www.ou.org/judaism-101/glossary/wisdom/",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Traditional Simcha Bunim two-pocket attribution",
+      "supports": "Qualified attribution and the two note phrases.",
+      "limits": "A traditional teaching reproduced by the Orthodox Union, not proof of exact historical English dialogue."
+    },
+    {
+      "url": "https://www.sefaria.org/Mishnah_Sanhedrin.4.5?lang=bi",
+      "additional_url": "https://www.sefaria.org/Genesis.18.27?lang=bi",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Mishnah Sanhedrin 4:5 and Genesis 18:27; public API texts",
+      "supports": "Both note phrases have the stated textual roots.",
+      "limits": "Public APIs read with urllib after web failures. English translations differ slightly; source roots do not prove a particular retelling's exact historical wording."
+    },
+    {
+      "url": "https://terebess.hu/zen/mesterek/NaninZengu.html",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "A Cup of Tea, first item of 101 Zen Stories, lines 44 to 52",
+      "supports": "Professor, Nan-in, overflowing cup, and the opinions/speculations comparison.",
+      "limits": "Reproduction of the published literary text, not a transcript proving the visit happened."
+    },
+    {
+      "url": "https://www.niaaa.nih.gov/publications/brochures-and-fact-sheets/understanding-alcohol-use-disorder",
+      "posts": [
+        "spirituality-of-imperfection.html"
+      ],
+      "location": "Definition and multifactorial risk discussion",
+      "supports": "AUD is a medical condition; the ego interpretation is not medical causation evidence.",
+      "limits": "No claim about the efficacy or superiority of any particular treatment is inferred."
+    }
+  ],
+  "not_independently_rechecked": "Every image-provenance item, every AA reception archive link in James and Fox, and every bibliographic detail from all original print editions were not reopened. Their author audits remain the supporting record. No issue was identified that warranted a speculative factual objection.",
+  "validation": {
+    "json": "Final UTF-8 JSON parse, five post records, five resolved findings, and 28 source checks passed.",
+    "resolution_check": "Directly reread the current Fox CBT paragraph, Frankl hero and happiness paragraph, and Imperfection bowl and Nan-in paragraphs. All accepted changes are present.",
+    "content_edit_status": "Reviewer edited only this audit JSON. Root owns all accepted HTML changes and publication."
+  },
+  "count_method": "Visible main content before section#sources, including authored gallery cards and headings; exclude hero, navigation, sources, footer, scripts, and styles. Unicode word regex preserves contractions and hyphenated words. These current snapshot counts are informational and need not match the authors' different hero/source-inclusive methods."
+}

@@ -1,0 +1,396 @@
+{
+  "page": "chemical-path.html",
+  "reviewed_date": "2026-10-03",
+  "assignment": "Individual full editorial and accuracy review of The Chemical Path.",
+  "files_changed": [
+    "chemical-path.html",
+    "research/inner-life-review/chemical-path.json"
+  ],
+  "script_review": {
+    "path": "js/chemical-path.js",
+    "changed": false,
+    "judgment": "Static reveal behavior remains suitable; node --check passed."
+  },
+  "counts": {
+    "method": "HTML text word count from header.hero through main, excluding scripts and styles. Regex: word tokens with internal apostrophes. The before-Sources count includes chapter links, headings, figure labels, and captions.",
+    "before_without_sources": 4152,
+    "before_with_sources": 4766,
+    "first_rewrite_without_sources": 2861,
+    "first_rewrite_with_sources": 3227,
+    "after_without_sources": 2493,
+    "after_with_sources": 2875,
+    "article_reduction_percent": 40.0,
+    "draft_cut_percent": 12.9,
+    "read_time_minutes": 12,
+    "read_time_basis": "Ceiling of article text divided by 220 words per minute.",
+    "unique_source_documents": 34
+  },
+  "review_judgment": {
+    "before": "Required reconstruction, not a style pass. The original treated similarities in reported experience as proof of a common metaphysical reality, turned imaging results into confirmation of Huxley, and overstated both treatment efficacy and safety. Its legal summary contained concrete errors.",
+    "after": "The essay now separates reported meaning, religious interpretation, mechanism, and clinical outcomes. It preserves the human and historical interest while putting sample selection, comparators, time points, and uncertainty beside consequential claims.",
+    "length_judgment": "The full scope remains, with repeated door metaphors, slogans, recap verdicts, the redundant tradition table, and ancillary pilot-study anecdotes removed. The reduced length follows the evidence and argument rather than a preset target."
+  },
+  "factual_corrections": [
+    {
+      "before": "Drug use described as the oldest, shortest, and most direct spiritual path and as a foundation of the oldest religions.",
+      "after": "Removed. Archaeological material supports ancient psychoactive use, not those rankings or an account of its spiritual meaning."
+    },
+    {
+      "before": "Ancient peyote treated as the same ongoing sacrament across 5,700 years; wrong PubMed identifier.",
+      "after": "Separated ancient material from contemporary practice and linked PMID 15990261."
+    },
+    {
+      "before": "Independent traditions said to enter the same room.",
+      "after": "Different religious purposes and authority structures retained; community and practitioner accounts used."
+    },
+    {
+      "before": "Ayahuasca presented as an exact universal two-plant recipe.",
+      "after": "Specified a common preparation and its enzyme interaction, with variation acknowledged."
+    },
+    {
+      "before": "Mazatec mushrooms given a Nahuatl name and Sabina reduced to an outsider-discovery tragedy with unsupported causal links to violence.",
+      "after": "Used her translated oral autobiography, her term, healing setting, and specific objection to visitors. Removed the unverified causal story."
+    },
+    {
+      "before": "Eleusis treated alongside documented psychedelic traditions with unsupported attendance and consensus claims.",
+      "after": "Retained only the ancient drink description and the explicitly unconfirmed ergot proposal."
+    },
+    {
+      "before": "The reducing valve described as empirically confirmed and localized to the default mode network.",
+      "after": "Distinguished the proposal from measured neural effects; corrected SVG labels and accessible description."
+    },
+    {
+      "before": "Mystical-experience scores presented as the cause of healing.",
+      "after": "Separated measurement and association from causal identification."
+    },
+    {
+      "before": "Cancer-trial follow-up percentages presented without the crossover or comparator.",
+      "after": "Restored response definition, groups, assessment counts, timing, and loss of untreated comparison after crossover."
+    },
+    {
+      "before": "Psilocybin and escitalopram primary result treated as a tie.",
+      "after": "No significant difference does not establish equivalence; secondary comparisons have multiplicity limits."
+    },
+    {
+      "before": "Treatment-resistant-depression results compressed into promising percentages.",
+      "after": "Remission groups, the secondary-outcome testing limit, later suicidal behavior, and the inconclusive 12-week sustained-response comparison included."
+    },
+    {
+      "before": "Research effectively frozen as illegal for thirty years, largely because of Leary.",
+      "after": "Removed the unsupported single-cause narrative. Explained that Schedule I restricts rather than categorically prohibits authorized research."
+    },
+    {
+      "before": "Functional unblinding said to inflate every trial result; microdosing dismissed categorically.",
+      "after": "Described possible bias and the limits of the self-blinding evidence."
+    },
+    {
+      "before": "MDMA trial numbers and rejection/retractions bundled into one verdict.",
+      "after": "Restored final-assessment denominators and placebo-plus-therapy improvement. Used the actual FDA letter and its grounds; removed the retraction conflation."
+    },
+    {
+      "before": "Classic psychedelics effectively impossible to overdose on; setting responsible for nearly every bad outcome.",
+      "after": "Removed impossible-safety language. Physical, psychiatric, interaction, accident, and persistent-visual harms addressed without fabricated population rates."
+    },
+    {
+      "before": "Employment Division v. Smith described as the state firing church members.",
+      "after": "Corrected to unemployment-benefits denial after dismissal by a private employer."
+    },
+    {
+      "before": "Peyote and ayahuasca religious exemptions treated as blanket permissions for churches.",
+      "after": "Specified statutory tribal eligibility and the case-specific UDV injunction."
+    },
+    {
+      "before": "A state-legal act described as a federal felony without qualification.",
+      "after": "Removed the categorical felony claim; state and federal frameworks distinguished."
+    },
+    {
+      "before": "Drug development and legal map not current to the requested date.",
+      "after": "Checked July 2026 final guidance, 2026 approval records, federal schedule, and current state regulators. Sponsor Phase 3 announcements labeled as such."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Removed theatrical door/room recurrences, crescendo verdicts, and short slogans. Kept concrete evidence at section openings."
+    },
+    {
+      "pass": 2,
+      "name": "Delete first paragraph",
+      "result": "The opening survives: deleting it loses the concrete long-term meaning result that motivates the essay. Removed the old throat-clearing map and recommendation paragraphs."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence test and tells",
+      "result": "Removed paragraphs transplantable to any mystical topic. The finale now ends on the specific 12-week sustained-response uncertainty in Goodwin 2022. No hard or soft mechanical voice tells found."
+    },
+    {
+      "pass": 4,
+      "name": "Cut ten percent",
+      "result": "Cut the first rewrite from 2,861 to 2493 words before Sources, 12.9 percent, after rebuilding the evidence."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Checked numbers against trial tables or primary abstracts, short quotations against full texts, and legal claims against primary laws and decisions. Inference and uncertainty stated locally."
+    }
+  ],
+  "checked_urls": [
+    {
+      "url": "https://doi.org/10.1177/0269881108094300",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary follow-up; full text also checked at PMC3050654. Selected healthy volunteers and self-report limits retained."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/15990261/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary archaeological abstract. Corrects the previous unrelated PMID."
+    },
+    {
+      "url": "https://www.ipci.life/politicalandsocialissues",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Practitioner organization statement, read as its position rather than a universal Indigenous position."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/12660312/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary human pharmacology abstract; full thesis copy also checked."
+    },
+    {
+      "url": "https://udvusa.org/who-we-are/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Community account of its own religion."
+    },
+    {
+      "url": "https://dokumen.pub/maria-sabina-her-life-and-chants-1nbsped-091552032x-0915520338.html",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary oral autobiography in translation, especially chapters 18 and 19. Mediation by recorder and translator identified."
+    },
+    {
+      "url": "https://chs.harvard.edu/primary-source/homeric-hymn-to-demeter-sb/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary ancient text, lines 206 to 211."
+    },
+    {
+      "url": "https://maps.org/images/pdf/books/eleusis.pdf",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary statement of the proposed ergot hypothesis."
+    },
+    {
+      "url": "https://maps.org/images/pdf/books/HuxleyA1954TheDoorsOfPerception.pdf",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary text checked at printed pages 4, 6, 7, 12, and 22."
+    },
+    {
+      "url": "https://www.nature.com/articles/s41586-024-07624-5",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary longitudinal imaging paper; seven participants."
+    },
+    {
+      "url": "https://ccel.org/ccel/james/varieties.xiv.html",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary text; short quotation verified near the conclusion of the mysticism lectures."
+    },
+    {
+      "url": "https://files.csp.org/Psilocybin/Griffiths2016CancerDistress.pdf",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary PDF; Table 6 supplies thresholds and assessment denominators."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5367551/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary full text; short-term control and later crossover distinguished."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/33852780/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary abstract and full NEJM PDF checked."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36322843/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary abstract and full trial tables checked."
+    },
+    {
+      "url": "https://ir.compasspathways.com/News--Events-/news/news-details/2026/Compass-Pathways-Announces-Six-Month-Data-from-Second-Phase-3-Trial-Confirming-Rapid-and-Durable-Profile/default.aspx",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Sponsor report dated July 7, 2026. Clearly labeled; no claim of approval or independent confirmation."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5203697/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary questionnaire validation paper."
+    },
+    {
+      "url": "https://www.fda.gov/media/169694/download",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official final guidance, July 2026; supersedes the 2023 draft."
+    },
+    {
+      "url": "https://elifesciences.org/articles/62878",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary self-blinding study; PubMed abstract also checked when full-page access challenged."
+    },
+    {
+      "url": "https://www.nature.com/articles/s41591-023-02565-4",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary MAPP2 paper; an accessible PDF copy was checked for final-assessment counts."
+    },
+    {
+      "url": "https://download.open.fda.gov/crl/CRL_NDA215455_20240808.pdf",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official FDA letter; signature date August 8, 2024, distinct from the August 9 announcement."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/18593734/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary research safety guidelines; full text checked at PMC3056407."
+    },
+    {
+      "url": "https://health.nih.gov/health-topics-a-z/psychedelic-drugs",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official NIH health information. The page contains apparent editing artifacts, so only clear statements were used and primary safety sources were checked separately."
+    },
+    {
+      "url": "https://www.dea.gov/sites/default/files/2025-01/Hallucinogens-Drug-Fact-Sheet.pdf",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official fact sheet; differentiates less-common direct overdose deaths from impossible dangerous outcomes."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9924842/",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary clinical report and interaction analysis. Full paper copy checked."
+    },
+    {
+      "url": "https://www.thieme-connect.com/products/ejournals/pdf/10.1055/a-1524-2794.pdf",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary online-report analysis; selection and incidence limits made explicit."
+    },
+    {
+      "url": "https://www.law.cornell.edu/cfr/text/21/1308.11",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Text of the federal regulation on an academic legal mirror."
+    },
+    {
+      "url": "https://www.fda.gov/drugs/resources-drugs/psychedelic-drugs",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official current page includes July guidance, September hearing, and research initiatives."
+    },
+    {
+      "url": "https://www.fda.gov/drugs/novel-drug-approvals-fda/novel-drug-approvals-2026",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official 2026 approvals list, updated through September 28; supplemented by Drugs@FDA API checks."
+    },
+    {
+      "url": "https://www.oregon.gov/oha/ph/preventionwellness/pages/psilocybin-what-are-psilocybin-services.aspx",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official state service requirements."
+    },
+    {
+      "url": "https://dnm.colorado.gov/unlicensed-and-unlawful-activities",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Official state regulator; avoids detailing changing implementation provisions."
+    },
+    {
+      "url": "https://www.law.cornell.edu/supremecourt/text/494/872",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary Supreme Court decision on an academic legal mirror."
+    },
+    {
+      "url": "https://www.law.cornell.edu/uscode/text/42/1996a",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Statutory text, definitions, and limits read directly."
+    },
+    {
+      "url": "https://www.law.cornell.edu/supremecourt/text/04-1084.ZO.html",
+      "source_type": "Primary research, primary text, official rule, or practitioner statement",
+      "note": "Primary Supreme Court decision; case-specific preliminary injunction and RFRA analysis."
+    }
+  ],
+  "supplemental_checked_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC3050654/",
+    "https://pubmed.ncbi.nlm.nih.gov/16826400/",
+    "https://files.csp.org/Psilocybin/Barrett2015MysticalExperience.pdf",
+    "https://citclinics.com/wp-content/uploads/2021/04/Carhart-Harris-2021-Trial-of-Psilocybin-versus-Escitalopram-for-Depression.pdf",
+    "https://www.suicideinfo.ca/wp-content/uploads/2024/01/MDMA-assisted-therapy-for-moderate-to-severe-PTSD.pdf",
+    "https://www.fda.gov/media/180463/download",
+    "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/psychedelic-drugs-considerations-clinical-investigations",
+    "https://www.fda.gov/news-events/fda-meetings-conferences-and-workshops/considerations-potential-future-therapeutic-use-psychedelic-drugs-public-hearing-09142026",
+    "https://www.fda.gov/news-events/press-announcements/fda-accelerates-action-treatments-serious-mental-illness-following-executive-order",
+    "https://pubmed.ncbi.nlm.nih.gov/38986146/",
+    "https://chacruna.net/wp-content/uploads/2019/08/Callaway_Grob_Ayahuasca_Serotonin_Reuptake_Inhibitor_Journal_Psychoactive_Drugs_1998.pdf",
+    "https://www.wussu.com/shrooms/wasson_seeking_the_magic_mushroom_life_magazine_1957.pdf",
+    "https://bibliography.maps.org/bibliography/default/resource/15048",
+    "https://www.sec.gov/Archives/edgar/data/1816590/000119312526157141/d58331dars.pdf",
+    "https://unlimitedsciences.org/wp-content/uploads/2023/10/nejmoa2206443.pdf"
+  ],
+  "fda_approval_api_checks": [
+    {
+      "name": "PSILOCYBIN",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22PSILOCYBIN%22&limit=1",
+      "http_status": 404,
+      "result": "No matches found!"
+    },
+    {
+      "name": "MIDOMAFETAMINE",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22MIDOMAFETAMINE%22&limit=1",
+      "http_status": 404,
+      "result": "No matches found!"
+    },
+    {
+      "name": "MDMA",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22MDMA%22&limit=1",
+      "http_status": 404,
+      "result": "No matches found!"
+    },
+    {
+      "name": "LYSERGIC ACID DIETHYLAMIDE",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22LYSERGIC+ACID+DIETHYLAMIDE%22&limit=1",
+      "http_status": 404,
+      "result": "No matches found!"
+    },
+    {
+      "name": "MESCALINE",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22MESCALINE%22&limit=1",
+      "http_status": 404,
+      "result": "No matches found!"
+    },
+    {
+      "name": "DIMETHYLTRYPTAMINE",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22DIMETHYLTRYPTAMINE%22&limit=1",
+      "http_status": 404,
+      "result": "No matches found!"
+    }
+  ],
+  "uncertainties": [
+    "Reported meaningfulness does not establish a metaphysical explanation or treatment benefit.",
+    "Clinical samples and intensive support constrain generalizability.",
+    "Cancer-trial longer follow-up followed crossover and some additional medication use.",
+    "Goodwin 2022 secondary outcomes were not statistically conclusive under hierarchical testing; its 12-week sustained-response odds-ratio interval also included no difference.",
+    "Functional unblinding can bias outcomes, but the size and direction are not a universal correction factor.",
+    "The independent causal role of mystical-experience qualities is unresolved.",
+    "Sponsor Phase 3 announcements are not interchangeable with complete published analyses or regulatory approval.",
+    "Rare-harm incidence and risks in excluded psychiatric populations are incompletely established.",
+    "Lithium interaction evidence cited here comes from selected online reports and cannot provide a population rate.",
+    "Eleusis composition is unconfirmed; ancient peyote material cannot establish a modern ceremonial lineage.",
+    "Drug approval and state implementation can change after the review date."
+  ],
+  "suggested_hub_description": "Psychedelics, living religious traditions, and what clinical trials can tell us about meaning and recovery.",
+  "qa": {
+    "static_checks": {
+      "duplicate_ids": false,
+      "missing_local_references": [],
+      "missing_hash_targets": [],
+      "missing_aria_labelledby": [],
+      "title_h1_og_match": true,
+      "em_or_en_dashes": false,
+      "emoji_or_pictographs": false,
+      "hard_voice_phrases": [],
+      "soft_voice_tells": []
+    },
+    "javascript_syntax": "node --check js/chemical-path.js passed",
+    "visual_qa": "Delegated to the parent agent after its shared layout changes. No browser was launched by this reviewer.",
+    "css": "Preserved; only factual figure labels, caption, and aria description changed.",
+    "git": "No commit, push, reset, staging, or unrelated edits performed."
+  }
+}

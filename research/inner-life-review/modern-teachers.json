@@ -1,0 +1,472 @@
+{
+  "page": "modern-teachers.html",
+  "reviewed_date": "2026-10-04",
+  "assignment": "Individual substantive editorial and accuracy review, resumed after an interrupted research pass.",
+  "files_changed": [
+    "modern-teachers.html",
+    "js/modern-teachers.js",
+    "research/inner-life-review/modern-teachers.json"
+  ],
+  "script_review": {
+    "path": "js/modern-teachers.js",
+    "changed": true,
+    "judgment": "Only obsolete header-comment wording changed. Runtime logic unchanged. HTML cache version is 20261003b. node --check passed."
+  },
+  "counts": {
+    "method": "HTMLParser text excluding script and style contents. Regex: Unicode word tokens with internal apostrophes or hyphens. All five authored gallery cards counted once. Main pre-Sources includes headings, controls, captions and citations, stopping before Sources. Additional hero-plus-main and whole-HTML measures make boundaries explicit.",
+    "before": {
+      "main_before_sources": 2554,
+      "main_with_sources": 3198,
+      "hero_and_main_before_sources": 2610,
+      "hero_and_main_with_sources": 3254,
+      "all_visible_html": 3290
+    },
+    "first_complete_draft": {
+      "main_before_sources": 2087,
+      "main_with_sources": 2468,
+      "hero_and_main_before_sources": 2125,
+      "hero_and_main_with_sources": 2506,
+      "all_visible_html": 2540
+    },
+    "after": {
+      "main_before_sources": 1808,
+      "main_with_sources": 2192,
+      "hero_and_main_before_sources": 1848,
+      "hero_and_main_with_sources": 2232,
+      "all_visible_html": 2266
+    },
+    "before_without_sources": 2554,
+    "first_rewrite_without_sources": 2087,
+    "after_without_sources": 1808,
+    "before_with_sources": 3198,
+    "first_rewrite_with_sources": 2468,
+    "after_with_sources": 2192,
+    "article_reduction_percent": 29.21,
+    "draft_cut_percent": 13.37,
+    "read_time_minutes": 10,
+    "read_time_basis": "Editorial estimate for reading the five interactive selections, questions, and comparison; bibliography optional. No fixed word target.",
+    "unique_source_documents": 15,
+    "grouped_bibliography_rows": 12,
+    "original_snapshot": "/tmp/inner-life-review-20261003/modern-teachers.html",
+    "first_complete_draft_snapshot": "/tmp/modern-teachers-complete-first-draft.html"
+  },
+  "review_judgment": {
+    "before": "Required reconstruction: uniform one-idea account of Eastern wisdom, unsupported scholarly dismissal, conflated accounts of self, and catch rows mixing allegations with moral judgment.",
+    "after": "Primary passages carry disagreements about identity, practice, and authority. Concrete questions replace the catch rows. Conduct remains relevant to claims about a changed life, with participant testimony and self-report identified.",
+    "length_judgment": "Shorter because the universal one-room thesis, repeating recaps, sensational biography, meme detour, and generic advice were removed. Bus passenger, anger, self-remembering, cosmology, and the unresolved final question remain because they carry the argument."
+  },
+  "factual_corrections": [
+    {
+      "before": "Preparation for Krishnamurti described as twenty years.",
+      "after": "1911 founding to 1929 dissolution; eighteen years in the speech itself."
+    },
+    {
+      "before": "Five men alone finally brought Eastern religion west; scholars dismissed without evidence.",
+      "after": "Removed exclusive history and unsupported scholarly judgment. The page compares selected teachers without ranking all interpreters."
+    },
+    {
+      "before": "Each retained one identical truth and discarded the rest of religion.",
+      "after": "Restored differences: cosmic identity, devotion and God, Being, rejection of prescribed paths, school discipline and cosmology."
+    },
+    {
+      "before": "Teachings treated as interchangeable, including Buddhist not-self.",
+      "after": "Distinguished identity, spiritual change, and authority, with a narrow primary comparison to SN 22.59."
+    },
+    {
+      "before": "Watts's addiction treated as a definitive cause of death.",
+      "after": "Removed the cause claim and gossip catch. The question now concerns his cosmic-game account of pain."
+    },
+    {
+      "before": "Ram Dass's bisexuality treated as a flaw, with an unsupported honesty ranking.",
+      "after": "Removed both. Devotion, service, the passenger story, and post-stroke self-report describe consequential parts of his teaching."
+    },
+    {
+      "before": "Tolle's origin story read as verified clinical history or proof of a separate witness; pricing used to imply abuse.",
+      "after": "Origin explicitly self-report. Observing thought distinguished from proof of eternal self. Unsupported pricing verdict removed."
+    },
+    {
+      "before": "Krishnamurti's observer treated as the same deeper witness taught by others.",
+      "after": "The anger example examines the judge itself as accumulated experience. The final question preserves disagreement with Tolle."
+    },
+    {
+      "before": "Krishnamurti's relationship used as a shortcut verdict on his philosophy.",
+      "after": "Attributed Sloss's account and concern about deceit; linked conduct to claims about changed attachment without automatically deciding every proposition."
+    },
+    {
+      "before": "Gurdjieff asked almost nothing and discarded metaphysics, with origins and misconduct allegations treated as settled.",
+      "after": "Restored Fourth Way discipline, self-remembering, and Moon cosmology. Omitted unverified origins and allegations."
+    },
+    {
+      "before": "Ouspensky's later break reduced to a glib verdict.",
+      "after": "Used chapter 18 account of failing to find a place in the work and continuing London work independently in 1924."
+    },
+    {
+      "before": "Sick-society meme and generic take-the-truth/drop-the-teacher advice displaced the comparison.",
+      "after": "Removed. Trust relates conduct to stated claims; ending identifies unresolved explanatory disagreement."
+    },
+    {
+      "before": "Early draft located the machine quote in chapter 2.",
+      "after": "Final PDF check locates it in chapter 1. Alarm example chapter 3, Fourth Way chapter 2, self-remembering chapter 7, Moon chapters 3 and 5, separation chapter 18."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Read as flat explanatory text. Removed theatrical universe language, invented rankings, warning crescendos, slogans and ornamental recaps. Concrete actions and claims carry sections."
+    },
+    {
+      "pass": 2,
+      "name": "Delete first paragraph",
+      "result": "Kept the single-sentence 1929 dissolution opening: deleting it leaves organizational background without the action motivating the comparison. Removed decorative crowd, age and scale details; corrected the preparation period."
+    },
+    {
+      "pass": 3,
+      "name": "Generic sentence test",
+      "result": "Removed the one-identical-idea thesis, scholar dismissal, and advice suited to any guru article. Cut a first-draft reading-question paragraph and repeated caveat. Questions now refer to Watts's pain myth, the bus passenger, a thought, anger, or the alarm."
+    },
+    {
+      "pass": 4,
+      "name": "Cut ten percent of first complete draft where justified",
+      "result": "Complete first draft saved at /tmp/modern-teachers-complete-first-draft.html. Main pre-Sources cut from 2087 to 1808 words, 13.37 percent. Cuts remove repeated explanations while preserving distinctive examples and differences."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Checked exact excerpts against located primary passages, corrected Ouspensky chapter, linked consequential facts, and separated source testimony from independent verification. Unsupported biographical and historical claims removed."
+    }
+  ],
+  "quotes_and_locations": [
+    {
+      "page_selector": "#intro .u-pq",
+      "excerpt": "Pathless-land fragment",
+      "word_count": 5,
+      "source_url": "https://kfoundation.org/dissolution-speech/",
+      "location": "Dissolution speech, paragraph beginning I maintain that Truth",
+      "verification": "Exact short fragment, labeled excerpt rather than complete sentence."
+    },
+    {
+      "page_selector": ".tale[data-tradition=\"Alan Watts\"] .tale-lesson",
+      "excerpt": "Leaf comparison",
+      "word_count": 17,
+      "source_url": "https://www.tonylutz.net/index.php/e-books/taboo/the-book-on-the-taboo-against-knowing-who-you-are",
+      "location": "The Book, chapter 1, Inside Information, paragraph beginning This feeling of being lonely",
+      "verification": "Exact wording and punctuation; quotation marks HTML-encoded for display."
+    },
+    {
+      "page_selector": ".tale[data-tradition=\"Ram Dass\"] .tale-lesson",
+      "excerpt": "Three instructions",
+      "word_count": 7,
+      "source_url": "https://www.ramdass.org/love-everyone-serve-everyone-remember-god/",
+      "location": "Maharajji's Three Teachings, recalled instruction in Greyhound story",
+      "verification": "Exact short instruction attributed to Neem Karoli Baba as recounted by Ram Dass."
+    },
+    {
+      "page_selector": ".tale[data-tradition=\"Eckhart Tolle\"] .tale-body p:nth-child(3)",
+      "excerpt": "Private thought in origin account",
+      "word_count": 7,
+      "source_url": "https://communicate.eckharttolle.com/power-of-now-excerpt/",
+      "location": "The Power of Now, introduction",
+      "verification": "Exact short excerpt from his reported private experience."
+    },
+    {
+      "page_selector": ".tale[data-tradition=\"Eckhart Tolle\"] .tale-lesson",
+      "excerpt": "Thinking/consciousness distinction",
+      "word_count": 6,
+      "source_url": "https://www.soulfulliving.com/not_your_mind.htm",
+      "location": "The Power of Now, chapter 1, Enlightenment: Rising above Thought",
+      "verification": "Exact wording from authorized excerpt. Chosen over a popular quotation whose wording differed from the checked edition."
+    },
+    {
+      "page_selector": ".tale[data-tradition=\"Krishnamurti\"] .tale-lesson",
+      "excerpt": "Following and truth",
+      "word_count": 10,
+      "source_url": "https://kfoundation.org/dissolution-speech/",
+      "location": "Dissolution speech, paragraph beginning The moment you follow someone",
+      "verification": "Exact sentence and capitalization."
+    },
+    {
+      "page_selector": ".tale[data-tradition=\"Gurdjieff & Ouspensky\"] .tale-lesson",
+      "excerpt": "Machine sentence",
+      "word_count": 4,
+      "source_url": "https://gurdjieff.work/texts/isotm.pdf",
+      "location": "In Search of the Miraculous, chapter 1, PDF page index 27",
+      "verification": "Exact short sentence in Ouspensky's account; early chapter 2 attribution corrected."
+    }
+  ],
+  "checked_urls": [
+    {
+      "url": "https://kfoundation.org/dissolution-speech/",
+      "source_type": "Primary speech, official Krishnamurti Foundation site",
+      "support": [
+        "Order founded in 1911; dissolution at Ommen on 3 August 1929",
+        "Eighteen years of preparation",
+        "Rejection of prescribed spiritual paths and inward dependence on authority",
+        "Practical organizations distinguished from spiritual freedom by steamship comparison"
+      ],
+      "locations": [
+        "Foundation headnote",
+        "Paragraph beginning I maintain that Truth",
+        "Paragraph beginning The moment you follow someone",
+        "Organizational and steamship comparison"
+      ],
+      "limits": "Establishes his stated position, not that he consistently lived by it.",
+      "access": "Full speech read."
+    },
+    {
+      "url": "https://www.tonylutz.net/index.php/e-books/taboo/the-book-on-the-taboo-against-knowing-who-you-are",
+      "source_type": "Primary text transcription of Watts, The Book",
+      "support": [
+        "1966 copyright and 1973 Abacus edition identified",
+        "Isolated ego contrasted with dependence on the world",
+        "Adaptation of Vedanta and universal identity claim",
+        "God hide-and-seek story presented as myth",
+        "Leaf comparison"
+      ],
+      "locations": [
+        "Preface",
+        "Chapter 1, Inside Information, paragraph beginning This feeling of being lonely",
+        "Chapter 1, hide-and-seek story and pain discussion"
+      ],
+      "limits": "Transcription outside the publisher. The cosmic identity and myth are philosophical claims, not empirical results.",
+      "access": "Full transcription available; preface and chapter 1 read in detail."
+    },
+    {
+      "url": "https://alanwatts.org/biography",
+      "source_type": "Official Alan Watts Organization biography",
+      "support": [
+        "Books, radio, and recorded talks",
+        "Philosophical entertainer description and preference for comparing worldviews"
+      ],
+      "locations": [
+        "Biography of public activity and teaching"
+      ],
+      "limits": "Insider account of public activity and self-presentation; does not support spiritual attainment or exclusive influence.",
+      "access": "Relevant text read."
+    },
+    {
+      "url": "https://www.ramdass.org/love-everyone-serve-everyone-remember-god/",
+      "source_type": "Primary Ram Dass essay, Maharajji's Three Teachings",
+      "support": [
+        "Greyhound passenger and holy-book story",
+        "Guru instruction as recalled by Ram Dass",
+        "Attention turned from his private project toward another person"
+      ],
+      "locations": [
+        "Greyhound story and recalled instruction"
+      ],
+      "limits": "His recollection and religious interpretation, not independently verified events or supernatural claims.",
+      "access": "Direct open returned 403; the web search result exposed the essay text and the relevant story was read there."
+    },
+    {
+      "url": "https://www.ramdass.org/understand-love-serve-remember/",
+      "source_type": "Primary Ram Dass essay, How to Understand Love, Serve, Remember",
+      "support": [
+        "Service as devotion",
+        "Recognizing God beyond body and personality"
+      ],
+      "locations": [
+        "Indexed passage explaining love, service, and recognition"
+      ],
+      "limits": "Accessible indexed passage checked, not a complete manuscript. Reports his religious interpretation.",
+      "access": "Direct open returned 403; indexed passage checked."
+    },
+    {
+      "url": "https://www.ramdass.org/about-ram-dass/",
+      "source_type": "Official Love Serve Remember Foundation biography",
+      "support": [
+        "Richard Alpert and psychology background",
+        "Neem Karoli Baba encounter",
+        "Be Here Now in 1971",
+        "Bhakti and service commitments"
+      ],
+      "locations": [
+        "Indexed passages covering India, publication, devotion, and service"
+      ],
+      "limits": "Insider biography; does not verify spiritual attainment, an honesty ranking, or a moral judgment about sexuality.",
+      "access": "Direct open returned 403; indexed biographical text checked."
+    },
+    {
+      "url": "https://www.soulfulliving.com/not_your_mind.htm",
+      "source_type": "Primary authorized excerpt from The Power of Now, chapter 1",
+      "support": [
+        "Listening to thought without added judgment",
+        "Being as eternal reality and presence as deeper self",
+        "Hand-washing and car-breath examples",
+        "Thinking/consciousness distinction"
+      ],
+      "locations": [
+        "You Are Not Your Mind",
+        "Freeing Yourself from Your Mind",
+        "Enlightenment: Rising above Thought"
+      ],
+      "limits": "Footer identifies New World Library permission and copyright 1999. Attention effects do not establish an eternal self.",
+      "access": "Full authorized excerpt read."
+    },
+    {
+      "url": "https://communicate.eckharttolle.com/power-of-now-excerpt/",
+      "source_type": "Primary introduction excerpt on Tolle's official site",
+      "support": [
+        "His account of anxiety, suicidal depression, and sudden change",
+        "I/myself question as a prompt in his origin account"
+      ],
+      "locations": [
+        "Introduction, private-thought paragraph and subsequent two-selves question"
+      ],
+      "limits": "Private self-report, not independently established diagnosis, treatment result, or proof of two beings.",
+      "access": "Official excerpt read."
+    },
+    {
+      "url": "https://catalog.mylakelibrary.org/bib/87925",
+      "source_type": "Library bibliographic record",
+      "support": [
+        "Namaste first publication in 1997",
+        "New World Library edition in 1999"
+      ],
+      "locations": [
+        "Publication statement and contents"
+      ],
+      "limits": "Bibliographic support only.",
+      "access": "Record checked."
+    },
+    {
+      "url": "https://kfoundation.org/krishnamurti-the-observer-is-the-past-%C2%B7-from-to-be-human/",
+      "source_type": "Primary To Be Human excerpt on the official foundation site",
+      "support": [
+        "Anger followed by the judging observer",
+        "Observer formed by accumulated experience",
+        "Observation without naming or condemning"
+      ],
+      "locations": [
+        "The Observer Is the Past, anger and memory passages"
+      ],
+      "limits": "Distinct account of the observer; does not justify equating it with Tolle's deeper witness.",
+      "access": "Full excerpt read."
+    },
+    {
+      "url": "https://gurdjieff.work/texts/isotm.pdf",
+      "source_type": "Primary Ouspensky book, In Search of the Miraculous",
+      "support": [
+        "Machine claim and changing I's",
+        "Early-rising promise example",
+        "Fourth Way during ordinary life",
+        "Self-remembering and St. Petersburg walk",
+        "Moon/organic-life cosmology",
+        "Ouspensky's separation and independent London work in 1924"
+      ],
+      "locations": [
+        "Chapter 1: machine quotation, PDF page index 27",
+        "Chapter 2: Fourth Way, PDF page indices 54 and 55",
+        "Chapter 3: early-rising example, PDF page indices 65 and 66",
+        "Chapters 3 and 5: Moon claim, PDF page indices 63 and 91",
+        "Chapter 7: self-remembering from PDF page index 124 onward",
+        "Chapter 18: separation, final PDF page index 395"
+      ],
+      "limits": "Ouspensky's retrospective recollection and explanation, not independently verified verbatim dialogue or validated cosmology. The separation began before 1924 and included later contacts; the page does not claim a sudden total break.",
+      "access": "Full 396-page PDF available; relevant chapters and passages checked."
+    },
+    {
+      "url": "https://www.gurdjieff.org/ripman1.htm",
+      "source_type": "Primary pupil explanation, Hugh Ripman's 9 April 1976 lecture",
+      "support": [
+        "Fourth Way integrates body, emotion, and thought",
+        "Developing consciousness and psychological integration",
+        "Ripman studied under Ouspensky"
+      ],
+      "locations": [
+        "Grace Church lecture, description of Fourth Way"
+      ],
+      "limits": "Insider account of the method, not scientific outcome evidence.",
+      "access": "Lecture text read."
+    },
+    {
+      "url": "https://accesstoinsight.org/tipitaka/sn/sn22/sn22.059.than.html",
+      "source_type": "Primary Buddhist discourse in Thanissaro Bhikkhu's Pali translation",
+      "support": [
+        "SN 22.59 includes consciousness among changing phenomena not identified as self"
+      ],
+      "locations": [
+        "Discourse on the Not-self Characteristic, consciousness and aggregate passages"
+      ],
+      "limits": "Narrow comparison; does not settle every Buddhist view of self or imply Watts's universal Self.",
+      "access": "Discourse checked."
+    },
+    {
+      "url": "https://tricycle.org/magazine/the-shadow-side-krishnamurti/",
+      "source_type": "Primary Radha Rajagopal Sloss interview by Helen Tworkov, Winter 1991",
+      "support": [
+        "Sloss's account of Krishnamurti's secret relationship with her mother Rosalind",
+        "Her concern about deceit",
+        "The family's direct involvement"
+      ],
+      "locations": [
+        "Interview about Lives in the Shadow with J. Krishnamurti"
+      ],
+      "limits": "Participant account with a family stake in the dispute. Used as attributed evidence concerning an idealized image, not to invalidate propositions automatically. Introductory historical ages conflict with the official record and were not used.",
+      "access": "Full interview read."
+    },
+    {
+      "url": "https://www.ramdass.org/still-here/",
+      "source_type": "Primary Ram Dass excerpt from Still Here",
+      "support": [
+        "Stroke, caregiver dependence, and continuing suffering",
+        "Soul perspective as help within illness rather than immunity"
+      ],
+      "locations": [
+        "Indexed excerpt on aging, stroke, caregivers, and suffering"
+      ],
+      "limits": "First-person experience and spiritual interpretation, not a cure or clinical outcome measure.",
+      "access": "Direct open returned 403; long indexed excerpt read."
+    }
+  ],
+  "supplemental_checked_urls": [
+    {
+      "url": "https://openlibrary.org/books/OL22824109M/In_search_of_the_miraculous",
+      "note": "Bibliographic cross-check: 1949 Harcourt Brace publication."
+    },
+    {
+      "url": "https://openlibrary.org/books/OL25921265M/Be_Here_Now",
+      "note": "Bibliographic cross-check: 1971 Lama Foundation publication."
+    },
+    {
+      "url": "https://www.ramdass.org/ram-dass-here-and-now-ep-213-from-suffering-to-grace-with-mirabai-bush-sharon-salzberg/",
+      "note": "Indexed account checked for his own stroke interpretation and limits on assigning it to others; final page instead cites Still Here."
+    },
+    {
+      "url": "https://kfoundation.org/transcript/k-school-adults-discussion-7-ojai-california-24-january-1976/",
+      "note": "Corroborating indexed primary anger/observer discussion; final page uses To Be Human excerpt."
+    }
+  ],
+  "uncertainties": [
+    "Selection does not exhaust modern spiritual teaching or represent entire traditions.",
+    "The page can document teachings and exercises; it cannot establish universal Self, eternal Being, spiritual attainment, or the ultimate explanation of mental quiet.",
+    "Ram Dass direct opens returned 403. Relevant indexed passages were checked, with the access limit recorded.",
+    "Sloss is a participant with a stake in the dispute, not final neutral adjudication of all personal or legal allegations.",
+    "Ouspensky dialogue is retrospective testimony; source locations are verified, not the truth of the cosmology.",
+    "Read-time label is an editorial estimate.",
+    "Generated banner, hub, next-post navigation, search, shared style and full browser QA belong to the parent publication pass."
+  ],
+  "suggested_hub_description": "Krishnamurti rejects the guru. Watts, Ram Dass, Tolle, and Gurdjieff disagree about what the self is, how it changes, and who can guide you.",
+  "qa": {
+    "static_checks": {
+      "gallery_cards": 5,
+      "duplicate_ids": [],
+      "missing_local_references": [],
+      "missing_hash_targets": [],
+      "missing_aria_labelledby": [],
+      "title_h1_og_match": true,
+      "title": "The Modern Teachers: What They Ask You to Believe",
+      "em_or_en_dashes": false,
+      "emoji_or_pictographs": [],
+      "hard_voice_phrases": [],
+      "soft_voice_tells": [],
+      "script_version": true,
+      "obsolete_catch_label": false
+    },
+    "javascript_syntax": "node --check js/modern-teachers.js passed.",
+    "whitespace": "git diff --check on owned HTML and JS passed; repeated in final validation.",
+    "visual_qa": "Full browser QA is assigned to parent. No browser process launched by this subagent.",
+    "css": "Existing CSS, gallery shell, assets, portrait credit and no-JS content preserved. Obsolete descriptive comments updated.",
+    "git": "No staging, commits, pushes, resets or edits outside the three owned paths."
+  }
+}

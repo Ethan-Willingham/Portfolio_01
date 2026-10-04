@@ -10,6 +10,7 @@
 
    Run from the repo root:  node tools/build-search-index.mjs
    Re-run whenever posts are added, retitled, or substantially edited.
+   Use --hub=inner-life to refresh one collection while preserving other entries.
    No dependencies (vanilla Node, regex extraction; the text only needs to be
    searchable, not perfectly structured). No em dashes in output copy.
    ============================================================================ */
@@ -22,6 +23,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CARD_CAP = 3600;      // max chars of text kept per section
 const SECTIONS_CAP = 32;    // max sections kept per post
 const POST_TEXT_CAP = 46000;// hard ceiling on total text per post
+const EXPLORER_DATA = {
+  'meditation.html': ['js/meditation-data.js', 'MED', 'techniques'],
+  'cults-the-cage.html': ['js/cults-data.js', 'CULTS', 'cases'],
+};
 
 const READER_NOTES = {
   'art-of-war.html': ['js/aow-notes.js', 'AOW_NOTES'],
@@ -57,6 +62,11 @@ function attr(block, re) { const m = block.match(re); return m ? decode(m[1]).tr
 function buildSections(post, file) {
   if (!existsSync(file)) return;
   let html = readFileSync(file, 'utf8');
+  // The collection uses short card labels; search displays the revised article title.
+  if (post.hub === 'inner-life') {
+    const title = attr(html, /<meta property="og:title" content="([^"]+)"/);
+    if (title) post.title = stripToText(title);
+  }
   // work inside <main> when present, else <body>; drop heavy/non-content blocks
   // (.u-next is the generated endcap nav; its next-post titles are chrome, not
   // content, and must not make every collection member match its siblings)
@@ -64,6 +74,12 @@ function buildSections(post, file) {
     .replace(/<(script|style|noscript|template|svg)[\s\S]*?<\/\1>/gi, ' ')
     .replace(/<nav class="u-next"[\s\S]*?<\/nav>/gi, ' ')
     .replace(/<!--[\s\S]*?-->/g, ' ');
+
+  // Authored gallery cards are hidden after boot. Send their search hits to the visible gallery.
+  const galleryRanges = post.hub === 'inner-life'
+    ? [...html.matchAll(/<article\b[^>]*class="tale"[^>]*>[\s\S]*?<\/article>/g)]
+        .map((match) => [match.index, match.index + match[0].length])
+    : [];
 
   // find every heading, its anchor id (own id, else nearest preceding id="..."),
   // and the raw span between this heading and the next -> one searchable section.
@@ -78,6 +94,7 @@ function buildSections(post, file) {
       const ids = [...before.matchAll(/\bid="([^"]+)"/g)];
       if (ids.length) id = ids[ids.length - 1][1];
     }
+    if (galleryRanges.some(([start, end]) => m.index >= start && m.index < end)) id = 'gal-frame';
     heads.push({ at: m.index, end: headRe.lastIndex, id: id || '', head: stripToText(m[3]) });
   }
 
@@ -122,6 +139,23 @@ function buildSections(post, file) {
       pushSection(note.title, id, [note.gist, explanations, note.read, plain].filter(Boolean).join(' '));
     }
   }
+
+  // Include the researched copy behind each explorer's choices. Every result
+  // reaches the existing explorer, where all choices remain visible.
+  const explorer = EXPLORER_DATA[post.url];
+  if (explorer) {
+    const context = { window: {} };
+    runInNewContext(readFileSync(join(ROOT, explorer[0]), 'utf8'), context, { timeout: 1000 });
+    const data = context.window[explorer[1]];
+    for (const id of data.order) {
+      const entry = data[explorer[2]][id];
+      const text = Object.entries(entry)
+        .filter(([key]) => !['name', 'fam', 'grade'].includes(key))
+        .map(([, value]) => Array.isArray(value) ? value.join(' ') : value)
+        .filter((value) => typeof value === 'string').join(' ');
+      pushSection(entry.name, 'explorer', text);
+    }
+  }
 }
 
 const posts = [];
@@ -154,6 +188,9 @@ for (const block of cardBlocks) {
 // archived posts. They are NOT `archived`: the files never moved, the URLs are
 // live, and the homepage search still finds them.
 const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive', 'career'];
+const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
+const selectedHub = hubArg && hubArg.slice(6);
+if (hubArg && !HUB_SLUGS.includes(selectedHub)) throw new Error(`Unknown hub: ${selectedHub}`);
 const progressIndexHtml = existsSync(join(ROOT, 'archive.html')) ? readFileSync(join(ROOT, 'archive.html'), 'utf8') : '';
 const IN_PROGRESS_HUBS = new Set([...progressIndexHtml.matchAll(/<a class="article-item is-collection" href="([^"]+)\.html"/g)].map(m => m[1]));
 const BORING_HUBS = new Set(HUB_SLUGS.filter((s) => !IN_PROGRESS_HUBS.has(s)));
@@ -274,16 +311,26 @@ for (const slug of archiveDirs) {
   seen.add(url);
 }
 
-const payload = { built: new Date().toISOString().slice(0, 10), count: posts.length, posts };
+let outputPosts = posts;
+if (selectedHub) {
+  const existing = JSON.parse(readFileSync(join(ROOT, 'search-index.json'), 'utf8'));
+  const replacements = new Map(posts.filter((p) => p.hub === selectedHub).map((p) => [p.url, p]));
+  const kept = new Set();
+  outputPosts = existing.posts
+    .filter((p) => p.hub !== selectedHub || replacements.has(p.url))
+    .map((p) => { kept.add(p.url); return replacements.get(p.url) || p; });
+  for (const [url, post] of replacements) if (!kept.has(url)) outputPosts.push(post);
+}
+const payload = { built: new Date().toISOString().slice(0, 10), count: outputPosts.length, posts: outputPosts };
 const json = JSON.stringify(payload);
 writeFileSync(join(ROOT, 'search-index.json'), json);
 
 const kb = (json.length / 1024).toFixed(0);
-console.log(`search-index.json: ${posts.length} posts, ${json.length} bytes (${kb} KB)`);
-const archived = posts.filter(p => p.archived).length;
-const inprog = posts.filter(p => p.inprogress).length;
-console.log(`  (${posts.length - archived - inprog} active, ${inprog} in progress, ${archived} archived)`);
-for (const p of posts) {
+console.log(`search-index.json: ${outputPosts.length} posts, ${json.length} bytes (${kb} KB)`);
+const archived = outputPosts.filter(p => p.archived).length;
+const inprog = outputPosts.filter(p => p.inprogress).length;
+console.log(`  (${outputPosts.length - archived - inprog} active, ${inprog} in progress, ${archived} archived)`);
+for (const p of selectedHub ? outputPosts.filter((p) => p.hub === selectedHub) : outputPosts) {
   const chars = p.sections.reduce((a, s) => a + s.text.length, 0);
   const mark = p.archived ? 'A ' : p.inprogress ? 'P ' : '  ';
   console.log(`  ${mark + p.url.padEnd(52)} ${String(p.sections.length).padStart(2)} sec  ${(chars/1024).toFixed(1).padStart(5)}KB  "${p.title}"`);

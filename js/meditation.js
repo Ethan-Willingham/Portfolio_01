@@ -30,12 +30,12 @@
   })();
 
   /* ---------- 2. THE TECHNIQUE EXPLORER ---------- */
-  (function () {
+  (function initExplorer() {
     var mount = $('explorer');
-    if (!mount || !window.MED) { if (mount) setTimeout(arguments.callee, 60); return; }
+    if (!mount || !window.MED) { if (mount) setTimeout(initExplorer, 60); return; }
     var MED = window.MED, FAMS = MED.fams, ORDER = MED.order, T = MED.techniques;
     var cur = ORDER[0], view = 'card';
-    var GRADE = { a: ['g-a', 'strong'], b: ['g-b', 'good'], c: ['g-c', 'mixed'], d: ['g-d', 'thin'] };
+    var GRADE = { a: ['g-a', 'strong'], b: ['g-b', 'good'], c: ['g-c', 'limited'], d: ['g-d', 'thin'] };
 
     function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'; }); }
     function gradeChip(g) { var x = GRADE[g] || GRADE.c; return '<span class="grade ' + x[0] + '">' + x[1] + '</span>'; }
@@ -43,7 +43,7 @@
     function chips() {
       return ORDER.map(function (id) {
         var t = T[id], c = FAMS[t.fam].color;
-        return '<button class="mx-chip' + (id === cur ? ' is-cur' : '') + '" data-id="' + id + '" style="--fam:' + c + '">' + esc(t.name) + '</button>';
+        return '<button type="button" class="mx-chip' + (id === cur ? ' is-cur' : '') + '" aria-pressed="' + (id === cur) + '" data-id="' + id + '" style="--fam:' + c + '">' + esc(t.name) + '</button>';
       }).join('');
     }
 
@@ -55,10 +55,10 @@
       if (t.also) h += '<p class="mx-also">also: ' + esc(t.also) + '</p>';
       h += '<p class="mx-one">' + t.one + '</p>';
       h += row('Where it came from', '<p class="mx-v">' + t.origin + '</p>');
-      h += row('What it claims', '<p class="mx-v">' + t.claims + '</p>');
-      h += row('What the evidence shows' + gradeChip(t.grade), '<p class="mx-v">' + t.ev + '</p>');
+      h += row('Its aim', '<p class="mx-v">' + t.claims + '</p>');
+      h += row('Health evidence' + gradeChip(t.grade), '<p class="mx-v"><b>' + esc(t.evidenceFor) + '.</b> ' + t.ev + '</p>');
       var steps = '<ol class="mx-how">' + t.how.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>';
-      h += row('How to do the core of it', steps +
+      h += row('An introductory exercise', steps +
         '<div class="mx-meta"><div><b>How long.</b> ' + esc(t.time) + '</div></div>' +
         '<p class="mx-miss" style="margin-top:.7rem"><b>Common mistakes.</b> ' + t.miss + '</p>' +
         (t.note ? '<p class="mx-miss" style="margin-top:.5rem;color:var(--text-faint)">' + t.note + '</p>' : ''));
@@ -75,15 +75,15 @@
       var rows = ORDER.map(function (id) {
         var t = T[id], fam = FAMS[t.fam];
         return '<tr>' +
-          '<td class="t-name"><b data-id="' + id + '">' + esc(t.name) + '</b></td>' +
+          '<td class="t-name"><button type="button" class="mx-table-link" data-id="' + id + '">' + esc(t.name) + '</button></td>' +
           '<td>' + esc(t.object) + '</td>' +
           '<td><span class="fam-dot" style="background:' + fam.color + '"></span>' + esc(fam.label) + '</td>' +
-          '<td>' + gradeChip(t.grade) + '</td>' +
+          '<td>' + gradeChip(t.grade) + '<br>' + esc(t.evidenceFor) + '</td>' +
           '<td>' + esc(shortTime(t.time)) + '</td>' +
           '</tr>';
       }).join('');
-      return '<div class="mx-tablewrap"><table class="mx-table"><thead><tr>' +
-        '<th>Technique</th><th>You attend to</th><th>Family</th><th>Evidence</th><th>To start</th>' +
+      return '<div class="mx-tablewrap"><table class="mx-table" aria-label="Health evidence and scope of eleven practices"><thead><tr>' +
+        '<th scope="col">Technique</th><th scope="col">You attend to</th><th scope="col">Group</th><th scope="col">Evidence for</th><th scope="col">Time or scope</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
     function shortTime(s) { return s.split(/[.;]/)[0].replace(/^(About|As little as)\s*/i, ''); }
@@ -92,6 +92,7 @@
       $('mx-count').innerHTML = '<b>' + ORDER.length + '</b> techniques';
       document.querySelectorAll('#mx-views button').forEach(function (b) {
         b.classList.toggle('is-on', b.getAttribute('data-view') === view);
+        b.setAttribute('aria-pressed', String(b.getAttribute('data-view') === view));
       });
       var chipWrap = $('mx-chips'), cardWrap = $('mx-card'), tableWrap = $('mx-table');
       chipWrap.hidden = (view === 'table');
@@ -118,7 +119,7 @@
       if (n) n.onclick = function () { if (i < ORDER.length - 1) go(ORDER[i + 1]); };
     }
     function wireTable() {
-      document.querySelectorAll('#mx-table b[data-id]').forEach(function (b) {
+      document.querySelectorAll('#mx-table button[data-id]').forEach(function (b) {
         b.onclick = function () { go(b.getAttribute('data-id')); };
       });
     }
@@ -141,15 +142,15 @@
 
     var PATTERNS = {
       coherent: {
-        desc: '<b>Coherent breathing.</b> Smooth, even, about six breaths a minute. The daily calm setting; raises heart-rate variability.',
+        desc: '<b>Slow breathing.</b> About five seconds in and five to six out. Follow only while comfortable; a normal pace is also an option.',
         steps: [{ t: 'Breathe in', d: 5000, to: 1 }, { t: 'Breathe out', d: 5500, to: 0 }]
       },
       box: {
-        desc: '<b>Box breathing.</b> Four equal sides. Steadies and centers you under pressure; used by the military.',
+        desc: '<b>Box breathing.</b> Inhale, hold, exhale, hold. Skip this pattern if holding your breath feels strained.',
         steps: [{ t: 'Breathe in', d: 4000, to: 1 }, { t: 'Hold', d: 4000, to: 1 }, { t: 'Breathe out', d: 4000, to: 0 }, { t: 'Hold', d: 4000, to: 0 }]
       },
       sigh: {
-        desc: '<b>The physiological sigh.</b> A double inhale, then a long exhale. The fastest reset; five minutes beat other methods for mood in a Stanford trial.',
+        desc: '<b>Double inhale.</b> Inhale, add a small second inhale, then exhale slowly. The timing shown is illustrative; keep the breath gentle.',
         steps: [{ t: 'Breathe in', d: 1600, to: 0.78 }, { t: 'Sip in more', d: 900, to: 1 }, { t: 'Long exhale', d: 5500, to: 0 }, { t: 'Rest', d: 700, to: 0 }]
       }
     };
@@ -178,7 +179,7 @@
     function stop() {
       running = false; clearTimeout(timer);
       btn.textContent = 'Start'; btn.classList.remove('is-running');
-      phaseEl.textContent = 'Ready'; subEl.textContent = 'Press start, and follow the circle';
+      phaseEl.textContent = 'Ready'; subEl.textContent = 'Breathe gently; the timing is optional';
       setOrb(0.18, 600);
     }
     function setDesc() { descEl.innerHTML = PATTERNS[pat].desc; }

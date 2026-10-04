@@ -1,0 +1,228 @@
+{
+  "post": "spirituality-of-imperfection.html",
+  "review_date": "2026-10-04",
+  "status": "Completed editorial rewrite and owned gallery repair; shared shell and navigation left to parent",
+  "scope": [
+    "spirituality-of-imperfection.html",
+    "js/imperfection.js",
+    "research/inner-life-review/spirituality-of-imperfection.json"
+  ],
+  "baseline": {
+    "html": "/tmp/inner-life-review-20261003/spirituality-of-imperfection.html",
+    "javascript": "/tmp/inner-life-review-20261003/js/imperfection.js",
+    "html_sha256": "2bc149375c2959524e0ace806fd07b52d0373d1c845527ddc1ff549d57b9727b"
+  },
+  "counts": {
+    "original": 3670,
+    "first_complete_rewrite": 2001,
+    "final": 1683
+  },
+  "count_method": "Python HTMLParser, decoded visible text from the hero header and main#guide. Count words with the Unicode regex \\b[\\w]+(?:['’][\\w]+)*\\b. Include headings, caption, source list, and all authored gallery cards once. Exclude generated gallery UI, navigation, footer, scripts, styles, and comments. Hyphenated compounds count as separate words. Same method for baseline, first complete rewrite, and final.",
+  "first_complete_rewrite": {
+    "temporary_snapshot": "/tmp/imperfection-first-complete.html",
+    "sha256": "4a0a82fc2bb047880d534235b94f2f40613116f6e4b8e2935caa4aa10a4df151",
+    "words": 2001,
+    "explanation": "A complete replacement, including all sections, metadata, five retellings, their comments, and source notes. Count taken before the required self-edit cut, not a target inflated with padding."
+  },
+  "cut_from_first_complete": {
+    "words_removed": 318,
+    "percent_removed": 15.89
+  },
+  "change_from_original": {
+    "words_removed": 1987,
+    "percent_removed": 54.14
+  },
+  "judgments": {
+    "accuracy": "The original had recognizable book themes, but repeatedly promoted analogies into universal religious doctrine and a spiritual interpretation into an explanation of addiction. Its caveats came after stronger claims. The rewrite grounds the opening in the actual sequence of AA steps and uses book passages on humility and responsibility to qualify acceptance.",
+    "substance": "Added the fourth/fifth and eighth/ninth step sequence, the amends exception, the authors' recovery-story method, the distinction between a reported experience and a guaranteed result, and the omitted information that limits Moses's forgiveness story. Page-specific primary preview references and the later coauthored paper replace broad appeals to wisdom.",
+    "length": "The original spent many paragraphs repeating surrender, finitude, cracks, and an alleged final answer for the entire series. A shorter article preserves the distinct recovery argument, five examples, and six named experiences. The final article is about nine minutes at ordinary reading speed.",
+    "voice": "Removed recurring slogans, performing metaphors, throat-clearing, moral punchlines after each tale, and the seven-doors-one-room framing. Replaced them with concrete actions, source settings, and limits on interpretation. No claim about all faiths sharing a hidden answer remains."
+  },
+  "major_corrections": [
+    "Foregrounded Ernest Kurtz and Katherine Ketcham as the two authors instead of making the article mostly a Kurtz biography.",
+    "Kept the 1992 first-publication date distinct from the publisher's current 1993 paperback and the 2009 ebook preview used for page references.",
+    "Restored the specific object of Step One: alcohol. Powerlessness is not presented as having no choices or responsibility.",
+    "Distinguished AA's spiritual account of selfishness from a medical explanation of alcohol use disorder. Removed the unsupported superiority-to-clinical-treatment claim rather than attempting to defend it.",
+    "Repaired the interpretation of acceptance: the same program asks for inventory, admission, willingness, and amends. The book's forgiveness discussion also explicitly retains responsibility.",
+    "Kept the original kintsugi assets and identified the exact Daderot DSC02061 Commons photograph and its CC0 dedication. Removed claims that the repair is the bowl's most valuable feature or that damage itself improves a person.",
+    "Removed the unverified claim that Cohen's Anthem was based on kintsugi. No lyrics remain.",
+    "The rose is credited to the actual checked book sample. A Laozi saying inside it is not treated as proof of Daoist origin or a summary of Daoism.",
+    "The pockets are a traditionally attributed Hasidic teaching, not a witnessed exchange. The exact Mishnah and Genesis references are linked. Fixed left/right labels are omitted from this retelling, though the checked book page 60 does include a particular arrangement.",
+    "Moses follows the leaking-jug version actually quoted by Benedicta Ward. Removed invented rope, wet trail, and seniority details. The offense is unspecified, and the interpretation now acknowledges that absence.",
+    "Nan-in is a modern published teaching story, not a historically verified visit. The retelling does not invent a long monologue by the professor.",
+    "Removed the Nasrudin and Kisa Gotami cards. They widened a recital of traditions without clarifying this book's recovery argument; Kisa Gotami was an outside selection even in the old source note.",
+    "The gallery makes no claim that all five selections are in the book. Rose, Moses, and pockets have checked book references; tea and the AA passage are identified by their separate source texts.",
+    "Reframed the religion/spirituality distinction as the authors' reported usage among spiritual-but-not-religious readers, preserving their qualification rather than asserting a universal taxonomy.",
+    "Removed the convergence weave, claims of historical independence/no contact, Prothero's diagnoses treated as universal definitions, the false opposition between Deutsch and all wisdom traditions, and the all-series capstone.",
+    "The six terms remain, but are presented as themes in accounts of recovery, with explanatory definitions supported by the later Kurtz/White paper. They are not inevitable rewards of surrender.",
+    "Forgiveness is not presented as erasing responsibility or requiring renewed contact, continued relationship, or exposure to further harm."
+  ],
+  "sources_checked": [
+    {
+      "url": "https://www.penguinrandomhouse.com/books/96307/the-spirituality-of-imperfection-by-ernest-kurtz-and-katherine-ketcham/",
+      "source_type": "Publisher page and embedded primary book excerpt",
+      "access": "Browsed page; extracted and read the full publicly embedded chapter 1 sample from its excerpt_text_list JSON using urllib. The browser-text tool omitted the modal excerpt, but it is in the page source.",
+      "supports": "Both authors; current-edition details; the actual rose opening; Poemen story; the chapter's relation of description, experience, storytelling, and accepting imperfection.",
+      "limits": "Only chapter 1 was available in the publisher sample. Marketing language is not evidence of clinical efficacy or universal religious agreement."
+    },
+    {
+      "url": "https://books.google.com/books?id=5B5dgtFUuJAC",
+      "source_type": "Primary book, publicly searchable 2009 edition preview",
+      "access": "Read table of contents and public SearchWithinVolume2 page snippets. Queried imperfection, finitude, religion, gratitude, amends, humility, release, Moses, Mello, pockets, jug, beyond, between, forgiveness, and being-at-home. Queries Bunim and Nan-in returned no hits.",
+      "checked_search_urls": [
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&q=pockets&vid=5B5dgtFUuJAC",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=humility",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=religion",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=jug",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=Moses",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=forgiveness",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=being-at-home",
+        "https://books.google.com/books?jscmd=SearchWithinVolume2&vid=5B5dgtFUuJAC&q=amends"
+      ],
+      "supports": "Book chapter structure. Page 24 qualifies the religion association as a usage among spiritual-but-not-religious people. Page 49 has Moses's council and leaking jug. Page 60 has the two pockets. Page 159 says the experiences cannot be commanded. Page 187 rejects self-abasement. Pages 219 and 224 connect forgiveness to amends and retain responsibility for actions.",
+      "limits": "Read these passages as public snippets, not complete chapters. The entire book was not obtained or read. Zero search hits do not prove an example is absent. Page links sometimes failed in the web text tool, while public search endpoints returned actual page snippets."
+    },
+    {
+      "url": "https://doi.org/10.3390/rel6010058",
+      "additional_urls": [
+        "https://www.mdpi.com/2077-1444/6/1/58",
+        "https://aaagnostica.org/recovery-spirituality/"
+      ],
+      "source_type": "Ernest Kurtz and William L. White, Recovery Spirituality (2015), open-access author paper, CC BY 4.0",
+      "access": "Located original publication; read the full author-text reprint, especially sections 6 and 7, including forgiveness, direct amends, and belonging through acknowledged limitations. The MDPI body failed through the web text tool; its publication metadata and reprint matched.",
+      "supports": "Mutuality, listening to recovery stories, the six experiences and their meanings, recognition of help received, humility as neither all nor nothing, and forgiveness that can follow amends.",
+      "limits": "An interpretive paper about recovery experience, not a randomized treatment comparison and not proof that all people experience these six changes."
+    },
+    {
+      "url": "https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt5.pdf",
+      "additional_urls": [
+        "https://www.aa.org/sites/default/files/2021-11/en_bigbook_chapt6.pdf"
+      ],
+      "source_type": "AA's own Big Book chapters, official AA site",
+      "access": "The web PDF parser returned errors. Downloaded both public PDFs through urllib, converted with pdftotext, and read the steps, the spiritual progress paragraph, and the amends passages.",
+      "supports": "Step One's actual reference to alcohol; steps four, five, eight, and nine; the injury exception; perfect adherence is not maintained; exact nine-word progress quotation; the practical demands of amends.",
+      "limits": "AA's own spiritual and programmatic claims are not by themselves clinical outcome evidence. The article does not endorse every assertion made in the chapters."
+    },
+    {
+      "url": "https://www.niaaa.nih.gov/publications/brochures-and-fact-sheets/understanding-alcohol-use-disorder",
+      "source_type": "Primary federal health agency explanation",
+      "access": "Browsed and read the medical-condition definition and multifactorial risk explanation.",
+      "supports": "AUD is a medical condition; a spiritual claim about ego should not be substituted for medical causation.",
+      "limits": "Used for that distinction only. No treatment recommendation or efficacy comparison is made."
+    },
+    {
+      "url": "https://www.theway.org.uk/Back/s064Ward.pdf",
+      "additional_urls": [
+        "https://avowofconversation.wordpress.com/2008/11/27/a-leaking-jug/"
+      ],
+      "source_type": "Benedicta Ward's own article quoting her primary Desert Fathers translation; independently checked complete quotation reprint",
+      "access": "Read Ward's page 12 and note 15 identifying Moses 2; read the full translated passage as reproduced with bibliographic reference on A vow of conversation.",
+      "supports": "The leaking jug and water, first refusal and second summons, unseen sins and judging another person, and the monks forgiving the brother.",
+      "limits": "An ancient teaching tale with an unspecified offense. The retelling cannot establish historical particulars or supply a rule for handling abuse."
+    },
+    {
+      "url": "https://www.ou.org/judaism-101/glossary/wisdom/",
+      "additional_urls": [
+        "https://www.sefaria.org/Mishnah_Sanhedrin.4.5?lang=bi",
+        "https://www.sefaria.org/Genesis.18.27?lang=bi",
+        "https://www.sefaria.org/api/texts/Mishnah_Sanhedrin.4.5?context=0",
+        "https://www.sefaria.org/api/texts/Genesis.18.27?context=0"
+      ],
+      "source_type": "Traditional teaching reproduced by Orthodox Union; primary Mishnah and Genesis texts via Sefaria",
+      "access": "Read the two-pocket teaching; read both scripture references through Sefaria's public text API. Also checked the book's page 60 snippet.",
+      "supports": "Traditional Simcha Bunim attribution and both phrases' textual roots. Sefaria's Mishnah rendering says the world was created for me; the Genesis rendering has dust and ashes.",
+      "limits": "These sources do not prove that Bunim uttered the exact English wording. The book's translated dust/earth wording and arrangement differ; the retelling quotes the linked traditional version without inventing mandatory pockets."
+    },
+    {
+      "url": "https://terebess.hu/zen/mesterek/NaninZengu.html",
+      "source_type": "Reprint of the published A Cup of Tea text attributed to Nyogen Senzaki and Paul Reps",
+      "access": "Read the full English text at lines 44 to 52, with its collection identification. Also checked Google Books bibliography for Zen Flesh, Zen Bones.",
+      "supports": "University professor, Nan-in, overflowing tea, opinions and assumptions, and the position as the first story in 101 Zen Stories.",
+      "limits": "A primary literary text available in a later reprint. It is not proof that the visit happened; the retelling labels that limit."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:Tea_bowl,_Korea,_Joseon_dynasty,_16th_century_AD,_Mishima-hakeme_type,_buncheong_ware,_stoneware_with_white_engobe_and_translucent,_greenish-gray_glaze,_gold_lacquer_-_Ethnological_Museum,_Berlin_-_DSC02061.JPG",
+      "source_type": "Photographer's own file record and CC0 dedication",
+      "access": "Read the exact image record, title, photographer, date, dimensions, and license. Inspected the local original photograph; its composition and aspect ratio match this record.",
+      "supports": "Joseon Korean bowl, 16th century, Berlin Ethnological Museum, gold lacquer repair, Daderot authorship, public-domain dedication.",
+      "limits": "The file record does not establish the bowl's market value, the date of its repair, or a moral benefit of damage."
+    },
+    {
+      "url": "https://www.penguinrandomhouse.com/books/114310/under-the-influence-by-james-r-milam-phd-and-katherine-ketcham/",
+      "additional_urls": [
+        "https://www.penguinrandomhouse.com/authors/15537/katherine-ketcham/",
+        "https://chestnut.org/li/william-white-library/industry-experts/ernie-kurtz",
+        "https://chestnut.org/li/william-white-library/blogs/article/2014/05/spirituality-and-recovery"
+      ],
+      "source_type": "Publisher bibliography; William White's author/collaborator records",
+      "access": "Checked Ketcham's coauthorship of Under the Influence and White's dating of the Kurtz/Ketcham book to 1992.",
+      "supports": "Brief author-background facts and the original publication year.",
+      "limits": "Only bibliography and dating used. No claims from the current Under the Influence marketing description are repeated."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Read the complete first rewrite flat. Removed the extra opening gloss and the paragraph ending about an impressive success. Simplified the abstractions about the person who needs a spiritual life into mixed motives and unfinished business. Kept the concrete AA sequence and the named sources."
+    },
+    {
+      "pass": 2,
+      "name": "Delete the first paragraph",
+      "result": "Tested the deletion and retained the factual opening. Without it the article starts by naming a book, and loses the actual admission/amends sequence that explains the thesis. Cut its redundant third sentence instead."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence pass",
+      "result": "Removed repeated assurances about improvement, lengthy general statements about helplessness, a generic pattern paragraph, and comments that merely restated the story. Retained specific interpretive limits, such as the missing offense in Moses's tale and the difference between a rose description and experience."
+    },
+    {
+      "pass": 4,
+      "name": "Cut at least ten percent",
+      "result": "First complete draft: 2,001 words. Main compression pass: 1,698 words, a cut of 303 words (15.14%). Final source/metadata cleanup: 1,683 words. Cuts removed redundancy while preserving all six terms, five stories, their sources, and the limits of the argument."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Checked the exact AA steps and quotation against the official PDF, the book's relevant public passages, the complete recovery paper, both pocket-text roots, Ward's jug version, the Nan-in literary text, and image provenance. Source notes distinguish full excerpt, preview snippets, interpretive paper, literary tales, and medical source. The strongest objection is answered: acceptance does not remove repair or responsibility, and these stories lack facts needed to judge particular harms."
+    }
+  ],
+  "uncertainties_and_limits": [
+    "No complete digital copy of the book was obtained. The actual chapter 1 text was read in full, with additional book passages available as primary preview snippets. The later coauthored paper supplies detailed interpretation of the recovery terms.",
+    "The origins and historical transmission of the folklore are not established by modern retellings. The article avoids assertions of historical independence, exact witnessed dialogue, and universality.",
+    "The five-card selection is the post's editorial selection, not a claim about the book's exact contents. The public search result for Nan-in was empty, so inclusion in the book is not asserted.",
+    "Forgiveness without reconciliation and objecting to harm are editorial limits on applying the tales, distinguished from claims about what every tradition prescribes.",
+    "The local bowl photograph matches the exact Commons image, but no separate museum catalog was obtained for market value or restoration chronology; both claims are omitted.",
+    "The requested shared centered shell, 44px shared gallery sizing, hub/search updates, and navigation changes belong to the parent assignment and were not edited here."
+  ],
+  "gallery_changes": {
+    "cards": 5,
+    "script_version": "js/imperfection.js?v=2",
+    "behavior": "Native labelled tab buttons share a named role=tabpanel, aria-controls, aria-selected, roving tabindex, and selected-tab focus. ArrowLeft/ArrowRight wrap; Home/End go to endpoints. Only focused tabs receive those keys. Previous/next buttons select and focus the corresponding tab. Source cards hide only after successful render via gallery-ready. Missing or blocked script leaves source cards visible; print shows all source cards.",
+    "css_scope": "Only the existing owned inline fallback/print selectors were narrowed to .tales.gallery-ready. No shared CSS or new colors were edited."
+  },
+  "validation": {
+    "node_check": "node --check js/imperfection.js passed",
+    "diff_check": "git diff --check -- spirituality-of-imperfection.html js/imperfection.js passed",
+    "content_checks": "21 unique IDs, valid aria-labelledby targets, one h1, title/h1/og:title agreement, and 11 local assets found. Full decoded HTML and JS contain no em/en dashes, including entity encodings, no emoji-range characters, and no hard-block voice phrases.",
+    "browser": "Playwright using /Users/ethan/.local/bin/agent-chrome-for-testing, with the browser and local HTTP server closed in finally. Five tabs; tab/panel relationships; roving tabindex; Arrow/Home/End and focus; wrapping; previous/next focus; keys on source links and outside the gallery unaffected; zero JS page errors; print fallback; 375px no overflow and 20px section gutter; JavaScript-disabled source; blocked-script source. All passed.",
+    "visual": "Inspected mobile top and gallery screenshots. Existing banner and original page shell were still present, pending parent's shared presentation pass. Original bowl image inspected separately.",
+    "temporary_artifacts": [
+      "/tmp/imperfection-first-complete.html",
+      "/tmp/imperfection-mobile-top.png",
+      "/tmp/imperfection-mobile-gallery.png",
+      "/tmp/test-imperfection.cjs"
+    ],
+    "commit_status": "No staging, commit, or push performed; unrelated dirty files were not edited."
+  },
+  "suggested_hub_description": "AA begins with powerlessness and later asks for amends. Kurtz and Ketcham use recovery stories to explain how accepting human limits can coexist with responsibility for wrongdoing.",
+  "preserved_anchors": [
+    "intro",
+    "spine",
+    "tales",
+    "grows",
+    "different",
+    "thread",
+    "sources"
+  ]
+}

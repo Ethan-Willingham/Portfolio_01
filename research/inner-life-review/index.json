@@ -1,0 +1,195 @@
+{
+  "collection_url": "https://ethanwillingham.com/inner-life.html",
+  "completed_editorial_review_date": "2026-10-04",
+  "requested_assignments": 7,
+  "actual_collection_posts": 10,
+  "execution": "Each post received an individual GPT-6.1 Sol xhigh assignment, dispatched in waves under the four-agent concurrency limit, plus integration review and independent clinical/legal and humanities reviews.",
+  "goal": "Rewrite every Inner Life post for accuracy, substance, appropriate length and the calibrated site voice, then apply the religious reading layout and verify publication.",
+  "prose_count_method": "Count decoded main content before the Sources section, including authored gallery cards once and excluding scripts, styles, SVG, noscript and navigation. Runtime explorer prose is reviewed separately in the meditation and cage audits and is not included in this uniform total.",
+  "article_words_before": 30698,
+  "article_words_after": 17252,
+  "article_reduction_percent": 43.8,
+  "posts": [
+    {
+      "slug": "meditation",
+      "title": "Meditation, Mapped",
+      "article_words_before": 2298,
+      "article_words_after": 1334,
+      "audit": "meditation.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Replaced the historical 2017 blood-pressure note with the 2025 AHA/ACC optional-adjunct guidance, with small and short-trial limits retained."
+      ]
+    },
+    {
+      "slug": "chemical-path",
+      "title": "The Chemical Path",
+      "article_words_before": 4062,
+      "article_words_after": 2422,
+      "audit": "chemical-path.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Independent review corrected the Hopkins denominator to 56 randomized and 51 receiving a session, and FDA terminology to blinded central raters."
+      ]
+    },
+    {
+      "slug": "william-james",
+      "title": "William James on Religious Experience",
+      "article_words_before": 3496,
+      "article_words_after": 1924,
+      "audit": "william-james.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": []
+    },
+    {
+      "slug": "fox",
+      "title": "Emmet Fox's Sermon on the Mount",
+      "article_words_before": 2827,
+      "article_words_after": 1542,
+      "audit": "fox.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Independent review removed a surviving sentence rebutting an AA/CBT lineage claim that the new prose no longer made."
+      ]
+    },
+    {
+      "slug": "perennial-philosophy",
+      "title": "The Perennial Philosophy",
+      "article_words_before": 2947,
+      "article_words_after": 2039,
+      "audit": "perennial-philosophy.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": []
+    },
+    {
+      "slug": "frankl",
+      "title": "Viktor Frankl and the Search for Meaning",
+      "article_words_before": 3116,
+      "article_words_after": 1337,
+      "audit": "frankl.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Independent review restored the stronger automatic-happiness claim from the 1984 postscript before assessing it, and removed the duplicated survival disclaimer in the hero."
+      ]
+    },
+    {
+      "slug": "modern-teachers",
+      "title": "The Modern Teachers",
+      "article_words_before": 2554,
+      "article_words_after": 1808,
+      "audit": "modern-teachers.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Shortened the main heading to The Modern Teachers so it fits the religious-post hero layout."
+      ]
+    },
+    {
+      "slug": "cults-the-cage",
+      "title": "When a Path Becomes a Cage",
+      "article_words_before": 2283,
+      "article_words_after": 1137,
+      "audit": "cults-the-cage.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "The Los Angeles church opening is dated specifically to 1954; this does not assert that the first incorporated Scientology church dates to 1954."
+      ]
+    },
+    {
+      "slug": "cults-business",
+      "title": "When a Path Becomes a Business",
+      "article_words_before": 4074,
+      "article_words_after": 2288,
+      "audit": "cults-business.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Removed remaining reviewer asides about an endless ladder and the Jesus-wealth joke after the individual handoff."
+      ]
+    },
+    {
+      "slug": "spirituality-of-imperfection",
+      "title": "The Spirituality of Imperfection",
+      "article_words_before": 3041,
+      "article_words_after": 1421,
+      "audit": "spirituality-of-imperfection.json",
+      "agent_model": "gpt-6.1-sol",
+      "agent_reasoning_effort": "xhigh",
+      "integration_notes": [
+        "Independent review removed unsupported comparisons in the bowl paragraph and the unprompted teacher-infallibility disclaimer."
+      ]
+    }
+  ],
+  "voice_work": [
+    "Concrete openings and facts before commentary",
+    "Removed slogans, generic motivational lessons, staged revelations, unnecessary contrasts, repeated conclusions and comparisons to claims the revised text no longer makes",
+    "Preserved actual differences between authors and traditions",
+    "Separated quotations, retellings and paraphrases",
+    "Five individual self-edit passes, including a justified cut from each complete first rewrite"
+  ],
+  "style_reference": {
+    "page": "tao-te-ching.html",
+    "shared_stylesheet": "inner-life-post.css",
+    "changes": [
+      "Large centered Century Supra titles with religious-post spacing and placement",
+      "Centered section headings, narrow reading measure, drop capitals and thin section rules",
+      "Responsive phone alternatives for dense diagrams and research figures",
+      "Readable print, no-JavaScript and failed-script content"
+    ]
+  },
+  "independent_reviews": [
+    "clinical-legal-review.json",
+    "humanities-review.json"
+  ],
+  "verification_limits": "Individual audits name the primary documents and passages actually read, and distinguish unavailable full texts, indexed excerpts, allegations, retrospective accounts and uncertain historical or scientific claims. No audit claims exhaustive access to every complete book.",
+  "validation": "validation.json",
+  "publication": "The repository publishes main through GitHub Pages. Completion requires committing the reviewed files, pushing main, and checking the live collection and article assets.",
+  "release_file_sha256": {
+    "chemical-path.html": "4293ef0fb50fcd441a591128976bc227726b6623e56635a98d9d83c5ad90c020",
+    "cults-business.html": "57d503568b6ddc282ba99719c72be115a624d56ee47fa4a6f1b125e72f310f42",
+    "cults-the-cage.html": "b22493dee23f8631b31b3bdc44c801386dc738b6b073d9ddcf5ea74760221967",
+    "fox.html": "3222e6cf3848b41cd41b1c393b43bae1cb2ba42f2d62d86e9845c45f40bfe98a",
+    "frankl.html": "589ca7b15d3bef4cdf65ab30ddda0271510bbc74f4d294dcbe64cd844a9e7a73",
+    "inner-life-post.css": "96ee0a8433ca6db0f8f5263664a71520be9d17b97e300d968ff4381faee3b23d",
+    "inner-life.html": "1cceb9eb36b4042df75d27072eddba97aa4a9c4a864bc98c5f42d34bcfb0012b",
+    "js/cults-data.js": "f502587db5ca67e8e035643f60db53aef20fda867216ade2d237c01857859151",
+    "js/cults.js": "d11ef5f686f5eaa2fac209a29eb9101b7a498fbf73b8fd96f86e129a37adef3c",
+    "js/fox.js": "746ead79fae3bfd0fc59c801e1a4a7780dcbe49e5dd69e4f53e3a1b25e61ace7",
+    "js/frankl.js": "938c4c21b3beba149896962d69cfc6fe82e0302c3720145925c2c28df61eb7ec",
+    "js/imperfection.js": "3fbbe9ea43411a283944f087d881916bbe3d96e2fe0562554a6e2fe13adf3084",
+    "js/meditation-data.js": "5d8758ab3e42403b9aad1bd69f4151d11b18f5863bf9ee2abfacf32797b89036",
+    "js/meditation.js": "9c13e0cdd8d00fcd597d23fb68c812ec01b18dd9a5e94af60da8b4e3cd2d988f",
+    "js/modern-teachers.js": "70f096840a1e0d9591b4b2d396e33c2171df0a783b987cb84a15eeb8d2637639",
+    "js/perennial-philosophy.js": "2b43befb93c725f2064a0bee18442826827c1d89539eeb598124b79ea35286bb",
+    "js/search.js": "bf008331e006be53956c5c8c2f219fe6dc79f82aec56e38d1b6980971e58160a",
+    "js/william-james.js": "38f962e70a4b8172e2ed9ea5b9ce587b118135a56be49e93e9ae88d47d5e9c77",
+    "meditation.html": "1fa2b2b1528ea0b07012e94c0815a1e364437a8c22b886d06ac5acfe633842da",
+    "modern-teachers.html": "54c7d774abcac5676d53823e91081d328a87cee941c9c34962fac92b2cf780e7",
+    "perennial-philosophy.html": "df3624a1d16fd78257101d6ebcbc7b121b93ea691b6aebfd4457b24aeeca709a",
+    "search-index.json": "3472b7c8ed7bb6657587f343b25853b06e575ba09dafd7e10c8f6049aa2f43bb",
+    "spirituality-of-imperfection.html": "26cf6f500eae184d5ade83fc1637adfcc8b234794a34e2f9c9073118b252dd3c",
+    "tools/build-search-index.mjs": "696ec84cd24509a27e558ff370d26023d9a247da0284e472b0e4c5c326f9ecde",
+    "tools/gen-hubs.mjs": "e4098d1363119ffbb8aba056c91f68200f726ea61a7fa307c1aaa5858ca5bdd7",
+    "tools/gen-post-nav.mjs": "19a0b3a7ecf9f9a822885dd41da31436b7e45029ced9439bad44191250d34f26",
+    "william-james.html": "8b1cb0ea5ff629f91ad3cfa379cfe8fce44dc525c33d57324d103da1c62be6e9"
+  },
+  "publication_integration": {
+    "published_parent": "5b57e0d98d8c6d140e0661d206b71e664916caef",
+    "method": "Applied the reviewed release onto current origin/main in a separate managed worktree, retaining both reader-note and explorer-note indexing and every other published search entry.",
+    "post_and_interaction_bytes_unchanged": true,
+    "merged_shared_files": [
+      "tools/gen-hubs.mjs",
+      "tools/build-search-index.mjs",
+      "search-index.json"
+    ],
+    "browser_views_rechecked": 30,
+    "scoped_generator_checks_repeated": true
+  }
+}

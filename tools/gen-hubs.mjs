@@ -8,7 +8,8 @@
    Also the source of truth for collection membership: tools/gen-post-nav.mjs
    imports HUBS/SHELF from here to stamp each member post's endcap nav, so
    importing this module must stay side-effect free (writes run only when the
-   file is executed directly, see the isMain guard at the bottom). */
+   file is executed directly, see the isMain guard at the bottom).
+   Use --hub=inner-life to generate one hub without changing the shelf or homepage. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -71,19 +72,19 @@ const HUBS = [
   {
     slug: 'inner-life', title: 'The Inner Life', inProgress: true,
     card: { thumb: 'meditation.jpg', alt: 'A Chola-period granite statue of the Buddha seated in meditation.',
-      desc: 'Meaning, the mind, and how to bear a life: Frankl, the spirituality of imperfection, and the truth about every kind of meditation.' },
-    lead: 'Meaning, the mind, and how to bear a life, laid out oldest first: the practices, the great consolations, the psychology of contentment, and the honest cases of a search gone wrong.',
+      desc: "Read James, Fox, Huxley, and Frankl alongside the evidence for meditation and psychedelics. Examine what spiritual teachers promise and how authority or money can distort the relationship." },
+    lead: "James studies religious experience; Frankl asks what makes life worth living. Alongside the books are readings on meditation, psychedelics, spiritual authority, and money, with the claims checked against their sources.",
     members: [
-      live('meditation.html', 'Meditation, Mapped', 'meditation.jpg', 'ancient', -500, "Every kind of meditation in one place, with the hype stripped off: what TM, mindfulness, Zen, and the rest actually are, what the evidence really shows they do and do not do, and how to actually begin, today."),
-      live('chemical-path.html', 'The Chemical Path', 'chemical-path.jpg', 'ancient + now', -499, "The oldest shortcut to the mystical experience is a drug, and science is rediscovering it. The old traditions, Huxley's Doors of Perception, the new psilocybin research, and the real risks, all in one place."),
-      live('fox.html', 'Emmet Fox', 'fox.jpg', '1934', 1934, "A 1934 reading of the Sermon on the Mount as practical mind-power, not a moral scolding: change your thinking and you change your life. The book early AA passed hand to hand before it had one of its own."),
-      live('frankl.html', 'Viktor Frankl', 'frankl.jpg', '1946', 1946, "A psychiatrist who came through the Nazi camps with one lesson: the men who held on were the ones who kept a reason to live. Meaning, not pleasure or power, is what we are really after, and it stays within reach even in suffering."),
-      live('cults-the-cage.html', 'When a Path Becomes a Cage', 'cults-the-cage.jpg', 'modern', 1978, "How a search for meaning hardens into a cult: first the thought-reform playbook, then the cases, from Scientology to Jonestown. A clearly labeled case study, not an endorsement."),
-      live('cults-business.html', 'When a Path Becomes a Business', 'cults-business.jpg', 'modern', 1979, "The other failure mode, spirituality with a price tag: est and Landmark, A Course in Miracles, the prosperity gospel, and the line where teaching ends and selling begins."),
-      live('spirituality-of-imperfection.html', 'The Spirituality of Imperfection', 'spirituality-of-imperfection.jpg', '1992', 1992, "A quiet modern classic stitched together from stories across every tradition. To be human is to be imperfect, and the cracks are where the spiritual life actually starts, not a flaw to fix first. The book that ties this whole shelf together."),
-      live('william-james.html', 'William James', 'william-james.jpg', '1902', 1902, "The 1902 book behind Alcoholics Anonymous. A scientist takes religious experience seriously as evidence, studying conversions and mystical states by what they actually do in a person's life, not by whether their creeds are true."),
-      live('perennial-philosophy.html', 'The Perennial Philosophy', 'perennial-philosophy.jpg', '1945', 1945, "Aldous Huxley's claim that underneath every religion lies one shared truth, assembled from the mystics of every tradition. Almost the secret thesis of this whole shelf, pressure-tested for where it overreaches."),
-      live('modern-teachers.html', 'The Modern Teachers: How the East Got Sold to the West', 'modern-teachers.jpg', '20th c.', 1965, "How the East got sold to the West in the twentieth century, by five charismatic teachers from Alan Watts to Eckhart Tolle, each keeping one big idea: you are it, be here now, wake up. Plus the honest problem of the guru who turns out to be a fraud, and how to keep the teaching without the teacher."),
+      live('meditation.html', 'Meditation, Mapped', 'meditation.jpg', 'ancient', -500, "Eleven practices, from mindfulness to dhikr, ask you to do different things. Compare their aims and health evidence, including the limits of the trials, then try a short attention exercise."),
+      live('chemical-path.html', 'The Chemical Path', 'chemical-path.jpg', 'ancient + now', -499, "Huxley took mescaline and saw ordinary objects differently. Follow his explanation alongside Indigenous traditions and modern clinical trials, where a meaningful experience and a lasting treatment benefit are separate questions."),
+      live('fox.html', 'Emmet Fox', 'fox.jpg', '1934', 1934, "Fox reads Jesus's teachings as instructions for changing thought. His book helped early AA members, but its promise that right thinking changes external events goes beyond the evidence for psychological treatment."),
+      live('frankl.html', 'Viktor Frankl', 'frankl.jpg', '1946', 1946, "Frankl remembers imagining his wife during forced labor. His account asks how meaning can sustain a person, without establishing why some prisoners survived and others were murdered."),
+      live('cults-the-cage.html', 'When a Path Becomes a Cage', 'cults-the-cage.jpg', 'modern', 1978, "A group's unusual beliefs tell you little about whether members can leave. Five cases examine threats, secrecy, control, and violence, separating court findings from allegations and competing accounts."),
+      live('cults-business.html', 'When a Path Becomes a Business', 'cults-business.jpg', 'modern', 1979, "A fee can support a teacher or fund a promise that never delivers. Examine Landmark, A Course in Miracles, prosperity preaching, wellness sales, and TM through their claims and financial arrangements."),
+      live('spirituality-of-imperfection.html', 'The Spirituality of Imperfection', 'spirituality-of-imperfection.jpg', '1992', 1992, "Ernest Kurtz and Katherine Ketcham draw on recovery and religious stories to explore admitting limits. Read their account of humility and fellowship, with attention to what the stories can and cannot establish."),
+      live('william-james.html', 'William James', 'william-james.jpg', '1902', 1902, "James collects accounts of conversion and mystical experience, then asks what they do in a life. Follow his judgments alongside the limits of his cases and his own belief in a spiritual reality."),
+      live('perennial-philosophy.html', 'The Perennial Philosophy', 'perennial-philosophy.jpg', '1945', 1945, "Huxley assembles a shared spiritual philosophy from selected mystics. Read five passages in context, where Buddhist accounts of self and Christian accounts of union complicate his claim of agreement."),
+      live('modern-teachers.html', 'The Modern Teachers', 'modern-teachers.jpg', '20th c.', 1965, "Watts, Ram Dass, Krishnamurti, Gurdjieff, and Tolle give different accounts of self and practice. Compare what each asks you to accept, and what a teacher's conduct can tell you about their authority."),
     ],
   },
   {
@@ -242,7 +243,7 @@ ${ordered(h.members).map(memberCard).join('\n')}
       <div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><span class="ftr-links"><a class="ftr-lucky" href="lucky.html">Feeling lucky? <span class="arr">&#8599;</span></a></span></div>
     </footer>
   </div>
-  <script src="js/search.js"></script>
+  <script src="js/search.js?v=20261003il"></script>
   <script>
   (function () { var root = document.querySelector('.home-search'); var input = root && root.querySelector('.hs-input'); if (!input) return; input.addEventListener('focus', function () { root.classList.add('is-open'); }); input.addEventListener('blur', function () { setTimeout(function () { if (!input.value && !root.contains(document.activeElement)) root.classList.remove('is-open'); }, 160); }); })();
   </script>
@@ -351,22 +352,28 @@ const REMOVE = new Set([
    never as an import side effect (gen-post-nav.mjs imports the data above). --- */
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
-  HUBS.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + liveCount(h) + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
-  writeFileSync(join(ROOT, SHELF.path + '.html'), shelfPage());
-  console.log('wrote', SHELF.path + '.html', '(' + shelfCount + ' posts in ' + shelfHubs.length + ' collections + ' + SHELF.singles.length + ' single)');
+  const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
+  const selectedHub = hubArg && HUBS.find((h) => h.slug === hubArg.slice(6));
+  if (hubArg && !selectedHub) throw new Error(`Unknown hub: ${hubArg.slice(6)}`);
+  const targets = selectedHub ? [selectedHub] : HUBS;
+  targets.forEach((h) => { writeFileSync(join(ROOT, h.slug + '.html'), hubPage(h)); console.log('wrote', h.slug + '.html', '(' + liveCount(h) + ' live, ' + h.members.filter((m) => m.soon).length + ' soon)'); });
+  if (!selectedHub) {
+    writeFileSync(join(ROOT, SHELF.path + '.html'), shelfPage());
+    console.log('wrote', SHELF.path + '.html', '(' + shelfCount + ' posts in ' + shelfHubs.length + ' collections + ' + SHELF.singles.length + ' single)');
 
-  let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
-  const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
-  let removed = 0;
-  const keptLis = allLis.filter((li) => {
-    const href = (li.match(/href="([^"]+)"/) || [])[1];
-    if (href && REMOVE.has(href)) { removed++; return false; }
-    return true;
-  });
-  const newList = keptLis.join('\n');
-  idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
-  writeFileSync(join(ROOT, 'index.html'), idx);
-  console.log('homepage: removed ' + removed + ' collection post/old-hub cards, kept ' + keptLis.length + ' (collection is a header link, no card)');
+    let idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
+    const allLis = idx.match(/<li class="article-list-item[\s\S]*?<\/li>/g) || [];
+    let removed = 0;
+    const keptLis = allLis.filter((li) => {
+      const href = (li.match(/href="([^"]+)"/) || [])[1];
+      if (href && REMOVE.has(href)) { removed++; return false; }
+      return true;
+    });
+    const newList = keptLis.join('\n');
+    idx = idx.replace(/<ul class="article-list">[\s\S]*?<\/ul>/, '<ul class="article-list">\n' + newList + '\n      </ul>');
+    writeFileSync(join(ROOT, 'index.html'), idx);
+    console.log('homepage: removed ' + removed + ' collection post/old-hub cards, kept ' + keptLis.length + ' (collection is a header link, no card)');
+  }
 }
 
 export { HUBS, SHELF, ordered, liveCount };

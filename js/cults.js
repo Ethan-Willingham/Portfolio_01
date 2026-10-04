@@ -1,6 +1,6 @@
 /* ============================================================
    cults.js
-   Self-contained behavior for the "How a Path Becomes a Cage"
+   Self-contained behavior for the "When a Path Becomes a Cage"
    case study. Two independent, guarded pieces:
      1. scroll-reveal + figure draw-in animations
      2. the case explorer (cards + compare table)
@@ -29,9 +29,10 @@
   })();
 
   /* ---------- 2. THE CASE EXPLORER ---------- */
-  (function () {
+  (function initExplorer() {
     var mount = $('explorer');
-    if (!mount || !window.CULTS) { if (mount) setTimeout(arguments.callee, 60); return; }
+    if (!mount) return;
+    if (!window.CULTS) { setTimeout(initExplorer, 60); return; }
     var FAMS = window.CULTS.fams, ORDER = window.CULTS.order, C = window.CULTS.cases;
     var cur = ORDER[0], view = 'card';
 
@@ -40,7 +41,7 @@
     function chips() {
       return ORDER.map(function (id) {
         var t = C[id], c = FAMS[t.fam].color;
-        return '<button class="mx-chip' + (id === cur ? ' is-cur' : '') + '" data-id="' + id + '" style="--fam:' + c + '">' + esc(t.name) + '</button>';
+        return '<button type="button" class="mx-chip' + (id === cur ? ' is-cur' : '') + '" aria-pressed="' + (id === cur) + '" data-id="' + id + '" style="--fam:' + c + '">' + esc(t.name) + '</button>';
       }).join('');
     }
 
@@ -53,14 +54,14 @@
       h += '<h3 class="mx-name">' + esc(t.name) + '</h3>';
       if (t.also) h += '<p class="mx-also">' + esc(t.also) + '</p>';
       h += '<p class="mx-one">' + t.one + '</p>';
-      h += row('What it promised', '<p class="mx-v">' + t.promise + '</p>');
-      h += row('The leader', '<p class="mx-v">' + t.leader + '</p>');
-      h += row('How the cage closed', '<p class="mx-v">' + t.caged + '</p>');
-      h += row('The cost of leaving', '<p class="mx-v">' + t.cost + '</p>');
-      h += row('How it ended', '<p class="mx-v">' + t.end + '</p>');
+      h += row('The offer', '<p class="mx-v">' + t.promise + '</p>');
+      h += row('Authority', '<p class="mx-v">' + t.leader + '</p>');
+      h += row('Restrictions and abuse', '<p class="mx-v">' + t.caged + '</p>');
+      h += row('Leaving and dissent', '<p class="mx-v">' + t.cost + '</p>');
+      h += row('The outcome', '<p class="mx-v">' + t.end + '</p>');
       h += '<div class="mx-nav">' +
-        '<button class="mx-navb" id="mx-prev"' + (idx === 0 ? ' disabled' : '') + '>&lsaquo; ' + (idx > 0 ? esc(C[ORDER[idx - 1]].name) : '') + '</button>' +
-        '<button class="mx-navb" id="mx-next"' + (idx === ORDER.length - 1 ? ' disabled' : '') + '>' + (idx < ORDER.length - 1 ? esc(C[ORDER[idx + 1]].name) : '') + ' &rsaquo;</button>' +
+        '<button type="button" class="mx-navb" id="mx-prev"' + (idx === 0 ? ' disabled' : '') + '>&lsaquo; ' + (idx > 0 ? esc(C[ORDER[idx - 1]].name) : '') + '</button>' +
+        '<button type="button" class="mx-navb" id="mx-next"' + (idx === ORDER.length - 1 ? ' disabled' : '') + '>' + (idx < ORDER.length - 1 ? esc(C[ORDER[idx + 1]].name) : '') + ' &rsaquo;</button>' +
         '</div>';
       h += '</div>';
       return h;
@@ -70,21 +71,23 @@
       var rows = ORDER.map(function (id) {
         var t = C[id], fam = FAMS[t.fam];
         return '<tr>' +
-          '<td class="t-name"><b data-id="' + id + '"><span class="fam-dot" style="background:' + fam.color + '"></span>' + esc(t.name) + '</b></td>' +
+          '<td class="t-name"><button type="button" class="mx-table-link" data-id="' + id + '"><span class="fam-dot" style="background:' + fam.color + '"></span>' + esc(t.name) + '</button></td>' +
           '<td>' + esc(t.founded) + '</td>' +
           '<td>' + esc(t.began) + '</td>' +
           '<td>' + esc(t.endshort) + '</td>' +
           '</tr>';
       }).join('');
-      return '<div class="mx-tablewrap"><table class="mx-table"><thead><tr>' +
-        '<th>Group</th><th>Founded</th><th>Began as</th><th>How it ended</th>' +
+      return '<div class="mx-tablewrap"><table class="mx-table" aria-label="Overview of the five cases"><thead><tr>' +
+        '<th scope="col">Group</th><th scope="col">Period examined</th><th scope="col">Offered</th><th scope="col">Outcome</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
 
     function render() {
       $('mx-count').innerHTML = '<b>' + ORDER.length + '</b> cases';
       document.querySelectorAll('#mx-views button').forEach(function (b) {
-        b.classList.toggle('is-on', b.getAttribute('data-view') === view);
+        var selected = b.getAttribute('data-view') === view;
+        b.classList.toggle('is-on', selected);
+        b.setAttribute('aria-pressed', String(selected));
       });
       var chipWrap = $('mx-chips'), cardWrap = $('mx-card'), tableWrap = $('mx-table');
       chipWrap.hidden = (view === 'table');
@@ -111,7 +114,7 @@
       if (n) n.onclick = function () { if (i < ORDER.length - 1) go(ORDER[i + 1]); };
     }
     function wireTable() {
-      document.querySelectorAll('#mx-table b[data-id]').forEach(function (b) {
+      document.querySelectorAll('#mx-table .mx-table-link[data-id]').forEach(function (b) {
         b.onclick = function () { go(b.getAttribute('data-id')); };
       });
     }

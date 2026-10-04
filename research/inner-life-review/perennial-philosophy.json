@@ -1,0 +1,285 @@
+{
+  "post": "perennial-philosophy.html",
+  "review_date": "2026-10-03",
+  "title": "The Perennial Philosophy",
+  "status": "Editorial and source review complete; final shared-style browser check belongs to the root agent.",
+  "word_count_method": "Unicode word tokens matching \\b\\w+(?:[’'-]\\w+)*\\b in authored main text after HTML parsing, with spaces between text nodes. Gallery source cards counted once. Main count includes headings, controls, source captions, and the Sources section. Article count excludes only the Sources section. Hero, metadata, navigation, footer, scripts, and CSS excluded. Baseline is the task-start snapshot, not HEAD, which contains unrelated changes.",
+  "before_word_counts": {
+    "main_including_source_notes": 3564,
+    "article_excluding_source_notes": 2947
+  },
+  "first_revision_word_counts": {
+    "main_including_source_notes": 2884,
+    "article_excluding_source_notes": 2587
+  },
+  "handoff_draft_word_counts": {
+    "main_including_source_notes": 2588,
+    "article_excluding_source_notes": 2280
+  },
+  "after_word_counts": {
+    "main_including_source_notes": 2347,
+    "article_excluding_source_notes": 2039
+  },
+  "reduction_percent": {
+    "main_from_baseline": 34.15,
+    "article_from_baseline": 30.81,
+    "main_from_full_rewrite": 18.62,
+    "article_from_full_rewrite": 21.18
+  },
+  "review_judgments": {
+    "ideas": "The post now follows Huxley's own metaphysical and practical claims, then examines five passages instead of treating a pile of quotations as independent evidence. It distinguishes practical resemblance, shared experience, and shared reality. The modern dispute is an argument about how experience is shaped and assessed, not a vote won by the academy.",
+    "accuracy": "The central factual corrections are Steuco's earlier title, Huxley's allowance of likeness as well as identity, his explicit Christian grace distinction, and the different claims made by early Buddhist not-self, the Lankavatara, and John of the Cross. Textual locations replaced loose attribution through Huxley alone.",
+    "prose": "Removed the grain of rice, equals signs, doors opening from inside, common floor, shared country, mountain summit, net, and backyard metaphors. Removed the secret thesis of the entire series, emotional endorsement, seminar-room verdict, and repeated announced takeaways. The source passages provide the concrete material.",
+    "length": "Reduced article text from 2947 to 2039 words, while adding source context and defenses absent from the original. The 12-minute label corresponds to about 2347 main-text words, including citations. Repetition and unsupported framing supplied the cut; the technical dispute retains enough detail to be intelligible.",
+    "fairness": "Huxley's practical method is steelmanned through trained perception and conduct. The Christian card now notes that Huxley himself denies the necessity of identity of substance. Katz's universal premise is challenged in turn. Schuon is assessed on intellectual intuition rather than falsely reduced to identical experience at a mystical summit.",
+    "confidence": "Publication dates and quoted textual distinctions are definite where checked. Philosophical readings are attributed to their authors. Possible shared states, causal explanations, and divine reality remain proposals, not empirical findings."
+  },
+  "major_corrections": [
+    {
+      "topic": "Independent discovery",
+      "before": "The original repeatedly claimed no contact, no copying, and independently reached identical conclusions.",
+      "correction": "Removed these claims. Huxley's own chapter 1 acknowledges Daoist and Mahayana contact. Shared ancestry, translation, and anthology selection are alternative explanations that need checking.",
+      "location": "The Perennial Philosophy, chapter 1; linked PDF page 11."
+    },
+    {
+      "topic": "Origin of the phrase",
+      "before": "The original repeated Huxley's claim that Leibniz coined the phrase.",
+      "correction": "Steuco's De perenni philosophia appeared in Lyon in 1540. The post makes Huxley's mistaken credit visible without claiming to prove the phrase's absolute first occurrence.",
+      "location": "USTC 157320; independently corroborated by the Google Books catalog of the Rome library copy."
+    },
+    {
+      "topic": "Four doctrines",
+      "before": "Your real self already is it and one equals sign across every tradition overstated Huxley's own formulation.",
+      "correction": "Located the enumeration in his 1944 Gita introduction. Kept the eternal Self and purpose-of-life claims, while allowing same or similar nature and attributing the metaphysics to Huxley.",
+      "location": "Huxley's Gita introduction, four doctrines and the following account of orthodox Christianity."
+    },
+    {
+      "topic": "Huxley's Christian concession",
+      "before": "The handoff draft risked presenting the creature/God distinction as something Huxley simply failed to acknowledge.",
+      "correction": "His Gita introduction explicitly describes Christian union through grace without identity of substances. The John card now states that concession and asks how different relationships count as one knowledge.",
+      "location": "Gita introduction, paragraph beginning The third doctrine and its following paragraph."
+    },
+    {
+      "topic": "Early Buddhist not-self",
+      "before": "The original assimilated Buddhist release from I and mine to the realization of a divine Self.",
+      "correction": "SN 22.59 examines form, feeling, perception, choices, and consciousness. It does not replace them with a divine Self. The post neither infers Atman nor claims people vanish from ordinary life.",
+      "location": "SN 22.59, paragraphs 2 to 12."
+    },
+    {
+      "topic": "Buddha-nature",
+      "before": "The original selected Universal Mind/Buddha-womb language without the sutra's express objection to eternal ego-substance.",
+      "correction": "Added Mahamati's question and the Buddha's negative answer, emptiness, egolessness, and the reason for reassuring language.",
+      "location": "Lankavatara Sutra, chapter 2, XXVIII, Suzuki pp. 78 to 79."
+    },
+    {
+      "topic": "Christian union",
+      "before": "The original grouped several Christian quotations under literal identity with God.",
+      "correction": "John distinguishes God's sustaining presence from transformation through love. The illuminated window retains a nature distinct from sunlight. This is one located Christian account, not an assertion about all Christian mystics.",
+      "location": "Ascent of Mount Carmel 2.5, paragraphs 2 to 3 and 6 to 7."
+    },
+    {
+      "topic": "Rumi",
+      "before": "An isolated shortened couplet appeared as evidence that five traditions describe one place.",
+      "correction": "Named the current translator and line. Restored the opening poem's greed, longing, dependence, and Moses/Sinai context. No conclusion about all of Rumi follows from one couplet.",
+      "location": "Masnavi I.19 to 34, especially 26, 30, and 31."
+    },
+    {
+      "topic": "Ego and conduct",
+      "before": "The original claimed almost all cruel or foolish conduct has a single ego root.",
+      "correction": "Removed the universal causal claim. Huxley's criticism of harmful self-denial is included. Ordinary self-protection, coercion, ignorance, and conflicting obligations prevent an all-purpose ego explanation.",
+      "location": "The Perennial Philosophy, chapters 5 and 6; especially PDF pages 82 to 83."
+    },
+    {
+      "topic": "The academic dispute",
+      "before": "The original said Katz supplied the view the academy mostly settled on, then largely dismissed it as thin in the seminar room.",
+      "correction": "No unsupported consensus claim remains. Katz shapes experience as well as retrospective report; Stace distinguishes two types; Forman argues for contentless wakeful consciousness; Schuon appeals to certain intellectual intuition. Their claims are not interchangeable.",
+      "location": "Katz pp. 26 to 27 and 54 to 55; Stace chapter 2; Forman pp. 361 to 365; Schuon's Casey interview."
+    },
+    {
+      "topic": "Metaphysics and evidence",
+      "before": "The original repeatedly treated resemblance as the entire case and endorsed an unresolved suspicion emotionally.",
+      "correction": "Gave the cumulative argument its strongest form, distinguished experience/meaning/reality, and ended on the difficulty of identifying wakeful contentless awareness from a remembered interval. This is philosophical assessment, not a claim of scientific disproof.",
+      "location": "Sections What would count and The dispute."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Reviewed every paragraph as flat prose. Removed claims whose effect depended on the shared-floor, country, mountain, and door language. The salt lesson, not-self analysis, illuminated window, and Moses passage retain their information without dramatic delivery."
+    },
+    {
+      "pass": 2,
+      "name": "Delete the first paragraph",
+      "result": "Tested deletion of the opening paragraph. It would make publication history the opening and lose the immediate contrast between eternal Self, Buddhist release from self-identification, and Christian/Sufi union. Retained the source-specific opener."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence pass",
+      "result": "Replaced ceremonial warnings and repeated proof disclaimers with the actual distinctions. Cut vague conclusions about what readers feel, what all traditions say, the academy's preference, and the whole series' secret thesis. Defined ineffable at first use. The John card gained Huxley's actual concession instead of a generic criticism."
+    },
+    {
+      "pass": 4,
+      "name": "Cut 10 percent",
+      "result": "First complete rewrite: 2884 main words and 2587 article words. Final: 2347 main and 2039 article words, cuts of 18.62 percent and 21.18 percent respectively. The follow-through cut repeated cautions, duplicated practice explanation, and recap sentences while adding the Christian concession."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Checked each short quotation in the named source copy, all five passage locations, Huxley's introduction and practice chapters, and the four modern positions. Checked the USTC embedded record and a corroborating library catalog. Framed unproven unity, common states, and contentless awareness as claims. Counterarguments work in both directions."
+    }
+  ],
+  "checked_urls": [
+    {
+      "url": "https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf",
+      "support": "Primary book text in the existing downloaded PDF and extracted text: introduction, chapter 1, charity, and self-denial/right livelihood. Exact Knowledge sentence at PDF page 3; Leibniz attribution at page 2; borrowing paragraph at page 11.",
+      "limit": "Modern digital edition contains later supplementary material. PDF page anchors are physical pages in this file, not original print pagination. Huxley's claims about universality are evidence of his position, not independent proof."
+    },
+    {
+      "url": "https://psypolitics.org/2022/01/04/huxleys-introduction-to-the-bhagavad-gita-2022/",
+      "support": "Transcribes Huxley's 1944 introduction, including four doctrines, same-or-like nature, and the Christian union/grace distinction.",
+      "limit": "Third-party transcription of primary text with editorial emphasis and links. The surrounding blog commentary is not used."
+    },
+    {
+      "url": "https://www.ustc.ac.uk/editions/157320",
+      "support": "Directly fetched HTML; decoded embedded edition record names Steuco, title, Lyon, and 1540.",
+      "limit": "Catalog supports this publication, not an absolute first use of the phrase. Web tool returned an error, but direct HTTP fetch succeeded."
+    },
+    {
+      "url": "https://books.google.com/books?hl=en&id=LYyfsDlH2tcC",
+      "support": "Independent catalog of the National Central Library of Rome copy: Steuco, Gryphius, 1540.",
+      "limit": "Corroborates title/year; detailed history of the phrase is not inferred."
+    },
+    {
+      "url": "https://sacred-texts.com/hin/sbe01/sbe01131.htm",
+      "support": "Max Müller's Chandogya 6.13: salt lesson and exact Self/Svetaketu sentence.",
+      "limit": "Historic translation and commentary do not exhaust Vedanta interpretations."
+    },
+    {
+      "url": "https://sacred-texts.com/hin/sbe01/sbe01126.htm",
+      "support": "Chandogya 6.8: sleep, roots of living things, and repeated teaching at 6.8.7.",
+      "limit": "Used to establish scope and location, not to endorse the ancient account as physics."
+    },
+    {
+      "url": "https://suttacentral.net/sn22.59/en/sujato",
+      "support": "Sujato's translation and stable discourse location.",
+      "limit": "Rendered page is mostly a JavaScript shell in the web tool, so actual wording checked in the published translation source below."
+    },
+    {
+      "url": "https://github.com/suttacentral/bilara-data/blob/published/translation/en/sujato/sutta/sn/sn22/sn22.59_translation-en-sujato.json",
+      "support": "Existing downloaded published JSON gives five aggregates, exact quotation at 7.1 and 10.1, and liberation at 11 to 12.",
+      "limit": "Only this discourse is summarized. Broader disputes over no-self and conventional personhood are not declared settled."
+    },
+    {
+      "url": "https://siteofenlightenment.org/Tripitaka/Books/T16n0670/The%20Lankavatara%20Sutra%20(Suzuki)/lanka-chapter-2.htm",
+      "support": "Suzuki chapter 2 XXVIII contains Mahamati's question, the exact fragment, emptiness/egolessness explanation, and warning against clinging to a soul.",
+      "limit": "Historic translation. Buddha-nature has a large contested history; this textual objection does not alone settle every Buddhist school."
+    },
+    {
+      "url": "https://ccel.org/ccel/john_cross/ascent.all.html",
+      "support": "Direct fetch of complete CCEL text confirms book 2 chapter 5, exact fragment, natural union, union of likeness through love, and window distinction. Preface identifies a scan of the 1962 Image Books edition.",
+      "limit": "Web open failed but direct fetch succeeded. Paragraph/chapter references are reliable; omitted manuscript-variant notes are not used."
+    },
+    {
+      "url": "https://www.dar-al-masnavi.org/n-I-0019.html",
+      "support": "Gamard's English and Persian transliteration for I.19 to 34; exact quotation at 30, Moses at 26, wingless bird at 31.",
+      "limit": "Modern copyrighted translation quoted briefly. Notes sometimes offer possibilities rather than certainties; the post does not promote them into facts."
+    },
+    {
+      "url": "https://de.scribd.com/document/94115021/Katz-Language-Epistemology-and-Mysticism-pp-22-74",
+      "support": "Primary essay scan/transcription: no unmediated experience and shaping during experience at pp. 26 to 27; ineffability/comparison argument at pp. 54 to 55.",
+      "limit": "OCR errors and Scribd presentation. No long or uncertain quotation reproduced."
+    },
+    {
+      "url": "https://www.scribd.com/doc/70165808/W-T-Stace-Mysticism-and-Philosophy-Whole-Book",
+      "support": "Primary book scan/transcription, chapter 2: outward multiplicity perceived as one versus inward elimination of thoughts/sensations; common-feature argument.",
+      "limit": "OCR errors. His typology and claimed universality are attributed proposals, not established facts."
+    },
+    {
+      "url": "https://ruccs.rutgers.edu/faculty/pylyshyn/TreismanReadings/11-Forman.pdf",
+      "support": "Primary PDF visually checked at pp. 361 to 362: pure consciousness event described as wakeful but contentless. Existing page 365 image supports the wider discussion.",
+      "limit": "Scan has no usable extracted text. Self-reports and author's theory do not uniquely establish contentless consciousness or a divine source."
+    },
+    {
+      "url": "https://en.fschuon.info/?page_id=1347",
+      "support": "Directly fetched official author-site interview with Casey; opening questions place unity in metaphysical meaning and intellectual intuition claimed infallible. Search result also returned the primary text.",
+      "limit": "A statement of Schuon's view, not proof of intuition's certainty. The interview is used instead of pretending to have checked every argument in his book."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:Aldous_Huxley_1947.png",
+      "support": "Existing portrait source: LIFE, The Huxley Brothers, 24 March 1947; Commons identifies US public-domain status from nonrenewal.",
+      "limit": "Existing crop and assets retained. Caption states US jurisdiction; no universal licensing conclusion is added."
+    }
+  ],
+  "exact_quotes": [
+    {
+      "text": "Knowledge is a function of being.",
+      "source": "Huxley, The Perennial Philosophy",
+      "location": "Introduction; linked PDF physical page 3",
+      "words": 6,
+      "check": "Exact sentence including full stop."
+    },
+    {
+      "text": "It is the Self, and thou, O Svetaketu, art it.",
+      "source": "F. Max Müller, The Upanishads, Part I (1879)",
+      "location": "Chandogya 6.13.3, p. 105; repeated at 6.8.7, p. 101",
+      "words": 10,
+      "check": "Exact sentence fragment from the numbered verse. The separate three-word conventional rendering that art thou is labeled often rendered."
+    },
+    {
+      "text": "This is not mine, I am not this, this is not my self.",
+      "source": "Bhikkhu Sujato, SN 22.59",
+      "location": "Published Bilara segments sn22.59:7.1 and sn22.59:10.1",
+      "words": 13,
+      "check": "Exact internal quoted instruction. The intervening feeling/perception/choices passages are abbreviated with ellipses in this translation."
+    },
+    {
+      "text": "my Tathāgata-garbha is not the same as the ego taught by the philosophers",
+      "source": "D. T. Suzuki, The Lankavatara Sutra (1932)",
+      "location": "Chapter 2 XXVIII, p. 78, first sentence of the Buddha's answer",
+      "words": 13,
+      "check": "Exact fragment with source lowercase my; no full-sentence punctuation invented."
+    },
+    {
+      "text": "it is transformed in God through love.",
+      "source": "E. Allison Peers, The Ascent of Mount Carmel, linked 1962 edition",
+      "location": "Book 2, chapter 5, paragraph 3; CCEL id v.v-p4",
+      "words": 7,
+      "check": "Exact ending fragment with lowercase it and full stop."
+    },
+    {
+      "text": "The Beloved is All, and the lover (is merely) a veil; the Beloved is Living, and the lover (is merely) a corpse.",
+      "source": "Ibrahim Gamard (2000), Masnavi",
+      "location": "Book 1, line 30",
+      "words": 22,
+      "check": "Exact English text with original parentheticals, capitalization, semicolon, and full stop."
+    }
+  ],
+  "quotation_policy": "One brief excerpt per quoted author, 6 to 22 words each. No modern long quotation, invented translation, stitched quotation, silent wording modernization, or source-language ornament added. Explanations are explicitly marked as paraphrases. Primary verse/paragraph locations and translators are visible beside each excerpt.",
+  "interaction_changes": {
+    "data": "Gallery now reads five authored passage cards instead of three broad sameness claims. HTML remains the single source for interactive, print, and fallback copies.",
+    "accessibility": "Keyboard handlers belong to the gallery; ArrowLeft, ArrowRight, Home, End select cards and move focus when originating on a tab. Tabs use selected state and roving tabindex. Panel is labeled by its selected tab.",
+    "fallback": "Authored cards remain visible until initialization and first render complete; no-JS, blocked script, and print use those same cards.",
+    "cache_version": "js/perennial-philosophy.js?v=20261003a, bumped by the initial rewrite and retained in follow-through."
+  },
+  "verification": {
+    "node_check": "Passed: node --check js/perennial-philosophy.js.",
+    "diff_check": "Passed: git diff --check -- perennial-philosophy.html js/perennial-philosophy.js.",
+    "title_triplet": "Passed: title, og:title, and h1 identical.",
+    "unique_ids_and_local_paths": "Passed: no duplicate ids; all local href/src/srcset targets present.",
+    "mechanical_voice": "Passed on both owned source files: no em/en dashes or encoded dash forms, emoji ranges, or hard empty-writing phrases.",
+    "browser_prior_to_followthrough": "Existing browser-results.json reports passed: five tabs, scoped arrows/Home/End and focus, button endpoints, print, no-JS, blocked-script fallback, 375px/no-overflow/20px gutter, and 44px touch targets. The harness launches agent-chrome-for-testing and closes that browser plus server in finally.",
+    "browser_after_shared_style": "Root agent will run final browser checks after shared styling. This audit does not misreport the previous run as a test of future shared CSS.",
+    "scope": "Only perennial-philosophy.html and this audit edited in follow-through; original rewrite already changed js/perennial-philosophy.js. Research working copies added under the owned perennial-sources folder. No shared CSS, hub, navigation, search, sitemap, staging, commit, push, or reset performed."
+  },
+  "remaining_uncertainties": [
+    "The first occurrences and later history of philosophia perennis are not fully reconstructed; the secure correction is a 1540 Steuco title predating Leibniz.",
+    "Huxley's metaphysical unity, Katz's universal mediation premise, and Schuon's certain intuition cannot be settled by five passages. The post identifies their different burdens rather than announcing a verdict from science.",
+    "Whether a remembered contemplative interval was wakefully contentless remains an evidential question. The post does not treat sincerity as sufficient verification.",
+    "The excerpt set is selective, does not represent all schools, and cannot establish how much every religion agrees.",
+    "Historical translations and OCR source copies have limits; disputed points are checked in contextual passages, with no uncertain long quotation reproduced.",
+    "Final visuals depend on the root agent's shared stylesheet and browser pass."
+  ],
+  "suggested_hub_description": "Huxley argues that mystics know one divine reality. Five passages test the comparison, from the Upanishads to Buddhist not-self, Christian union, and Rumi's love.",
+  "completed_date": "2026-10-04"
+}

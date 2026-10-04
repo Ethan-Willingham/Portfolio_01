@@ -4,6 +4,7 @@
    link points at the collection it lives in instead of Home, so a reader who
    finishes a post is never left at a dead end and never loses their place in
    the tree. The single shelf post gets a shelf-flavoured endcap.
+   Use --hub=inner-life to stamp only one collection's members.
 
    Data comes from tools/gen-hubs.mjs (the one source of truth for collection
    membership and order). Idempotent: re-run any time; existing endcaps are
@@ -97,7 +98,10 @@ function stamp(file, endcap, backHref, backLabel, inProgress) {
 }
 
 const report = [];
-for (const h of HUBS) {
+const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
+const selectedHub = hubArg && HUBS.find((h) => h.slug === hubArg.slice(6));
+if (hubArg && !selectedHub) throw new Error(`Unknown hub: ${hubArg.slice(6)}`);
+for (const h of selectedHub ? [selectedHub] : HUBS) {
   const members = ordered(h.members).filter((m) => !m.soon);
   const hubHref = `${h.slug}.html`;
   members.forEach((m, i) => {
@@ -114,7 +118,7 @@ for (const h of HUBS) {
   });
 }
 
-for (const p of SHELF.singles) {
+for (const p of selectedHub ? [] : SHELF.singles) {
   const endcap = endcapHTML(
     'More in Longform',
     `${SHELF.path}.html`, SHELF.title,
@@ -124,6 +128,6 @@ for (const p of SHELF.singles) {
 }
 
 const bad = report.filter((r) => !r.startsWith('ok'));
-const banners = HUBS.filter((h) => h.inProgress).reduce((n, h) => n + h.members.filter((m) => !m.soon).length, 0);
+const banners = (selectedHub ? [selectedHub] : HUBS).filter((h) => h.inProgress).reduce((n, h) => n + h.members.filter((m) => !m.soon).length, 0);
 console.log(`gen-post-nav: stamped ${report.length - bad.length}/${report.length} posts, ${banners} carrying the in-progress banner`);
 for (const r of report) if (!r.startsWith('ok') || r.includes('(')) console.log('  ' + r);

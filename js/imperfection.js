@@ -1,106 +1,119 @@
-/* The Spirituality of Imperfection: the cross-tradition story gallery.
-   Reads the authored .tale cards in the page, builds a one-at-a-time
-   gallery with tradition chips, arrow buttons, and keyboard support.
-   No dependencies. Without JS the .tale cards read as a plain list. */
+/* The Spirituality of Imperfection: sourced stories and passages.
+   Source cards remain readable until the gallery has rendered successfully.
+   Keyboard navigation belongs to the story tabs, not the rest of the page. */
 (function () {
   'use strict';
 
-  // ---- gentle reveal-on-scroll (runs first, so a later error can never
-  //      leave a .reveal element stuck at opacity 0) ----
   var reveals = [].slice.call(document.querySelectorAll('.reveal'));
   if (reveals.length) {
     if ('IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
         });
       }, { rootMargin: '0px 0px -10% 0px' });
-      reveals.forEach(function (el) { io.observe(el); });
+      reveals.forEach(function (element) { io.observe(element); });
     } else {
-      reveals.forEach(function (el) { el.classList.add('in'); });
+      reveals.forEach(function (element) { element.classList.add('in'); });
     }
   }
 
-  // ---- the gallery ----
   var wrap = document.querySelector('.gal-wrap');
   var source = document.getElementById('tales-data');
-  if (!wrap || !source) return;
+  var frame = document.getElementById('gal-frame');
+  var tabsBox = document.getElementById('gal-chips');
+  var position = document.getElementById('gal-pos');
+  var previous = document.getElementById('gal-prev');
+  var next = document.getElementById('gal-next');
+  if (!wrap || !source || !frame || !tabsBox || !position || !previous || !next) return;
 
-  function html(el, sel) {
-    var node = el.querySelector(sel);
+  function content(element, selector) {
+    var node = element.querySelector(selector);
     return node ? node.innerHTML : '';
   }
 
-  var tales = [].slice.call(source.querySelectorAll('.tale')).map(function (el) {
+  var stories = [].slice.call(source.querySelectorAll('.tale')).map(function (element) {
+    var heading = element.querySelector('.tale-h');
     return {
-      tradition: el.getAttribute('data-tradition') || '',
-      place: el.getAttribute('data-place') || '',
-      ta: el.style.getPropertyValue('--ta') || 'var(--accent)',
-      title: html(el, '.tale-h'),
-      body: html(el, '.tale-body'),
-      lesson: html(el, '.tale-lesson'),
-      src: html(el, '.tale-src')
+      name: element.getAttribute('data-tradition') || '',
+      label: heading ? heading.textContent : '',
+      place: element.getAttribute('data-place') || '',
+      accent: element.style.getPropertyValue('--ta') || 'var(--accent)',
+      kicker: content(element, '.tale-k'),
+      title: content(element, '.tale-h'),
+      body: content(element, '.tale-body'),
+      comment: content(element, '.tale-lesson'),
+      citation: content(element, '.tale-src')
     };
   });
-  if (!tales.length) return;
+  if (!stories.length) return;
 
-  var frame = document.getElementById('gal-frame');
-  var chipsBox = document.getElementById('gal-chips');
-  var pos = document.getElementById('gal-pos');
-  var prev = document.getElementById('gal-prev');
-  var next = document.getElementById('gal-next');
-  var cur = 0;
+  var current = 0;
+  frame.setAttribute('role', 'tabpanel');
+  frame.tabIndex = 0;
 
-  var chips = tales.map(function (t, i) {
-    var b = document.createElement('button');
-    b.className = 'gal-chip';
-    b.type = 'button';
-    b.setAttribute('role', 'tab');
-    b.style.setProperty('--ta', t.ta);
-    b.innerHTML = '<span class="dot" aria-hidden="true"></span>' + t.tradition;
-    b.addEventListener('click', function () { go(i); });
-    chipsBox.appendChild(b);
-    return b;
+  var tabs = stories.map(function (story, index) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'gal-chip';
+    button.id = 'imperfection-tab-' + (index + 1);
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-label', story.label);
+    button.setAttribute('aria-controls', frame.id);
+    button.style.setProperty('--ta', story.accent);
+    var dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.setAttribute('aria-hidden', 'true');
+    button.appendChild(dot);
+    button.appendChild(document.createTextNode(story.name));
+    button.addEventListener('click', function () { select(index); });
+    tabsBox.appendChild(button);
+    return button;
   });
 
   function render() {
-    var t = tales[cur];
-    frame.style.setProperty('--ta', t.ta);
+    var story = stories[current];
+    frame.style.setProperty('--ta', story.accent);
     frame.innerHTML =
-      '<p class="gal-card-k">' + t.tradition + ' <span class="place">' + t.place + '</span></p>' +
-      '<h3 class="gal-card-h">' + t.title + '</h3>' +
-      '<div class="gal-card-body">' + t.body + '</div>' +
-      '<p class="gal-lesson"><span class="lk">what it teaches</span>' + t.lesson + '</p>' +
-      '<p class="gal-src">' + t.src + '</p>';
-    pos.innerHTML = '<b>' + (cur + 1) + '</b> / ' + tales.length;
-    prev.disabled = cur === 0;
-    next.disabled = cur === tales.length - 1;
-    chips.forEach(function (c, i) {
-      var on = i === cur;
-      c.classList.toggle('is-on', on);
-      c.setAttribute('aria-selected', on ? 'true' : 'false');
+      '<p class="gal-card-k">' + story.kicker + ' <span class="place">' + story.place + '</span></p>' +
+      '<h3 class="gal-card-h">' + story.title + '</h3>' +
+      '<div class="gal-card-body">' + story.body + '</div>' +
+      (story.comment ? '<p class="gal-lesson">' + story.comment + '</p>' : '') +
+      '<p class="gal-src">' + story.citation + '</p>';
+    frame.setAttribute('aria-labelledby', tabs[current].id);
+    position.innerHTML = '<b>' + (current + 1) + '</b> / ' + stories.length;
+    previous.disabled = current === 0;
+    next.disabled = current === stories.length - 1;
+    tabs.forEach(function (tab, index) {
+      var selected = index === current;
+      tab.classList.toggle('is-on', selected);
+      tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+      tab.tabIndex = selected ? 0 : -1;
     });
   }
 
-  function go(i) {
-    cur = Math.max(0, Math.min(tales.length - 1, i));
+  function select(index) {
+    current = Math.max(0, Math.min(stories.length - 1, index));
     render();
+    tabs[current].focus();
   }
 
-  prev.addEventListener('click', function () { go(cur - 1); });
-  next.addEventListener('click', function () { go(cur + 1); });
+  previous.addEventListener('click', function () { select(current - 1); });
+  next.addEventListener('click', function () { select(current + 1); });
 
-  // left/right arrows step the gallery, but only while it is on screen
-  // and the user is not typing in a field
-  document.addEventListener('keydown', function (e) {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    var tag = (document.activeElement && document.activeElement.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    var r = wrap.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > window.innerHeight) return;
-    go(cur + (e.key === 'ArrowLeft' ? -1 : 1));
+  tabsBox.addEventListener('keydown', function (event) {
+    if (tabs.indexOf(document.activeElement) < 0 || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(event.key) < 0) return;
+    event.preventDefault();
+    if (event.key === 'Home') select(0);
+    else if (event.key === 'End') select(stories.length - 1);
+    else select((current + (event.key === 'ArrowLeft' ? -1 : 1) + stories.length) % stories.length);
   });
 
-  wrap.hidden = false;
   render();
+  source.classList.add('gallery-ready');
+  wrap.hidden = false;
 })();
