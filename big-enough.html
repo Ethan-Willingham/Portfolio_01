@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>Big Enough: How Much Muscle Is Actually Worth Building</title>
-  <meta name="description" content="A sourced, illustrated field guide to the diminishing returns of natural muscle growth: what training can deliver, what research cannot predict, and where the smart effort stops.">
-  <meta property="og:title" content="Big Enough: How Much Muscle Is Actually Worth Building">
-  <meta property="og:description" content="How natural muscle growth slows, which training inputs keep paying, and where more work buys too little to organize a life around. Sourced and illustrated.">
+  <title>Big Enough</title>
+  <meta name="description" content="More weekly sets can build more muscle, with smaller returns. A guide to training, protein, creatine, and the limits of predicting your natural potential.">
+  <meta property="og:title" content="Big Enough">
+  <meta property="og:description" content="More weekly sets can build more muscle, with smaller returns. A guide to training, protein, creatine, and the limits of predicting your natural potential.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/big-enough.html">
@@ -38,9 +38,7 @@
      Supra / Segoe UI / Commit Mono). This block adds only the
      guide's own components: the hero, the section system, headline
      stats, the controversy "fork" boxes, evidence-grade citation
-     chips, the data-viz figures and their animations, the
-     interactive tools, the progressive-disclosure form guides, and
-     interactive tools and progressive-disclosure form guides.
+     chips, the figures and their animations, and the interactive tools.
      ============================================================ */
   :root {
     --measure: 780px;                 /* reading column */
@@ -60,29 +58,28 @@
   }
 
   html { overflow-x: hidden; }
-  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+  body.be-page { overflow-x: hidden; padding-inline: 0; font-family: var(--font-heading); font-weight: 400; line-height: 1.66; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
   /* the reading column */
   .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
 
-  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+  .post-back.be-back { display: block; width: 100%; max-width: var(--measure); margin-inline: auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-inline: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 40ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero { display: flex; flex-direction: column; justify-content: center; width: 100%; min-height: calc(100svh - 4rem); max-width: 61rem; margin: 0 auto; padding-block: clamp(4.5rem, 11svh, 7rem); padding-inline: var(--gutter); text-align: center; }
+  .hero-title { max-width: 9ch; margin-inline: auto; font-family: var(--font-heading); font-weight: 700; font-size: clamp(3.45rem, 11vw, 6.9rem); line-height: .94; letter-spacing: -.035em; color: var(--text-bright); text-wrap: balance; margin-block: 0; }
+  .hero-dek { font-family: var(--font-heading); font-style: normal; font-size: 1.24rem; line-height: 1.58; color: var(--text-dim); margin: 1.6rem auto 0; max-width: 49ch; text-wrap: pretty; }
+  .hero-meta { justify-content: center; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .11em; text-transform: uppercase; color: var(--text-dim); margin: 1.6rem 0 0; display: flex; flex-wrap: wrap; gap: .5em 1.05em; }
   .hero-meta b { color: var(--accent); font-weight: 400; }
   .hero-meta .sep { opacity: 0.4; }
 
   /* ---------- SECTIONS ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
-  .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(4.5rem, 8svh, 6.5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec.first { padding-top: clamp(4.5rem, 8svh, 6.5rem); }
   .sec > :last-child { margin-bottom: 0; }
-  .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
-  .sec-kicker::before, .sec.first .sec-h::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
-  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
-  .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec-kicker { font-family: var(--font-mono); font-size: .72rem; line-height: 1.3; letter-spacing: .13em; text-transform: uppercase; color: var(--text-faint); display: block; margin: 0 0 1.1rem; text-align: center; }
+  .sec-h { max-width: 22ch; font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); margin: 0 auto 2.6rem; text-align: center; text-wrap: balance; }
+  .sec p { font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
   .sec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 1.5rem 0 0.4rem; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
@@ -90,10 +87,14 @@
   .sec strong, .sec b { font-weight: 600; color: var(--text-bright); }
   .sec em { font-style: italic; }
   .sec ul, .sec ol { margin: 0 0 1.3em; padding-left: 1.35em; }
-  .sec li { font-size: var(--body-size); line-height: 1.6; margin-bottom: 0.5em; }
+  .sec li { font-size: 1.3rem; line-height: 1.74; margin-bottom: 0.5em; }
   .sec li::marker { color: var(--accent); }
-  .lede { font-size: 1.2rem; line-height: 1.6; color: var(--text-bright); margin-bottom: 1.1em; }
-  @media (min-width: 720px) { .lede { font-size: 1.28rem; } }
+  .sec .lede { font-size: 1.3rem; line-height: 1.74; color: var(--text); }
+  .sec .tool, .sec .plan-grid, .sec .u-checks, .sec .legend, .sec .u-collapse-list, .be-page .u-next, .be-page .site-footer { font-family: var(--font-body); }
+  .sec .tool p, .sec .u-checks li { font-family: var(--font-body); }
+  .sec .u-checks li { font-size: 1.05rem; line-height: 1.6; }
+  .sec .tool p { font-size: .95rem; line-height: 1.55; }
+  @media (max-width: 560px) { .sec, .sec.first { padding-top: 3.4rem; } }
   .leadin { font-variant-caps: small-caps; letter-spacing: 0.04em; color: var(--text-bright); font-weight: 600; }
   .sec-divider { text-align: center; color: var(--sec-accent, var(--text-dim)); letter-spacing: 0.6em; margin: 3.4rem 0 0; user-select: none; opacity: 0.55; }
 
@@ -198,16 +199,17 @@
   .tool { margin: 2.2em 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(12,16,13,0.4), 0 14px 34px -18px rgba(8,12,9,0.5); }
   .tool-head { display: flex; align-items: center; justify-content: space-between; gap: 0.7rem; padding: 0.75em 1.15em; background: var(--panel-2); border-bottom: 1px solid var(--rule); }
   .tool-head h4 { margin: 0; font-family: var(--font-heading); font-size: 1.08rem; color: var(--text-bright); }
-  .tool-head .tool-tag { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .tool-head .tool-tag { white-space: nowrap; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
   .tool-body { padding: 1.15em 1.2em 1.3em; }
   .tool-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-bottom: 0.9rem; }
-  .tool label { font-family: var(--font-body); font-size: 0.92rem; color: var(--text); }
-  .tool input[type=number], .tool input[type=text], .tool select { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); background: rgba(0,0,0,0.24); border: 1px solid var(--rule); border-radius: 6px; padding: 0.4em 0.6em; max-width: 7em; }
+  .tool label, .tool .control-label { font-family: var(--font-body); font-size: 0.92rem; color: var(--text); }
+  .tool input[type=number], .tool input[type=text], .tool select { min-height: 44px; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text); background: rgba(0,0,0,0.24); border: 1px solid var(--rule); border-radius: 6px; padding: 0.4em 0.6em; max-width: 7em; }
   .tool input:focus, .tool select:focus { outline: none; border-color: var(--accent); }
   .tool .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
-  .tool .seg button { font-family: var(--font-body); font-size: 0.86rem; color: var(--text-dim); background: transparent; border: none; padding: 0.42em 0.85em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .tool .seg button { min-height: 44px; font-family: var(--font-body); font-size: 0.86rem; color: var(--text-dim); background: transparent; border: none; padding: 0.42em 0.85em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .tool button:focus-visible, .tool input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .tool .seg button.on { background: var(--accent); color: var(--bg); }
-  .tool input[type=range] { -webkit-appearance: none; appearance: none; flex: 1 1 180px; height: 20px; background: transparent; cursor: pointer; }
+  .tool input[type=range] { -webkit-appearance: none; appearance: none; flex: 1 1 180px; height: 44px; background: transparent; cursor: pointer; }
   .tool input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--c-grid-strong); border-radius: 2px; }
   .tool input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.3); transition: background 0.15s, transform 0.1s; }
   .tool input[type=range]:hover::-webkit-slider-thumb, .tool input[type=range]:focus::-webkit-slider-thumb { background: var(--accent-hover); transform: scale(1.08); }
@@ -220,6 +222,10 @@
   .tool-rail b { color: var(--text-bright); }
   .tool svg { display: block; width: 100%; height: auto; overflow: visible; }
   .tool .val { font-family: var(--font-mono); color: var(--accent-hover); font-variant-numeric: tabular-nums; }
+  @media (max-width: 560px) {
+    #returns-tool svg .v-axis-t { display: none; }
+    #returns-tool svg .v-axis { font-size: 16px; }
+  }
 
   /* ---------- PROGRESSIVE DISCLOSURE (the form guides) ---------- */
   details.deeper { margin: 1.1em 0; border: 1px solid var(--rule); border-radius: 10px; background: rgba(0,0,0,0.10); overflow: hidden; }
@@ -262,24 +268,25 @@
   #sources li.shead { list-style: none; margin: 1.15em 0 0.4em -1.4em; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
   #sources li.shead:first-child { margin-top: 0.2em; }
   #sources b { color: var(--text-bright); font-weight: 600; }
+  #sources .u-collapse-list li:not(.shead) { font-family: var(--font-body); font-size: .82rem; line-height: 1.5; }
 
   .disclaimer { margin: 1.7em 0; padding: 1em 1.2em; border: 1px solid var(--accent); border-radius: 10px; background: rgba(212,196,160,0.08); font-size: 1.02rem; line-height: 1.6; color: var(--text); }
   .disclaimer strong { color: var(--accent-hover); }
 
   /* ---------- ANIMATION + REDUCED MOTION ---------- */
-  @media all {
-    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
-    .reveal.in { opacity: 1; transform: none; }
-    .draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); }
+  @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
+    .be-animate .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    .be-animate .reveal.in { opacity: 1; transform: none; }
+    .be-animate .draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); }
     .draw.go { animation: draw 1.6s var(--ease) forwards; }
     @keyframes draw { to { stroke-dashoffset: 0; } }
-    .fade-el { opacity: 0; }
+    .be-animate .fade-el { opacity: 0; }
     .fade-el.go { animation: fadeEl 0.9s ease forwards; }
     @keyframes fadeEl { to { opacity: 1; } }
-    .grow-b { transform: scaleX(0.001); transform-origin: left; }
+    .be-animate .grow-b { transform: scaleX(0.001); transform-origin: left; }
     .grow-b.go { animation: growL 1s var(--ease) forwards; }
     @keyframes growL { to { transform: scaleX(1); } }
-    .grow-v { transform: scaleY(0.001); transform-origin: bottom; }
+    .be-animate .grow-v { transform: scaleY(0.001); transform-origin: bottom; }
     .grow-v.go { animation: growV 1s var(--ease) forwards; }
     @keyframes growV { to { transform: scaleY(1); } }
     .pulse-dot { animation: pulseDot 2.6s ease-in-out infinite; }
@@ -288,9 +295,9 @@
     @keyframes drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   }
   @media (prefers-reduced-motion: reduce) {
-    .reveal, .fade-el { opacity: 1; transform: none; transition: none; }
-    .draw { stroke-dashoffset: 0; }
-    .grow-b, .grow-v { transform: none; }
+    .be-animate .reveal, .be-animate .fade-el { opacity: 1; transform: none; transition: none; }
+    .be-animate .draw { stroke-dashoffset: 0; }
+    .be-animate .grow-b, .be-animate .grow-v { transform: none; }
     .draw.go, .fade-el.go, .grow-b.go, .grow-v.go, .pulse-dot, .drift { animation: none; }
   }
 
@@ -306,7 +313,7 @@
   }
   </style>
 </head>
-<body>
+<body class="be-page">
   <!-- in-progress banner, generated by tools/gen-post-nav.mjs; flip inProgress in tools/gen-hubs.mjs -->
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -315,9 +322,9 @@
 
   <!-- ===================== HERO ===================== -->
   <header class="hero">
-    <h1 class="hero-title">Big Enough: How Much Muscle Is Actually Worth Building</h1>
-    <p class="hero-dek">Muscle growth is generous at first. Then each added set, meal, and year buys less. Here is what the research can measure, what it cannot, and where the smart effort stops.</p>
-    <p class="hero-meta">A field guide to natural muscle <span class="sep">/</span> <b>49 sources</b> <span class="sep">/</span> 30 min read</p>
+    <h1 class="hero-title">Big Enough</h1>
+    <p class="hero-dek">How much muscle is worth building? Training, protein, and creatine have useful evidence behind them. Your natural ceiling is harder to measure.</p>
+    <p class="hero-meta">A field guide to natural muscle <span class="sep">/</span> <b>54 sources</b> <span class="sep">/</span> 25 min read</p>
   </header>
 
   <main id="guide">
@@ -331,33 +338,33 @@
   <section id="start" class="sec first" aria-labelledby="start-h">
     <h2 id="start-h" class="sec-h">The one-page version</h2>
 
-    <p class="lede">The useful part of muscle science fits on one page. Train each muscle group with enough hard weekly sets, add repetitions or load when you can, eat enough protein, sleep, and keep going. Creatine helps a little. Most products do not. The difficult part is noticing when a lever that works has started paying less.</p>
+    <p class="lede">In an eight-week trial, trained adults grew muscle with one set of nine exercises twice a week. More weekly sets generally produce more growth, with smaller returns from each addition. About ten per muscle group is a useful starting point when growth is the priority; fewer can work. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40249908/">Hermann 2025</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span></p>
 
-    <p>You can become strong and visibly muscular on a plan that fits on a sticky note. You can also keep adding work after the easy progress is gone. Research can show that the returns shrink. It cannot show you where your own ceiling sits. <strong>Big enough</strong> is therefore the point where the next increment stops being worth what it asks from the rest of your life.</p>
+    <p>The research can help you choose a training dose. Whether another small gain is worth another hour in the gym depends on what you want the muscle for.</p>
 
     <figure class="viz reveal" aria-label="The entire effective protocol on a single card.">
       <figcaption>The whole plan, on one card</figcaption>
-      <p class="viz-sub">These are the high-return inputs. The exact result and the time it takes vary too much to promise a percentage.</p>
+      <p class="viz-sub">Starting estimates for training and general health. They address different outcomes.</p>
       <div class="plan-grid">
         <div class="plan-tile" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">1</span> Lift</div><div class="plan-body">Start near 10 challenging weekly sets per muscle group, then adjust to your recovery.</div></div>
         <div class="plan-tile" style="--tile:#9ec79a"><div class="plan-name"><span class="plan-n">2</span> Eat</div><div class="plan-body">About 0.7 g protein per pound each day is a sensible target, not a magic cutoff.</div></div>
-        <div class="plan-tile" style="--tile:#8fb3c7"><div class="plan-name"><span class="plan-n">3</span> Sleep</div><div class="plan-body">Give recovery a regular 7 to 9 hour window. Hypertrophy has no proven hour-by-hour curve.</div></div>
+        <div class="plan-tile" style="--tile:#8fb3c7"><div class="plan-name"><span class="plan-n">3</span> Sleep</div><div class="plan-body">Most adults need at least 7 hours regularly. More may suit you; muscle growth has no hour-by-hour formula.</div></div>
         <div class="plan-tile" style="--tile:#dfc288"><div class="plan-name"><span class="plan-n">4</span> Move</div><div class="plan-body">Keep some cardio. Sensible concurrent training does not erase whole-muscle growth.</div></div>
         <div class="plan-tile" style="--tile:#D4C4A0"><div class="plan-name"><span class="plan-n">5</span> Creatine</div><div class="plan-body">Optional. If you want one supplement, 3 to 5 g of plain monohydrate a day.</div></div>
         <div class="plan-tile" style="--tile:#b79bc4"><div class="plan-name"><span class="plan-n">6</span> Wait</div><div class="plan-body">Measure progress across months. No study can predict your personal finish line.</div></div>
       </div>
-      <p class="viz-note">That is the engine. The chapters below show where the measurements are solid and where judgment has to replace precision.</p>
+      <p class="viz-note">The training and protein chapters explain these targets. The sleep recommendation comes from general health guidance, not a measured hypertrophy optimum. <span class="u-src"><a href="https://aasm.org/resources/pdf/adultsleepdurationconsensus.pdf">AASM/SRS 2015</a></span></p>
     </figure>
 
     <h3>The supplement aisle, in one glance</h3>
-    <p>A supermarket of powders exists to convince you that muscle is a purchasing problem. It mostly is not. Here is the short sort: one thing worth taking, one thing that is optional and oversold, and a long shelf of things you can walk past.</p>
+    <p>Creatine and extra protein have evidence for improving lifting outcomes. Vitamin D and caffeine address different needs.</p>
 
     <ul class="u-checks">
-      <li class="u-check u-use"><b>Creatine monohydrate.</b> One of the most studied and reliably useful sports supplements. It modestly improves resistance-training outcomes; possible cognitive benefits are less settled. Use plain monohydrate, 3 to 5 grams a day. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></li>
-      <li class="u-check u-use"><b>Protein powder (only if food falls short).</b> It is convenient protein, not a separate muscle-building category. Supplementation helps most when it raises a low daily intake toward an adequate one; the estimated breakpoint varies across people and studies. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></li>
+      <li class="u-check u-use"><b>Creatine monohydrate.</b> Modestly improves resistance-training outcomes. Possible cognitive benefits are less settled. Use plain monohydrate, 3 to 5 grams a day. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></li>
+      <li class="u-check u-use"><b>Protein powder (only if food falls short).</b> Helps when it raises an inadequate daily intake. Once enough protein is coming from food, adding powder offers less reason to expect extra growth. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></li>
       <li class="u-check u-meh"><b>Vitamin D.</b> Correct a diagnosed deficiency with a clinician. Current guidance does not support one universal blood target, and intentional ultraviolet exposure is not a safe vitamin strategy. Use food, fortified food, or a supplement when appropriate. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38828931/">Endocrine Society 2024</a></span> <span class="u-src"><a href="https://www.aad.org/media/stats-vitamin-d">AAD</a></span> <span class="grade g-a">strong</span></li>
-      <li class="u-check u-meh"><b>Caffeine.</b> A genuine acute performance aid, but not a direct hypertrophy supplement. It is useful if it improves a session and costly if it disturbs sleep. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-b">good</span></li>
-      <li class="u-check u-skip"><b>Almost everything else.</b> Testosterone "boosters," BCAAs on top of enough protein, fat burners, pre-workout pixie dust, exotic creatine blends that cost more than the monohydrate they are diluting. The evidence is thin to nonexistent, and your money is better spent on food. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></li>
+      <li class="u-check u-meh"><b>Caffeine.</b> Can improve performance during a session. Evidence for a direct hypertrophy benefit is lacking; lost sleep can make it a poor trade. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/">Guest 2021</a></span> <span class="grade g-b">good</span></li>
+      <li class="u-check u-skip"><b>Premium creatine forms.</b> No alternative form has convincingly outperformed monohydrate. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></li>
     </ul>
 
     <hr class="u-divider">
@@ -366,22 +373,21 @@
   <!-- ===================== 2. DIMINISHING RETURNS ===================== -->
   <section id="returns" class="sec" aria-labelledby="returns-h">
     <span class="sec-kicker">The point of the guide</span>
-    <h2 id="returns-h" class="sec-h">Diminishing returns, without the fake precision</h2>
+    <h2 id="returns-h" class="sec-h">The return on another set</h2>
 
-    <p class="lede">The first useful dose of lifting changes a body more than the last heroic dose. That part is well supported. The popular claim that a lifter reaches exactly 80 or 90 percent of a genetic ceiling after a fixed number of years is not. No study can measure your personal ceiling in advance, and most training trials last weeks or months, not the decade needed to watch an individual approach one.</p>
+    <p class="lede">A study can compare ten weekly sets with twenty. It cannot tell you that either gets you 90 percent of your lifetime potential. That would require knowing your eventual maximum under years of different training, diets, and recovery conditions.</p>
 
-    <p>The best current synthesis pooled 137 systematic reviews and more than 30,000 participants. Resistance training worked across a wide range of loads, schedules, and programs. Hypertrophy was enhanced by higher volume, summarized as at least 10 weekly sets, while many other prescription details did not consistently change outcomes. The review does not supply one exact optimum for everyone. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="grade g-a">strong</span></p>
+    <p>A 2026 overview examined 137 systematic reviews and more than 30,000 participants. Resistance training worked across a wide range of loads, schedules, and programs. Muscle growth, or hypertrophy, was enhanced by higher volume, summarized as at least 10 weekly sets. Many other prescription details did not consistently change outcomes. The review does not supply one exact optimum for everyone. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="grade g-a">strong</span></p>
 
-    <p>A separate 2026 dose-response meta-regression added an important qualification: the observed curve kept rising as weekly sets increased, but each added set bought less than the one before it. Its models fit the available studies rather than defining a hard threshold, so confidence in the exact curve should fall toward the high-volume edge. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span></p>
+    <p>A 2026 review included 67 studies overall. Its muscle-growth models used 35 studies with 1,032 participants to relate weekly volume to growth. The best-fitting model favored more sets with diminishing returns. It did not identify a universal maximum, and a rising fitted curve is not proof that adding sets will help indefinitely. Across the review as a whole, most participants were young adults, and about four in five were male. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal" aria-label="What the evidence establishes and what it cannot predict about diminishing returns.">
       <figcaption>Where the evidence stops</figcaption>
-      <p class="viz-sub">The direction is clear. The personal coordinates are not.</p>
       <div class="prog-wrap"><table class="prog">
         <thead><tr><th>The evidence supports</th><th>The evidence does not supply</th></tr></thead>
         <tbody>
           <tr><td>More hard weekly sets usually build more muscle</td><td>your exact percentage of genetic potential</td></tr>
-          <tr><td>the marginal gain per added set gets smaller</td><td>a universal natural ceiling in pounds or FFMI</td></tr>
+          <tr><td>the marginal gain per added set gets smaller</td><td>a universal natural ceiling in pounds</td></tr>
           <tr><td>training closer to failure is generally more stimulative</td><td>one perfect reps-in-reserve target for every exercise</td></tr>
           <tr><td>people vary greatly in observed response</td><td>a reliable year-by-year gain schedule for one person</td></tr>
         </tbody>
@@ -389,20 +395,20 @@
     </figure>
 
     <h3>Locate your weekly dose</h3>
-    <p>This tool does not predict muscle. It places one muscle group's weekly volume inside the ranges current reviews can defend. Count a direct set as one. Count a compound lift for an assisting muscle fractionally, about half a set, rather than awarding every involved muscle a full set.</p>
+    <p>Use the slider to compare your weekly dose with practical starting ranges. Count a set that directly trains the muscle as one, and an assisting role as about half: bench presses for chest and triceps, for example. This bookkeeping method fit the 2026 analysis better than counting all involvement equally. It is an approximation, not a measurement of what every muscle receives.</p>
 
     <div class="tool" id="returns-tool">
-      <div class="tool-head"><h4>Weekly volume, one muscle group</h4><span class="tool-tag">drag me</span></div>
+      <div class="tool-head"><h4>Weekly sets, one muscle</h4><span class="tool-tag">interactive</span></div>
       <div class="tool-body">
         <div class="tool-row">
           <label for="dr-slider">Direct and fractional hard sets:</label>
-          <input type="range" id="dr-slider" min="0" max="30" value="10" step="1">
+          <input type="range" id="dr-slider" min="0" max="30" value="10" step="0.5">
           <span class="val" id="dr-sets">10 sets</span>
         </div>
-        <svg viewBox="0 0 350 120" role="img" aria-label="An interactive weekly-volume scale with low, productive, high-return, and diminishing-return regions.">
+        <svg viewBox="0 0 350 120" role="img" aria-label="An interactive weekly-set scale. Its bands are practical starting categories, not experimentally established boundaries.">
           <text x="58.75" y="26" text-anchor="middle" class="v-axis-t">low dose</text>
           <text x="106.25" y="26" text-anchor="middle" class="v-axis-t">productive</text>
-          <text x="177.5" y="26" text-anchor="middle" class="v-axis-t">high return</text>
+          <text x="177.5" y="26" text-anchor="middle" class="v-axis-t">starting range</text>
           <text x="272.5" y="26" text-anchor="middle" class="v-axis-t">smaller returns</text>
           <rect x="35" y="38" width="47.5" height="30" rx="4" fill="#d9978c" opacity="0.48"/>
           <rect x="82.5" y="38" width="47.5" height="30" fill="#dfc288" opacity="0.55"/>
@@ -420,7 +426,7 @@
           <text x="177.5" y="112" text-anchor="middle" class="v-axis" fill="#B8B2A2">per muscle group, per week</text>
         </svg>
         <div class="tool-out">
-          <div><span class="big" id="dr-band">High-return starting dose</span> <span class="lbl">for many healthy adults</span></div>
+          <div><span class="big" id="dr-band">Common starting range</span> <span class="lbl">a guide to weekly volume</span></div>
           <div class="tool-rail" id="dr-verdict">Ten challenging sets is a defensible place to begin. Add work only if performance, recovery, and your goal justify it.</div>
         </div>
       </div>
@@ -429,11 +435,9 @@
     <p class="viz-note">The bands are practical reading aids, not biological borders. Exercise selection, training age, set quality, recovery, and the muscle being trained all move them. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span></p>
 
     <h3>Who decides when it is enough</h3>
-    <p>People do not gain at one published annual rate. The measured spread is wide, and it does not split cleanly by sex: a 2025 meta-analysis found similar relative hypertrophy in men and women, with only a small male advantage in absolute change. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40028215/">Refalo 2025</a></span> <span class="grade g-a">strong</span></p>
+    <p>A 2025 meta-analysis found similar relative muscle growth in men and women, with only a small male advantage in absolute change. That difference does little to predict one person's annual gains. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40028215/">Refalo 2025</a></span> <span class="grade g-a">strong</span></p>
 
-    <p>The stopping rule has to be personal: keep adding work while the return still matters to you and recovery remains good. Stop adding it when another weekly hour, another food rule, or another tired joint matters more than the likely increment of muscle. A competitive bodybuilder may choose differently from a parent who wants strength, health, and three free evenings.</p>
-
-    <blockquote class="u-pq">Diminishing returns can tell you how to spend the next hour. They cannot tell you what percentage of your genes you own.<cite class="u-pq-cite">The limit of the evidence</cite></blockquote>
+    <p>Track the result you care about alongside the cost: strength, measurements, session time, fatigue, and discomfort. If more work improves none of those results across a useful stretch of training, the average dose-response curve is not a reason to keep adding it. A competitor may accept costs that someone training for everyday strength would decline.</p>
 
     <hr class="u-divider">
   </section>
@@ -443,71 +447,39 @@
     <span class="sec-kicker">Building it</span>
     <h2 id="grows-h" class="sec-h">How muscle actually grows</h2>
 
-    <p class="lede">Resistance training asks muscle to produce high tension. Repeated exposure, enough recovery, and adequate nutrition can shift the tissue toward growth. The molecular story is complicated; the practical stimulus is not.</p>
+    <p class="lede">Muscle grows mainly by enlarging its existing fibers. Resistance exercise starts signals that increase the building of muscle proteins; repeated training and adequate recovery can make the tissue larger. Researchers still disagree about parts of that signaling process. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span></p>
 
     <figure class="photo portrait reveal">
       <img src="assets/images/big-enough/hadrian.webp" width="1000" height="1509" loading="lazy" decoding="async" alt="A headless Roman statue wearing a muscle cuirass, a marble breastplate sculpted to look like a bare, idealized muscled torso.">
-      <figcaption>A Roman muscle cuirass, the breastplate sculpted as the bare torso underneath. The armor buckles on in a minute. The body it copies is built the slow way, one hard contraction at a time.
+      <figcaption>A muscle cuirass, armor sculpted to resemble the torso beneath it. This statue depicts Hadrian, who ruled Rome from AD 117 to 138.
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Cuirassed_statue_of_Hadrian,_Ancient_Agora_of_Athens_(13983975696).jpg">Cuirassed statue of Hadrian, Ancient Agora of Athens, c. 117 to 138 AD. Photo: Carole Raddato, CC BY-SA 2.0</a></span>
       </figcaption>
     </figure>
 
-    <h3>The signal: tension, not damage</h3>
-    <p>For years people thought you had to "tear the muscle down," and that soreness proved a good workout. That is mostly wrong. The primary signal for growth is <strong>mechanical tension</strong>: the muscle sensing a heavy load through a full range of motion and converting that strain into "build" signals. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> Damage and the metabolic "burn" are supporting players at most, and chasing soreness just buys fatigue. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
-    <p>You deliver that tension with a handful of levers, seven of them. Every one has a sweet spot, and pushing past it costs more than it pays.</p>
+    <h3>Tension and soreness</h3>
+    <p>Mechanical tension, the force experienced by active muscle fibers, is the leading candidate for the growth signal. That can come from a heavy load or a lighter set performed with enough effort. Muscle damage is not required, and soreness does not measure how much growth a session will produce. The contribution of metabolic stress, the processes behind the burning sensation, is less certain. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">Wackerhage 2019</a></span> <span class="grade g-b">good</span> <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">Bernardez-Vazquez 2022</a></span></p>
 
-    <h3>Lever one: volume (the big one)</h3>
-    <p>Volume, the number of challenging sets a muscle performs each week, is the lever most tightly tied to growth. Counting sets fractionally matters most here: a bench press is direct chest work and about half a set for the triceps, a row is direct back work and about half a set for the biceps. That method best fit the newest dose-response analysis. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span> Older pooled trials also found that groups performing 10 or more weekly sets generally grew more than lower-volume groups. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></p>
+    <h3>Weekly volume</h3>
+    <p>Volume is the number of challenging sets a muscle performs each week. In the recent dose-response analysis, counting direct work as one set and indirect work as half a set best fit the observed growth. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-b">good</span> Older pooled trials also found that groups performing 10 or more weekly sets generally grew more than lower-volume groups. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">Schoenfeld 2017</a></span></p>
 
-    <figure class="viz reveal" aria-label="A curve of muscle growth against weekly training volume.">
-      <figcaption>More sets, more muscle, up to a point</figcaption>
-      <p class="viz-sub">Growth climbs fast through the first ten or so weekly sets, then keeps rising more and more slowly. It does not truly flatten; you just pay more and more for less and less.</p>
-      <svg viewBox="0 0 700 320" role="img" aria-label="Muscle growth rises steeply from zero to about ten weekly sets, continues more slowly through a productive band to about twenty sets, then keeps rising gently, with each added set buying less.">
-        <!-- bands -->
-        <rect x="245" y="40" width="207" height="220" fill="#9ec79a" opacity="0.07"/>
-        <rect x="452" y="40" width="178" height="220" fill="#dfc288" opacity="0.06"/>
-        <text x="348" y="84" text-anchor="middle" class="v-axis-t" fill="#9ec79a">productive band</text>
-        <text x="541" y="84" text-anchor="middle" class="v-axis-t" fill="#dfc288">a worse and worse trade</text>
-        <!-- axes -->
-        <line x1="55" y1="260" x2="660" y2="260" class="v-grid-s"/>
-        <line x1="55" y1="40" x2="55" y2="260" class="v-grid-s"/>
-        <!-- x ticks: 0,10,20,30 across 55..630 (~19.2px/set) -->
-        <g class="v-axis">
-          <text x="55" y="280" text-anchor="middle">0</text>
-          <text x="245" y="280" text-anchor="middle">10</text>
-          <text x="452" y="280" text-anchor="middle">20</text>
-          <text x="630" y="280" text-anchor="middle">30</text>
-          <text x="345" y="305" text-anchor="middle" fill="#B8B2A2">hard sets per muscle group, per week</text>
-        </g>
-        <text x="46" y="50" text-anchor="end" class="v-axis-t">growth</text>
-        <!-- curve: rises steeply, flattens. points approx -->
-        <path class="draw" style="--len:780" d="M55 260 C 130 150 200 95 245 86 C 340 70 410 62 452 58 C 530 53 590 49 630 47" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
-        <!-- 10-set and 20-set markers -->
-        <line x1="245" y1="86" x2="245" y2="260" class="v-grid"/>
-        <line x1="452" y1="58" x2="452" y2="260" class="v-grid"/>
-        <circle cx="245" cy="86" r="4" fill="#9ec79a"/>
-        <circle cx="452" cy="58" r="4" fill="#dfc288"/>
-      </svg>
-      <p class="viz-note"><b>About 10 fractional sets per muscle group per week is a defensible start.</b> Higher volumes can add growth, with smaller returns and less evidence at the far end.</p>
-    </figure>
 
-    <h3>Lever two: load (lighter than you think)</h3>
-    <p>How heavy? For <em>growth</em>, surprisingly flexible: loads from about 30 to 85 percent of your one-rep max produced similar average hypertrophy when sets were taken close to failure. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span> In other words, a hard set of 8 and a hard set of 25 can both work. For pure <em>strength</em>, heavy wins clearly. So pick loads that let you train hard without wrecking your joints, and stop worrying that 12-rep sets are "too light to grow."</p>
+    <h3>Light and heavy loads</h3>
+    <p>One 2017 meta-analysis compared lighter loads, at most 60 percent of a one-repetition maximum (the heaviest weight lifted once), with heavier ones. All sets were taken to failure, the point where another repetition could not be completed. Average hypertrophy was similar; improvement in one-repetition maximum strength favored the heavier loads. Both light and heavy sets can build muscle when performed with enough effort. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span> <span class="grade g-a">strong</span></p>
 
-    <h3>Lever three: effort (close to failure, not always to it)</h3>
-    <p>Sets generally become more stimulative as they finish closer to failure, but the exact curve is uncertain. Failure itself is not required, and using it on every set adds fatigue that can reduce later work. A practical default is to finish most sets with roughly 2 to 3 reps in reserve, then use failure selectively when the exercise is safe and the extra fatigue is acceptable. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38970765/">Robinson 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="grade g-a">strong</span></p>
+    <h3>How close to failure</h3>
+    <p>An exploratory 2024 analysis found greater hypertrophy when sets ended closer to failure. Its estimates of how many repetitions participants had left were reconstructed from study descriptions, so the exact relationship is uncertain. Failure is not required. Leaving roughly 2 to 3 repetitions in reserve is a practical default that limits fatigue, rather than a proven optimum. Very light sets may need to finish closer to failure to provide a comparable stimulus. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38970765/">Robinson 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span> <span class="grade g-b">good</span></p>
 
     <h3>The smaller levers</h3>
     <ul>
       <li><strong>Frequency.</strong> Once weekly can grow muscle when it delivers enough good work. Two or more sessions are often easier for distributing volume, but frequency has little independent hypertrophy effect when weekly volume is accounted for. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span> <span class="grade g-a">strong</span></li>
-      <li><strong>Rest between sets.</strong> Enough rest helps preserve performance. In one trial of trained men, 3 minutes produced more growth than 1 minute. That supports longer rests when the next set would otherwise suffer, not one perfect stopwatch setting. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Rest between sets.</strong> Enough rest helps preserve performance. In an eight-week trial of twenty-one trained men, three-minute rests produced greater thigh growth than one-minute rests; the triceps result was less certain. Extend rests when the next set would otherwise suffer. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span> <span class="grade g-b">good</span></li>
       <li><strong>Tempo.</strong> A wide range of ordinary repetition durations can build muscle. Use a controlled motion that keeps the target muscle working; deliberately super-slow repetitions appear less effective. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25601394/">Schoenfeld 2015</a></span> <span class="grade g-b">good</span></li>
-      <li><strong>Progression.</strong> Over time, add repetitions, load, range of motion, or useful sets when performance allows. A static routine eventually stops being a new stimulus.</li>
+      <li><strong>Progression.</strong> When a weight becomes easier, add repetitions or load to keep the sets challenging. A routine can maintain muscle after growth slows; changing exercises is not required simply to make it new.</li>
     </ul>
 
     <h3>The part that happens out of the gym</h3>
-    <p>Sleep and protein support recovery, but hypertrophy research does not provide a clean percentage for each hour slept. In one small laboratory study, a night of total sleep deprivation reduced muscle protein synthesis by about 18 percent. That is evidence against all-nighters, not proof that an ordinary short night costs the same amount of muscle. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-c">mixed</span> A regular 7 to 9 hour sleep opportunity remains a sound recovery target.</p>
-    <p>And the famous "anabolic window," the panic that you must drink protein within thirty minutes of your last rep? A myth: once you account for total daily protein, the timing magic disappears. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">Schoenfeld 2013</a></span> <span class="grade g-a">strong</span> The window is hours wide. Hit your daily total and the clock takes care of itself, as the <a href="#diet">food chapter</a> covers.</p>
+    <p>In a laboratory study of thirteen adults, one night without sleep reduced the measured rate of muscle protein synthesis by about 18 percent. That was a short-term measurement after a meal, not an 18 percent loss of muscle or a trial of ordinary six-hour nights. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7785053/">Lamon 2021</a></span> <span class="grade g-c">limited</span> General health guidance recommends at least seven hours of sleep regularly for most adults. There is no validated formula converting each extra hour into hypertrophy. <span class="u-src"><a href="https://aasm.org/resources/pdf/adultsleepdurationconsensus.pdf">AASM/SRS 2015</a></span></p>
+    <p>You also do not need to drink protein within thirty minutes of the last repetition. In a protein-timing meta-analysis, the apparent growth benefit was explained by differences in total intake. Meals around training still make sense, especially if you train after a long fast. The <a href="#diet">daily total</a> matters more than meeting a narrow deadline. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">Schoenfeld 2013</a></span> <span class="grade g-b">good</span></p>
 
     <hr class="u-divider">
   </section>
@@ -527,44 +499,29 @@
     <span class="sec-kicker">Building it</span>
     <h2 id="training-h" class="sec-h">A practical training template</h2>
 
-    <p class="lede">A program is a delivery system for challenging sets and gradual progression. The research leaves plenty of room for different exercises, schedules, and rep ranges, so this is a starting template rather than the exact answer. Pick the version that fits your week, run it long enough to see a trend, and adjust one variable at a time.</p>
+    <p class="lede">These example programs were assembled for this guide and have not been tested exactly as listed. Their schedules and set totals are shown separately, so you can see how much work each one adds.</p>
 
     <figure class="photo portrait reveal">
       <img src="assets/images/big-enough/charioteer.webp" width="1000" height="1504" loading="lazy" decoding="async" alt="The Charioteer of Delphi, a life-size ancient Greek bronze of a young charioteer in a long pleated robe, standing calm and upright with one arm extended to hold the reins.">
-      <figcaption>The Charioteer of Delphi has held the same pose, calm and exact, for twenty-five centuries. Good training is mostly that: one movement, owned and repeated, until the body has no choice but to adapt.
+      <figcaption>The Charioteer of Delphi, a bronze usually dated to about 478 BC.
         <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:The_Charioteer_of_Delphi,_478_BC,_AM_of_Delphi,_201441.jpg">The Charioteer of Delphi, c. 478 BC, Archaeological Museum of Delphi. Photo: Zde, CC BY-SA 4.0</a></span>
       </figcaption>
     </figure>
-
-    <h3>The same levers, in gym form</h3>
-    <aside class="u-callout">
-      <p class="u-callout-k">The card to keep</p>
-      <p class="u-callout-body">The last chapter's numbers, written the way you use them</p>
-      <ul style="margin:0.8em 0 0">
-        <li><b>10 fractional sets</b> per muscle group per week, to start. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">ACSM 2026</a></span></li>
-        <li>Any weekly frequency that delivers those sets with good effort. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">Pelland 2026</a></span></li>
-        <li>Most sets stopped at <b>2 to 3 reps in reserve</b>, true failure used selectively. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38970765/">Robinson 2024</a></span></li>
-        <li><b>6 to 15 reps</b> on most work, heavier low-rep sets on the main lifts. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28834797/">Schoenfeld 2017</a></span></li>
-        <li>Rest <b>2 to 3 minutes</b> on compounds, about a minute on small isolation. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26605807/">Schoenfeld 2016</a></span></li>
-        <li>Add repetitions, load, or range of motion over months, as performance allows.</li>
-      </ul>
-    </aside>
 
     <h3>Pick the split that fits your life</h3>
     <p>The "split" is just how you divide the body across the week. More training days do not carry a special hypertrophy bonus. Choose the schedule that lets you complete good work and recover.</p>
 
     <figure class="viz reveal" aria-label="Three weekly training schedules.">
       <figcaption>Three ways to carve up a week</figcaption>
-      <p class="viz-sub">Each colored cell is a training day. The schedules spread similar work across 3, 4, or 6 sessions.</p>
+      <p class="viz-sub">Each colored cell is a training day. Any of these schedules can distribute a weekly dose; the six-day example below also adds accessory work.</p>
       <div class="week"><span class="wk-name">&nbsp;</span><span class="wk-cell wk-head">Mon</span><span class="wk-cell wk-head">Tue</span><span class="wk-cell wk-head">Wed</span><span class="wk-cell wk-head">Thu</span><span class="wk-cell wk-head">Fri</span><span class="wk-cell wk-head">Sat</span><span class="wk-cell wk-head">Sun</span></div>
       <div class="week"><span class="wk-name">Full body &#215;3</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-full">Full</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
       <div class="week"><span class="wk-name">Upper / lower &#215;4</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-up">Upper</span><span class="wk-cell wk-low">Lower</span><span class="wk-cell wk-rest">rest</span><span class="wk-cell wk-rest">rest</span></div>
       <div class="week"><span class="wk-name">Push / pull / legs &#215;6</span><span class="wk-cell wk-push">Push</span><span class="wk-cell wk-pull">Pull</span><span class="wk-cell wk-legs">Legs</span><span class="wk-cell wk-push">Push</span><span class="wk-cell wk-pull">Pull</span><span class="wk-cell wk-legs">Legs</span><span class="wk-cell wk-rest">rest</span></div>
-      <p class="viz-note">Three full-body days done right beat six half-hearted ones.</p>
-    </figure>
+      </figure>
 
     <h3>Where to start</h3>
-    <p>If you are new, run this three-day full-body plan: you practice the big lifts often and miss nothing if life eats a day. Rotate variations and add a rep or a little weight most weeks. When three days no longer fit your volume, move up to the upper/lower layout or the full push/pull/legs program written out below. <span class="u-src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
+    <p>The full-body example trains the major movement patterns three times a week. If you are new, begin with fewer sets while you learn the exercises; the complete table is something to build toward. Keep variations stable enough to compare sessions. When you can complete every set at the top of its rep range with the intended effort, try a small increase in load. <span class="u-src"><a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">Schoenfeld 2020</a></span></p>
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>Each full-body session, 3x a week</th><th class="n">Sets &#215; reps</th></tr></thead>
       <tbody>
@@ -574,14 +531,16 @@
         <tr><td>Overhead press</td><td class="n">2 &#215; 8-12</td></tr>
         <tr><td>Romanian deadlift or leg curl</td><td class="n">2 &#215; 8-12</td></tr>
         <tr><td>Lat pulldown or pull-up</td><td class="n">2 &#215; 8-12</td></tr>
-        <tr><td>Biceps curl + triceps extension</td><td class="n">2 &#215; 10-15</td></tr>
+        <tr><td>Biceps curl and triceps extension, two sets each</td><td class="n">2 each &#215; 10-15</td></tr>
       </tbody>
     </table></div>
 
-    <p>At 17 to 19 working sets, this session will often take close to an hour once warm-ups and rest are included. That is one useful dose, not the minimum that can build muscle. Short sessions using fewer sets, supersets, or one hard set per exercise can still produce hypertrophy, although they may leave some possible growth on the table. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/34125411/">Iversen 2021</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40249908/">Hermann 2025</a></span> <span class="grade g-b">good</span></p>
+    <p>That is 19 working sets per session, or 57 across the week. It includes nine direct chest sets, nine squat or leg-press sets, and fifteen combined row and vertical-pull sets. For biceps, six curl sets plus half-credit for those fifteen pulling sets gives about thirteen and a half fractional sets. The total differs by muscle group.</p>
 
-    <h3>The same work across six shorter days</h3>
-    <p>Six days does not have to mean a bigger dose. Push / pull / legs divides similar weekly work into shorter sessions. Total it with the same fractional counting, so the program never awards full credit twice for one set.</p>
+    <p>You can build muscle with less. In one eight-week trial, trained adults improved with a single set of nine exercises twice weekly. There was no higher-volume comparison, so the trial does not show what those participants gave up by doing less. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40249908/">Hermann 2025</a></span> A review of time-efficient training also supports prioritizing a leg press or squat, an upper-body push, and an upper-body pull when time is short. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/34125411/">Iversen 2021</a></span> <span class="grade g-b">good</span></p>
+
+    <h3>A six-day option with more accessory work</h3>
+    <p>Push / pull / legs separates pressing, pulling, and leg work. This example also adds direct work for delts, calves, and the abdomen, so it is a larger program than the full-body table. Choose it if you want those additions and can recover from the extra work.</p>
 
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>Push, Monday and Thursday</th><th class="n">Sets &#215; reps</th></tr></thead>
@@ -597,7 +556,7 @@
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>Pull, Tuesday and Friday</th><th class="n">Sets &#215; reps</th></tr></thead>
       <tbody>
-        <tr><td>Deadlift <span class="swap">second pass: barbell row</span></td><td class="n">3 &#215; 3-6</td></tr>
+        <tr><td>Barbell row <span class="swap">second pass: cable row</span></td><td class="n">3 &#215; 6-10</td></tr>
         <tr><td>Pull-up or lat pulldown, both days</td><td class="n">3 &#215; 6-10</td></tr>
         <tr><td>Chest-supported row <span class="swap">second pass: single-arm dumbbell row</span></td><td class="n">2 &#215; 8-12</td></tr>
         <tr><td>Face pull or rear-delt fly, both days</td><td class="n">3 &#215; 12-20</td></tr>
@@ -617,32 +576,32 @@
       </tbody>
     </table></div>
 
-    <p>Progress it the same way as the starter plan. Add a repetition or a small plate when performance allows. If a slot stalls for a month, first check recovery and technique, then consider changing the exercise. More volume is an option, not an automatic upgrade: add it to a specific muscle only when you can recover from it and value the likely smaller return.</p>
+    <p>The push days contain thirteen working sets, the pull days fourteen, and the leg days sixteen: 86 across the week. Chest receives ten direct sets. Biceps receive six curl sets plus about eight fractional sets from the sixteen pulling sets. Count the other groups in the same way before adding work. The half-set convention is only approximate, especially when an exercise involves several regions of the back or shoulder.</p>
 
-    <p>Each of those six sessions contains 13 to 16 working sets, so with warm-ups and ordinary rest, expect roughly 45 to 60 minutes. A shorter version can drop the later isolation sets or use compatible supersets; the trade is lower weekly volume, not automatic failure to grow.</p>
+    <p>Use the same progression rule as for full-body training. The listed hinges stay on leg days, avoiding heavy deadlifts immediately before another hamstring session.</p>
 
     <div class="prog-wrap"><table class="prog">
       <thead><tr><th>The week, in hours</th><th class="n">Days</th><th class="n">One session</th><th class="n">Per week</th><th>What it buys</th></tr></thead>
       <tbody>
-        <tr><td>Full body</td><td class="n">3</td><td class="n">~60 min</td><td class="n">~3 hrs</td><td>a compact default with room to adjust</td></tr>
-        <tr><td>Upper / lower</td><td class="n">4</td><td class="n">~55 min</td><td class="n">~3.5 hrs</td><td>the same dose in four easier days</td></tr>
-        <tr><td>Push / pull / legs</td><td class="n">6</td><td class="n">45-60 min</td><td class="n">~5 hrs</td><td>the same dose, plus direct arm, delt, and calf work</td></tr>
+        <tr><td>Full body, as listed</td><td class="n">3</td><td class="n">55-75 min</td><td class="n">2.75-3.75 hrs</td><td>57 working sets, major patterns and direct arm work</td></tr>
+        <tr><td>Upper / lower</td><td class="n">4</td><td class="n">varies</td><td class="n">varies</td><td>a schedule; the weekly dose depends on your exercise list</td></tr>
+        <tr><td>Push / pull / legs, as listed</td><td class="n">6</td><td class="n">40-60 min</td><td class="n">4-6 hrs</td><td>86 working sets, including more accessory work</td></tr>
       </tbody>
     </table></div>
-    <p style="white-space:normal;display:block;font-size:0.8em;color:var(--text-dim);margin:-0.6em 0 1.4em">Times assume full rest between sets and a 10-minute warm-up. The six-day version costs more hours mostly because the small muscles get sets of their own.</p>
+    <p style="white-space:normal;display:block;font-size:0.8em;color:var(--text-dim);margin:-0.6em 0 1.4em">These planning estimates allow for warm-ups, rests, and exercise changes. Equipment queues can extend them. Supersets, alternating compatible exercises, can shorten them without reducing the set total.</p>
 
-    <h3>Form, in one rule and six cues</h3>
+    <h3>Form cues</h3>
     <p>Good form keeps the target muscle working through a useful range while the load remains repeatable and tolerable. If added weight shortens the range or changes the exercise into a different movement, reduce it. The cues below are practical defaults, not universal anatomy rules:</p>
     <ul>
-      <li><strong>Squat:</strong> sit down and back until your hip crease drops below your knee, bar stacked over mid-foot, knees tracking over your toes. Depth beats plates.</li>
-      <li><strong>Deadlift and Romanian deadlift:</strong> push the hips back, not down, keeping the bar dragging close and the back flat. It is a hinge, not a squat.</li>
-      <li><strong>Bench press:</strong> shoulder blades pinned back and down, a small natural arch, feet driving the floor, bar to the lower chest with elbows near 45 degrees. No bouncing.</li>
-      <li><strong>Overhead press:</strong> brace and squeeze the glutes so you do not lean back, press straight up, move your head "through the window" as the bar passes.</li>
-      <li><strong>Row:</strong> flat braced back, pull to the lower ribs by driving the elbows back, full stretch at the bottom. No heaving with the whole body.</li>
-      <li><strong>Pull-up and pulldown:</strong> start from a full hang, pull the elbows down and back until the chin clears, then lower all the way. No half reps, no kipping.</li>
+      <li><strong>Squat:</strong> keep your balance over the middle of the foot and let the knees follow the toes. Use the deepest range you can control comfortably; stance and depth depend on your build.</li>
+      <li><strong>Deadlift and Romanian deadlift:</strong> keep the load close and the trunk braced. In a Romanian deadlift, move the hips back and stop where you can still control the position. A floor deadlift also involves knee extension.</li>
+      <li><strong>Bench press:</strong> use a stable upper back and planted feet. Lower the bar under control to a comfortable touch point, then press without bouncing. Grip width changes the elbow angle.</li>
+      <li><strong>Overhead press:</strong> brace the trunk and avoid turning the lift into a large backward lean. Move the head clear of the bar, then return it as the bar passes.</li>
+      <li><strong>Row:</strong> keep the torso stable, let the arms reach forward under control, and pull through a repeatable range. The elbow path depends on which row you choose.</li>
+      <li><strong>Pull-up and pulldown:</strong> use a controlled overhead stretch that your shoulders tolerate. Pull without swinging and lower through the same range. A pulldown bar comes toward the upper chest; a pull-up brings your body toward the bar.</li>
     </ul>
 
-    <aside class="u-callout"><p class="u-callout-k">The most underrated variable</p><p class="u-callout-body"><b>Consistency beats optimization.</b> A merely good program run for two years will build more muscle than a perfect program abandoned every six weeks. The templates above are interchangeable enough that switching between them is fine; what is not fine is never giving any of them time to work.</p></aside>
+    <p>Record the exercise, load, repetitions, and estimated repetitions left. Compare several sessions before treating a single bad day as a stalled program.</p>
 
     <hr class="u-divider">
   </section>
@@ -652,15 +611,15 @@
     <span class="sec-kicker">Building it</span>
     <h2 id="around-h" class="sec-h">Keep the cardio</h2>
 
-    <p class="lede">Cardio is not a tax a lifter pays for health. At ordinary doses it can coexist with hypertrophy, and cardiorespiratory fitness predicts outcomes that a larger arm cannot. The practical question is how to combine the two without turning every day into a maximal leg session.</p>
+    <p class="lede">Adding aerobic exercise to a lifting program usually preserves whole-muscle growth in the trials that have compared them. The possible tradeoffs are more apparent for explosive strength and, in some studies, individual muscle-fiber size. A larger biceps does not replace aerobic fitness. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/34757594/">Schumann 2022</a></span></p>
 
     <h3>Cardio and the heart</h3>
-    <p>In a clinical cohort of more than 120,000 people, low measured cardiorespiratory fitness was strongly associated with higher mortality. The least-fit group had about five times the adjusted risk of the elite performers. This was observational evidence from people referred for treadmill testing, so it cannot prove that fitness alone caused the difference, but the association is large and consistent with the broader literature. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
+    <p>In a clinical cohort of more than 120,000 people, low measured cardiorespiratory fitness was strongly associated with higher mortality. The least-fit group had about five times the adjusted risk of the elite performers. The participants had been referred for treadmill testing. Illness and other differences between them can affect this association; it does not isolate a causal effect of fitness. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">Mandsager 2018</a></span> <span class="grade g-b">good</span></p>
 
-    <figure class="viz reveal scrollx" aria-label="Risk of death by factor: low fitness dwarfs smoking, diabetes, and heart disease.">
-      <figcaption>Low fitness carried the largest association</figcaption>
-      <p class="viz-sub">Adjusted mortality associations in one selected clinical cohort, compared with the study reference. These bars are not randomized causal effects.</p>
-      <svg viewBox="0 0 700 280" role="img" aria-label="Relative mortality risk: low fitness about 5.0, coronary artery disease 1.29, diabetes 1.40, smoking 1.41, all far above the reference of 1.0.">
+    <figure class="viz reveal scrollx" aria-label="Adjusted mortality associations in the Mandsager cohort, with different comparison groups for each factor.">
+      <figcaption>Large associations, different comparisons</figcaption>
+      <p class="viz-sub">Adjusted hazard ratios in one clinical cohort. Low fitness is compared with elite fitness; each medical risk factor is compared with its absence. These are not effects of changing one behavior.</p>
+      <svg viewBox="0 0 700 280" role="img" aria-label="Adjusted mortality hazard ratios: low versus elite fitness 5.04, smoking versus no smoking 1.41, diabetes versus no diabetes 1.40, and coronary artery disease versus no disease 1.29.">
         <line x1="180" y1="30" x2="180" y2="240" class="v-grid-s"/>
         <g class="v-axis">
           <text x="180" y="260" text-anchor="middle">1&#215;</text>
@@ -675,30 +634,32 @@
         <line x1="660" y1="30" x2="660" y2="240" class="v-grid"/>
         <!-- scale: 120px per 1.0, baseline at x=180 (=1.0). width = (HR-1)*120 -->
         <g>
-          <text x="172" y="62" text-anchor="end" class="v-label" font-size="13">Low fitness</text>
+          <text x="172" y="62" text-anchor="end" class="v-label" font-size="13">Fitness: low vs elite</text>
           <rect class="grow-b" x="180" y="48" width="485" height="24" rx="4" fill="#d9978c" style="transform-box:fill-box;transform-origin:left;"/>
-          <text x="660" y="42" text-anchor="end" class="v-mono" font-size="12" fill="#d9978c">5.0&#215;</text>
+          <text x="660" y="42" text-anchor="end" class="v-mono" font-size="12" fill="#d9978c">5.04&#215;</text>
         </g>
         <g>
-          <text x="172" y="106" text-anchor="end" class="v-label" font-size="13">Smoking</text>
+          <text x="172" y="106" text-anchor="end" class="v-label" font-size="13">Smoking: yes vs no</text>
           <rect class="grow-b" x="180" y="92" width="49" height="24" rx="4" fill="#B8B2A2" style="transform-box:fill-box;transform-origin:left;"/>
           <text x="236" y="110" class="v-mono" font-size="12" fill="#B8B2A2">1.41&#215;</text>
         </g>
         <g>
-          <text x="172" y="150" text-anchor="end" class="v-label" font-size="13">Diabetes</text>
+          <text x="172" y="150" text-anchor="end" class="v-label" font-size="13">Diabetes: yes vs no</text>
           <rect class="grow-b" x="180" y="136" width="48" height="24" rx="4" fill="#B8B2A2" style="transform-box:fill-box;transform-origin:left;"/>
           <text x="235" y="154" class="v-mono" font-size="12" fill="#B8B2A2">1.40&#215;</text>
         </g>
         <g>
-          <text x="172" y="194" text-anchor="end" class="v-label" font-size="13">Heart disease</text>
+          <text x="172" y="194" text-anchor="end" class="v-label" font-size="13">Heart disease: yes vs no</text>
           <rect class="grow-b" x="180" y="180" width="35" height="24" rx="4" fill="#B8B2A2" style="transform-box:fill-box;transform-origin:left;"/>
           <text x="222" y="198" class="v-mono" font-size="12" fill="#B8B2A2">1.29&#215;</text>
         </g>
       </svg>
-      <p class="viz-note">In another large observational cohort, 15 minutes of moderate activity a day was associated with <b>14 percent lower mortality and about three years longer life expectancy</b>. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">Wen 2011</a></span></p>
+      <p class="viz-note">In a separate Taiwanese cohort, people reporting about fifteen minutes of daily exercise had 14 percent lower mortality than inactive participants. The study estimated a three-year difference in life expectancy; it did not establish that adding fifteen minutes causes that gain. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">Wen 2011</a></span></p>
     </figure>
 
-    <p>Updated meta-analysis found no significant reduction in whole-muscle hypertrophy when aerobic and resistance training were combined. A small fiber-level effect remains possible, and very demanding endurance work can still compete with lifting for time and recovery. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/35476184/">Lundberg 2022</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/36508686/">Monserdà-Vilaró 2023</a></span> <span class="grade g-a">strong</span> Two or three moderate sessions are a practical default. Separate hard cardio from hard lifting when convenient, and use low-impact modes if leg fatigue is limiting your strength work.</p>
+    <p>The distinction between whole muscles and sampled fibers matters. Reviews found no clear whole-muscle penalty, while a fiber-level review found a small possible reduction, particularly with running. That is a reason to manage fatigue, not to drop cardio. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/35476184/">Lundberg 2022</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/36508686/">Monserdà-Vilaró 2023</a></span> <span class="grade g-b">good</span></p>
+
+    <p>General health guidance recommends 150 to 300 minutes of moderate aerobic activity per week, or 75 to 150 minutes of vigorous activity. Some activity is better than none. Build that total with sessions and ordinary movement that you can recover from; separate demanding cardio from demanding leg work when practical. Cycling or walking may be easier to combine with lifting if impact and leg fatigue are limiting you. <span class="u-src"><a href="https://www.who.int/publications/i/item/9789240015128">WHO 2020</a></span> The <a href="still-moving.html">cardio guide</a> covers the larger plan.</p>
 
     <hr class="u-divider">
   </section>
@@ -706,34 +667,31 @@
   <!-- ===================== 8. DIET ===================== -->
   <section id="diet" class="sec" aria-labelledby="diet-h">
     <span class="sec-kicker">Feeding it</span>
-    <h2 id="diet-h" class="sec-h">Food: enough, then ordinary</h2>
+    <h2 id="diet-h" class="sec-h">Protein and calories</h2>
 
-    <p class="lede">Training supplies the stimulus. Food supplies amino acids and energy. Protein has a useful target range, not a magic cutoff, and a calorie surplus is an option rather than a prerequisite for every lifter. Once those needs are covered, nutrition becomes much less exotic than its market suggests.</p>
+    <p class="lede">For someone eating enough calories to maintain or gain weight, about 0.7 grams of protein per pound of bodyweight is a reasonable daily starting target. Dieting can justify a higher intake, especially when you are already lean. Neither figure is a personalized measurement of need.</p>
 
-    <h3>Protein: use a target, not a cliff</h3>
-    <p>Pooling 49 studies and nearly 1,900 people, researchers estimated that the average added benefit of protein supplementation leveled near 0.74 grams per pound of bodyweight per day. The confidence interval was wide, roughly 0.47 to 1.0 grams per pound, and the estimate applies to groups, not a personal switch. About 0.7 grams per pound is therefore a sensible daily target for gaining, not proof that everything above it is wasted. Higher intakes can be useful during an energy deficit, especially for lean, trained people. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></p>
+    <h3>What the protein target means</h3>
+    <p>A meta-analysis of 49 studies with 1,863 participants estimated a breakpoint near 0.74 grams per pound each day, beyond which higher total intake was not associated with additional fat-free-mass gain. Its 95 percent confidence interval ran from about 0.47 to 1.0 grams per pound. Fat-free mass includes water and other lean tissue, and the breakpoint came from comparisons across study groups. It is a population estimate, not a measurement of your personal need. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span></p>
 
-    <figure class="viz reveal" aria-label="The average added benefit of protein intake levels near an estimated group breakpoint around 0.7 grams per pound, with wide uncertainty.">
-      <figcaption>Protein has an estimated breakpoint, not a trapdoor</figcaption>
-      <p class="viz-sub">The group estimate sits near 0.7 g/lb/day. Individual need and the confidence interval extend on both sides.</p>
-      <svg viewBox="0 0 700 300" role="img" aria-label="A curve where the average added muscle benefit rises with protein intake and levels near 0.7 grams per pound, surrounded by an uncertainty band.">
-        <rect x="285" y="40" width="255" height="210" fill="#9ec79a" opacity="0.08"/>
-        <text x="412" y="58" text-anchor="middle" class="v-axis-t" fill="#9ec79a">wide confidence interval</text>
-        <line x1="55" y1="250" x2="660" y2="250" class="v-grid-s"/>
-        <line x1="55" y1="40" x2="55" y2="250" class="v-grid-s"/>
+    <figure class="viz reveal" aria-label="The protein breakpoint estimated by Morton and colleagues, with its 95 percent confidence interval.">
+      <figcaption>How uncertain is the breakpoint?</figcaption>
+      <p class="viz-sub">Estimated breakpoint: about 0.74 g/lb/day. The line shows its 95 percent confidence interval, not a distribution of individual protein needs.</p>
+      <svg viewBox="0 0 700 190" role="img" aria-label="Morton's estimated protein breakpoint is 0.74 grams per pound per day, with a 95 percent confidence interval from about 0.47 to 1.0 grams per pound.">
+        <line x1="55" y1="120" x2="635" y2="120" class="v-grid-s"/>
+        <line x1="113" y1="82" x2="552" y2="82" stroke="var(--c-green)" stroke-width="3"/>
+        <line x1="113" y1="70" x2="113" y2="94" stroke="var(--c-green)" stroke-width="2"/>
+        <line x1="552" y1="70" x2="552" y2="94" stroke="var(--c-green)" stroke-width="2"/>
+        <circle cx="337" cy="82" r="6" fill="var(--accent)"/>
+        <text x="337" y="53" text-anchor="middle" class="v-axis-t">0.74 g/lb/day</text>
         <g class="v-axis">
-          <text x="55" y="270" text-anchor="middle">0</text>
-          <text x="298" y="270" text-anchor="middle">0.5</text>
-          <text x="395" y="270" text-anchor="middle">0.7</text>
-          <text x="541" y="270" text-anchor="middle">1.0</text>
-          <text x="635" y="270" text-anchor="middle">1.2</text>
-          <text x="350" y="294" text-anchor="middle" fill="#B8B2A2">grams of protein per pound of bodyweight, per day</text>
+          <text x="55" y="144" text-anchor="middle">0.4</text>
+          <text x="138" y="144" text-anchor="middle">0.5</text>
+          <text x="304" y="144" text-anchor="middle">0.7</text>
+          <text x="469" y="144" text-anchor="middle">0.9</text>
+          <text x="635" y="144" text-anchor="middle">1.1</text>
+          <text x="350" y="178" text-anchor="middle">grams per pound of bodyweight, per day</text>
         </g>
-        <text x="46" y="50" text-anchor="end" class="v-axis-t">muscle</text>
-        <path class="draw" style="--len:760" d="M55 250 C 160 150 320 92 395 86 C 480 82 560 82 635 82" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
-        <line x1="395" y1="86" x2="395" y2="250" class="v-grid"/>
-        <circle cx="395" cy="86" r="5" fill="#9ec79a"/>
-        <text x="403" y="110" class="v-label-b" font-size="12" fill="#9ec79a">group estimate</text>
       </svg>
       <p class="viz-note">Spreading the total across 3 to 4 meals is practical, but daily intake matters more than perfect timing. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">Schoenfeld 2018</a></span></p>
     </figure>
@@ -743,27 +701,29 @@
       <div class="tool-body">
         <div class="tool-row">
           <label for="pc-weight">Bodyweight</label>
-          <input type="number" id="pc-weight" value="165" min="60" max="550" step="1" inputmode="decimal">
-          <span class="seg" role="group" aria-label="weight unit"><button type="button" id="pc-kg">kg</button><button type="button" id="pc-lb" class="on">lb</button></span>
+          <input type="number" id="pc-weight" value="165" min="60" max="550" step="any" inputmode="decimal" aria-label="Bodyweight in pounds" aria-describedby="pc-method">
+          <span class="seg" role="group" aria-label="weight unit"><button type="button" id="pc-kg" aria-pressed="false">kg</button><button type="button" id="pc-lb" class="on" aria-pressed="true">lb</button></span>
         </div>
         <div class="tool-row">
-          <label>Goal</label>
-          <span class="seg" role="group" aria-label="goal"><button type="button" id="pc-gain" class="on">build muscle</button><button type="button" id="pc-cut">lose fat, keep muscle</button></span>
+          <span class="control-label">Goal</span>
+          <span class="seg" role="group" aria-label="goal"><button type="button" id="pc-gain" class="on" aria-pressed="true">build muscle</button><button type="button" id="pc-cut" aria-pressed="false">lose fat, keep muscle</button></span>
         </div>
         <div class="tool-out">
-          <div><span class="big" id="pc-out">120 g</span> <span class="lbl">of protein a day</span></div>
-          <div class="tool-rail" id="pc-meal">That is about <b>30 g per meal</b> across 4 meals.</div>
-          <div class="tool-rail" id="pc-foods">Roughly: 2 eggs + Greek yogurt at breakfast, a chicken breast at lunch, a palm of salmon and some lentils at dinner, a glass of milk. No powder required.</div>
-          <div class="tool-rail">Plus <b>3 to 5 g of creatine</b>, taken whenever. That is the whole supplement plan.</div>
+          <div aria-live="polite" aria-atomic="true"><span class="big" id="pc-out">120 g</span> <span class="lbl">daily starting estimate</span>
+          <div class="tool-rail" id="pc-meal">If you divide that across 4 meals, about 30 g per meal. Four meals is optional.</div></div>
+          <div class="tool-rail" id="pc-foods">Eggs, yogurt, beans, tofu, fish, and meat can contribute. Use portions and labels to total the amount you actually eat.</div>
+          <div class="tool-rail" id="pc-method">The build estimate uses about 0.7 g per pound daily; the dieting range is about 0.8 to 1.2 g per pound from guidance for athletes losing weight. The calculation uses 1.6 and 1.8 to 2.7 g/kg respectively. Simple bodyweight scaling can overshoot when much of that weight is fat. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25014731/">Murphy 2015</a></span></div>
         </div>
       </div>
     </div>
 
-    <h3>Whole food beats powder, and you cannot out-supplement a bad diet</h3>
-    <p>Eggs, dairy, meat, fish, beans, lentils, tofu, and grains reach that target while bringing other nutrients with them. Protein powder is convenient food, a tool for a busy day rather than a requirement. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span></p>
+    <h3>Food or powder</h3>
+    <p>Dairy, eggs, fish, meat, soy, and legumes can supply protein alongside other nutrients. Powder is a convenient way to fill a gap in the daily total. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span></p>
 
-    <h3>Eat a little more than you burn</h3>
-    <p>A calorie surplus can support faster weight gain, especially for a lean novice, but muscle can also be gained near maintenance and during some deficits. If gaining is the goal, use the scale and waist rather than a universal calorie prescription: a modest surplus that moves bodyweight slowly is easier to steer than a fixed 500-calorie rule. Larger surpluses reliably add more fat and have not shown proportionally more hypertrophy. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span> <span class="grade g-b">good</span></p>
+    <h3>Do you need a surplus?</h3>
+    <p>Muscle can grow near maintenance, and sometimes during a deficit, particularly in less-trained people or those with more stored body fat. A surplus makes weight gain easier, but there is limited research identifying its best size. One eight-week study compared maintenance with intended surpluses of 5 and 15 percent in trained lifters. Only seventeen completed it. Faster weight gain was more clearly related to thicker skinfolds than to greater muscle thickness. Bench-press strength favored the larger surplus, and a possible biceps-growth association was less certain. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">Helms 2023</a></span> <span class="grade g-c">limited</span></p>
+
+    <p>If your goal is to gain weight, start with a small increase in food and watch the trend in bodyweight, waist, and gym performance. A rapid rise on the scale does not demonstrate rapid muscle growth. </p>
 
     <hr class="u-divider">
   </section>
@@ -773,31 +733,31 @@
     <span class="sec-kicker">The one supplement</span>
     <h2 id="creatine-h" class="sec-h">Creatine, kept in proportion</h2>
 
-    <p class="lede">Creatine monohydrate adds a little strength and lean mass to a training program. It is about as well studied as a supplement gets, and a 1 kg tub covers 200 days at 5 grams. The effect is useful rather than transformative, which is the scale a guide about diminishing returns should keep.</p>
+    <p class="lede">Creatine monohydrate can add a small improvement to a lifting program. In a 2025 meta-analysis, creatine groups improved bench or chest press strength by about 3 lb and squat strength by about 12 lb more than placebo groups, on average. The effects varied by population and exercise; they are not a promised increase for your next training block. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span> <span class="grade g-a">strong</span></p>
 
-    <p>It is not exotic. Creatine is a small molecule your liver already makes and your muscles already store, and you eat about a gram of it a day if you eat meat or fish. Your hardest, fastest efforts run on it. A firing muscle spends ATP (the cell's energy coin) and is left holding spent change, ADP; phosphocreatine hands over a phosphate to rebuild fresh ATP in a fraction of a second, faster than any other pathway in the body. Supplementing raises those stores by 20 to 40 percent. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
+    <p>Your body makes creatine, primarily through the kidneys and liver, and stores most of it in muscle. Meat and fish also supply it. The stored form, phosphocreatine, helps rapidly regenerate ATP, the molecule that supplies energy for muscle contraction. Supplementation can raise muscle creatine stores by roughly 20 to 40 percent, supporting repeated short, demanding efforts. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span></p>
 
     <figure class="viz reveal" aria-label="A three-dimensional model of the phosphocreatine molecule.">
-      <figcaption>The instant battery, up close</figcaption>
-      <p class="viz-sub">This is phosphocreatine itself: a creatine molecule carrying a charged phosphate group, the orange cluster at left. It hands that phosphate straight to spent ADP to rebuild ATP, the cell's energy coin, faster than any other system in the body. A fuller bank of it means a couple more good reps before the battery runs flat.</p>
+      <figcaption>Phosphocreatine, up close</figcaption>
+      <p class="viz-sub">The orange phosphorus atom and surrounding red oxygen atoms form the phosphate group. Transferring that group to ADP, ATP's lower-energy partner, regenerates ATP during high-demand contractions.</p>
       <div class="mol-stage">
         <img class="mol" src="assets/images/big-enough/phosphocreatine.webp" width="1600" height="978" loading="lazy" decoding="async" alt="A three-dimensional ball-and-stick model of phosphocreatine: an orange phosphorus atom ringed by red oxygens at the left (the charged phosphate group), linked through blue nitrogen atoms to a dark carbon backbone that ends in a red carboxyl group at the right.">
       </div>
-      <p class="viz-note">This is also why creatine helps short, powerful efforts (a heavy set, a sprint, a jump) and does almost nothing for a long, steady jog. It is a battery for bursts. <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Phosphocreatine-zwitterion-3D-balls.png">3-D model by Jynto, Wikimedia Commons (CC0)</a></span></p>
+      <p class="viz-note">Its clearest performance use is repeated high-intensity work, rather than steady endurance exercise. <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Phosphocreatine-zwitterion-3D-balls.png">3-D model by Jynto, Wikimedia Commons (CC0)</a></span></p>
     </figure>
 
-    <p>The size of the payoff is where the marketing and the evidence part ways. Most of creatine's muscle-building power is <em>indirect</em>: a topped-up battery buys an extra rep or two and slightly faster recovery, so more good training piles up over months. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> Its <em>direct</em> contribution to muscle thickness, isolated from the training, is a fraction of an inch. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-a">strong</span> Against an identical program on placebo, pooled trials put creatine at about 3 lb on a bench press and 12 lb on a squat, <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">Kazeminasab 2025</a></span> and about 3 lb of lean mass in older adults. <span class="u-src"><a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">Chilibeck 2017</a></span> The training builds the muscle. Creatine lets you train a bit harder and hold a bit more.</p>
+    <p>Lean-mass measurements also tend to favor creatine plus training. A review in older adults found about 3 lb more lean tissue than with placebo, but lean tissue includes water, which creatine can increase. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29138605/">Chilibeck 2017</a></span> A separate analysis of ten studies using regional imaging estimated a small extra thickness gain, around 0.04 to 0.06 inches. Its overall effect estimate was uncertain enough to include no difference. Both groups trained, so this did not isolate a direct effect of creatine from its effect on training performance. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">Burke 2023</a></span> <span class="grade g-b">good</span></p>
 
-    <p>Buy plain creatine monohydrate, the original cheap form. Nothing fancier has been shown to beat it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
+    <p>Plain monohydrate is sufficient; alternative forms have not shown a convincing advantage. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span></p>
     <ul>
-      <li>3 to 5 grams a day, every day, saturates muscle over about three to four weeks. Use the measured scoop or a scale, since ordinary teaspoons vary.</li>
-      <li>Loading, 20 grams a day for five to seven days, fills the tank faster and ends in the same place. Most people skip it. Timing does not matter.</li>
+      <li>3 to 5 grams a day usually raises muscle stores over several weeks. Use the measured scoop or a scale, since ordinary teaspoons vary.</li>
+      <li>Optional loading uses about 20 grams a day, split into smaller doses, for five to seven days before the maintenance dose. It raises stores faster. A precise pre- or post-workout deadline has not been established.</li>
       <li>The scale may tick up a little, since creatine draws water into muscle. No weight change does not prove it failed.</li>
     </ul>
 
-    <p>The brain claims are a thinner literature. Reviews report possible memory benefits under stress or in people with low baseline intake, and the striking 2024 sleep-deprivation result used a single dose near 25 grams in a small sample, which is not what a daily spoonful tests. <span class="u-src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29704637/">Avgerinos 2018</a></span> <span class="grade g-c">mixed</span></p>
+    <p>Cognitive benefits are less settled. A review found possible benefits for short-term memory, with inconsistent results across other tasks. A 2024 experiment during sleep deprivation used fifteen participants and a single large dose, about 25 grams for a 155 lb person. It cannot establish what a routine 3 to 5 gram dose does for a well-rested person. <span class="u-src"><a href="https://www.nature.com/articles/s41598-024-54249-9">Gordji-Nejad 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/29704637/">Avgerinos 2018</a></span> <span class="grade g-c">limited</span></p>
 
-    <aside class="u-callout"><p class="u-callout-k">The myths, retired</p><p class="u-callout-body"><b>"It wrecks your kidneys."</b> It does not, in healthy people, even over years. It nudges a blood marker (creatinine) that can spook a doctor reading a lab result, which is a measurement artifact and not damage. <b>"It makes your hair fall out."</b> That traces to one 2009 study which measured a hormone (DHT) rather than hair, and was never replicated; the first trial to look directly at hair, in 2025, found no difference from placebo. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <b>"It causes cramps and dehydration."</b> Controlled evidence has not shown higher rates of either in healthy users. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-a">strong</span></p></aside>
+    <aside class="u-callout"><p class="u-callout-k">Safety evidence</p><p class="u-callout-body">Recommended doses have not shown kidney damage in healthy users in the available trials. Creatinine, a blood marker used to estimate kidney function, can rise with supplementation without a corresponding loss of function. Tell the clinician interpreting your results that you take creatine; a raised result still needs interpretation. Controlled evidence also does not show increased cramping or dehydration. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7871530/">Antonio 2021</a></span> <span class="grade g-b">good</span></p><p class="u-callout-body">The hair-loss concern came from a small study of DHT, a hormone involved in some hair loss, rather than measurements of hair. In a 2025 trial, 38 men completed twelve weeks of creatine or placebo, with no detected difference in DHT or measured hair outcomes. Longer-term hair outcomes remain uncertain. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">Lak 2025</a></span> <span class="grade g-c">limited</span></p></aside>
 
     <aside class="u-callout u-aside"><p class="u-callout-body"><b>Response varies.</b> A small study found that some participants stored much less additional creatine than others, partly related to their starting muscle characteristics. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15320650/">Syrotuik 2004</a></span> If months of consistent use produce no useful change, stopping is reasonable. Existing kidney disease or another relevant medical condition is a reason to ask a clinician first.</p></aside>
 
@@ -807,49 +767,37 @@
   <!-- ===================== 13. GENETICS ===================== -->
   <section id="genetics" class="sec" aria-labelledby="genetics-h">
     <span class="sec-kicker">The limits and the balance</span>
-    <h2 id="genetics-h" class="sec-h">Born different: genes and fibers</h2>
+    <h2 id="genetics-h" class="sec-h">Individual differences</h2>
 
-    <p class="lede">People can follow the same supervised program and show very different measured changes. Genetics is one contributor, but training history, nutrition, sleep, adherence, starting size, and measurement error travel with it. No twelve-week trial reveals anyone's destiny, and no population average can promise your result.</p>
+    <p class="lede">The same supervised program can produce very different measured changes. Training history, nutrition, and measurement error contribute alongside genetics.</p>
 
-    <p>In one large study, 585 people completed the same supervised 12-week arm program. Measured muscle-size change ranged from minus 2 percent to plus 59 percent, and strength change ranged from zero to plus 250 percent. The study demonstrates wide observed variation, not how much of that spread was genetic; small negative changes can also reflect measurement noise. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
+    <p>In Hubal's 2005 study, 585 people completed twelve weeks of supervised training for one arm. Biceps cross-sectional area, measured by MRI, changed from minus 2 percent to plus 59 percent. Curl one-repetition maximum changed from zero to plus 250 percent. Those are results for one measured muscle and lift, not percentages of whole-body muscle gained or genetic potential used. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">Hubal 2005</a></span> <span class="grade g-b">good</span></p>
 
-    <figure class="viz reveal" aria-label="The spread of muscle growth among 585 people on the same program.">
+    <figure class="viz reveal" aria-label="The observed range of biceps-area change in Hubal's twelve-week study of 585 people.">
       <figcaption>Same program, 585 different results</figcaption>
-      <p class="viz-sub">Each dot represents part of the reported spread. The common program narrowed one variable; it did not isolate genes from every other cause.</p>
-      <svg viewBox="0 0 700 220" role="img" aria-label="A dot plot of biceps growth from minus 2 percent to plus 59 percent, with most people clustered near 19 percent, a handful of non-responders near zero, and a handful of high responders near 60 percent.">
-        <line x1="55" y1="180" x2="660" y2="180" class="v-grid-s"/>
+      <p class="viz-sub">The reported range of biceps cross-sectional-area change. The endpoints are observations; this line does not reconstruct the distribution of participants.</p>
+      <svg viewBox="0 0 700 180" role="img" aria-label="Biceps cross-sectional-area changes in Hubal's twelve-week study ranged from minus 2 percent to plus 59 percent.">
+        <line x1="70" y1="95" x2="660" y2="95" stroke="var(--accent)" stroke-width="3"/>
+        <circle cx="70" cy="95" r="6" fill="var(--c-rose)"/>
+        <circle cx="660" cy="95" r="6" fill="var(--c-green)"/>
+        <line x1="89.3" y1="72" x2="89.3" y2="110" class="v-grid-s"/>
         <g class="v-axis">
-          <text x="55" y="200" text-anchor="middle">0%</text>
-          <text x="205" y="200" text-anchor="middle">15%</text>
-          <text x="355" y="200" text-anchor="middle">30%</text>
-          <text x="505" y="200" text-anchor="middle">45%</text>
-          <text x="640" y="200" text-anchor="middle">+59%</text>
-          <text x="350" y="216" text-anchor="middle" fill="#B8B2A2">change in muscle size after the same 12 weeks</text>
+          <text x="70" y="130" text-anchor="middle">-2%</text>
+          <text x="89.3" y="58" text-anchor="middle">zero change</text>
+          <text x="234.4" y="130" text-anchor="middle">15%</text>
+          <text x="379.5" y="130" text-anchor="middle">30%</text>
+          <text x="524.6" y="130" text-anchor="middle">45%</text>
+          <text x="660" y="130" text-anchor="middle">+59%</text>
+          <text x="350" y="165" text-anchor="middle">biceps cross-sectional-area change after 12 weeks</text>
         </g>
-        <!-- scale: 0% at x=55, 10px per 1% -> 59% at x=645 -->
-        <g class="fade-el">
-          <!-- non-responders -->
-          <circle cx="35" cy="170" r="6" fill="#d9978c"/><circle cx="55" cy="158" r="6" fill="#d9978c"/><circle cx="75" cy="172" r="6" fill="#d9978c"/><circle cx="95" cy="150" r="6" fill="#dfc288"/>
-          <!-- the big cluster around 19% (x~245) -->
-          <circle cx="150" cy="165" r="6" fill="#D4C4A0"/><circle cx="170" cy="150" r="6" fill="#D4C4A0"/><circle cx="190" cy="172" r="6" fill="#D4C4A0"/><circle cx="205" cy="140" r="6" fill="#D4C4A0"/>
-          <circle cx="225" cy="160" r="6" fill="#D4C4A0"/><circle cx="245" cy="128" r="6" fill="#D4C4A0"/><circle cx="245" cy="172" r="6" fill="#D4C4A0"/><circle cx="265" cy="148" r="6" fill="#D4C4A0"/>
-          <circle cx="285" cy="166" r="6" fill="#D4C4A0"/><circle cx="225" cy="138" r="6" fill="#D4C4A0"/><circle cx="265" cy="170" r="6" fill="#D4C4A0"/><circle cx="305" cy="152" r="6" fill="#D4C4A0"/>
-          <!-- moderate -->
-          <circle cx="335" cy="164" r="6" fill="#9ec79a"/><circle cx="360" cy="150" r="6" fill="#9ec79a"/><circle cx="390" cy="168" r="6" fill="#9ec79a"/><circle cx="420" cy="156" r="6" fill="#9ec79a"/>
-          <!-- high responders -->
-          <circle cx="470" cy="168" r="6" fill="#9ec79a"/><circle cx="510" cy="158" r="6" fill="#9ec79a"/><circle cx="555" cy="166" r="6" fill="#9ec79a"/><circle cx="600" cy="160" r="6" fill="#9ec79a"/><circle cx="640" cy="168" r="6" fill="#9ec79a"/>
-        </g>
-        <text x="65" y="120" text-anchor="middle" class="v-axis-t" fill="#d9978c">little measured change</text>
-        <text x="245" y="112" text-anchor="middle" class="v-axis-t" fill="#D4C4A0">average (~19%)</text>
-        <text x="590" y="140" text-anchor="middle" class="v-axis-t" fill="#9ec79a">high responders</text>
       </svg>
-      <p class="viz-note">A separate analysis found that larger responders began with and added more satellite cells. That offers one possible mechanism; it still does not turn a 12-week response into a lifetime ceiling. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">Petrella 2008</a></span></p>
+      <p class="viz-note">In Petrella's sixteen-week study, the largest-growth group began with more satellite cells and added more during training. Satellite cells can contribute nuclei to muscle fibers. This association does not predict your personal ceiling. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">Petrella 2008</a></span></p>
     </figure>
 
     <h3>Fiber number is uncertain, too</h3>
-    <p>Human muscle-fiber number varies substantially between people, but counting fibers in a living whole muscle is difficult. A 2026 systematic review found no significant increase after resistance training across the available studies, while stressing that the studies were short and the methods limited. A cross-sectional study of long-term trained people estimated more fibers than in untrained controls, but that design cannot show whether training created them or people with more fibers selected into training. The safest conclusion is that hypertrophy comes mainly from enlarging existing fibers; meaningful adult hyperplasia remains unproven. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">Barton 2026</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38875487/">Maeo 2024</a></span> <span class="grade g-c">mixed</span></p>
+    <p>Hyperplasia means increasing the number of fibers, rather than enlarging them. Counting fibers throughout a living muscle is difficult, so studies often estimate their number from whole-muscle area and a biopsy. A 2026 review of eleven studies found no clear increase after resistance training lasting up to six months. A cross-sectional comparison estimated more fibers in long-term trained men, but could not establish whether training created them. Growth mainly through enlargement of existing fibers is well supported; a meaningful adult increase in fiber number remains uncertain. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">Barton 2026</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38875487/">Maeo 2024</a></span> <span class="grade g-c">limited</span></p>
 
-    <p>Twin studies find substantial heritability for lean mass and strength. That does not mean 50 to 80 percent of your personal result was fixed at birth. Heritability describes variation in a studied population under its particular environment; it does not assign a genetic percentage to one body or reveal how close that body is to a ceiling. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">Arden 1997</a></span> <span class="grade g-b">good</span> Heritability explains why comparison is noisy, not why effort is pointless.</p>
+    <p>One twin study of 706 postmenopausal women estimated heritability at 52 percent for lean mass and 30 percent for grip strength. Heritability describes how much of the variation within that studied population a genetic model explains. It does not mean that 52 percent of one person's muscle was fixed at birth, and it does not measure the limits of training. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">Arden 1997</a></span> <span class="grade g-c">limited</span></p>
 
     <hr class="u-divider">
   </section>
@@ -857,48 +805,31 @@
   <!-- ===================== 14. GAIN VS LOSS ===================== -->
   <section id="gainloss" class="sec" aria-labelledby="gainloss-h">
     <span class="sec-kicker">The limits and the balance</span>
-    <h2 id="gainloss-h" class="sec-h">Built slowly, more durable than it feels</h2>
+    <h2 id="gainloss-h" class="sec-h">Breaks, losses, and retraining</h2>
 
-    <p class="lede">Building muscle is slow, and complete immobilization can shrink it quickly. Ordinary layoffs are less dramatic, and retraining is often faster than the first build. Muscle appears to retain some cellular and epigenetic traces of earlier training, but their permanence and their exact contribution to faster regrowth are still being worked out.</p>
+    <p class="lede">Bed-rest studies remove most weight-bearing activity. A gym break usually leaves walking and ordinary muscle use intact, so the two situations cannot share one predicted rate of loss.</p>
 
-    <p>With <em>complete</em> immobilization, a cast or a hospital bed, muscle can decline around half a percent per day early on, with strength falling faster than size. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> <span class="grade g-b">good</span> Normal life is not bed rest. Short training breaks tend to cause much smaller changes, and the timing varies with training history, activity, illness, and the outcome measured. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">Mujika 2000</a></span></p>
+    <p>A review of bed-rest experiments found that loss of knee-extensor size and strength was fastest early on, with strength declining more sharply than size. The rates changed over time, rather than following one daily percentage. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">Marusic 2021</a></span> A review of short-term detraining found more limited declines in strength, even as some muscle and endurance adaptations reversed. Training history, ongoing activity, and illness change the result. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/10966148/">Mujika 2000</a></span> <span class="grade g-b">good</span></p>
 
-    <figure class="viz reveal" aria-label="A conceptual timeline showing muscle built slowly, reduced during a layoff, then often regained more quickly.">
-      <figcaption>Built slowly, often regained faster</figcaption>
-      <p class="viz-sub">A conceptual timeline: a slow build, a layoff, and a faster return often seen in practice. The exact slopes vary, and the retained mechanism is not fully settled.</p>
-      <svg viewBox="0 0 700 300" role="img" aria-label="Muscle rises slowly over the first year, falls more steeply during a three-month layoff, then climbs back to its old peak much faster than the original build once training resumes.">
-        <line x1="55" y1="250" x2="660" y2="250" class="v-grid-s"/>
-        <line x1="55" y1="40" x2="55" y2="250" class="v-grid-s"/>
-        <g class="v-axis">
-          <text x="55" y="270" text-anchor="middle">start</text>
-          <text x="300" y="270" text-anchor="middle">1 yr</text>
-          <text x="420" y="270" text-anchor="middle">layoff</text>
-          <text x="600" y="270" text-anchor="middle">return</text>
-        </g>
-        <text x="46" y="50" text-anchor="end" class="v-axis-t">muscle</text>
-        <!-- retained myonuclei floor -->
-        <line x1="300" y1="95" x2="660" y2="95" stroke="#b79bc4" stroke-width="1.5" stroke-dasharray="3 6"/>
-        <text x="655" y="86" text-anchor="end" class="v-axis-t" fill="#b79bc4">some myonuclei may be retained</text>
-        <!-- build: slow rise 55->300 -->
-        <path class="draw" style="--len:360" d="M55 240 C 150 215 230 130 300 92" fill="none" stroke="#9ec79a" stroke-width="3.5" stroke-linecap="round"/>
-        <!-- loss: faster drop 300->420 -->
-        <path class="draw" style="--len:200" d="M300 92 C 350 110 390 150 430 175" fill="none" stroke="#d9978c" stroke-width="3.5" stroke-linecap="round"/>
-        <!-- regain: fast rise 430->600 back to peak -->
-        <path class="draw" style="--len:240" d="M430 175 C 490 120 545 98 600 92" fill="none" stroke="#D4C4A0" stroke-width="3.5" stroke-linecap="round"/>
-        <circle cx="300" cy="92" r="4" fill="#9ec79a"/>
-        <circle cx="600" cy="92" r="4" fill="#D4C4A0"/>
-        <text x="175" y="150" class="v-axis-t" fill="#9ec79a">slow build</text>
-        <text x="360" y="205" class="v-axis-t" fill="#d9978c">faster loss</text>
-        <text x="505" y="150" class="v-axis-t" fill="#D4C4A0">often faster regain</text>
-      </svg>
-      <p class="viz-note">Animal work found long retention of acquired myonuclei. A small 2024 human study also found retained myonuclei after 16 weeks of detraining, but did not establish a clear physiological advantage during retraining. Epigenetic traces are another plausible part of the story. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/20713720/">Bruusgaard 2010</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39159314/">Cumming 2024</a></span> <span class="u-src"><a href="https://www.nature.com/articles/s41598-018-20287-3">Seaborne 2018</a></span> <span class="grade g-c">mixed</span></p>
+    <figure class="viz reveal" aria-label="Evidence about retraining and possible mechanisms of muscle memory.">
+      <figcaption>Retraining observations and possible mechanisms</figcaption>
+      <div class="prog-wrap"><table class="prog">
+        <thead><tr><th>Observation</th><th>What it establishes</th></tr></thead>
+        <tbody>
+          <tr><td>A 2024 trial used ten weeks of training, ten weeks off, then ten weeks back</td><td>lost size and strength returned rapidly; final results were similar to continuous training</td></tr>
+          <tr><td>Mouse experiments retained added muscle-cell nuclei during later atrophy</td><td>a possible local memory mechanism, not proof of permanence in people</td></tr>
+          <tr><td>A small human study retained added nuclei after sixteen weeks off</td><td>retention, without a clearly superior subsequent training response</td></tr>
+          <tr><td>Human studies found DNA-methylation changes after training and detraining</td><td>a possible epigenetic trace; its contribution to faster regrowth remains uncertain</td></tr>
+        </tbody>
+      </table></div>
+      <p class="viz-note">The retraining trial had 42 completers who began untrained. Its result does not promise a return date for someone with years of training or an illness-related layoff. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39364857/">Halonen 2024</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/20713720/">Bruusgaard 2010</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39159314/">Cumming 2024</a></span> <span class="u-src"><a href="https://www.nature.com/articles/s41598-018-20287-3">Seaborne 2018</a></span> <span class="grade g-b">good</span></p>
     </figure>
 
-    <h3>What this means for you</h3>
+    <h3>Returning after a break</h3>
     <ul>
       <li><strong>A short layoff is usually manageable.</strong> One or two missed weeks are unlikely to erase months of progress, although skill and performance can feel rusty on the first sessions back.</li>
-      <li><strong>Coming back is often faster than starting.</strong> Retained skill, confidence, connective-tissue tolerance, training knowledge, and possible cellular memory can all contribute. Myonuclei are one candidate mechanism, not the whole proven explanation.</li>
-      <li><strong>Age changes the stakes.</strong> Population estimates suggest muscle mass declines around 1 to 2 percent a year later in life, with strength often falling faster. Individual trajectories vary, and resistance training is one of the most effective ways to preserve function. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">von Haehling 2010</a></span> <span class="grade g-b">good</span></li>
+      <li><strong>Restart below your old dose.</strong> Familiar movements can feel easier than your recovery capacity allows. Increase loads and sets as you establish what you can now repeat comfortably.</li>
+      <li><strong>Age changes the stakes.</strong> Population estimates suggest muscle mass declines around 1 to 2 percent a year later in life, with strength often falling faster. Individual trajectories vary, and resistance training can help preserve function. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">von Haehling 2010</a></span> <span class="grade g-b">good</span></li>
     </ul>
 
     <hr class="u-divider">
@@ -907,34 +838,34 @@
   <!-- ===================== 16. WHEN BIG GOES WRONG ===================== -->
   <section id="toomuch" class="sec" aria-labelledby="toomuch-h">
     <span class="sec-kicker">The boundary</span>
-    <h2 id="toomuch-h" class="sec-h">Natural muscle and bodybuilding risk are different questions</h2>
+    <h2 id="toomuch-h" class="sec-h">When does more become harmful?</h2>
 
-    <p class="lede">The evidence does not show that approaching your natural muscular potential turns strength from healthy to harmful. The clearest dangers at the extreme come from a different exposure: anabolic drugs, severe contest dieting, dehydration, diuretics, and the physiology of professional bodybuilding. Combining those findings into one curve of “muscularity” would pretend that researchers measured a continuum they did not.</p>
+    <p class="lede">Research does not locate a natural muscle size at which lifting's health benefits reverse. That uncertainty should not be replaced with professional-bodybuilding mortality figures. Those athletes can have very different exposures, including anabolic drugs and extreme contest preparation.</p>
 
-    <p>In ordinary populations, greater strength and muscle-strengthening activity are associated with lower mortality. Grip strength is also a marker of age, illness, body size, and general function, so those studies do not prove that adding muscle alone causes longer life. They do establish that frailty and the ability to produce force matter clinically. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25982160/">Leong 2015</a></span> <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">Momma 2022</a></span> <span class="grade g-b">good</span></p>
+    <p>Greater grip strength is associated with lower mortality in ordinary populations. Grip strength also reflects age, illness, body size, and function; that association does not prove that adding muscle alone extends life. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25982160/">Leong 2015</a></span> <span class="grade g-b">good</span></p>
+
+    <p>A 2022 meta-analysis found the lowest mortality associations around 30 to 60 minutes of reported muscle-strengthening activity weekly, with less clear benefit at higher amounts. The authors rated the all-cause-mortality evidence very low in certainty. The studies were observational, generally relied on self-reported activity, and supplied little information at high doses. That curve raises a question about training volume; it does not identify a dangerous muscular size or prove that a longer gym session shortens life. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">Momma 2022</a></span> <span class="grade g-c">limited</span></p>
 
     <figure class="viz reveal" aria-label="A comparison between evidence about natural resistance training and evidence about professional bodybuilding.">
-      <figcaption>Do not draw one curve through two exposures</figcaption>
+      <figcaption>Natural training and competitive bodybuilding</figcaption>
       <div class="prog-wrap"><table class="prog">
         <thead><tr><th>Natural resistance training</th><th>Professional bodybuilding</th></tr></thead>
         <tbody>
           <tr><td>studied through programs, strength, function, and activity</td><td>often includes anabolic drugs and polypharmacy</td></tr>
           <tr><td>hypertrophy returns diminish as weekly volume rises</td><td>contest preparation can include extreme leanness and dehydration</td></tr>
-          <tr><td>no measured point where natural muscle reverses health</td><td>elite competitors show elevated cardiac mortality</td></tr>
-          <tr><td>the main extra cost is time, fatigue, and opportunity</td><td>the medical risk cannot be assigned to muscle mass alone</td></tr>
+          <tr><td>no established size threshold that reverses health benefits</td><td>professionals showed more sudden cardiac deaths than amateurs</td></tr>
+          <tr><td>extra time and fatigue can be tracked; long-term risk is less well mapped</td><td>observed medical risk cannot be assigned to muscle mass alone</td></tr>
         </tbody>
       </table></div>
     </figure>
 
     <h3>What the extreme evidence does show</h3>
-    <p>A 2025 cohort of more than 20,000 male bodybuilding competitors found much higher mortality among professionals than amateurs, particularly sudden cardiac death. The study also reported especially high risk in the largest open class. It is serious evidence about professional bodybuilding as practiced, not a randomized estimate of what each additional pound of muscle does. <span class="u-src"><a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">Vecchiato 2025</a></span> <span class="grade g-b">good</span></p>
+    <p>A 2025 study followed 20,286 male bodybuilding competitors using competition records and web searches for deaths. It identified 121 deaths, including 46 classified as sudden cardiac deaths. Professionals had about five times the sudden-cardiac-death hazard of amateurs. Web searches can miss deaths, and the study could not separate muscular size from drug use or other practices. It is evidence about the sport as practiced, not a controlled comparison of naturally larger and smaller lifters. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/40393525/">Vecchiato 2025</a></span> <span class="grade g-b">good</span></p>
 
-    <p>An autopsy review of bodybuilders who died young found enlarged hearts and thickened walls. Because the sample was selected after death and exposure histories were incomplete, it cannot separate the effects of body mass, anabolic drugs, blood pressure, stimulants, or other practices. It identifies a warning pattern, not a clean dose-response curve for muscularity. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">Escalante 2022</a></span> <span class="grade g-c">mixed</span></p>
+    <p>An autopsy review of bodybuilders who died young found enlarged hearts and thickened walls. Because the sample was selected after death and exposure histories were incomplete, it cannot separate the effects of body mass, anabolic drugs, blood pressure, stimulants, or other practices. The selection prevents it from estimating the risk for all lifters. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">Escalante 2022</a></span> <span class="grade g-c">limited</span></p>
 
     <h3>What this changes about “big enough”</h3>
-    <p>The case for stopping short of maximum natural hypertrophy should rest on evidence we actually have: higher volumes produce smaller average returns, recovery becomes harder, and the pursuit can consume more time and attention. Health risk enters sharply when the method changes to drugs or extreme contest practices. It should not be smuggled backward onto a natural lifter deciding between 12 and 18 weekly sets.</p>
-
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The boundary is method, not a magic size.</b> Natural diminishing returns are mostly an argument about how to spend a life. Professional-bodybuilding mortality is an argument about a high-risk sport and its exposures. Both belong here, but they are not one biological curve.</p></aside>
+    <p>For a natural lifter deciding whether to add sets, the clearest costs to assess are time, fatigue, discomfort, and interference with other activities. Avoiding drugs and extreme contest practices removes important exposures, but it does not establish that every amount of natural training is harmless. A universal safe maximum remains unmeasured.</p>
 
     <hr class="u-divider">
   </section>
@@ -942,40 +873,19 @@
   <!-- ===================== 18. THE BALANCE SHEET ===================== -->
   <section id="balance" class="sec" aria-labelledby="balance-h">
     <span class="sec-kicker">The limits and the balance</span>
-    <h2 id="balance-h" class="sec-h">The balance sheet</h2>
+    <h2 id="balance-h" class="sec-h">When to change the dose</h2>
 
-    <p class="lede">The useful targets in this guide are starting points with error bars. Some inputs level sharply, some continue paying at a lower rate, and some have never been mapped well enough to draw a dose-response curve. The table keeps those differences visible.</p>
+    <p class="lede">Increase a dose when the result gives you a reason. If bodyweight rises quickly while waist size increases and performance barely changes, more food is not automatically helping. If fewer sets let you recover and progress again, returning to the higher volume needs a justification.</p>
 
     <figure class="photo portrait reveal">
       <img src="assets/images/big-enough/augustus.webp" width="1000" height="1500" loading="lazy" decoding="async" alt="The Augustus of Prima Porta, a marble statue of the emperor in an ornately decorated muscle cuirass, one arm raised, standing in a balanced contrapposto pose.">
-      <figcaption>The Augustus of Prima Porta is built on Polykleitos's Canon, the old Greek rule for ideal proportion. Rome did not copy the biggest body it could find. It copied the best-proportioned one. Big enough, on purpose, two thousand years ago.
-        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Augustus_of_Prima_Porta.jpg">Augustus of Prima Porta, c. 20 BC, Vatican Museums. Photo: Justin Benttinen, CC BY-SA 4.0</a></span>
+      <figcaption>The Augustus of Prima Porta combines an idealized body with a decorated cuirass. The Vatican Museums date this statue to the early first century AD and describe its pose as inspired by Polykleitos's Doryphoros.
+        <span class="cred"><a href="https://www.museivaticani.va/content/museivaticani/en/collezioni/musei/braccio-nuovo/Augusto-di-Prima-Porta.html">Vatican Museums catalog</a>. <a href="https://commons.wikimedia.org/wiki/File:Augustus_of_Prima_Porta.jpg">Photo: Justin Benttinen, CC BY-SA 4.0</a></span>
       </figcaption>
     </figure>
 
-    <figure class="viz reveal" aria-label="A table of evidence-supported starting points and the uncertainty around adding more.">
-      <figcaption>Start here, then earn each adjustment</figcaption>
-      <div class="prog-wrap"><table class="prog">
-        <thead><tr><th>Lever</th><th>A useful starting point</th><th>What the evidence says about more</th></tr></thead>
-        <tbody>
-          <tr><td>Training volume</td><td>about 10 fractional sets per muscle group each week</td><td>growth can keep rising, with smaller returns and more fatigue</td></tr>
-          <tr><td>Effort</td><td>most sets about 2 to 3 reps from failure</td><td>closer may add stimulus; failure is optional and more fatiguing</td></tr>
-          <tr><td>Protein</td><td>about 0.7 g per pound a day</td><td>average benefit likely shrinks; individual need is not a cliff</td></tr>
-          <tr><td>Calories</td><td>maintenance or a modest surplus</td><td>larger surpluses add disproportionately more fat</td></tr>
-          <tr><td>Cardio</td><td>a few moderate sessions a week</td><td>whole-muscle hypertrophy is usually preserved; manage recovery</td></tr>
-          <tr><td>Sleep</td><td>a regular 7 to 9 hour opportunity</td><td>there is no validated hypertrophy percentage for each hour</td></tr>
-          <tr><td>Progression</td><td>add load or reps when performance supports it</td><td>progression has several forms; forcing weight can degrade the set</td></tr>
-          <tr><td>Total size</td><td>no universal natural number</td><td>judge the next increment by time, fatigue, recovery, and purpose</td></tr>
-        </tbody>
-      </table></div>
-      <p class="viz-note">Only volume has a current quantitative hypertrophy dose-response across a broad range, and even that curve carries substantial uncertainty. The other rows should not be forced into matching percentages.</p>
-    </figure>
 
-    <p>The evidence can tell you that another block of weekly sets will probably buy less than the first. It cannot price your evenings, your joints, your attention, or the satisfaction of competing. That final conversion is yours. The stopping point begins exactly where the literature ends.</p>
-
-    <div class="disclaimer" role="note">
-      <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your history, your heart, or your joints. Talk to a physician before starting creatine, a new diet, or a serious training program, especially if you have any kidney, heart, or metabolic condition. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
-    </div>
+    <p>A plateau does not reveal your genetic ceiling. Before increasing the dose, check whether the current one is being completed, whether the measurements are comparable, and whether recovery has changed. Even after those checks, the evidence cannot tell you in advance how much the next training block will add.</p>
 
     <hr class="u-divider">
   </section>
@@ -984,17 +894,16 @@
   <section id="sources" class="sec">
     <span class="sec-kicker">The fine print</span>
     <h2 class="sec-h">Sources, and how to read them</h2>
-    <p class="lede">Claims with important numeric or medical consequences are linked where they appear. The grades describe the kind and consistency of evidence, not whether a result is eternally settled.</p>
+    <p class="lede">Sources are linked beside the claims they support. The grades are editorial judgments about each claim, not a formal study-quality assessment. An observational association can be well established while its causal interpretation remains uncertain.</p>
     <details class="u-collapse">
-      <summary class="u-collapse-s">The full list, 49 cited sources, grouped by topic</summary>
+      <summary class="u-collapse-s">The full list, 54 cited sources, grouped by topic</summary>
     <div class="legend">
-      <span><span class="grade g-a">strong</span> major synthesis, guideline, or converging trials</span>
-      <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
-      <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
-      <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
+      <span><span class="grade g-a">strong</span> broadly supported by trials or relevant guidance</span>
+      <span><span class="grade g-b">good</span> useful evidence with important limits</span>
+      <span><span class="grade g-c">limited</span> small, exploratory, inconsistent, or indirect evidence</span>
     </div>
     <ol class="u-collapse-list">
-      <li class="shead">Current synthesis and diminishing returns</li>
+      <li class="shead" value="0">Current synthesis and diminishing returns</li>
       <li value="1"><b>ACSM Position Stand (2026).</b> Resistance-training prescription for muscle function, hypertrophy, and physical performance: overview of reviews. <i>Medicine & Science in Sports & Exercise</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">PubMed</a></li>
       <li><b>Pelland JC, et al. (2026).</b> Resistance-training volume and frequency dose-response meta-regression. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">PubMed</a></li>
       <li><b>Robinson ZP, et al. (2024).</b> Proximity to failure and hypertrophy: meta-regression. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/38970765/">PubMed</a></li>
@@ -1003,11 +912,11 @@
       <li><b>Iversen VM, et al. (2021).</b> Time-efficient strength and hypertrophy training: narrative review. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/34125411/">PubMed</a></li>
       <li><b>Hermann T, et al. (2025).</b> Single-set resistance training to failure or with repetitions in reserve. <a href="https://pubmed.ncbi.nlm.nih.gov/40249908/">PubMed</a></li>
 
-      <li class="shead">Creatine and supplements</li>
+      <li class="shead" value="7">Creatine and supplements</li>
       <li><b>Kreider RB, et al. (2017).</b> ISSN position stand on creatine safety and efficacy. <i>JISSN</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">PMC5469049</a></li>
       <li><b>Burke R, et al. (2023).</b> Creatine and regional muscle hypertrophy: meta-analysis. <i>Nutrients</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10180745/">PMC10180745</a></li>
       <li><b>Kazeminasab F, et al. (2025).</b> Creatine, strength, and power: meta-analysis. <i>Nutrients</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12430374/">PMC12430374</a></li>
-      <li><b>Chilibeck PD, et al. (2017).</b> Creatine and lean mass in older adults. <i>Open Access Journal of Sports Medicine</i>. <a href="https://www.tandfonline.com/doi/full/10.2147/OAJSM.S123529">journal</a></li>
+      <li><b>Chilibeck PD, et al. (2017).</b> Creatine and lean mass in older adults. <i>Open Access Journal of Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/29138605/">PubMed</a></li>
       <li><b>Gordji-Nejad A, et al. (2024).</b> Single-dose creatine during sleep deprivation. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-024-54249-9">nature.com</a></li>
       <li><b>Avgerinos KI, et al. (2018).</b> Creatine and cognition: systematic review. <i>Experimental Gerontology</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/29704637/">PubMed</a></li>
       <li><b>Lak M, et al. (2025).</b> Creatine, DHT, and hair outcomes: randomized trial. <i>JISSN</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12020143/">PMC12020143</a></li>
@@ -1017,7 +926,7 @@
       <li><b>Endocrine Society (2024).</b> Vitamin D for prevention of disease: clinical practice guideline. <i>JCEM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/38828931/">PubMed</a></li>
       <li><b>American Academy of Dermatology.</b> Vitamin D and ultraviolet exposure statement. <a href="https://www.aad.org/media/stats-vitamin-d">AAD</a></li>
 
-      <li class="shead">Training mechanics and recovery</li>
+      <li class="shead" value="19">Training mechanics and recovery</li>
       <li><b>Wackerhage H, et al. (2019).</b> Stimuli and sensors that initiate hypertrophy. <i>Journal of Applied Physiology</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30335577/">PubMed</a></li>
       <li><b>Bernardez-Vazquez R, et al. (2022).</b> Resistance-training variables and hypertrophy: umbrella review. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9302196/">PMC9302196</a></li>
       <li><b>Schoenfeld BJ, Ogborn D, Krieger JW (2017).</b> Weekly set volume and hypertrophy: meta-analysis. <i>Journal of Sports Sciences</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27433992/">PubMed</a></li>
@@ -1028,32 +937,39 @@
       <li><b>Schoenfeld BJ, Aragon AA, Krieger JW (2013).</b> Protein timing and hypertrophy: meta-analysis. <i>JISSN</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3879660/">PMC3879660</a></li>
       <li><b>Schoenfeld BJ (2020).</b> <i>Science and Development of Muscle Hypertrophy</i>, second edition. <a href="https://us.humankinetics.com/products/science-and-development-of-muscle-hypertrophy-2nd-edition">publisher</a></li>
 
-      <li class="shead">Cardio and nutrition</li>
+      <li><b>AASM/SRS (2015).</b> Recommended sleep duration for a healthy adult: joint consensus statement. <i>Sleep</i>. <a href="https://aasm.org/resources/pdf/adultsleepdurationconsensus.pdf">statement</a></li>
+
+      <li class="shead" value="29">Cardio and nutrition</li>
+      <li><b>Schumann M, et al. (2022).</b> Compatibility of concurrent aerobic and strength training: updated systematic review and meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/34757594/">PubMed</a></li>
+      <li><b>World Health Organization (2020).</b> Guidelines on physical activity and sedentary behaviour. <a href="https://www.who.int/publications/i/item/9789240015128">WHO</a></li>
+      <li><b>Murphy CH, Hector AJ, Phillips SM (2015).</b> Considerations for protein intake in managing weight loss in athletes. <i>European Journal of Sport Science</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/25014731/">PubMed</a></li>
       <li><b>Mandsager K, et al. (2018).</b> Cardiorespiratory fitness and long-term mortality. <i>JAMA Network Open</i>. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2707428">JAMA</a></li>
       <li><b>Wen CP, et al. (2011).</b> Minimum physical activity and mortality. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/21846575/">PubMed</a></li>
-      <li><b>Lundberg TR, et al. (2022).</b> Concurrent aerobic and strength training: meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/35476184/">PubMed</a></li>
+      <li><b>Lundberg TR, et al. (2022).</b> Concurrent aerobic and strength training and muscle-fiber hypertrophy: meta-analysis. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/35476184/">PubMed</a></li>
       <li><b>Monserdà-Vilaró A, et al. (2023).</b> Concurrent training and muscle hypertrophy: systematic review and meta-analysis. <a href="https://pubmed.ncbi.nlm.nih.gov/36508686/">PubMed</a></li>
       <li><b>Schoenfeld BJ, Aragon AA (2018).</b> Protein per meal and distribution. <i>JISSN</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5828430/">PMC5828430</a></li>
       <li><b>Helms ER, et al. (2023).</b> Energy surplus size and resistance-training outcomes. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10620361/">PMC10620361</a></li>
 
-      <li class="shead">Individual variation, loss, and retraining</li>
+      <li class="shead" value="38">Individual variation, loss, and retraining</li>
+      <li><b>Halonen V, et al. (2024).</b> Periodic and continuous resistance training: adaptations during detraining and retraining. <i>Scandinavian Journal of Medicine & Science in Sports</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/39364857/">PubMed</a></li>
       <li><b>Hubal MJ, et al. (2005).</b> Variability in response to resistance training. <i>Medicine & Science in Sports & Exercise</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/15947721/">PubMed</a></li>
       <li><b>Petrella JK, et al. (2008).</b> Satellite cells and different hypertrophy responses. <i>Journal of Applied Physiology</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/18436694/">PubMed</a></li>
       <li><b>Barton NV, et al. (2026).</b> Human muscle hyperplasia: systematic review and meta-analysis. <a href="https://pubmed.ncbi.nlm.nih.gov/41307564/">PubMed</a></li>
       <li><b>Maeo S, et al. (2024).</b> Long-term resistance training and estimated fiber number: cross-sectional study. <a href="https://pubmed.ncbi.nlm.nih.gov/38875487/">PubMed</a></li>
       <li><b>Arden NK, Spector TD (1997).</b> Heritability of lean mass and strength in twins. <i>Journal of Bone and Mineral Research</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/9421240/">PubMed</a></li>
       <li><b>Marusic U, et al. (2021).</b> Muscle and strength loss during bed rest. <i>Journal of Applied Physiology</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8325614/">PMC8325614</a></li>
-      <li><b>Mujika I, Padilla S (2000).</b> Detraining. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/10999421/">PubMed</a></li>
+      <li><b>Mujika I, Padilla S (2000).</b> Detraining, Part I: short-term insufficient training stimulus. <i>Sports Medicine</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/10966148/">PubMed</a></li>
       <li><b>Bruusgaard JC, et al. (2010).</b> Myonuclei and muscle memory in mice. <i>PNAS</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/20713720/">PubMed</a></li>
       <li><b>Cumming KT, et al. (2024).</b> Human myonuclei after detraining and retraining: small longitudinal study. <a href="https://pubmed.ncbi.nlm.nih.gov/39159314/">PubMed</a></li>
       <li><b>Seaborne RA, et al. (2018).</b> Epigenetic memory of human skeletal muscle. <i>Scientific Reports</i>. <a href="https://www.nature.com/articles/s41598-018-20287-3">nature.com</a></li>
       <li><b>von Haehling S, et al. (2010).</b> Sarcopenia and age-related muscle loss. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3060646/">PMC3060646</a></li>
 
-      <li class="shead">Strength, mortality, and bodybuilding</li>
+      <li class="shead" value="50">Strength, mortality, and bodybuilding</li>
       <li><b>Leong DP, et al. (2015).</b> Grip strength and mortality in the PURE cohort. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/25982160/">PubMed</a></li>
       <li><b>Momma H, et al. (2022).</b> Muscle-strengthening activity and mortality: meta-analysis. <i>British Journal of Sports Medicine</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9209691/">PMC9209691</a></li>
-      <li><b>Vecchiato M, et al. (2025).</b> Mortality in competitive bodybuilders. <i>European Heart Journal</i>. <a href="https://academic.oup.com/eurheartj/article/46/30/3006/8131432">EHJ</a></li>
+      <li><b>Vecchiato M, et al. (2025).</b> Mortality in competitive bodybuilders. <i>European Heart Journal</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/40393525/">PubMed</a></li>
       <li><b>Escalante G, et al. (2022).</b> Cardiac findings in deceased bodybuilders. <i>Journal of Functional Morphology and Kinesiology</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9781327/">PMC9781327</a></li>
+
     </ol>
     </details>
 
@@ -1064,11 +980,9 @@
   <section id="colophon" class="sec">
     <span class="sec-kicker">Colophon</span>
     <h2 class="sec-h">How this was made</h2>
-    <p class="lede">This is an AI-assisted field guide steered and edited by a human enthusiast, not a clinical guideline. The argument was rebuilt around the 2026 ACSM position stand and current dose-response work, then each consequential claim was matched to the source linked beside it.</p>
+    <p class="lede">This is an AI-assisted guide edited by a human enthusiast. The training templates and session times are practical examples assembled for the page. They were not tested as written.</p>
 
-    <p>The page keeps uncertainty visible on purpose. Coaching estimates are not presented as longitudinal science, observational associations are not written as causes, and the professional-bodybuilding evidence is separated from natural hypertrophy. If a source changes the answer, the page should change with it.</p>
-
-    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Originally researched June 2026. Re-audited and revised July 2026. Forty-nine cited sources, eleven diagrams, and two interactive tools. Not medical advice.</p>
+    <p class="note" style="font-size:0.95rem;color:var(--text-dim)">Originally researched June 2026. Sources and calculations reviewed October 2026. This guide concerns healthy adults and does not cover training or supplement treatment for a medical condition.</p>
   </section>
 
   </main>
@@ -1076,7 +990,7 @@
   <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
   <nav class="u-next" aria-label="Keep reading">
     <p class="u-next-k">Next in Staying Alive</p>
-    <p class="u-next-t"><a class="u-next-link" href="still-moving.html">Still Moving: The Two Thirds of Fitness Lifting Leaves Out</a></p>
+    <p class="u-next-t"><a class="u-next-link" href="still-moving.html">Still Moving</a></p>
     <p class="u-next-more"><a href="staying-alive.html">All 4 posts in Staying Alive</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
@@ -1087,6 +1001,6 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/big-enough.js"></script>
+  <script src="js/big-enough.js?v=20261004-1"></script>
 </body>
 </html>

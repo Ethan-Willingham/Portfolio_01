@@ -105,12 +105,12 @@ const HUBS = [
     slug: 'staying-alive', title: 'Staying Alive', inProgress: true,
     card: { thumb: 'big-enough.jpg', alt: 'The bowed bearded head and massive shoulders of the Farnese Hercules, an ancient marble statue.',
       desc: 'How to take care of the one body you get: muscle, the heart, food, sleep, and the rest. The actionable science, with the hype stripped off.' },
-    lead: 'Taking care of the one body you get, from muscle and the heart to food and sleep. The actionable health science, sorted from what is settled to what is merely sold.',
+    lead: "Four guides to muscle, cardio, food, and health outside the gym. Each pairs practical examples with the studies behind the advice.",
     members: [
-      live('big-enough.html', 'Big Enough: How Much Muscle Is Actually Worth Building', 'big-enough.jpg', 'muscle', 1, "How to build muscle the natural way, and the harder skill of knowing when to stop. One supplement that works, real food, enough sleep, and a last ten percent that costs twice the effort for a result almost nobody will notice."),
-      live('still-moving.html', 'Still Moving: The Two Thirds of Fitness Lifting Leaves Out', 'still-moving.jpg', 'the heart', 2, "The two thirds of fitness lifting leaves out: cardio and stretching. How fit your heart is predicts how long you live better than almost anything, most stretching is wasted motion, and a small dose buys nearly all of the benefit."),
-      live('what-to-eat.html', "What You're Supposed to Eat", 'what-to-eat.jpg', 'food', 3, "What to eat, sorted from the settled to the sold. Weight is just energy, health is mostly real food, and every famous diet ties when you actually test it. The few things that are true, and the long aisle of things that are not."),
-      live('the-other-hours.html', 'The Other Hours: Health Outside the Gym and the Kitchen', 'the-other-hours.jpg', 'the rest', 4, "Everything that decides your health but is not the gym or the kitchen: sleep, the people you love, what you breathe and drink, the medical numbers that save lives, and the recovery rituals that mostly do not work. Ranked biggest lever first."),
+      live("big-enough.html", "Big Enough", "big-enough.jpg", "muscle", 1, "More weekly sets can build more muscle, with smaller returns. The training plans and protein tool help you choose a routine you can keep doing."),
+      live("still-moving.html", "Still Moving", "still-moving.jpg", "the heart", 2, "Brisk walking counts as aerobic activity. Fit cardio around lifting, total your weekly activity, and see what stretching and strength work can change."),
+      live("what-to-eat.html", "What You're Supposed to Eat", "what-to-eat.jpg", "food", 3, "In a controlled feeding trial, people ate more from the ultra-processed menu. Compare that result with diet trials, protein and fiber targets, and the evidence for supplements."),
+      live("the-other-hours.html", "The Other Hours", "the-other-hours.jpg", "the rest", 4, "Blood pressure can be high without symptoms. Read about sleep, smoking, screening, and the limits of popular recovery treatments, then use the checklist to choose a place to start."),
     ],
   },
   {

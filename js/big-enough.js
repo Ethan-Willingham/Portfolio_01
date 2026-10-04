@@ -8,7 +8,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = !window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(pointer: fine)').matches;
 
   /* ---------- 1. REVEAL + CHART ANIMATION ---------- */
   (function () {
@@ -28,6 +28,7 @@
         if (e.isIntersecting) { fire(e.target); io.unobserve(e.target); }
       });
     }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+    document.documentElement.classList.add('be-animate');
     reveals.forEach(function (el) { io.observe(el); });
     // Safety backstop: never leave content hidden if something goes wrong.
     setTimeout(function () { reveals.forEach(function (el) { if (!el.classList.contains('in')) fire(el); }); }, 4000);
@@ -41,36 +42,57 @@
     var gain = document.getElementById('pc-gain'), cut = document.getElementById('pc-cut');
     var out = document.getElementById('pc-out'), meal = document.getElementById('pc-meal');
     var unit = 'lb', goal = 'gain';
+    var LB_TO_KG = 0.45359237;
+    var kgWeight = null;
 
+    function readWeight() {
+      var val = w.valueAsNumber;
+      var valid = Number.isFinite(val) && val >= Number(w.min) && val <= Number(w.max);
+      kgWeight = valid ? (unit === 'kg' ? val : val * LB_TO_KG) : null;
+      w.setAttribute('aria-invalid', String(!valid));
+    }
     function calc() {
-      var val = parseFloat(w.value);
-      if (isNaN(val) || val <= 0) { out.textContent = '--'; return; }
-      val = Math.max(30, Math.min(unit === 'kg' ? 250 : 550, val));
-      var kgWeight = unit === 'kg' ? val : val * 0.453592;
-      var perKg = goal === 'gain' ? 1.6 : 2.1;
-      var grams = Math.round(kgWeight * perKg);
-      var perMeal = Math.round(grams / 4);
-      out.textContent = grams + ' g';
-      meal.innerHTML = 'That is about <b>' + perMeal + ' g per meal</b> across 4 meals' +
-        (goal === 'cut' ? ', a bit higher because you are dieting.' : '.');
+      var invalid = kgWeight === null || !w.validity.valid;
+      w.setAttribute('aria-invalid', String(invalid));
+      if (invalid) {
+        out.textContent = '--';
+        meal.textContent = "Enter a bodyweight within the tool's range: 60 to 550 lb, or the equivalent in kg.";
+        return;
+      }
+      var low = goal === 'gain' ? 1.6 : 1.8;
+      var high = goal === 'gain' ? 1.6 : 2.7;
+      var lowGrams = Math.round(kgWeight * low), highGrams = Math.round(kgWeight * high);
+      out.textContent = lowGrams + (goal === 'cut' ? ' to ' + highGrams : '') + ' g';
+      meal.textContent = 'If you divide that across 4 meals, about ' + Math.round(kgWeight * low / 4) +
+        (goal === 'cut' ? ' to ' + Math.round(kgWeight * high / 4) : '') + ' g per meal. Four meals is optional.';
     }
     function setUnit(u) {
       if (u === unit) return;
-      // convert the number so the same body stays selected
-      var val = parseFloat(w.value);
-      if (!isNaN(val)) { w.value = Math.round(u === 'lb' ? val / 0.453592 : val * 0.453592); }
+      // Keep the underlying weight, rather than converting rounded displays back and forth.
       unit = u;
+      w.min = u === 'kg' ? String(60 * LB_TO_KG) : '60';
+      w.max = u === 'kg' ? String(550 * LB_TO_KG) : '550';
+      var converted = u === 'kg' ? kgWeight : kgWeight / LB_TO_KG;
+      var rounded = Math.round(converted * 10) / 10;
+      w.value = kgWeight === null ? '' : String(Math.min(Number(w.max), Math.max(Number(w.min), rounded)));
+      w.setAttribute('aria-label', 'Bodyweight in ' + (u === 'kg' ? 'kilograms' : 'pounds'));
       kg.classList.toggle('on', u === 'kg'); lb.classList.toggle('on', u === 'lb');
+      kg.setAttribute('aria-pressed', String(u === 'kg')); lb.setAttribute('aria-pressed', String(u === 'lb'));
       calc();
     }
-    function setGoal(g) { goal = g; gain.classList.toggle('on', g === 'gain'); cut.classList.toggle('on', g === 'cut'); calc(); }
+    function setGoal(g) {
+      goal = g;
+      gain.classList.toggle('on', g === 'gain'); cut.classList.toggle('on', g === 'cut');
+      gain.setAttribute('aria-pressed', String(g === 'gain')); cut.setAttribute('aria-pressed', String(g === 'cut'));
+      calc();
+    }
 
-    w.addEventListener('input', calc);
+    w.addEventListener('input', function () { readWeight(); calc(); });
     kg.addEventListener('click', function () { setUnit('kg'); });
     lb.addEventListener('click', function () { setUnit('lb'); });
     gain.addEventListener('click', function () { setGoal('gain'); });
     cut.addEventListener('click', function () { setGoal('cut'); });
-    calc();
+    readWeight(); calc();
   })();
 
   /* ---------- 3b. WEEKLY VOLUME TOOL ---------- */
@@ -85,7 +107,7 @@
     var X0 = 35, XMAX = 320;
 
     function update() {
-      var sets = parseInt(slider.value, 10);
+      var sets = parseFloat(slider.value);
       var x = X0 + (sets / 30) * (XMAX - X0);
       setsEl.textContent = sets + (sets === 1 ? ' set' : ' sets');
       if (dot) dot.setAttribute('cx', x.toFixed(1));
@@ -95,21 +117,25 @@
       }
 
       var label, v;
-      if (sets < 5) {
+      if (sets === 0) {
+        label = 'No weekly sets selected';
+        v = 'This selects no resistance-training dose for this muscle group. Trials showing growth from low volume still involve some training.';
+      } else if (sets < 5) {
         label = 'Low weekly dose';
         v = 'This may build muscle, especially for a novice, but it sits below the volume current reviews associate with larger average hypertrophy.';
       } else if (sets < 10) {
         label = 'Productive dose';
         v = 'A time-efficient amount that can build muscle. If growth is the priority and recovery is good, more weekly work may help.';
       } else if (sets < 20) {
-        label = 'High-return range';
-        v = 'A defensible hypertrophy range for many lifters. More sets can still add growth, but the average return per set gets smaller.';
+        label = 'Common starting range';
+        v = 'Around ten challenging sets is a useful starting point when growth is the priority. This band is not a measured optimum. More can help, with smaller average returns.';
       } else {
         label = 'Smaller-return range';
         v = 'Higher volume can still work. Evidence is thinner at the far end, and the added fatigue makes individual recovery and progress the deciding tests.';
       }
       bandEl.textContent = label;
-      verdictEl.innerHTML = v;
+      verdictEl.textContent = v;
+      slider.setAttribute('aria-valuetext', sets + ' weekly sets. ' + label + '.');
     }
     slider.addEventListener('input', update);
     update();

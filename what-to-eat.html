@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>What You're Supposed to Eat</title>
-  <meta name="description" content="A sourced, illustrated field guide to eating well. Why weight is just energy and health is just food, why every famous diet ties, the one food rule that does the most, the supplements worth taking, and why diets fail (and the drug that changed it). Every claim cited.">
+  <meta name="description" content="An illustrated guide to diet comparisons, food quality, protein, fiber, supplements, and weight-loss medicines, with linked evidence and practical limits.">
   <meta property="og:title" content="What You're Supposed to Eat">
-  <meta property="og:description" content="The third thing you can train: what you eat. Weight is energy, health is food, and almost every diet you have heard of is the same diet wearing a different hat. How little it takes to eat well, and where eating 'better' stops paying you back. Sourced and illustrated.">
+  <meta property="og:description" content="What diet trials can tell us about weight, appetite, and health. An illustrated guide to food choices, supplements, and weight-loss medicines.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/what-to-eat.html">
@@ -42,7 +42,7 @@
      and the references. No em dashes anywhere.
      ============================================================ */
   :root {
-    --measure: 780px;
+    --measure: 820px;
     --wide: 1080px;
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
     --c-gold:  #D4C4A0;
@@ -60,27 +60,30 @@
   }
 
   html { overflow-x: hidden; }
-  body { overflow-x: hidden; padding-left: 0; padding-right: 0; }
+  body { overflow-x: hidden; padding-left: 0; padding-right: 0; font-family: var(--font-heading); }
 
   .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
-  .post-back.be-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
+  .post-back.be-back { display: block; width: 100%; max-width: var(--measure); margin-left: auto; margin-right: auto; padding-top: clamp(2.5rem, 7vw, 5rem); padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3rem, 11vw, 6rem); line-height: 0.96; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.2rem, 3.2vw, 1.6rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.4rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
+  .hero { display: flex; flex-direction: column; justify-content: center; min-height: calc(100svh - 4rem); max-width: 61rem; margin: 0 auto; padding: clamp(4.5rem, 11svh, 7rem) var(--gutter); text-align: center; }
+  .hero-title { max-width: 14ch; margin: 0 auto; font-family: var(--font-heading); font-weight: 700; font-size: clamp(3.45rem, 11vw, 6.9rem); line-height: .94; letter-spacing: -.035em; color: var(--text-bright); text-wrap: balance; }
+  .hero-dek { max-width: 49ch; margin: 1.6rem auto 0; font-family: var(--font-heading); font-style: normal; font-size: 1.24rem; line-height: 1.58; color: var(--text-dim); text-wrap: pretty; }
+  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin: 1.6rem 0 0; padding-top: 0; border-top: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5em 1.05em; }
   .hero-meta b { color: var(--accent); font-weight: 400; }
   .hero-meta .sep { opacity: 0.4; }
 
   /* ---------- SECTIONS ---------- */
-  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(3.4rem, 6vw, 5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
+  .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(4.5rem, 8svh, 6.5rem) var(--gutter) 0; scroll-margin-top: 1.5rem; }
   .sec.first { padding-top: clamp(2.4rem, 5vw, 3.4rem); }
   .sec > :last-child { margin-bottom: 0; }
   .sec-kicker { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sec-accent, var(--accent)); display: block; margin-bottom: 0.7rem; }
-  .sec-kicker::before { content: ""; display: block; width: 44px; height: 3px; border-radius: 2px; background: var(--sec-accent, var(--accent)); margin-bottom: 0.95rem; }
-  .sec-h { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.95rem, 5.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.018em; color: var(--text-bright); margin: 0 0 0.7rem; text-wrap: balance; }
+  .sec-kicker { text-align: center; margin-bottom: 1.1rem; }
+  .sec-kicker::before { display: none; }
+  .sec-h { max-width: 22ch; margin: 0 auto 1.7rem; font-family: var(--font-heading); font-weight: 700; font-size: clamp(2rem, 5vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; color: var(--text-bright); text-align: center; text-wrap: balance; }
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1.15em; text-wrap: pretty; }
+  .sec > p { max-width: 64ch; font-family: var(--font-heading); font-size: 1.3rem; line-height: 1.74; }
+  .sec .u-checks, .sec .legend, .chapters { font-family: var(--font-body); }
   .sec h3 { font-family: var(--font-heading); font-weight: 700; font-size: 1.42rem; color: var(--text-bright); line-height: 1.22; margin: 2.6rem 0 0.6rem; scroll-margin-top: 1.5rem; }
   .sec h4 { font-family: var(--font-heading); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin: 1.5rem 0 0.4rem; }
   .sec a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.2s; }
@@ -187,6 +190,15 @@
   .tool-seg button { font-family: var(--font-body); font-size: 0.88rem; color: var(--text-dim); background: transparent; border: none; padding: 0.42em 0.85em; cursor: pointer; transition: background 0.15s, color 0.15s; }
   .tool-seg button + button { border-left: 1px solid var(--rule); }
   .tool-seg button.on { background: var(--accent); color: #1e2420; font-weight: 600; }
+  @media (max-width: 520px) {
+    .tool-seg { flex-wrap: wrap; max-width: 100%; }
+    .tool-seg button { min-height: 44px; flex: 1 0 auto; }
+    #s-pick { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #s-pick button { min-width: 0; }
+    #s-pick button:nth-child(odd) { border-left: 0; }
+    #s-pick button:nth-child(n+3) { border-top: 1px solid var(--rule); }
+    #s-pick button:last-child { grid-column: 1 / -1; }
+  }
   .tool-out { margin-top: 1em; padding: 0.9em 1.05em; border-radius: 10px; background: rgba(0,0,0,0.22); border: 1px solid var(--rule); }
   .tool-out .big { font-family: var(--font-heading); font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.4rem); color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
   .tool-out .lbl { font-family: var(--font-body); font-size: 0.9rem; color: var(--text-dim); }
@@ -228,13 +240,13 @@
   .disclaimer strong { color: var(--accent-hover); }
 
   /* ---------- ANIMATION ---------- */
-  @media all {
-    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+  @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
+    .we-animate .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
     .reveal.in { opacity: 1; transform: none; }
-    .draw { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); }
+    .we-animate .draw { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); }
     .draw.go { animation: draw 1.6s var(--ease) forwards; }
     @keyframes draw { to { stroke-dashoffset: 0; } }
-    .fade-el { opacity: 0; }
+    .we-animate .fade-el { opacity: 0; }
     .fade-el.go { animation: fadeEl 0.9s ease forwards; }
     @keyframes fadeEl { to { opacity: 1; } }
   }
@@ -249,6 +261,7 @@
     .reading-progress, .site-footer, .post-back, .btt-fab { display: none !important; }
     body { background: #fff; color: #161616; }
     .sec, .hero { max-width: none; }
+    .hero { min-height: 0; padding-block: 1.5rem; }
     .sec p, .sec li, .lede { color: #161616; }
     figure.viz, .tool, .u-callout, .u-stats, .u-pq { break-inside: avoid; }
     a { color: #161616; }
@@ -265,8 +278,8 @@
   <!-- ===================== HERO ===================== -->
   <header class="hero">
     <h1 class="hero-title">What You're Supposed to Eat</h1>
-    <p class="hero-dek">Muscle and the heart are two things you can train. Food is the third. Here is what actually matters once you clear away the noise: why weight is just energy and health is just food, why every famous diet ties, and where eating "better" quietly stops paying you back.</p>
-    <p class="hero-meta">A field guide to eating well <span class="sep">/</span> <b>50 sources</b> <span class="sep">/</span> 24 min read</p>
+    <p class="hero-dek">Weight-loss diets often produce similar results. The useful differences are what you can sustain, how the food affects your appetite, and what it does to your health.</p>
+    <p class="hero-meta">A field guide to eating well <span class="sep">/</span> <b>59 sources</b> <span class="sep">/</span> 17 min read</p>
   </header>
 
   <main id="guide">
@@ -294,47 +307,44 @@
     <span class="sec-kicker">Start here</span>
     <h2 id="start-h" class="sec-h">The short version</h2>
 
-    <p class="lede">Four of the most popular diets in the world were run head to head for a year: Atkins, the Zone, Weight Watchers, and Ornish. They disagree about almost everything. People lost about the same amount of weight on all four. The only thing that predicted who kept it off was how closely they stuck to the plan, not which plan they drew. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/200094">Dansinger 2005</a></span> <span class="grade g-b">good</span></p>
+    <p class="lede">In a trial of 160 adults, Atkins, the Zone, Weight Watchers, and Ornish produced similar average weight loss after a year. The results ranged from about 5 to 7 pounds, with no statistically significant difference between diets. Adherence was much more closely associated with weight loss than the assigned diet. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/200094">Dansinger 2005</a></span> <span class="grade g-b">good</span></p>
 
-    <p>This guide is about food, the third thing you can train alongside the muscle in <a href="big-enough.html">Big Enough</a> and the heart in <a href="still-moving.html">Still Moving</a>. It is also the one surrounded by the most noise: a whole industry is paid to make eating complicated, because complicated is what you can sell. Two simple ideas cut through almost all of it.</p>
+    <p>This is the food companion to <a href="big-enough.html">Big Enough</a>, on muscle, and <a href="still-moving.html">Still Moving</a>, on movement. The comparisons below show what different menus changed in actual studies. The calculator gives rough planning estimates.</p>
 
-    <p>The first is that two different questions get tangled together. How much you weigh is, to a first approximation, a question of energy: calories in against calories out. How long and how well you live is a question of food quality: more whole and minimally processed things, more fiber and protein, less ultra-processed food and less liquid sugar. Mix the two questions up and you get the whole confused mess of modern diet advice. Keep them apart and most of it falls into place.</p>
 
-    <p>The second is the idea this site keeps circling back to. Every lever works up to a point, then quietly stops paying. Enough protein helps; double it and you have bought expensive urine. Some fiber helps a lot, and unusually keeps helping. A daily walk helps; a daily marathon does not help more. And a couple of levers do not flatten at all; push them and they bend back down into harm. The whole skill is finding where each one stops paying and leaving it there.</p>
+
 
     <figure class="viz reveal" aria-label="The whole guide on a single card: six rules for eating well.">
       <figcaption>The whole thing, on one card</figcaption>
-      <p class="viz-sub">If you did only these six things and ignored every other word written about food, you would be eating better than almost everyone.</p>
+      <p class="viz-sub">Six decisions that account for much of the practical advice below.</p>
       <div class="gcards" role="list">
         <div class="gcard" role="listitem" style="--gc-accent:#8fb3c7">
           <div class="gc-title">1 &#183; Weight is energy</div>
-          <div class="gc-body">Eat a little less than you burn. The diet's name does not matter.</div>
+          <div class="gc-body">For weight loss, sustain a calorie deficit. Choose a pattern you can keep.</div>
         </div>
         <div class="gcard" role="listitem" style="--gc-accent:#9ec79a">
           <div class="gc-title">2 &#183; Protein</div>
-          <div class="gc-body">About 0.7 g per pound. It fills you up and keeps your muscle.</div>
+          <div class="gc-body">About 0.7 g per pound is a useful target for someone lifting regularly.</div>
         </div>
         <div class="gcard" role="listitem" style="--gc-accent:#9ec79a">
           <div class="gc-title">3 &#183; Fiber</div>
-          <div class="gc-body">25 to 38 g a day. Most people get half. From food, not pills.</div>
+          <div class="gc-body">25 to 38 g a day for ages 19 to 50, with lower targets for older adults.</div>
         </div>
         <div class="gcard" role="listitem" style="--gc-accent:#cf9f78">
-          <div class="gc-title">4 &#183; Mostly real food</div>
-          <div class="gc-body">The less it came from a factory, the better. That is most of it.</div>
+          <div class="gc-title">4 &#183; Food quality</div>
+          <div class="gc-body">Build meals from varied foods. Frozen vegetables and canned beans count.</div>
         </div>
         <div class="gcard" role="listitem" style="--gc-accent:#dfc288">
-          <div class="gc-title">5 &#183; Skip liquid sugar</div>
-          <div class="gc-body">Soda, juice, the sweet coffee. The single easiest win there is.</div>
+          <div class="gc-title">5 &#183; Sugary drinks</div>
+          <div class="gc-body">Replace some soda and sweetened coffee with water or unsweetened drinks.</div>
         </div>
         <div class="gcard" role="listitem" style="--gc-accent:#b79bc4">
-          <div class="gc-title">6 &#183; Most pills, skip</div>
-          <div class="gc-body">The multivitamin does nothing. Five or so are worth taking.</div>
+          <div class="gc-title">6 &#183; Supplements</div>
+          <div class="gc-body">Name the need before buying. Benefits differ by product and person.</div>
         </div>
       </div>
-      <p class="viz-note">That is the whole pantry. The chapters that follow are just the manual: what each rule rests on, how hard to pull it, and the exact point where pulling harder stops paying you back.</p>
+      <p class="viz-note">The protein figure comes from resistance-training studies. The fiber figures are age-based adequate-intake targets. Both are explained below.</p>
     </figure>
-
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The thread that ties this together.</b> Almost every chapter lands in the same place: a lever that works up to a point, then goes flat, and once or twice bends into harm. The skill this guide is really teaching is the same one Big Enough taught for muscle and Still Moving taught for the heart. Find where each lever stops paying, park it there, and go eat dinner.</p></aside>
 
     <hr class="u-divider">
   </section>
@@ -342,40 +352,38 @@
   <!-- ===================== 2. TWO QUESTIONS ===================== -->
   <section id="two" class="sec" aria-labelledby="two-h">
     <span class="sec-kicker">The map</span>
-    <h2 id="two-h" class="sec-h">Weight is energy, health is food</h2>
+    <h2 id="two-h" class="sec-h">Weight and health</h2>
 
-    <p class="lede">The most useful thing you can do with all the diet noise is sort it into two piles, because it is answering two different questions that have two different answers. One is about the number on the scale. The other is about how long you last. They are not the same question, and almost nothing solves both at once.</p>
+    <p class="lede">Losing weight and reducing disease risk are related goals. A calorie deficit can lower weight; changing the foods within that calorie budget can also affect cholesterol, blood pressure, and appetite.</p>
 
-    <h3>The scale is energy</h3>
-    <p>How much you weigh comes down to energy balance: eat fewer calories than you burn and you lose weight, eat more and you gain. This part is not really in scientific dispute. Every honest weight-loss diet ever invented, low-carb, low-fat, fasting, keto, points, whatever, is a different trick for getting you to eat fewer calories without feeling like you are starving. That is the whole job. The branding is which trick.</p>
+    <h3>Energy balance</h3>
+    <p>Over time, taking in less usable energy than you expend reduces the body's energy stores. But neither side of that equation stays fixed: hunger, movement, metabolism, and body size all change. Short-term scale changes also include water and the food in your gut. Energy balance is an accounting rule, not an explanation of why weight loss is easy or hard. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3302369/">Hall 2012</a></span> <span class="grade g-b">good</span></p>
 
-    <p>You will hear that "a calorie is a calorie" is a lie, and there is a real point hiding in that. For the scale, it is basically true: lock calories down and people lose about the same weight whatever the source. But for everything around the scale it bends two ways. Protein costs your body far more energy just to digest, 20 to 30 percent of its calories, against almost nothing for fat, and it fills you up more, so 200 calories of chicken and 200 calories of butter do not land the same way. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC524030/">Westerterp 2004</a></span> <span class="grade g-b">good</span> And at the same calorie deficit, people eating plenty of protein lose almost all of it as fat instead of muscle. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26817506/">Longland 2016</a></span> <span class="grade g-b">good</span> So calories decide how much you lose. Protein and food quality decide how much of it is fat, and how miserable the whole thing feels.</p>
+    <p>Protein takes more energy to process than fat or carbohydrate. A commonly cited estimate is 20 to 30 percent of protein's calories, compared with 0 to 3 percent for fat. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC524030/">Westerterp 2004</a></span> <span class="grade g-b">good</span> Protein and resistance training can also help preserve lean tissue during weight loss. In one four-week trial of 40 young men on a large calorie deficit and an intensive exercise program, the higher-protein group gained more lean mass and lost more fat. The result came from high protein together with a demanding training program. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/26817506/">Longland 2016</a></span> <span class="grade g-b">good</span></p>
 
-    <h3>Why "just count calories" fails real people</h3>
-    <p>If weight is energy, why is counting calories such a reliable way to fail? Because people cannot actually count. When researchers measured it directly, people underreported what they ate by an average of 47 percent and overreported their exercise by 51 percent. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/1454084/">Lichtman 1992</a></span> <span class="grade g-c">mixed</span> Not because they were lying, but because humans are bad at it. The number on the package is soft, the spoonful is bigger than you think, and the memory of the day is kinder than the day was. The arithmetic is correct. The data you feed it is garbage.</p>
+    <h3>What counting can miss</h3>
+    <p>Food records can miss a great deal. In a 1992 study, ten people with obesity who reported difficulty losing weight underreported their calorie intake by an average of 47 percent and overreported physical activity by 51 percent. Those figures describe a small, selected group, not the average person. <span class="u-src"><a href="https://www.nejm.org/doi/abs/10.1056/NEJM199212313272701">Lichtman 1992</a></span> <span class="grade g-c">mixed</span> A record of food intake is a measurement with error.</p>
 
-    <p>And you cannot fix the math by exercising it away. When anthropologists measured the daily energy burn of the Hadza, hunter-gatherers in Tanzania who walk and dig and carry all day, they burned about the same number of calories per day as office workers in Chicago. <span class="u-src"><a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0040503">Pontzer 2012</a></span> <span class="grade g-b">good</span> The body treats its energy budget like a thermostat: move more and it quietly spends less elsewhere. Exercise is close to the best thing you can do for your health, which is the entire point of <a href="still-moving.html">Still Moving</a>. It is one of the worst things you can do for weight loss. Weight is made in the kitchen.</p>
+    <p>Exercise contributes to weight loss, though the result is often smaller than a simple calories-burned calculation predicts. The Hadza study found similar daily expenditure to Western comparison groups after accounting for body size; it did not show that adding exercise to an individual's life burns nothing. <span class="u-src"><a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0040503">Pontzer 2012</a></span> <span class="grade g-c">mixed</span> A review of randomized aerobic-exercise trials found reductions in weight and body fat as weekly exercise increased.  <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39724371/">Jayedi 2024</a></span> <span class="grade g-a">strong</span></p>
 
-    <h3>The body lasts on food</h3>
-    <p>The second question, how long and how well you live, has a different answer, and the named diet matters even less here. The people who live longest are not, as a rule, keto or vegan or carnivore. They eat mostly whole foods, a lot of plants and fiber, and not much that came out of a wrapper. The pattern matters more than any nutrient, and far more than any brand. The rest of this guide takes those levers one at a time: the one food that does the most damage, the two worth adding, the pills worth skipping, and why the weight comes back.</p>
-
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Keep the two questions apart.</b> Weight is energy; health is food. Most diet arguments you will ever hear are two people answering different questions and each sure the other is an idiot. A diet can strip weight off you and wreck your health, or load you with the healthiest food on earth and still make you fat. Decide which question you are asking first.</p></aside>
+    <h3>Health beyond the scale</h3>
+    <p>PREDIMED tested heart health rather than weight loss. It assigned 7,447 older adults at high cardiovascular risk to a Mediterranean diet supplemented with olive oil or nuts, or advice to reduce dietary fat. The rate of major cardiovascular events was about 30 percent lower in the Mediterranean groups over nearly five years. The original report was retracted after randomization problems were found; the revised analysis still supported the benefit. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1800389">Estruch 2018</a></span> <span class="grade g-b">good</span> The result concerns a whole eating pattern in older people at high cardiovascular risk.</p>
 
     <hr class="u-divider">
   </section>
 
   <!-- ===================== 3. THE DIET WARS ===================== -->
   <section id="wars" class="sec" aria-labelledby="wars-h">
-    <span class="sec-kicker">The branding</span>
-    <h2 id="wars-h" class="sec-h">Every diet is the same diet</h2>
+    <span class="sec-kicker">Comparisons</span>
+    <h2 id="wars-h" class="sec-h">Why diet comparisons often end close</h2>
 
-    <p class="lede">Pick any two diets that hate each other, low-fat and low-carb, say, and run them properly for a year. They tie. Not "close enough." Tie. The diet you have been told is the answer is, for the purpose of losing weight, the same as the one it is fighting with.</p>
+    <p class="lede">Low-carb and low-fat diets can both produce weight loss. Large comparisons usually find modest differences in their average results.</p>
 
-    <p>The cleanest test is Stanford's DIETFITS trial: more than 600 people, healthy low-fat against healthy low-carb, twelve months. The low-fat group lost about 12 pounds, the low-carb group about 13. The difference was noise. And here is the part that should retire an entire industry: the researchers had genotyped everyone and measured their insulin response first, expecting to predict who would do better on which diet. Neither predicted anything. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/2673150">Gardner 2018</a></span> <span class="grade g-b">good</span> The idea that you have a "diet type" written in your biology, the thing every quiz and DNA kit is selling, is a fiction.</p>
+    <p>Stanford's DIETFITS trial assigned 609 adults without diabetes to healthy low-fat or healthy low-carb diets for twelve months. Average losses were about 12 and 13 pounds, respectively, without a statistically significant difference. The particular genotype pattern and insulin measurement the researchers tested did not identify which diet would work better. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/2673150">Gardner 2018</a></span> <span class="grade g-b">good</span></p>
 
     <figure class="viz reveal" aria-label="A bar chart of one-year weight loss on four rival diets, all landing in the same narrow band.">
-      <figcaption>Four rival diets, one finish line</figcaption>
-      <p class="viz-sub">Average weight lost after a year on each diet, in one head-to-head trial. Find the gap that would change your life. There is not one.</p>
+      <figcaption>Four diets after a year</figcaption>
+      <p class="viz-sub">Average loss in one trial with 40 people assigned to each diet. The differences were not statistically significant; the bars are group averages, not predictions for an individual.</p>
       <svg viewBox="0 0 700 250" role="img" aria-label="Horizontal bars of one-year weight loss: Ornish about 7.3 pounds, the Zone about 7.0, Weight Watchers about 6.6, Atkins about 4.6. All cluster between roughly 5 and 7 pounds.">
         <line x1="150" y1="26" x2="150" y2="214" class="v-grid-s"/>
         <g font-family="var(--font-body)">
@@ -394,36 +402,34 @@
         </g>
         <text x="150" y="236" class="v-axis-t">one year, same trial, n = 160 &#183; Dansinger 2005</text>
       </svg>
-      <p class="viz-note">The bigger trials say the same thing. A meta-analysis of 48 trials and 7,300 people found low-carb and low-fat both landing near 16 pounds at a year, with only crumbs between the named brands. <b>Johnston 2014.</b></p>
+      <p class="viz-note">A review of 48 trials involving 7,286 participants found small differences between named diets. Its roughly 16-pound estimates for low-carb and low-fat at a year were differences from a no-diet comparison, not the average loss in this four-diet trial. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25182101/">Johnston 2014</a></span> <span class="grade g-a">strong</span></p>
     </figure>
 
-    <p>It keeps replicating. POUNDS LOST put 811 people on four different mixes of fat, protein, and carbs for two years and found no winner; the thing that predicted who lost weight was how many counseling sessions they showed up to. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/19246357/">Sacks 2009</a></span> <span class="grade g-b">good</span> The 48-trial review came right out and said it: prescribe whichever diet the patient will actually stick to. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/25182101/">Johnston 2014</a></span> <span class="grade g-a">strong</span></p>
+    <p>POUNDS LOST assigned 811 people to four calorie-reduced diets with different proportions of fat, protein, and carbohydrate. After two years, average weight losses were similar. Attendance at counseling sessions was strongly associated with the result. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/19246357/">Sacks 2009</a></span> <span class="grade g-b">good</span></p>
 
-    <p>There is no metabolic magic in cutting carbs, the claim under half the diet books ever sold. The cleanest possible test, a metabolic ward where every single calorie is weighed and controlled, found that cutting fat produced slightly <em>more</em> body-fat loss than cutting carbs at equal calories, the exact opposite of the low-carb pitch. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4603544/">Hall 2015</a></span> <span class="grade g-b">good</span> The "insulin makes you fat, so banish carbs" model keeps losing its own experiments.</p>
+    <p>Hall compared equal-calorie cuts to fat or carbohydrate under controlled feeding for six days. In that experiment, cutting fat produced more measured body-fat loss than cutting carbohydrate, despite the larger insulin reduction with carbohydrate restriction. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4603544/">Hall 2015</a></span> <span class="grade g-b">good</span> Six days cannot settle which diet someone will maintain for years. It does test the claim that lowering insulin necessarily produces more fat loss.</p>
 
-    <p>Intermittent fasting is the same story in newer packaging. Squeezing your eating into a shorter window works when it makes you eat less, which it often does. Head to head against plain old calorie counting, it does not beat it. A smaller eating window is a calorie trick, a useful one for some people, not a metabolic cheat code.</p>
+    <p>Restricting eating hours is another way to reduce intake. In a twelve-month trial, adding an eight-hour eating window to calorie restriction did not significantly improve weight loss compared with calorie restriction alone. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/35443107/">Liu 2022</a></span> <span class="grade g-b">good</span> A 2025 review found broadly similar results across fasting and continuous calorie restriction, with a small short-term advantage for alternate-day fasting. <span class="u-src"><a href="https://www.bmj.com/content/389/bmj-2024-082007">Semnani-Azad 2025</a></span> <span class="grade g-a">strong</span></p>
 
-    <h3>The exception that is real: when a diet is medicine</h3>
-    <p>All of that is true for losing weight in a healthy person. It is not true when a diet is being used as a drug, and this is the caveat worth keeping in plain sight. For some conditions a specific diet genuinely beats the others, on hard medical numbers, not vibes. Low-carb really does lower blood sugar better for type 2 diabetes; in one review, 57 percent of patients hit diabetes remission at six months versus 31 percent on the control diet (though the edge fades by a year as people drift back). <span class="u-src"><a href="https://www.bmj.com/content/372/bmj.m4743">Goldenberg 2021</a></span> <span class="grade g-b">good</span> A ketogenic diet is a real, prescribed treatment for drug-resistant epilepsy. DASH genuinely lowers blood pressure. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJM199704173361601">Appel 1997</a></span> <span class="grade g-b">good</span> A low-FODMAP diet really does calm irritable bowel syndrome. If you have the condition, the diet is medicine. If you do not, it is a brand.</p>
-
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Stop shopping for the magic diet.</b> For losing weight, the best diet is the one you will still be doing in a year. Adherence beats the brand by a mile, which means the right question is not "which diet works" but "which one can I live with." Save the special diets for the conditions that actually need them.</p></aside>
+    <h3>Diets for medical conditions</h3>
+    <p>A diet chosen for a medical condition needs a different comparison. Low-carbohydrate diets can improve blood-sugar control in type 2 diabetes. In a review, 57 percent versus 31 percent met a blood-sugar threshold at six months, but that definition allowed medication use; the advantage was smaller when remission required stopping medication and uncertain by twelve months. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/33441384/">Goldenberg 2021</a></span> <span class="grade g-b">good</span> DASH lowers blood pressure. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJM199704173361601">Appel 1997</a></span> <span class="grade g-b">good</span> A medically supervised ketogenic diet can reduce seizures in drug-resistant epilepsy, and a low-FODMAP diet, which temporarily limits certain fermentable carbohydrates, can reduce IBS symptoms. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/18456557/">Neal 2008</a></span> <span class="grade g-b">good</span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/24076059/">Halmos 2014</a></span> <span class="grade g-b">good</span></p>
 
     <hr class="u-divider">
   </section>
 
   <!-- ===================== 4. ULTRA-PROCESSED ===================== -->
   <section id="processed" class="sec" aria-labelledby="processed-h">
-    <span class="sec-kicker">The one big lever</span>
-    <h2 id="processed-h" class="sec-h">The 500-calorie machine</h2>
+    <span class="sec-kicker">Food processing</span>
+    <h2 id="processed-h" class="sec-h">A menu that changed intake</h2>
 
-    <p class="lede">Here is the closest thing nutrition has to a clean experiment, and maybe the single most important result in the field. Same calories on the table. Same protein, fat, sugar, salt, and fiber. The only thing that changed was whether the food came from a factory or a kitchen. People ate 500 calories a day more on the factory food, and gained weight. The same people, two weeks later, on the home food, lost it.</p>
+    <p class="lede">Twenty adults ate more on an ultra-processed menu than on an unprocessed menu while living in an NIH research ward. They were allowed to eat freely. Changing the menu changed the average intake by about 500 calories a day.</p>
 
-    <p>The National Institutes of Health locked 20 adults in a metabolic ward for a month and controlled every bite. Two diets, two weeks each, matched on the nutrition label all the way down to fiber and even calorie density. Everyone could eat as much or as little as they wanted. On the ultra-processed diet they ate 508 calories a day more and gained about two pounds; on the whole-food diet they lost about two. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/31105044/">Hall 2019</a></span> <span class="grade g-b">good</span> The food itself moved their appetite half a thousand calories a day, with nobody deciding anything.</p>
+    <p>Each person received both menus, in random order, for two weeks each. Intake was 508 calories a day higher on the ultra-processed diet. Participants gained about 2 pounds during that phase and lost about 2 during the unprocessed phase. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7946062/">Hall 2019</a></span> <span class="grade g-b">good</span> The offered meals were designed to match calories and several nutrients. They were not identical foods with processing switched on or off: texture, the energy density of solid food, and other properties differed.</p>
 
-    <figure class="viz reveal" aria-label="A chart showing weight gained on an ultra-processed diet and weight lost on a whole-food diet over two weeks each, driven by eating 508 more calories a day.">
-      <figcaption>Same calories offered. The food chose.</figcaption>
-      <p class="viz-sub">Weight change over two weeks on each diet, by the same 20 people, eating freely. The cause sits in the middle: 508 extra calories a day on the ultra-processed food.</p>
-      <svg viewBox="0 0 700 260" role="img" aria-label="A zero line in the middle. On the ultra-processed diet, a bar rises to plus 2 pounds. On the whole-food diet, a bar drops to minus 2 pounds. An arrow labels the cause: plus 508 calories eaten per day on the ultra-processed diet.">
+    <figure class="viz reveal" aria-label="A chart showing weight gained on an ultra-processed diet and weight lost on an unprocessed diet over two weeks each, driven by eating 508 more calories a day.">
+      <figcaption>Two menus, different intake</figcaption>
+      <p class="viz-sub">Average weight change during each two-week menu phase. The same participants ate 508 more calories a day on the ultra-processed menu.</p>
+      <svg viewBox="0 0 700 260" role="img" aria-label="A zero line in the middle. On the ultra-processed diet, a bar rises to plus 2 pounds. On the unprocessed diet, a bar drops to minus 2 pounds. A label reports 508 more calories eaten per day on the ultra-processed diet.">
         <line x1="60" y1="130" x2="640" y2="130" class="v-grid-s"/>
         <text x="648" y="134" class="v-axis-t">0</text>
         <g font-family="var(--font-body)">
@@ -433,30 +439,30 @@
           <text x="195" y="170" text-anchor="middle" class="v-axis-t">two weeks, eat freely</text>
           <rect x="430" y="130" width="150" height="70" rx="4" fill="#9ec79a"/>
           <text x="505" y="222" text-anchor="middle" class="v-label-b" font-size="15" fill="#9ec79a">&#8722;2 lb</text>
-          <text x="505" y="50" text-anchor="middle" class="v-label" font-size="13">Whole food</text>
+          <text x="505" y="50" text-anchor="middle" class="v-label" font-size="13">Unprocessed</text>
           <text x="505" y="68" text-anchor="middle" class="v-axis-t">same calories offered</text>
         </g>
         <text x="350" y="118" text-anchor="middle" class="v-label-b" font-size="13" fill="#dfc288">+508 calories eaten / day</text>
-        <text x="350" y="135" text-anchor="middle" class="v-axis-t" fill="#B8B2A2">the only thing that changed was the food</text>
+        <text x="350" y="135" text-anchor="middle" class="v-axis-t" fill="#B8B2A2">a comparison of two complete menus</text>
       </svg>
-      <p class="viz-note">Two pounds in two weeks does not sound like much. Run it for a year at that rate and it is the difference between slimming down and the slow climb most people are actually on. <b>Hall 2019.</b></p>
+      <p class="viz-note">This short trial establishes a difference between these two menus. Its weight changes should not be projected at the same rate for a year.</p>
     </figure>
 
-    <p>"Ultra-processed" has a real definition, not just a vibe. The NOVA system sorts food by how much industry has done to it. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10260459/">Monteiro 2019</a></span> Chopping, freezing, canning, and fermenting are all fine. Ultra-processed means the top tier: industrial formulations built mostly from refined extracts and additives, with little intact food left in them. Soda, packaged snacks, most breakfast cereals, reconstituted chicken nuggets, the shelf-stable ready meal. The rough test is the back of the box. If it is a long list of things you would never have in your own kitchen, it is probably ultra-processed.</p>
+    <p>NOVA classifies foods by the purpose and extent of processing. Its ultra-processed category includes industrial formulations containing ingredients or additives rarely used in home cooking, such as some packaged snacks, soft drinks, and reconstituted meat products. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10260459/">Monteiro 2019</a></span> <span class="grade g-c">mixed</span> Freezing vegetables or canning beans does not automatically put them in that category. Neither a wrapper nor a long ingredient list is a reliable health verdict by itself.</p>
 
     <figure class="photo reveal">
       <img src="assets/images/what-to-eat/meat.webp" width="1500" height="1045" loading="lazy" decoding="async" alt="Pieter Aertsen's 1551 painting of a market meat stall: a dense foreground wall of sausages, a pig's head, poultry, fish, butter and pretzels, with a tiny religious scene almost hidden behind it.">
-      <figcaption>Aertsen built the whole painting as a wall of food, so much of it that the holy figures behind it nearly vanish. The modern grocery store does the same trick, except the wall is engineered to be eaten faster than your body can say stop.
-        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:A_Meat_Stall_with_the_Holy_Family_Giving_Alms_-_Pieter_Aertsen_-_Google_Cultural_Institute.jpg">Pieter Aertsen, <i>A Meat Stall with the Holy Family Giving Alms</i> (1551), North Carolina Museum of Art. Public domain, via Wikimedia Commons.</a></span>
+      <figcaption>The meat stall occupies the foreground; the Holy Family gives alms in the distance. Aertsen painted the contrast in 1551.
+        <span class="cred"><a href="https://collection.ncartmuseum.org/objects/25/a-meat-stall-with-the-holy-family-giving-alms">Pieter Aertsen, <i>A Meat Stall with the Holy Family Giving Alms</i> (1551), North Carolina Museum of Art. Public domain.</a></span>
       </figcaption>
     </figure>
 
-    <p>Why does the same food, matched bite for bite on paper, make you eat 500 calories more? The honest answer is that nobody has fully nailed it, but the leading suspects all point the same way. Ultra-processed food is soft and energy-dense, so you eat it fast, and you are finished before the fullness signal catches up. It is engineered, expensively, to be exactly as moreish as possible. And it tends to be thin on protein, so you keep eating to hit the protein your body is quietly demanding. <span class="u-src"><a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0025929">Gosby 2011</a></span> <span class="grade g-c">mixed</span> However it works, the effect is real and it bypasses your willpower entirely.</p>
+    <p>The trial did not isolate one cause of the extra intake. Participants ate the ultra-processed meals faster, and the solid food was more calorie-dense. The diets also differed in protein proportion and fiber type. The study could not tell which of those differences accounted for the extra intake.</p>
 
-    <h3>The longevity claim, graded honestly</h3>
-    <p>Beyond weight, people who eat the most ultra-processed food also have more heart disease, diabetes, depression, and earlier deaths. The biggest review, pooling studies of nearly 10 million people, tied high intake to dozens of worse outcomes: cardiovascular death up about 50 percent, all-cause mortality up about 20 percent. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38418082/">Lane 2024</a></span> <span class="grade g-c">mixed</span> Worth being straight about the grade, though. That part is observational: people who eat the most ultra-processed food differ in a hundred other ways, and the studies cannot fully separate the food from the life around it. The one true experiment is Hall's, and it ran for two weeks on 20 people. NOVA is a loose net that files whole-grain bread next to cola. So the overeating effect is proven, and the disease numbers are a strong, consistent association rather than a closed case. Either way the move is identical.</p>
+    <h3>Long-term health evidence</h3>
+    <p>A 2024 review of published meta-analyses included data from nearly 10 million participants. Higher ultra-processed intake was associated with more cardiovascular disease, diabetes, and earlier death. The pooled relative risks were about 1.50 for cardiovascular mortality and 1.21 for all-cause mortality, though those estimates came from different analyses and exposure definitions. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38418082/">Lane 2024</a></span> <span class="grade g-c">mixed</span> These were observational studies; the authors rated certainty for the cardiovascular-mortality estimate very low. Smoking, income, activity, and the rest of the diet can complicate the comparison. The broad category also combines foods with very different nutritional value.</p>
 
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>The one food rule that does the most.</b> If you change a single thing about how you eat, push ultra-processed food off the center of the plate and back to the edges. You will eat less without trying to, and you will very likely live better. Unlike almost all diet advice, it asks nothing of your willpower at the table, only of your grocery cart.</p></aside>
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>A useful substitution.</b> Replace some ready-to-eat snacks and sugary drinks with meals built from beans, vegetables, whole grains, fruit, and a protein source. Frozen vegetables, canned beans, and packaged whole-grain bread can make that practical.</p></aside>
 
     <hr class="u-divider">
   </section>
@@ -464,90 +470,82 @@
   <!-- ===================== 5. WHAT TO ADD ===================== -->
   <section id="add" class="sec" aria-labelledby="add-h">
     <span class="sec-kicker">The two levers</span>
-    <h2 id="add-h" class="sec-h">The two things to add</h2>
+    <h2 id="add-h" class="sec-h">Protein and fiber</h2>
 
-    <p class="lede">Almost all diet advice is about what to cut. The two changes with the best evidence behind them are things to add, and hardly anyone gets enough of either. Protein and fiber. Get those two up and a surprising amount of the rest takes care of itself.</p>
+    <p class="lede">Protein and fiber are worth considering separately. Protein supports lean tissue, especially with resistance training. Fiber-rich foods are associated with lower disease risk and can improve several risk factors. Neither removes the need to consider the rest of the diet.</p>
 
     <figure class="photo reveal">
       <img src="assets/images/what-to-eat/cheese.webp" width="1500" height="1108" loading="lazy" decoding="async" alt="Floris van Dijck's around-1615 still life of a laid table: stacked rounds of cheese, bread, apples, grapes and nuts on a white damask cloth.">
-      <figcaption>A breakfast table from 1615: cheese, bread, fruit, nuts. Almost nothing on it has an ingredient list, and most of it is the two things this chapter is about. What you are supposed to add is not exotic. It is the oldest food there is.
-        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Stilleven_met_kazen_Rijksmuseum_SK-A-4821.jpeg">Floris van Dijck, <i>Still Life with Cheese</i> (c. 1615), Rijksmuseum. Public domain, via Wikimedia Commons.</a></span>
+      <figcaption>Cheese, bread, fruit, and nuts on a table painted around 1615. Cheese and bread are processed foods too; processing alone is a poor way to judge the whole meal.
+        <span class="cred"><a href="https://www.rijksmuseum.nl/en/collection/object/Still-Life-with-Cheese--89a7cfe4ed585328b467c64966c22634">Floris van Dijck, <i>Still Life with Cheese</i> (c. 1615), Rijksmuseum. Public domain.</a></span>
       </figcaption>
     </figure>
 
-    <h3>Protein: the most filling thing you can eat</h3>
-    <p>Big Enough covers protein for building muscle. This is protein for eating less. Calorie for calorie, it is the most filling thing on your plate: when people were told to get 30 percent of their calories from protein, they spontaneously ate about 440 fewer calories a day and lost weight, without being asked to cut anything. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/16002798/">Weigle 2005</a></span> <span class="grade g-b">good</span> It also protects your muscle while you lose fat, so the weight that comes off is the weight you wanted gone.</p>
+    <h3>Protein and fullness</h3>
+    <p>In a small study of 19 adults, raising protein from 15 to 30 percent of calories was followed by an average reduction of about 440 calories a day during a free-eating phase. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/16002798/">Weigle 2005</a></span> <span class="grade g-c">mixed</span> Everyone followed the diet phases in the same order, so this is suggestive evidence rather than a large randomized comparison. It supports trying more protein when meals leave you hungry, not a guarantee that your intake will fall by that amount.</p>
 
-    <p>The target is about 0.7 grams per pound of bodyweight, which is plenty for nearly everyone. Past roughly 1 gram per pound there is nothing left to gain for general health, so this is another lever that flattens out fast. Hit the number from food first: meat, fish, eggs, dairy, beans, lentils. The tool below works it out for you.</p>
+    <p>For someone lifting regularly, about 0.7 grams per pound of bodyweight is a reasonable target. A training meta-analysis estimated that average gains in fat-free mass, which includes muscle and other non-fat tissue, stopped increasing near that intake, with substantial uncertainty around the cutoff. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Morton 2018</a></span> <span class="grade g-a">strong</span> That estimated training target does not establish a ceiling for every person or purpose. Choose protein from foods you like and can afford, including fish, eggs, dairy, beans, lentils, or soy.</p>
 
-    <h3>Fiber: the lever that keeps paying</h3>
-    <p>Fiber is the most under-eaten nutrient in the country. The average American gets about 15 grams a day; the target is 25 for women and 38 for men. <span class="u-src"><a href="https://www.dietaryguidelines.gov/">Dietary Guidelines</a></span> The WHO-commissioned review of 185 studies and 58 trials found the highest-fiber eaters had 15 to 30 percent lower death rates, with less heart disease, diabetes, and colon cancer, in a clean dose-response. <span class="u-src"><a href="https://www.thelancet.com/article/S0140-6736(18)31809-9/fulltext">Reynolds 2019</a></span> <span class="grade g-a">strong</span> And here is the rare lever that does not plateau early: across the whole range anyone studied, more fiber kept helping.</p>
+    <h3>Fiber and disease risk</h3>
+    <p>The longstanding adequate-intake targets are 25 grams of fiber for women and 38 for men aged 19 to 50; after 50 they are 21 and 30 grams. They come from a reference of 14 grams per 1,000 calories. <span class="u-src"><a href="https://nap.nationalacademies.org/read/10490/chapter/9">Dietary Reference Intakes</a></span> <span class="grade g-b">good</span> A WHO-commissioned review included 185 prospective studies and 58 trials. Higher-fiber diets were associated with roughly 15 to 30 percent lower risks across several outcomes, including mortality, heart disease, diabetes, and colorectal cancer. Mortality was measured in the observational studies. Trials supported benefits for weight, blood pressure, and cholesterol. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30638909/">Reynolds 2019</a></span> <span class="grade g-b">good</span></p>
 
-    <figure class="viz reveal" aria-label="A downward curve of death rate against daily fiber intake, still falling at the high end, with markers for the US average and the recommended target.">
-      <figcaption>The lever that does not flatten</figcaption>
-      <p class="viz-sub">Risk of death against daily fiber. Most people sit at the high-risk left end. Unlike almost everything else in this guide, the line keeps dropping the further right you go.</p>
-      <svg viewBox="0 0 700 300" role="img" aria-label="A curve falling from high risk at about 10 grams of fiber a day down through the 25 to 38 gram target zone and still sloping downward past 40 grams.">
+    <figure class="viz reveal" aria-label="A schematic showing the association between higher fiber intake and lower risk. It is not a fitted mortality curve.">
+      <figcaption>Higher-fiber diets and lower risk</figcaption>
+      <p class="viz-sub">Higher fiber intake is associated with lower disease risk. This is a schematic illustration of the direction, not a fitted mortality curve or a prediction of your risk.</p>
+      <svg viewBox="0 0 700 300" role="img" aria-label="A schematic downward curve with unquantified axes, illustrating the association of higher fiber intake with lower risk.">
         <g>
           <line x1="70" y1="60" x2="660" y2="60" class="v-grid"/>
           <line x1="70" y1="140" x2="660" y2="140" class="v-grid"/>
           <line x1="70" y1="220" x2="660" y2="220" class="v-grid"/>
           <text x="60" y="64" text-anchor="end" class="v-axis">high</text>
           <text x="60" y="224" text-anchor="end" class="v-axis">low</text>
-          <text x="22" y="150" class="v-axis-t" transform="rotate(-90 22 150)" text-anchor="middle">risk of death</text>
+          <text x="22" y="150" class="v-axis-t" transform="rotate(-90 22 150)" text-anchor="middle">associated risk</text>
         </g>
         <line x1="70" y1="250" x2="660" y2="250" class="v-grid-s"/>
-        <!-- target zone -->
-        <rect x="330" y="60" width="180" height="190" fill="rgba(158,199,154,0.10)"/>
-        <text x="420" y="78" text-anchor="middle" class="v-axis-t" fill="#9ec79a">the 25 to 38 g target</text>
         <path class="draw" style="--len:760" d="M70,80 C 150,96 230,150 330,182 C 420,210 520,228 640,240" fill="none" stroke="#9ec79a" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="150" cy="96" r="5" fill="#d9978c"/>
-        <text x="150" y="86" text-anchor="middle" class="v-label" font-size="11" fill="#d9978c">US average, ~15 g</text>
-        <circle cx="420" cy="195" r="5" fill="#9ec79a"/>
-        <circle cx="640" cy="240" r="5" fill="#9ec79a"/>
-        <text x="70" y="268" text-anchor="middle" class="v-axis-t">10 g</text>
-        <text x="640" y="268" text-anchor="middle" class="v-axis-t">40 g+</text>
-        <text x="350" y="288" text-anchor="middle" class="v-axis-t" fill="#767d71">fiber per day</text>
+
+        <text x="70" y="268" text-anchor="middle" class="v-axis-t">lower intake</text>
+        <text x="640" y="268" text-anchor="middle" class="v-axis-t">higher intake</text>
+        <text x="350" y="288" text-anchor="middle" class="v-axis-t" fill="#767d71">schematic fiber intake</text>
       </svg>
-      <p class="viz-note">Be fair about the grade: the death-rate part is observational, and people who eat a lot of fiber tend to eat well in general. But it is backed by trials for the hard stuff like cholesterol and blood sugar, and there is no plausible downside to eating more beans. <b>Reynolds 2019.</b></p>
+      <p class="viz-note">The review found substantial benefit around 25 to 29 grams a day and suggested that higher intakes could help further. It did not establish unlimited benefit.</p>
     </figure>
 
-    <p>The catch is that fiber is not a pill. The big review pointedly excluded fiber-powder trials; the benefit lives in the food, in beans and lentils and whole grains and fruit and vegetables and nuts. You cannot buy your way to it in the supplement aisle, which is a good place for the next chapter to start.</p>
+    <p>Beans, lentils, whole grains, fruit, vegetables, and nuts supply fiber along with other nutrients. The large review excluded isolated-fiber supplement trials, so it cannot answer whether powders work. Separate trials show that psyllium can lower LDL cholesterol. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30239559/">Jovanovski 2018</a></span> <span class="grade g-a">strong</span>  Add fiber gradually so your body can adjust. <span class="u-src"><a href="https://www.niddk.nih.gov/health-information/digestive-diseases/constipation/eating-diet-nutrition">NIDDK fiber guidance</a></span></p>
 
     <div class="tool" id="num-tool">
-      <div class="tool-head"><h4>Your three numbers</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-head"><h4>Three planning estimates</h4><span class="tool-tag">interactive</span></div>
       <div class="tool-body">
         <div class="tool-row">
           <label for="n-weight">Bodyweight</label>
           <input type="range" id="n-weight" min="90" max="350" step="1" value="170">
           <span class="val" id="n-weight-v">170 lb</span>
           <div class="tool-seg" id="n-unit" role="group" aria-label="Units">
-            <button data-unit="lb" class="on">lb</button><button data-unit="kg">kg</button>
+            <button data-unit="lb" class="on" aria-pressed="true">lb</button><button data-unit="kg" aria-pressed="false">kg</button>
           </div>
         </div>
         <div class="tool-row">
           <label>Activity</label>
           <div class="tool-seg" id="n-act" role="group" aria-label="Activity level">
-            <button data-act="13" class="on">Mostly sitting</button><button data-act="15">Active</button><button data-act="17">Very active</button>
+            <button data-act="13" class="on" aria-pressed="true">Mostly sitting</button><button data-act="15" aria-pressed="false">Active</button><button data-act="17" aria-pressed="false">Very active</button>
           </div>
         </div>
         <div class="tool-row">
           <label>Goal</label>
           <div class="tool-seg" id="n-goal" role="group" aria-label="Goal">
-            <button data-goal="-500">Lose</button><button data-goal="0" class="on">Maintain</button><button data-goal="250">Build</button>
+            <button data-goal="-500" aria-pressed="false">Lose</button><button data-goal="0" class="on" aria-pressed="true">Maintain</button><button data-goal="250" aria-pressed="false">Build</button>
           </div>
         </div>
         <div class="tool-out">
           <div class="zgrid">
-            <div class="zcell"><span class="zk">Calories a day</span><span class="zv" id="n-cal">2,550</span> <span class="zu">to hit your goal</span></div>
-            <div class="zcell"><span class="zk">Protein</span><span class="zv" id="n-pro">119</span> <span class="zu">grams a day</span></div>
-            <div class="zcell"><span class="zk">Fiber</span><span class="zv" id="n-fib">36</span> <span class="zu">grams a day</span></div>
+            <div class="zcell"><span class="zk">Calories a day</span><span class="zv" id="n-cal">2,210</span> <span class="zu">illustrative estimate</span></div>
+            <div class="zcell"><span class="zk">Protein</span><span class="zv" id="n-pro">123</span> <span class="zu">grams a day</span></div>
+            <div class="zcell"><span class="zk">Fiber</span><span class="zv" id="n-fib">31</span> <span class="zu">grams a day</span></div>
           </div>
-          <div class="tool-rail" id="n-rail">A rough rule-of-thumb estimate, not a prescription. Calories are bodyweight times an activity factor; protein is 0.7 g per pound; fiber is 14 g per 1,000 calories, which is the actual federal guideline. Real bodies vary by a few hundred calories either way, so treat these as a starting line and adjust by what the scale and the mirror actually do.</div>
+          <div class="tool-rail" id="n-rail">The calorie estimate multiplies bodyweight by a rough activity factor and omits age, height, sex, and medical history. Protein uses the training target of 1.6 g/kg (about 0.7 g per pound); fiber uses 14 g per 1,000 estimated maintenance calories. These examples are for adults, outside pregnancy or breastfeeding. For a more detailed model, see the <a href="https://www.niddk.nih.gov/bwp">NIDDK Body Weight Planner</a>.</div>
         </div>
       </div>
     </div>
-
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Add before you subtract.</b> Get protein and fiber up first, and a lot of the cutting happens on its own. You are fuller, so the junk has less room, and you are feeding the exact part of your diet that tracks with living longer. It is the rare move that helps the scale and the lifespan at the same time.</p></aside>
 
     <hr class="u-divider">
   </section>
@@ -555,46 +553,43 @@
   <!-- ===================== 6. SUPPLEMENTS ===================== -->
   <section id="pills" class="sec" aria-labelledby="pills-h">
     <span class="sec-kicker">The aisle</span>
-    <h2 id="pills-h" class="sec-h">The aisle is mostly theater</h2>
+    <h2 id="pills-h" class="sec-h">What supplements have evidence for</h2>
 
-    <p class="lede">Americans spend tens of billions of dollars a year on supplements. For a well-fed adult, almost all of it does nothing, and a few of the most popular ones gently raise your odds of dying. The supplement aisle is one of the great triumphs of marketing over evidence.</p>
+    <p class="lede">A supplement is easiest to assess when you name the job: correcting a deficiency, preventing a particular birth defect, improving training, or preventing disease. Evidence for one job does not establish the others.</p>
 
-    <p>Start with the biggest seller, the multivitamin. It does not extend life or prevent heart disease or cancer in well-nourished people, and this has been tested about as well as anything in nutrition. The Physicians' Health Study II followed roughly 14,000 doctors for over a decade: cardiovascular events came out dead even, a hazard ratio of 1.01. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23117775/">Sesso 2012</a></span> <span class="grade g-a">strong</span> A 2024 analysis of 390,000 people found no lower death rate for daily multivitamin users either. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2820369">Loftfield 2024</a></span> <span class="grade g-b">good</span> After reviewing 84 studies, the U.S. Preventive Services Task Force concluded there was not enough evidence to recommend them at all. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/2793447">USPSTF 2022</a></span> <span class="grade g-a">strong</span></p>
+    <p>Routine multivitamins have not shown a clear benefit for preventing cardiovascular disease or extending life in generally healthy adults. In the Physicians' Health Study II, 14,641 male doctors were followed for about eleven years, with no statistically significant reduction in major cardiovascular events. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23117775/">Sesso 2012</a></span> <span class="grade g-b">good</span> A 2024 observational analysis of 390,124 adults also found no mortality benefit. <span class="u-src"><a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2820369">Loftfield 2024</a></span> <span class="grade g-c">mixed</span> The USPSTF judged the evidence insufficient to recommend multivitamins for cardiovascular or cancer prevention.  <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/2793447">O'Connor 2022</a></span> <span class="grade g-b">good</span></p>
 
-    <h3>The part where more turns into harm</h3>
-    <p>The antioxidant story is the cleanest example in this whole guide of a lever that does not flatten, it bends into harm. For years the observational data made antioxidants look protective, so people started taking big doses. Then the trials arrived. Beta-carotene supplements <em>raised</em> lung cancer in smokers by about 18 percent, and a second trial was stopped early for the same reason. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/8127329/">ATBC 1994</a></span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/8602180/">CARET 1996</a></span> <span class="grade g-a">strong</span> A meta-analysis of 230,000 people found beta-carotene, vitamin A, and vitamin E supplements nudged death rates up, not down. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/205797">Bjelakovic 2007</a></span> <span class="grade g-b">good</span> More was not better. More was worse.</p>
+    <h3>When supplementation causes harm</h3>
+    <p>Beta-carotene is a clearer warning. In a large trial of male smokers, supplementation increased lung-cancer incidence by 18 percent relative to the comparison group. A second trial of beta-carotene plus vitamin A in smokers and asbestos-exposed workers was stopped early after harmful results. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/8127329/">ATBC 1994</a></span> <span class="grade g-a">strong</span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/8602180/">CARET 1996</a></span> <span class="grade g-a">strong</span> A 2007 review found no significant mortality effect when all antioxidant trials were pooled, but an increased risk in the lower-bias subset, particularly for beta-carotene, vitamin A, and vitamin E. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/205797">Bjelakovic 2007</a></span> <span class="grade g-b">good</span> These trials tested pills, rather than diets rich in vegetables.</p>
 
-    <figure class="viz reveal" aria-label="A chart of supplements plotted against a no-effect line: multivitamins sit right on it, antioxidant pills poke past it into harm, while a few targeted supplements genuinely help.">
-      <figcaption>Where the pills actually land</figcaption>
-      <p class="viz-sub">Effect on the risk of dying, against a line of no effect. To the left is help, to the right is harm. Most of the bestsellers sit on the line or just past it.</p>
-      <svg viewBox="0 0 700 250" role="img" aria-label="A vertical no-effect line. Multivitamin sits on it at 1.01. Vitamin E is just past it at 1.04, beta-carotene at 1.07, vitamin A at 1.16, all into the harm side. Below, creatine, vitamin D for the deficient, and folate in pregnancy are marked as genuinely helpful.">
-        <line x1="350" y1="20" x2="350" y2="170" stroke="#8a8a7a" stroke-width="1" stroke-dasharray="3 4"/>
-        <text x="350" y="186" text-anchor="middle" class="v-axis-t">no effect</text>
-        <text x="250" y="34" text-anchor="middle" class="v-axis-t" fill="#9ec79a">&#8592; helps</text>
-        <text x="455" y="34" text-anchor="middle" class="v-axis-t" fill="#d9978c">harms &#8594;</text>
-        <g font-family="var(--font-body)">
-          <circle cx="354" cy="58" r="6" fill="#b8b2a2"/>
-          <text x="368" y="62" class="v-label" font-size="12">Multivitamin (1.01)</text>
-          <circle cx="366" cy="86" r="6" fill="#d9978c"/>
-          <text x="380" y="90" class="v-label" font-size="12">Vitamin E (1.04)</text>
-          <circle cx="376" cy="114" r="6" fill="#d9978c"/>
-          <text x="390" y="118" class="v-label" font-size="12">Beta-carotene (1.07)</text>
-          <circle cx="404" cy="142" r="6" fill="#b8796d"/>
-          <text x="418" y="146" class="v-label" font-size="12">Vitamin A (1.16)</text>
+    <figure class="viz reveal" aria-label="A forest plot of mortality risk ratios for vitamin E, beta-carotene, and vitamin A in a lower-bias trial analysis.">
+      <figcaption>Antioxidant trials: mortality</figcaption>
+      <p class="viz-sub">Relative risks of all-cause mortality from the lower-bias antioxidant trials, excluding selenium trials. Lines show 95 percent confidence intervals; 1.00 is no difference.</p>
+      <svg viewBox="0 0 700 250" role="img" aria-label="Mortality risk ratios with 95 percent confidence intervals: vitamin E 1.04, 1.01 to 1.07; beta-carotene 1.07, 1.02 to 1.11; vitamin A 1.16, 1.10 to 1.24. A vertical line at 1.00 marks no difference.">
+        <line x1="280" y1="28" x2="280" y2="192" stroke="var(--text-faint)" stroke-width="1" stroke-dasharray="3 4"/>
+        <g class="v-label">
+          <text x="36" y="66">Vitamin E</text><text x="36" y="112">Beta-carotene</text><text x="36" y="158">Vitamin A</text>
         </g>
-        <line x1="40" y1="206" x2="660" y2="206" class="v-grid"/>
-        <text x="40" y="230" class="v-label-b" font-size="12" fill="#9ec79a">The ones that work:</text>
-        <text x="210" y="230" class="v-label" font-size="12" fill="#E8E2D6">creatine &#183; vitamin D if you are low &#183; folate in pregnancy</text>
+        <g stroke="#d9978c" stroke-width="2" fill="#d9978c">
+          <line x1="295" y1="62" x2="385" y2="62"/><circle cx="340" cy="62" r="5"/>
+          <line x1="310" y1="108" x2="445" y2="108"/><circle cx="385" cy="108" r="5"/>
+          <line x1="430" y1="154" x2="640" y2="154"/><circle cx="520" cy="154" r="5"/>
+        </g>
+        <line x1="205" y1="196" x2="640" y2="196" class="v-grid-s"/>
+        <g class="v-axis-t" text-anchor="middle">
+          <text x="205" y="218">0.95</text><text x="280" y="218">1.00</text><text x="430" y="218">1.10</text><text x="580" y="218">1.20</text>
+          <text x="430" y="241">all-cause mortality risk ratio</text>
+        </g>
       </svg>
-      <p class="viz-note">The harm signal is strongest in the low-bias trials and in smokers, and the multivitamin's record is "useless," not "dangerous." But for a healthy, fed person, the whole top of this chart is money spent to do nothing or slightly worse. <b>Bjelakovic 2007; ATBC 1994.</b></p>
+      <p class="viz-note">Vitamin E: 1.04 (1.01 to 1.07); beta-carotene: 1.07 (1.02 to 1.11); vitamin A: 1.16 (1.10 to 1.24). Supplements were sometimes given in combination. The full pool of trials was statistically inconclusive. <span class="u-src"><a href="https://jamanetwork.com/journals/jama/fullarticle/205797">Bjelakovic 2007</a></span> <span class="grade g-b">good</span></p>
     </figure>
 
-    <h3>The handful that are not theater</h3>
-    <p>"All supplements are theater" is too strong, and worth correcting before a sharp reader does it for you. A few are real. Creatine is the most proven legal performance supplement there is, cheap and safe, covered in <a href="big-enough.html#creatine">Big Enough</a>. Folic acid in pregnancy cuts the risk of neural-tube birth defects by about 72 percent, one of the clearest wins in all of medicine. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/1677062/">MRC 1991</a></span> <span class="grade g-a">strong</span> Vitamin D helps if you are genuinely deficient, though the giant VITAL trial found nothing for people who already had enough. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30415629/">VITAL 2019</a></span> <span class="grade g-a">strong</span> Prescription-dose omega-3 lowers cardiac risk for people with high triglycerides (real, but contested). <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30415628/">REDUCE-IT 2019</a></span> <span class="grade g-c">mixed</span> B12 for vegans and many older people, and iron for diagnosed anemia, are simple necessities. The pattern is exact: supplements work when they fix a deficiency or act as a drug. They do nothing as insurance on a diet you already eat fine.</p>
+    <h3>What the broad verdict misses</h3>
+    <p>The multivitamin evidence has exceptions too. The same physicians' trial found an 8 percent relative reduction in total cancer incidence, without a demonstrated reduction in cancer mortality. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/23162860/">Gaziano 2012</a></span> <span class="grade g-b">good</span> COSMOS cognitive studies found small improvements in test scores among older adults. Those results do not establish that multivitamins prevent dementia. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/38244989/">Vyas 2024</a></span> <span class="grade g-b">good</span></p>
 
-    <p>And you cannot out-supplement a bad diet. Whole food keeps beating isolated nutrients, over and over, because the antioxidant in a head of broccoli helps and the very same antioxidant in a capsule does not. The lesson runs one way: spend the supplement money on better groceries.</p>
+    <p>Targeted supplements have clearer uses. Folic acid around conception reduced recurrent neural-tube defects by 72 percent in a trial of women with a previous affected pregnancy. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/1677062/">MRC 1991</a></span> <span class="grade g-a">strong</span> General prevention guidance recommends 400 to 800 micrograms daily for people planning to or who could become pregnant, starting before conception. People with a previous affected pregnancy need individual advice. <span class="u-src"><a href="https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/folic-acid-for-the-prevention-of-neural-tube-defects-preventive-medication">USPSTF 2023</a></span> <span class="grade g-a">strong</span> B12 is important for vegans and people who cannot absorb enough; iron treats iron deficiency, not every cause of anemia. <span class="u-src"><a href="https://ods.od.nih.gov/factsheets/VitaminB12-HealthProfessional/">NIH B12</a></span> <span class="grade g-b">good</span> <span class="u-src"><a href="https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/">NIH iron</a></span> <span class="grade g-b">good</span></p>
 
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Skip the aisle, with about five exceptions.</b> For most people the whole list is: creatine if you lift, vitamin D if a blood test says you are low, B12 if you are vegan, folate if you are pregnant, and a specific fix for a diagnosed deficiency. Everything else, especially the multivitamin and the megadose antioxidants, is a tax on hope.</p></aside>
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Ask what the supplement is for.</b> Creatine can improve resistance-training results. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Kreider 2017</a></span> <span class="grade g-a">strong</span> Vitamin D treats established deficiency, but routine extra dosing did not prevent cancer or major cardiovascular events in VITAL. Recommendations differ for groups such as older adults and pregnancy. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6425757/">Manson 2019</a></span> <span class="grade g-b">good</span> <a href="https://www.endocrine.org/clinical-practice-guidelines/vitamin-d-for-prevention-of-disease">The Endocrine Society's guidance</a> addresses those differences. Prescription icosapent ethyl reduced cardiovascular events in selected statin-treated, high-risk patients with elevated triglycerides. That result does not apply to every fish-oil capsule. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/30415628/">Bhatt 2019</a></span> <span class="grade g-b">good</span></p></aside>
 
     <hr class="u-divider">
   </section>
@@ -602,21 +597,21 @@
   <!-- ===================== 7. WHY IT FAILS ===================== -->
   <section id="fails" class="sec" aria-labelledby="fails-h">
     <span class="sec-kicker">The hard part</span>
-    <h2 id="fails-h" class="sec-h">Why diets fail, and the drug that changed it</h2>
+    <h2 id="fails-h" class="sec-h">Why weight returns, and what medicines change</h2>
 
-    <p class="lede">Diets do not mostly fail because people are weak. They fail because the body fights to put the weight back, with a precision that makes willpower look quaint. And for the first time in history, there is a drug that fights back just as hard.</p>
+    <p class="lede">Weight regain has physiological causes. Losing weight can increase hunger and reduce the energy your body expends. In a small study, hunger and several appetite-hormone changes persisted a year after substantial diet-induced weight loss. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/22029981/">Sumithran 2011</a></span> <span class="grade g-b">good</span> Those changes make maintaining the loss harder.</p>
 
-    <p>Lose a meaningful amount of weight and your body does two things. It slows your metabolism by more than your smaller size can explain, and it turns your hunger up. Drop 10 percent of your weight and you burn a few hundred calories a day fewer than a person who is naturally that size. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/7632212/">Leibel 1995</a></span> <span class="grade g-a">strong</span> The contestants from <em>The Biggest Loser</em> are the brutal version: six years after the show they had regained most of the weight, and their resting metabolism was still running about 500 calories a day below where it should have been, years later. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27136388/">Fothergill 2016</a></span> <span class="grade g-b">good</span> The body had quietly turned down the furnace and refused to turn it back up. Across the research, people keep off only about a quarter of what they lose after a few years. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/11684524/">Anderson 2001</a></span> <span class="grade g-b">good</span></p>
+    <p>A controlled study found that maintaining a weight at least 10 percent below the starting weight reduced energy expenditure beyond the change expected from body size. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/7632212/">Leibel 1995</a></span> <span class="grade g-b">good</span> The more extreme example is <em>The Biggest Loser</em>: fourteen former contestants had regained much of their lost weight six years later, while their resting expenditure averaged about 500 calories a day below the researchers' prediction. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/27136388/">Fothergill 2016</a></span> <span class="grade g-c">mixed</span> That small, unusual cohort does not tell every dieter what will happen to their metabolism.</p>
 
-    <p>That is not a death sentence, and it is not pure biology, which is the honest correction to keep in view. Thousands of people in the National Weight Control Registry have kept off 30 pounds or more for years, mostly through dull, consistent habits: they weigh in, they move every day, they do not quit on a bad week. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/24355667/">Thomas 2014</a></span> <span class="grade g-c">mixed</span> The "set point" is really more of a settling point that the food environment shoves around, which is exactly why a country awash in super-sized, ultra-processed food drifted upward together. Biology makes the weight hard to keep off. Behavior and environment still decide a great deal.</p>
+    <p>Long-term results vary. A review of older US weight-loss programs found that participants retained about a quarter of their initial loss after several years; it was not a finding that a fixed percentage of all dieters fail. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/11684524/">Anderson 2001</a></span> <span class="grade g-b">good</span> The National Weight Control Registry documents people who have maintained substantial losses for years, but they volunteered after succeeding. It cannot estimate how often that happens in the population. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/24355667/">Thomas 2014</a></span> <span class="grade g-c">mixed</span></p>
 
-    <h3>The drug that broke the pattern</h3>
-    <p>The GLP-1 drugs, semaglutide (Wegovy) and tirzepatide (Zepbound), copy the gut hormones that tell your brain you are full, and they work at a level nothing before them did. Semaglutide took off about 15 percent of bodyweight in a year; tirzepatide up to about 21 percent. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/33567185/">Wilding 2021</a></span> <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2206038">Jastreboff 2022</a></span> <span class="grade g-a">strong</span> For comparison, the best diet-and-exercise programs manage 5 to 10 percent, briefly. And it goes past the scale: in 17,600 people with heart disease, semaglutide cut major cardiac events, heart attack, stroke, and cardiovascular death, by about 20 percent, the first weight drug to prove it does more than shrink a waistline. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/37952131/">Lincoff 2023</a></span> <span class="grade g-a">strong</span></p>
+    <h3>Medicines that reduce appetite</h3>
+    <p>Semaglutide mimics a gut-hormone signal involved in appetite and blood-sugar control, GLP-1. Tirzepatide acts on both GLP-1 and a second hormone signal, GIP. In trials of adults with obesity or overweight and a related complication, without diabetes, semaglutide produced an average 14.9 percent weight loss over 68 weeks, versus 2.4 percent with placebo. Tirzepatide's highest studied dose produced 20.9 percent over 72 weeks, versus 3.1 percent. Both trials included lifestyle support. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/33567185/">Wilding 2021</a></span> <span class="grade g-a">strong</span> <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/35658024/">Jastreboff 2022</a></span> <span class="grade g-a">strong</span></p>
 
-    <figure class="viz reveal" aria-label="A line showing weight dropping about 15 percent on semaglutide over 68 weeks, then climbing back to regain about two-thirds of the loss within a year of stopping.">
-      <figcaption>It suspends the biology, it does not cure it</figcaption>
-      <p class="viz-sub">Average bodyweight on semaglutide, then after stopping. The drug works the whole time you take it. Stop, and the body resumes the program it was running.</p>
-      <svg viewBox="0 0 700 280" role="img" aria-label="Weight falls from zero to about minus 17 percent over 68 weeks on the drug, then rises back to about minus 5 percent a year after stopping, regaining about two-thirds of the loss.">
+    <figure class="viz reveal" aria-label="A line illustrating average weight loss of 17.3 percent in the STEP 1 extension subset, followed by regain of about two-thirds after treatment stopped.">
+      <figcaption>Weight after semaglutide withdrawal</figcaption>
+      <p class="viz-sub">The semaglutide group in the STEP 1 extension lost an average 17.3 percent by week 68, then regained 11.6 percentage points over the following year. Lines connect the reported means; intervening values are not shown.</p>
+      <svg viewBox="0 0 700 280" role="img" aria-label="Illustrative line between study endpoints: 17.3 percent weight loss at week 68 and 5.6 percent remaining at week 120, after medication and lifestyle support stopped.">
         <g>
           <line x1="70" y1="40" x2="660" y2="40" class="v-grid"/>
           <line x1="70" y1="110" x2="660" y2="110" class="v-grid"/>
@@ -627,24 +622,24 @@
         </g>
         <line x1="70" y1="40" x2="70" y2="220" class="v-grid-s"/>
         <!-- on drug -->
-        <path class="draw" style="--len:520" d="M70,40 C 180,70 240,150 360,160" fill="none" stroke="#9ec79a" stroke-width="3" stroke-linecap="round"/>
+        <path class="draw" style="--len:520" d="M70,40 L393,161.1" fill="none" stroke="#9ec79a" stroke-width="3" stroke-linecap="round"/>
         <!-- off drug -->
-        <path class="draw" style="--len:420" d="M360,160 C 470,170 540,95 640,80" fill="none" stroke="#d9978c" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 0"/>
-        <circle cx="360" cy="160" r="5.5" fill="#dfc288"/>
-        <text x="215" y="200" text-anchor="middle" class="v-label" font-size="12" fill="#9ec79a">on the drug: down ~15 to 17%</text>
-        <text x="360" y="240" text-anchor="middle" class="v-axis-t" fill="#dfc288">stop here</text>
+        <path class="draw" style="--len:420" d="M393,161.1 L640,79.2" fill="none" stroke="#d9978c" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 0"/>
+        <circle cx="393" cy="161.1" r="5.5" fill="#dfc288"/>
+        <text x="215" y="200" text-anchor="middle" class="v-label" font-size="12" fill="#9ec79a">week 68: down 17.3%</text>
+        <text x="393" y="240" text-anchor="middle" class="v-axis-t" fill="#dfc288">stop here</text>
         <text x="560" y="60" text-anchor="middle" class="v-label" font-size="12" fill="#d9978c">a year later:</text>
         <text x="560" y="76" text-anchor="middle" class="v-label" font-size="12" fill="#d9978c">two-thirds back</text>
         <text x="70" y="244" class="v-axis-t">week 0</text>
-        <text x="360" y="258" text-anchor="middle" class="v-axis-t">week 68</text>
-        <text x="640" y="244" text-anchor="end" class="v-axis-t">+1 year</text>
+        <text x="393" y="258" text-anchor="middle" class="v-axis-t">week 68</text>
+        <text x="640" y="244" text-anchor="end" class="v-axis-t">week 120</text>
       </svg>
-      <p class="viz-note">When people stopped semaglutide, they regained about two-thirds of the weight within a year, and the blood-pressure and blood-sugar gains faded with it. <b>Wilding 2022.</b></p>
+      <p class="viz-note">Participants regained about two-thirds of the loss on average. Semaglutide and the trial's lifestyle intervention both stopped at week 68; several cardiometabolic improvements also moved back toward baseline.</p>
     </figure>
 
-    <p>The catch is right there in that curve, and it is the most important caveat in the chapter. The drug does not cure the biology, it suspends it. Stop taking it and the weight comes back: in the extension of the semaglutide trial, people regained about two-thirds of what they had lost within a year of stopping. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9542252/">Wilding 2022</a></span> <span class="grade g-b">good</span> It is a treatment for a chronic condition, like blood-pressure medication, not a course you finish. It runs about $1,000 a month, a quarter or more of the lost weight can be muscle, and it makes a lot of people queasy. But it has settled one long argument for good: for many people obesity is a problem of biology you can medicate, not a flaw of character you can shame away.</p>
+    <p>Semaglutide also has evidence beyond weight. SELECT enrolled 17,604 people with established cardiovascular disease and overweight or obesity, without diabetes. Heart attack, stroke, or cardiovascular death occurred in 6.5 percent on semaglutide versus 8.0 percent on placebo over about 40 months of follow-up. The time-to-event analysis estimated a 20 percent relative reduction, a hazard ratio of 0.80, in that composite outcome. It did not establish a separate 20 percent reduction in each component. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Lincoff 2023</a></span> <span class="grade g-a">strong</span></p>
 
-    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Why this is the kindest chapter.</b> If you have lost weight and watched it crawl back, that was your body doing its job, not you failing at yours. Knowing that changes what you reach for: steady habits over crash diets, self-forgiveness over self-loathing, and, for some people, an actual medicine instead of more willpower they were never going to win with.</p></aside>
+    <aside class="u-callout u-aside"><p class="u-callout-body"><b>Plan for ongoing treatment.</b> In the extension study, substantial weight returned after treatment stopped. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9542252/">Wilding 2022</a></span> <span class="grade g-b">good</span> These medicines also commonly cause nausea, diarrhea, or constipation and require a clinician to check suitability and risks. Some lost weight is lean tissue. In a tirzepatide body-composition substudy, about a quarter of the loss was lean mass, which includes more than skeletal muscle. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/39996356/">Look 2025</a></span> <span class="grade g-b">good</span></p></aside>
 
     <hr class="u-divider">
   </section>
@@ -652,74 +647,58 @@
   <!-- ===================== 8. THE PLAN ===================== -->
   <section id="plan" class="sec" aria-labelledby="plan-h">
     <span class="sec-kicker">The plan</span>
-    <h2 id="plan-h" class="sec-h">Enough on the plate</h2>
+    <h2 id="plan-h" class="sec-h">Meals you can repeat</h2>
 
-    <p class="lede">Here is the whole guide as something you could write on an index card and tape inside a cupboard. None of it is new, and that is the point. The honest version of nutrition advice is short, dull, and almost free.</p>
+    <p class="lede">Start with meals you can repeat, then change the part that is causing a problem. A filling lunch, fewer sugary drinks, or a reliable source of B12 may matter more than adopting an entire named diet.</p>
 
     <ul class="u-checks">
-      <li class="u-check u-use"><b>Build meals around protein and plants.</b> A palm of protein, half the plate vegetables or fruit, the rest whole-food carbs and fats. That single habit hits most of this list at once.</li>
-      <li class="u-check u-use"><b>Know your two numbers.</b> Protein around 0.7 g per pound, fiber 25 to 38 grams. They are the levers worth tracking; almost nothing else is.</li>
-      <li class="u-check u-use"><b>Keep ultra-processed food at the edges.</b> Not banned, just not the center of the plate. This is the one change that does the most.</li>
-      <li class="u-check u-use"><b>Drink water, coffee, or tea.</b> Cutting liquid sugar is the single easiest win in the whole guide. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3778861/">Malik 2013</a></span></li>
-      <li class="u-check u-meh"><b>Eat at a slight deficit to lose, a slight surplus to build.</b> The diet's name does not matter. Pick the eating pattern you can actually keep for a year.</li>
-      <li class="u-check u-skip"><b>Skip the supplement aisle</b> beyond creatine, vitamin D if you are low, B12 if you are vegan, and folate if you are pregnant.</li>
-      <li class="u-check u-meh"><b>If your body keeps clawing the weight back,</b> that is biology, not weakness. It is worth talking to a doctor about the drugs that now exist.</li>
+      <li class="u-check u-use"><b>Make a few filling meals repeatable.</b> Combine a protein source with vegetables or fruit, and include beans, whole grains, nuts, or other foods that fit the meal.</li>
+      <li class="u-check u-use"><b>Use the numbers for their purpose.</b> The protein target here comes from training studies. Fiber targets depend on age and energy needs. They can help plan food without tracking every nutrient.</li>
+      <li class="u-check u-use"><b>Change the menu where it helps.</b> Try replacing some packaged snacks with a meal or a more filling snack. Convenience foods such as frozen vegetables and canned beans can help.</li>
+      <li class="u-check u-use"><b>Check sugary drinks.</b> Replacing some soda or sweetened coffee can reduce calorie intake. Trials and cohort studies support a connection between these drinks and weight gain. <span class="u-src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3778861/">Malik 2013</a></span></li>
+      <li class="u-check u-meh"><b>Choose a sustainable weight plan.</b> Weight loss needs an energy deficit. A named diet is useful when its food and rules help you maintain that change.</li>
+      <li class="u-check u-meh"><b>Give supplements a specific job.</b> B12, folic acid, iron, vitamin D, and creatine have different indications. A broad promise of better health is harder to substantiate.</li>
+      <li class="u-check u-meh"><b>Get help with repeated regain.</b> A clinician can assess causes, support, and whether medication is appropriate.</li>
     </ul>
 
-    <p>And the same quiet point this site keeps arriving at, one more time. Most of these levers are the same shape, the one drawn over and over in these guides. Big payoff at first, then flat. Enough protein, enough fiber, enough real food, enough of a deficit. The work is finding "enough" and stopping there, instead of chasing a perfection that costs a fortune in money and attention and pays back nothing.</p>
 
-    <div class="prog-wrap">
-      <table class="prog">
-        <thead><tr><th>Lever</th><th>The dose that works</th><th>Where it stops paying</th></tr></thead>
-        <tbody>
-          <tr><td class="day">Calories</td><td>a small deficit or surplus</td><td>crash diets, the body fights back hard</td></tr>
-          <tr><td class="day">Protein</td><td>~0.7 g per pound</td><td>past ~1 g/lb, just expensive urine</td></tr>
-          <tr><td class="day">Fiber</td><td>25 to 38 g, from food</td><td class="easy">barely flattens, eat up</td></tr>
-          <tr><td class="day">Real food</td><td>most of the plate</td><td>perfection is not worth the misery</td></tr>
-          <tr><td class="day">Liquid sugar</td><td>about none</td><td>every sip is pure cost</td></tr>
-          <tr><td class="day">Salt</td><td>a middle amount</td><td class="hard">too low is also risky (a U-curve)</td></tr>
-          <tr><td class="day">Supplements</td><td>fix real deficiencies</td><td class="hard">megadoses can do harm</td></tr>
-        </tbody>
-      </table>
-    </div>
 
-    <p>But notice the two rows that behave differently. Push salt too low and risk climbs back up; the safe zone is a middle amount, not the minimum. Megadose the antioxidant vitamins and you raise your odds of dying. For those two, the maximum is actively harmful, the far edge of a cliff rather than a plateau you coast onto. The explorer below lets you feel the difference.</p>
+    <p>Reducing sodium lowered blood pressure in the controlled DASH-Sodium trial. <span class="u-src"><a href="https://pubmed.ncbi.nlm.nih.gov/11136953/">Sacks 2001</a></span> <span class="grade g-b">good</span> Some observational studies reported higher risk at very low intake, but measurement error and illness can create that pattern. Research using repeated 24-hour urine samples found a rising cardiovascular risk with higher sodium, rather than a clear protective middle. <span class="u-src"><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2109794">Ma 2022</a></span> <span class="grade g-b">good</span> Current US guidance is less than 2,300 milligrams of sodium daily for most people aged fourteen and older, with needs differing when sweat losses are high. <span class="u-src"><a href="https://cdn.realfood.gov/DGA_508.pdf">Dietary Guidelines 2025-2030</a></span> <span class="grade g-b">good</span> That is sodium, not the weight of table salt.</p>
 
     <div class="tool" id="shape-tool">
-      <div class="tool-head"><h4>The shapes of enough</h4><span class="tool-tag">interactive</span></div>
+      <div class="tool-head"><h4>Evidence sketches</h4><span class="tool-tag">interactive</span></div>
       <div class="tool-body">
         <div class="tool-row">
           <div class="tool-seg" id="s-pick" role="group" aria-label="Pick a lever">
-            <button data-lever="protein" class="on">Protein</button><button data-lever="fiber">Fiber</button><button data-lever="steps">Walking</button><button data-lever="salt">Salt</button><button data-lever="anti">Vitamin pills</button>
+            <button data-lever="protein" class="on" aria-pressed="true">Protein</button><button data-lever="fiber" aria-pressed="false">Fiber</button><button data-lever="steps" aria-pressed="false">Walking</button><button data-lever="salt" aria-pressed="false">Salt</button><button data-lever="anti" aria-pressed="false">Vitamin pills</button>
           </div>
         </div>
-        <svg id="s-curve" viewBox="0 0 380 170" role="img" aria-label="A dose-response curve that changes shape with the lever you pick.">
+        <svg id="s-curve" viewBox="0 0 380 170" role="img" aria-label="An unquantified evidence sketch that changes with the selected topic. Shapes illustrate patterns discussed in the text, not measured dose-response curves.">
           <line x1="34" y1="140" x2="368" y2="140" class="v-grid-s"/>
           <line x1="34" y1="14" x2="34" y2="140" class="v-grid"/>
-          <text x="20" y="20" class="v-axis-t" font-size="9">good</text>
-          <text x="20" y="140" class="v-axis-t" font-size="9">bad</text>
-          <text x="200" y="160" text-anchor="middle" class="v-axis-t" font-size="9">how much you do it &#8594;</text>
-          <path id="s-path" class="draw" style="--len:520" d="" fill="none" stroke="#9ec79a" stroke-width="3" stroke-linecap="round"/>
+          <text x="20" y="20" class="v-axis-t" font-size="9">benefit</text>
+          <text x="20" y="140" class="v-axis-t" font-size="9">less</text>
+          <text x="200" y="160" text-anchor="middle" class="v-axis-t" font-size="9">lower to higher amount (schematic)</text>
+          <path id="s-path" class="draw" style="--len:520" d="M34,120 C 70,112 100,52 150,44 C 210,40 300,40 368,40" fill="none" stroke="#9ec79a" stroke-width="3" stroke-linecap="round"/>
+          <text id="s-no-curve" x="200" y="80" text-anchor="middle" class="v-label" visibility="hidden">No common dose-response estimate</text>
         </svg>
         <div class="tool-out">
-          <div class="tool-rail" id="s-verdict"><b>Protein: rises, then flat.</b> Climbs fast to about 0.7 g per pound, then a plateau. More does no harm, it just does nothing.</div>
+          <div class="tool-rail" id="s-verdict"><b>Protein and training.</b> Average fat-free-mass gains showed diminishing returns near 0.7 g per pound. The estimated cutoff is uncertain. This curve is schematic, not a fitted result.</div>
         </div>
       </div>
     </div>
 
-    <p>You do not need the perfect diet, the clean fifteen, the supplement stack, or the fasting window. You need enough protein, enough fiber, mostly real food, not much liquid sugar, and a way of eating you can live with for years instead of weeks. That is most of the prize, for almost none of the misery. Eat roughly that way, and then go spend your attention on literally anything more interesting than your plate.</p>
+
 
     <figure class="photo reveal">
       <img src="assets/images/what-to-eat/peeters.webp" width="1200" height="844" loading="lazy" decoding="async" alt="Clara Peeters's around-1615 still life: stacked cheeses, a dish of almonds, pretzels, butter, dried figs and a tall glass on a wooden table.">
-      <figcaption>Clara Peeters laid out exactly enough, and painted a tiny self-portrait into the reflection on the pewter lid. The whole guide comes down to her instinct: work out what enough looks like, set the table that way, and stop.
-        <span class="cred"><a href="https://commons.wikimedia.org/wiki/File:Clara_Peeters_-_Still_Life_with_Cheeses,_Almonds_and_Pretzels.jpg">Clara Peeters, <i>Still Life with Cheeses, Almonds and Pretzels</i> (c. 1615), Mauritshuis. Public domain, via Wikimedia Commons.</a></span>
+      <figcaption>Peeters painted her own face in the pewter lid of the jug, a small self-portrait among the cheeses and costly tableware.
+        <span class="cred"><a href="https://www.mauritshuis.nl/en/our-collection/artworks/1203-still-life-with-cheeses-almonds-and-pretzels">Clara Peeters, <i>Still Life with Cheeses, Almonds and Pretzels</i> (c. 1615), Mauritshuis. Public domain.</a></span>
       </figcaption>
     </figure>
 
-    <blockquote class="u-pq">Enough protein, enough fiber, mostly real food, and the sense to stop optimizing. The rest is marketing.<cite class="u-pq-cite">What You're Supposed to Eat</cite></blockquote>
-
     <div class="disclaimer" role="note">
-      <strong>One honest disclaimer.</strong> This is an enthusiast's guide, not medical advice, and I am not a doctor. It cannot know your body, your bloodwork, or your history. Talk to a physician before big diet changes or any weight-loss medication, and especially if you have a medical condition or any history of disordered eating. Every claim here is cited so you can check it yourself, which you should. Built with care, for the love of getting one thing right.
+      <strong>A limit of this guide.</strong> I am not a doctor. This guide cannot account for your medical history, medications, pregnancy, or eating-disorder history. Its numbers describe study groups and rough planning estimates, not an individual prescription. A clinician or registered dietitian can help when those circumstances change what is appropriate.
     </div>
 
     <hr class="u-divider">
@@ -729,73 +708,81 @@
   <section id="sources" class="sec">
     <span class="sec-kicker">The fine print</span>
     <h2 class="sec-h">Sources, and how to read them</h2>
-    <p class="lede">Every number in this guide is tied to a real study, cited where it appears. The research was told to refute the thesis, not flatter it, so the corrections were left visible above: a calorie is not quite a calorie, the ultra-processed disease data is mostly observational, some "interchangeable" diets really are medicine, a few supplements genuinely work, and a couple of levers turn harmful at the top.</p>
+    <p class="lede">Sources are linked beside the claims they support. Trials can test causation under their study conditions; cohorts can find associations over longer periods. A review is only as reliable as the evidence it pools. The grades are editorial shorthand for that distinction and the important limitations, not formal GRADE ratings.</p>
     <details class="u-collapse">
-      <summary class="u-collapse-s">The full list, 50 sources, grouped by topic</summary>
+      <summary class="u-collapse-s">The full list, 59 sources, grouped by topic</summary>
     <div class="legend">
-      <span><span class="grade g-a">strong</span> meta-analyses or many trials agreeing</span>
-      <span><span class="grade g-b">good</span> one strong trial or large cohort</span>
-      <span><span class="grade g-c">mixed</span> observational, limited, or contested</span>
-      <span><span class="grade g-d">thin</span> a single study or a popular claim</span>
+      <span><span class="grade g-a">strong</span> consistent trials or high-certainty synthesis</span>
+      <span><span class="grade g-b">good</span> useful trial or well-supported estimate</span>
+      <span><span class="grade g-c">mixed</span> observational, limited, or uncertain</span>
+      <span><span class="grade g-d">thin</span> little direct evidence</span>
     </div>
     <ol>
-      <li class="shead">Weight is energy</li>
-      <li value="1"><b>Hall KD, et al. (2016).</b> Energy balance and its components. <i>Am J Clin Nutr</i>. (The physics of weight, stated plainly.) <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4733244/">PMC4733244</a></li>
-      <li><b>Westerterp KR (2004).</b> Diet-induced thermogenesis (the thermic effect of protein vs fat vs carbohydrate). <i>Nutr Metab</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC524030/">PMC524030</a></li>
-      <li><b>Longland TM, et al. (2016).</b> Higher protein during a deficit: more fat lost, muscle spared. <i>Am J Clin Nutr</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26817506/">PubMed</a></li>
-      <li><b>Lichtman SW, et al. (1992).</b> Discrepancy between self-reported and actual intake and exercise. <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/1454084/">PubMed</a></li>
-      <li><b>Pontzer H, et al. (2012).</b> Hunter-gatherer energetics and human obesity (the Hadza). <i>PLoS ONE</i>. <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0040503">PLoS ONE</a></li>
-      <li><b>Pontzer H, et al. (2016).</b> Constrained total energy expenditure. <i>Current Biology</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26832439/">PubMed</a></li>
-      <li class="shead">The diet wars</li>
-      <li value="7"><b>Dansinger ML, et al. (2005).</b> Atkins, Ornish, Weight Watchers, and Zone for weight loss. <i>JAMA</i>. <a href="https://jamanetwork.com/journals/jama/fullarticle/200094">jamanetwork.com</a></li>
-      <li><b>Gardner CD, et al. (2018).</b> Low-fat vs low-carb, and genotype/insulin (DIETFITS). <i>JAMA</i>. <a href="https://jamanetwork.com/journals/jama/fullarticle/2673150">jamanetwork.com</a></li>
-      <li><b>Sacks FM, et al. (2009).</b> Weight-loss diets with different macronutrient compositions (POUNDS LOST). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/19246357/">PubMed</a></li>
-      <li><b>Johnston BC, et al. (2014).</b> Named diet programs: network meta-analysis. <i>JAMA</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/25182101/">PubMed</a></li>
-      <li><b>Tobias DK, et al. (2015).</b> Low-fat vs other diets for long-term weight change. <i>Lancet Diabetes Endocrinol</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/26527511/">PubMed</a></li>
-      <li><b>Hall KD, et al. (2015).</b> Calorie for calorie, fat restriction beats carb restriction for fat loss. <i>Cell Metab</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4603544/">PMC4603544</a></li>
-      <li><b>Hall KD, et al. (2016).</b> Energy expenditure after an isocaloric ketogenic diet. <i>Am J Clin Nutr</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27385608/">PubMed</a></li>
-      <li><b>Goldenberg JZ, et al. (2021).</b> Low-carbohydrate diets for type 2 diabetes remission. <i>BMJ</i>. <a href="https://www.bmj.com/content/372/bmj.m4743">bmj.com</a></li>
-      <li><b>Appel LJ, et al. (1997).</b> Dietary patterns and blood pressure (DASH). <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJM199704173361601">nejm.org</a></li>
-      <li class="shead">Ultra-processed food</li>
-      <li value="16"><b>Hall KD, et al. (2019).</b> Ultra-processed diets cause excess intake and weight gain (the metabolic-ward RCT). <i>Cell Metab</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/31105044/">PubMed</a></li>
-      <li><b>Monteiro CA, et al. (2019).</b> Ultra-processed foods: what they are and how to identify them (NOVA). <i>Public Health Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10260459/">PMC10260459</a></li>
-      <li><b>Lane MM, et al. (2024).</b> Ultra-processed food and adverse health: umbrella review. <i>BMJ</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/38418082/">PubMed</a></li>
-      <li><b>Pagliai G, et al. (2021).</b> Ultra-processed foods and health: meta-analysis. <i>Br J Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7844609/">PMC7844609</a></li>
-      <li><b>Gosby AK, et al. (2011).</b> Testing protein leverage in lean humans. <i>PLoS ONE</i>. <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0025929">PLoS ONE</a></li>
-      <li><b>Simpson SJ, Raubenheimer D (2005).</b> Obesity: the protein leverage hypothesis. <i>Obes Rev</i>. <a href="https://onlinelibrary.wiley.com/doi/10.1111/j.1467-789X.2005.00178.x">Wiley</a></li>
-      <li class="shead">What to add: protein and fiber</li>
-      <li value="22"><b>Weigle DS, et al. (2005).</b> A high-protein diet lowers spontaneous calorie intake. <i>Am J Clin Nutr</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/16002798/">PubMed</a></li>
-      <li><b>Reynolds A, et al. (2019).</b> Carbohydrate quality and human health (the WHO fiber review). <i>The Lancet</i>. <a href="https://www.thelancet.com/article/S0140-6736(18)31809-9/fulltext">thelancet.com</a></li>
-      <li><b>Morton RW, et al. (2018).</b> Protein supplementation and resistance training: the plateau near 1.6 g/kg. <i>Br J Sports Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">PubMed</a></li>
-      <li><b>U.S. Dept. of Agriculture & HHS (2020).</b> Dietary Guidelines for Americans 2020-2025 (fiber targets, 14 g/1,000 kcal). <a href="https://www.dietaryguidelines.gov/">dietaryguidelines.gov</a></li>
-      <li class="shead">Sugar and drinks</li>
-      <li value="26"><b>Malik VS, et al. (2013).</b> Sugar-sweetened beverages and weight gain: meta-analysis. <i>Am J Clin Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3778861/">PMC3778861</a></li>
-      <li><b>Malik VS, et al. (2010).</b> Sugar-sweetened beverages and risk of type 2 diabetes. <i>Diabetes Care</i>. <a href="https://diabetesjournals.org/care/article/33/11/2477/26589/">diabetesjournals.org</a></li>
-      <li><b>de Ruyter JC, et al. (2012).</b> Sugar-free vs sugary drinks and weight in children (RCT). <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1203034">nejm.org</a></li>
-      <li><b>Estruch R, et al. (2018).</b> Mediterranean diet and cardiovascular prevention (PREDIMED, republished after the 2013 retraction). <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1800389">nejm.org</a></li>
+      <li class="shead">Energy balance and weight</li>
+      <li value="1"><b>Hall KD, et al. (2012).</b> Energy balance and its components: implications for body weight regulation. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3302369/">Source</a></li>
+      <li value="2"><b>Westerterp KR (2004).</b> Diet-induced thermogenesis. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC524030/">Source</a></li>
+      <li value="3"><b>Longland TM, et al. (2016).</b> Higher protein intake during energy restriction and intensive exercise. <a href="https://pubmed.ncbi.nlm.nih.gov/26817506/">Source</a></li>
+      <li value="4"><b>Lichtman SW, et al. (1992).</b> Discrepancy between self-reported and actual caloric intake and exercise. <a href="https://www.nejm.org/doi/abs/10.1056/NEJM199212313272701">Source</a></li>
+      <li value="5"><b>Pontzer H, et al. (2012).</b> Hunter-gatherer energetics and human obesity. <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0040503">Source</a></li>
+      <li value="6"><b>Jayedi A, et al. (2024).</b> Aerobic exercise and weight loss in adults: dose-response meta-analysis of randomized trials. <a href="https://pubmed.ncbi.nlm.nih.gov/39724371/">Source</a></li>
+      <li value="7"><b>NIDDK.</b> Body Weight Planner, including its adult scope and low-intake limit. <a href="https://www.niddk.nih.gov/bwp">Source</a></li>
+      <li class="shead">Diet comparisons and health</li>
+      <li value="8"><b>Dansinger ML, et al. (2005).</b> Atkins, Ornish, Weight Watchers, and Zone for weight loss. <a href="https://jamanetwork.com/journals/jama/fullarticle/200094">Source</a></li>
+      <li value="9"><b>Gardner CD, et al. (2018).</b> Healthy low-fat versus low-carbohydrate diets: DIETFITS. <a href="https://jamanetwork.com/journals/jama/fullarticle/2673150">Source</a></li>
+      <li value="10"><b>Sacks FM, et al. (2009).</b> Weight-loss diets with different macronutrient compositions: POUNDS LOST. <a href="https://pubmed.ncbi.nlm.nih.gov/19246357/">Source</a></li>
+      <li value="11"><b>Johnston BC, et al. (2014).</b> Named diet programs: network meta-analysis. <a href="https://pubmed.ncbi.nlm.nih.gov/25182101/">Source</a></li>
+      <li value="12"><b>Hall KD, et al. (2015).</b> Dietary fat restriction versus carbohydrate restriction during controlled feeding. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4603544/">Source</a></li>
+      <li value="13"><b>Liu D, et al. (2022).</b> Calorie restriction with or without time-restricted eating. <a href="https://pubmed.ncbi.nlm.nih.gov/35443107/">Source</a></li>
+      <li value="14"><b>Semnani-Azad Z, et al. (2025).</b> Intermittent fasting strategies: network meta-analysis of randomized trials. <a href="https://www.bmj.com/content/389/bmj-2024-082007">Source</a></li>
+      <li value="15"><b>Goldenberg JZ, et al. (2021).</b> Low-carbohydrate diets and type 2 diabetes remission. <a href="https://pubmed.ncbi.nlm.nih.gov/33441384/">Source</a></li>
+      <li value="16"><b>Appel LJ, et al. (1997).</b> Dietary patterns and blood pressure: DASH. <a href="https://www.nejm.org/doi/full/10.1056/NEJM199704173361601">Source</a></li>
+      <li value="17"><b>Neal EG, et al. (2008).</b> Ketogenic diet in childhood drug-resistant epilepsy. <a href="https://pubmed.ncbi.nlm.nih.gov/18456557/">Source</a></li>
+      <li value="18"><b>Halmos EP, et al. (2014).</b> A low-FODMAP diet and irritable bowel syndrome symptoms. <a href="https://pubmed.ncbi.nlm.nih.gov/24076059/">Source</a></li>
+      <li value="19"><b>Estruch R, et al. (2018).</b> Mediterranean diet and cardiovascular prevention: corrected PREDIMED report. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1800389">Source</a></li>
+      <li class="shead">Food quality, protein, and fiber</li>
+      <li value="20"><b>Hall KD, et al. (2019).</b> Ultra-processed diets, excess intake, and weight gain: inpatient crossover trial. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7946062/">Source</a></li>
+      <li value="21"><b>Monteiro CA, et al. (2019).</b> Ultra-processed foods: what they are and how to identify them. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10260459/">Source</a></li>
+      <li value="22"><b>Lane MM, et al. (2024).</b> Ultra-processed food and adverse health outcomes: umbrella review. <a href="https://pubmed.ncbi.nlm.nih.gov/38418082/">Source</a></li>
+      <li value="23"><b>Weigle DS, et al. (2005).</b> A high-protein diet, appetite, and spontaneous calorie intake. <a href="https://pubmed.ncbi.nlm.nih.gov/16002798/">Source</a></li>
+      <li value="24"><b>Morton RW, et al. (2018).</b> Protein supplementation and resistance training: meta-analysis and breakpoint estimate. <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/">Source</a></li>
+      <li value="25"><b>Institute of Medicine (2005).</b> Dietary Reference Intakes, chapter 7: dietary, functional, and total fiber. <a href="https://nap.nationalacademies.org/read/10490/chapter/9">Source</a></li>
+      <li value="26"><b>Reynolds A, et al. (2019).</b> Carbohydrate quality and human health: systematic reviews and meta-analyses. <a href="https://pubmed.ncbi.nlm.nih.gov/30638909/">Source</a></li>
+      <li value="27"><b>Jovanovski E, et al. (2018).</b> Psyllium fiber and LDL cholesterol: meta-analysis of randomized trials. <a href="https://pubmed.ncbi.nlm.nih.gov/30239559/">Source</a></li>
+      <li value="28"><b>NIDDK.</b> Eating, diet, and nutrition for constipation: fiber foods and gradual increases. <a href="https://www.niddk.nih.gov/health-information/digestive-diseases/constipation/eating-diet-nutrition">Source</a></li>
+      <li value="29"><b>Malik VS, et al. (2013).</b> Sugar-sweetened beverages and weight gain: systematic review and meta-analysis. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3778861/">Source</a></li>
       <li class="shead">Supplements</li>
-      <li value="30"><b>USPSTF / O'Connor EA, et al. (2022).</b> Vitamin and mineral supplements for CVD and cancer prevention: evidence report. <i>JAMA</i>. <a href="https://jamanetwork.com/journals/jama/fullarticle/2793447">jamanetwork.com</a></li>
-      <li><b>Sesso HD, et al. (2012).</b> Multivitamins and cardiovascular disease (Physicians' Health Study II). <i>JAMA</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/23117775/">PubMed</a></li>
-      <li><b>Gaziano JM, et al. (2012).</b> Multivitamins and cancer (Physicians' Health Study II). <i>JAMA</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/23162860/">PubMed</a></li>
-      <li><b>Loftfield E, et al. (2024).</b> Multivitamin use and mortality in 390,000 adults. <i>JAMA Netw Open</i>. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2820369">jamanetwork.com</a></li>
-      <li><b>Bjelakovic G, et al. (2007).</b> Antioxidant supplements and mortality: meta-analysis. <i>JAMA</i>. <a href="https://jamanetwork.com/journals/jama/fullarticle/205797">jamanetwork.com</a></li>
-      <li><b>ATBC Study Group (1994).</b> Vitamin E and beta-carotene in male smokers. <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/8127329/">PubMed</a></li>
-      <li><b>Omenn GS, et al. (1996).</b> Beta-carotene and retinol, and lung cancer (CARET). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/8602180/">PubMed</a></li>
-      <li><b>Manson JE, et al. (2019).</b> Vitamin D and prevention of cancer and CVD (VITAL). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30415629/">PubMed</a></li>
-      <li><b>Bhatt DL, et al. (2019).</b> Cardiovascular risk reduction with icosapent ethyl (REDUCE-IT). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/30415628/">PubMed</a></li>
-      <li><b>MRC Vitamin Study Group (1991).</b> Folic acid and prevention of neural-tube defects. <i>The Lancet</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/1677062/">PubMed</a></li>
-      <li><b>Kreider RB, et al. (2017).</b> ISSN position stand: creatine. <i>J Int Soc Sports Nutr</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">PMC5469049</a></li>
-      <li><b>Guallar E, et al. (2013).</b> "Enough is enough: stop wasting money on supplements." <i>Ann Intern Med</i>. <a href="https://www.acpjournals.org/doi/10.7326/0003-4819-159-12-201312170-00011">acpjournals.org</a></li>
-      <li class="shead">Why diets fail, and GLP-1</li>
-      <li value="42"><b>Leibel RL, et al. (1995).</b> Changes in energy expenditure after weight change. <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/7632212/">PubMed</a></li>
-      <li><b>Rosenbaum M, et al. (2005).</b> Low-dose leptin reverses the energy drop after weight loss. <i>J Clin Invest</i>. <a href="https://www.jci.org/articles/view/25977">jci.org</a></li>
-      <li><b>Fothergill E, et al. (2016).</b> Persistent metabolic adaptation 6 years after "The Biggest Loser." <i>Obesity</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/27136388/">PubMed</a></li>
-      <li><b>Anderson JW, et al. (2001).</b> Long-term weight-loss maintenance: meta-analysis. <i>Am J Clin Nutr</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/11684524/">PubMed</a></li>
-      <li><b>Thomas JG, et al. (2014).</b> Weight-loss maintenance in the National Weight Control Registry. <i>Am J Prev Med</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/24355667/">PubMed</a></li>
-      <li><b>Wilding JPH, et al. (2021).</b> Once-weekly semaglutide in obesity (STEP 1). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/33567185/">PubMed</a></li>
-      <li><b>Jastreboff AM, et al. (2022).</b> Tirzepatide for obesity (SURMOUNT-1). <i>NEJM</i>. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2206038">nejm.org</a></li>
-      <li><b>Lincoff AM, et al. (2023).</b> Semaglutide and cardiovascular outcomes (SELECT). <i>NEJM</i>. <a href="https://pubmed.ncbi.nlm.nih.gov/37952131/">PubMed</a></li>
-      <li><b>Wilding JPH, et al. (2022).</b> Weight regain after stopping semaglutide (STEP 1 extension). <i>Diabetes Obes Metab</i>. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9542252/">PMC9542252</a></li>
+      <li value="30"><b>O'Connor EA, et al. (2022).</b> Vitamin and mineral supplements for cardiovascular and cancer prevention: USPSTF evidence review. <a href="https://jamanetwork.com/journals/jama/fullarticle/2793447">Source</a></li>
+      <li value="31"><b>Sesso HD, et al. (2012).</b> Multivitamins and cardiovascular disease: Physicians' Health Study II. <a href="https://pubmed.ncbi.nlm.nih.gov/23117775/">Source</a></li>
+      <li value="32"><b>Gaziano JM, et al. (2012).</b> Multivitamins and cancer incidence: Physicians' Health Study II. <a href="https://pubmed.ncbi.nlm.nih.gov/23162860/">Source</a></li>
+      <li value="33"><b>Loftfield E, et al. (2024).</b> Multivitamin use and mortality in 390,124 adults. <a href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2820369">Source</a></li>
+      <li value="34"><b>Vyas CM, et al. (2024).</b> Multivitamins and cognition: COSMOS clinical trials. <a href="https://pubmed.ncbi.nlm.nih.gov/38244989/">Source</a></li>
+      <li value="35"><b>Bjelakovic G, et al. (2007).</b> Mortality in randomized trials of antioxidant supplements. <a href="https://jamanetwork.com/journals/jama/fullarticle/205797">Source</a></li>
+      <li value="36"><b>ATBC Study Group (1994).</b> Vitamin E and beta-carotene supplementation in male smokers. <a href="https://pubmed.ncbi.nlm.nih.gov/8127329/">Source</a></li>
+      <li value="37"><b>Omenn GS, et al. (1996).</b> Beta-carotene and vitamin A: CARET trial. <a href="https://pubmed.ncbi.nlm.nih.gov/8602180/">Source</a></li>
+      <li value="38"><b>MRC Vitamin Study Group (1991).</b> Folic acid and recurrence of neural-tube defects. <a href="https://pubmed.ncbi.nlm.nih.gov/1677062/">Source</a></li>
+      <li value="39"><b>USPSTF (2023).</b> Folic acid to prevent neural-tube defects: preventive medication recommendation. <a href="https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/folic-acid-for-the-prevention-of-neural-tube-defects-preventive-medication">Source</a></li>
+      <li value="40"><b>NIH Office of Dietary Supplements.</b> Vitamin B12: health professional fact sheet. <a href="https://ods.od.nih.gov/factsheets/VitaminB12-HealthProfessional/">Source</a></li>
+      <li value="41"><b>NIH Office of Dietary Supplements.</b> Iron: health professional fact sheet. <a href="https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/">Source</a></li>
+      <li value="42"><b>Kreider RB, et al. (2017).</b> ISSN position stand on creatine supplementation. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/">Source</a></li>
+      <li value="43"><b>Manson JE, et al. (2019).</b> Vitamin D supplements and prevention of cancer and cardiovascular disease: VITAL. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6425757/">Source</a></li>
+      <li value="44"><b>Endocrine Society (2024).</b> Vitamin D for prevention of disease: clinical practice guideline. <a href="https://www.endocrine.org/clinical-practice-guidelines/vitamin-d-for-prevention-of-disease">Source</a></li>
+      <li value="45"><b>Bhatt DL, et al. (2019).</b> Icosapent ethyl in selected high-risk patients: REDUCE-IT. <a href="https://pubmed.ncbi.nlm.nih.gov/30415628/">Source</a></li>
+      <li class="shead">Weight maintenance and medicines</li>
+      <li value="46"><b>Sumithran P, et al. (2011).</b> Long-term persistence of hormonal adaptations to weight loss. <a href="https://pubmed.ncbi.nlm.nih.gov/22029981/">Source</a></li>
+      <li value="47"><b>Leibel RL, et al. (1995).</b> Changes in energy expenditure after changes in body weight. <a href="https://pubmed.ncbi.nlm.nih.gov/7632212/">Source</a></li>
+      <li value="48"><b>Fothergill E, et al. (2016).</b> Metabolic adaptation six years after The Biggest Loser. <a href="https://pubmed.ncbi.nlm.nih.gov/27136388/">Source</a></li>
+      <li value="49"><b>Anderson JW, et al. (2001).</b> Long-term weight-loss maintenance: meta-analysis of US programs. <a href="https://pubmed.ncbi.nlm.nih.gov/11684524/">Source</a></li>
+      <li value="50"><b>Thomas JG, et al. (2014).</b> Long-term maintenance in the National Weight Control Registry. <a href="https://pubmed.ncbi.nlm.nih.gov/24355667/">Source</a></li>
+      <li value="51"><b>Wilding JPH, et al. (2021).</b> Semaglutide for obesity: STEP 1. <a href="https://pubmed.ncbi.nlm.nih.gov/33567185/">Source</a></li>
+      <li value="52"><b>Jastreboff AM, et al. (2022).</b> Tirzepatide for obesity: SURMOUNT-1. <a href="https://pubmed.ncbi.nlm.nih.gov/35658024/">Source</a></li>
+      <li value="53"><b>Lincoff AM, et al. (2023).</b> Semaglutide and cardiovascular outcomes: SELECT. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2307563">Source</a></li>
+      <li value="54"><b>Wilding JPH, et al. (2022).</b> Weight regain after withdrawal: STEP 1 extension. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9542252/">Source</a></li>
+      <li value="55"><b>Look M, et al. (2025).</b> Body composition during tirzepatide treatment: SURMOUNT-1 substudy. <a href="https://pubmed.ncbi.nlm.nih.gov/39996356/">Source</a></li>
+      <li class="shead">Sodium and movement</li>
+      <li value="56"><b>Ma Y, et al. (2022).</b> Repeated urinary sodium measurements and cardiovascular risk. <a href="https://www.nejm.org/doi/full/10.1056/NEJMoa2109794">Source</a></li>
+      <li value="57"><b>USDA and HHS (2026).</b> Dietary Guidelines for Americans, 2025-2030: sodium guidance. <a href="https://cdn.realfood.gov/DGA_508.pdf">Source</a></li>
+      <li value="58"><b>Paluch AE, et al. (2022).</b> Daily steps and all-cause mortality: meta-analysis of 15 cohorts. <a href="https://pubmed.ncbi.nlm.nih.gov/35247352/">Source</a></li>
+      <li value="59"><b>Sacks FM, et al. (2001).</b> Reduced sodium and DASH: controlled blood-pressure trial. <a href="https://pubmed.ncbi.nlm.nih.gov/11136953/">Source</a></li>
     </ol>
     </details>
 
@@ -807,7 +794,7 @@
   <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
   <nav class="u-next" aria-label="Keep reading">
     <p class="u-next-k">Next in Staying Alive</p>
-    <p class="u-next-t"><a class="u-next-link" href="the-other-hours.html">The Other Hours: Health Outside the Gym and the Kitchen</a></p>
+    <p class="u-next-t"><a class="u-next-link" href="the-other-hours.html">The Other Hours</a></p>
     <p class="u-next-more"><a href="staying-alive.html">All 4 posts in Staying Alive</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
@@ -818,6 +805,6 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/what-to-eat.js"></script>
+  <script src="js/what-to-eat.js?v=20261004"></script>
 </body>
 </html>
