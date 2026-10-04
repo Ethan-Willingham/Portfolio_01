@@ -1,0 +1,229 @@
+{
+  "slug": "fox",
+  "date": "2026-10-03",
+  "title": "Emmet Fox's Sermon on the Mount",
+  "owned_files": [
+    "fox.html",
+    "js/fox.js"
+  ],
+  "baseline": "fox.html and js/fox.js were clean at assignment start. Captured HEAD copies before edits; their content matched the working-tree baseline. Other dirty files were left untouched.",
+  "word_count_method": "Text in main before sources, including headings, authored gallery cards, citations and captions; excludes hero, source section, navigation, styles and scripts. Word tokens retain internal apostrophes and hyphens. The authored gallery is counted once, not again after JavaScript renders it.",
+  "original_word_counts": {
+    "narrative": 2827,
+    "main_including_sources": 3493,
+    "visible_page": 3572
+  },
+  "final_word_counts": {
+    "narrative": 1556,
+    "main_including_sources": 1849,
+    "visible_page": 1918
+  },
+  "first_rewrite_narrative_words": 1730,
+  "original_read_time_minutes": 16,
+  "final_read_time_minutes": 8,
+  "read_time_method": "Narrative including all three gallery passages, rounded up at 200 words per minute; source list excluded.",
+  "editorial_rationale": [
+    "Replaced the AA anecdote and promotional sermon framing with the concrete claim that inheriting the earth means dominion over health and circumstances. The post now introduces Fox as a religious interpreter whose claims readers can examine.",
+    "Preserved spiritual laws, mental causation, the possibility of beginning again, meekness, nonresistance, realization, the Golden Key and early AA readership. Added the distinction between goodwill and forced affection in forgiveness, which the old prayer-machine account obscured.",
+    "Rebuilt the three-card gallery around the Gospel passage, Fox's reading, and the interpretive step that connects them. All gallery summaries and lesson lines are explicitly labeled paraphrases in both HTML and generated JavaScript.",
+    "Removed the most-popular-preacher superlative, unaudited audience count, engineering jokes, compulsory contrasts, Sunday-school ridicule, stage directions, repeated callouts and the keep/drop checklist.",
+    "Removed The Secret and bestseller genealogy, Ehrenreich's breast-cancer statistic, and the Epictetus family tree. Those detours supplied a tidy modern lineage without doing the work needed to establish one.",
+    "Moved AA before the final limits section. The narrative now ends on the difficulty of identifying a failed fair trial when Fox explains failure through the reader's consciousness.",
+    "Kept the existing hero and structural classes, image assets, picture wrappers, gallery navigation, authored no-JavaScript cards and endcap. Root owns shared styling and visual QA."
+  ],
+  "major_factual_corrections": [
+    {
+      "before": "The Sermon was presented as a manual of practical psychology instead of moral demands, with Fox's account treated as the original meaning of Jesus.",
+      "after": "Fox's metaphysical reading is attributed to him. The meekness and nonresistance cards show where he adds definitions or moves instructions about conduct into thought. His ethical demand for forgiveness remains visible."
+    },
+    {
+      "before": "The kingdom of heaven is within you was treated as a line from the Sermon.",
+      "after": "Removed this conflation. The phrase belongs to the interpretation of Luke 17:21, not Matthew's Sermon, and the usual wording names the kingdom of God."
+    },
+    {
+      "before": "Daily bread was said to have nothing to do with food.",
+      "after": "Fox explicitly includes food and material needs before extending bread to a firsthand experience of divine presence."
+    },
+    {
+      "before": "The Lord's Prayer was called a machine engineered by Jesus and a treatment that reliably changes the user.",
+      "after": "Explained Fox's religious interpretation of divine parenthood, realization and forgiveness without treating the prayer as a validated device."
+    },
+    {
+      "before": "The Golden Key was declared sound because you cannot think about two things at once, with God optional and a direct parallel to therapy.",
+      "after": "Removed the cognitive claim and efficacy guarantee. Explained Fox's belief that an omnipotent God acts through prayer; stripping out God changes his proposed explanation. Possible reassurance is distinguished from external control."
+    },
+    {
+      "before": "CBT and New Thought were described as parallel descendants of Epictetus, with CBT validating Fox's mechanism.",
+      "after": "No unsupported descent claim remains. The Beck Institute is cited for evaluation of thoughts, problem solving and behavior practice, which cannot prove Fox's universal metaphysical law."
+    },
+    {
+      "before": "Early AA used Fox as its first textbook, and detailed claims about the authorship of God as we understood Him were asserted without primary evidence.",
+      "after": "AA's own archives publish Dorothy and Bill's 1954 recollection of popular early reading. The post names the recollection's scope and other reading, and does not infer official textbook status or authorship of the Steps."
+    },
+    {
+      "before": "The medical critique used an unsourced breast-cancer mortality generalization and broad slogans about thought moving matter.",
+      "after": "The National Cancer Institute supports the specific limit: attitude is not convincingly linked to cancer risk or death. The page does not advise replacing medical care with prayer."
+    },
+    {
+      "before": "The source note claimed a Grosset and Dunlap reprint while its Internet Archive link identifies a 1989 Perennial Library edition.",
+      "after": "Named the actually inspected 2010 HarperCollins digital text; the Archive link is described as an edition record, with a separate preview for the digital edition."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://www.thetbs.org/study-materials/wp-content/uploads/2023/03/The_Sermon_on_the_Mount_The_Key_to_Success_in_Life_Emmet_Fox_z_lib.pdf",
+      "type": "Primary text, HarperCollins digital edition transcription",
+      "verified": "Preface and relevant passages in chapters 1, 2, 4 and 7 plus the Lord's Prayer appendix. Verified the free-will quotation, health and legal illustrations, unconscious states, earth and meekness definitions, nonresistance anecdotes, daily bread, realization, forgiveness, fixed forms and results test. Copyright page identifies 1934/1935/1938 for the Sermon, 1932/1938 for the appendix, 2010 digital edition and ISBN 9780062010674.",
+      "limits": "A reformatted digital text, not a facsimile of the first printing. Research URL records the inspected copy; the page links to edition records and the HarperOne preview rather than this third-party mirror."
+    },
+    {
+      "url": "https://www.emmetfox.org/booklets/the-golden-key",
+      "type": "Primary pamphlet reprint",
+      "verified": "Read the complete pamphlet. Exact central instruction, omnipotent God as agent, possible religious views, named troubles, redirection, no checking, no outlining and influence on another person.",
+      "limits": "This reprint opens Prayer rather than Scientific Prayer. No claim is made that its wording exactly reproduces the 1931 first printing."
+    },
+    {
+      "url": "https://cdnc.heyzine.com/flip-book/pdf/33b5b7ab65ae3a703ddc01c8a9b0785e5da46282.pdf",
+      "type": "Unity booklet, The Golden Key for Today",
+      "verified": "Downloaded and read the historical introduction and complete modernized pamphlet. Confirms 1931 first publication, Fox's Divine Science Church of the Healing Christ ministry, Hippodrome and Carnegie Hall venues, and 1944 special Unity edition. Copyright attribution gives 1931.",
+      "limits": "Pamphlet wording has been modernized. Not used as the verbatim source of the central quotation."
+    },
+    {
+      "url": "https://shop.unity.org/offer/the-golden-key-for-today?p=WJ410500",
+      "type": "Publisher statement",
+      "verified": "Unity identifies Fox's pamphlet as written in 1931 and supplies its central instruction."
+    },
+    {
+      "url": "https://www.biblegateway.com/passage/?search=Matthew+5&version=KJV",
+      "type": "Primary Gospel text, KJV",
+      "verified": "Matthew 5:5 and neighboring Beatitudes; Matthew 5:38 to 48 and the sequence of cheek, cloak, second mile, generosity and enemies.",
+      "limits": "The post identifies Fox's additional definitions without claiming that every Christian interpretation agrees on all details."
+    },
+    {
+      "url": "https://www.biblegateway.com/passage/?search=Matthew+6&version=KJV",
+      "type": "Primary Gospel text, KJV",
+      "verified": "Matthew 6:9 to 15, daily bread, forgiveness, surrounding prayer instructions."
+    },
+    {
+      "url": "https://www.aa.org/sites/default/files/newsletters/f-151_markings_spring06.pdf",
+      "type": "AA General Service Office Archives newsletter and transcript",
+      "verified": "Downloaded original after web open returned an internal error. Page 2 reproduces the 1954 conversation with Bill W. and Dorothy, wife of Clarence S. Dorothy recalls Bob giving her Fox and newcomers receiving it in hospital. Bill confirms popularity. Conversation names Drummond and Upper Room. Page 3 identifies the Big Book's publication in April 1939.",
+      "limits": "A retrospective recollection, not a universal curriculum record or measurement of treatment effect. No Fox authorship of Steps inferred."
+    },
+    {
+      "url": "https://cares.beckinstitute.org/about-cbt/",
+      "type": "Clinical institute description",
+      "verified": "CBT examines distressing thoughts, evaluates realism, teaches skills and includes problem solving and behavioral work. The model links interpretation with reactions, not external-event causation.",
+      "limits": "Not used to claim that Fox's practice is tested, or to rank all psychotherapies."
+    },
+    {
+      "url": "https://www.cancer.gov/about-cancer/causes-prevention/risk/myths",
+      "type": "National Cancer Institute evidence summary",
+      "verified": "No convincing evidence connects attitude to developing or dying from cancer; support and activity can help coping.",
+      "limits": "Specific cancer claim, not a claim that stress or psychological processes have no influence on any aspect of health."
+    },
+    {
+      "url": "https://archive.org/details/sermononmountkey00foxe",
+      "type": "Edition record",
+      "verified": "1989 Harper and Row, first Perennial Library edition; access-restricted. Corrected the prior description of a Grosset and Dunlap reprint."
+    },
+    {
+      "url": "https://www.perlego.com/book/582783/the-sermon-on-the-mount-the-key-to-success-in-life-pdf",
+      "type": "HarperOne digital edition record and preview",
+      "verified": "2010, eISBN 9780062010674, same chapter layout and opening as the inspected text."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:Bloch-SermonOnTheMount.jpg",
+      "type": "Image credit record",
+      "verified": "Carl Bloch, The Sermon On the Mount, 1877, public-domain artwork. Existing asset retained."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:Emmet_Fox_1944.png",
+      "type": "Image credit record",
+      "verified": "1944 Divine Science News portrait. Existing asset retained."
+    }
+  ],
+  "quotes": [
+    {
+      "text": "We have free will, but our free will lies in our choice of thought.",
+      "location": "Chapter 1, What Did Jesus Teach?, paragraph following the outer expression of inner thought passage.",
+      "transcription_pdf_page_1_based": 16,
+      "url": "https://www.thetbs.org/study-materials/wp-content/uploads/2023/03/The_Sermon_on_the_Mount_The_Key_to_Success_in_Life_Emmet_Fox_z_lib.pdf#page=16",
+      "alterations": "None.",
+      "word_count": 14
+    },
+    {
+      "text": "Stop thinking about the difficulty, whatever it is, and think about God instead.",
+      "location": "The Golden Key, paragraph beginning As for the actual method of working.",
+      "url": "https://www.emmetfox.org/booklets/the-golden-key",
+      "alterations": "None.",
+      "word_count": 13
+    },
+    {
+      "text": "That was required reading for everybody.",
+      "location": "Markings, spring 2006, page 2, Dorothy's statement in the 1954 recording.",
+      "url": "https://www.aa.org/sites/default/files/newsletters/f-151_markings_spring06.pdf#page=2",
+      "alterations": "None.",
+      "word_count": 6
+    },
+    {
+      "text": "Blessed are the meek: for they shall inherit the earth.",
+      "location": "Matthew 5:5, King James Version.",
+      "url": "https://www.biblegateway.com/passage/?search=Matthew+5&version=KJV",
+      "alterations": "None.",
+      "word_count": 10
+    },
+    {
+      "text": "Give us this day our daily bread.",
+      "location": "Matthew 6:11, King James Version.",
+      "url": "https://www.biblegateway.com/passage/?search=Matthew+6&version=KJV",
+      "alterations": "None.",
+      "word_count": 7
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Removed the sermon as machinery, the printout of thought, guru ridicule and contemporary marketing analogies. Concrete Gospel instructions, Fox's definitions and the AA recording now carry the explanation."
+    },
+    {
+      "pass": 2,
+      "name": "Delete the first paragraph",
+      "result": "Kept the shortened opening after checking its deletion. It supplies the unexpected claim about health and circumstances, the central issue a reader needs before the book's history. The former anecdotal AA opening and preview paragraph were deleted."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence and symptoms pass",
+      "result": "Removed warm-up questions, instructions to slow down, repetitive synthesis callouts, formulaic keep/drop packaging and the Frankl comparison. Further cut generic announcements about agency and AA appeal."
+    },
+    {
+      "pass": 4,
+      "name": "Cut 10 percent",
+      "result": "Initial rewritten narrative: 1730 words. Final narrative: 1556 words, a 10.06 percent cut after source clarifications. The original narrative was 2827 words."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Verified quoted words and locations, corrected daily bread and the hypothetical healing illustration, compared interpretations with Matthew, and made the limits of retrospective AA evidence explicit. Clinical claims have links and do not assert Golden Key efficacy."
+    }
+  ],
+  "verification": {
+    "javascript": "node --check js/fox.js passed",
+    "titles": "title, og:title and h1 identical",
+    "html": "Unique ids, valid aria-labelledby targets and existing local references checked with HTMLParser",
+    "prohibited_content": "No literal or entity-encoded em/en dashes or emoji found",
+    "cards": "Three authored cards retained; gallery and source captions identify paraphrases",
+    "browser": "Deferred to parent's shared visual and interaction QA as assigned",
+    "cache": "js/fox.js query bumped to 20261003a",
+    "quoted_words": 50
+  },
+  "remaining_uncertainties": [
+    "No original 1931 Golden Key printing was inspected; modern reprints differ in wording. The retained short quotation matches the identified reprint.",
+    "No facsimile of the 1934 Sermon first edition was inspected; claims are checked against the 2010 digital text, whose copyright page preserves the early dates.",
+    "The AA record establishes retrospective recollection of early readership. Its reach and contribution to sobriety cannot be measured from that transcript.",
+    "Possible reassurance from prayer is identified as a possibility for a believer, not as a measured effect of Fox's method.",
+    "No direct Fox-to-CBT or Fox-to-Step-wording lineage is asserted. The old historical claims were removed instead of being converted into another tidy genealogy."
+  ],
+  "suggested_hub_description": "Fox reads Jesus's sermon as a method of spiritual healing. Early AA members valued the book; his promise that thought controls circumstances needs a separate judgment."
+}

@@ -1,0 +1,323 @@
+/* The Inner Life uses the centered shell of the sacred-text reading guides.
+   Loaded after each post's local styles; interactive diagrams keep their own UI. */
+.inner-life-post .il-mobile-model,
+.inner-life-post .il-mobile-results {
+  display: none;
+}
+
+html:not(.js) .inner-life-post .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce), print {
+  .inner-life-post .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .inner-life-post .draw {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .inner-life-post .fade-el {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+@media screen {
+  html.js .inner-life-post .tales {
+    display: block;
+  }
+
+  html.js .inner-life-post .gal-wrap:not([hidden]) ~ .tales {
+    display: none;
+  }
+
+  body.inner-life-post {
+    --il-frame: 58rem;
+    --il-measure: 820px;
+    --il-copy: 64ch;
+    padding-inline: 0;
+    font-family: var(--font-heading);
+    font-weight: 400;
+    line-height: 1.66;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .inner-life-post .post-back {
+    width: 100%;
+    max-width: var(--il-measure);
+    margin-inline: auto;
+    padding: clamp(2.5rem, 7vw, 5rem) var(--gutter) 0;
+  }
+
+  .inner-life-post .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 61rem;
+    min-height: calc(100svh - 4rem);
+    margin: 0 auto;
+    padding: clamp(4.5rem, 11svh, 7rem) var(--gutter);
+    text-align: center;
+  }
+
+  .inner-life-post .hero-title {
+    width: 100%;
+    min-width: 0;
+    max-width: min(10ch, 100%);
+    margin: 0 auto;
+    font-family: var(--font-heading);
+    font-size: clamp(3.45rem, 11vw, 6.9rem);
+    line-height: .94;
+    letter-spacing: -.035em;
+    text-wrap: balance;
+  }
+
+  .inner-life-post .hero-dek {
+    max-width: 49ch;
+    margin: 1.6rem auto 0;
+    font-size: 1.24rem;
+    font-style: normal;
+    line-height: 1.58;
+    text-wrap: pretty;
+  }
+
+  .inner-life-post .hero-meta {
+    justify-content: center;
+    margin: 1.6rem 0 0;
+    padding-top: 0;
+    border-top: 0;
+    gap: .5em 1.05em;
+    letter-spacing: .11em;
+  }
+
+  .inner-life-post .hero-eyebrow {
+    margin: 0 0 1.1rem;
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .13em;
+    color: var(--text-faint);
+  }
+
+  .inner-life-post .il-scroll {
+    display: block;
+    margin-top: 2.8rem;
+    color: var(--text-dim);
+    opacity: .68;
+    font-variant: small-caps;
+    letter-spacing: .22em;
+    font-size: .82rem;
+  }
+
+  .inner-life-post .sec {
+    width: 100%;
+    max-width: var(--il-frame);
+    margin: 0 auto;
+    padding: clamp(4.5rem, 8svh, 6.5rem) var(--gutter);
+    border-top: 1px solid var(--rule);
+  }
+
+  .inner-life-post .sec:last-of-type {
+    padding-bottom: clamp(2.6rem, 5svh, 3.4rem);
+  }
+
+  .inner-life-post .sec > .u-divider {
+    display: none;
+  }
+
+  .inner-life-post .sec .u-sechead {
+    align-items: center;
+    text-align: center;
+    margin-bottom: 2.6rem;
+  }
+
+  .inner-life-post .sec .u-sechead-k,
+  .inner-life-post .sec-kicker {
+    display: block;
+    margin: 0 0 1.1rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: .13em;
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  .inner-life-post .sec-kicker::before,
+  .inner-life-post .sec .u-sechead-k::before,
+  .inner-life-post .sec .u-sechead-k::after {
+    display: none;
+  }
+
+  .inner-life-post .sec-h,
+  .inner-life-post .sec .u-sechead-h {
+    max-width: 22ch;
+    margin: 0 auto;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .inner-life-post .sec-h,
+  .inner-life-post .sec > .u-sechead-h {
+    margin-bottom: 2.6rem;
+  }
+
+  .inner-life-post .sec > p,
+  .inner-life-post .sec > h3,
+  .inner-life-post .sec > ul,
+  .inner-life-post .sec > ol,
+  .inner-life-post .sec > blockquote,
+  .inner-life-post .sec > .u-callout,
+  .inner-life-post .sec > .note,
+  .inner-life-post .sec > .gal-wrap,
+  .inner-life-post .sec > .tales,
+  .inner-life-post .sec > .u-collapse {
+    max-width: var(--il-copy);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .inner-life-post .sec > p {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    line-height: 1.74;
+  }
+
+  .inner-life-post .sec.first > p:first-of-type::first-letter {
+    float: left;
+    padding: .06em .12em 0 0;
+    color: var(--accent);
+    font-size: 3.4em;
+    font-weight: 700;
+    line-height: .74;
+  }
+
+  .inner-life-post .chapters {
+    justify-content: center;
+    max-width: var(--il-frame);
+    margin: 0 auto;
+    padding: 1.6rem var(--gutter);
+  }
+
+  .inner-life-post .gal-chips,
+  .inner-life-post .gal-bar {
+    justify-content: center;
+  }
+
+  .inner-life-post .gal-frame {
+    padding: 1.6rem 0;
+    border: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .inner-life-post .gal-card-body p,
+  .inner-life-post .tale-body p {
+    font-family: var(--font-heading);
+    font-size: 1.18rem;
+    line-height: 1.74;
+  }
+
+  .inner-life-post .gal-chip,
+  .inner-life-post .gal-nav {
+    min-height: 44px;
+  }
+
+  .inner-life-post .gal-nav {
+    min-width: 44px;
+  }
+
+  .inner-life-post .u-next,
+  .inner-life-post .site-footer-inner {
+    width: 100%;
+    max-width: var(--il-measure);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .inner-life-post .site-footer-inner {
+    font-family: var(--font-body);
+  }
+
+  .inner-life-post #sources .src-note {
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .inner-life-post .mx-table-link {
+    min-height: 44px;
+    padding: .4rem 0;
+    border: 0;
+    background: none;
+    color: var(--text-bright);
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .inner-life-post .mx-table-link:hover {
+    color: var(--accent);
+  }
+
+  .inner-life-post .mx-chip,
+  .inner-life-post .mx-navb,
+  .inner-life-post .mx-views button,
+  .inner-life-post .pacer-seg button,
+  .inner-life-post .pacer-btn {
+    min-height: 44px;
+  }
+
+  @media (max-width: 560px) {
+    .inner-life-post .sec { padding-block: 3.4rem; }
+    .inner-life-post .gal-hint { display: none; }
+    .inner-life-post .il-model-figure > svg,
+    .inner-life-post .il-results-figure > svg { display: none; }
+    .inner-life-post .il-mobile-model {
+      display: block;
+      padding-left: 1.4em;
+      margin: 0 0 1.3rem;
+      font-family: var(--font-body);
+      font-size: 1.06rem;
+      line-height: 1.65;
+    }
+    .inner-life-post .il-mobile-model li + li { margin-top: .8rem; }
+    .inner-life-post .il-mobile-results {
+      display: table;
+      width: 100%;
+      margin: 0 0 1.1rem;
+      border-collapse: collapse;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    .inner-life-post .il-mobile-results th,
+    .inner-life-post .il-mobile-results td {
+      padding: .65rem .2rem;
+      border-bottom: 1px solid var(--rule);
+      text-align: left;
+      font-weight: 400;
+    }
+    .inner-life-post .il-mobile-results thead th {
+      color: var(--text-dim);
+      font-size: .86rem;
+    }
+  }
+}

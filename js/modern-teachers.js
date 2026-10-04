@@ -2,7 +2,7 @@
    Reads the authored .tale cards in the page, builds a one-at-a-time
    gallery with name chips, arrow buttons, and keyboard support. Each
    card carries the teaching, a line in the teacher's own words, and
-   the honest "catch" about the person who said it.
+   a question about the teaching or its practice.
    No dependencies. Without JS the .tale cards read as a plain list.
    (Cloned from js/frankl.js; same shell, same pattern.) */
 (function () {
@@ -54,13 +54,18 @@
   var pos = document.getElementById('gal-pos');
   var prev = document.getElementById('gal-prev');
   var next = document.getElementById('gal-next');
+  if (!frame || !chipsBox || !pos || !prev || !next) return;
   var cur = 0;
+  frame.setAttribute('role', 'tabpanel');
+  frame.tabIndex = 0;
 
   var chips = teachers.map(function (d, i) {
     var b = document.createElement('button');
     b.className = 'gal-chip';
     b.type = 'button';
     b.setAttribute('role', 'tab');
+    b.id = 'teachers-tab-' + (i + 1);
+    b.setAttribute('aria-controls', frame.id);
     b.style.setProperty('--ta', d.ta);
     b.innerHTML = '<span class="dot" aria-hidden="true"></span>' + d.name;
     b.addEventListener('click', function () { go(i); });
@@ -78,6 +83,7 @@
       '<p class="gal-lesson"><span class="lk">in their words</span>' + d.lesson + '</p>' +
       (d.catch_ ? '<div class="gal-catch">' + d.catch_ + '</div>' : '') +
       '<p class="gal-src">' + d.src + '</p>';
+    frame.setAttribute('aria-labelledby', chips[cur].id);
     pos.innerHTML = '<b>' + (cur + 1) + '</b> / ' + teachers.length;
     prev.disabled = cur === 0;
     next.disabled = cur === teachers.length - 1;
@@ -85,6 +91,7 @@
       var on = i === cur;
       c.classList.toggle('is-on', on);
       c.setAttribute('aria-selected', on ? 'true' : 'false');
+      c.tabIndex = on ? 0 : -1;
     });
   }
 
@@ -96,17 +103,17 @@
   prev.addEventListener('click', function () { go(cur - 1); });
   next.addEventListener('click', function () { go(cur + 1); });
 
-  // left/right arrows step the gallery, but only while it is on screen
-  // and the user is not typing in a field
-  document.addEventListener('keydown', function (e) {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    var tag = (document.activeElement && document.activeElement.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    var r = wrap.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > window.innerHeight) return;
-    go(cur + (e.key === 'ArrowLeft' ? -1 : 1));
+  // Navigation keys act on the gallery while focus is inside it.
+  wrap.addEventListener('keydown', function (e) {
+    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(e.key) < 0) return;
+    e.preventDefault();
+    var fromTab = chips.indexOf(document.activeElement) >= 0;
+    if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(teachers.length - 1);
+    else go(cur + (e.key === 'ArrowLeft' ? -1 : 1));
+    if (fromTab) chips[cur].focus();
   });
 
-  wrap.hidden = false;
   render();
+  wrap.hidden = false;
 })();

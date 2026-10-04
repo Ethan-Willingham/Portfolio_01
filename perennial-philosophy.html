@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>The Perennial Philosophy</title>
-  <meta name="description" content="Aldous Huxley's 1945 book distilled: underneath the world's religions, he argues, the mystics keep reporting the same few things, a divine Ground of all being, a self in you that is already one with it, and a life spent closing the gap. The core claim, the Sanskrit sentence it rests on, the ego as the one obstacle, the mystics stacked side by side, and the honest case that the whole convergence is cherry-picked.">
+  <meta name="description" content="Huxley argues that mystics know one divine reality. Five source passages test his comparison, alongside the case for common experience and the role of religious training.">
   <meta property="og:title" content="The Perennial Philosophy">
-  <meta property="og:description" content="The man who wrote Brave New World read the mystics of every religion and decided they were all describing the same thing: one divine Ground, a self in you already part of it, and a life spent waking up to that. Huxley's book distilled, with the strong case that he is cherry-picking.">
+  <meta property="og:description" content="Huxley argues that mystics know one divine reality. Five source passages test his comparison, alongside the case for common experience and the role of religious training.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/perennial-philosophy.html">
@@ -34,17 +34,10 @@
   <style>
   /* ============================================================
      THE PERENNIAL PHILOSOPHY
-     Approach C (Idea Distillation): one modern book, no
-     translations to stack, so the load-bearing ideas are stated
-     plainly in the site voice and anchored to short verbatim
-     quotes and to where they sit in the argument. Sibling of the
-     Frankl build (same shell, same gallery). The interactive
-     piece is the convergence stack, Huxley's own method made
-     live: pick a claim, watch it surface in five traditions that
-     never met. One muted accent per claim, from the site's
-     categorical set. Sits in the site shell (forest green,
-     parchment, Century Supra / Segoe UI / Commit Mono). No em
-     dashes; quoted em dashes are rendered as commas.
+     Idea distillation, with a gallery comparing five primary
+     passages in their contexts. The authored source cards also
+     supply the no-JS and print versions. Existing site shell,
+     fonts, and categorical accents are retained.
      ============================================================ */
   :root {
     --measure: 760px;                 /* reading column */
@@ -109,14 +102,14 @@
   .claimlist .ch { font-weight: 600; color: var(--text-bright); }
 
   /* ============================================================
-     THE CONVERGENCE STACK (gallery pattern, cloned from Frankl)
+     THE PASSAGE GALLERY
      ============================================================ */
   .gal-wrap { margin: 1.8rem 0 0; }
   .gal-wrap[hidden] { display: none; }
   html:not(.js) .gal-wrap { display: none; }
 
   .gal-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 0.9rem; }
-  .gal-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid var(--rule); border-radius: 999px; padding: 0.38em 0.8em; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+  .gal-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.68rem; min-height: 44px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid var(--rule); border-radius: 999px; padding: 0.38em 0.8em; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
   .gal-chip:hover { color: var(--text-bright); border-color: var(--line-mid); }
   .gal-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ta, var(--line-mid)); }
   .gal-chip.is-on { color: var(--text-bright); border-color: var(--ta, var(--accent)); background: color-mix(in srgb, var(--ta, var(--accent)) 14%, transparent); }
@@ -130,7 +123,7 @@
   .gal-wrap .gal-lesson { margin: 1.2rem 0 0; padding: 0.9rem 0 0.1rem; border-top: 1px solid var(--rule); font-family: var(--font-heading); font-style: italic; font-size: 1.16rem; line-height: 1.45; color: var(--text-bright); text-wrap: pretty; }
   .gal-wrap .gal-src { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.02em; line-height: 1.55; color: var(--text-faint); margin: 1rem 0 0; }
 
-  /* the stack of cross-tradition quotes inside each claim card */
+  /* the source quotations */
   .qs-lead { color: var(--text-dim) !important; }
   .qs { list-style: none; margin: 0.4rem 0 0; padding: 0; display: grid; gap: 0.9rem; }
   .qs-item { padding: 0 0 0 0.95rem; border-left: 2px solid color-mix(in srgb, var(--ta, var(--accent)) 55%, transparent); }
@@ -141,16 +134,16 @@
   .qs-tr::before { content: "\00a0\00b7\00a0"; }
 
   .gal-bar { display: flex; align-items: center; gap: 0.7rem; margin: 1rem 0 0; }
-  .gal-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.14rem; transition: border-color .2s, color .2s; }
+  .gal-nav { font-family: var(--font-heading); font-size: 1.4rem; line-height: 1; width: 44px; height: 44px; border: 1px solid var(--rule-strong); border-radius: 50%; background: transparent; color: var(--accent); cursor: pointer; display: grid; place-items: center; padding: 0 0 0.14rem; transition: border-color .2s, color .2s; }
   .gal-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-hover); }
   .gal-nav:disabled { opacity: 0.3; cursor: default; }
   .gal-pos { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--text-faint); }
   .gal-pos b { color: var(--accent); font-weight: 400; }
   .gal-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
 
-  /* the no-JS fallback: the claims read as a plain stacked list */
+  /* the no-JS fallback: the passages read as a plain stacked list */
   .tales { margin-top: 1.6rem; }
-  html.js .tales { display: none; }
+  html.js .tales.gallery-ready { display: none; }
   .tale { padding: 1.5rem 0 0; border-top: 1px solid var(--rule); margin-top: 1.5rem; }
   .tale:first-child { border-top: none; margin-top: 0; padding-top: 0; }
   .tales .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.4rem; }
@@ -183,7 +176,7 @@
     body { background: #fff; color: #161616; }
     .sec, .hero { max-width: none; }
     .sec p, .lede, .tale-body p, .gal-card-body p { color: #161616; }
-    html.js .tales { display: block; }   /* print the readable claims, not the app */
+    html.js .tales.gallery-ready { display: block; }   /* print the readable claims, not the app */
     .gal-wrap { display: none !important; }
     .debateA, .u-callout, .tale { break-inside: avoid; }
     a { color: #161616; }
@@ -197,8 +190,9 @@
     .pfig img { border-radius: 10px; }
   }
   </style>
+  <link rel="stylesheet" href="inner-life-post.css?v=20261004a">
 </head>
-<body>
+<body class="inner-life-post">
   <!-- in-progress banner, generated by tools/gen-post-nav.mjs; flip inProgress in tools/gen-hubs.mjs -->
   <script src="/js/archive-banner.js"></script>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -208,237 +202,173 @@
   <!-- ============================ HERO ============================ -->
   <header class="hero">
     <h1 class="hero-title">The Perennial Philosophy</h1>
-    <p class="hero-dek">The man who wrote Brave New World read the mystics of every religion and decided they were all describing the same thing. Here is the claim, and the case against it.</p>
-    <p class="hero-meta">A distillation <span class="sep">/</span> <b>one claim, every religion</b> <span class="sep">/</span> <b>16 sources</b> <span class="sep">/</span> 18 min read</p>
+    <p class="hero-dek">Huxley reads the mystics as witnesses to one divine reality. The passages show why that claim is attractive, and where the comparison breaks down.</p>
+    <p class="hero-meta">Aldous Huxley <span class="sep">/</span> <b>Five passages in context</b> <span class="sep">/</span> 12 min read</p>
+    <span class="il-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main id="guide">
-
-    <!-- ============================ INTRO ============================ -->
     <section id="intro" class="sec first" aria-labelledby="intro-h">
-      <p class="lede">Around the year 1300, a Dominican friar in Germany named Meister Eckhart told the people in his church that, when it comes to God, "the knower and the known are one," that "God and I, we are one in knowledge." Two thousand years before that, in a forest in India, a father had told his son the same thing in three words. <em>Tat tvam asi.</em> That art thou. The thing you are looking for, you already are. The two men could not have read each other. Neither could the Persian and the Italian who said it too.</p>
-
-      <p>In 1945, Aldous Huxley, the Englishman who had written <em>Brave New World</em>, set five hundred pages of these side by side and asked the obvious question. What if it is not borrowing, and not coincidence? What if they keep saying the same thing because they are all looking at the same thing?</p>
-
-      <p id="intro-h">That is the book, and the claim has a name. The perennial philosophy: the idea that underneath the world's religions, past the gods and the rules and the histories that all flatly contradict each other, there sits a single shared core, and a few people in every tradition have reached it and come back reporting the same handful of things.</p>
-
+      <h2 id="intro-h" class="u-sechead-h">What Huxley thinks the mystics know</h2>
+      <p class="lede">Aldous Huxley's <i>The Perennial Philosophy</i> treats the Hindu Self and Buddhist awakening as knowledge of the same divine reality. His first chapter puts them beside Christian and Sufi accounts of union with God. Discovering an eternal Self, ceasing to identify anything as self, and loving God don't obviously describe the same achievement.</p>
+      <p>Published in <a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf">1945</a>, the book is an anthology with Huxley's commentary. He arranges religious writings by topic, from the nature of reality to charity and action. Their common source, he argues, is the divine <em>Ground</em>: the reality on which everything depends.</p>
       <figure class="pfig reveal">
         <picture><source type="image/webp" srcset="assets/thumbs/perennial-philosophy.webp"><img src="assets/thumbs/perennial-philosophy.jpg" width="600" height="400" loading="eager" decoding="async" alt="Aldous Huxley in 1947, in a white shirt at his typewriter, looking up from the page."></picture>
-        <figcaption>Aldous Huxley, 1947. Photo: LIFE. Public domain.</figcaption>
+        <figcaption>Aldous Huxley, 1947. Photo: LIFE. Public domain in the US. <a href="https://commons.wikimedia.org/wiki/File:Aldous_Huxley_1947.png">Source and license</a>.</figcaption>
       </figure>
-
-      <p>Huxley did not invent the idea, or the phrase. <em>Philosophia perennis</em> goes back to Leibniz, around 1700, and the hunch is older than that. What Huxley did was build the anthology. He gathered the mystics, the Christian and the Hindu and the Buddhist and the Muslim and the Taoist, sorted their lines under about twenty-seven plain headings, and wrote the connective tissue himself. The book is less an argument than an exhibit. He lays the quotes next to each other and lets the resemblance do the work.</p>
-
-      <p>What follows is that book, distilled. The core claim in four parts, the one short sentence the whole thing hangs on, the single thing every tradition says is in your way, and then the honest part, because "all religions are really one" is a great deal more contested than the book lets on.</p>
-
+      <p>Agostino Steuco published <i>De perenni philosophia</i> in <a href="https://www.ustc.ac.uk/editions/157320">1540</a>. Huxley's opening credits Leibniz with the phrase. Steuco's title predates him.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE CORE CLAIM ============================ -->
     <section id="core" class="sec" aria-labelledby="core-h">
-      <div class="u-sechead"><p class="u-sechead-k">The claim</p><h2 id="core-h" class="u-sechead-h">What the mystics are supposed to agree on</h2></div>
-
-      <p>Boil the perennial philosophy down and it is four claims. Huxley states them a dozen different ways across the book; here they are in plain ones.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">The claim</p><h2 id="core-h" class="u-sechead-h">Huxley's four claims</h2></div>
+      <p>Huxley gave this argument a four-part form in his <a href="https://psypolitics.org/2022/01/04/huxleys-introduction-to-the-bhagavad-gita-2022/">1944 introduction to the Bhagavad Gita</a>. These are paraphrases of his claims:</p>
       <ol class="claimlist">
-        <li><span class="ch">There is a divine Ground.</span> One reality underneath everything, the source the whole world hangs on, in Huxley's words "a divine Reality substantial to the world of things and lives and minds." It is both inside the world and beyond it at once.</li>
-        <li><span class="ch">You can know it directly.</span> Not believe in it, not deduce it. Know it, the way you know you are in pain. Not by argument but by a kind of first-hand seeing that a few people in every age say they have done.</li>
-        <li><span class="ch">Your real self already is it.</span> You have two natures: the everyday ego with your name on it, and underneath, something that was never separate from the Ground at all. The eternal Self. The spark. The Atman.</li>
-        <li><span class="ch">The point of life is to close the gap.</span> To stop living as the ego and wake up as the Self. That union, the perennial philosophy says, is the thing a human life is actually for.</li>
+        <li><span class="ch">Everything depends on a divine Ground.</span> The physical world and individual minds are its manifestations. The Ground is present in them and exceeds them.</li>
+        <li><span class="ch">Direct knowledge of it is possible.</span> A person can come to know this reality through an intuition that unites the knower with what is known.</li>
+        <li><span class="ch">The everyday ego doesn't exhaust who you are.</span> Huxley posits an eternal spiritual Self of the same or similar nature as the Ground. A person can learn to identify with it.</li>
+        <li><span class="ch">That knowledge is the purpose of life.</span> Detachment and love prepare a person for the union he considers our final end.</li>
       </ol>
-
-      <p>Claims one and three and the end of claim four are just Huxley's own one-sentence definition of the thing, unpacked:</p>
-
-      <blockquote class="u-pq">the metaphysic that recognizes a divine Reality substantial to the world of things and lives and minds; the psychology that finds in the soul something similar to, or even identical with, divine Reality; the ethic that places man's final end in the knowledge of the immanent and transcendent Ground of all being.<cite class="u-pq-cite">The Perennial Philosophy, Introduction</cite></blockquote>
-
-      <p>The catch is in claim two, and Huxley puts it in one line: "Knowledge is a function of being." What you are able to know depends on what you are. A spectroscope shows an astronomer things a naked eye cannot, and Huxley's claim is that a person is an instrument that can be upgraded the same way, until it picks up something that was there the whole time. The upgrade is moral, not technical. You become, in his words, "loving, pure in heart, and poor in spirit," or you do not see it.</p>
-
-      <p>So the perennial philosophy is not a set of beliefs you can nod along to from the couch. It is a claim that there is a door, and that it only opens from the inside.</p>
-
+      <p>Accepting the value of compassion doesn't commit you to an eternal Self. Unusual states of consciousness don't establish that they disclose the source of the universe.</p>
+      <p>In his <a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf#page=6">opening chapter</a>, Huxley favors Advaita Vedanta, the nondual reading in which Atman, the Self, is one with Brahman, ultimate reality. He reads other traditions through that possibility, though his definition allows likeness to the Ground as well as identity with it.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ TAT TVAM ASI ============================ -->
     <section id="keystone" class="sec" aria-labelledby="keystone-h">
-      <div class="u-sechead"><p class="u-sechead-k">The keystone</p><h2 id="keystone-h" class="u-sechead-h">Three words the whole thing rests on</h2></div>
-
-      <p>If you had to fit the perennial philosophy on a grain of rice, you would use the three words Huxley opens with. <em>Tat tvam asi.</em> It is Sanskrit, from the Chandogya Upanishad, one of the oldest Hindu scriptures, and it usually comes across as: That art thou. Or, thou art That.</p>
-
-      <p>"That" means the Ground, the absolute, the whole of it. "Thou" means you, the particular person reading this. The sentence sets an equals sign between them. Whatever the ultimate reality is, you are not standing outside it looking in. You are it, looking at itself through one set of eyes.</p>
-
-      <p>The Upanishad teaches it as a story, and Huxley quotes the story. A young man named Svetaketu comes home from twelve years of school pleased with himself, and his father takes him down a notch with a question he cannot answer: do you know the one thing that, once known, makes everything known? He does not. So the father walks him to it. He has the boy dissolve salt in water and then go find the salt; it is gone, yet every drop tastes of it. He has the boy split a tiny seed and look for the great tree inside; there is nothing there to see, and the tree comes out of exactly that nothing. Then he lands it.</p>
-
-      <blockquote class="u-pq">That subtle essence, which you do not perceive, in that very essence stands the being of the huge tree. In that which is the subtle essence all that exists has its self. That is the True, that is the Self, and thou, Svetaketu, art That.<cite class="u-pq-cite">The Chandogya Upanishad, quoted in chapter 1</cite></blockquote>
-
-      <p>Huxley's whole book is an argument that Svetaketu's father had hold of something bigger than Hinduism. Huxley thought the same equals sign was hiding inside every developed religion, written each time in a different alphabet. The Atman, the Self in you, is one with Brahman, the ground of everything. "The last end of every human being," he writes, is "to discover the fact for himself, to find out Who he really is."</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">How to know</p><h2 id="keystone-h" class="u-sechead-h">Practice changes the observer</h2></div>
+      <blockquote class="u-pq">Knowledge is a function of being.<cite class="u-pq-cite"><a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf#page=3">The Perennial Philosophy, Introduction</a></cite></blockquote>
+      <p>Huxley's example is an astronomer whose instruments reveal things unavailable to the naked eye. He proposes a comparable change through moral and contemplative practice: becoming less possessive and more loving would make knowledge of the Ground possible. Reading the doctrine wouldn't perform this work for you.</p>
+      <p>A musician hears distinctions a beginner misses. An experienced contemplative might also notice things the rest of us overlook. Lack of practice is a poor reason to dismiss their report.</p>
+      <p>The analogy leaves a verification problem. Astronomers can compare instruments, examine the same object, and check a prediction. Divine union supplies no equally straightforward way to separate accurate perception from a compelling experience that has been misunderstood. Training can improve attention while teaching someone what to expect.</p>
+      <p>Huxley selects writers he regards as qualified by their holiness. Their conduct can support their credibility. It becomes circular if agreement with him helps decide who qualifies. A comparison would need to include accomplished practitioners whose reports resist his reading.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE EGO ============================ -->
     <section id="ego" class="sec" aria-labelledby="ego-h">
-      <div class="u-sechead"><p class="u-sechead-k">The one obstacle</p><h2 id="ego-h" class="u-sechead-h">The only thing in the way is you</h2></div>
-
-      <p>If your real self is already one with the Ground, why does it so plainly not feel that way? Here every tradition in the book gives the same answer, and it is blunt. The thing in the way is the self. Not the body, not the world, not even sin in the usual sense. The plain fact of separateness, the running sense of <em>I, me, mine</em>, the ego that quietly assumes it is the center of things.</p>
-
-      <p>The mystics call the fix "dying to self," and they mean it about as literally as you can without actually dying. Huxley's phrase for it is "a process of dying to self, self in reasoning, self in willing, self in feeling." You quiet the part of you that is forever managing and defending and narrating, the part certain it is the main character, and in the gap that opens, the thing that was always underneath gets a word in.</p>
-
-      <blockquote class="u-pq">The desire for personal separateness is deep-rooted and powerful, for it exists from beginningless time. It creates the notion, "I am the actor, I am he who experiences." This notion is the cause of bondage to conditional existence.<cite class="u-pq-cite">Shankara, the Hindu philosopher, quoted in chapter 1</cite></blockquote>
-
-      <p>This is the part of the perennial philosophy that survives even if you bin the metaphysics. You do not have to buy a divine Ground to notice that almost everything stupid or cruel a person does runs back to the same root: the overweight self that needs to win, to be right, to be safe, to come first. Huxley puts it about as well as it has been put.</p>
-
-      <blockquote class="u-pq">It is because we don't know Who we are, because we are unaware that the Kingdom of Heaven is within us, that we behave in the generally silly, the often insane, the sometimes criminal ways that are so characteristically human.<cite class="u-pq-cite">The Perennial Philosophy, chapter 1</cite></blockquote>
-
+      <div class="u-sechead"><p class="u-sechead-k">The practice</p><h2 id="ego-h" class="u-sechead-h">Detachment has an ethical test</h2></div>
+      <p>In <a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf#page=82">chapter 6</a>, Huxley warns that self-denial can leave a person proud, angry, and cruel. Giving up pleasures can become another way to feel superior. Extreme bodily austerities can damage health and encourage competition.</p>
+      <p>His positive standard, <a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf#page=68">charity</a>, means love that doesn't depend on getting something back. A demanding routine or an unusual experience tells us less than whether the person becomes more considerate when there is nothing to gain. The book links contemplation to conduct, including the work by which someone earns a living.</p>
+      <p>Someone who listens to criticism without immediately preparing a defense might notice a mistake and repair it. Reduced self-concern can help them, whether or not their deepest nature is divine. That benefit doesn't require treating ordinary identity or self-protection as a moral failure.</p>
+      <p>Refusing a demand or defending yourself can be warranted. Greed and pride explain some harm. Coercion, ignorance, and conflicting obligations can't all be reduced to one oversized ego.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE CONVERGENCE STACK ============================ -->
     <section id="stack" class="sec" aria-labelledby="stack-h">
-      <div class="u-sechead"><p class="u-sechead-k">The evidence</p><h2 id="stack-h" class="u-sechead-h">The same thing, in five traditions</h2></div>
-
-      <p>Here is the move that makes the book. Huxley takes one of these claims and, instead of arguing for it, lines up people who reached it on their own, in traditions with no line of contact, and lets you read them back to back. Pick a claim below. Each one shows the same point in four voices, a Hindu beside a Christian beside a Buddhist or a Sufi or a Taoist, none of whom could have copied the others.</p>
-
-      <!-- the interactive gallery (JS builds it from the cards below) -->
+      <div class="u-sechead"><p class="u-sechead-k">The comparison</p><h2 id="stack-h" class="u-sechead-h">Five passages in context</h2></div>
+      <p>These are my paraphrases, with short quotations from the named translations. The comparison extends beyond Huxley's excerpts and includes an early Buddhist discourse he doesn't quote here.</p>
       <div class="gal-wrap" hidden>
-        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a claim"></div>
+        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a passage"></div>
         <div class="gal-frame" id="gal-frame" aria-live="polite"></div>
         <div class="gal-bar">
-          <button class="gal-nav" id="gal-prev" aria-label="Previous claim">&lsaquo;</button>
+          <button class="gal-nav" id="gal-prev" aria-label="Previous passage">&lsaquo;</button>
           <span class="gal-pos" id="gal-pos"></span>
-          <button class="gal-nav" id="gal-next" aria-label="Next claim">&rsaquo;</button>
-          <span class="gal-hint">tap a claim, or use the arrow keys</span>
+          <button class="gal-nav" id="gal-next" aria-label="Next passage">&rsaquo;</button>
+          <span class="gal-hint">choose a passage, or use the arrow keys</span>
         </div>
       </div>
-
-      <!-- the three claims, authored as plain cards (no-JS reading + the gallery source).
-           data-ta is the claim's accent color. Every quote is from chapter 1, "That Art Thou." -->
       <div class="tales" id="tales-data">
-
-        <article class="tale" data-tradition="the same self" data-place="That Art Thou" style="--ta: var(--c-a)">
-          <p class="tale-k">Claim one</p>
-          <h3 class="tale-h">You and the Ground are one thing</h3>
+        <article class="tale" data-tradition="The Self" data-place="Chandogya Upanishad" style="--ta: var(--c-a)">
+          <p class="tale-k">Hindu text</p>
+          <h3 class="tale-h">What the salt is meant to show</h3>
           <div class="tale-body">
-            <p class="qs-lead">Not near God, not loved by God. The same as God, at the root. Four people who never met:</p>
-            <ul class="qs">
-              <li class="qs-item"><p class="qs-q">"That is the Self, and thou, Svetaketu, art That."</p><p class="qs-by"><span class="qs-who">The Chandogya Upanishad</span><span class="qs-tr">Hindu, India, ancient</span></p></li>
-              <li class="qs-item"><p class="qs-q">"God and I, we are one in knowledge."</p><p class="qs-by"><span class="qs-who">Meister Eckhart</span><span class="qs-tr">Christian, Germany, ~1300</span></p></li>
-              <li class="qs-item"><p class="qs-q">"Is anybody here except God?"</p><p class="qs-by"><span class="qs-who">Bayazid of Bistun</span><span class="qs-tr">Sufi, Persia, 800s</span></p></li>
-              <li class="qs-item"><p class="qs-q">"My Me is God, nor do I recognize any other Me except my God Himself."</p><p class="qs-by"><span class="qs-who">St. Catherine of Genoa</span><span class="qs-tr">Christian, Italy, 1400s</span></p></li>
-            </ul>
+            <p class="qs-q">&ldquo;It is the Self, and thou, O Svetaketu, art it.&rdquo;</p>
+            <p>In the Chandogya Upanishad, Uddalaka teaches his son Svetaketu about the underlying reality of living things. In 6.13, the boy dissolves salt in water. He can no longer retrieve it, but water tasted at the surface, middle, and bottom is salty. Something can be present throughout without being visible.</p>
+            <p>The repeated teaching is <em>tat tvam asi</em>, often rendered &ldquo;that art thou.&rdquo; Huxley takes it as the identity of Self and ultimate reality. The earlier discussion of sleep and the origin of things makes the scope clear: the father is teaching what a person is and what sustains the world.</p>
           </div>
-          <p class="tale-lesson">Different alphabets, one equals sign.</p>
-          <p class="tale-src">All four quoted by Huxley in chapter 1, "That Art Thou."</p>
+          <p class="tale-src">Chandogya Upanishad <a href="https://sacred-texts.com/hin/sbe01/sbe01126.htm">6.8.7</a> and <a href="https://sacred-texts.com/hin/sbe01/sbe01131.htm">6.13.1 to 3</a>. F. Max M&uuml;ller, <i>The Upanishads</i>, Part I (1879), pp. 101 and 104 to 105. Quotation: 6.13.3.</p>
         </article>
-
-        <article class="tale" data-tradition="the inner spark" data-place="That Art Thou" style="--ta: var(--c-b)">
-          <p class="tale-k">Claim two</p>
-          <h3 class="tale-h">It was inside you the whole time</h3>
+        <article class="tale" data-tradition="Not-self" data-place="SN 22.59" style="--ta: var(--c-b)">
+          <p class="tale-k">Early Buddhist discourse</p>
+          <h3 class="tale-h">Consciousness is included in what to release</h3>
           <div class="tale-body">
-            <p class="qs-lead">The Ground is not somewhere far off. It is the floor of your own mind, the thing you are too close to notice:</p>
-            <ul class="qs">
-              <li class="qs-item"><p class="qs-q">"Goodness needeth not to enter into the soul, for it is there already, only it is unperceived."</p><p class="qs-by"><span class="qs-who">The Theologia Germanica</span><span class="qs-tr">Christian, Germany, 1300s</span></p></li>
-              <li class="qs-item"><p class="qs-q">"Universal Mind is the undefiled Buddha-womb, which is wrongly apprehended by sentient beings."</p><p class="qs-by"><span class="qs-who">The Lankavatara Sutra</span><span class="qs-tr">Buddhist, Mahayana</span></p></li>
-              <li class="qs-item"><p class="qs-q">"There is a root or depth of thee... the centre, the fund or bottom of the soul."</p><p class="qs-by"><span class="qs-who">William Law</span><span class="qs-tr">Christian, England, 1700s</span></p></li>
-              <li class="qs-item"><p class="qs-q">"The Atman is the Witness of the individual mind and its operations. It is absolute knowledge."</p><p class="qs-by"><span class="qs-who">Shankara</span><span class="qs-tr">Hindu, India, ~700</span></p></li>
-            </ul>
+            <p class="qs-q">&ldquo;This is not mine, I am not this, this is not my self.&rdquo;</p>
+            <p>The Characteristic of Not-Self examines five groups of experience: bodily form, feeling, perception, choices, and consciousness. Each changes, can bring distress, and cannot simply be ordered to behave as we wish. The Buddha asks whether it makes sense to identify these things as a lasting self.</p>
+            <p>The instruction above applies to consciousness as well as the body. Understanding this leads to disillusionment, the fading of desire, and liberation. The discourse doesn't replace the ordinary ego with a divine Self behind it.</p>
+            <p>Releasing attachment to what you call yours resembles Huxley's practical advice. Discovering a divine Self would be an additional claim. The discourse also doesn't say that people cease to exist in ordinary life.</p>
           </div>
-          <p class="tale-lesson">Everybody is pointing at the same floor.</p>
-          <p class="tale-src">All four quoted by Huxley in chapter 1, "That Art Thou."</p>
+          <p class="tale-src"><a href="https://suttacentral.net/sn22.59/en/sujato">Samyutta Nikaya 22.59</a>, Bhikkhu Sujato. Quotation: paragraphs 7 and 10; argument: paragraphs 2 to 6; liberation: paragraphs 11 to 12.</p>
         </article>
-
-        <article class="tale" data-tradition="one in many" data-place="That Art Thou" style="--ta: var(--c-c)">
-          <p class="tale-k">Claim three</p>
-          <h3 class="tale-h">One thing wears every face</h3>
+        <article class="tale" data-tradition="Buddha-nature" data-place="Lankavatara Sutra" style="--ta: var(--c-c)">
+          <p class="tale-k">Mahayana Buddhist text</p>
+          <h3 class="tale-h">The text anticipates Huxley's comparison</h3>
           <div class="tale-body">
-            <p class="qs-lead">The many things are not the point. They are one thing, seen from a lot of angles:</p>
-            <ul class="qs">
-              <li class="qs-item"><p class="qs-q">"The one Moon reflects itself wherever there is a sheet of water, and all the moons in the waters are embraced within the one Moon."</p><p class="qs-by"><span class="qs-who">Yung-chia Ta-shih</span><span class="qs-tr">Zen Buddhist, China, ~700</span></p></li>
-              <li class="qs-item"><p class="qs-q">"Behold but One in all things; it is the second that leads you astray."</p><p class="qs-by"><span class="qs-who">Kabir</span><span class="qs-tr">India, ~1500</span></p></li>
-              <li class="qs-item"><p class="qs-q">"Do not ask whether the Principle is in this or in that; it is in all beings."</p><p class="qs-by"><span class="qs-who">Chuang Tzu</span><span class="qs-tr">Taoist, China, ~300 BC</span></p></li>
-              <li class="qs-item"><p class="qs-q">"The Beloved is all in all; the lover merely veils Him."</p><p class="qs-by"><span class="qs-who">Jalal-uddin Rumi</span><span class="qs-tr">Sufi, Persia, 1200s</span></p></li>
-            </ul>
+            <p class="qs-q">&ldquo;my Tathāgata-garbha is not the same as the ego taught by the philosophers&rdquo;</p>
+            <p>Huxley quotes the Lankavatara's language of a pure inner nature. <em>Tathāgata-garbha</em>, often translated as Buddha-nature or Buddha-womb, can sound like a concealed eternal Self. The sutra itself raises that problem.</p>
+            <p>Mahamati asks whether an enduring, pure nature within beings is the same as the philosophers' eternal self. The Buddha answers no. The teaching is explained through emptiness and the absence of a separate self. Its reassuring language helps people who fear the teaching of egolessness; it should not lead them to cling to a soul.</p>
+            <p>The sutra explicitly rejects the identification its language might suggest.</p>
           </div>
-          <p class="tale-lesson">Five reports, and they keep describing one place.</p>
-          <p class="tale-src">All four quoted by Huxley in chapter 1, "That Art Thou."</p>
+          <p class="tale-src"><a href="https://siteofenlightenment.org/Tripitaka/Books/T16n0670/The%20Lankavatara%20Sutra%20(Suzuki)/lanka-chapter-2.htm">Lankavatara Sutra, chapter 2, section XXVIII</a>, D. T. Suzuki (1932), pp. 78 to 79. The quotation is a fragment of the Buddha's first reply.</p>
         </article>
-
+        <article class="tale" data-tradition="Union with God" data-place="John of the Cross" style="--ta: var(--c-a)">
+          <p class="tale-k">Christian mystic</p>
+          <h3 class="tale-h">Union changes the person's love and will</h3>
+          <div class="tale-body">
+            <p class="qs-q">&ldquo;it is transformed in God through love.&rdquo;</p>
+            <p>In The Ascent of Mount Carmel, John distinguishes two kinds of union. God continually sustains every creature's existence; without that dependence, it would cease to be. The union a practitioner seeks is a further transformation through love and grace.</p>
+            <p>He describes the person's will coming into conformity with God's will. His image is a window filled with sunlight. The window appears to be light, yet its nature remains distinct from the light that illuminates it.</p>
+            <p>Huxley acknowledges this distinction in his <a href="https://psypolitics.org/2022/01/04/huxleys-introduction-to-the-bhagavad-gita-2022/">Gita introduction</a>: Christian union through grace needn't mean identity of substance. He still proposes one knowledge across both accounts. The comparison must explain why identity with ultimate reality and participation in God's life count as the same knowledge.</p>
+          </div>
+          <p class="tale-src"><a href="https://ccel.org/ccel/john_cross/ascent.all.html">The Ascent of Mount Carmel, book 2, chapter 5</a>, E. Allison Peers translation, linked 1962 edition. Quotation: paragraph 3. Window comparison: paragraphs 6 to 7.</p>
+        </article>
+        <article class="tale" data-tradition="The Beloved" data-place="Rumi's Masnavi" style="--ta: var(--c-b)">
+          <p class="tale-k">Sufi poem</p>
+          <h3 class="tale-h">The lover's dependence on the Beloved</h3>
+          <div class="tale-body">
+            <p class="qs-q">&ldquo;The Beloved is All, and the lover (is merely) a veil; the Beloved is Living, and the lover (is merely) a corpse.&rdquo;</p>
+            <p>Huxley's excerpt can sound like a claim that God is the only reality. In the opening of the Masnavi, the line also belongs to a poem about longing, greed, and the transformation love brings. The following couplet imagines a lover deprived of Love's care as a bird without wings.</p>
+            <p>The surrounding passage invokes Moses at Sinai. Rumi expresses this relationship through Islamic scripture, with the lover dependent on the source of life.</p>
+            <p>The language allows a reading of self-effacement in God. This couplet alone can't establish the same experience or account of reality as the Upanishad.</p>
+          </div>
+          <p class="tale-src"><a href="https://www.dar-al-masnavi.org/n-I-0019.html">Masnavi, book 1, lines 19 to 34</a>, Ibrahim Gamard (2000). Quotation: line 30. Moses: line 26; wingless bird: line 31.</p>
+        </article>
       </div>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">what it is doing to you</p><p class="u-callout-body">Read enough of these and the effect Huxley is after kicks in. It stops feeling like four religions and starts feeling like four reports of one country. That is the entire case, made not by argument but by accumulation. Hold onto that feeling for a second, because the next-to-last section is going to push on it hard.</p></aside>
-
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE THREAD ============================ -->
     <section id="thread" class="sec" aria-labelledby="thread-h">
-      <div class="u-sechead"><p class="u-sechead-k">The thread</p><h2 id="thread-h" class="u-sechead-h">Why this book haunts the whole series</h2></div>
-
-      <p>If you have read other posts on this shelf, the perennial philosophy is the thing you have been bumping into the whole time without anyone naming it.</p>
-
-      <p>The <a href="tao-te-ching.html">Tao Te Ching</a> opens on a reality too deep to be named. The Upanishads behind the <a href="gita.html">Gita</a> set the same equals sign Huxley starts with. <a href="nagarjuna.html">Nagarjuna</a> empties the self until there is no separate you left to defend. The <a href="dhammapada.html">Buddha</a> builds an entire path on loosening the grip of <em>I</em> and <em>mine</em>. Eckhart keeps turning up in the Christian material saying the ground of God and the ground of your soul are one ground. Different books, different centuries, no shared language, and they keep walking into the same small clearing.</p>
-
-      <p>Huxley is the one who says the quiet part out loud. Maybe these are not separate discoveries. Maybe it is one discovery, made over and over by people who never met, because there was one real thing there to be found. That is the secret thesis under this whole series of posts, the suspicion beneath all the others: that the great traditions are less a set of rival answers than a pile of repeat sightings.</p>
-
-      <aside class="u-callout u-move"><p class="u-callout-k">why it matters</p><p class="u-callout-body">It is the most hopeful idea in any of these books. It says the thing the saints found is not the private property of one religion you happened to be born outside of. By this account it is standing in everyone's own backyard, under a different name, waiting.</p></aside>
-
+      <div class="u-sechead"><p class="u-sechead-k">What would count</p><h2 id="thread-h" class="u-sechead-h">Agreement has more than one explanation</h2></div>
+      <p>The strongest case for Huxley is cumulative. One practitioner's report might be idiosyncratic. If different traditions repeatedly produced closely matching experiences and changes in conduct, the agreement would need explaining. Huxley takes it as evidence that the practitioners know one reality. A critic could accept the agreement and attribute it to capacities of the human mind.</p>
+      <p>Do they describe the same felt change? Give it the same meaning? Encounter the same reality? These are separate questions. A recurring state of consciousness would be interesting even if its theological interpretations were incompatible.</p>
+      <p>Shared ancestry and borrowing also need checking before the reports count as independent. Huxley's own <a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf#page=11">first chapter acknowledges contact</a> between Daoism and Mahayana Buddhism. Translators may choose the same English word for terms with different uses. Collections may preserve the passages later readers find compelling. Agreement produced by any of these routes would be weaker evidence for independent discovery.</p>
+      <p>Selection is necessary in an anthology. It becomes misleading when the selected material is made to stand for every religion, or when disagreement is assigned to less advanced people by definition. What would count as a qualified contrary report, and make Huxley revise the theory?</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE HONEST PART ============================ -->
     <section id="honest" class="sec" aria-labelledby="honest-h">
-      <div class="u-sechead"><p class="u-sechead-k">The honest part</p><h2 id="honest-h" class="u-sechead-h">Now the case that it is not true</h2></div>
-
-      <p>A claim this lovely should make you suspicious, and plenty of serious people are. That all religions are secretly one is not a settled fact. It is a contested position, and the objections are strong. Here are the two best, because the book mostly walks past them.</p>
-
-      <div class="debateA">
-        <div class="debateA-claim"><span class="debateA-kicker">The objection: he cherry-picks</span><p class="debateA-text">Huxley went looking for agreement, so of course he found it. He kept the lines that rhymed and quietly dropped the rest. A religion is not its three most mystical sentences. It is also the law, the ritual, the history, the God who has a personality and makes demands. Pull four poetic quotes out of four traditions, file off the context, and squint, and anything can be made to look like anything.</p></div>
-        <div class="debateA-truth"><span class="debateA-kicker">The honest version</span><p class="debateA-text">Largely fair, and Huxley half-admits it. He says in passing that he is skipping "the doctrinal differences." But the differences are not a footnote. When the Hindu says you <em>are</em> the absolute, the Christian mystic almost always stops short, the soul is united with God, not identical to God, and the Buddhist denies there is any permanent self there to be identical with anything. Those may not be three accents of one sentence. They may be three different sentences.</p></div>
-      </div>
-
-      <p>The second objection is deeper, and it is the one the academy mostly settled on. Maybe the mystics sound alike not because they saw the same thing, but because they are all jamming language up against the same wall, the point where words give out. The philosopher Steven Katz made this the standard view in a 1978 essay that religion departments still assign, and his whole case sits on one sentence.</p>
-
-      <blockquote class="u-pq">There are no pure (i.e., unmediated) experiences.<cite class="u-pq-cite">Steven Katz, "Language, Epistemology, and Mysticism," 1978</cite></blockquote>
-
-      <p>Katz's point is that you never get experience raw. A Carmelite nun raised on the Gospels and a Zen monk raised on the sutras do not have one identical experience and then phrase it two ways. The concepts go in first and shape what can be experienced at all. The nun meets Christ because she arrived loaded with Christ; the monk meets the empty Buddha-nature because that is the shape of the net he brought. Same blank, different catch. On this reading, the family resemblance Huxley found is in the vocabulary, not in the place, and the perennial philosophy is a trick of translation.</p>
-
-      <p>The perennialists have an answer, and it is sharper than Huxley's own. In 1948 Frithjof Schuon drew a line straight through every religion. Below it, the exoteric part: the doctrines, the laws, the rituals, all the stuff that genuinely differs and is meant to. Above it, the esoteric part: the mystical summit, where he argued the traditions actually converge.</p>
-
-      <p>Notice that this hands the critics most of the field and keeps the part that matters. Yes, the religions differ, enormously, nearly all the way up. Schuon was firm that you should not blend them; each is a whole path up its own mountain, to be walked in its own terms. The claim was never that Catholicism equals Buddhism. It is only that the few in each who climbed all the way report arriving somewhere strangely alike. That is a far smaller claim, and a far harder one to wave off.</p>
-
-      <p>So where does it land? Honestly, unresolved, and be wary of anyone who tells you it is closed. The academic mainstream leans Katz's way: the traditions are different all the way down, and the common core is mostly something the perennialists carried in with them and then "found." But the resemblance is real, it is old, and it has never been fully explained away. Read the stack one more time, and the constructivist account, probably correct as it is in the seminar room, feels a little thin against the actual lines.</p>
-
-      <aside class="u-callout"><p class="u-callout-k">the honest place to stand</p><p class="u-callout-body">Huxley almost certainly overstated it. The mystics are not interchangeable, and "all religions are one" is too cheap a slogan. Strike all of that out, and something stubborn is still on the page: a great many people, very far apart in time and language, kept coming back from the far edge of the inner life and reaching for the same few words. That is not proof of anything. It is just very hard to un-see once somebody lines it up.</p></aside>
-
+      <div class="u-sechead"><p class="u-sechead-k">The dispute</p><h2 id="honest-h" class="u-sechead-h">Does belief shape the experience itself?</h2></div>
+      <p>Steven Katz's <a href="https://de.scribd.com/document/94115021/Katz-Language-Epistemology-and-Mysticism-pp-22-74">1978 essay</a> challenges the distinction between a universal experience and the local interpretation added afterward. His proposal, often called contextualism or constructivism, is that a person's concepts, training, and expectations help shape the experience while it happens. A Christian's encounter with God and a Buddhist's awakening would not simply be different names for an identical prior event.</p>
+      <p>Calling both experiences <em>ineffable</em>, impossible to express adequately, doesn't identify their contents. Katz asks why only one kind of experience should be beyond language.</p>
+      <p>But the universal claim that every experience must be shaped by concepts also needs an argument. The question is whether practice can sometimes suspend the activity that ordinarily does this shaping.</p>
+      <p>W. T. Stace's <a href="https://www.scribd.com/doc/70165808/W-T-Stace-Mysticism-and-Philosophy-Whole-Book">Mysticism and Philosophy</a> (1960) distinguishes an outward experience of unity amid things from an inward experience in which sensations and thoughts disappear. He argues for common features across reports while separating experience from interpretation. Those two categories matter: perceiving a landscape as one and being aware without distinct objects are not automatically the same event.</p>
+      <p>Robert Forman develops the narrower challenge through what he calls a <em>pure consciousness event</em>: being awake without thoughts, images, or sensory contents. In <a href="https://ruccs.rutgers.edu/faculty/pylyshyn/TreismanReadings/11-Forman.pdf">his account</a>, reports of such states suggest that consciousness can persist when its ordinary contents fall away. If that is possible, it challenges a theory that requires every conscious event to be organized by concepts. It doesn't demonstrate Huxley's divine Ground.</p>
+      <p>Frithjof Schuon offers a different defense. In <a href="https://en.fschuon.info/?page_id=1347">an interview explaining his position</a>, he places religious unity in metaphysical truth beyond the mutually exclusive forms of doctrine. He treats intellectual intuition as capable of certain knowledge of that truth. Religious forms can remain different in this account. The dispute then concerns the certainty of that intuition: why should someone who doubts it accept the unity?</p>
+      <p>A shared state would still leave open whether it reveals the source of reality. Even Forman's narrower claim about consciousness needs a way to distinguish that state from alternatives.</p>
+      <p>What makes a remembered interval evidence of wakeful awareness without contents? How much was present but later forgotten? A sincere report can leave those questions unresolved. The anthology supplies no test that separates these possibilities.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and a note on the quotes</h2></div>
-      <p class="src-note">This is a distillation of one book, told in my own words; the ideas are Huxley's and the people he quotes. Every quotation was checked against the full text of <i>The Perennial Philosophy</i>, and all of the cross-tradition lines come from its first chapter, "That Art Thou," cited there. The book's definition uses em dashes; the site does not, so the passage is quoted from the part that runs on semicolons instead, with no change to the words. No em dashes, anywhere.</p>
+      <div class="u-sechead"><p class="u-sechead-k">Sources</p><h2 id="sources-h" class="u-sechead-h">Texts and editions</h2></div>
+      <p class="src-note">The explanations are mine. The short quotations preserve their source wording and punctuation; none is a new translation. Chapter and passage references are used because page numbers differ between editions. The comparison isn't intended to represent every school within a religion.</p>
       <details class="u-collapse">
-        <summary class="u-collapse-s">The full list, 16 sources</summary>
+        <summary class="u-collapse-s">Primary texts and source copies</summary>
         <ol class="u-collapse-list">
-        <li><b>Aldous Huxley.</b> <i>The Perennial Philosophy.</i> Harper &amp; Brothers, New York, 1945 (Chatto &amp; Windus, London, 1946). The source for everything here. Borrowable copy: <a href="https://openlibrary.org/works/OL64463W">openlibrary.org</a>.</li>
-        <li><b>The Introduction, in full.</b> The definition ("the metaphysic that recognizes a divine Reality...") and "Knowledge is a function of being" are from Huxley's Introduction, reprinted by the Theosophical Society as <a href="https://www.theosophical.org/files/resources/articles/PerennialPhilosophy.pdf">"Knowledge as a Function of Being"</a>.</li>
-        <li><b>"That Art Thou."</b> Chapter 1. The source of the <i>tat tvam asi</i> framing, the Svetaketu story, and all four-per-claim cross-tradition quotations in the stack above.</li>
-        <li><b>The Sanskrit formula.</b> <i>Tat tvam asi</i> is from the Chandogya Upanishad (roughly the 7th to 6th century BC), the Svetaketu and Uddalaka dialogue; Huxley quotes it at the start of chapter 1.</li>
-        <li><b>Shankara.</b> The two Shankara lines are from the <i>Viveka-Chudamani</i> ("The Crest-Jewel of Wisdom"), the verse treatise attributed to the 8th-century Advaita Vedanta philosopher, as Huxley quotes it.</li>
-        <li><b>Meister Eckhart.</b> "The knower and the known are one... God and I, we are one in knowledge," the German Dominican (c. 1260 to 1328), quoted in chapter 1.</li>
-        <li><b>The other mystics in the stack.</b> St. Catherine of Genoa, the <i>Theologia Germanica</i>, William Law, Bayazid of Bistun, Kabir, Chuang Tzu, the <i>Lankavatara Sutra</i>, Yung-chia Ta-shih, and Jalal-uddin Rumi are all quoted, and attributed, by Huxley in chapter 1.</li>
-        <li><b>The phrase.</b> "Philosophia perennis" was coined by Gottfried Wilhelm Leibniz (1646 to 1716); the idea is usually traced further back to Agostino Steuco's <i>De perenni philosophia</i> (1540). <a href="https://en.wikipedia.org/wiki/Perennial_philosophy">overview</a>.</li>
-        <li><b>The four-point version.</b> Huxley's tidiest enumeration ("At the core of the Perennial Philosophy we find four fundamental doctrines...") is not in this book; it is from his 1944 introduction to the Prabhavananda and Isherwood translation of the <i>Bhagavad-Gita</i>. The four claims above are my own plain restatement, anchored to the book's own definition.</li>
-        <li><b>Huxley, the life.</b> Aldous Huxley (1894 to 1963), English author of <i>Brave New World</i> (1932); by the 1940s in California and close to the Vedanta Society of Southern California under Swami Prabhavananda. <a href="https://en.wikipedia.org/wiki/Aldous_Huxley">biography</a>.</li>
-        <li><b>The contest, named.</b> The "constructivist" rebuttal: Steven T. Katz, "Language, Epistemology, and Mysticism," in <i>Mysticism and Philosophical Analysis</i> (Oxford, 1978). The verbatim line: "There are no pure (that is to say, unmediated) experiences." <a href="https://en.wikipedia.org/wiki/Common-core_thesis">summary of the debate</a>.</li>
-        <li><b>The other side.</b> Robert K. C. Forman, <i>The Problem of Pure Consciousness</i> (1990), and W. T. Stace, <i>Mysticism and Philosophy</i> (1960), argue for a contentless core underneath the interpretations.</li>
-        <li><b>The sharpest perennialist.</b> Frithjof Schuon, <i>The Transcendent Unity of Religions</i> (1948), the exoteric / esoteric line through every religion; introduction by Huston Smith, who defended the position for American readers in <i>Forgotten Truth</i> (1976).</li>
-        <li><b>"Knowledge is a function of being."</b> Introduction, with the William James and Rumi ("The astrolabe of the mysteries of God is love") supports Huxley stacks behind it.</li>
-        <li><b>Where the academy sits.</b> Comparative religion today leans constructivist (the traditions differ all the way down) rather than perennialist; the perennialist intuition remains influential and is still argued seriously. <a href="https://plato.stanford.edu/entries/mysticism/">Stanford Encyclopedia of Philosophy, "Mysticism"</a>.</li>
-        <li><b>The portrait.</b> Aldous Huxley, 1947, from <i>LIFE</i> magazine ("The Huxley Brothers," 24 March 1947), via <a href="https://commons.wikimedia.org/wiki/File:Aldous_Huxley_1947.png">Wikimedia Commons</a>; public domain (US, copyright not renewed). Cropped for the card, matted on the site green for the link preview.</li>
+          <li><b>Aldous Huxley.</b> <a href="https://huxleyarchive.org/Non-fiction/BOOKS/The%20perennial%20philosophy.pdf"><i>The Perennial Philosophy</i></a> (1945). Introduction and chapters 1, 5, and 6 inform this reading. The linked digital edition has later supplementary material.</li>
+          <li><b>Huxley's four doctrines.</b> <a href="https://psypolitics.org/2022/01/04/huxleys-introduction-to-the-bhagavad-gita-2022/">His introduction</a> to Prabhavananda and Isherwood's <i>Bhagavad-Gita</i> (1944), in a web transcription.</li>
+          <li><b>Steuco's title.</b> <a href="https://www.ustc.ac.uk/editions/157320">Universal Short Title Catalogue, record 157320</a>: <i>De perenni philosophia libri X</i>, Lyon, 1540.</li>
+          <li><b>The Upanishad.</b> F. Max M&uuml;ller, <i>The Upanishads</i>, Part I (1879). <a href="https://sacred-texts.com/hin/sbe01/sbe01126.htm">6.8</a> and <a href="https://sacred-texts.com/hin/sbe01/sbe01131.htm">6.13</a>.</li>
+          <li><b>Buddhist not-self.</b> Bhikkhu Sujato, <a href="https://suttacentral.net/sn22.59/en/sujato">Samyutta Nikaya 22.59</a>, with the translation checked against <a href="https://github.com/suttacentral/bilara-data/blob/published/translation/en/sujato/sutta/sn/sn22/sn22.59_translation-en-sujato.json">SuttaCentral's source text</a>.</li>
+          <li><b>Buddha-nature.</b> D. T. Suzuki, <a href="https://siteofenlightenment.org/Tripitaka/Books/T16n0670/The%20Lankavatara%20Sutra%20(Suzuki)/lanka-chapter-2.htm"><i>The Lankavatara Sutra</i></a> (1932), chapter 2, XXVIII.</li>
+          <li><b>Christian union.</b> John of the Cross, <a href="https://ccel.org/ccel/john_cross/ascent.all.html"><i>The Ascent of Mount Carmel</i></a>, E. Allison Peers translation, linked 1962 edition, book 2, chapter 5, especially paragraphs 3 and 6 to 7.</li>
+          <li><b>Rumi.</b> Ibrahim Gamard, <a href="https://www.dar-al-masnavi.org/n-I-0019.html">Masnavi I, 19 to 34</a> (2000), translation and Persian transliteration.</li>
+          <li><b>Steven T. Katz.</b> <a href="https://de.scribd.com/document/94115021/Katz-Language-Epistemology-and-Mysticism-pp-22-74">&ldquo;Language, Epistemology, and Mysticism&rdquo;</a>, in <i>Mysticism and Philosophical Analysis</i> (1978), pp. 22 to 74. The relevant arguments are at pp. 26 to 27 and 54 to 55. The linked scan's transcription has OCR errors.</li>
+          <li><b>W. T. Stace.</b> <a href="https://www.scribd.com/doc/70165808/W-T-Stace-Mysticism-and-Philosophy-Whole-Book"><i>Mysticism and Philosophy</i></a> (1960), chapter 2, especially sections 5 and 7 to 8. The linked scan has OCR errors.</li>
+          <li><b>Robert K. C. Forman.</b> <a href="https://ruccs.rutgers.edu/faculty/pylyshyn/TreismanReadings/11-Forman.pdf">&ldquo;What Does Mysticism Have to Teach Us About Consciousness?&rdquo;</a>, especially pp. 361 to 365.</li>
+          <li><b>Frithjof Schuon.</b> <a href="https://en.fschuon.info/?page_id=1347">Interview with Deborah Casey</a>, explaining the argument of <i>The Transcendent Unity of Religions</i>.</li>
+          <li><b>Portrait.</b> <i>LIFE</i>, &ldquo;The Huxley Brothers,&rdquo; 24 March 1947, via <a href="https://commons.wikimedia.org/wiki/File:Aldous_Huxley_1947.png">Wikimedia Commons</a>. Existing crop retained; Commons identifies it as public domain in the US because copyright was not renewed.</li>
         </ol>
       </details>
     </section>
-
   </main>
 
   <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
@@ -448,13 +378,13 @@
     <p class="u-next-more"><a href="inner-life.html">All 10 posts in The Inner Life</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
-    <div class="site-footer-inner" style="max-width:var(--measure); margin:0 auto;">
+    <div class="site-footer-inner">
       <a href="/">&copy; 2026 Ethan Willingham</a>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/perennial-philosophy.js" defer></script>
+  <script src="js/perennial-philosophy.js?v=20261003a" defer></script>
 </body>
 </html>

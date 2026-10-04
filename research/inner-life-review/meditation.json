@@ -1,0 +1,432 @@
+{
+  "slug": "meditation",
+  "date": "2026-10-03",
+  "title": "Meditation, Mapped",
+  "owned_files": [
+    "meditation.html",
+    "js/meditation-data.js",
+    "js/meditation.js"
+  ],
+  "baseline": "Working-tree snapshots captured before this assignment, preserving pre-existing uncommitted work. Counts are not against HEAD. Final counts describe the editorial handoff before the parent task's shared style and browser changes.",
+  "word_count_method": {
+    "visible_page": "HTMLParser text from the entire HTML file, including title, hero, captions, SVG text, source legend and navigation, excluding scripts and styles. Python word tokens include apostrophes within words.",
+    "main_before_sources": "The same HTML text count from main through the section immediately before sources, including captions, controls, citations and headings.",
+    "explorer_all_entries": "Evaluate meditation-data.js in an isolated Node VM. Count name, also, object, one, origin, claims, ev, evidenceFor, how, time, miss and note across all eleven entries after stripping HTML tags. The new outcome label is included in the final count; the original had no such field. Repeated rendering labels and family names are excluded."
+  },
+  "original_word_counts": {
+    "visible_page": 3221,
+    "main_before_sources": 2362,
+    "explorer_all_entries": 3429,
+    "page_plus_entries": 6650
+  },
+  "first_rewrite_before_volume_cut": {
+    "visible_page": 1790,
+    "main_before_sources": 1602,
+    "explorer_all_entries": 2355,
+    "page_plus_entries": 4145
+  },
+  "final_word_counts": {
+    "visible_page": 1519,
+    "main_before_sources": 1349,
+    "explorer_all_entries": 2152,
+    "page_plus_entries": 3671
+  },
+  "volume_cut_percent": 11.44,
+  "editorial_rationale": [
+    "Opened with a concrete randomized comparison of a complete mindfulness course and medication. Removed market figures, celebrity history and universal claims that every practice trains the same return of attention.",
+    "Retained eleven practices, five overlapping browsing groups, practical instructions, the comparison table and three breathing patterns. Distinguished focused attention, open observation, compassion imagery, deliberate breathing and devotional prayer.",
+    "Rewrote every explorer entry, including religious aims, provenance, instructions, common errors, time suggestions and evidence. Evidence labels now name the particular outcome, population or combined intervention being assessed.",
+    "Removed the claim that ten minutes daily for two weeks fairly tests clinical benefit, repeated rep metaphors, motivational slogans, self-quotations, rhetorical reversals and the recap ending. Ended with the limits of applying course evidence to a different method or dose.",
+    "Replaced the padded 38-source list with citations beside the actual claims. Traditional instructions and clinical evidence have separate roles; no grade evaluates spiritual importance or truth.",
+    "Kept existing structural classes, hero markup, photographs and shared CSS. Corrected pacer names and descriptions without adding a medical promise. Added outcome text to the explorer comparison and fixed a strict-mode arguments.callee retry with a named function."
+  ],
+  "major_factual_corrections": [
+    {
+      "before": "The Goyal chart called its control doing nothing and invented a universal 0.13 real-alternative marker.",
+      "after": "The 0.38 anxiety, 0.30 depression and 0.33 pain estimates are comparisons with nonspecific active controls. Removed the invented marker and plotted the published 95% intervals. Anxiety and depression refer to eight weeks; pain pools varying follow-up periods."
+    },
+    {
+      "before": "No superiority over other treatments was treated as equality, including a claim about antidepressant-sized effects.",
+      "after": "Explained why a failure to establish superiority does not prove equivalence. The newer MBSR versus escitalopram result is an outcome-specific noninferiority comparison, with a prespecified margin and unblinded participants."
+    },
+    {
+      "before": "Clinical course results were generalized to brief home exercises and apps.",
+      "after": "Named the weekly classes, day retreat and daily practice in the anxiety trial. Added the separate 2024 evidence that a 15-minute body scan can reduce immediate self-rated stress in mostly students, without implying treatment of an anxiety disorder or a lasting effect."
+    },
+    {
+      "before": "MBCT was described as cutting relapse by about a third and doing no better than antidepressants.",
+      "after": "Restricted the claim to recurrent depression in full or partial remission. The individual-patient meta-analysis found a smaller advantage over active treatments, not a uniform reduction across all comparisons. Medication decisions belong in a clinical treatment plan."
+    },
+    {
+      "before": "Britton's 6 to 14 percent was presented as negative effects lasting over a month.",
+      "after": "The duration thresholds differ: 14.1% over a day, 9.0% over a week and 6.4% over a month among 78 participants with relevant duration data. The post reports five of 78 for the month threshold, separately from 58% of 96 reporting an unpleasant experience. It also states the absence of a nonmeditating control."
+    },
+    {
+      "before": "Distress reports, retreat associations and claims about app safety were presented as settled causal facts.",
+      "after": "Distinguished self-attribution, observational association, functioning and duration. The 2026 app analysis reports adverse experiences even among nonexposed participants, but exposure groups were not randomly assigned, so the post avoids the authors' stronger causal inference."
+    },
+    {
+      "before": "Long exhalation was described as a vagus-nerve off-switch, the strongest mechanism, and the fastest reset.",
+      "after": "Removed the mechanistic guarantee and acute anxiety promise. Balban studied daily practice for one month and mood; it found no persistent heart-rate or heart-rate-variability change. Fincham's blinded 400-person trial found no additional measured mental-health benefit of slow over matched normal-paced breathing."
+    },
+    {
+      "before": "The pacer was called coherent breathing at 5.5 breaths per minute despite a 10.5-second cycle.",
+      "after": "Called it slow breathing at about six per minute. Stated that its timings illustrate patterns and do not reproduce either cited trial. Holding and filling the lungs are optional, without pressure to strain."
+    },
+    {
+      "before": "A free neutral-word exercise was claimed to work the same as TM, and cardiovascular guidance was overstated.",
+      "after": "Separated a generic mantra exercise from certified TM instruction. Used the modest blood-pressure finding and AHA's possible-adjunct language. Rechecked the current $980 fee and added income-based rates, scholarships and follow-up support."
+    },
+    {
+      "before": "Body scanning, vipassana and zazen were flattened into one clinical evidence base.",
+      "after": "Distinguished standalone body-scan research, Goenka-style scanning from wider vipassana, and Soto shikantaza from Rinzai breath counting. No MBSR result is assigned automatically to a retreat or Zen sitting."
+    },
+    {
+      "before": "Compassion and religious practices received broad symptom-benefit summaries or tradition-based grades.",
+      "after": "Named the outcomes and controls: positive emotion after loving-kindness versus waitlist; immediate compassion after combined tonglen and focused attention versus a story; adapted centering stress versus waitlist; a Jesus Prayer program for Christian volunteers; combined dhikr and salawat during dialysis."
+    },
+    {
+      "before": "The Jesus Prayer offered breathing synchronization to beginners and dhikr implied a universal breath/count pattern.",
+      "after": "Used ordinary unforced breathing, retained the devotional meaning and cited the OCA's guidance requirement for advanced hesychast methods. The dhikr instructions identify one community and defer specialized formulas and counts to its teacher."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4142584/",
+      "type": "Systematic review, Goyal 2014",
+      "verified": "47 trials, 3515 participants; moderate-quality evidence for anxiety, depression and pain; standardized differences and intervals; lack of demonstrated superiority over specific active controls.",
+      "limits": "Effects and evidence quality depend on outcome and comparison. An old review does not establish the current state of all meditation research."
+    },
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK180101/?report=reader",
+      "type": "AHRQ review results",
+      "verified": "Confirmed that 0.38 anxiety and 0.30 depression refer to nonspecific active comparisons, with different estimates for specific active controls."
+    },
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK180104/",
+      "type": "AHRQ review discussion",
+      "verified": "Control definitions and limitations of direct active-treatment comparisons."
+    },
+    {
+      "url": "https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2798510",
+      "type": "Randomized noninferiority trial, Hoge 2023",
+      "verified": "276 randomized adults with anxiety disorders; full eight-week MBSR versus escitalopram, prescribed daily practice and retreat; prespecified margin; blinded symptom raters but unblinded participants.",
+      "limits": "Specific clinical population and substantial course, not an app dose or proof that every treatment result is identical."
+    },
+    {
+      "url": "https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2517515",
+      "type": "Individual-patient meta-analysis, Kuyken 2016",
+      "verified": "Nine trials, recurrent depression in full or partial remission, relapse assessed within 60 weeks. Hazard ratios differ between all non-MBCT care and active treatments.",
+      "limits": "Relapse prevention differs from treatment of an active depressive episode. A hazard reduction is not a universal absolute risk reduction."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25907157/",
+      "type": "PREVENT randomized trial, Kuyken 2015",
+      "verified": "No superiority of MBCT with taper support over maintenance antidepressants in the individual 24-month trial.",
+      "limits": "Consulted to test the old claim; not presented as proof of equivalence."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11420060/",
+      "type": "Preregistered randomized multisite trial, Sparacio 2024",
+      "verified": "2239 participants at 37 sites; 449 assigned to a 15-minute body scan and 478 to audiobook controls; lower immediate self-rated stress. Body-scan result persisted when the potentially stressful story was excluded.",
+      "limits": "Mostly students, nonmeditators without mental illness, self-report, one session. Does not show lasting clinical benefit."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35538557/",
+      "type": "Body-scan systematic review, Gan 2022",
+      "verified": "Fourteen articles, low-quality and heterogeneous studies, only a small mindfulness effect versus passive controls in the abstract.",
+      "limits": "Abstract inspected as background. The more recent immediate-stress trial prevents describing all standalone evidence as uniformly small or absent."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8845498/",
+      "type": "Structured adverse-effect interviews, Britton 2021",
+      "verified": "96 interviewed; 58% unpleasant experiences; duration analysis denominator 78 and five reporting negative functioning effects over a month.",
+      "limits": "Mindfulness-course variants, no nonmeditating comparator. Unpleasantness, adverse functional effects and their duration are different measures."
+    },
+    {
+      "url": "https://jimhopper.com/pdf/britton_et_al_2021.pdf",
+      "type": "Mirror of the primary Britton article",
+      "verified": "Independently checked Table 3 denominator and 14.10%, 8.97% and 6.41% duration thresholds when PMC challenged direct access."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13263023/",
+      "type": "Secondary analysis of digital meditation trials, Beloborodova 2026",
+      "verified": "Adverse experiences were reported among participants completing didactic lessons without guided meditations. Comparisons by actual meditation exposure were quasi-experimental, not randomized exposure contrasts.",
+      "limits": "Attrition, different measurement formats, limited nonexposed samples and self-report. The post does not infer that meditation can never cause harm."
+    },
+    {
+      "url": "https://mental.jmir.org/2026/1/e90602/",
+      "type": "Publisher record of the 2026 analysis",
+      "verified": "June 12, 2026 article and identifier; used the PMC mirror for the public citation because direct publisher access sometimes challenged the browser."
+    },
+    {
+      "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0176239",
+      "type": "Primary qualitative research, Lindahl 2017",
+      "verified": "Documented anxiety, traumatic memories and altered self-experience among purposively recruited meditators.",
+      "limits": "Selected for challenging experiences; cannot estimate prevalence or prove a general causal rate."
+    },
+    {
+      "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0216643",
+      "type": "Cross-sectional survey, Schlosser 2019",
+      "verified": "Associations between unpleasant experiences, retreat history and exclusively deconstructive practice.",
+      "limits": "Self-selected regular meditators, retrospective self-attribution; no causal comparison of named retreats."
+    },
+    {
+      "url": "https://www.nccih.nih.gov/health/meditation-and-mindfulness-effectiveness-and-safety",
+      "type": "Authoritative medical overview",
+      "verified": "Safety research remains incomplete, meditation should not replace conventional care, and people should discuss health considerations with a provider."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9873947/",
+      "type": "Randomized breathing trial, Balban 2023",
+      "verified": "Five minutes daily for one month; cyclic sighing showed a positive-mood advantage over brief mindfulness; no persistent HR or HRV change.",
+      "limits": "Small remote sample and different intervention from a single acute anxiety treatment. No claim that cyclic sighing definitively outperformed every other breathing group."
+    },
+    {
+      "url": "https://www.foleyphysicaltherapy.com/uploads/7/5/8/6/75863405/brief-structured-respiration-practices-enhance-moo.pdf",
+      "type": "Mirror of the primary Balban article",
+      "verified": "Checked full physiological results when direct PMC access challenged the browser."
+    },
+    {
+      "url": "https://www.nature.com/articles/s41598-023-49279-8",
+      "type": "Blinded randomized trial, Fincham 2023",
+      "verified": "400 people, four weeks of ten minutes daily, slow 5.5/min pacing versus matched 12/min pacing; no extra measured mental-health effect.",
+      "limits": "Does not prove all breathing patterns or every population respond equally."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35412731/",
+      "type": "TM blood-pressure meta-analysis, Schneider 2022",
+      "verified": "18 primary studies, modest average blood-pressure reductions, effects waning after three months.",
+      "limits": "Primary abstract inspected. Not a test of all mantra words, spiritual claims or replacement of hypertension treatment."
+    },
+    {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5721815/",
+      "type": "American Heart Association scientific statement, 2017",
+      "verified": "Meditation may be considered an adjunct to guideline-directed cardiovascular care; evidence is modest and benefits remain to be established.",
+      "limits": "Not a blanket endorsement of TM, a drug comparison or a current blood-pressure treatment guideline."
+    },
+    {
+      "url": "https://www.tm.org/en-us/course-fee",
+      "type": "Official current price and program description",
+      "verified": "$980 US course fee, income-based reductions, potential scholarships and included follow-up support.",
+      "limits": "Commercial primary source establishes price and offer, not efficacy. Recheck if the post is later updated."
+    },
+    {
+      "url": "https://my.clevelandclinic.org/health/treatments/22292-transcendental-meditation",
+      "type": "Medical institution's technique background",
+      "verified": "Maharishi, 1950s development and teacher instruction.",
+      "limits": "Used for technique background, not its broader health-benefit language."
+    },
+    {
+      "url": "https://www.ummhealth.org/services-treatments/center-mindfulness/mindfulness-programs/mbsr",
+      "type": "Originating MBSR institution",
+      "verified": "Kabat-Zinn's 1979 course, eight-week format and 45 to 60 minutes of daily home practice."
+    },
+    {
+      "url": "https://ggia.berkeley.edu/practice/body_scan_meditation",
+      "type": "University practice guide",
+      "verified": "Supported seated or lying practice, attention through regions and guided university audio.",
+      "limits": "Primary instructions establish the exercise. Efficacy in the entry is sourced separately to the 2024 randomized trial."
+    },
+    {
+      "url": "https://www.accesstoinsight.org/tipitaka/kn/snp/snp.1.08.amar.html",
+      "type": "Primary Buddhist text, Metta Sutta translation",
+      "verified": "Goodwill extended to all living beings."
+    },
+    {
+      "url": "https://www.mindful.org/loving-kindness-meditation-with-sharon-salzberg/",
+      "type": "Teacher's primary instructions",
+      "verified": "Wishes of goodwill, no required emotional state, selected recipients and gradual widening."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/18954193/",
+      "type": "Randomized loving-kindness training study, Fredrickson 2008",
+      "verified": "139 working adults and positive-emotion outcome versus waitlist.",
+      "limits": "Waiting does not match teaching, expectancy or group attention. Does not establish every compassion or clinical claim."
+    },
+    {
+      "url": "https://www.accesstoinsight.org/tipitaka/mn/mn.010.nysa.html",
+      "type": "Primary Buddhist text, Satipatthana Sutta translation",
+      "verified": "Body, feelings, mind and mental phenomena, establishing broader contemplative scope than one body-scan lineage."
+    },
+    {
+      "url": "https://www.dhamma.org/en/about/code",
+      "type": "Goenka organization's course discipline",
+      "verified": "Ten-day schedule with many daily hours, screening and donation funding rather than a course fee."
+    },
+    {
+      "url": "https://www.sotozen.com/eng/zazen/howto/index.html",
+      "type": "Official Soto practice instructions",
+      "verified": "Stable posture, chair option, hand position, slightly open eyes and natural breathing."
+    },
+    {
+      "url": "https://www.sotozen.com/eng/about/history/index.html",
+      "type": "Official Soto historical account",
+      "verified": "Dogen's study in China and transmission of the Soto lineage."
+    },
+    {
+      "url": "https://www.sotozen.com/eng/library/key_terms/pdf/key_terms01.pdf",
+      "type": "Official Soto explanation of shikantaza",
+      "verified": "Practice and realization are treated together rather than sitting being only a means to a later awakening."
+    },
+    {
+      "url": "https://zen.rinnou.net/zazen/sitting.html",
+      "type": "Rinzai-Obaku primary instruction",
+      "verified": "Breath counting as a sitting practice, supporting the distinction from the selected Soto outline."
+    },
+    {
+      "url": "https://www.lionsroar.com/how-to-practice-tonglen-meditation/",
+      "type": "Pema Chodron's primary instructions",
+      "verified": "Taking and sending imagery, chosen difficulty and widening the wish for relief."
+    },
+    {
+      "url": "https://link.springer.com/article/10.1007/s12671-025-02601-z",
+      "type": "Randomized acute tonglen study, Andreu 2025",
+      "verified": "60 healthcare workers, three five-minute phases combining focused attention and tonglen, neutral story comparison and immediate reported compassion result.",
+      "limits": "Single session, much prior meditation experience, no enduring grief or burnout outcome. Removed a vague reference to some physiological measures."
+    },
+    {
+      "url": "https://www.contemplativeoutreach.org.uk/centering-prayer-2/",
+      "type": "Contemplative Outreach's primary method",
+      "verified": "Sacred word as consent, return when engaged by thought and time in silence; older Christian contemplative roots."
+    },
+    {
+      "url": "https://www.contemplativeoutreach.org/2023/04/19/why-is-20-minutes-recommended-for-centering-prayer/",
+      "type": "Teacher's duration explanation",
+      "verified": "Twenty minutes twice daily is recommended, with shorter periods possible, rather than a clinically established dose."
+    },
+    {
+      "url": "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2021.720824/full",
+      "type": "Adapted centering intervention trial, Dorais and Gutierrez 2021",
+      "verified": "Student self-rated stress, a method adapted across faiths, waitlist control and excluded participants in the final analysis.",
+      "limits": "No active treatment control or proof about contemplative prayer generally."
+    },
+    {
+      "url": "https://www.oca.org/orthodoxy/the-orthodox-faith/spirituality/prayer-fasting-and-almsgiving/the-jesus-prayer",
+      "type": "Orthodox Church in America's primary teaching",
+      "verified": "Prayer wording, ordinary daily repetition without special breathing, advanced hesychasm requiring spiritual guidance."
+    },
+    {
+      "url": "https://doi.org/10.1037/scp0000154",
+      "type": "Randomized Jesus Prayer program, Knabb and Vazquez 2018",
+      "verified": "Small two-week online program for Christian volunteers; reported stress and surrender improved versus waitlist.",
+      "limits": "Publisher access restricted. Checked the original abstract through its PsycInfo/EBSCO record, not full methods. No active-treatment comparison."
+    },
+    {
+      "url": "https://openurl.ebsco.com/contentitem/pdh%3A2018-03412-001?crl=f&id=ebsco%3Apdh%3A2018-03412-001&jrnl=23264519&sid=ebsco%3Aplink%3Acrawler-pdh",
+      "type": "Original article abstract record",
+      "verified": "Jesus Prayer group 44, waitlist 42, trial population and reported outcomes."
+    },
+    {
+      "url": "https://suficommunities.org/sufi-library/spiritual-practices/remembrance-dhikr/",
+      "type": "Shadhiliyya community's primary instructions",
+      "verified": "Devotional purpose, names and formulas, beads and community-specific practice. Avoided inventing a universal count or synchronized breathing method."
+    },
+    {
+      "url": "https://pubmed.ncbi.nlm.nih.gov/40632388/",
+      "type": "Randomized combined dhikr/salawat dialysis study, 2025",
+      "verified": "54 patients in one Indonesian hospital; combined intervention, anxiety and sleep outcomes.",
+      "limits": "Primary abstract inspected. Combined devotional treatment in dialysis cannot establish efficacy of every dhikr form."
+    },
+    {
+      "url": "https://www.nccih.nih.gov/health/yoga-effectiveness-and-safety",
+      "type": "Authoritative medical overview",
+      "verified": "Pranayama is breathing practice within yoga; a specific modern breathing trial is not evidence for all yogic breathing."
+    },
+    {
+      "url": "https://www.wimhofmethod.com/faq",
+      "type": "Method owner's explicit safety instructions",
+      "verified": "Forceful breathing may produce lightheadedness and loss of consciousness.",
+      "limits": "Used for stated risks only, not its promotional efficacy claims."
+    },
+    {
+      "url": "https://www.wimhofmethod.com/practice-the-method",
+      "type": "Method owner's explicit safety instructions",
+      "verified": "Never practice the forceful breathing protocol in water, in the shower or while driving.",
+      "limits": "The page's medical marketing was not used."
+    },
+    {
+      "url": "https://www.clevelandart.org/art/1972.41",
+      "type": "Museum artwork record",
+      "verified": "Bodhidharma Meditating Facing a Cliff, Song China, ink on silk, late 1200s, existing open-access image."
+    },
+    {
+      "url": "https://www.artic.edu/artworks/21023/buddha-shakyamuni-seated-in-meditation-dhyanamudra",
+      "type": "Museum artwork record",
+      "verified": "Buddha Shakyamuni in dhyanamudra, Chola period about the 12th century, Nagapattinam in Tamil Nadu, granite and public domain.",
+      "limits": "Museum page returned 403 during this pass; confirmed directly through the museum API."
+    },
+    {
+      "url": "https://api.artic.edu/api/v1/artworks/21023?fields=id,title,date_display,artist_display,medium_display,is_public_domain,place_of_origin,main_reference_number",
+      "type": "Museum's primary collection API",
+      "verified": "Title, origin, date, material, accession 1964.556 and public-domain flag confirmed by JSON response."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Read every static paragraph and explorer field flat for content. Removed slogans, rep metaphors, physiological certainty, clever reversals and abstract universal claims; specific interventions and comparisons now carry the explanation."
+    },
+    {
+      "pass": 2,
+      "name": "Delete the first paragraph",
+      "result": "Tested the opening without the course-versus-medication paragraph. Kept it because the sample, intervention and comparison are the concrete payoff; deleted the generic follow-up announcement of useful evidence."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence pass",
+      "result": "Cut vague study claims, unearned best-method judgments, generic encouragement and repeated caveats. Defined MBSR, MBCT, shikantaza, lojong and the meaning of standardized differences. Source and population details replaced broad efficacy summaries."
+    },
+    {
+      "pass": 4,
+      "name": "Cut ten percent",
+      "result": "Reduced the 4145-word rewritten page plus entries to 3671 words, 11.44%, while retaining practical steps, counterexamples and research limitations. Original total was 6650 words."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Checked controls, denominators, outcomes, durations and primary instructions. Added the newer body-scan result as a counterexample to an overly course-centered draft. Grades refer to named health outcomes; traditional importance receives no medical score."
+    }
+  ],
+  "validation": [
+    "node --check js/meditation-data.js",
+    "node --check js/meditation.js",
+    "git diff --check restricted to the owned files and audit",
+    "Evaluated all eleven entries in an isolated Node VM; confirmed unique IDs, required fields, valid family and grade keys, linked evidence sources except the explicitly limited extrapolation claim for shikantaza, and four instructions per entry.",
+    "Verified identical title, og:title and h1; existing CSS and hero structure retained; cache stamps added for changed meditation scripts.",
+    "Checked the owned content for literal/entity em or en dashes, pictographs and the voice linter's hard filler phrases. No violations."
+  ],
+  "remaining_concerns": [
+    "Parent task will run desktop, 375px, keyboard, pacer and no-JavaScript browser checks and shared style integration. This agent did not launch a browser.",
+    "Desktop SVG labels become small when the entire chart scales to phone width. Parent will add an equivalent native table at narrow widths; caption is usable for either display.",
+    "Existing comparison-table names are click targets without keyboard semantics. Parent will update those controls during accessibility QA.",
+    "No-JavaScript fallback links to the data file rather than rendering all entries. Parent owns no-JavaScript presentation QA.",
+    "TM pricing is current at review time and may change. Several publisher/PMC URLs intermittently challenged direct access; primary mirrors or original abstracts were used and the limitation is recorded above."
+  ],
+  "hub_description": "Eleven practices, from mindfulness to contemplative prayer. Compare their instructions, the outcomes researchers have tested, and the limits of a brief exercise.",
+  "publication": "No commit, push, index generation or publication performed. Parent owns publication and final integrated browser checks.",
+  "root_followup": {
+    "date": "2026-10-04",
+    "changes": [
+      "Updated TM cardiovascular guidance from the historical 2017 scientific statement to section 5.1 of the 2025 AHA/ACC hypertension guideline. Optional adjunct remains the practical conclusion; no claim that generic mantras are equivalent.",
+      "Added native comparison-table buttons, selected-state attributes, and column-header scopes.",
+      "Shared centered reading shell, readable phone results table and reduced-motion reveal fixes added by root."
+    ],
+    "checked_sources": [
+      {
+        "url": "https://www.ahajournals.org/doi/10.1161/CIR.0000000000001356",
+        "support": "Section 5.1 recommendation8, Class2b B-R: TM may be reasonable as adjunct. Supporting text notes small short trials. Publisher primary text returned in search but direct retrieval403."
+      },
+      {
+        "url": "https://www.atma.si/HBP_Guidelines_Excerpts_AHAACCAMA_18Aug25_250822_213858.pdf",
+        "support": "Reproduction of JACC primary guideline, printed32; recommendation table and supporting text checked. Original DOI10.1016/j.jacc.2025.05.007."
+      },
+      {
+        "url": "https://pubmed.ncbi.nlm.nih.gov/35412731/",
+        "support": "Primary abstract independently rechecked: Schneider, Reangsing, Willis;18studies1207, modest BP improvements, effects waning after3months."
+      }
+    ],
+    "final_counts": "See index.json for uniform counts after root follow-through."
+  }
+}

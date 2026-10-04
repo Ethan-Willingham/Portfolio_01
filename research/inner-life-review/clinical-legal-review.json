@@ -1,0 +1,489 @@
+{
+  "review_date": "2026-10-04",
+  "reviewer": "Independent delegated clinical, legal, commercial and prose review; GPT-6.1 Sol at the requested xhigh effort",
+  "scope": {
+    "complete_local_reads": [
+      "AGENTS.md",
+      "VOICE.md",
+      "meditation.html",
+      "js/meditation-data.js",
+      "chemical-path.html",
+      "cults-the-cage.html",
+      "js/cults-data.js",
+      "cults-business.html",
+      "research/inner-life-review/meditation.json",
+      "research/inner-life-review/chemical-path.json",
+      "research/inner-life-review/cults-the-cage.json",
+      "research/inner-life-review/cults-business.json"
+    ],
+    "method": "Read the complete authored articles and both runtime datasets, then independently inspected selected primary papers, court opinions, statutes, regulator documents and current sales terms. Existing audits were used as claim inventories, not accepted as proof. Re-read the two changed chemical-path paragraphs after the parent applied the review findings. This is an editorial evidence review, not a new systematic review, statistical reanalysis, or legal opinion for an individual situation.",
+    "restrictions_observed": "No post, script, styling, shared-file, staging, commit or push changes by this reviewer. Only this audit was authored.",
+    "line_number_basis": "Current working files on October 4, 2026. The parent was integrating styles and corrections during this review; lines can move after subsequent edits."
+  },
+  "overall_conclusion": {
+    "open_material_findings": 0,
+    "resolved_factual_findings": 1,
+    "resolved_optional_precision_findings": 1,
+    "verdict": "No further blocking factual, clinical, legal or commercial error found in the checked claims. The cancer-trial enrollment count required correction and has been corrected. The FDA assessor terminology was a low-priority source-precision improvement and has also been corrected.",
+    "why_this_is_not_a_blanket_certification": "The strongest and most consequential claims received independent primary-source checks. Some historical, tradition-specific and secondary runtime references were read in the articles and original audits without reopening every cited document. Retrieval limits and remaining research uncertainties are listed below.",
+    "cross_post_consistency": [
+      "The meditation and business pages now treat the current blood-pressure recommendation as a possible adjunct to care, supported by limited trials. Neither turns it into endorsement of the movement's spiritual or social claims.",
+      "The meditation and chemical pages distinguish immediate subjective outcomes, symptom response, relapse prevention, and enduring benefit. Neither treats a reported meaningful experience as proof of supernatural knowledge or a medical cure.",
+      "The cage and business pages distinguish a witness account, a criminal verdict, a civil settlement, a dismissed claim, and an author's interpretation. They do not infer identical legal status from the shared category of a spiritual organization."
+    ]
+  },
+  "findings": [
+    {
+      "id": "CL-01",
+      "priority": "P2",
+      "category": "Trial denominator precision",
+      "status": "resolved_by_parent_and_verified_in_current_file",
+      "file": "chemical-path.html",
+      "line": 319,
+      "original_quote": "A 2016 Johns Hopkins trial enrolled 51 people with life-threatening cancer and clinically significant depression or anxiety.",
+      "problem": "The Methods report 56 randomized participants; 51 completed at least one session. Calling 51 the enrolled sample conflated stages of participation. The response numerators and assessed denominators in the following sentence were correct.",
+      "source_id": "C01",
+      "evidence_location": "Griffiths 2016, Methods, printed page 1182; response outcomes in Table 6, printed page 1189.",
+      "proposed_replacement": "A 2016 Johns Hopkins trial randomized 56 people with life-threatening cancer and clinically significant depression or anxiety; 51 received at least one psilocybin session.",
+      "current_resolution": "The current paragraph uses the proposed 56 randomized / 51 session distinction and retains 23 of 25 versus 8 of 25 assessed depression-response outcomes.",
+      "materiality": "A real factual correction to the study description, without changing the reported treatment comparison or the article's clinical conclusion."
+    },
+    {
+      "id": "CL-02",
+      "priority": "P3",
+      "category": "Optional terminology precision",
+      "status": "resolved_by_parent_and_verified_in_current_file",
+      "file": "chemical-path.html",
+      "line": 344,
+      "original_quote": "independent blinded assessors",
+      "problem": "The July 2026 FDA guidance specifically discusses central raters blinded to treatment allocation and visit number. The old paraphrase conveyed the correct practical idea but added a less exact descriptor.",
+      "source_id": "C04",
+      "evidence_location": "FDA guidance, section E.1, Blinding; printed pages 9 to 10.",
+      "proposed_replacement": "blinded central raters",
+      "current_resolution": "The current paragraph now says blinded central raters.",
+      "materiality": "Optional source precision, not a false clinical claim or a blocker."
+    }
+  ],
+  "per_post": {
+    "meditation": {
+      "conclusion": "No open material finding in the article or eleven-entry dataset. The evidence is attached to named practices and outcomes rather than presented as a universal ranking of meditation traditions.",
+      "clinical_review": [
+        "Hoge's anxiety trial supports a complete eight-week MBSR package within a prespecified noninferiority margin. The page explains the substantial practice commitment, blinded symptom raters, and need for replication, and explicitly separates this from a short app exercise.",
+        "Goyal's comparison groups and modest effects are described appropriately. Lack of evidence of superiority over specific active treatments is not treated as demonstrated equivalence.",
+        "The brief body-scan finding stays within immediate self-rated stress in a predominantly student sample. MBCT is described as prevention of relapse in people whose depression was in full or partial remission, not treatment of any current depressive episode.",
+        "Britton's unpleasant experiences and lasting impairment use different relevant denominators. Five of 78 is not presented as five of 96, five of all meditators, or a causal excess-risk estimate.",
+        "The app adverse-experience comparison is treated cautiously. Completion-based exposure was not a randomized exposed-versus-unexposed contrast, so the article properly avoids a causal risk estimate.",
+        "The tonglen experiment was brief and combined focused attention with tonglen. The entry acknowledges that combination and does not infer durable compassion, general behavior change, or a neural signature from an immediate measure."
+      ],
+      "practical_misinterpretation": "The article repeatedly separates a sample exercise from clinical course dosing, does not direct medication substitution, and gives a usable stopping rule for distress. No additional warning block or clinical instructions were warranted from this review.",
+      "prose_and_length": "The practice entries repeat their fields because the user chooses and compares them independently. That repetition is functional. The core article is concise enough for its clinical distinctions; no material generic filler or required length cut found.",
+      "independent_source_checks": ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10"],
+      "limits": "The body-scan trial's total sample and outcome were independently checked, but the exact 449-person arm count was not independently located in the retrieved full-text rendering. The AHA publisher retrieval was incomplete; the parent separately checked the precise recommendation and supporting text. Not every prayer, dhikr, historical-origin or breathing-practice reference was reopened in this review."
+    },
+    "chemical-path": {
+      "conclusion": "The one enrollment-count error and optional FDA wording improvement are resolved. No further material error found in the checked clinical endpoints, current federal status, sponsor update, or religious-law examples.",
+      "clinical_review": [
+        "The Hopkins comparison correctly states assessed response rather than remission or cure. Its six-month result is explicitly limited by crossover and later medication use.",
+        "The Goodwin 2022 remission counts are 23 of 79 versus 6 of 79 at three weeks. Those secondary results did not pass an uninterrupted confirmatory testing sequence, and the page says so. The safety paragraph accurately records the three later suicidal-behavior events and previous histories without assigning causation.",
+        "MAPP2's 71.2 versus 47.6 percent outcome is loss of the PTSD diagnosis among assessed participants, not the stricter remission measure or an all-randomized cure rate. The article uses that distinction.",
+        "The FDA Complete Response Letter is described as a refusal of that application in its current form. Its critiques are neither omitted nor turned into proof that MDMA has no possible usefulness.",
+        "The July 2026 Compass item is a sponsor report of Phase 3 results and a rolling application. The article properly stops short of independently accepting efficacy, safety or approval claims from a press release.",
+        "The 36-person healthy-volunteer opening is a report of meaning at follow-up. Participants were selected for prior spiritual or religious engagement; the article states this and does not present the finding as a treatment result."
+      ],
+      "legal_review": [
+        "Federal Schedule I status, state service frameworks, religious protection and FDA approval are kept separate.",
+        "Smith is tied to the unemployment-benefits case and neutral generally applicable law. The statutory peyote protection is correctly limited by eligibility and traditional ceremonial use.",
+        "O Centro is a case-specific RFRA dispute involving a preliminary injunction, not legalization for anyone who labels drug use religious.",
+        "The Colorado sentence is deliberately general and remains supported despite August 2026 changes to licensing and advertising law. The older regulator page should not be extrapolated into a current blanket prohibition on every licensed sale."
+      ],
+      "practical_misinterpretation": "The trial package, selection criteria, supervision, uncertainty, and medicine-interaction discussion keep the evidence from reading as instructions for unsupervised treatment. No dosing protocol or medication-discontinuation advice appears.",
+      "prose_and_length": "The trial subsections justify their length by explaining genuinely different endpoints and designs. The repeated boundary between a supported treatment package and an unsupervised dose is useful here. No required cut found.",
+      "independent_source_checks": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15", "C16"],
+      "limits": "The NYU and escitalopram comparisons, historical ethnobotanical claims, and full interaction literature were read as authored and in the original audit but were not each reanalyzed from their complete papers here. Approval checks are a dated snapshot, not a promise that status cannot change."
+    },
+    "cults-the-cage": {
+      "conclusion": "No open material finding in the article or five-case dataset. The account gives different cases different evidentiary status and avoids the usual coercion-versus-free-choice false binary.",
+      "legal_and_evidence_review": [
+        "Headley's appellate opinion describes monitored communication and family-related exit costs while rejecting the specific forced-labor claims. The article and runtime entry do not claim Scientology was found liable, or that failure of that claim proves no harm. They also do not substitute the district court's ministerial-exception rationale for the appellate holding.",
+        "The NXIVM account distinguishes DOS from the broader paid seminar business and attaches coercion claims to trial-established conduct. The checked DOJ verdict and sentence support those claims.",
+        "The original outbreak paper reports 751 affected people and ten definitely implicated restaurants, eight with salad bars. It also reports criminal evidence of deliberate contamination and the two guilty pleas. The runtime description no longer equates ten restaurants with ten salad bars.",
+        "Layton's affidavit predates the deaths and supports the stated guarded-settlement and rehearsal details. It remains a witness account; it cannot independently establish every event or motive later attributed to Jones.",
+        "Barker's more-than-one-thousand London-area workshop attendees, approximately 90 percent nonjoining, and majority voluntary departure within two years are supported by her own retrospective account. The article restricts the finding to that recruitment setting.",
+        "The APA memorandum rejected a report and said there was insufficient information to take a broader position. The article properly avoids treating that as a finding that blackmail or confinement cannot occur.",
+        "Heaven's Gate members' statements provide evidence of their stated religious interpretation. They do not independently establish how free every participant was from pressure. The article does not claim that they do."
+      ],
+      "prose_and_length": "The case fields are concrete, source-linked and readable independently. The main article's distinction between recruitment conversion rates and blackmail or guarded confinement is necessary context. No material empty prose or excessive length found.",
+      "independent_source_checks": ["G01", "G02", "G03", "G04", "G05", "G06", "G07", "G08"],
+      "limits": "The parent independently checked the Jonestown location counts and limited autopsy record. This reviewer read their use and the full original audit but did not independently replay the entire Q042 recording or reopen every forensic document. The San Diego sheriff page was not successfully retrieved during this review. No exhaustive audit of subsequent criminal appeal proceedings was conducted."
+    },
+    "cults-business": {
+      "conclusion": "No open material finding in the current prices, subscription commitment, refund conditions, copyright holding, FTC denominator, prosperity teaching, or Goop settlement summary.",
+      "commercial_review": [
+        "Landmark's checked American landing page supports the $1,177 standard format and $2,277 online Signature format. The subscription is optional after the Forum, costs $39 monthly with a twelve-month minimum, and can have additional charges. The page does not imply every graduate must subscribe.",
+        "The TM fee and satisfaction guarantee are accurately conditional. Course completion, follow-up, personal tune-up, at least thirty days of regular practice, and a sixty-day request deadline matter to the refund. The article does not advertise an unconditional money-back promise.",
+        "Landmark's satisfaction figure is labeled a company survey claim rather than an independently established benefit. The article's request for methods is justified by the landing page's lack of sufficient methodological detail."
+      ],
+      "legal_and_evidence_review": [
+        "The ACIM discussion follows the district court's prepublication unrestricted-distribution and notice analysis and the registration-specific judgment. It does not attribute loss of copyright to Jesus' asserted authorship or extend the ruling to every later edition and translation.",
+        "The KCM comparison preserves the ministry's own qualifications: a gift can be a point of contact for faith, and the hundredfold language is not a guarantee of a literal fixed 100-to-1 multiplier. The article's concern about explanations for disappointment is identified as an interpretation, not a finding of fraudulent intent.",
+        "The FTC review covers seventy selected income disclosures. Company payments, participant expenses and profits are distinguished, and the article does not turn that selection into an exact industry-wide probability of loss.",
+        "The Goop item accurately states a civil consumer-protection settlement, $145,000 in penalties, alleged unsupported claims, substantiation requirements and eligible refunds. It does not call the settlement a criminal conviction or imply the products were established effective."
+      ],
+      "prose_and_length": "The five businesses and movements pose different questions, and the article explains the differences. Two inherited editorial asides were removed by the parent during review. The remaining prose stays specific enough to justify its length; no additional required cut found.",
+      "independent_source_checks": ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "M10"],
+      "limits": "The old Yogic Flying and crime studies were not subjected to a new full methodological or replication review here. The current article treats them cautiously and does not make an absolute claim that no replication exists. Company terms are live offers that can change after the stated check date."
+    }
+  },
+  "primary_sources_actually_checked": [
+    {
+      "id": "M01",
+      "url": "https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2798510",
+      "access": "Original publisher full text",
+      "supports": "Hoge 2023: 276 randomized adults; 208 completed the primary noninferiority analysis; an eight-week MBSR package compared with escitalopram using a prespecified CGI-S margin.",
+      "limits": "Participants could not be blinded. This is evidence for the course and selected anxiety-disorder patients, not all brief meditation."
+    },
+    {
+      "id": "M02",
+      "url": "https://www.nature.com/articles/s41562-024-01907-7",
+      "access": "Original publisher full text, despite a cookie-related URL redirect",
+      "supports": "Sparacio 2024: 2,239 participants across 37 sites; brief exercises compared with an audiobook; immediate self-rated stress fell, with the largest contrast for the body scan.",
+      "limits": "Predominantly young students; immediate subjective outcome. Exact 449-person arm count was not independently located in this rendering."
+    },
+    {
+      "id": "M03",
+      "url": "https://gwern.net/doc/psychiatry/meditation/2021-britton.pdf",
+      "original_primary_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8845498/",
+      "access": "Complete original Britton 2021 paper on a mirror; PMC direct access initially challenged",
+      "supports": "104 randomized; 96 completed and interviewed. Negatively valenced experiences were reported by 56 of 96. Relevant long-lasting functional-impact data were available for 78, with five effects lasting more than a month.",
+      "limits": "Interviewed course completers and different denominators for different questions; no nonmeditating comparison group or population excess-risk estimate."
+    },
+    {
+      "id": "M04",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13263023/",
+      "access": "Original Beloborodova 2026 article in PMC",
+      "supports": "Adverse-experience analyses within two app trials, including comparisons by actual completion or exposure.",
+      "limits": "Actual exposure was not itself randomized; completion-based comparisons can be confounded and do not establish causal excess risk."
+    },
+    {
+      "id": "M05",
+      "url": "https://link.springer.com/article/10.1007/s12671-025-02601-z",
+      "access": "Primary publisher text available through indexed detailed excerpts",
+      "supports": "Andreu 2025: sixty healthcare workers; fifteen-minute combined focused-attention/tonglen exercise; neutral-story active comparator; improvements in selected immediate state-compassion dimensions.",
+      "limits": "Combination intervention, narrow state measures and no durable-outcome demonstration. No between-group EEG result establishing a distinctive neural signature."
+    },
+    {
+      "id": "M06",
+      "url": "https://jamanetwork.com/journals/jamapsychiatry/fullarticle/2517515",
+      "access": "Original publisher full text",
+      "supports": "Kuyken 2016 individual-participant meta-analysis: nine trials and 1,258 participants in full or partial remission; lower relapse hazard over sixty weeks, including a smaller advantage over active treatments.",
+      "limits": "Relapse prevention in recurrent depression; relative hazard is not an absolute chance of cure."
+    },
+    {
+      "id": "M07",
+      "url": "https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/1809754",
+      "additional_primary_url": "https://pure.johnshopkins.edu/en/publications/meditation-programs-for-psychological-stress-and-well-being-a-sys-4",
+      "access": "Original publisher and authors' university abstract/method text through search",
+      "supports": "Goyal 2014: forty-seven trials, 3,515 participants, modest anxiety, depression and pain effects; nonspecific active comparators distinguished from comparisons with specific active treatments.",
+      "limits": "Absence of superiority is not proof of equivalence. Quality and number of comparisons differ by outcome."
+    },
+    {
+      "id": "M08",
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK180101/?report=reader",
+      "access": "Original AHRQ addendum",
+      "supports": "Clarifies the comparison categories and eight-week anxiety/depression effect-size entries underlying the Goyal review.",
+      "limits": "A clarification of the original evidence synthesis, not a new meditation treatment trial."
+    },
+    {
+      "id": "M09",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35412731/",
+      "access": "Original research abstract through primary indexed results; direct open did not return useful text",
+      "supports": "2022 blood-pressure meta-analysis: eighteen studies, 1,207 participants, modest pooled systolic and diastolic reductions; effects diminished beyond three months.",
+      "limits": "Abstract-level check; it cannot establish broader psychological or spiritual claims."
+    },
+    {
+      "id": "M10",
+      "url": "https://www.ahajournals.org/doi/full/10.1161/CIR.0000000000001356?af=R",
+      "access": "Direct publisher open failed; current guideline table and text retrieved through primary indexed results",
+      "supports": "The 2025 AHA/ACC guideline contains meditation-related blood-pressure recommendations and estimates. This reviewer found no contradiction with the article's cautious adjunct framing.",
+      "limits": "The exact recommendation 8 and 5/2 supporting passage were independently verified by the parent, not fully retrievable by this reviewer. This audit does not relabel that as an independent complete-text check."
+    },
+    {
+      "id": "C01",
+      "url": "https://files.csp.org/Psilocybin/Griffiths2016CancerDistress.pdf",
+      "access": "Complete original published Griffiths 2016 PDF on the research organization's site",
+      "supports": "Fifty-six randomized and fifty-one completing at least one session; first-session depression response 23 of 25 high-dose versus 8 of 25 low-dose; later follow-up after crossover.",
+      "limits": "The six-month observation does not preserve an untreated high-dose comparison. Outcome-specific assessed denominators are distinct from the randomized sample."
+    },
+    {
+      "id": "C02",
+      "url": "https://unlimitedsciences.org/wp-content/uploads/2023/10/nejmoa2206443.pdf",
+      "access": "Complete original Goodwin 2022 NEJM PDF on a mirror",
+      "supports": "233 randomized; three dose groups of 79, 75 and 79. Primary three-week 25-mg versus 1-mg contrast; remission counts 23/79 and 6/79; testing hierarchy; three later suicidal-behavior events in the 25-mg group.",
+      "limits": "Secondary outcomes were not confirmatory under the testing sequence. Sustained response at twelve weeks was uncertain. Safety-event occurrence alone cannot settle causality."
+    },
+    {
+      "id": "C03",
+      "url": "https://www.nature.com/articles/s41591-023-02565-4",
+      "access": "Complete original Mitchell 2023 MAPP2 publisher article",
+      "supports": "104 randomized; loss of PTSD diagnosis among assessed participants 37/52 versus 20/42 at eighteen weeks. Stricter remission counts are a separate endpoint.",
+      "limits": "Assessment denominators differ from randomized groups and attrition differs. Functional unblinding and treatment support limit generalization."
+    },
+    {
+      "id": "C04",
+      "url": "https://www.fda.gov/media/169694/download",
+      "access": "Complete sixteen-page July 2026 final FDA guidance",
+      "supports": "Suitable comparators, psychological support, expectancy and masking considerations, central blinded raters, abuse potential and longer follow-up. Distinguishes classic psychedelic pharmacology from MDMA while addressing both in trial guidance.",
+      "limits": "Guidance for drug development, not approval of an intervention or an estimate that all observed efficacy is expectancy."
+    },
+    {
+      "id": "C05",
+      "url": "https://download.open.fda.gov/crl/CRL_NDA215455_20240808.pdf",
+      "access": "Complete eleven-page original FDA Complete Response Letter",
+      "supports": "August 8, 2024 refusal of the submitted midomafetamine application; unblinding, adverse-event collection and durability concerns; recommendation for another trial and an independent audit.",
+      "limits": "A decision on this application and evidence package, not proof that any future MDMA intervention must fail."
+    },
+    {
+      "id": "C06",
+      "url": "https://ir.compasspathways.com/News--Events-/news/news-details/2026/Compass-Pathways-Announces-Six-Month-Data-from-Second-Phase-3-Trial-Confirming-Rapid-and-Durable-Profile/default.aspx",
+      "access": "Original July 7, 2026 sponsor announcement",
+      "supports": "Sponsor-reported positive Phase 3 findings and an underway rolling NDA; submission completion expected in Q4 and launch subject to FDA approval and rescheduling.",
+      "limits": "Evidence of what the sponsor announced. Does not independently establish the complete efficacy/safety analysis or regulatory success."
+    },
+    {
+      "id": "C07",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3050654/",
+      "access": "Original Griffiths 2008 article in PMC, successful on later retrieval",
+      "supports": "Thirty-six healthy hallucinogen-naive participants, recruited with spiritual/religious engagement; all thirty-six completed follow-up; 58 percent ranked the experience among their five most meaningful.",
+      "limits": "Retrospective meaning ratings from a selected sample, not a treatment outcome or proof of external spiritual reality. Some different questionnaire analyses used twenty-nine participants."
+    },
+    {
+      "id": "C08",
+      "url": "https://www.law.cornell.edu/cfr/text/21/1308.11",
+      "access": "Full federal regulation reproduced by Cornell LII",
+      "supports": "Federal Schedule I listing of the named substances.",
+      "limits": "Scheduling alone does not mean authorized research is prohibited or determine every state-law or religious-exemption situation."
+    },
+    {
+      "id": "C09",
+      "url": "https://www.law.cornell.edu/uscode/text/42/1996a",
+      "access": "Full statute reproduced by Cornell LII",
+      "supports": "Peyote use, possession and transport protection for the eligible traditional ceremonial religious use, with defined eligibility and other statutory boundaries.",
+      "limits": "Not an exemption for all religiously motivated psychedelic use or for all self-described churches."
+    },
+    {
+      "id": "C10",
+      "url": "https://www.law.cornell.edu/supremecourt/text/04-1084.ZO.html",
+      "access": "Full O Centro Supreme Court opinion reproduced by Cornell LII",
+      "supports": "Case-specific RFRA burden and preliminary-injunction analysis, involving a particular church and controlled conditions.",
+      "limits": "Not a universal entitlement to possess or distribute ayahuasca; the procedural stage and specific record matter."
+    },
+    {
+      "id": "C11",
+      "url": "https://www.law.cornell.edu/supremecourt/text/494/872",
+      "access": "Original Supreme Court opinion text reproduced by Cornell LII; facts and majority sections inspected",
+      "supports": "Smith's denial of unemployment benefits following ceremonial peyote use and the majority's neutral generally applicable law reasoning.",
+      "limits": "A historical constitutional holding. Later statutes and other religious-liberty doctrines must be considered separately."
+    },
+    {
+      "id": "C12",
+      "url": "https://www.oregon.gov/oha/ph/preventionwellness/pages/psilocybin-what-are-psilocybin-services.aspx",
+      "access": "Full official Oregon Health Authority page",
+      "supports": "Licensed centers/facilitators, adults twenty-one and older, and no required diagnosis or prescription.",
+      "limits": "State service authorization does not imply federal approval or a clinical diagnosis-specific efficacy finding."
+    },
+    {
+      "id": "C13",
+      "url": "https://dnm.colorado.gov/unlicensed-and-unlawful-activities",
+      "additional_primary_url": "https://www.leg.colorado.gov/bills/HB26-1325",
+      "access": "Official regulator page, successful on later retrieval; current enacted-law summary and effective date also inspected",
+      "supports": "Colorado has its own licensed framework and separate personal-use rules. The 2026 law took effect August 12 and modifies advertising and licensed-sales provisions.",
+      "limits": "The older regulator webpage's blanket sales language should not be extrapolated over the newer limited licensed-sales framework. The article's general statement remains accurate; it does not give transaction-specific permission."
+    },
+    {
+      "id": "C14",
+      "url": "https://www.fda.gov/drugs/resources-drugs/psychedelic-drugs",
+      "additional_primary_url": "https://www.govinfo.gov/content/pkg/FR-2026-07-14/pdf/2026-14155.pdf",
+      "access": "Current official FDA page through primary indexed text and official Federal Register notice",
+      "supports": "Current drug-development activity, guidance and expedited pathways; research and review status are distinct from approval.",
+      "limits": "Drug-development announcements do not independently establish safety or efficacy."
+    },
+    {
+      "id": "C15",
+      "url": "https://www.fda.gov/drugs/novel-drug-approvals-fda/novel-drug-approvals-2026",
+      "access": "Current official FDA approval list through search",
+      "supports": "No named psychedelic appears in the retrieved 2026 novel approval list.",
+      "limits": "A novel-approval list alone is not a complete negative proof across all approved products; this reviewer separately queried the Drugs@FDA API below."
+    },
+    {
+      "id": "C16",
+      "url": "https://api.fda.gov/drug/drugsfda.json",
+      "access": "Six independently repeated live API searches on October 4, 2026",
+      "supports": "Each exact active-ingredient query returned HTTP 404 with the API's no-matches response.",
+      "queries": [
+        "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22PSILOCYBIN%22&limit=1",
+        "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22MIDOMAFETAMINE%22&limit=1",
+        "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22MDMA%22&limit=1",
+        "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22LYSERGIC+ACID+DIETHYLAMIDE%22&limit=1",
+        "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22MESCALINE%22&limit=1",
+        "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name%3A%22DIMETHYLTRYPTAMINE%22&limit=1"
+      ],
+      "limits": "Database update lag and alternative naming are possible. These checks supplement the current regulator and sponsor records; they are a dated verification rather than a guarantee of future status."
+    },
+    {
+      "id": "G01",
+      "url": "https://cdn.ca9.uscourts.gov/datastore/opinions/2012/07/24/10-56266.pdf",
+      "access": "Complete original seventeen-page Ninth Circuit Headley opinion",
+      "supports": "The Sea Org factual record, opportunities to leave, failure of the statutory forced-labor causal theory, and reservation of other possible legal theories.",
+      "limits": "The appellate holding did not require deciding the ministerial exception. Dismissal of these claims does not settle whether the described conduct could produce other harms or causes of action."
+    },
+    {
+      "id": "G02",
+      "url": "https://www.justice.gov/usao-edny/pr/jury-finds-nxivm-leader-keith-raniere-guilty-all-counts",
+      "access": "Complete primary DOJ verdict announcement through indexed text",
+      "supports": "2019 jury convictions and the distinction between the seminar organization and DOS collateral, coercive labor and sexual exploitation.",
+      "limits": "A prosecutor's summary of trial findings, not the complete transcript or every participant's experience."
+    },
+    {
+      "id": "G03",
+      "url": "https://www.justice.gov/usao-edny/pr/nxivm-leader-keith-raniere-sentenced-120-years-prison-racketeering-and-sex-trafficking",
+      "additional_primary_url": "https://www.govinfo.gov/content/pkg/USCOURTS-nyed-1_18-cr-00204/pdf/USCOURTS-nyed-1_18-cr-00204-27.pdf",
+      "access": "Primary sentencing announcement and a later district-court record through indexed text",
+      "supports": "The 120-year sentence and continuing post-trial court proceedings.",
+      "limits": "Not an exhaustive current appeal-history review. No checked record contradicted the article's conviction/sentence description."
+    },
+    {
+      "id": "G04",
+      "url": "https://jonestown.sdsu.edu/?page_id=18599",
+      "access": "Complete original Layton affidavit reproduced by the Jonestown Institute",
+      "supports": "Pre-death account of threats, armed guards, work and the claimed suicide rehearsal; direct personal observation distinguished from information and belief.",
+      "limits": "A witness's statement, not independent verification of every reported event or the later causes of all deaths."
+    },
+    {
+      "id": "G05",
+      "url": "https://www.cesnur.org/testi/APA.htm",
+      "access": "Original May 11, 1987 APA board memorandum reproduced in full",
+      "supports": "Rejection of DIMPAC's report for deficiencies and explicit lack of sufficient information to take a broader position.",
+      "limits": "A reproduced institutional memorandum, not an APA finding that coercion never occurs."
+    },
+    {
+      "id": "G06",
+      "url": "https://www.heavensgate.com/book/a10.htm",
+      "access": "Original member statement",
+      "supports": "The movement's members expressed a religious interpretation of departure and bodily death.",
+      "limits": "Evidence of expressed belief cannot by itself establish the degree of pressure or freedom of every member."
+    },
+    {
+      "id": "G07",
+      "url": "https://stacks.cdc.gov/view/cdc/155944/cdc_155944_DS1.pdf",
+      "access": "Direct web retrieval failed; independently read the complete original JAMA paper cached locally as /tmp/cage-torok.pdf and /tmp/cage-torok.txt, with targeted checks of abstract, restaurant classification and criminal investigation passages",
+      "supports": "751 affected people; ten definitely implicated restaurants, eight with salad bars; matching laboratory strain, testimony of deliberate contamination and two guilty pleas in April 1986.",
+      "limits": "The original outbreak investigation was not itself a randomized experiment or complete court record. Local copy was the source text, rather than merely trusting the previous audit's numbers."
+    },
+    {
+      "id": "G08",
+      "url": "https://eprints.lse.ac.uk/50872/1/Barker_Stepping_ivory_tower_2011.pdf",
+      "access": "Original accepted-paper PDF cached locally; inspected the research account and printed page 4",
+      "supports": "Barker reports tracking more than a thousand London-area residential-workshop attendees in 1979; approximately ninety percent did not join, and most joiners left voluntarily within two years.",
+      "limits": "Retrospective account citing her earlier fieldwork. This conversion setting cannot determine the mechanisms in DOS or Jonestown."
+    },
+    {
+      "id": "B01",
+      "url": "https://www3.landmarkworldwide.com/the-landmark-forum",
+      "access": "Original live American sales page",
+      "supports": "Standard $1,177, three-day and Tuesday-evening format; $2,277 online Signature format with two days, an evening and two private sessions. Company benefit and survey claims are present.",
+      "limits": "A geographically and temporally specific offer. Advertising proves the claim was made, not the benefit's independent validity or survey quality."
+    },
+    {
+      "id": "B02",
+      "url": "https://www.landmarkworldwide.com/subscription",
+      "access": "Original FAQ and terms through indexed primary text after direct opens timed out",
+      "supports": "$39 monthly, minimum twelve months, Forum-graduate eligibility, separate purchase of most courses, possible additional charges.",
+      "limits": "Live terms can change. The subscription is an optional product, not a compulsory cost of every Forum participant."
+    },
+    {
+      "id": "B03",
+      "url": "https://www.tm.org/en-us/course-fee",
+      "access": "Original live course-fee page and satisfaction-guarantee text",
+      "supports": "Standard $980 fee and income-related terms; course/follow-up completion, personal tune-up, regular practice for at least thirty days and a refund request within sixty days of personal instruction.",
+      "limits": "Conditional satisfaction terms, not an unconditional change-of-mind refund or independent evidence of clinical efficacy."
+    },
+    {
+      "id": "B04",
+      "url": "https://law.justia.com/cases/federal/district-courts/FSupp2/288/544/2509276/",
+      "access": "Complete October 2003 district-court opinion reproduced by Justia; the court's substantive analysis was inspected",
+      "supports": "Unrestricted general distribution before proper copyright notice under the law applicable to the 1975 work; earlier rejection of the divine-authorship defense.",
+      "limits": "A specific publication and legal record, not a blanket rule against copyright of asserted revelation."
+    },
+    {
+      "id": "B05",
+      "url": "https://www.casemine.com/judgement/us/59147773add7b049343d41d0",
+      "access": "Actual judgment text reproduced by Casemine",
+      "supports": "Voids registration A693944 and its renewals.",
+      "limits": "The judgment does not independently decide every later revision, translation or spiritual-authorship question."
+    },
+    {
+      "id": "B06",
+      "url": "https://www.kcm.org/read/question-of-the-day/im-giving-why-am-i-not-receiving",
+      "access": "Original ministry answer through complete indexed primary text after direct access was blocked",
+      "supports": "The ministry explains promised returns and reasons for disappointment through tithing, words, love and receiving.",
+      "limits": "Evidence of the teaching. It cannot establish the promised causal return or the teacher's intent."
+    },
+    {
+      "id": "B07",
+      "url": "https://www.kcm.org/question-of-the-day/what-is-naming-your-seed/",
+      "access": "Original ministry answer through complete indexed primary text",
+      "supports": "Naming a seed is taught as a point of contact for faith, with gifts potentially involving money, time or talent.",
+      "limits": "The ministry does not say that the gift itself mechanically produces healing; the article preserves this distinction."
+    },
+    {
+      "id": "B08",
+      "url": "https://www.kcm.org/read/question-of-the-day?field_question_date_value=2024-10-25",
+      "access": "Original ministry answer through complete indexed primary text",
+      "supports": "Hundredfold is described as the greatest possible return, not only a literal multiplier; money and other benefits are included.",
+      "limits": "Theological interpretation rather than testable evidence that a fixed return is delivered."
+    },
+    {
+      "id": "B09",
+      "url": "https://www.ftc.gov/system/files/ftc_gov/pdf/2024-08-19-mlm-ids-staff-report.pdf",
+      "access": "Original ninety-five-page FTC report; methods, summary and income definitions inspected",
+      "supports": "Seventy selected income disclosures; exclusions, expenses, company payments and misleading presentation concerns.",
+      "limits": "Not a random sample establishing a precise industry-wide loss rate, and not independent verification of every underlying company's figures."
+    },
+    {
+      "id": "B10",
+      "url": "https://www.napacounty.gov/DocumentCenter/View/9780/Goop-Press-Release-09042018",
+      "access": "Complete original one-page district attorney announcement",
+      "supports": "$145,000 civil penalties, alleged unsubstantiated egg and flower-essence claims, scientific-substantiation requirement and refunds for eligible purchasers.",
+      "limits": "Civil settlement announcement, not a criminal conviction or an efficacy finding."
+    }
+  ],
+  "unresolved_questions": [
+    {
+      "question": "How much psychedelic benefit is causally attributable to drug action, expectation, psychological support, or mystical interpretation?",
+      "status": "Research uncertainty, already stated appropriately in the article; no required edit."
+    },
+    {
+      "question": "What are the rates and causes of rare or persistent adverse effects outside screened trial populations?",
+      "status": "Research uncertainty. The current adverse-event evidence does not warrant a universal causal risk rate or universal assurance of safety."
+    },
+    {
+      "question": "Will current psychedelic approval status, company prices, subscription terms or refund rules change?",
+      "status": "Future maintenance issue; current claims are explicitly dated. No invented schedule or monitoring task was created."
+    },
+    {
+      "question": "What copyright remains in particular later ACIM editions or translations?",
+      "status": "Outside the specific registration judgment and outside this article's claim. The page correctly declines a blanket ruling."
+    },
+    {
+      "question": "Can every Jonestown adult death or every Heaven's Gate participant's degree of agreement be classified from the surviving records?",
+      "status": "Historical evidence limit, already preserved by the article. Neither the recording nor the statements justify a universal classification."
+    }
+  ],
+  "verification_limits": [
+    "Selected consequential primary claims were independently verified; this audit is not a claim to have reopened every citation or replicated every study.",
+    "Indexed primary text was used where direct publisher or organization access failed. Such entries explicitly say so rather than being labeled successful full direct retrievals.",
+    "The San Diego sheriff Heaven's Gate page was not retrievable. Jonestown death-count and forensic checks and the exact 2025 guideline supporting text were performed separately by the parent.",
+    "Original scientific PDFs on mirrors or in local caches were read as the papers themselves. The mirrors were not treated as independent corroborating authorities.",
+    "No browser rendering or accessibility test was performed by this reviewer because the assigned scope was authored content and the parent was integrating and testing the shared presentation."
+  ]
+}

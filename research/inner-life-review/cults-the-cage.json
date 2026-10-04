@@ -1,0 +1,391 @@
+{
+  "page": "cults-the-cage.html",
+  "reviewed_date": "2026-10-04",
+  "assignment": "Individual full editorial and accuracy review of When a Path Becomes a Cage, including all five runtime case studies.",
+  "files_changed": [
+    "cults-the-cage.html",
+    "js/cults-data.js",
+    "js/cults.js",
+    "research/inner-life-review/cults-the-cage.json"
+  ],
+  "instructions_read": [
+    "AGENTS.md",
+    "VOICE.md, complete",
+    "STYLE.md",
+    "CANON.md, relevant scope and writing requirements",
+    "tao-te-ching.html, presentation reference"
+  ],
+  "workflow": "Direct research and five editorial passes. The historical write-post and deep-research skills referenced by CANON were unavailable. The prior interrupted review's findings were treated as leads and consequential claims checked independently.",
+  "counts": {
+    "method": "HTMLParser text extraction, decoding entities and excluding script, style, SVG and noscript content. Word regex: \\b\\w+(?:['’-]\\w+)*\\b. Static counts include headings, chapter links, captions, figure text, inline citation labels and controls. Hero and main are also reported separately. Runtime counts evaluate window.CULTS in Node, strip HTML, and count each case's one, promise, leader, caged, cost and end fields once. They exclude case names, aliases, family labels, repeated controller labels, navigation and comparison-table repetitions.",
+    "before_without_sources": 2342,
+    "before_with_sources": 2956,
+    "first_rewrite_without_sources": 1315,
+    "first_rewrite_with_sources": 1866,
+    "after_without_sources": 1181,
+    "after_with_sources": 1754,
+    "before_static_main_without_sources": 2283,
+    "first_rewrite_static_main_without_sources": 1271,
+    "after_static_main_without_sources": 1137,
+    "before_hero": 59,
+    "first_rewrite_hero": 44,
+    "after_hero": 44,
+    "before_runtime_narrative": 1340,
+    "first_rewrite_runtime_narrative": 1321,
+    "after_runtime_narrative": 1152,
+    "before_runtime_by_case": {
+      "scientology": 283,
+      "nxivm": 259,
+      "rajneesh": 257,
+      "jonestown": 272,
+      "heavensgate": 269
+    },
+    "first_rewrite_runtime_by_case": {
+      "scientology": 252,
+      "nxivm": 233,
+      "rajneesh": 262,
+      "jonestown": 286,
+      "heavensgate": 288
+    },
+    "after_runtime_by_case": {
+      "scientology": 236,
+      "nxivm": 195,
+      "rajneesh": 218,
+      "jonestown": 250,
+      "heavensgate": 253
+    },
+    "before_combined_hero_main_and_runtime_without_sources": 3682,
+    "first_rewrite_combined_hero_main_and_runtime_without_sources": 2636,
+    "after_combined_hero_main_and_runtime_without_sources": 2333,
+    "combined_reduction_percent": 36.6,
+    "draft_cut_percent": 11.5,
+    "draft_cut_main_and_runtime_percent": 11.7,
+    "read_time_minutes": 6,
+    "read_time_basis": "Ceiling of the 1181-word static essay and hero divided by 220 words per minute. The hero says 6 min essay because the five optional case cards add another 1152 narrative words; reading the whole essay and every card is about 11 minutes at that rate.",
+    "baselines": [
+      "/tmp/inner-life-review-20261003/cults-the-cage.html",
+      "/tmp/inner-life-review-20261003/js/cults-data.js"
+    ],
+    "first_complete_draft_snapshots": [
+      "/tmp/cage-first-draft.html",
+      "/tmp/cage-first-data.js"
+    ]
+  },
+  "review_judgment": {
+    "before": "The essay imposed an unsupported universal four-stage recruitment story on five distinct groups. It substituted theatrical language for evidence, treated exit cost as a sufficient test, and compressed allegations, religious doctrine, court findings and homicide into one explanatory mechanism. The runtime cases repeated the same errors and contained unsupported figures and mistaken scopes.",
+    "after": "Rebuilt around DOS collateral and documented forms of pressure. The five cases now identify the particular conduct, authority and evidence available. Legal outcomes accompany allegations; group doctrine is attributed; individual uncertainty remains visible. The comparison preserves useful parallels without equating a demanding course or unusual theology with homicide.",
+    "length_judgment": "Shortened the static essay substantially while retaining all five independently rewritten cases, the eight Lifton themes, the APA and Barker dispute, and practical questions. The reduction removes repeated trap metaphors, mockery, a redundant BITE card set, several recaps and a self-quotation. Length follows the distinct evidence rather than a preset word target."
+  },
+  "factual_corrections": [
+    {
+      "before": "Nobody joins a cult; everyone is loved into one; the same four stages explain all five groups.",
+      "after": "Removed the universal recruitment and progression claims. The figure now compares four documented kinds of pressure with locally identified evidence and different severity."
+    },
+    {
+      "before": "A full checklist establishes the diagnosis, and high exit cost is the sharpest single test.",
+      "after": "Removed both tests. Cost can arise from poverty, migration or voluntary commitment. The article asks about threats, deception, withheld documents, retaliation and restrictions, and does not assign a numerical or clinical diagnosis."
+    },
+    {
+      "before": "Lifton's themes described what every total environment does; BITE was presented as a parts list for identifying cults.",
+      "after": "Restored the Chinese thought-reform context and the descriptive purpose of Lifton's eight themes. BITE is identified as an advocacy framework, not a validated clinical diagnostic instrument. Lifton's insistence on individual judgment and opposition to coercive deprogramming are included."
+    },
+    {
+      "before": "The APA rejection and Barker findings were compressed into a broad dismissal of brainwashing across groups.",
+      "after": "The 1987 board memorandum rejected the DIMPAC report and declined a broader position. Barker's reported numbers are scoped to more than a thousand attendees at London-area residential workshops in 1979, rather than every group or recruitment setting."
+    },
+    {
+      "before": "Scientology was reduced to exotic cosmology, unsupported costs above $250000, a sales figure, and categorical family-disconnection claims.",
+      "after": "Removed the unsupported prices, sales and mockery. Distinguished church doctrine, the Sea Org pledge, the Headley record, the church's denial and the court's rejection of the forced labor claims. The factual background is not treated as a finding of liability. The Los Angeles church opening in 1954 is identified without an unqualified first-church claim."
+    },
+    {
+      "before": "The NXIVM course business and DOS were narrated as one uniform participant experience, including unnecessary recruitment estimates and secondary sentencing details.",
+      "after": "Separated paid workshops from DOS and its false women-only recruitment premise. Threats involving collateral, trial conduct, Daniela's confinement, the 2019 verdict and the 2020 120-year sentence are grounded in DOJ accounts following conviction. No claim applies that experience to every course attendee."
+    },
+    {
+      "before": "The Rajneesh case said ten salad bars, gave 1985 as the mass-poisoning outcome in the table, and blurred responsibility for the attack with Rajneesh's deportation.",
+      "after": "The attack occurred in 1984. The JAMA investigation identifies 751 ill people and ten definitely implicated restaurants, eight with salad bars. Sheela's management and poisoning plea are distinguished from Rajneesh's spiritual authority and separate immigration plea. The text does not infer that he ordered the attack. The victims outside the commune are not treated as evidence of every resident's exit experience."
+    },
+    {
+      "before": "918 members were said to die in the jungle; 304 children was repeated without scope; many adult injections or gunpoint deaths were asserted; the drink brand was used as a rhetorical correction.",
+      "after": "Separated 909 deaths at Jonestown, five at the airstrip and four in Georgetown, for 918 overall, including people outside Peoples Temple. Omitted the exact child total because published totals use different scopes and age thresholds. Child poisoning remains murder; adult agreement, fear and direct force cannot be sorted for every person from the surviving evidence. Removed the drink-brand claim and unsupported adult-force quantification."
+    },
+    {
+      "before": "Jones' motives for the airstrip attack and the universal psychological meaning of Jonestown's restrictions were asserted.",
+      "after": "The case attributes guards, work and permission requirements to Layton's pre-death affidavit, describes the Ryan visit and attack through the House staff report, and does not pretend to know the precise motive or decision of every participant."
+    },
+    {
+      "before": "Heaven's Gate was described as gentle and essentially free of force; belief was said to do all the work of guards; the website was supposedly maintained by two members away that night.",
+      "after": "Removed the unsupported characterizations and caretaker story. Group publications establish the stated spiritual consequences and body doctrine. The case leaves each person's conviction, dependency and group pressure uncertain, distinguishes those claims from blackmail or confinement, and uses the Sheriff for 39 deaths discovered on March 26, 1997 over several days. The group's homepage itself says a visible comet companion was irrelevant."
+    },
+    {
+      "before": "The preserved drive-by photograph was labeled CC BY-SA, with additional wording suggesting a Creative Commons attribution license.",
+      "after": "Commons' file-specific record identifies an attribution-only permission. Preserved the image and Samvado Gunnar Kossatz credit; corrected the license description to used with attribution."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Removed crescendo passages, the recurring machine and cage slogans, the ray metaphor, spaceship mockery and the closing self-quotation. Case openings now name conduct and outcomes that remain meaningful without performance."
+    },
+    {
+      "pass": 2,
+      "name": "Delete first paragraph",
+      "result": "Replaced the historical throat-clearing opener with DOS collateral. The final opening earns its place because deleting it loses the concealed authority, initial disclosures and threatened release needed to understand the next paragraph's concrete coercion. Checked the five card offers for necessary context rather than generic introductions."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence test",
+      "result": "Cut claims about universal longing, loving recruitment and the reader's vulnerability that could be transplanted to any spiritual topic. Replaced the warning-sign diagnosis with questions about information, specific terms, refusal and outside resources. Framework descriptions remain because they explain the named concepts, with scope and limits."
+    },
+    {
+      "pass": 4,
+      "name": "Cut ten percent",
+      "result": "Retained snapshots of the first complete static and runtime rewrite, then removed redundant explanations and repeated verdicts. The combined hero, main and five narratives fell from 2636 to 2333 words, an 11.5 percent cut. Excluding the unchanged final hero, main plus runtime fell from 2592 to 2289, an 11.7 percent cut."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Checked legal outcomes against the full Headley opinion and DOJ conviction and sentencing accounts; outbreak numbers against the complete JAMA paper; Jonestown events against primary affidavits, the House staff report, Q042 and the AFIP letter; and Heaven's Gate doctrine against its own publications, with the Sheriff for the deaths. Checked the sole prose quotation word for word. Source types and the limits of inference are stated beside the claims."
+    }
+  ],
+  "checked_urls": [
+    {
+      "url": "https://cultrecovery101.com/chapter-22-ideological-totalism/",
+      "source_type": "Primary authored chapter, third-party reprint",
+      "support": "Lifton's eight themes and their descriptive context.",
+      "limits": "Historical text, not a validated numerical or clinical diagnostic rule."
+    },
+    {
+      "url": "https://internationalculticstudies.org/icsa-insights/eight-criteria-for-thought-reform-in-cults/",
+      "source_type": "Lifton's 1991 authored article, later ICSA reprint",
+      "support": "Individual assessment, civil liberties and opposition to kidnapping or coercive deprogramming.",
+      "limits": "The site publication date differs from the article's original 1991 date."
+    },
+    {
+      "url": "https://freedomofmind.com/cult-mind-control/bite-model/",
+      "source_type": "Framework developer's advocacy account",
+      "support": "Behavior, information, thought and emotional control categories.",
+      "limits": "Redirects to the developer's model-download page. It does not supply a clinical diagnosis or a full-set threshold."
+    },
+    {
+      "url": "https://www.cesnur.org/testi/APA.htm",
+      "source_type": "1987 APA board memorandum, third-party reproduction",
+      "support": "Rejection of the DIMPAC report for deficient rigor and balance; insufficient information for a broader board position.",
+      "limits": "CESNUR's surrounding advocacy is separate from the reproduced primary memorandum."
+    },
+    {
+      "url": "https://eprints.lse.ac.uk/50872/1/Barker_Stepping_ivory_tower_2011.pdf",
+      "source_type": "Barker's 2011 accepted research manuscript",
+      "support": "Manuscript page 4 specifies the London 1979 attendees and voluntary joining and departure results.",
+      "limits": "Full PDF downloaded and read when web extraction failed. Results concern that recruitment setting, not all high-control groups."
+    },
+    {
+      "url": "https://www.scientology.org/what-is-scientology/scientology-background/the-beginning-of-scientology.html",
+      "source_type": "Church's own historical account",
+      "support": "Dianetics publication in 1950 and Los Angeles church formation in 1954.",
+      "limits": "Institutional self-description; the unqualified claim that this was the first incorporation is avoided."
+    },
+    {
+      "url": "https://www.scientology.org/faq/church-management/is-it-true-that-people-in-the-sea-org-sign-a-billion-year-contract.html",
+      "source_type": "Church's own FAQ",
+      "support": "Symbolic billion-year Sea Org pledge.",
+      "limits": "Does not establish that every church member belongs to the Sea Org."
+    },
+    {
+      "url": "https://www.scientology.org/faq/scientology-attitudes-and-practices/what-is-disconnection.html",
+      "source_type": "Church's own policy statement",
+      "support": "Church describes disconnection as personal and denies mandatory family separation for different beliefs.",
+      "limits": "Attributed denial, not independent verification of implementation."
+    },
+    {
+      "url": "https://cdn.ca9.uscourts.gov/datastore/opinions/2012/07/24/10-56266.pdf",
+      "source_type": "Full Ninth Circuit judicial opinion",
+      "support": "Headley record in parts I and II, statutory forced labor disposition and other-theory reservation in part IV.",
+      "limits": "The rejected claim and described opportunities to leave are visible. Neither testimony nor factual background becomes a finding that all members were trafficked."
+    },
+    {
+      "url": "https://www.scientology.org/scientology-today/events/lrh-birthday-celebration-2026.html",
+      "source_type": "Current church event publication",
+      "support": "Documented continuing church activity in 2026.",
+      "limits": "Used for continued operation, not membership counts or spiritual efficacy."
+    },
+    {
+      "url": "https://www.justice.gov/usao-edny/pr/jury-finds-nxivm-leader-keith-raniere-guilty-all-counts",
+      "source_type": "DOJ account following jury conviction, June 19, 2019",
+      "support": "Paid ESP, DOS creation in 2015, collateral threats, coercive trial conduct and branding.",
+      "limits": "Prosecutors' account following trial; scoped to the enterprise and victims described, not every workshop attendee."
+    },
+    {
+      "url": "https://www.justice.gov/usao-edny/pr/nxivm-leader-keith-raniere-sentenced-120-years-prison-racketeering-and-sex-trafficking",
+      "source_type": "DOJ sentencing account, October 27, 2020",
+      "support": "120-year sentence, false women-only premise, threats tied to leaving and disclosure, and Daniela's confinement.",
+      "limits": "The criminal evidence is distinct from a universal psychology of recruitment."
+    },
+    {
+      "url": "https://stacks.cdc.gov/view/cdc/155944/cdc_155944_DS1.pdf",
+      "source_type": "Full primary JAMA epidemiologic investigation, 1997, hosted by CDC",
+      "support": "751 illnesses, ten definitely implicated restaurants, eight salad bars; deliberate contamination and 1986 food-tampering pleas.",
+      "limits": "Full PDF and extracted text checked. The historical motive includes later testimony; an immigration plea cannot prove Rajneesh's direction of the attack."
+    },
+    {
+      "url": "https://www.oregonhistoryproject.org/articles/historical-records/ma-anand-sheela-b-1950/",
+      "source_type": "Oregon Historical Society archival catalog and historical account",
+      "support": "Sheela's management and spokesman role, surveillance discoveries and prosecution.",
+      "limits": "The secondary summary's ten-salad-bars wording conflicts with the more precise epidemiologic record; corrected explicitly. Accusations are not silently converted into findings."
+    },
+    {
+      "url": "https://usdchs.org/events/rajneesh/",
+      "source_type": "US District Court of Oregon Historical Society event with original case participants",
+      "support": "Oregon settlement chronology, immigration plea in 1985 and separate commune-member prosecutions.",
+      "limits": "Historical event account, not the complete original judgments or proof that Rajneesh ordered poisoning."
+    },
+    {
+      "url": "https://booking.osho.com/team/",
+      "source_type": "Current movement provider's own publication",
+      "support": "Osho teaching and practice continued outside the defunct Oregon commune.",
+      "limits": "Used only for continued activity; none of its therapeutic efficacy claims are adopted. The main osho.com homepage returned 403, so this accessible organizational page was checked."
+    },
+    {
+      "url": "https://jonestown.sdsu.edu/?page_id=18599",
+      "source_type": "Deborah Layton Blakey's June 1978 affidavit in SDSU's primary archive",
+      "support": "Her joining motives, threats, guards, work, permission requirements, suicide rehearsal and escape.",
+      "limits": "Witness testimony submitted before the deaths. Some paragraphs expressly rely on information and belief."
+    },
+    {
+      "url": "https://jonestown.sdsu.edu/?page_id=13674",
+      "source_type": "Full 1979 House staff investigative report in SDSU's archive",
+      "support": "Ryan's visit, residents leaving with the party and the airstrip attack.",
+      "limits": "Staff findings, not necessarily committee findings. Older aggregate death figures were not adopted."
+    },
+    {
+      "url": "https://jonestown.sdsu.edu/?page_id=68414",
+      "source_type": "Jonestown Institute archive explanation of death-toll scopes",
+      "support": "909 at the settlement, five at Port Kaituma and four in Georgetown, 918 overall.",
+      "limits": "The regional total includes Ryan and nonmember journalists; it is not 918 commune residents or Temple members."
+    },
+    {
+      "url": "https://jonestown.sdsu.edu/?page_id=132225",
+      "source_type": "2025 transcription of the primary Q042 recording",
+      "support": "Jones urging death, audible dissent, and Christine Miller's verified four-word quotation.",
+      "limits": "Indistinct speech, disputed passages and edits prevent reconstructing every adult's choice or circumstances."
+    },
+    {
+      "url": "https://jonestown.sdsu.edu/?page_id=104523",
+      "source_type": "FBI memorandum and AFIP autopsy covering letter in SDSU's primary archive",
+      "support": "Seven selected autopsies, toxicology limitations and inability to establish coercion or self-ingestion for all victims.",
+      "limits": "The small and delayed forensic record cannot support a precise count of compelled adult deaths."
+    },
+    {
+      "url": "https://jonestown.sdsu.edu/?page_id=70495",
+      "source_type": "Jonestown Institute demographic analysis",
+      "support": "Shows why death populations, identifications and age thresholds need explicit scope.",
+      "limits": "Supplemental check only. The essay omits an exact child total rather than combining incompatible published counts."
+    },
+    {
+      "url": "https://www.heavensgate.com/",
+      "source_type": "Group's final homepage",
+      "support": "Comet as departure marker, physical spacecraft claim and statement that a visible companion was irrelevant.",
+      "limits": "Primary doctrine, not proof of the spacecraft or extraterrestrial destination."
+    },
+    {
+      "url": "https://www.heavensgate.com/misc/intro.htm",
+      "source_type": "Do's own doctrinal introduction",
+      "support": "Claimed authority comparable to Jesus and required separation from family, sensuality, human mind and potentially the body.",
+      "limits": "Group demands, not a complete account of how each person understood or complied with them."
+    },
+    {
+      "url": "https://www.heavensgate.com/book/a10.htm",
+      "source_type": "Member Wknody's doctrinal essay",
+      "support": "Body-container doctrine and spiritual death or suicide defined as rejecting teachers and Next Level mind.",
+      "limits": "One published member statement does not establish every member's private wishes or freedom from pressure."
+    },
+    {
+      "url": "https://www.heavensgate.com/misc/letter.htm",
+      "source_type": "Group's own position against suicide",
+      "support": "Rejection of the Next Level defined as suicide; deliberately leaving the body contemplated.",
+      "limits": "The rhetorical definition is reported as the group's position, not accepted as the ordinary meaning of suicide."
+    },
+    {
+      "url": "https://www.sdsheriff.gov/bureaus/media-relations/common-questions/heaven-s-gate-case",
+      "source_type": "San Diego County Sheriff's case record",
+      "support": "39 dead discovered on March 26, 1997 and an investigation concluding mass suicide over several days.",
+      "limits": "Discovery date is distinguished from all individuals' dates of death."
+    },
+    {
+      "url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1083-6101.1997.tb00077.x",
+      "source_type": "Wendy Gale Robinson's 1997 scholarly article, Heaven's Gate: The End",
+      "support": "Bonnie Nettles and Marshall Applewhite identified as Ti and Do in Who Were Heaven's Gate.",
+      "limits": "Used for identity and historical context, not its broader interpretive or speculative conclusions."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:Osho_Drive_By.jpg",
+      "source_type": "File-specific image provenance and permission record",
+      "support": "Summer 1982, photographer Samvado Gunnar Kossatz and attribution-only permission.",
+      "limits": "Commons' general page-text license differs from the photograph's file-specific license."
+    }
+  ],
+  "quotations": [
+    {
+      "text": "they deserve to live",
+      "words": 4,
+      "speaker": "Christine Miller",
+      "source_url": "https://jonestown.sdsu.edu/?page_id=132225",
+      "source_location": "Miller's argument with Jones about the children's right to live in the November 18 Project Q042 transcript",
+      "page_location": "Final paragraph of section #line",
+      "verification": "Exact wording checked in the updated transcript. No longer quotation or unverified recollection retained."
+    }
+  ],
+  "uncertainties": [
+    "No single uniform recruitment process is established across the five cases.",
+    "Joining sincerely does not settle whether a later act involved free consent, but demanding commitment or costly departure alone does not establish coercion.",
+    "BITE and Lifton are descriptive aids here, not clinical diagnoses or numerical thresholds.",
+    "The Headley statutory forced labor claims failed; the opinion does not settle every possible legal theory or every member's experience.",
+    "DOJ accounts establish the conviction and described trial conduct, not a uniform experience for all NXIVM attendees.",
+    "Rajneesh's immigration plea does not prove that he ordered the salmonella contamination.",
+    "Published Jonestown child counts differ by scope and age threshold; no exact count is asserted.",
+    "The Jonestown recording and limited autopsies cannot assign unforced agreement, fear or direct compulsion to every adult death.",
+    "Heaven's Gate publications establish spiritual claims. The part played by personal conviction, dependency and group pressure remains uncertain for each individual.",
+    "Current organizational publications establish continued activity, not membership size, efficacy or the truth of doctrine."
+  ],
+  "suggested_hub_description": "Five cases of spiritual authority, threats and restricted choice, with court records, testimony and the groups' own words.",
+  "qa": {
+    "static_checks": {
+      "duplicate_ids": [],
+      "missing_local_references": [],
+      "missing_hash_targets": [],
+      "missing_aria_labelledby": [],
+      "title_h1_og_match": true,
+      "em_or_en_dashes": false,
+      "emoji_or_pictographs": false,
+      "hard_voice_phrases": [],
+      "soft_voice_tells": [],
+      "existing_image_assets_alt_dimensions_and_loading_preserved": true
+    },
+    "javascript_syntax": "node --check js/cults-data.js and node --check js/cults.js passed.",
+    "whitespace": "git diff --check passed for all three owned source files.",
+    "explorer_changes": [
+      "Replaced arguments.callee in the strict-mode data retry with the named initExplorer initializer.",
+      "Comparison links are native type=button elements with class mx-table-link and updated event selectors.",
+      "View controls and case chips maintain aria-pressed; table column headers have scope=col.",
+      "Changed labels describe the offer, authority, restrictions, dissent and outcome without asserting a universal cage mechanism.",
+      "The no-script notice guides readers to the static article and records, rather than raw implementation files."
+    ],
+    "focused_browser_checks": [
+      "All five rewritten cards rendered with five narrative rows each.",
+      "Case chips exposed exactly one aria-pressed=true selection.",
+      "Previous and next navigation worked, including disabled first and last boundaries.",
+      "All five comparison rows were native buttons; Enter selected the NXIVM card and restored the proper view and aria-pressed state.",
+      "The named initializer recovered after CULTS was initially unavailable and then supplied later.",
+      "No uncaught browser errors occurred."
+    ],
+    "browser_harness": "Temporary local HTTP server and Playwright harness used /Users/ethan/.local/bin/agent-chrome-for-testing through the repository browser-support helper. Browser and server closed in finally. No personal Chrome, broad process cleanup, shared changes or repository test additions.",
+    "script_cache_versions": {
+      "js/cults-data.js": "20261003a",
+      "js/cults.js": "20261003a"
+    },
+    "visual_qa": "Full desktop and mobile visual checks remain with the parent after its shared religious-text styling changes. This reviewer performed focused browser behavior checks.",
+    "shared_scope": "Kept hero, sec and explorer structures and existing IDs, photograph assets, attribution, chapter anchors and endcap navigation. Parent owns shared CSS, hub, navigation and search integration.",
+    "git": "No staging, commits, pushes, resets or unrelated edits performed."
+  }
+}

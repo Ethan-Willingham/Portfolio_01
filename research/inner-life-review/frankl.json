@@ -1,0 +1,159 @@
+{
+  "slug": "frankl",
+  "date": "2026-10-03",
+  "title": "Viktor Frankl and the Search for Meaning",
+  "owned_files": [
+    "frankl.html",
+    "js/frankl.js"
+  ],
+  "baseline": "Working-tree frankl.html captured before this assignment, preserving its pre-existing uncommitted navigation state. Counts are not against HEAD.",
+  "word_count_method": "Text in main before sources, including headings, card text, citations and caption; excludes hero, sources, navigation, styles and scripts. Word tokens include apostrophes inside words.",
+  "original_word_counts": {
+    "narrative": 3120,
+    "main_including_sources": 3677,
+    "visible_page": 3748
+  },
+  "final_word_counts": {
+    "narrative": 1339,
+    "main_including_sources": 1539,
+    "visible_page": 1616
+  },
+  "first_rewrite_narrative_words": 1488,
+  "editorial_rationale": [
+    "Replaced a claim that meaning decided camp survival with a concrete manuscript example and an immediate distinction between testimony and causal evidence.",
+    "Kept the will to meaning, existential vacuum, personal responsibility, all three meaning categories, paradoxical intention and the happiness argument. Cut repeated summaries, dramatic fragments, motivational commands, sales figures and literary superlatives.",
+    "Broadened the second gallery card from romantic love to experience including nature and art. Added the bereaved physician example to show what attitudinal meaning actually looks like.",
+    "Removed the recovery-thread conclusion, which flattened Frankl into a secular Serenity Prayer and treated camp experience as a credential settling his claims. The final factual limit is the unverified authorship of the familiar quotation.",
+    "Kept the portrait, structural classes, gallery, buttons, keyboard behavior and no-JavaScript authored cards. Changed generated gallery label from in his words to in plain English and explicitly labeled card summaries as paraphrases.",
+    "Kept quotes to two unchanged extracts totaling 17 words, linked to specific pages in the verified transcription. Removed approximate paperback pages and the prior claim that quote punctuation had been silently changed."
+  ],
+  "major_factual_corrections": [
+    {
+      "before": "The opening says nothing else changed at Christmas and loss of hope caused increased deaths.",
+      "after": "The book attributes that interpretation to its camp doctor; the post explains that recollections lack the records needed to isolate despair from hunger, exhaustion and infection."
+    },
+    {
+      "before": "Meaning decided who lived, and those with a reason were the people who held on.",
+      "after": "Murder, labor, starvation, disease, selection, assistance and chance could decide fate. Survivorship cannot be converted into a claim about the murdered lacking reasons to live."
+    },
+    {
+      "before": "Frankl invented and named logotherapy after returning to Vienna.",
+      "after": "He used the name in 1926 and began The Doctor and the Soul before deportation. His theory preceded his imprisonment."
+    },
+    {
+      "before": "The wife imagined on the march was already dead.",
+      "after": "Frankl says he had no way to know whether she was alive. Her death at the time of that scene is not established."
+    },
+    {
+      "before": "The memoir all but proved universally inviolable choice under coercion.",
+      "after": "The remembered generosity shows some acts were possible, without establishing that every prisoner had the same capacity to choose."
+    },
+    {
+      "before": "The polished stimulus-and-response sentence is Covey's.",
+      "after": "The institute reports Covey remembered an unrecorded library source; the original author remains unidentified."
+    },
+    {
+      "before": "An Internet Archive link was labeled a 2006 edition.",
+      "after": "Its record is 1963. Replaced the public citation with Beacon's actual 2006 edition page."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://antilogicalism.com/wp-content/uploads/2017/07/mans-search-for-meaning.pdf",
+      "type": "Primary text transcription",
+      "verified": "Title page labels fourth edition and Ilse Lasch as Part One translator; includes 1992 preface. Verified manuscript, wife, bread-sharing, Christmas, typhus, meaning categories, therapist's role, paradoxical intention, dignity and usefulness passages.",
+      "limits": "Reformatted PDF has 69 pages and no reliable correspondence to paperback pagination. Not presented as an inspected physical 2006 copy."
+    },
+    {
+      "url": "https://www.viktorfrankl.org/biography.html",
+      "type": "Frankl Institute chronology",
+      "verified": "1926 use of logotherapy, 1941 manuscript, 1942 Theresienstadt deportation, 1944 Auschwitz followed after a few days by Kaufering and Türkheim, 1945 liberation and family losses, 1946 publication.",
+      "limits": "Institution devoted to Frankl; useful for chronology, not independent proof of therapeutic efficacy."
+    },
+    {
+      "url": "https://encyclopedia.ushmm.org/content/en/article/dachau",
+      "type": "Historical museum source",
+      "verified": "Subcamp system, forced labor, selections, starvation, disease and typhus conditions.",
+      "limits": "General camp context, not evidence explaining a specific death in Frankl's memoir."
+    },
+    {
+      "url": "https://www.viktorfrankl.org/quote_stimulus.html",
+      "type": "Frankl Institute attribution inquiry",
+      "verified": "Covey reported finding an unrecorded library source; original quotation is not established as Frankl's."
+    },
+    {
+      "url": "https://www.beacon.org/Mans-Search-for-Meaning-P2354.aspx",
+      "type": "Publisher edition record",
+      "verified": "2006 edition with Kushner foreword and Winslade afterword."
+    },
+    {
+      "url": "https://commons.wikimedia.org/wiki/File:Viktor_Frankl2.jpg",
+      "type": "Image source and provenance",
+      "verified": "1965, Franz Vesely, Viktor-Frankl-Archiv, CC BY-SA 3.0 DE."
+    },
+    {
+      "url": "https://archive.org/details/manssearchformea0000fran",
+      "type": "Edition catalog inspected for correction",
+      "verified": "Record says 1963, not 2006; removed as the page's 2006 edition citation."
+    }
+  ],
+  "quotes": [
+    {
+      "text": "to choose one's attitude in any given set of circumstances",
+      "location": "Part One, after the question about prisoner behavior being determined by surroundings and the recollection of prisoners sharing bread.",
+      "transcription_pdf_page_1_based": 33,
+      "url": "https://antilogicalism.com/wp-content/uploads/2017/07/mans-search-for-meaning.pdf#page=33",
+      "alterations": "None; extract avoids the source dash outside the selected words."
+    },
+    {
+      "text": "the best of us did not return",
+      "location": "Part One, opening discussion of survival and lucky chances.",
+      "transcription_pdf_page_1_based": 8,
+      "url": "https://antilogicalism.com/wp-content/uploads/2017/07/mans-search-for-meaning.pdf#page=8",
+      "alterations": "None."
+    }
+  ],
+  "voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "result": "Removed personified hope, theatrical camp language, bumper-sticker claims and language treating suffering as authority. Concrete manuscript, Sunday, two prisoners and bereaved doctor examples carry the explanation."
+    },
+    {
+      "pass": 2,
+      "name": "Delete the first paragraph",
+      "result": "Retained the shortened manuscript opening because it supplies a specific example of meaning and establishes the book that existed before deportation. Deleting it loses the referent for the next paragraph."
+    },
+    {
+      "pass": 3,
+      "name": "Generic-sentence and symptoms pass",
+      "result": "Cut stage directions, three-door slogans, wall-poster commands, the repeat synthesis callouts and the recovery recap. Every retained section supplies a distinct passage, category or limit."
+    },
+    {
+      "pass": 4,
+      "name": "Cut 10 percent",
+      "result": "First rewrite narrative: 1488 words. Cut to 1339 words (10.01 percent) before final citation clarification. Count after clarification remains recorded above."
+    },
+    {
+      "pass": 5,
+      "name": "Source pass",
+      "result": "Verified chronology, quotation wording and locations, source provenance and uncertain authorship. Historical dates have nearby links. Claims about memory and case reports are explicitly graded in prose."
+    }
+  ],
+  "verification": {
+    "javascript": "node --check js/frankl.js passed",
+    "titles": "title, og:title and h1 identical",
+    "prohibited_content": "No em dashes, en dashes, entity-encoded dashes or emoji found",
+    "cards": "Three authored cards retained; HTML and JS paraphrase labels agree",
+    "browser": "Deferred to parent's shared visual and interaction QA as assigned",
+    "quoted_words": 17
+  },
+  "remaining_uncertainties": [
+    "Date of Tilly Frankl's death relative to the march scene remains unknown; no longer claimed.",
+    "Frankl says he wrote the memoir in 1945 in its 1992 preface; institute chronology places nine-day dictation under 1946. The post states only the verified publication year and omits the composition date.",
+    "No independent camp mortality records were examined to evaluate the Christmas death-spike interpretation.",
+    "No treatment efficacy claim is made from the therapeutic case reports.",
+    "The source transcription has not been treated as a facsimile of the named 2006 paperback."
+  ],
+  "suggested_hub_description": "Frankl describes meaning through work, love and unavoidable suffering. His camp memoir shows moments of choice under coercion, while exposing the limits of testimony about survival."
+}

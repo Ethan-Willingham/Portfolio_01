@@ -1,0 +1,324 @@
+{
+  "page": "cults-business.html",
+  "reviewed_at": "2026-10-04",
+  "assignment": "Individual substantive overhaul of the business post within the broader Inner Life review. No staging, commits, pushes, or changes to shared files.",
+  "status": "Final article and audit saved; root handles shared shell, metadata/navigation/hub/search and browser QA.",
+  "before_after": {
+    "baseline": "/tmp/inner-life-review-20261003/cults-business.html",
+    "method": "HTML tags stripped; entities decoded; count regex \\b[\\w]+(?:['’][\\w]+)*\\b. main includes visible figure captions, chapter labels, headings and sources; article excludes source section. Numerals with punctuation can split into separate tokens. Hero and endcap are excluded.",
+    "before_main_words": 4562,
+    "after_main_words": 2616,
+    "before_article_words_excluding_sources": 4096,
+    "after_article_words_excluding_sources": 2344,
+    "main_reduction_percent": 42.66,
+    "article_reduction_percent": 42.77,
+    "first_complete_rewrite_main_words": 3190,
+    "first_complete_rewrite_article_words": 2918,
+    "full_rewrite_count": 1,
+    "cut_after_first_complete_article_percent": 19.67,
+    "stages": {
+      "first_complete": {
+        "main": 3190,
+        "article_excluding_sources": 2918
+      },
+      "pass1_monotone": {
+        "main": 3129,
+        "article_excluding_sources": 2857
+      },
+      "pass2_opening_test": {
+        "main": 3129,
+        "article_excluding_sources": 2857
+      },
+      "pass3_generic": {
+        "main": 2881,
+        "article_excluding_sources": 2609
+      },
+      "pass4_volume": {
+        "main": 2592,
+        "article_excluding_sources": 2320
+      },
+      "pass5_sources": {
+        "main": 2616,
+        "article_excluding_sources": 2344
+      }
+    },
+    "counts_note": "Counts are final saved content before the root shared-shell migration. Metadata source count is 21 distinct external source URLs."
+  },
+  "judgments": {
+    "accuracy": "Original used several inflated or mismatched claims. The revised article confines judgments to particular documents, distinguishes legal holdings from narrative jokes, and states scientific limits.",
+    "substance": "Rebuilt all five cases around actual commercial terms and close readings. Added Landmark minimum annual subscription calculation, KCM qualifications and failure explanation, publisher optional-instruction policy, FTC scope/revenue limitations, TM refund requirements and updated 2025 clinical guidance.",
+    "length": "Cut cases that did not earn their space: founder scandals, jet anecdotes, net-worth estimates, Oprah sales claims, The Secret digression, Beatles history and empire catalog. Final substantive article is 2344 words versus 4096 under the same method.",
+    "voice": "Removed repeated strongest-defense/tell pair boxes, imagined seminar scenes, universal free-versus-paid assertions, cash-register/table slogans, endless-ladder repetition and invented dot ratings. Each case now proceeds through evidence and its specific limitation.",
+    "original_contribution": "Primary-document comparison: current Landmark annual minimum calculation; court treatment of publishers' contradictory sharing accounts; close reading of KCM expected-return qualifications versus absent-return advice; study comparator inspection. Not a claim of private reporting or attendance."
+  },
+  "factual_corrections": [
+    {
+      "before": "Landmark approximately $700 and only three-day ballroom format.",
+      "after": "Current American landing page advertised $1177 standard, $2277 Signature with distinct online format. Dates and page-specific status explicit."
+    },
+    {
+      "before": "Stoicism with a clipboard; founder family, tax and abuse biography; legally not a cult.",
+      "after": "Removed unsourced comparison, irrelevant allegations and nonexistent legal-status formulation. Focused on documented purchasing terms."
+    },
+    {
+      "before": "All good classes must end; any continuing ladder shows exploitation.",
+      "after": "Continuing instruction and paid work can be legitimate. Pressure needs separate evidence; published catalog alone does not establish it."
+    },
+    {
+      "before": "ACIM copyright link to 262 F. Supp. 2d 251 was presented as the final holding; court ruled Jesus could not copyright.",
+      "after": "Correct October 24, 2003 opinion at 288 F. Supp. 2d 544 and ensuing specific judgment. Divine-authorship defense had already been dismissed; the successful issue was general authorized prepublication distribution without notice under applicable historical law."
+    },
+    {
+      "before": "Entire Course handed into public domain; Schucman almost never earned money and never wanted to.",
+      "after": "Specific registration A693944 voided; no blanket statement about later editions/translations. Removed unsupported claims about earnings/desires; actual opinion says proceeds were paid to Schucman and later her husband."
+    },
+    {
+      "before": "All prosperity theology equals giving money to get rich, with donation identical to belief.",
+      "after": "Named KCM examples; preserved explicit qualification that a seed alone does not itself cause healing and that hundredfold is not literal times 100. Critique concerns advice following failed return, not every church or deceptive intent."
+    },
+    {
+      "before": "Copeland 2014 demons interview and uncertain net worth, Creflo $65m arithmetic, Oral Roberts anecdote, Senate no findings.",
+      "after": "Removed entire noncentral jet/anecdote chain rather than reproducing or trying to infer corrected claims. No claim these were all verified."
+    },
+    {
+      "before": "Industry-wide 99 percent losses and 95 percent quitting; all MLM rewards need losers.",
+      "after": "FTC 70 disclosures, 2023 review/2024 publication, company payments and omitted expenses. Disclosed retail income limitation; no industry-wide precise loss estimate. Legal MLM versus illegal pyramid scheme distinction."
+    },
+    {
+      "before": "Goop evidence was secondary reporting and conflated with MLM.",
+      "after": "Primary Napa County DA announcement, $145000 civil settlement, allegations/injunction/refunds. Goop direct retail separated from MLM incentive structure."
+    },
+    {
+      "before": "TM $980 is simply buying a secret mantra; unverified mantra tables.",
+      "after": "Current standard fee plus reduced rates/scholarships and services/conditional guarantee. Unverified mantra-selection claims removed."
+    },
+    {
+      "before": "AHA uniquely mentions TM; all health benefits settled.",
+      "after": "2025 AHA/ACC modest blood-pressure adjunct recommendation with short-trial limits; no unique-medical-endorsement inference."
+    },
+    {
+      "before": "Yogic Flying described as selling levitation; Maharishi Effect never independently replicated.",
+      "after": "Organizational hopping/hovering/flying descriptions attributed. Never-replicated assertion removed; original crime study modeled counterfactual explained and critique labeled my inference."
+    },
+    {
+      "before": "Temple narrative proves a general legitimate-fee criterion; Roman coin explanation.",
+      "after": "Removed unsupported ancient-money explanation and theological financial test. Retained existing public-domain painting as an illustration."
+    }
+  ],
+  "primary_sources_checked": [
+    {
+      "url": "https://www3.landmarkworldwide.com/the-landmark-forum",
+      "title": "Landmark Forum sales page",
+      "supports": "Official advertised American standard tuition $1177, Signature $2277; formats; company 94 percent survey claim. These are advertised prices on this landing page, not asserted universal prices.",
+      "access": "Web search and extracted official page."
+    },
+    {
+      "url": "https://www.landmarkforum.net/details/",
+      "title": "Landmark program details",
+      "supports": "Standard full-day schedule roughly 9 a.m. to 10 p.m., breaks and evening session.",
+      "access": "Web search and official program-details text."
+    },
+    {
+      "url": "https://www.landmarkworldwide.com/advanced-programs",
+      "title": "Landmark program catalog",
+      "supports": "Advanced Course, communication, coaching and leadership options exist. The catalog alone does not establish coercive pressure.",
+      "access": "Web search and official page."
+    },
+    {
+      "url": "https://www.landmarkworldwide.com/subscription",
+      "title": "Landmark subscription",
+      "supports": "Optional subscription for graduates, $39 USD monthly, minimum twelve-month commitment, stand-alone courses, some extra event charges; $468 is my multiplication of 39 by 12.",
+      "access": "Official indexed page gave the expanded FAQ and price. Direct extraction sometimes returned collapsed questions."
+    },
+    {
+      "url": "https://acim.org/about-acim/acim-scribing/",
+      "title": "Foundation for Inner Peace scribing account",
+      "supports": "Schucman clinical/research psychologist, inner-dictation attribution, 1965 to 1972, Thetford transcription; publisher testimony, not independent confirmation of Jesus.",
+      "access": "Official page text."
+    },
+    {
+      "url": "https://acim.org/fip/frequently-asked-questions/",
+      "title": "Foundation for Inner Peace FAQ",
+      "supports": "Self-study structure, Text/Workbook/Manual, stated theology, optional workshops/teachers, complete online edition.",
+      "access": "Official page text."
+    },
+    {
+      "url": "https://law.justia.com/cases/federal/district-courts/FSupp2/288/544/2509276/",
+      "title": "October 24, 2003 ACIM court opinion",
+      "supports": "Read complete opinion, factual findings and legal conclusions. General authorized distribution without notice under applicable pre-1978 law invalidated copyright. Divine-authorship defense already dismissed. Earlier sharing accounts, changed book text and trial contradictions.",
+      "access": "Read full opinion in two web opens, including findings and conclusions; relied on court text rather than Justia summary."
+    },
+    {
+      "url": "https://www.casemine.com/judgement/us/59147773add7b049343d41d0",
+      "title": "ACIM ensuing judgment",
+      "supports": "Judgment specifically voids registration A693944, dissolves preliminary injunction, dismisses copyright claim; subsequent to 2003 findings and April 2004 fee opinion.",
+      "access": "Read reproduced judgment text, paragraphs 1 to 6."
+    },
+    {
+      "url": "https://www.pbs.org/video/kate-bowler-pmwrt4/",
+      "title": "Kate Bowler PBS interview",
+      "supports": "Primary interview with historian on prosperity teaching linking right faith with health, wealth and happiness and why it appeals.",
+      "access": "Web indexed interview description and statement."
+    },
+    {
+      "url": "https://www.kcm.org/read/question-of-the-day?field_question_date_value=2024-10-25",
+      "title": "KCM hundredfold return",
+      "supports": "Organization explains greatest possible return, not necessarily literal 100-times cash; includes money among gifts.",
+      "access": "Official indexed full answer. Direct page extraction sometimes blocked."
+    },
+    {
+      "url": "https://www.kcm.org/question-of-the-day/what-is-naming-your-seed/",
+      "title": "KCM naming a seed",
+      "supports": "Money alone does not itself produce healing/prosperity; gift described as a point of contact for faith. Preserves qualification against a caricature of the doctrine.",
+      "access": "Official indexed full answer. Direct open blocked."
+    },
+    {
+      "url": "https://www.kcm.org/read/question-of-the-day/im-giving-why-am-i-not-receiving",
+      "title": "KCM disappointed giver",
+      "supports": "Read whole answer: expected return, tithing 10 percent gross, extra offerings, forgiveness, speech, active receiving. My interpretation: no stated absent-result condition against the promise. Does not prove deceptive intent.",
+      "access": "Official indexed full article, including all four numbered sections. Direct open blocked."
+    },
+    {
+      "url": "https://consumer.ftc.gov/articles/multi-level-marketing-businesses-and-pyramid-schemes",
+      "title": "FTC MLM consumer guidance",
+      "supports": "MLM structure, distinction from illegal pyramid schemes, incentives and recruitment/purchases needing scrutiny.",
+      "access": "Official consumer guidance page and search text."
+    },
+    {
+      "url": "https://www.ftc.gov/system/files/ftc_gov/pdf/2024-08-19-mlm-ids-staff-report.pdf",
+      "title": "FTC 2024 staff report",
+      "supports": "70 public disclosures reviewed February 2023; company payments mostly $1000 or less, many zero; expenses often excluded, low earners excluded; report not industry-wide loss estimate. Read executive summary, scope/method and income definition excluding other possible revenue.",
+      "access": "Read official 95-page PDF selected methodological and substantive sections, not the entire appendix."
+    },
+    {
+      "url": "https://www.napacounty.gov/DocumentCenter/View/9780/Goop-Press-Release-09042018",
+      "title": "Napa County DA Goop announcement",
+      "supports": "September 4, 2018 multi-county civil case filed in Napa; $145000 civil penalties, alleged unsupported egg and flower-essence health claims, substantiation injunction, eligible refunds.",
+      "access": "Read complete one-page primary prosecutor PDF."
+    },
+    {
+      "url": "https://www.tm.org/en-us/course-fee",
+      "title": "TM USA fee page",
+      "supports": "$980 standard fee; income-based rates, installments, partial scholarships, instruction/follow-up/app; refund attendance/practice/follow-up/tune-up conditions and sixty-day request.",
+      "access": "Official current text and FAQ."
+    },
+    {
+      "url": "https://www.jacc.org/doi/10.1016/j.jacc.2025.05.007",
+      "title": "2025 AHA/ACC guideline",
+      "supports": "Section 5.1 TM as adjunct, short trials approximately 5/2 mm Hg, heterogeneous smaller short-duration trials needing further data. No inference that TM uniquely works or replaces medication.",
+      "access": "Official indexed publisher full supportive text and table. Direct open intermittently failed."
+    },
+    {
+      "url": "https://www.mwpm.in/yogic-flying",
+      "title": "Maharishi World Peace Movement",
+      "supports": "Organization describes hopping as first stage and hovering/flying as subsequent stages. Its claim is attributed, not treated as demonstrated levitation.",
+      "access": "Official page and indexed text."
+    },
+    {
+      "url": "https://research.miu.edu/maharishi-effect/",
+      "title": "MIU Maharishi Effect",
+      "supports": "Primary institutional claim of city-wide benefits and promotion of 1993 Washington project.",
+      "access": "Official university text."
+    },
+    {
+      "url": "https://www.coreresonance.com/maharishi-effect/Maharishi-Effect-Washington-93-Study-Fulltext.pdf",
+      "title": "Hagelin and colleagues original study (1999)",
+      "supports": "Read original study methodology/results including modeled absent-intervention comparator, temperature/time patterns, Figure 1 and outcome construction. My inference distinguishes observational modeled counterfactual from randomized clinical BP evidence.",
+      "access": "Original published research PDF reproduction; read selected methods/results, not all fifty pages."
+    },
+    {
+      "url": "https://collections.artsmia.org/art/278/christ-driving-the-money-changers-from-the-temple-el-greco",
+      "title": "Museum artwork record",
+      "supports": "Existing El Greco image and public-domain credit preserved; exact 1571 date removed because accessible institutional references disagree and museum text did not extract.",
+      "access": "Opened museum record but no extractable text. Museum API timed out. Artwork attribution is inherited, not a newly verified date."
+    }
+  ],
+  "additional_checks": [
+    {
+      "url": "https://law.justia.com/cases/federal/district-courts/FSupp2/262/251/2391723/",
+      "finding": "Original linked opinion is May 7, 2003 evidentiary admissibility, not final copyright invalidation."
+    },
+    {
+      "url": "https://www.ahajournals.org/doi/full/10.1161/CIR.0000000000001356?af=R",
+      "finding": "Official alternate publication supportive text confirms short-term TM reductions and caution."
+    },
+    {
+      "url": "https://www.atma.si/HBP_Guidelines_Excerpts_AHAACCAMA_18Aug25_250822_213858.pdf",
+      "finding": "Reproduction of actual guideline table makes recommendation 8 legible: Class 2b, B-R, TM may be reasonable as adjunct. Cross-checked against official publisher supportive text; not relied on as independent research."
+    },
+    {
+      "url": "https://www.heart.org/en/healthy-living/healthy-lifestyle/mental-health-and-wellbeing/meditation-to-boost-health-and-wellbeing",
+      "finding": "AHA also discusses mindfulness and broader meditation; original exclusive-mention assertion untenable."
+    },
+    {
+      "url": "https://acim.org/about-acim/acim-scribing/significant-historical-dates-of-helen-and-bill/",
+      "finding": "Publisher dates and history checked; exact tenure not needed, so no tenure claim included."
+    },
+    {
+      "url": "https://global.oup.com/academic/product/blessed-9780199827695",
+      "finding": "Old publisher link did not return substantive accessible text; replaced by primary Bowler PBS interview for minimal definition."
+    }
+  ],
+  "five_voice_passes": [
+    {
+      "pass": 1,
+      "name": "Monotone read",
+      "action": "Read the full first rewrite flat in a spoken cadence. Removed the slogan about promise surviving/donor needing work; replaced with a concrete named page. Removed the painting-as-financial-test paragraph.",
+      "result": "3190 to 3129 main words."
+    },
+    {
+      "pass": 2,
+      "name": "Delete first paragraph test",
+      "action": "Tested deleting the new opening. It loses the specific KCM source and absent-return premise, so retained it. Opening is a checkable institutional statement, not scene-setting.",
+      "result": "Opening retained; same count."
+    },
+    {
+      "pass": 3,
+      "name": "Generic sentence and symptoms pass",
+      "action": "Cut generic section setup, imagined universality and repeated buyer advice; started Landmark on prices and ACIM on optional instruction. Condensed the church steelman and tied it to the donation claim.",
+      "result": "3129 to 2881 main words; article 2857 to 2609."
+    },
+    {
+      "pass": 4,
+      "name": "Cut ten percent by volume",
+      "action": "Independent further cut after generic pass: compressed case inventory, tuition introduction, copyright interpretation, donation questions, recruitment scenario, wellness distinctions, crime-study interpretation and practical introduction; removed repeated long-term instruction paragraph.",
+      "result": "2881 to 2592 main words, 289 words or 10.03 percent. Article 2609 to 2320, 11.08 percent. Preserved all five cases and source limitations."
+    },
+    {
+      "pass": 5,
+      "name": "Source and counterargument pass",
+      "action": "Checked numbers, claims and actual documents; made TM adjunct wording specific and added quantitative trial context, expanded TM acronym, added Bowler primary interview to sources and removed inaccurate diagnostic framing. Preserved supplier qualifications and explicitly distinguished evidence from interpretation.",
+      "result": "Final 2616 main words and 2344 article words. 19.67 percent shorter article than first complete rewrite."
+    }
+  ],
+  "uncertainties": [
+    "Current company policies and prices can change; article dates the advertised Landmark page and links live TM terms.",
+    "Official terms do not measure actual pressure frequency, customer outcomes or every refusal/complaint. The article explicitly ends on that limit.",
+    "Landmark survey number is attributed; response rate, comparator and follow-up were not supplied by the landing page inspected. It is not treated as independent effectiveness evidence.",
+    "The court ruling is scoped to the specific registration and applicable historical law; no advice about copyright of individual later editions/translations.",
+    "KCM critique is a reading of its public articles, not a finding of intent or individual donor harm.",
+    "No full systematic replication audit of Maharishi Effect literature was performed. The post does not assert that no independent replication exists.",
+    "Museum record returned no extractable text and API timed out; existing image/licensing attribution preserved and precise disputed date omitted."
+  ],
+  "validation": {
+    "completed": [
+      "All original useful section anchors retained: open, weekend, scripture, prosperity, hustle, mantra, lights, sources.",
+      "Unique IDs checked (18), all local hash links resolve.",
+      "Existing WebP/JPG image references preserved and both exist; eager first image retained.",
+      "No literal/entity em/en dashes, forbidden filler phrases or unsanctioned pictographs in page.",
+      "Removed invented score table and repeated debate boxes.",
+      "21 unique external citation URLs in final main, matching hero count.",
+      "Read complete final main after edits; numeric counts reproduced from files."
+    ],
+    "delegated_to_root": [
+      "Shared shell migration, metadata/navigation consistency, hub description/search refresh, browser/mobile layout and final independent source/prose review."
+    ],
+    "not_run": "No staging-dependent linter invocation, commits, browser launch or site generation; root owns integration and many unrelated dirty files are present."
+  },
+  "suggested_hub_description": "Fees can pay for useful teaching, but some promises keep charging after they fail. Five cases, from course terms and copyright to donations and income claims.",
+  "suggested_meta_description": "Five cases in paid self-help and spirituality, using course terms, court records, fundraising advice and income disclosures to examine what customers are promised.",
+  "edited_files": [
+    "cults-business.html",
+    "research/inner-life-review/cults-business.json"
+  ]
+}
