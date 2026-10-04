@@ -13,10 +13,10 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>Socrates, Plato, and the cave</title>
-  <meta name="description" content="Who Socrates and Plato were, why Athens executed Socrates, and what Plato's cave has to do with education, justice, and government.">
-  <meta property="og:title" content="Socrates, Plato, and the cave">
-  <meta property="og:description" content="Who Socrates and Plato were, why Athens executed Socrates, and what Plato's cave has to do with education, justice, and government.">
+  <title>Why Plato wanted philosophers to rule</title>
+  <meta name="description" content="Socrates tested claims to wisdom. Plato imagined rulers trained to understand the good. The cave explains their education, but knowledge and a right to rule are different claims.">
+  <meta property="og:title" content="Why Plato wanted philosophers to rule">
+  <meta property="og:description" content="Socrates tested claims to wisdom. Plato imagined rulers trained to understand the good. The cave explains their education, but knowledge and a right to rule are different claims.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/plato.html">
@@ -34,14 +34,8 @@
   /* A continuous reading of Socrates' trial and Plato's cave. */
   :root {
     --measure: 760px;                 /* reading column */
-    --gr-font: "GFS Didot","Times New Roman",Georgia,serif;
-    --early:  #cf9f78;                 /* Jowett, the Victorian standard */
-    --mid:    #bc9d65;                 /* Fowler / Shorey, the Loeb */
-    --modern: #9ec79a;                 /* Grube, Reeve, Bloom, Tredennick */
-    --ease: cubic-bezier(0.23, 1, 0.32, 1);
   }
   html, body { overflow-x: clip; }   /* clip, not hidden: hidden makes body a scroll container and breaks position:sticky */
-  .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter); }
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
@@ -61,7 +55,6 @@
   .sec em, .prose em { font-style: italic; }
   .sec a, .prose a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s, color .2s; }
   .sec a:hover, .prose a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .gr { font-family: var(--gr-font); font-style: normal; }
   .sec .u-figure { margin: 2.4rem 0 0.5rem; }
   .pfig { margin: 2rem auto 0.5rem; max-width: 440px; }
   .pfig picture, .pfig img { display: block; width: 100%; height: auto; border-radius: 12px; }
@@ -79,32 +72,10 @@
 
   /* the unpacking sits in .prose (scoped so kit components stay intact) */
   .prose { margin: 0; }
-  .sec > :is(.passage, .stack) { max-width: 64ch; margin-inline: auto; }
+  .sec > .passage { max-width: 64ch; margin-inline: auto; }
   .sec .passage-k { font-size: .66rem; line-height: 1.6; color: var(--accent); margin-bottom: .7rem; }
   .sec .passage-t p { color: var(--text-bright); }
-  .sec, #st-examined { scroll-margin-top: 2rem; }
-
-  /* ---------- TRANSLATION / TERM SIDEBAR ---------- */
-  .stack { margin: 1.6rem 0 0; border: 1px solid var(--rule); border-radius: 12px; background: var(--bg-raised); overflow: hidden; }
-  .stack > summary { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); padding: 0.85rem 1.1rem; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.6rem; }
-  .stack > summary::-webkit-details-marker { display: none; }
-  .stack > summary::before { content: "\002B"; font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-faint); transition: transform .2s; }
-  .stack[open] > summary::before { content: "\2212"; }
-  .stack > summary:hover { color: var(--accent-hover); }
-  .stack-body { padding: 0 1.1rem 1.1rem; }
-  .stack-gloss { font-family: var(--font-body); font-size: 0.92rem; color: var(--text-faint); margin: 0 0 1rem; line-height: 1.55; }
-  .stack-gloss em { color: var(--text-dim); font-style: italic; }
-  .stack-v { padding: 0.85rem 0 0.85rem 1rem; border-top: 1px solid var(--rule); border-left: 2px solid var(--rule-strong); }
-  .stack-v:first-of-type { border-top: none; }
-  .stack-early  { border-left-color: var(--early); }
-  .stack-mid    { border-left-color: var(--mid); }
-  .stack-modern { border-left-color: var(--modern); }
-  .stack-feat { background: rgba(158,199,154,0.06); }
-  .stack-vh { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
-  .stack-vn { font-family: var(--font-heading); font-size: 1.04rem; color: var(--text-bright); }
-  .stack-vn .star { color: var(--modern); font-size: 0.7rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.5rem; }
-  .stack-vy { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); flex: none; }
-  .stack-vt { font-family: var(--font-body); font-size: 1rem; line-height: 1.55; color: var(--text); }
+  .sec, #st-questions, #st-examined, #st-death, #st-crito { scroll-margin-top: 2rem; }
 
   /* ---------- closing / colophon ---------- */
   .u-divider { border: none; border-top: 1px solid var(--rule); width: calc(100% - 2 * var(--gutter)); max-width: var(--measure); margin: 3.6rem auto 0; }
@@ -119,8 +90,9 @@
     /* phones: the body already supplies the side gutter, so drop the duplicate
        column padding here (it was doubling up to ~40px of dead space). */
     body { padding-left: 0; padding-right: 0; }
-    .passage, .stack-body { padding-left: 1.05rem; padding-right: 1.05rem; }
+    .passage { padding-left: 1.05rem; padding-right: 1.05rem; }
   }
+  @media (max-width: 360px) { body.philosophy-page .hero .hero-title { font-size: clamp(2.85rem, 15vw, 3.45rem); } }
   </style>
   <link rel="stylesheet" href="philosophy-reading.css?v=20261003a">
 </head>
@@ -130,122 +102,89 @@
  <a href="philosophy.html" class="post-back ll-back"><span class="pb-label">How to Think, and What's Real</span></a>
 
   <header class="hero u-hero">
-    <h1 class="hero-title u-title">Socrates, Plato, and the cave</h1>
-    <p class="hero-dek u-dek">Athens sentenced Socrates to death. Plato, his younger associate, wrote about his defense and imagined a city ruled by philosophers.</p>
-    <p class="hero-meta u-meta">14 min read</p>
+    <h1 class="hero-title u-title">Why Plato wanted philosophers to rule</h1>
+    <p class="hero-dek u-dek">Plato, a philosopher in ancient Greece, imagined giving power to people trained to understand what was good. Socrates, the man he learned from, had questioned whether respected people knew as much as they claimed.</p>
+    <p class="hero-meta u-meta">9 min read</p>
     <a class="philosophy-scroll" href="#summary">Scroll</a>
   </header>
 
-  <main>
+<main>
     <section class="sec" id="summary" aria-labelledby="summary-title">
-      <h2 class="sechead" id="summary-title">Socrates and Plato</h2>
-      <p class="lede">In 399 BC, a court in Athens sentenced the philosopher Socrates to death. He had spent years questioning people about how they should live. His accusers said he was corrupting the young and offending the city's religion. He argued that Athens needed the questions he was asking. <a href="https://plato.stanford.edu/entries/socrates/#ChrHisSocConAthHisDraDatPlaDia">The trial of Socrates</a></p>
-      <p>Socrates lived in ancient Greece. He would ask someone what justice or courage meant, listen to the answer, then look for a case it couldn't explain. He wanted to know whether their beliefs held up when someone questioned them.</p>
-      <p>Plato was a younger Athenian who knew Socrates and became a philosopher himself. Socrates left no philosophical writings. Plato wrote conversations in which Socrates is usually the main speaker. These are called dialogues: people make claims, question each other, and sometimes finish without agreeing on an answer. <a href="https://plato.stanford.edu/entries/plato/#DiaSetCha">Plato's way of writing</a></p>
-      <p>Plato also developed ideas of his own. Other writers who knew Socrates give different portraits, and we can't reliably separate the real man's words from the character's. The cave story and the proposal for philosophers to rule belong to Plato's book, the <em>Republic</em>. Having Socrates tell them doesn't make them a transcript of Socrates' beliefs. <a href="https://plato.stanford.edu/entries/socrates/#SocProWhoWasSocRea">The historical Socrates</a></p>
-
-      <figure class="pfig">
-        <picture><source type="image/webp" srcset="assets/images/plato-david-death-of-socrates.webp"><img src="assets/images/plato-david-death-of-socrates.jpg" width="1400" height="920" loading="eager" decoding="async" alt="Socrates reaches for a cup of poison while speaking to grieving companions in Jacques-Louis David's painting The Death of Socrates."></picture>
-        <figcaption>Jacques-Louis David, <a href="https://www.metmuseum.org/art/collection/search/436105"><em>The Death of Socrates</em></a> (1787). Socrates is reaching for the poison. David places Plato at the foot of the bed, although Plato's account says he was absent. Metropolitan Museum of Art. Public domain.</figcaption>
-      </figure>
-    </section>
-
-    <section class="sec" id="st-questions" aria-labelledby="questions-title">
-      <h2 class="sechead" id="questions-title">How Socrates questioned people</h2>
-      <p>Near the beginning of the <em>Republic</em>, an older man links living justly with telling the truth and returning what you owe. Socrates tests that answer. Suppose a friend leaves weapons with you, then loses his reason and asks for them back. Returning them would meet the rule, but it would be dangerous. His companion agrees that it wouldn't be right. The proposed account of justice needs to change. <a href="https://classics.mit.edu/Plato/republic.2.i.html">Republic 331c to 331d</a></p>
-      <p>This is the questioning often called the Socratic method. Start with a claim, ask what it commits you to, and check whether you still accept it in a particular case. The example breaks the rule without yet telling us what justice is.</p>
-      <p>In the <em>Apology</em>, Plato's account of the courtroom defense, Socrates explains why he began testing people who had reputations for wisdom. Here, “apology” means a defense, not an expression of regret. A friend had consulted the oracle at Delphi, a sanctuary where a priestess was believed to give the god Apollo's answers. She said no one was wiser than Socrates. He didn't think he knew enough for this to be true, so he went looking for someone who could prove the oracle wrong. <a href="https://classics.mit.edu/Plato/apology.html">Apology 20e to 21b</a></p>
-      <p>He questioned politicians, poets, and craftsmen. The craftsmen understood their trades, but assumed this made them wise about more important matters too. Socrates thought he had a small advantage over the people who couldn't answer his questions: he recognized his ignorance, while they mistook confidence for understanding. <a href="https://classics.mit.edu/Plato/apology.html">Apology 21b to 23b</a></p>
-      <p>That is narrower than the popular slogan “I know that I know nothing.” Socrates doesn't deny every kind of knowledge. Later in the defense, he says he knows that doing wrong is shameful, while he doesn't know whether death is bad. <a href="https://classics.mit.edu/Plato/apology.html">Apology 29b</a></p>
+      <h2 class="sechead" id="summary-title">A rule that fails a simple test</h2>
+      <p class="lede">Socrates lived in Athens, a city in Greece with its own government and courts. He asked people what made an action right, or courage different from recklessness. Plato, a younger man who learned from him, wrote conversations around these questions. Philosophy here means answering them through reasoning that other people can examine. <a href="https://plato.stanford.edu/entries/socrates/">Socrates and his setting</a></p>
+      <p id="st-questions">Early in Plato's <em>Republic</em>, a long conversation about justice, Socrates tests a familiar rule: tell the truth and return what you owe. Suppose a friend leaves weapons with you, then loses his reason and demands them back. Returning them follows the rule. It could also get someone killed. His companion agrees that returning them would be wrong. The rule needs to change. <a href="https://classics.mit.edu/Plato/republic.2.i.html">Republic 331c to 331d</a></p>
+      <p>Someone offers an answer, Socrates finds a case it would cover, and the person discovers a conflict with another judgment he accepts. They haven't yet found what justice is. They have found that their first answer isn't enough.</p>
+      <p>These written conversations are called dialogues. Socrates is often the main speaker, but they aren't recordings. The real Socrates left no philosophical books, and other ancient writers give different portraits. We can't reliably separate his beliefs from the ideas Plato gave his character. <a href="https://plato.stanford.edu/entries/plato/#DiaSetCha">Plato's way of writing</a></p>
+      <p>Socrates makes a respected person's reasoning available for inspection. Plato will ask what follows if some people can learn to reason well enough about right and wrong to govern everyone else.</p>
     </section>
 
     <section class="sec" id="st-trial" aria-labelledby="trial-title">
-      <h2 class="sechead" id="trial-title">Why Athens sentenced him to death</h2>
-      <p>Socrates' accusers charged him with corrupting the young, failing to acknowledge the gods Athens recognized, and introducing new divine beings. Religion was part of the city's public life, and the charges alleged wrongdoing against it. <a href="https://classics.mit.edu/Plato/apology.html">Apology 24b to 28a</a></p>
-      <p>He nevertheless says his questions helped create enemies. Some young men enjoyed hearing respected people fail to defend their answers, then tried the questioning themselves. The people they embarrassed blamed Socrates. He describes himself as a biting fly keeping a large, sluggish horse awake: Athens needs someone to disturb its confidence. <a href="https://classics.mit.edu/Plato/apology.html">Apology 23c to 23e</a>; <a href="https://classics.mit.edu/Plato/apology.html">30e to 31a</a></p>
-      <p>His defense is religious too. He says the god gave him a duty to question people. He describes a divine warning that sometimes stops him from acting. He disputes the accusation that his conduct is impious, meaning irreverent toward the gods. <a href="https://classics.mit.edu/Plato/apology.html">Apology 31c to 31d</a></p>
-      <p>Athens had recently lost a war against Sparta and suffered a violent takeover by a small group of rulers known as the Thirty. Socrates knew men associated with attacks on its democracy. This helps explain suspicion, but doesn't prove the religious charges concealed a political prosecution. Plato also has him describe refusing the Thirty's order to help seize a man for execution. We lack the accusers' speeches. <a href="https://plato.stanford.edu/entries/socrates/#ChrHisSocConAthHisDraDatPlaDia">The trial's setting</a>; <a href="https://classics.mit.edu/Plato/apology.html">Apology 32c to 32e</a></p>
-      <p id="st-examined">After finding Socrates guilty, the jury has to choose a penalty. He first says he deserves public meals, an honor awarded to Olympic victors. He considers imprisonment and exile, then proposes a fine his friends will guarantee. The jury chooses death. <a href="https://classics.mit.edu/Plato/apology.html">Apology 36b to 38b</a></p>
-      <p>Living quietly would defeat the purpose of his life, he says. The daily examination he means is discussion about becoming a good person: whether an action is just, what makes courage different from recklessness, and whether money deserves more attention than character. He tells the jury:</p>
+      <h2 class="sechead" id="trial-title">The questions became a public problem</h2>
+      <p>In 399 BC, an Athenian jury convicted Socrates and sentenced him to death. The charges were corrupting the young, failing to recognize the gods the city recognized, and introducing new divine beings. Religion belonged to public life: the city's worship and its laws were connected. <a href="https://classics.mit.edu/Plato/apology.html">Apology 24b to 28a</a></p>
+      <p>Plato's <em>Apology</em> presents Socrates' courtroom defense; apology here means defending yourself. Socrates says young men enjoyed hearing respected people fail to explain their beliefs, then imitated him. Those they embarrassed blamed Socrates. We have this explanation through Plato, but lack the accusers' speeches. <a href="https://classics.mit.edu/Plato/apology.html">Apology 23c to 23e</a></p>
+      <p>Craftsmen really knew their trades, he says. Their mistake was assuming that skill made them wise about more important matters too. His advantage is recognizing what he doesn't understand. He also treats his questioning as a duty given by a god. <a href="https://classics.mit.edu/Plato/apology.html">Apology 21b to 23b; 28e to 30a</a></p>
+      <p id="st-examined">He says he would refuse an offer of acquittal that required him to stop questioning people. This is a condition he imagines, rather than an offer the jury has made. Daily discussion about becoming a good person is, he says, what makes life worth living: <a href="https://classics.mit.edu/Plato/apology.html">Apology 29c to 29d; 38a</a></p>
       <div class="passage">
         <p class="passage-k"><a href="https://classics.mit.edu/Plato/apology.html">Apology 38a</a> / Benjamin Jowett</p>
         <div class="passage-t"><p>“the life which is unexamined is not worth living”</p></div>
       </div>
-      <p>That is a much stronger claim than saying reflection is useful. Many people live generously without spending their days in philosophical argument. Socrates doesn't establish here that their lives have no value. He does choose to risk his own rather than give up the questioning he thinks makes it worth living.</p>
+      <p>People can live generously without daily philosophical argument. Socrates doesn't establish that their lives have no value. He does risk his own rather than abandon the work he believes gives it value.</p>
+      <p id="st-death"><span id="st-crito"></span>Socrates was executed by drinking poison. He claimed to benefit the city that condemned him. The trial alone doesn't prove that philosophers should govern. Plato's case for giving them power needs an argument of its own. <a href="https://plato.stanford.edu/entries/socrates/">The historical trial and its limits</a></p>
+      <figure class="pfig">
+        <picture><source type="image/webp" srcset="assets/images/plato-david-death-of-socrates.webp"><img src="assets/images/plato-david-death-of-socrates.jpg" width="1400" height="920" loading="lazy" decoding="async" alt="Socrates sits upright on a prison bed, reaching for a cup while grieving companions surround him, in Jacques-Louis David's painting."></picture>
+        <figcaption>Jacques-Louis David, <em>The Death of Socrates</em> (1787). Painted more than two thousand years after the execution. <a href="https://www.metmuseum.org/art/collection/search/436105">The Metropolitan Museum of Art</a>.</figcaption>
+      </figure>
     </section>
 
-    <section class="sec" id="st-crito" aria-labelledby="crito-title">
-      <h2 class="sechead" id="crito-title">Why he refused to escape</h2>
-      <p>Plato's <em>Crito</em> takes place in prison while Socrates awaits execution. Crito, a friend, arrives before dawn with a plan to get him out. Socrates has children to raise; Crito fears people will blame his friends for failing to save him. <a href="https://classics.mit.edu/Plato/crito.html">Crito 43a to 46a</a></p>
-      <p>Socrates asks whether escaping would be right. The answer should follow the principles they accepted before the sentence. If the city has wronged him, that alone doesn't give him permission to wrong it in return:</p>
-      <div class="passage">
-        <p class="passage-k"><a href="https://classics.mit.edu/Plato/crito.html">Crito 49c to 49d</a> / Benjamin Jowett</p>
-        <div class="passage-t"><p>“Then we ought not to retaliate or render evil for evil to anyone, whatever evil we may have suffered from him.”</p></div>
-      </div>
-      <p>But why would escaping an unjust sentence be a wrong? Socrates imagines the Laws of Athens addressing him as if they were a person. They say the city made his upbringing possible. As an adult he could have left, but he stayed and accepted its legal arrangements. If people can set aside judgments whenever they dislike them, the courts lose their authority. The Laws say he should persuade the city that it is wrong or accept its decision. <a href="https://classics.mit.edu/Plato/crito.html">Crito 50a to 52d</a></p>
-      <p>This argument depends on more than the principle against revenge. Escaping might save a victim without destroying the legal system. Staying in your birthplace also seems a weak substitute for freely agreeing to every judgment its courts might make.</p>
-      <p>There is a further difficulty. In his defense, Socrates says he would disobey an order to stop philosophizing. Here, he accepts the city's punishment. A possible distinction is that he won't obey a command to do wrong, but he won't escape punishment by breaking a commitment either. Whether a state that sentences someone unjustly can still demand that commitment remains a problem. <a href="https://plato.stanford.edu/entries/socrates/#ConIntStr">The tension between the two books</a></p>
-    </section>
-
-    <section class="sec" id="st-death" aria-labelledby="death-title">
-      <h2 class="sechead" id="death-title">The last conversation</h2>
-      <p>Another book, the <em>Phaedo</em>, describes Socrates' last day. Phaedo is a companion recounting the scene afterward. He says Plato was ill and absent. Athens allowed no executions while its sacred ship traveled to Delos, an island associated with Apollo. The ship's return means the sentence can be carried out. <a href="https://people.bu.edu/wwildman/courses/wphil/readings/wphil_rdg01_phaedo_entire.htm">Phaedo 58a to 59b</a></p>
-      <p>Socrates spends much of the day arguing that the soul survives death. By soul, he means what gives a body life and does the thinking, capable, in this account, of existing apart from the body. He thinks philosophy prepares it for that separation by teaching it to pursue understanding instead of being ruled by bodily desires. <a href="https://people.bu.edu/wwildman/courses/wphil/readings/wphil_rdg01_phaedo_entire.htm">Phaedo 64c to 67b</a></p>
-      <p>His companions challenge him. One compares the soul to the harmony of a musical instrument: a beautiful pattern could disappear when the instrument breaks. Another asks whether a soul might outlast several bodies and still eventually perish. Socrates' final argument says the soul brings life to a body and therefore cannot admit its opposite, death. But ruling out an opposite doesn't automatically prove that something will survive: fire can't be cold, yet it can go out. The dialogue also needs the claim that what is deathless cannot be destroyed. Socrates' companions accept that additional step. <a href="https://people.bu.edu/wwildman/courses/wphil/readings/wphil_rdg01_phaedo_entire.htm">Phaedo 85e to 107b</a></p>
-      <p>At the end, Socrates drinks the poison. His companions weep; he asks them to be quiet. As his body grows cold, he reminds Crito that they owe an offering of a rooster to Asclepius, the god of healing. The dialogue doesn't explain what the debt was for. <a href="https://people.bu.edu/wwildman/courses/wphil/readings/wphil_rdg01_phaedo_entire.htm">Phaedo 117b to 118a</a></p>
-    </section>
-
-    <section class="sec" id="republic" aria-labelledby="republic-title">
-      <h2 class="sechead" id="republic-title">The city Plato imagined</h2>
-      <p>In the <em>Republic</em>, Plato puts Socrates in a different setting: a conversation at a private house, before the trial. The book asks what justice is and why we should want to be just. Glaucon, one of the speakers and Plato's brother, sharpens the question. Suppose someone does wrong, becomes wealthy, and earns a good reputation by hiding it. Why would being just be better than that? Praise and rewards for looking good won't answer him. <a href="https://classics.mit.edu/Plato/republic.3.ii.html">Republic 357a to 367e</a></p>
-      <p>Socrates proposes examining justice in a whole city first, then looking for the same pattern in a person. He compares this with reading large letters before trying to make out small ones. The speakers build a city in words, deciding what it would need and how its people should live together. This is the ideal city: an imagined society used to investigate what a good social order would be. It isn't an account of a place Plato visited. <a href="https://classics.mit.edu/Plato/republic.3.ii.html">Republic 368c to 369b</a></p>
-      <p>They divide its work among people who produce what it needs, people who defend it, and people who govern. Socrates eventually identifies justice with these groups doing their own work without taking over the others' roles. <a href="https://classics.mit.edu/Plato/republic.5.iv.html">Republic 433a to 434c</a></p>
-      <p>He compares the city with a person. Our appetites are desires for things like food, drink, and possessions. We can want another drink while also judging that we should stop. Socrates thinks reason should direct these desires with the whole life in view. What he calls spirit, the part that becomes angry or defends our honor, should support that direction. Justice in a person means these motives cooperating under reason, just as the city's groups cooperate under its rulers. <a href="https://classics.mit.edu/Plato/republic.5.iv.html">Republic 436a to 444a</a></p>
-      <p>This is his answer to Glaucon: an ordered life is good for the person living it. Someone dominated by greed or fear can gain power while losing control of their own life. He argues that a just person is more free and happier than a tyrant, even when the tyrant appears successful. <a href="https://classics.mit.edu/Plato/republic.10.ix.html">Republic 577c to 580c</a></p>
-      <p>That comparison has political consequences. If the whole city's well-being depends on good judgment, who should govern it? Socrates argues for philosophers: people who can give a reasoned account of what is good, rather than chase wealth or popularity. This is the philosopher-ruler proposal. The cave story explains what their education should achieve. <a href="https://classics.mit.edu/Plato/republic.6.v.html">Republic 473c to 480a</a></p>
+    <section class="sec" id="republic" aria-labelledby="city-title">
+      <h2 class="sechead" id="city-title">Why Plato invents a city</h2>
+      <p>The <em>Republic</em> asks why being just is good for the person who does it. Justice here concerns living and dealing rightly. Imagine a wrongdoer who gets away with it and enjoys wealth and respect. Set him beside a just person who is wrongly condemned and suffers. Why would the second life still be better? One participant demands an answer that doesn't rely on praise or punishment. <a href="https://classics.mit.edu/Plato/republic.3.ii.html">Republic 357a to 367e</a></p>
+      <p>Socrates proposes looking for justice in a community first, where it should be easier to see, like reading large letters before small ones. The speakers build a city in words, then compare its organization with the motives within one person. The city is invented to investigate the question. <a href="https://classics.mit.edu/Plato/republic.3.ii.html">Republic 368c to 369b</a></p>
+      <p>People produce what the city needs, defenders protect it, and rulers direct it. Plato's proposed justice has each group do its work without taking over the others' functions. Within a person he distinguishes reason, desires such as hunger, and anger or pride that can help resist a temptation. He argues that reason should guide these motives, rather than a desire governing the whole person. <a href="https://classics.mit.edu/Plato/republic.5.iv.html">Republic 433a to 444a</a></p>
+      <p>His answer is that wrongdoing harms the person doing it, even when it pays. Letting the desire for money override judgment about what is right disorders that person's life. In his extreme example, a tyrant, a ruler with unchecked power, controls other people but remains driven by fear and desires he can't satisfy. The just person is better governed within. That is Plato's claim; the comparison between a person and a city doesn't by itself prove it. <a href="https://classics.mit.edu/Plato/republic.10.ix.html">Republic 577c to 580c</a></p>
+      <p>When the speakers ask how such a city could exist, Socrates says political power and philosophical understanding must come together. Its rulers must understand what is good. What education could give someone that understanding? <a href="https://classics.mit.edu/Plato/republic.6.v.html">Republic 472c to 473e</a></p>
     </section>
 
     <section class="sec" id="st-cave" aria-labelledby="cave-title">
       <h2 class="sechead" id="cave-title">The cave is an invented story</h2>
-      <p>Socrates asks Glaucon to picture prisoners who have been chained inside a cave since childhood. They can face only a wall. A fire burns behind them. Between the fire and the prisoners, people carry objects above a low barrier, casting shadows on the wall. The prisoners can see the shadows but can't turn around to see what produces them. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 514a to 515b</a></p>
-      <p>When the people carrying objects speak, echoes make the voices seem to come from the passing shadows. The prisoners think the shadows are the things themselves. They give them names, predict which will appear next, and reward the people who make the best predictions. They can become skilled within this restricted view while misunderstanding what they are looking at.</p>
-      <p>One prisoner is released and made to stand up and turn around. Looking toward the fire hurts his eyes. He finds the objects harder to recognize than their familiar shadows and wants to turn back. Then he is dragged up the steep passage into daylight. At first, he can barely see. Gradually he can look at reflections, the things outside, and finally the sun. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 515c to 516c</a></p>
-      <p>This is a picture of learning, not a story about prehistoric humans leaving cave homes. Plato imagines someone discovering how badly their familiar view of the world misled them. Learning is painful here because a person has to give up the standards that previously made them feel competent.</p>
-      <p>When the prisoner returns, his eyes need to adjust to the dark. He performs badly at identifying the shadows, so the others think the journey ruined his sight. They conclude that leaving is dangerous. Socrates says they would kill someone trying to free them if they could get hold of him. That threat may recall Socrates' fate, but the story doesn't identify the prisoner as Socrates or explain his trial. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 516e to 517a</a></p>
+      <p>Plato explains the education his rulers need by asking us to imagine prisoners kept in a cave since childhood. Their legs and necks are fixed so that they can look only at a wall. Behind them, a fire burns. Between the fire and the prisoners, people carry objects along a low wall. Shadows of those objects fall on the wall the prisoners face. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 514a to 515b</a></p>
+      <p>They have never seen anything else. They name the shadows and learn to predict them; skill at this earns honors. Echoing voices seem to come from the shadows. They mistake their limited scene for the whole of reality.</p>
+      <p>One prisoner is released and forced to turn around. The fire hurts his eyes. The objects look less convincing than the familiar shadows. He wants to return to what he understood. Then he is dragged out into daylight, where he can barely see. Gradually he sees shadows and reflections, then objects, then the sky. Finally he can look at the sun and understand its role in this world. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 515c to 516c</a></p>
+      <p>Plato invents this scene to explain education. It is an allegory: its physical details stand for ideas. Leaving the cave changes what a person takes to be real and worth knowing. It can initially make someone less sure of himself.</p>
+      <p>When the prisoner returns, his eyes need time to adjust to the darkness. He does badly at the shadow-predicting task. The others conclude that going outside damaged him. If someone tried to release them and lead them up, they would kill that person if they could. The community rewards proficiency at its familiar task and treats a challenge to the task itself as a threat. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 516e to 517a</a></p>
     </section>
 
     <section class="sec" id="st-forms" aria-labelledby="forms-title">
       <h2 class="sechead" id="forms-title">What the daylight stands for</h2>
-      <p>The cave is an allegory, a story whose people and places represent ideas. The climb stands for education: moving from the changing things we see toward an understanding reached through reasoning. Plato's claim goes further than being suspicious of rumors or checking whether a picture is fake. He thinks we can know stable realities beyond the physical things our senses encounter. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 517b to 518d</a></p>
-      <p>He also wants education to change what someone values. A clever wrongdoer may know exactly how to get what he wants; becoming cleverer won't make him good. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 518e to 519a</a></p>
-      <p>The comparison with equality in the <em>Phaedo</em> helps explain this. Two sticks can seem equal from one perspective and unequal from another. Yet we can judge that they fall short of perfect equality. Socrates argues that the standard we use, equality itself, is different from either stick. He takes our ability to make this judgment as evidence that we grasp a standard beyond the particular examples. Plato calls these stable realities Forms: Equality itself, Justice itself, Beauty itself. The capitalized word doesn't mean a physical shape. <a href="https://people.bu.edu/wwildman/courses/wphil/readings/wphil_rdg01_phaedo_entire.htm">Phaedo 74a to 75d</a></p>
-      <p>Plato thinks these realities exist independently of our thoughts about them. Particular just actions can be imperfect, disputed, or mixed with something unjust. Justice itself supplies the reality by which they are judged. A philosopher should learn to explain what makes those actions just, rather than accumulate examples or repeat the judgments of the crowd.</p>
-      <p>The sun represents what the <em>Republic</em> calls the Good. As sunlight makes sight possible, the Good makes knowledge and truth possible. It is the source of what makes things understandable and good in Plato's account. Knowing how to win a war or make a city wealthier wouldn't be enough: a ruler needs to judge whether those ends are worth choosing and what should be sacrificed for them. Understanding the Good is supposed to make that judgment possible. <a href="https://classics.mit.edu/Plato/republic.7.vi.html">Republic 507b to 509b</a></p>
-      <p>Recognizing a standard doesn't, by itself, establish that it exists independently of minds and physical examples. We might explain equality through concepts without accepting Plato's Forms. He explores objections to Forms in another dialogue, the <em>Parmenides</em>, including how one Justice itself could relate to many particular just actions. <a href="https://plato.stanford.edu/entries/plato/#DoePlaChaHisMinAboFor">Plato's objections to Forms</a></p>
+      <p>His ruler needs to understand what makes an action just and an aim good. A capable commander might win a war that should never have been fought. Knowing how to achieve something doesn't settle whether it is worth achieving.</p>
+      <p>Plato distinguishes the changing things we encounter from stable realities he calls Forms. Consider the difference between a circle drawn on paper and the exact circle geometry describes. The drawing has imperfections; reasoning concerns the exact circle. Plato thinks there is a comparable distinction between particular just actions and Justice itself, or beautiful things and Beauty itself. His Forms exist independently of our opinions. They aren't merely words or physical shapes. <a href="https://classics.mit.edu/Plato/republic.6.v.html">Republic 476a to 480a</a>; <a href="https://classics.mit.edu/Plato/republic.7.vi.html">510d to 511a</a></p>
+      <p>The sun in the story represents what he calls the Good. As sunlight makes sight possible, the Good makes truth knowable. He credits it with the existence of the Forms, as well as making them understandable. For a ruler, understanding the Good is supposed to explain what makes other things beneficial and worth pursuing. <a href="https://classics.mit.edu/Plato/republic.7.vi.html">Republic 505a; 507b to 509b</a></p>
+      <p>The existence of a standard doesn't establish that it exists independently of minds. Nor does the sun comparison prove that someone can know the Good. A listener asks Socrates to explain it directly. Socrates says he can't give the account he wants and offers the comparison instead. The reader never receives the full explanation required of the rulers. <a href="https://classics.mit.edu/Plato/republic.7.vi.html">Republic 506d to 507a</a></p>
     </section>
 
     <section class="sec" id="st-man" aria-labelledby="return-title">
       <h2 class="sechead" id="return-title">Why the philosophers must go back</h2>
-      <p>Going back means returning to ordinary civic life and governing the imagined city. Plato isn't asking people to move into underground homes. He is asking the people who have learned to understand the good to take responsibility for a community still largely guided by appearances.</p>
-      <p>The imagined city selects its prospective rulers for character and ability. Their training includes mathematics, questioning assumptions, and years of public service; they are tested before receiving authority. These philosophers have to be able to reason well and resist the temptations of power. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 535a to 540b</a></p>
-      <p>Glaucon objects. If the philosophers would be happier studying than holding office, why force them into a worse life? Socrates answers that the city educates them for everyone's benefit. People trained at its expense owe it a share of their work. Philosophers elsewhere, who learned without the city's help, don't have the same debt. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 519c to 520c</a></p>
+      <p>Returning means governing. The educated philosophers want to spend their lives understanding what is true and good. Plato regards that as a better life than competing for office, but his city makes them take their turns in government.</p>
+      <p>Their education is demanding. Candidates are selected for ability and character, study mathematics, learn to question assumptions, and spend years doing practical public work. They must be able to explain the Good and defend their account against objections through argument. Declaring themselves wise wouldn't qualify them. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 534b to 540b</a></p>
+      <p>The city educated them for everyone's benefit and expects their service in return. Someone who developed the same understanding elsewhere without that support wouldn't owe the same debt. Plato also thinks reluctant rulers are preferable to people who treat power as life's greatest prize. His governing class is forbidden ordinary private wealth, with shared living arrangements intended to prevent public guardians from becoming predators on the people they protect. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 519c to 521b</a>; <a href="https://classics.mit.edu/Plato/republic.4.iii.html">416d to 417b</a></p>
+      <p>Plato wants to prevent able people from using intelligence to serve greed. Their preference for a life outside politics is another protection:</p>
       <div class="passage">
-        <p class="passage-k"><a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 520c</a> / Benjamin Jowett</p>
-        <div class="passage-t"><p>“must go down to the general underground abode, and get the habit of seeing in the dark.”</p></div>
+        <p class="passage-k"><a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 521a</a> / Benjamin Jowett</p>
+        <div class="passage-t"><p>“You must contrive for your future rulers another and a better life than that of a ruler”</p></div>
       </div>
-      <p>The cave's image now explains a political duty. The philosophers must learn to deal with public affairs after their education, just as the returning prisoner must learn to see in the dark again. Plato values rulers who would prefer something better than office: they have less reason to turn government into a source of private wealth. <a href="https://classics.mit.edu/Plato/republic.8.vii.html">Republic 520e to 521b</a></p>
-      <p>But being well educated and entitled to rule are different claims. Plato gives a selected group authority on the strength of its supposed knowledge of the good. The people they govern don't have an equal political right to reject their judgment. If the rulers mistake their own convictions for knowledge, the same confidence Socrates challenged in his conversations becomes a basis for government.</p>
-      <p>Earlier, Glaucon asks Socrates to explain the Good itself. Socrates says he can't give the account he wants and offers the comparison with the sun instead. The city requires rulers who understand the Good, but the reader doesn't receive the full account Glaucon asks for. <a href="https://classics.mit.edu/Plato/republic.7.vi.html">Republic 506d to 507a</a></p>
+      <p>Understanding more can give someone good advice to offer. Does it give that person the right to decide how everybody else must live? Plato's answer depends on rulers genuinely knowing the community's good. His case requires both that this knowledge exists and that the city can reliably identify who has it.</p>
+      <p>The <em>Republic</em> makes its prospective rulers answer difficult philosophical objections. It gives the people they govern no equal political power to choose or dismiss them. Its educational tests are designed to find people fit to rule; they don't supply an independent way for the governed to remove someone whose judgment has failed. <a href="https://plato.stanford.edu/entries/plato-ethics-politics/">Plato's political proposal and its difficulties</a></p>
     </section>
 
     <hr class="u-divider">
     <section class="sec" id="sources" aria-labelledby="sources-title">
       <h2 class="sechead" id="sources-title">Text and sources</h2>
-      <p>The quotations use Benjamin Jowett's English translations. The surrounding explanations are paraphrase and interpretation, not translations.</p>
-      <p>References such as 331c identify a passage using the page and letter divisions of a sixteenth-century edition, called Stephanus references. You can use them to find the same passage in other translations.</p>
+      <p>This reading follows a problem through Plato's courtroom defense of Socrates and the <em>Republic</em>: what knowing right from wrong could qualify someone to do.</p>
+      <p>The quotations use Benjamin Jowett's English translations. The surrounding explanations are paraphrase and interpretation. References such as 331c use the page and letter divisions of a sixteenth-century edition, called Stephanus references. They identify the same passage across different translations.</p>
       <ul class="src-list">
-        <li>Jowett's <a href="https://classics.mit.edu/Plato/apology.html"><em>Apology</em></a>, <a href="https://classics.mit.edu/Plato/crito.html"><em>Crito</em></a>, and <a href="https://classics.mit.edu/Plato/republic.html">complete <em>Republic</em></a> at the Internet Classics Archive; the <a href="https://people.bu.edu/wwildman/courses/wphil/readings/wphil_rdg01_phaedo_entire.htm"><em>Phaedo</em></a> at Boston University.</li>
-        <li>Debra Nails, <a href="https://plato.stanford.edu/entries/socrates/">Socrates</a>, and Richard Kraut, <a href="https://plato.stanford.edu/entries/plato/">Plato</a>, in the Stanford Encyclopedia of Philosophy, for the historical and interpretive limits.</li>
+        <li>Plato, <a href="https://classics.mit.edu/Plato/apology.html"><em>Apology</em></a> and <a href="https://classics.mit.edu/Plato/republic.html"><em>Republic</em></a>, translated by Benjamin Jowett, at the Internet Classics Archive.</li>
+        <li>Debra Nails, <a href="https://plato.stanford.edu/entries/socrates/">Socrates</a>, and Richard Kraut, <a href="https://plato.stanford.edu/entries/plato/">Plato</a>, in the Stanford Encyclopedia of Philosophy, for the people and the limits of their surviving portraits.</li>
+        <li>Eric Brown, <a href="https://plato.stanford.edu/entries/plato-ethics-politics/">Plato's Ethics and Politics in the Republic</a>, for the argument connecting justice in a person with government, and the difficulties of that proposal.</li>
       </ul>
     </section>
   </main>

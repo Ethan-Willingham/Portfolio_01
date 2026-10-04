@@ -30,3 +30,18 @@ A separate GPT-6.1 Sol reviewer using extra-high reasoning checked the page for 
 - Checked the philosophy hub at desktop and phone widths: all fourteen cards remain present, the new description appears, and search reaches the cave section with the revised article title.
 - Updated only the Plato search entry. The other published entries remain intact. The search generator retains the revised title on future rebuilds.
 - Checked both modified generators for JavaScript syntax and passed the repository's voice linter and whitespace checks.
+
+
+## Revision after the opening and purpose review
+
+The earlier version supplied definitions but still asked readers to care about unfamiliar names before explaining the article's purpose. This revision changes the title to **Why Plato wanted philosophers to rule** and builds one argument from Socrates' questioning to Plato's proposed government.
+
+- The hero identifies Plato as a philosopher in ancient Greece and Socrates as the man he learned from. The first body paragraph identifies Athens as a city with its own government and courts.
+- The borrowed-weapons example follows that short orientation. The distinction between written dialogues and historical records remains explicit.
+- The courtroom defense is retained with the actual religious and civic charges. The proposed release condition is explicitly hypothetical.
+- The imagined city answers the Republic's challenge about why justice benefits its possessor. Plato's internal-order answer and its argumentative limit remain visible.
+- The cave begins as an invented story explaining the rulers' education. Forms and the Good are explained as Plato's claims about reality.
+- The governing duty includes education for the community's benefit, examination under objections, practical service, and restrictions on private wealth. The closing question concerns political authority and accountability, rather than treating Plato's rulers as people with untested confidence.
+- The escape and immortality sections are removed. The Symposium is omitted because it does not develop this argument. Existing relevant fragment links remain usable.
+
+Two independent GPT-6.1 Sol agents at xhigh reviewed the new draft for accuracy and for a reader with no prior context. Their four substantive repairs were incorporated before a separate tightening pass. The article is approximately 1,870 words including source notes, with a nine-minute read time. The page retains the shared sacred-text title placement, Century Supra text, and mobile gutter; its longer title scales at narrow phone widths.

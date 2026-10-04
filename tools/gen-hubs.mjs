@@ -53,7 +53,7 @@ const HUBS = [
       desc: "What can we know, and how should we live? Read the arguments from Plato to David Deutsch, with enough of the original text to judge them for yourself." },
     lead: "What makes a good life? What gives a government the right to rule? These readings follow the answers closely enough that you can see where you agree, and where you don't.",
     members: [
-      live('plato.html', 'Plato', 'plato.jpg', 'c. 380 BCE', -380, "Socrates questions what people mean by justice. His younger associate Plato writes about his trial and death, then imagines a city and a cave story to examine who should govern."),
+      live('plato.html', 'Plato', 'plato.jpg', 'c. 380 BCE', -380, "Socrates tested claims to wisdom. Plato imagined giving power to people trained to understand the good, and used the cave story to explain their education."),
       live('aristotle.html', 'Aristotle', 'aristotle.jpg', 'c. 340 BCE', -340, "A good character cannot prevent every loss. Seven passages through Aristotle's Ethics examine happiness as activity, the judgment virtue requires, and why even a happy person needs friends."),
       live('meditations.html', 'Marcus Aurelius', 'marcus-aurelius.jpg', 'c. 175 CE', 175, "An emperor warns himself against the effects of power. Twenty-eight passages connect judgment and death to providence, moral character, and duties to others, with sourced translation comparisons and plain explanations."),
       live('social-contract.html', 'Hobbes, Locke, and Rousseau', 'social-contract.jpg', '1651-1762', 1651, "Hobbes lets a condemned prisoner resist execution. Read his case for sovereignty beside Locke's limited government and Rousseau's general will, with five questions and fifteen primary excerpts."),
