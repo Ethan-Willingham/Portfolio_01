@@ -14,9 +14,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>In Praise of Shadows</title>
-  <meta name="description" content="A lacquer bowl looks different in a dim room. Tanizaki asks what electric light has cost Japanese beauty; Okakura approaches related questions through the preparation and drinking of tea.">
+  <meta name="description" content="Tanizaki describes a lacquer bowl in a dim room; Okakura writes about preparing tea. Read the two essays alongside the claims they make about Japanese beauty.">
   <meta property="og:title" content="In Praise of Shadows">
-  <meta property="og:description" content="A lacquer bowl looks different in a dim room. Tanizaki asks what electric light has cost Japanese beauty; Okakura approaches related questions through the preparation and drinking of tea.">
+  <meta property="og:description" content="Tanizaki describes a lacquer bowl in a dim room; Okakura writes about preparing tea. Read the two essays alongside the claims they make about Japanese beauty.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/in-praise-of-shadows.html">
@@ -30,28 +30,20 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261002c">
   <style>
   /* ============================================================
      IN PRAISE OF SHADOWS
-     Approach C (Idea Distillation): two short single-author essays
-     (Tanizaki 1933, Okakura 1906), no translations to stack, so the
-     load-bearing ideas are stated plainly in the site voice and
-     anchored to short quotes. Same shell as the Frankl and
-     Spirituality-of-Imperfection builds (same hero, sections, and
-     story-gallery). The interactive piece is the five words the
-     aesthetic turns on (wabi-sabi, the shadow, the cup of tea, ma,
-     mono no aware), authored as plain cards so the page reads
-     without JS. One muted accent per word, from the site's
-     categorical set. Forest green, parchment, Century Supra / Segoe
-     UI / Commit Mono. Okakura is public domain and quoted directly;
-     the Tanizaki translation is in copyright, so its quotes are kept
-     short and used for comment and study. No em dashes.
+     Two essays: Tanizaki (1933-1934) and Okakura (1906).
+     Five concrete scenes are authored as static cards, then read
+     by the gallery script. The cards remain visible until gallery
+     initialization succeeds. Okakura wrote in English; Tanizaki
+     is quoted from Harper and Seidensticker's 1977 translation.
      ============================================================ */
   :root {
     --measure: 760px;                 /* reading column */
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
-    /* one muted accent per word, from the categorical set */
+    /* one muted accent per scene, from the categorical set */
     --w-wabi:   #cf9f78;   /* clay  */
     --w-shadow: #bc9d65;   /* deep gold */
     --w-tea:    #d9978c;   /* coral */
@@ -66,12 +58,6 @@
   .post-back.ll-back { display: block; max-width: var(--measure); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
 
   /* ---------- HERO ---------- */
-  .hero { max-width: var(--measure); margin: 0 auto; padding: 1rem var(--gutter) 0; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.7rem, 9vw, 5.4rem); line-height: 1.0; letter-spacing: -0.025em; color: var(--text-bright); text-wrap: balance; margin: 0; }
-  .hero-dek { font-family: var(--font-heading); font-style: italic; font-size: clamp(1.18rem, 3vw, 1.55rem); line-height: 1.46; color: var(--text-dim); margin: 1.2rem 0 0; max-width: 42ch; text-wrap: pretty; }
-  .hero-meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin: 1.5rem 0 0; padding-top: 1.1rem; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 0.5em 1.1em; }
-  .hero-meta b { color: var(--accent); font-weight: 400; }
-  .hero-meta .sep { opacity: 0.4; }
 
   /* ---------- SECTIONS ---------- */
   .sec { max-width: var(--measure); margin: 0 auto; padding: clamp(2.6rem, 5vw, 3.8rem) var(--gutter) 0; scroll-margin-top: 1.2rem; }
@@ -112,11 +98,10 @@
   @media (max-width: 600px) { .pfig { max-width: 300px; } .pfig img { border-radius: 10px; } }
 
   /* ============================================================
-     THE FIVE WORDS (story-gallery pattern)
+     FIVE SCENES (story-gallery pattern)
      ============================================================ */
   .gal-wrap { margin: 1.8rem 0 0; }
   .gal-wrap[hidden] { display: none; }
-  html:not(.js) .gal-wrap { display: none; }
 
   .gal-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 0.9rem; }
   .gal-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); background: rgba(255,255,255,0.03); border: 1px solid var(--rule); border-radius: 999px; padding: 0.38em 0.8em; cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
@@ -143,9 +128,9 @@
   .gal-pos b { color: var(--accent); font-weight: 400; }
   .gal-hint { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-faint); margin-left: auto; }
 
-  /* the no-JS fallback: the words read as a plain stacked list */
+  /* fallback: the scenes read as a plain stacked list */
   .tales { margin-top: 1.6rem; }
-  html.js .tales { display: none; }
+  .gal-ready .tales { display: none; }
   .tale { padding: 1.5rem 0 0; border-top: 1px solid var(--rule); margin-top: 1.5rem; }
   .tale:first-child { border-top: none; margin-top: 0; padding-top: 0; }
   .tales .tale-k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ta, var(--accent)); margin: 0 0 0.4rem; }
@@ -165,11 +150,11 @@
 
   /* ---------- ANIMATION + REDUCED MOTION (no-JS safe) ---------- */
   @media all {
-    html.js .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
-    html.js .reveal.in { opacity: 1; transform: none; }
+    html.js .reveal.will-reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s var(--ease); }
+    html.js .reveal.will-reveal.in { opacity: 1; transform: none; }
   }
   @media (prefers-reduced-motion: reduce) {
-    html.js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    html.js .reveal.will-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
     .gal-frame { transition: none !important; }
   }
 
@@ -179,7 +164,7 @@
     body { background: #fff; color: #161616; }
     .sec, .hero { max-width: none; }
     .sec p, .lede, .tale-body p, .gal-card-body p { color: #161616; }
-    html.js .tales { display: block; }   /* print the readable list, not the app */
+    .gal-ready .tales { display: block; }   /* print the complete list */
     .gal-wrap { display: none !important; }
     .debateA, .u-callout, .tale { break-inside: avoid; }
     a { color: #161616; }
@@ -191,277 +176,166 @@
     .gal-hint { display: none; }
   }
   </style>
+  <link rel="stylesheet" href="power-story-reading.css?v=20261003-reading">
 </head>
-<body>
-  <!-- in-progress banner, generated by tools/gen-post-nav.mjs; flip inProgress in tools/gen-hubs.mjs -->
-  <script src="/js/archive-banner.js"></script>
+<body class="power-reading">
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
   <a href="power-story-love.html" class="post-back ll-back"><span class="pb-label">Power, Story, and Love</span></a>
 
   <!-- ============================ HERO ============================ -->
-  <header class="hero">
-    <h1 class="hero-title">In Praise of Shadows</h1>
-    <p class="hero-dek">Tanizaki notices what disappears when an old room is flooded with light. Okakura explains a way of looking at beauty through tea. Both attend to ordinary things that modern taste can hurry past.</p>
-    <p class="hero-meta">Reading notes <span class="sep">/</span> <b>two essays, one aesthetic</b> <span class="sep">/</span> <b>12 sources</b> <span class="sep">/</span> 14 min read</p>
+  <header class="hero u-hero">
+    <h1 class="hero-title u-title">In Praise of Shadows</h1>
+    <p class="hero-dek u-dek">Tanizaki watches gold emerge in candlelight. Okakura considers the work of preparing and sharing tea.</p>
+    <p class="hero-meta u-meta"><span>2 essays</span> <span class="sep" aria-hidden="true">&middot;</span> <span>10 min read</span></p>
+    <span class="reading-scroll" aria-hidden="true">scroll</span>
   </header>
 
   <main id="guide">
 
-    <!-- ============================ INTRO ============================ -->
     <section id="intro" class="sec first" aria-labelledby="intro-h">
-      <p class="lede">Turn on a bright overhead light in a beautiful old room and you can watch the beauty drain out of it. We usually blame the bulb, or the room. A Japanese novelist blamed the light.</p>
-
-      <p>In 1933 Junichiro Tanizaki wrote a short, wandering essay arguing that electric light had flooded out a whole kind of beauty, one that had always lived in shadow, and that the modern world was scrubbing away without ever noticing it was there. He called it <em>In Praise of Shadows</em>. It is barely fifty pages, it has no real argument or order, it drifts from architecture to lacquer bowls to the right way to build a toilet, and it is one of the most quietly persuasive things ever written about why anything looks good.</p>
-
-      <p>Twenty-seven years before it, a museum man named Kakuzo Okakura had come at the same idea from the other side. In 1906 he wrote <em>The Book of Tea</em>, in English, to explain Japanese taste to Americans who mostly knew Japan as a country that had just won a war. His move was strange and brilliant: he explained the entire aesthetic through a cup of tea. Put the two books next to each other and you get the clearest map there is of an idea of beauty that runs the opposite direction from the Western one.</p>
-
-      <p>The Western eye, roughly, loves light, symmetry, and permanence. The floodlit gallery, the matched pair, the marble built to outlast everyone who sees it. This other eye loves the reverse. It finds beauty in shadow, in things that are imperfect and plain and worn with age, in empty space left deliberately empty, and in the plain fact that nothing lasts. Not as a quirk or a mood, but as a worked-out way of seeing with its own logic. This is that way of seeing, pulled out of the two short books that say it best.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">Two essays</p><h2 id="intro-h" class="u-sechead-h">Lacquer by candlelight</h2></div>
+      <p class="lede">Tanizaki thought electric light could make a fine lacquer box look vulgar. He imagined its makers working for dark rooms, where a candle picked out only parts of the gold. Illuminate the whole surface and the decoration becomes too much.</p>
+      <p>Junichiro Tanizaki published <em>In Praise of Shadows</em> in <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=56">December 1933 and January 1934</a>. The essay moves from houses to theaters, with stops at food and the toilet. An ugly appliance leads him to a larger complaint: Japan has adopted technologies designed around somebody else's habits.</p>
+      <p>Kakuzo Okakura's <em>The Book of Tea</em>, written in English and published in <a href="https://en.wikisource.org/wiki/The_Book_of_Tea">1906</a>, approaches beauty through a gathering. The host prepares a room; guests help give the occasion its meaning. Okakura uses tea to challenge readers who respect Japan's military victories more readily than its culture.</p>
       <figure class="pfig reveal">
-        <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/pines.webp"><img src="assets/in-praise-of-shadows/pines.jpg" width="1520" height="711" loading="eager" decoding="async" alt="A 16th-century Japanese ink-on-paper screen: a few pine trees half-dissolved in mist, with most of the surface left as empty paper."></picture>
-        <figcaption>Hasegawa Tohaku, <em>Pine Trees</em>, about 1595. Tokyo National Museum. Public domain.</figcaption>
+        <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/pines.webp"><img src="assets/in-praise-of-shadows/pines.jpg" width="1520" height="711" loading="eager" decoding="async" alt="The right-hand six-panel Pine Trees screen, with dark and faint pine trunks separated by large areas of pale paper."></picture>
+        <figcaption>Hasegawa Tohaku, <em>Pine Trees</em>, right-hand screen, 16th century. Ink on paper, Tokyo National Museum. <a href="https://www.tnm.jp/modules/r_exhibition/index.php?controller=item&amp;id=6470&amp;lang=en">Museum record</a>; <a href="https://commons.wikimedia.org/wiki/File:Hasegawa_Tohaku_-_Pine_Trees_(Sh%C5%8Drin-zu_by%C5%8Dbu)_-_right_hand_screen.jpg">public-domain reproduction</a>, resized.</figcaption>
       </figure>
-
-      <p>Hold that screen in mind while you read. A Western painting that left two-thirds of the canvas blank would look unfinished. Here the blank is doing most of the work, and a viewer raised on this aesthetic would call it the best part. By the end you should have a word for why.</p>
-
-      <blockquote class="u-pq">We find beauty not in the thing itself but in the patterns of shadows, the light and the darkness, that one thing against another creates.<cite class="u-pq-cite">Tanizaki, In Praise of Shadows (trans. Harper and Seidensticker)</cite></blockquote>
-
+      <p>In Tohaku's screen, unpainted paper suggests mist between the trees. Some trunks fade into it; others stand close. Much of the scene depends on what he has left bare.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE DARK (TANIZAKI) ============================ -->
     <section id="dark" class="sec" aria-labelledby="dark-h">
-      <div class="u-sechead"><p class="u-sechead-k">Tanizaki's half</p><h2 id="dark-h" class="u-sechead-h">Beauty that needs the dark</h2></div>
-
-      <p>Tanizaki's claim is that a lot of old Japanese things were made for dimness, and look wrong the moment you light them properly. His favorite example is lacquerware. A black lacquer bowl with a little gold worked into it looks gaudy and cheap under a ceiling light, like a souvenir. Put it in a dark room with one candle and it comes alive: the black goes deep and bottomless, and the gold catches the single moving flame and seems to flicker on its own. It was designed for exactly that, and we have lit it wrong for a century.</p>
-
-      <blockquote class="u-pq">Darkness is an indispensable element of the beauty of lacquerware.<cite class="u-pq-cite">Tanizaki, In Praise of Shadows</cite></blockquote>
-
+      <div class="u-sechead"><p class="u-sechead-k">Tanizaki</p><h2 id="dark-h" class="u-sechead-h">What the light reveals, and removes</h2></div>
+      <p>Tanizaki's lacquer passage begins with a restaurant that has switched from candles to electric lamps after customers complained. He asks for a candlestand. In that light, he can enjoy the bowls again. The decoration appears in portions, as the flame picks up one patch of gold and leaves another hidden.</p>
+      <blockquote class="u-pq">Darkness is an indispensable element of the beauty of lacquerware.<cite class="u-pq-cite">Tanizaki, <em>In Praise of Shadows</em>, trans. Harper and Seidensticker, p. 13</cite></blockquote>
       <figure class="afig reveal">
-        <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/lacquer.webp"><img src="assets/in-praise-of-shadows/lacquer.jpg" width="1400" height="1050" loading="lazy" decoding="async" alt="A black lacquer writing box with a woodcutter and trees rendered in gold, against a dark ground."></picture>
-        <figcaption>A gold-on-black lacquer writing box by Ogata Korin, early 1700s. Under a flat modern light it reads as ornament. By a single flame the gold is meant to be the only thing you see. (The Met, public domain.)</figcaption>
+        <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/lacquer.webp"><img src="assets/in-praise-of-shadows/lacquer.jpg" width="1400" height="1050" loading="lazy" decoding="async" alt="A black lacquer writing box with a gold hillside and an inlaid woodcutter carrying a bundle."></picture>
+        <figcaption><a href="https://www.metmuseum.org/art/collection/search/58334"><em>Writing Box with Woodcutter</em></a>, 19th century, The Met, 58.169a, b. Black and gold lacquer with mother-of-pearl inlay. Museum photograph, public domain, resized.</figcaption>
       </figure>
-
-      <p>From there he generalizes, and it is the line the whole essay turns on. The beauty was never really in the object. It was in the play of light and dark across it, the gradient from the lit edge into the black, the thing seen against its own shadow. Take the shadow away with an even, shadowless light and you have not revealed the beauty. You have deleted it.</p>
-
-      <p>He pushes this further than you expect, and this is where readers either fall for the essay or put it down. He spends real, loving pages on the traditional Japanese toilet, a small wooden room set apart from the house, in shadow, near a window onto a garden. He means it.</p>
-
-      <blockquote class="u-pq">Of all the elements of Japanese architecture, the toilet is the most aesthetic.<cite class="u-pq-cite">Tanizaki, In Praise of Shadows</cite></blockquote>
-
-      <p>It sounds like a joke, and he plays it a little for laughs, but the point under it is the serious one. Beauty for Tanizaki is most at home in the humblest, dimmest, most overlooked place, not the showpiece. The same instinct runs through his taste for old things over new ones. Where a Western host might be embarrassed by a tarnished spoon or a darkened beam, Tanizaki finds the best part of the object right there, in the film that handling and age and a little grime have left on it.</p>
-
-      <blockquote class="u-pq">We do love things that bear the marks of grime, soot, and weather, and we love the colors and the sheen that call to mind the past that made them.<cite class="u-pq-cite">Tanizaki, In Praise of Shadows</cite></blockquote>
-
-      <p>A new thing is loud and a little stupid. A thing that has been used and held and left to age has a quiet to it, what he calls a pensive luster, and the West keeps polishing that quiet off in the name of looking clean. The essay turns sad near the end, because Tanizaki knows which way history is going. The bright light has already won.</p>
-
-      <blockquote class="u-pq">So benumbed are we nowadays by electric lights that we have become utterly insensitive to the evils of excessive illumination.<cite class="u-pq-cite">Tanizaki, In Praise of Shadows</cite></blockquote>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">the move</p><p class="u-callout-body">Notice that every fix Tanizaki wants is a subtraction. Not a brighter bulb or a finer object, but less light, an older thing, a darker room. The Western reflex toward beauty is to add: more light, more polish, more detail. His is to take away until what is left can be felt.</p></aside>
-
+      <p>He makes a similar case for tarnish. A darkened metal surface records years of use; polishing it removes something he values. He even admits that the celebrated sheen of age includes accumulated dirt. The traditional toilet he praises must be absolutely clean, as well as quiet and dim.</p>
+      <p>The toilet is a small wooden room near a garden, apart from the main building. Tanizaki describes hearing rain and seeing leaves from it. Then he admits the difficulties: the walk is inconvenient at night, the room is cold, and wood is hard to keep clean in an ordinary household. His own house has a flush toilet.</p>
+      <p>Tanizaki knows what makes this room possible. In a temple, there is room to set it apart and few people using it; everyone helps with the cleaning. In a crowded household, keeping wood clean is harder. He wants modern fixtures designed with more consideration for the rooms they occupy.</p>
+      <p>His larger claim is that imported equipment can reshape the art it serves. A writing tool influences handwriting; a bright stage changes the appearance of costumes. He goes as far as wondering whether Japanese science, developed independently, would have produced different physical principles. He admits he knows nothing about science. <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=9">Harper and Seidensticker edition, pp. 1-16 and 23-27</a></p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE TEA (OKAKURA) ============================ -->
     <section id="tea" class="sec" aria-labelledby="tea-h">
-      <div class="u-sechead"><p class="u-sechead-k">Okakura's half</p><h2 id="tea-h" class="u-sechead-h">The whole thing in a cup of tea</h2></div>
-
-      <p>Okakura set himself a harder task than Tanizaki. He wanted to hand a Western reader the entire aesthetic at once, and he bet the whole book on a single object: a bowl of tea. Not the drink, the ceremony. The slow, deliberate, half-religious Japanese practice of preparing and sharing tea in a bare little room, which by the 1500s had become the place where this whole sense of beauty was taught and kept.</p>
-
-      <blockquote class="u-pq">Teaism is a cult founded on the adoration of the beautiful among the sordid facts of everyday existence.<cite class="u-pq-cite">Okakura, The Book of Tea, ch. I</cite></blockquote>
-
-      <p>That is the gentle, anti-grand heart of it. Not beauty in the cathedral or the crown, but beauty found in an ordinary, even shabby, daily act, done with full attention. And then he gives the sentence that this whole post hangs on, the cleanest statement of the idea anyone has written. He is describing the cult of tea, and what it worships.</p>
-
-      <blockquote class="u-pq">It is essentially a worship of the Imperfect, as it is a tender attempt to accomplish something possible in this impossible thing we know as life.<cite class="u-pq-cite">Okakura, The Book of Tea, ch. I</cite></blockquote>
-
-      <p>A worship of the imperfect. Read that next to anything a Western museum says about beauty and you feel how far it is from us. The objects bear it out. A good tea bowl is handmade, often a little lopsided, plain in color, sometimes left rough where a factory would have smoothed it. The dark Raku bowls made for the ceremony are deliberately humble: thick, irregular, shaped by hand and not on a wheel. The irregularities are not flaws the potter failed to remove. They are the reason to own it.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">Okakura</p><h2 id="tea-h" class="u-sechead-h">The work behind a simple gathering</h2></div>
+      <p>Okakura calls his ideal <em>Teaism</em>. Tea becomes a way to bring aesthetic judgment into daily conduct, including the preparation of a room and the treatment of a guest. He connects it to Daoism, whose account of emptiness he draws on, and Zen Buddhism, which he presents as giving spiritual weight to ordinary work.</p>
+      <blockquote class="u-pq">It is essentially a worship of the Imperfect, as it is a tender attempt to accomplish something possible in this impossible thing we know as life.<cite class="u-pq-cite">Okakura, <em>The Book of Tea</em>, <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0001">chapter I</a></cite></blockquote>
+      <p>Okakura's tea room suggests modest means, but he says its materials and skilled carpentry can make it more expensive than an ordinary mansion. The old utensils are clean. A white linen napkin and bamboo dipper are conspicuously new.</p>
       <figure class="afig narrow reveal">
-        <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/tea-bowl.webp"><img src="assets/in-praise-of-shadows/tea-bowl.jpg" width="1100" height="1120" loading="lazy" decoding="async" alt="A black, thick-walled, slightly irregular Raku tea bowl on a plain ground."></picture>
-        <figcaption>A black Raku tea bowl, "Suehiro," from the studio of Chojiro, who first made these for the tea ceremony around 1580. Hand-shaped, uneven, plain. The unevenness is the value. (Tokyo National Museum, CC0.)</figcaption>
+        <picture><source type="image/webp" srcset="assets/in-praise-of-shadows/tea-bowl.webp"><img src="assets/in-praise-of-shadows/tea-bowl.jpg" width="1100" height="1120" loading="lazy" decoding="async" alt="Suehiro, a black-glazed Raku tea bowl with an uneven rim and a rounded body."></picture>
+        <figcaption><em>Suehiro</em>, black Raku tea bowl, studio of Chojiro, 16th to 17th century, Tokyo National Museum. <a href="https://artsandculture.google.com/asset/tea-bowl-with-black-glaze-known-as-suehiro-studio-of-chojiro-raku-ware-kuroraku-type/9AH-mSZ93XFFdA">Museum record</a>. Photograph by <a href="https://commons.wikimedia.org/wiki/File:Tea_bowl,_known_as_Suehiro,_studio_of_Chojiro,_Raku_ware,_Kuroraku_type,_Azuchi-Momoyama_to_Edo_period,_1500s-1600s_AD,_ceramic_-_Tokyo_National_Museum_-_Ueno_Park,_Tokyo,_Japan_-_DSC08889.jpg">Daderot</a>, 2018, <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>, resized.</figcaption>
       </figure>
-
-      <p>The room around the bowl follows the same rule. The tea-room is tiny, made of plain wood and paper and mud, built to look poor on purpose, and almost completely empty. Okakura gives it a set of names, and the one that matters here is the Abode of Vacancy. The emptiness is not a lack. He borrows an old Taoist idea to explain why.</p>
-
-      <blockquote class="u-pq">Vacuum is all potent because all containing. In vacuum alone motion becomes possible.<cite class="u-pq-cite">Okakura, The Book of Tea, ch. III</cite></blockquote>
-
-      <p>A cup is useful because of the hollow you can fill. A room is useful because of the space inside the walls, not the walls. Empty it out, and you make room for something to happen. So the tea-room keeps almost nothing in it, and what little it holds, a single flower, one hanging scroll, gets changed for each gathering, so it lands fresh instead of fading into the furniture. And the emptiness has a second job: it leaves space for you. The aesthetic deliberately under-fills, under-finishes, under-states, and hands the rest to the person looking.</p>
-
-      <blockquote class="u-pq">True beauty could be discovered only by one who mentally completed the incomplete.<cite class="u-pq-cite">Okakura, The Book of Tea, ch. IV</cite></blockquote>
-
-      <p>There is a story Okakura tells about Sen no Rikyu, the tea master who set most of these rules in the 1500s, that puts the whole sensibility in one image. Rikyu watched his son sweep and water the garden path until it was spotless, not a leaf left on the ground. Then he told the boy it still was not right, stepped into the garden himself, and shook a tree so a few leaves fell and scattered across the clean path. Scraps of the brocade of autumn. Spotless was dead. A little disorder, a few fallen leaves, made it alive and made it real.</p>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">same lesson, three sizes</p><p class="u-callout-body">The bowl, the room, and the swept path are the same idea at three scales. Leave it a little rough, a little bare, a little undone. Perfection is closed and finished and slightly dead. The imperfect thing is still open, still breathing, and still has room for you in it.</p></aside>
-
+      <p>Raku bowls are shaped by hand; this one has an uneven rim above a rounded body. Their development is associated with Chojiro and the tea master Sen no Rikyu in the late 16th century. <a href="https://asia.si.edu/explore-art-culture/collections/search/edanmdm%3Afsg_F1902.52/">Smithsonian's account of early Raku</a></p>
+      <p>Okakura gives the guest a job too. He criticizes collectors who admire a famous name or an old date without responding to the work. Understanding art takes effort, including a willingness to let an unfamiliar artist change your taste. Yet his standard remains personal: a great collection can consist of objects few other people know how to appreciate.</p>
+      <p>He wants tea to make refinement available beyond wealth and rank. His examples include expensive carpentry and rare objects, admired by guests with cultivated tastes. <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0004">Chapter IV</a>; <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0005">chapter V</a></p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE FIVE WORDS (GALLERY) ============================ -->
     <section id="words" class="sec" aria-labelledby="words-h">
-      <div class="u-sechead"><p class="u-sechead-k">The payoff</p><h2 id="words-h" class="u-sechead-h">Five words for things you have felt</h2></div>
-
-      <p>The reason this aesthetic feels foreign is partly that English never built the words for it. Japanese did. Here are the five the whole thing turns on. None of them is exotic once you have it; each names a feeling you have almost certainly had and had no handle for. Anchored, where the books anchor them.</p>
-
-      <!-- the interactive gallery (JS builds it from the cards below) -->
+      <div class="u-sechead"><p class="u-sechead-k">The reader</p><h2 id="words-h" class="u-sechead-h">Five scenes from the books</h2></div>
+      <p>Tanizaki records the compromises of his own house. Okakura tells stories about tea masters. His Rikyu anecdotes come centuries after the master's life; their dialogue is read here as part of Okakura's argument.</p>
       <div class="gal-wrap" hidden>
-        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a word"></div>
-        <div class="gal-frame" id="gal-frame" aria-live="polite"></div>
+        <div class="gal-chips" id="gal-chips" role="tablist" aria-label="Choose a scene"></div>
+        <div class="gal-frame" id="gal-frame" role="tabpanel" aria-live="polite"></div>
         <div class="gal-bar">
-          <button class="gal-nav" id="gal-prev" aria-label="Previous word">&lsaquo;</button>
+          <button class="gal-nav" id="gal-prev" aria-label="Previous scene">&lsaquo;</button>
           <span class="gal-pos" id="gal-pos"></span>
-          <button class="gal-nav" id="gal-next" aria-label="Next word">&rsaquo;</button>
-          <span class="gal-hint">tap a word, or use the arrow keys</span>
+          <button class="gal-nav" id="gal-next" aria-label="Next scene">&rsaquo;</button>
+          <span class="gal-hint">choose a scene, or use the arrow keys</span>
         </div>
       </div>
-
-      <!-- the five words, authored as plain cards (no-JS reading + the gallery source).
-           data-ta is the word's accent color. data-say is the pronunciation. -->
       <div class="tales" id="tales-data">
-
-        <article class="tale" data-tradition="wabi-sabi" data-place="the whole aesthetic" data-say="WAH-bee SAH-bee" style="--ta: var(--w-wabi)">
-          <p class="tale-k">Word one</p>
-          <h3 class="tale-h">wabi-sabi</h3>
-          <p class="tale-say">WAH-bee SAH-bee</p>
+        <article class="tale" data-tradition="Paper and glass" data-place="Tanizaki" style="--ta: var(--w-wabi)">
+          <p class="tale-k">Scene one</p><h3 class="tale-h">A compromise that spoils the paper</h3>
           <div class="tale-body">
-            <p>The big one, the umbrella over all the rest. The beauty of things that are imperfect, impermanent, and incomplete. A plain handmade cup with an uneven rim and a drip in the glaze, kept and used for fifty years, held as more beautiful than a flawless new one. It is the feeling, hard to argue anyone out of, that the worn and the slightly broken can be lovelier than the pristine.</p>
-            <p>Fair warning: neither book actually uses the word. Okakura says "the Imperfect" and "refined poverty"; Tanizaki never names it at all. Wabi-sabi is the label later writers put on what these two are circling. The thing is older than the word.</p>
+            <p>Building his house, Tanizaki wants paper sliding doors, or <em>shoji</em>, but worries about light and security. He puts glass outside and paper inside. The extra frame costs more; the glass spoils the softness he wanted from the paper. He wishes he had accepted glass from the start.</p>
+            <p>Elsewhere, he admits that an ordinary exposed bulb can look more natural than an elaborate disguise for it. His successful experiment is an electric brazier fitted into a traditional sunken hearth.</p>
           </div>
-          <p class="tale-lesson">It is essentially a worship of the Imperfect, as it is a tender attempt to accomplish something possible in this impossible thing we know as life.</p>
-          <p class="tale-src">Okakura, The Book of Tea, ch. I (where "it" is the cult of tea). Public domain.</p>
+          <p class="tale-src">Tanizaki, Harper and Seidensticker edition, <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=9">pp. 1-3</a>. Paraphrase.</p>
         </article>
-
-        <article class="tale" data-tradition="the shadow" data-place="Tanizaki, 1933" data-say="kage" style="--ta: var(--w-shadow)">
-          <p class="tale-k">Word two</p>
-          <h3 class="tale-h">the shadow</h3>
-          <p class="tale-say">kage</p>
+        <article class="tale" data-tradition="The soup bowl" data-place="Tanizaki" style="--ta: var(--w-shadow)">
+          <p class="tale-k">Scene two</p><h3 class="tale-h">The interval before a sip</h3>
           <div class="tale-body">
-            <p>Tanizaki's whole contribution: that beauty lives in shadow, not in the lit thing. The dark is not the absence of the show. The dark is the show. A gold screen breathes in candlelight and dies under a bulb; a face is lovelier half in shade; a room is built around its dark corners, not its bright ones.</p>
-            <p>Once you have this, you cannot unsee it. You start turning lamps off to make a room look better, and it works.</p>
+            <p>A lacquer soup bowl holds mild warmth against the palms. Lifting its lid reveals liquid that nearly merges with the bowl's dark interior. Tanizaki describes the pause before drinking, when warmth and rising vapor convey what the eye cannot quite distinguish.</p>
+            <p>His comparison with ceramic includes touch and sound: ceramic feels colder and clatters. The pause before a sip lets him attend to the food while it is still mostly hidden.</p>
           </div>
-          <p class="tale-lesson">We find beauty not in the thing itself but in the patterns of shadows, the light and the darkness, that one thing against another creates.</p>
-          <p class="tale-src">Tanizaki, In Praise of Shadows (trans. Harper and Seidensticker, 1977).</p>
+          <p class="tale-src">Tanizaki, Harper and Seidensticker edition, <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=22">pp. 14-15</a>. Paraphrase.</p>
         </article>
-
-        <article class="tale" data-tradition="the cup of tea" data-place="Okakura, 1906" data-say="cha-no-yu" style="--ta: var(--w-tea)">
-          <p class="tale-k">Word three</p>
-          <h3 class="tale-h">the cup of tea</h3>
-          <p class="tale-say">cha-no-yu, the way of tea</p>
+        <article class="tale" data-tradition="The tea room" data-place="Okakura" style="--ta: var(--w-tea)">
+          <p class="tale-k">Scene three</p><h3 class="tale-h">What gets left outside</h3>
           <div class="tale-body">
-            <p>This one is not a feeling at all. It is the practice that holds all the others in one place. The tea ceremony took the whole aesthetic, shadow, plainness, emptiness, the worn bowl, the passing moment, and turned it into something you do with your hands in a small bare room. The aesthetic made into a verb.</p>
-            <p>This is why Okakura could explain a civilization through tea. The ceremony is the aesthetic's school, where every rule above is practiced until it becomes taste.</p>
+            <p>In Okakura's description, a samurai leaves his sword beneath the eaves. Every guest bends to pass through the small entrance. Inside, the objects avoid duplication: living flowers shouldn't share the room with a flower painting, and a round kettle calls for an angular water pitcher.</p>
+            <p>The host chooses what receives attention and leaves the guest to complete the arrangement in imagination. Guests have already agreed on their order of precedence outside, before each of them stoops to enter.</p>
           </div>
-          <p class="tale-lesson">Teaism is a cult founded on the adoration of the beautiful among the sordid facts of everyday existence.</p>
-          <p class="tale-src">Okakura, The Book of Tea, ch. I. Public domain.</p>
+          <p class="tale-src">Okakura, <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0004">chapter IV, The Tea-Room</a>. Paraphrase of his account.</p>
         </article>
-
-        <article class="tale" data-tradition="ma, the empty" data-place="Okakura, 1906" data-say="ma" style="--ta: var(--w-ma)">
-          <p class="tale-k">Word four</p>
-          <h3 class="tale-h">ma, the meaningful empty space</h3>
-          <p class="tale-say">ma</p>
+        <article class="tale" data-tradition="The swept path" data-place="Okakura" style="--ta: var(--w-ma)">
+          <p class="tale-k">Scene four</p><h3 class="tale-h">The leaves come after the cleaning</h3>
           <div class="tale-body">
-            <p>The empty space that is doing work. The pause in the music, the bare wall, the silence someone leaves before answering, the blank two-thirds of that screen of pines. The West tends to treat empty space as nothing, space still to be filled. Ma treats it as the most active part of the whole, the thing that gives everything else room to be.</p>
-            <p>Leave the gap on purpose, and you make a place for motion, for attention, for the viewer to come in and finish it.</p>
+            <p>Rikyu's son Shoan has washed the steps and watered the garden. No leaf or twig remains on the path. Rikyu tells him the work still isn't right, then shakes a tree to scatter autumn leaves across it.</p>
+            <p>The leaves fall onto steps that have already been washed three times. Okakura has just insisted that a tea master know how to clean. The garden's apparent ease comes at the end of an hour of work.</p>
           </div>
-          <p class="tale-lesson">Vacuum is all potent because all containing. In vacuum alone motion becomes possible.</p>
-          <p class="tale-src">Okakura, The Book of Tea, ch. III, after the Tao Te Ching. Public domain.</p>
+          <p class="tale-src">Okakura, <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0004">chapter IV</a>. Paraphrase.</p>
         </article>
-
-        <article class="tale" data-tradition="mono no aware" data-place="the close of it" data-say="MOH-no no ah-WAH-reh" style="--ta: var(--w-aware)">
-          <p class="tale-k">Word five</p>
-          <h3 class="tale-h">mono no aware</h3>
-          <p class="tale-say">MOH-no no ah-WAH-reh</p>
+        <article class="tale" data-tradition="One flower" data-place="Okakura" style="--ta: var(--w-aware)">
+          <p class="tale-k">Scene five</p><h3 class="tale-h">A garden sacrificed to a flower</h3>
           <div class="tale-body">
-            <p>The gentle ache of things passing, and the strange fact that the passing is what makes them beautiful. Cherry blossoms are precious because they are gone in a week. A cup of tea among friends is lovely partly because this exact afternoon will never come again. It is not grief. It is a tender, almost grateful sadness, beauty and loss felt as the same thing.</p>
-            <p>This is the floor under all the rest. You prize the worn and the imperfect because you have made peace with the truth that nothing holds still, including you.</p>
+            <p>Hideyoshi hears of Rikyu's morning-glory garden and comes to see it. In Okakura's story, the garden has been cleared. One flower waits in the tea room, in a bronze vessel. Hideyoshi's anger gives way to admiration.</p>
+            <p>Earlier in the chapter, Okakura attacks the waste of cutting flowers for display. Here he defends their sacrifice to beauty. The cleared garden gives his example a cost that the single bloom in its vase can hide.</p>
           </div>
-          <p class="tale-lesson">Let us dream of evanescence, and linger in the beautiful foolishness of things.</p>
-          <p class="tale-src">Okakura, The Book of Tea, ch. I, the closing line. Public domain.</p>
+          <p class="tale-src">Okakura, <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0006">chapter VI, Flowers</a>. His retelling and interpretation.</p>
         </article>
-
       </div>
-
-      <aside class="u-callout u-aside"><p class="u-callout-k">how they stack</p><p class="u-callout-body">They are not five separate ideas so much as one idea seen from five sides. Things pass (mono no aware), so the worn and unfinished are dearer than the perfect (wabi-sabi); the dark (the shadow) and the empty (ma) are where that beauty actually shows up; and the cup of tea is where you go to practice all of it. Pull any thread and the rest comes with it.</p></aside>
-
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE CONTRAST ============================ -->
     <section id="contrast" class="sec" aria-labelledby="contrast-h">
-      <div class="u-sechead"><p class="u-sechead-k">The whole thing, side by side</p><h2 id="contrast-h" class="u-sechead-h">Two ways of looking</h2></div>
-
-      <p>Laid out flat, the two aesthetics line up as near-opposites, point for point. Read down either column and you get a coherent taste, just two of them, pointed different ways.</p>
-
+      <div class="u-sechead"><p class="u-sechead-k">Where they meet</p><h2 id="contrast-h" class="u-sechead-h">Two arguments about surroundings</h2></div>
+      <p>Both writers think the setting helps make the beauty. Tanizaki keeps asking what a material needs. Okakura asks how a host and guest can make an occasion worth their attention.</p>
       <table class="u-table">
-        <thead><tr><th>The Western reflex</th><th>The other eye</th></tr></thead>
+        <thead><tr><th>Tanizaki</th><th>Okakura</th></tr></thead>
         <tbody>
-          <tr><td>bright, even light</td><td>shadow and half-light</td></tr>
-          <tr><td>the brand-new, the spotless</td><td>the worn, the used, the aged</td></tr>
-          <tr><td>symmetry, the matched pair</td><td>asymmetry, the odd one out</td></tr>
-          <tr><td>finished, complete, resolved</td><td>unfinished, left for you to complete</td></tr>
-          <tr><td>full, ornamented, more</td><td>empty, bare, less</td></tr>
-          <tr><td>built to last, permanent</td><td>made to pass, impermanent</td></tr>
+          <tr><td>Light changes the appearance of a material.</td><td>Arrangement directs the guest's attention.</td></tr>
+          <tr><td>Age gives objects a surface he wants to keep.</td><td>Age alone cannot make an artwork worth admiring.</td></tr>
+          <tr><td>New equipment may suit an old room badly.</td><td>Copying an old style can suppress living judgment.</td></tr>
+          <tr><td>He hopes literature can preserve a disappearing atmosphere.</td><td>He wants artistic practice to shape present conduct.</td></tr>
         </tbody>
       </table>
-
-      <p>Neither column is right. A cathedral and a tea hut are both trying to make you feel something, and both succeed. But most of us were handed only the left column and told it was just "good taste," with no idea a whole other column existed. Having the right one in view is the entire gift of these two books. It does not replace your taste. It doubles it.</p>
-
+      <p>Tanizaki praises gold and richly woven theatrical costumes along with dark wood. Okakura values fresh white implements in an aged room and warns against slavish copying of the past.</p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE HONEST PART ============================ -->
     <section id="honest" class="sec" aria-labelledby="honest-h">
-      <div class="u-sechead"><p class="u-sechead-k">Where to push back</p><h2 id="honest-h" class="u-sechead-h">Be a little skeptical here</h2></div>
-
-      <p>This is a seductive idea, and seductive ideas need a cold look. Three places to keep your guard up.</p>
-
-      <div class="debateA">
-        <div class="debateA-claim"><span class="debateA-kicker">The clean story</span><p class="debateA-text">The serene East loves shadow and impermanence; the brash West loves light and permanence. Two civilizations, two souls, neatly opposed, and you can sort any object into one bin or the other.</p></div>
-        <div class="debateA-truth"><span class="debateA-kicker">The messier truth</span><p class="debateA-text">That split is too clean, and both authors had a thumb on the scale. Okakura wrote in 1906, right after Japan beat Russia, half-selling Asia's spiritual depth to a West that had the gunboats. Tanizaki wrote in 1933 as Japan modernized at a sprint. "The Japanese see this, the West sees that" is a useful lens and a real overstatement. The West has always loved a ruin, an antique, a pair of beaten-in jeans; Japan builds plenty of floodlit glass towers. This is an aesthetic, available to anyone, not a national essence.</p></div>
-      </div>
-
-      <p>Second, it romanticizes a hard past. The world of shadows was also genuinely cold, and dim for bad reasons as often as good ones, and that beautifully shadowed house kept women out of sight in ways worth not getting misty about. Tanizaki, to his credit, half-knows this. His essay is shot through with self-mockery, and he admits more than once that he would not actually give up his heater or his modern comforts to live in the gloom he is praising. Take it as a mood he is testing, not a command to go off the grid.</p>
-
-      <p>Third, the marketing problem. "Wabi-sabi" has become a lifestyle word, stamped on anything beige, lumpy, and overpriced, a candle and a linen napkin sold back to you as ancient wisdom. The real thing is a demanding, Zen-rooted discipline about mortality and attention, not a color palette. If a version of this only ever asks you to buy something, it has been hollowed out.</p>
-
-      <aside class="u-callout"><p class="u-callout-k">the honest version</p><p class="u-callout-body">Take it as a real, coherent, centuries-old way of seeing that the rest of us were never taught, and that genuinely makes more of the world beautiful once you learn it. Not a racial soul, not a self-help mood, not a thing to purchase. A second pair of eyes, free, already yours to use.</p></aside>
-
+      <div class="u-sechead"><p class="u-sechead-k">The limits</p><h2 id="honest-h" class="u-sechead-h">Whose taste, and whose past?</h2></div>
+      <p>Both essays exaggerate national differences. Okakura rebukes Western readers for calling Japan civilized once it can kill on Manchurian battlefields. He also admits that Asian writers have invented absurd stories about Westerners, and names Shakespeare among those who understand suggestion. His attack is an attempt to change an unequal conversation, though his account of an exhausted China preserving little of its earlier culture is itself a sweeping dismissal. <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0001">Chapters I</a> and <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0002">II</a></p>
+      <p>Tanizaki speculates that skin color helps explain whole peoples' tastes. He imagines white people finding people of color visually disruptive at a gathering and uses that imagined reaction to explain racial exclusion. He then uses this racial theory to explain a Japanese preference for muted colors and shadows. <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=39">Pp. 31-33</a></p>
+      <p>His account of women also treats concealment as a means of producing beauty. He compares a woman whose body is hidden by clothes and darkness to lacquerware, leaving her face as the visible object of admiration. The celebrated sentence about beauty arising between light and shadow occurs within this discussion. <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=36">Pp. 28-30</a></p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ THE THREAD ============================ -->
     <section id="thread" class="sec" aria-labelledby="thread-h">
-      <div class="u-sechead"><p class="u-sechead-k">The thread</p><h2 id="thread-h" class="u-sechead-h">The same idea, about people</h2></div>
-
-      <p>There is an old Japanese way of fixing a broken bowl. You do not glue the pieces back and hide the seams. You fill the cracks with gold, so the break becomes a vein of light running through the thing, and the mended bowl is worth more than it was before it broke. It is called kintsugi, and it is wabi-sabi you can hold in your hand: the flaw made into the most valuable part.</p>
-
-      <p>That bowl is also where the other post on this shelf begins. <a class="key" href="spirituality-of-imperfection.html">The Spirituality of Imperfection</a> takes the same instinct and turns it on a person. Across a dozen traditions it finds one idea repeating: that to be human is to be imperfect, and the cracks are not a problem to fix before the real life can start. The cracks are where it starts. Tanizaki and Okakura say it about a bowl and a room. Kurtz says it about a soul. It is one move, made twice: stop hiding the flaw, stop scrubbing for a perfection that was never the point, and look at the cracked, worn, passing thing again.</p>
-
-      <p>Which is why this belongs in a books series at all, and not just a design blog. It started as a quarrel about lamps and lacquer, and it turns out to be a quiet argument about how to be at peace with a world, and a self, that will not hold still and will not come out perfect. The cherry blossom is worth more because it falls. So, maybe, is everything else.</p>
-
-      <aside class="u-callout u-move"><p class="u-callout-k">the whole thing in a line</p><p class="u-callout-body">Beauty does not live in the bright, the new, the flawless, and the permanent. It lives in the shadow, the worn, the unfinished, the empty, and the passing, which is most of what there is, and all of what you are.</p></aside>
-
+      <div class="u-sechead"><p class="u-sechead-k">The endings</p><h2 id="thread-h" class="u-sechead-h">What these books leave unresolved</h2></div>
+      <p>Tanizaki ends by asking for a place in literature where the lost shadows might survive. Japan will continue to modernize; he hopes art can keep an atmosphere that its buildings are losing. His final proposal is a room made of words. <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf#page=50">P. 42</a></p>
+      <p>Okakura closes with Rikyu's final gathering before his forced suicide. In his retelling, Hideyoshi suspects the tea master of plotting to poison him. Rikyu serves his guests, gives away the utensils, and keeps the bowl. He breaks it so that no one can drink from it again. Okakura describes a beautifully composed death at the command of a ruler. The host's judgment has shaped every object in the room, but cannot secure his life. <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm#link2H_4_0007">Chapter VII</a></p>
       <hr class="u-divider">
     </section>
 
-    <!-- ============================ SOURCES ============================ -->
     <section id="sources" class="sec" aria-labelledby="sources-h">
-      <div class="u-sechead"><p class="u-sechead-k">The fine print</p><h2 id="sources-h" class="u-sechead-h">Sources, and a note on the quotes</h2></div>
-      <p class="src-note">A distillation of two short books, told in my own words; the ideas are theirs. Okakura's <i>The Book of Tea</i> is public domain and is quoted directly from the Project Gutenberg text, by chapter. Tanizaki's <i>In Praise of Shadows</i> survives in English only in copyrighted translations, so its quotes are kept short and used for comment and study, in the standard Harper and Seidensticker translation. One famous line going around, "Were it not for shadows, there would be no beauty," could not be verified as Tanizaki's actual words and is left out. Note too that neither author writes "wabi-sabi"; it is the modern label for what they describe. No em dashes; a couple of the quoted originals use one, and it is shown as a comma with no other change.</p>
+      <div class="u-sechead"><p class="u-sechead-k">Editions and evidence</p><h2 id="sources-h" class="u-sechead-h">Sources and reading notes</h2></div>
+      <p class="src-note">The explanations are paraphrases and interpretations. The two displayed quotations preserve the editions' wording and punctuation. Tanizaki is read in Harper and Seidensticker's 1977 translation. Okakura wrote in English; his religious history and tea anecdotes are read as his account, with independent museum sources used for the objects.</p>
       <details class="u-collapse">
-        <summary class="u-collapse-s">The full list, 12 sources</summary>
+        <summary class="u-collapse-s">Texts, objects, and context</summary>
         <ol class="u-collapse-list">
-        <li><b>Kakuzo Okakura.</b> <i>The Book of Tea.</i> New York: Fox, Duffield, 1906. The source for Teaism, the worship of the imperfect, the vacuum, the incomplete, the tea-room, and the closing line on evanescence. Quoted from the public-domain text. <a href="https://www.gutenberg.org/ebooks/769">Project Gutenberg #769</a></li>
-        <li><b>Junichiro Tanizaki.</b> <i>In Praise of Shadows</i> (In'ei Raisan, 1933). Trans. Thomas J. Harper and Edward G. Seidensticker. New Haven: Leete's Island Books, 1977. The source for shadow, lacquer, the toilet, grime and patina, and the electric-light lament. Translation in copyright; quoted briefly for study. <a href="https://en.wikipedia.org/wiki/In_Praise_of_Shadows">overview</a></li>
-        <li><b>The thesis line.</b> "We find beauty not in the thing itself but in the patterns of shadows..." is the most-quoted sentence of the essay and the safest-attested in the Harper and Seidensticker text. The widely shared follow-on, "Were it not for shadows, there would be no beauty," is treated here as unverified and not used.</li>
-        <li><b>Translations of Tanizaki.</b> Besides Harper and Seidensticker (1977), there is a later illustrated translation by Gregory Starr (Sora Books, 2017). Quote aggregators silently mix the two; several "famous" wordings online are Starr's. Wording here follows the 1977 text. <a href="https://en.wikipedia.org/wiki/In_Praise_of_Shadows">translation history</a></li>
-        <li><b>Sen no Rikyu and the tea ceremony.</b> The 16th-century tea master who fixed the aesthetic of wabi-cha (the simple, rustic style). The swept-garden story and the line about completing the incomplete are Okakura's, ch. IV. <a href="https://en.wikipedia.org/wiki/Sen_no_Riky%C5%AB">background</a></li>
-        <li><b>wabi-sabi, the term.</b> Neither essay uses it; it is the standard modern name for the aesthetic of imperfection and impermanence. Leonard Koren's <i>Wabi-Sabi for Artists, Designers, Poets and Philosophers</i> (1994) is the common English starting point. <a href="https://en.wikipedia.org/wiki/Wabi-sabi">overview</a></li>
-        <li><b>ma.</b> The Japanese concept of meaningful negative space or interval, in design, music, and architecture. Okakura grounds the idea in ch. III in the Tao Te Ching's image of the useful empty cup and room. <a href="https://en.wikipedia.org/wiki/Ma_(negative_space)">overview</a></li>
-        <li><b>mono no aware.</b> "The pathos of things," the bittersweet awareness of impermanence, named and developed by the scholar Motoori Norinaga in the 1700s. <a href="https://en.wikipedia.org/wiki/Mono_no_aware">overview</a></li>
-        <li><b>Okakura in context.</b> Okakura Kakuzo (Tenshin), 1863 to 1913, art curator and cultural diplomat; wrote <i>The Book of Tea</i> in English in 1906, in the years after the Russo-Japanese War, partly to argue for Asian aesthetic depth to a Western audience. <a href="https://en.wikipedia.org/wiki/Okakura_Kakuz%C5%8D">biography</a></li>
-        <li><b>The pines.</b> Hasegawa Tohaku, <i>Pine Trees</i> (Shorin-zu byobu), ink on paper, about 1595, a National Treasure in the Tokyo National Museum. The emblem of ma. Image public domain, via <a href="https://commons.wikimedia.org/wiki/File:Hasegawa_Tohaku_-_Pine_Trees_(Sh%C5%8Drin-zu_by%C5%8Dbu)_-_right_hand_screen.jpg">Wikimedia Commons</a>.</li>
-        <li><b>The objects.</b> Lacquer writing box (suzuribako) with a woodcutter, attributed to Ogata Korin, early 18th century, The Met (public domain). Black Raku tea bowl "Suehiro," studio of Chojiro, Tokyo National Museum (CC0), via <a href="https://commons.wikimedia.org/wiki/Category:Raku_ware">Wikimedia Commons</a>. Korin's box: <a href="https://www.metmuseum.org/art/collection/search/45192">The Met</a>.</li>
-        <li><b>The thread.</b> The kintsugi image and the human version of this idea are the subject of <a href="spirituality-of-imperfection.html">The Spirituality of Imperfection</a> on this site (Kurtz and Ketcham, 1992), which opens on a gold-mended bowl. Leonard Cohen's song "Anthem" (1992) turns on the same thought, that a break in a thing can be the very place light reaches in. <a href="https://en.wikipedia.org/wiki/Kintsugi">kintsugi</a></li>
+          <li><b>Tanizaki.</b> <em>In Praise of Shadows</em>, Leete's Island Books, 1977, trans. Thomas J. Harper and Edward G. Seidensticker. <a href="https://neeta.works/on-graphic-design/readings/Tanizaki-In_Praise_of_Shadows.pdf">Scanned edition</a>; <a href="https://www.penguin.co.uk/books/355259/in-praise-of-shadows-by-junichiro-tanizaki/9780099283577">publisher's current edition</a>. Page links use the scan; page numbers in the prose refer to the printed book. Harper's afterword dates original publication to December 1933 and January 1934.</li>
+          <li><b>Translation and quotation.</b> The lacquer quotation is on p. 13. The frequently circulated sentence beginning &ldquo;Were it not for shadows&rdquo; is present on p. 30 of this edition; its wording is verified against the scan. <a href="https://ci.nii.ac.jp/ncid/BD03566987">Gregory Starr's translation</a> was published by Sora Books in 2017. It is a separate English text.</li>
+          <li><b>Okakura.</b> <em>The Book of Tea</em>, 1906. <a href="https://www.gutenberg.org/files/769/769-h/769-h.htm">Public-domain text</a>; <a href="https://en.wikisource.org/wiki/The_Book_of_Tea">1906 edition with scans</a>. Chapter I defines Teaism; III supplies his Daoist and Zen account; IV describes the room and swept path; V discusses appreciation; VI includes the morning glory; VII closes with Rikyu.</li>
+          <li><b>Historical context.</b> <a href="https://asia-archive.si.edu/press-release/freer-and-tea-one-hundred-years-of-the-book-of-tea-opens-nov-19/">Smithsonian on Okakura and tea</a>; <a href="https://www.tnm.jp/modules/r_exhibition/index.php?controller=item&amp;id=6913&amp;lang=en">Tokyo National Museum on tea's changing social roles</a>. Tea involved imported treasures and elite patronage as well as the austere practice emphasized here.</li>
+          <li><b>The images.</b> The three works illustrate this post; neither essay discusses these particular objects. Captions link the records and image credits. The Met dates its box to the 19th century while retaining an attribution to Ogata Korin (1658 to 1716); the record leaves that inconsistency unresolved. The bowl photograph is Daderot's CC0 image.</li>
         </ol>
       </details>
     </section>
@@ -471,7 +345,7 @@
   <!-- endcap nav, generated by tools/gen-post-nav.mjs; the data lives in tools/gen-hubs.mjs -->
   <nav class="u-next" aria-label="Keep reading">
     <p class="u-next-k">Next in Power, Story, and Love</p>
-    <p class="u-next-t"><a class="u-next-link" href="odyssey.html">The Odyssey, the Long Way Home</a></p>
+    <p class="u-next-t"><a class="u-next-link" href="odyssey.html">The Odyssey</a></p>
     <p class="u-next-more"><a href="power-story-love.html">All 7 posts in Power, Story, and Love</a><span class="u-next-sep">&middot;</span><a href="/">Home</a></p>
   </nav>
   <footer class="site-footer">
@@ -482,6 +356,6 @@
 
   <script src="js/main.js"></script>
   <script src="js/backtotop.js"></script>
-  <script src="js/in-praise-of-shadows.js" defer></script>
+  <script src="js/in-praise-of-shadows.js?v=20261003-reading" defer></script>
 </body>
 </html>

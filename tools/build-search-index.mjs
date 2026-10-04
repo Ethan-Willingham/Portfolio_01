@@ -16,11 +16,17 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { runInNewContext } from 'node:vm';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CARD_CAP = 3600;      // max chars of text kept per section
 const SECTIONS_CAP = 32;    // max sections kept per post
 const POST_TEXT_CAP = 46000;// hard ceiling on total text per post
+
+const READER_NOTES = {
+  'art-of-war.html': ['js/aow-notes.js', 'AOW_NOTES'],
+  'kama-sutra.html': ['js/kama-notes.js', 'KAMA_NOTES'],
+};
 
 // ---- tiny HTML helpers ------------------------------------------------------
 const ENT = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ', middot:'·',
@@ -101,6 +107,19 @@ function buildSections(post, file) {
     for (let i = 0; i < heads.length; i++) {
       const raw = html.slice(heads[i].end, i + 1 < heads.length ? heads[i + 1].at : html.length);
       pushSection(heads[i].head, heads[i].id, raw);
+    }
+  }
+  // These readers render their explanations from local data. Include every
+  // passage, with its existing numeric hash, so search can reach the explanation
+  // rather than stopping at the introduction in the static HTML shell.
+  const reader = READER_NOTES[post.url];
+  if (reader) {
+    const context = { window: {} };
+    runInNewContext(readFileSync(join(ROOT, reader[0]), 'utf8'), context, { timeout: 1000 });
+    for (const [id, note] of Object.entries(context.window[reader[1]])) {
+      const explanations = (note.splits || []).map((split) => split.note || '').join(' ');
+      const plain = Array.isArray(note.plain) ? note.plain.join(' ') : note.plain;
+      pushSection(note.title, id, [note.gist, explanations, note.read, plain].filter(Boolean).join(' '));
     }
   }
 }

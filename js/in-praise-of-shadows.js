@@ -1,8 +1,8 @@
-/* In Praise of Shadows: the five-words gallery.
+/* In Praise of Shadows: five scenes from the two essays.
    Reads the authored .tale cards in the page, builds a one-at-a-time
-   gallery with word chips, arrow buttons, and keyboard support.
+   gallery with scene buttons, arrow buttons, and keyboard support.
    No dependencies. Without JS the .tale cards read as a plain list.
-   (Cloned from js/frankl.js; same shell, same pattern.) */
+   */
 (function () {
   'use strict';
 
@@ -16,7 +16,7 @@
           if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
         });
       }, { rootMargin: '0px 0px -10% 0px' });
-      reveals.forEach(function (el) { io.observe(el); });
+      reveals.forEach(function (el) { io.observe(el); el.classList.add('will-reveal'); });
     } else {
       reveals.forEach(function (el) { el.classList.add('in'); });
     }
@@ -52,6 +52,7 @@
   var pos = document.getElementById('gal-pos');
   var prev = document.getElementById('gal-prev');
   var next = document.getElementById('gal-next');
+  if (!frame || !chipsBox || !pos || !prev || !next) return;
   var cur = 0;
 
   var chips = words.map(function (d, i) {
@@ -74,7 +75,7 @@
       '<h3 class="gal-card-h">' + d.title + '</h3>' +
       (d.say ? '<p class="gal-card-say">' + d.say + '</p>' : '') +
       '<div class="gal-card-body">' + d.body + '</div>' +
-      '<p class="gal-lesson"><span class="lk">the line</span>' + d.lesson + '</p>' +
+      (d.lesson ? '<p class="gal-lesson">' + d.lesson + '</p>' : '') +
       '<p class="gal-src">' + d.src + '</p>';
     pos.innerHTML = '<b>' + (cur + 1) + '</b> / ' + words.length;
     prev.disabled = cur === 0;
@@ -105,6 +106,7 @@
     go(cur + (e.key === 'ArrowLeft' ? -1 : 1));
   });
 
-  wrap.hidden = false;
   render();
+  wrap.hidden = false;
+  wrap.parentElement.classList.add('gal-ready');
 })();

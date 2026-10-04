@@ -1,9 +1,7 @@
 /* ============================================================
    The Kamasutra, side by side.
-   Interactive explorer: step through the keystone passages, read
-   the Sanskrit source, then compare the 1883 Burton translation
-   against the 2002 Doniger and Kakar one, with a plain-language
-   breakdown of what the passage says and where the two split.
+   Selected passages with editorial explanations, a Sanskrit
+   disclosure and excerpts from two English editions.
 
    Data:  window.KAMA        (js/kama-data.js)  -> {translators, order, passages}
    Notes: window.KAMA_NOTES  (js/kama-notes.js) -> per-passage commentary
@@ -18,9 +16,7 @@
   function passage(n) { return KAMA.passages[n - 1]; }
   function meta(k) { return KAMA.translators[k] || { name: k, year: null, n: 0 }; }
 
-  /* two eras for the colored left border: the lone Victorian
-     (Burton, 1883) against the modern scholarship (Doniger and
-     Kakar, 2002). The split between those columns is the page. */
+  /* Edition-era colors are visual identifiers, not quality grades. */
   function era(y) {
     if (!y) return '';
     return y < 1950 ? 'early' : 'modern';
@@ -51,13 +47,13 @@
 
     $('kama-pno').textContent = 'Passage ' + cur + ' / ' + N;
     $('kama-title').textContent = note.title ? note.title : '';
-    $('kama-count').innerHTML = '<b>' + sel.length + '</b> translations';
+    $('kama-count').innerHTML = '<b>' + sel.length + '</b> editions';
 
     /* source */
     $('kama-source').innerHTML =
       '<p class="kama-sa-k">Book ' + p.book +
-      ' <span>&middot; ' + esc(p.bookTitle) + ' &middot; Kamasutra ' + esc(p.ref) + '</span></p>' +
-      '<p class="kama-sa" lang="sa">' + esc(p.iast || '') + '</p>' +
+      ' <span>&middot; ' + esc(p.bookTitle) + ' &middot; Kamasutra ' + esc(p.sourceRef || p.ref) + '</span></p>' +
+      '<p class="kama-sa" lang="sa">' + textHtml(p.iast || '') + '</p>' +
       (p.gloss ? '<p class="kama-gloss-cap">' + esc(p.gloss) + '</p>' : '');
 
     /* commentary */
@@ -67,9 +63,11 @@
     var out = sel.map(function (v) {
       var m = meta(v.k);
       return '<article class="kama-v kama-' + era(m.year) + '">' +
-        '<header class="kama-vh"><span class="kama-vn">' + esc(m.name) + '</span>' +
+        '<header class="kama-vh"><span class="kama-vn"><a href="' + esc(m.url) + '" title="' + esc(m.src) + '">' + esc(m.name) + '</a></span>' +
         '<span class="kama-vy">' + (m.year || '') + '</span></header>' +
-        '<div class="kama-vt">' + textHtml(v.t) + '</div></article>';
+        '<div class="kama-vt">' + textHtml(v.t) + '</div>' +
+        '<p class="kama-v-cite">' + esc(v.ref || p.ref) +
+        (v.page ? ' · <a href="' + esc(v.url) + '">' + esc(v.pageLabel || ('p. ' + v.page)) + '</a>' : '') + '</p></article>';
     }).join('');
     $('kama-versions').innerHTML = out;
 
@@ -81,27 +79,10 @@
   }
 
   function noteHtml(note) {
-    if (!note.gist && !(note.splits && note.splits.length)) {
-      return '<p class="kama-note-soon">A plain-language breakdown of this passage is on the way. For now, compare the two translations below.</p>';
-    }
-    var h = '<div class="kama-note-card">';
-    if (note.gist) {
-      h += '<p class="kama-note-k">What it says</p><p class="kama-note-gist">' +
-        note.gist + '</p>';
-    }
-    if (note.splits && note.splits.length) {
-      h += '<p class="kama-note-k">Where the translators split</p>';
-      h += '<dl class="kama-splits">' + note.splits.map(function (s) {
-        return '<dt>' + (s.sa ? '<span lang="sa">' + esc(s.sa) + '</span> ' : '') +
-          (s.gloss ? '<span class="kama-gloss">' + esc(s.gloss) + '</span>' : '') +
-          '</dt><dd>' + s.note + '</dd>';
-      }).join('') + '</dl>';
-    }
-    if (note.read) {
-      h += '<p class="kama-note-k">My read</p><p class="kama-note-read">' + note.read + '</p>';
-    }
-    h += '</div>';
-    return h;
+    var paragraphs = note.plain || [];
+    if (!paragraphs.length) return '';
+    return '<div class="kama-note-card"><p class="kama-note-k">In plain English</p>' +
+      paragraphs.map(function (p) { return '<p class="kama-note-gist">' + p + '</p>'; }).join('') + '</div>';
   }
 
   /* ---------- navigation ---------- */
@@ -118,7 +99,11 @@
     $('kama-next').onclick = function () { go(cur + 1); };
 
     var pop = $('kama-gridpop');
-    $('kama-jump').onclick = function () { pop.hidden = !pop.hidden; };
+    function closeIndex() { pop.hidden = true; $('kama-jump').setAttribute('aria-expanded', 'false'); }
+    $('kama-jump').onclick = function () {
+      pop.hidden = !pop.hidden;
+      $('kama-jump').setAttribute('aria-expanded', String(!pop.hidden));
+    };
 
     /* the jump list: one row per passage, book + title */
     KAMA.passages.forEach(function (p, i) {
@@ -127,7 +112,7 @@
       b.setAttribute('data-n', n);
       b.innerHTML = '<span class="kama-jrow-ch">Bk ' + p.book + '</span>' +
         '<span class="kama-jrow-t">' + esc(note.title || ('Passage ' + n)) + '</span>';
-      b.onclick = (function (k) { return function () { pop.hidden = true; go(k, 'scroll'); }; })(n);
+      b.onclick = (function (k) { return function () { closeIndex(); go(k, 'scroll'); }; })(n);
       pop.appendChild(b);
     });
 
@@ -135,7 +120,7 @@
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.key === 'ArrowLeft') { go(cur - 1); }
       else if (e.key === 'ArrowRight') { go(cur + 1); }
-      else if (e.key === 'Escape') { pop.hidden = true; }
+      else if (e.key === 'Escape') { closeIndex(); }
     });
     window.addEventListener('hashchange', function () {
       var n = parseInt(location.hash.slice(1), 10);

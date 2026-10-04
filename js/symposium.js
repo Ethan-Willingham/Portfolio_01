@@ -84,7 +84,7 @@
 
   /* ---------- scroll-spy ---------- */
   function spy() {
-    var line = bar.getBoundingClientRect().bottom + 4;
+    var line = bar.getBoundingClientRect().bottom + 16;
     var i = 0;
     for (var k = 0; k < stations.length; k++) {
       if (stations[k].getBoundingClientRect().top <= line) i = k;

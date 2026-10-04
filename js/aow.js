@@ -58,8 +58,8 @@
     $('aow-source').innerHTML =
       '<p class="aow-zh-k">Chapter ' + p.ch +
       ' <span>&middot; <span lang="zh">' + esc(p.chZh) + '</span> &middot; ' +
-      esc(p.chTitle) + ' &middot; received text, China, by ~4th c. BCE</span></p>' +
-      '<p class="aow-zh" lang="zh">' + esc(p.zh || '') + '</p>';
+      esc(p.chTitle) + ' &middot; <a href="' + esc(p.sourceUrl || '#sources-title') + '">' + esc(p.ref || '') + '</a> &middot; received text</span></p>' +
+      '<p class="aow-zh" lang="zh">' + textHtml(p.zh || '') + '</p>';
 
     /* commentary */
     $('aow-notes').innerHTML = noteHtml(note);
@@ -68,8 +68,9 @@
     var out = sel.map(function (v) {
       var m = meta(v.k);
       return '<article class="aow-v aow-' + era(m.year) + '">' +
-        '<header class="aow-vh"><span class="aow-vn">' + esc(m.name) + '</span>' +
+        '<header class="aow-vh"><span class="aow-vn"><a href="' + esc(m.url || '#sources-title') + '">' + esc(m.name) + '</a></span>' +
         '<span class="aow-vy">' + (m.year || '') + '</span></header>' +
+        '<p class="aow-vref">' + esc(v.loc || ('Chapter ' + p.ch + ', excerpt')) + '</p>' +
         '<div class="aow-vt">' + textHtml(v.t) + '</div></article>';
     }).join('');
     $('aow-versions').innerHTML = out;
@@ -83,23 +84,20 @@
 
   function noteHtml(note) {
     if (!note.gist && !(note.splits && note.splits.length)) {
-      return '<p class="aow-note-soon">A plain-language breakdown of this passage is on the way. For now, compare the renderings below.</p>';
+      return '<p class="aow-note-soon">No explanation is available for this selection.</p>';
     }
     var h = '<div class="aow-note-card">';
     if (note.gist) {
-      h += '<p class="aow-note-k">What it says</p><p class="aow-note-gist">' +
+      h += '<p class="aow-note-k">In plain English</p><p class="aow-note-gist">' +
         note.gist + '</p>';
     }
     if (note.splits && note.splits.length) {
-      h += '<p class="aow-note-k">Where the translators split</p>';
+      h += '<p class="aow-note-k">Translation notes</p>';
       h += '<dl class="aow-splits">' + note.splits.map(function (s) {
         return '<dt>' + (s.zh ? '<span lang="zh">' + esc(s.zh) + '</span> ' : '') +
           (s.gloss ? '<span class="aow-gloss">' + esc(s.gloss) + '</span>' : '') +
           '</dt><dd>' + s.note + '</dd>';
       }).join('') + '</dl>';
-    }
-    if (note.read) {
-      h += '<p class="aow-note-k">My read</p><p class="aow-note-read">' + note.read + '</p>';
     }
     h += '</div>';
     return h;
@@ -119,7 +117,10 @@
     $('aow-next').onclick = function () { go(cur + 1); };
 
     var pop = $('aow-gridpop');
-    $('aow-jump').onclick = function () { pop.hidden = !pop.hidden; };
+    $('aow-jump').onclick = function () {
+      pop.hidden = !pop.hidden;
+      $('aow-jump').setAttribute('aria-expanded', String(!pop.hidden));
+    };
 
     /* the jump list: one row per passage, chapter + title */
     AOW.passages.forEach(function (p, i) {
@@ -128,15 +129,15 @@
       b.setAttribute('data-n', n);
       b.innerHTML = '<span class="aow-jrow-ch">Ch ' + p.ch + '</span>' +
         '<span class="aow-jrow-t">' + esc(note.title || ('Passage ' + n)) + '</span>';
-      b.onclick = (function (k) { return function () { pop.hidden = true; go(k, 'scroll'); }; })(n);
+      b.onclick = (function (k) { return function () { pop.hidden = true; $('aow-jump').setAttribute('aria-expanded', 'false'); go(k, 'scroll'); }; })(n);
       pop.appendChild(b);
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.key === 'ArrowLeft') { go(cur - 1); }
-      else if (e.key === 'ArrowRight') { go(cur + 1); }
-      else if (e.key === 'Escape') { pop.hidden = true; }
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); }
+      else if (e.key === 'Escape') { pop.hidden = true; $('aow-jump').setAttribute('aria-expanded', 'false'); }
     });
     window.addEventListener('hashchange', function () {
       var n = parseInt(location.hash.slice(1), 10);

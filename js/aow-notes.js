@@ -1,160 +1,115 @@
-/* ============================================================
-   The Art of War, side by side: the commentary.
-   Per-passage, plain-language breakdown of what Sun Tzu is doing
-   and where the translators split. Written in the site voice.
-   No em dashes (in my prose; verbatim quotes keep their own).
-   Light inline HTML (<em>, <b>) is allowed; it is injected as
-   innerHTML by js/aow.js.
-
-   shape:  id: { title, gist, splits:[{zh, gloss, note}], read }
-   Passages without an entry render the translations alone.
-   ============================================================ */
+/* The Art of War: editorial explanations, not translations.
+   Each selection has a plain summary and notes on differences that
+   affect its meaning. HTML is limited to emphasis and source links. */
 window.AOW_NOTES = {
-
   1: {
-    title: "War is the one thing you cannot wing",
-    gist: "The book opens cold, with no glory in it. War is the biggest thing a state does, the ground it lives or dies on, the road to either lasting or being wiped out. So you study it, hard, or you lose. No trumpets, no honor, no heroes. The first sentence of the most famous war book ever written is basically a safety warning.",
+    title: "The state's survival",
+    gist: "War can destroy the state that undertakes it. Examine that risk before committing an army. The chapter compares the people's agreement with their ruler, weather, terrain, command, and military organization. Are the soldiers trained? Are rewards and punishments applied consistently?",
     splits: [
-      { zh: "兵", gloss: "bing", note: "One character that means soldiers, weapons, and war all at once, so the translators have to pick. Giles goes abstract with <em>'the art of war,'</em> Cleary picks <em>'military action,'</em> Mair just says <em>'warfare.'</em> The Chinese does not separate the fighting, the people, and the steel. They are one thing." },
-      { zh: "死生之地", gloss: "the ground of death and life", note: "Almost everyone keeps this stark, because you cannot soften it. Death before life, not life before death. The phrasing alone tells you what register the book is in." }
-    ],
-    read: "Most war stories open on a battlefield. This one opens on a ledger. That is the whole book in one move: the drama is not the fighting, it is the math you do before."
+      { zh: "兵", gloss: "bing: military affairs", note: "The word can mean weapons, soldiers, or warfare. Giles chooses <em>the art of war</em>, Denma <em>the military</em>, and Griffith <em>war</em>. The opening's scope changes with the word, from the institution to the activity." }
+    ]
   },
-
   2: {
-    title: "War is the way of deception",
-    gist: "Five characters: <em>bing zhe, gui dao ye</em>. War is the way of deception. Then a list of how: when you can fight, look like you cannot; when you are close, look far; when you are far, look near. The entire game is managing what the other side thinks it sees.",
+    title: "Mislead the enemy",
+    gist: "Show the enemy a false picture of your ability and movements. A force ready to attack should appear unable to do so; a nearby force should appear far away. Make the opponent deploy against the wrong threat. The next lines add bait, provocation, and attacks where the enemy is unprepared.",
     splits: [
-      { zh: "詭道", gloss: "gui dao: the way of deceit", note: "Giles and Griffith flatten it to <em>'based on deception.'</em> Ames, Minford, and Mair keep the <em>way</em>, because 道 (<em>dao</em>) is the same loaded word that titles the Tao Te Ching. Deception is not a trick here, it is a method, a road you travel. And 詭 means strange and uncanny as much as it means false, so it is closer to wrong-footing the enemy than to lying to him." },
-      { zh: "示之", gloss: "show him", note: "The verb that runs through the whole passage is <em>show</em>. Not <em>be</em> weak, <em>look</em> weak. Mair makes the point in his notes: this is not a license to lie, it is the general hiding his real intentions. You manage the appearance, you keep the truth." }
-    ],
-    read: "People read this line as permission to cheat. Sun Tzu means something colder and more useful: never let the enemy see what is actually there."
+      { zh: "詭道", gloss: "gui dao: a method of deception", note: "Giles's <em>based on deception</em> and Ames's <em>art of deceit</em> both convey the military point. <em>Dao</em> means a way or method here. The examples concern misleading an opponent. Using this word alone doesn't establish a connection with the cosmic Way of the Tao Te Ching." }
+    ]
   },
-
   3: {
-    title: "The battle is settled before it starts",
-    gist: "Before a war, the old generals went to the ancestral temple and counted. They weighed the five factors, ran the seven comparisons, and tallied it up with counting rods. The side with the higher score has already won; the fighting just collects the result. Many counts, victory. Few counts, defeat. No counting at all, and you have already lost.",
+    title: "Compare before committing",
+    gist: "Assess the two sides before battle. This closes the chapter listing what to compare, so a favorable reckoning concerns an army's actual advantages. The passage claims this lets a commander foresee victory or defeat. It gives no numerical weights for the comparisons.",
     splits: [
-      { zh: "廟算", gloss: "miao suan: temple reckoning", note: "Giles keeps the temple. So does Griffith. Ames makes it <em>'the temple rehearsal of the battle.'</em> Cleary quietly drops the temple for <em>'headquarters,'</em> trading an ancient ritual for a boardroom, which is exactly the kind of choice that tells you how a translator reads the whole book." },
-      { zh: "算", gloss: "suan: to count / a count", note: "A pun that does not survive English. 算 is both the act of reckoning and the score you rack up, literally counting rods. Mair is the only one who keeps the rods in his English, so you can see the abacus under the metaphor." }
-    ],
-    read: "This is the engine under the famous 'win first, then fight.' You do not show up and hope. You add it up, and if the numbers say no, you do not go."
+      { zh: "廟算", gloss: "miao suan: temple calculations", note: "Giles retains the temple setting; Cleary moves the assessment to headquarters. Cleary is easier to picture, though the ancient setting disappears." },
+      { zh: "得算多", gloss: "a greater reckoning", note: "Giles's English can suggest that the winner simply thinks more. Cleary emphasizes having more favorable factors; Ames scores points; Mair receives counting rods. Doing more calculation differs from finding more grounds for confidence." }
+    ]
   },
-
   4: {
-    title: "Win fast, or do not start",
-    gist: "A long war ruins the country fighting it, even a country that is winning. Sun Tzu would rather see a clumsy, fast victory than a brilliant, drawn-out one. Speed is not a style choice here, it is the economics: armies eat, treasuries empty, and the other states pile on while you are stuck in the field.",
+    title: "The cost of a long campaign",
+    gist: "A prolonged campaign consumes the resources needed to keep fighting. Earlier in the chapter, weapons wear out, troops tire, and reserves run short. Neighboring rulers can exploit the exhausted state's weakness. The army and the people supplying it both pay for delay.",
     splits: [
-      { zh: "拙速", gloss: "zhuo su: clumsy but fast", note: "A phrase nobody can make pretty, and they do not try. Giles: <em>'stupid haste.'</em> Griffith: <em>'blundering swiftness.'</em> Ames: <em>'a foolish haste.'</em> The point is ugly on purpose: a quick win that looks dumb beats a slow one that looks smart." }
-    ],
-    read: "The least romantic line in any war book. The smart move is the short one, even when it is the ugly one."
+      { zh: "拙速", gloss: "zhuo su: clumsy speed", note: "Giles has <em>stupid haste</em>; Griffith has <em>blundering swiftness</em>. Read beside the opening demand for assessment, this warns that clever planning can't make an indefinitely costly campaign profitable." }
+    ]
   },
-
   5: {
-    title: "The best win has no battle in it",
-    gist: "This is the line. Winning every battle is not the top of the skill. The top is making the enemy quit without a fight. Then the ranking, best to worst: wreck his strategy, break up his alliances, beat his army in the field, and dead last, lay siege to his cities, which is slow and bloody and bleeds you white. The heroic battle is near the bottom of the list.",
+    title: "Subdue without battle",
+    gist: "Making the enemy's army submit without a battle ranks above winning every engagement. The order of targets follows: plans, alliances, troops, then walled cities. Siege is last because it takes preparations and casualties that an impatient commander may squander. The enemy may submit because the threat of force is credible.",
     splits: [
-      { zh: "不戰而屈人之兵", gloss: "subdue the enemy without fighting", note: "The most quoted sentence in the book. Worth knowing: Griffith's 1963 first edition says <em>'is the acme of skill,'</em> not <em>'the supreme excellence'</em> that gets passed around online (that is a later revision). Small thing, but this is the line people tattoo on themselves, so the wording matters." },
-      { zh: "伐謀", gloss: "fa mou: attack the plan", note: "The very best target is not the enemy's army, it is his <em>plan</em>. Cleary: <em>'strikes while schemes are being laid.'</em> Denma, blunt as ever: <em>'cuts down strategy.'</em> You beat the war before it has troops in it." }
-    ],
-    read: "Everyone quotes this and then goes to war anyway. Sun Tzu ranked the bloodless win at the top of the list and the heroic siege at the very bottom, and he meant the order."
+      { zh: "伐謀", gloss: "fa mou: attack plans", note: "Giles frustrates the enemy's plans; Cleary strikes while schemes are being laid. One stresses the target, the other the stage at which to act. The compressed Chinese does not spell out that timing." },
+      { zh: "伐交", gloss: "fa jiao: attack alliances", note: "Ames and Mair name alliances. Giles instead prevents the junction of enemy forces. Isolating a state politically and stopping its armies from joining are different instructions." }
+    ]
   },
-
   6: {
-    title: "Know both, and you stay out of trouble",
-    gist: "Know the enemy and know yourself, and a hundred battles will not endanger you. Know only yourself, you will win some and lose some. Know neither, you lose every time. Knowledge is the one variable; everything else falls out of it.",
+    title: "Knowledge and danger",
+    gist: "Know both armies. Knowing your own capacity while misjudging the enemy leaves the outcome uncertain; knowing neither puts you in danger whenever you fight. The chapter also requires knowing when to refuse battle. Information can lead to a decision to stay out of it.",
     splits: [
-      { zh: "百戰不殆", gloss: "a hundred battles, no peril", note: "Here is the famous misquote, and it is worth catching. The line does <b>not</b> say you will <em>win</em> a hundred battles. 不殆 (<em>bu dai</em>) means <em>not in danger</em>, not <em>victorious</em>. Giles: <em>'you need not fear.'</em> Griffith: <em>'you will never be in peril.'</em> Every careful translator keeps it as safety, never triumph. The poster version that promises a hundred wins is selling something Sun Tzu never wrote." }
-    ],
-    read: "The most quoted line in the book, and the most inflated. He promises you will not be destroyed. He never promised you would win."
+      { zh: "百戰不殆", gloss: "a hundred battles without peril", note: "<em>Bu dai</em> means not imperiled. Griffith and Ames preserve that distinction; Minford says victory is never in doubt. At the end, the Chinese repeats <em>dai</em>, peril, while Giles and Denma render it as defeat. The familiar promise of a hundred victories strengthens the wording, as some published translations do." }
+    ]
   },
-
   7: {
-    title: "Make yourself unbeatable first",
-    gist: "The old masters first made themselves impossible to beat, then waited for the enemy to slip. Being unbeatable is on you. Beating the enemy is on him. You can build the first part yourself; the second you can only wait for.",
+    title: "Secure your own position",
+    gist: "First protect your army from defeat, then wait for an opening in the enemy's defenses. The following sentence says a commander can secure the first condition but cannot guarantee the second. An army can be ready to win and still lack an opportunity to attack.",
     splits: [
-      { zh: "不可勝在己", gloss: "invincibility lies in yourself", note: "The clean half of the idea, and everyone keeps it close: your defense is yours to build, the opening is the enemy's to give. You do not manufacture his mistake. You make sure you are ready when it comes." },
-      { zh: "形", gloss: "xing: form, disposition", note: "This is the title word of the chapter, the visible shape an army shows. Hold onto it. Two chapters later Sun Tzu tells you to erase it completely, and the word for that is 無形, no-form." }
-    ],
-    read: "Defense first, and not the dramatic kind. You close your own gaps and let the other guy open his."
+      { zh: "不可勝在己，可勝在敵", gloss: "security here, vulnerability there", note: "<em>Invincibility</em> sounds absolute in English. The chapter grounds it in defense and the strength available for attack. An enemy unable to break the army's defenses is the point of this invincibility." }
+    ]
   },
-
   8: {
-    title: "Win first, then fight",
-    gist: "The winning army wins, and then goes to battle. The losing army goes to battle, and then tries to win. By the time the swords are out, the result is mostly set. The fight is where you collect a victory you already arranged, or find out about a loss you already booked.",
+    title: "Arrange victory before battle",
+    gist: "The successful army seeks battle after establishing favorable conditions. The unsuccessful one fights first and then hopes to find a way to win. Secure defenses and an exposed enemy provide that advantage before troops enter the fight.",
     splits: [
-      { zh: "先勝而後求戰", gloss: "first win, then seek battle", note: "Cleary's phrasing, <em>'a victorious army first wins and then seeks battle,'</em> is the one people quote. The line you have actually heard, <em>'every battle is won before it is fought'</em> (Gordon Gekko in <em>Wall Street</em>, Bill Belichick in the locker room), is a paraphrase of this. Good paraphrase. Just not a real sentence in the book." }
-    ],
-    read: "This is the verse Wall Street and the NFL turned into a slogan. The real line is stranger and better: the fighting is the last step, not the first."
+      { zh: "先勝", gloss: "win first", note: "Most versions retain the apparent paradox. Mair explains it as preparing the conditions for victory. The popular <em>Every battle is won before it is fought</em> compresses this passage; it isn't a separate sentence in the Chinese." }
+    ]
   },
-
   9: {
-    title: "The best win looks like nothing happened",
-    gist: "The expert wins where winning was easy, because he set it up to be easy. So his victories bring him no fame for brilliance and no medal for bravery. There was no near-thing to admire, no heroic stand. He made no mistakes, beat someone who was already beaten, and went home.",
+    title: "An easy victory earns little fame",
+    gist: "An expert wins against an enemy who is easy to defeat. Spectators see little reason to praise exceptional wisdom or courage. Judge command by the advantage it creates and exploits; the fighting may look unimpressive. The army still fights; an easy victory need not be bloodless.",
     splits: [
-      { zh: "無智名，無勇功", gloss: "no fame for wisdom, no merit for courage", note: "Everyone keeps the deflation. Giles: <em>'neither reputation for wisdom nor credit for courage.'</em> Griffith: <em>'merit for valour.'</em> Cleary connects it to the setup: the good warrior <em>'prevailed when it was easy to prevail.'</em> He arranged easy, then took it." }
-    ],
-    read: "We hand out medals for the close call and the heroic comeback. Sun Tzu thinks the close call means you let it get close. The master's win is boring, and that is the compliment."
+      { zh: "無智名，無勇功", gloss: "no fame for wisdom or courage", note: "Giles gives only this sentence. Cleary, Minford, and Mair include the preceding explanation about easy victories. Their excerpts make the reasoning clearer by quoting more Chinese." }
+    ]
   },
-
   10: {
-    title: "Shi, the force in the setup",
-    gist: "Here is the hardest idea in the book, and English has no word for it. <em>Shi</em> is the force a situation stores when you arrange it right. Water moving fast enough to roll boulders is shi. A drawn crossbow, the instant before the trigger, is shi; the snap of release is <em>jie</em>, the timing. The power is not in the water or the bow. It is in the position.",
+    title: "Force and its release",
+    gist: "Rushing water can carry stones; a striking bird can kill its prey. These images join <em>shi</em>, force arising from a favorable arrangement, with <em>jie</em>, its concentrated release. The crossbow makes the pair easier to see: drawing it stores force, and pulling the trigger releases that force at a chosen moment.",
     splits: [
-      { zh: "勢", gloss: "shi: configured force", note: "Watch them all reach for a different word. Giles and Griffith say <em>energy</em>, Cleary <em>force</em> and <em>momentum</em>, Minford <em>potential energy</em>, Mair <em>configuration</em>. The Denma group gives up and just keeps <em>shih</em>. The French scholar François Jullien calls it <em>propensity</em>: the way a setup, left alone, wants to go." },
-      { zh: "節", gloss: "jie: the timed release", note: "Shi's partner, and it has to be rendered as a pair. Giles calls it <em>'decision'</em> and loses the timing, which is the whole point. Griffith, Cleary, and Ames all land on <em>timing</em>. Denma keeps the literal sense, <em>'the node,'</em> the joint in the bamboo where it snaps." }
-    ],
-    read: "Stop thinking about how hard your people are pushing. Think about the slope you put them on. Shi is the slope."
+      { zh: "勢", gloss: "shi: force in an arrangement", note: "Ames's <em>strategic advantage</em>, Minford's <em>potential energy</em>, and Mair's <em>configuration</em> emphasize different parts of the image. Denma keeps <em>shih</em>, an older spelling of shi. The torrent concerns motion; the drawn crossbow concerns stored force. Neither image alone supplies a complete definition." },
+      { zh: "節", gloss: "jie: timing or concentrated release", note: "Griffith uses <em>timing</em>, Cleary <em>precision</em>, and Denma <em>node</em>. Giles's <em>decision</em> can obscure the pair, although his description of a well-timed falcon strike preserves its timing. His choice needs to be read with that example." }
+    ]
   },
-
   11: {
-    title: "Roll the round stone downhill",
-    gist: "The chapter ends on its picture. A good commander goes looking for victory in the shi, not in his individual soldiers, then puts them where winning is like rolling a round stone down a mountain a mile high. A square rock sits where you drop it. A round rock on a slope rolls itself. You do not push harder. You change the ground.",
+    title: "The commander creates the advantage",
+    gist: "The commander must create conditions that make the army effective, and select soldiers for their tasks. A round stone on a steep slope moves because of its shape and position. The comparison places responsibility on the commander who deploys the troops.",
     splits: [
-      { zh: "求之於勢，不責於人", gloss: "seek it in shi, not in your people", note: "The leadership line, and it is brutal in its way: arrange the situation, do not lean on the individuals. Griffith: <em>'seeks victory from the situation and does not demand it of his subordinates.'</em> The work is in the setup, not in the squeezing." },
-      { zh: "如轉圓石於千仞之山", gloss: "like a round stone down a mile-high mountain", note: "Jullien reads this one image as the entire idea. You arrange the slope; the stone falls of its own accord, <em>sponte sua</em>. The commander does not carry the stone down. He picks the hill." }
-    ],
-    read: "The most useful line here for anyone who is not a general. Do not try to get more out of people. Build the slope so the work rolls on its own."
+      { zh: "不責於人", gloss: "do not demand it of people", note: "Minford says the commander does not hold the men responsible; Mair says not to impose undue responsibilities. The next clause still requires choosing suitable people. Chapter one also compares the armies' training and discipline." },
+      { zh: "千仞", gloss: "a thousand ren", note: "<em>Ren</em> is an ancient measure of height. These versions use thousands of feet, a mountain height, or the original unit. The image needs a great drop; calling it exactly a mile high would add precision the passage does not warrant." }
+    ]
   },
-
   12: {
-    title: "Be so shaped that you have no shape",
-    gist: "If the enemy cannot read your formation, he cannot plan against it. So the peak of arranging an army is to show no arrangement at all. Subtle to the point of formless, quiet to the point of soundless. Then even a spy planted inside your camp learns nothing, and a clever enemy has nothing to scheme against. You become the one holding his fate.",
+    title: "Conceal the deployment",
+    gist: "These two excerpts concern an army whose deployment the enemy cannot discover. If spies cannot identify its positions, an opposing commander cannot plan a response. Earlier in the chapter, secrecy makes the enemy defend several possible targets while the attacking army concentrates at one. Secrecy helps the attacker choose where the two armies meet.",
     splits: [
-      { zh: "無形", gloss: "wu xing: formlessness", note: "Remember 形, <em>form</em>, the title of chapter four, the shape an army shows? Here you erase it. Most translators render the negation straight (formless, no-form), but Mair breaks from the pack and translates 形 as <em>'positions'</em> the whole way through, so his formlessness becomes <em>'no position.'</em> One character choice, two different books." },
-      { zh: "微乎微乎", gloss: "wei hu wei hu: subtle, subtle", note: "The Chinese doubles the word for effect. Minford keeps the doubling, <em>'subtlety of subtleties.'</em> Giles cannot resist and inflates it into <em>'O divine art of subtlety and secrecy!'</em> The plainer versions hit harder." }
-    ],
-    read: "Deception back in chapter one was hiding a single fact. This is hiding the shape of everything, until there is nothing left for the enemy to grab."
+      { zh: "無形", gloss: "wu xing: no discernible form", note: "Ames uses <em>form</em>; Mair uses <em>positions</em>. In either reading, the army conceals a real deployment from an opponent who could act against it. Giles's dramatic opening translates the first excerpt; Mair's quotation translates the later one." }
+    ]
   },
-
   13: {
-    title: "Take the shape of the ground",
-    gist: "An army should move like water. Water runs off the high ground and pours into the low; an army avoids the enemy's strength and pours into his weakness. Water takes its shape from the land it is on; you take your plan from the enemy in front of you. No fixed shape, no fixed tactics. Whatever the ground hands you.",
+    title: "Adapt to the opposing army",
+    gist: "Water flows according to the ground; an army should choose its attack according to the enemy. Avoid defended strength and strike an exposed weakness. Conditions change, so a successful deployment cannot become a permanent template. Water also appears in Daoist writing. Here it describes choosing an attack.",
     splits: [
-      { zh: "水無常形，兵無常勢", gloss: "water has no constant shape, war no constant shi", note: "The two hardest words in the book, formlessness and shi, land in the same breath here. This is the Taoist heart of a military manual: soft over hard, low over high. It rhymes straight out of the Tao Te Ching, which also makes water the teacher." },
-      { zh: "因敵而制勝", gloss: "shape your victory to the enemy", note: "The anti-formula. There is no formula, the line says, only the enemy in front of you. Cleary calls the knack of changing with the enemy <em>'genius'</em> outright." }
-    ],
-    read: "A war book whose highest image is water: yielding, low, shapeless, and it carves canyons. The winner is the one with no fixed plan to hit."
+      { zh: "勢 / 形", gloss: "shi / xing: conditions and form", note: "Griffith has no constant <em>conditions</em>; Mair has no constant <em>configuration</em>. Both distinguish the army's situation from water's form. Cleary's excerpt includes the following sentence, where adapting to the enemy is called genius; Ames renders that last word as inscrutability elsewhere in his chapter." }
+    ]
   },
-
   14: {
-    title: "Add the ground and the sky",
-    gist: "Chapter three said: know the enemy and yourself, and you stay out of danger. Here, deep in the chapter on terrain, Sun Tzu adds the missing half. Know the enemy and yourself, and your victory is not in danger. Know the ground and the weather too, and the victory is whole. People are half the equation. Place and timing are the rest.",
+    title: "Terrain can prevent the attack",
+    gist: "Knowing both armies is insufficient if the terrain prevents your troops from attacking. The preceding lines describe exactly that failure. Heaven and earth add weather, seasons, and ground to the assessment. Ask whether the military advantage can be used in this place.",
     splits: [
-      { zh: "知天知地", gloss: "know heaven, know earth", note: "Heaven is the weather and the season; earth is the terrain. These are two of the five factors from way back in chapter one, returning at the end as the closer. The book ties its own knot." },
-      { zh: "勝乃可全", gloss: "victory can be made whole", note: "The upgrade. Knowing the two sides gets you <em>'not in danger.'</em> Adding the ground and the sky gets you <em>'complete.'</em> Cleary stretches it to <em>'inexhaustible,'</em> Mair to <em>'unlimited.'</em>" }
-    ],
-    read: "The famous half of this couplet is 'know yourself and the enemy.' The forgotten half is 'know the ground and the sky,' and it is the half that turns safe into certain."
+      { zh: "勝乃可全", gloss: "victory can be complete", note: "Griffith and Ames make victory total; Cleary makes it inexhaustible; Mair makes victories unlimited. The Chinese includes <em>ke</em>, can, and <em>quan</em>, whole or complete. <em>Complete</em> concerns the victory at hand; <em>inexhaustible</em> extends the promise to further successes." }
+    ]
   },
-
   15: {
-    title: "Pay for the truth, in people",
-    gist: "The book ends on spies, and it is blunt about why. Everything Sun Tzu has promised, the win arranged in advance, the knowing of both sides, the reading of the enemy's shape, runs on knowing things before they happen. And that foreknowledge cannot be prayed out of the spirits, read off omens, or calculated from the stars. It comes from one place: people who already know. So you run spies, and you pay them better than anyone in your army.",
+    title: "Get intelligence from people",
+    gist: "Information about the enemy comes from people who know its situation. Spirits, comparisons with earlier events, and calculations cannot reveal those particular facts. The chapter then covers recruiting and rewarding spies. It also includes agents fed false information to pass to the enemy, and orders execution for a spy who reveals a secret too soon, along with its recipient.",
     splits: [
-      { zh: "先知", gloss: "xian zhi: foreknowledge", note: "The word the whole book quietly rests on. Not prophecy, not magic. Just knowing first. Giles, Griffith, Cleary, and Ames all keep it as <em>foreknowledge</em>; Minford makes it plain as <em>'prior information.'</em>" },
-      { zh: "必取於人", gloss: "it must be taken from people", note: "The coldest, most modern line in the book. Not from gods (鬼神), not from omens, not from the calendar's math. Ames: <em>'It must come from people, people who know the enemy's situation.'</em> Sun Tzu rules out everything supernatural and lands on human intelligence." }
-    ],
-    read: "A book that can sound mystical ends as the exact opposite. No spirits, no signs, no fate. If you want to know what the enemy will do, find the person who already knows, and buy him."
+      { zh: "先知", gloss: "xian zhi: prior knowledge", note: "<em>Foreknowledge</em> can sound prophetic. Minford's <em>prior information</em> clarifies that the commander needs intelligence before acting. The people supplying it know the enemy's present situation." },
+      { zh: "不可象於事，不可驗於度", gloss: "not from analogy or calculation", note: "Ames specifies astrological calculations; Griffith and Cleary leave calculation broader. This rejects those methods for obtaining enemy intelligence. Chapter one still requires assessment, and chapter twelve uses celestial signs when discussing fire attacks." }
+    ]
   }
-
 };

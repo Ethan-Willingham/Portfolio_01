@@ -28,6 +28,7 @@
   if (!stations.length) return;
 
   var pop = $('walkpop');
+  var jump = $('walk-jump');
   var stno = $('walk-stno');
   var stlabel = $('walk-stlabel');
   var count = $('walk-count');
@@ -39,6 +40,13 @@
 
   function tag(el) { return el.getAttribute('data-tag') || ''; }
   function label(el) { return el.getAttribute('data-label') || ''; }
+
+  function setPop(open) {
+    if (!pop) return;
+    pop.hidden = !open;
+    bar.classList.toggle('is-open', open);
+    if (jump) jump.setAttribute('aria-expanded', String(open));
+  }
 
   /* ---------- the jump menu ---------- */
   function buildPop() {
@@ -53,8 +61,7 @@
     pop.addEventListener('click', function (e) {
       var b = e.target.closest('button[data-i]');
       if (!b) return;
-      pop.hidden = true;
-      bar.classList.remove('is-open');
+      setPop(false);
       goTo(+b.getAttribute('data-i'));
     });
   }
@@ -68,6 +75,8 @@
     if (pop) {
       Array.prototype.forEach.call(pop.children, function (b, i) {
         b.classList.toggle('is-cur', i === cur);
+        if (i === cur) b.setAttribute('aria-current', 'step');
+        else b.removeAttribute('aria-current');
       });
     }
     $('walk-prev').disabled = cur === 0;
@@ -84,7 +93,7 @@
 
   /* ---------- scroll-spy ---------- */
   function spy() {
-    var line = bar.getBoundingClientRect().bottom + 4;
+    var line = bar.getBoundingClientRect().bottom + 16;
     var i = 0;
     for (var k = 0; k < stations.length; k++) {
       if (stations[k].getBoundingClientRect().top <= line) i = k;
@@ -97,21 +106,19 @@
     $('walk-prev').onclick = function () { goTo(cur - 1); };
     $('walk-next').onclick = function () { goTo(cur + 1); };
     if (pop) {
-      $('walk-jump').onclick = function () {
-        pop.hidden = !pop.hidden;
-        bar.classList.toggle('is-open', !pop.hidden);
+      jump.onclick = function () {
+        setPop(pop.hidden);
       };
       document.addEventListener('click', function (e) {
         if (pop.hidden) return;
-        if (!pop.contains(e.target) && !$('walk-jump').contains(e.target)) {
-          pop.hidden = true;
-          bar.classList.remove('is-open');
+        if (!pop.contains(e.target) && !jump.contains(e.target)) {
+          setPop(false);
         }
       });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          pop.hidden = true;
-          bar.classList.remove('is-open');
+        if (e.key === 'Escape' && !pop.hidden) {
+          setPop(false);
+          jump.focus();
         }
       });
     }

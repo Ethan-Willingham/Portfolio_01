@@ -1,0 +1,173 @@
+/* Follow the religious posts' centered titles, generous opening,
+   serif prose, and quiet section rules. */
+body.power-reading {
+  --measure: 760px;
+  padding-inline: 0;
+  overflow-x: clip;
+  font-family: var(--font-heading);
+}
+
+.power-reading .post-back.ll-back {
+  width: 100%;
+  padding-top: clamp(2.5rem, 7vw, 5rem);
+}
+
+.power-reading .hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 61rem;
+  min-height: calc(100svh - 4rem);
+  margin-inline: auto;
+  padding: clamp(4.5rem, 11svh, 7rem) var(--gutter);
+  text-align: center;
+}
+
+.power-reading .hero .hero-title {
+  max-width: 14ch;
+  margin-inline: auto;
+  font-size: clamp(3.7rem, 12vw, 7.5rem);
+  line-height: .94;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.power-reading .hero .hero-dek {
+  max-width: 49ch;
+  margin: 1.6rem auto 0;
+  font-size: 1.24rem;
+  line-height: 1.58;
+  font-style: normal;
+  text-wrap: pretty;
+}
+
+.power-reading .hero .hero-meta {
+  justify-content: center;
+  margin-top: 1.6rem;
+  padding-top: 0;
+  border-top: 0;
+  gap: .5em 1.05em;
+  letter-spacing: .11em;
+}
+
+.power-reading .hero .hero-meta .sep {
+  opacity: .4;
+}
+
+.power-reading .reading-scroll {
+  display: block;
+  margin-top: 2.8rem;
+  color: var(--text-dim);
+  opacity: .68;
+  font-variant: small-caps;
+  letter-spacing: .22em;
+  font-size: .82rem;
+}
+
+.power-reading :is(.sec, .station) {
+  width: 100%;
+  padding-block: clamp(4.5rem, 8svh, 6.5rem);
+  border-top: 1px solid var(--rule);
+}
+
+.power-reading .sec.first {
+  padding-top: clamp(4.5rem, 8svh, 6.5rem);
+}
+
+.power-reading :is(.sec, .station):last-child {
+  padding-bottom: clamp(2.6rem, 5svh, 3.4rem);
+}
+
+.power-reading :is(.station-k, .station-h, .sechead) {
+  text-align: center;
+}
+
+.power-reading :is(.station-h, .sechead) {
+  max-width: 24ch;
+  margin-inline: auto;
+  margin-bottom: 2.2rem;
+  font-size: clamp(2rem, 5vw, 2.5rem);
+  line-height: 1.12;
+}
+
+.power-reading .sec .u-sechead {
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2.6rem;
+}
+
+.power-reading .sec .u-sechead-k {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--text-faint);
+}
+
+.power-reading :is(.prose > p, .sec > p:not([class]), .sec > .lede, .aow-note-gist, .kama-note-gist) {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  line-height: 1.74;
+  text-wrap: pretty;
+}
+
+.power-reading :is(.aow-note-card, .kama-note-card) {
+  padding: 1.2rem 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.power-reading :is(.sec, .station) > :last-child {
+  margin-bottom: 0;
+}
+
+.power-reading .station + .u-divider,
+.power-reading .sec + .u-divider {
+  display: none;
+}
+
+.power-reading :is(.u-next, .site-footer-inner) {
+  width: 100%;
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+
+.power-reading .site-footer-inner {
+  font-family: var(--font-body);
+}
+
+@media (max-width: 560px) {
+  .power-reading :is(.sec, .station) {
+    padding-block: 3.4rem;
+  }
+
+  .power-reading .sec.first {
+    padding-top: 3.4rem;
+  }
+}
+
+@media print {
+  .power-reading .hero {
+    min-height: 0;
+    padding-block: 1rem;
+  }
+
+  .power-reading .hero .hero-title {
+    font-size: 3rem;
+  }
+
+  .power-reading .reading-scroll {
+    display: none;
+  }
+
+  .power-reading :is(.sec, .station) {
+    padding-block: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(body.power-reading) {
+    scroll-behavior: auto;
+  }
+}
