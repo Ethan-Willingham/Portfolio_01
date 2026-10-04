@@ -110,7 +110,7 @@ not every page):
 
 - `index.html` holds the 12 curated homepage cards plus the site search; most posts
   live under one of the hub/section pages instead: `boring-stuff.html` (the shelf),
-  `religion.html`, `philosophy.html`, `inner-life.html`, `power-story-love.html`,
+  `religion.html`, `philosophy.html`, `inner-life.html`,
   `staying-alive.html`, and `career.html`. A post is either a homepage card OR a hub
   member, never both.
 - Demo/visualization posts: `gallery.html`, `particle-life.html`, `particles.html`,

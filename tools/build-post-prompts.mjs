@@ -231,6 +231,10 @@ function bundle() {
       prompts: prompts.map(p => ({ when: p.when || '', text: p.text.trim() })),
     };
   }
+  // Old research and the published seed can contain posts since removed from the site.
+  for (const [slug, post] of Object.entries(data)) {
+    if (!post.href || !fs.existsSync(path.join(ROOT, post.href))) delete data[slug];
+  }
   const header =
     '/* Per-post Claude prompt archive: the human prompts that built each post, shown in\n' +
     '   the About-page tile tray. Extracted from this machine\'s Claude Code session transcripts\n' +
