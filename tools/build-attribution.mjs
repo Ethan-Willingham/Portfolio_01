@@ -425,6 +425,8 @@ if (process.argv.includes('--write')) {
     } catch { return 0; }
   };
   const out = JSON.parse(JSON.stringify(ATTR));
+  // Historical credit stays in the ledger; tiles require a page that still exists.
+  out.posts = out.posts.filter(post => post.href && existsSync(join(REPO, post.href)));
   const topicByKey = new Map(GH.topics.map(t => [t.key, t]));
   const postByKey = new Map(out.posts.map(p => [p.key, p]));
   let added = 0;
@@ -440,7 +442,7 @@ if (process.argv.includes('--write')) {
       const supplied = NEW[a.key];
       const topic = topicByKey.get(a.key);
       const meta = supplied || topic;
-      if (!meta || !meta.href || !['post', 'archived'].includes(meta.kind)) continue;
+      if (!meta || !meta.href || !['post', 'archived'].includes(meta.kind) || !existsSync(join(REPO, meta.href))) continue;
       post = {
         key: a.key,
         label: supplied?.label || topic.label,

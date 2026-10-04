@@ -88,21 +88,6 @@ const HUBS = [
     ],
   },
   {
-    slug: 'power-story-love', title: 'Power, Story, and Love', inProgress: true,
-    card: { thumb: 'symposium.jpg', alt: "A detail of Anselm Feuerbach's Das Gastmahl, a torch-lit procession of garlanded revelers entering a feast.",
-      desc: "A long trip home, a dinner party about love, and advice for keeping power. Homer, Plato, Machiavelli, and the others are often stranger than the lines people quote." },
-    lead: "Odysseus is trying to get home. The Prince asks how a ruler keeps power. From epic poems to advice on love, these books pay close attention to what people do when they want something.",
-    members: [
-      live("odyssey.html", "The Odyssey", "odyssey.jpg", "Late 8th to early 7th c. BCE", -700, "Odysseus returns to Ithaca disguised as a beggar. These readings follow his journey home and the violence that makes it possible to reclaim his household."),
-      live("art-of-war.html", "The Art of War", "art-of-war.jpg", "4th to 3rd c. BCE", -350, "Sun Tzu treats war as a danger to the state that wages it. Compare fifteen passages, with Chinese alongside English translations that don't always agree."),
-      live("symposium.html", "Plato's Symposium", "symposium.jpg", "4th c. BCE", -385, "At a dinner party, Socrates reports Diotima's teaching on desire. Other guests offer different accounts of love, and Alcibiades makes the argument personal."),
-      live("kama-sutra.html", "The Kama Sutra", "kama-sutra.jpg", "Early centuries CE", 300, "Vatsyayana discusses pleasure, marriage, and a courtesan's livelihood. Compare thirteen passages with Sanskrit and two English editions that sometimes give opposing advice."),
-      live("machiavelli.html", "The Prince", "machiavelli.jpg", "1513; published 1532", 1513, "A prince can be generous with someone else's money. Machiavelli follows the costs of ruling, including the difference between seeming virtuous and keeping people loyal."),
-      live("grand-inquisitor.html", "The Grand Inquisitor", "grand-inquisitor.jpg", "1879", 1879, "Ivan Karamazov tells a story in which the Church arrests the returning Jesus. The Inquisitor argues that people want bread and authority more than freedom."),
-      live("in-praise-of-shadows.html", "In Praise of Shadows", "in-praise-of-shadows.jpg", "1906 and 1933-1934", 1933, "Tanizaki describes a lacquer bowl in a dim room; Okakura writes about preparing tea. Read the two essays alongside the claims they make about Japanese beauty."),
-    ],
-  },
-  {
     slug: 'staying-alive', title: 'Staying Alive', inProgress: true,
     card: { thumb: 'big-enough.jpg', alt: 'The bowed bearded head and massive shoulders of the Farnese Hercules, an ancient marble statue.',
       desc: 'How to take care of the one body you get: muscle, the heart, food, sleep, and the rest. The actionable science, with the hype stripped off.' },
@@ -137,7 +122,7 @@ const SHELF = {
   credit: 'thumbnail: Admont Abbey Library, Austria; photo by Jorge Royan, CC BY-SA 3.0, via Wikimedia Commons.',
   alt: 'The white-and-gold Baroque hall of the Admont Abbey Library in Austria, its shelves of books beneath a painted ceiling fresco.',
   cardDesc: "Longer readings on old books and the work of everyday life. Pick a collection, or start with a question you already have.",
-  /* only the finished collections. philosophy, power-story-love, staying-alive,
+  /* only the finished collections. philosophy, staying-alive,
      and inner-life moved to the In Progress index (archive.html); they carry
      inProgress above. */
   hubOrder: ['career', 'religion'],

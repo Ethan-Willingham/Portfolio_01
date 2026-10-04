@@ -31,8 +31,6 @@ const EXPLORER_DATA = {
 const READER_NOTES = {
   'meditations.html': ['js/marcus-notes.js', 'MARCUS_NOTES'],
   'social-contract.html': ['js/social-contract-notes.js', 'SC_NOTES'],
-  'art-of-war.html': ['js/aow-notes.js', 'AOW_NOTES'],
-  'kama-sutra.html': ['js/kama-notes.js', 'KAMA_NOTES'],
 };
 
 // ---- tiny HTML helpers ------------------------------------------------------
@@ -190,7 +188,7 @@ for (const block of cardBlocks) {
 // the In Progress search finds them and the UI ranks and marks them like the
 // archived posts. They are NOT `archived`: the files never moved, the URLs are
 // live, and the homepage search still finds them.
-const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'power-story-love', 'staying-alive', 'career'];
+const HUB_SLUGS = ['religion', 'philosophy', 'inner-life', 'staying-alive', 'career'];
 const hubArg = process.argv.slice(2).find((arg) => arg.startsWith('--hub='));
 const selectedHub = hubArg && hubArg.slice(6);
 if (hubArg && !HUB_SLUGS.includes(selectedHub)) throw new Error(`Unknown hub: ${selectedHub}`);
