@@ -40,7 +40,6 @@
       kicker: html(el, '.tale-k'),
       title: html(el, '.tale-h'),
       body: html(el, '.tale-body'),
-      lesson: html(el, '.tale-lesson'),
       src: html(el, '.tale-src')
     };
   });
@@ -72,7 +71,6 @@
       '<p class="gal-card-k">' + d.kicker + ' <span class="place">' + d.place + '</span></p>' +
       '<h3 class="gal-card-h">' + d.title + '</h3>' +
       '<div class="gal-card-body">' + d.body + '</div>' +
-      '<p class="gal-lesson"><span class="lk">in his words</span>' + d.lesson + '</p>' +
       '<p class="gal-src">' + d.src + '</p>';
     pos.innerHTML = '<b>' + (cur + 1) + '</b> / ' + orders.length;
     prev.disabled = cur === 0;

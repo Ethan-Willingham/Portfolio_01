@@ -29,6 +29,8 @@ const EXPLORER_DATA = {
 };
 
 const READER_NOTES = {
+  'meditations.html': ['js/marcus-notes.js', 'MARCUS_NOTES'],
+  'social-contract.html': ['js/social-contract-notes.js', 'SC_NOTES'],
   'art-of-war.html': ['js/aow-notes.js', 'AOW_NOTES'],
   'kama-sutra.html': ['js/kama-notes.js', 'KAMA_NOTES'],
 };
@@ -136,7 +138,8 @@ function buildSections(post, file) {
     for (const [id, note] of Object.entries(context.window[reader[1]])) {
       const explanations = (note.splits || []).map((split) => split.note || '').join(' ');
       const plain = Array.isArray(note.plain) ? note.plain.join(' ') : note.plain;
-      pushSection(note.title, id, [note.gist, explanations, note.read, plain].filter(Boolean).join(' '));
+      const readings = Object.values(note.reads || {}).flat().join(' ');
+      pushSection(note.title, id, [note.gist, explanations, note.read, plain, readings].filter(Boolean).join(' '));
     }
   }
 

@@ -1,0 +1,257 @@
+/* The philosophy collection shares the sacred-text reading shell. */
+body.philosophy-page {
+  --measure: 58rem;
+  padding-inline: 0;
+  overflow-x: clip;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  line-height: 1.66;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Preserve Sapiens's curation notice without displacing the reading title. */
+body.philosophy-page .arc-banner {
+  padding: .75rem var(--gutter);
+  background: color-mix(in srgb, var(--bg) 96%, var(--accent));
+  border-bottom-color: var(--rule);
+  box-shadow: none;
+}
+.philosophy-page .arc-banner .arc-banner__in { max-width: 760px; }
+.philosophy-page .arc-banner :is(.arc-banner__mark, .arc-banner__lead, p:not(.arc-banner__kicker)) { display: none; }
+.philosophy-page .arc-banner .arc-banner__kicker {
+  margin: 0;
+  font-size: .68rem;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.philosophy-page .post-back.ll-back {
+  width: 100%;
+  max-width: 760px;
+  padding-top: clamp(2.5rem, 7vw, 5rem);
+  padding-inline: var(--gutter);
+}
+
+.philosophy-page .hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100svh - 4rem);
+  max-width: 61rem;
+  padding: clamp(4.5rem, 11svh, 7rem) var(--gutter);
+  text-align: center;
+}
+
+.philosophy-page .hero .hero-title {
+  max-width: 15ch;
+  margin-inline: auto;
+  font-size: clamp(3.45rem, 11vw, 6.9rem);
+  line-height: .94;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.philosophy-page .hero .hero-dek {
+  max-width: 49ch;
+  margin: 1.6rem auto 0;
+  font-size: 1.24rem;
+  line-height: 1.58;
+  font-style: normal;
+  text-wrap: pretty;
+}
+
+.philosophy-page .hero .hero-meta {
+  justify-content: center;
+  margin-top: 1.6rem;
+  padding-top: 0;
+  border-top: 0;
+  gap: .5em 1.05em;
+  letter-spacing: .11em;
+}
+
+.philosophy-page .philosophy-scroll {
+  display: block;
+  align-self: center;
+  margin-top: 2.8rem;
+  color: var(--text-dim);
+  opacity: .68;
+  font-variant: small-caps;
+  letter-spacing: .22em;
+  font-size: .82rem;
+  text-decoration: none;
+}
+
+.philosophy-page .philosophy-scroll:hover { opacity: 1; }
+
+.philosophy-page .sec {
+  width: 100%;
+  padding: clamp(4.5rem, 8svh, 6.5rem) var(--gutter) 0;
+}
+
+.philosophy-page main > .sec:first-child {
+  border-top: 1px solid var(--rule);
+}
+
+.philosophy-page .sec > :is(p, ul, ol, blockquote, .u-callout, .fan, .tales, .meanings, .debateA),
+.philosophy-page .prose,
+.philosophy-page .station > :is(.passage, .stack, .u-callout, .u-aside) {
+  max-width: 64ch;
+  margin-inline: auto;
+}
+
+.philosophy-page :is(.sec, .prose) p:not([class]),
+.philosophy-page :is(.sec, .prose) p.lede {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  line-height: 1.74;
+  color: var(--text);
+}
+
+.philosophy-page .station {
+  width: 100%;
+  margin-top: clamp(3.5rem, 7svh, 5rem);
+  padding: clamp(3.5rem, 7svh, 5rem) var(--gutter) 0;
+  border-top: 1px solid var(--rule);
+  scroll-margin-top: 5.5rem;
+}
+
+.philosophy-page :is(.station-k, .u-sechead-k) {
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.philosophy-page :is(.station-h, .u-sechead-h, .sechead) {
+  max-width: 24ch;
+  margin-inline: auto;
+  font-size: clamp(2rem, 5vw, 2.5rem);
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.philosophy-page .station-h { margin-bottom: 2.2rem; }
+.philosophy-page .sec .u-sechead { align-items: center; text-align: center; margin-bottom: 2.6rem; }
+.philosophy-page .sechead { margin-bottom: 2rem; }
+
+.philosophy-page .passage {
+  padding: 1.3rem 1.5rem;
+  background: color-mix(in srgb, var(--bg) 96%, var(--accent));
+  border-color: var(--rule);
+  box-shadow: none;
+}
+
+.philosophy-page .stack {
+  border-radius: 0;
+  border-inline: 0;
+  background: transparent;
+}
+
+.philosophy-page .fan {
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.philosophy-page :is(.src-list, .stack-vt, .tale-body, .sc-read, .sc-gist, .sc-split-body, .marc-note-gist, .marc-note-read, .marc-vt) {
+  font-family: var(--font-heading);
+}
+
+.philosophy-page :is(.marc-body, .sc-body) { max-width: 64ch; margin-inline: auto; }
+.philosophy-page :is(.sc-read, .sc-gist, .sc-split-body, .marc-note-gist, .marc-note-read, .marc-vt) {
+  font-size: 1.14rem;
+  line-height: 1.72;
+}
+
+.philosophy-page .walkbar {
+  top: .75rem;
+  width: calc(100% - 2 * var(--gutter));
+  max-width: 760px;
+  padding: .5rem .55rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg) 92%, var(--text-bright));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.philosophy-page .walkpop {
+  top: 4.9rem;
+  width: min(760px, calc(100% - 2 * var(--gutter)));
+}
+
+.philosophy-page :is(.walk-nav, .marc-nav, .sc-nav, .gal-nav, .amap-nav) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.philosophy-page .walk-jump { min-height: 44px; }
+.philosophy-page .walkpop > button { min-height: 44px; }
+
+.philosophy-page :is(.marc-bar, .sc-bar) {
+  top: .75rem;
+  padding: .6rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg) 92%, var(--text-bright));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.philosophy-page .marc-step { flex: 1; min-width: 0; }
+.philosophy-page .marc-jump { flex: 1; min-width: 0; min-height: 44px; }
+.philosophy-page .marc-jump #marc-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+}
+.philosophy-page .sc-now { flex: 1; }
+.philosophy-page :is(.marc-views button, .marc-grp button, .sc-tabs button) { min-height: 44px; }
+
+.philosophy-page .marc-note-card,
+.philosophy-page .sc-split-card {
+  padding-inline: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.philosophy-page .sc-t {
+  border-inline: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Map relation labels remain quiet alongside the serif explanations. */
+.philosophy-page .amap-rel-k {
+  font-size: .65rem;
+  line-height: 1.6;
+  margin-bottom: .55rem;
+}
+
+.philosophy-page .u-next { text-align: center; }
+.philosophy-page .site-footer-inner { justify-content: center; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(body.philosophy-page) { scroll-behavior: auto; }
+}
+
+@media (max-width: 560px) {
+  .philosophy-page .hero .hero-dek { font-size: 1.12rem; }
+  .philosophy-page :is(.sec, .prose) p:not([class]),
+  .philosophy-page :is(.sec, .prose) p.lede { font-size: 1.18rem; }
+  .philosophy-page .walkbar { gap: .25rem; }
+  .philosophy-page .walk-jump { flex-direction: column; justify-content: center; align-items: flex-start; gap: .15rem; }
+  .philosophy-page .walk-jump #walk-stlabel { max-width: 100%; font-size: .95rem; }
+  .philosophy-page .walk-count { font-size: .65rem; }
+  .philosophy-page .walkpop-tag { display: none; }
+  .philosophy-page .marc-jump { flex-direction: column; align-items: flex-start; gap: .15rem; }
+  .philosophy-page .marc-jump #marc-ref { white-space: nowrap; font-size: .88rem; }
+  .philosophy-page .marc-jump #marc-title { max-width: 100%; font-size: .86rem; }
+  .philosophy-page .sc-now { display: flex; flex-direction: column; gap: .15rem; }
+  .philosophy-page .sc-now b { white-space: nowrap; }
+  .philosophy-page .sc-now span { max-width: 100%; }
+}

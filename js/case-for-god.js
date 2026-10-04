@@ -1,6 +1,6 @@
 /* Can You Argue Your Way to God: the trilemma gallery.
-   Reads the authored .tale cards in the page (the four "doors": liar,
-   lunatic, lord, legend), builds a one-at-a-time gallery with chips,
+   Reads the authored .tale cards in the page (four explanations of
+   the claims), builds a one-at-a-time gallery with chips,
    arrow buttons, and keyboard support. No dependencies. Without JS the
    .tale cards read as a plain stacked list.
    (Cloned from js/frankl.js; same shell, same pattern.) */
@@ -74,7 +74,7 @@
       '<p class="gal-card-k">' + d.kicker + ' <span class="place">' + d.place + '</span></p>' +
       '<h3 class="gal-card-h">' + d.title + '</h3>' +
       '<div class="gal-card-body">' + d.body + '</div>' +
-      '<p class="gal-lesson"><span class="lk">' + d.llabel + '</span>' + d.lesson + '</p>' +
+      (d.lesson ? '<p class="gal-lesson"><span class="lk">' + d.llabel + '</span>' + d.lesson + '</p>' : '') +
       (d.src ? '<p class="gal-src">' + d.src + '</p>' : '');
     pos.innerHTML = '<b>' + (cur + 1) + '</b> / ' + doors.length;
     prev.disabled = cur === 0;

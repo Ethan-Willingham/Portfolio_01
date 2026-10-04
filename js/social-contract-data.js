@@ -1,126 +1,123 @@
-/* ============================================================
-   The Social Contract, side by side: the corpus.
-   Three thinkers, their dates, and the VERBATIM line from each
-   one's book that answers each question. The plain-English
-   breakdowns live in js/social-contract-notes.js; this file is
-   just the evidence, quoted exactly and cited.
-
-   Quotes are reproduced verbatim from primary digital editions
-   (see the colophon in social-contract.html for every source).
-   Hobbes and Locke are in their own English; Rousseau is in the
-   public-domain G. D. H. Cole translation (1913). Quoted
-   punctuation is left as the source has it; the lines chosen here
-   contain no em dashes, so none had to be altered.
-
-   shape: window.SC = { thinkers, order, questions:[ {id, short,
-          q, answers:{ key:{quote, cite} } } ] }
-   ============================================================ */
+/* Primary excerpts for the five-question comparison.
+   Hobbes retains the spelling and capitalization of Gutenberg's transcription.
+   Locke is quoted from Gutenberg's text. Rousseau uses G. D. H. Cole's
+   translation, in the digitized 1920 Everyman's Library volume.
+   All fifteen selected excerpts are contiguous. */
 window.SC = {
   thinkers: {
-    hobbes:   { name: "Thomas Hobbes",         work: "Leviathan",                       year: 1651 },
-    locke:    { name: "John Locke",            work: "Second Treatise of Government",    year: 1689 },
-    rousseau: { name: "Jean-Jacques Rousseau", work: "The Social Contract",             year: 1762 }
+    hobbes: { name: "Thomas Hobbes", work: "Leviathan", year: 1651 },
+    locke: { name: "John Locke", work: "Second Treatise of Government", year: 1689 },
+    rousseau: { name: "Jean-Jacques Rousseau", work: "The Social Contract", year: 1762 }
   },
-
   order: ["hobbes", "locke", "rousseau"],
-
   questions: [
     {
       id: "nature",
       short: "The state of nature",
-      q: "What are people actually like with no government at all?",
+      q: "What is life without a common political authority?",
       answers: {
         hobbes: {
-          quote: "During the time men live without a common power to keep them all in awe, they are in that condition which is called war; and such a war as is of every man against every man.",
-          cite: "Leviathan, Part I, ch. 13"
+          quote: "Hereby it is manifest, that during the time men live without a common Power to keep them all in awe, they are in that condition which is called Warre; and such a warre, as is of every man, against every man.",
+          cite: "Leviathan, Part I, ch. 13",
+          url: "https://www.gutenberg.org/files/3207/3207-h/3207-h.htm#link2HCH0013"
         },
         locke: {
-          quote: "The state of nature has a law of nature to govern it, which obliges every one: and reason, which is that law, teaches all mankind, who will but consult it, that being all equal and independent, no one ought to harm another in his life, health, liberty, or possessions.",
-          cite: "Second Treatise, ch. 2, §6"
+          quote: "being all equal and independent, no one ought to harm another in his life, health, liberty, or possessions",
+          cite: "Second Treatise, ch. 2, §6 (excerpt)",
+          url: "https://www.gutenberg.org/files/7370/7370-h/7370-h.htm#CHAPTER_II"
         },
         rousseau: {
-          quote: "Man is born free; and everywhere he is in chains. One thinks himself the master of others, and still remains a greater slave than they.",
-          cite: "The Social Contract, Book I, ch. 1 (tr. Cole)"
+          quote: "That primitive condition can then subsist no longer; and the human race would perish unless it changed its manner of existence.",
+          cite: "The Social Contract, I.6 (tr. Cole)",
+          url: "https://www.gutenberg.org/files/46333/46333-h/46333-h.htm#CHAPTER_VI"
         }
       }
     },
-
     {
       id: "deal",
       short: "What you hand over",
-      q: "What exactly do you sign away to get a government?",
+      q: "Which powers do people surrender?",
       answers: {
         hobbes: {
-          quote: "I authorise and give up my right of governing myself to this man, or to this assembly of men, on this condition, that thou give up thy right to him, and authorise all his actions in like manner.",
-          cite: "Leviathan, Part II, ch. 17"
+          quote: "I Authorise and give up my Right of Governing my selfe, to this Man, or to this Assembly of men, on this condition, that thou give up thy Right to him, and Authorise all his Actions in like manner.",
+          cite: "Leviathan, Part II, ch. 17",
+          url: "https://www.gutenberg.org/files/3207/3207-h/3207-h.htm#link2HCH0017"
         },
         locke: {
-          quote: "Though men, when they enter into society, give up the equality, liberty, and executive power they had in the state of nature... the power of the society, or legislative constituted by them, can never be supposed to extend farther than the common good.",
-          cite: "Second Treatise, ch. 9, §131"
+          quote: "the power of the society, or legislative constituted by them, can never be supposed to extend farther, than the common good",
+          cite: "Second Treatise, ch. 9, §131 (excerpt)",
+          url: "https://www.gutenberg.org/files/7370/7370-h/7370-h.htm#CHAPTER_IX"
         },
         rousseau: {
           quote: "Each of us puts his person and all his power in common under the supreme direction of the general will, and, in our corporate capacity, we receive each member as an indivisible part of the whole.",
-          cite: "The Social Contract, Book I, ch. 6 (tr. Cole)"
+          cite: "The Social Contract, I.6 (tr. Cole)",
+          url: "https://www.gutenberg.org/files/46333/46333-h/46333-h.htm#CHAPTER_VI"
         }
       }
     },
-
     {
       id: "sovereign",
       short: "Who ends up in charge",
       q: "Who gets the power, and what makes it legitimate?",
       answers: {
         hobbes: {
-          quote: "This is the generation of that great LEVIATHAN, or rather, to speak more reverently, of that mortal god, to which we owe, under the immortal God, our peace and defence.",
-          cite: "Leviathan, Part II, ch. 17"
+          quote: "When the Representative is One man, then is the Common-wealth a MONARCHY: when an Assembly of All that will come together, then it is a DEMOCRACY, or Popular Common-wealth: when an Assembly of a Part onely, then it is called an ARISTOCRACY.",
+          cite: "Leviathan, Part II, ch. 19",
+          url: "https://www.gutenberg.org/files/3207/3207-h/3207-h.htm#link2HCH0019"
         },
         locke: {
-          quote: "Men being, as has been said, by nature, all free, equal, and independent, no one can be put out of this estate, and subjected to the political power of another, without his own consent.",
-          cite: "Second Treatise, ch. 8, §95"
+          quote: "MEN being, as has been said, by nature, all free, equal, and independent, no one can be put out of this estate, and subjected to the political power of another, without his own consent.",
+          cite: "Second Treatise, ch. 8, §95",
+          url: "https://www.gutenberg.org/files/7370/7370-h/7370-h.htm#CHAPTER_VIII"
         },
         rousseau: {
-          quote: "Sovereignty, for the same reason as makes it inalienable, cannot be represented; it lies essentially in the general will, and will does not admit of representation.",
-          cite: "The Social Contract, Book III, ch. 15 (tr. Cole)"
+          quote: "The deputies of the people, therefore, are not and cannot be its representatives: they are merely its stewards, and can carry through no definitive acts.",
+          cite: "The Social Contract, III.15 (tr. Cole)",
+          url: "https://www.gutenberg.org/files/46333/46333-h/46333-h.htm#CHAPTER_XVc"
         }
       }
     },
-
     {
       id: "revolt",
       short: "When you can revolt",
-      q: "The people in charge go bad. Can you throw them out?",
+      q: "When does obedience cease to be owed?",
       answers: {
         hobbes: {
-          quote: "The obligation of subjects to the sovereign is understood to last as long, and no longer, than the power lasteth by which he is able to protect them.",
-          cite: "Leviathan, Part II, ch. 21"
+          quote: "The Obligation of Subjects to the Soveraign is understood to last as long, and no longer, than the power lasteth, by which he is able to protect them.",
+          cite: "Leviathan, Part II, ch. 21",
+          url: "https://www.gutenberg.org/files/3207/3207-h/3207-h.htm#link2HCH0021"
         },
         locke: {
-          quote: "By this breach of trust they forfeit the power the people had put into their hands... and it devolves to the people, who have a right to resume their original liberty.",
-          cite: "Second Treatise, ch. 19, §222"
+          quote: "by this breach of trust they forfeit the power the people had put into their hands for quite contrary ends, and it devolves to the people, who have a right to resume their original liberty",
+          cite: "Second Treatise, ch. 19, §222 (excerpt)",
+          url: "https://www.gutenberg.org/files/7370/7370-h/7370-h.htm#CHAPTER_XIX"
         },
         rousseau: {
-          quote: "The moment the government usurps the Sovereignty, the social compact is broken, and all private citizens recover by right their natural liberty.",
-          cite: "The Social Contract, Book III, ch. 10 (tr. Cole)"
+          quote: "So that the moment the government usurps the Sovereignty, the social compact is broken and all private citizens recover by right their natural liberty, and are forced, but not bound, to obey.",
+          cite: "The Social Contract, III.10 (tr. Cole)",
+          url: "https://www.gutenberg.org/files/46333/46333-h/46333-h.htm#CHAPTER_Xc"
         }
       }
     },
-
     {
       id: "catch",
-      short: "The catch",
-      q: "What does each deal quietly cost you?",
+      short: "The limits",
+      q: "Who is left unprotected or excluded?",
       answers: {
         hobbes: {
-          quote: "There can happen no breach of covenant on the part of the sovereign; and consequently none of his subjects, by any pretence of forfeiture, can be freed from his subjection.",
-          cite: "Leviathan, Part II, ch. 18"
+          quote: "there can happen no breach of Covenant on the part of the Soveraigne; and consequently none of his Subjects, by any pretence of forfeiture, can be freed from his Subjection.",
+          cite: "Leviathan, Part II, ch. 18 (excerpt)",
+          url: "https://www.gutenberg.org/files/3207/3207-h/3207-h.htm#link2HCH0018"
         },
         locke: {
-          quote: "Whatsoever then he removes out of the state that nature hath provided... he hath mixed his labour with, and joined to it something that is his own, and thereby makes it his property.",
-          cite: "Second Treatise, ch. 5, §27"
+          quote: "Whatsoever then he removes out of the state that nature hath provided, and left it in, he hath mixed his labour with, and joined to it something that is his own, and thereby makes it his property.",
+          cite: "Second Treatise, ch. 5, §27",
+          url: "https://www.gutenberg.org/files/7370/7370-h/7370-h.htm#CHAPTER_V"
         },
         rousseau: {
-          quote: "Whoever refuses to obey the general will shall be compelled to do so by the whole body. This means nothing less than that he will be forced to be free.",
-          cite: "The Social Contract, Book I, ch. 7 (tr. Cole)"
+          quote: "whoever refuses to obey the general will shall be compelled to do so by the whole body. This means nothing less than that he will be forced to be free",
+          cite: "The Social Contract, I.7 (tr. Cole; excerpt)",
+          url: "https://www.gutenberg.org/files/46333/46333-h/46333-h.htm#CHAPTER_VII"
         }
       }
     }

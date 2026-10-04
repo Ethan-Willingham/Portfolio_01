@@ -1,5 +1,5 @@
 /* ============================================================
-   Euclid and the invention of proof: a walk through the Elements.
+   Euclid's Elements, step by step: a walk through the Elements.
    Two independent pieces, both vanilla and deferred, no deps:
 
    1) THE WALK RAIL  (same contract as js/aristotle.js): a sticky
@@ -28,10 +28,18 @@
 
     var pop = $('walkpop'), stno = $('walk-stno'), stlabel = $('walk-stlabel'),
         count = $('walk-count'), total = stations.length, cur = 0;
+    var spyGap = 12;
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function tag(el) { return el.getAttribute('data-tag') || ''; }
     function label(el) { return el.getAttribute('data-label') || ''; }
+
+    function setOpen(open) {
+      if (!pop) return;
+      pop.hidden = !open;
+      bar.classList.toggle('is-open', open);
+      $('walk-jump').setAttribute('aria-expanded', String(open));
+    }
 
     function buildPop() {
       if (!pop) return;
@@ -44,7 +52,7 @@
       pop.addEventListener('click', function (e) {
         var b = e.target.closest('button[data-i]');
         if (!b) return;
-        pop.hidden = true; bar.classList.remove('is-open');
+        setOpen(false);
         goTo(+b.getAttribute('data-i'));
       });
     }
@@ -62,11 +70,12 @@
     function goTo(i) {
       i = Math.max(0, Math.min(total - 1, i));
       var el = stations[i];
-      var y = el.getBoundingClientRect().top + window.pageYOffset - (bar.offsetHeight + 12);
-      window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+      var inset = parseFloat(window.getComputedStyle(bar).top) || 0;
+      var y = el.getBoundingClientRect().top + window.pageYOffset - (inset + bar.offsetHeight + spyGap);
+      window.scrollTo({ top: Math.ceil(y), behavior: reduce ? 'auto' : 'smooth' });
     }
     function spy() {
-      var line = bar.getBoundingClientRect().bottom + 4, i = 0;
+      var line = bar.getBoundingClientRect().bottom + spyGap, i = 0;
       for (var k = 0; k < stations.length; k++) {
         if (stations[k].getBoundingClientRect().top <= line) i = k;
       }
@@ -77,16 +86,16 @@
       $('walk-next').onclick = function () { goTo(cur + 1); };
       if (pop) {
         $('walk-jump').onclick = function () {
-          pop.hidden = !pop.hidden; bar.classList.toggle('is-open', !pop.hidden);
+          setOpen(pop.hidden);
         };
         document.addEventListener('click', function (e) {
           if (pop.hidden) return;
           if (!pop.contains(e.target) && !$('walk-jump').contains(e.target)) {
-            pop.hidden = true; bar.classList.remove('is-open');
+            setOpen(false);
           }
         });
         document.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape') { pop.hidden = true; bar.classList.remove('is-open'); }
+          if (e.key === 'Escape' && !pop.hidden) { setOpen(false); $('walk-jump').focus(); }
         });
       }
       var ticking = false;

@@ -2,7 +2,7 @@
    Reads the authored .tale cards in the page, builds a one-at-a-time
    gallery with chips, arrow buttons, and keyboard support.
    No dependencies. Without JS the .tale cards read as a plain list.
-   (Cloned from js/frankl.js; same shell, same pattern.) */
+   The extracts use Justin O'Brien's translation; commentary is paraphrase. */
 (function () {
   'use strict';
 
@@ -72,7 +72,7 @@
       '<p class="gal-card-k">' + d.kicker + ' <span class="place">' + d.place + '</span></p>' +
       '<h3 class="gal-card-h">' + d.title + '</h3>' +
       '<div class="gal-card-body">' + d.body + '</div>' +
-      '<p class="gal-lesson"><span class="lk">in his words</span>' + d.lesson + '</p>' +
+      '<p class="gal-lesson"><span class="lk">Extract, O\'Brien translation</span>' + d.lesson + '</p>' +
       '<p class="gal-src">' + d.src + '</p>';
     pos.innerHTML = '<b>' + (cur + 1) + '</b> / ' + cards.length;
     prev.disabled = cur === 0;
@@ -103,6 +103,7 @@
     go(cur + (e.key === 'ArrowLeft' ? -1 : 1));
   });
 
-  wrap.hidden = false;
   render();
+  source.classList.add('gallery-ready');
+  wrap.hidden = false;
 })();

@@ -1,26 +1,26 @@
 /* ============================================================
    Marcus Aurelius, Meditations, side by side.
    Interactive explorer: pick a passage (cited Book.Section), read
-   the Koine Greek source, then compare the English translations in
-   the corpus, with a plain-language breakdown of what the passage
-   says and where the translators split.
+   an explanation, optional Greek source, and sourced edition excerpts.
 
    Data:  window.MARCUS        (js/marcus-data.js)  -> {translators, order, entries}
    Notes: window.MARCUS_NOTES  (js/marcus-notes.js) -> per-passage commentary, keyed by "B.S"
-   No dependencies. Vanilla, deferred. No em dashes in my own text;
-   the translations are quoted verbatim and keep their punctuation.
+   No dependencies. Vanilla, deferred. Edition punctuation is normalized.
    ============================================================ */
 (function () {
   'use strict';
 
-  /* The "Key" view: the three complete public-domain translations
-     (Casaubon 1634, Long 1862, Haines 1916) plus the beloved modern
-     (Hays 2002), shown chronologically, so a first read is a clean
-     spread across four centuries. "All" adds the other moderns. */
-  var KEY = ['casaubon', 'long', 'haines', 'staniforth', 'hays'];
+  /* The Key view omits the much older Casaubon wording. All adds it. */
+  var KEY = ['long', 'haines', 'farquharson', 'hays'];
 
   var DATA, NOTES, cur = 0, view = 'key';
   var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setIndex(open) {
+    $('marc-gridpop').hidden = !open;
+    $('marc-jump').setAttribute('aria-expanded', String(open));
+  }
 
   function entry(i) { return DATA.entries[i]; }
   function refOf(e) { return e.b + '.' + e.s; }
@@ -74,11 +74,13 @@
     /* source (the Greek) */
     if (e.gk) {
       $('marc-source').innerHTML =
-        '<p class="marc-zh-k">Source <span>Koine Greek, written c. 170s CE</span></p>' +
-        '<p class="marc-zh" lang="grc">' + esc(e.gk) + '</p>';
+        '<details><summary>Greek source' + (e.gkExcerpt ? ' (excerpt)' : '') + '</summary>' +
+        '<p class="marc-zh-k"><a href="' + e.source + '">Received Greek text</a>' +
+        ' <span>Book ' + e.b + ', ' + e.s + '; numbering may differ in the linked copy</span></p>' +
+        '<p class="marc-zh" lang="grc">' + esc(e.gk) + '</p></details>';
     } else {
       $('marc-source').innerHTML =
-        '<p class="marc-zh-k">Source <span>Marcus wrote in Koine Greek; this passage is shown in translation only</span></p>';
+        '<p class="marc-zh-k">Source <span>This passage is shown in translation only</span></p>';
     }
 
     /* commentary */
@@ -88,15 +90,18 @@
     var out = sel.map(function (v) {
       var m = meta(v.k);
       return '<article class="marc-v marc-' + era(m.year) + '">' +
-        '<header class="marc-vh"><span class="marc-vn">' + esc(m.name) + '</span>' +
+        '<header class="marc-vh"><a class="marc-vn" href="' + v.source + '">' + esc(m.name) + '</a>' +
         '<span class="marc-vy">' + (m.year || '') + '</span></header>' +
+        '<p class="marc-vloc">' + esc(v.locator || refOf(e)) + (v.excerpt && !/excerpt/i.test(v.locator || '') ? ' · excerpt' : '') + '</p>' +
         '<div class="marc-vt">' + textHtml(v.t) + '</div></article>';
     }).join('');
     $('marc-versions').innerHTML = out ||
       '<p class="marc-empty">No translations in this view. Try All.</p>';
 
     document.querySelectorAll('#marc-views button').forEach(function (b) {
-      b.classList.toggle('is-on', b.getAttribute('data-view') === view);
+      var selected = b.getAttribute('data-view') === view;
+      b.classList.toggle('is-on', selected);
+      b.setAttribute('aria-pressed', String(selected));
     });
     document.querySelectorAll('#marc-gridpop button').forEach(function (b) {
       b.classList.toggle('is-cur', b.getAttribute('data-ref') === refOf(e));
@@ -106,27 +111,9 @@
   }
 
   function noteHtml(note) {
-    if (!note.gist && !(note.splits && note.splits.length)) {
-      return '<p class="marc-note-soon">A plain-language breakdown of this passage is on the way. For now, compare the renderings below.</p>';
-    }
-    var h = '<div class="marc-note-card">';
-    if (note.gist) {
-      h += '<p class="marc-note-k">What it says</p><p class="marc-note-gist">' +
-        note.gist + '</p>';
-    }
-    if (note.splits && note.splits.length) {
-      h += '<p class="marc-note-k">The Greek behind it</p>';
-      h += '<dl class="marc-splits">' + note.splits.map(function (s) {
-        return '<dt>' + (s.gk ? '<span lang="grc">' + esc(s.gk) + '</span> ' : '') +
-          (s.gloss ? '<span class="marc-gloss">' + esc(s.gloss) + '</span>' : '') +
-          '</dt><dd>' + s.note + '</dd>';
-      }).join('') + '</dl>';
-    }
-    if (note.read) {
-      h += '<p class="marc-note-k">My read</p><p class="marc-note-read">' + note.read + '</p>';
-    }
-    h += '</div>';
-    return h;
+    if (!note.plain) return '<p class="marc-note-soon">The passage explanation could not be loaded.</p>';
+    return '<div class="marc-note-card"><p class="marc-note-k">In plain English</p>' +
+      '<p class="marc-note-gist">' + note.plain + '</p></div>';
   }
 
   /* ---------- navigation ---------- */
@@ -135,7 +122,7 @@
     render();
     if (mode !== false) history.replaceState(null, '', '#' + refOf(entry(cur)));
     var top = document.getElementById('marc');
-    if (mode === 'scroll' && top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (mode === 'scroll' && top) top.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }
 
   function buildIndex(pop) {
@@ -155,7 +142,7 @@
         var btn = document.createElement('button');
         btn.textContent = o.e.s;
         btn.setAttribute('data-ref', refOf(o.e));
-        btn.onclick = (function (n) { return function () { pop.hidden = true; go(n, 'scroll'); }; })(o.i);
+        btn.onclick = (function (n) { return function () { setIndex(false); go(n, 'scroll'); }; })(o.i);
         row.appendChild(btn);
       });
       pop.appendChild(row);
@@ -169,17 +156,26 @@
       b.onclick = function () { view = b.getAttribute('data-view'); render(); };
     });
     var pop = $('marc-gridpop');
-    $('marc-jump').onclick = function () { pop.hidden = !pop.hidden; };
+    $('marc-jump').onclick = function () { setIndex(pop.hidden); };
     buildIndex(pop);
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[href^="#"]');
+      if (!link) return;
+      var i = indexOfRef(link.getAttribute('href').slice(1));
+      if (i < 0) return;
+      e.preventDefault();
+      go(i, 'scroll');
+    });
     document.addEventListener('keydown', function (e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
+          e.target.tagName === 'SELECT' || e.target.isContentEditable) return;
       if (e.key === 'ArrowLeft') { go(cur - 1); }
       else if (e.key === 'ArrowRight') { go(cur + 1); }
-      else if (e.key === 'Escape') { pop.hidden = true; }
+      else if (e.key === 'Escape' && !pop.hidden) { setIndex(false); $('marc-jump').focus(); }
     });
     window.addEventListener('hashchange', function () {
       var i = indexOfRef(location.hash.slice(1));
-      if (i >= 0 && i !== cur) go(i, false);
+      if (i >= 0) go(i, 'scroll');
     });
   }
 
@@ -190,9 +186,11 @@
     var i = indexOfRef(location.hash.slice(1));
     if (i >= 0) cur = i;
     wire();
+    setIndex(false);
     render();
     var mount = document.getElementById('marc');
     if (mount) mount.classList.add('marc-ready');
+    if (i >= 0) window.requestAnimationFrame(function () { go(i, 'scroll'); });
   }
 
   if (document.readyState === 'loading') {

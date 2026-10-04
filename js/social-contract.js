@@ -3,14 +3,13 @@
    Three thinkers (Hobbes, Locke, Rousseau) answer the same set
    of questions about why anyone should obey the state and what
    makes power legitimate. Pick a question, read the plain-English
-   answer from each, then the verbatim line from the book it came
+   answer from each, then a linked excerpt from the book it came
    from, stacked so you can read them against each other.
 
    Data:  window.SC       (js/social-contract-data.js)
           -> {thinkers, order, questions}
    Notes: window.SC_NOTES (js/social-contract-notes.js)
-          -> per-question breakdown (island handle, framing, the
-             plain read of each thinker, where they split)
+          -> per-question framing and paragraphs for each thinker
    No dependencies. Vanilla, deferred. No em dashes.
    ============================================================ */
 (function () {
@@ -18,13 +17,14 @@
 
   var SC, NOTES, cur = 0;
   var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function question(i) { return SC.questions[i]; }
   function thinker(k) { return SC.thinkers[k] || { name: k, work: '', year: null }; }
 
   function esc(s) {
-    return String(s).replace(/[&<>]/g, function (c) {
-      return c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;';
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
 
@@ -35,20 +35,22 @@
     $('sc-qno').textContent = 'Question ' + (cur + 1);
     $('sc-qshort').textContent = q.short || '';
 
-    /* the question + the island handle that makes it concrete */
+    /* the question and its framing */
     var head = '<p class="sc-q-k">The question</p>' +
       '<p class="sc-q">' + esc(q.q) + '</p>';
-    if (note.island) head += '<p class="sc-island">' + note.island + '</p>';
     if (note.gist) head += '<p class="sc-gist">' + note.gist + '</p>';
     $('sc-question').innerHTML = head;
 
     /* the three thinkers, in order: the plain read, then their own words */
     var out = SC.order.map(function (k) {
       var t = thinker(k), a = (q.answers && q.answers[k]) || {};
-      var read = (note.reads && note.reads[k]) || '';
+      var read = (note.reads && note.reads[k]) || [];
+      var paragraphs = Array.isArray(read) ? read : [read];
+      var cite = esc(a.cite || t.work);
+      if (a.url) cite = '<a href="' + esc(a.url) + '">' + cite + '</a>';
       var verse = a.quote
         ? '<blockquote class="sc-quote">' + esc(a.quote) +
-          '<cite class="sc-cite">' + esc(a.cite || (t.work)) + '</cite></blockquote>'
+          '<cite class="sc-cite">' + cite + '</cite></blockquote>'
         : '';
       return '<article class="sc-t sc-' + k + '">' +
         '<header class="sc-th">' +
@@ -56,7 +58,7 @@
           '<span class="sc-tw">' + esc(t.work) +
             (t.year ? ' <span class="sc-ty">' + t.year + '</span>' : '') + '</span>' +
         '</header>' +
-        (read ? '<p class="sc-read">' + read + '</p>' : '') +
+        paragraphs.filter(Boolean).map(function (p) { return '<p class="sc-read">' + p + '</p>'; }).join('') +
         verse +
         '</article>';
     }).join('');
@@ -71,6 +73,14 @@
     document.querySelectorAll('#sc-tabs button').forEach(function (b, i) {
       b.classList.toggle('is-on', i === cur);
       b.setAttribute('aria-selected', i === cur ? 'true' : 'false');
+      if (i === cur) {
+        var tabs = $('sc-tabs');
+        var left = b.getBoundingClientRect().left - tabs.getBoundingClientRect().left + tabs.scrollLeft;
+        if (left < tabs.scrollLeft) tabs.scrollLeft = left;
+        else if (left + b.offsetWidth > tabs.scrollLeft + tabs.clientWidth) {
+          tabs.scrollLeft = left + b.offsetWidth - tabs.clientWidth;
+        }
+      }
     });
     $('sc-prev').disabled = cur === 0;
     $('sc-next').disabled = cur === SC.questions.length - 1;
@@ -82,7 +92,7 @@
     render();
     history.replaceState(null, '', '#' + question(cur).id);
     var top = $('sc');
-    if (scroll && top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (scroll && top) top.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   }
 
   function indexOfId(id) {
@@ -114,7 +124,7 @@
     });
     window.addEventListener('hashchange', function () {
       var i = indexOfId(location.hash.slice(1));
-      if (i >= 0 && i !== cur) go(i);
+      if (i >= 0) go(i, true);
     });
   }
 
@@ -128,6 +138,7 @@
     render();
     var mount = $('sc');
     if (mount) mount.classList.add('sc-ready');
+    if (i >= 0) window.requestAnimationFrame(function () { go(i, true); });
   }
 
   if (document.readyState === 'loading') {

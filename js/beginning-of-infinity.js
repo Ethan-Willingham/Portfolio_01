@@ -1,9 +1,9 @@
 /* ============================================================
    The Beginning of Infinity, mapped.
-   An argument map: the book's load-bearing ideas as nodes in a
-   single flow, foundations at the top, conclusions at the bottom.
-   Click a node to read the claim, why it holds, the line from the
-   book it rests on, and what it rests on / leads to.
+   A reading map of nine selected ideas. Connections are this
+   page's editorial route through related discussions, not proof
+   dependencies or entailments attributed to Deutsch. Click a
+   node to read the account, source, and connected discussions.
 
    Progressive enhancement: the ideas are authored as plain
    <article class="boi-idea"> cards in the HTML, so the page reads
@@ -99,8 +99,8 @@
 
     svg = el('svg', {
       viewBox: '0 0 ' + vbW + ' ' + vbH,
-      role: 'img',
-      'aria-label': 'A map of the book’s argument: nine ideas as connected boxes, from a foundation of fallibilism at the top down to the conclusion that people are significant.'
+      role: 'group',
+      'aria-label': 'An editorial reading map of nine ideas from The Beginning of Infinity. Lines connect related discussions and do not assert logical entailment.'
     });
 
     /* edges first (behind the nodes) */
@@ -178,10 +178,10 @@
       '<div class="pn-why">' + d.whyHtml + '</div>' +
       qHtml +
       '<div class="amap-rel">' +
-      '<div class="amap-rel-col"><p class="amap-rel-k">Rests on</p>' +
-      (fromC || '<span class="amap-rel-none">Nothing. This is where the argument starts.</span>') + '</div>' +
-      '<div class="amap-rel-col"><p class="amap-rel-k">Leads to</p>' +
-      (toC || '<span class="amap-rel-none">The end of this thread.</span>') + '</div>' +
+      '<div class="amap-rel-col"><p class="amap-rel-k">Earlier connections</p>' +
+      (fromC || '<span class="amap-rel-none">No earlier connection in this map.</span>') + '</div>' +
+      '<div class="amap-rel-col"><p class="amap-rel-k">Further connections</p>' +
+      (toC || '<span class="amap-rel-none">No further connection in this map.</span>') + '</div>' +
       '</div>';
 
     Array.prototype.slice.call(panel.querySelectorAll('.amap-chip')).forEach(function (b) {
@@ -199,6 +199,7 @@
     order.forEach(function (o) {
       var g = nodeEls[o.id];
       g.classList.toggle('is-on', o.id === d.id);
+      g.setAttribute('aria-pressed', o.id === d.id ? 'true' : 'false');
       g.classList.toggle('is-rel', !!rel[o.id]);
       g.classList.toggle('is-dim', o.id !== d.id && !rel[o.id]);
     });
@@ -258,6 +259,7 @@
 
     var start = byId[location.hash.slice(1)];
     select(start ? start.i : 0, 'init');
+    document.documentElement.classList.add('boi-ready');
   }
 
   if (document.readyState === 'loading') {
