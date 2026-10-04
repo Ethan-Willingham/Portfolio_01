@@ -1,4 +1,4 @@
-// Exercise lossless municipal delivery in native and older browsers.
+// Exercise lossless city data delivery in native and older browsers.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -7,11 +7,11 @@ const zlib = require('node:zlib');
 const { chromium, launchOptions } = require('./browser-support.cjs');
 const root = path.resolve(__dirname, '../..');
 const mapRoot = path.join(root, 'archive/under-the-street/assets/map');
-const file = 'data/municipal/eagan-water.json.gz';
+const file = 'data/wells-complete.json.gz';
 const bytes = fs.readFileSync(path.join(mapRoot, file));
 const original = zlib.gunzipSync(bytes);
 const expected = JSON.parse(original).features.length;
-const hooks = `window.__compressionAudit={state:()=>({loaded:data.eaganWater?.features?.length,error:data.eaganWater?.error}),first:()=>data.eaganWater?.features?.[0]?.id};`;
+const hooks = `window.__compressionAudit={state:()=>({loaded:data.wells?.features?.length,error:data.wells?.error}),first:()=>data.wells?.features?.[0]?.id};`;
 const mime = {'.html':'text/html','.js':'text/javascript','.json':'application/json','.css':'text/css','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2'};
 const server = http.createServer((req, res) => {
   const target = path.resolve(root, '.' + new URL(req.url, 'http://localhost').pathname);
@@ -33,13 +33,13 @@ async function open(configure) {
   page.on('pageerror', error => errors.push(error.message));
   await page.route('https://www.googletagmanager.com/**', route => route.abort());
   if (configure) await configure(page);
-  await page.goto(url + '/archive/under-the-street/under-the-street.html#map=14/44.804/-93.167&topic=water&layers=eaganWater');
+  await page.goto(url + '/archive/under-the-street/under-the-street.html#map=14/44.95/-93.12&topic=ground&layers=wells');
   return {page, context};
 }
 async function ready(page) {
   await page.waitForFunction(count => window.__compressionAudit?.state().loaded === count && !__compressionAudit.state().error, expected);
   assert.ok(await page.locator('.um-result').count(), 'Decoded data reaches the place browser');
-  assert.match(await page.evaluate(() => __compressionAudit.first()), /^eaganWater-/);
+  assert.match(await page.evaluate(() => __compressionAudit.first()), /^wells-/);
 }
 (async () => { try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -59,19 +59,19 @@ async function ready(page) {
   assert.equal(decoderRequests, 1, 'Fallback decoder loads once when needed');
   await fallback.context.close();
 
-  const decoded = await open(page => page.route('**/municipal/eagan-water.json.gz?*', route => route.fulfill({status:200,contentType:'application/json',body:original})));
+  const decoded = await open(page => page.route('**/data/wells-complete.json.gz?*', route => route.fulfill({status:200,contentType:'application/json',body:original})));
   await ready(decoded.page);
   await decoded.context.close();
 
   let damagedOnce = false;
-  const retry = await open(page => page.route('**/municipal/eagan-water.json.gz?*', route => {
+  const retry = await open(page => page.route('**/data/wells-complete.json.gz?*', route => {
     if (!damagedOnce) {damagedOnce = true;return route.fulfill({status:200,body:Buffer.from([31,139,8,0])});}
     return route.continue();
   }));
   await retry.page.waitForFunction(() => window.__compressionAudit?.state().error);
   await retry.page.locator('.um-layers').evaluate(node => {node.open = true;});
-  assert.match(await retry.page.locator('[data-layer="eaganWater"] small').textContent(), /retry/i);
-  await retry.page.locator('[data-layer="eaganWater"]').click();
+  assert.match(await retry.page.locator('[data-layer="wells"] small').textContent(), /retry/i);
+  await retry.page.locator('[data-layer="wells"]').click();
   await ready(retry.page);
   await retry.context.close();
 
@@ -86,10 +86,10 @@ async function ready(page) {
   });
   await decoderRetry.page.waitForFunction(() => window.__compressionAudit?.state().error);
   await decoderRetry.page.locator('.um-layers').evaluate(node => {node.open = true;});
-  await decoderRetry.page.locator('[data-layer="eaganWater"]').click();
+  await decoderRetry.page.locator('[data-layer="wells"]').click();
   await ready(decoderRetry.page);
   assert.equal(retryRequests, 2, 'Failed fallback loading can retry');
   await decoderRetry.context.close();
   assert.deepEqual(errors, []);
-  console.log('PASS complete municipal records through native gzip, lazy fallback, server-decoded responses, corrupt-data retry and decoder retry');
+  console.log('PASS Saint Paul well records through native gzip, lazy fallback, server-decoded responses, corrupt-data retry and decoder retry');
 } finally {if (browser) await browser.close();await new Promise(resolve => server.close(resolve));}})().catch(error => {console.error(error);process.exitCode=1;});

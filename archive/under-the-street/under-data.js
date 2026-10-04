@@ -1,122 +1,518 @@
-/* Dataset and feature interpretation for the Twin Cities infrastructure map.
- * Geometry stays in the exports. This registry keeps source-specific meaning
- * out of the renderer, including units, lifecycle states and missing values.
- */
+/* Saint Paul public infrastructure. Source fields, missing values and status
+ * stay separate from display geometry clipped to the city boundary. */
 (function () {
   'use strict';
-
   var C = { water:'#8fb3c7', sewer:'#9ec79a', power:'#d9978c', gas:'#dfc288', net:'#cf9f78', ground:'#b79bc4', cream:'#e8e2d6', faint:'#a4a293' };
   var number = new Intl.NumberFormat('en-US', { maximumFractionDigits:2 });
   var manifestByFile = {};
-
-  function layer(title, file, kind, color, type, minZ, on, note) {
-    return { title:title, file:file, kind:kind, color:color, type:type,
-      minZ:minZ || 0, on:on !== false, note:note || '' };
-  }
-
-  // Existing IDs are kept so shared map links and the rendering styles survive.
   var layers = {
-    waterworks:layer('Mapped water facilities', 'data/osm-waterworks.json', 'point', C.water, 'waterfacility', 0, true, 'The water_works tag alone does not establish treatment or drinking-water use'),
-    towers:layer('Water towers', 'data/osm-water-towers.json', 'point', C.water, 'tower', 0, true, 'OSM snapshot; includes historic towers'),
-    services:layer('Minneapolis service connections', 'data/service-lines.json.gz', 'point', C.water, 'service', 14, true, 'Material inventory, not pipe routes or water tests'),
-    hydrants:layer('Minneapolis hydrants', 'hydrants.json', 'point', C.power, 'hydrant', 13.4, false, 'June 2020 snapshot; no public bury-depth values'),
-    protection:layer('Drinking-water protection areas', 'data/drinking-water-protection.json', 'polygon', C.water, 'protection', 0, false, 'MDH management boundaries, not water-service territories'),
-    vulnerability:layer('Drinking-water vulnerability', 'data/drinking-water-vulnerability.json', 'polygon', C.ground, 'vulnerability', 0, false, 'MDH source-water vulnerability, not measured contamination'),
-    interceptors:layer('Regional sewer pipes', 'data/mces-interceptors.json', 'line', C.sewer, 'interceptor', 0, true, 'MCES records include online, offline, abandoned and removed segments'),
-    plants:layer('Regional treatment plants', 'data/mces-treatment-plants.json', 'point', C.sewer, 'tplant', 0, true, 'Nine online plants plus former sites'),
-    wspSanitary:layer('West Saint Paul sanitary pipes', 'data/wsp-sanitary-pipes.json', 'line', C.sewer, 'sanitary', 12, true, 'Municipal pipe geometry; sparse material and installation fields'),
-    lifts:layer('Regional lift stations', 'data/mces-lift-stations.json', 'point', C.sewer, 'lift', 11, false, 'Published status distinguishes online and other records'),
-    meters:layer('Regional flow meters', 'data/mces-flow-meters.json', 'point', C.sewer, 'meter', 12, false, 'Includes non-operating records'),
-    sheds:layer('Treatment service areas', 'sewersheds.json', 'polygon', C.sewer, 'sewershed', 0, false, 'Plant service boundaries; no building-to-plant pipe tracing'),
-    wspSanManholes:layer('West Saint Paul sanitary manholes', 'data/wsp-sanitary-manhole.json', 'point', C.sewer, 'wspSanManhole', 14, false, 'Municipal structure inventory'),
-    osmWastewater:layer('Other mapped wastewater sites', 'data/osm-wastewater-plants.json', 'point', C.sewer, 'tplant', 0, false, 'OSM facilities may overlap the MCES inventory'),
-    buried:layer('Buried watercourse records', 'streamsug.json', 'line', C.water, 'bstream', 0, true, 'DNR classes include culverts, storm sewers and former channels'),
-    bassettPlan:layer('Bassett Creek engineering overview, 2025', 'data/bassett-plan-routes.json', 'line', C.water, 'bassettTunnel', 0, true, 'Three published project phases; approximate routes, not surveyed pipe locations'),
-    inlets:layer('Minneapolis storm inlets', 'inlets.json', 'point', C.water, 'inlet', 13.4, true, '6,000 published points; city describes nearly 29,000 inlets'),
-    wspStorm:layer('West Saint Paul storm pipes', 'data/wsp-storm-pipes.json', 'line', C.water, 'stormsewer', 12, true, 'Published width and length units are not documented'),
-    wspInlets:layer('West Saint Paul street catch basins', 'data/wsp-storm-inlets.json', 'point', C.water, 'wspInlets', 14, false, 'Street catch-basin layer; yard and special basins are separate'),
-    wspStormManholes:layer('West Saint Paul storm manholes', 'data/wsp-storm-manhole.json', 'point', C.water, 'wspStormManhole', 14, false, 'Municipal structure inventory'),
-    streams:layer('DNR watercourse network', 'data/surface-streams.json', 'line', C.water, 'surfacewater', 11, false, 'Includes surface and other segment types; inspect the DNR class'),
-    dams:layer('Mapped dams and navigation locks', 'data/osm-dams-locks.json', 'point', C.water, 'dam', 0, false, 'OSM snapshot; points can represent centers of mapped structures'),
-    power:layer('Mapped transmission lines', 'data/osm-power-lines.json', 'line', C.power, 'transmission', 0, true, 'OSM snapshot; location and voltage shown only when tagged'),
-    substations:layer('Substations', 'data/osm-substations.json', 'point', C.power, 'sub', 0, true, 'OSM snapshot; incomplete utility inventory'),
-    powerplants:layer('EIA generating-site inventory', 'data/eia-power-plants.json', 'point', C.gas, 'pplant', 0, true, 'August 2026 inventory; approximate federal site coordinates'),
-    generators:layer('EIA generator records', 'data/eia-generators.json', 'point', C.gas, 'generator', 13, false, 'Units share plant coordinates; status is reported, not live'),
-    osmPowerplants:layer('OSM generating sites', 'data/osm-power-plants.json', 'point', C.gas, 'pplant', 0, false, 'Tagged output and fuel; no automatic match to EIA plants'),
-    feeders:layer('Mapped local electric lines', 'data/osm-power-minor.json', 'line', C.power, 'distribution', 12, false, 'Partial OSM coverage of distribution lines'),
-    cables:layer('Mapped power cables', 'data/osm-power-cables.json', 'line', C.power, 'powercable', 11, false, '463 tagged underground; 12 have no location tag'),
-    electricAreas:layer('Electric utility service areas', 'data/electric-service-areas.json', 'polygon', C.power, 'electricarea', 0, false, 'Utility territory context, not cable routes or a legal survey'),
-    pipelines:layer('Pipelines by recorded substance', 'data/osm-pipelines.json', 'line', C.gas, 'pipeline', 0, true, '292 of 425 have no substance tag; gas includes landfill gas'),
-    pipeStations:layer('Pipeline stations and controls', 'data/osm-pipeline-stations.json', 'point', C.gas, 'pipestation', 11, true, 'Includes valves; a station name does not establish substance'),
-    comms:layer('Mapped data centers', 'data/osm-data-centers.json', 'point', C.net, 'dc', 0, true, 'OSM equipment sites; street fiber routes are absent'),
-    exchanges:layer('Recorded telephone exchanges', 'data/osm-telephone-exchanges.json', 'point', C.net, 'exch', 0, true, 'An OSM exchange tag does not confirm present building use'),
-    telephoneAreas:layer('Telephone exchange territories', 'data/telephone-service-areas.json', 'polygon', C.net, 'telephonearea', 0, false, 'Legacy operator and exchange boundaries, not broadband coverage'),
-    rail:layer('Rail routes crossing the street network', 'data/rail-routes.json', 'line', C.net, 'rail', 11, false, 'MnDOT inventory; train-count years vary and are not live schedules'),
-    depth:layer('Modeled depth to bedrock, 2025', 'data/bedrock-depth-2025.json', 'raster', C.ground, 'bdepth', 0, true, 'MGS D-03; browser sampling about 120 m, depth in feet'),
-    bedrock:layer('Bedrock formations', 'bedrock.json', 'polygon', C.ground, 'bedrock', 0, false, 'Rock formations below the glacial and recent deposits'),
-    faults:layer('Mapped bedrock faults', 'bedrockfaults.json', 'line', C.ground, 'fault', 0, true, 'Geologic map interpretation, not a current movement measurement'),
-    surficial:layer('Glacial and recent deposits', 'data/surficial-geology.json', 'polygon', C.gas, 'surficial', 0, false, 'MGS D-01; generalized polygons for regional viewing'),
-    wells:layer('Recorded wells and boreholes', 'data/wells-complete.json.gz', 'point', C.cream, 'well', 14, true, '110,839 located CWI records; includes sealed and other statuses'),
-    groundwater:layer('Groundwater areas of concern', 'data/groundwater-areas.json', 'polygon', C.net, 'groundwater', 0, false, 'MPCA mapped areas; status and mapping dates vary'),
-    groundwaterBounds:layer('Groundwater boundary certainty', 'data/groundwater-boundaries.json', 'line', C.net, 'groundwaterBoundary', 0, false, 'Boundary lines retain the published certainty classification'),
-    groundwaterSources:layer('Potential groundwater source areas', 'data/groundwater-source-areas.json', 'polygon', C.power, 'groundwaterSource', 0, false, 'Potential source areas differ from mapped groundwater plumes'),
-    groundwaterSites:layer('Groundwater investigation sites', 'data/groundwater-sites.json', 'point', C.net, 'groundwaterSite', 0, false, 'Project anchors associated with mapped groundwater areas'),
-    groundwaterUnmapped:layer('Groundwater sites without mapped areas', 'data/groundwater-sites-unmapped.json', 'point', C.net, 'groundwaterSite', 0, false, 'A site point does not establish a plume boundary'),
-    cleanup:layer('Cleanup and tank program records', 'data/cleanup-sites.json', 'point', C.net, 'cleanup', 13, false, 'Program enrollment alone does not establish current contamination'),
-    pavement:layer('Minneapolis street condition, 2015', 'data/pavement-all.json', 'line', C.gas, 'pavement', 12, false, 'Historical export; 8,699 of 12,184 sections have no rating')
-  };
-  layers.services.tileIndex = 'data/service-lines-tiles.json';
-  layers.wells.tileIndex = 'data/wells-complete-tiles.json';
-  ['services','interceptors','plants','lifts','meters','wspSanitary','wspSanManholes','powerplants','generators'].forEach(function(id) { layers[id].hasInactive = true; });
-
-  // Municipal snapshots retain native field names, aliases and domains. Their
-  // shared interpretation below never fills a missing measurement or status.
-  var municipalLayers = {
-    maplewoodSanitary:['Maplewood-area sanitary pipes','maplewood-sanitary','sanitary','sanitary',C.sewer,true,'Includes regional, neighboring and private ownership'],
-    maplewoodForce:['Maplewood-area force mains','maplewood-force','force','forcemain',C.sewer,false,'Pumped sanitary pipes; source units are unspecified'],
-    maplewoodStorm:['Maplewood-area storm pipes','maplewood-storm','storm','stormsewer',C.water,true,'City, county, state and private ownership are recorded'],
-    mwmoNorthModel:['North Minneapolis stormwater model','mwmo-north-model','model','stormmodel',C.ground,false,'Model conduits; source comments retain assumptions'],
-    bloomWater:['Bloomington-area water mains','bloomington-water','water','watermain',C.water,true,'Supply, raw-water, private and neighboring mains included'],
-    bloomServices:['Bloomington-area water services','bloomington-services','service','waterserviceline',C.water,false,'Published line alignments; addresses are omitted'],
-    bloomSanitary:['Bloomington-area sanitary pipes','bloomington-sanitary','sanitary','sanitary',C.sewer,true,'Gravity, force-main, regional and private types included'],
-    bloomStorm:['Bloomington-area storm pipes','bloomington-storm','storm','stormsewer',C.water,true,'Published diameter inches, length feet and slope percent'],
-    bloomPrivateStorm:['Bloomington private storm pipes','bloomington-private-storm','privateStorm','stormsewer',C.water,false,'Separate inventory; width and length units unspecified'],
-    bloomCulverts:['Bloomington-area culverts','bloomington-culverts','culvert','culvert',C.water,false,'Published size kept without an assumed diameter unit'],
-    bloomDrainTile:['Bloomington storm drain tile','bloomington-drain-tile','drainTile','draintile',C.water,false,'Diameter units are unspecified in the source'],
-    bloomConduit:['Bloomington underground utilities','bloomington-conduit','conduit','cityconduit',C.net,false,'Recorded electrical, telephone, gas and other contents'],
-    eaganWater:['Eagan-area water mains','eagan-water','water','watermain',C.water,true,'Potable and raw-water types; native lifecycle retained'],
-    eaganServices:['Eagan-area water lateral lines','eagan-services','service','waterserviceline',C.water,false,'Includes explicitly assumed and plan-derived geometry'],
-    eaganSanitary:['Eagan-area sanitary pipes','eagan-sanitary','sanitary','sanitary',C.sewer,true,'Gravity, lateral and force-main source layers retained'],
-    eaganStorm:['Eagan-area storm pipes','eagan-storm','storm','stormsewer',C.water,true,'Gravity, lateral and pressurized pipes; source units vary'],
-    eaganFiberCable:['Eagan fiber cables','eagan-fiber-cable','fiber','fibercable',C.net,true,'Explicit fiber cable inventory; conflicting status fields retained'],
-    eaganFiberPath:['Eagan utility paths','eagan-fiber-path','fiberPath','fiberpath',C.net,false,'A published utility path does not establish a laid cable']
-  };
-  Object.keys(municipalLayers).forEach(function(id) {
-    var s=municipalLayers[id], cfg=layer(s[0],'data/municipal/'+s[1]+'.json.gz','line',s[4],s[3],s[2]==='service'?15:12,s[5],s[6]);
-    cfg.municipal=true; cfg.role=s[2]; cfg.hasInactive=s[2]!=='model';
-    layers[id]=cfg;
-  });
-
+  "towers": {
+    "title": "Water towers",
+    "file": "data/osm-water-towers.json",
+    "kind": "point",
+    "color": "#8fb3c7",
+    "type": "tower",
+    "minZ": 0,
+    "on": true,
+    "note": "Mapped tanks include the historic Highland Park tower"
+  },
+  "protection": {
+    "title": "Drinking-water protection areas",
+    "file": "data/drinking-water-protection.json",
+    "kind": "polygon",
+    "color": "#8fb3c7",
+    "type": "protection",
+    "minZ": 0,
+    "on": false,
+    "note": "MDH management boundaries, not water-service territories"
+  },
+  "vulnerability": {
+    "title": "Drinking-water vulnerability",
+    "file": "data/drinking-water-vulnerability.json",
+    "kind": "polygon",
+    "color": "#b79bc4",
+    "type": "vulnerability",
+    "minZ": 0,
+    "on": false,
+    "note": "MDH source-water vulnerability, not measured contamination"
+  },
+  "interceptors": {
+    "title": "Interceptor pipes in Saint Paul",
+    "file": "data/mces-interceptors.json",
+    "kind": "line",
+    "color": "#9ec79a",
+    "type": "interceptor",
+    "minZ": 0,
+    "on": true,
+    "note": "MCES records include online, offline, abandoned and removed segments",
+    "hasInactive": true
+  },
+  "plants": {
+    "title": "Saint Paul treatment plant",
+    "file": "data/mces-treatment-plants.json",
+    "kind": "point",
+    "color": "#9ec79a",
+    "type": "tplant",
+    "minZ": 0,
+    "on": true,
+    "note": "Metro plant inventory inside Saint Paul",
+    "hasInactive": true
+  },
+  "lifts": {
+    "title": "Lift stations in Saint Paul",
+    "file": "data/mces-lift-stations.json",
+    "kind": "point",
+    "color": "#9ec79a",
+    "type": "lift",
+    "minZ": 11,
+    "on": false,
+    "note": "Published status distinguishes online and other records",
+    "hasInactive": true
+  },
+  "meters": {
+    "title": "Sewer flow meters in Saint Paul",
+    "file": "data/mces-flow-meters.json",
+    "kind": "point",
+    "color": "#9ec79a",
+    "type": "meter",
+    "minZ": 12,
+    "on": false,
+    "note": "Includes non-operating records",
+    "hasInactive": true
+  },
+  "sheds": {
+    "title": "Treatment service areas",
+    "file": "sewersheds.json",
+    "kind": "polygon",
+    "color": "#9ec79a",
+    "type": "sewershed",
+    "minZ": 0,
+    "on": false,
+    "note": "Plant service boundaries; no building-to-plant pipe tracing"
+  },
+  "osmWastewater": {
+    "title": "Other mapped wastewater sites",
+    "file": "data/osm-wastewater-plants.json",
+    "kind": "point",
+    "color": "#9ec79a",
+    "type": "tplant",
+    "minZ": 0,
+    "on": false,
+    "note": "OSM facilities may overlap the MCES inventory"
+  },
+  "buried": {
+    "title": "Buried watercourse records",
+    "file": "streamsug.json",
+    "kind": "line",
+    "color": "#8fb3c7",
+    "type": "bstream",
+    "minZ": 0,
+    "on": true,
+    "note": "DNR classes include culverts, storm sewers and former channels"
+  },
+  "streams": {
+    "title": "DNR watercourse network",
+    "file": "data/surface-streams.json",
+    "kind": "line",
+    "color": "#8fb3c7",
+    "type": "surfacewater",
+    "minZ": 11,
+    "on": false,
+    "note": "Includes surface and other segment types; inspect the DNR class"
+  },
+  "dams": {
+    "title": "Mapped dams and navigation locks",
+    "file": "data/osm-dams-locks.json",
+    "kind": "point",
+    "color": "#8fb3c7",
+    "type": "dam",
+    "minZ": 0,
+    "on": false,
+    "note": "OSM snapshot; points can represent centers of mapped structures"
+  },
+  "power": {
+    "title": "Mapped transmission lines",
+    "file": "data/osm-power-lines.json",
+    "kind": "line",
+    "color": "#d9978c",
+    "type": "transmission",
+    "minZ": 0,
+    "on": true,
+    "note": "OSM snapshot; location and voltage shown only when tagged"
+  },
+  "substations": {
+    "title": "Substations",
+    "file": "data/osm-substations.json",
+    "kind": "point",
+    "color": "#d9978c",
+    "type": "sub",
+    "minZ": 0,
+    "on": true,
+    "note": "OSM snapshot; incomplete utility inventory"
+  },
+  "powerplants": {
+    "title": "EIA generating-site inventory",
+    "file": "data/eia-power-plants.json",
+    "kind": "point",
+    "color": "#dfc288",
+    "type": "pplant",
+    "minZ": 0,
+    "on": true,
+    "note": "August 2026 inventory; approximate federal site coordinates",
+    "hasInactive": true
+  },
+  "generators": {
+    "title": "EIA generator records",
+    "file": "data/eia-generators.json",
+    "kind": "point",
+    "color": "#dfc288",
+    "type": "generator",
+    "minZ": 13,
+    "on": false,
+    "note": "Units share plant coordinates; status is reported, not live",
+    "hasInactive": true
+  },
+  "osmPowerplants": {
+    "title": "OSM generating sites",
+    "file": "data/osm-power-plants.json",
+    "kind": "point",
+    "color": "#dfc288",
+    "type": "pplant",
+    "minZ": 0,
+    "on": false,
+    "note": "Tagged output and fuel; no automatic match to EIA plants"
+  },
+  "feeders": {
+    "title": "Mapped local electric lines",
+    "file": "data/osm-power-minor.json",
+    "kind": "line",
+    "color": "#d9978c",
+    "type": "distribution",
+    "minZ": 12,
+    "on": false,
+    "note": "Partial OSM coverage of distribution lines"
+  },
+  "electricAreas": {
+    "title": "Electric utility service areas",
+    "file": "data/electric-service-areas.json",
+    "kind": "polygon",
+    "color": "#d9978c",
+    "type": "electricarea",
+    "minZ": 0,
+    "on": false,
+    "note": "Utility territory context, not cable routes or a legal survey"
+  },
+  "pipelines": {
+    "title": "Pipelines by recorded substance",
+    "file": "data/osm-pipelines.json",
+    "kind": "line",
+    "color": "#dfc288",
+    "type": "pipeline",
+    "minZ": 0,
+    "on": true,
+    "note": "Tagged substances and operators; a complete utility inventory is not available"
+  },
+  "comms": {
+    "title": "Mapped data centers",
+    "file": "data/osm-data-centers.json",
+    "kind": "point",
+    "color": "#cf9f78",
+    "type": "dc",
+    "minZ": 0,
+    "on": true,
+    "note": "OSM equipment sites; street fiber routes are absent"
+  },
+  "exchanges": {
+    "title": "Recorded telephone exchanges",
+    "file": "data/osm-telephone-exchanges.json",
+    "kind": "point",
+    "color": "#cf9f78",
+    "type": "exch",
+    "minZ": 0,
+    "on": true,
+    "note": "An OSM exchange tag does not confirm present building use"
+  },
+  "telephoneAreas": {
+    "title": "Telephone exchange territories",
+    "file": "data/telephone-service-areas.json",
+    "kind": "polygon",
+    "color": "#cf9f78",
+    "type": "telephonearea",
+    "minZ": 0,
+    "on": false,
+    "note": "Legacy operator and exchange boundaries, not broadband coverage"
+  },
+  "rail": {
+    "title": "Rail routes crossing the street network",
+    "file": "data/rail-routes.json",
+    "kind": "line",
+    "color": "#cf9f78",
+    "type": "rail",
+    "minZ": 11,
+    "on": false,
+    "note": "MnDOT inventory; train-count years vary and are not live schedules"
+  },
+  "depth": {
+    "title": "Modeled depth to bedrock, 2025",
+    "file": "data/bedrock-depth-2025.json",
+    "kind": "raster",
+    "color": "#b79bc4",
+    "type": "bdepth",
+    "minZ": 0,
+    "on": true,
+    "note": "MGS D-03; browser sampling about 120 m, depth in feet"
+  },
+  "bedrock": {
+    "title": "Bedrock formations",
+    "file": "bedrock.json",
+    "kind": "polygon",
+    "color": "#b79bc4",
+    "type": "bedrock",
+    "minZ": 0,
+    "on": false,
+    "note": "Rock formations below the glacial and recent deposits"
+  },
+  "surficial": {
+    "title": "Glacial and recent deposits",
+    "file": "data/surficial-geology.json",
+    "kind": "polygon",
+    "color": "#dfc288",
+    "type": "surficial",
+    "minZ": 0,
+    "on": false,
+    "note": "MGS D-01; generalized sediment units clipped to Saint Paul"
+  },
+  "wells": {
+    "title": "Recorded wells and boreholes",
+    "file": "data/wells-complete.json.gz",
+    "kind": "point",
+    "color": "#e8e2d6",
+    "type": "well",
+    "minZ": 13.4,
+    "on": true,
+    "note": "Saint Paul CWI records; includes sealed and other statuses"
+  },
+  "groundwater": {
+    "title": "Groundwater areas of concern",
+    "file": "data/groundwater-areas.json",
+    "kind": "polygon",
+    "color": "#cf9f78",
+    "type": "groundwater",
+    "minZ": 0,
+    "on": false,
+    "note": "MPCA mapped areas; status and mapping dates vary"
+  },
+  "groundwaterBounds": {
+    "title": "Groundwater boundary certainty",
+    "file": "data/groundwater-boundaries.json",
+    "kind": "line",
+    "color": "#cf9f78",
+    "type": "groundwaterBoundary",
+    "minZ": 0,
+    "on": false,
+    "note": "Boundary lines retain the published certainty classification"
+  },
+  "groundwaterSources": {
+    "title": "Potential groundwater source areas",
+    "file": "data/groundwater-source-areas.json",
+    "kind": "polygon",
+    "color": "#d9978c",
+    "type": "groundwaterSource",
+    "minZ": 0,
+    "on": false,
+    "note": "Potential source areas differ from mapped groundwater plumes"
+  },
+  "groundwaterSites": {
+    "title": "Groundwater investigation sites",
+    "file": "data/groundwater-sites.json",
+    "kind": "point",
+    "color": "#cf9f78",
+    "type": "groundwaterSite",
+    "minZ": 0,
+    "on": false,
+    "note": "Project anchors associated with mapped groundwater areas"
+  },
+  "groundwaterUnmapped": {
+    "title": "Groundwater sites without mapped areas",
+    "file": "data/groundwater-sites-unmapped.json",
+    "kind": "point",
+    "color": "#cf9f78",
+    "type": "groundwaterSite",
+    "minZ": 0,
+    "on": false,
+    "note": "A site point does not establish a plume boundary"
+  },
+  "cleanup": {
+    "title": "Cleanup and tank program records",
+    "file": "data/cleanup-sites.json",
+    "kind": "point",
+    "color": "#cf9f78",
+    "type": "cleanup",
+    "minZ": 13,
+    "on": false,
+    "note": "Program enrollment alone does not establish current contamination"
+  },
+  "hydrants": {
+    "title": "Saint Paul public hydrants, 2021",
+    "file": "data/saint-paul-hydrants.json",
+    "kind": "point",
+    "color": "#8fb3c7",
+    "type": "hydrant",
+    "minZ": 13.4,
+    "on": true,
+    "note": "December 2021 public snapshot; hydrants do not show main routes",
+    "native": true,
+    "oid": "FID"
+  },
+  "troutBrook": {
+    "title": "Trout Brook storm interceptor",
+    "file": "data/trout-brook.json",
+    "kind": "line",
+    "color": "#8fb3c7",
+    "type": "stormsewer",
+    "minZ": 0,
+    "on": true,
+    "note": "Published route; stormwater, not sanitary sewage",
+    "native": true,
+    "oid": "OBJECTID"
+  },
+  "rwmwdPipes": {
+    "title": "District storm pipes",
+    "file": "data/rwmwd-pipes.json",
+    "kind": "line",
+    "color": "#8fb3c7",
+    "type": "stormsewer",
+    "minZ": 0,
+    "on": true,
+    "note": "District-owned alignments; partial city coverage",
+    "native": true,
+    "oid": "OBJECTID"
+  },
+  "rwmwdStructures": {
+    "title": "Storm inlets, outlets and structures",
+    "file": "data/rwmwd-structures.json",
+    "kind": "point",
+    "color": "#8fb3c7",
+    "type": "stormstructure",
+    "minZ": 13,
+    "on": false,
+    "note": "District inventory; native structure types retained",
+    "native": true,
+    "oid": "OBJECTID"
+  },
+  "rwmwdPonds": {
+    "title": "Stormwater treatment ponds",
+    "file": "data/rwmwd-ponds.json",
+    "kind": "polygon",
+    "color": "#8fb3c7",
+    "type": "stormpond",
+    "minZ": 0,
+    "on": false,
+    "note": "District-owned stormwater ponds",
+    "native": true,
+    "oid": "OBJECTID"
+  },
+  "signalLines": {
+    "title": "Traffic-signal fiber and connections",
+    "file": "data/saint-paul-signals.json",
+    "kind": "line",
+    "color": "#cf9f78",
+    "type": "signalconnection",
+    "minZ": 13,
+    "on": true,
+    "note": "Fiber, copper and other signal connections; not home internet routes",
+    "native": true,
+    "oid": "OBJECTID",
+    "hasInactive": true
+  }
+};
   var topics = {
-    water:{title:'The drinking-water system', text:'Treatment plants, water towers and Minneapolis service connections. The city records connection materials; these points do not show buried mains. Map details adds hydrants and source-water protection.', layers:['waterworks','towers','services','hydrants','protection','vulnerability']},
-    wastewater:{title:'Where sewage goes', text:'Regional pipes carry sewage to treatment plants. West Saint Paul also publishes local pipes. The regional inventory keeps abandoned and removed records alongside the online system.', layers:['interceptors','plants','wspSanitary','lifts','meters','sheds','wspSanManholes','osmWastewater']},
-    storm:{title:'Rain, creeks and the river', text:'Storm drains carry runoff toward waterways. The Bassett Creek engineering overview separates its three tunnel phases. Buried-watercourse records distinguish culverts, sewers, tunnels and former channels. Minneapolis publishes an inlet subset; West Saint Paul publishes local storm pipes.', layers:['buried','bassettPlan','inlets','wspStorm','streams','dams','wspInlets','wspStormManholes']},
-    power:{title:'The electric grid', text:'Transmission lines, substations and the August 2026 EIA plant inventory. Map details adds generator status, tagged underground cables and utility territories. The mapped distribution network remains partial.', layers:['power','substations','powerplants','generators','cables','feeders','electricAreas','osmPowerplants']},
-    gas:{title:'Pipelines and district heat', text:'Pipelines carry gas, steam, water, fuel and other substances. Many mapped pipes have no substance tag. Steam routes near the university show part of its heating network; local gas distribution is incomplete.', layers:['pipelines','pipeStations']},
-    networks:{title:'Where networks connect', text:'Data centers and recorded telephone exchanges are connection points. Exchange territories describe legacy service boundaries. None of these layers supplies a street-level fiber network.', layers:['comms','exchanges','telephoneAreas','rail']},
-    ground:{title:'The ground beneath the street', text:'The official 2025 depth model estimates how far down the rock lies. Well records add reported depths and geologic interpretations. Map details adds rock and sediment formations, groundwater investigations, and historical street condition.', layers:['depth','faults','wells','bedrock','surficial','groundwater','groundwaterBounds','groundwaterSources','groundwaterSites','groundwaterUnmapped','cleanup','pavement','protection','vulnerability']}
-  };
-  topics.water.layers.push('bloomWater','bloomServices','eaganWater','eaganServices');
-  topics.wastewater.layers.push('maplewoodSanitary','maplewoodForce','bloomSanitary','eaganSanitary');
-  topics.storm.layers.push('maplewoodStorm','bloomStorm','bloomPrivateStorm','bloomCulverts','bloomDrainTile','mwmoNorthModel','eaganStorm');
-  topics.networks.layers.push('bloomConduit','eaganFiberCable','eaganFiberPath');
-  topics.water.text='Treatment plants and towers supply the system. Minneapolis publishes connection-material points; Bloomington and Eagan publish water-main and lateral alignments. Native fields distinguish recorded, assumed and former routes.';
-  topics.wastewater.text='Regional pipes carry sewage to treatment plants. West Saint Paul, Maplewood, Bloomington and Eagan publish local alignments. Their inventories retain ownership, force-main types and former records.';
-  topics.storm.text='Storm drains carry runoff toward waterways. The Bassett Creek engineering overview separates three tunnel phases. Local pipe inventories cover West Saint Paul, Maplewood, Bloomington and Eagan; an optional North Minneapolis stormwater model preserves its assumptions.';
-  topics.networks.text='Data centers and telephone exchanges mark connection points. Eagan publishes fiber cables separately from utility paths; Bloomington records underground utility contents. These snapshots do not establish complete provider coverage.';
+  "water": {
+    "title": "Saint Paul drinking water",
+    "text": "Historic towers and the public hydrant inventory. Hydrants mark connections to the water system. Main routes are not included in the public exports used here.",
+    "layers": [
+      "towers",
+      "hydrants",
+      "protection",
+      "vulnerability"
+    ]
+  },
+  "wastewater": {
+    "title": "Where Saint Paul sewage goes",
+    "text": "Interceptor pipes, the Metro treatment plant, lift stations and flow meters inside Saint Paul. Local sanitary branches are not included as a complete city network.",
+    "layers": [
+      "interceptors",
+      "plants",
+      "lifts",
+      "meters",
+      "sheds",
+      "osmWastewater"
+    ]
+  },
+  "storm": {
+    "title": "Saint Paul storm drains",
+    "text": "The Trout Brook interceptor and district storm pipes, including Beltline and Battle Creek. Add inlets, outfalls and ponds in Map details. These public routes cover part of the city.",
+    "layers": [
+      "troutBrook",
+      "rwmwdPipes",
+      "rwmwdStructures",
+      "rwmwdPonds",
+      "buried",
+      "streams",
+      "dams"
+    ]
+  },
+  "power": {
+    "title": "Power in Saint Paul",
+    "text": "Transmission lines, substations and generating sites within the city. Mapped local feeders are partial coverage. A power line is not necessarily underground.",
+    "layers": [
+      "power",
+      "substations",
+      "powerplants",
+      "generators",
+      "feeders",
+      "electricAreas",
+      "osmPowerplants"
+    ]
+  },
+  "gas": {
+    "title": "Saint Paul gas and district heat",
+    "text": "Tagged pipeline routes and District Energy Saint Paul. Recorded substances are kept separate; many source records do not identify what the pipe carries.",
+    "layers": [
+      "pipelines"
+    ]
+  },
+  "networks": {
+    "title": "Saint Paul cables and connections",
+    "text": "City traffic-signal connections include fiber and copper. Their routes do not establish residential broadband service. Data-center, exchange and railway records add local context.",
+    "layers": [
+      "signalLines",
+      "comms",
+      "exchanges",
+      "telephoneAreas",
+      "rail"
+    ]
+  },
+  "ground": {
+    "title": "The ground under Saint Paul",
+    "text": "Modeled depth to bedrock, well records, rock and sediment formations, and groundwater investigation records. The depth model is an estimate, not a measurement at each property.",
+    "layers": [
+      "depth",
+      "wells",
+      "bedrock",
+      "surficial",
+      "groundwater",
+      "groundwaterBounds",
+      "groundwaterSources",
+      "groundwaterSites",
+      "groundwaterUnmapped",
+      "cleanup",
+      "protection",
+      "vulnerability"
+    ]
+  }
+};
 
-  var serviceClasses = {1:'Lead', 2:'Non-lead', 3:'Unknown material', 4:'Galvanized requiring replacement'};
-  var servicePurposes = {Commercial:'Commercial', Domestic:'Domestic', DomesticFire:'Domestic and fire', Fire:'Fire', Irrigation:'Irrigation', Storm:'Storm', NotaWaterService:'Not a water service'};
   var hydroTypes = {43:'Aqueduct or tunnel',70:'Road culvert',71:'Underground storm sewer',72:'Force main',90:'Superseded channel'};
   var plantKinds = {nuclear:'nuclearplant',coal:'coalplant',gas:'gasplant',hydro:'hydroplant',solar:'solarplant',wind:'windplant',waste:'wasteplant',biomass:'biomassplant',oil:'oilplant',battery:'batteryplant'};
   var fuelNames = {NG:'Natural gas',NUC:'Nuclear',SUN:'Solar',WND:'Wind',WAT:'Water',BIT:'Bituminous coal',SUB:'Subbituminous coal',LIG:'Lignite',WC:'Waste coal',DFO:'Distillate fuel oil',RFO:'Residual fuel oil',JF:'Jet fuel',KER:'Kerosene',PC:'Petroleum coke',PG:'Propane',LFG:'Landfill gas',OBG:'Other biomass gas',WDS:'Wood and wood-derived solids',BLQ:'Black liquor',MSW:'Municipal solid waste',OBS:'Other biomass solids',AB:'Agricultural byproducts',OBL:'Other biomass liquids',SGC:'Coal-derived synthesis gas',SGP:'Petroleum-derived synthesis gas',OG:'Other gas',WH:'Waste heat',GEO:'Geothermal',MWH:'Electricity for storage',OTH:'Other'};
@@ -127,44 +523,29 @@
   var wellVerification = {"1":"Address verification","2":"Name on mailbox","3":"Lot Block","4":"Plat Book","5":"Information from owner-site visit","6":"Information from neighbor","7":"Other, note in remarks","8":"Address with parcel boundary","E":"Emergency services number","G":"Info/GPS from data source","S":"Site Plan","T":"Tag on well","U":"Unlocated (not field located)","X":"Tax Records","Y":"Information from owner-phone call"};
   var wellCoordinates={A:'Digitized map, at least 1:24,000','A**':'Digitized map, irregular section',B:'Digitized map, 1:100,000 to 1:24,000',DS1:'Screen-digitized map, 1:24,000',DS2:'Screen-digitized map, 1:12,000',G:'GPS, source class below 1 meter',G3:'Differentially corrected GPS',G6A:'Averaged GPS, Selective Availability on',G6O:'Averaged GPS, Selective Availability off',I:'GPS, source class 3 to 12 meters',PQ6:'Public Land Survey subsection',S:'Survey',SPL:'Derived State Plane coordinates',UNK:'Unknown coordinate method'};
   var wellGeology={A:'Inferred from geologic map',B:'Inferred from geophysical log',C:'Interpreted from core',D:'Inferred from driller log',E:'Interpreted from core and geophysical log',F:'Interpreted from cuttings',G:'On-site geologist',H:'Cuttings and geophysical log',N:'No source',O:'Other',P:'Geologic study, 1:24,000 or larger',Q:'Geologic study, 1:24,000 to 1:100,000',R:'Geologic study, 1:100,000 or smaller',U:'Unknown',X:'MGS provisional interpretation',Z:'Aquifer code only'};
-  var historicTowers = {
-    'way/88405612':{status:'No longer used for water storage',url:'https://www.minneapolismn.gov/government/projects/washburn-water-tower/'},
-    'way/95763640':{status:'No longer in service',url:'https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower'},
-    'way/175087241':{status:'Water-storage service ended in 1952',url:'https://www.minneapolisparks.org/parks-destinations/historical_sites/tower_hill_park/'},
-    'way/230142974':{status:'No longer used for water storage',url:'https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/mplsdist.html'},
-    'way/896291899':{status:'Replaced for water storage in 1992; converted in 1993',url:'https://www.cityoflindstrom.us/1429/Kaffe-Kanna-Park-Coffee-Pot-Water-Tower'}
-  };
-  // Exact source IDs preserve verified treatment-plant photographs without
-  // interpreting every water_works tag or a facility name as drinking-water use.
-  var confirmedWaterFacilities = {
-    'way/128646413':{type:'ww',purpose:'Drinking-water treatment at the Fridley campus',url:'https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/'},
-    'way/217164192':{type:'ww',purpose:'Drinking-water filtration at the Columbia Heights plant',url:'https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/'},
-    'way/1319645735':{type:'ww',purpose:'Drinking-water treatment at McCarrons',url:'https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water'},
-    'way/1323221824':{type:'ww',purpose:'Bloomington drinking-water treatment plant',url:'https://www.bloomingtonmn.gov/util/utilities-division'},
-    'way/1039251010':{type:'waterpump',purpose:'Southwest Pump Station in the Minneapolis water system; pumping does not establish treatment',url:'https://www.minneapolismn.gov/media/-www-content-assets/documents/2026-2031-Capital-Budget-Requests.pdf'}
-  };
+  var historicTowers = {'way/95763640':{status:'No longer in service',url:'https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower'}};
+  var confirmedWaterFacilities = {};
 
   // Extra kinds reuse verified encyclopedia pages. The media catalog supplies
   // photos and the established kinds; these override only narrower meanings.
   var kinds = {
+    signalconnection:{"label": "Traffic-signal connection", "wiki": "https://en.wikipedia.org/wiki/Traffic_light_control_and_coordination", "description": "A city traffic-signal connection. Read the recorded type for overhead, low-voltage, abandoned or unclassified records."},
+    emptyconduit:{"label": "Empty signal conduit record", "wiki": "https://en.wikipedia.org/wiki/Electrical_conduit", "description": "The city labels this traffic-signal line EMPTY. This record does not establish that a cable has been installed."},
+    signalradio:{"label": "Traffic-signal radio connection", "wiki": "https://en.wikipedia.org/wiki/Radio", "description": "A city record classified as radio. This mapped line is not a buried cable."},
+    signalcopper:{"label": "Traffic-signal copper connection", "wiki": "https://en.wikipedia.org/wiki/Copper_cable", "description": "A traffic-signal connection classified as copper in the city inventory. The source does not supply burial depth."},
+    signalfiber:{"label": "Traffic-signal fiber connection", "wiki": "https://en.wikipedia.org/wiki/Optical_fiber_cable", "description": "The city classifies this traffic-signal connection as fiber. Burial, active operation and home internet availability are not established by this geometry."},
+    stormpond:{"label": "Stormwater treatment pond", "wiki": "https://en.wikipedia.org/wiki/Retention_basin", "description": "A district-owned pond or basin that receives runoff. Basin type and installation year are shown when supplied."},
+    storminlet:{"label": "Stormwater inlet", "wiki": "https://en.wikipedia.org/wiki/Storm_drain", "description": "Receives runoff into the district stormwater system. The source retains any more specific intake or catch-basin type."},
+    stormmanhole:{"label": "Stormwater manhole", "wiki": "https://en.wikipedia.org/wiki/Manhole", "description": "Provides access to a stormwater pipe or junction. This is not a sanitary-sewer connection."},
+    stormoutfall:{"label": "Stormwater outlet", "wiki": "https://en.wikipedia.org/wiki/Outfall", "description": "A recorded outlet or outfall from a stormwater system. Its published structure type identifies what the district recorded."},
+    stormstructure:{"label": "Stormwater structure", "wiki": "https://en.wikipedia.org/wiki/Storm_drain", "description": "A district stormwater structure. The source retains its recorded inlet, outlet, drop-shaft or other type."},
     waterfacility:{label:'Mapped water facility',wiki:'https://en.wikipedia.org/wiki/Water_supply_network',description:'OSM tags this record as water_works. That tag alone does not establish treatment, drinking-water use or current operation. Names and operators remain source tags; some tagged records describe public works or lift stations.'},
-    waterpump:{label:'Water pumping station',wiki:'https://en.wikipedia.org/wiki/Pumping_station',description:'The Minneapolis capital request identifies Southwest Pump Station within its water infrastructure. A pumping station moves water; this classification does not make it a treatment plant or establish current operation.'},
     watermain:{label:'Published water-main record',wiki:'https://en.wikipedia.org/wiki/Water_supply_network',description:'This city inventory gives a water-main alignment and its published type. Public, private, neighboring, supply and former records can occur together. Read the type, ownership and construction fields before treating a segment as a currently operating drinking-water distribution main.'},
     rawwatermain:{label:'Raw-water main record',wiki:'https://en.wikipedia.org/wiki/Water_supply_network',description:'The source identifies this as a raw-water pipe. Raw water has not completed drinking-water treatment; its route is distinct from the distribution mains that serve customers.'},
-    waterserviceline:{label:'Published water-service alignment',wiki:'https://en.wikipedia.org/wiki/Water_supply_network',description:'The city publishes this service or lateral as line geometry. Its recorded water type, material, geometry source and status remain separate from Minneapolis connection-inventory points. Geometry can be explicitly assumed; a material record is not a tap-water test.'},
     sanitarylateral:{label:'Sanitary lateral pipe',wiki:'https://en.wikipedia.org/wiki/Sanitary_sewer',description:'The source identifies this as a sanitary lateral, separate from its gravity mains and force mains. Geometry and attribute-source fields preserve any assumed or plan-derived values.'},
     stormlateral:{label:'Storm lateral pipe',wiki:'https://en.wikipedia.org/wiki/Storm_drain',description:'The city identifies this line as a storm lateral. Its original lifecycle, geometry source, dimensions and any unknown measurement units remain part of the record.'},
     stormpressure:{label:'Pressurized storm pipe',wiki:'https://en.wikipedia.org/wiki/Storm_drain',description:'The source identifies this as a pressurized storm main, separate from gravity flow and lateral pipes. That classification does not supply a pressure measurement or establish current pump operation.'},
-    fibercable:{label:'Published fiber cable',wiki:'https://en.wikipedia.org/wiki/Optical_fiber_cable',description:'Eagan explicitly records this as a fiber cable. Native status fields can disagree and are retained separately. A mapped cable does not establish its burial method, live traffic, available capacity or complete provider coverage.'},
-    fiberpath:{label:'Published utility path',wiki:'https://en.wikipedia.org/wiki/Telecommunications',description:'Eagan publishes this path separately from its fiber cable inventory. A mapped path is not evidence that a cable has been laid, that the route is buried or that broadband service is available at every property along it.'},
-    stormmodel:{label:'Stormwater-model conduit',wiki:'https://en.wikipedia.org/wiki/Storm_drain',description:'MWMO publishes this conduit as part of its North Minneapolis stormwater model. Source comments distinguish city GIS, as-built plans, modified links and assumed values. Model geometry and dimensions do not establish a surveyed route, current condition or operating status.'},
     draintile:{label:'Published storm drain-tile record',wiki:'https://en.wikipedia.org/wiki/Drainage',description:'This city inventory records a drainage pipe below the surface. Its diameter units are not stated in the public definitions, so the source value is kept without conversion.'},
-    cityconduit:{label:'Published underground utility record',wiki:'https://en.wikipedia.org/wiki/Pipeline_transport',description:'Bloomington records this alignment in its underground utility inventory. Read the published contents and lifecycle fields; an empty or unspecified conduit does not establish an installed cable or pipe substance.'},
-    cityelectric:{label:'Published underground electrical record',wiki:'https://en.wikipedia.org/wiki/Undergrounding',description:'Bloomington identifies this underground alignment as electrical. The record does not establish its voltage, current load or every cable within the conduit.'},
-    citytelecom:{label:'Published underground telecom record',wiki:'https://en.wikipedia.org/wiki/Telecommunications',description:'Bloomington identifies this underground alignment as phone service or city telecom. The source does not identify fiber versus copper, present broadband availability or a complete provider network.'},
-    citygas:{label:'Published underground gas-service record',wiki:'https://en.wikipedia.org/wiki/Pipeline_transport',description:'Bloomington identifies this underground alignment as gas service. Substance, pressure and operating status are not filled in when the source omits them.'},
-    bassettTunnel:{label:'Bassett Creek stormwater tunnel', wiki:'https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)', description:'This route follows a phase of the newer Bassett Creek flood-control system in the June 2025 engineering overview. It is separate from the old creek tunnel. The overview does not provide a surveyed pipe location or depth along the route.'},
-    bassettCulvert:{label:'Bassett Creek box culvert', wiki:'https://en.wikipedia.org/wiki/Culvert', description:'The upstream section carries Bassett Creek through a double box culvert, then a single box, toward the Third Avenue tunnel. Its route is interpreted from the June 2025 engineering overview. The report describes open-cut excavation, rather than a measured roof depth at every point.'},
     sanitary:{label:'Local sanitary sewer', wiki:'https://en.wikipedia.org/wiki/Sanitary_sewer', description:'A local sanitary pipe carries wastewater from buildings toward the regional system. Pipe size, material and status are shown only when the city publishes them.'},
     interceptor:{label:'Interceptor sewer', wiki:'https://en.wikipedia.org/wiki/Sanitary_sewer', description:'An interceptor collects wastewater from smaller sewers. Its published type distinguishes gravity flow, pumped force mains, siphons and effluent pipes.'},
     effluent:{label:'Treated-effluent pipe', wiki:'https://en.wikipedia.org/wiki/Effluent', description:'This MCES pipe carries treated effluent. The record preserves its flow type and lifecycle status.'},
@@ -185,7 +566,6 @@
     protection:{label:'Drinking-water supply management area', wiki:'https://en.wikipedia.org/wiki/Aquifer', description:'MDH delineates these areas to help protect public drinking-water sources. A management boundary is not a contamination plume or a water-service territory.'},
     vulnerability:{label:'Source-water vulnerability area', wiki:'https://en.wikipedia.org/wiki/Aquifer', description:'MDH rates how susceptible a drinking-water source area is to contamination. The rating does not say that contamination has been measured at a property.'},
     rail:{label:'Rail route inventory', wiki:'https://en.wikipedia.org/wiki/Rail_transport', description:'MnDOT’s route inventory gives railroad, subdivision and selected movement fields. The count year belongs to the record; this map does not provide live train movements.'},
-    nonwaterservice:{label:'Non-water service inventory record', wiki:'https://en.wikipedia.org/wiki/Water_supply_network', description:'The Minneapolis inventory identifies this record as a non-water or storm service. Its material field should not be interpreted as a drinking-water lead connection.'}
   };
 
   function present(v) { return v !== undefined && v !== null && v !== ''; }
@@ -197,7 +577,6 @@
     n=n==null?'':String(n).trim();
     return n && !/^(unnamed(?: plant| stream| creek)?|none(?:-none)?|unknown|n\/a)$/i.test(String(n).trim()) ? String(n) : '';
   }
-  function isWaterService(p) { return p.t !== 'NotaWaterService' && p.t !== 'Storm'; }
   function substance(p) { return p.substance || 'Not tagged'; }
   function retiredRecord(p) { return /^(abandoned|removed|closed|retired)$/i.test(String(p.s || p.status || '')); }
   function fuelKind(code) {
@@ -216,10 +595,9 @@
   function type(f) {
     if (f.layer === 'tour') return f.type;
     var p = pof(f), id = f.layer;
-    if (config(f).municipal) return municipalType(f);
+    if (id === 'signalLines') return p.TYPE === 'FIBER' ? 'signalfiber' : p.TYPE === 'COPPER' ? 'signalcopper' : p.TYPE === 'RADIO' ? 'signalradio' : p.TYPE === 'EMPTY' ? 'emptyconduit' : 'signalconnection';
+    if (id === 'rwmwdStructures') return /outlet|outfall/i.test(p.STRCT_TYPE || '') ? 'stormoutfall' : /manhole/i.test(p.STRCT_TYPE || '') ? 'stormmanhole' : /catch basin|inlet|intake/i.test(p.STRCT_TYPE || '') ? 'storminlet' : 'stormstructure';
     if (id==='waterworks') return confirmedWaterFacilities[p.i]?confirmedWaterFacilities[p.i].type:'waterfacility';
-    if (id === 'bassettPlan') return p.phase === 3 ? 'bassettCulvert' : 'bassettTunnel';
-    if (id === 'services') return !isWaterService(p) ? 'nonwaterservice' : p.c === 1 ? 'leadservice' : p.c === 4 ? 'galvanizedservice' : p.c === 3 || !present(p.c) ? 'unknownservice' : 'service';
     if (id === 'plants' && retiredRecord(p)) return 'tplantGhost';
     if (id === 'interceptors') {
       if (retiredRecord(p)) return 'abandonedsewer';
@@ -248,11 +626,12 @@
   function name(f) {
     if (f.layer === 'tour') return f.name;
     var p = pof(f), id = f.layer, n = namedValue(p);
-    if (config(f).municipal) return municipalName(f);
-    if (id === 'services') {
-      if (!isWaterService(p)) return 'City record: ' + (p.t === 'Storm' ? 'storm service' : 'non-water service');
-      return (serviceClasses[p.c] || 'Unknown material') + ' service connection' + (p.x === 1 ? ' (discontinued)' : '');
-    }
+    if (id === 'troutBrook') return 'Trout Brook storm interceptor, segment ' + p.OBJECTID;
+    if (id === 'rwmwdPipes') return (p.PROJECT || 'District storm pipe') + ', segment ' + p.OBJECTID;
+    if (id === 'rwmwdStructures') return (p.Name || p.PROJECT || 'Storm structure') + ', record ' + p.OBJECTID;
+    if (id === 'rwmwdPonds') return p.PROJECT || 'Stormwater pond ' + p.OBJECTID;
+    if (id === 'signalLines') return (p.TYPE && p.TYPE.trim() ? p.TYPE.toLowerCase() : 'Unclassified') + ' signal connection, record ' + p.OBJECTID;
+    if (id === 'hydrants') return 'Hydrant ' + (p.ASSET_ID || p.FID);
     if (id === 'generators') return (n || 'EIA plant ' + p.i) + ', generator ' + (present(p.g) ? p.g : 'unknown');
     if (id === 'plants') return (n || 'Regional treatment site') + (retiredRecord(p) ? ' (former plant)' : '');
     if (id === 'sheds') return p.WWTP ? p.WWTP + ' treatment service area' : 'Treatment service area, plant unreported';
@@ -260,9 +639,6 @@
     if (id === 'bedrock') return p.d || p.u || 'Bedrock formation';
     if (id === 'surficial') return n || [p.description, p.lithology].filter(Boolean).join(': ') || 'Glacial or recent deposit';
     if (id === 'buried' && !n) return hydroTypes[p.t] || 'Buried watercourse record';
-    if (id === 'wspSanitary') return 'Sanitary pipe' + (n ? ' ' + n : '');
-    if (id === 'wspSanManholes') return 'Sanitary manhole' + (n ? ' ' + n : '');
-    if (id === 'wspStormManholes') return 'Storm manhole' + (n ? ' ' + n : '');
     if (id === 'pipelines') return n || (p.substance ? titlecase(p.substance) + ' pipeline' : 'Pipeline, substance unreported');
     if (id === 'pipeStations') return n || (p.pipeline === 'valve' ? 'Pipeline valve' : 'Pipeline station or control');
     if (id === 'telephoneAreas') return (n || p.wirecenter || 'Telephone') + ' exchange territory';
@@ -270,7 +646,7 @@
     if (id === 'vulnerability') return (n || 'Public water supply') + ', ' + (p.v || 'unreported') + ' vulnerability';
     if (id === 'rail') return (p.operator || 'Railroad') + (n ? ', subdivision ' + n : ' route');
     if (n) return n;
-    return {interceptors:'Regional sewer segment', lifts:'Lift station', meters:'Sewer flow meter', substations:'Substation', powerplants:'EIA generating site', osmPowerplants:'Mapped generating site', power:'Transmission line', feeders:'Local electric line', cables:p.location === 'underground' ? 'Tagged underground power cable' : 'Power cable, location unreported', hydrants:'Fire hydrant', inlets:'Storm inlet', wspInlets:'Street catch basin', towers:'Water tower', waterworks:'Mapped water facility', comms:'Mapped data center', exchanges:'Recorded telephone exchange', cleanup:'Cleanup or tank program record', groundwater:'Groundwater area of concern', groundwaterSources:'Potential groundwater source area', groundwaterBounds:'Groundwater boundary record', groundwaterSites:'Groundwater investigation site', groundwaterUnmapped:'Groundwater site without mapped area', wspStorm:'Storm pipe', streams:'DNR watercourse segment', faults:'Mapped bedrock fault', pavement:'Street condition record', electricAreas:'Electric utility territory', osmWastewater:'Mapped wastewater site'}[id] || 'Mapped feature';
+    return {interceptors:'Regional sewer segment', lifts:'Lift station', meters:'Sewer flow meter', substations:'Substation', powerplants:'EIA generating site', osmPowerplants:'Mapped generating site', power:'Transmission line', feeders:'Local electric line', cables:p.location === 'underground' ? 'Tagged underground power cable' : 'Power cable, location unreported', hydrants:'Fire hydrant', inlets:'Storm inlet', towers:'Water tower', waterworks:'Mapped water facility', comms:'Mapped data center', exchanges:'Recorded telephone exchange', cleanup:'Cleanup or tank program record', groundwater:'Groundwater area of concern', groundwaterSources:'Potential groundwater source area', groundwaterBounds:'Groundwater boundary record', groundwaterSites:'Groundwater investigation site', groundwaterUnmapped:'Groundwater site without mapped area', streams:'DNR watercourse segment', faults:'Mapped bedrock fault', electricAreas:'Electric utility territory', osmWastewater:'Mapped wastewater site'}[id] || 'Mapped feature';
   }
 
   function displayDate(v, compact) {
@@ -286,131 +662,25 @@
     return isNaN(date.getTime()) ? String(v) : date.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'});
   }
   function fuelLabel(code) { return (fuelNames[code] || 'Unmapped source code') + ' (' + code + ')'; }
-  function municipalMetadata(f) {
-    var meta=config(f).metadata || {}, layer=pof(f).sourceLayer;
-    return (meta.components || []).find(function(c) { return c.layer===layer; }) || meta;
-  }
-  function municipalRole(f) { return municipalMetadata(f).conduitRole || config(f).role; }
-  function municipalCode(f,key) {
-    var value=pof(f)[key], domain=(municipalMetadata(f).fieldDomains || {})[key];
-    if (!present(value) || typeof value==='string' && !value.trim()) return '';
-    var choice=domain && (domain.codedValues || []).find(function(v) { return String(v.code)===String(value); });
-    return choice?choice.name:String(value);
-  }
-  function municipalType(f) {
-    var p=pof(f), cfg=config(f), role=municipalRole(f);
-    if (cfg.role==='water' && (p.Type==='Raw Water' || p.WaterType==='Raw')) return 'rawwatermain';
-    if (role==='force') return 'forcemain';
-    if (role==='stormForce') return 'stormpressure';
-    if (role==='sanitaryLateral') return 'sanitarylateral';
-    if (role==='stormLateral') return 'stormlateral';
-    if (cfg.role==='sanitary' && /force\s*main/i.test(p.main_type || '')) return 'forcemain';
-    if (cfg.role==='sanitary' && /interceptor/i.test(p.main_type || '')) return 'interceptor';
-    if (cfg.role==='conduit') {
-      var contents=p.underground_type || '';
-      if (/electrical/i.test(contents)) return 'cityelectric';
-      if (/phone|telecom/i.test(contents)) return 'citytelecom';
-      if (/gas service/i.test(contents)) return 'citygas';
-      if (/fuel line/i.test(contents)) return 'fuelpipe';
-    }
-    return cfg.type;
-  }
-  function municipalName(f) {
-    var p=pof(f), cfg=config(f), role=municipalRole(f);
-    var identifier=p.DIS_P_NM || p.PIPE_ID || p.MainlineID || p.ServiceID || p.mainline_pipe_id || p.PvtPipeID || p.CommonName || p.Culvert_ID || p.DrainTileID || p.ASSET_ID || p.FacilityID || p.FACILITYID;
-    if (cfg.role==='model') return 'Model conduit '+p.CONDUIT_ID;
-    if (cfg.role==='conduit') return String(p.underground_type || 'Underground utility record')+(present(p.ASSET_ID)?' '+p.ASSET_ID:'');
-    var label={water:p.WaterType==='Raw'?'Raw-water main':'Water main',service:'Water lateral',sanitary:/force\s*main/i.test(p.main_type || '')?'Sanitary force main':'Sanitary pipe',sanitaryLateral:'Sanitary lateral',force:'Sanitary force main',storm:'Storm pipe',stormLateral:'Storm lateral',stormForce:'Pressurized storm pipe',privateStorm:'Private storm pipe',culvert:'Culvert',drainTile:'Storm drain tile',fiber:'Fiber cable',fiberPath:'Utility path'}[role];
-    return label+(present(identifier)?' '+String(identifier).trim():'');
-  }
-  function municipalDecommissioned(f) {
-    var p=pof(f), source=config(f).source || {}, cutoff=Date.parse(source.retrievedAt || '');
-    if (!Number.isFinite(cutoff)) cutoff=Date.now();
-    var value=p.Date_Decommissioned || p.DecommissionDate || p.date_decommissioned;
-    return typeof value==='number' && value!==0 && Number.isFinite(value) && value<=cutoff && new Date(value).getUTCFullYear()>=1800;
-  }
-  function municipalStatus(f) {
-    var p=pof(f), cfg=config(f), explicit=p.Status || p.STATUS || p.status;
-    if (cfg.role==='model') return 'Model record; operating status not supplied';
-    var lifecycle=municipalCode(f,'LifecycleStatus') || municipalCode(f,'LifeCycleStatus');
-    if (lifecycle) return lifecycle;
-    if (cfg.role==='fiber' || cfg.role==='fiberPath') {
-      var state=municipalCode(f,'status'), cable=municipalCode(f,'cableStatus');
-      return state && cable && state.toLowerCase()!==cable.toLowerCase()?state+'; cable status: '+cable+' (source fields differ)':state || cable || 'Operating status not reported';
-    }
-    if (present(explicit)) return String(explicit);
-    if (/inactive|abandoned|removed|proposed|active/i.test(p.Type || p.main_type || '')) return p.Type || p.main_type;
-    if (municipalDecommissioned(f)) return 'Reported decommission date: '+displayDate(p.Date_Decommissioned || p.DecommissionDate || p.date_decommissioned);
-    if (p.ConstructionStatus==='Proposed') return 'Proposed';
-    return 'Operating status not reported';
-  }
-  function municipalInactive(f) {
-    var p=pof(f);
-    var lifecycle=municipalCode(f,'LifecycleStatus') || municipalCode(f,'LifeCycleStatus');
-    if (lifecycle) return /^proposed$/i.test(lifecycle) || /^(?:inactive|abandoned|removed(?:\b|$))/i.test(lifecycle);
-    if (config(f).role==='fiber' || config(f).role==='fiberPath') return /^(?:proposed|inactive|abandoned|removed)$/i.test(municipalCode(f,'status')) || /^(?:proposed|inactive|abandoned|removed)$/i.test(municipalCode(f,'cableStatus'));
-    return config(f).role!=='model' && (/inactive|abandoned|removed|closed|proposed|retired/i.test([p.Status,p.STATUS,p.status,p.Type,p.main_type,p.ConstructionStatus,p.underground_type].filter(present).join(' ')) || municipalDecommissioned(f));
-  }
-  function municipalFacts(f) {
-    var p=pof(f), cfg=config(f), meta=municipalMetadata(f), fields=meta.sourceFields || [], definitions={}, rows=[], seen={};
-    fields.forEach(function(field) { definitions[field.name]=field; });
-    function add(label,value) { rows.push([label,String(value)]); }
-    add('Publisher',meta.source && meta.source.attribution || (cfg.role==='model'?'MWMO':'Municipal GIS'));
-    add('Record meaning',cfg.role==='model'?'Stormwater-model conduit, including source assumptions':'Published municipal inventory alignment');
-    if (meta.title) add('Native source layer',meta.title);
-    add('Published operating status',municipalStatus(f));
-    var units=meta.fieldUnits || {};
-    var unspecified={LENGTH:1,GRADE:1,Diameter:1,DIAMETER:1,INV_Upstream:1,INV_Downstream:1,Pipe_Length:1,pipe_length:1,PipeLength:1,PipeSize:1,tile_diameter:1,calc_length:1,USINV:1,DSINV:1,Size:1,PipeDepth:1,RecordedLength:1,Slope:1,DownStreamInvert:1,UpStreamInvert:1,UpstreamInvert:1,DownstreamInvert:1,UpstreamDepth:1,DownstreamDepth:1,DepthUpstream:1,DepthDownstream:1,Depth:1,PathLength:1,footage:1};
-    function field(key,unknown) {
-      if (seen[key] || key==='i') return;
-      seen[key]=true;
-      var value=p[key], definition=definitions[key] || {}, label=String(definition.alias || key).replace(/\s+/g,' ').trim();
-      if (!present(value)) { if (unknown) add(label,'Not reported'); return; }
-      var domain=meta.fieldDomains && meta.fieldDomains[key], choice=domain && (domain.codedValues || []).find(function(v) { return String(v.code)===String(value); });
-      var measured=units[key] || unspecified[key] || /length|slope|elev|depth|diameter|width|height|roughness|loss|condition|mannings/i.test(key);
-      var text=typeof value==='number' && measured?number.format(value):String(value);
-      if (definition.type==='esriFieldTypeDate') text=displayDate(value);
-      else if (definition.type==='esriFieldTypeOID' || /(?:ID|Id|_id)$|^id$/i.test(key)) text=String(value);
-      else if (choice && String(choice.name)!==String(value)) text=choice.name+' (source code: '+value+')';
-      if (units[key] && !/\((?:ft|feet|in|inches|%|months)\)/i.test(label)) label+=' ('+units[key]+')';
-      else if (!units[key] && unspecified[key]) label+=' (source units unspecified)';
-      add(label,text);
-    }
-    ['CONDUIT_ID','MainlineID','ServiceID','DIS_P_NM','PIPE_ID','mainline_pipe_id','PvtPipeID','Culvert_ID','DrainTileID','ASSET_ID','underground_type','Type','main_type','Status','STATUS','status','ConstructionStatus','Ownership','ownership','OWNERSHIP','Jurisdiction','CITY','MATERIAL','Pipe_Material','PipeMaterial','pipe_material','Material','PIPE_MAT','TYPE','Pipe_Diameter','Diameter','pipe_diameter','PipeDiameter','DIAMETER','DIA_IN','PipeSize','tile_diameter','LENGTH','Pipe_Length','pipe_length','PipeLength','GRADE','PipeSlope','pipe_slope','USINV','DSINV','UpstreamInvertElev','DownstreamInvertElev','INV_Upstream','INV_Downstream'].forEach(function(key) { if (definitions[key] || present(p[key])) field(key,false); });
-    fields.forEach(function(definition) { field(definition.name,false); });
-    Object.keys(p).forEach(function(key) { field(key,false); });
-    if (cfg.role==='model') add('Model interpretation','A source assumption or plan-derived value is retained as reported, not converted into a field observation');
-    if (cfg.role==='fiberPath') add('Path interpretation','A mapped utility path does not establish that a fiber cable has been laid along it');
-    if (cfg.role==='water' || cfg.role==='service') add('Material meaning','Recorded pipe material, not a measurement of lead in drinking water');
-    return rows;
-  }
   function facts(f) {
     if (f.layer === 'tour' || f.layer === 'depth') return f.facts || [];
     var p = pof(f), id = f.layer, rows = [], used = {};
-    if (config(f).municipal) return municipalFacts(f);
     function add(label, value, field) { if (present(value)) rows.push([label, String(value)]); if (field) used[field] = true; }
-    function field(label, key, unit, unknown) { add(label, present(p[key]) ? (typeof p[key] === 'number' && !/^(?:i|id|y)$/.test(key) ? number.format(p[key]) : p[key]) + (unit || '') : unknown ? 'Not reported' : null, key); }
+    function field(label, key, unit, unknown) { add(label, present(p[key]) ? (typeof p[key] === 'number' && !/^(?:i|id|y|OBJECTID|FID|YEAR_INST_|YEAR_INST)$/.test(key) ? number.format(p[key]) : p[key]) + (unit || '') : unknown ? 'Not reported' : null, key); }
     function date(label, key, compact) { if (present(p[key])) add(label, displayDate(p[key],compact),key); }
     function code(label, key, table) { add(label, present(p[key]) ? (table[String(p[key]).trim()] || 'Unmapped code') + ' (' + p[key] + ')' : 'Not reported',key); }
 
-    if (id === 'services') {
-      field('City source ObjectID','i');
-      add('City material classification',serviceClasses[p.c] || 'Unknown material','c');
-      add('Service purpose',servicePurposes[p.t] || p.t || 'Not reported','t');
-      add('Discontinued field',p.x === 1 ? 'Yes' : p.x === 2 ? 'No' : 'Unknown or not reported','x');
-      field('First diameter field','d',' in'); field('Second diameter field','d2',' in');
-      add('Record meaning',isWaterService(p) ? 'Connection location, not a pipe alignment or tap-water test' : 'Source identifies a non-water or storm record');
+
+    if (id === 'troutBrook') {field('Source ObjectID','OBJECTID');add('System','Trout Brook storm interceptor');add('Route meaning','Published alignment clipped to Saint Paul');add('Pipe dimensions','Not supplied in the public view');}
+    if (/^rwmwd/.test(id)) {
+      field('Source ObjectID','OBJECTID');field('Project','PROJECT');field('Published structure type','STRCT_TYPE');field('Pipe size, source units unspecified','PIPE_SIZE');field('Original length, source units unspecified','PIPE_LNGTH');field('Material code','PIPE_MAT');field('Shape','PIPE_SHP');field('Owner','PIPE_OWNER');
+      if (p.YEAR_INST_ > 0) field('Installation year','YEAR_INST_');if(p.YEAR_INST > 0)field('Installation year','YEAR_INST');
+      field('Inlet invert, source units unspecified','Inlt_InvEle');field('Outlet invert, source units unspecified','Out_InvElev');field('Published directionality','Directionality');field('Outlet type','OUTLETTYPE');field('Trash rack','TRASHRACK');field('Basin type','BASIN_TYPE');field('Published status','STR_STAT');field('Published condition','STR_COND');field('Published owner','STR_OWNAM');field('Maintenance owner','STR_MAINN');field('Source notes','Notes');field('Additional source notes','Note2');
+      add('Coverage','District-owned infrastructure inside Saint Paul; partial municipal coverage');add('Units and datum','Unspecified size and elevation units are not inferred');
     }
-    if (/^wspSan/.test(id)) {
-      field(id === 'wspSanitary' ? 'Pipe number' : 'Manhole number','n');
-      field('Installation year','y','',true); field('Abandonment field','a','',true);
-      if (id === 'wspSanitary') { field('Material code','m','',true);field('Published pipe size','d','',true);field('Published grade','g');field('Length','l',' ft'); }
-    }
-    if (/^wspStorm|^wspInlets$/.test(id)) {
-      field('Structure number','n'); field('Published type','t');
-      if (id === 'wspStorm') { field('Width, source units unspecified','d','',true);field('Length, source units unspecified','l','',true); }
-      add('Enabled field',p.e === 1 ? 'Yes (1)' : p.e === 0 ? 'No (0)' : present(p.e) ? p.e : 'Not reported','e');
-    }
+    if (id === 'hydrants') {field('Hydrant asset ID','ASSET_ID');field('Published location','LOCATION');add('Snapshot','December 2021');add('Record meaning','Hydrant point, not the route of a water main');}
+    if (id === 'signalLines') {field('City ObjectID','OBJECTID');field('Published connection type','TYPE');add('Network','Traffic signals');add('Location','Burial is not established by this line record');add('Coverage','Not a residential broadband-availability map');}
+
     if (['interceptors','plants','lifts','meters'].indexOf(id) >= 0) {
       field('Published status','s','',true); field('Record identifier','i'); field('Operator / owner','operator'); date('Record source date','date');
       if (id === 'interceptors') { field('Published pipe type','type','',true);field('Length','l',' ft');field('Shape classification','shape'); }
@@ -418,19 +688,6 @@
       if (id === 'lifts' || id === 'meters') field('Associated interceptor','interceptor');
     }
     if (id === 'sheds') field('Treatment plant','WWTP','',true);
-    if (id === 'bassettPlan') {
-      field('Published project phase','phase'); add('Source figure','June 2025 report, Figure 1 (PDF page 9)');
-      add('Route meaning','Approximate engineering overview; elevation is not encoded');
-      if (p.phase === 1) add('Phase scope','I-94 branch and Second Street tunnel; separate from the old creek tunnel');
-      if (p.phase === 2) add('Phase scope','Third Avenue tunnel between the box culvert and Phase 1');
-      if (p.phase === 3) {
-        add('Construction described','Open-cut excavation 0 to 20 feet below ground surface');
-        add('Connection to Third Avenue','Via a 30-foot drop structure');
-        add('Published box sections','Double 11 by 11 feet, then single 11 by 15 feet (height by width)');
-        add('Construction and ownership','Built by USACE in 1992; transferred to the City of Minneapolis in 2002');
-        add('Construction source','Report section 2.1, printed page 6 (PDF page 8)');
-      }
-    }
     if (id === 'buried' || id === 'streams') {
       add('DNR segment class',p.type || hydroTypes[p.t] || 'Unmapped or unreported class','type'); field('DNR class code','t');field('DNR hydrographic ID','i');field('DNR label','label');date('Content date','date');date('Published date','published');
     }
@@ -454,10 +711,6 @@
     if (id === 'cleanup') {
       field('MPCA site ID','id');field('Program','p');field('Activity','a');add('Program active flag',p.s === 'Y' ? 'Yes (Y)' : p.s === 'N' ? 'No (N)' : p.s || 'Not reported','s');
     }
-    if (id === 'pavement') {
-      add('Historical condition index',present(p.pci) ? p.pci + ' / 100' : 'Unrated','pci');date('Inspection date','date');field('Construction year','y');field('Renovation year','r');field('Pavement type code','t');add('Dataset edited','December 2, 2015');
-    }
-    if (id === 'hydrants') {field('Recorded installation year','yr');add('Public bury depth','Not supplied');add('Dataset edited','June 16, 2020');}
     if (id === 'towers') {
       var tower = historicTowers[p.i];
       add('Confirmed storage status',tower ? tower.status : 'Not established by this snapshot');
@@ -513,6 +766,7 @@
       });
       field('Wikidata identifier','wikidata');
     }
+    if (config(f).native) (config(f).metadata && config(f).metadata.sourceFields || []).forEach(function(d){if(used[d.name] || d.name === 'FID')return;var value=p[d.name];if(present(value))add(d.alias || d.name,d.type === 'esriFieldTypeDate' ? displayDate(value) : value,d.name);});
     return rows;
   }
 
@@ -526,12 +780,7 @@
   }
   function recordURL(f) {
     var p = pof(f);
-    if (f.layer==='services' && config(f).source && present(p.i)) return config(f).source.url+'/query?f=pjson&objectIds='+encodeURIComponent(p.i)+'&outFields=OBJECTID,Classification,ServiceType,Diameter1,Diameter2,Discontinued';
-    if (config(f).municipal && config(f).source && present(p.OBJECTID)) {
-      var meta=municipalMetadata(f), source=meta.source || config(f).source;
-      return source.url+'/query?f=pjson&objectIds='+encodeURIComponent(p.OBJECTID)+'&outFields='+encodeURIComponent((meta.sourceFields || []).map(function(d) { return d.name; }).filter(function(key) { return key!=='i' && key!=='sourceLayer'; }).join(','));
-    }
-    if (f.layer === 'bassettPlan' && /^https:\/\//i.test(p.sourceUrl || '')) return p.sourceUrl;
+    if (config(f).native && config(f).source) return config(f).source.url + '/query?f=pjson&where=' + encodeURIComponent((config(f).oid || 'OBJECTID') + '=' + p[config(f).oid || 'OBJECTID']) + '&outFields=' + encodeURIComponent((config(f).metadata.sourceFields || []).map(function(d){return d.name;}).join(','));
     if (/^https?:\/\//i.test(p.url || '')) return p.url;
     if (/^(?:node|way|relation)\/\d+$/.test(String(p.i || ''))) return 'https://www.openstreetmap.org/' + p.i;
     // Source territories carry bare hostnames in their published website field.
@@ -540,45 +789,39 @@
   }
   function isNamed(f) {
     if (f.layer === 'tour') return true;
-    if (config(f).municipal) return !!pof(f).CommonName;
+    if (/^rwmwd/.test(f.layer)) return !!pof(f).PROJECT;
+    if (f.layer === 'troutBrook') return true;
     return !!namedValue(pof(f)) || ['bedrock','surficial','electricAreas'].indexOf(f.layer) >= 0;
   }
   function status(f) {
     var p = pof(f);
-    if (config(f).municipal) return municipalStatus(f);
-    if (f.layer === 'services') return p.x === 1 ? 'Discontinued' : p.x === 2 ? 'Not discontinued' : 'Discontinued status unknown';
+    if (f.layer === 'signalLines') return p.TYPE === 'ABANDONED' ? 'Abandoned' : '';
     if (['plants','interceptors','lifts','meters'].indexOf(f.layer) >= 0) return p.s || 'Status unreported';
     if (f.layer === 'generators' || f.layer === 'powerplants') return p.status || p.stage || 'Status unreported';
-    if (f.layer === 'wspSanitary' || f.layer === 'wspSanManholes') return p.a === 'Yes' ? 'Abandoned' : 'Abandonment field not reported';
     if (f.layer === 'towers' && historicTowers[p.i]) return historicTowers[p.i].status;
     return '';
   }
   function isVisible(f, showInactive) {
     if (showInactive) return true;
+    if (f.layer === 'signalLines') return pof(f).TYPE !== 'ABANDONED';
     var p = pof(f), id = f.layer;
-    if (config(f).municipal) return !municipalInactive(f);
     if (['plants','interceptors','lifts','meters'].indexOf(id) >= 0) return !/^(offline|abandoned|removed|closed)$/i.test(p.s || '');
     if (id === 'powerplants') return p.status === 'Operating';
     if (id === 'generators') return p.stage === 'Operating' && /^\((?:OP|SB)\)/.test(p.status || '');
-    if (id === 'services') return p.x !== 1;
-    if (id === 'wspSanitary' || id === 'wspSanManholes') return p.a !== 'Yes';
     return true;
   }
   function color(f) {
     var p = pof(f);
     if (f.color) return f.color;
-    if (config(f).municipal) return municipalInactive(f)?C.faint:{cityelectric:C.power,citygas:C.gas,citytelecom:C.net,fuelpipe:C.power}[municipalType(f)] || config(f).color;
-    if (f.layer === 'bassettPlan') return {1:C.sewer,2:C.gas,3:C.net}[p.phase] || C.water;
-    if (f.layer === 'services') return !isWaterService(p) || p.x === 1 ? C.faint : {1:C.power,2:C.water,3:C.gas,4:C.ground}[p.c] || C.gas;
+    if (f.layer === 'signalLines' && p.TYPE === 'ABANDONED') return C.faint;
     if (f.layer === 'pipelines') return {g:C.gas,h:C.net,w:C.water,f:C.power,a:C.ground,o:C.ground}[p.k] || C.faint;
-    if (f.layer === 'pavement') return !present(p.pci) ? C.faint : p.pci < 40 ? '#b8796d' : p.pci < 70 ? C.gas : C.sewer;
     if (f.layer === 'generators' && p.stage !== 'Operating') return C.faint;
     if (retiredRecord(p) && ['plants','lifts','meters','interceptors','powerplants'].indexOf(f.layer) >= 0) return C.faint;
     return config(f).color || C.cream;
   }
   function lineStyle(f) {
     var p = pof(f);
-    if (config(f).municipal) return {dash:config(f).role==='model'?[3,3]:municipalInactive(f)?[3,5]:municipalType(f)==='forcemain'?[7,4]:[],opacity:municipalInactive(f)?.45:config(f).role==='model'?.7:1};
+    if (f.layer === 'signalLines') return {dash:p.TYPE === 'RADIO' ? [2,5] : p.TYPE === 'EMPTY' || p.TYPE === 'ABANDONED' ? [4,4] : [],opacity:p.TYPE === 'ABANDONED' ? .45 : 1};
     if (f.layer === 'interceptors') return {dash:retiredRecord(p) ? [3,5] : /forcemain/i.test(p.type || '') ? [7,4] : /siphon/i.test(p.type || '') ? [1,3] : [],opacity:p.s === 'Online' ? 1 : .45};
     if (f.layer === 'cables') return {dash:[5,3],opacity:p.location === 'underground' ? .9 : .45};
     if (f.layer === 'groundwaterBounds') return {dash:/uncertain|inferred|approximate/i.test(p.certainty || '') ? [5,4] : [],opacity:.9};
@@ -591,6 +834,7 @@
     HP:['Heat-pump well record','Ground_source_heat_pump']
   };
   function typeInfo(f) {
+    if (f.layer === 'rwmwdPipes' && pof(f).PIPE_MAT === 'RCP') return {label:'Reinforced-concrete storm pipe',wiki:'https://en.wikipedia.org/wiki/Reinforced_concrete',description:'The district classifies this storm pipe as RCP, reinforced concrete pipe. Size and installation year are displayed only when supplied in the record.'};
     if (f.layer === 'wells') {
       var use=String(pof(f).u || '').trim(), known=wellReferences[use], supply=/^(?:DO|IR|LA|LN|MD|MU|PC|PN|PP|PS)$/.test(use);
       var entry=known || (supply?['Recorded water well','Water_well']:['Recorded well or borehole','Borehole']);
@@ -603,13 +847,7 @@
     return kinds[type(f)] || null;
   }
   function primarySources(f) {
-    if (config(f).municipal) {
-      var p=pof(f), rows=[], cfg=config(f);
-      ['LF_LINK_URL','LF_LINK2_URL','LF_LINK3_URL','SitePlanLink'].forEach(function(key) { if (/^https?:\/\//i.test(p[key] || '')) rows.push({label:'Published plan reference',url:p[key]}); });
-      if (cfg.role==='model') rows.push({label:'MWMO stormwater-model context and limitations',url:'https://www.mwmo.org/learn/storymap/'});
-      return rows;
-    }
-    if (f.layer === 'bassettPlan') return [{label:'2025 engineering overview and construction history',url:pof(f).sourceUrl}];
+    if (f.layer === 'troutBrook') return [{label:'Trout Brook history and photographs',url:'https://www.capitolregionwd.org/our-water/stormwater-runoff/trout-brook-storm-sewer-interceptor/'}];
     var facility=f.layer==='waterworks' && confirmedWaterFacilities[pof(f).i];
     if (facility) return [{label:'Primary facility purpose',url:facility.url}];
     var tower = f.layer === 'towers' && historicTowers[pof(f).i];
@@ -631,5 +869,20 @@
     });
   }
 
-  window.UnderStreetData = {topics:topics,layers:layers,name:name,type:type,facts:facts,wiki:wiki,isNamed:isNamed,status:status,isVisible:isVisible,typeInfo:typeInfo,recordURL:recordURL,primarySources:primarySources,color:color,lineStyle:lineStyle,sourceNotes:sourceNotes,applyManifest:applyManifest,displayDate:displayDate};
+  function contains(lon,lat) {
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return false;
+    var boundary=window.UnderStreetBoundary;
+    if (!boundary) return false;
+    var g=boundary.features[0].geometry, polygons=g.type==='Polygon'?[g.coordinates]:g.coordinates;
+    return polygons.some(function(rings){
+      var inside=false,onEdge=false;
+      rings.forEach(function(r){for(var i=0,j=r.length-1;i<r.length;j=i++){
+        var a=r[i],b=r[j],dx=b[0]-a[0],dy=b[1]-a[1],length=dx*dx+dy*dy;
+        if(length){var t=Math.max(0,Math.min(1,((lon-a[0])*dx+(lat-a[1])*dy)/length));if(Math.hypot(lon-a[0]-t*dx,lat-a[1]-t*dy)<1e-10)onEdge=true;}
+        if((a[1]>lat)!==(b[1]>lat)&&lon<(b[0]-a[0])*(lat-a[1])/(b[1]-a[1])+a[0])inside=!inside;
+      }});
+      return inside||onEdge;
+    });
+  }
+  window.UnderStreetData = {topics:topics,layers:layers,name:name,type:type,facts:facts,wiki:wiki,isNamed:isNamed,status:status,isVisible:isVisible,typeInfo:typeInfo,recordURL:recordURL,primarySources:primarySources,color:color,lineStyle:lineStyle,sourceNotes:sourceNotes,applyManifest:applyManifest,displayDate:displayDate,contains:contains};
 }());

@@ -13,19 +13,19 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>What's Under a Twin Cities Street</title>
-  <meta name="description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and explanations of each system.">
-  <meta property="og:title" content="What's Under a Twin Cities Street">
-  <meta property="og:description" content="Explore public maps of Twin Cities water pipes, stormwater tunnels, sewers, power and geology, with real photographs, source records and explanations of each system.">
+  <title>What's Under a Saint Paul Street</title>
+  <meta name="description" content="Explore Saint Paul storm pipes, sewers, hydrants, power, cables and geology, with real photographs and downloadable public records.">
+  <meta property="og:title" content="What's Under a Saint Paul Street">
+  <meta property="og:description" content="Explore Saint Paul storm pipes, sewers, hydrants, power, cables and geology, with real photographs and downloadable public records.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/under-the-street/under-the-street.html">
-  <meta property="og:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-3">
+  <meta property="og:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-sp1">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The Twin Cities map showing electric transmission lines, substations and generating sites, with Minneapolis and Saint Paul labeled.">
+  <meta property="og:image:alt" content="Saint Paul public storm-pipe routes inside the city boundary.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-3">
+  <meta name="twitter:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-sp1">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -92,11 +92,13 @@
   .u-entry-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font: 600 0.9rem/1.4 var(--font-body); text-underline-offset: 0.25em; }
   .layer .section-map-link { font-size: 0.86rem; margin-top: 1.4rem; }
   .layer .section-map-link a { display: inline-flex; align-items: center; min-height: 44px; }
+  .layer .u-figure { margin: 1.8rem auto; }
+  .layer .u-figure.is-portrait { max-width: 320px; }
   .u-callout { margin-block: 3rem 0; }
   /* sources */
   .srcs { margin: 4rem 0 2rem; }
   </style>
-  <link rel="stylesheet" href="under-map.css?v=20261003-6">
+  <link rel="stylesheet" href="under-map.css?v=20261003-sp1">
 </head>
 <body>
   <script src="/js/archive-banner.js"></script>
@@ -106,10 +108,10 @@
     <div class="col">
 
       <header class="u-hero">
-        <p class="u-eyebrow">Minneapolis and St. Paul</p>
-        <h1 class="u-title">What's Under a Twin Cities Street</h1>
-        <p class="u-dek">Bassett Creek runs under downtown Minneapolis. The water, drains, gas pipes and cables around it belong to different systems.</p>
-        <p class="u-meta"><b>27 primary sources</b> <span class="u-sep">/</span> 8 min read</p><p class="u-entry-links"><a href="#undermap">Explore the map</a><a href="#street">Read the article</a></p>
+        <p class="u-eyebrow">Saint Paul</p>
+        <h1 class="u-title">What's Under a Saint Paul Street</h1>
+        <p class="u-dek">Trout Brook carries rain under the city. Other pipes bring drinking water, take sewage away and heat downtown buildings.</p>
+        <p class="u-meta"><b>Saint Paul public records</b> <span class="u-sep">/</span> 6 min read</p><p class="u-entry-links"><a href="#undermap">Explore the map</a><a href="#street">Read the article</a></p>
       </header>
 
 <section class="ummap" id="undermap" aria-labelledby="um-title">
@@ -123,20 +125,20 @@
     </header>
 
     <nav class="um-topics" aria-label="Choose a system">
-      <button type="button" data-um-topic="water" aria-pressed="true">Drinking water<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="water" aria-pressed="false">Drinking water<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="wastewater" aria-pressed="false">Sewage<span class="um-topic-count" aria-hidden="true"></span></button>
-      <button type="button" data-um-topic="storm" aria-pressed="false">Rain &amp; river<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="storm" aria-pressed="true">Rain &amp; river<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="power" aria-pressed="false">Power<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="gas" aria-pressed="false">Gas &amp; heat<span class="um-topic-count" aria-hidden="true"></span></button>
-      <button type="button" data-um-topic="networks" aria-pressed="false">Internet<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="networks" aria-pressed="false">Cables<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="ground" aria-pressed="false">Ground<span class="um-topic-count" aria-hidden="true"></span></button>
     </nav>
 
     <div class="um-location-controls">
-      <label class="um-city-jump" for="um-city"><span>Go to a city</span><select id="um-city"><option value="metro">Twin Cities region</option><option value="minneapolis">Minneapolis</option><option value="saintPaul">Saint Paul</option><option value="bloomington">Bloomington</option><option value="eagan">Eagan</option><option value="maplewood">Maplewood</option><option value="westSaintPaul">West Saint Paul</option></select></label>
+      <p class="um-city-limit">Saint Paul <span>City limits only</span></p>
       <form class="um-address-form" aria-label="Find an address on the map">
         <label for="um-address">Find an address</label>
-        <div class="um-address-row"><input id="um-address" type="search" placeholder="Street number, street and city" maxlength="200" autocomplete="off" spellcheck="false"><button type="submit">Find</button></div>
+        <div class="um-address-row"><input id="um-address" type="search" placeholder="Saint Paul street address" maxlength="200" autocomplete="off" spellcheck="false"><button type="submit">Find</button></div>
       </form>
     </div>
     <div class="um-address-output" hidden>
@@ -147,8 +149,8 @@
     <details class="um-layers">
       <summary>Map details <small>Layers and legend</small></summary>
       <div class="um-topic-copy">
-        <h3>The drinking-water system</h3>
-        <p>Treatment plants and towers supply the system. Minneapolis publishes connection-material points; Bloomington and Eagan publish water-main and lateral alignments.</p>
+        <h3>Saint Paul storm drains</h3>
+        <p>The Trout Brook interceptor and district storm pipes, including Beltline and Battle Creek.</p>
       </div>
       <div class="um-inactive" hidden><button type="button" data-um-inactive aria-pressed="false">Include inactive records</button><p>Show reported former, removed, planned or offline assets alongside operating records.</p></div>
       <div class="um-layer-list" aria-label="Optional map layers"></div>
@@ -168,14 +170,13 @@
           <button type="button" data-um-scope="all" aria-pressed="true">Browse records</button>
         </div>
         <p class="um-results-heading" id="um-results-heading" aria-live="polite">Published places and records</p>
-        <p class="um-browse-note" hidden></p>
         <div class="um-results" id="um-results" aria-labelledby="um-results-heading"></div>
         <button class="um-results-more" type="button" hidden>Show more places</button>
         <aside class="um-panel" hidden aria-label="Place details"></aside>
       </div>
 
       <div class="um-stage">
-        <canvas tabindex="0" aria-label="Map of public Twin Cities infrastructure records" aria-describedby="maphelp mapkeys"></canvas>
+        <canvas tabindex="0" aria-label="Map of public infrastructure inside Saint Paul" aria-describedby="maphelp mapkeys"></canvas>
         <p class="um-status" role="status">This map needs JavaScript. The article and sources are below.</p>
         <div class="um-tooltip" hidden aria-hidden="true"></div>
 
@@ -187,7 +188,7 @@
         <div class="um-ctrl" aria-label="Map controls">
           <button type="button" data-um-zoom="out" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
           <button type="button" data-um-zoom="in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-          <button type="button" data-um-zoom="home" aria-label="Show the Twin Cities"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>
+          <button type="button" data-um-zoom="home" aria-label="Show all of Saint Paul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>
           <button type="button" data-um-zoom="full" aria-label="Expand map"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg></button>
         </div>
 
@@ -216,13 +217,12 @@
 
     <details class="um-data" id="map-data">
       <summary>Sources and downloads</summary>
-      <p>Coverage depends on who publishes the records. City inventories, regional networks and well records cover different areas. A blank part of the map does not mean there is nothing below it.</p>
+      <p>Every downloadable extract is limited to Saint Paul. Crossing lines and areas stop at the city boundary. Public coverage is partial; a blank street can still have pipes and cables beneath it.</p>
       <div class="um-source-controls" aria-label="Datasets to show">
         <button type="button" data-um-source-scope="current" aria-pressed="true">This system</button>
         <button type="button" data-um-source-scope="all" aria-pressed="false">All datasets</button>
-        <button type="button" data-um-source-scope="earlier" aria-pressed="false">Reference snapshots</button>
       </div>
-      <label class="um-source-search"><span>Find a dataset</span><input type="search" placeholder="Dataset name or area" autocomplete="off" spellcheck="false"></label>
+      <label class="um-source-search"><span>Find a dataset</span><input type="search" placeholder="Dataset name or system" autocomplete="off" spellcheck="false"></label>
       <p class="um-source-count" aria-live="polite"></p>
       <div class="um-datasets" aria-label="Published datasets and downloadable map data"></div>
       <p class="um-source-foot">Street centerlines: <a href="https://www.arcgis.com/home/item.html?id=515028a0cb3a42e0b6470b2af035121c">MnGeo and participating counties</a>. Community-mapped facilities: <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors, ODbL</a>. Aerial imagery: <a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USGS / USDA</a> and <a href="https://www.mngeo.state.mn.us/chouse/wms/geo_image_server.html">MnGeo</a>. Photograph credits appear beside each photograph. <a href="assets/map/datasets.json" download>Download the full source manifest</a>.</p>
@@ -232,137 +232,76 @@
 </section>
 
 
-<section class="layer" id="street" style="--lc:var(--accent)"><div class="layer-head"><h2>A creek under downtown</h2></div>
-  <p>Bassett Creek reaches the Mississippi through tunnels beneath Minneapolis. One route carries the creek's normal flow; an older route carries neighborhood runoff and takes some creek water during heavy rain. <span class="u-src"><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></span></p>
-  <p>The pipes under a street have different destinations. Drinking water arrives from treatment plants. Sewage leaves for another set of plants. Rainwater goes toward lakes and rivers. Cables and gas mains connect the same buildings to other networks.</p>
-  <p>The paint before an excavation identifies the utility: blue for drinking water, green for sewers and drains, orange for communications, red for electricity, and yellow for gas, oil, steam or propane. These are the actual marking colors. The map uses muted colors, with blue for stormwater and purple for geology. Its colors describe the layers here, while the paint outside follows the locate code. <span class="u-src"><a href="https://gopherstateonecall.org/what-do-the-marks-mean/">Gopher State One Call</a></span></p>
-  <p>There is no fixed order from shallow to deep. A city storm tunnel can run through sandstone far below a water main. The map shows the public records available for each system; the article explains what moves through it.</p><div class="paintkey" aria-label="Utility marking colors"><p class="paintkey-k">The paint outside</p><div class="paintkey-row"><a class="paint" href="#water" style="--pc:var(--mark-water)">blue · drinking water</a><a class="paint" href="#comms" style="--pc:var(--mark-comms)">orange · communications</a><a class="paint" href="#gas" style="--pc:var(--mark-gas)">yellow · gas and heat</a><a class="paint" href="#power" style="--pc:var(--mark-elec)">red · electricity</a><a class="paint" href="#storm" style="--pc:var(--mark-sewer)">green · drains and sewer</a></div></div>
+<section class="layer" id="street" style="--lc:var(--accent)">
+  <div class="layer-head"><h2>A brook under the city</h2></div>
+  <p>Trout Brook's storm interceptor once carried sewage and rainwater together. The systems were separated in 1988. The tunnel now carries runoff toward the Mississippi. Its published route is on the map. <span class="u-src"><a href="https://www.capitolregionwd.org/our-water/stormwater-runoff/trout-brook-storm-sewer-interceptor/">Capitol Region Watershed District</a></span></p>
+  <p>Saint Paul has separate networks for drinking water, sewage and stormwater. Gas mains and electric cables serve the same buildings. Downtown heating pipes carry hot water that transfers its heat to a building, then returns to the plant.</p>
+  <p>Before an excavation, the paint identifies the utility: blue for drinking water, green for sewers and drains, orange for communications, red for electricity, and yellow for gas, oil, steam or propane. The map uses muted colors, including blue for stormwater and purple for geology. <span class="u-src"><a href="https://gopherstateonecall.org/what-do-the-marks-mean/">Gopher State One Call</a></span></p>
+  <div class="paintkey" aria-label="Utility marking colors"><p class="paintkey-k">The paint outside</p><div class="paintkey-row"><a class="paint" href="#water" style="--pc:var(--mark-water)">blue · drinking water</a><a class="paint" href="#comms" style="--pc:var(--mark-comms)">orange · communications</a><a class="paint" href="#gas" style="--pc:var(--mark-gas)">yellow · gas and heat</a><a class="paint" href="#power" style="--pc:var(--mark-elec)">red · electricity</a><a class="paint" href="#storm" style="--pc:var(--mark-sewer)">green · drains and sewer</a></div></div>
 </section>
 
 <section class="layer" id="water" style="--lc:var(--mark-water)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Blue paint</p><span class="layer-depth">mains and service pipes</span></div>
-    <h2>From the river to the tap</h2>
-    <p class="sub">Both cities use the Mississippi. They take different routes to the street.</p>
-  </div>
-  <p>Minneapolis pumps river water into its treatment system in Fridley. It softens the water, filters it at Fridley or Columbia Heights, and disinfects it before delivery. Fridley uses granular activated carbon filters; Columbia Heights uses <a href="https://en.wikipedia.org/wiki/Ultrafiltration">ultrafiltration</a>, membranes that hold back small particles. The city's <a href="https://en.wikipedia.org/wiki/Water_distribution_system">distribution system</a> includes about 1,000 miles of water mains. <span class="u-src"><a href="https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/">Minneapolis</a></span></p>
-  <p>St. Paul pumps Mississippi water from Fridley through a chain of lakes and conduits before it reaches the McCarrons plant in Maplewood. Vadnais Lake is the last lake before the plant. This is still source water, before the treatment that makes it drinking water. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS treatment process</a></span> <span class="u-src"><a href="https://www.stpaul.gov/sites/default/files/2021-06/WSP_Saint%20Paul_1975-6227_05-02-2019%20Public%20Version.pdf">2019 supply plan, figure I.C-2</a></span></p>
-  <p>McCarrons brought its new treatment facilities online in 2025. The plant softens and clarifies the water, filters it through carbon and sand, then adds chlorine and ammonia to make <a href="https://en.wikipedia.org/wiki/Monochloramine">chloramine</a>, a disinfectant that lasts through the distribution system. New equipment can also add ozone when needed. <span class="u-src"><a href="https://www.stpaul.gov/news/saint-paul-regional-water-services-turns-new-mccarrons-water-treatment-plant-ushering-new-era">2025 opening</a></span> <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS</a></span></p>
-  <p>A service line is the smaller pipe between the street main and a building's meter. Some older ones are <a href="https://en.wikipedia.org/wiki/Lead_service_line">lead service lines</a>. The Minneapolis inventory shown here contains 99,774 published connection points. Its classes describe pipe material, rather than the amount of lead in someone's drinking water. An unknown record means the material has not been established. <span class="u-src"><a href="https://services.arcgis.com/afSMGVsC7QlRK1kZ/ArcGIS/rest/services/ServiceLineInventory_Public/FeatureServer/0">City inventory</a></span> St. Paul's replacement program has its own address map. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS</a></span></p>
-<p class="section-map-link"><a href="#undermap" data-map-topic="water">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Blue paint</p><span class="layer-depth">mains and service pipes</span></div><h2>River water at the tap</h2><p class="sub">Treatment, storage and the smaller pipe into a building.</p></div>
+  <p>Saint Paul's drinking water starts in the Mississippi. SPRWS routes source water through lakes before treating it at McCarrons. The plant softens and clarifies the water, filters it through carbon and sand, and disinfects it before distribution. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS treatment process</a></span></p>
+  <p>A <a href="https://en.wikipedia.org/wiki/Water_distribution_system">water main</a> supplies the street. A smaller service line runs toward each building. SPRWS owns the service from the main to the property line; the property owner owns the section from there to the meter. Some older service lines contain <a href="https://en.wikipedia.org/wiki/Lead_service_line">lead</a>. The city's material map records what is known about those pipes; it is not a test of the water coming from a tap. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS and address lookup</a></span></p>
+  <p>The map includes 6,441 public hydrant records from the December 2021 snapshot and nine mapped water towers. A hydrant connects to the water network, but its location does not reveal the main's route. Highland Park's historic tower is no longer in water-storage service. <span class="u-src"><a href="https://services9.arcgis.com/OhApV2tSBivqSpuX/arcgis/rest/services/Public_Hydrants_2021_View/FeatureServer/0">Public hydrant inventory</a></span> <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower">Highland Tower</a></span></p>
+  <p>Some actual water and sewer routes appear in the city's <a href="https://www.stpaul.gov/sites/default/files/2021-11/190487_Report_November12_2021_DRAFT.pdf">2021 Hillcrest utility plans</a>. Those drawings cover a project area. A complete current water-main network is not included here.</p>
+  <figure class="u-figure is-portrait"><picture><source type="image/webp" srcset="assets/map/img/tower-highland.webp?v=20261003-sp1"><img class="u-figure-img" src="assets/map/img/tower-highland.jpg?v=20261003-sp1" width="604" height="1200" alt="The stone Highland Park Water Tower in Saint Paul." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">Highland Park Water Tower in Saint Paul, photographed in December 2006. SPRWS identifies the historic tower as no longer in service. <a href="https://commons.wikimedia.org/wiki/File:Highland_Park_Water_Tower_2.jpg">Elkman</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>.</figcaption></figure>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="water">Explore drinking water</a></p>
 </section>
 
 <section class="layer" id="comms" style="--lc:var(--mark-comms)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Orange paint</p><span class="layer-depth">cables and conduit</span></div>
-    <h2>Where the networks meet</h2>
-    <p class="sub">Fiber in the street leads to buildings where providers connect.</p>
-  </div>
-  <p>The 511 Building, at 511 11th Avenue South, is a <a href="https://en.wikipedia.org/wiki/Colocation_centre">carrier hotel</a>: several network operators keep equipment in the same building. Cologix's MIN1 facility there hosts MICE, the Midwest Internet Cooperative Exchange. An <a href="https://en.wikipedia.org/wiki/Internet_exchange_point">internet exchange</a> lets participating networks pass traffic directly between them. <span class="u-src"><a href="https://www.cologix.com/data-centers/minneapolis/min1/">Cologix MIN1</a></span></p>
-  <p>Eagan publishes <a href="https://en.wikipedia.org/wiki/Optical_fiber_cable">fiber cable</a> records separately from utility paths. Both are on this map. A path by itself does not establish that a cable has been laid or that a provider offers service along it. <span class="u-src"><a href="https://cityofeagan.maps.arcgis.com/apps/webappviewer/index.html?id=514dc132f418488d817f6cf71b71bbb7">Eagan public map</a></span></p>
-<p class="section-map-link"><a href="#undermap" data-map-topic="networks">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Orange paint</p><span class="layer-depth">cables and conduit</span></div><h2>Fiber that runs the traffic signals</h2><p class="sub">A public cable map can describe a particular network.</p></div>
+  <p>Saint Paul's published traffic-signal inventory includes 1,407 connection lines. It labels 1,297 as fiber and 65 as copper; other records describe radio, low-voltage, overhead, empty or abandoned connections. The map keeps those distinctions. A radio link is not a buried cable. <span class="u-src"><a href="https://services1.arcgis.com/9meaaHE3uiba0zr8/arcgis/rest/services/pwTrafficSignalLines_COPY/FeatureServer/35">City signal inventory</a></span></p>
+  <p><a href="https://en.wikipedia.org/wiki/Optical_fiber_cable">Optical fiber</a> carries signals as pulses of light. <a href="https://en.wikipedia.org/wiki/Electrical_conduit">Conduit</a> protects and routes cables. A line labeled empty does not establish that a cable has been installed, and signal fiber does not establish which internet provider serves a house. Data-center and telephone-exchange records provide additional locations within the city.</p>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="networks">Explore cables and connections</a></p>
 </section>
 
 <section class="layer" id="gas" style="--lc:var(--mark-gas)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Yellow paint</p><span class="layer-depth">gas and heat pipes</span></div>
-    <h2>Gas to the building, heat from a plant</h2>
-    <p class="sub">A district heating pipe carries heat already made elsewhere.</p>
-  </div>
-  <p>CenterPoint supplies natural gas in Minneapolis; St. Paul gets gas from Xcel. <span class="u-src"><a href="https://www.minneapolismn.gov/government/departments/health/sustainability-homes-environment/sustainability/energy-utility-franchise-agreements/">Minneapolis utilities</a></span> <span class="u-src"><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">St. Paul utilities</a></span> Street mains feed smaller service pipes into buildings. The gas itself has no smell; utilities add an odorant so a leak can be noticed. <span class="u-src"><a href="https://www.centerpointenergy.com/en-us/business/safety/natural-gas-leaks/what-to-do-if-you-smell-gas?sa=mn">CenterPoint</a></span></p>
-  <p>Both downtowns also have <a href="https://en.wikipedia.org/wiki/District_heating">district heating</a>. St. Paul's system sends hot water through underground pipes. A heat exchanger transfers its heat to a building's own water circuit; the district water returns to the plant to be heated again. Wood waste supplies part of the heat. <span class="u-src"><a href="https://www.districtenergy.com/services/how-it-works/">District Energy St. Paul</a></span> <span class="u-src"><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></span></p>
-  <p>Downtown Minneapolis has a separate Cordia system. It supplies steam for heat and chilled water for cooling, with 39,000 feet of steam and hot-water distribution and 24,900 feet of chilled-water distribution. Those pipes carry thermal energy rather than drinking water. <span class="u-src"><a href="https://cordiaenergy.com/locations/minneapolis/">Cordia system profile</a></span></p>
-<p class="section-map-link"><a href="#undermap" data-map-topic="gas">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Yellow paint</p><span class="layer-depth">gas and heat pipes</span></div><h2>Hot water under downtown</h2><p class="sub">Heat can arrive already made.</p></div>
+  <p>Xcel supplies Saint Paul's natural gas. Street mains feed smaller service pipes into buildings, where the gas can be burned for heating or cooking. Published community maps cover only some pipeline routes; their substance tags are retained here. <span class="u-src"><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">Saint Paul utilities</a></span></p>
+  <p><a href="https://en.wikipedia.org/wiki/District_heating">District Energy Saint Paul</a> sends hot water through underground supply pipes. A heat exchanger transfers its heat to a building's own water circuit. The district water returns through another pipe to be heated again. Wood waste supplies part of the plant's fuel. <span class="u-src"><a href="https://www.districtenergy.com/services/how-it-works/">How district heat works</a></span> <span class="u-src"><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></span></p>
+  <p>The district's brochure lists 56 miles of supply and return piping combined, with hot-water supply temperatures of 180 to 250 degrees Fahrenheit. A separate chilled-water system provides cooling. Those pipes carry thermal energy. <span class="u-src"><a href="https://www.districtenergy.com/wp-content/uploads/2025/02/DESP_tour_brochure_print-2025.pdf">2025 plant brochure</a></span></p>
+  <figure class="u-figure"><picture><source type="image/webp" srcset="assets/map/img/district-stpaul.webp?v=20261003-sp1"><img class="u-figure-img" src="assets/map/img/district-stpaul.jpg?v=20261003-sp1" width="960" height="628" alt="District Energy Saint Paul building at 76 West Kellogg Boulevard." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">District Energy Saint Paul at 76 West Kellogg Boulevard, photographed in July 2020. <a href="https://commons.wikimedia.org/wiki/File:District_Energy_St._Paul.jpg">McGhiever</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>.</figcaption></figure>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="gas">Explore gas and district heat</a></p>
 </section>
 
 <section class="layer" id="power" style="--lc:var(--mark-elec)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Red paint</p><span class="layer-depth">overhead and underground</span></div>
-    <h2>Two kinds of power line</h2>
-    <p class="sub">Transmission links substations. Distribution reaches buildings.</p>
-  </div>
-  <p>The large lines on the map belong to the <a href="https://en.wikipedia.org/wiki/Electric_power_transmission">transmission system</a>, which moves power between generating plants and substations. The smaller <a href="https://en.wikipedia.org/wiki/Electric_power_distribution">distribution system</a> delivers it to customers. A transmission-line map does not show every street cable or say that every line is buried.</p>
-  <p>Minneapolis does have underground transmission. Xcel's North Loop project describes existing 115-kilovolt cables between the Aldrich and West River Road substations, with part of the system needing relocation for the proposed Blue Line extension. Xcel's published replacement routes are proposals. <span class="u-src"><a href="https://xcelenergytransmission.com/projects/minneapolis-underground-transmission-project/">Xcel project record</a></span></p>
-<p class="section-map-link"><a href="#undermap" data-map-topic="power">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Red paint</p><span class="layer-depth">lines, substations and generating sites</span></div><h2>From the plant to the building</h2><p class="sub">Voltage changes along the way.</p></div>
+  <p><a href="https://en.wikipedia.org/wiki/Electric_power_transmission">Transmission lines</a> move electricity between generating sites and substations. Transformers change the voltage; the smaller <a href="https://en.wikipedia.org/wiki/Electric_power_distribution">distribution network</a> delivers power to customers. These public records cover transmission, substations and some local lines inside Saint Paul.</p>
+  <p>The High Bridge plant beside the river generates electricity from natural gas. The map's EIA inventory lists generating units, fuel, nameplate capacity and reported status. Nameplate capacity is a rating, rather than live electrical output. A line without an underground location tag is not shown as a confirmed buried cable. <span class="u-src"><a href="https://www.eia.gov/electricity/data/eia860m/">EIA August 2026 inventory</a></span></p>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="power">Explore electricity</a></p>
 </section>
 
 <section class="layer" id="storm" style="--lc:var(--mark-storm)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">drains, culverts and tunnels</span></div>
-    <h2>Rain has its own route</h2>
-    <p class="sub">A deep tunnel can carry stormwater rather than sewage.</p>
-  </div>
-  <p><a href="https://en.wikipedia.org/wiki/Storm_drain">Storm drains</a> collect rain and snowmelt from streets and carry it toward lakes and rivers. Runoff may pass through ponds or other controls, but it generally does not pass through a sewage treatment plant. Road salt follows the runoff: dissolved chloride reaches surface water and groundwater, where removing it is impractical. MPCA says a teaspoon of salt can contaminate five gallons of water. <span class="u-src"><a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></span></p>
-  <p>Bassett Creek's old and new tunnels do different work. The old 1.5-mile tunnel was completed in 1923. It now mostly drains 870 acres of Minneapolis, with creek flow entering during heavy rain. Its 2018 and 2020 cleanouts removed 1,735 tons of sediment from 1,933 feet of tunnel. <span class="u-src"><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></span> <span class="u-src"><a href="https://www.mwmo.org/news/uncovering-condition-old-bassett-creek-tunnel/">1923 completion</a></span></p>
-  <p>The new system includes a double <a href="https://en.wikipedia.org/wiki/Culvert">box culvert</a>, two adjoining passages mostly 11 feet high and 11 feet wide. This part was built in 1992 near the Cedar Lake Trail, in an open excavation ranging from ground level to 20 feet deep. A roughly 30-foot drop takes water into the deeper Third Avenue Tunnel. Farther downstream, the Second Street section was excavated in sandstone as much as 80 feet below the street. Those depths describe different parts of the new system. <span class="u-src"><a href="https://www.bassettcreekwmo.org/download_file/view/720550e9-eb72-46aa-865d-0aec666002f7/167">2025 engineering report, p. 6</a></span> <span class="u-src"><a href="https://bassettcreekwmo.org/news/celebrating-50-years-formation-bassett-creek-watershed-manag">BCWMC history</a></span></p>
-  <p>The Central City tunnels are another stormwater system. The city places them about 70 feet below the streets and says they collect runoff from nearly all of downtown. A new parallel tunnel beneath Washington Avenue South, between Nicollet Mall and Chicago Avenue, was completed in 2024. <span class="u-src"><a href="https://www.minneapolismn.gov/government/projects/central-city-tunnel/">Minneapolis</a></span></p>
-<p class="section-map-link"><a href="#undermap" data-map-topic="storm">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">drains, outlets and storm tunnels</span></div><h2>Rain has its own route</h2><p class="sub">Trout Brook, Beltline and Battle Creek.</p></div>
+  <p><a href="https://en.wikipedia.org/wiki/Storm_drain">Storm drains</a> collect rain and snowmelt from streets. Saint Paul reports about 450 miles of storm sewers. Runoff moves toward waterways, sometimes through ponds or other treatment structures, rather than through the sanitary-sewage treatment process. <span class="u-src"><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division">City sewer utility</a></span></p>
+  <p>The Trout Brook system was built between the 1880s and 1950s. Its current six-mile interceptor carries stormwater; Capitol Region Watershed District became its owner and operator in 2006. The map draws the published alignment within Saint Paul. <span class="u-src"><a href="https://www.capitolregionwd.org/our-water/stormwater-runoff/trout-brook-storm-sewer-interceptor/">Trout Brook history, map and inspection photographs</a></span></p>
+  <p>Ramsey-Washington's district inventory adds 60 storm-pipe segments inside the city, including Beltline and Battle Creek records. Its structure layer includes intake structures, drop shafts, manholes and outlets; four mapped ponds are available in Map details. Select a record to see its supplied size, material, installation year and notes. Some fields are blank, and unspecified units stay unspecified. <span class="u-src"><a href="https://services1.arcgis.com/akJvlMqEfOC1yVhp/arcgis/rest/services/Infrastructure_DistOwned/FeatureServer">District infrastructure inventory</a></span></p>
+  <p>Those are district assets, rather than all of Saint Paul's local drains. DNR buried-watercourse records add separate classifications for culverts, storm sewers and former channels. Their routes can overlap the district inventory without representing an additional pipe.</p>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="storm">Explore storm pipes</a></p>
 </section>
 
 <section class="layer" id="sewer" style="--lc:var(--mark-sewer)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">local pipes and regional interceptors</span></div>
-    <h2>Where sewage goes</h2>
-    <p class="sub">City sewers feed a larger regional network.</p>
-  </div>
-  <p>Local <a href="https://en.wikipedia.org/wiki/Sanitary_sewer">sanitary sewers</a> feed regional interceptors, the larger pipes and tunnels that carry wastewater to treatment plants. The Metro facility near Pig's Eye Lake receives wastewater from 66 communities through 389 miles of interceptors. It serves about 1.8 million people and treats an average of 172 million gallons a day. Other parts of the region drain to other plants. <span class="u-src"><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></span></p>
-  <p>Before the plant opened in 1938, sewage went straight into the Mississippi. By the 1920s, an estimated three million cubic yards of sewage sludge had accumulated above the Ford Dam. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH historical account</a></span></p>
-  <p>The older <a href="https://en.wikipedia.org/wiki/Combined_sewer">combined sewers</a> carried rainwater and sewage in the same pipe. Rain could fill them faster than the interceptors could drain them, sending untreated overflow to the river. Minneapolis accelerated separation work in 1986. In 2018, after years of disconnecting roof drains from sanitary sewers, repairing pipes and building storm drains, it sought termination of its combined-sewer overflow permit. The city reported no river overflows in 10 of the preceding 11 years, with two small events in 2010. <span class="u-src"><a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">Minneapolis history</a></span> <span class="u-src"><a href="https://lims.minneapolismn.gov/RCA/2075">2018 council record</a></span></p>
-<div class="seam"><p>In June 1987, a mayfly hatch near the airport left Interstate 494 covered in insects. The highway closed while snowplows cleared them. MDH describes the hatch as evidence of the river's improving water quality. <span class="u-src"><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH</a></span></p></div>
-<p class="section-map-link"><a href="#undermap" data-map-topic="wastewater">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Green paint</p><span class="layer-depth">sanitary sewers and interceptors</span></div><h2>Where the sewage goes</h2><p class="sub">Local branches feed larger pipes toward Pig's Eye.</p></div>
+  <p>Saint Paul maintains about 804 miles of <a href="https://en.wikipedia.org/wiki/Sanitary_sewer">sanitary sewer</a>. Smaller pipes collect wastewater from buildings and feed larger regional interceptors. The map includes 1,203 interceptor records within the city, together with lift stations and flow meters. Former and removed records are available through the inactive-record switch. <span class="u-src"><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division">City sewer utility</a></span></p>
+  <p>The Metro plant near Pig's Eye Lake opened in 1938. It treats wastewater before releasing treated water to the Mississippi. The interceptor map does not include every local branch or trace a building's entire route to the plant. <span class="u-src"><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></span></p>
+  <p>The older <a href="https://en.wikipedia.org/wiki/Combined_sewer">combined system</a> carried sewage and runoff in the same pipes. Separating them reduced the amount of rainwater sent toward sewage treatment. The city still cleans and inspects its sewer pipes with cameras to identify obstructions and repairs. <span class="u-src"><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division/cleaning-and-televising">Cleaning and televising</a></span></p>
+  <figure class="u-figure"><picture><source type="image/webp" srcset="assets/map/img/aerial-ww-metro.webp?v=20261003-sp1"><img class="u-figure-img" src="assets/map/img/aerial-ww-metro.jpg?v=20261003-sp1" width="960" height="640" alt="Aerial photograph of Metropolitan Water Resource Recovery Facility." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">Metropolitan Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied. <a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USDA / USGS, The National Map</a>, <a href="https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits">Public domain</a>.</figcaption></figure>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="wastewater">Explore sewage</a></p>
 </section>
 
 <section class="layer" id="rock" style="--lc:var(--mark-rock)">
-  <div class="layer-head">
-    <div class="layer-band"><p class="layer-k">Limestone and sandstone</p><span class="layer-depth">the riverbed</span></div>
-    <h2>The buried wall at the falls</h2>
-    <p class="sub">The Corps built it to keep water from washing away the rock beneath St. Anthony Falls.</p>
-  </div>
-  <p>At the falls, hard <a href="https://en.wikipedia.org/wiki/Platteville_Formation">Platteville limestone</a> lies above softer <a href="https://en.wikipedia.org/wiki/St._Peter_Sandstone">St. Peter Sandstone</a>, with a thinner shale layer between them. Water can erode the sandstone and leave the limestone unsupported. In October 1869, the river broke into the <a href="https://en.wikipedia.org/wiki/Eastman_tunnel">Eastman tunnel</a>, a waterpower excavation under the riverbed, and enlarged the opening until part of Hennepin Island collapsed. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span></p>
-  <p>The Army Corps of Engineers built a concrete wall beneath the limestone. Finished in November 1876, it stretched 1,850 feet across the river and reached as much as 39 feet below the limestone. The wall remains buried at the falls, helping stop water from opening new passages through the sandstone. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span></p>
-<p>The Corps completed a sloping apron over the falls in 1880. Today the visible slope is a concrete spillway. You can see it from the Stone Arch Bridge. The cutoff wall remains buried beneath the limestone upstream. <span class="u-src"><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></span></p>
-<p class="section-map-link"><a href="#undermap" data-map-topic="ground">Explore this system on the map</a></p>
+  <div class="layer-head"><div class="layer-band"><p class="layer-k">Rock and sediment</p><span class="layer-depth">below the utilities</span></div><h2>The ground is another layer</h2><p class="sub">A model of the rock, and records from actual wells.</p></div>
+  <p>Saint Paul's bluffs expose some of the rock beneath the city. At Waḳaƞ Ṭípi, east of downtown, a cave lies in the sandstone bluff. The National Park Service describes how soft sandstone, flowing water and ceiling collapses may have changed its interior. The cave is not accessible. <span class="u-src"><a href="https://www.nps.gov/miss/planyourvisit/wakan-tipi-sanctuary.htm">National Park Service</a></span></p>
+  <p>The map separates <a href="https://en.wikipedia.org/wiki/Bedrock">bedrock</a> from the glacial and more recent sediment above it. The MGS 2025 depth model estimates the thickness of those deposits. The browser samples the model at about 120 metres, so a colored cell is an estimate across an area. It does not tell you how deep a particular utility was buried. <span class="u-src"><a href="https://mgs-gispub.mngs.umn.edu/arcgis/rest/services/mosaics/D_03_Depth_to_Bedrock_2025/ImageServer">MGS depth model</a></span></p>
+  <p>There are 1,816 located well and borehole records in the Saint Paul extract. They retain reported depths, aquifer codes, status and location methods. Some records describe monitoring or exploration rather than drinking-water wells. A reported bedrock depth can come from a geological interpretation instead of a direct measurement. <span class="u-src"><a href="https://arcgis.web.health.state.mn.us/arcgis/rest/services/3GADX/MWIMap/MapServer">Minnesota Well Index</a></span></p>
+  <p class="section-map-link"><a href="#undermap" data-map-topic="ground">Explore the ground</a></p>
 </section>
 
-<aside class="u-callout">
-  <p class="u-callout-k">What the map can show</p>
-  <p>These are public records from different owners, dates and scales. Some layers show individual assets; others show regional routes or service areas. A missing line means it is absent from this dataset. The street can still have a pipe or cable there.</p>
-</aside>
+<aside class="u-callout"><p class="u-callout-k">What is missing</p><p>All map records and downloads are limited to Saint Paul. These public snapshots do not contain a complete city water-main, local sanitary-sewer, storm-drain, gas or residential fiber network. A missing line means the route is absent from these records. It can still be under the street.</p></aside>
 
-      <div class="srcs">
-        <details class="u-collapse">
-          <summary class="u-collapse-s">Sources</summary>
-          <ol class="u-collapse-list">
-            <li><a href="https://www.mwmo.org/projects/old-bassett-creek-tunnel/">MWMO</a></li>
-            <li><a href="https://gopherstateonecall.org/what-do-the-marks-mean/">Gopher State One Call</a></li>
-            <li><a href="https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/">Minneapolis</a></li>
-            <li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS treatment process</a></li>
-            <li><a href="https://www.stpaul.gov/sites/default/files/2021-06/WSP_Saint%20Paul_1975-6227_05-02-2019%20Public%20Version.pdf">2019 supply plan, figure I.C-2</a></li>
-            <li><a href="https://www.stpaul.gov/news/saint-paul-regional-water-services-turns-new-mccarrons-water-treatment-plant-ushering-new-era">2025 opening</a></li>
-            <li><a href="https://services.arcgis.com/afSMGVsC7QlRK1kZ/ArcGIS/rest/services/ServiceLineInventory_Public/FeatureServer/0">City inventory</a></li>
-            <li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS</a></li>
-            <li><a href="https://www.cologix.com/data-centers/minneapolis/min1/">Cologix MIN1</a></li>
-            <li><a href="https://cityofeagan.maps.arcgis.com/apps/webappviewer/index.html?id=514dc132f418488d817f6cf71b71bbb7">Eagan public map</a></li>
-            <li><a href="https://www.minneapolismn.gov/government/departments/health/sustainability-homes-environment/sustainability/energy-utility-franchise-agreements/">Minneapolis utilities</a></li>
-            <li><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">St. Paul utilities</a></li>
-            <li><a href="https://www.centerpointenergy.com/en-us/business/safety/natural-gas-leaks/what-to-do-if-you-smell-gas?sa=mn">CenterPoint</a></li>
-            <li><a href="https://www.districtenergy.com/services/how-it-works/">District Energy St. Paul</a></li>
-            <li><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></li>
-            <li><a href="https://cordiaenergy.com/locations/minneapolis/">Cordia system profile</a></li>
-            <li><a href="https://xcelenergytransmission.com/projects/minneapolis-underground-transmission-project/">Xcel project record</a></li>
-            <li><a href="https://www.pca.state.mn.us/pollutants-and-contaminants/chloride">MPCA</a></li>
-            <li><a href="https://www.mwmo.org/news/uncovering-condition-old-bassett-creek-tunnel/">1923 completion</a></li>
-            <li><a href="https://www.bassettcreekwmo.org/download_file/view/720550e9-eb72-46aa-865d-0aec666002f7/167">2025 engineering report, p. 6</a></li>
-            <li><a href="https://bassettcreekwmo.org/news/celebrating-50-years-formation-bassett-creek-watershed-manag">BCWMC history</a></li>
-            <li><a href="https://www.minneapolismn.gov/government/projects/central-city-tunnel/">Minneapolis</a></li>
-            <li><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></li>
-            <li><a href="https://www.health.state.mn.us/communities/environment/water/waterline/featurestories/metroplant.html">MDH historical account</a></li>
-            <li><a href="https://www2.minneapolismn.gov/government/departments/public-works/surface-water-sewers/programs-policy/combined-sewer-overflow/combined-sewer-separation/">Minneapolis history</a></li>
-            <li><a href="https://lims.minneapolismn.gov/RCA/2075">2018 council record</a></li>
-            <li><a href="https://www.nps.gov/miss/learn/historyculture/river-of-hisory-chapter-6.htm">National Park Service</a></li>
-          </ol>
-        </details>
-      </div>
+<div class="srcs"><details class="u-collapse"><summary class="u-collapse-s">Article sources</summary><ol><li><a href="https://www.capitolregionwd.org/our-water/stormwater-runoff/trout-brook-storm-sewer-interceptor/">Capitol Region Watershed District</a></li><li><a href="https://gopherstateonecall.org/what-do-the-marks-mean/">Gopher State One Call</a></li><li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water">SPRWS treatment process</a></li><li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS and address lookup</a></li><li><a href="https://services9.arcgis.com/OhApV2tSBivqSpuX/arcgis/rest/services/Public_Hydrants_2021_View/FeatureServer/0">Public hydrant inventory</a></li><li><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower">Highland Tower</a></li><li><a href="https://www.stpaul.gov/sites/default/files/2021-11/190487_Report_November12_2021_DRAFT.pdf">2021 Hillcrest utility plans</a></li><li><a href="https://commons.wikimedia.org/wiki/File:Highland_Park_Water_Tower_2.jpg">Elkman</a></li><li><a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a></li><li><a href="https://services1.arcgis.com/9meaaHE3uiba0zr8/arcgis/rest/services/pwTrafficSignalLines_COPY/FeatureServer/35">City signal inventory</a></li><li><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">Saint Paul utilities</a></li><li><a href="https://www.districtenergy.com/services/how-it-works/">How district heat works</a></li><li><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></li><li><a href="https://www.districtenergy.com/wp-content/uploads/2025/02/DESP_tour_brochure_print-2025.pdf">2025 plant brochure</a></li><li><a href="https://commons.wikimedia.org/wiki/File:District_Energy_St._Paul.jpg">McGhiever</a></li><li><a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a></li><li><a href="https://www.eia.gov/electricity/data/eia860m/">EIA August 2026 inventory</a></li><li><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division">City sewer utility</a></li><li><a href="https://services1.arcgis.com/akJvlMqEfOC1yVhp/arcgis/rest/services/Infrastructure_DistOwned/FeatureServer">District infrastructure inventory</a></li><li><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></li><li><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division/cleaning-and-televising">Cleaning and televising</a></li><li><a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USDA / USGS, The National Map</a></li><li><a href="https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits">Public domain</a></li><li><a href="https://www.nps.gov/miss/planyourvisit/wakan-tipi-sanctuary.htm">National Park Service</a></li><li><a href="https://mgs-gispub.mngs.umn.edu/arcgis/rest/services/mosaics/D_03_Depth_to_Bedrock_2025/ImageServer">MGS depth model</a></li><li><a href="https://arcgis.web.health.state.mn.us/arcgis/rest/services/3GADX/MWIMap/MapServer">Minnesota Well Index</a></li></ol></details></div>
 
       <hr class="u-divider">
 
@@ -386,9 +325,10 @@
       }, { passive: true });
     })();
   </script>
-  <script src="under-data.js?v=20261003-6" defer></script>
-  <script src="under-map.js?v=20261003-6" defer></script>
-  <script src="under-locate.js?v=20261003-3" defer></script>
+  <script src="assets/map/city-boundary.js?v=20261003-sp1" defer></script>
+  <script src="under-data.js?v=20261003-sp1" defer></script>
+  <script src="under-map.js?v=20261003-sp1" defer></script>
+  <script src="under-locate.js?v=20261003-sp1" defer></script>
   <script src="/js/backtotop.js"></script>
 
 

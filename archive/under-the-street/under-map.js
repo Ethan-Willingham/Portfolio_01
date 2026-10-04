@@ -5,30 +5,28 @@
   var CANVAS=HOST.querySelector('canvas'),STAGE=HOST.querySelector('.um-stage'),PANEL=HOST.querySelector('.um-panel');
   var STATUS=HOST.querySelector('.um-status'),SCALE=HOST.querySelector('.um-scale'),TOOLTIP=HOST.querySelector('.um-tooltip');
   var RESULTS=HOST.querySelector('.um-results'),SEARCH=HOST.querySelector('.um-search input'),ctx=CANVAS.getContext('2d');
-  var ROOT='assets/map/',VERSION='20261003-6',W=0,H=0,DPR=1,raf=null,started=false,topic='water',scope='all';
+  var ROOT='assets/map/',VERSION='20261003-sp1',W=0,H=0,DPR=1,raf=null,started=false,topic='storm',scope='all';
   var showInactive=false,sourceScope='current',catalogLoading=false,catalogError=false;
   var selection=null,hovered=null,addressPin=null,media={photos:[],types:{}},manifest=null,visibleLimit=30,resultItems=[],data={};
-  var fmt=new Intl.NumberFormat('en-US'),MINZ=9,MAXZ=18,view={x:mx(-93.19),y:my(44.985),z:10.6};
+  var fmt=new Intl.NumberFormat('en-US'),MINZ=11.5,MAXZ=18,view={x:mx(-93.10797),y:my(44.9437),z:12.3};
   var HOME={x:view.x,y:view.y,z:view.z},fitted=false,savedView=false,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   var C={water:'#8fb3c7',sewer:'#9ec79a',power:'#d9978c',gas:'#dfc288',net:'#cf9f78',ground:'#b79bc4',cream:'#e8e2d6'};
   var catalog=window.UnderStreetData;
   if(!catalog){STATUS.textContent='The map data definitions could not load. The article and sources are below.';return;}
   var topics=catalog.topics,layers=catalog.layers;
   var places=[
-    {id:'falls',name:'The wall under St. Anthony Falls',lon:-93.257,lat:44.9806,z:15,type:'cutoffwall',color:C.ground,topic:'ground',photoName:'St. Anthony Falls + the 1876 dike',blurb:'A concrete cutoff wall beneath the limestone blocks water from eroding the sandstone under the falls. The Corps finished the 1,850-foot wall in 1876; it reaches about 40 feet into the sandstone.',facts:[['Completed','1876'],['Wall length','1,850 ft']],source:'https://www.mvp.usace.army.mil/Home/Projects/Article/626089/engineering-the-falls-the-corps-of-engineers-role-at-st-anthony-falls/',wiki:'https://en.wikipedia.org/wiki/Saint_Anthony_Falls'},
-    {id:'511',name:'The 511 Building',lon:-93.25458,lat:44.97141,z:16,type:'carrierhotel',color:C.net,topic:'networks',blurb:'Networks connect their equipment in this carrier hotel at 511 11th Avenue South. Cologix MIN1 hosts the Midwest Internet Cooperative Exchange.',source:'https://cologix.com/data-centers/minneapolis/min1/',wiki:'https://en.wikipedia.org/wiki/511_Building_(Minneapolis)'},
-    {id:'metro',name:'Metro wastewater plant',photoName:'Metro',lon:-93.04547,lat:44.92526,z:14.3,type:'tplant',color:C.sewer,topic:'wastewater',blurb:'The regional plant near Pig\'s Eye Lake treats an average of 172 million gallons a day for 1.8 million people. It opened in 1938.',facts:[['Average flow','172 million gal/day'],['Service population','1.8 million']],source:'https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx'},
-    {id:'fridley',name:'Fridley waterworks',photoName:'Minneapolis Water Treatment Plant',lon:-93.27868,lat:45.04322,z:15.2,type:'ww',color:C.water,topic:'water',blurb:'Minneapolis draws its drinking water from the Mississippi River. Its Fridley and Columbia Heights campuses treat the water before distribution.',source:'https://www.minneapolismn.gov/government/departments/public-works/water-treatment-distribution/treatment-delivery/'},
-    {id:'steam',name:'Southeast Steam Plant',lon:-93.24965,lat:44.98077,z:15.3,type:'districtheat',color:C.gas,topic:'gas',blurb:'The university\'s steam plant stands beside the Mississippi. Mapped steam pipes nearby are part of a district heating system.',source:'https://campusmaps.umn.edu/southeast-steam-plant',wiki:'https://en.wikipedia.org/wiki/Southeast_Steam_Plant'},
-    {id:'highland',name:'Highland Park Water Tower',lon:-93.16661,lat:44.91766,z:15,type:'tower',color:C.water,topic:'water',blurb:'Saint Paul Regional Water Services says this historic tower is no longer in service. It still stands in Highland Park.',facts:[['Water storage','No longer in service']],source:'https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower',wiki:'https://en.wikipedia.org/wiki/Highland_Park_Tower'},
-    {id:'mccarrons',name:'McCarrons water treatment plant',lon:-93.1007,lat:44.99649,z:15,type:'ww',color:C.water,topic:'water',blurb:'Saint Paul routes Mississippi water through lakes before treating it here. New facilities came online in 2025, with softening, filtration and disinfection. The aerial photograph predates that upgrade.',facts:[['Water source','Mississippi River, through the lake system'],['New facilities','2025']],source:'https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-your-water'},
-    {id:'district-stpaul',name:'District Energy Saint Paul',lon:-93.0963,lat:44.9432,z:15.5,type:'districtheat',color:C.gas,topic:'gas',blurb:'The plant sends hot water to buildings and receives cooler water back. It also chills water overnight and stores it in large tanks for daytime cooling demand.',facts:[['Supply and return piping','56 miles combined'],['Hot-water supply','180 to 250 F'],['Chilled-water supply','42 F']],source:'https://www.districtenergy.com/wp-content/uploads/2025/02/DESP_tour_brochure_print-2025.pdf'},
-    {id:'washburn',name:'Washburn Park Water Tower',lon:-93.28428,lat:44.91075,z:15.5,type:'tower',color:C.water,topic:'water',blurb:'The historic tower remains a neighborhood landmark. Minneapolis says it is no longer in use for water storage.',facts:[['Water storage','No longer in use']],source:'https://www.minneapolismn.gov/government/projects/washburn-water-tower/',wiki:'https://en.wikipedia.org/wiki/Washburn_Park_Water_Tower'},
-    {id:'wsp',name:'Local pipes in West Saint Paul',lon:-93.087,lat:44.904,z:14,type:'sewer',color:C.sewer,topic:'wastewater',blurb:'This city publishes local sanitary and storm pipe geometry. Zoom in and select a pipe to inspect its available material and size fields.'},
-    {id:'bassett',name:'Old Bassett Creek Tunnel outlet',photoName:'Old Bassett Creek Tunnel outlet',lon:-93.273508,lat:44.990355,z:15.5,type:'bstream',color:C.water,topic:'storm',blurb:'The 1923 tunnel still carries stormwater from north Minneapolis. MWMO cleared accumulated sediment and debris between 2017 and 2020. The map anchor is an approximate outlet location derived from DNR hydrography, rather than a surveyed pipe route.',source:'https://www.mwmo.org/projects/old-bassett-creek-tunnel/',wiki:'https://en.wikipedia.org/wiki/Bassett_Creek_(Mississippi_River_tributary)'}
+    {id:'highland',name:'Highland Park Water Tower',lon:-93.16661,lat:44.91766,z:15,type:'tower',color:C.water,topic:'water',blurb:'This historic tower is no longer in water-storage service. It still stands in Highland Park.',facts:[['Water storage','No longer in service']],source:'https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower',wiki:'https://en.wikipedia.org/wiki/Highland_Park_Tower'},
+    {id:'metro',name:'Metro wastewater plant',photoName:'Metro',lon:-93.04547,lat:44.92526,z:14.3,type:'tplant',color:C.sewer,topic:'wastewater',blurb:'Saint Paul sewage reaches this treatment plant near Pig’s Eye Lake. It opened in 1938. Regional interceptors deliver wastewater; treated water returns to the river.',facts:[['Opened','1938']],source:'https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx'},
+    {id:'district-stpaul',name:'District Energy Saint Paul',lon:-93.0963,lat:44.9432,z:15.5,type:'districtheat',color:C.gas,topic:'gas',blurb:'Hot water carries heat from this plant to downtown buildings. Cooler water returns to be heated again. A separate chilled-water system provides cooling.',facts:[['Supply and return piping','56 miles combined'],['Hot-water supply','180 to 250 F'],['Chilled-water supply','42 F']],source:'https://www.districtenergy.com/wp-content/uploads/2025/02/DESP_tour_brochure_print-2025.pdf'},
+    {id:'highbridge',name:'High Bridge generating plant',photoName:'High Bridge',lon:-93.10954,lat:44.93278,z:15,type:'gasplant',color:C.power,topic:'power',blurb:'The current High Bridge station uses natural gas to generate electricity. The EIA layer supplies the reported capacity and status of its individual units.',source:'https://www.eia.gov/electricity/data/eia860m/'},
+    {id:'trout-brook',name:'Trout Brook storm interceptor',lon:-93.0852,lat:44.9619,z:14,type:'stormsewer',color:C.water,topic:'storm',blurb:'The Trout Brook interceptor carries rain and snowmelt toward the Mississippi. It was separated from the combined sanitary system in 1988. Select a mapped segment for its actual published route.',facts:[['Current use','Stormwater'],['Sanitary separation','1988']],source:'https://www.capitolregionwd.org/our-water/stormwater-runoff/trout-brook-storm-sewer-interceptor/',wiki:'https://en.wikipedia.org/wiki/Trout_Brook_(Ramsey_County,_Minnesota)'}
   ];
-  places.forEach(function(f){f.x=mx(f.lon);f.y=my(f.lat);f.kind='point';f.p={};f.layer='tour';});
-  var placeControls={falls:['depth','bedrock'],fridley:['waterworks'],mccarrons:['waterworks'],highland:['towers'],washburn:['towers'],'511':['comms'],metro:['plants'],wsp:['wspSanitary'],steam:['pipelines'],'district-stpaul':['pipelines'],bassett:['buried','bassettPlan']};
+  places.forEach(function(f){f.x=mx(f.lon);f.y=my(f.lat);f.kind='point';f.p=f.id==='highland'?{i:'way/95763640'}:{};f.layer='tour';});
+  var placeControls={highland:['towers'],metro:['plants'],'district-stpaul':['pipelines'],highbridge:['powerplants'],'trout-brook':['troutBrook']};
+  var cityRings=(window.UnderStreetBoundary.features[0].geometry.type==='Polygon'?window.UnderStreetBoundary.features[0].geometry.coordinates:window.UnderStreetBoundary.features[0].geometry.coordinates.reduce(function(a,p){return a.concat(p);},[])).map(function(r){return r.map(function(c){return [mx(c[0]),my(c[1])];});});
+  var cityBounds=[Infinity,Infinity,-Infinity,-Infinity];cityRings.forEach(function(r){r.forEach(function(c){cityBounds[0]=Math.min(cityBounds[0],c[0]);cityBounds[1]=Math.min(cityBounds[1],c[1]);cityBounds[2]=Math.max(cityBounds[2],c[0]);cityBounds[3]=Math.max(cityBounds[3],c[1]);});});
+  HOME.x=(cityBounds[0]+cityBounds[2])/2;HOME.y=(cityBounds[1]+cityBounds[3])/2;
+  function cityPath(){ctx.beginPath();cityRings.forEach(function(r){r.forEach(function(c,i){var p=toPx(c[0],c[1]);if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.closePath();});}
   function shownPlace(f){return f.topic===topic&&placeControls[f.id].some(function(id){return layers[id].on;})&&allowed(f);}
   function mx(lon){return (lon+180)/360;}
   function my(lat){var r=lat*Math.PI/180;return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2;}
@@ -68,8 +66,8 @@
     var cfg=layers[id]||{},packed=[],grid=new Map();
     (gj.features||[]).forEach(function(f,i){
       var g=f.geometry,p=f.properties||{};if(!g)return;
-      var nativeId=['contextStreets','services','wells','powerplants','rail','protection','interceptors','lifts','meters','plants'].indexOf(id)>=0||cfg.file&&cfg.file.indexOf('data/osm-')===0?p.i:id==='cleanup'?p.id:null;
-      var identity=cfg.municipal&&f.id!=null?f.id:id==='generators'?String(p.i)+'-'+String(p.g):nativeId!=null?nativeId:f.id!=null?f.id:'row-'+i;
+      var nativeId=['contextStreets','wells','powerplants','rail','protection','interceptors','lifts','meters','plants'].indexOf(id)>=0||cfg.file&&cfg.file.indexOf('data/osm-')===0?p.i:id==='cleanup'?p.id:null;
+      var identity=id==='generators'?String(p.i)+'-'+String(p.g):nativeId!=null?nativeId:f.id!=null?f.id:'row-'+i;
       var o={id:id+'-'+identity,layer:id,p:p,kind:g.type==='Point'?'point':cfg.kind||(g.type.indexOf('Polygon')>=0?'polygon':'line')};
       if(o.kind==='point'){
         o.x=mx(g.coordinates[0]);o.y=my(g.coordinates[1]);
@@ -78,42 +76,26 @@
         o.rings=rings(g).map(function(r){return r.map(function(c){return [mx(c[0]),my(c[1])];});});o.b=[Infinity,Infinity,-Infinity,-Infinity];
         o.rings.forEach(function(r){r.forEach(function(c){o.b[0]=Math.min(o.b[0],c[0]);o.b[1]=Math.min(o.b[1],c[1]);o.b[2]=Math.max(o.b[2],c[0]);o.b[3]=Math.max(o.b[3],c[1]);});});o.x=(o.b[0]+o.b[2])/2;o.y=(o.b[1]+o.b[3])/2;
       }
-      o.name=id==='contextStreets'?p.n||'':featureName(o);o.type=id==='contextStreets'?'street':featureType(o);packed.push(o);
+      if(f.displayAnchor){o.x=mx(f.displayAnchor[0]);o.y=my(f.displayAnchor[1]);}o.name=id==='contextStreets'?p.n||'':featureName(o);o.type=id==='contextStreets'?'street':featureType(o);packed.push(o);
     });return {features:packed,grid:grid,count:packed.length};
   }
   function ensure(id){
     if(data[id]&&data[id].promise)return data[id].promise;
     var cfg=layers[id],state=data[id]={loading:true};
-    if(cfg.tileIndex){state.features=[];state.grid=new Map();state.loadedTiles=new Map();state.tileParts=new Map();state.tileUsed=new Map();state.promise=fetchJSON(cfg.tileIndex).then(function(index){state.index=index;state.count=index.featureCount;state.loading=false;loadViewportTiles(id);updateLayers();renderResults();return state;}).catch(function(){state.loading=false;state.error=true;updateLayers();renderResults();return state;});updateLayers();return state.promise;}
+
     state.promise=fetchJSON(cfg.file).then(function(gj){var packed=cfg.kind==='raster'?{raster:gj,count:gj.width*gj.height}:ingest(gj,id);Object.assign(state,packed,{loading:false});updateLayers();renderResults();restoreFeature();requestDraw();return state;}).catch(function(){state.loading=false;state.error=true;updateLayers();renderResults();requestDraw();return state;});
     updateLayers();return state.promise;
   }
-  function shouldLoad(id){
-    var cfg=layers[id];if(requestedFeature&&requestedFeature.indexOf(id+'-')===0)return true;if(cfg.tileIndex)return true;if(view.z<cfg.minZ)return false;
-    if(!cfg.municipal)return true;if(!cfg.metadata)return false;
-    var b=cfg.metadata.bounds;if(!b)return true;var s=scale(),bounds=[lonOf(view.x-W/2/s),latOf(view.y+H/2/s),lonOf(view.x+W/2/s),latOf(view.y-H/2/s)];
-    return b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3];
-  }
+  function shouldLoad(id){return view.z>=layers[id].minZ||requestedFeature&&requestedFeature.indexOf(id+'-')===0;}
   function ensureActive(){return Promise.all(activeIds().filter(shouldLoad).map(ensure));}
-  layers.services.tileIndex='data/service-lines-tiles.json';
-  layers.wells.tileIndex='data/wells-complete-tiles.json';
-  function loadViewportTiles(id){
-    var cfg=layers[id],state=data[id],pin=requestedFeature&&requestedFeature.indexOf(id+'-')===0?requestedPin:null;if(!state||!state.index||activeIds().indexOf(id)<0)return;pruneTileCache(id);if(view.z<cfg.minZ&&!pin)return;
-    var s=scale(),bounds=[lonOf(view.x-W/2/s),latOf(view.y+H/2/s),lonOf(view.x+W/2/s),latOf(view.y-H/2/s)];
-    state.index.tiles.forEach(function(t){var b=t.bounds,inView=view.z>=cfg.minZ&&b[2]>=bounds[0]&&b[0]<=bounds[2]&&b[3]>=bounds[1]&&b[1]<=bounds[3],atPin=pin&&pin.lon>=b[0]&&pin.lon<=b[2]&&pin.lat>=b[1]&&pin.lat<=b[3];if(!inView&&!atPin)return;state.tileUsed.set(t.file,Date.now());if(state.loadedTiles.has(t.file))return;
-      state.loadedTiles.set(t.file,'loading');state.pending=(state.pending||0)+1;updateLayers();
-      var prefix=cfg.tileIndex.slice(0,cfg.tileIndex.lastIndexOf('/')+1);
-      fetchJSON(prefix+t.file).then(function(gj){var part=ingest(gj,id);state.tileParts.set(t.file,part);state.features=state.features.concat(part.features);part.grid.forEach(function(a,k){var b=state.grid.get(k);state.grid.set(k,b?b.concat(a):a);});state.loadedTiles.set(t.file,'ready');pruneTileCache(id);}).catch(function(){state.loadedTiles.set(t.file,'error');state.tileError=true;}).finally(function(){state.pending--;updateLayers();updateLegend();renderResults();restoreFeature();requestDraw();});
-    });
-  }
   function viewBounds(){var s=scale();return [lonOf(view.x-W/2/s),latOf(view.y+H/2/s),lonOf(view.x+W/2/s),latOf(view.y-H/2/s)];}
   function boundsIntersect(a,b){return a[2]>=b[0]&&a[0]<=b[2]&&a[3]>=b[1]&&a[1]<=b[3];}
   function pruneTileCache(id){
-    var state=data[id],cap=id==='services'?10:24;if(!state||!state.tileParts||state.tileParts.size<=cap)return;
-    var bounds=viewBounds(),protectView=id==='contextStreets'?view.z>=13.2:activeIds().indexOf(id)>=0&&view.z>=layers[id].minZ,pin=requestedFeature&&requestedFeature.indexOf(id+'-')===0?requestedPin:null,changed=false;
+    var state=data[id],cap=24;if(!state||!state.tileParts||state.tileParts.size<=cap)return;
+    var bounds=viewBounds(),protectView=view.z>=13.2,changed=false;
     Array.from(state.tileParts.keys()).sort(function(a,b){return state.tileUsed.get(a)-state.tileUsed.get(b);}).some(function(file){
       if(state.tileParts.size<=cap)return true;var t=state.index.tiles.find(function(t){return t.file===file;}),b=t.bounds;
-      if(protectView&&boundsIntersect(b,bounds)||pin&&pin.lon>=b[0]&&pin.lon<=b[2]&&pin.lat>=b[1]&&pin.lat<=b[3])return false;
+      if(protectView&&boundsIntersect(b,bounds))return false;
       state.tileParts.delete(file);state.loadedTiles.delete(file);state.tileUsed.delete(file);changed=true;return false;
     });
     if(changed){state.features=[];state.grid=new Map();state.tileParts.forEach(function(part){state.features=state.features.concat(part.features);part.grid.forEach(function(a,k){var b=state.grid.get(k);state.grid.set(k,b?b.concat(a):a);});});}
@@ -186,8 +168,6 @@
     well:['Recorded water well','Water_well','A drilled well recorded in the County Well Index. Depth and aquifer fields come from its record.'],
     groundwater:['Groundwater contamination area','Groundwater_pollution','An MPCA inventory polygon. It is not a parcel-level determination of exposure or current conditions.'],
     cleanup:['Cleanup or tank record','Environmental_remediation','A regulated-site inventory record. Program activity and status need to be read in the source record.'],
-    pavement:['Street condition record','Pavement_Condition_Index','Historical Minneapolis ratings on a 0-to-100 scale. Unrated segments remain unclassified.'],
-    cutoffwall:['Buried cutoff wall','Saint_Anthony_Falls','A buried barrier that restricts water moving through the ground.']
   };
   function typeInfo(f){
     if(f.layer==='generators'){var tech=f.p.technology||'Electric generator',page=/combined cycle/i.test(tech)?'Combined_cycle_power_plant':/combustion turbine/i.test(tech)?'Gas_turbine':/photovoltaic/i.test(tech)?'Photovoltaic_power_station':/wind/i.test(tech)?'Wind_turbine':/hydroelectric/i.test(tech)?'Hydroelectricity':/nuclear/i.test(tech)?'Nuclear_power_plant':/batter/i.test(tech)?'Battery_storage_power_station':'Electric_generator';return {label:tech,wiki:'https://en.wikipedia.org/wiki/'+page,description:'This is one reported generating unit at '+(f.p.name||'this site')+'. The map uses the plant’s approximate EIA coordinates. Nameplate capacity is a rating; the inventory status does not describe production at this moment.'};}
@@ -310,10 +290,9 @@
     var p=f.p||{},id=f.layer,st=catalog.lineStyle(f),color=layers[id]?catalog.color(f):'rgba(232,226,214,.22)',width=1.5,dash=st.dash;
     if(id==='power'){width=p.v>=300?2.5:p.v>=200?2:p.v>=100?1.6:1.2;if(p.location==='underground')dash=[4,3];}
     if(id==='feeders'||id==='rail')width=1;
-    if(id==='interceptors'||id==='pavement')width=2;
+    if(id==='interceptors')width=2;
     if(id==='buried'){dash=p.t===90?[2,5]:[6,3];}
     if(id==='pipelines'&&!p.substance)dash=[2,4];
-    if(id==='faults')dash=[4,3];
     if(id==='streams')width=1.3;
     return {color:color,width:width,dash:dash,opacity:st.opacity};
   }
@@ -338,17 +317,17 @@
   }
   function draw(){
     if(!W||!H)return;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle='#1e2420';ctx.fillRect(0,0,W,H);ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash([]);
+    ctx.save();cityPath();ctx.clip('evenodd');
     var hasAerial=SAT.on&&drawTiles();
     if(topic==='ground'&&layers.depth.on&&data.depth)drawDepth(data.depth);
     activeIds().forEach(function(id){var cfg=layers[id],state=data[id];if(view.z<cfg.minZ||cfg.kind!=='polygon'||!state||!state.features)return;state.features.forEach(function(f){if(!visible(f)||!allowed(f))return;ctx.beginPath();path(f);ctx.fillStyle=id==='bedrock'?(f.p.u||'').charAt(0)==='C'?'rgba(223,194,136,.22)':'rgba(183,155,196,.25)':id==='sheds'?'rgba(158,199,154,.07)':'rgba(207,159,120,.20)';ctx.fill('evenodd');ctx.strokeStyle=cfg.color;ctx.globalAlpha=.35;ctx.lineWidth=.7;ctx.stroke();ctx.globalAlpha=1;});});
     if(!hasAerial){
       if(data.contextWater&&data.contextWater.features){ctx.beginPath();data.contextWater.features.filter(function(f){return visible(f);}).forEach(path);ctx.fillStyle='#273e43';ctx.fill('evenodd');}
-      if(data.contextCounties&&data.contextCounties.features)strokeFeatures(data.contextCounties.features,{color:'rgba(232,226,214,.12)',width:.7,dash:[]});
     }
     var streetsDrawn=drawStreets(hasAerial);if(!hasAerial&&!streetsDrawn&&data.contextRoads&&data.contextRoads.features)strokeFeatures(data.contextRoads.features,{color:'rgba(232,226,214,.2)',width:.8,dash:[]});
     activeIds().forEach(function(id){var cfg=layers[id],state=data[id];if(!state||!state.features||view.z<cfg.minZ)return;
       if(cfg.kind==='line'){strokeFeatures(state.features);return;}if(cfg.kind!=='point')return;
-      visiblePoints(state).forEach(function(f){if(!visible(f)||!allowed(f))return;var p=toPx(f.x,f.y),dense=['services','hydrants','inlets','wells','cleanup'].indexOf(id)>=0,r=dense?(view.z>15?2.5:1.6):3.6;
+      visiblePoints(state).forEach(function(f){if(!visible(f)||!allowed(f))return;var p=toPx(f.x,f.y),dense=['hydrants','wells','cleanup'].indexOf(id)>=0,r=dense?(view.z>15?2.5:1.6):3.6;
         if(id==='powerplants'&&f.p.mw)r=Math.max(3.5,Math.min(10,2+Math.sqrt(f.p.mw)*.3));
         ctx.fillStyle=pointColor(f);ctx.strokeStyle='#1e2420';ctx.lineWidth=1.2;ctx.beginPath();
         if(id==='substations'||id==='comms'||id==='exchanges'){ctx.rect(p[0]-r,p[1]-r,r*2,r*2);}else ctx.arc(p[0],p[1],r,0,Math.PI*2);ctx.fill();ctx.stroke();
@@ -360,15 +339,15 @@
     if(document.activeElement===CANVAS){ctx.strokeStyle=C.cream;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W/2-8,H/2);ctx.lineTo(W/2+8,H/2);ctx.moveTo(W/2,H/2-8);ctx.lineTo(W/2,H/2+8);ctx.stroke();}
     if(selection){if(selection.rings){ctx.beginPath();path(selection);ctx.strokeStyle='#ede0c0';ctx.lineWidth=3;ctx.stroke();}else{var sp=toPx(selection.x,selection.y);ctx.strokeStyle='#ede0c0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(sp[0],sp[1],10,0,Math.PI*2);ctx.stroke();}}
     if(hovered&&hovered.rings){ctx.beginPath();path(hovered);ctx.strokeStyle='#ede0c0';ctx.lineWidth=2.5;ctx.stroke();}
-    [['Minneapolis',-93.265,44.978],['Saint Paul',-93.09,44.954],['Bloomington',-93.30,44.826],['Maple Grove',-93.455,45.07],['Woodbury',-92.955,44.91],['Coon Rapids',-93.31,45.16]].forEach(function(p){var xy=toPx(mx(p[1]),my(p[2])),major=view.z<12.5&&(p[0]==='Minneapolis'||p[0]==='Saint Paul');queueLabel(p[0],xy[0],xy[1]+(major?(p[0]==='Minneapolis'?-8:12):0),major?11:-1);});
-    drawLabels();drawScale();
+    if(view.z<13){var cityLabel=toPx(mx(-93.104),my(44.956));queueLabel('Saint Paul',cityLabel[0],cityLabel[1],11);}
+    drawLabels();ctx.restore();cityPath();ctx.strokeStyle='rgba(232,226,214,.48)';ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);drawScale();
   }
   function drawScale(){var metersPerPx=WORLD_M*Math.cos(latOf(view.y)*Math.PI/180)/scale(),target=90*metersPerPx/1609.344,mi=.05;[.05,.1,.25,.5,1,2,5,10,20].forEach(function(v){if(v<=target)mi=v;});SCALE.textContent=mi+' mi';SCALE.style.width=mi*1609.344/metersPerPx+'px';}
 
   function countFor(id){var m=metaFor(id),d=data[id];return m&&m.featureCount!=null?m.featureCount:m&&m.count!=null?m.count:d&&d.count!=null?d.count:null;}
   function updateLayers(){
     var list=HOST.querySelector('.um-layer-list');
-    topics[topic].layers.forEach(function(id){var btn=list.querySelector('[data-layer="'+id+'"]');if(!btn)return;var cfg=layers[id],state=data[id]||{},n=countFor(id),small=btn.querySelector('small');btn.setAttribute('aria-pressed',String(cfg.on));btn.classList.toggle('is-error',!!state.error||!!state.tileError);small.textContent=state.error?'Could not load. Select to retry.':state.loading||state.pending?'Loading records…':(n!=null?fmt.format(n)+(cfg.kind==='raster'?' model cells':' records')+' · ':'')+(view.z<cfg.minZ?'Zoom in to see these records. ':cfg.municipal&&!shouldLoad(id)?'Choose this city to load its records. ':'')+(cfg.note||'Published snapshot');});
+    topics[topic].layers.forEach(function(id){var btn=list.querySelector('[data-layer="'+id+'"]');if(!btn)return;var cfg=layers[id],state=data[id]||{},n=countFor(id),small=btn.querySelector('small');btn.setAttribute('aria-pressed',String(cfg.on));btn.classList.toggle('is-error',!!state.error||!!state.tileError);small.textContent=state.error?'Could not load. Select to retry.':state.loading||state.pending?'Loading records…':(n!=null?fmt.format(n)+(cfg.kind==='raster'?' model cells':' records')+' · ':'')+(view.z<cfg.minZ?'Zoom in to see these records. ':'')+(cfg.note||'Published snapshot');});
     var loading=activeIds().some(function(id){return data[id]&&(data[id].loading||data[id].pending);}),errors=activeIds().filter(function(id){return data[id]&&(data[id].error||data[id].tileError);});
     var streetError=data.contextStreets&&(data.contextStreets.error||data.contextStreets.tileError);STATUS.hidden=!loading&&!errors.length&&!catalogError&&!streetError&&!(SAT.on&&SAT.failed);STATUS.textContent=loading?'Loading this system…':errors.length?'Some records could not load. Retry in Map details.':catalogError?'Dataset catalog could not load. Retry in Sources and downloads.':streetError?'Street context could not load. Select Map to retry.':SAT.on&&SAT.failed?'Aerial imagery could not load. Showing the map. Select Aerial to retry.':'';
   }
@@ -380,24 +359,24 @@
     inactive.querySelector('button').setAttribute('aria-pressed',String(showInactive));
   }
   function updateLegend(){
-    var entries=[];activeIds().forEach(function(id){var cfg=layers[id];if(view.z<cfg.minZ)return;if(id==='services'){entries.push(['Lead',C.power],['Non-lead',C.water],['Unknown material',C.gas],['Galvanized requiring replacement',C.ground]);}else if(id==='depth'){entries.push(['Under 50 ft','#dfc288'],['50–149 ft','#cf9f78'],['150–299 ft','#b8796d'],['300 ft or more',C.ground]);}else if(id==='pipelines'){entries.push(['Gas',C.gas],['Steam',C.net],['Water or drainage',C.water],['Other substance',C.ground],['Unclassified','#a4a293']);}else if(id==='interceptors'){entries.push(['Gravity',C.sewer,'solid'],['Pumped force main',C.sewer,'dashed'],['Inverted siphon',C.sewer,'dotted']);}else if(id==='pavement'){entries.push(['PCI under 40','#b8796d'],['PCI 40–69',C.gas],['PCI 70–100',C.sewer],['Unrated','#a4a293']);}else entries.push([cfg.title,cfg.color,cfg.kind==='line'?'solid':null]);});
+    var entries=[];activeIds().forEach(function(id){var cfg=layers[id];if(view.z<cfg.minZ)return;if(id==='depth'){entries.push(['Under 50 ft','#dfc288'],['50–149 ft','#cf9f78'],['150–299 ft','#b8796d'],['300 ft or more',C.ground]);}else if(id==='pipelines'){entries.push(['Gas',C.gas],['Steam',C.net],['Water or drainage',C.water],['Other substance',C.ground],['Unclassified','#a4a293']);}else if(id==='interceptors'){entries.push(['Gravity',C.sewer,'solid'],['Pumped force main',C.sewer,'dashed'],['Inverted siphon',C.sewer,'dotted']);}else entries.push([cfg.title,cfg.color,cfg.kind==='line'?'solid':null]);});
     if(showInactive&&topics[topic].layers.some(function(id){return layers[id].hasInactive;}))entries.push(['Inactive records','#a4a293']);
     HOST.querySelector('.um-legend').innerHTML=entries.map(function(e){return '<span><i style="--legend-color:'+e[1]+';'+(e[2]?'border-top:2px '+e[2]+' '+e[1]+';background:none;width:20px;height:0;border-radius:0':'')+'" aria-hidden="true"></i>'+esc(e[0])+'</span>';}).join('');
     var key=HOST.querySelector('.um-map-key'),keyEntries=[],keyTitle='';
     if(topic==='ground'&&layers.depth.on){keyTitle='Depth to bedrock, feet';keyEntries=[['Under 50','#dfc288'],['50–149','#cf9f78'],['150–299','#b8796d'],['300+',C.ground]];}
-    else if(topic==='water'&&layers.services.on&&view.z>=layers.services.minZ&&visiblePoints(data.services).some(function(f){return visible(f)&&allowed(f);})){keyTitle='Minneapolis connection material';keyEntries=[['Lead',C.power],['Non-lead',C.water],['Unknown',C.gas],['Galvanized requiring replacement',C.ground],['Non-water record','#a4a293']];}
-    key.hidden=!keyTitle;key.innerHTML=key.hidden?'':'<span>'+keyTitle+'</span>'+keyEntries.map(function(e){return '<span><i style="--legend-color:'+e[1]+'" aria-hidden="true"></i>'+esc(e[0])+'</span>';}).join('');
+        key.hidden=!keyTitle;key.innerHTML=key.hidden?'':'<span>'+keyTitle+'</span>'+keyEntries.map(function(e){return '<span><i style="--legend-color:'+e[1]+'" aria-hidden="true"></i>'+esc(e[0])+'</span>';}).join('');
 
   }
   function namedFeature(f){return catalog.isNamed(f);}
   function renderResults(){
     if(!RESULTS)return;var active=document.activeElement,focusedResult=RESULTS.contains(active)&&active.dataset.id,resultsScroll=RESULTS.scrollTop;var q=SEARCH.value.trim().toLowerCase(),items=[],busy=false,denseHidden=false;
     items=places.filter(function(f){return shownPlace(f)&&(scope!=='view'||visible(f))&&(!q||(f.name+' '+f.blurb+' '+typeInfo(f).label).toLowerCase().indexOf(q)>=0);});
-    activeIds().forEach(function(id){var d=data[id],cfg=layers[id];if(view.z<cfg.minZ||cfg.municipal&&!shouldLoad(id)){denseHidden=true;return;}if(!d||d.loading){busy=true;return;}if(!d.features)return;
-      var dense=['services','wells','hydrants','inlets','cleanup','meters','lifts','wspInlets','wspSanManholes','wspStormManholes'].indexOf(id)>=0;
+    activeIds().forEach(function(id){var d=data[id],cfg=layers[id];if(view.z<cfg.minZ){denseHidden=true;return;}if(!d||d.loading){busy=true;return;}if(!d.features)return;
+      var dense=['wells','hydrants','cleanup','meters','lifts'].indexOf(id)>=0;
       if(dense&&view.z<cfg.minZ){denseHidden=true;return;}
-      var fs=cfg.municipal?d.features.filter(function(f){return visible(f);}):dense?visiblePoints(d):d.features;
+      var fs=dense?visiblePoints(d):d.features;
       fs.forEach(function(f){if(!allowed(f)||scope==='view'&&!visible(f))return;if(!q&&!namedFeature(f)&&!dense&&view.z<12.5)return;
+        if(!q&&items.some(function(p){return p.layer==='tour'&&p.name===f.name&&Math.hypot(p.x-f.x,p.y-f.y)*WORLD_M<100;}))return;
         if(q){var text=(f.name+' '+f.id+' '+typeInfo(f).label+' '+Object.values(f.p).join(' ')).toLowerCase();if(text.indexOf(q)<0)return;}items.push(f);
       });
     });
@@ -407,10 +386,10 @@
     var nameCounts=Object.create(null);items.forEach(function(f){nameCounts[f.name]=(nameCounts[f.name]||0)+1;});
     RESULTS.innerHTML=items.slice(0,visibleLimit).map(function(f,i){var info=typeInfo(f),p=photoFor(f),thumb=p?'<picture class="um-result-thumb">'+(p.webp?'<source type="image/webp" srcset="'+esc(photoAsset(p.webp))+'">':'')+'<img src="'+esc(photoAsset(p.src))+'" alt="" width="56" height="56" loading="'+(i===0?'eager':'lazy')+'"></picture>':'';return '<button class="um-result" type="button" data-id="'+esc(f.id)+'" style="--result-color:'+pointColor(f)+'">'+thumb+'<span class="um-result-text"><span class="um-result-name">'+esc(f.name)+'</span><span class="um-result-meta">'+esc(info.label)+(catalog.status(f)&&layers[f.layer]&&layers[f.layer].hasInactive?' · '+catalog.status(f):'')+(nameCounts[f.name]>1&&f.layer==='interceptors'&&f.p.i!=null?' · Record '+esc(f.p.i):'')+'</span></span></button>';}).join('');
     if(!items.length)RESULTS.innerHTML='<p class="um-empty">'+(busy?'Loading this system.':q?denseHidden?'No matching records at this scale. Zoom in to search street records, or try a facility name.':'No matching records. Try a name, type or record ID.':hasModel?'Select a colored part of the map to see the modeled depth. Zoom in for well records, or add a geology layer in Map details.':denseHidden?'Zoom in for individual connections and records, or turn on another layer in Map details.':'No records in this view. Choose Browse records or another layer.')+'</p>';
-    else if(denseHidden)RESULTS.insertAdjacentHTML('beforeend','<p class="um-empty">Zoom in for individual connections and street records.</p>');
+    else if(denseHidden)RESULTS.insertAdjacentHTML('beforeend','<p class="um-empty">Zoom in for hydrants and other street records.</p>');
     RESULTS.querySelectorAll('[data-id]').forEach(function(btn){btn.addEventListener('click',function(){var f=items.find(function(f){return f.id===btn.dataset.id;});if(!f)return;lastSelected=f.id;lastFocusControl=btn;if(f.layer==='tour'&&f.z>=14)setBase(true);openPanel(f,true);flyTo(f.x,f.y,f.z||Math.max(view.z,f.kind==='point'?14.5:14));});});
     RESULTS.scrollTop=resultsScroll;if(focusedResult){var replacement=Array.from(RESULTS.querySelectorAll('[data-id]')).find(function(b){return b.dataset.id===focusedResult;});if(replacement)replacement.focus({preventScroll:true});}
-    var browseNote=HOST.querySelector('.um-browse-note');browseNote.hidden=!topics[topic].layers.some(function(id){return (layers[id].tileIndex||layers[id].municipal)&&layers[id].on;});browseNote.textContent='Street records and wells are browsed near the map view. Zoom in, or choose a city to explore its published pipes.';
+
     var more=HOST.querySelector('.um-results-more');more.hidden=shown>=items.length||!items.length;more.textContent='Show '+Math.min(30,items.length-shown)+' more';
   }
   function setTopic(id,reset){
@@ -427,23 +406,24 @@
   }
   function renderSources(){
     if(!manifest)return;
-    var all=manifest.datasets||[],mapped=Object.keys(layers).map(function(id){return layers[id].file;}).concat(['counties.json','water.json','roads-context.json','data/context-streets.json.gz']),selected=topics[topic].layers.map(function(id){return layers[id].file;}),query=(HOST.querySelector('.um-source-search input').value||'').trim().toLowerCase();
-    HOST.querySelector('.um-summary').textContent=Object.keys(layers).length+' map layers · Public records';
+    var all=manifest.datasets||[],mapped=Object.keys(layers).map(function(id){return layers[id].file;}).concat(['cities.json','water.json','roads-context.json','data/context-streets.json.gz']),selected=topics[topic].layers.map(function(id){return layers[id].file;}),query=(HOST.querySelector('.um-source-search input').value||'').trim().toLowerCase();
+    HOST.querySelector('.um-summary').textContent=Object.keys(layers).length+' map layers · Saint Paul';
     HOST.querySelectorAll('[data-um-topic]').forEach(function(b){var key=b.dataset.umTopic,n=topics[key].layers.length;b.querySelector('.um-topic-count').textContent=n;b.setAttribute('aria-label',b.firstChild.textContent.trim()+', '+n+' layers');});
     var list=all.filter(function(m){
-      var current=mapped.indexOf(m.file)>=0,match=sourceScope==='earlier'?!current&&m.legacy:sourceScope==='all'?true:selected.indexOf(m.file)>=0;
+      var current=mapped.indexOf(m.file)>=0,match=sourceScope==='all'||selected.indexOf(m.file)>=0;
       return match&&(!query||(m.title+' '+m.id+' '+(m.source||{}).coverage).toLowerCase().indexOf(query)>=0);
     });
-    HOST.querySelector('.um-source-count').textContent=fmt.format(list.length)+' '+(list.length===1?'dataset':'datasets')+(sourceScope==='current'?' for '+topics[topic].title.toLowerCase():'')+'. Source dates describe the published snapshot. Map expanded October 3, 2026; retrieval dates vary by dataset.';
+    HOST.querySelector('.um-source-count').textContent=fmt.format(list.length)+' '+(list.length===1?'dataset':'datasets')+(sourceScope==='current'?' for '+topics[topic].title.toLowerCase():'')+'. Source dates describe the published snapshot. Saint Paul extracts updated October 3, 2026; source dates vary.';
     HOST.querySelector('.um-datasets').innerHTML=list.length?'<div class="um-source-grid">'+list.map(function(m){
       var source=m.source||{},url=source.url,file=m.file,title=m.title||m.id,date=source.sourceDate,license=source.license,n=m.featureCount!=null?m.featureCount:m.recordCount,caveats=source.caveats||[],format=m.format==='DepthRaster'?'depth model JSON':m.format==='Table'?'table JSON':'GeoJSON',used=mapped.indexOf(file)>=0;if(/\.gz$/.test(file||''))format+=' (gzip)';var downloadSize=m.bytes!=null?' · '+(m.bytes>=1000000?(m.bytes/1000000).toFixed(1)+' MB':Math.max(1,Math.round(m.bytes/1000))+' KB'):'';
-      return '<article class="um-source-item"><h4>'+esc(title)+'</h4><p class="um-source-meta">'+(n!=null?fmt.format(n)+' '+(m.format==='DepthRaster'?'model cells':'records')+' · ':'')+esc(displayDate(date))+'</p>'+(source.retrievedAt?'<p class="um-source-meta">Retrieved: '+esc(displayDate(source.retrievedAt))+'</p>':'')+(!used&&m.legacy?'<p class="um-source-version">Reference snapshot; this version is not drawn on the map.</p>':'')+'<p>'+esc(m.coverage||source.coverage||'')+'</p>'+'<div>'+(url?'<a href="'+safeLink(url)+'" target="_blank" rel="noopener">Source</a>':'')+(file?'<a href="'+esc(ROOT+file)+'" download>Download '+esc(format+downloadSize)+'</a>':'')+(source.itemUrl?'<a href="'+safeLink(source.itemUrl)+'" target="_blank" rel="noopener">Metadata</a>':'')+'</div>'+((caveats.length||license)?'<details class="um-source-notes"><summary>Record notes and terms</summary>'+(caveats.length?'<p>'+esc(caveats.join(' '))+'</p>':'')+(license?'<small>'+esc(license)+'</small>':'')+'</details>':'')+'</article>';
+      return '<article class="um-source-item"><h4>'+esc(title)+'</h4><p class="um-source-meta">'+(n!=null?fmt.format(n)+' '+(m.format==='DepthRaster'?'model cells':'records')+' · ':'')+esc(displayDate(date))+'</p>'+(source.retrievedAt?'<p class="um-source-meta">Retrieved: '+esc(displayDate(source.retrievedAt))+'</p>':'')+'<p>'+esc(m.coverage||source.coverage||'')+'</p>'+'<div>'+(url?'<a href="'+safeLink(url)+'" target="_blank" rel="noopener">Source</a>':'')+(file?'<a href="'+esc(ROOT+file)+'" download>Download '+esc(format+downloadSize)+'</a>':'')+(source.itemUrl?'<a href="'+safeLink(source.itemUrl)+'" target="_blank" rel="noopener">Metadata</a>':'')+'</div>'+((caveats.length||license)?'<details class="um-source-notes"><summary>Record notes and terms</summary>'+(caveats.length?'<p>'+esc(caveats.join(' '))+'</p>':'')+(license?'<small>'+esc(license)+'</small>':'')+'</details>':'')+'</article>';
     }).join('')+'</div>':'<p class="um-empty">No datasets match this search.</p>';
   }
 
   // A click pins one inspector. Hover only shows a short map label.
   function hitTest(px,py){
     var best=null,distance=14,s=scale(),wx=view.x+(px-W/2)/s,wy=view.y+(py-H/2)/s;
+    if(!catalog.contains(lonOf(wx),latOf(wy)))return null;
     function point(f){if(!allowed(f))return;var p=toPx(f.x,f.y),d=Math.hypot(p[0]-px,p[1]-py);if(d<distance){distance=d;best=f;}}
     places.filter(shownPlace).forEach(point);
     activeIds().forEach(function(id){var cfg=layers[id],state=data[id];if(!state||!state.features||cfg.kind!=='point'||view.z<cfg.minZ)return;visiblePoints(state).forEach(point);});if(best)return best;
@@ -455,10 +435,10 @@
   }
   var lastHover=0,tooltipTimer=null;
   function hover(e){if(e.pointerType==='touch'||performance.now()-lastHover<90)return;lastHover=performance.now();var r=CANVAS.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,f=hitTest(px,py);hovered=f;TOOLTIP.hidden=!f;if(f){TOOLTIP.textContent=f.name;TOOLTIP.style.left=Math.min(W-180,Math.max(12,px+12))+'px';TOOLTIP.style.top=Math.max(54,py-34)+'px';}requestDraw();}
-  var hashTimer=null,resultsTimer=null,requestedFeature=null,requestedPin=null,restoring=true;
+  var hashTimer=null,resultsTimer=null,requestedFeature=null,restoring=true;
   function writeHash(){if(restoring)return;var h='#map='+view.z.toFixed(2)+'/'+latOf(view.y).toFixed(5)+'/'+lonOf(view.x).toFixed(5)+(SAT.on?'/sat':'')+'&topic='+topic;h+='&layers='+activeIds().join(',');if(showInactive)h+='&inactive=1';if(selection)h+='&feature='+encodeURIComponent(selection.id)+'&pin='+latOf(selection.y).toFixed(7)+'/'+lonOf(selection.x).toFixed(7);try{history.replaceState(null,'',h);}catch(err){}}
-  function noteMoved(){hovered=null;TOOLTIP.hidden=true;hqRefresh();clearTimeout(hashTimer);clearTimeout(resultsTimer);hashTimer=setTimeout(writeHash,350);resultsTimer=setTimeout(function(){ensureActive();activeIds().forEach(loadViewportTiles);loadStreets();updateLayers();updateLegend();renderResults();},160);}
-  function clampView(){view.z=Math.max(MINZ,Math.min(MAXZ,view.z));view.x=Math.max(mx(-94.6),Math.min(mx(-92),view.x));view.y=Math.max(my(45.75),Math.min(my(44.2),view.y));}
+  function noteMoved(){hovered=null;TOOLTIP.hidden=true;hqRefresh();clearTimeout(hashTimer);clearTimeout(resultsTimer);hashTimer=setTimeout(writeHash,350);resultsTimer=setTimeout(function(){ensureActive();loadStreets();updateLayers();updateLegend();renderResults();},160);}
+  function clampView(){view.z=Math.max(MINZ,Math.min(MAXZ,view.z));view.x=Math.max(cityBounds[0],Math.min(cityBounds[2],view.x));view.y=Math.max(cityBounds[1],Math.min(cityBounds[3],view.y));}
   function zoomAt(px,py,dz){var s0=scale(),wx=view.x+(px-W/2)/s0,wy=view.y+(py-H/2)/s0;view.z+=dz;clampView();var s1=scale();view.x=wx-(px-W/2)/s1;view.y=wy-(py-H/2)/s1;clampView();noteMoved();requestDraw();}
   var flyRaf=null;
   function flyTo(x,y,z){
@@ -470,7 +450,7 @@
   }
   function resize(){
     var left=HOST.parentElement.getBoundingClientRect().left;HOST.style.marginLeft=-left+'px';HOST.style.width=document.documentElement.clientWidth+'px';DPR=Math.min(devicePixelRatio||1,2);var r=STAGE.getBoundingClientRect();W=Math.round(r.width);H=Math.round(r.height);CANVAS.width=W*DPR;CANVAS.height=H*DPR;CANVAS.style.width=W+'px';CANVAS.style.height=H+'px';
-    if(!fitted&&W&&H){HOME.z=Math.max(MINZ,Math.min(11.3,Math.log2(W/((mx(-92.72)-mx(-93.72))*256)),Math.log2(Math.max(1,H-64)/((my(44.86)-my(45.11))*256))));if(!savedView)view.z=HOME.z;fitted=true;}requestDraw();if(started){activeIds().forEach(loadViewportTiles);loadStreets();renderResults();}
+    if(W&&H){var oldHome=HOME.z;HOME.z=Math.min(14,Math.log2(Math.max(1,W-64)/((cityBounds[2]-cityBounds[0])*256)),Math.log2(Math.max(1,H-100)/((cityBounds[3]-cityBounds[1])*256)));MINZ=Math.max(10,HOME.z-.35);if(!fitted&&!savedView||fitted&&Math.abs(view.z-oldHome)<.01){view.x=HOME.x;view.y=HOME.y;view.z=HOME.z;}fitted=true;clampView();}requestDraw();if(started){loadStreets();renderResults();}
   }
   var interacting=false,pointers=new Map(),pinch=null,down=null;
   function setInteracting(on){interacting=!!on;STAGE.classList.toggle('is-interacting',interacting);var b=HOST.querySelector('[data-um-interact]');b.setAttribute('aria-pressed',String(interacting));b.textContent=interacting?'Stop map dragging':'Enable map dragging';pointers.clear();pinch=null;}
@@ -492,9 +472,7 @@
   HOST.querySelector('.um-photo-dialog').addEventListener('close',function(){var opener=PANEL.hidden?RESULTS.querySelector('[data-id="'+esc(lastSelected||'')+'"]')||SEARCH:PANEL.querySelector('.um-photo-open')||PANEL.querySelector('.um-pback');opener.focus({preventScroll:true});});
   HOST.querySelector('.um-photo-dialog').addEventListener('click',function(e){if(e.target===e.currentTarget)e.currentTarget.close();});
   function browseNearLocation(local){scope=local?'view':'all';visibleLimit=30;SEARCH.value='';HOST.querySelectorAll('[data-um-scope]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.umScope===scope));});renderResults();}
-  HOST.addEventListener('understreet:locate',function(e){var p=e.detail;if(!p||!Number.isFinite(p.lon)||!Number.isFinite(p.lat)||p.lon<-94.05||p.lon>-92.52||p.lat<44.47||p.lat>45.42)return;closePanel(false);browseNearLocation(true);addressPin={x:mx(p.lon),y:my(p.lat)};flyTo(addressPin.x,addressPin.y,15.5);showMap();});
-  var cityViews={metro:[-93.19,44.985,HOME.z],minneapolis:[-93.27,44.976,13.2],saintPaul:[-93.091,44.955,13.2],bloomington:[-93.304,44.837,13.2],eagan:[-93.17,44.817,13.2],maplewood:[-93.021,44.995,13.2],westSaintPaul:[-93.087,44.904,13.8]};
-  HOST.querySelector('#um-city').addEventListener('change',function(e){var c=cityViews[e.target.value];if(c){addressPin=null;closePanel(false);browseNearLocation(e.target.value!=='metro');flyTo(mx(c[0]),my(c[1]),e.target.value==='metro'?HOME.z:c[2]);}});
+  HOST.addEventListener('understreet:locate',function(e){var p=e.detail;if(!p||!Number.isFinite(p.lon)||!Number.isFinite(p.lat)||!catalog.contains(p.lon,p.lat))return;closePanel(false);browseNearLocation(true);addressPin={x:mx(p.lon),y:my(p.lat)};flyTo(addressPin.x,addressPin.y,15.5);showMap();});
   HOST.querySelector('.um-results-more').addEventListener('click',function(){visibleLimit+=30;renderResults();});
   HOST.querySelector('[data-um-inactive]').addEventListener('click',function(e){showInactive=!showInactive;e.currentTarget.setAttribute('aria-pressed',String(showInactive));if(selection&&!allowed(selection))closePanel(false);updateLegend();renderResults();requestDraw();writeHash();});
   HOST.querySelectorAll('[data-um-source-scope]').forEach(function(b){b.addEventListener('click',function(){sourceScope=b.dataset.umSourceScope;HOST.querySelectorAll('[data-um-source-scope]').forEach(function(c){c.setAttribute('aria-pressed',String(c===b));});renderSources();});});
@@ -531,15 +509,15 @@
   }
   function start(){
     if(started)return;started=true;STATUS.textContent='Loading the map…';
-    Promise.allSettled(['counties','water','roads-context'].map(function(file){return fetchJSON(file+'.json').then(function(gj){var id={counties:'contextCounties',water:'contextWater','roads-context':'contextRoads'}[file];data[id]=ingest(gj,id);requestDraw();});})).then(function(){updateLayers();});
+    Promise.allSettled(['water','roads-context'].map(function(file){return fetchJSON(file+'.json').then(function(gj){var id={water:'contextWater','roads-context':'contextRoads'}[file];data[id]=ingest(gj,id);requestDraw();});})).then(function(){updateLayers();});
     fetchJSON('media.json').then(function(m){media=m;renderResults();if(selection)openPanel(selection,false);}).catch(function(){});
     loadManifest();
     loadStreets();ensureActive().then(function(){restoreFeature();if(!requestedFeature)restoring=false;updateLayers();requestDraw();});setTimeout(function finishRestore(){if(!restoring)return;var pending=catalogLoading||activeIds().filter(shouldLoad).some(function(id){var d=data[id];return !d||d.loading||d.pending;});if(pending){setTimeout(finishRestore,1000);return;}restoring=false;requestedFeature=null;writeHash();},15000);renderResults();
   }
   var hash=location.hash,m=hash.match(/map=([\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)(\/sat)?/),params=new URLSearchParams(hash.replace(/^#/,''));
-  if(m&&isFinite(+m[1])&&isFinite(+m[2])&&isFinite(+m[3])&&Math.abs(+m[2])<=85&&Math.abs(+m[3])<=180){view.z=+m[1];view.y=my(+m[2]);view.x=mx(+m[3]);clampView();savedView=true;SAT.on=!!m[4];}
-  requestedFeature=params.get('feature');var pinValue=(params.get('pin')||'').match(/^(-?[\d.]+)\/(-?[\d.]+)$/);if(pinValue&&isFinite(+pinValue[1])&&isFinite(+pinValue[2])&&Math.abs(+pinValue[1])<=85&&Math.abs(+pinValue[2])<=180)requestedPin={lat:+pinValue[1],lon:+pinValue[2]};var initial=params.get('topic'),oldPlace=places.find(function(f){return f.id===requestedFeature;});if(oldPlace)topic=oldPlace.topic;else if(topics[initial])topic=initial;showInactive=params.get('inactive')==='1';
-  if(params.has('layers')&&initial!=='tour'){var enabled=params.get('layers').split(',');topics[topic].layers.forEach(function(id){layers[id].on=enabled.indexOf(id)>=0;});}
+  if(m&&isFinite(+m[1])&&isFinite(+m[2])&&isFinite(+m[3])&&Math.abs(+m[2])<=85&&Math.abs(+m[3])<=180&&catalog.contains(+m[3],+m[2])){view.z=+m[1];view.y=my(+m[2]);view.x=mx(+m[3]);clampView();savedView=true;SAT.on=!!m[4];}
+  requestedFeature=params.get('feature');if(requestedFeature&&!places.some(function(f){return f.id===requestedFeature;})&&!Object.keys(layers).some(function(id){return requestedFeature.indexOf(id+'-')===0;}))requestedFeature=null;var initial=params.get('topic'),oldPlace=places.find(function(f){return f.id===requestedFeature;});if(oldPlace)topic=oldPlace.topic;else if(topics[initial])topic=initial;showInactive=params.get('inactive')==='1';
+  if(params.has('layers')&&initial!=='tour'){var enabled=params.get('layers').split(',');if(!enabled.length||enabled.some(function(id){return !!layers[id];})||params.get('layers')==='')topics[topic].layers.forEach(function(id){layers[id].on=enabled.indexOf(id)>=0;});}
   if(requestedFeature){var selectedLayer=Object.keys(layers).find(function(id){return requestedFeature.indexOf(id+'-')===0;});if(selectedLayer){layers[selectedLayer].on=true;if(topics[topic].layers.indexOf(selectedLayer)<0)topic=Object.keys(topics).find(function(t){return topics[t].layers.indexOf(selectedLayer)>=0;})||topic;}}
   setTopic(topic,false);HOST.querySelectorAll('[data-um-base]').forEach(function(b){b.setAttribute('aria-pressed',String((b.dataset.umBase==='sat')===SAT.on));});
   if('IntersectionObserver' in window){var io=new IntersectionObserver(function(entries){if(entries.some(function(e){return e.isIntersecting;})){start();io.disconnect();}},{rootMargin:'500px'});io.observe(HOST);}else start();

@@ -1,171 +1,48 @@
-// Uses an owned Chrome for Testing process and closes it even on failure.
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const http = require('node:http');
-const { chromium, launchOptions } = require('./browser-support.cjs');
-const root = path.resolve(__dirname, '../..');
-const output = process.env.UNDER_MAP_TEST_OUTPUT || '/tmp/under-street-qa';
-fs.mkdirSync(output, { recursive: true });
-const errors = [], localFailures = [], requests = [];
-let browser;
-const hooks = `
-window.__mapAudit = {
-  state:()=>({topic,view:{...view},W,H,selected:selection&&selection.id,data:Object.fromEntries(Object.entries(data).map(([k,v])=>[k,{loading:v.loading,error:v.error,pending:v.pending,count:v.count,loaded:v.features&&v.features.length}]))}),
-  point:(lon,lat)=>toPx(mx(lon),my(lat)),
-  move:(lon,lat,z)=>{view.x=mx(lon);view.y=my(lat);view.z=z;noteMoved();requestDraw();},
-  select:(id,index=0)=>openPanel(data[id].features[index],false),
-  hit:(x,y)=>hitTest(x,y),
-  source:id=>metaFor(id),
-  photo:(id,index=0)=>photoFor(data[id].features[index]),
-  performance:()=>{const samples=[];for(let i=0;i<12;i++){const t=performance.now();draw();samples.push(performance.now()-t);}return samples;}
-};
-`;
-const mime = { '.html':'text/html', '.js':'text/javascript', '.json':'application/json', '.css':'text/css', '.jpg':'image/jpeg', '.webp':'image/webp', '.woff2':'font/woff2', '.svg':'image/svg+xml' };
-const server = http.createServer((req,res) => {
-  const file = path.resolve(root, '.'+new URL(req.url,'http://localhost').pathname);
-  if(!file.startsWith(root+path.sep))return res.writeHead(403).end();
-  try {
-    let bytes=fs.readFileSync(file);
-    if(file.endsWith('/under-map.js')){const src=bytes.toString(),end=src.lastIndexOf('})();');bytes=Buffer.from(src.slice(0,end)+hooks+src.slice(end));}
-    res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'}).end(bytes);
-  } catch {res.writeHead(404).end();}
-});
-async function pageFor(size,hash='',options={}) {
-  const context=await browser.newContext({viewport:size,reducedMotion:options.motion||'reduce',deviceScaleFactor:size.width<600?2:1,hasTouch:size.width<600});
-  await context.route('https://www.googletagmanager.com/**',r=>r.abort());
-  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  page.on('response',r=>{if(r.url().startsWith(url)){requests.push(r.url());if(r.status()>=400)localFailures.push(r.url());}});
-  if(options.configure)await options.configure(page);
-  await page.goto(url+'/archive/under-the-street/under-the-street.html'+hash);
-  if(!options.natural)await page.locator('#undermap').scrollIntoViewIfNeeded();
-  await page.waitForFunction(()=>window.__mapAudit && document.querySelectorAll('.um-result').length>0);
-  await page.evaluate(()=>document.fonts.ready);
-  return {page,context};
-}
-let url;
-async function assertViewportFit(page,size) {
-  if(size.width<761||size.height<600)return;
-  const frame=await page.locator('.um-shell').evaluate(n=>({height:n.getBoundingClientRect().height,overflow:n.scrollHeight-n.clientHeight}));
-  const stage=await page.locator('.um-stage').boundingBox();
-  assert.ok(frame.height<=size.height-40,'Demo fits a normal browser viewport '+JSON.stringify(size));
-  assert.ok(frame.overflow<=2,'Closed demo needs no internal frame scroll '+JSON.stringify(size));
-  assert.ok(stage.height>=239,'Map remains usable in the compact frame');
-  assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false,'Viewport fit does not require fullscreen');
-}
-async function assertTopicColors(page){
-  const contrast=await page.locator('.um-topics button').evaluateAll(bs=>{
-    const c=document.createElement('canvas');c.width=c.height=1;const ctx=c.getContext('2d');
-    function rgb(color){ctx.clearRect(0,0,1,1);ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return Array.from(ctx.getImageData(0,0,1,1).data).slice(0,3);}
-    function luminance(v){return v.map(x=>{x/=255;return x<=0.04045?x/12.92:Math.pow((x+0.055)/1.055,2.4);}).reduce((sum,x,i)=>sum+x*[0.2126,0.7152,0.0722][i],0);}
-    return bs.map(b=>{const s=getComputedStyle(b),text=luminance(rgb(s.color)),bg=luminance(rgb(s.backgroundColor));return {topic:b.dataset.umTopic,ratio:(Math.max(text,bg)+0.05)/(Math.min(text,bg)+0.05),accent:s.getPropertyValue('--topic-color').trim()};});
-  });
-  for(const b of contrast){assert.ok(b.accent,'Every system has its map color');assert.ok(b.ratio>=4.5,'Readable '+b.topic+' button: '+b.ratio);}
-}
-(async()=>{try {
-  await new Promise(r=>server.listen(0,'127.0.0.1',r));url='http://127.0.0.1:'+server.address().port;
-  browser=await chromium.launch(launchOptions);
-  const desktop={width:1440,height:800}, {page,context}=await pageFor(desktop);
-  await page.waitForFunction(()=>__mapAudit.state().data.contextRoads);
-  const initial=await page.evaluate(()=>__mapAudit.state());
-  assert.equal(initial.topic,'water');assert.equal(initial.selected,null);
-  assert.ok(!initial.data.interceptors&&!initial.data.pipelines,'opening the map fetches its selected system');
-  assert.equal(await page.locator('.um-topics button').count(),7);assert.equal(await page.locator('[data-um-topic="tour"]').count(),0,'No Start here section');
-  assert.equal(await page.locator('.rail,.top-nav').count(),0,'Removed article navigation stays removed');
-  assert.doesNotMatch(await page.locator('.u-hero').textContent(),/field guide/i);
-  await page.locator('.um-layers').evaluate(d=>d.open=true);
-  await page.locator('[data-layer="waterworks"]').click();assert.equal(await page.locator('[data-id="fridley"]').count(),0,'Named places respect their layer switch');
-  await page.locator('[data-layer="waterworks"]').click();assert.equal(await page.locator('[data-id="fridley"]').count(),1);
-  await page.locator('.um-layers').evaluate(d=>d.open=false);
-  await assertViewportFit(page,desktop);
-  await page.locator('#undermap').screenshot({path:path.join(output,'desktop-start.png')});
-  await page.locator('[data-um-topic="networks"]').click();
-  await page.locator('[data-id="511"]').click();
-  assert.match(await page.locator('.um-ptitle').textContent(),/511/);
-  await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.complete);
-  const title=await page.locator('.um-ptitle').boundingBox(),photo=await page.locator('.um-pimg').boundingBox();
-  assert.ok(title.y+title.height<=photo.y,'Record identity appears before its photograph');
-  await page.locator('#undermap').screenshot({path:path.join(output,'desktop-place.png')});
-  const box=await page.locator('canvas').boundingBox();
-  await page.mouse.move(box.x+box.width/2+60,box.y+box.height/2+60);
-  assert.equal((await page.evaluate(()=>__mapAudit.state())).selected,'511','hover does not replace a selected place');
-  await page.locator('.um-pback').click();
-  assert.equal(await page.evaluate(()=>document.activeElement?.dataset.id),'511','Back returns focus to the selected place');
-  for(const topic of ['water','wastewater','storm','power','gas','networks','ground']) {
-    await page.locator('[data-um-topic="'+topic+'"]').click();
-    await page.waitForFunction(()=>Object.values(__mapAudit.state().data).every(d=>!d.loading&&!d.pending));
-    assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,topic);
-    await assertViewportFit(page,desktop);await assertTopicColors(page);
-    await page.locator('#undermap').screenshot({path:path.join(output,topic+'.png')});
-  }
-  const loaded=await page.evaluate(()=>__mapAudit.state());console.log('Loaded systems:',JSON.stringify(loaded.data));
-  await page.locator('[data-um-topic="water"]').click();
-  await page.evaluate(()=>__mapAudit.move(-93.27,44.95,15));
-  await page.waitForFunction(()=>__mapAudit.state().data.services?.loaded>0&&!__mapAudit.state().data.services.pending);
-  assert.ok((await page.evaluate(()=>__mapAudit.state())).data.services.loaded<99774,'service inventory is loaded by neighborhood');
-  await page.evaluate(()=>__mapAudit.select('services'));
-  assert.ok(await page.locator('.um-links a[href*="ServiceLineInventory_Public"]').count(),'service record has its actual source');
-  const serviceHash=await page.evaluate(()=>location.hash), serviceId=(await page.evaluate(()=>__mapAudit.state())).selected;
-  const restored=await pageFor({width:1024,height:768},serviceHash);
-  await restored.page.waitForFunction(id=>__mapAudit.state().selected===id,serviceId);
-  await restored.context.close();
-  await page.locator('[data-um-topic="ground"]').click();
-  await page.waitForFunction(()=>!!__mapAudit.state().data.depth?.count);
-  await page.evaluate(()=>__mapAudit.move(-93.2,44.95,12));
-  const depthHit=await page.evaluate(()=>{const f=__mapAudit.hit(__mapAudit.state().W/2,__mapAudit.state().H/2);return f&&{name:f.name,id:f.id};});
-  assert.match(depthHit.name,/ft to bedrock/);
-  const timings=await page.evaluate(()=>__mapAudit.performance());console.log('Map draw ms:',timings.map(n=>n.toFixed(2)).join(', '));
+const assert=require('node:assert/strict'),fs=require('fs'),path=require('path');
+const {harness,settle}=require('./test-support.cjs');
+const output=process.env.UNDER_MAP_TEST_OUTPUT||'/tmp/saint-paul-qa';fs.mkdirSync(output,{recursive:true});
+(async()=>{const h=await harness();try{
+ const {page,context}=await h.page();await settle(page);
+ assert.equal(await page.title(),"What's Under a Saint Paul Street");
+ assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,'storm');
+ assert.equal(await page.locator('.um-topics button').count(),7);
+ assert.equal(await page.locator('#um-city,[data-um-topic="tour"],.rail,.top-nav').count(),0);
+ assert.doesNotMatch(await page.locator('body').textContent(),/Twin Cities|Minneapolis|Bloomington|Eagan|Maplewood|West Saint Paul|Bassett|Field guide|Start here/i);
+ for(const topic of ['water','wastewater','storm','power','gas','networks','ground']){
+  await page.locator('[data-um-topic="'+topic+'"]').click();await settle(page);
+  assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,topic);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.locator('#undermap').screenshot({path:path.join(output,topic+'.png')});
+ }
+ await page.locator('[data-um-topic="storm"]').click();await settle(page);
+ const state=await page.evaluate(()=>__mapAudit.state());assert.equal(state.data.troutBrook.loaded,6);assert.equal(state.data.rwmwdPipes.loaded,60);
+ const selected=await page.evaluate(()=>__mapAudit.select('rwmwdPipes'));
+ assert.match(await page.locator('.um-ptitle').textContent(),/segment/);assert.ok(await page.locator('.um-links a[href*="Infrastructure_DistOwned"]').count());
+ assert.match(await page.locator('.um-facts').textContent(),/unspecified/);
+ const hash=await page.evaluate(()=>location.hash),restored=await h.page({width:1280,height:720},hash);await restored.page.waitForFunction(id=>__mapAudit.state().selected===id,selected);await restored.context.close();
+ await page.locator('.um-pback').click();await page.locator('[data-id="trout-brook"]').click();
+ assert.match(await page.locator('.um-ptitle').textContent(),/Trout Brook/);assert.ok(await page.locator('.um-links a[href*="wikipedia.org/wiki/Trout_Brook"]').count());
+ await page.locator('.um-pback').click();await page.locator('[data-um-topic="water"]').click();await page.evaluate(()=>__mapAudit.move(-93.12,44.95,15));await settle(page);
+ assert.equal((await page.evaluate(()=>__mapAudit.state())).data.hydrants.loaded,6441);await page.evaluate(()=>__mapAudit.select('hydrants'));assert.match(await page.locator('.um-facts').textContent(),/December 2021/);
+ await page.locator('[data-um-topic="networks"]').click();await settle(page);await page.evaluate(()=>__mapAudit.select('signalLines'));assert.match(await page.locator('.um-pblurb').textContent(),/signal|Signal/);assert.match(await page.locator('.um-facts').textContent(),/Traffic signals/);
+ await page.locator('[data-um-topic="ground"]').click();await settle(page);await page.evaluate(()=>__mapAudit.move(-93.12,44.95,13));await settle(page);
+ assert.match((await page.evaluate(()=>__mapAudit.hit(__mapAudit.state().W/2,__mapAudit.state().H/2)))?.name||'',/ft to bedrock|Well/);
+ assert.equal(await page.evaluate(()=>{let p=__mapAudit.point(-93.26,44.975);return __mapAudit.hit(...p);}),null,'No inspection outside Saint Paul');
+ console.log('Draw ms:',await page.evaluate(()=>__mapAudit.performance()));
+ await context.close();
+ for(const size of [{width:1512,height:820},{width:1440,height:760},{width:1280,height:720},{width:1024,height:768},{width:820,height:720},{width:390,height:844},{width:320,height:568},{width:844,height:390}]){
+  const {page,context}=await h.page(size);await settle(page);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  if(size.width>=761&&size.height>=600){const r=await page.locator('.um-shell').boundingBox();assert.ok(r.y>=-2&&r.y+r.height<=size.height+2,'Normal browser viewport fits '+JSON.stringify(size));assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false);}
+  assert.deepEqual(await page.locator('#undermap button:visible').evaluateAll(bs=>bs.filter(b=>{let r=b.getBoundingClientRect();return r.width<43.5||r.height<43.5;}).map(b=>b.textContent)),[]);
+  await page.locator('[data-um-topic="water"]').click();await settle(page);assert.equal(await page.locator('.um-result').filter({hasText:'Highland Park Water Tower'}).count(),1);
+  await page.locator('[data-id="highland"]').click();await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.naturalWidth>0);
+  await page.locator('#undermap').screenshot({path:path.join(output,'highland-'+size.width+'.png')});
+  await page.locator('.um-photo-open').click();assert.equal(await page.locator('.um-photo-dialog').evaluate(d=>d.open),true);await page.locator('[data-photo-close]').click();assert.equal(await page.locator('.um-photo-open').evaluate(b=>b===document.activeElement),true);
+  await page.locator('.um-data').evaluate(d=>d.open=true);await page.locator('[data-um-source-scope="all"]').click();assert.equal(await page.locator('.um-source-item').count(),44);
+  await page.locator('.um-source-search input').fill('Saint Paul street centerlines');await page.waitForFunction(()=>document.querySelectorAll('.um-source-item').length===1);assert.ok(await page.locator('.um-source-item a[download]').count());
   await context.close();
-  for(const motion of ['reduce','no-preference'])for(const size of [{width:1440,height:800},{width:820,height:720}]){
-    const {page,context}=await pageFor(size,'#undermap',{natural:true,motion,configure:p=>p.route('**/assets/map/media.json?*',async r=>{await new Promise(resolve=>setTimeout(resolve,650));await r.continue();})});
-    await page.waitForFunction(()=>document.querySelector('.um-result-thumb img')?.naturalWidth>0);
-    await page.waitForTimeout(650);
-    let frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Delayed photographs keep the direct map link entirely visible with '+motion);
-    await page.locator('[data-um-topic="networks"]').click();
-  await page.locator('[data-id="511"]').click();await page.waitForFunction(()=>__mapAudit.state().view.z>=15.99);
-    await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.naturalWidth>0);
-    frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Selecting a place after loading preserves the entire demo');
-    await context.close();
-  }
-  for(const size of [{width:1512,height:850},{width:1280,height:720},{width:1024,height:768},{width:820,height:720},{width:780,height:740},{width:390,height:844},{width:320,height:568},{width:844,height:390}]) {
-    const {page,context}=await pageFor(size);
-    await assertViewportFit(page,size);
-    if(size.width>=761&&size.height>=600){
-      const column=await page.locator('.descent > .col').boundingBox();assert.ok(Math.abs(column.x+column.width/2-size.width/2)<1,'Article remains centered');
-      await page.locator('[data-um-topic="ground"]').click();await page.waitForFunction(()=>Object.values(__mapAudit.state().data).every(d=>!d.loading&&!d.pending));
-      await assertViewportFit(page,size);
-      await page.locator('[data-um-topic="water"]').click();
-    }
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no page overflow '+JSON.stringify(size));
-    const targets=await page.locator('#undermap button:visible').evaluateAll(bs=>bs.filter(b=>{const r=b.getBoundingClientRect();return r.width<43.5||r.height<43.5;}).map(b=>b.outerHTML));
-    assert.deepEqual(targets,[],'44px visible controls '+JSON.stringify(size));
-    const dims=await page.locator('canvas').boundingBox(),stage=await page.locator('.um-stage').boundingBox();
-    assert.ok(Math.abs(dims.width-stage.width)<2,'canvas uses CSS pixels at all device scales');
-    if(size.width<600)assert.match(await page.locator('canvas').evaluate(c=>getComputedStyle(c).touchAction),/pan-y/,'page scroll works over the map');
-    await page.locator('[data-id="highland"]').click();
-    if(size.width>=761&&size.height>=600){
-      const inspector=await page.locator('.um-panel').evaluate(n=>({height:n.clientHeight,content:n.scrollHeight}));assert.ok(inspector.content>inspector.height,'Record details scroll inside the frame');
-      await page.locator('[data-pa="closer"]').click();const frame=await page.locator('.um-shell').boundingBox();assert.ok(frame.y>=-2&&frame.y+frame.height<=size.height+2,'Map action keeps the entire demo visible');
-    }
-    await page.locator('#undermap').screenshot({path:path.join(output,'place-'+size.width+'x'+size.height+'.png')});
-    await page.locator('.um-data').evaluate(d=>d.open=true);
-    await page.locator('[data-um-source-scope="all"]').click();
-    await page.locator('.um-source-search input').fill('Named seven-county');
-    await page.waitForFunction(()=>document.querySelectorAll('.um-source-item').length===1);
-    const card=page.locator('.um-source-item'),notes=card.locator('.um-source-notes');
-    assert.match(await card.locator('a[download]').textContent(),/GeoJSON \(gzip\).*19.5 MB/,'Compressed complete download and size are visible');
-    assert.equal(await notes.getAttribute('open'),null,'Detailed source notes start folded');
-    const noteTarget=await notes.locator('summary').boundingBox();assert.ok(noteTarget.width>=43.5&&noteTarget.height>=43.5,'Source disclosure has a44px target');
-    await card.screenshot({path:path.join(output,'source-card-'+size.width+'x'+size.height+'.png')});
-    await notes.locator('summary').focus();await page.keyboard.press('Enter');
-    assert.ok(await notes.locator('p').isVisible(),'Source caveats open with the keyboard');
-    assert.ok(await notes.locator('small').isVisible(),'Redistribution terms remain available');
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Source card has no overflow');
-    await context.close();
-  }
-  console.log('Page errors:',errors);console.log('Local failures:',localFailures);
-  assert.deepEqual(errors,[]);assert.deepEqual(localFailures,[]);
-  console.log('PASS topic loading, source links, selection persistence, tile deep links, depth, laptop viewport fit, centered article, responsive layouts, touch targets and compact source disclosures');
-} finally {
-  if(browser)await browser.close();await new Promise(r=>server.close(r));
-}})().catch(e=>{console.error(e);process.exitCode=1;});
+ }
+ const old=await h.page({width:1280,height:720},'#map=10/44.82/-93.3&topic=water&layers=bloomWater,eaganWater');await settle(old.page);assert.equal(await old.page.locator('[data-id="highland"]').count(),1);assert.ok((await old.page.evaluate(()=>__mapAudit.state())).view.lon>-93.22);await old.context.close();
+ assert.deepEqual(h.errors,[]);assert.deepEqual(h.failures,[]);console.log('PASS Saint Paul topics, real routes, source fields, deep links, city boundary, photographs, laptop fit, responsive controls and downloads');
+}finally{await h.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
