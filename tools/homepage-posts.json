@@ -50,15 +50,15 @@
   },
   {
     "href": "daylight-globe.html",
-    "thumb": "daylight-globe-live.jpg",
+    "thumb": "daylight-globe-live-v2.jpg",
     "date": "2026-04-23",
     "dateDisplay": "23 Apr 2026",
     "createdCommit": "92854590a411ef73c7480a3030b230a1eabcfbfe",
     "createdAt": "2026-05-29T18:12:00-05:00",
-    "alt": "Actual daily satellite clouds over Earth, with night lights and an elevated green aurora forecast.",
-    "credit": "NASA GIBS NOAA-21 and NOAA-20 VIIRS daily true color, NASA Black Marble 2016, NOAA SWPC OVATION. Real Daylight Globe screenshot.",
-    "keywords": "daylight earth globe satellite clouds sun moon aurora NOAA NASA live space",
+    "alt": "Dated satellite clouds, including two storm spirals over the Pacific, on the Daylight Globe.",
+    "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NASA Black Marble 2016 and NOAA SWPC OVATION. Real Daylight Globe screenshot.",
+    "keywords": "daylight earth globe satellite clouds sun moon aurora NOAA NASA EUMETSAT live space weather history time",
     "title": "Daylight Globe",
-    "desc": "Clouds from the latest daily satellite mosaic cover the sunlit Earth. Spin the globe to see city lights and NOAA's aurora forecast, or pin a spot."
+    "desc": "Live sunlight, dated satellite clouds and NOAA's aurora forecasts. Spin the globe, pin a spot or follow real weather frames through time."
   }
 ]

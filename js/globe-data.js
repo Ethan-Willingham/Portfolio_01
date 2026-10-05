@@ -22,11 +22,22 @@
   ];
   var AURORA_URL = 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json';
   var KP_URL = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+  var CLOUD_SERVICE='https://view.eumetsat.int/geoserver/ows';
+  var CLOUD_LAYERS=['mumi:wideareacoverage_rgb_natural','mumi:worldcloudmap_ir108'];
+  var CLOUD_CACHE='daylight-globe-cloud-v1';
 
   function dateValue(value) {
     var result = value instanceof Date ? new Date(value.getTime()) : new Date(value);
     if (!Number.isFinite(result.getTime())) throw new Error('Invalid timestamp');
     return result;
+  }
+
+  function utcTimestamp(value) {
+    if(value instanceof Date)return dateValue(value);
+    if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value))throw new Error('Invalid UTC timestamp');
+    var date=dateValue(value);
+    if(date.toISOString().slice(0,19)!==value.slice(0,19))throw new Error('Invalid UTC timestamp');
+    return date;
   }
 
   function utcDate(value) {
@@ -87,11 +98,80 @@
   async function fetchJSON(url, options) {
     return request(url, options, async function (response) {
       var mime = (response.headers.get('content-type') || '').split(';')[0].trim();
-      if (mime !== 'application/json' && !/\+json$/.test(mime)) {
+      if (mime !== 'application/json' && !/\+json$/.test(mime) && !(options && options.allowText && mime === 'text/plain')) {
         throw new Error('Unexpected JSON content type');
       }
       return response.json();
     });
+  }
+
+  function parseCloudCatalog(xml) {
+    if(typeof xml!=='string'||xml.length>2000000) throw new Error('Invalid cloud catalog');
+    var periods=CLOUD_LAYERS.map(function(layer){
+      var name=new RegExp('<(?:[A-Za-z0-9_]+:)?Name>\\s*'+layer+'\\s*</(?:[A-Za-z0-9_]+:)?Name>');
+      var found=name.exec(xml);
+      if(!found) throw new Error('Missing cloud layer');
+      var tail=xml.slice(found.index),closing=/<\/(?:[A-Za-z0-9_]+:)?Layer\s*>/.exec(tail);
+      if(!closing)throw new Error('Unclosed cloud layer');
+      var section=tail.slice(0,closing.index);
+      var dimension=/<(?:[A-Za-z0-9_]+:)?Dimension\b[^>]*name=["']time["'][^>]*>([^<]+)</.exec(section);
+      if(!dimension) throw new Error('Missing cloud times');
+      var interval=dimension[1].trim().split('/');
+      if(interval.length!==3||interval[2]!=='PT3H') throw new Error('Unexpected cloud cadence');
+      var start=utcTimestamp(interval[0]),end=utcTimestamp(interval[1]);
+      if(end<start||(+end-+start)%(3*3600000)) throw new Error('Invalid cloud interval');
+      return {start:start,end:end};
+    });
+    if((+periods[0].start-+periods[1].start)%(3*3600000))throw new Error('Cloud layer ticks do not align');
+    var start=new Date(Math.max(+periods[0].start,+periods[1].start)),end=new Date(Math.min(+periods[0].end,+periods[1].end));
+    if(end<start) throw new Error('Cloud layers have no common time');
+    return {start:start,end:end,step:3*3600000};
+  }
+
+  async function fetchCloudCatalog(options) {
+    return request(CLOUD_SERVICE+'?service=WMS&version=1.3.0&request=GetCapabilities',options,async function(response){
+      return parseCloudCatalog(await response.text());
+    });
+  }
+
+  function cloudFrameAt(catalog, instant, now) {
+    var target=utcTimestamp(instant),clock=dateValue(now===undefined?Date.now():now);
+    var start=utcTimestamp(catalog.start),end=utcTimestamp(catalog.end);
+    if(target<start||target-clock>5*MINUTE||end-clock>5*MINUTE) return null;
+    var limit=Math.min(+target,+end);
+    return new Date(+start+Math.floor((limit-start)/(3*3600000))*3*3600000);
+  }
+
+  function cloudURL(instant,width,layer) {
+    if(CLOUD_LAYERS.indexOf(layer)<0||!Number.isInteger(width)||width<2||width>4096||width%2) throw new Error('Invalid cloud request');
+    var params=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:layer,styles:'',format:'image/png',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:utcTimestamp(instant).toISOString()});
+    return CLOUD_SERVICE+'?'+params;
+  }
+
+  async function fetchCloudFrame(instant,width,options) {
+    options=options||{};
+    var store=options.cacheStorage===undefined?(typeof caches!=='undefined'?caches:null):options.cacheStorage,cache=null;
+    if(store){try{cache=await store.open(CLOUD_CACHE);}catch(_){}}
+    var urls=CLOUD_LAYERS.map(function(layer){return cloudURL(instant,width,layer);});
+    var images=await Promise.allSettled(urls.map(async function(url){
+      if(cache){var hit=null;try{hit=await cache.match(url);}catch(_){}if(hit){try{return await imageBlob(hit,width);}catch(_){try{await cache.delete(url);}catch(_){}}}}
+      if(options.cacheOnly) throw new Error('Cached clouds unavailable');
+      return request(url,options,async function(response){
+        var copy=cache?response.clone():null,blob=await imageBlob(response,width);
+        if(cache){try{await cache.put(url,copy);var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-32)).map(function(key){return cache.delete(key);}));}catch(_){}}
+        return blob;
+      });
+    }));
+    if(options.signal&&options.signal.aborted) throw abortError();
+    // Infrared supplies observed nighttime structure as well as daytime data.
+    if(images[1].status!=='fulfilled') throw images[1].reason;
+    return {time:utcTimestamp(instant),width:width,urls:urls,natural:images[0].status==='fulfilled'?images[0].value:null,infrared:images[1].value};
+  }
+
+  async function discardCloudFrame(instant,width,options) {
+    options=options||{};var store=options.cacheStorage===undefined?(typeof caches!=='undefined'?caches:null):options.cacheStorage;
+    if(!store) return;
+    try{var cache=await store.open(CLOUD_CACHE);await Promise.all(CLOUD_LAYERS.map(function(layer){return cache.delete(cloudURL(instant,width,layer));}));}catch(_){}
   }
 
   function photoURL(date, width, layer) {
@@ -271,8 +351,8 @@
     if (!data || !Array.isArray(data.coordinates) || data.coordinates.length !== GRID_WIDTH * GRID_HEIGHT) {
       throw new Error('Incomplete aurora grid');
     }
-    var observation = dateValue(data['Observation Time']);
-    var forecast = dateValue(data['Forecast Time']);
+    var observation = utcTimestamp(data['Observation Time']);
+    var forecast = utcTimestamp(data['Forecast Time']);
     if (forecast < observation) throw new Error('Forecast precedes observation');
     var grid = new Float32Array(GRID_WIDTH * GRID_HEIGHT);
     var seen = new Uint8Array(grid.length);
@@ -303,6 +383,60 @@
       observationAgeMinutes: observationAge / MINUTE,
       forecastAgeMinutes: forecastAge / MINUTE
     };
+  }
+
+  function parseAuroraArchive(value) {
+    if (!value || value.version !== 1 || !Array.isArray(value.runs)) throw new Error('Invalid aurora archive');
+    var observation=utcTimestamp(value.observation), forecast=utcTimestamp(value.forecast);
+    if(forecast<observation || forecast-observation>120*MINUTE) throw new Error('Invalid archive forecast time');
+    var grid=new Float32Array(GRID_WIDTH*GRID_HEIGHT),end=0;
+    value.runs.forEach(function(run){
+      if(!Array.isArray(run)||run.length!==2||!Number.isInteger(run[0])||run[0]<end||!Array.isArray(run[1])||!run[1].length||run[0]+run[1].length>grid.length) throw new Error('Invalid archive run');
+      run[1].forEach(function(probability,index){
+        if(!Number.isFinite(probability)||probability<=0||probability>100) throw new Error('Invalid archive probability');
+        grid[run[0]+index]=probability;
+      });
+      end=run[0]+run[1].length;
+    });
+    return {grid:grid,observation:observation,forecast:forecast,width:GRID_WIDTH,height:GRID_HEIGHT,historical:true};
+  }
+
+  function parseAuroraManifest(value) {
+    if(!value||value.version!==1||!Array.isArray(value.frames)||value.frames.length>2000) throw new Error('Invalid aurora manifest');
+    var seen=new Set();
+    return value.frames.map(function(frame){
+      if(!frame||typeof frame.file!=='string'||!/^[-A-Za-z0-9_.]+\.json\.gz$/.test(frame.file)||!(/^[a-f0-9]{64}$/.test(frame.sha256))||seen.has(frame.file)) throw new Error('Invalid archive entry');
+      seen.add(frame.file);
+      var observation=utcTimestamp(frame.observation),forecast=utcTimestamp(frame.forecast);
+      if(forecast<observation||forecast-observation>120*MINUTE) throw new Error('Invalid archive entry time');
+      return {file:frame.file,sha256:frame.sha256,observation:observation,forecast:forecast};
+    }).sort(function(a,b){return a.forecast-b.forecast;});
+  }
+
+  function auroraFrameAt(frames, instant) {
+    var target=utcTimestamp(instant).getTime(),best=null,distance=Infinity;
+    frames.forEach(function(frame){
+      if(utcTimestamp(frame.observation).getTime()>target)return;
+      var delta=Math.abs(utcTimestamp(frame.forecast).getTime()-target);
+      if(delta<distance){best=frame;distance=delta;}
+    });
+    return distance<=90*MINUTE?best:null;
+  }
+
+  async function fetchAuroraArchive(frame, base, options) {
+    return request(base+frame.file,options,async function(response){
+      var bytes=await response.arrayBuffer();
+      if(bytes.byteLength>600000) throw new Error('Oversized aurora archive');
+      var digest=await crypto.subtle.digest('SHA-256',bytes);
+      var hash=Array.from(new Uint8Array(digest),function(byte){return byte.toString(16).padStart(2,'0');}).join('');
+      if(hash!==frame.sha256) throw new Error('Aurora archive hash mismatch');
+      if(typeof DecompressionStream!=='function') throw new Error('Archive decompression unavailable');
+      var expanded=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+      if(expanded.byteLength>2500000) throw new Error('Oversized expanded aurora archive');
+      var parsed=parseAuroraArchive(JSON.parse(new TextDecoder().decode(expanded)));
+      if(+parsed.observation!==+frame.observation||+parsed.forecast!==+frame.forecast) throw new Error('Aurora archive timestamp mismatch');
+      return parsed;
+    });
   }
 
   function auroraAt(data, lat, lon) {
@@ -387,11 +521,14 @@
 
   return {
     AURORA_URL: AURORA_URL, KP_URL: KP_URL, PHOTO_CACHE: PHOTO_CACHE,
+    CLOUD_SERVICE:CLOUD_SERVICE,CLOUD_LAYERS:CLOUD_LAYERS.slice(),CLOUD_CACHE:CLOUD_CACHE,
+    parseCloudCatalog:parseCloudCatalog,fetchCloudCatalog:fetchCloudCatalog,cloudFrameAt:cloudFrameAt,cloudURL:cloudURL,fetchCloudFrame:fetchCloudFrame,discardCloudFrame:discardCloudFrame,
     PHOTO_LAYERS: PHOTO_LAYERS.slice(), GRID_WIDTH: GRID_WIDTH, GRID_HEIGHT: GRID_HEIGHT,
     fetchJSON: fetchJSON, photoURL: photoURL, fetchPhotoDay: fetchPhotoDay, latestPhoto: latestPhoto,
     cachedPhotoDay: cachedPhotoDay, discardPhotoDay: discardPhotoDay, evictPhoto: evictPhoto,
-    previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA,
+    utcDate:utcDate, previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA,
     parseAurora: parseAurora, auroraFreshness: auroraFreshness, auroraAt: auroraAt,
+    parseAuroraArchive:parseAuroraArchive,parseAuroraManifest:parseAuroraManifest,auroraFrameAt:auroraFrameAt,fetchAuroraArchive:fetchAuroraArchive,
     auroraVisibility: auroraVisibility, greatCircleMiles: greatCircleMiles, parseKp: parseKp
   };
 }));

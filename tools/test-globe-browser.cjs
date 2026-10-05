@@ -65,6 +65,15 @@ const checks=[],evidence=[];
 function check(name,value) {assert.ok(value,name);checks.push(name);console.log('PASS '+name);}
 const model=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/daylight/ovation-2026-10-04-storm.json')));
 const kps=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/daylight/kp-2026-10-04-storm.json')));
+const cloudCatalog='<WMS_Capabilities>'+['mumi:wideareacoverage_rgb_natural','mumi:worldcloudmap_ir108'].map(layer=>'<Layer><Name>'+layer+'</Name><Dimension name="time">2021-06-06T15:00:00.000Z/2026-10-05T00:00:00.000Z/PT3H</Dimension></Layer>').join('')+'</WMS_Capabilities>';
+async function mockClouds(context,damage=false,onImage=()=>{}) {
+  await context.route('https://view.eumetsat.int/**',route=>{
+    const q=new URL(route.request().url()).searchParams;
+    if(q.get('request')==='GetCapabilities')return route.fulfill({contentType:'text/xml',body:cloudCatalog});
+    onImage();const bytes=image(Number(q.get('width')));
+    return route.fulfill({contentType:'image/png',body:damage?bytes.subarray(0,33):bytes});
+  });
+}
 let browser;
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -73,6 +82,7 @@ let browser;
     for(const width of [375,768,1440]){
       const context=await browser.newContext({viewport:{width,height:1000},deviceScaleFactor:width===375?2:1,isMobile:width===375,hasTouch:width===375,timezoneId:'America/Chicago'});
       let imageRequests=0;
+      if(!real)await mockClouds(context,false,()=>imageRequests++);
       if(!real)await context.route('https://gibs.earthdata.nasa.gov/**',async route=>{imageRequests++;const q=new URL(route.request().url()).searchParams;await route.fulfill({contentType:'image/png',body:image(Number(q.get('WIDTH')),q.get('LAYERS').includes('NOAA20'))});});
       if(!real)await context.route('https://services.swpc.noaa.gov/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(route.request().url().includes('ovation')?model:kps)}));
       const page=await context.newPage(), errors=[];
@@ -160,7 +170,7 @@ let browser;
         check('apparent solar midnight keeps the visible pin date and events aligned',first.sunrise.startsWith('2026-10-05')&&first.sunrise===second.sunrise&&(await page.locator('#globe-pin-clock').textContent()).includes('Oct 5'));
         await page.locator('#globe-explore-toggle').click();await page.locator('#globe-return').click();await page.locator('#globe-explore-toggle').click();
       }
-      if(!real){const before=imageRequests;await page.reload();await page.waitForFunction(()=>window.__globeTest&&__globeTest.state().photo);check(width+' reload reuses completed-day Cache Storage images',imageRequests===before);}
+      if(!real){const before=imageRequests;await page.reload();await page.waitForFunction(()=>window.__globeTest&&__globeTest.state().photo);check(width+' reload reuses dated satellite Cache Storage images',before>0&&imageRequests===before);}
       await page.evaluate(()=>__globeTest.stale());check(width+' stale aurora hides without becoming zero',(await state()).aurora===false&&(await page.locator('#globe-data').textContent()).includes('unavailable'));
       await page.evaluate(()=>{Object.defineProperty(navigator,'onLine',{configurable:true,value:false});__globeTest.resetRequests();__globeTest.refresh();});
       await context.route('https://**',route=>route.abort());
@@ -193,6 +203,7 @@ let browser;
     await failurePage.screenshot({path:path.join(dump,'fresh-blocked-network.png'),fullPage:true});
     evidence.push({failureErrors});await failed.close();
     const damaged=await browser.newContext({viewport:{width:375,height:812}});
+    await mockClouds(damaged,true);
     await damaged.route('https://gibs.earthdata.nasa.gov/**',route=>{const q=new URL(route.request().url()).searchParams;return route.fulfill({contentType:'image/png',body:image(Number(q.get('WIDTH'))).subarray(0,33)});});
     await damaged.route('https://services.swpc.noaa.gov/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(route.request().url().includes('ovation')?model:kps)}));
     const damagedPage=await damaged.newPage(),damagedErrors=[];
@@ -202,6 +213,7 @@ let browser;
     await damagedPage.waitForFunction(()=>window.__globeTest&&!__globeTest.state().photoBusy&&__globeTest.state().textures[0].w>1);
     check('damaged PNG pixel streams fall back and are evicted from Cache Storage',await damagedPage.evaluate(async()=>!__globeTest.state().photo&&(await (await caches.open('daylight-globe-photo-v1')).keys()).length===0));
     await damaged.unroute('https://gibs.earthdata.nasa.gov/**');
+    await damaged.unroute('https://view.eumetsat.int/**');await mockClouds(damaged);
     await damaged.route('https://gibs.earthdata.nasa.gov/**',route=>{const q=new URL(route.request().url()).searchParams;return route.fulfill({contentType:'image/png',body:image(Number(q.get('WIDTH')))});});
     await damagedPage.evaluate(()=>{__globeTest.resetRequests();__globeTest.refresh();});
     await damagedPage.waitForFunction(()=>__globeTest.state().photo);
@@ -230,6 +242,7 @@ let browser;
     check('failed local map does not claim a neutral sphere is a reference map',noBaseErrors.length===0&&(await noBasePage.locator('#globe-summary').textContent()).includes('Reference map unavailable'));
     await noBasePage.screenshot({path:path.join(dump,'base-map-unavailable.png'),fullPage:true});await noBase.close();
     const slowWeather=await browser.newContext({viewport:{width:375,height:812}});
+    await mockClouds(slowWeather);
     await slowWeather.addInitScript(()=>{const original=window.fetch.bind(window);window.fetch=(url,options)=>String(url).includes('gibs.earthdata')?Promise.reject(new TypeError('No satellite data')):original(url,options);});
     await slowWeather.route('https://services.swpc.noaa.gov/**',async route=>{await new Promise(resolve=>setTimeout(resolve,1800));await route.fulfill({contentType:'application/json',body:JSON.stringify(route.request().url().includes('ovation')?model:kps)});});
     const slowPage=await slowWeather.newPage();await slowPage.clock.setFixedTime(new Date('2026-10-05T00:05:00Z'));

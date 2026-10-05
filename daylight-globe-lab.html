@@ -52,7 +52,7 @@
       <p class="post-subtitle">Aurora light, the data sentence and the Explore button.</p>
     </header>
     <main class="lab-main">
-      <p class="lab-intro">Provisional picks: layered light, the dated sentence and Explore another time.</p>
+      <p class="lab-intro">Provisional picks: narrow curtains, the dated sentence and Explore another time.</p>
 
       <section class="lab-section" aria-labelledby="aurora-heading">
         <h2 id="aurora-heading">Aurora light</h2>
@@ -61,30 +61,30 @@
           <legend>Choose an aurora treatment</legend>
           <label class="lab-choice"><input type="radio" name="aurora-style" value="shell">Thin shell</label>
           <label class="lab-choice"><input type="radio" name="aurora-style" value="halo">Soft halo</label>
-          <label class="lab-choice"><input type="radio" name="aurora-style" value="curtain">Curtains</label>
-          <label class="lab-choice"><input type="radio" name="aurora-style" value="layered" checked>Layered light</label>
+          <label class="lab-choice"><input type="radio" name="aurora-style" value="curtain" checked>Curtains</label>
+          <label class="lab-choice"><input type="radio" name="aurora-style" value="layered">Layered light</label>
         </fieldset>
         <figure class="lab-view">
-          <iframe id="globe-preview" src="daylight-globe.html?auroraStyle=layered" title="Daylight Globe with layered aurora light" allow="fullscreen"></iframe>
-          <figcaption id="globe-preview-caption" aria-live="polite">Viewing layered light, the provisional pick. The live forecast can change as NOAA publishes a new grid.</figcaption>
+          <iframe id="globe-preview" src="daylight-globe.html?auroraStyle=curtain" title="Daylight Globe with narrow aurora curtains" allow="fullscreen"></iframe>
+          <figcaption id="globe-preview-caption" aria-live="polite">Viewing narrow curtains, the provisional pick. The live forecast can change as NOAA publishes a new grid.</figcaption>
         </figure>
       </section>
 
       <section class="lab-section" aria-labelledby="status-heading">
         <h2 id="status-heading">The data sentence</h2>
-        <p class="lab-note">These are copy samples. Oct 3 and 7:27 PM are example timestamps, not the data currently shown above.</p>
+        <p class="lab-note">These are copy samples. Oct 4 and the times below are examples, not the data currently shown above.</p>
         <div class="lab-candidates">
           <div class="lab-candidate is-picked">
             <div class="lab-candidate-label">Dated sentence<span class="lab-pick">Provisional pick</span></div>
-            <p class="lab-status">Satellite photo Oct 3. Aurora forecast 7:27 PM.</p>
+            <p class="lab-status">Satellite clouds Oct 4, 7:00 PM CDT. Aurora forecast Oct 4, 7:27 PM CDT.</p>
           </div>
           <div class="lab-candidate">
             <div class="lab-candidate-label">Compact strip</div>
-            <p class="lab-status lab-status--strip">Photo Oct 3 &middot; Aurora forecast 7:27 PM</p>
+            <p class="lab-status lab-status--strip">Clouds Oct 4, 7:00 PM CDT &middot; Aurora Oct 4, 7:27 PM CDT</p>
           </div>
           <div class="lab-candidate">
             <div class="lab-candidate-label">Natural sentence</div>
-            <p class="lab-status">Photographed Oct 3, with an aurora forecast for 7:27 PM.</p>
+            <p class="lab-status">Clouds imaged Oct 4 at 7:00 PM CDT, with an aurora forecast for 7:27 PM CDT.</p>
           </div>
         </div>
       </section>
@@ -107,7 +107,7 @@
           </div>
         </div>
       </section>
-      <p class="lab-footer">The provisional picks keep the photograph's date readable and place the optional controls behind one ordinary sentence. Layered light should show a glow above Earth while retaining the model's true oval.</p>
+      <p class="lab-footer">The provisional picks keep each source's time readable and place the optional controls behind one ordinary sentence. Narrow curtains illustrate the model's stronger probabilities above Earth.</p>
     </main>
   </div>
   <script>
@@ -122,7 +122,7 @@
           preview.src = 'daylight-globe.html?auroraStyle=' + input.value;
           preview.title = 'Daylight Globe with ' + names[input.value];
           caption.textContent = 'Viewing ' + names[input.value] +
-            (input.value === 'layered' ? ', the provisional pick.' : '.') +
+            (input.value === 'curtain' ? ', the provisional pick.' : '.') +
             ' The live forecast can change as NOAA publishes a new grid.';
         });
       });

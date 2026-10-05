@@ -1,25 +1,28 @@
 {
-  "source": "Real browser capture of daylight-globe.html using NASA GIBS and NOAA SWPC live responses",
-  "capturedAt": "2026-10-05T01:02:50.373Z",
-  "rendererSha256": "62db7b2a91e17fb2faf4b5aa8c2f643334afda05c5baed79eb986db8e83acfb3",
-  "satelliteDay": "2026-10-04",
+  "source": "Real browser capture of daylight-globe.html with EUMETSAT EUMETView and NOAA SWPC live responses",
+  "capturedAt": "2026-10-05T03:43:02.182Z",
+  "rendererSha256": "b0aa3f4d2a1eae73d52889d4150f9056b89adf710b37cb2ffd04ef258d5bb3dc",
+  "satelliteTime": "2026-10-05T00:00:00.000Z",
   "photoLayers": [
-    "VIIRS_NOAA21_CorrectedReflectance_TrueColor",
-    "VIIRS_NOAA20_CorrectedReflectance_TrueColor"
+    "mumi:wideareacoverage_rgb_natural",
+    "mumi:worldcloudmap_ir108"
   ],
-  "auroraObservation": "2026-10-05T00:55:00.000Z",
-  "auroraForecast": "2026-10-05T01:42:00.000Z",
-  "kp": 4.67,
+  "auroraObservation": "2026-10-05T03:35:00.000Z",
+  "auroraForecast": "2026-10-05T04:24:00.000Z",
+  "kp": 4,
+  "view": "20 degrees north, 160 degrees east, showing dated Pacific satellite clouds and two storm spirals",
   "derivatives": {
-    "daylight-globe-live.jpg": [
+    "daylight-globe-live-v2.jpg": [
       600,
       400
     ],
-    "daylight-globe-og.jpg": [
+    "daylight-globe-og-v2.jpg": [
       1200,
       630
     ]
   },
-  "processing": "One-pixel UI border removed, then centered crop and resize. No cloud or forecast data were altered.",
-  "credit": "NASA GIBS, NOAA SWPC, NASA Black Marble 2016"
+  "processing": "UI controls hidden for the capture. One-pixel border removed, then centered crop and resize. Satellite pixel colours retained. Aurora curtains illustrate the genuine NOAA probability field.",
+  "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NOAA SWPC OVATION. NASA Black Marble 2016.",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "dataPolicy": "https://www-cdn.eumetsat.int/files/2024-07/45173%20-%20Data%20Policy%281419774%20V1%29.pdf"
 }

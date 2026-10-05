@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Daylight Globe</title>
-  <meta name="description" content="Recent satellite clouds, city lights and the latest aurora forecast on a globe you can spin. Pin a spot or explore another time.">
+  <meta name="description" content="Live sunlight, dated satellite clouds and NOAA's aurora forecasts. Spin the globe, pin a spot or follow real weather frames through time.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="Daylight Globe">
-  <meta property="og:description" content="Recent satellite clouds, city lights and the latest aurora forecast on a globe you can spin. Pin a spot or explore another time.">
+  <meta property="og:description" content="Live sunlight, dated satellite clouds and NOAA's aurora forecasts. Spin the globe, pin a spot or follow real weather frames through time.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/daylight-globe.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og.jpg">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og-v2.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og-v2.jpg">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -66,6 +66,7 @@
                 </div>
               </div>
               <p class="globe-time-basis" id="globe-time-basis"></p>
+              <p class="globe-time-basis" id="globe-weather-basis">Cloud images every 3 hours. Aurora history is available only for saved forecasts.</p>
               <fieldset class="globe-tilts">
                 <legend>Earth's tilt</legend>
                 <div class="globe-tilt-options">
@@ -91,8 +92,8 @@
           <p id="globe-keyboard" class="globe-sr-only">With the globe focused, use arrow keys to rotate, plus or minus to zoom, Enter to pin the center, and Escape to exit fullscreen or clear the pin. Drag, pinch or scroll to explore. Pin times follow the Sun, rather than a civil time zone.</p>
           <p id="globe-summary" class="globe-sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
         </div>
-        <p>This photograph is stitched from satellite passes, so the clouds over different oceans were photographed at different times. The sunlight follows the clock; the clouds change with the next daily mosaic.</p>
-        <p class="globe-credits">Imagery: <a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a> and <a href="https://worldview.earthdata.nasa.gov/">Worldview</a>, NOAA-21 and NOAA-20 VIIRS. Night lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA Black Marble, 2016</a>. Aurora and Kp: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA SWPC</a>. Aurora glow illustrates the forecast's probabilities; clouds and local lights can hide it. The Moon's distance is compressed. Pin clocks use local solar time. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/docs/DAYLIGHT_GLOBE.md">Calculation notes</a>.</p>
+        <p>Satellites can see clouds after sunset: infrared images measure heat rather than reflected sunlight. The slider follows dated satellite images and saved aurora forecasts, with a separate timestamp for each.</p>
+        <p class="globe-credits">Satellite imagery: <a href="https://view.eumetsat.int/">EUMETSAT EUMETView</a>, NOAA and JMA, with natural-colour RGB by day and infrared at night. Contains modified EUMETSAT data, 2021 to 2026, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Daily fallback: <a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a>, NOAA-21 and NOAA-20 VIIRS. Night lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA Black Marble, 2016</a>. Aurora and Kp: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA SWPC</a>. The glow illustrates modeled probabilities above 10%; it does not guarantee a sighting. Clouds, daylight and local lights can hide aurora. Sun and Moon distances are compressed; background stars are illustrative. Pin clocks use local solar time. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/docs/DAYLIGHT_GLOBE.md">Calculation notes</a>.</p>
       </article>
     </main>
 
@@ -105,8 +106,8 @@
   <script src="js/main.js"></script>
   <script src="js/vendor/three-r128.min.js"></script>
   <script src="js/globe-math.js?v=20261004-9"></script>
-  <script src="js/globe-data.js?v=20261004-9"></script>
-  <script src="js/globe.js?v=20261004-9"></script>
+  <script src="js/globe-data.js?v=20261004-10"></script>
+  <script src="js/globe.js?v=20261004-10"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

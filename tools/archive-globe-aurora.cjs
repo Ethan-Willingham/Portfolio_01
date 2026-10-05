@@ -16,6 +16,7 @@ const HEIGHT = 181;
 const SIZE = WIDTH * HEIGHT;
 const MINUTE = 60000;
 const RETENTION = 30 * 86400000;
+const MAX_FRAMES = 2000;
 const FILE_PATTERN = /^\d{8}T\d{6}Z-\d{8}T\d{6}Z-[a-f0-9]{16}\.json\.gz$/;
 
 function timestamp(value) {
@@ -35,7 +36,9 @@ function parseNOAA(data) {
   }
   const observation = timestamp(data['Observation Time']);
   const forecast = timestamp(data['Forecast Time']);
-  if (forecast < observation) throw new Error('Forecast precedes observation');
+  if (forecast < observation || Date.parse(forecast) - Date.parse(observation) > 120 * MINUTE) {
+    throw new Error('Forecast lead outside the supported two-hour range');
+  }
   // Ordinary numbers preserve fractional source probabilities through JSON, while
   // an integer or Float32 buffer would quantize values before they reach the archive.
   const grid = new Array(SIZE).fill(0);
@@ -84,7 +87,9 @@ function decodeFrame(frame) {
   if (!frame || frame.version !== 1 || !Array.isArray(frame.runs)) throw new Error('Invalid archived frame');
   const observation = timestamp(frame.observation);
   const forecast = timestamp(frame.forecast);
-  if (forecast < observation) throw new Error('Archived forecast precedes observation');
+  if (forecast < observation || Date.parse(forecast) - Date.parse(observation) > 120 * MINUTE) {
+    throw new Error('Archived forecast lead outside the supported two-hour range');
+  }
   const grid = new Array(SIZE).fill(0);
   let end = 0;
   for (const run of frame.runs) {
@@ -118,6 +123,7 @@ function readManifest(directory) {
   if (!manifest || manifest.version !== 1 || manifest.source !== SOURCE || !Array.isArray(manifest.frames)) {
     throw new Error('Invalid archive manifest');
   }
+  if (manifest.frames.length > MAX_FRAMES) throw new Error('Archive exceeds the supported 2000-frame limit');
   timestamp(manifest.updatedAt);
   const files = new Set();
   for (const entry of manifest.frames) {
@@ -164,6 +170,7 @@ function archiveFrames(inputs, options = {}) {
   }
   entries.sort((a, b) => a.forecast.localeCompare(b.forecast) ||
     a.observation.localeCompare(b.observation) || a.file.localeCompare(b.file));
+  if (entries.length > MAX_FRAMES) throw new Error('Archive exceeds the supported 2000-frame limit');
   if (!pending.length && !removed.length && fs.existsSync(path.join(directory, 'manifest.json'))) {
     return { added: 0, removed: 0, skipped, frames: entries.length, changed: false };
   }

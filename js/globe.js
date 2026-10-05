@@ -20,19 +20,31 @@
   var solarFormatter = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit',timeZone:'UTC'});
   var solarDateFormatter = new Intl.DateTimeFormat(undefined, {month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'UTC'});
   var live = true, instant = new Date(), tilt = undefined, pin = null;
-  var photo = null, forecast = null, kp = null, fetchingPhoto = false, fetchingWeather = false;
+  var photo = null, forecast = null, liveForecast = null, kp = null, fetchingPhoto = false, fetchingWeather = false;
+  var cloudCatalog=null,cloudCatalogChecked=0,cloudController=null,timeEditTimer=null;
+  var archiveFrames=[],archiveChecked=0,archiveBusy=false,archiveController=null,archiveGeneration=0,archiveCache=new Map();
+  var archiveBase='https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/aurora/';
   var baseState = 'loading';
   var requestedDay = '', photoChecked = 0, weatherChecked = 0, photoGeneration = 0;
   var photoMix = 0, lastLabels = 0, lastFrame = 0, frameRequest = null, inView = true;
   var autoSpin = true, targetTheta = 0, targetPhi = 1.1, targetRadius = 3;
   var theta = 0, phi = 1.1, radius = 3;
-  var auroraStyle = new URLSearchParams(location.search).get('auroraStyle') || 'layered';
-  if (!['shell','halo','curtain','layered'].includes(auroraStyle)) auroraStyle = 'layered';
+  var auroraStyle = new URLSearchParams(location.search).get('auroraStyle') || 'curtain';
+  if (!['shell','halo','curtain','layered'].includes(auroraStyle)) auroraStyle = 'curtain';
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
+  function expireLivePhoto() {
+    if(!live||!photo)return;
+    var age=Date.now()-new Date(photo.time||photo.date+'T00:00:00Z');
+    var invalid=photo.time?age < -5*60000||age > 5*3600000:photo.date>completedDay(new Date())||age>=5*DAY;
+    if(invalid){photo=null;photoMix=0;wrapper.dataset.photo='unavailable';}
+  }
+  function hasForecast() {
+    return !!(tilt===undefined&&forecast&&(live?data.auroraFreshness(forecast,new Date()).fresh:forecast.historical&&Math.abs(forecast.forecast-instant)<=90*60000));
+  }
   function coordinate(lat, lon) { return Math.abs(lat).toFixed(1) + '\u00b0' + (lat < 0 ? 'S' : 'N') + ', ' + Math.abs(lon).toFixed(1) + '\u00b0' + (lon < 0 ? 'W' : 'E'); }
   function solarDate(date, lon) { return new Date(date.getTime() + (lon * 4 + math.solar(date,tilt).equationOfTime) * 60000); }
   function announce() {
@@ -51,23 +63,25 @@
   function updateLabels() {
     var hypothetical = tilt !== undefined;
     var line = hypothetical ? 'Reference map. Lighting at a ' + tilt + '\u00b0 tilt.' :
-      (photo ? 'Satellite photo ' + formatDay(photo.date) + '. ' : baseState === 'ready' ? 'Reference map. ' : baseState === 'loading' ? 'Loading reference map. ' : 'Reference map unavailable. ') + (live ? 'Live sunlight.' : 'Lighting for the time you chose.');
+      (photo ? photo.time ? 'Satellite clouds ' + forecastFormatter.format(new Date(photo.time)) + '. ' : 'Daily satellite photo ' + formatDay(photo.date) + '. ' : baseState === 'ready' ? 'Reference map. ' : baseState === 'loading' ? 'Loading reference map. ' : 'Reference map unavailable. ') + (live ? 'Live sunlight.' : 'Lighting for the time you chose.');
     if(hypothetical && baseState !== 'ready') line = (baseState === 'loading' ? 'Loading reference map. ' : 'Reference map unavailable. ') + 'Lighting at a ' + tilt + '\u00b0 tilt.';
     text(status, line);
     text(clock, (live ? 'Now: ' : 'Chosen time: ') + clockFormatter.format(instant));
     clock.dateTime = instant.toISOString();
     var parts = [];
-    var fresh = forecast && data.auroraFreshness(forecast, new Date()).fresh;
-    if (live && !hypothetical && fresh) {
-      parts.push('Aurora forecast ' + forecastFormatter.format(forecast.forecast));
+    var fresh = hasForecast();
+    if (fresh) {
+      parts.push((live?'Aurora forecast ':'Archived aurora forecast ') + forecastFormatter.format(forecast.forecast));
       parts.push('measurements from ' + forecastFormatter.format(forecast.observation));
-    } else if (!live || hypothetical) parts.push('Current aurora is hidden in Explore.');
+    } else if (hypothetical) parts.push('Aurora hidden for hypothetical tilt.');
+    else if(!live) parts.push(archiveBusy?'Loading archived aurora.':'No saved aurora forecast near this time.');
     else parts.push(fetchingWeather && !weatherChecked ? 'Checking aurora forecast.' : 'Aurora forecast unavailable.');
     var kpAge = kp ? new Date() - kp.time : Infinity;
     if (live && kpAge >= -5 * 60000 && kpAge < 9 * 3600000) parts.push('Magnetic activity: Kp ' + kp.kp.toFixed(2) + ' at ' + forecastFormatter.format(kp.time));
     text(dataLine, parts.join(' / '));
     byId('globe-gap-key').hidden = !photo || hypothetical;
-    text(byId('globe-gap-key'),baseState === 'ready' ? 'Reference map in hatched photo gaps.' : 'No photo data in hatched gaps.');
+    text(byId('globe-gap-key'),photo&&photo.time ? 'Visible and infrared satellite imagery. Reference map in hatched data gaps.' : baseState === 'ready' ? 'Reference map in hatched photo gaps.' : 'No photo data in hatched gaps.');
+    text(byId('globe-weather-basis'),'Cloud images every 3 hours. '+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history is available only for saved forecasts.')+' Missing dates stay unavailable.');
     returnButton.hidden = live;
     wrapper.dataset.mode = live ? 'live' : 'explore';
     if (live) syncInputs();
@@ -89,11 +103,11 @@
       (daylight.sunrise ? solarFormatter.format(solarDate(daylight.sunrise,pin.lon)) : 'No sunrise') + ' / ' + (daylight.sunset ? solarFormatter.format(solarDate(daylight.sunset,pin.lon)) : 'No sunset');
     text(byId('globe-pin-events'), events);
     var aurora = 'Forecast unavailable';
-    if (!live || tilt !== undefined) aurora = 'Hidden in Explore';
-    else if (forecast && data.auroraFreshness(forecast,new Date()).fresh) {
+    if (tilt !== undefined) aurora = 'Hidden for hypothetical tilt';
+    else if (hasForecast()) {
       var probability = data.auroraAt(forecast,pin.lat,pin.lon);
       var elevation = math.solarElevation(instant,pin.lat,pin.lon);
-      aurora = Math.round(probability) + '% modeled overhead';
+      aurora = Math.round(probability) + '% modeled overhead'+(live?'':' (archived)');
       aurora += elevation >= 0 ? '. Daylight hides it.' : elevation >= -12 ? '. Twilight may hide it.' : '. Dark sky; clouds can hide it.';
       if (probability < 5 && elevation < -6) {
         var nearby = data.auroraVisibility(forecast,pin.lat,pin.lon,elevation);
@@ -113,6 +127,18 @@
     var chosen = new Date(fields[0],fields[1]-1,fields[2],Math.floor(minutes/60),minutes%60);
     if (!Number.isFinite(chosen.getTime())) return;
     instant = chosen; live = false; syncInputs(); updateAstronomy(); updateLabels(); announce();
+    scheduleTimeData();
+  }
+  function scheduleTimeData() {
+    clearTimeout(timeEditTimer);
+    if(cloudController)cloudController.abort();
+    if(archiveController)archiveController.abort();
+    photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
+    forecast=null;
+    if(photo&&photo.time&&(instant-new Date(photo.time)<0||instant-new Date(photo.time)>=3*3600000))photo=null;
+    if(photo&&!photo.time&&!live)photo=null;
+    updateAstronomy();updateLabels();
+    timeEditTimer=setTimeout(function(){refreshData();},250);
   }
   dateInput.addEventListener('change',editTime); hourInput.addEventListener('input',editTime);
   document.querySelectorAll('.tilt-btn').forEach(function (button) {
@@ -122,11 +148,14 @@
       document.querySelectorAll('.tilt-btn').forEach(function (b) { b.setAttribute('aria-pressed',String(b === button)); });
       text(byId('globe-tilt-note'), tilt === undefined ? 'Current tilt. The Moon follows its real orbit.' : tilt === 45 ? 'A hypothetical tilt. Reference map; Moon hidden.' : 'A hypothetical tilt. Reference map; real lunar orbit.');
       updateAstronomy(); updateLabels(); announce();
+      scheduleTimeData();
     });
   });
   returnButton.addEventListener('click',function () {
     var returnHadFocus = document.activeElement === returnButton;
-    live = true; instant = new Date(); tilt = undefined; pinDayKey = '';
+    clearTimeout(timeEditTimer);if(cloudController)cloudController.abort();if(archiveController)archiveController.abort();
+    photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
+    live = true; instant = new Date(); tilt = undefined; pinDayKey = '';expireLivePhoto();if(liveForecast)setForecast(liveForecast);else forecast=null;
     document.querySelectorAll('.tilt-btn').forEach(function (b) {b.setAttribute('aria-pressed',String(b.dataset.tilt === 'current'));});
     text(byId('globe-tilt-note'),'Current tilt. The Moon follows its real orbit.');
     updateAstronomy(); updateLabels(); announce(); refreshData();
@@ -163,47 +192,65 @@
   var mobile = matchMedia('(pointer: coarse)').matches || innerWidth < 700;
   var textureWidth = Math.min(mobile ? 2048 : 4096,renderer.capabilities.maxTextureSize);
   textureWidth = Math.pow(2,Math.floor(Math.log2(textureWidth)));
+  var cloudWidth=Math.min(textureWidth,mobile?1024:2048);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
     var tex = new THREE.DataTexture(new Uint8Array([r,g,b,255]),1,1,THREE.RGBAFormat); tex.needsUpdate = true; return tex;
   }
-  var baseTexture = solidTexture(60,90,87), nightTexture = solidTexture(1,2,1), satelliteTexture = solidTexture(60,90,87), moonTexture = solidTexture(130,128,117);
+  var baseTexture = solidTexture(60,90,87), nightTexture = solidTexture(1,2,1), satelliteTexture = solidTexture(60,90,87), infraredTexture=solidTexture(0,0,0), moonTexture = solidTexture(130,128,117);
+  var photoSunUniform={value:new THREE.Vector3(1,0,0)};
   var vertex = 'varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld; void main(){ vUv=uv; vNormal=normalize((modelMatrix*vec4(normal,0.0)).xyz); vWorld=(modelMatrix*vec4(position,1.0)).xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
-  var earthMaterial = new THREE.ShaderMaterial({uniforms:{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},sunDir:sunUniform,photoMix:{value:0},photoEnabled:{value:0}},vertexShader:vertex,fragmentShader:[
-    'uniform sampler2D baseMap, nightMap, photoMap; uniform vec3 sunDir; uniform float photoMix,photoEnabled; varying vec2 vUv; varying vec3 vNormal;',
-    'void main(){ vec3 base=texture2D(baseMap,vUv).rgb; vec4 photo=texture2D(photoMap,vUv);',
-    'float missing=1.0-photo.a; float hatch=step(.72,fract((vUv.x+vUv.y)*190.0));',
-    'vec3 muted=mix(vec3(dot(base,vec3(.299,.587,.114))),base,.38)*.67+vec3(.07)*hatch;',
-    'vec3 liveColor=mix(muted,photo.rgb,photo.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
+  var earthMaterial = new THREE.ShaderMaterial({uniforms:{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0}},vertexShader:vertex,fragmentShader:[
+    'uniform sampler2D baseMap, nightMap, photoMap,infraredMap; uniform vec3 sunDir,photoSunDir; uniform float photoMix,photoEnabled,thermalEnabled,naturalEnabled; varying vec2 vUv; varying vec3 vNormal;',
+    'void main(){ vec3 base=texture2D(baseMap,vUv).rgb; vec4 photo=texture2D(photoMap,vUv); vec4 infrared=texture2D(infraredMap,vUv);',
+    'float hatch=step(.90,fract((vUv.x+vUv.y)*110.0));',
+    'vec3 muted=mix(base,vec3(.12,.19,.21),.22)+vec3(.028)*hatch;',
+    'float shotDay=smoothstep(.10,.25,dot(normalize(vNormal),photoSunDir))*naturalEnabled*photo.a;',
+    'vec4 shot=mix(photo,mix(infrared,photo,shotDay),thermalEnabled); vec3 liveColor=mix(muted,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
     'float light=dot(normalize(vNormal),sunDir); float daylight=smoothstep(-.10,.04,light);',
     'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
+    'night+=infrared.rgb*.10*infrared.a*thermalEnabled*photoMix*photoEnabled;',
     'gl_FragColor=vec4(mix(night,litDay,daylight),1.0); }'
   ].join('\n')});
   var earth = new THREE.Mesh(new THREE.SphereGeometry(1,96,64),earthMaterial); scene.add(earth);
   var moonMaterial = new THREE.ShaderMaterial({uniforms:{moonMap:{value:moonTexture},sunDir:moonSunUniform},vertexShader:vertex,fragmentShader:'uniform sampler2D moonMap; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vNormal; void main(){ float light=max(0.0,dot(normalize(vNormal),sunDir)); gl_FragColor=vec4(texture2D(moonMap,vUv).rgb*(.025+light*.98),1.0); }'});
   var moon = new THREE.Mesh(new THREE.SphereGeometry(.273,40,28),moonMaterial); scene.add(moon);
   var atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.015,64,40),new THREE.ShaderMaterial({uniforms:{sunDir:sunUniform},vertexShader:vertex,fragmentShader:'uniform vec3 sunDir; varying vec3 vNormal,vWorld; void main(){ vec3 eye=normalize(cameraPosition-vWorld); float rim=pow(1.0-abs(dot(normalize(vNormal),eye)),3.5); float day=smoothstep(-.25,.3,dot(normalize(vNormal),sunDir)); gl_FragColor=vec4(.28,.46,.59,rim*(.08+.3*day)); }',transparent:true,depthWrite:false,side:THREE.BackSide,blending:THREE.AdditiveBlending})); scene.add(atmosphere);
-  var starPositions = [];
-  for (var i=0;i<450;i++) {
-    var z=1-2*(i+.5)/450, angle=i*2.39996323, scale=Math.sqrt(1-z*z)*65;
-    starPositions.push(Math.cos(angle)*scale,z*65,Math.sin(angle)*scale);
+  // Decorative stars keep a readable size at every camera distance.
+  var starPositions = [[],[]];
+  for (var i=0;i<1400;i++) {
+    var z=1-2*(i+.5)/1400, angle=i*2.39996323, scale=Math.sqrt(1-z*z)*65;
+    starPositions[i%11===0?1:0].push(Math.cos(angle)*scale,z*65,Math.sin(angle)*scale);
   }
-  var stars = new THREE.BufferGeometry(); stars.setAttribute('position',new THREE.Float32BufferAttribute(starPositions,3));
-  scene.add(new THREE.Points(stars,new THREE.PointsMaterial({color:cssColor('--text-dim'),size:.08,transparent:true,opacity:.45})));
+  starPositions.forEach(function(positions,index){
+    var geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    scene.add(new THREE.Points(geometry,new THREE.PointsMaterial({color:cssColor('--text'),size:index?2:1.1,sizeAttenuation:false,transparent:true,opacity:index?.85:.58})));
+  });
+  // The Sun keeps its calculated bearing and angular diameter. It can be outside
+  // the camera frame or behind Earth; its distance is compressed for the scene.
+  var sunBody=new THREE.Mesh(new THREE.SphereGeometry(.35,32,24),new THREE.MeshBasicMaterial({color:cssColor('--accent-hover')}));
+  scene.add(sunBody);
+  var sunGlow=new THREE.Sprite(new THREE.ShaderMaterial({
+    uniforms:{tint:{value:cssColor('--accent-hover')}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    vertexShader:'varying vec2 vUv; void main(){vUv=uv;vec4 center=modelViewMatrix*vec4(0.,0.,0.,1.);center.xy+=position.xy*vec2(length(modelMatrix[0].xyz),length(modelMatrix[1].xyz));gl_Position=projectionMatrix*center;}',
+    fragmentShader:'uniform vec3 tint; varying vec2 vUv; void main(){float r=length(vUv-.5)*2.;float glow=pow(max(0.,1.-r),3.)*.5;gl_FragColor=vec4(tint,glow);}'
+  }));
+  sunGlow.scale.set(3,3,1);scene.add(sunGlow);
   var pinMarker = new THREE.Mesh(new THREE.RingGeometry(.014,.021,24),new THREE.MeshBasicMaterial({color:cssColor('--accent-hover'),side:THREE.DoubleSide}));
   pinMarker.visible=false; scene.add(pinMarker);
   var auroraTexture = solidTexture(0,0,0), auroraMeshes = [];
   function buildAurora() {
     auroraMeshes.forEach(function (mesh) {scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}); auroraMeshes=[];
-    var layers = auroraStyle === 'shell' ? [1.028] : auroraStyle === 'halo' ? [1.035,1.055,1.08] : auroraStyle === 'curtain' ? [1.016,1.03,1.045,1.06] : [1.023,1.038,1.052];
+    var layers = auroraStyle === 'shell' ? [1.028] : auroraStyle === 'halo' ? [1.035,1.055,1.08] : auroraStyle === 'curtain' ? [1.014,1.023,1.032] : [1.023,1.038,1.052];
     layers.forEach(function (height,index) {
-      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:auroraStyle==='halo'?.3:auroraStyle==='shell'?.75:.46}},vertexShader:vertex,fragmentShader:[
+      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:auroraStyle==='halo'?.3:auroraStyle==='shell'?.75:.62/(1+index*.65)}},vertexShader:vertex,fragmentShader:[
         'uniform sampler2D auroraMap; uniform vec3 sunDir; uniform float tick,layer,style,strength; varying vec2 vUv; varying vec3 vNormal,vWorld;',
-        'void main(){ vec2 gridUv=vec2(vUv.x+.5/360.0,(vUv.y*180.0+.5)/181.0); float probability=texture2D(auroraMap,gridUv).r; float night=1.0-smoothstep(-.20,-.035,dot(normalize(vNormal),sunDir));',
-        'float curtain=.72+.28*sin(vUv.x*900.0+sin(vUv.y*32.0+tick*.22)*2.0);',
-        'float pulse=.92+.08*sin(tick*.5+vUv.x*24.0+layer); float glow=pow(probability,.70)*night*strength*pulse*mix(1.0,curtain,style);',
-        'vec3 color=mix(vec3(.28,.76,.43),vec3(.43,.64,.36),layer/4.0); gl_FragColor=vec4(color,glow); }'
+        'void main(){ vec2 gridUv=vec2((vUv.x*360.0+1.5)/362.0,(vUv.y*180.0+.5)/181.0); float probability=texture2D(auroraMap,gridUv).r; float night=1.0-smoothstep(-.20,-.035,dot(normalize(vNormal),sunDir));',
+        'float angle=vUv.x*6.2831853; float fold=sin(angle*7.0+vUv.y*17.0+tick*.10)*.9+sin(angle*19.0-vUv.y*11.0)*.35;',
+        'float filaments=.5+.25*sin(angle*61.0+fold)+.15*sin(angle*103.0+fold*2.0)+.1*sin(angle*151.0-fold); float curtain=.78+.22*clamp(filaments,0.0,1.0);',
+        'float pulse=.96+.04*sin(tick*.35+vUv.x*24.0); float glow=probability*smoothstep(.10,.13,probability)*night*strength*pulse*mix(1.0,curtain,style);',
+        'vec3 color=mix(vec3(.28,.86,.43),vec3(.43,.74,.36),layer/4.0); gl_FragColor=vec4(color,glow); }'
       ].join('\n'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
       var mesh = new THREE.Mesh(new THREE.SphereGeometry(height,96,64),material); mesh.visible=false; scene.add(mesh); auroraMeshes.push(mesh);
     });
@@ -235,11 +282,13 @@
   var initialSun=math.solar(instant);
   targetTheta=theta=Math.PI/2+(initialSun.longitude-52)*DEG;targetPhi=phi=Math.PI/2-32*DEG;
   function updateAstronomy() {
+    expireLivePhoto();
     var sun=math.solar(instant,tilt);sunUniform.value.set(sun.vector.x,sun.vector.y,sun.vector.z);
+    sunBody.position.copy(sunUniform.value).multiplyScalar(75);sunGlow.position.copy(sunBody.position);
     lunarState=math.moon(instant);moonDisplayDistance=5.5*lunarState.distance/60.2666;
     moon.position.set(lunarState.vector.x,lunarState.vector.y,lunarState.vector.z).multiplyScalar(moonDisplayDistance);moon.lookAt(0,0,0);moon.visible=tilt!==45;
-    earthMaterial.uniforms.photoEnabled.value=tilt===undefined?1:0;
-    var current=live&&tilt===undefined&&forecast&&data.auroraFreshness(forecast,new Date()).fresh;
+    earthMaterial.uniforms.photoEnabled.value=tilt===undefined&&photo?1:0;
+    var current=hasForecast();
     auroraMeshes.forEach(function (mesh) {mesh.visible=!!current;});
     wrapper.dataset.aurora=current?'ready':'hidden';
   }
@@ -354,17 +403,13 @@
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     }
   });
-  async function refreshPhoto() {
-    if(fetchingPhoto)return;
-    var offline=navigator.onLine===false;
-    var target=completedDay(new Date());
-    if(requestedDay===target && (photo && photo.date===target || Date.now()-photoChecked<5*60000))return;
-    requestedDay=target;fetchingPhoto=true;var generation=++photoGeneration;
+  async function refreshDailyPhoto(generation,signal) {
+    var offline=navigator.onLine===false,target=live?completedDay(new Date()):data.utcDate(instant);
     try {
-      for(var back=0;back<4;back++){
+      for(var back=0;back<(live?4:1);back++){
         var day=new Date(new Date(target+'T00:00:00Z').getTime()-back*DAY).toISOString().slice(0,10);
         try {
-          var result=await data.fetchPhotoDay(day,textureWidth,{timeout:18000,cacheOnly:offline});
+          var result=await data.fetchPhotoDay(day,textureWidth,{timeout:18000,cacheOnly:offline,signal:signal});
           var canvases=await Promise.all(result.blobs.map(function(blob){return decodeBlob(blob,textureWidth);}));
           var primary=canvases[0],ctx=primary.getContext('2d'),pixels=ctx.getImageData(0,0,primary.width,primary.height);
           var secondary=canvases[1]&&canvases[1].getContext('2d').getImageData(0,0,primary.width,primary.height);
@@ -373,22 +418,68 @@
           pixels.data.set(composite.pixels);ctx.putImageData(pixels,0,0);
           if(generation!==photoGeneration){canvases.forEach(function(canvas){canvas.width=canvas.height=1;});return;}
           var texture=configureTexture(new THREE.CanvasTexture(primary));satelliteTexture.dispose();satelliteTexture=texture;earthMaterial.uniforms.photoMap.value=texture;
+          earthMaterial.uniforms.thermalEnabled.value=0;
           photo={date:day,coverage:composite.coverage,width:primary.width};photoMix=0;wrapper.dataset.photo='ready';
           canvases.slice(1).forEach(function(canvas){canvas.width=canvas.height=1;});updateLabels();announce();break;
         } catch(error) {
+          if(error.name==='AbortError')return;
           // A PNG header can be valid while its compressed pixels are damaged.
           // Evict that day's responses so a later visit can recover.
           await data.discardPhotoDay(day,textureWidth);
         }
       }
-    } finally {fetchingPhoto=false;photoChecked=Date.now();updateLabels();}
+    } catch(_){}
+  }
+  async function refreshPhoto() {
+    if(tilt!==undefined)return;
+    var key=String(Math.floor(instant.getTime()/(3*3600000))),offline=navigator.onLine===false;
+    if(requestedDay===key&&(fetchingPhoto||Date.now()-photoChecked<5*60000))return;
+    if(cloudController)cloudController.abort();
+    cloudController=new AbortController();var signal=cloudController.signal,generation=++photoGeneration;
+    fetchingPhoto=true;requestedDay=key;
+    try {
+      if(instant-Date.now()>5*60000){photo=null;return;}
+      if(!cloudCatalog){try{var stored=JSON.parse(localStorage.getItem('globe-cloud-catalog'));if(stored)cloudCatalog={start:new Date(stored.start),end:new Date(stored.end)};}catch(_){}}
+      if(!offline&&(!cloudCatalog||Date.now()-cloudCatalogChecked>10*60000)){
+        try{cloudCatalog=await data.fetchCloudCatalog({timeout:10000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){if(error.name==='AbortError')return;}
+      }
+      var stamp=cloudCatalog&&data.cloudFrameAt(cloudCatalog,instant,new Date());
+      if(!stamp||live&&new Date()-stamp>5*3600000)throw new Error('Dated cloud imagery unavailable');
+      if(photo&&photo.time===stamp.toISOString())return;
+      var result=await data.fetchCloudFrame(stamp,cloudWidth,{timeout:18000,signal:signal,cacheOnly:offline});
+      var canvases=[];
+      try{
+        var infrared=await decodeBlob(result.infrared,cloudWidth);canvases.push(infrared);
+        var pixels=infrared.getContext('2d').getImageData(0,0,infrared.width,infrared.height).data,valid=0;
+        for(var i=3;i<pixels.length;i+=4)if(pixels[i]===255)valid++;
+        if(valid/(pixels.length/4)<.15)throw new Error('Cloud image has no useful coverage');
+        var natural=result.natural?await decodeBlob(result.natural,cloudWidth):infrared;
+        if(natural!==infrared)canvases.push(natural);
+        if(generation!==photoGeneration||signal.aborted)return;
+        var newNatural=configureTexture(new THREE.CanvasTexture(natural)),newInfrared=configureTexture(new THREE.CanvasTexture(infrared));
+        satelliteTexture.dispose();infraredTexture.dispose();satelliteTexture=newNatural;infraredTexture=newInfrared;
+        earthMaterial.uniforms.photoMap.value=newNatural;earthMaterial.uniforms.infraredMap.value=newInfrared;
+        earthMaterial.uniforms.thermalEnabled.value=1;earthMaterial.uniforms.naturalEnabled.value=result.natural?1:0;
+        var sourceSun=math.solar(stamp);photoSunUniform.value.set(sourceSun.vector.x,sourceSun.vector.y,sourceSun.vector.z);
+        photo={date:data.utcDate(stamp),time:stamp.toISOString(),coverage:valid/(pixels.length/4),width:infrared.width,source:'EUMETSAT',natural:!!result.natural};
+        photoMix=0;wrapper.dataset.photo='ready';updateLabels();announce();
+      }catch(error){await data.discardCloudFrame(stamp,cloudWidth);throw error;}
+      finally{if(generation!==photoGeneration)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
+    }catch(error){
+      if(error.name!=='AbortError'&&generation===photoGeneration)await refreshDailyPhoto(generation,signal);
+    }finally{
+      if(generation===photoGeneration){fetchingPhoto=false;photoChecked=Date.now();updateAstronomy();updateLabels();announce();}
+    }
   }
   function setForecast(value) {
-    forecast=value;var rgba=new Uint8Array(360*181*4);
-    for(var lat=-90;lat<=90;lat++)for(var lon=0;lon<360;lon++){
-      var offset=((lat+90)*360+(lon+180)%360)*4;rgba[offset]=Math.round(value.grid[(lat+90)*360+lon]/100*255);rgba[offset+3]=255;
+    forecast=value;var rgba=new Uint8Array(362*181*4);
+    // Duplicate the seam's neighbors instead of repeating a non-power-of-two
+    // texture, which WebGL1 cannot wrap correctly.
+    for(var lat=-90;lat<=90;lat++)for(var column=0;column<362;column++){
+      var lon=(column+539)%360;
+      var offset=((lat+90)*362+column)*4;rgba[offset]=Math.round(value.grid[(lat+90)*360+lon]/100*255);rgba[offset+3]=255;
     }
-    auroraTexture.dispose();auroraTexture=configureTexture(new THREE.DataTexture(rgba,360,181,THREE.RGBAFormat));
+    auroraTexture.dispose();auroraTexture=configureTexture(new THREE.DataTexture(rgba,362,181,THREE.RGBAFormat));auroraTexture.wrapS=THREE.ClampToEdgeWrapping;
     auroraMeshes.forEach(function(mesh){mesh.material.uniforms.auroraMap.value=auroraTexture;});updateAstronomy();
   }
   async function refreshWeather() {
@@ -397,12 +488,40 @@
     if(!weatherChecked){updateLabels();announce();}
     try {
       var results=await Promise.allSettled([data.fetchJSON('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json',{timeout:10000}),data.fetchJSON('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',{timeout:10000})]);
-      if(results[0].status==='fulfilled'){try{var next=data.parseAurora(results[0].value);if(data.auroraFreshness(next,new Date()).fresh)setForecast(next);}catch(error){}}
+      if(results[0].status==='fulfilled'){try{var next=data.parseAurora(results[0].value);if(data.auroraFreshness(next,new Date()).fresh){liveForecast=next;if(live)setForecast(next);}}catch(error){}}
       if(results[1].status==='fulfilled'){try{kp=data.parseKp(results[1].value);}catch(error){}}
     } finally {fetchingWeather=false;weatherChecked=Date.now();updateAstronomy();updateLabels();announce();}
   }
-  function refreshData() {refreshPhoto();refreshWeather();}
+  async function refreshArchive() {
+    if(archiveBusy||navigator.onLine===false||tilt!==undefined||live&&Date.now()-archiveChecked<10*60000)return;
+    archiveBusy=true;updateLabels();var generation=++archiveGeneration;
+    if(archiveController)archiveController.abort();archiveController=new AbortController();var signal=archiveController.signal;
+    try{
+      if(!archiveFrames.length||Date.now()-archiveChecked>5*60000){
+        try{
+          var manifest=await data.fetchJSON(archiveBase+'manifest.json?v='+Math.floor(Date.now()/300000),{timeout:10000,signal:signal,allowText:true});
+          archiveFrames=data.parseAuroraManifest(manifest);archiveChecked=Date.now();
+        }catch(error){
+          if(error.name==='AbortError')return;
+          if(!archiveFrames.length){try{archiveFrames=data.parseAuroraManifest(await data.fetchJSON('assets/data/aurora/manifest.json',{timeout:3000,signal:signal}));archiveChecked=Date.now();}catch(_){}}
+        }
+      }
+      if(!live){
+        var entry=data.auroraFrameAt(archiveFrames,instant);
+        if(!entry){forecast=null;return;}
+        var value=archiveCache.get(entry.file);
+        if(!value){
+          try{value=await data.fetchAuroraArchive(entry,archiveBase,{timeout:10000,signal:signal});}
+          catch(error){if(error.name==='AbortError')return;value=await data.fetchAuroraArchive(entry,'assets/data/aurora/',{timeout:3000,signal:signal});}
+          archiveCache.set(entry.file,value);if(archiveCache.size>12)archiveCache.delete(archiveCache.keys().next().value);
+        }
+        if(generation===archiveGeneration&&!signal.aborted&&!live)setForecast(value);
+      }
+    }catch(_){}
+    finally{if(generation===archiveGeneration){archiveBusy=false;updateAstronomy();updateLabels();announce();}}
+  }
+  function refreshData() {refreshPhoto();refreshWeather();refreshArchive();}
   window.addEventListener('online',function(){requestedDay='';weatherChecked=0;refreshData();});
   updateAstronomy();updateLabels();announce();resume();refreshData();
-  setInterval(function(){if(live)instant=new Date();updateAstronomy();updateLabels();refreshData();},5*60000);
+  setInterval(function(){if(live)instant=new Date();updateAstronomy();updateLabels();refreshData();},60000);
 }());
