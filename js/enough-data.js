@@ -5,20 +5,20 @@ window.EnoughData = {
   "screenedCount": 46,
   "definition": {
     "share": "Improvement from the lowest displayed dose divided by the largest improvement anywhere in the explicitly declared range.",
-    "enough": "First90% crossing, or first qualifying published category. This is a bounded summary, never an absolute lifetime maximum.",
+    "enough": "First 90% crossing, or first qualifying published category. This is a bounded summary, never an absolute lifetime maximum.",
     "uncertainty": "Independently normalized pointwise bound curves give sensitivity, not a formal threshold confidence interval."
   },
   "curves": [
     {
       "id": "steps",
       "question": "How much walking?",
-      "fact": "7,000 steps is roughly three miles, about an hour at a steady 3 mph.",
+      "fact": "7,000 steps went with 47% lower risk of dying than 2,000.",
       "kind": "points",
       "shape": "Most arrives early",
       "unit": "steps/day",
       "effectKind": "risk",
       "effectUnit": "Relative all-cause mortality risk",
-      "outcome": "death rate",
+      "outcome": "all-cause mortality risk",
       "better": "lower",
       "domain": [
         2000,
@@ -204,7 +204,7 @@ window.EnoughData = {
         "area": "move",
         "mode": "benefit",
         "answer": "About 10,500 steps",
-        "fact": "7,000 steps is roughly three miles, about an hour at a steady 3 mph.",
+        "fact": "7,000 steps went with 47% lower risk of dying than 2,000.",
         "range": [
           2000,
           12000
@@ -235,13 +235,13 @@ window.EnoughData = {
     {
       "id": "exercise",
       "question": "How much exercise?",
-      "fact": "Two and a half hours already captures 81% of the gain in this range.",
+      "fact": "150 minutes a week went with 31% lower risk of dying than no exercise.",
       "kind": "points",
       "shape": "Most arrives early",
       "unit": "min/week",
       "effectKind": "risk",
       "effectUnit": "Relative all-cause mortality risk",
-      "outcome": "death rate",
+      "outcome": "all-cause mortality risk",
       "better": "lower",
       "domain": [
         0,
@@ -12307,7 +12307,7 @@ window.EnoughData = {
         "area": "move",
         "mode": "benefit",
         "answer": "About 5¾ hours a week",
-        "fact": "Two and a half hours already captures 81% of the gain in this range.",
+        "fact": "150 minutes a week went with 31% lower risk of dying than no exercise.",
         "range": [
           0,
           600
@@ -13388,7 +13388,8 @@ window.EnoughData = {
         "sensitivity": null,
         "sweetRange": null
       },
-      "effectUnit": "Modeled extra fat-free mass gain, lb, relative to 0.41 g/lb/day while lifting"
+      "effectUnit": "Modeled extra fat-free mass gain, lb, relative to 0.41 g/lb/day while lifting",
+      "outcome": "modeled extra fat-free mass gain while lifting"
     },
     {
       "id": "sets",
@@ -13399,7 +13400,7 @@ window.EnoughData = {
       "unit": "sets/week",
       "effectKind": "change",
       "effectUnit": "Percent difference in modeled post/pre muscle-size ratios, relative to zero weekly sets",
-      "outcome": "death rate",
+      "outcome": "modeled post/pre muscle-size ratio",
       "better": "higher",
       "domain": [
         0,
@@ -14208,7 +14209,7 @@ window.EnoughData = {
       "better": "lower",
       "unitLabel": "hours a night",
       "effectKind": "risk",
-      "outcome": "death rate",
+      "outcome": "all-cause mortality risk",
       "domain": [
         3,
         11
@@ -14498,7 +14499,7 @@ window.EnoughData = {
       "evidence": "prospective observational cohort",
       "better": "lower",
       "effectKind": "risk",
-      "outcome": "death rate",
+      "outcome": "all-cause mortality risk",
       "defaultDose": 3,
       "unitLabel": "servings a day",
       "domain": [
@@ -15034,7 +15035,9 @@ window.EnoughData = {
         ],
         "sweetRange": null
       },
-      "effectUnit": "Relative all-cause mortality risk, 7 grams/day =1"
+      "effectUnit": "Relative all-cause mortality risk, 7 grams/day =1",
+      "outcome": "all-cause mortality risk",
+      "effectKind": "risk"
     },
     {
       "id": "income",
@@ -19695,7 +19698,7 @@ window.EnoughData = {
       "contradictsEnough": true,
       "fact": "These munitions workers produced about as much in 56 hours as in 70.",
       "doseUnit": "hours worked per week",
-      "effectUnit": "Additional factory output relative to 24 hours",
+      "effectUnit": "Additional factory output-index units relative to 24 hours",
       "direction": "lower",
       "points": [
         {
@@ -20762,7 +20765,7 @@ window.EnoughData = {
       "coordinate": "category-index",
       "unitLabel": "hours a week",
       "effectKind": "output",
-      "outcome": "stroke rate",
+      "outcome": "additional factory output index",
       "domain": [
         24,
         72.5
@@ -21049,7 +21052,7 @@ window.EnoughData = {
       "evidence": "systematic review and meta-analysis of prospective cohort studies; study-level bias-adjusted meta-regression",
       "better": "lower",
       "effectKind": "risk",
-      "outcome": "breast cancer rate",
+      "outcome": "all-cause mortality risk",
       "defaultDose": 2,
       "unitLabel": "US drinks a week",
       "domain": [
@@ -22423,5 +22426,12 @@ window.EnoughData = {
       },
       "archiveReason": "Owner requested removal of the Mind section on 2026-10-04. Evidence retained only for provenance."
     }
-  ]
+  ],
+  "presentation": {
+    "revised": "2026-10-05",
+    "axes": "Physical doses and source outcome units; no normalized benefit percentages are plotted.",
+    "enoughLine": "90% of improvement from the displayed baseline to the best result shown, placed on the actual outcome scale.",
+    "opening": "One selectable curve; walking opens at 7,000 steps, 47% lower mortality risk compared with 2,000. The shown 12,000-step endpoint is 55%, not a universal maximum.",
+    "audit": "Primary agent rechecked Ding 2025 Table 2 and audited all eight previously normalized benefit curves. Source coordinates and enough computations are unchanged."
+  }
 };

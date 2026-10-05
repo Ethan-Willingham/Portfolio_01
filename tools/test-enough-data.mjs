@@ -35,4 +35,11 @@ near(M.sleepRange(by('sleep'))[0],6);near(M.sleepRange(by('sleep'))[1],7.25);ass
 near(M.extraRisk(by('alcohol'),1),-4);near(M.extraRisk(by('alcohol'),2),-7);near(M.extraRisk(by('alcohol'),5),35);assert.equal(by('alcohol').points.at(-1).doseHigh,null,'Open last bin');
 for(const p of by('income').points)near(p.high-p.effect,1.96*p.standardError);
 near(M.extraRisk(by('smoking'),1)/M.extraRisk(by('smoking'),3),.48/1.04);
+// Source-outcome presentation must never turn a chosen endpoint into 100% benefit.
+near(M.outcome(by('steps'),7000),47);near(M.outcome(by('steps'),12000),55);near(M.outcome(by('steps'),M.enough(by('steps'))),49.5);
+near(M.outcome(by('exercise'),600),38.44373343584258);near(M.outcome(by('protein'),1),2.7778245035310007);
+near(M.outcome(by('fruit-veg'),3),13);near(M.outcome(by('fruit-veg'),4),11);
+near(M.outcome(by('fiber'),35),22.430620048399886);near(M.outcome(by('income'),13),4.947);
+near(M.outcome(by('savings'),50),16.620772445041133);near(M.outcome(by('work'),M.basis(by('work')).best.dose),4029.041452735495);
+assert.equal(by('sets').outcome,'modeled post/pre muscle-size ratio');assert.equal(by('work').outcome,'additional factory output index');assert.equal(by('alcohol').outcome,'all-cause mortality risk');
 console.log('PASS 12 curves, retained source estimates, corrected sets interpretation, all benefit crossings, range endpoints, categories, signed risk, source units, uncertainty and exact models');

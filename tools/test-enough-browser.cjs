@@ -43,29 +43,37 @@ const clickFraction=async(page,plot,f)=>{
   assert.ok(wordCounts.every(c=>c.words<=115),'Each evidence drawer under 115 words: '+JSON.stringify(wordCounts));
   assert.equal(await page.locator('.enough-card details table').count(),0,'Raw tables removed from short drawers');
   assert.equal(await page.locator('.enough-card details a[download]').count(),12,'Full evidence still available');
-  assert.ok((await page.locator('.overview-legend').textContent()).trim().split(/\s+/).length<28,'Quiet overview legend');
-  assert.deepEqual(await page.locator('.overview-benefit').allTextContents(),['of mortality-risk reduction','of mortality-risk reduction','of muscle growth'],'Overview names each measured outcome');
-  assert.match(await page.locator('#protein .en-y-label').textContent(),/muscle growth/);assert.match(await page.locator('#steps .en-y-label').textContent(),/mortality-risk reduction/);
-  assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range/i,'Removed unclear range phrase');
-  assert.equal(await page.locator('#overview-chart .enough-target-key').textContent(),'90% = enough');
+  const opening=page.locator('#overview-steps .overview-plot');
+  assert.equal(await opening.getAttribute('aria-valuenow'),'7000');assert.match(await opening.getAttribute('aria-valuetext'),/47% lower risk of dying.*2,000/,'Opening uses actual outcome and baseline');
+  assert.equal(await page.locator('.overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
+  assert.match(await page.locator('#protein .en-y-label').textContent(),/lean-mass gain, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/Lower risk of dying, %/);
+  assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
+  assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
   const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
    const ticks=[...svg.querySelectorAll('.en-y-tick')];
    return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
-  }));assert.deepEqual(crowdedTicks,[],'Ordinary y-axis labels have at least 4px separation');
+  }));assert.deepEqual(crowdedTicks,[],'Y-axis labels have at least 4px separation');
   const benefitIds=await page.evaluate(()=>EnoughData.curves.filter(c=>c.view.mode==='benefit').map(c=>c.id));
   for(const id of benefitIds){
-   assert.deepEqual(await page.locator('#'+id+' .en-y-tick').allTextContents(),['0','50','100'],'90 is a threshold, not a crowded axis tick');
-   assert.equal(await page.locator('#'+id+' .enough-target-key').textContent(),'90% = enough');
-   assert.ok(await page.locator('#'+id+' svg').evaluate(svg=>{
-    const ticks=[...svg.querySelectorAll('.en-y-tick')],y=n=>Number(ticks.find(t=>t.textContent===n).getAttribute('y'))-4;
-    const target=Number(svg.querySelector('.en-target').getAttribute('y1'));
-    return Math.abs(target-(y('100')+.2*(y('50')-y('100'))))<.01;
-   }),'Threshold stays at the true 90% position');
+   assert.ok(!(await page.locator('#'+id+' .en-y-tick').allTextContents()).includes('100'),'Benefit axis has source units, not a normalized maximum');
+   assert.equal(await page.locator('#'+id+' .enough-target-key').textContent(),'Enough: 90% of shown improvement');
+   assert.ok(await page.locator('#'+id+' svg').evaluate((svg,id)=>{
+    const ticks=[...svg.querySelectorAll('.en-y-tick')],values=ticks.map(t=>Number(t.textContent.replaceAll(',',''))),ys=ticks.map(t=>Number(t.getAttribute('y'))-4);
+    const c=EnoughData.curves.find(c=>c.id===id),value=EnoughMath.outcome(c,EnoughMath.enough(c));
+    const expected=ys[0]+(value-values[0])*(ys[1]-ys[0])/(values[1]-values[0]);
+    return Math.abs(Number(svg.querySelector('.en-target').getAttribute('y1'))-expected)<.01;
+   },id),'Enough line uses the actual outcome value');
   }
-  assert.equal(await page.locator('.overview-range,.overview-enough,.overview-definition,.overview-outcomes').count(),0,'No repeated overview explanations');
-  const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/10,500.*90%/,'Accessible selected chart value');
-  const overview=page.locator('#overview-chart');await clickFraction(page,overview,.75);assert.equal(await overview.getAttribute('aria-valuenow'),'75');assert.match(await overview.getAttribute('aria-valuetext'),/75% from the lowest to highest amount.*mortality-risk reduction.*muscle growth/);
-  await page.keyboard.press('Home');assert.equal(await overview.getAttribute('aria-valuenow'),'0');await page.keyboard.press('ArrowRight');assert.equal(await overview.getAttribute('aria-valuenow'),'1');await page.keyboard.press('End');assert.equal(await overview.getAttribute('aria-valuenow'),'100');
+  const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/10,500.*49.5%.*2,000/,'Enough point reports actual relative risk reduction');
+  await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'9500');
+  await page.keyboard.press('Home');assert.equal(await opening.getAttribute('aria-valuenow'),'2000');await page.keyboard.press('ArrowRight');assert.equal(await opening.getAttribute('aria-valuenow'),'2100');await page.keyboard.press('End');assert.equal(await opening.getAttribute('aria-valuenow'),'12000');assert.match(await opening.getAttribute('aria-valuetext'),/55% lower risk/,'12,000 steps is 55%, never 100%');
+  for(const id of ['exercise','protein']){
+   await page.locator('[data-opening-curve="'+id+'"]').click();const plot=page.locator('#overview-'+id+' .overview-plot');
+   assert.equal(await page.locator('.overview-panel:visible').count(),1);assert.equal(await page.locator('[data-opening-curve="'+id+'"]').getAttribute('aria-pressed'),'true');
+   await clickFraction(page,plot,.5);await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
+   assert.match(await plot.getAttribute('aria-valuetext'),id==='exercise'?/38.4% lower risk.*no exercise/:/2.8 lb more lean-mass gain.*model/);
+  }
+  await page.locator('[data-opening-curve="steps"]').click();assert.equal(await opening.getAttribute('aria-valuenow'),'12000','Curve changes preserve each selection');
   for(const plot of await page.locator('.enough-chart').all()){
    await clickFraction(page,plot,.2);const low=Number(await plot.getAttribute('aria-valuenow')),cx=await plot.locator('.en-dot').getAttribute('cx');
    await clickFraction(page,plot,.8);assert.ok(Number(await plot.getAttribute('aria-valuenow'))>low,'Click moves every chart marker');assert.notEqual(await plot.locator('.en-dot').getAttribute('cx'),cx);
@@ -74,7 +82,15 @@ const clickFraction=async(page,plot,f)=>{
    await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
   }
   const steps=page.locator('#steps .enough-chart');await steps.scrollIntoViewIfNeeded();const b=await steps.boundingBox();
-  await page.mouse.move(b.x+42,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width-12,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'12000','Drag moves marker to endpoint');
+  await page.mouse.move(b.x+42,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width+20,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'12000','Drag moves marker to endpoint');
+  // Leaving a pointer-focused box changes its decoration only, even during capture.
+  assert.equal(await steps.evaluate(el=>getComputedStyle(el).outlineStyle),'none','Captured drag outside clears highlight');
+  await clickFraction(page,steps,.3);const selected=await steps.getAttribute('aria-valuenow'),rFocus=await steps.boundingBox();
+  await page.mouse.move(rFocus.x-10,rFocus.y+80);
+  assert.equal(await steps.evaluate(el=>getComputedStyle(el).outlineStyle),'none','Mouse exit clears the box highlight');
+  assert.equal(await steps.getAttribute('aria-valuenow'),selected,'Mouse exit preserves the marker');assert.ok(await steps.evaluate(el=>document.activeElement===el),'Mouse exit preserves focus');
+  await page.keyboard.press('ArrowRight');assert.equal(Number(await steps.getAttribute('aria-valuenow')),Number(selected)+100);assert.equal(await steps.evaluate(el=>getComputedStyle(el).outlineStyle),'solid','Keyboard restores visible focus with pointer outside');
+  await page.mouse.move(rFocus.x+100,rFocus.y+80);await page.mouse.move(rFocus.x-10,rFocus.y+80);assert.equal(await steps.evaluate(el=>getComputedStyle(el).outlineStyle),'solid','Keyboard-origin focus remains visible on pointer exit');
   await page.locator('#steps summary').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.keyboard.press('Enter');
   if(width===375){
    await page.locator('#steps summary').tap();assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.locator('#steps summary').tap();
@@ -97,21 +113,18 @@ const clickFraction=async(page,plot,f)=>{
    const styles=(el,p)=>{const css=getComputedStyle(el);return Object.fromEntries(p.map(k=>[k,k==='text-underline-offset'?(parseFloat(css.getPropertyValue(k))/parseFloat(css.fontSize)).toFixed(3):css.getPropertyValue(k)]));};
    assert.deepEqual(await page.locator(target).first().evaluate(styles,props),await reference.locator(source).first().evaluate(styles,props),'Reference style: '+target);
   };
-  await compare('.post-back','.post-back',['font-family','font-size','color','text-decoration-line','padding-top']);await compare('.hero-title','.hero-title',['font-family','font-size','font-weight','line-height','letter-spacing','color']);await compare('.overview-key a','.sec a',['color','text-decoration-line','text-decoration-color','text-underline-offset']);await compare('.site-footer a','.site-footer a',['font-family','font-size','color','text-decoration-line']);await reference.close();
+  await compare('.post-back','.post-back',['font-family','font-size','color','text-decoration-line','padding-top']);await compare('.hero-title','.hero-title',['font-family','font-size','font-weight','line-height','letter-spacing','color']);await compare('.overview-context a','.sec a',['color','text-decoration-line','text-decoration-color','text-underline-offset']);await compare('.site-footer a','.site-footer a',['font-family','font-size','color','text-decoration-line']);await reference.close();
   await page.reload();await ready(page);await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:path.join(destination,width+'-top.png')});await page.screenshot({path:path.join(destination,width+'-page.png'),fullPage:true});await page.locator('.enough-overview').screenshot({path:path.join(destination,width+'-overview.png')});
+  for(const area of ['move','eat','money','work'])await page.locator('.enough-group').filter({has:page.locator('#area-'+area)}).screenshot({path:path.join(destination,width+'-'+area+'.png')});
   await page.locator('#sets summary').click();await page.locator('#sets').screenshot({path:path.join(destination,width+'-sets-detail.png')});await page.locator('#protein summary').click();await page.locator('#protein').screenshot({path:path.join(destination,width+'-protein-detail.png')});await page.locator('.site-footer').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(destination,width+'-footer.png')});
   await context.close();console.log('PASS '+width+' px: full art, click/drag/keyboard charts, axes, short evidence, removed panels, reference styling and accessibility');
  }
  const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));
  for(const painting of ['homer','chardin']){await page.goto(url+'/enough.html?painting='+painting);await ready(page);await fullPainting(page);}
- for(const layout of ['smalls','rings']){
-  await page.goto(url+'/enough.html?layout='+layout);await ready(page);const box=page.locator('#overview-chart');await box.focus();await page.keyboard.press('End');assert.equal(await box.getAttribute('aria-valuenow'),'100');
-  if(layout==='smalls')for(const svg of await box.locator('svg').all()){
-   const r=await svg.boundingBox();await page.mouse.click(r.x+42+.25*(r.width-54),r.y+80);assert.equal(await box.getAttribute('aria-valuenow'),'25','Each small chart controls the shared position');
-   await page.mouse.move(r.x+42+.25*(r.width-54),r.y+80);await page.mouse.down();await page.mouse.move(r.x+42+.75*(r.width-54),r.y+80,{steps:4});await page.mouse.up();assert.equal(await box.getAttribute('aria-valuenow'),'75','Drag stays on the selected small chart');
-  }
-  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Alternative layout fits');
+ for(const curve of ['exercise','protein']){
+  await page.goto(url+'/enough.html?curve='+curve);await ready(page);assert.equal(await page.locator('#overview-'+curve).getAttribute('hidden'),null);assert.equal(await page.locator('.overview-panel:visible').count(),1);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Alternative starting curve fits');
  }
- await page.goto(url+'/enough-lab.html');assert.equal(await page.locator('select').count(),3);await page.locator('#lab-painting').selectOption('homer');await page.locator('#lab-layout').selectOption('rings');await page.locator('#lab-colors').selectOption('quiet');await page.waitForFunction(()=>document.querySelector('iframe').src.includes('homer')&&document.querySelector('iframe').src.includes('rings'));
- assert.deepEqual(errors,[],'No JavaScript errors');assert.deepEqual(failures,[],'No missing resources');console.log('PASS painting/layout chooser and resources');
+ await page.goto(url+'/enough-lab.html');assert.equal(await page.locator('select').count(),3);await page.locator('#lab-painting').selectOption('homer');await page.locator('#lab-curve').selectOption('protein');await page.locator('#lab-colors').selectOption('quiet');await page.waitForFunction(()=>document.querySelector('iframe').src.includes('homer')&&document.querySelector('iframe').src.includes('protein'));
+ assert.deepEqual(errors,[],'No JavaScript errors');assert.deepEqual(failures,[],'No missing resources');console.log('PASS painting/curve chooser and resources');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

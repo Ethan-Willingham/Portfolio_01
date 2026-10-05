@@ -55,6 +55,16 @@
       if(i&&((p[i].effect-threshold)*(p[i-1].effect-threshold)<0))out.push(p[i-1].dose+(p[i].dose-p[i-1].dose)*(threshold-p[i-1].effect)/(p[i].effect-p[i-1].effect));
     }return[Math.min(...out),Math.max(...out)];
   }
+  // Display source outcomes, never a rescaled share of all possible benefit.
+  function outcome(c,d,key='effect'){
+    const e=estimate(c,d,key);
+    if(c.view.mode==='benefit'){
+      if(c.effectKind==='risk')return 100*(1-e/estimate(c,c.view.range[0],key));
+      if(c.id==='income')return e-estimate(c,c.view.range[0],key);
+      return e;
+    }
+    return c.view.mode==='model'?e:100*(e-1);
+  }
   function extraRisk(c,d){return(estimate(c,d)-1)*100;}
-  window.EnoughMath={clamp,estimate,series,basis,share,enough,sensitivity,sleepRange,extraRisk};
+  window.EnoughMath={clamp,estimate,series,basis,share,enough,sensitivity,sleepRange,extraRisk,outcome};
 })();

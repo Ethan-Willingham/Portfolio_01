@@ -1,6 +1,6 @@
 # How Much Is Enough?
 
-`enough.html` is an explorable post in In Progress. It has a full painting, a shared overview and 12 cards grouped by life area. The owner removed the personal form and the Mind section. The chooser is `enough-lab.html`. Fonts, the dark-green background, Home navigation, link treatment and footer follow the site and `what-you-get-used-to.html`.
+`enough.html` is an explorable post in In Progress. It has a full painting, a selectable opening curve and 12 cards grouped by life area. The owner removed the personal form and the Mind section. The chooser is `enough-lab.html`. Fonts, the dark-green background, Home navigation, link treatment and footer follow the site and `what-you-get-used-to.html`.
 
 ## Calculation
 
@@ -8,9 +8,11 @@ For benefit curves, share is improvement from the lowest displayed dose divided 
 
 `js/enough-data.js` stores primary coordinates, per-point source locations, uncertainty, model parameters, ranges and computed crossings. `js/enough-math.js` supplies the calculation to the UI and validator. Reconstructable models use their analytical expressions. Other lines interpolate source coordinates. Categories select published groups and never invent an exact threshold between them. Full tables, extraction details and caveats remain downloadable; each on-page evidence drawer has two short paragraphs and a data link.
 
-The overview overlays steps, exercise and protein. Its x-axis says “Amount within each shown range,” with Lowest, Halfway and Highest ticks. This remains a shared position between different physical endpoints, not equal effort. The y-axis says “Share of measured benefit, %.” Each value names its outcome: mortality-risk reduction for walking and exercise, muscle growth for protein. These are shares of the measured improvement, not absolute risk reductions or percentages of personal muscle growth. Its initial 40% position captures about 83 to 86% of those bounded gains. Clicking, dragging or using the keyboard changes the shared position and the three physical dose readouts. Definitions and ranges live in a short disclosure.
+The opening shows one curve at a time, selectable with Walking, Exercise and Protein buttons. Each uses physical amounts and source outcomes. Walking opens at 7,000 steps with 47% lower mortality risk compared with 2,000 steps; its 12,000-step estimate is 55%. The opening y-axis names the baseline. Exercise opens at 150 moderate minutes/week; protein at 0.70 g/lb/day. Each selection keeps its own marker. The opening omits the enough rule to keep the first explanation simple.
 
-Benefit charts use ordinary y-axis labels at 0, 50 and 100. The 90% threshold stays at its true linear position as a dashed horizontal rule, with a separate “90% = enough” key below the chart. It is no longer a crowded axis tick next to 100. Individual benefit axes and readouts name the actual outcome. Sleep, sets and harmful-exposure charts retain their original outcome units and have no 90% threshold key.
+All eight formerly normalized benefit charts now plot source outcome units. Steps, exercise, fruit and vegetables, and fiber use relative mortality-risk reductions in percent, with the baseline stated in each readout. Protein uses extra fat-free mass gain in lb relative to 0.41 g/lb/day, explicitly labeled a model. This outcome includes muscle and water. Income uses feeling-score point increases above the lowest income group. Savings uses years to the model target and a descending, unfilled line. Work uses added source output-index units above 24 hours. No benefit endpoint is drawn as 100% of possible benefit.
+
+The bounded enough calculation remains reproducible. On each individual benefit chart, the dashed line is placed at the actual outcome at the first 90% crossing, with a separate “Enough: 90% of shown improvement” key. For walking, that is 49.5% lower risk at 10,500 steps, not 90% lower mortality. Categories can exceed the exact 90% threshold when their first qualifying group crosses it. Ordinary y-ticks have room between them. Sleep, sets and harmful-exposure charts keep their original outcome units without an enough rule.
 
 Separately normalized lower and upper pointwise curves are sensitivity checks, not confidence intervals for thresholds. Protein has a published breakpoint interval but no complete response band. Work has no reconstructable covariance, so no band is invented. Savings alternatives are assumptions, not statistical limits. The sets card is an exception to gain normalization, described below.
 
@@ -18,8 +20,8 @@ Separately normalized lower and upper pointwise curves are sensitivity checks, n
 
 | Card | Range shown | Enough or other shape |
 |---|---|---|
-| Steps | 2,000 to 12,000/day | 10,500; 7,000 reaches 85.5% |
-| Exercise | 0 to 600 moderate minutes/week | 342.64 minutes; 150 reaches 80.6% |
+| Steps | 2,000 to 12,000/day | 10,500; actual risk reductions are 47% at 7,000 and 55% at 12,000 |
+| Exercise | 0 to 600 moderate minutes/week | 342.64 minutes; actual risk reductions are 31% at 150 and 38.4% at 600 |
 | Protein | 0.41 to 1.09 g/lb/day | 0.7022 g/lb, about 105 g at 150 lb |
 | Weekly sets per muscle | 0 to 45 fractional sets | Uncertain ceiling; original model contrasts and 95% credible band; no enough marker |
 | Sleep | 3 to 11 hours | Low point 7; highlighted 6 to 7.25 stays within 1% of the minimum |
@@ -55,10 +57,10 @@ Zhao 2023 preserves light-drinking estimates below zero extra risk and intervals
 
 ## Interaction and checks
 
-Every numeric chart has named x and y axes and a focusable graphical control. Clicking or dragging changes the marker and readout, without a separate slider bar. Arrow keys select adjacent groups or small dose increments; Home and End select endpoints. Touch taps and horizontal drags select doses, while vertical gestures scroll the page. There is no personal form, storage or network submission.
+Every numeric chart has named x and y axes and a focusable graphical control. Clicking or dragging changes the marker and readout, without a separate slider bar. Arrow keys select adjacent groups or small dose increments; Home and End select endpoints. Touch taps and horizontal drags select doses, while vertical gestures scroll the page. Mouse and pen exit suppress pointer-origin focus decoration while preserving focus, the selected value and captured dragging. A keyboard event restores visible focus, and keyboard-origin focus remains visible when the pointer leaves. Touch behavior is unchanged. There is no personal form, storage or network submission.
 
-Run `node tools/test-enough-data.mjs` and, with Playwright on NODE_PATH, `node tools/test-enough-browser.cjs`. The harness owns an ephemeral server and `/Users/ethan/.local/bin/agent-chrome-for-testing`, closing both in `finally`. It checks 375x812, 768x900 and 1440x900: natural painting aspect ratio, all chart controls and axis bounds, explicit outcome labels, y-tick separation, true 90% rule positions, keyboard and touch interaction, short disclosures, removed sections, reference-essay styles, accessible names and values, no horizontal overflow and no missing resources. `ENOUGH_BASE_URL` can run the same checks against the deployed site. Automation does not certify physical devices or real screen readers.
+Run `node tools/test-enough-data.mjs` and, with Playwright on NODE_PATH, `node tools/test-enough-browser.cjs`. The harness owns an ephemeral server and `/Users/ethan/.local/bin/agent-chrome-for-testing`, closing both in `finally`. It checks 375x812, 768x900 and 1440x900: natural painting aspect ratio, all chart controls and axis bounds, source outcome values and baselines, y-tick separation, actual outcome positions of enough rules, independent opening selections, pointer-exit decoration, keyboard and touch interaction, short disclosures, removed sections, reference-essay styles, accessible names and values, no horizontal overflow and no missing resources. `ENOUGH_BASE_URL` can run the same checks against the deployed site. Automation does not certify physical devices or real screen readers.
 
 Local research and historical AI reader reviews live in `/Users/ethan/Portfolio_01/research/enough/v2/`. AI reader personas are simulations, not human testing. The latest owner follow-up uses the behavioral harness, source checks and screenshot inspection; historical reader reviews do not certify these new edits.
 
-Painting options remain Bruegel's The Harvesters (Met), Homer's Breezing Up (NGA) and Chardin's Fruit, Jug, and a Glass (NGA), all public domain. Every painting is shown whole. Defaults remain Bruegel, shared overlay and area colors.
+Painting options remain Bruegel's The Harvesters (Met), Homer's Breezing Up (NGA) and Chardin's Fruit, Jug, and a Glass (NGA), all public domain. Every painting is shown whole. Defaults are Bruegel, walking first and area colors. The old shared-dose layouts and percentage rings were removed from the chooser.
