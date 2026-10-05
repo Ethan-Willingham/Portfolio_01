@@ -1,0 +1,103 @@
+body.chance-page { padding-inline: 0; }
+:root {
+  --reading-width: 680px;
+  --measure: calc(var(--reading-width) + 2 * var(--gutter));
+  --body-size: 1.25rem;
+  --body-leading: 1.6;
+}
+@media (max-width: 719px) { :root { --gutter: clamp(0.875rem, 3.5vw, 1rem); } }
+@media (min-width: 720px) { :root { --body-size: 1.375rem; } }
+.hero, .sec { max-width: var(--measure); margin: 0 auto; padding-inline: var(--gutter); }
+.post-back.essay-back {
+  display: block;
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-top: clamp(1.5rem, 5vw, 3.5rem);
+}
+.hero { margin-bottom: 2.75rem; }
+.hero-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(2.375rem, 5vw, 3.125rem);
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  color: var(--text-bright);
+  margin: 0;
+}
+.sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1em; text-wrap: pretty; }
+.sec > :last-child { margin-bottom: 0; }
+.sec strong { font-weight: 600; color: var(--text-bright); }
+.sec em { font-style: italic; }
+.chance-essay a, .chance-lab a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.16em;
+}
+.chance-essay a:hover, .chance-lab a:hover {
+  color: var(--accent-hover);
+  text-decoration-color: currentColor;
+}
+.chance-figure { margin: 2rem 0 1.5rem; }
+.chance-diagram {
+  display: block;
+  width: 100%;
+  max-width: 450px;
+  height: auto;
+  margin-inline: auto;
+  overflow: visible;
+}
+.chance-diagram text {
+  font-family: var(--font-body);
+  font-size: 17px;
+  fill: var(--text);
+}
+.chance-diagram .small { font-size: 15px; fill: var(--text-dim); }
+.chance-diagram .accent { fill: var(--accent); }
+.chance-diagram .line {
+  fill: none;
+  stroke: var(--line-mid);
+  stroke-width: 1.25;
+}
+.chance-diagram .gold {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.chance-diagram .point { fill: var(--accent); }
+.chance-diagram .arrow-head { fill: var(--line-mid); }
+.chance-figure figcaption {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin-top: 0.75rem;
+}
+.chance-lab { max-width: 1100px; margin: 0 auto; padding: 2rem var(--gutter); }
+.chance-lab h1 { font-family: var(--font-heading); font-size: clamp(2.25rem, 6vw, 3.5rem); }
+.chance-lab-intro { max-width: 65ch; color: var(--text-dim); font-size: 1.1rem; }
+.chance-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.5rem 3rem; margin-top: 3rem; }
+.chance-option { border-top: 1px solid var(--rule-strong); padding-top: 1.2rem; }
+.chance-option h2 { font-family: var(--font-heading); font-size: 1.6rem; }
+.chance-option p { font-size: 1rem; color: var(--text-dim); }
+.chance-option .chance-figure { margin-block: 1.5rem; }
+.chance-option button {
+  border: 1px solid var(--line-mid);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.chance-option button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.chance-option button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.chance-choice { font-size: 1rem; color: var(--accent); }
+@media (max-width: 719px) {
+  .chance-options { grid-template-columns: 1fr; }
+  .chance-essay p { text-wrap: wrap; }
+}
+@media print {
+  .chance-figure { break-inside: avoid; }
+}
