@@ -1,0 +1,21 @@
+HYG Database v4.1, David Nash / Astronexus
+https://github.com/astronexus/HYG-Database
+
+The star catalog in stars-hyg-v41.bin and its source manifest are adaptations
+of HYG Database v4.1 and are licensed under Creative Commons
+Attribution-ShareAlike 4.0 International (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/
+https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+Changes: exclude the Sun, select apparent visual magnitude <= 6.0, sort by
+magnitude, quantize coordinates and photometry, round proper motions to whole
+milliarcseconds per year, and derive display RGB from measured B-V color
+indices. Unknown B-V is retained as missing and given a neutral display color.
+
+This attribution and license concern the HYG-derived data. The JavaScript
+runtime and builder are separate software; this notice does not apply a
+new license to the rest of the portfolio site.
+
+Exact source version, SHA-256, fields, derivation, byte layout and original
+sample values are recorded in stars-hyg-v41.source.json. This adaptation is
+not endorsed by the catalog's author or source observatories.

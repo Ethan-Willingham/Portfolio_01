@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "title": "HYG 4.1 bright-star subset for Daylight Globe",
+  "attribution": "HYG Database v4.1, David Nash / Astronexus",
+  "license": "CC-BY-SA-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "source": {
+    "url": "https://raw.githubusercontent.com/astronexus/HYG-Database/c7f7f883fe678cc7680169a50ccd7dcc49b060ce/hyg/CURRENT/hygdata_v41.csv",
+    "repository": "https://github.com/astronexus/HYG-Database",
+    "commit": "c7f7f883fe678cc7680169a50ccd7dcc49b060ce",
+    "sha256": "d9f69fd86bbf90a4e4d52b4c5c53eacfa6dfc0bfdef85bfd94f095e0bebe4ebd",
+    "rows": 119626,
+    "documentation": "https://github.com/astronexus/HYG-Database/blob/c7f7f883fe678cc7680169a50ccd7dcc49b060ce/hyg/README.md",
+    "license": "https://github.com/astronexus/HYG-Database/blob/c7f7f883fe678cc7680169a50ccd7dcc49b060ce/LICENSE"
+  },
+  "derivation": "Exclude HYG id 0 (Sun); retain every star with apparent visual magnitude <= 6.0; sort by magnitude then HYG id; quantize positions, photometry and proper motions; derive display RGB from measured B-V.",
+  "frame": "Mean equatorial J2000.0, epoch and equinox 2000.0. Hipparcos-derived ICRS directions are treated as J2000 mean equatorial directions at this display scale.",
+  "fields": {
+    "id": "HYG id",
+    "ra": "rarad, radians",
+    "dec": "decrad, radians",
+    "pmRa": "pmra, mu_alpha*cos(delta), milliarcseconds/year",
+    "pmDec": "pmdec, milliarcseconds/year",
+    "magnitude": "mag, apparent visual magnitude",
+    "colorIndex": "ci, measured B-V"
+  },
+  "file": "stars-hyg-v41.bin",
+  "sha256": "71e7d0587af9c8e2ec5ae999ceae29ca3ad7a7d189555c441920b08791ab2355",
+  "bytes": 121712,
+  "count": 5070,
+  "magnitudeLimit": 6,
+  "missingColorIndices": 23,
+  "records": {
+    "endian": "little",
+    "headerBytes": 32,
+    "recordBytes": 24,
+    "layout": [
+      "u32 HYG id",
+      "f32 RA radians",
+      "f32 declination radians",
+      "i16 pmRA mas/year",
+      "i16 pmDec mas/year",
+      "i16 visual magnitude / 1000",
+      "i16 B-V / 1000 (32767 missing)",
+      "u8 sRGB red",
+      "u8 sRGB green",
+      "u8 sRGB blue",
+      "u8 flags (bit 0 = missing B-V)"
+    ]
+  },
+  "color": {
+    "method": "Ballesteros B-V temperature; Planck spectrum integrated 380-780 nm at 5 nm with Wyman CIE 1931 fits; linear sRGB, peak-normalized, sRGB encoded to 8 bits. Missing B-V gives neutral white.",
+    "rawColorIndexRetained": true,
+    "temperatureInputRange": [
+      -0.4,
+      2
+    ],
+    "references": [
+      "https://arxiv.org/html/1201.1809v2",
+      "https://jcgt.org/published/0002/02/01/paper.pdf"
+    ]
+  },
+  "rawSourceSamples": [
+    {
+      "id": 32263,
+      "hip": 32349,
+      "name": "Sirius",
+      "ra": 1.7677953696021995,
+      "dec": -0.291751258517685,
+      "pmRa": -546.01,
+      "pmDec": -1223.08,
+      "magnitude": -1.44,
+      "bv": 0.009
+    },
+    {
+      "id": 30365,
+      "hip": 30438,
+      "name": "Canopus",
+      "ra": 1.6753053519997292,
+      "dec": -0.9197127748902675,
+      "pmRa": 19.99,
+      "pmDec": 23.67,
+      "magnitude": -0.62,
+      "bv": 0.164
+    },
+    {
+      "id": 90979,
+      "hip": 91262,
+      "name": "Vega",
+      "ra": 4.873563095509031,
+      "dec": 0.6769031163973025,
+      "pmRa": 201.02,
+      "pmDec": 287.46,
+      "magnitude": 0.03,
+      "bv": -0.001
+    },
+    {
+      "id": 27919,
+      "hip": 27989,
+      "name": "Betelgeuse",
+      "ra": 1.5497291183713153,
+      "dec": 0.12927763169419373,
+      "pmRa": 27.33,
+      "pmDec": 10.86,
+      "magnitude": 0.45,
+      "bv": 1.5
+    },
+    {
+      "id": 11734,
+      "hip": 11767,
+      "name": "Polaris",
+      "ra": 0.6622870748653336,
+      "dec": 1.5579526129751475,
+      "pmRa": 44.22,
+      "pmDec": -11.74,
+      "magnitude": 1.97,
+      "bv": 0.636
+    },
+    {
+      "id": 103879,
+      "hip": 104214,
+      "name": null,
+      "ra": 5.527840164315857,
+      "dec": 0.6763048804390562,
+      "pmRa": 4155.1,
+      "pmDec": 3258.9,
+      "magnitude": 5.2,
+      "bv": 1.069
+    }
+  ]
+}

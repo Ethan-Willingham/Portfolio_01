@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>Daylight Globe</title>
-  <meta name="description" content="Live sunlight, dated satellite clouds and NOAA's aurora forecasts. Spin the globe, pin a spot or follow real weather frames through time.">
+  <meta name="description" content="Real clouds, moving sunlight and aurora forecasts. Orbit Earth or replay another time.">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:title" content="Daylight Globe">
-  <meta property="og:description" content="Live sunlight, dated satellite clouds and NOAA's aurora forecasts. Spin the globe, pin a spot or follow real weather frames through time.">
+  <meta property="og:description" content="Real clouds, moving sunlight and aurora forecasts. Orbit Earth or replay another time.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/daylight-globe.html">
-  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og-v2.jpg">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og-v3.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og-v2.jpg">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/daylight-globe-og-v3.jpg">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="globe.css?v=20261004-9">
+  <link rel="stylesheet" href="globe.css?v=20261005-11">
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -31,30 +31,26 @@
 
     <header class="post-header fade-in">
       <h1 class="post-title">Daylight Globe</h1>
-      <p class="post-subtitle">Real satellite clouds, live sunlight and the aurora forecast.</p>
+      <p class="post-subtitle">Real clouds. Live sunlight. Aurora forecasts.</p>
     </header>
     <main>
       <article class="post-body fade-in">
         <div class="globe-wrapper">
-          <div id="globe-container" class="is-loading" tabindex="0" role="group" aria-label="Interactive Earth globe" aria-describedby="globe-keyboard">
-            <div class="globe-loading">Loading Earth</div>
-            <div class="globe-info"><span id="hover-info">Drag to spin. Tap to pin. Arrow keys rotate.</span></div>
+          <div id="globe-container" class="is-loading" tabindex="0" role="group" aria-label="Interactive Earth globe" aria-describedby="globe-keyboard" aria-busy="true">
+            <div class="globe-loading" role="status" aria-live="polite">
+              <div class="globe-loading-inner"><p id="globe-loading-label">Loading Earth</p><progress id="globe-loading-progress" max="11" value="0" aria-label="Globe loading progress"></progress></div>
+            </div>
+            <div class="globe-info"><span id="hover-info">Drag to orbit. Tap Earth to pin.</span></div>
+            <button id="globe-sun" class="globe-sun-btn globe-button" type="button" title="Frame Earth and the Sun">Sun</button>
             <button id="globe-fullscreen" class="globe-fs-btn" type="button" aria-label="Enter fullscreen">
               <svg class="fs-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
               <svg class="fs-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h4V4M20 8h-4V4M4 16h4v4M20 16h-4v4"/></svg>
             </button>
           </div>
           <div class="globe-foot">
-            <div class="globe-status-row">
-              <div class="globe-status-text">
-                <p class="globe-status" id="globe-status">Earth now. Loading reference map.</p>
-                <time class="globe-clock" id="globe-clock"></time>
-              </div>
-              <button id="globe-explore-toggle" class="globe-button" type="button" aria-expanded="false" aria-controls="globe-explore">Explore another time</button>
-            </div>
-            <p class="globe-data" id="globe-data">Checking satellite imagery and aurora data.</p>
-            <p class="globe-gap-key" id="globe-gap-key" hidden>Reference map in hatched photo gaps.</p>
-            <section id="globe-explore" class="globe-explore" aria-label="Explore another time" hidden>
+            <div class="globe-clock-row"><time class="globe-clock" id="globe-clock"></time><button id="globe-return" class="globe-button globe-return" type="button" aria-pressed="true">Live</button></div>
+            <div class="globe-status-row"><p class="globe-status" id="globe-status">Loading clouds</p><p class="globe-status" id="globe-aurora-status">Loading aurora</p></div>
+            <section id="globe-explore" class="globe-explore" aria-label="Time and tilt controls">
               <div class="globe-explore-grid">
                 <div class="globe-field">
                   <label for="globe-date">Date</label>
@@ -65,19 +61,17 @@
                   <input id="globe-hour" aria-describedby="globe-time-basis" type="range" min="0" max="1439" step="1" value="720">
                 </div>
               </div>
-              <p class="globe-time-basis" id="globe-time-basis"></p>
-              <p class="globe-time-basis" id="globe-weather-basis">Cloud images every 3 hours. Aurora history is available only for saved forecasts.</p>
+              <p class="globe-sr-only" id="globe-zone"></p>
               <fieldset class="globe-tilts">
                 <legend>Earth's tilt</legend>
                 <div class="globe-tilt-options">
                   <button class="tilt-btn" type="button" data-tilt="22.1" aria-pressed="false">22.1&deg;</button>
-                  <button class="tilt-btn" type="button" data-tilt="current" aria-pressed="true">Current</button>
+                  <button class="tilt-btn" type="button" data-tilt="current" aria-pressed="true">Real</button>
                   <button class="tilt-btn" type="button" data-tilt="24.5" aria-pressed="false">24.5&deg;</button>
                   <button class="tilt-btn" type="button" data-tilt="45" aria-pressed="false">45&deg;</button>
                 </div>
               </fieldset>
-              <p class="globe-tilt-note" id="globe-tilt-note">Current tilt. The Moon follows its real orbit.</p>
-              <div class="globe-explore-actions"><button id="globe-return" class="globe-button globe-return" type="button" hidden>Return to live</button></div>
+              <p class="globe-tilt-note" id="globe-tilt-note" hidden></p>
             </section>
             <section id="globe-pin" class="globe-pin" aria-labelledby="globe-pin-title" hidden>
               <div class="globe-pin-head"><h2 id="globe-pin-title">Pinned location</h2><button id="globe-pin-close" class="globe-pin-close" type="button">Clear pin</button></div>
@@ -88,12 +82,23 @@
                 <div><dt>Aurora forecast</dt><dd id="globe-pin-aurora"></dd></div>
               </dl>
             </section>
+            <details class="globe-sources">
+              <summary>Sources &amp; accuracy</summary>
+              <p id="globe-data">Checking satellite imagery and aurora data.</p>
+              <p id="globe-gap-key" hidden>Reference map in hatched photo gaps.</p>
+              <p id="globe-time-basis"></p>
+              <p id="globe-weather-basis">Cloud images every 3 hours. Aurora history covers saved forecasts only.</p>
+              <p>Satellite imagery: <a href="https://view.eumetsat.int/">EUMETSAT EUMETView</a>, NOAA and JMA. Natural colour where available; infrared at night. Contains modified EUMETSAT data, 2021 to 2026, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Daily fallback: <a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a>, NOAA-21 and NOAA-20 VIIRS. City lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA Black Marble, 2016</a>.</p>
+              <p>Aurora: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA SWPC</a>. The glow shows modeled probabilities above 10%, with illustrative curtain detail. A forecast does not guarantee a sighting. Clouds, daylight and local lights can hide it.</p>
+              <p>Stars: <a href="https://github.com/astronexus/HYG-Database">HYG 4.1</a>, David Nash / Astronexus. 5,070 measured stars, magnitude 6 and brighter. Adapted catalog under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Positions follow the selected time; point sizes and exposure are adjusted for the screen. Sun and Moon directions follow the selected time, with compressed distances. Glare illustrates a camera's response to the visible Sun. Pin clocks use local solar time.</p>
+              <p><a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/docs/DAYLIGHT_GLOBE.md">Calculation notes</a>.</p>
+            </details>
           </div>
           <p id="globe-keyboard" class="globe-sr-only">With the globe focused, use arrow keys to rotate, plus or minus to zoom, Enter to pin the center, and Escape to exit fullscreen or clear the pin. Drag, pinch or scroll to explore. Pin times follow the Sun, rather than a civil time zone.</p>
           <p id="globe-summary" class="globe-sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
         </div>
-        <p>Satellites can see clouds after sunset: infrared images measure heat rather than reflected sunlight. The slider follows dated satellite images and saved aurora forecasts, with a separate timestamp for each.</p>
-        <p class="globe-credits">Satellite imagery: <a href="https://view.eumetsat.int/">EUMETSAT EUMETView</a>, NOAA and JMA, with natural-colour RGB by day and infrared at night. Contains modified EUMETSAT data, 2021 to 2026, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Daily fallback: <a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a>, NOAA-21 and NOAA-20 VIIRS. Night lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA Black Marble, 2016</a>. Aurora and Kp: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA SWPC</a>. The glow illustrates modeled probabilities above 10%; it does not guarantee a sighting. Clouds, daylight and local lights can hide aurora. Sun and Moon distances are compressed; background stars are illustrative. Pin clocks use local solar time. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/docs/DAYLIGHT_GLOBE.md">Calculation notes</a>.</p>
+        <p class="globe-caption">Move time to replay real clouds and recorded aurora. Infrared sees clouds at night.</p>
+
       </article>
     </main>
 
@@ -107,7 +112,9 @@
   <script src="js/vendor/three-r128.min.js"></script>
   <script src="js/globe-math.js?v=20261004-9"></script>
   <script src="js/globe-data.js?v=20261004-10"></script>
-  <script src="js/globe.js?v=20261004-10"></script>
+  <script src="js/globe-stars.js?v=20261005-11"></script>
+  <script src="js/globe-optics.js?v=20261005-11"></script>
+  <script src="js/globe.js?v=20261005-11"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

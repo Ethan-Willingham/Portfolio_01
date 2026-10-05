@@ -1,28 +1,31 @@
 {
-  "source": "Real browser capture of daylight-globe.html with EUMETSAT EUMETView and NOAA SWPC live responses",
-  "capturedAt": "2026-10-05T03:43:02.182Z",
-  "rendererSha256": "b0aa3f4d2a1eae73d52889d4150f9056b89adf710b37cb2ffd04ef258d5bb3dc",
-  "satelliteTime": "2026-10-05T00:00:00.000Z",
+  "source": "Real browser capture of daylight-globe.html with EUMETSAT and NOAA live responses",
+  "capturedAt": "2026-10-05T14:00:17.220Z",
+  "rendererSha256": "a03b700bab83b59805cb04826c43cacf60dd6c5141c0a01a787abb839f568a00",
+  "satelliteTime": "2026-10-05T12:00:00.000Z",
   "photoLayers": [
     "mumi:wideareacoverage_rgb_natural",
     "mumi:worldcloudmap_ir108"
   ],
-  "auroraObservation": "2026-10-05T03:35:00.000Z",
-  "auroraForecast": "2026-10-05T04:24:00.000Z",
-  "kp": 4,
-  "view": "20 degrees north, 160 degrees east, showing dated Pacific satellite clouds and two storm spirals",
+  "auroraObservation": "2026-10-05T13:50:00.000Z",
+  "auroraForecast": "2026-10-05T14:38:00.000Z",
+  "starCatalog": "HYG4.1, 5070 actual V<=6 stars",
+  "starCatalogSha256": "71e7d0587af9c8e2ec5ae999ceae29ca3ad7a7d189555c441920b08791ab2355",
+  "view": "Dusk Earth and camera-relative real solar bearing, with the catalog sky",
   "derivatives": {
-    "daylight-globe-live-v2.jpg": [
+    "daylight-globe-live-v3.jpg": [
       600,
       400
     ],
-    "daylight-globe-og-v2.jpg": [
+    "daylight-globe-og-v3.jpg": [
       1200,
       630
     ]
   },
-  "processing": "UI controls hidden for the capture. One-pixel border removed, then centered crop and resize. Satellite pixel colours retained. Aurora curtains illustrate the genuine NOAA probability field.",
-  "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NOAA SWPC OVATION. NASA Black Marble 2016.",
-  "license": "https://creativecommons.org/licenses/by/4.0/",
-  "dataPolicy": "https://www-cdn.eumetsat.int/files/2024-07/45173%20-%20Data%20Policy%281419774%20V1%29.pdf"
+  "processing": "Canvas-only browser screenshot with controls hidden. Centered crop and resize. Satellite colors retained; solar bloom and point exposure are illustrative.",
+  "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NOAA SWPC OVATION. NASA Black Marble 2016. HYG 4.1 by David Nash / Astronexus, adapted under CC BY-SA 4.0.",
+  "licenses": [
+    "https://creativecommons.org/licenses/by/4.0/",
+    "https://creativecommons.org/licenses/by-sa/4.0/"
+  ]
 }

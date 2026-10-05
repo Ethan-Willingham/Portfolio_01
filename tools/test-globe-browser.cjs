@@ -22,7 +22,7 @@ const server = http.createServer((req,res) => {
       const index = source.lastIndexOf('}());');
       source = source.slice(0,index)+`
       window.__globeTest = {
-        state: () => ({live,instant:instant.toISOString(),tilt:tilt??null,pin,photo,
+        state: () => ({loading,live,instant:instant.toISOString(),tilt:tilt??null,pin,photo,
           forecast:forecast?{observation:forecast.observation.toISOString(),forecast:forecast.forecast.toISOString()}:null,
           kp:kp?.kp,textureWidth,photoMix,autoSpin,targetTheta,targetPhi,targetRadius,
           pending:frameRequest!==null,aurora:auroraMeshes.some(m=>m.visible),moon:moon.visible,
@@ -91,12 +91,12 @@ let browser;
       await page.goto(`http://127.0.0.1:${server.address().port}/daylight-globe.html`);
       await page.waitForFunction(()=>window.__globeTest&&__globeTest.state().textures[0].w>1);
       await page.waitForFunction(()=>__globeTest.state().photo&&__globeTest.state().forecast,{timeout:90000});
-      await page.waitForFunction(()=>__globeTest.state().photoMix===1);
+      await page.waitForFunction(()=>__globeTest.state().photoMix===1&&!__globeTest.state().loading);
       await page.evaluate(()=>document.fonts.ready);
       const state=()=>page.evaluate(()=>__globeTest.state());
       let s=await state();
       check(width+' opens in Live with photographed Earth and current forecast',s.live&&s.photo&&s.aurora);
-      check(width+' Explore and pin facts start collapsed',!await page.locator('#globe-explore').isVisible()&&!await page.locator('#globe-pin').isVisible());
+      check(width+' controls start available and pin facts start hidden',await page.locator('#globe-explore').isVisible()&&!await page.locator('#globe-pin').isVisible());
       check(width+' texture size respects the phone/desktop and GPU budget',s.textureWidth<=(width===375?2048:4096)&&s.textures.every(t=>t.w<=s.textureWidth&&t.h<=s.textureWidth));
       check(width+' has no page overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       if(width===375){
@@ -121,11 +121,11 @@ let browser;
       await page.keyboard.press('Enter');s=await state();
       check(width+' keyboard pins the center and keeps live',s.pin&&s.live);
       check(width+' pin presents exactly four semantic facts',await page.locator('#globe-pin dt').count()===4);
-      check(width+' buttons retain their visible border affordance',await page.locator('#globe-explore-toggle').evaluate(el=>getComputedStyle(el).borderTopStyle==='solid'));
+      check(width+' buttons retain their visible border affordance',await page.locator('#globe-return').evaluate(el=>getComputedStyle(el).borderTopStyle==='solid'));
       await page.evaluate(()=>__globeTest.pin(69.65,18.96));
       await page.screenshot({path:path.join(dump,width+'-pin.png'),fullPage:true});
-      await page.locator('#globe-explore-toggle').click();
-      check(width+' opening Explore preserves live',(await state()).live);
+
+      check(width+' time controls are immediately available',await page.locator('#globe-date').isVisible()&&(await state()).live);
       check(width+' the time range announces a readable civil time',!!await page.locator('#globe-hour').getAttribute('aria-valuetext'));
       await page.locator('#globe-date').fill('2026-12-21');await page.locator('#globe-date').dispatchEvent('change');
       await page.locator('#globe-hour').fill('720');await page.locator('#globe-hour').dispatchEvent('input');s=await state();
@@ -136,12 +136,12 @@ let browser;
       await page.screenshot({path:path.join(dump,width+'-explore.png'),fullPage:true});
       await page.locator('#globe-return').focus();await page.keyboard.press('Enter');s=await state();
       check(width+' Return to live restores real tilt and forecast',s.live&&s.tilt===null&&s.aurora&&s.moon);
-      check(width+' Return to live preserves keyboard focus',await page.evaluate(()=>document.activeElement.id==='globe-explore-toggle'));
+      check(width+' Return to live preserves keyboard focus',await page.evaluate(()=>document.activeElement.id==='globe-return'));
       if(width===375){
         await page.evaluate(()=>document.documentElement.style.fontSize='32px');
         for(const size of [375,320]){
           await page.setViewportSize({width:size,height:812});
-          check(size+' mobile enlarged text keeps status and Explore apart',await page.evaluate(()=>{const a=document.querySelector('.globe-status-text').getBoundingClientRect(),b=document.querySelector('#globe-explore-toggle').getBoundingClientRect();return a.right<=b.left+1||a.bottom<=b.top+1;}));
+          check(size+' mobile enlarged text keeps date and Live apart',await page.evaluate(()=>{const a=document.querySelector('#globe-clock').getBoundingClientRect(),b=document.querySelector('#globe-return').getBoundingClientRect();return a.right<=b.left+1||a.bottom<=b.top+1;}));
           check(size+' enlarged mobile controls do not cause horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.querySelector('.globe-foot').scrollWidth<=document.querySelector('.globe-foot').clientWidth+1));
           await page.screenshot({path:path.join(dump,size+'-mobile-large-text.png'),fullPage:true});
         }
@@ -152,7 +152,7 @@ let browser;
         check('200 percent text preserves all four readable pin facts',await page.locator('#globe-pin dd').evaluateAll(elements=>elements.length===4&&elements.every(el=>el.scrollWidth<=el.clientWidth+1)));
         await page.evaluate(()=>document.documentElement.style.fontSize='');
       }
-      await page.locator('#globe-explore-toggle').click();
+
       await page.evaluate(()=>{document.querySelector('.globe-wrapper').requestFullscreen=undefined;});
       await page.locator('#globe-fullscreen').click();check(width+' fullscreen opens',await page.locator('.globe-wrapper.is-fullscreen').count()===1);
       for(let i=0;i<8;i++)await page.keyboard.press('Tab');
@@ -168,7 +168,7 @@ let browser;
         await page.evaluate(()=>__globeTest.setInstant('2026-10-05T00:01:00Z'));
         const second=await page.evaluate(()=>__globeTest.meanDay());
         check('apparent solar midnight keeps the visible pin date and events aligned',first.sunrise.startsWith('2026-10-05')&&first.sunrise===second.sunrise&&(await page.locator('#globe-pin-clock').textContent()).includes('Oct 5'));
-        await page.locator('#globe-explore-toggle').click();await page.locator('#globe-return').click();await page.locator('#globe-explore-toggle').click();
+        await page.locator('#globe-return').click();
       }
       if(!real){const before=imageRequests;await page.reload();await page.waitForFunction(()=>window.__globeTest&&__globeTest.state().photo);check(width+' reload reuses dated satellite Cache Storage images',before>0&&imageRequests===before);}
       await page.evaluate(()=>__globeTest.stale());check(width+' stale aurora hides without becoming zero',(await state()).aurora===false&&(await page.locator('#globe-data').textContent()).includes('unavailable'));
@@ -196,10 +196,10 @@ let browser;
     failurePage.on('pageerror',e=>failureErrors.push(e.message));failurePage.on('console',e=>{if(e.type()==='error')failureErrors.push(e.text());});
     await failurePage.goto(`http://127.0.0.1:${server.address().port}/daylight-globe.html`);
     await failurePage.waitForFunction(()=>window.__globeTest&&__globeTest.state().textures[0].w>1&&!__globeTest.state().photoBusy&&!__globeTest.state().weatherBusy);
-    check('a fresh blocked-network visit shows reference Earth and truthful unavailable forecast',!(await failurePage.evaluate(()=>__globeTest.state())).photo&&(await failurePage.locator('#globe-status').textContent()).includes('Reference map')&&(await failurePage.locator('#globe-data').textContent()).includes('unavailable'));
-    await failurePage.locator('#globe-explore-toggle').click();
+    check('a fresh blocked-network visit shows reference Earth and truthful unavailable forecast',!(await failurePage.evaluate(()=>__globeTest.state())).photo&&(await failurePage.locator('#globe-status').textContent()).includes('Clouds unavailable')&&(await failurePage.locator('#globe-data').textContent()).includes('unavailable'));
+
     check('blocked-network controls remain usable without console or JavaScript errors',await failurePage.locator('#globe-date').isVisible()&&failureErrors.length===0);
-    check('successful local map loading updates the offline accessible summary',await failurePage.locator('#globe-summary').textContent().then(value=>value.includes('Reference map.')&&!value.includes('Loading reference map')));
+    check('successful local map loading updates the offline accessible summary',await failurePage.locator('#globe-summary').textContent().then(value=>value.includes('Satellite clouds unavailable.')&&!value.includes('Loading reference map')));
     await failurePage.screenshot({path:path.join(dump,'fresh-blocked-network.png'),fullPage:true});
     evidence.push({failureErrors});await failed.close();
     const damaged=await browser.newContext({viewport:{width:375,height:812}});
@@ -227,8 +227,8 @@ let browser;
       page.on('pageerror',e=>errors.push(e.message));page.on('console',e=>{if(e.type()==='error')errors.push(e.text());});
       await page.goto(`http://127.0.0.1:${server.address().port}/daylight-globe.html`);
       await page.waitForFunction(()=>document.querySelector('#globe-summary').textContent.includes('source links below'));
-      check(failure+' failure removes inactive controls and misleading keyboard affordances',await page.evaluate(()=>!document.querySelector('#globe-container').hasAttribute('tabindex')&&document.querySelector('#globe-fullscreen').disabled&&document.querySelector('#globe-explore-toggle').disabled&&!document.querySelector('.globe-info'))&&!await page.locator('#globe-fullscreen').isVisible());
-      check(failure+' failure supplies an accessible summary and working source links without errors',errors.length===0&&await page.locator('.globe-credits a').count()>=4);
+      check(failure+' failure removes inactive controls and misleading keyboard affordances',await page.evaluate(()=>!document.querySelector('#globe-container').hasAttribute('tabindex')&&document.querySelector('#globe-fullscreen').disabled&&document.querySelector('#globe-date').disabled&&!document.querySelector('.globe-info'))&&!await page.locator('#globe-fullscreen').isVisible());
+      check(failure+' failure supplies an accessible summary and working source links without errors',errors.length===0&&await page.locator('.globe-sources a').count()>=4);
       await page.screenshot({path:path.join(dump,failure+'-unavailable.png'),fullPage:true});await unavailable.close();
     }
     const noBase=await browser.newContext({viewport:{width:375,height:812}});
@@ -237,8 +237,8 @@ let browser;
     const noBasePage=await noBase.newPage(),noBaseErrors=[];
     noBasePage.on('pageerror',e=>noBaseErrors.push(e.message));noBasePage.on('console',e=>{if(e.type()==='error')noBaseErrors.push(e.text());});
     await noBasePage.goto(`http://127.0.0.1:${server.address().port}/daylight-globe.html`);
-    check('delayed reference imagery is labeled as loading',await noBasePage.locator('#globe-status').textContent().then(value=>value.includes('Loading reference map')));
-    await noBasePage.waitForFunction(()=>document.querySelector('#globe-status').textContent.includes('Reference map unavailable'));
+    check('delayed reference imagery keeps the loading overlay visible',await noBasePage.locator('.globe-loading').isVisible());
+    await noBasePage.waitForFunction(()=>document.querySelector('#globe-summary').textContent.includes('Reference map unavailable'));
     check('failed local map does not claim a neutral sphere is a reference map',noBaseErrors.length===0&&(await noBasePage.locator('#globe-summary').textContent()).includes('Reference map unavailable'));
     await noBasePage.screenshot({path:path.join(dump,'base-map-unavailable.png'),fullPage:true});await noBase.close();
     const slowWeather=await browser.newContext({viewport:{width:375,height:812}});
@@ -257,8 +257,8 @@ let browser;
     await fullscreenContext.route('https://services.swpc.noaa.gov/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(route.request().url().includes('ovation')?model:kps)}));
     const fsPage=await fullscreenContext.newPage();await fsPage.clock.setFixedTime(new Date('2026-10-05T00:05:00Z'));
     await fsPage.goto(`http://127.0.0.1:${server.address().port}/daylight-globe.html`);
-    await fsPage.waitForFunction(()=>window.__globeTest&&__globeTest.state().photo);
-    await fsPage.locator('#globe-explore-toggle').click();await fsPage.locator('#globe-date').fill('1900-01-01');await fsPage.locator('#globe-date').dispatchEvent('change');
+    await fsPage.waitForFunction(()=>window.__globeTest&&__globeTest.state().photo&&!__globeTest.state().loading);
+    await fsPage.locator('#globe-date').fill('1900-01-01');await fsPage.locator('#globe-date').dispatchEvent('change');
     await fsPage.locator('#globe-return').click();await fsPage.setViewportSize({width:568,height:320});
     await fsPage.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
     await fsPage.waitForFunction(()=>!__globeTest.state().inView&&!__globeTest.state().pending);
@@ -270,18 +270,15 @@ let browser;
     check('fullscreen rendering advances the actual Live instant',true);
     await fsPage.screenshot({path:path.join(dump,'narrow-fullscreen-from-offscreen.png')});
     await fsPage.evaluate(()=>document.documentElement.style.fontSize='32px');
-    await fsPage.waitForFunction(()=>document.querySelector('.globe-foot').getBoundingClientRect().width===innerWidth);
-    if(!await fsPage.locator('#globe-explore').isVisible())await fsPage.locator('#globe-explore-toggle').click();
+    await fsPage.waitForFunction(()=>document.querySelector('.globe-foot').getBoundingClientRect().width>0);
+
     await fsPage.locator('[data-tilt="45"]').click();await fsPage.locator('#globe-return').focus();
     check('200 percent text in narrow fullscreen has no horizontal footer scrolling',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollLeft===0));
     await fsPage.screenshot({path:path.join(dump,'narrow-fullscreen-large-text.png')});
     for(const width of [640,740,800,844,1024]){
       await fsPage.setViewportSize({width,height:400});
-      for(const expanded of [false,true]){
-        await fsPage.evaluate(expanded=>{const section=document.querySelector('#globe-explore');if(section.hidden===expanded)document.querySelector('#globe-explore-toggle').click();},expanded);
-        check(width+' fullscreen enlarged '+(expanded?'expanded':'collapsed')+' status stays clear of Explore',await fsPage.evaluate(()=>{const a=document.querySelector('.globe-status-text').getBoundingClientRect(),b=document.querySelector('#globe-explore-toggle').getBoundingClientRect();return a.right<=b.left+1||a.bottom<=b.top+1;}));
-        check(width+' fullscreen enlarged '+(expanded?'expanded':'collapsed')+' has no horizontal footer overflow',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
-      }
+      check(width+' fullscreen enlarged controls stay available',await fsPage.locator('#globe-date').isVisible());
+      check(width+' fullscreen enlarged has no horizontal footer overflow',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
       await fsPage.screenshot({path:path.join(dump,width+'-fullscreen-large-text.png')});
     }
     await fsPage.setViewportSize({width:568,height:320});
