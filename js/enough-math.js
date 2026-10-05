@@ -3,13 +3,16 @@
   'use strict';
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   function estimate(c,d,key='effect'){
-    if(c.kind==='unknown')return null;
+    if(c.kind==='unknown'||c.kind==='guidance')return null;
     if(c.kind==='categories')return c.points[Math.round(clamp(d,0,c.points.length-1))][key];
     if(key==='effect'){
       if(c.id==='protein')return 1.75*(Math.min(d*2.20462262185,1.62)-.9)*2.20462262185;
       if(c.id==='work')return 126.089*(d-24)-4.533*Math.max(0,d-49)**2;
     }
-    if(c.id==='fiber')return (key==='low'?.90:key==='high'?.95:.93)**((d-7)/8);
+    if(c.id==='fiber'){
+      const model=c.model,ratio=key==='low'?model.riskRatioPerIncrementLow:key==='high'?model.riskRatioPerIncrementHigh:model.riskRatioPerIncrement;
+      return ratio**((d-c.domain[0])/model.increment);
+    }
     if(c.id==='savings'){
       const s=d/100,[r,w]=key==='scenarioLow'?[.07,.05]:key==='scenarioHigh'?[.03,.03]:[.05,.04];
       return ['low','high'].includes(key)?null:Math.log1p(r*(1-s)/(w*s))/Math.log1p(r);
@@ -20,7 +23,7 @@
     return a[key]+(b[key]-a[key])*(d-a.dose)/(b.dose-a.dose);
   }
   function series(c,key='effect'){
-    if(c.kind==='unknown')return [];const [a,b]=c.view.range;
+    if(c.kind==='unknown'||c.kind==='guidance')return [];const [a,b]=c.view.range;
     let points=c.points.filter(p=>p.dose>=a&&p.dose<=b).map(p=>({dose:p.dose,effect:estimate(c,p.dose,key)}));
     if(c.kind!=='categories')for(const d of [a,b])if(!points.some(p=>p.dose===d))points.push({dose:d,effect:estimate(c,d,key)});
     return points.sort((a,b)=>a.dose-b.dose);
@@ -58,10 +61,11 @@
   // Display source outcomes, never a rescaled share of all possible benefit.
   function outcome(c,d,key='effect'){
     const e=estimate(c,d,key);
+    if(e===null)return null;
+    if(c.id==='income')return e;
     if(c.view.mode==='comparison')return 100*(1-e);
     if(c.view.mode==='benefit'){
       if(c.effectKind==='risk')return 100*(1-e/estimate(c,c.view.range[0],key));
-      if(c.id==='income')return e-estimate(c,c.view.range[0],key);
       return e;
     }
     return c.view.mode==='model'?e:100*(e-1);

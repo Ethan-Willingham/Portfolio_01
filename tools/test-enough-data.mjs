@@ -7,7 +7,7 @@ assert.equal(curves.length,12);assert.equal(new Set(curves.map(c=>c.id)).size,12
 for(const c of curves){
  assert.ok(c.question&&c.fact&&c.extraction&&c.population&&c.uncertainty&&c.sources.length,c.id+' complete provenance');
  if(c.id==='steps'){assert.equal(c.verified,'2026-10-05');assert.match(c.followupAudit.method,/No independent review/);}else{assert.equal(c.verified,'2026-10-04');assert.equal(c.reverification.researcher===c.reverification.adversary,false);}
- const sources=new Set(c.sources.map(s=>s.id));for(const s of c.sources)assert.ok(s.citation&&s.location&&/^(https:\/\/|#)/.test(s.url));
+ assert.equal(c.evidenceAudit.date,'2026-10-05');assert.equal(c.view.showEnough,false);const sources=new Set(c.sources.map(s=>s.id));for(const s of c.sources)assert.ok(s.citation&&s.location&&/^(https:\/\/|#)/.test(s.url));
  if(c.kind==='unknown'){assert.equal(c.domain,null);assert.equal(c.view.range,null);assert.equal(M.series(c).length,0);}else assert.ok(c.domain[0]<c.domain[1]&&c.defaultDose>=c.domain[0]&&c.defaultDose<=c.domain[1]);
  for(let i=0;i<c.points.length;i++){const p=c.points[i];assert.ok(Number.isFinite(p.dose)&&Number.isFinite(p.effect));if(i)assert.ok(p.dose>c.points[i-1].dose,c.id+' ordered');assert.ok(sources.has(p.source)&&p.location,c.id+' point provenance');assert.equal(p.low===null,p.high===null);if(p.low!==null)assert.ok(p.low<=p.effect+1e-10&&p.effect<=p.high+1e-10,c.id+' limits order');}
  const d=M.enough(c);if(c.view.mode==='benefit'){
@@ -26,10 +26,11 @@ assert.equal(ding.points.length,11);near(M.enough(ding),10500);near(M.share(ding
 for(const p of ding.points){assert.ok(p.low<=p.effect&&p.effect<=p.high);assert.equal(p.source,'steps-0');assert.match(p.location,/Table 2/);}
 near(M.enough(by('exercise')),342.64369150794863);near(M.share(by('exercise'),150),80.5518385314365);
 for(const p of by('exercise').points)near(p.dose,p.originalDose*60/3.5,1e-9);
-near(M.enough(by('protein')),.7021609887596101);near(M.estimate(by('protein'),.8),M.estimate(by('protein'),1));
+const oldProtein=ctx.window.EnoughData.supportingEvidence.protein2018;near(M.enough(oldProtein),.7021609887596101);near(M.estimate(oldProtein,.8),M.estimate(oldProtein,1));
+assert.equal(by('protein').kind,'guidance');assert.equal(M.enough(by('protein')),null);assert.equal(M.outcome(by('protein'),.8),null);assert.equal(M.series(by('protein')).length,0);near(by('protein').guidance.low,1.4/2.20462262185);near(by('protein').guidance.high,2/2.20462262185);assert.equal(by('protein').guidance.type,'recommendation');assert.equal(by('protein').evidenceSummary.nunes2022.leanMassTrialsWithResistanceExercise,62);near(by('protein').evidenceSummary.nunes2022.effect,.22);near(by('protein').evidenceSummary.morton2018.effectKg,.30);assert.equal(by('protein').evidenceSummary.bagheri2023.completed,44);
 assert.equal(M.enough(by('sets')),null);assert.equal(by('sets').computed.enough,null);assert.equal(by('sets').view.mode,'model');assert.equal(by('sets').points[0].dose,0);near(M.estimate(by('sets'),10),4.18);near(M.estimate(by('sets'),30),8.41);near(M.estimate(by('sets'),30,'low'),4.96);near(M.estimate(by('sets'),30,'high'),11.77);near(by('sets').followupAudit.contrast.effect,4.06);assert.equal(by('sets').followupAudit.counterevidence.status,'preprint');
 assert.equal(M.enough(by('fruit-veg')),3);near(by('fruit-veg').points[3].sourceDose,5.3);assert.ok(M.share(by('fruit-veg'),4)<90,'Preserve produce tail dip');
-near(M.enough(by('fiber')),31.857496,1e-5);near(M.estimate(by('fiber'),15),.93);
+near(M.estimate(by('fiber'),17),.90);near(M.estimate(by('fiber'),17,'low'),.86);near(M.estimate(by('fiber'),17,'high'),.93);assert.equal(by('fiber').evidenceSummary.yao2023.studies,14);const oldFiber=ctx.window.EnoughData.supportingEvidence.fiber2019;near(M.enough(oldFiber),31.857496,1e-5);near(M.estimate(oldFiber,15),.93);
 assert.equal(M.enough(by('income')),12);assert.match(by('income').points[12].label,/200,000 to \$300,000/);assert.ok(M.share(by('income'),14)<100,'Preserve highest income dip');
 near(M.enough(by('savings')),73.11250116948123);near(M.estimate(by('savings'),50),16.620772445041133);
 for(const p of by('savings').points){near(p.effect,M.estimate(by('savings'),p.dose));assert.ok(p.scenarioLow<=p.effect&&p.effect<=p.scenarioHigh);}
@@ -41,9 +42,9 @@ near(M.extraRisk(by('smoking'),1)/M.extraRisk(by('smoking'),3),.48/1.04);
 // Source-outcome presentation must never turn a chosen endpoint into 100% benefit.
 near(M.outcome(ding,7000),47);near(M.outcome(ding,12000),55);near(M.outcome(ding,M.enough(ding)),49.5);
 near(M.outcome(by('steps'),8200),44.618);near(M.outcome(by('steps'),10000),46.22);assert.ok(M.outcome(by('steps'),10000)-M.outcome(by('steps'),8200)<2);
-near(M.outcome(by('exercise'),600),38.44373343584258);near(M.outcome(by('protein'),1),2.7778245035310007);
+near(M.outcome(by('exercise'),600),38.44373343584258);near(M.outcome(oldProtein,1),2.7778245035310007);
 near(M.outcome(by('fruit-veg'),3),13);near(M.outcome(by('fruit-veg'),4),11);
-near(M.outcome(by('fiber'),35),22.430620048399886);near(M.outcome(by('income'),13),4.947);
+near(M.outcome(by('fiber'),35),100*(1-.9**2.8));near(M.outcome(by('income'),13),by('income').points[13].effect);for(const p of by('income').points){near(M.outcome(by('income'),p.dose,'low'),p.low);near(M.outcome(by('income'),p.dose,'high'),p.high);}assert.equal(by('income').view.yScale.min,55);
 near(M.outcome(by('savings'),50),16.620772445041133);near(M.outcome(by('work'),M.basis(by('work')).best.dose),4029.041452735495);
 assert.equal(by('sets').outcome,'modeled post/pre muscle-size ratio');assert.equal(by('work').outcome,'additional factory output index');assert.equal(by('alcohol').outcome,'all-cause mortality risk');
 // The longer figure keeps each age group's reference and published extent separate.
@@ -69,4 +70,4 @@ assert.ok(M.outcome(younger,16000,'high')<0,'Younger uncertainty includes higher
 near(M.outcome(ding,12000,'low'),61);near(M.outcome(ding,12000,'high'),47);
 assert.equal(younger.defaultDose,8000);assert.equal(older.defaultDose,6000);assert.equal(JSON.stringify(by('steps').points),JSON.stringify(younger.points));
 console.log('PASS longer age curves, source baselines, figure uncertainty, 16,000 endpoints and no imposed cutoff');
-console.log('PASS 12 curves, retained source estimates, corrected sets interpretation, all benefit crossings, range endpoints, categories, signed risk, source units, uncertainty and exact models');
+console.log('PASS 12 topics, sourced protein guidance, pooled trial summaries, updated fiber slope, raw income intervals, historical models, dose groups and signed risk');

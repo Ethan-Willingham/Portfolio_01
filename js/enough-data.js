@@ -1,11 +1,11 @@
-/* Primary tables and models. See docs/ENOUGH.md. */
+/* Primary tables, guidance and historical models. See docs/ENOUGH_EVIDENCE_AUDIT.md. */
 window.EnoughData = {
-  "version": 2,
+  "version": 3,
   "verified": "2026-10-04",
   "screenedCount": 46,
   "definition": {
     "share": "Improvement from the lowest displayed dose divided by the largest improvement anywhere in the explicitly declared range.",
-    "enough": "First 90% crossing, or first qualifying published category. This is a bounded summary, never an absolute lifetime maximum.",
+    "enough": "Historical first 90% crossing retained only for reproducibility of earlier chart versions. No 90% guide is displayed and the calculation cannot establish an optimum.",
     "uncertainty": "Independently normalized pointwise bound curves give sensitivity, not a formal threshold confidence interval."
   },
   "curves": [
@@ -53,7 +53,8 @@ window.EnoughData = {
         "area": "move",
         "shape": "Flatter region",
         "answer": "8,000 to 10,000 steps/day",
-        "rangeLabel": "5,000 to 16,000 steps a day"
+        "rangeLabel": "5,000 to 16,000 steps a day",
+        "showEnough": false
       },
       "points": [
         {
@@ -443,6 +444,12 @@ window.EnoughData = {
           "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
           "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
           "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
+        },
+        {
+          "id": "steps-new-review",
+          "url": "https://doi.org/10.1016/S2468-2667(25)00164-1",
+          "citation": "Ding et al. 2025. Daily steps and health outcomes in adults: a systematic review and dose-response meta-analysis",
+          "location": "Table 2, all-cause mortality column, e676"
         }
       ],
       "caveats": [
@@ -458,7 +465,13 @@ window.EnoughData = {
         "sensitivity": null,
         "sweetRange": null
       },
-      "fact": "Later results are uncertain."
+      "fact": "Later results are uncertain.",
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
+      }
     },
     {
       "id": "exercise",
@@ -503,6 +516,12 @@ window.EnoughData = {
           "url": "https://raw.githubusercontent.com/meta-analyses/meta-analysis/master/data/csv/MA-DR/0.75/all-cause-mortality-fatal.csv",
           "citation": "Garcia et al. 2023. Non-occupational physical activity and risk of cardiovascular disease, cancer and mortality outcomes",
           "location": "Author-deposited estimates; Figure 2 and Table 1; author-published main analysis model output CSV"
+        },
+        {
+          "id": "guidelines",
+          "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
+          "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
+          "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
         }
       ],
       "intervalKind": "confidence",
@@ -12534,27 +12553,29 @@ window.EnoughData = {
       "view": {
         "area": "move",
         "mode": "benefit",
-        "answer": "About 5¾ hours a week",
+        "answer": "150 to 300 minutes/week",
         "fact": "150 minutes a week went with 31% lower risk of dying than no exercise.",
         "range": [
           0,
           600
         ],
-        "rangeLabel": "0 to 600 minutes a week",
+        "rangeLabel": "0 to 600 moderate minutes/week. Shading: 95% confidence interval",
         "default": 150,
         "ticks": [
           0,
           150,
           300,
           600
-        ]
+        ],
+        "shape": "Most arrives early",
+        "showEnough": false
       },
       "reverification": {
         "researcher": "v2_move",
         "adversary": "polish_audit"
       },
       "rangeMethod": "Range shown: 0 to 600 minutes of moderate exercise a week",
-      "enoughPolicy": "first90-in-declared-range",
+      "enoughPolicy": "Historical bounded 90% computation retained for provenance only. No displayed optimum is inferred from chart endpoints.",
       "computed": {
         "enough": 342.6436915079478,
         "sensitivity": [
@@ -12562,49 +12583,55 @@ window.EnoughData = {
           350.88575755499915
         ],
         "sweetRange": null
+      },
+      "evidenceSummary": {
+        "garcia2023": {
+          "studies": 196,
+          "cohorts": 94,
+          "participants": "more than 30 million",
+          "associationAt150": "31% lower relative mortality risk versus no non-occupational activity",
+          "recommendation": "150 to 300 moderate minutes/week is HHS guidance, not a 90% endpoint-derived optimum."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
       "id": "protein",
       "question": "How much protein?",
       "shape": "Most arrives early",
-      "fact": "The sharp turn at 0.73 g/lb/day comes from a forced plateau in the model.",
-      "kind": "model",
+      "fact": "Adding protein led to small extra lean-mass gains across 62 lifting trials. An exact daily cutoff is still unknown.",
+      "kind": "guidance",
       "unit": "g/lb/day",
       "xLabel": "Protein each day (g/lb)",
-      "yLabel": "Lean gain vs 0.41 g/lb (lb)",
       "domain": [
-        0.4082331329997733,
-        1.0886216879993955
+        0.3,
+        1.3
       ],
       "ticks": [
-        0.4082331329997733,
-        0.7,
-        1.0886216879993955
+        0.3,
+        0.6,
+        0.9,
+        1.3
       ],
-      "defaultDose": 0.7021609887596101,
-      "effectKind": "lean",
-      "better": "higher",
-      "model": {
-        "type": "protein",
-        "slope": 1.75,
-        "baselineKg": 0.9,
-        "breakpointKg": 1.62,
-        "lbPerKg": 2.20462262185,
-        "responseFormulaKg": "1.75*(min(totalProteinGPerKg,1.62)-0.9)",
-        "shareFormula": "(min(totalProteinGPerKg,1.62)-0.9)/(1.62-0.9)",
-        "d90FormulaKg": "0.9+0.9*(1.62-0.9)"
-      },
-      "uncertainty": "The published bend interval is 0.47 to 1.00 g/lb. Propagating those endpoints through this chosen model moves the 90% mark to 0.46 to 0.94 g/lb. This is conditional sensitivity, not a new threshold confidence interval. No full response bands are published.",
-      "evidence": "Meta-analysis of randomized training trials; dose curve is a comparison across study arms",
-      "population": "Healthy adults doing resistance training, 42 study arms and 723 participants in the breakpoint model.",
+      "defaultDose": 0.8,
+      "effectKind": "guidance",
+      "better": null,
+      "model": null,
+      "uncertainty": "No confidence interval for a universal intake cutoff is available. The recommended range is not a statistical interval. Added-protein pooled effects and their own limits are stored separately.",
+      "evidence": "Systematic reviews of randomized trials, a directly assigned protein-intake trial and published sports nutrition guidance",
+      "population": "Published sports nutrition guidance for most exercising adults; trial summaries concern healthy adults doing resistance exercise, generally without intentional energy restriction.",
       "caveats": [
-        "This curve applies to adults doing resistance training. Protein here means total daily intake, not the size of a supplement.",
-        "The model forces a flat second segment. Its bend is about 0.73 g/lb, with a broad published interval of 0.47 to 1.00. The segmented model did not clearly outperform a straight line (p=0.079).",
-        "Newer reviews support small extra gains from protein during training, but their populations and intake measures differ. They do not establish a universal ceiling.",
-        "Cooked roasted chicken breast contains 31.02 grams of protein per 100 grams in USDA Standard Reference 27. Three 4-ounce portions contain about 105.5 grams."
+        "Food and supplements together. Individual needs vary with age, energy intake and training.",
+        "Energy restriction and clinical conditions are outside this guide.",
+        "Nunes intake subgroups compare different studies and cannot establish a causal dose curve.",
+        "A nonsignificant difference in one small high-dose trial does not prove equivalence or a universal ceiling."
       ],
-      "extraction": "Reconstructed change relative to a chart reference intake, 0.9 g/kg/day, using the reported slope 1.75 and breakpoint 1.62. Both axes converted with 1 kg = 2.20462262185 lb. No extrapolation to zero. Stored response CI values are null.",
+      "extraction": "ISSN position statement item 2: 1.4 to 2.0 g/kg/day, divided by 2.20462262185 for g/lb/day. This is guidance, not a measured growth curve. Nunes Table 2 provides the supporting pooled treatment effect, not a continuous dose-response.",
       "sources": [
         {
           "id": "morton",
@@ -12629,1002 +12656,166 @@ window.EnoughData = {
           "url": "https://www.ars.usda.gov/ARSUserFiles/80400525/Data/SR27/reports/sr27fg05.pdf",
           "citation": "USDA Standard Reference27, cooked roasted chicken breast",
           "location": "NDB 05064, printed PDF page 118, Proximates; half-breast measure on page 120"
+        },
+        {
+          "id": "nunes2022",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8978023/",
+          "citation": "Nunes et al. 2022. Systematic review and meta-analysis of protein intake to support muscle mass and function in healthy adults. J Cachexia Sarcopenia Muscle. DOI 10.1002/jcsm.12922.",
+          "location": "Table 2, lean body mass with resistance exercise, 62 trials/87 intervention groups; dose subgroup rows and sensitivity analysis."
+        },
+        {
+          "id": "issn2017",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5477153/",
+          "citation": "Jager et al. 2017. International Society of Sports Nutrition Position Stand: protein and exercise. DOI 10.1186/s12970-017-0177-8.",
+          "location": "Position statement item 2; 1.4 to 2.0 g/kg/day total protein for most exercising individuals."
+        },
+        {
+          "id": "bagheri2023",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/37516903/",
+          "citation": "Bagheri et al. 2023. Two high-protein diets during 16 weeks of resistance or concurrent training in trained males. DOI 10.1080/15502783.2023.2236053.",
+          "location": "Abstract Methods/Results; Figure 3. 48 randomized, 44 completed; assigned 1.6 versus 3.2 g/kg/day."
         }
       ],
       "verified": "2026-10-04",
-      "points": [
-        {
-          "dose": 0.4082331329997733,
-          "effect": 0,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 0
-        },
-        {
-          "dose": 0.41503701854976954,
-          "effect": 0.05787134382356255,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 2.083333333333335
-        },
-        {
-          "dose": 0.42184090409976577,
-          "effect": 0.1157426876471251,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 4.16666666666667
-        },
-        {
-          "dose": 0.428644789649762,
-          "effect": 0.17361403147068766,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 6.250000000000004
-        },
-        {
-          "dose": 0.4354486751997582,
-          "effect": 0.2314853752942502,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 8.33333333333334
-        },
-        {
-          "dose": 0.44225256074975444,
-          "effect": 0.28935671911781274,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 10.416666666666673
-        },
-        {
-          "dose": 0.44905644629975067,
-          "effect": 0.3472280629413753,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 12.500000000000009
-        },
-        {
-          "dose": 0.4558603318497469,
-          "effect": 0.4050994067649379,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 14.583333333333345
-        },
-        {
-          "dose": 0.4626642173997431,
-          "effect": 0.4629707505885,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 16.66666666666666
-        },
-        {
-          "dose": 0.46946810294973934,
-          "effect": 0.520842094412063,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 18.75000000000001
-        },
-        {
-          "dose": 0.4762719884997355,
-          "effect": 0.5787134382356252,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 20.833333333333332
-        },
-        {
-          "dose": 0.48307587404973173,
-          "effect": 0.6365847820591871,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 22.916666666666647
-        },
-        {
-          "dose": 0.489879759599728,
-          "effect": 0.6944561258827502,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 25.000000000000004
-        },
-        {
-          "dose": 0.4966836451497242,
-          "effect": 0.7523274697063124,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 27.08333333333332
-        },
-        {
-          "dose": 0.5034875306997204,
-          "effect": 0.8101988135298743,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 29.166666666666632
-        },
-        {
-          "dose": 0.5102914162497166,
-          "effect": 0.8680701573534374,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 31.24999999999999
-        },
-        {
-          "dose": 0.5170953017997129,
-          "effect": 0.9259415011769996,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 33.33333333333331
-        },
-        {
-          "dose": 0.5238991873497091,
-          "effect": 0.9838128450005625,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 35.41666666666666
-        },
-        {
-          "dose": 0.5307030728997053,
-          "effect": 1.0416841888241246,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 37.49999999999998
-        },
-        {
-          "dose": 0.5375069584497015,
-          "effect": 1.0995555326476876,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 39.58333333333332
-        },
-        {
-          "dose": 0.5443108439996978,
-          "effect": 1.1574268764712499,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 41.66666666666665
-        },
-        {
-          "dose": 0.551114729549694,
-          "effect": 1.2152982202948128,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 43.75
-        },
-        {
-          "dose": 0.5579186150996902,
-          "effect": 1.273169564118375,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 45.83333333333332
-        },
-        {
-          "dose": 0.5647225006496864,
-          "effect": 1.3310409079419379,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 47.916666666666664
-        },
-        {
-          "dose": 0.5715263861996827,
-          "effect": 1.3889122517655,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 49.999999999999986
-        },
-        {
-          "dose": 0.5783302717496789,
-          "effect": 1.446783595589063,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 52.08333333333334
-        },
-        {
-          "dose": 0.5851341572996751,
-          "effect": 1.504654939412625,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 54.16666666666666
-        },
-        {
-          "dose": 0.5919380428496713,
-          "effect": 1.562526283236188,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 56.24999999999999
-        },
-        {
-          "dose": 0.5987419283996676,
-          "effect": 1.6203976270597502,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 58.33333333333333
-        },
-        {
-          "dose": 0.6055458139496638,
-          "effect": 1.6782689708833132,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 60.41666666666668
-        },
-        {
-          "dose": 0.61234969949966,
-          "effect": 1.7361403147068752,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 62.49999999999999
-        },
-        {
-          "dose": 0.6191535850496562,
-          "effect": 1.7940116585304375,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 64.58333333333331
-        },
-        {
-          "dose": 0.6259574705996525,
-          "effect": 1.8518830023540005,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 66.66666666666667
-        },
-        {
-          "dose": 0.6327613561496487,
-          "effect": 1.9097543461775623,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 68.74999999999997
-        },
-        {
-          "dose": 0.6395652416996449,
-          "effect": 1.9676256900011255,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 70.83333333333334
-        },
-        {
-          "dose": 0.6463691272496411,
-          "effect": 2.0254970338246876,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 72.91666666666664
-        },
-        {
-          "dose": 0.6531730127996374,
-          "effect": 2.0833683776482506,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 75
-        },
-        {
-          "dose": 0.6599768983496336,
-          "effect": 2.1412397214718126,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 77.08333333333331
-        },
-        {
-          "dose": 0.6667807838996298,
-          "effect": 2.1991110652953756,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 79.16666666666667
-        },
-        {
-          "dose": 0.6735846694496259,
-          "effect": 2.2569824091189368,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 81.24999999999994
-        },
-        {
-          "dose": 0.6803885549996223,
-          "effect": 2.3148537529425006,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 83.33333333333333
-        },
-        {
-          "dose": 0.6871924405496184,
-          "effect": 2.372725096766062,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 85.41666666666661
-        },
-        {
-          "dose": 0.6939963260996147,
-          "effect": 2.430596440589626,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 87.50000000000001
-        },
-        {
-          "dose": 0.7008002116496108,
-          "effect": 2.4884677844131873,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 89.5833333333333
-        },
-        {
-          "dose": 0.7021609887596101,
-          "effect": 2.5000420531779004,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 90
-        },
-        {
-          "dose": 0.7076040971996072,
-          "effect": 2.546339128236751,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 91.66666666666669
-        },
-        {
-          "dose": 0.7144079827496033,
-          "effect": 2.6042104720603123,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 93.74999999999997
-        },
-        {
-          "dose": 0.7212118682995996,
-          "effect": 2.6620818158838753,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 95.83333333333331
-        },
-        {
-          "dose": 0.7280157538495957,
-          "effect": 2.7199531597074373,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 97.91666666666663
-        },
-        {
-          "dose": 0.734819639399592,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7416235249495882,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7484274104995845,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7552312960495806,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.762035181599577,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7688390671495731,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7756429526995694,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7824468382495655,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.7892507237995618,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.796054609349558,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8028584948995542,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8096623804495504,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8164662659995467,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8232701515495429,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8300740370995391,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8368779226495353,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8436818081995315,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8504856937495278,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8572895792995241,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8640934648495202,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8708973503995164,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8777012359495127,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.884505121499509,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8913090070495051,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.8981128925995013,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9049167781494976,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9117206636994939,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.91852454924949,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9253284347994861,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9321323203494825,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9389362058994786,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9457400914494749,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.952543976999471,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9593478625494674,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9661517480994635,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9729556336494598,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9797595191994561,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9865634047494523,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 0.9933672902994484,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0001711758494447,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0069750613994408,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0137789469494372,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0205828324994333,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0273867180494296,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0341906035994257,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.040994489149422,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0477983746994182,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0546022602494145,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0614061457994108,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.068210031349407,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.075013916899403,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0818178024493994,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        },
-        {
-          "dose": 1.0886216879993955,
-          "effect": 2.7778245035310007,
-          "low": null,
-          "high": null,
-          "source": "morton",
-          "location": "Figure 5, reported model coefficients and observed intake range",
-          "share": 100.00000000000001
-        }
-      ],
+      "points": [],
       "unitLabel": "g/lb a day",
-      "yDomain": [
-        0,
-        3
-      ],
-      "yTicks": [
-        0,
-        1.5,
-        3
-      ],
       "step": 0.01,
       "doseDigits": 2,
-      "personalNote": "This model flattens near 0.74 g/lb, about 110 g for a 150 lb lifter. Its bend is uncertain and does not measure your individual need.",
-      "yDigits": 1,
       "reviews": {
         "researcher": "root",
         "adversary": "movement_research",
         "statistician": "diet_research"
       },
-      "sourcePrecision": "source point grid with linear interpolation",
       "view": {
         "area": "lift",
-        "mode": "benefit",
-        "answer": "No exact cutoff",
-        "shape": "Uncertain plateau",
-        "lineStyle": "dashed",
-        "fact": "The sharp turn at 0.73 g/lb/day comes from a forced plateau in the model.",
+        "mode": "guidance",
+        "shape": "Intake guide",
+        "answer": "About 0.65 to 0.9 g/lb/day",
         "range": [
-          0.4082331329997733,
-          1.0886216879993955
+          0.3,
+          1.3
         ],
-        "rangeLabel": "0.41 to 1.09 grams per pound a day",
-        "default": 0.7021609887596101,
+        "rangeLabel": "Food and supplements together. Guide for most exercising adults",
+        "default": 0.8,
         "ticks": [
-          0.4082331329997733,
-          0.7,
-          1.0886216879993955
-        ]
+          0.3,
+          0.6,
+          0.9,
+          1.3
+        ],
+        "showEnough": false
       },
       "reverification": {
         "researcher": "v2_move",
         "adversary": "polish_audit"
       },
-      "rangeMethod": "Range shown: about 0.41 to 1.09 grams per pound a day",
-      "breakpoint": {
-        "dose": 0.734819639399592,
-        "interval": [
-          0.46720014109974056,
-          0.9979032139994459
-        ],
-        "intervalType": "Published 95% confidence interval for model breakpoint, not response band",
-        "modelComparisonP": 0.079,
-        "flatSecondSlopeImposed": true,
-        "modelArms": 42,
-        "modelParticipants": 723
-      },
-      "conditionalSensitivity": [
-        0.4613034402897438,
-        0.9389362058994786
-      ],
-      "enoughPolicy": "first90-in-declared-range",
+      "rangeMethod": "Selectable physical intake axis, not a studied effect range. The guide uses published recommendations.",
+      "breakpoint": null,
+      "conditionalSensitivity": null,
+      "enoughPolicy": "No response curve or enough calculation. A sourced intake guide replaces the arm-level segmented regression.",
       "computed": {
-        "enough": 0.7021609887596101,
-        "sensitivity": null,
-        "sweetRange": null
+        "enough": null,
+        "share": null
       },
-      "effectUnit": "Modeled extra fat-free mass gain, lb, relative to 0.41 g/lb/day while lifting",
-      "outcome": "modeled extra fat-free mass gain while lifting"
+      "effectUnit": null,
+      "outcome": "published total-protein intake guidance, not a muscle-gain estimate",
+      "guidance": {
+        "source": "issn2017",
+        "low": 0.6350293179996473,
+        "high": 0.9071847399994962,
+        "originalLow": 1.4,
+        "originalHigh": 2,
+        "originalUnit": "g/kg/day",
+        "type": "recommendation",
+        "rangeMeaning": "Published sports nutrition guidance, not a confidence interval or a proven minimum/maximum.",
+        "displayRangeMeaning": "0.3 to 1.3 is a selectable intake axis only, not an observed trial range."
+      },
+      "evidenceSummary": {
+        "nunes2022": {
+          "source": "nunes2022",
+          "allTrials": 74,
+          "leanMassTrialsWithResistanceExercise": 62,
+          "interventionGroups": 87,
+          "effect": 0.22,
+          "low": 0.14,
+          "high": 0.3,
+          "unit": "standardized mean difference",
+          "comparison": "Added protein versus control during resistance exercise",
+          "certainty": "moderate",
+          "location": "Table 2, With RE",
+          "intakeGroups": [
+            {
+              "intakeKg": "less than 1.2",
+              "effect": -0.14,
+              "low": -0.56,
+              "high": 0.27,
+              "trials": 4,
+              "groups": 4
+            },
+            {
+              "intakeKg": "1.2 to 1.59",
+              "effect": 0.17,
+              "low": 0.06,
+              "high": 0.28,
+              "trials": 24,
+              "groups": 34
+            },
+            {
+              "intakeKg": "at least 1.6",
+              "effect": 0.3,
+              "low": 0.17,
+              "high": 0.43,
+              "trials": 23,
+              "groups": 34
+            }
+          ],
+          "doseLimit": "Different trials, ages and baseline intakes; these subgroup estimates are not head-to-head assigned-dose effects."
+        },
+        "morton2018": {
+          "source": "morton",
+          "trials": 49,
+          "participants": 1863,
+          "effectKg": 0.3,
+          "lowKg": 0.09,
+          "highKg": 0.52,
+          "comparison": "Protein supplementation versus control, pooled fat-free mass effect",
+          "doseCurve": "Separate comparison across 42 study arms, 723 participants; segmented shape was imposed, p=.079 against straight line, breakpoint 1.62 g/kg with interval 1.03 to 2.20."
+        },
+        "tagawa2021": {
+          "source": "tagawa",
+          "articles": 105,
+          "comparison": "Mixed populations and studies with/without training; adjusted study-arm spline differs from Morton.",
+          "doseLimit": "Only four articles compared multiple supplementation doses under identical conditions. Study-arm associations do not isolate the effect of adding a particular daily dose."
+        },
+        "bagheri2023": {
+          "source": "bagheri2023",
+          "randomized": 48,
+          "completed": 44,
+          "weeks": 16,
+          "assignedIntakesKg": [
+            1.6,
+            3.2
+          ],
+          "result": "No significant between-group lean-mass advantage from 3.2 versus 1.6 g/kg/day was reported. Small trial of trained young men; this is not an equivalence finding."
+        },
+        "li2026": {
+          "source": "li",
+          "trials": 36,
+          "participants": 1552,
+          "doseLimit": "Dose is supplemental grams/day, not total g/lb/day. Sparse exploratory subtype plateaus cannot supply a universal total-intake cutoff."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
+      }
     },
     {
       "id": "sets",
       "question": "How many sets?",
-      "fact": "Few studies cover more than about 25 weekly sets. The payoff above that is uncertain.",
+      "fact": "More sets can help, with diminishing returns. Few studies cover more than about 25 sets per muscle a week.",
       "kind": "continuous",
       "shape": "Uncertain ceiling",
       "unit": "sets/week",
@@ -14219,7 +13410,7 @@ window.EnoughData = {
         "shape": "Uncertain ceiling",
         "answer": "No settled optimum",
         "lineStyle": "dashed",
-        "fact": "Few studies cover more than about 25 weekly sets. The payoff above that is uncertain.",
+        "fact": "More sets can help, with diminishing returns. Few studies cover more than about 25 sets per muscle a week.",
         "range": [
           0,
           45
@@ -14231,7 +13422,10 @@ window.EnoughData = {
           15,
           30,
           45
-        ]
+        ],
+        "modelLabel": "Study model; sparse evidence above 25 sets",
+        "sparseFrom": 25,
+        "showEnough": false
       },
       "reverification": {
         "researcher": "v2_move",
@@ -14296,6 +13490,27 @@ window.EnoughData = {
           "equivalenceP": 0.032,
           "location": "PDF page 8 Primary Hypertrophy Results. Body lower limit differs by 0.001 from abstract; body retained."
         }
+      },
+      "evidenceSummary": {
+        "acsm2026": {
+          "reviews": 137,
+          "participants": "more than 30,000, with overlapping review populations",
+          "finding": "Hypertrophy is enhanced by higher weekly volumes, at least 10 sets; an exact optimal dose cannot be ascertained. Discussion describes diminishing returns around 18 to 20 weekly sets. This is not a proven ceiling.",
+          "searchThrough": "2024-10",
+          "location": "Abstract, Table 6, Application of findings"
+        },
+        "pelland2026": {
+          "hypertrophyStudies": 35,
+          "effects": 220,
+          "participants": 1032,
+          "modelLimit": "Increasing square-root dose function, with sparse high-dose observations. Do not interpret the 45-versus-zero / 15-versus-zero ratio as an assigned 45-versus-15 trial or a personal doubling of growth."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -14304,7 +13519,7 @@ window.EnoughData = {
       "question": "How much sleep?",
       "shape": "A sweet spot",
       "contradictsEnough": true,
-      "fact": "Seven hours was the low point in this older self-report curve. Watches can draw a different curve.",
+      "fact": "Adults are generally advised to sleep at least seven hours. An older mortality curve is not a personal sleep target.",
       "doseUnit": "hours per day",
       "effectUnit": "relative mortality risk, 7 hours = 1",
       "direction": "lower",
@@ -14348,13 +13563,14 @@ window.EnoughData = {
         {
           "dose": 7,
           "effect": 1,
-          "low": null,
-          "high": null,
+          "low": 1,
+          "high": 1,
           "source": "yin2017",
           "reference": true,
           "ciByDefinition": 1,
           "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
-          "share": null
+          "share": null,
+          "referenceIntervalMeaning": "The reference is fixed at one by definition, not an estimated confidence interval."
         },
         {
           "dose": 8,
@@ -14430,6 +13646,12 @@ window.EnoughData = {
           "doi": "10.1093/sleep/zsag193",
           "verified": "2026-10-04",
           "location": "Primaryabstract,7 hour mortality estimates and outcome-spanning reported minima"
+        },
+        {
+          "id": "aasm2015",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4442216/",
+          "citation": "Watson et al. 2015. Recommended Amount of Sleep for a Healthy Adult: A Joint Consensus Statement of AASM and SRS.",
+          "location": "Consensus recommendation: adults aged 18 to 60 should regularly sleep at least seven hours. Methodology discussion supports 7 to 9 hours and does not define a universally harmful upper limit."
         }
       ],
       "extraction": "Exact Table 2 all-cause mortality column, NCBI BioC XML. Direct table values, no inferred CI or figure digitization.",
@@ -14477,13 +13699,13 @@ window.EnoughData = {
       "view": {
         "area": "rest",
         "mode": "sweet",
-        "answer": "Around 7 hours",
-        "fact": "Seven hours was the low point in this older self-report curve. Watches can draw a different curve.",
+        "answer": "Usually 7 to 9 hours",
+        "fact": "Adults are generally advised to sleep at least seven hours. An older mortality curve is not a personal sleep target.",
         "range": [
           3,
           11
         ],
-        "rangeLabel": "3 to 11 hours a night",
+        "rangeLabel": "Older self-report curve. Shading: 95% confidence interval",
         "margin": 0.01,
         "default": 7,
         "ticks": [
@@ -14492,7 +13714,10 @@ window.EnoughData = {
           7,
           9,
           11
-        ]
+        ],
+        "shape": "Sleep needs vary",
+        "highlightRange": null,
+        "showEnough": false
       },
       "reverification": {
         "researcher": "polish_audit",
@@ -14566,6 +13791,37 @@ window.EnoughData = {
           6,
           7.25
         ]
+      },
+      "evidenceSummary": {
+        "chaput2026": {
+          "design": "UK Biobank observational cohort, not a meta-analysis",
+          "mortalityParticipants": 76811,
+          "followupYears": 8,
+          "sevenVsFive": {
+            "sleepPeriod": {
+              "HR": 0.7,
+              "low": 0.61,
+              "high": 0.79
+            },
+            "totalSleepTime": {
+              "HR": 0.83,
+              "low": 0.78,
+              "high": 0.89
+            },
+            "selfReport": {
+              "HR": 0.86,
+              "low": 0.74,
+              "high": 1
+            }
+          },
+          "limitation": "Measurement definitions change minima; do not turn an older 6 to 7.25-hour plotting margin into a sleep recommendation."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -14578,7 +13834,7 @@ window.EnoughData = {
       "question": "How much fruit and veg?",
       "shape": "Most arrives early",
       "contradictsEnough": false,
-      "fact": "The group eating about five servings did best; seven did no better.",
+      "fact": "Five daily servings went with 13% lower risk of dying in a 26-study review. More was not clearly better in that review.",
       "doseUnit": "servings/day",
       "effectUnit": "relative death rate, lowest intake quintile = 1",
       "coordinate": "category-index",
@@ -14767,25 +14023,26 @@ window.EnoughData = {
         "area": "eat",
         "mode": "benefit",
         "answer": "About 5 servings a day",
-        "fact": "The group eating about five servings did best; seven did no better.",
+        "fact": "Five daily servings went with 13% lower risk of dying in a 26-study review. More was not clearly better in that review.",
         "range": [
           0,
           4
         ],
-        "rangeLabel": "Groups eating about 2.1 to 7.3 servings a day",
+        "rangeLabel": "US women’s intake groups. Whiskers: 95% confidence intervals",
         "default": 3,
         "ticks": [
           0,
           3,
           4
-        ]
+        ],
+        "showEnough": false
       },
       "reverification": {
         "researcher": "v2_food",
         "adversary": "v2_move"
       },
       "rangeMethod": "Lowest and highest published group medians, not the full individual exposure range.",
-      "enoughPolicy": "first90-in-declared-range",
+      "enoughPolicy": "Historical bounded 90% computation retained for provenance only. No displayed optimum is inferred from chart endpoints.",
       "computed": {
         "enough": 3,
         "sensitivity": [
@@ -14793,6 +14050,28 @@ window.EnoughData = {
           3
         ],
         "sweetRange": null
+      },
+      "evidenceSummary": {
+        "wang2021": {
+          "metaStudies": 26,
+          "participants": 1892885,
+          "deaths": 145015,
+          "fiveServingsRR": 0.87,
+          "low": 0.85,
+          "high": 0.88,
+          "comparison": "Five versus two daily servings, pooled dose-response summary",
+          "chart": "Individual Nurses Health Study intake quintiles from Table 2, not the pooled spline"
+        },
+        "aune2017": {
+          "studies": 95,
+          "limitation": "Review includes multiple outcomes and reports further associations up to 800 g/day. Food weights and questionnaire servings are not interchangeable; five is not a universal ceiling."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -14800,24 +14079,27 @@ window.EnoughData = {
       "view": {
         "area": "eat",
         "mode": "benefit",
-        "shape": "Keeps paying",
-        "answer": "About 32 grams a day",
-        "fact": "Each extra 8 grams went with 7% lower risk of dying. The model keeps improving at the edge.",
+        "shape": "More fiber, lower risk",
+        "answer": "No clear cutoff",
+        "fact": "Across 14 studies, 10 more grams a day went with about 10% lower risk of dying.",
         "range": [
           7,
           35
         ],
-        "rangeLabel": "2019 linear model: 7 to 35 grams a day",
+        "rangeLabel": "7 to 35 grams/day. Shading: slope uncertainty",
         "default": 25,
         "ticks": [
           7,
           15,
           25,
           35
-        ]
+        ],
+        "lineStyle": "dashed",
+        "modelLabel": "Linear study summary",
+        "showEnough": false
       },
       "question": "How much fiber?",
-      "fact": "Each extra 8 grams went with 7% lower risk of dying. The model keeps improving at the edge.",
+      "fact": "Across 14 studies, 10 more grams a day went with about 10% lower risk of dying.",
       "shape": "Keeps paying",
       "defaultDose": 25,
       "domain": [
@@ -14843,346 +14125,346 @@ window.EnoughData = {
           "effect": 1,
           "low": 1,
           "high": 1,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": true,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "method": "reconstruction-from-published-linear-slope",
           "share": 0
         },
         {
           "dose": 8,
           "originalDose": 8,
-          "effect": 0.9909696838390821,
-          "low": 0.9869162813660015,
-          "high": 0.993608849045455,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9895192582062144,
+          "low": 0.9850308790880502,
+          "high": 0.9927691996602169,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 4.025887889604755
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 4.102445871264388
         },
         {
           "dose": 9,
           "originalDose": 9,
-          "effect": 0.9820209142881304,
-          "low": 0.9740037464252967,
-          "high": 0.9872585449014338,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9791483623609768,
+          "low": 0.9702858327569769,
+          "high": 0.9855906837939876,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 8.01542073873795
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 8.16189506662911
         },
         {
           "dose": 10,
           "originalDose": 10,
-          "effect": 0.9731529549554749,
-          "low": 0.9612601554586079,
-          "high": 0.9809488265098043,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9688861611972633,
+          "low": 0.9557615068072858,
+          "high": 0.978464074342723,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 11.968926844909145
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 12.17879822315222
         },
         {
           "dose": 11,
           "originalDose": 11,
-          "effect": 0.9643650760992956,
-          "low": 0.9486832980505138,
-          "high": 0.9746794344808963,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9587315155141827,
+          "low": 0.9414545972489001,
+          "high": 0.9713889959815001,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 15.88673154099746
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 16.15360125488116
         },
         {
           "dose": 12,
           "originalDose": 12,
-          "effect": 0.9556565545675713,
-          "low": 0.9362709927060472,
-          "high": 0.9684501110828384,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9486832980505138,
+          "low": 0.9273618495495703,
+          "high": 0.9643650760992956,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 19.7691572220234
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 20.086745402353387
         },
         {
           "dose": 13,
           "originalDose": 13,
-          "effect": 0.9470266737385726,
-          "low": 0.9240210864723069,
-          "high": 0.9622606002309622,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9387403933595694,
+          "low": 0.9134800578945335,
+          "high": 0.9573919447793618,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 23.616523371678387
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 23.97866728157822
         },
         {
           "dose": 14,
           "originalDose": 14,
-          "effect": 0.9384747234618909,
-          "low": 0.9119314545650217,
-          "high": 0.9561106474772749,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.928901697685371,
+          "low": 0.8998060644572552,
+          "high": 0.9504692347797455,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 27.429146588615193
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 27.829798932505312
         },
         {
           "dose": 15,
           "originalDose": 15,
-          "effect": 0.93,
-          "low": 0.9,
-          "high": 0.95,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9191661188401216,
+          "low": 0.8863367586810889,
+          "high": 0.9435965815139469,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 31.20734061250058
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 31.640567866985155
         },
         {
           "dose": 16,
           "originalDose": 16,
-          "effect": 0.9216018059703465,
-          "low": 0.8882246532294015,
-          "high": 0.9439284065931822,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9095325760829622,
+          "low": 0.873069076571686,
+          "high": 0.9367736230317176,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 34.95141634983299
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 35.41139711622692
         },
         {
           "dose": 17,
           "originalDose": 17,
-          "effect": 0.9132794502879613,
-          "low": 0.8766033717827671,
-          "high": 0.9378956176563621,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.9,
+          "low": 0.86,
+          "high": 0.93,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 38.66168189952689
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 39.142705277758964
         },
         {
           "dose": 18,
           "originalDose": 18,
-          "effect": 0.9050322481085917,
-          "low": 0.865134139912747,
-          "high": 0.9319013851843141,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8905673323855929,
+          "low": 0.8471265560157232,
+          "high": 0.9232753556840018,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 42.33844257826609
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 42.83490656189695
         },
         {
           "dose": 19,
           "originalDose": 19,
-          "effect": 0.8968595207723449,
-          "low": 0.8538149682454624,
-          "high": 0.9259454627568515,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8812335261248792,
+          "low": 0.8344458161710001,
+          "high": 0.9165993359284086,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 45.982000945628236
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 46.488410837725155
         },
         {
           "dose": 20,
           "originalDose": 20,
-          "effect": 0.8887605957478413,
-          "low": 0.8426438934354425,
-          "high": 0.9200276055286964,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.871997545077537,
+          "low": 0.8219548958542657,
+          "high": 0.9099715891387324,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 49.59265682898236
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 50.103623678595966
         },
         {
           "dose": 21,
           "originalDose": 21,
-          "effect": 0.8807348065768726,
-          "low": 0.8316189778250762,
-          "high": 0.914147570219414,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8628583639627645,
+          "low": 0.8096509536340541,
+          "high": 0.9033917662627952,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 53.17070734816146
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 53.68094640715198
         },
         {
           "dose": 22,
           "originalDose": 22,
-          "effect": 0.8727814928195585,
-          "low": 0.8207383091085195,
-          "high": 0.9083051151034112,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8538149682454624,
+          "low": 0.7975311906126306,
+          "high": 0.8968595207723449,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 56.716446939912736
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 57.220776139877
         },
         {
           "dose": 23,
           "originalDose": 23,
-          "effect": 0.8649000000000001,
-          "low": 0.81,
-          "high": 0.9025,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8448663540236125,
+          "low": 0.7855928497892988,
+          "high": 0.8903745086448065,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 60.23016738212612
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 60.72350583117933
         },
         {
           "dose": 24,
           "originalDose": 24,
-          "effect": 0.8570896795524222,
-          "low": 0.7994021879064613,
-          "high": 0.896731986263523,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.836011527916834,
+          "low": 0.7738332154332395,
+          "high": 0.8839363883451634,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 63.71215781784529
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 64.18952431701372
         },
         {
           "dose": 25,
           "originalDose": 25,
-          "effect": 0.849349888767804,
-          "low": 0.7889430346044904,
-          "high": 0.8910008367735439,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8272495069561094,
+          "low": 0.7622496124657364,
+          "high": 0.8775448208079706,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 67.1627047790606
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 67.6192163580456
         },
         {
           "dose": 26,
           "originalDose": 26,
-          "effect": 0.8416799907409903,
-          "low": 0.7786207259214724,
-          "high": 0.8853063159250983,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.818579318474666,
+          "low": 0.7508394058516499,
+          "high": 0.8711994694194974,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 70.58209221028807
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 71.0129626823632
         },
         {
           "dose": 27,
           "originalDose": 27,
-          "effect": 0.8340793543182808,
-          "low": 0.7684334714209162,
-          "high": 0.8796481896190089,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.81,
+          "low": 0.7395999999999999,
+          "high": 0.8649000000000001,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 73.97060149193483
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 74.37114002774202
         },
         {
           "dose": 28,
           "originalDose": 28,
-          "effect": 0.8265473540454925,
-          "low": 0.7583795040918982,
-          "high": 0.8740262252522616,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.8015105991470337,
+          "low": 0.7285288381735219,
+          "high": 0.8586460807861217,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 77.32851146345415
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 77.6941211834662
         },
         {
           "dose": 29,
           "originalDose": 29,
-          "effect": 0.8190833701164916,
-          "low": 0.7484570800425686,
-          "high": 0.8684401917084432,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7931101735123912,
+          "low": 0.7176234019070601,
+          "high": 0.8524373824134199,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 80.65609844629077
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 80.98227503171162
         },
         {
           "dose": 30,
           "originalDose": 30,
-          "effect": 0.8116867883221895,
-          "low": 0.7386644781976676,
-          "high": 0.8628898593482406,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7847977905697834,
+          "low": 0.7068812104346686,
+          "high": 0.8462735778990212,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 83.95363626661938
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 84.23596658849532
         },
         {
           "dose": 31,
           "originalDose": 31,
-          "effect": 0.8043570000000001,
-          "low": 0.7290000000000001,
-          "high": 0.8573749999999999,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7765725275664881,
+          "low": 0.6962998201252866,
+          "high": 0.8401543426243996,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 87.22139627787789
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 87.45555704419574
         },
         {
           "dose": 32,
           "originalDose": 32,
-          "effect": 0.7970934019837527,
-          "low": 0.7194619691158152,
-          "high": 0.8518953869503468,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7684334714209162,
+          "low": 0.6858768239268622,
+          "high": 0.8340793543182808,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 90.45964738309672
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 90.64140380364826
         },
         {
           "dose": 33,
           "originalDose": 33,
-          "effect": 0.7898953965540578,
-          "low": 0.7100487311440414,
-          "high": 0.8464507949348666,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7603797186212513,
+          "low": 0.6756098508187969,
+          "high": 0.8280482930396701,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 93.66865605702694
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 93.79386052582035
         },
         {
           "dose": 34,
           "originalDose": 34,
-          "effect": 0.7827623913891211,
-          "low": 0.7007586533293252,
-          "high": 0.8410410001288433,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7524103751251505,
+          "low": 0.6654965652725859,
+          "high": 0.8220608411610021,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
-          "share": 96.84868636806847
+          "method": "reconstruction-from-published-linear-slope",
+          "share": 96.91327716307134
         },
         {
           "dose": 35,
           "originalDose": 35,
-          "effect": 0.7756937995160011,
-          "low": 0.6915901242788246,
-          "high": 0.8356657801380584,
-          "source": "reynolds2019",
-          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "effect": 0.7445245562604985,
+          "low": 0.6555346667205333,
+          "high": 0.8161166833514127,
+          "source": "yao2023",
+          "location": "Table 2, total fiber, all-cause mortality, linear dose-response per 10 g/day; Results 3.2",
           "reference": false,
-          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "method": "reconstruction-from-published-linear-slope",
           "share": 100
         }
       ],
@@ -15244,31 +14526,47 @@ window.EnoughData = {
       "better": "lower",
       "model": {
         "form": "log-linear",
-        "formula": "RR(d)=0.93^((d-7)/8)",
-        "increment": 8,
+        "formula": "RR(d)=0.90^((d-7)/10)",
+        "increment": 10,
         "incrementUnit": "g/day",
-        "riskRatioPerIncrement": 0.93,
-        "riskRatioPerIncrementLow": 0.9,
-        "riskRatioPerIncrementHigh": 0.95,
+        "riskRatioPerIncrement": 0.9,
+        "riskRatioPerIncrementLow": 0.86,
+        "riskRatioPerIncrementHigh": 0.93,
         "coefficientsExactFromPrintedSource": true,
-        "parameterPrecision": "Source ratios printed to two decimals; generated dose estimates carry computational precision only.",
-        "reconstructedRiskIntervalFormula": "[0.90^((d-7)/8),0.95^((d-7)/8)]",
-        "method": "Arithmetic reconstruction of the published linear model. This is not the published nonlinear spline and no model points were hand digitized."
+        "parameterPrecision": "Published ratios rounded to two decimals; arithmetic evaluations add no source precision.",
+        "reconstructedRiskIntervalFormula": "[0.86^((d-7)/10),0.93^((d-7)/10)]",
+        "method": "Reconstruct the updated 2023 linear dose summary. This is not the separately published nonlinear spline."
       },
-      "extraction": "Reconstructed published log-linear slope, RR = 0.93 per extra 8 g/day, with pointwise slope limits. Analyst-selected 7 to 35 g window within the source figure extent; endpoints are not exact observed exposure extremes.",
-      "uncertainty": "The published slope limits are 0.90 to 0.95 per 8 grams. They imply different gain curves; their crossings are a sensitivity check, not a confidence interval for an optimal amount.",
-      "enoughPolicy": "first90-in-declared-range",
+      "extraction": "Yao 2023 Table 2/Results 3.2: RR 0.90 (0.86 to 0.93) per 10 g/day, 14 studies, 1,367,285 participants and 97,469 deaths. Reconstructed linear summary anchored at 7 g/day for display. Do not confuse with the published nonlinear spline or attribute causality.",
+      "uncertainty": "Shading reconstructs the published slope limits around the selected reference. High between-study heterogeneity (I-squared 86.1%); no confidence interval for an exact enough intake.",
+      "enoughPolicy": "Historical bounded 90% computation retained for provenance only. No displayed optimum is inferred from chart endpoints.",
       "computed": {
-        "enough": 31.857503285276195,
-        "sensitivity": [
-          31.687290750655407,
-          31.96268978995299
-        ],
-        "sweetRange": null
+        "enough": 31.797822001841368,
+        "interpretation": "Historical endpoint-bounded summary only; not displayed as an optimum."
       },
       "effectUnit": "Relative all-cause mortality risk, 7 grams/day =1",
       "outcome": "all-cause mortality risk",
-      "effectKind": "risk"
+      "effectKind": "risk",
+      "evidenceSummary": {
+        "yao2023": {
+          "studies": 14,
+          "participants": 1367285,
+          "deaths": 97469,
+          "perIncrementGrams": 10,
+          "riskRatio": 0.9,
+          "low": 0.86,
+          "high": 0.93,
+          "heterogeneityI2": 86.1,
+          "nonlinearityP": 0.0096,
+          "splineFinding": "Larger reductions below about 15 g/day and slower changes above; coefficients for that separate spline are not reconstructed here."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
+      }
     },
     {
       "id": "income",
@@ -15276,7 +14574,7 @@ window.EnoughData = {
       "question": "When does money stop helping?",
       "shape": "No settled ceiling",
       "contradictsEnough": true,
-      "fact": "Doubling household income went with about one extra point on a 100-point feeling scale.",
+      "fact": "Higher household income went with better feelings on average. The extra benefit varied across people.",
       "doseUnit": "annual household dollars before tax, original study dollars",
       "effectUnit": "average feeling score, 0 to 100",
       "direction": "higher",
@@ -15778,27 +15076,39 @@ window.EnoughData = {
         "area": "money",
         "mode": "benefit",
         "shape": "No settled ceiling",
-        "answer": "More still helps, on average",
-        "fact": "Doubling household income went with about one extra point on a 100-point feeling scale.",
+        "answer": "No settled income cutoff",
+        "fact": "Higher household income went with better feelings on average. The extra benefit varied across people.",
         "range": [
           0,
           14
         ],
-        "rangeLabel": "Income groups from $10,000 to $500,000+ a year",
+        "rangeLabel": "US app volunteers, 2009 to 2015 dollars. Whiskers: 95% confidence intervals",
         "default": 8,
         "ticks": [
           0,
           8,
           12,
           14
-        ]
+        ],
+        "yScale": {
+          "min": 55,
+          "max": 70,
+          "ticks": [
+            55,
+            60,
+            65,
+            70
+          ],
+          "label": "Average feeling score, out of 100"
+        },
+        "showEnough": false
       },
       "reverification": {
         "researcher": "polish_audit",
         "adversary": "v2_food"
       },
       "rangeMethod": "Author income-band coordinates, not exact boundaries of sampled income.",
-      "enoughPolicy": "first90-in-declared-range",
+      "enoughPolicy": "Historical bounded 90% computation retained for provenance only. No displayed optimum is inferred from chart endpoints.",
       "computed": {
         "enough": 12,
         "sensitivity": [
@@ -15806,6 +15116,12 @@ window.EnoughData = {
           13
         ],
         "sweetRange": null
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -19893,13 +19209,13 @@ window.EnoughData = {
       "view": {
         "area": "money",
         "mode": "benefit",
-        "answer": "About 73%, in this model",
+        "answer": "More saved, fewer years",
         "fact": "Saving 40% instead of 20% cuts the wait from 37 years to 22, under these assumptions.",
         "range": [
           5,
           95
         ],
-        "rangeLabel": "Model window: 5% to 95% of take-home pay",
+        "rangeLabel": "Start at $0. Save at year end. Shading: alternate assumptions",
         "default": 50,
         "ticks": [
           5,
@@ -19907,18 +19223,28 @@ window.EnoughData = {
           50,
           75,
           95
-        ]
+        ],
+        "shape": "An arithmetic example",
+        "lineStyle": "dashed",
+        "modelLabel": "5% steady growth; target = 25 times spending",
+        "showEnough": false
       },
       "reverification": {
         "researcher": "polish_audit",
         "adversary": "v2_food"
       },
       "rangeMethod": "Chosen model illustration range, not a studied population range",
-      "enoughPolicy": "first90-in-declared-range",
+      "enoughPolicy": "Historical bounded 90% computation retained for provenance only. No displayed optimum is inferred from chart endpoints.",
       "computed": {
         "enough": 73.11250116948122,
         "sensitivity": null,
         "sweetRange": null
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -19927,7 +19253,7 @@ window.EnoughData = {
       "question": "How much work captures most of the gain?",
       "shape": "Most arrives early",
       "contradictsEnough": true,
-      "fact": "These munitions workers produced about as much in 56 hours as in 70.",
+      "fact": "In this historical model, output barely changed between 56 and 70 hours. It does not set a modern workweek.",
       "doseUnit": "hours worked per week",
       "effectUnit": "Additional factory output-index units relative to 24 hours",
       "direction": "lower",
@@ -20985,6 +20311,12 @@ window.EnoughData = {
           "citation": "Pencavel,2014 author version of The Productivity of Working Hours",
           "url": "https://docs.iza.org/dp8129.pdf",
           "location": "Equation4, Table4(ii) and Table1"
+        },
+        {
+          "id": "collewet2017",
+          "url": "https://www.sciencedirect.com/science/article/pii/S0927537116302445",
+          "citation": "Collewet and Sauermann. 2017. Working hours and productivity. Labour Economics 47:96-106.",
+          "location": "Abstract and Conclusion: Netherlands call-centre worker panel, mid-2008 to early 2010; longer daily hours associated with lower hourly productivity. Different workplace and outcome, no common weekly cutoff."
         }
       ],
       "extraction": "Exact author working-paper equation 4 and Table 4 column(ii) coefficients. Table 1 gives studied range. Evaluated from equation, not observed raw points or figure digitization.",
@@ -21032,8 +20364,8 @@ window.EnoughData = {
       "view": {
         "area": "work",
         "mode": "benefit",
-        "answer": "About 54 hours, in this factory",
-        "fact": "These munitions workers produced about as much in 56 hours as in 70.",
+        "answer": "No universal workweek",
+        "fact": "In this historical model, output barely changed between 56 and 70 hours. It does not set a modern workweek.",
         "range": [
           24,
           72.5
@@ -21045,7 +20377,11 @@ window.EnoughData = {
           40,
           56,
           72.5
-        ]
+        ],
+        "shape": "A historical example",
+        "lineStyle": "dashed",
+        "modelLabel": "Historical factory model",
+        "showEnough": false
       },
       "reverification": {
         "researcher": "polish_audit",
@@ -21071,11 +20407,17 @@ window.EnoughData = {
         "residualStandardError": 591.28,
         "coefficientCovariance": null
       },
-      "enoughPolicy": "first90-in-declared-range",
+      "enoughPolicy": "Historical bounded 90% computation retained for provenance only. No displayed optimum is inferred from chart endpoints.",
       "computed": {
         "enough": 53.480148710289846,
         "sensitivity": null,
         "sweetRange": null
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -21266,6 +20608,12 @@ window.EnoughData = {
           "doi": "10.1001/jamanetworkopen.2023.6185",
           "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
           "year": 2023
+        },
+        {
+          "id": "stockwell2024",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/38289182/",
+          "citation": "Stockwell et al. 2024. Why Do Only Some Cohort Studies Find Health Benefits From Low-Volume Alcohol Use? J Stud Alcohol Drugs 85:441-452.",
+          "location": "Abstract Results: younger cohorts separating former/occasional drinkers from abstainers, RR 0.98, 95% CI 0.87 to 1.11. Same underlying 107-cohort review family, not 107 new independent cohorts."
         }
       ],
       "extraction": "Exact Table 2 fully adjusted all-cause mortality categories, lifetime nondrinkers as reference. Grams/day converted to weekly US standard drinks by multiplying 7/14. Keep early negative estimates and open-ended highest group.",
@@ -21332,7 +20680,8 @@ window.EnoughData = {
           2,
           4,
           5
-        ]
+        ],
+        "showEnough": false
       },
       "reverification": {
         "researcher": "v2_food",
@@ -21344,6 +20693,21 @@ window.EnoughData = {
         "enough": null,
         "sensitivity": null,
         "sweetRange": null
+      },
+      "evidenceSummary": {
+        "stockwell2024": {
+          "lowVolumeRR": 0.98,
+          "low": 0.87,
+          "high": 1.11,
+          "comparison": "Selected less-biased cohort characteristics",
+          "independence": "Reanalysis of the same review family; do not add to Zhao 2023 cohort count."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     },
     {
@@ -21439,6 +20803,12 @@ window.EnoughData = {
           "doi": "10.1136/bmj.j5855",
           "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
           "year": 2018
+        },
+        {
+          "id": "ccc2025",
+          "url": "https://journals.plos.org/plosmedicine/article?id=10.1371/journal.pmed.1004561",
+          "citation": "Cross-Cohort Collaboration. 2025. Cigarette smoking status, intensity and cessation duration with nine cardiovascular and mortality outcomes. PLOS Medicine 22:e1004561.",
+          "location": "Abstract Results and Smoking intensity section: 22 cohorts, 323,826 adults; 2 to 5 cigarettes/day, CVD mortality HR 1.57 (1.41 to 1.75), all-cause mortality 1.60 (1.52 to 1.69). Different outcomes/population from the male coronary-disease chart."
         }
       ],
       "extraction": "Exact Table 1, coronary heart disease, men, all studies: pooled predictions at 1, 5 and 20 cigarettes/day. Zero is the explicitly defined never-smoking reference, not an estimated dose-response confidence interval.",
@@ -21505,7 +20875,8 @@ window.EnoughData = {
           1,
           2,
           3
-        ]
+        ],
+        "showEnough": false
       },
       "reverification": {
         "researcher": "v2_food",
@@ -21517,6 +20888,26 @@ window.EnoughData = {
         "enough": null,
         "sensitivity": null,
         "sweetRange": null
+      },
+      "evidenceSummary": {
+        "ccc2025": {
+          "cohorts": 22,
+          "participants": 323826,
+          "exposure": "2 to 5 cigarettes/day versus never smoking",
+          "allCauseHR": 1.6,
+          "allCauseLow": 1.52,
+          "allCauseHigh": 1.69,
+          "cvdMortalityHR": 1.57,
+          "cvdMortalityLow": 1.41,
+          "cvdMortalityHigh": 1.75,
+          "notPlotted": "Different outcome and mixed-sex sample; no splicing into Hackshaw coronary incidence curve."
+        }
+      },
+      "evidenceAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
+        "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+        "status": "Revised or retained with population, outcome and uncertainty checked."
       }
     }
   ],
@@ -22664,7 +22055,11 @@ window.EnoughData = {
     "enoughLine": "90% of improvement from the displayed baseline to the best result shown, placed on the actual outcome scale.",
     "opening": "Walking uses the same Paluch 2022 age-group curve as its single card. Age selection and the physical marker stay synchronized. The initial marker is at the lower edge of the author-described flatter range, not a prescription.",
     "audit": "Primary agent rechecked Ding 2025 Table 2 and audited all eight previously normalized benefit curves. Source coordinates and enough computations are unchanged.",
-    "longerSteps": "One walking card, with under-60 and 60+ selection, approximate Figure 3 values to 16,000 steps and published 95% bands. No second walking section, extrapolation or enough mark. Ding 2025 is retained as supporting evidence."
+    "longerSteps": "One walking card, with under-60 and 60+ selection, approximate Figure 3 values to 16,000 steps and published 95% bands. No second walking section, extrapolation or enough mark. Ding 2025 is retained as supporting evidence.",
+    "evidenceAudit": "docs/ENOUGH_EVIDENCE_AUDIT.md",
+    "enough": "Use supported recommendations or author-described broad ranges. No arbitrary 90% marker is shown.",
+    "protein": "Sourced intake guide, no fabricated continuous gain curve.",
+    "intervals": "Published point intervals or response bands; assumption scenarios are labeled separately. No confidence interval is derived by subtracting independent bound curves."
   },
   "stepComparisons": [
     {
@@ -23857,6 +23252,1539 @@ window.EnoughData = {
         ],
         "sweetRange": null
       }
+    },
+    "protein2018": {
+      "id": "protein",
+      "question": "How much protein?",
+      "shape": "Most arrives early",
+      "fact": "The sharp turn at 0.73 g/lb/day comes from a forced plateau in the model.",
+      "kind": "model",
+      "unit": "g/lb/day",
+      "xLabel": "Protein each day (g/lb)",
+      "yLabel": "Lean gain vs 0.41 g/lb (lb)",
+      "domain": [
+        0.4082331329997733,
+        1.0886216879993955
+      ],
+      "ticks": [
+        0.4082331329997733,
+        0.7,
+        1.0886216879993955
+      ],
+      "defaultDose": 0.7021609887596101,
+      "effectKind": "lean",
+      "better": "higher",
+      "model": {
+        "type": "protein",
+        "slope": 1.75,
+        "baselineKg": 0.9,
+        "breakpointKg": 1.62,
+        "lbPerKg": 2.20462262185,
+        "responseFormulaKg": "1.75*(min(totalProteinGPerKg,1.62)-0.9)",
+        "shareFormula": "(min(totalProteinGPerKg,1.62)-0.9)/(1.62-0.9)",
+        "d90FormulaKg": "0.9+0.9*(1.62-0.9)"
+      },
+      "uncertainty": "The published bend interval is 0.47 to 1.00 g/lb. Propagating those endpoints through this chosen model moves the 90% mark to 0.46 to 0.94 g/lb. This is conditional sensitivity, not a new threshold confidence interval. No full response bands are published.",
+      "evidence": "Meta-analysis of randomized training trials; dose curve is a comparison across study arms",
+      "population": "Healthy adults doing resistance training, 42 study arms and 723 participants in the breakpoint model.",
+      "caveats": [
+        "This curve applies to adults doing resistance training. Protein here means total daily intake, not the size of a supplement.",
+        "The model forces a flat second segment. Its bend is about 0.73 g/lb, with a broad published interval of 0.47 to 1.00. The segmented model did not clearly outperform a straight line (p=0.079).",
+        "Newer reviews support small extra gains from protein during training, but their populations and intake measures differ. They do not establish a universal ceiling.",
+        "Cooked roasted chicken breast contains 31.02 grams of protein per 100 grams in USDA Standard Reference 27. Three 4-ounce portions contain about 105.5 grams."
+      ],
+      "extraction": "Reconstructed change relative to a chart reference intake, 0.9 g/kg/day, using the reported slope 1.75 and breakpoint 1.62. Both axes converted with 1 kg = 2.20462262185 lb. No extrapolation to zero. Stored response CI values are null.",
+      "sources": [
+        {
+          "id": "morton",
+          "citation": "Morton et al., 2018. Protein supplementation and resistance training. British Journal of Sports Medicine.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5867436/",
+          "location": "Figure 5; Results, Protein intake and changes in FFM"
+        },
+        {
+          "id": "tagawa",
+          "citation": "Tagawa et al., 2021. Protein intake and lean body mass.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/",
+          "location": "Dose-response results, broad mixed-population sensitivity check"
+        },
+        {
+          "id": "li",
+          "citation": "Li et al., 2026. Dose, protein type and population in protein supplementation with resistance training.",
+          "url": "https://www.frontiersin.org/journals/nutrition/articles/10.3389/fnut.2026.1860234/full",
+          "location": "Abstract and dose-response model; supplementary protein dose differs from total intake"
+        },
+        {
+          "id": "usda-chicken",
+          "url": "https://www.ars.usda.gov/ARSUserFiles/80400525/Data/SR27/reports/sr27fg05.pdf",
+          "citation": "USDA Standard Reference27, cooked roasted chicken breast",
+          "location": "NDB 05064, printed PDF page 118, Proximates; half-breast measure on page 120"
+        }
+      ],
+      "verified": "2026-10-04",
+      "points": [
+        {
+          "dose": 0.4082331329997733,
+          "effect": 0,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 0
+        },
+        {
+          "dose": 0.41503701854976954,
+          "effect": 0.05787134382356255,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 2.083333333333335
+        },
+        {
+          "dose": 0.42184090409976577,
+          "effect": 0.1157426876471251,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 4.16666666666667
+        },
+        {
+          "dose": 0.428644789649762,
+          "effect": 0.17361403147068766,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 6.250000000000004
+        },
+        {
+          "dose": 0.4354486751997582,
+          "effect": 0.2314853752942502,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 8.33333333333334
+        },
+        {
+          "dose": 0.44225256074975444,
+          "effect": 0.28935671911781274,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 10.416666666666673
+        },
+        {
+          "dose": 0.44905644629975067,
+          "effect": 0.3472280629413753,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 12.500000000000009
+        },
+        {
+          "dose": 0.4558603318497469,
+          "effect": 0.4050994067649379,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 14.583333333333345
+        },
+        {
+          "dose": 0.4626642173997431,
+          "effect": 0.4629707505885,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 16.66666666666666
+        },
+        {
+          "dose": 0.46946810294973934,
+          "effect": 0.520842094412063,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 18.75000000000001
+        },
+        {
+          "dose": 0.4762719884997355,
+          "effect": 0.5787134382356252,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 20.833333333333332
+        },
+        {
+          "dose": 0.48307587404973173,
+          "effect": 0.6365847820591871,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 22.916666666666647
+        },
+        {
+          "dose": 0.489879759599728,
+          "effect": 0.6944561258827502,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 25.000000000000004
+        },
+        {
+          "dose": 0.4966836451497242,
+          "effect": 0.7523274697063124,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 27.08333333333332
+        },
+        {
+          "dose": 0.5034875306997204,
+          "effect": 0.8101988135298743,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 29.166666666666632
+        },
+        {
+          "dose": 0.5102914162497166,
+          "effect": 0.8680701573534374,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 31.24999999999999
+        },
+        {
+          "dose": 0.5170953017997129,
+          "effect": 0.9259415011769996,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 33.33333333333331
+        },
+        {
+          "dose": 0.5238991873497091,
+          "effect": 0.9838128450005625,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 35.41666666666666
+        },
+        {
+          "dose": 0.5307030728997053,
+          "effect": 1.0416841888241246,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 37.49999999999998
+        },
+        {
+          "dose": 0.5375069584497015,
+          "effect": 1.0995555326476876,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 39.58333333333332
+        },
+        {
+          "dose": 0.5443108439996978,
+          "effect": 1.1574268764712499,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 41.66666666666665
+        },
+        {
+          "dose": 0.551114729549694,
+          "effect": 1.2152982202948128,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 43.75
+        },
+        {
+          "dose": 0.5579186150996902,
+          "effect": 1.273169564118375,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 45.83333333333332
+        },
+        {
+          "dose": 0.5647225006496864,
+          "effect": 1.3310409079419379,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 47.916666666666664
+        },
+        {
+          "dose": 0.5715263861996827,
+          "effect": 1.3889122517655,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 49.999999999999986
+        },
+        {
+          "dose": 0.5783302717496789,
+          "effect": 1.446783595589063,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 52.08333333333334
+        },
+        {
+          "dose": 0.5851341572996751,
+          "effect": 1.504654939412625,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 54.16666666666666
+        },
+        {
+          "dose": 0.5919380428496713,
+          "effect": 1.562526283236188,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 56.24999999999999
+        },
+        {
+          "dose": 0.5987419283996676,
+          "effect": 1.6203976270597502,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 58.33333333333333
+        },
+        {
+          "dose": 0.6055458139496638,
+          "effect": 1.6782689708833132,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 60.41666666666668
+        },
+        {
+          "dose": 0.61234969949966,
+          "effect": 1.7361403147068752,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 62.49999999999999
+        },
+        {
+          "dose": 0.6191535850496562,
+          "effect": 1.7940116585304375,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 64.58333333333331
+        },
+        {
+          "dose": 0.6259574705996525,
+          "effect": 1.8518830023540005,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 66.66666666666667
+        },
+        {
+          "dose": 0.6327613561496487,
+          "effect": 1.9097543461775623,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 68.74999999999997
+        },
+        {
+          "dose": 0.6395652416996449,
+          "effect": 1.9676256900011255,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 70.83333333333334
+        },
+        {
+          "dose": 0.6463691272496411,
+          "effect": 2.0254970338246876,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 72.91666666666664
+        },
+        {
+          "dose": 0.6531730127996374,
+          "effect": 2.0833683776482506,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 75
+        },
+        {
+          "dose": 0.6599768983496336,
+          "effect": 2.1412397214718126,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 77.08333333333331
+        },
+        {
+          "dose": 0.6667807838996298,
+          "effect": 2.1991110652953756,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 79.16666666666667
+        },
+        {
+          "dose": 0.6735846694496259,
+          "effect": 2.2569824091189368,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 81.24999999999994
+        },
+        {
+          "dose": 0.6803885549996223,
+          "effect": 2.3148537529425006,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 83.33333333333333
+        },
+        {
+          "dose": 0.6871924405496184,
+          "effect": 2.372725096766062,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 85.41666666666661
+        },
+        {
+          "dose": 0.6939963260996147,
+          "effect": 2.430596440589626,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 87.50000000000001
+        },
+        {
+          "dose": 0.7008002116496108,
+          "effect": 2.4884677844131873,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 89.5833333333333
+        },
+        {
+          "dose": 0.7021609887596101,
+          "effect": 2.5000420531779004,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 90
+        },
+        {
+          "dose": 0.7076040971996072,
+          "effect": 2.546339128236751,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 91.66666666666669
+        },
+        {
+          "dose": 0.7144079827496033,
+          "effect": 2.6042104720603123,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 93.74999999999997
+        },
+        {
+          "dose": 0.7212118682995996,
+          "effect": 2.6620818158838753,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 95.83333333333331
+        },
+        {
+          "dose": 0.7280157538495957,
+          "effect": 2.7199531597074373,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 97.91666666666663
+        },
+        {
+          "dose": 0.734819639399592,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7416235249495882,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7484274104995845,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7552312960495806,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.762035181599577,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7688390671495731,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7756429526995694,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7824468382495655,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.7892507237995618,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.796054609349558,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8028584948995542,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8096623804495504,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8164662659995467,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8232701515495429,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8300740370995391,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8368779226495353,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8436818081995315,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8504856937495278,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8572895792995241,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8640934648495202,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8708973503995164,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8777012359495127,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.884505121499509,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8913090070495051,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8981128925995013,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9049167781494976,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9117206636994939,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.91852454924949,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9253284347994861,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9321323203494825,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9389362058994786,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9457400914494749,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.952543976999471,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9593478625494674,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9661517480994635,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9729556336494598,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9797595191994561,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9865634047494523,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9933672902994484,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0001711758494447,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0069750613994408,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0137789469494372,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0205828324994333,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0273867180494296,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0341906035994257,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.040994489149422,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0477983746994182,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0546022602494145,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0614061457994108,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.068210031349407,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.075013916899403,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0818178024493994,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0886216879993955,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        }
+      ],
+      "unitLabel": "g/lb a day",
+      "yDomain": [
+        0,
+        3
+      ],
+      "yTicks": [
+        0,
+        1.5,
+        3
+      ],
+      "step": 0.01,
+      "doseDigits": 2,
+      "personalNote": "This model flattens near 0.74 g/lb, about 110 g for a 150 lb lifter. Its bend is uncertain and does not measure your individual need.",
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "root",
+        "adversary": "movement_research",
+        "statistician": "diet_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "lift",
+        "mode": "benefit",
+        "answer": "No exact cutoff",
+        "shape": "Uncertain plateau",
+        "lineStyle": "dashed",
+        "fact": "The sharp turn at 0.73 g/lb/day comes from a forced plateau in the model.",
+        "range": [
+          0.4082331329997733,
+          1.0886216879993955
+        ],
+        "rangeLabel": "0.41 to 1.09 grams per pound a day",
+        "default": 0.7021609887596101,
+        "ticks": [
+          0.4082331329997733,
+          0.7,
+          1.0886216879993955
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_move",
+        "adversary": "polish_audit"
+      },
+      "rangeMethod": "Range shown: about 0.41 to 1.09 grams per pound a day",
+      "breakpoint": {
+        "dose": 0.734819639399592,
+        "interval": [
+          0.46720014109974056,
+          0.9979032139994459
+        ],
+        "intervalType": "Published 95% confidence interval for model breakpoint, not response band",
+        "modelComparisonP": 0.079,
+        "flatSecondSlopeImposed": true,
+        "modelArms": 42,
+        "modelParticipants": 723
+      },
+      "conditionalSensitivity": [
+        0.4613034402897438,
+        0.9389362058994786
+      ],
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 0.7021609887596101,
+        "sensitivity": null,
+        "sweetRange": null
+      },
+      "effectUnit": "Modeled extra fat-free mass gain, lb, relative to 0.41 g/lb/day while lifting",
+      "outcome": "modeled extra fat-free mass gain while lifting"
+    },
+    "fiber2019": {
+      "id": "fiber",
+      "view": {
+        "area": "eat",
+        "mode": "benefit",
+        "shape": "Keeps paying",
+        "answer": "About 32 grams a day",
+        "fact": "Each extra 8 grams went with 7% lower risk of dying. The model keeps improving at the edge.",
+        "range": [
+          7,
+          35
+        ],
+        "rangeLabel": "2019 linear model: 7 to 35 grams a day",
+        "default": 25,
+        "ticks": [
+          7,
+          15,
+          25,
+          35
+        ]
+      },
+      "question": "How much fiber?",
+      "fact": "Each extra 8 grams went with 7% lower risk of dying. The model keeps improving at the edge.",
+      "shape": "Keeps paying",
+      "defaultDose": 25,
+      "domain": [
+        7,
+        35
+      ],
+      "ticks": [
+        7,
+        15,
+        25,
+        35
+      ],
+      "verified": "2026-10-04",
+      "reverification": {
+        "researcher": "v2_food",
+        "adversary": "v2_move"
+      },
+      "rangeMethod": "Analyst-declared conservative subset of the author figure model exposure extent, approximately 6 to 35 g/day. These are not claimed to be the exact observed exposure extremes.",
+      "points": [
+        {
+          "dose": 7,
+          "originalDose": 7,
+          "effect": 1,
+          "low": 1,
+          "high": 1,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": true,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 0
+        },
+        {
+          "dose": 8,
+          "originalDose": 8,
+          "effect": 0.9909696838390821,
+          "low": 0.9869162813660015,
+          "high": 0.993608849045455,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 4.025887889604755
+        },
+        {
+          "dose": 9,
+          "originalDose": 9,
+          "effect": 0.9820209142881304,
+          "low": 0.9740037464252967,
+          "high": 0.9872585449014338,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 8.01542073873795
+        },
+        {
+          "dose": 10,
+          "originalDose": 10,
+          "effect": 0.9731529549554749,
+          "low": 0.9612601554586079,
+          "high": 0.9809488265098043,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 11.968926844909145
+        },
+        {
+          "dose": 11,
+          "originalDose": 11,
+          "effect": 0.9643650760992956,
+          "low": 0.9486832980505138,
+          "high": 0.9746794344808963,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 15.88673154099746
+        },
+        {
+          "dose": 12,
+          "originalDose": 12,
+          "effect": 0.9556565545675713,
+          "low": 0.9362709927060472,
+          "high": 0.9684501110828384,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 19.7691572220234
+        },
+        {
+          "dose": 13,
+          "originalDose": 13,
+          "effect": 0.9470266737385726,
+          "low": 0.9240210864723069,
+          "high": 0.9622606002309622,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 23.616523371678387
+        },
+        {
+          "dose": 14,
+          "originalDose": 14,
+          "effect": 0.9384747234618909,
+          "low": 0.9119314545650217,
+          "high": 0.9561106474772749,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 27.429146588615193
+        },
+        {
+          "dose": 15,
+          "originalDose": 15,
+          "effect": 0.93,
+          "low": 0.9,
+          "high": 0.95,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 31.20734061250058
+        },
+        {
+          "dose": 16,
+          "originalDose": 16,
+          "effect": 0.9216018059703465,
+          "low": 0.8882246532294015,
+          "high": 0.9439284065931822,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 34.95141634983299
+        },
+        {
+          "dose": 17,
+          "originalDose": 17,
+          "effect": 0.9132794502879613,
+          "low": 0.8766033717827671,
+          "high": 0.9378956176563621,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 38.66168189952689
+        },
+        {
+          "dose": 18,
+          "originalDose": 18,
+          "effect": 0.9050322481085917,
+          "low": 0.865134139912747,
+          "high": 0.9319013851843141,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 42.33844257826609
+        },
+        {
+          "dose": 19,
+          "originalDose": 19,
+          "effect": 0.8968595207723449,
+          "low": 0.8538149682454624,
+          "high": 0.9259454627568515,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 45.982000945628236
+        },
+        {
+          "dose": 20,
+          "originalDose": 20,
+          "effect": 0.8887605957478413,
+          "low": 0.8426438934354425,
+          "high": 0.9200276055286964,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 49.59265682898236
+        },
+        {
+          "dose": 21,
+          "originalDose": 21,
+          "effect": 0.8807348065768726,
+          "low": 0.8316189778250762,
+          "high": 0.914147570219414,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 53.17070734816146
+        },
+        {
+          "dose": 22,
+          "originalDose": 22,
+          "effect": 0.8727814928195585,
+          "low": 0.8207383091085195,
+          "high": 0.9083051151034112,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 56.716446939912736
+        },
+        {
+          "dose": 23,
+          "originalDose": 23,
+          "effect": 0.8649000000000001,
+          "low": 0.81,
+          "high": 0.9025,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 60.23016738212612
+        },
+        {
+          "dose": 24,
+          "originalDose": 24,
+          "effect": 0.8570896795524222,
+          "low": 0.7994021879064613,
+          "high": 0.896731986263523,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 63.71215781784529
+        },
+        {
+          "dose": 25,
+          "originalDose": 25,
+          "effect": 0.849349888767804,
+          "low": 0.7889430346044904,
+          "high": 0.8910008367735439,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 67.1627047790606
+        },
+        {
+          "dose": 26,
+          "originalDose": 26,
+          "effect": 0.8416799907409903,
+          "low": 0.7786207259214724,
+          "high": 0.8853063159250983,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 70.58209221028807
+        },
+        {
+          "dose": 27,
+          "originalDose": 27,
+          "effect": 0.8340793543182808,
+          "low": 0.7684334714209162,
+          "high": 0.8796481896190089,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 73.97060149193483
+        },
+        {
+          "dose": 28,
+          "originalDose": 28,
+          "effect": 0.8265473540454925,
+          "low": 0.7583795040918982,
+          "high": 0.8740262252522616,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 77.32851146345415
+        },
+        {
+          "dose": 29,
+          "originalDose": 29,
+          "effect": 0.8190833701164916,
+          "low": 0.7484570800425686,
+          "high": 0.8684401917084432,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 80.65609844629077
+        },
+        {
+          "dose": 30,
+          "originalDose": 30,
+          "effect": 0.8116867883221895,
+          "low": 0.7386644781976676,
+          "high": 0.8628898593482406,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 83.95363626661938
+        },
+        {
+          "dose": 31,
+          "originalDose": 31,
+          "effect": 0.8043570000000001,
+          "low": 0.7290000000000001,
+          "high": 0.8573749999999999,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 87.22139627787789
+        },
+        {
+          "dose": 32,
+          "originalDose": 32,
+          "effect": 0.7970934019837527,
+          "low": 0.7194619691158152,
+          "high": 0.8518953869503468,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 90.45964738309672
+        },
+        {
+          "dose": 33,
+          "originalDose": 33,
+          "effect": 0.7898953965540578,
+          "low": 0.7100487311440414,
+          "high": 0.8464507949348666,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 93.66865605702694
+        },
+        {
+          "dose": 34,
+          "originalDose": 34,
+          "effect": 0.7827623913891211,
+          "low": 0.7007586533293252,
+          "high": 0.8410410001288433,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 96.84868636806847
+        },
+        {
+          "dose": 35,
+          "originalDose": 35,
+          "effect": 0.7756937995160011,
+          "low": 0.6915901242788246,
+          "high": 0.8356657801380584,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 100
+        }
+      ],
+      "population": "Reynolds 2019 mortality dose-response analysis: 68,183 deaths over 11.3 million person-years; general-population prospective cohorts.",
+      "caveats": [
+        "This is the 2019 paper’s published log-linear model. The source also presents a nonlinear fit, but it supplies no exact numeric grid for that curve.",
+        "We chose 7 to 35 grams inside the figure’s approximate 6 to 35 gram extent. These are not the exact observed exposure extremes. A different window changes the enough point.",
+        "The source prints 0.93 relative risk per extra 8 grams, with limits 0.90 to 0.95. This reconstruction is observational, not a personal risk forecast.",
+        "The line keeps improving at 35 grams. Its 90% point is a summary of this window, not an optimal fiber prescription."
+      ],
+      "evidence": "dose-response meta-analysis of prospective observational studies",
+      "sources": [
+        {
+          "id": "reynolds2019",
+          "citation": "Reynolds et al. Carbohydrate quality and human health. Lancet 2019;393:434-445.",
+          "url": "https://discovery.dundee.ac.uk/ws/files/30375889/Final_Lancet_for_John.pdf",
+          "doi": "10.1016/S0140-6736(18)31809-9",
+          "location": "Primary author manuscript Figure 2a, PDF page 21; published journal Figure 1A",
+          "year": 2019,
+          "primaryPublicationUrl": "https://doi.org/10.1016/S0140-6736(18)31809-9",
+          "method": "Printed per8 g linear slope andCI. Figure exposure extent visually inspected; conservative analyst domain7 to 35 g declared. No nonlinear predictions digitized."
+        },
+        {
+          "id": "yao2023",
+          "citation": "Yao et al. Dietary intake of total vegetable, fruit, cereal, soluble and insoluble fiber and risk of all-cause, cardiovascular, and cancer mortality. Front Nutr 2023;10:1153165.",
+          "url": "https://www.frontiersin.org/journals/nutrition/articles/10.3389/fnut.2023.1153165/full",
+          "doi": "10.3389/fnut.2023.1153165",
+          "location": "Table 2, total dietary fiber, all-cause dose-response; Results 3.2 and Figure2 first panel; Data_Sheet_1.docx",
+          "verified": "LinearRR 0.90(0.86 to 0.93) per 10 g; nonlinear P 0.0096, steep below15 g. No numeric spline grid/coefficient table found in source or DOCX supplement.",
+          "use": "Newer counterevidence and optional future independently digitized nonlinear upgrade."
+        },
+        {
+          "id": "ramezani2024",
+          "citation": "Ramezani et al. Dietary fiber intake and all-cause and cause-specific mortality: An updated systematic review and meta-analysis of prospective cohort studies. Clin Nutr 2024;43:65-83.",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/38011755/",
+          "doi": "10.1016/j.clnu.2023.11.005",
+          "location": "Abstract,64 eligible studies and3,512,828 participants",
+          "use": "Newer highest-versus-lowest review supports association but abstract supplies no continuous dose-response curve. Corrects earlier dossier misattribution to Mirrafiei."
+        },
+        {
+          "id": "niddkFiberTable",
+          "citation": "NIDDK. Eating, Diet, and Nutrition for Diverticular Disease. Food and Portion Size tables, sourceUSDA/HHS 2020-2025 Dietary Guidelines.",
+          "url": "https://www.niddk.nih.gov/health-information/digestive-diseases/diverticulosis-diverticulitis/eating-diet-nutrition",
+          "location": "Vegetables table, half cup cooked lentils7.8 g dietary fiber",
+          "use": "Food-unit example only."
+        },
+        {
+          "id": "veronese2025fiber",
+          "citation": "Veronese et al. The impact of dietary fiber consumption on human health: An umbrella review of evidence from 17,155,277 individuals. Clin Nutr 2025;51:325-333.",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40651334/",
+          "doi": "10.1016/j.clnu.2025.06.021",
+          "location": "Abstract and accessible primary publisher Results, literature search through December 1, 2024",
+          "use": "Newest screened umbrella: all-cause mortality association graded highly suggestive, Class II. No original continuous dose curve supplied in accessible results."
+        }
+      ],
+      "unit": "g/day",
+      "unitLabel": "grams a day",
+      "kind": "model",
+      "better": "lower",
+      "model": {
+        "form": "log-linear",
+        "formula": "RR(d)=0.93^((d-7)/8)",
+        "increment": 8,
+        "incrementUnit": "g/day",
+        "riskRatioPerIncrement": 0.93,
+        "riskRatioPerIncrementLow": 0.9,
+        "riskRatioPerIncrementHigh": 0.95,
+        "coefficientsExactFromPrintedSource": true,
+        "parameterPrecision": "Source ratios printed to two decimals; generated dose estimates carry computational precision only.",
+        "reconstructedRiskIntervalFormula": "[0.90^((d-7)/8),0.95^((d-7)/8)]",
+        "method": "Arithmetic reconstruction of the published linear model. This is not the published nonlinear spline and no model points were hand digitized."
+      },
+      "extraction": "Reconstructed published log-linear slope, RR = 0.93 per extra 8 g/day, with pointwise slope limits. Analyst-selected 7 to 35 g window within the source figure extent; endpoints are not exact observed exposure extremes.",
+      "uncertainty": "The published slope limits are 0.90 to 0.95 per 8 grams. They imply different gain curves; their crossings are a sensitivity check, not a confidence interval for an optimal amount.",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 31.857503285276195,
+        "sensitivity": [
+          31.687290750655407,
+          31.96268978995299
+        ],
+        "sweetRange": null
+      },
+      "effectUnit": "Relative all-cause mortality risk, 7 grams/day =1",
+      "outcome": "all-cause mortality risk",
+      "effectKind": "risk"
     }
-  }
+  },
+  "audited": "2026-10-05"
 };

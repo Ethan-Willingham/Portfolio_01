@@ -36,7 +36,7 @@ const clickFraction=async(page,plot,f)=>{
   assert.deepEqual(clipped,[],'All axis titles and ticks fit');await fullPainting(page);
   assert.equal(await page.locator('input[type=range]').count(),0,'No visible slider bars');
   assert.equal(await page.locator('.enough-chart[role=slider][tabindex="0"]').count(),12,'Every chart has direct keyboard control');
-  assert.equal(await page.locator('.enough-chart .en-x-label').count(),12);assert.equal(await page.locator('.enough-chart .en-y-label').count(),12);
+  assert.equal(await page.locator('.enough-chart .en-x-label').count(),12);assert.equal(await page.locator('.enough-chart .en-y-label').count(),11);assert.equal(await page.locator('#protein .en-guidance-label').textContent(),'Published intake guide');
   assert.ok(await page.locator('.enough-detail summary').evaluateAll(els=>els.every(el=>el.getBoundingClientRect().height>=44)),'44px disclosure targets');
   if(width===375)assert.equal(await page.locator('.enough-card').first().evaluate(el=>Math.round(el.getBoundingClientRect().left)),20,'Site mobile gutter');
   const wordCounts=await page.locator('.enough-card details').evaluateAll(els=>els.map(el=>({id:el.closest('article').id,words:el.textContent.trim().split(/\s+/).length})));
@@ -46,24 +46,28 @@ const clickFraction=async(page,plot,f)=>{
   const opening=page.locator('#overview-steps .overview-plot');
   assert.equal(await opening.getAttribute('aria-valuenow'),'8000');assert.match(await opening.getAttribute('aria-valuetext'),/about 44% lower risk of dying.*5,000.*under 60/,'Opening uses actual outcome and baseline');
   assert.equal(await page.locator('.enough-overview .overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
-  assert.match(await page.locator('#protein .en-y-label').textContent(),/lean-mass gain, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/lower risk of dying, %/i);
+  assert.equal(await page.locator('#protein .en-y-label,#protein .en-curve').count(),0,'Guidance is not a predicted muscle-gain curve');assert.match(await page.locator('#steps .en-y-label').textContent(),/lower risk of dying, %/i);
   assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
   assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
   const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
    const ticks=[...svg.querySelectorAll('.en-y-tick')];
    return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
   }));assert.deepEqual(crowdedTicks,[],'Y-axis labels have at least 4px separation');
-  const benefitIds=await page.evaluate(()=>EnoughData.curves.filter(c=>c.view.mode==='benefit'&&c.view.lineStyle!=='dashed').map(c=>c.id));
-  for(const id of benefitIds){
-   assert.ok(!(await page.locator('#'+id+' .en-y-tick').allTextContents()).includes('100'),'Benefit axis has source units, not a normalized maximum');
-   assert.equal(await page.locator('#'+id+' .enough-target-key').textContent(),'Enough: 90% of shown improvement');
-   assert.ok(await page.locator('#'+id+' svg').evaluate((svg,id)=>{
-    const ticks=[...svg.querySelectorAll('.en-y-tick')],values=ticks.map(t=>Number(t.textContent.replaceAll(',',''))),ys=ticks.map(t=>Number(t.getAttribute('y'))-4);
-    const c=EnoughData.curves.find(c=>c.id===id),value=EnoughMath.outcome(c,EnoughMath.enough(c));
-    const expected=ys[0]+(value-values[0])*(ys[1]-ys[0])/(values[1]-values[0]);
-    return Math.abs(Number(svg.querySelector('.en-target').getAttribute('y1'))-expected)<.01;
-   },id),'Enough line uses the actual outcome value');
+  assert.equal(await page.locator('.en-target,.en-guide,.enough-target-key').count(),0,'No endpoint-derived 90% optimum');
+  for(const id of ['exercise','fiber','sleep'])assert.equal(await page.locator('#'+id+' .en-uncertainty').count(),1,'Published interval displayed: '+id);
+  for(const id of ['fruit-veg','income','alcohol','smoking']){
+   assert.equal(await page.locator('#'+id+' .en-curve').count(),0,'No invented response line between source groups');
+   assert.ok(await page.locator('#'+id+' .en-whisker').count()>1,'Source-group intervals displayed');
   }
+  const intervalClips=await page.locator('.enough-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>[...svg.querySelectorAll('.en-uncertainty,.en-whisker')].filter(el=>{const b=el.getBBox(),v=svg.viewBox.baseVal;return b.y<29.9||b.y+b.height>v.height-55.9;}).map(el=>el.closest('article').id)));
+  assert.deepEqual(intervalClips,[],'Full intervals and scenario ranges fit on every chart');
+  assert.equal(await page.locator('#sleep .en-area').count(),0,'No artificial six-hour sweet spot');
+  assert.equal(await page.locator('#protein .en-intake-band').count(),1);
+  assert.match(await page.locator('#protein .enough-answer').textContent(),/0.65 to 0.9/);
+  assert.match(await page.locator('#protein .enough-fact').textContent(),/62 lifting trials/);
+  assert.match(await page.locator('#protein details').textContent(),/not a growth curve/);
+  assert.match(await page.locator('#income .en-y-label').textContent(),/out of 100/);
+  assert.equal(await page.locator('#savings .en-scenario').count(),1,'Alternate assumptions are labeled, not confidence limits');
   const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/8,000.*about 44%.*5,000/,'Walking opens at the lower edge of its broad flatter region');assert.match(await page.locator('#steps .enough-answer').textContent(),/8,000 to 10,000/);assert.equal(await page.locator('#steps-longer,[id^=longer-steps],.steps-longer').count(),0,'One walking card, no second study section');assert.equal(await page.locator('[data-steps-age]').count(),2,'Only one pair of walking age controls');
   await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'13300');assert.equal(await page.locator('#steps .enough-chart').getAttribute('aria-valuenow'),'13300','Opening and card share the same selected amount');
   await page.keyboard.press('Home');assert.equal(await opening.getAttribute('aria-valuenow'),'5000');await page.keyboard.press('ArrowRight');assert.equal(await opening.getAttribute('aria-valuenow'),'5100');await page.keyboard.press('End');assert.equal(await opening.getAttribute('aria-valuenow'),'16000');assert.match(await opening.getAttribute('aria-valuetext'),/about 39% lower risk/,'Figure endpoint is not normalized to 100%');
@@ -71,7 +75,7 @@ const clickFraction=async(page,plot,f)=>{
    await page.locator('[data-opening-curve="'+id+'"]').click();const plot=page.locator('#overview-'+id+' .overview-plot');
    assert.equal(await page.locator('.overview-panel:visible').count(),1);assert.equal(await page.locator('[data-opening-curve="'+id+'"]').getAttribute('aria-pressed'),'true');
    await clickFraction(page,plot,.5);await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
-   assert.match(await plot.getAttribute('aria-valuetext'),id==='exercise'?/38.4% lower risk.*no exercise/:/2.8 lb more lean-mass gain.*model/);
+   assert.match(await plot.getAttribute('aria-valuetext'),id==='exercise'?/38.4% lower risk.*no exercise/:/above the published intake guide.*cutoff is unknown/i);
   }
   await page.locator('[data-opening-curve="steps"]').click();assert.equal(await opening.getAttribute('aria-valuenow'),'16000','Curve changes preserve each selection');
   for(const plot of await page.locator('.enough-chart').all()){
@@ -106,15 +110,14 @@ const clickFraction=async(page,plot,f)=>{
    await page.waitForFunction(before=>scrollY>before,beforeScroll,{timeout:2000});assert.ok(await page.evaluate(()=>scrollY)>beforeScroll,'Vertical touch scroll passes through charts');await cdp.detach();
   }
   assert.match(await page.locator('#sets .enough-answer').textContent(),/No settled optimum/);
-  for(const selector of ['#sets .enough-chart','#protein .enough-chart','#overview-protein .overview-plot']){
-   assert.ok(await page.locator(selector+' .en-curve').evaluateAll(els=>els.length>0&&els.every(el=>getComputedStyle(el).strokeDasharray!=='none')),'Sets and protein model curves remain dashed through the selected amount and remainder');
-   assert.equal(await page.locator(selector+' .enough-model-key').textContent(),'Study model');
-   assert.equal(await page.locator(selector+' .en-area,'+selector+' .en-target,'+selector+' .en-guide').count(),0,'Tentative models have no solid benefit fill or exact enough guide');
+  for(const id of ['sets','fiber','savings','work']){
+   const selector='#'+id+' .enough-chart';
+   assert.ok(await page.locator(selector+' .en-curve').evaluateAll(els=>els.length>0&&els.every(el=>getComputedStyle(el).strokeDasharray!=='none')),'Model remains dashed: '+id);
+   assert.ok((await page.locator(selector+' .enough-model-key').textContent()).length>0,'Named model key: '+id);
   }
-  assert.match(await page.locator('#protein .enough-answer').textContent(),/No exact cutoff/);
-  assert.match(await page.locator('#protein .enough-fact').textContent(),/forced plateau/);
+  assert.equal(await page.locator('#sets .en-sparse').count(),1,'Sparse high-dose tail is visible');
   assert.match(await page.locator('#sets .enough-fact').textContent(),/about 25/);
-  assert.equal(await page.locator('#sets .en-uncertainty').count(),1,'Sets model has credible band');assert.equal(await page.locator('#sets .en-guide').count(),0,'No false 38-set enough marker');
+  assert.equal(await page.locator('#sets .en-uncertainty').count(),1,'Sets model has credible band');
   assert.match(await page.locator('#sets details').textContent(),/preprint/);assert.doesNotMatch(await page.locator('#sets .enough-readout').textContent(),/of the gain/);
   assert.equal(await steps.locator('.en-uncertainty').count(),1,'Walking has the published confidence band');
   assert.equal(await opening.locator('.en-uncertainty').count(),1,'Opening shares the same source band');
@@ -146,7 +149,7 @@ const clickFraction=async(page,plot,f)=>{
   await compare('.post-back','.post-back',['font-family','font-size','color','text-decoration-line','padding-top']);await compare('.hero-title','.hero-title',['font-family','font-size','font-weight','line-height','letter-spacing','color']);await compare('.overview-context a','.sec a',['color','text-decoration-line','text-decoration-color','text-underline-offset']);await compare('.site-footer a','.site-footer a',['font-family','font-size','color','text-decoration-line']);await reference.close();
   await page.reload();await ready(page);await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:path.join(destination,width+'-top.png')});await page.screenshot({path:path.join(destination,width+'-page.png'),fullPage:true});await page.locator('.enough-overview').screenshot({path:path.join(destination,width+'-overview.png')});
   await page.locator('#steps').screenshot({path:path.join(destination,width+'-steps-younger.png')});await page.locator('[data-steps-age="steps-older"]').click();await page.locator('#steps').screenshot({path:path.join(destination,width+'-steps-older.png')});await page.locator('[data-steps-age="steps-younger"]').click();
-  for(const area of ['move','eat','money','work'])await page.locator('.enough-group').filter({has:page.locator('#area-'+area)}).screenshot({path:path.join(destination,width+'-'+area+'.png')});
+  for(const area of ['move','lift','rest','eat','money','work','harm'])await page.locator('.enough-group').filter({has:page.locator('#area-'+area)}).screenshot({path:path.join(destination,width+'-'+area+'.png')});
   await page.locator('#sets summary').click();await page.locator('#sets').screenshot({path:path.join(destination,width+'-sets-detail.png')});await page.locator('#protein summary').click();await page.locator('#protein').screenshot({path:path.join(destination,width+'-protein-detail.png')});await page.locator('.site-footer').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(destination,width+'-footer.png')});
   await context.close();console.log('PASS '+width+' px: full art, click/drag/keyboard charts, axes, short evidence, removed panels, reference styling and accessibility');
  }
