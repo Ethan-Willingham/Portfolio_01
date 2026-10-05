@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "source": "https://view.eumetsat.int/geoserver/ows",
+  "layers": [
+    "mumi:wideareacoverage_rgb_natural",
+    "mumi:worldcloudmap_ir108"
+  ],
+  "start": "2021-06-06T15:00:00.000Z",
+  "end": "2026-10-05T15:00:00.000Z",
+  "step": 10800000,
+  "checkedAt": "2026-10-05T17:11:33.966Z"
+}

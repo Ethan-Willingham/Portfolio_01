@@ -134,6 +134,13 @@
     });
   }
 
+  function parseCloudSnapshot(value) {
+    if(!value||value.version!==1||value.source!==CLOUD_SERVICE||value.step!==3*3600000||!Array.isArray(value.layers)||value.layers.length!==2||value.layers.some(function(layer,i){return layer!==CLOUD_LAYERS[i];}))throw new Error('Invalid cloud snapshot');
+    var start=utcTimestamp(value.start),end=utcTimestamp(value.end),checked=utcTimestamp(value.checkedAt);
+    if(end<start||(+end-+start)%(3*3600000)||end-checked>5*MINUTE)throw new Error('Invalid cloud snapshot times');
+    return {start:start,end:end,step:value.step};
+  }
+
   function cloudFrameAt(catalog, instant, now) {
     var target=utcTimestamp(instant),clock=dateValue(now===undefined?Date.now():now);
     var start=utcTimestamp(catalog.start),end=utcTimestamp(catalog.end);
@@ -561,7 +568,7 @@
   return {
     AURORA_URL: AURORA_URL, KP_URL: KP_URL, PHOTO_CACHE: PHOTO_CACHE,
     CLOUD_SERVICE:CLOUD_SERVICE,CLOUD_LAYERS:CLOUD_LAYERS.slice(),CLOUD_CACHE:CLOUD_CACHE,
-    parseCloudCatalog:parseCloudCatalog,fetchCloudCatalog:fetchCloudCatalog,cloudFrameAt:cloudFrameAt,cloudURL:cloudURL,fetchCloudFrame:fetchCloudFrame,discardCloudFrame:discardCloudFrame,
+    parseCloudCatalog:parseCloudCatalog,fetchCloudCatalog:fetchCloudCatalog,parseCloudSnapshot:parseCloudSnapshot,cloudFrameAt:cloudFrameAt,cloudURL:cloudURL,fetchCloudFrame:fetchCloudFrame,discardCloudFrame:discardCloudFrame,
     PHOTO_LAYERS: PHOTO_LAYERS.slice(), GRID_WIDTH: GRID_WIDTH, GRID_HEIGHT: GRID_HEIGHT,
     fetchJSON: fetchJSON, photoURL: photoURL, fetchPhotoDay: fetchPhotoDay, latestPhoto: latestPhoto,
     cachedPhotoDay: cachedPhotoDay, discardPhotoDay: discardPhotoDay, evictPhoto: evictPhoto,

@@ -141,7 +141,7 @@ async function staleUpgradeCheck(browser){const {context,page,requests}=await se
  check('old sharper decode begins while its prior frame remains installed',old.photo.width===2048&&old.detailBusy&&old.photo.time==='2026-10-05T03:00:00.000Z',old);
  await page.evaluate(()=>__globeQuality.zoom(4));await page.locator('#globe-hour').fill('1150');await page.locator('#globe-hour').dispatchEvent('input');
  await page.waitForFunction(()=>__globeQuality.state().photo?.time==='2026-10-05T00:00:00.000Z');const chosen=await state(page);decode.release();await page.waitForTimeout(300);const after=await state(page);
- check('time edit defeats a late sharper image from the previous timestamp',after.photo.time===chosen.photo.time&&after.photo.time==='2026-10-05T00:00:00.000Z'&&after.photo.width===2048&&after.textures.natural[0]===2048&&after.generation>old.generation,{old,chosen,after});
+ check('time edit defeats a late sharper image from the previous timestamp',after.photo.time===chosen.photo.time&&after.photo.time==='2026-10-05T00:00:00.000Z'&&after.photo.width>=chosen.photo.width&&after.photo.width<=2048&&after.textures.natural[0]===after.photo.width&&after.generation>old.generation,{old,chosen,after});
  evidence.push({stale:{old,chosen,after},requests});
  }finally{if(decode)decode.release();await context.close();}}
 let browser;

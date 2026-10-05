@@ -93,6 +93,15 @@ function fetchArchive(bytes, frame = compressed().frame, options = {}) {
 }
 
 (async () => {
+  await check('saved cloud index preserves the provider interval without extrapolating future frames', () => {
+    const snapshot={version:1,source:D.CLOUD_SERVICE,layers:D.CLOUD_LAYERS,start:START,end:END,step:3*HOUR,checkedAt:END};
+    const parsed=D.parseCloudSnapshot(snapshot);assert.equal(parsed.end.toISOString(),new Date(END).toISOString());
+    assert.equal(D.cloudFrameAt(parsed,'2026-10-05T02:00:00Z','2026-10-05T02:00:00Z').toISOString(),new Date(END).toISOString());
+  });
+  await check('saved cloud index rejects unrelated products, wrong cadence and impossible published times', () => {
+    const snapshot={version:1,source:D.CLOUD_SERVICE,layers:D.CLOUD_LAYERS,start:START,end:END,step:3*HOUR,checkedAt:END};
+    for(const changed of[{source:'https://other.example'},{layers:['unknown',D.CLOUD_LAYERS[1]]},{version:2},{step:HOUR},{start:END,end:START},{end:'2026-10-05T01:00:00Z'},{checkedAt:'2026-10-04T20:00:00Z'},{checkedAt:'2026-02-30T00:00:00Z'}])assert.throws(()=>D.parseCloudSnapshot({...snapshot,...changed}));
+  });
   await check('cloud catalog selects only the two observed EUMETSAT layers and their common UTC span', () => {
     const xml = '<Layer><Name>unrelated</Name><Dimension name="time">bad</Dimension></Layer>' + catalog([
       ['2026-10-01T00:00:00Z', '2026-10-05T00:00:00Z', 'PT3H'],

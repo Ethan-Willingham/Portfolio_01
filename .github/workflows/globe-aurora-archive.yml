@@ -1,4 +1,4 @@
-name: Archive NOAA aurora grids
+name: Archive globe weather sources
 
 on:
   schedule:
@@ -29,15 +29,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node tools/archive-globe-aurora.cjs
-          git add -A -- assets/data/aurora
-          if git diff --cached --quiet -- assets/data/aurora; then
-            echo 'No new NOAA frame or retention change.'
+          node tools/archive-globe-weather.cjs
+          git add -A -- assets/data/aurora assets/data/globe-cloud-catalog.json
+          if git diff --cached --quiet -- assets/data/aurora assets/data/globe-cloud-catalog.json; then
+            echo 'No new weather frame or retention change.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Archive NOAA aurora forecast' -- assets/data/aurora
+          git commit -m 'Archive globe weather sources' -- assets/data/aurora assets/data/globe-cloud-catalog.json
           for attempt in 1 2 3; do
             if git push origin HEAD:main; then
               exit 0

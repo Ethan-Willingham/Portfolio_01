@@ -161,7 +161,7 @@
     if(photo&&!photo.time&&!live)photo=null;
     applyCachedTime();
     updateAstronomy();updateLabels();
-    timeEditTimer=setTimeout(function(){refreshData();},250);
+    timeEditTimer=setTimeout(function(){timeEditTimer=null;refreshData();},250);
   }
   dateInput.addEventListener('change',editTime); hourInput.addEventListener('input',editTime);
   document.querySelectorAll('.tilt-btn').forEach(function (button) {
@@ -175,7 +175,7 @@
     });
   });
   returnButton.addEventListener('click',function () {
-    clearTimeout(timeEditTimer);if(cloudController)cloudController.abort();if(detailController){detailController.abort();detailController=null;}if(archiveController)archiveController.abort();
+    clearTimeout(timeEditTimer);timeEditTimer=null;if(cloudController)cloudController.abort();if(detailController){detailController.abort();detailController=null;}if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
     live = true; instant = new Date(); tilt = undefined; pinDayKey = '';expireLivePhoto();if(liveForecast)setForecast(liveForecast);else forecast=null;
     document.querySelectorAll('.tilt-btn').forEach(function (b) {b.setAttribute('aria-pressed',String(b.dataset.tilt === 'current'));});
@@ -524,7 +524,17 @@
       if(instant-Date.now()>5*60000){photo=null;return;}
       if(!cloudCatalog){try{var stored=JSON.parse(localStorage.getItem('globe-cloud-catalog'));if(stored)cloudCatalog={start:new Date(stored.start),end:new Date(stored.end)};}catch(_){}}
       if(!offline&&(!cloudCatalog||Date.now()-cloudCatalogChecked>10*60000)){
-        try{cloudCatalog=await data.fetchCloudCatalog({timeout:6000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){if(error.name==='AbortError')return;}
+        try{cloudCatalog=await data.fetchCloudCatalog({timeout:6000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){
+          if(error.name==='AbortError')return;
+          try{
+            var snapshots=await Promise.allSettled([
+              data.fetchJSON('https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/globe-cloud-catalog.json?v='+Math.floor(Date.now()/300000),{timeout:2000,signal:signal,allowText:true}).then(data.parseCloudSnapshot),
+              data.fetchJSON('assets/data/globe-cloud-catalog.json',{timeout:1000,signal:signal}).then(data.parseCloudSnapshot)
+            ]);
+            snapshots.forEach(function(result){if(result.status==='fulfilled'&&(!cloudCatalog||result.value.end>cloudCatalog.end))cloudCatalog=result.value;});
+            if(cloudCatalog){cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}
+          }catch(_){}
+        }
       }
       var stamp=cloudCatalog&&data.cloudFrameAt(cloudCatalog,instant,new Date());
       if(!stamp||live&&new Date()-stamp>5*3600000)throw new Error('Dated cloud imagery unavailable');
@@ -597,7 +607,7 @@
     return timeline.waitFor(cloudPending.get(key).promise,signal);
   }
   async function upgradePhotoDetail() {
-    if(loading||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
+    if(loading||timeEditTimer!==null||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
     var desired=Math.max(photo.width,Math.min(textureWidth,radius<2.8?4096:2048));
     if(photo.width>=desired&&photo.natural)return;
     var key=photo.time+'/'+desired+'/'+photoGeneration;
