@@ -19,6 +19,7 @@
   O.purchaseReason=function(s,id) {
     const e=O.equipment.find(e=>e.id===id);
     if(!e)return 'Unknown equipment.';
+    if(!O.liveEquipment.has(id))return 'This equipment is not available in this release.';
     if(s.day<3&&id!=='rack')return 'The shop opens after your third shift.';
     if(s.owned[id]&&!['rack','door','expansion','robot'].includes(id))return 'Already installed.';
     if(e.requires.some(r=>!O.has(s,r)))return 'First: '+e.requires.filter(r=>!O.has(s,r)).map(r=>r==='forklift'?'a forklift':O.equipment.find(e=>e.id===r)?.name||r).join(', ')+'.';

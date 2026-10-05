@@ -82,6 +82,14 @@ are ordinary scripts, with no bundle step and no Sluice dependencies. Read
 `archive.html` (In Progress). Bump the `?v=` values on its CSS and game scripts
 when changing them so deployed edits bypass stale caches.
 
+**One Shift**, the standalone overhead warehouse game, lives in `one-shift.html`,
+`one-shift.css` and `js/one-shift-*.js`. Read `docs/ONE_SHIFT.md` for the model,
+checks and current limits. The simulation modules have no DOM access. Keep it
+on `archive.html` (In Progress). Use four-foot tiles, invented client names,
+procedural Canvas art and landscape mobile play. Bump every changed CSS/script
+query version. Preserve case conservation, lot dates and the ledger; forklift
+training precedes operation, and owning the forklift precedes hiring.
+
 **Hunting Game**, the JavaScript port of the owner's Unity hunting prototype,
 lives in `hunting-game.html`, `hunting-game.css`, and `js/hunting-*.js`.
 Read `docs/HUNTING_GAME.md` for the ballistics, art, and checks.

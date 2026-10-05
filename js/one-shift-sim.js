@@ -15,7 +15,7 @@
   }
   class Sim {
     constructor(seed=1,mode='normal'){this.s=state(seed,mode);this.reindex();this.schedule();}
-    reindex(){this.p=new Map(this.s.pallets.map(p=>[p.id,p]));this.t=new Map(this.s.trucks.map(t=>[t.id,t]));}
+    reindex(){this.occTick=-1;this.occ=null;this.p=new Map(this.s.pallets.map(p=>[p.id,p]));this.t=new Map(this.s.trucks.map(t=>[t.id,t]));}
     id(){return this.s.nextId++;}
     pallet(item,client,cases,truck=null,extra={}){
       const s=this.s,d=O.items[item],p={id:this.id(),sscc:O.labels.sscc(++s.serial),item,client,cases,bookCases:cases,expected:cases,ti:d.ti,hi:d.hi,lot:'L'+s.day.toString().padStart(3,'0'),bestBy:s.day+30+Math.floor(random(s)*40),receivedDay:s.day,x:0,y:0,level:0,place:truck?'trailer':'lane',truckId:truck?.id||null,scanned:false,confirmed:false,hold:false,reservedBy:null,condition:'sound',wrapped:true,labelled:true,...extra};s.pallets.push(p);this.p.set(p.id,p);return p;
@@ -46,8 +46,8 @@
         if(c.profile==='storage'){if(stored>15&&s.day%5===0)order.push({item:c.items[0],cases:24,full:true});}
         else if(c.profile==='parcel')order.push({item:c.items[0],cases:Math.min(30,10+Math.floor(s.day/6)),full:false,parcel:true});
         else if(c.profile==='kit')order.push({item:'kit',cases:8,full:false,kit:true});
-        else {const n=c.profile==='case'?2:Math.max(2,Math.floor(volume*.72));for(let i=0;i<n;i++){const item=c.items[i%c.items.length];order.push({item,cases:c.profile==='case'?12:O.items[item].ti*O.items[item].hi,full:c.profile!=='case'});}}
-        if(order.length)this.truck('out',c.id,Math.min(860,slot+150),[],order,{deadline:c.profile==='parcel'?960:Math.min(970,slot+275),kind:order.length>12?'semi':'box'});
+        else {const n=c.profile==='case'?2:c.profile==='crossdock'?volume:Math.max(2,Math.ceil(volume*.72));for(let i=0;i<n;i++){const item=c.items[(i+s.day)%c.items.length];order.push({item,cases:c.profile==='case'?12:O.items[item].ti*O.items[item].hi,full:c.profile!=='case'});}}
+        if(order.length)this.truck('out',c.id,Math.min(860,slot+150),[],order,{deadline:c.profile==='parcel'?960:Math.min(970,slot+360),kind:order.length>12?'semi':'box'});
         slot+=s.owned.appointments?65:40;
       }
       if(s.day>3&&s.day%3===0&&O.situations?.length){const eligible=O.situations.filter(q=>!q.requires||O.has(s,q.requires));s.situation=copy(eligible[Math.floor(random(s)*eligible.length)]);event(s,s.situation.title+': '+s.situation.text);this.applySituation();}
@@ -68,7 +68,14 @@
       if(q.effect==='bonus')O.post(s,'Spot work',12,'Appointment flexibility');
     }
     available(item,client){return this.s.pallets.filter(p=>p.item===item&&(!client||p.client===client)&&['lane','storage'].includes(p.place)&&p.confirmed&&!p.hold&&!p.reservedBy&&p.cases>0).sort((a,b)=>O.client(client||a.client).rule==='FEFO'?a.bestBy-b.bestBy||a.id-b.id:a.receivedDay-b.receivedDay||a.id-b.id);}
-    occupied(x,y,level=0,except=null){return this.s.pallets.some(p=>p.id!==except&&p.x===x&&p.y===y&&p.level===level&&['storage','lane'].includes(p.place)&&p.cases>0)||this.s.workers.some(w=>[w.task,...w.queue].some(t=>t?.dest?.x===x&&t.dest.y===y&&(t.dest.level||0)===level&&t.pallet!==except));}
+    occupied(x,y,level=0,except=null){
+      const s=this.s,key=(x,y,l)=>x+'/'+y+'/'+l;
+      if(this.occTick!==s.tick||!this.occ){this.occTick=s.tick;this.occ=new Map();const add=(x,y,l,id)=>{const k=key(x,y,l);if(!this.occ.has(k))this.occ.set(k,new Set());this.occ.get(k).add(id);};
+        for(const p of s.pallets)if(['storage','lane'].includes(p.place)&&p.cases>0)add(p.x,p.y,p.level,p.id);
+        for(const w of s.workers)for(const t of [w.task,...w.queue])if(t?.dest)add(t.dest.x,t.dest.y,t.dest.level||0,t.pallet||-t.id);
+      }
+      const ids=this.occ.get(key(x,y,level));return !!ids&&[...ids].some(id=>id!==except);
+    }
     lane(kind='receiving',p=null){const s=this.s,b=s.map.building,left=kind==='receiving'?b.x+3:b.x+b.w-10;
       for(let row=0;row<4;row++)for(let col=0;col<6;col++){const x=left+col,y=b.y+b.h-2-row;if(!this.occupied(x,y,0,p?.id))return {x,y,level:0,place:'lane',lane:kind};}return this.spot(p);
     }
@@ -84,7 +91,7 @@
       const rack=s.map.racks.find(r=>p.y===r.y&&p.x>=r.x&&p.x<r.x+2);return {x:p.x,y:p.y+(rack?(O.has(s,'forklift')?2:1):0)};
     }
     reachable(t,p){return !t.manifest.some(id=>{const q=this.p.get(id);return q&&q.place==='trailer'&&q.index<p.index&&Math.floor(q.index/2)<Math.floor(p.index/2);});}
-    enqueue(w,t){t.id=this.id();t.phase='source';t.progress=0;t.path=null;w.queue.push(t);if(t.pallet)this.p.get(t.pallet).reservedBy=t.id;return {ok:true};}
+    enqueue(w,t){t.id=this.id();t.phase='source';t.progress=0;t.path=null;w.queue.push(t);if(this.occ&&this.occTick===this.s.tick&&t.dest){const k=t.dest.x+'/'+t.dest.y+'/'+(t.dest.level||0);if(!this.occ.has(k))this.occ.set(k,new Set());this.occ.get(k).add(t.pallet||-t.id);}if(t.pallet)this.p.get(t.pallet).reservedBy=t.id;return {ok:true};}
     command(c){const s=this.s,w=s.workers.find(w=>w.id===(c.worker||1)),p=this.p.get(c.pallet),t=this.t.get(c.truck),fail=reason=>({ok:false,reason});
       if(c.type==='inspect'){if(!t||t.status!=='docked')return fail('Wait until the truck is at a door.');t.inspected=true;return {ok:true};}
       if(c.type==='seal'){if(!t||t.status!=='docked'||!t.inspected)return fail('Read the paperwork first.');if(t.seal!==t.expectedSeal)return fail('The seal does not match. Reject the load or record a hold.');t.checked=true;t.opened=true;event(s,'Seal checked. Scan the nearest pallet.','seal');return {ok:true};}
@@ -174,7 +181,7 @@
         if(found)break;
       }
     }}
-    finish(w,task){const s=this.s,p=this.p.get(task.pallet);
+    finish(w,task){this.occTick=-1;const s=this.s,p=this.p.get(task.pallet);
       if(task.kind==='pick'){const out=this.p.get(task.output);const n=Math.min(task.count,p.cases);p.cases-=n;p.bookCases=Math.max(0,p.bookCases-n);out.cases+=n;out.bookCases+=n;out.x=w.x;out.y=w.y;if(!p.cases){p.place='empty';s.emptyPallets++;}}
       else if(task.kind==='wrap'){p.wrapped=true;p.labelled=true;O.post(s,'Wrap and labels',2.5,'Wrapped pick pallet');event(s,'Wrapped and labelled. Ready to load.','wrap');}
       else if(task.kind==='count'){p.bookCases=p.cases;p.confirmed=true;event(s,'Count corrected: '+p.cases+' cases.');}
@@ -205,7 +212,7 @@
         if(t.phase==='dest'&&t.pallet){const p=this.p.get(t.pallet);p.x=w.x;p.y=w.y;}
         if(lift)w.battery=Math.max(0,w.battery-DT*.025);return;
       }
-      if(t.phase==='source'&&['load','unload','putaway'].includes(t.kind)){const p=this.p.get(t.pallet);p.place='transit';t.phase='dest';t.path=O.pathing.path(s,w,t.end,lift);if(!t.path){p.place='lane';p.reservedBy=null;w.task=null;event(s,'Route blocked. Pallet staged safely.');}return;}
+      if(t.phase==='source'&&['load','unload','putaway'].includes(t.kind)){const p=this.p.get(t.pallet);p.place='transit';this.occTick=-1;t.phase='dest';t.path=O.pathing.path(s,w,t.end,lift);if(!t.path){p.place='lane';p.reservedBy=null;w.task=null;event(s,'Route blocked. Pallet staged safely.');}return;}
       t.progress+=DT;
       if(t.progress>=t.duration&&this.finish(w,t)){w.task=null;w.fatigue=Math.min(1,w.fatigue+DT*.002);}
     }

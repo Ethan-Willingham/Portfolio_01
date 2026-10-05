@@ -52,6 +52,25 @@ Run `node tools/test-one-shift.cjs`. Verified at M1:
 - Equal state hashes for equal seeds and commands; JSON state round trip.
 - Forklift training and hiring prerequisite; holds, reservations and FEFO.
 
-Browser, save corruption/migration, long-run economy, pathing stress and frame
-budgets remain unverified at this milestone. The headless checks do not establish
-cold-player usability or a finished commercial game.
+Run the browser checks with the bundled Playwright packages in `NODE_PATH`:
+`node tools/test-one-shift-browser.cjs`. The harness owns Chrome for Testing and
+closes that exact process in `finally`. `ASSETS=1` captures the actual game for
+the 1200 by 750 card and 1200 by 630 sharing image.
+
+Verified at the first playable release:
+
+- Fresh start has no modal or tutorial screen. A real canvas click opens the
+  bill of lading; real buttons check the seal, scan, confirm and receive.
+- Day one completes in the browser through validated commands; autosave loads.
+- Every evening screen and the three save slots open without JavaScript errors
+  or failed resources.
+- Layout fits at 1280 by 800, 1440 by 900, 1920 by 1080, 1024 by 768,
+  844 by 390 and 667 by 375. Real landscape touch opens paperwork.
+- Portrait on a touch device shows the rotate screen and freezes simulation.
+- Empty-floor lighting render work: about 0.03 ms mean and 0.10 ms 95th
+  percentile on this test host. This is a small scene, not the late-game budget.
+
+Long-run strategy balance, corruption and migration coverage, pathing stress,
+the full situation/term catalog and late-game frame budgets remain in progress.
+Equipment catalog entries are not evidence that every advanced branch is
+finished. Automated ramp checks do not establish cold-player usability.
