@@ -1,6 +1,6 @@
 # How Much Is Enough?
 
-`enough.html` is an explorable post in In Progress. Version2 rebuilds its presentation around bounded share of improvement, a painting-led opening, a shared range control, optional personal bars and13 cards grouped by life area. The chooser is `enough-lab.html`. All three fonts and the dark-green background come from the site kit.
+`enough.html` is an explorable post in In Progress. Version2 rebuilds its presentation around bounded share of improvement, a painting-led opening, a static overview, optional personal bars and13 cards grouped by life area. The chooser is `enough-lab.html`. All three fonts and the dark-green background come from the site kit.
 
 ## Calculation
 
@@ -8,7 +8,7 @@ For each curve where more helps, share = improvement from the lowest displayed d
 
 `js/enough-data.js` contains the primary coordinates, source location per point, full retained activity grid, raw uncertainty, model parameters, declared range and computed share/crossings. `js/enough-math.js` supplies the shared calculation to the UI and validator. For exact reconstructable models, analytical expressions evaluate the selected dose; root-finding gives the crossing. Otherwise we use straight lines between source coordinates. Categorical evidence selects the first qualifying source group and never invents a continuous threshold. The old off-topic cards remain as archived evidence in the data file.
 
-The overview overlays steps, exercise and protein. Its x-axis is the fraction through each curve’s displayed dose range. The range endpoints differ, so it is not equal physical effort. Its y-axis compares shares of distinct outcomes, not equal health gains. A shared40% point initially displays about83 to 86% of those range-bounded gains. Each card and the overview drawer disclose the physical ranges.
+The overview overlays steps, exercise and protein. Its x-axis is the fraction through each curve’s displayed dose range. The range endpoints differ, so it is not equal physical effort. Its y-axis compares shares of distinct outcomes, not equal health gains. A fixed40% point displays about83 to 86% of those range-bounded gains. Each card and the overview drawer disclose the physical ranges.
 
 Separately normalizing complete lower and upper pointwise curves provides a sensitivity check. It is not a formal confidence interval for a threshold. Protein’s published breakpoint interval can be propagated conditionally through the chosen model; it is not a new response band. Work has no reconstructable covariance, so no band is invented. Savings alternatives are assumptions, never confidence limits.
 
@@ -46,9 +46,9 @@ Zhao2023 Table2 corrects abstainer bias and uses lifetime nondrinkers. Keep the 
 
 ## Interaction and checks
 
-Every numeric card has a native labeled range control, a human readout and an evidence drawer with source estimates with outcome units. Chart pointer gestures focus and update that same control. Categories snap to source points; keyboard navigation remains native. The optional personal inputs collapse under a native disclosure. The panel accepts any subset, pairs protein with body weight in pounds, rejects invalid values and declines extrapolation. It makes no network request or storage write. Sleep’s bar marks hours across its displayed range, not a health-share score. Work explicitly uses the factory curve.
+Every numeric card has a static chart marked at its enough point (or the sleep low point or harm baseline), a text alternative and an evidence drawer with source estimates and outcome units. The overview stays at40% through each displayed range. There are no range sliders or chart-drag gestures. Home navigation, bold serif title, gold underlined links and the shared copyright footer follow `what-you-get-used-to.html`. The optional personal inputs collapse under a native disclosure. The panel accepts any subset, pairs protein with body weight in pounds, rejects invalid values and declines extrapolation. It makes no network request or storage write. Sleep’s bar marks hours across its displayed range, not a health-share score. Work explicitly uses the factory curve.
 
-Run `node tools/test-enough-data.mjs`. Then, with Playwright on NODE_PATH, run `node tools/test-enough-browser.cjs`. The browser harness owns an ephemeral server and `/Users/ethan/.local/bin/agent-chrome-for-testing`, closing both in `finally`. It verifies375x812,768x900 and1440x900, keyboard, mouse, actual dispatched touch, drawer Enter, input subsets/reset/error cases,44px controls, SVG label bounds, accessibility names and no missing resources. This is automation, not physical-device or real screen-reader certification.
+Run `node tools/test-enough-data.mjs`. Then, with Playwright on NODE_PATH, run `node tools/test-enough-browser.cjs`. The browser harness owns an ephemeral server and `/Users/ethan/.local/bin/agent-chrome-for-testing`, closing both in `finally`. It verifies375x812,768x900 and1440x900, static chart alternatives, absence of sliders, reference-essay style comparisons, keyboard and touch drawers, input subsets/reset/error cases,44px evidence targets, SVG label bounds, accessibility names and no missing resources. This is automation, not physical-device or real screen-reader certification.
 
 Research and AI reader reviews are local, ignored files in `/Users/ethan/Portfolio_01/research/enough/v2/`; progress and polish logs are in its parent. AI reader personas are simulations, never human user testing. The local write-post skill is applied in a separate editing pass. An installed dataviz skill could not be found; primary design references and explicit statistical/art reviews fill that gap without claiming the skill ran.
 
