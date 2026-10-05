@@ -107,7 +107,7 @@
     text(dataLine,parts.join(' / '));
     byId('globe-gap-key').hidden=!photo||hypothetical;
     text(byId('globe-gap-key'),photo&&photo.time?(photo.natural?'Visible imagery and infrared overlay; reference map where coverage ends.':'Infrared brightness over reference terrain; gaps show the reference map.'):'Reference map where daily photo coverage ends.');
-    text(byId('globe-weather-basis'),'Cloud images every 3 hours. '+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
+    text(byId('globe-weather-basis'),(hourlyClouds()?'Hourly cloud images. ':'Older cloud images every 3 hours. ')+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
     returnButton.setAttribute('aria-pressed',String(live));returnButton.title=live?'Following the current time':'Return to the current time';
     byId('globe-tilt-note').hidden=!hypothetical;
     wrapper.dataset.mode=live?'live':'explore';
