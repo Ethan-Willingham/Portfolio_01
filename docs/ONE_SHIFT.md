@@ -56,8 +56,10 @@ reused or returned to the stack. Shipping sends the wooden pallet away with its
 goods; replacement pallets cost packaging money. Evening purchases update the
 closing report, and consumables count against operating profit. Case picking takes an empty
 pallet from the stack to its source and visibly transfers cases.
-Painted zones supply putaway destinations. Cold and secure storage validate
-client requirements. Layouts can be shared by URL into a separate sandbox.
+Storage is restricted to rack positions. Bare floor cannot be a storage destination.
+Receiving and Shipping markings remain temporary staging areas. Full racks require
+more rack capacity or shipping stock out. Painted zones group racks. Cold and
+secure storage validate client requirements. Layouts can be shared by URL into a separate sandbox.
 
 Purchases have 39 available catalog entries. Unfinished gifts, displays,
 returns, refurbishing, conveyors, sortation, kanban, inspection fixtures, robot
@@ -82,9 +84,11 @@ The warehouse uses a separate palette: concrete gray, blue steel,
 charcoal panels, off-white markings and restrained safety orange. Active and
 primary buttons are blue. The selection clipboard opens on the left so trucks
 remain visible on the right. A received pallet offers Put away / choose storage.
-The panel lists named rack positions and highlights available ground positions
-on the floor. Occupied positions, reserved moves, required storage areas and
-forklift access are checked before offering a destination. The selected pallet
+Hovering a rack highlights its left or right lower position. Clicking that half
+queues the selected pallet directly, with its destination and progress kept in the
+clipboard. Occupied and reserved positions show the reason they are blocked.
+The chooser lists named positions and supplies access to upper rack levels.
+Occupied positions, reserved moves, required storage areas and forklift access are checked before offering a destination. The selected pallet
 shows its destination while the worker moves it, then its named storage position.
 A stored pallet offers the next accessible delivery pallet. Selecting freight
 behind an occupied trailer row explains which pallet to unload first and offers
@@ -126,22 +130,29 @@ Opened cartons show loose units, and bench workers push a component cart.
 Dock shutters ease open, pallets settle when set down, and a brief label flash
 confirms scanning. Night work has fixed light pools and forklift lamps; an
 outage removes powered lights. Reduced motion removes settle and idle sway.
-Truck positions advance between simulation ticks, with eased backing and smooth
-transitions between yard positions and the dock. Departing trucks continue out
-of view after their simulation release. Pause and menus freeze truck motion.
+Truck positions advance between simulation ticks, with four-second eased backing
+and smooth transitions between yard positions and the dock. A release waits until
+workers and carried pallets clear the rear opening. Idle workers inside receive
+an exit walk. The rear doors then swing shut before the truck accelerates forward
+and follows a broad turn onto the yard road. Cutoffs cancel unfinished loading
+and return its stock and reservations. A shift settles after pending departures
+clear. Departing trucks continue out of view after their simulation release.
+Pause and menus freeze truck motion.
 Suspension details from the art bible remain unfinished.
 
 ## Checks and reproduction
 
 - `node tools/test-one-shift.cjs`: ramp, deterministic state, goods and ledger,
   recipes, physical component collection, interrupted bench work, ownership,
-  reservations, cancellation, pick faces, waves, task
+  reservations, cancellation, worker clearance and rear-door sequencing, rack-only
+  destinations, pick faces, waves, task
   handoff, layouts, migration and corrupt saves.
 - `node tools/test-one-shift-economy.cjs`: nine command-driven policies, each
   running 200 seeds for 60 shifts. Every shift reconciles goods and its ledger;
   saves validate every ten shifts. The first three shifts have no missed truck
   and positive operating profit. Results include full profit and cash curves,
-  acquisition days, missed trucks and simulation timing. Service policies bring
+  acquisition days, missed trucks and simulation timing. Policies buy enough rack
+  capacity before optional equipment or additional clients. Service policies bring
   upper component reserve to floor level and finish partial work orders. The
   fulfillment policy disposes of unresolved held stock through the scrap control
   so those goods cannot suppress replenishment indefinitely.
@@ -154,7 +165,8 @@ Suspension details from the art bible remain unfinished.
   inventory reconciliation. This fixture supplies starting cash and hires to
   exercise routing; it is not an economy playthrough.
 - `node tools/test-one-shift-browser.cjs`: real browser clicks, native buttons,
-  right-side arrivals and opening camera bounds, bench collection and component
+  right-side arrivals and opening camera bounds, direct rack halves, occupied
+  and reserved positions, rejected floor storage, bench collection and component
   returns, opened-case unit counts, keyboard
   receiving, remapping, autosave, viewport checks, landscape touch,
   portrait freeze, 1.3 text scale, phone panels and preview save isolation.
@@ -162,7 +174,7 @@ Suspension details from the art bible remain unfinished.
   the card and sharing images from actual gameplay.
 - `node tools/test-one-shift-motion.cjs`: frame-by-frame truck movement at all
   three speeds, pause, menu freeze, queued docking, departure, hit positions and
-  presentation-state isolation.
+  presentation-state isolation, native refused-load exit, closing doors and road turns.
 - `node tools/test-one-shift-barcode.cjs <desktop-label.png> <phone-label.png>`:
   independent ZXing decoding of the published GS1 vector, generated labels and
   actual CSS-sized browser labels. Set `ZXING_PATH` to `@zxing/library` installed

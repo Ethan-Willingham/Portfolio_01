@@ -8,7 +8,7 @@ function act(sim,O,style='average'){
  // Clear unresolved held stock so it cannot suppress replenishment forever.
  if(style==='fulfillment'){const held=s.pallets.find(p=>p.hold&&!p.reservedBy&&['lane','storage'].includes(p.place));if(held&&sim.command({type:'scrap',pallet:held.id}).ok)return;}
  if(s.situation?.effect==='seal'){const t=s.trucks.find(t=>t.status==='docked'&&t.direction==='in'&&t.seal!==t.expectedSeal);if(t){sim.command({type:'reject',truck:t.id});return;}}
- const outbound=s.trucks.filter(t=>t.direction==='out'&&t.status==='docked').sort((a,b)=>a.deadline-b.deadline);
+ const outbound=s.trucks.filter(t=>t.direction==='out'&&t.status==='docked'&&!t.departureRequested).sort((a,b)=>a.deadline-b.deadline);
  for(const t of outbound){
   if(t.order.every(l=>!sim.remaining(t,l))){sim.command({type:'dispatch',truck:t.id});return;}
   for(const l of t.order){const left=sim.unassigned(t,l);if(!left)continue;if(l.parcel){const q=s.parcels.find(q=>q.client===t.client&&q.item===l.item&&q.orderId===l.orderId&&q.place==='ready'&&!q.reservedBy&&q.units<=left);if(q){if(sim.command({type:'loadParcel',parcel:q.id,truck:t.id}).ok)return;}if(l.reservedBy)continue;const source=sim.availableUnits(l.item,t.client)[0];if(source&&sim.command({type:'parcel',pallet:source.id,truck:t.id,orderId:l.orderId,units:Math.min(left,source.cases*O.items[l.item].pack+(source.openUnits||0))}).ok)return;continue;}
@@ -20,7 +20,7 @@ function act(sim,O,style='average'){
 
   }
  }
- const inbound=s.trucks.find(t=>t.direction==='in'&&t.status==='docked');
+ const inbound=s.trucks.find(t=>t.direction==='in'&&t.status==='docked'&&!t.departureRequested);
  if(inbound){
   sim.command({type:'inspect',truck:inbound.id});if(!inbound.opened){const r=sim.command({type:'seal',truck:inbound.id});if(!r.ok){sim.command({type:'reject',truck:inbound.id});return;}}
   const p=inbound.manifest.map(id=>sim.p.get(id)).find(p=>p.place==='trailer'&&!p.reservedBy&&sim.reachable(inbound,p));
@@ -32,13 +32,16 @@ function act(sim,O,style='average'){
 }
 function evening(sim,O,style='average'){
  const s=sim.s;if(s.day<3){sim.command({type:'buy',id:'rack'});return;}
+ // Buy rack capacity before optional equipment or new clients consume its budget.
+ const openSlots=()=>s.map.racks.reduce((n,r)=>n+Array.from({length:(O.has(s,'forklift')?r.levels:1)*2},(_,i)=>Number(!sim.occupied(r.x+i%2,r.y,Math.floor(i/2)))).reduce((a,n)=>a+n,0),0);
+ let additions=0;while(openSlots()<2+s.contracts.length*2&&s.cash>13500&&additions++<8){if(sim.command({type:'buy',id:'rack'}).ok)continue;const cost=O.equipment.find(q=>q.id==='expansion').cost*100;if(s.cash<=cost+13500||!sim.command({type:'buy',id:'expansion'}).ok)break;}
  const plans={casual:['training','usedLift','zones','door'],average:['training','lift','zones','door','upper','charger'],expert:['training','lift','door','zones','upper','bench','shelves','pack','crossdock','conveyor'],storage:['training','usedLift','upper','expansion','zones','reach','narrow','asrs'],throughput:['training','lift','door','zones','crossdock','appointments','wrapStand','wrapper','conveyor','charger'],services:['training','usedLift','bench','zones','assembly','line','inspection','gifts','ticket'],fulfillment:['training','usedLift','shelves','pack','cart','zones','cartonFlow','sorter'],crossdock:['training','lift','door','crossdock','zones','appointments','conveyor'],mixed:['training','usedLift','upper','bench','shelves','pack','crossdock','zones','door','yard','baler']};
  for(const id of plans[style]||plans.average){if(['usedLift','lift'].includes(id)&&!O.has(s,'forklift')&&s.cash<(O.equipment.find(e=>e.id===id).cost*100+8000))break;if(!s.owned[id]&&s.cash>(O.equipment.find(e=>e.id===id)?.cost||0)*100+8000){sim.command({type:'buy',id});break;}}
  const desired={storage:['reserve'],throughput:['relay'],services:['lumen'],fulfillment:['paper'],crossdock:['relay'],mixed:['reserve','lumen','paper'],expert:['relay','paper','lumen']}[style]||[];
  for(const id of desired){const old=s.contracts.find(q=>q.id===id);if((old||O.has(s,'forklift'))&&(!old||old.until-s.day<3))sim.command({type:'contract',id});}
  const base=s.contracts.find(q=>q.id==='trail');if(base&&base.until-s.day<3)sim.command({type:'contract',id:'trail'});
  if(O.has(s,'forklift')&&s.cash>22000&&s.workers.length<(style==='storage'?2:Math.min(5,s.contracts.length+1))&&s.day%2===0){const roles=style==='fulfillment'?[2,0,3,1]:['services','mixed','expert'].includes(style)?[0,4,2,1]:[0,1,3,2];sim.command({type:'hire',index:roles[(s.workers.length-1)%4]});}
- if(!sim.spot(null)&&s.cash>60000)sim.command({type:'buy',id:'expansion'});
+
 }
 function day(sim,O,style='average'){let ticks=0;while(sim.s.phase==='shift'&&ticks++<22000){if(ticks%4===0)act(sim,O,style);sim.tick();}if(sim.s.phase!=='evening')throw Error('Day did not finish.');return sim.s.reports.at(-1);}
 module.exports={load,act,evening,day};

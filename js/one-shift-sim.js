@@ -73,7 +73,7 @@
     occupied(x,y,level=0,except=null){
       const s=this.s,key=(x,y,l)=>x+'/'+y+'/'+l;
       if(this.occTick===-1||!this.occ){this.occTick=s.tick;this.occ=new Map();const add=(x,y,l,id)=>{const k=key(x,y,l);if(!this.occ.has(k))this.occ.set(k,new Set());this.occ.get(k).add(id);};
-        for(const p of s.pallets)if(['storage','lane'].includes(p.place)&&p.cases>0)add(p.x,p.y,p.level,p.id);
+        for(const p of s.pallets)if(['storage','lane'].includes(p.place)&&(p.cases>0||p.openUnits>0))add(p.x,p.y,p.level,p.id);
         for(const w of s.workers)for(const t of [w.task,...w.queue])if(t?.dest)add(t.dest.x,t.dest.y,t.dest.level||0,t.pallet||-t.id);
       }
       const ids=this.occ.get(key(x,y,level));return !!ids&&[...ids].some(id=>id!==except);
@@ -81,12 +81,9 @@
     lane(kind='receiving',p=null){const s=this.s,rect=O.docks.lane(s,kind);
       for(let row=0;row<rect.h;row++)for(let col=0;col<rect.w;col++){const x=O.docks.side(s)==='east'?rect.x+rect.w-1-col:rect.x+col,y=rect.y+rect.h-1-row;if(!O.pathing.blocked(s,x,y)&&!this.occupied(x,y,0,p?.id))return {x,y,level:0,place:'lane',lane:kind};}return this.spot(p);
     }
-    spot(p,zone=null){const s=this.s,b=s.map.building,high=O.has(s,'forklift'),occupied=(x,y,l=0)=>this.occupied(x,y,l,p?.id)||p?.place==='storage'&&p.x===x&&p.y===y&&p.level===l;
-      const zones=s.map.zones.filter(z=>!zone||z.type===zone);const wanted=p?.hold?'hold':O.client(p?.client)?.requires.includes('cold')?'cold':O.client(p?.client)?.requires.includes('cage')?'cage':'storage';
-      const match=zones.find(z=>z.type===wanted||z.type==='client'&&z.client===p?.client||z.type==='fast');
-      if(match)for(let y=match.y;y<match.y+match.h;y++)for(let x=match.x;x<match.x+match.w;x++)if(!O.pathing.blocked(s,x,y)&&!occupied(x,y))return {x,y,level:0,place:'storage',zone:match.type};
-      for(const r of s.map.racks)for(let l=0;l<(high?r.levels:1);l++)for(let k=0;k<2;k++)if(!occupied(r.x+k,r.y,l))return {x:r.x+k,y:r.y,level:l,place:'storage',rack:r.id};
-      for(let y=b.y+3;y<b.y+b.h-(O.docks.side(s)==='east'?2:7);y+=2)for(let x=b.x+2;x<b.x+b.w-(O.docks.side(s)==='east'?6:2);x+=2)if(!O.pathing.blocked(s,x,y)&&!occupied(x,y))return {x,y,level:0,place:'storage'};
+    spot(p,zone=null){const s=this.s,high=O.has(s,'forklift'),occupied=(x,y,l=0)=>this.occupied(x,y,l,p?.id)||p?.place==='storage'&&p.x===x&&p.y===y&&p.level===l,required=O.client(p?.client)?.requires.find(q=>q==='cold'||q==='cage'),wanted=zone||required||(p?.hold?'hold':'storage'),inside=(z,x,y)=>x>=z.x&&x<z.x+z.w&&y>=z.y&&y<z.y+z.h;
+      const racks=s.map.racks.slice().sort((a,b)=>Number(s.map.zones.some(z=>z.type===wanted&&inside(z,b.x,b.y)))-Number(s.map.zones.some(z=>z.type===wanted&&inside(z,a.x,a.y))));
+      for(const r of racks)for(let l=0;l<(high?r.levels:1);l++)for(let side=0;side<2;side++){const x=r.x+side,y=r.y;if(occupied(x,y,l)||required&&!s.map.zones.some(z=>z.type===required&&inside(z,x,y))||zone&&!s.map.zones.some(z=>z.type===zone&&inside(z,x,y)))continue;return {x,y,level:l,place:'storage',rack:r.id};}
       return null;
     }
     approach(p){const s=this.s;if(p.place==='trailer'){const t=this.t.get(p.truckId),d=s.map.doors.find(d=>d.id===t.door);return O.docks.slot(s,d,p.index);}
@@ -102,8 +99,8 @@
     command(c){const s=this.s,w=s.workers.find(w=>w.id===(c.worker||1)),p=this.p.get(c.pallet),t=this.t.get(c.truck),fail=reason=>({ok:false,reason});
       if(!w&&['move','walk','pick','wrap','service','charge','count','cancel','priority'].includes(c.type))return fail('Choose a known worker.');
       if(c.type==='inspect'){if(!t||t.status!=='docked')return fail('Wait until the truck is at a door.');t.inspected=true;O.noteTerms(s,['Bill of lading','Carrier','Manifest','Delivery receipt']);return {ok:true};}
-      if(c.type==='seal'){if(!t||t.status!=='docked'||!t.inspected)return fail('Read the paperwork first.');if(t.seal!==t.expectedSeal)return fail('The seal does not match. Reject the load or record a hold.');t.checked=true;t.opened=true;event(s,'Seal checked. Scan the nearest pallet.','seal');return {ok:true};}
-      if(c.type==='reject'){if(!t||t.direction!=='in')return fail('Select an inbound truck.');for(const id of t.manifest){const p=this.p.get(id);if(p.place==='trailer'){p.place='returned';s.goods.shipped+=p.cases;}}t.status='leaving';t.animation=0;event(s,'Load refused. Client notified.');return {ok:true};}
+      if(c.type==='seal'){if(!t||t.status!=='docked'||t.departureRequested||!t.inspected)return fail('Read the paperwork of a waiting truck first.');if(t.seal!==t.expectedSeal)return fail('The seal does not match. Reject the load or record a hold.');t.checked=true;t.opened=true;event(s,'Seal checked. Scan the nearest pallet.','seal');return {ok:true};}
+      if(c.type==='reject'){if(!t||t.direction!=='in'||t.departureRequested||!['docked','yard'].includes(t.status))return fail('Select a waiting inbound truck.');for(const id of t.manifest){const p=this.p.get(id);if(p.place==='trailer'){p.place='returned';s.goods.shipped+=p.cases;}}this.requestTruckExit(t);event(s,'Load refused. Client notified.');return {ok:true};}
       if(c.type==='scan'){if(!p)return fail('Select a pallet.');if(p.place==='trailer'){const t=this.t.get(p.truckId);if(!t.opened)return fail('Check the seal first.');if(!this.reachable(t,p))return fail('Unload the rear row first.');}p.scanned=true;O.noteTerms(s,['SSCC','GS1-128','Application identifier','Case count','TI-HI']);event(s,'Label read: '+O.items[p.item].name+'.','scan');return {ok:true};}
       if(c.type==='confirm'){if(!p?.scanned)return fail('Scan the label first.');const count=Number(c.count??p.bookCases);if(!Number.isInteger(count)||count<0||count>200)return fail('Enter a whole case count.');p.bookCases=count;p.confirmed=true;p.recordedCondition=c.condition||'sound';if(c.condition==='damage'){p.hold=true;}
         if(p.truckId)this.t.get(p.truckId).receipt.push({pallet:p.id,expected:p.expected,received:count,condition:c.condition||'sound'});
@@ -111,7 +108,7 @@
       if(c.type==='move'){
         if(!p||!['trailer','lane','storage'].includes(p.place)||p.reservedBy)return fail('That pallet is already moving.');if(!p.confirmed)return fail('Scan and confirm its count first.');
         if(p.place==='trailer'&&!this.reachable(this.t.get(p.truckId),p))return fail('Unload the rear row first.');
-        let dest=copy(c.dest||{});if(dest.truck){const out=this.t.get(dest.truck);if(!out||out.status!=='docked'||out.direction!=='out')return fail('Choose a waiting outbound truck.');if(p.hold)return fail('Held goods cannot ship.');if(O.client(p.client).rule==='FEFO'&&p.bestBy<=s.day)return fail('Expired food cannot ship.');if(!p.wrapped||!p.labelled)return fail('Wrap and label the pick pallet first.');
+        let dest=copy(c.dest||{});if(dest.truck){const out=this.t.get(dest.truck);if(!out||out.status!=='docked'||out.departureRequested||out.direction!=='out')return fail('Choose a waiting outbound truck.');if(p.hold)return fail('Held goods cannot ship.');if(O.client(p.client).rule==='FEFO'&&p.bestBy<=s.day)return fail('Expired food cannot ship.');if(!p.wrapped||!p.labelled)return fail('Wrap and label the pick pallet first.');
           const line=out.order.find(l=>l.item===p.item&&this.remaining(out,l)>0);if(p.client!==out.client&&!c.skipScan)return fail('These goods belong to another client.');if(line?.parcel)return fail('Pack individual units at the pack station.');
           if(!line&&!c.skipScan)return fail('Wrong item. The loading scan caught it.');
           if(line&&p.cases>this.remaining(out,line)&&!c.skipScan)return fail('The order needs fewer cases. Build a pick pallet.');
@@ -123,6 +120,8 @@
           if(!dest)return fail('No open position. Free a spot or expand.');
           if(!Number.isInteger(dest.x)||!Number.isInteger(dest.y)||!O.pathing.inside(s,dest.x,dest.y))return fail('Choose a position inside the building.');
           const rack=s.map.racks.find(r=>dest.y===r.y&&dest.x>=r.x&&dest.x<r.x+2);dest.rack=rack?.id;dest.level=dest.level||0;dest.place=dest.place||'storage';
+          if(!rack&&dest.place!=='lane')return fail('Store pallets in a rack. Click its left or right position.');
+          if(dest.place==='lane'){const lane=['receiving','shipping'].includes(dest.lane)&&O.docks.lane(s,dest.lane);if(!lane||dest.level||dest.x<lane.x||dest.x>=lane.x+lane.w||dest.y<lane.y||dest.y>=lane.y+lane.h)return fail('Use the marked Receiving or Shipping staging area.');}
           if(dest.level&&!O.has(s,'forklift'))return fail('Upper levels need a trained forklift operator.');
           if(dest.level&&(!rack||dest.level>=rack.levels))return fail('That level is not installed.');
           if(this.occupied(dest.x,dest.y,dest.level,p.id))return fail('That position is occupied.');
@@ -140,8 +139,8 @@
       if(c.type==='count'){if(!p||p.reservedBy)return fail('Choose a resting pallet.');return this.enqueue(w,{kind:'count',pallet:p.id,start:this.approach(p),end:this.approach(p),duration:2});}
       if(c.type==='scrap'){if(!p||p.reservedBy||!['lane','storage'].includes(p.place)||!p.hold)return fail('Only resting held stock can be disposed.');s.goods.scrapped+=p.cases+(p.openUnits||0)/O.items[p.item].pack;p.place='scrap';O.post(s,'Damage',-Math.min(40,p.cases*.5),'Disposed held goods');this.occTick=-1;return {ok:true};}
       if(c.type==='hold'){if(!p||p.reservedBy)return fail('Choose a resting pallet.');p.hold=c.value!==false;return {ok:true};}
-      if(c.type==='dispatch'){if(!t||t.direction!=='out'||t.status!=='docked')return fail('Choose an outbound truck.');this.depart(t);O.noteTerms(s,['Outbound handling','Pickup','Cutoff']);return {ok:true};}
-      if(c.type==='walk'){const end={x:Math.round(c.x),y:Math.round(c.y)};if(!O.pathing.path(s,w,end))return fail('No clear route.');return this.enqueue(w,{kind:'walk',start:end,end,duration:0});}
+      if(c.type==='dispatch'){if(!t||t.direction!=='out'||t.status!=='docked'||t.departureRequested)return fail('Choose a waiting outbound truck.');this.depart(t);O.noteTerms(s,['Outbound handling','Pickup','Cutoff']);return {ok:true};}
+      if(c.type==='walk'){const end={x:Math.round(c.x),y:Math.round(c.y)};if(s.trucks.some(t=>t.departureRequested&&['docked','yard','leaving'].includes(t.status)&&this.inTruck(t,end)))return fail('That trailer is closing for departure.');if(!O.pathing.path(s,w,end))return fail('No clear route.');return this.enqueue(w,{kind:'walk',start:end,end,duration:0});}
       if(c.type==='cancel'){for(const task of w.queue)this.release(task);w.queue=[];return {ok:true};}
       if(c.type==='buy'){const reason=O.purchaseReason(s,c.id);if(reason)return fail(reason);if(['robot','autoLift'].includes(c.id)&&s.workers.length>=128)return fail('The warehouse team is full.');if(c.id==='expansion'&&(O.docks.side(s)==='east'?s.map.building.y+s.map.building.h+10:s.map.building.x+s.map.building.w+14)>512)return fail('The site has reached its expansion limit.');if(['bench','assembly','pack','wrapper','baler','repair','line','arm','robot','cage','cold'].includes(c.id)&&2+Math.floor(s.map.stations.length/5)*4>=s.map.building.h)return fail('There is no room for another workstation.');let rackPos=null;if(c.id==='rack'){const b=s.map.building;for(let y=b.y+4;y<b.y+b.h-3&&!rackPos;y+=4)for(let x=b.x+4;x<b.x+b.w-1&&!rackPos;x+=4)if(!this.rackReason(x,y))rackPos={x,y};if(!rackPos)return fail('No room for another rack. Clear its aisle or expand first.');}if(c.id==='door'&&(O.docks.side(s)==='east'?s.map.doors.at(-1).y+5>=s.map.building.y+s.map.building.h:s.map.doors.at(-1).x+5>=s.map.building.x+s.map.building.w))return fail('No wall space for another door. Expand first.');const e=O.equipment.find(e=>e.id===c.id);O.spend(s,c.id==='pallets'?'Packaging':'Purchases',e.cost,e.name);s.owned[c.id]=(s.owned[c.id]||0)+1;const words={training:['Powered industrial truck','Pre-use inspection','Rated capacity'],usedLift:['Counterbalance forklift','Mast','Forks'],lift:['Counterbalance forklift','Mast','Forks'],upper:['Vertical storage','Rack beam'],rack:['Rack bay','Rack upright','Ground position'],pack:['Unit pick','Case pack','Parcel','Pack station'],bench:['Kitting','Bill of materials','Work order'],zones:['Putaway','Location','Slotting'],cold:['FEFO','Cold room','Lot','Best-by date'],crossdock:['Cross-dock'],yard:['Yard','Drop trailer'],baler:['Disposition'],assembly:['WIP','Cycle time','Bottleneck'],labeler:['Relabeling','Label verification']};O.noteTerms(s,words[c.id]||[]);
         if(c.id==='pallets')s.emptyPallets+=10;
@@ -184,27 +183,38 @@
     }
     addWorker(person){const s=this.s;s.workers.push({id:this.id(),...person,...O.docks.spawn(s),queue:[],task:null,path:[],equipment:person.role==='driver'||person.role==='robot'?'forklift':'jack',battery:100,fatigue:0,priorities:person.role==='maker'?['service','putaway','load','unload']:person.role==='receiver'?['unload','putaway','load','service']:person.role==='loader'?['load','unload','putaway','service']:['putaway','load','unload','service']});}
     remaining(t,line){if(line.parcel&&line.orderId)return Math.max(0,line.cases-t.loaded.filter(q=>q.orderId===line.orderId).reduce((a,q)=>a+q.cases,0));const index=t.order.indexOf(line),before=t.order.slice(0,index).filter(l=>l.item===line.item).reduce((a,l)=>a+l.cases,0),loaded=t.loaded.filter(q=>q.item===line.item).reduce((a,q)=>a+q.cases,0);return Math.max(0,line.cases-Math.max(0,loaded-before));}
-    depart(t){const s=this.s;if(!['docked','yard'].includes(t.status))return;t.departureSeal=String(50000+Math.floor(random(s)*40000));t.status='leaving';t.animation=0;
+    requestTruckExit(t){if(t.departureRequested)return;t.departureRequested=true;t.closingTick=null;
+      const matches=q=>q&&(q.truck===t.id||q.dest?.truck===t.id||q.kind==='walk'&&this.inTruck(t,q.end)||q.pallet&&t.manifest.includes(q.pallet)&&this.p.get(q.pallet)?.place==='returned');
+      for(const w of this.s.workers){const kept=w.queue.filter(q=>!matches(q));for(const q of w.queue)if(matches(q))this.release(q);w.queue=[];if(matches(w.task)){const p=w.task?.pallet&&this.p.get(w.task.pallet),parcel=w.task?.parcel&&this.s.parcels.find(q=>q.id===w.task.parcel);this.clearWork(w);if(p?.place==='lane'){const lane=this.lane('shipping',p)||this.lane('receiving',p);if(lane)Object.assign(p,lane);}if(parcel){const station=this.s.map.stations.find(q=>q.id==='pack')||{x:7,y:6};Object.assign(parcel,{x:station.x+1,y:station.y});}}w.queue=kept;}
+    }
+    inTruck(t,w){const d=this.s.map.doors.find(q=>q.id===t.door);if(!d)return false;const east=O.docks.side(this.s)==='east',length=t.kind==='semi'?13:t.kind==='parcel'?4:7;return east?w.x>=d.x-.5&&w.x<=d.x+length+1&&w.y>=d.y-.5&&w.y<d.y+2:w.y>=d.y-.5&&w.y<=d.y+length+1&&w.x>=d.x-.5&&w.x<d.x+2;}
+    truckWorkers(t){return this.s.workers.filter(w=>this.inTruck(t,w));}
+    clearTruckExit(t){const s=this.s,workers=this.truckWorkers(t),d=s.map.doors.find(q=>q.id===t.door);if(workers.length){t.closingTick=null;for(const w of workers)if(!w.task){const end=O.docks.side(s)==='east'?{x:d.x-1,y:d.y}:{x:d.x,y:d.y-1};if(!w.queue.some(q=>q.exitTruck===t.id)){const kept=w.queue;w.queue=[];this.enqueue(w,{kind:'walk',exitTruck:t.id,start:end,end,duration:0});w.queue.push(...kept);}}return;}
+      if(t.closingTick===null){t.closingTick=s.tick;t.opened=false;event(s,'Worker clear. Trailer doors closing.','truck-close');}
+      if((s.tick-t.closingTick)*DT>=.7){t.status='leaving';t.animation=0;event(s,t.direction==='in'?'Receipt signed. Receiving truck released.':'Driver pulling away from the dock.','departure');}
+    }
+    depart(t){const s=this.s;if(!['docked','yard'].includes(t.status)||t.departureRequested)return;this.requestTruckExit(t);t.departureSeal=String(50000+Math.floor(random(s)*40000));
       const missing=t.order.reduce((a,l)=>a+this.remaining(t,l),0),wrong=t.loaded.filter(q=>q.client&&q.client!==t.client||!t.order.some(l=>l.item===q.item)).reduce((a,q)=>a+q.cases,0);
       const requested=t.order.reduce((a,l)=>a+l.cases,0),fraction=requested?Math.max(0,(requested-missing-wrong)/requested):1,complete=!missing&&!wrong;
       if(!complete){O.post(s,'Chargebacks',-Math.min(90,missing*.6+wrong*1.5),'Short or wrong shipment');s.dayMissed++;}else s.dayOnTime++;
       const contract=s.contracts.find(c=>c.id===t.client);if(contract){const q=contract.quality=contract.quality||{trucks:0,complete:0,requested:0,filled:0,wrong:0};q.trucks++;q.complete+=Number(complete);q.requested+=requested;q.filled+=requested*fraction;q.wrong+=wrong;const score=75*(q.requested?q.filled/q.requested:1)+25*q.complete/q.trucks;contract.rating=65+.55*score;s.reputation=Math.max(20,Math.min(100,s.reputation*.97+score*.03));}
 
-      event(s,missing?'Truck left '+missing+' cases short.':'Loaded, sealed and signed.','departure');
+      event(s,missing?'Releasing truck '+missing+' cases short.':'Order complete. Preparing the truck for departure.','release');
     }
     dock(){const s=this.s;for(const t of s.trucks){
       if(t.status==='scheduled'&&s.minute>=t.arrival){t.status='arriving';t.animation=0;event(s,(t.direction==='in'?'Inbound':'Outbound')+' truck is arriving.','truck');}
-      if(t.status==='arriving'){t.animation+=DT;if(t.animation>=2)t.status='yard';}
-      if(t.status==='yard'){const door=s.map.doors.find(d=>!s.trucks.some(q=>q.door===d.id&&['docked','leaving'].includes(q.status)));if(door){t.door=door.id;t.status='docked';t.animation=0;for(const id of t.manifest){const p=this.p.get(id);Object.assign(p,O.docks.slot(s,door,p.index));}event(s,'Door '+(s.map.doors.indexOf(door)+1)+': '+(t.direction==='in'?'check the seal.':'order ready.'),'dock');}}
-      if(t.status==='leaving'){t.animation+=DT;if(t.animation>=3)t.status='gone';}
+      if(t.status==='arriving'){t.animation+=DT;if(t.animation>=4)t.status='yard';}
+      if(t.status==='yard'&&!t.departureRequested){const door=s.map.doors.find(d=>!s.trucks.some(q=>q.door===d.id&&['docked','leaving'].includes(q.status)));if(door){t.door=door.id;t.status='docked';t.animation=0;for(const id of t.manifest){const p=this.p.get(id);Object.assign(p,O.docks.slot(s,door,p.index));}event(s,'Door '+(s.map.doors.indexOf(door)+1)+': '+(t.direction==='in'?'check the seal.':'order ready.'),'dock');}}
+      if(t.status==='leaving'){t.animation+=DT;if(t.animation>=6)t.status='gone';}
       if(['docked','yard'].includes(t.status)&&s.minute>t.arrival+t.freeMinutes){const due=Math.floor((s.minute-t.arrival-t.freeMinutes)/15);if(due>t.detention){O.post(s,'Detention',-(due-t.detention)*4,'Carrier waiting');t.detention=due;}}
       if(['docked','yard'].includes(t.status)&&t.direction==='out'&&s.minute>=t.deadline)this.depart(t);
-      if(t.status==='docked'&&t.direction==='in'&&!t.manifest.some(id=>this.p.get(id).place==='trailer')){t.status='leaving';t.animation=0;event(s,'Receipt signed. Receiving truck released.','departure');}
+      if(t.status==='docked'&&t.direction==='in'&&!t.manifest.some(id=>this.p.get(id).place==='trailer'))this.requestTruckExit(t);
+      if(t.departureRequested&&['docked','yard'].includes(t.status))this.clearTruckExit(t);
     }}
     assign(){const s=this.s;this.assignPool=s.pallets.filter(p=>['lane','storage'].includes(p.place)&&(p.cases>0||p.openUnits>0));const staged=this.assignPool.filter(p=>p.place==='lane'&&!p.pick);for(const w of s.workers.slice(1)){if(w.task||w.queue.length)continue;if(s.minute>990&&!s.owned.secondShift)continue;
       for(const priority of w.priorities){let found=false;
-        if(priority==='unload'&&w.role!=='robot'){const t=s.trucks.find(t=>t.direction==='in'&&t.status==='docked'&&t.seal===t.expectedSeal);if(t){t.inspected=true;t.checked=true;t.opened=true;const p=t.manifest.map(id=>this.p.get(id)).find(p=>p.place==='trailer'&&!p.reservedBy&&this.reachable(t,p));if(p){p.scanned=true;this.command({type:'confirm',pallet:p.id,count:p.cases,condition:p.condition==='damage'?'damage':'sound'});found=this.command({type:'move',pallet:p.id,dest:{lane:'receiving'},worker:w.id}).ok;}}}
-        if(priority==='load'){const t=s.trucks.find(t=>t.direction==='out'&&t.status==='docked');if(t){for(const l of t.order){if(l.parcel)continue;const left=this.unassigned(t,l);if(left<=0)continue;const stock=this.available(l.item,t.client),p=stock.find(p=>p.cases<=left&&p.wrapped);if(p)found=this.command({type:'move',pallet:p.id,dest:{truck:t.id},worker:w.id}).ok;
+        if(priority==='unload'&&w.role!=='robot'){const t=s.trucks.find(t=>t.direction==='in'&&t.status==='docked'&&!t.departureRequested&&t.seal===t.expectedSeal);if(t){t.inspected=true;t.checked=true;t.opened=true;const p=t.manifest.map(id=>this.p.get(id)).find(p=>p.place==='trailer'&&!p.reservedBy&&this.reachable(t,p));if(p){p.scanned=true;this.command({type:'confirm',pallet:p.id,count:p.cases,condition:p.condition==='damage'?'damage':'sound'});found=this.command({type:'move',pallet:p.id,dest:{lane:'receiving'},worker:w.id}).ok;}}}
+        if(priority==='load'){const t=s.trucks.find(t=>t.direction==='out'&&t.status==='docked'&&!t.departureRequested);if(t){for(const l of t.order){if(l.parcel)continue;const left=this.unassigned(t,l);if(left<=0)continue;const stock=this.available(l.item,t.client),p=stock.find(p=>p.cases<=left&&p.wrapped);if(p)found=this.command({type:'move',pallet:p.id,dest:{truck:t.id},worker:w.id}).ok;
           if(!found&&w.role!=='robot'){const built=stock.find(p=>p.pick&&!p.wrapped&&p.cases<=left);if(built)found=this.command({type:'wrap',pallet:built.id,worker:w.id}).ok;else{const source=stock.find(p=>p.wrapped);if(source){const q=this.command({type:'empty',item:source.item,client:source.client,worker:w.id});if(q.ok)found=this.command({type:'pick',pallet:source.id,output:q.pallet,count:Math.min(source.cases,left),worker:w.id}).ok;}}}if(found)break;}if(t.order.every(l=>!this.remaining(t,l)))this.depart(t);}}
 
         if(priority==='putaway'&&(s.owned.zones||w.role==='driver'||w.role==='robot')){const p=staged.find(p=>!p.reservedBy);if(p){const dest=this.spot(p);if(dest)found=this.command({type:'move',pallet:p.id,dest,worker:w.id}).ok;}}
@@ -224,7 +234,7 @@
       }
       else if(task.kind!=='walk'){
         const d=task.dest;
-        if(d.place==='shipped'){const t=this.t.get(d.truck);if(t.status!=='docked'){const lane=this.lane('shipping',p);Object.assign(p,lane);event(s,'The truck left. Pallet returned to the shipping lane.');}else{
+        if(d.place==='shipped'){const t=this.t.get(d.truck);if(t.status!=='docked'||t.departureRequested){const lane=this.lane('shipping',p);Object.assign(p,lane);event(s,'The truck left. Pallet returned to the shipping lane.');}else{
           p.place='shipped';p.truckId=t.id;t.loaded.push({pallet:p.id,item:p.item,client:p.client,cases:p.cases,scanned:!d.skipScan});s.goods.shipped+=p.cases;s.dayShipped+=p.cases;s.records.pallets++;s.records.cases+=p.cases;
           const c=O.client(t.client),line=t.order.find(l=>l.item===p.item),rate=(s.contracts.find(q=>q.id===c.id)?.rating||100)/100;
           O.post(s,line?.parcel?'Parcel':'Shipping',(line?.full?c.ship:c.ship+p.cases*c.cases)*rate,'Loaded '+O.items[p.item].name);
@@ -264,7 +274,7 @@
     }
     tick(){const s=this.s;if(s.phase!=='shift')return;s.tick++;s.minute+=DT*CLOCK;this.dock();if(s.tick%10===0)this.assign();for(const w of s.workers)this.work(w);if(s.machineDown>0)s.machineDown-=DT;
       if(s.owned.conveyor&&s.tick%40===0){const t=s.trucks.find(t=>t.direction==='out'&&t.status==='docked');if(t){const p=s.pallets.find(p=>p.place==='lane'&&p.lane==='shipping'&&!p.reservedBy&&t.order.some(l=>l.item===p.item&&this.remaining(t,l)>=p.cases));if(p)this.command({type:'move',pallet:p.id,dest:{truck:t.id},worker:s.workers.find(w=>w.role==='robot')?.id||1});}}
-      if(s.minute>=s.shiftEnd){for(const t of s.trucks)if(t.direction==='out'&&['docked','yard'].includes(t.status))this.depart(t);O.settle(s);}
+      if(s.minute>=s.shiftEnd){for(const t of s.trucks)if(t.direction==='out'&&['docked','yard'].includes(t.status))this.depart(t);if(!s.trucks.some(t=>t.departureRequested&&['docked','yard','leaving'].includes(t.status)))O.settle(s);}
     }
     step(n=1){for(let i=0;i<n;i++)this.tick();return this.s;}
     nextDay(){const s=this.s;
