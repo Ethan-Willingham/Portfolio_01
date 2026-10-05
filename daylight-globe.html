@@ -21,7 +21,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="globe.css?v=20261005-17">
+  <link rel="stylesheet" href="globe.css?v=20261005-22">
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -57,8 +57,9 @@
                   <input id="globe-date" aria-describedby="globe-time-basis" type="date" min="1900-01-01" max="2100-12-31">
                 </div>
                 <div class="globe-field">
-                  <div class="globe-hour-head"><label for="globe-hour">Time</label><output id="globe-hour-label" for="globe-hour"></output></div>
-                  <input id="globe-hour" aria-describedby="globe-time-basis" type="range" min="0" max="1439" step="1" value="720">
+                  <div class="globe-hour-head"><label id="globe-hour-title" for="globe-hour">Last 12 hours</label><output id="globe-hour-label" for="globe-hour"></output></div>
+                  <input id="globe-hour" aria-describedby="globe-time-basis" type="range" min="0" max="720" step="1" value="720">
+                  <div id="globe-range-ends" class="globe-range-ends"><span>12h ago</span><span>Now</span></div>
                   <p id="globe-replay-status" class="globe-replay-status" role="status" aria-live="polite"></p>
                 </div>
               </div>
@@ -113,11 +114,12 @@
   <script src="js/vendor/three-r128.min.js"></script>
   <script src="js/globe-math.js?v=20261004-9"></script>
   <script src="js/globe-data.js?v=20261005-18"></script>
-  <script src="js/globe-clouds.js?v=20261005-20"></script>
-  <script src="js/globe-timeline.js?v=20261005-18"></script>
+  <script src="js/globe-clouds.js?v=20261005-22"></script>
+  <script src="js/globe-archive.js?v=20261005-22"></script>
+  <script src="js/globe-timeline.js?v=20261005-22"></script>
   <script src="js/globe-stars.js?v=20261005-11"></script>
   <script src="js/globe-optics.js?v=20261005-11"></script>
-  <script src="js/globe.js?v=20261005-22"></script>
+  <script src="js/globe.js?v=20261005-23"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

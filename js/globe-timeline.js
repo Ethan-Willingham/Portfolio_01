@@ -11,6 +11,13 @@
     if(!Number.isFinite(+d))throw new Error('Invalid replay day');
     return {start:new Date(d.getFullYear(),d.getMonth(),d.getDate()),end:new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)};
   }
+  function recentBounds(now){var end=new Date(Math.floor(+new Date(now)/60000)*60000);if(!Number.isFinite(+end))throw new Error('Invalid replay clock');return {start:new Date(+end-12*3600000),end:end};}
+  function rangeFrames(catalog,bounds,now,step,published){
+    if(!catalog)return [];var start=+new Date(catalog.start),end=+new Date(catalog.end),clock=+new Date(now),out=[];
+    if(![start,end,clock,+bounds.start,+bounds.end,step].every(Number.isFinite)||end<start||end>clock+300000||step<=0)return out;
+    var first=Math.max(start,start+Math.floor((bounds.start-start)/step)*step),last=Math.min(end,clock,+bounds.end);
+    for(var t=first;t<=last;t+=step)if(!published||published(catalog,t))out.push(new Date(t));return out;
+  }
   function cloudFrames(catalog,instant,now){
     if(!catalog)return [];
     var day=dayBounds(instant),start=+new Date(catalog.start),end=+new Date(catalog.end),clock=+new Date(now);
@@ -45,5 +52,5 @@
       signal.addEventListener('abort',abort,{once:true});
     });
   }
-  return {dayBounds:dayBounds,cloudFrames:cloudFrames,order:order,memoryCache:memoryCache,waitFor:waitFor};
+  return {dayBounds:dayBounds,recentBounds:recentBounds,rangeFrames:rangeFrames,cloudFrames:cloudFrames,order:order,memoryCache:memoryCache,waitFor:waitFor};
 }));

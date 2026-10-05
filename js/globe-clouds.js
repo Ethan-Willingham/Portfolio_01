@@ -8,10 +8,14 @@
  'use strict';
  var HOUR=3600000, NASA='https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', EUM=data.CLOUD_SERVICE, CACHE='daylight-globe-hourly-v1';
  var GROUPS=[
-  {source:NASA,layers:['GOES-West_ABI_GeoColor','GOES-East_ABI_GeoColor','Himawari_AHI_Band3_Red_Visible_1km'],kind:'visible',longitudes:[-137.2,-75.2,140.7]},
+  {source:NASA,layers:['GOES-West_ABI_GeoColor'],kind:'visible',longitudes:[-137.2]},
+  {source:NASA,layers:['GOES-East_ABI_GeoColor'],kind:'visible',longitudes:[-75.2]},
+  {source:NASA,layers:['Himawari_AHI_Band3_Red_Visible_1km'],kind:'visible',longitudes:[140.7]},
   {source:EUM,layers:['msg_iodc:rgb_natural'],kind:'visible',longitudes:[45.5]},
   {source:EUM,layers:['mtg_fd:rgb_truecolour'],kind:'visible',longitudes:[0]},
-  {source:NASA,layers:['GOES-West_ABI_Band13_Clean_Infrared','GOES-East_ABI_Band13_Clean_Infrared','Himawari_AHI_Band13_Clean_Infrared'],kind:'infrared',longitudes:[-137.2,-75.2,140.7]},
+  {source:NASA,layers:['GOES-West_ABI_Band13_Clean_Infrared'],kind:'infrared',longitudes:[-137.2]},
+  {source:NASA,layers:['GOES-East_ABI_Band13_Clean_Infrared'],kind:'infrared',longitudes:[-75.2]},
+  {source:NASA,layers:['Himawari_AHI_Band13_Clean_Infrared'],kind:'infrared',longitudes:[140.7]},
   {source:EUM,layers:['msg_iodc:ir108'],kind:'infrared',longitudes:[45.5]},
   {source:EUM,layers:['mtg_fd:ir105_hrfi'],kind:'infrared',longitudes:[0]}
  ];
@@ -49,8 +53,8 @@
   var links=urls(time,width),images=await Promise.allSettled(links.map(async function(url){if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,width);}catch(_){await cache.delete(url);}}if(options.cacheOnly)throw new Error('Hourly image not cached');return data.request(url,options,async function(r){var copy=cache?r.clone():null,b=await imageBlob(r,width);if(cache)try{await cache.put(url,copy);}catch(_){}return b;});}));
   if(options.signal&&options.signal.aborted){var e=new Error('Hourly request aborted');e.name='AbortError';throw e;}
   // Require both providers, while allowing an individual Meteosat feed to fail.
-  if(images[3].status!=='fulfilled'||images[4].status!=='fulfilled'&&images[5].status!=='fulfilled')throw new Error('Hourly infrared coverage unavailable');
-  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-192)).map(function(k){return cache.delete(k);}));}catch(_){}
+  if(images.slice(5,8).some(function(r){return r.status!=='fulfilled';})||images[8].status!=='fulfilled'&&images[9].status!=='fulfilled')throw new Error('Hourly infrared coverage unavailable');
+  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-260)).map(function(k){return cache.delete(k);}));}catch(_){}
   return {time:timestamp(time),width:width,dense:true,urls:links,blobs:images.map(function(r){return r.status==='fulfilled'?r.value:null;})};
  }
  async function discard(time,width){if(typeof caches==='undefined')return;try{var c=await caches.open(CACHE);await Promise.all(urls(time,width).map(function(u){return c.delete(u);}));}catch(_){} }
