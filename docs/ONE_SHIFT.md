@@ -68,7 +68,8 @@ through normal simulation ticks.
 
 Three save slots, end-of-day autosave, import/export and a version-zero migration
 are supported. Import rejects malformed nested state, orphaned reservations,
-bad label data, goods imbalance and ledger imbalance. An art preview cannot
+bad label data, goods imbalance and ledger imbalance. Imported names, lots
+and seals display as literal text. An art preview cannot
 replace the live autosave. `one-shift-lab.html` offers four playable color
 studies and five title proposals. They are provisional studies, not an owner
 art approval or four independently designed sprite systems.

@@ -32,7 +32,7 @@
 .shift-panel h2 {font:1.625rem var(--font-heading);margin:5px 0 12px;color:var(--text-bright)}
 .shift-panel h3 {font:1.0rem var(--font-body);margin:14px 0 6px}
 .shift-panel p {font-size:0.8125rem;line-height:1.5;margin:8px 0;color:var(--text-dim)}
-.shift-panel .close {position:absolute;right:8px;top:8px;padding:5px;min-width:44px;background:none;border:0;font-size:1.375rem}
+.shift-panel .close {position:absolute;right:8px;top:8px;padding:5px;min-width:44px;background:none;border:0;font-size:0.75rem}
 .shift-paper {padding:14px;background:var(--text);color:var(--bg-raised);border-radius:2px;box-shadow:2px 3px 0 var(--rule)}
 .shift-paper .shift-kicker,.shift-paper p {color:var(--bg)}
 .shift-paper h3 {font-family:var(--font-heading)}
