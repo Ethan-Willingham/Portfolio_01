@@ -51,7 +51,7 @@
 .globe-time-basis { font: .68rem/1.4 var(--font-body); color: var(--text-dim); margin: -.25rem 0 1rem !important; }
 .globe-tilts { border: 0; margin: .8rem 0 0; padding: 0; }
 .globe-tilt-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; }
-.tilt-btn { font: .73rem var(--font-body); min-width: 44px; min-height: 44px; padding: .4rem .2rem; color: var(--text-dim); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 3px; cursor: pointer; }
+.globe-wrapper .tilt-btn { font: .73rem var(--font-body); min-width: 44px; min-height: 44px; padding: .4rem .2rem; color: var(--text-dim); background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 3px; cursor: pointer; }
 .tilt-btn[aria-pressed=true] { color: var(--bg-raised); background: var(--accent); border-color: var(--accent); }
 .globe-tilt-note { font: .72rem/1.5 var(--font-body); color: var(--text-dim); margin: .55rem 0 0 !important; }
 .globe-pin { border-top: 1px solid var(--rule); margin-top: 1rem; padding-top: .6rem; }
