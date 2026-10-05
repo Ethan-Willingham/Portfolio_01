@@ -34,7 +34,7 @@ The intake recommendation stays separate from the graph and its uncertainty band
 
 | Topic | Evidence checked | Resulting presentation |
 |---|---|---|
-| Walking | Paluch 2022 age curves, Ding 2025 review and HHS guidelines | One walking card with an age choice. Keep the full published 16,000-step extent and uncertainty. Use broad flatter regions, not a required 10,000 or an exact stopping point. |
+| Walking | Paluch 2022 age curves, Ding 2025 review and HHS guidelines | One walking card with an age choice. Display 0 to 16,000 steps, retaining source references and available uncertainty. Mark the uncertain near-zero tail; do not invent a zero-step estimate. Use broad flatter regions, not a required 10,000 or an exact stopping point. |
 | Exercise | Garcia 2023, Arem 2015, Ekelund 2019 and HHS guidance | Retain deposited source curve; show its confidence band. Headline 150 to 300 moderate minutes/week comes from guidelines, not the former 343-minute calculation. |
 | Training sets | Pelland 2026, ACSM 2026 overview and Steele 2026 trial preprint | Retain the dashed model and credible band. Mark the sparse tail above 25 sets. No exact optimum or claim that 45 sets doubles an individual’s growth. |
 | Sleep | Yin 2017, Yuan 2024, Chaput 2026 and AASM/SRS consensus | Keep the older curve as a named illustration with confidence shading. Remove the arbitrary 6 to 7.25-hour highlighted margin. Headline uses adult guidance, usually 7 to 9 hours. |
@@ -49,6 +49,8 @@ The intake recommendation stays separate from the graph and its uncertainty band
 ### Walking and exercise
 
 [Paluch 2022](https://discovery.ucl.ac.uk/id/eprint/10170017/) describes flatter mortality associations around 8,000 to 10,000 steps below age 60 and 6,000 to 8,000 at older ages. The plotted tail is preserved, including the younger group’s bend back and wider limits. These are approximate figure readings of observed habits, not assigned walks. Neither a central dip nor a plateau proves an eventual maximum.
+
+The walking display axis now begins at zero. Figure 3 already includes a modeled low-step tail. Its vector strokes begin at about 9 steps for younger adults and 20 for older adults; the extracted curve is not extended beyond those strokes. At zero the control reports no estimate. Source confidence bands are clipped at low counts, so complete intervals are omitted below 3,000 steps in the younger group and 500 in the older group, rather than treating the clipping boundary as a true upper limit. Those near-zero segments are dashed. Where complete bands are visible, estimates use their geometric midpoint on the source log-risk scale. Where clipped, they use the drawn center stroke normalized at its stated reference. The chart plots relative risk as a multiple of the same 5,000- or 3,000-step reference, while selected readouts still give higher or lower percentages. All earlier points at and above those references are preserved unchanged.
 
 [Ding 2025](https://pubmed.ncbi.nlm.nih.gov/40713949/) includes 57 studies across outcomes; its mortality dose analysis uses 14 studies. Seven thousand versus two thousand steps was associated with 47% lower relative mortality risk, with limits corresponding to 40% to 54% lower risk. This supports large early gains, but has a different reference from the age curves. Its numerical table remains supporting evidence, not a second confusing walking section.
 

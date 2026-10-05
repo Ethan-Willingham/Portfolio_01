@@ -67,12 +67,18 @@ const comparisons=ctx.window.EnoughData.stepComparisons;
 assert.equal(comparisons.length,2);
 for(const c of comparisons){
  assert.equal(c.view.mode,'comparison');assert.equal(M.enough(c),null);assert.equal(c.domain[1],16000);
+ assert.equal(c.view.range[0],0);assert.equal(c.view.plotMetric,'relative-risk');assert.equal(c.view.noExtrapolation,true);
+ assert.equal(M.estimate(c,0),null,'No invented zero-step estimate');assert.equal(M.outcome(c,0),null);
+ assert.equal(M.estimate(c,c.domain[0]-1),null,'No endpoint clamping outside the published stroke');assert.equal(M.series(c)[0].dose,c.domain[0]);
+ assert.ok(M.outcome(c,1000)<0,'Lower counts can have higher risk than the source reference');
  near(M.outcome(c,c.referenceDose),0);assert.ok(c.extraction.includes('figure readings'));
  assert.match(c.sourcePDFSHA256,/^[a-f0-9]{64}$/);assert.ok(c.centerlineCheckMaxRiskDifference<.01);
  for(let i=0;i<c.points.length;i++){
-  const p=c.points[i];assert.ok(Number.isFinite(p.effect)&&p.low<=p.effect&&p.effect<=p.high);assert.equal(p.source,'paluch2022');assert.match(p.location,/Figure 3/);
-  if(i)assert.equal(p.dose-c.points[i-1].dose,250);
-  for(const k of ['effect','low','high'])assert.ok(M.outcome(c,p.dose,k)>=c.view.yScale.min&&M.outcome(c,p.dose,k)<=c.view.yScale.max,'Unclipped published interval');
+  const p=c.points[i];assert.ok(Number.isFinite(p.effect));assert.equal(p.source,'paluch2022');assert.match(p.location,/Figure 3/);
+  if(i>1)assert.equal(p.dose-c.points[i-1].dose,250);
+  if(p.dose<c.view.uncertainUntil){assert.equal(p.low,null,'Clipped source intervals must not be reconstructed');assert.equal(p.high,null);}
+  else assert.ok(p.low<=p.effect&&p.effect<=p.high,'Complete interval contains estimate');
+  for(const k of ['effect','low','high']){const v=M.estimate(c,p.dose,k);if(v!==null)assert.ok(v>=c.view.yScale.min&&v<=c.view.yScale.max,'Unclipped published interval');}
  }
  assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)));
 }

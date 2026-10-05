@@ -17,10 +17,11 @@ window.EnoughData = {
       "effectUnit": "Approximate relative all-cause mortality risk; 5,000 steps/day = 1",
       "better": "lower",
       "domain": [
-        5000,
+        9,
         16000
       ],
       "ticks": [
+        0,
         5000,
         10000,
         16000
@@ -34,29 +35,210 @@ window.EnoughData = {
       "view": {
         "mode": "comparison",
         "range": [
-          5000,
+          0,
           16000
         ],
         "yScale": {
-          "min": -20,
-          "max": 80,
+          "min": 0,
+          "max": 3.5,
           "ticks": [
-            -20,
             0,
-            20,
-            40,
-            60,
-            80
+            1,
+            2,
+            3
           ],
-          "label": "Approx. lower risk of dying, %"
+          "label": "Risk of dying, × baseline"
         },
         "area": "move",
         "shape": "Flatter region",
         "answer": "8,000 to 10,000 steps/day",
-        "rangeLabel": "5,000 to 16,000 steps a day",
-        "showEnough": false
+        "rangeLabel": "0 to 16,000 steps a day",
+        "showEnough": false,
+        "noExtrapolation": true,
+        "uncertainUntil": 3000,
+        "plotMetric": "relative-risk"
       },
       "points": [
+        {
+          "dose": 9,
+          "effect": 3.1601,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 250,
+          "effect": 2.9947,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 500,
+          "effect": 2.8316,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 750,
+          "effect": 2.6766,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1000,
+          "effect": 2.5294,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1250,
+          "effect": 2.3896,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1500,
+          "effect": 2.2567,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1750,
+          "effect": 2.1313,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2000,
+          "effect": 2.0128,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2250,
+          "effect": 1.9008,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2500,
+          "effect": 1.7949,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2750,
+          "effect": 1.6949,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 3000,
+          "effect": 1.5955,
+          "low": 1.1787,
+          "high": 2.1596,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 3250,
+          "effect": 1.505,
+          "low": 1.1545,
+          "high": 1.9619,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 3500,
+          "effect": 1.4196,
+          "low": 1.1308,
+          "high": 1.7822,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 3750,
+          "effect": 1.3391,
+          "low": 1.1076,
+          "high": 1.619,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4000,
+          "effect": 1.2631,
+          "low": 1.0848,
+          "high": 1.4707,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4250,
+          "effect": 1.1915,
+          "low": 1.0626,
+          "high": 1.3361,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4500,
+          "effect": 1.1239,
+          "low": 1.0408,
+          "high": 1.2137,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4750,
+          "effect": 1.0602,
+          "low": 1.0194,
+          "high": 1.1025,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
         {
           "dose": 5000,
           "effect": 1,
@@ -418,12 +600,12 @@ window.EnoughData = {
           "location": "Figure 3, PDF page 6, printed e224"
         }
       ],
-      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated.",
+      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated. Lower-range extension uses the same published figure, not another study or a new spline. Where the source band is complete, use its geometric midpoint. Where it is clipped, use the drawn center stroke, normalized to its own stated reference; do not reconstruct a missing confidence bound. The displayed axis starts at zero, but the source stroke starts just above zero and no value is extrapolated to zero. The near-zero tail is dashed. All previously published points at and above the reference are unchanged.",
       "source": "https://doi.org/10.1016/S2468-2667(21)00302-9",
       "verified": "2026-10-05",
       "population": "Age-stratified mortality curves from 14 cohorts in Figure 3; BLSA excluded from this figure.",
       "intervalKind": "confidence",
-      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
+      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau. The clipped low-step intervals are unavailable and omitted, not treated as narrow or complete. The model tail near zero is uncertain.",
       "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
       "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
       "centerlineCheckMaxRiskDifference": 0.009550150370816968,
@@ -454,7 +636,8 @@ window.EnoughData = {
       ],
       "caveats": [
         "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
-        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+."
+        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+.",
+        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -471,6 +654,21 @@ window.EnoughData = {
         "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
         "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
         "status": "Revised or retained with population, outcome and uncertainty checked."
+      },
+      "centerlineCheckRange": [
+        5000,
+        16000
+      ],
+      "lowerRangeAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-vector extension. No independent review claimed.",
+        "sourceCurveStartDose": 8.63811738951994,
+        "firstFullIntervalDose": 3000,
+        "strokeReferenceRisk": 1.0119471828486537,
+        "bandReferenceRisk": 1.0023743570113446,
+        "sourceRepository": "https://discovery.ucl.ac.uk/id/eprint/10170017/",
+        "zeroEstimate": null,
+        "unchangedFromDose": 5000
       }
     },
     {
@@ -24247,10 +24445,11 @@ window.EnoughData = {
       "effectUnit": "Approximate relative all-cause mortality risk; 5,000 steps/day = 1",
       "better": "lower",
       "domain": [
-        5000,
+        9,
         16000
       ],
       "ticks": [
+        0,
         5000,
         10000,
         16000
@@ -24264,28 +24463,209 @@ window.EnoughData = {
       "view": {
         "mode": "comparison",
         "range": [
-          5000,
+          0,
           16000
         ],
         "yScale": {
-          "min": -20,
-          "max": 80,
+          "min": 0,
+          "max": 3.5,
           "ticks": [
-            -20,
             0,
-            20,
-            40,
-            60,
-            80
+            1,
+            2,
+            3
           ],
-          "label": "Approx. lower risk of dying, %"
+          "label": "Risk of dying, × baseline"
         },
         "area": "move",
         "shape": "Flatter region",
         "answer": "8,000 to 10,000 steps/day",
-        "rangeLabel": "5,000 to 16,000 steps a day"
+        "rangeLabel": "0 to 16,000 steps a day",
+        "noExtrapolation": true,
+        "uncertainUntil": 3000,
+        "plotMetric": "relative-risk"
       },
       "points": [
+        {
+          "dose": 9,
+          "effect": 3.1601,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 250,
+          "effect": 2.9947,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 500,
+          "effect": 2.8316,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 750,
+          "effect": 2.6766,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1000,
+          "effect": 2.5294,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1250,
+          "effect": 2.3896,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1500,
+          "effect": 2.2567,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 1750,
+          "effect": 2.1313,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2000,
+          "effect": 2.0128,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2250,
+          "effect": 1.9008,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2500,
+          "effect": 1.7949,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 2750,
+          "effect": 1.6949,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 3000,
+          "effect": 1.5955,
+          "low": 1.1787,
+          "high": 2.1596,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 3250,
+          "effect": 1.505,
+          "low": 1.1545,
+          "high": 1.9619,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 3500,
+          "effect": 1.4196,
+          "low": 1.1308,
+          "high": 1.7822,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 3750,
+          "effect": 1.3391,
+          "low": 1.1076,
+          "high": 1.619,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4000,
+          "effect": 1.2631,
+          "low": 1.0848,
+          "high": 1.4707,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4250,
+          "effect": 1.1915,
+          "low": 1.0626,
+          "high": 1.3361,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4500,
+          "effect": 1.1239,
+          "low": 1.0408,
+          "high": 1.2137,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 4750,
+          "effect": 1.0602,
+          "low": 1.0194,
+          "high": 1.1025,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
         {
           "dose": 5000,
           "effect": 1,
@@ -24647,12 +25027,12 @@ window.EnoughData = {
           "location": "Figure 3, PDF page 6, printed e224"
         }
       ],
-      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated.",
+      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated. Lower-range extension uses the same published figure, not another study or a new spline. Where the source band is complete, use its geometric midpoint. Where it is clipped, use the drawn center stroke, normalized to its own stated reference; do not reconstruct a missing confidence bound. The displayed axis starts at zero, but the source stroke starts just above zero and no value is extrapolated to zero. The near-zero tail is dashed. All previously published points at and above the reference are unchanged.",
       "source": "https://doi.org/10.1016/S2468-2667(21)00302-9",
       "verified": "2026-10-05",
       "population": "Age-stratified mortality curves from 14 cohorts in Figure 3; BLSA excluded from this figure.",
       "intervalKind": "confidence",
-      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
+      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau. The clipped low-step intervals are unavailable and omitted, not treated as narrow or complete. The model tail near zero is uncertain.",
       "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
       "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
       "centerlineCheckMaxRiskDifference": 0.009550150370816968,
@@ -24677,7 +25057,8 @@ window.EnoughData = {
       ],
       "caveats": [
         "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
-        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+."
+        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+.",
+        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -24688,7 +25069,22 @@ window.EnoughData = {
         "sensitivity": null,
         "sweetRange": null
       },
-      "fact": "Later results are uncertain."
+      "fact": "Later results are uncertain.",
+      "centerlineCheckRange": [
+        5000,
+        16000
+      ],
+      "lowerRangeAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-vector extension. No independent review claimed.",
+        "sourceCurveStartDose": 8.63811738951994,
+        "firstFullIntervalDose": 3000,
+        "strokeReferenceRisk": 1.0119471828486537,
+        "bandReferenceRisk": 1.0023743570113446,
+        "sourceRepository": "https://discovery.ucl.ac.uk/id/eprint/10170017/",
+        "zeroEstimate": null,
+        "unchangedFromDose": 5000
+      }
     },
     {
       "id": "steps-older",
@@ -24698,11 +25094,12 @@ window.EnoughData = {
       "effectUnit": "Approximate relative all-cause mortality risk; 3,000 steps/day = 1",
       "better": "lower",
       "domain": [
-        3000,
+        20,
         16000
       ],
       "ticks": [
-        3000,
+        0,
+        5000,
         10000,
         16000
       ],
@@ -24715,28 +25112,137 @@ window.EnoughData = {
       "view": {
         "mode": "comparison",
         "range": [
-          3000,
+          0,
           16000
         ],
         "yScale": {
-          "min": -20,
-          "max": 80,
+          "min": 0,
+          "max": 3.5,
           "ticks": [
-            -20,
             0,
-            20,
-            40,
-            60,
-            80
+            1,
+            2,
+            3
           ],
-          "label": "Approx. lower risk of dying, %"
+          "label": "Risk of dying, × baseline"
         },
         "area": "move",
         "shape": "Flatter region",
         "answer": "6,000 to 8,000 steps/day",
-        "rangeLabel": "3,000 to 16,000 steps a day"
+        "rangeLabel": "0 to 16,000 steps a day",
+        "noExtrapolation": true,
+        "uncertainUntil": 500,
+        "plotMetric": "relative-risk"
       },
       "points": [
+        {
+          "dose": 20,
+          "effect": 2.0725,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 250,
+          "effect": 1.9599,
+          "low": null,
+          "high": null,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Published center stroke; source confidence band is clipped. No complete interval reconstructed."
+        },
+        {
+          "dose": 500,
+          "effect": 1.8323,
+          "low": 1.5245,
+          "high": 2.2023,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 750,
+          "effect": 1.7247,
+          "low": 1.4614,
+          "high": 2.0354,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 1000,
+          "effect": 1.6233,
+          "low": 1.4009,
+          "high": 1.881,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 1250,
+          "effect": 1.5279,
+          "low": 1.3429,
+          "high": 1.7384,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 1500,
+          "effect": 1.4381,
+          "low": 1.2874,
+          "high": 1.6065,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 1750,
+          "effect": 1.3537,
+          "low": 1.2342,
+          "high": 1.4847,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 2000,
+          "effect": 1.274,
+          "low": 1.183,
+          "high": 1.372,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 2250,
+          "effect": 1.1992,
+          "low": 1.1342,
+          "high": 1.268,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 2500,
+          "effect": 1.1287,
+          "low": 1.0872,
+          "high": 1.1718,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
+        {
+          "dose": 2750,
+          "effect": 1.0624,
+          "low": 1.0422,
+          "high": 1.083,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224; approximate lower-range figure reading",
+          "figureMethod": "Geometric midpoint of the complete published log-risk confidence band."
+        },
         {
           "dose": 3000,
           "effect": 1,
@@ -25162,12 +25668,12 @@ window.EnoughData = {
           "location": "Figure 3, PDF page 6, printed e224"
         }
       ],
-      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated.",
+      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated. Lower-range extension uses the same published figure, not another study or a new spline. Where the source band is complete, use its geometric midpoint. Where it is clipped, use the drawn center stroke, normalized to its own stated reference; do not reconstruct a missing confidence bound. The displayed axis starts at zero, but the source stroke starts just above zero and no value is extrapolated to zero. The near-zero tail is dashed. All previously published points at and above the reference are unchanged.",
       "source": "https://doi.org/10.1016/S2468-2667(21)00302-9",
       "verified": "2026-10-05",
       "population": "Age-stratified mortality curves from 14 cohorts in Figure 3; BLSA excluded from this figure.",
       "intervalKind": "confidence",
-      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
+      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau. The clipped low-step intervals are unavailable and omitted, not treated as narrow or complete. The model tail near zero is uncertain.",
       "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
       "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
       "centerlineCheckMaxRiskDifference": 0.00854802152353884,
@@ -25192,7 +25698,8 @@ window.EnoughData = {
       ],
       "caveats": [
         "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
-        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+."
+        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+.",
+        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -25203,7 +25710,22 @@ window.EnoughData = {
         "sensitivity": null,
         "sweetRange": null
       },
-      "fact": "This curve keeps improving slowly afterward."
+      "fact": "This curve keeps improving slowly afterward.",
+      "centerlineCheckRange": [
+        3000,
+        16000
+      ],
+      "lowerRangeAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-vector extension. No independent review claimed.",
+        "sourceCurveStartDose": 19.671853656913196,
+        "firstFullIntervalDose": 500,
+        "strokeReferenceRisk": 0.9943797745768197,
+        "bandReferenceRisk": 1.00295303873906,
+        "sourceRepository": "https://discovery.ucl.ac.uk/id/eprint/10170017/",
+        "zeroEstimate": null,
+        "unchangedFromDose": 3000
+      }
     }
   ],
   "supportingEvidence": {

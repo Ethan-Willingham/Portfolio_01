@@ -4,6 +4,8 @@
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   function estimate(c,d,key='effect'){
     if(c.kind==='unknown'||c.kind==='guidance')return null;
+    // A wider display axis must not manufacture observations beyond the source curve.
+    if(c.view.noExtrapolation&&(d<c.domain[0]||d>c.domain[1]))return null;
     if(c.kind==='categories')return c.points[Math.round(clamp(d,0,c.points.length-1))][key];
     if(key==='effect'){
       if(c.model?.type==='protein')return 1.75*(Math.min(d*2.20462262185,1.62)-.9)*2.20462262185;
@@ -26,7 +28,7 @@
     if(c.kind==='unknown'||c.kind==='guidance')return [];const [a,b]=c.view.range;
     let points=c.points.filter(p=>p.dose>=a&&p.dose<=b).map(p=>({dose:p.dose,effect:estimate(c,p.dose,key)}));
     if(c.kind!=='categories')for(const d of [a,b])if(!points.some(p=>p.dose===d))points.push({dose:d,effect:estimate(c,d,key)});
-    return points.sort((a,b)=>a.dose-b.dose);
+    return points.filter(p=>Number.isFinite(p.effect)).sort((a,b)=>a.dose-b.dose);
   }
   const cache=new WeakMap();
   function basis(c,key='effect'){

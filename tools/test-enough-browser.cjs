@@ -46,7 +46,7 @@ const clickFraction=async(page,plot,f)=>{
   const opening=page.locator('#overview-steps .overview-plot');
   assert.equal(await opening.getAttribute('aria-valuenow'),'8000');assert.match(await opening.getAttribute('aria-valuetext'),/about 44% lower risk of dying.*5,000.*under 60/,'Opening uses actual outcome and baseline');
   assert.equal(await page.locator('.enough-overview .overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
-  assert.equal(await page.locator('#protein .en-model').count(),1,'Protein uses the shared graph with a named model');assert.match(await page.locator('#protein .en-y-label').textContent(),/Lean-mass change, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/lower risk of dying, %/i);
+  assert.equal(await page.locator('#protein .en-model').count(),1,'Protein uses the shared graph with a named model');assert.match(await page.locator('#protein .en-y-label').textContent(),/Lean-mass change, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/Risk of dying, × baseline/);
   assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
   assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
   const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
@@ -72,8 +72,8 @@ const clickFraction=async(page,plot,f)=>{
   assert.match(await page.locator('#savings .enough-readout').textContent(),/17 year-end contributions/);
   assert.equal(await page.locator('#savings .en-scenario').count(),1,'Alternate assumptions are labeled, not confidence limits');
   const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/8,000.*about 44%.*5,000/,'Walking opens at the lower edge of its broad flatter region');assert.match(await page.locator('#steps .enough-answer').textContent(),/8,000 to 10,000/);assert.equal(await page.locator('#steps-longer,[id^=longer-steps],.steps-longer').count(),0,'One walking card, no second study section');assert.equal(await page.locator('[data-steps-age]').count(),2,'Only one pair of walking age controls');
-  await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'13300');assert.equal(await page.locator('#steps .enough-chart').getAttribute('aria-valuenow'),'13300','Opening and card share the same selected amount');
-  await page.keyboard.press('Home');assert.equal(await opening.getAttribute('aria-valuenow'),'5000');await page.keyboard.press('ArrowRight');assert.equal(await opening.getAttribute('aria-valuenow'),'5100');await page.keyboard.press('End');assert.equal(await opening.getAttribute('aria-valuenow'),'16000');assert.match(await opening.getAttribute('aria-valuetext'),/about 39% lower risk/,'Figure endpoint is not normalized to 100%');
+  await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'12000');assert.equal(await page.locator('#steps .enough-chart').getAttribute('aria-valuenow'),'12000','Opening and card share the same selected amount');
+  await page.keyboard.press('Home');assert.equal(await opening.getAttribute('aria-valuenow'),'0');await page.keyboard.press('ArrowRight');assert.equal(await opening.getAttribute('aria-valuenow'),'100');await page.keyboard.press('End');assert.equal(await opening.getAttribute('aria-valuenow'),'16000');assert.match(await opening.getAttribute('aria-valuetext'),/about 39% lower risk/,'Figure endpoint is not normalized to 100%');
   for(const id of ['exercise','protein']){
    await page.locator('[data-opening-curve="'+id+'"]').click();const plot=page.locator('#overview-'+id+' .overview-plot');
    assert.equal(await page.locator('.overview-panel:visible').count(),1);assert.equal(await page.locator('[data-opening-curve="'+id+'"]').getAttribute('aria-pressed'),'true');
@@ -102,12 +102,12 @@ const clickFraction=async(page,plot,f)=>{
   await page.locator('#steps summary').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.keyboard.press('Enter');
   if(width===375){
    await page.locator('#steps summary').tap();assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.locator('#steps summary').tap();
-   await steps.scrollIntoViewIfNeeded();const r=await steps.boundingBox();await page.touchscreen.tap(r.x+42+.5*(r.width-54),r.y+80);assert.equal(await steps.getAttribute('aria-valuenow'),'10500','Touch tap selects dose');
+   await steps.scrollIntoViewIfNeeded();const r=await steps.boundingBox();await page.touchscreen.tap(r.x+42+.5*(r.width-54),r.y+80);assert.equal(await steps.getAttribute('aria-valuenow'),'8000','Touch tap selects dose');
    // Real touch events verify dragging while vertical page scrolling remains possible.
    const cdp=await context.newCDPSession(page);
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+42+.2*(r.width-54),y:r.y+80}]});
    for(const f of [.3,.5,.7,.8]){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+42+f*(r.width-54),y:r.y+80}]});await page.evaluate(()=>new Promise(requestAnimationFrame));}
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await steps.getAttribute('aria-valuenow'),'13800','Touch drag selects dose');
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await steps.getAttribute('aria-valuenow'),'12800','Touch drag selects dose');
    await steps.scrollIntoViewIfNeeded();const scrollRect=await steps.boundingBox(),beforeScroll=await page.evaluate(()=>scrollY);
    // A controlled native touch swipe tests panning without synthetic fling velocity.
    await cdp.send('Input.synthesizeScrollGesture',{x:scrollRect.x+100,y:scrollRect.y+125,yDistance:-100,speed:500,gestureSourceType:'touch',preventFling:true});
@@ -127,22 +127,22 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await opening.locator('.en-uncertainty').count(),1,'Opening shares the same source band');
   assert.equal(await page.locator('#overview-steps .overview-context a').getAttribute('href'),'#steps');
   assert.doesNotMatch(await page.locator('#steps').textContent(),/About 10,500|See a longer study|Where does walking flatten/);
-  for(const [id,baseline,end,minimum,range]of [['steps-younger','5,000',39,5000,'8,000 to 10,000'],['steps-older','3,000',64,3000,'6,000 to 8,000']]){
+  for(const [id,baseline,end,minimum,range]of [['steps-younger','5,000',39,0,'8,000 to 10,000'],['steps-older','3,000',64,0,'6,000 to 8,000']]){
    await page.locator('[data-steps-age="'+id+'"]').click();assert.equal(await page.locator('[data-steps-age="'+id+'"]').getAttribute('aria-pressed'),'true');
    assert.match(await page.locator('#steps .enough-answer').textContent(),new RegExp(range));assert.match(await page.locator('#overview-baseline-steps').textContent(),new RegExp(baseline));
    assert.equal(Number(await steps.getAttribute('aria-valuemin')),minimum);assert.equal(await opening.getAttribute('aria-valuemin'),await steps.getAttribute('aria-valuemin'));
    await clickFraction(page,steps,.5);assert.equal(await opening.getAttribute('aria-valuenow'),await steps.getAttribute('aria-valuenow'));
-   await page.keyboard.press('Home');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum);await page.keyboard.press('ArrowRight');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum+100);
+   await page.keyboard.press('Home');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum);assert.match(await steps.getAttribute('aria-valuetext'),/no estimate/i);assert.equal(await steps.locator('.en-dot').count(),0,'No false zero-step risk point');assert.equal(await steps.locator('.en-low-tail').count(),1,'Uncertain near-zero tail is dashed');await page.keyboard.press('ArrowRight');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum+100);
    await page.keyboard.press('End');assert.equal(await steps.getAttribute('aria-valuenow'),'16000');assert.match(await steps.getAttribute('aria-valuetext'),new RegExp('about '+end+'%.*'+baseline));
    assert.equal(await opening.getAttribute('aria-valuetext'),await steps.getAttribute('aria-valuetext'),'Same curve and baseline in both views');
    assert.equal(await steps.locator('.en-target,.en-guide,.enough-target-key').count(),0,'Walking has a broad flatter region, no exact enough guide');
    const clippedAge=await page.locator('#steps svg text,#overview-steps svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));assert.deepEqual(clippedAge,[]);
    assert.ok(await steps.locator('.en-uncertainty').evaluate(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.y>=29&&b.y+b.height<=v.height-55;}),'Full source confidence band fits');
   }
-  await page.keyboard.press('Home');await page.keyboard.press('PageUp');assert.equal(await steps.getAttribute('aria-valuenow'),'4000');
+  await page.keyboard.press('Home');await page.keyboard.press('PageUp');assert.equal(await steps.getAttribute('aria-valuenow'),'1000');
   await page.locator('[data-steps-age="steps-younger"]').click();assert.equal(await steps.getAttribute('aria-valuenow'),'16000','Age selection retains its own marker');
-  await page.locator('[data-steps-age="steps-older"]').click();assert.equal(await steps.getAttribute('aria-valuenow'),'4000','The second age marker is independent');
-  await page.setViewportSize({width:width+20,height:900});await page.waitForTimeout(100);assert.equal(await opening.getAttribute('aria-valuenow'),'4000','Resize retains synchronized selection');await page.setViewportSize({width,height:width===375?812:900});await page.waitForTimeout(100);
+  await page.locator('[data-steps-age="steps-older"]').click();assert.equal(await steps.getAttribute('aria-valuenow'),'1000','The second age marker is independent');
+  await page.setViewportSize({width:width+20,height:900});await page.waitForTimeout(100);assert.equal(await opening.getAttribute('aria-valuenow'),'1000','Resize retains synchronized selection');await page.setViewportSize({width,height:width===375?812:900});await page.waitForTimeout(100);
   assert.match(await page.locator('#steps details').textContent(),/don’t require 10,000 steps/);
   // Match the owner's chosen reference essay for shared chrome and links.
   const reference=await context.newPage();await reference.goto(url+'/what-you-get-used-to.html');await reference.evaluate(()=>document.fonts.ready);
