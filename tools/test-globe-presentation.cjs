@@ -163,7 +163,7 @@ async function loadingChecks(browser){
 }
 async function reducedResolutionCheck(browser){
  const before=requests.length,context=await browser.newContext({viewport:{width:1440,height:900},timezoneId:'America/Chicago'});await routes(context,{highResolutionIRFails:true});const page=await context.newPage();listen(page,'reduced-cloud-detail');await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);const s=await state(page),attempts=requests.slice(before);
- check('failed 2048 infrared retries the identical timestamp at 1024',attempts.some(r=>r.kind==='cloud'&&r.width===2048&&r.layer.endsWith('ir108'))&&attempts.filter(r=>r.kind==='cloud'&&r.width===1024).length===2&&attempts.filter(r=>r.kind==='cloud').every(r=>r.time==='2026-10-05T03:00:00.000Z'),attempts);
+ check('failed 2048 infrared retries the identical timestamp at 1024',attempts.some(r=>r.kind==='cloud'&&r.width===2048&&r.layer.endsWith('ir108'))&&attempts.filter(r=>r.kind==='cloud'&&r.width===1024&&r.time==='2026-10-05T03:00:00.000Z').length===2,attempts);
  check('reduced-detail retry preserves EUMETSAT frame rather than daily fallback',s.photo?.source==='EUMETSAT'&&s.photo.time==='2026-10-05T03:00:00.000Z'&&s.photo.width===1024&&!attempts.some(r=>r.kind==='daily')&&!s.loading,{state:s,attempts});await capture(page,'reduced-cloud-detail');evidence.push({reducedResolution:{state:s,attempts}});await context.close();
 }
 async function damagedRetryRecoveryCheck(browser){
@@ -171,7 +171,7 @@ async function damagedRetryRecoveryCheck(browser){
  check('header-valid corrupt 1024 retry is rejected after image decoding',!rejected.photo&&!rejected.loading&&rejected.status==='Clouds unavailable',{state:rejected,keys});
  check('damaged reduced retry evicts its own 1024 cache entries',!keys.some(k=>k.width===1024)&&keys.some(k=>k.width===2048&&k.layer.endsWith('rgb_natural')),keys);
  reducedDamage.corrupt=false;const before=requests.length;await page.reload({waitUntil:'domcontentloaded'});await ready(page);const recovered=await state(page),recoveryRequests=requests.slice(before);
- check('corrected reduced frame is fetched again and recovers the same timestamp',recovered.photo?.source==='EUMETSAT'&&recovered.photo.width===1024&&recovered.photo.time==='2026-10-05T03:00:00.000Z'&&recoveryRequests.filter(r=>r.kind==='cloud'&&r.width===1024).length===2&&!recoveryRequests.some(r=>r.kind==='daily'),{state:recovered,requests:recoveryRequests});
+ check('corrected reduced frame is fetched again and recovers the same timestamp',recovered.photo?.source==='EUMETSAT'&&recovered.photo.width===1024&&recovered.photo.time==='2026-10-05T03:00:00.000Z'&&recoveryRequests.filter(r=>r.kind==='cloud'&&r.width===1024&&r.time==='2026-10-05T03:00:00.000Z').length===2&&!recoveryRequests.some(r=>r.kind==='daily'),{state:recovered,requests:recoveryRequests});
  await capture(page,'damaged-retry-recovered');evidence.push({damagedRetryRecovery:{rejected,keys,recovered,recoveryRequests}});await context.close();
 }
 async function infraredOnlyCheck(browser){

@@ -21,7 +21,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="globe.css?v=20261005-14">
+  <link rel="stylesheet" href="globe.css?v=20261005-16">
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -38,7 +38,7 @@
         <div class="globe-wrapper">
           <div id="globe-container" class="is-loading" tabindex="0" role="group" aria-label="Interactive Earth globe" aria-describedby="globe-keyboard" aria-busy="true">
             <div class="globe-loading" role="status" aria-live="polite">
-              <div class="globe-loading-inner"><p id="globe-loading-label">Loading Earth</p><progress id="globe-loading-progress" max="11" value="0" aria-label="Globe loading progress"></progress></div>
+              <div class="globe-loading-inner"><p id="globe-loading-label">Loading Earth</p><progress id="globe-loading-progress" max="14" value="0" aria-label="Globe loading progress"></progress></div>
             </div>
             <div class="globe-info"><span id="hover-info">Drag to orbit. Tap Earth to pin.</span></div>
             <button id="globe-sun" class="globe-sun-btn globe-button" type="button" title="Frame Earth and the Sun">Sun</button>
@@ -59,6 +59,7 @@
                 <div class="globe-field">
                   <div class="globe-hour-head"><label for="globe-hour">Time</label><output id="globe-hour-label" for="globe-hour"></output></div>
                   <input id="globe-hour" aria-describedby="globe-time-basis" type="range" min="0" max="1439" step="1" value="720">
+                  <p id="globe-replay-status" class="globe-replay-status" role="status" aria-live="polite"></p>
                 </div>
               </div>
               <p class="globe-sr-only" id="globe-zone"></p>
@@ -111,10 +112,11 @@
   <script src="js/main.js"></script>
   <script src="js/vendor/three-r128.min.js"></script>
   <script src="js/globe-math.js?v=20261004-9"></script>
-  <script src="js/globe-data.js?v=20261005-13"></script>
+  <script src="js/globe-data.js?v=20261005-16"></script>
+  <script src="js/globe-timeline.js?v=20261005-16"></script>
   <script src="js/globe-stars.js?v=20261005-11"></script>
   <script src="js/globe-optics.js?v=20261005-11"></script>
-  <script src="js/globe.js?v=20261005-15"></script>
+  <script src="js/globe.js?v=20261005-16"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

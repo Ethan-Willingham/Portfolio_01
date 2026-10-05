@@ -1,0 +1,21 @@
+'use strict';
+const assert=require('node:assert/strict'),T=require('../js/globe-timeline.js');
+const savedZone=process.env.TZ;process.env.TZ='America/Chicago';
+let checks=0;function check(name,fn){fn();checks++;console.log('PASS '+name);}
+const catalog={start:new Date('2021-06-06T15:00:00Z'),end:new Date('2026-10-05T15:00:00Z')};
+try{
+ check('local replay day includes the preceding UTC cloud frame and no following day',()=>{const frames=T.cloudFrames(catalog,'2026-10-04T18:00:00Z','2026-10-05T16:00:00Z');assert.equal(frames.length,9);assert.equal(frames[0].toISOString(),'2026-10-04T03:00:00.000Z');assert.equal(frames.at(-1).toISOString(),'2026-10-05T03:00:00.000Z');});
+ check('current day never prepares future or unpublished cloud frames',()=>{const f=T.cloudFrames(catalog,'2026-10-05T16:00:00Z','2026-10-05T16:00:00Z');assert.deepEqual(f.map(d=>d.getUTCHours()),[3,6,9,12,15]);});
+ check('future days and days before the actual catalog remain empty',()=>{assert.equal(T.cloudFrames(catalog,'2026-10-06T18:00:00Z','2026-10-05T16:00:00Z').length,0);assert.equal(T.cloudFrames(catalog,'2021-06-05T18:00:00Z','2026-10-05T16:00:00Z').length,0);});
+ check('spring replay boundaries span the actual 23-hour civil day',()=>{const d=T.dayBounds('2026-03-08T18:00:00Z');assert.equal(d.end-d.start,23*3600000);assert.equal(d.start.toISOString(),'2026-03-08T06:00:00.000Z');assert.equal(d.end.toISOString(),'2026-03-09T05:00:00.000Z');});
+ check('fall replay boundaries span the actual 25-hour civil day',()=>{const d=T.dayBounds('2026-11-01T18:00:00Z');assert.equal(d.end-d.start,25*3600000);});
+ check('invalid and future source catalogs cannot advertise replay',()=>{assert.deepEqual(T.cloudFrames({start:catalog.end,end:catalog.start},new Date(),new Date()),[]);assert.deepEqual(T.cloudFrames({...catalog,end:new Date('2030-01-01')},'2026-10-05T16:00:00Z','2026-10-05T16:00:00Z'),[]);});
+ check('replay work starts nearest the selected time without mutating its source list',()=>{const list=[new Date(0),new Date(3),new Date(6)];assert.deepEqual(T.order(list,new Date(4)).map(Number),[3,6,0]);assert.deepEqual(list.map(Number),[0,3,6]);});
+ check('decoded replay cache evicts the least recently used frame under its byte budget',()=>{const dropped=[],cache=T.memoryCache(12,{dispose:v=>dropped.push(v)});cache.put('a','a',4);cache.put('b','b',4);cache.put('c','c',4);cache.get('a');cache.put('d','d',4);assert.deepEqual(dropped,['b']);assert.equal(cache.stats().bytes,12);});
+ check('the actively rendered frame stays pinned while other frames are evicted',()=>{const c=T.memoryCache(8);c.put('active',1,4);c.pin('active');c.put('other',2,4);c.put('new',3,4);assert.equal(c.get('active'),1);assert.equal(c.get('other'),null);assert.equal(c.stats().bytes,8);});
+ check('a smaller or infrared-only replacement cannot displace a sharper coloured frame',()=>{const dropped=[],c=T.memoryCache(100,{prefer:(n,o)=>n.width>=o.width&&(!o.natural||n.natural),dispose:v=>dropped.push(v)}),sharp={width:2048,natural:true};c.put('time',sharp,16);assert.equal(c.put('time',{width:1024,natural:true},4),sharp);assert.equal(c.put('time',{width:4096,natural:false},64),sharp);assert.equal(c.stats().bytes,16);assert.equal(dropped.length,2);});
+ check('changing replay days releases unused canvases and preserves the current frame',()=>{const dropped=[],c=T.memoryCache(100,{dispose:v=>dropped.push(v)});c.put('old',1,4);c.put('current',2,4);c.put('new',3,4);c.pin('current');c.retain(['new']);assert.deepEqual(dropped,[1]);assert.equal(c.stats().count,2);});
+}finally{if(savedZone===undefined)delete process.env.TZ;else process.env.TZ=savedZone;}
+(async()=>{const controller=new AbortController();let finish;const shared=new Promise(r=>{finish=r;}),wait=T.waitFor(shared,controller.signal);controller.abort();await assert.rejects(wait,{name:'AbortError'});finish(42);assert.equal(await shared,42);console.log('PASS cancelling a slider waiter preserves a shared prefetch');checks++;
+ const already=new AbortController();already.abort();await assert.rejects(T.waitFor(Promise.reject(new Error('Source also failed')),already.signal),{name:'AbortError'});console.log('PASS already cancelled waits still handle underlying request rejection');checks++;
+ console.log('Globe replay: '+checks+' checks passed.');})().catch(e=>{console.error(e);process.exitCode=1;});

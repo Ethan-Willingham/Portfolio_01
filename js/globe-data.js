@@ -441,7 +441,7 @@
   }
 
   function parseAuroraManifest(value) {
-    if(!value||value.version!==1||!Array.isArray(value.frames)||value.frames.length>2000) throw new Error('Invalid aurora manifest');
+    if(!value||value.version!==1||!Array.isArray(value.frames)||value.frames.length>4000) throw new Error('Invalid aurora manifest');
     var seen=new Set();
     return value.frames.map(function(frame){
       if(!frame||typeof frame.file!=='string'||!/^[-A-Za-z0-9_.]+\.json\.gz$/.test(frame.file)||!(/^[a-f0-9]{64}$/.test(frame.sha256))||seen.has(frame.file)) throw new Error('Invalid archive entry');

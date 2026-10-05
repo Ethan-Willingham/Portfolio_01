@@ -4,7 +4,7 @@
   'use strict';
   var container = document.getElementById('globe-container');
   if (!container) return;
-  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics;
+  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline;
   var byId = function (id) { return document.getElementById(id); };
   var wrapper = document.querySelector('.globe-wrapper');
   var status = byId('globe-status'), clock = byId('globe-clock'), dataLine = byId('globe-data');
@@ -14,19 +14,19 @@
   var DEG = Math.PI / 180, DAY = 86400000;
   // Progress counts completed work, including decoded clouds. It is not a
   // fabricated download percentage; failures settle into labeled fallbacks.
-  var loading = true, loadingJobsStarted = false, loaded = {}, loadWeights = {base:1,night:1,moon:1,stars:1,clouds:5,aurora:1,history:1};
+  var loading = true, loadingStarted=performance.now(), loadingJobsStarted = false, loaded = {}, loadWeights = {base:1,night:1,moon:1,stars:1,clouds:5,aurora:1,history:1,replay:3};
   var cloudFailure = '', starCatalog = null, starField = null, starDate = NaN;
   var loadingLabel = byId('globe-loading-label'), loadingProgress = byId('globe-loading-progress');
   function settleLoad(kind) {
     loaded[kind]=true;
     var value=Object.keys(loaded).reduce(function(total,key){return total+loadWeights[key];},0);
     loadingProgress.value=value;
-    loadingProgress.setAttribute('aria-valuetext',Math.round(value/11*100)+'% of preparation complete');
-    text(loadingLabel,!loaded.clouds?'Loading clouds':!loaded.stars?'Loading stars':'Preparing the view');
+    loadingProgress.setAttribute('aria-valuetext',Math.round(value/14*100)+'% of preparation complete');
+    text(loadingLabel,!loaded.clouds?'Loading clouds':!loaded.stars?'Loading stars':!loaded.replay?'Preparing day replay':'Preparing the view');
   }
   function finishLoading() {
     if(!loading||fetchingPhoto||Object.keys(loadWeights).some(function(key){return !loaded[key];})||photo&&photoMix<1)return;
-    loading=false;explore.querySelectorAll('input,button').forEach(function(control){control.disabled=false;});returnButton.disabled=false;container.classList.remove('is-loading');container.classList.add('is-ready');container.setAttribute('aria-busy','false');
+    loading=false;explore.querySelectorAll('input,button').forEach(function(control){control.disabled=false;});returnButton.disabled=false;container.classList.remove('is-loading');container.classList.add('is-ready');container.setAttribute('aria-busy','false');warmDayTimeline();
   }
   var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   var dateFormatter = new Intl.DateTimeFormat(undefined, {month:'short',day:'numeric',timeZone:'UTC'});
@@ -40,6 +40,9 @@
   var photo = null, forecast = null, liveForecast = null, kp = null, fetchingPhoto = false, fetchingWeather = false;
   var cloudCatalog=null,cloudCatalogChecked=0,cloudController=null,timeEditTimer=null;
   var detailController=null,detailKey='',detailChecked=0;
+  var cloudMemo=null,installedCloud=null,cloudPending=new Map(),archivePending=new Map();
+  var replayController=null,replayKey='',replayBusy=false,replayChecked=0,replayClouds=[],replayAurora=[],replayFailed=new Set(),sessionFrames=[];
+  var replayPendingCloud=false,replayPendingAurora=false;
   var archiveFrames=[],archiveChecked=0,archiveBusy=false,archiveController=null,archiveGeneration=0,archiveCache=new Map();
   var archiveBase='https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/aurora/';
   var baseState = 'loading';
@@ -62,7 +65,7 @@
     if(invalid){photo=null;photoMix=0;wrapper.dataset.photo='unavailable';}
   }
   function hasForecast() {
-    return !!(tilt===undefined&&forecast&&(live?data.auroraFreshness(forecast,new Date()).fresh:forecast.historical&&Math.abs(forecast.forecast-instant)<=90*60000));
+    return !!(tilt===undefined&&forecast&&(live?data.auroraFreshness(forecast,new Date()).fresh:instant<=Date.now()+300000&&forecast.historical&&Math.abs(forecast.forecast-instant)<=90*60000));
   }
   function coordinate(lat, lon) { return Math.abs(lat).toFixed(1) + '\u00b0' + (lat < 0 ? 'S' : 'N') + ', ' + Math.abs(lon).toFixed(1) + '\u00b0' + (lon < 0 ? 'W' : 'E'); }
   function solarDate(date, lon) { return new Date(date.getTime() + (lon * 4 + math.solar(date,tilt).equationOfTime) * 60000); }
@@ -85,11 +88,11 @@
     var shot=photo&&(photo.time?new Date(photo.time):new Date(photo.date+'T12:00:00Z'));
     var sameDay=shot&&shot.toDateString()===instant.toDateString();
     var shortShot=shot?(photo.time?(sameDay?timeFormatter.format(shot):forecastFormatter.format(shot)):dateFormatter.format(shot)):'';
-    text(status,hypothetical?'Reference map':photo?'Clouds '+shortShot+(photo.time?(photo.natural?'':' (infrared)'):' (daily)'):fetchingPhoto?'Loading clouds':'Clouds unavailable');
+    text(status,hypothetical?'Reference map':photo?'Clouds '+shortShot+(photo.time?(photo.natural?'':' (infrared)'):' (daily)'):fetchingPhoto||replayPendingCloud?'Loading clouds':'Clouds unavailable');
     status.title=photo?(photo.time?'Satellite image '+forecastFormatter.format(shot):'Daily satellite composite '+formatDay(photo.date)):'Reference map; no satellite image for this time.';
     text(clock,new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(instant));
     clock.dateTime=instant.toISOString();clock.title=clockFormatter.format(instant);
-    var auroraShort=fresh?'Aurora '+(forecast.forecast.toDateString()===instant.toDateString()?timeFormatter.format(forecast.forecast):forecastFormatter.format(forecast.forecast))+(live?'':' (saved)'):hypothetical?'Aurora hidden':archiveBusy&&!live||fetchingWeather&&!weatherChecked?'Loading aurora':'Aurora unavailable';
+    var auroraShort=fresh?'Aurora '+(forecast.forecast.toDateString()===instant.toDateString()?timeFormatter.format(forecast.forecast):forecastFormatter.format(forecast.forecast))+(live?'':' (saved)'):hypothetical?'Aurora hidden':replayPendingAurora||archiveBusy&&!live||fetchingWeather&&!weatherChecked?'Loading aurora':'Aurora unavailable';
     text(byId('globe-aurora-status'),auroraShort);
     byId('globe-aurora-status').title=fresh?'Forecast '+forecastFormatter.format(forecast.forecast)+'; measurements '+forecastFormatter.format(forecast.observation):hypothetical?'Weather is hidden for a hypothetical tilt.':'No fresh or saved forecast near this time.';
     var parts=[photo?(photo.time?'Satellite clouds '+forecastFormatter.format(shot):'Daily satellite photo '+formatDay(photo.date)):'Satellite clouds unavailable.'];
@@ -107,6 +110,7 @@
     returnButton.setAttribute('aria-pressed',String(live));returnButton.title=live?'Following the current time':'Return to the current time';
     byId('globe-tilt-note').hidden=!hypothetical;
     wrapper.dataset.mode=live?'live':'explore';
+    updateReplayLabel();
     if(live)syncInputs();
     updatePin();
   }
@@ -153,9 +157,9 @@
     if(detailController){detailController.abort();detailController=null;}
     if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
-    forecast=null;
     if(photo&&photo.time&&(instant-new Date(photo.time)<0||instant-new Date(photo.time)>=3*3600000))photo=null;
     if(photo&&!photo.time&&!live)photo=null;
+    applyCachedTime();
     updateAstronomy();updateLabels();
     timeEditTimer=setTimeout(function(){refreshData();},250);
   }
@@ -176,7 +180,7 @@
     live = true; instant = new Date(); tilt = undefined; pinDayKey = '';expireLivePhoto();if(liveForecast)setForecast(liveForecast);else forecast=null;
     document.querySelectorAll('.tilt-btn').forEach(function (b) {b.setAttribute('aria-pressed',String(b.dataset.tilt === 'current'));});
     text(byId('globe-tilt-note'),'Current tilt. The Moon follows its real orbit.');
-    updateAstronomy(); updateLabels(); announce(); refreshData();
+    applyCachedTime();updateAstronomy(); updateLabels(); announce(); refreshData();
   });
   byId('globe-pin-close').addEventListener('click',function () { setPin(null); container.focus({preventScroll:true}); });
   function unavailable(message) {
@@ -189,7 +193,7 @@
     text(byId('globe-keyboard'),'The interactive globe is unavailable. Source links are below.');
     text(summary,message+' '+dataLine.textContent);
   }
-  if (!THREE || !math || !data || !stars || !optics) {
+  if (!THREE || !math || !data || !stars || !optics || !timeline) {
     unavailable('The interactive globe could not load.'); return;
   }
   var renderer;
@@ -210,6 +214,10 @@
   var textureWidth = Math.min(mobile ? 2048 : 4096,renderer.capabilities.maxTextureSize);
   textureWidth = Math.pow(2,Math.floor(Math.log2(textureWidth)));
   var cloudWidth=Math.min(textureWidth,2048);
+  cloudMemo=timeline.memoryCache((mobile?64:96)*1024*1024,{
+    prefer:function(next,old){return next.photo.width>=old.photo.width&&(!old.photo.natural||next.photo.natural);},
+    dispose:function(record){record.memoized=false;if(record!==installedCloud)record.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
+  });
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -479,26 +487,27 @@
   async function refreshDailyPhoto(generation,signal) {
     var offline=navigator.onLine===false,target=live?completedDay(new Date()):data.utcDate(instant);
     try {
-      for(var back=0;back<(live?4:1);back++){
+      for(var back=0;back<(loading?1:live?4:1);back++){
         var day=new Date(new Date(target+'T00:00:00Z').getTime()-back*DAY).toISOString().slice(0,10);
         try {
-          var result=await data.fetchPhotoDay(day,textureWidth,{timeout:18000,cacheOnly:offline,signal:signal});
+          var dailyWidth=loading?Math.min(textureWidth,1024):textureWidth;
+          var result=await data.fetchPhotoDay(day,dailyWidth,{timeout:loading?5000:10000,cacheOnly:offline,signal:signal});
           var canvases=await Promise.all(result.blobs.map(function(blob){return decodeBlob(blob,textureWidth);}));
           var primary=canvases[0],ctx=primary.getContext('2d'),pixels=ctx.getImageData(0,0,primary.width,primary.height);
           var secondary=canvases[1]&&canvases[1].getContext('2d').getImageData(0,0,primary.width,primary.height);
           var composite=data.compositeRGBA(secondary ? [pixels.data,secondary.data] : [pixels.data]);
-          if(composite.coverage<.15){await data.discardPhotoDay(day,textureWidth);canvases.forEach(function(canvas){canvas.width=canvas.height=1;});continue;}
+          if(composite.coverage<.15){await data.discardPhotoDay(day,dailyWidth);canvases.forEach(function(canvas){canvas.width=canvas.height=1;});continue;}
           pixels.data.set(data.featherCoverage(composite.pixels,primary.width));ctx.putImageData(pixels,0,0);
           if(generation!==photoGeneration){canvases.forEach(function(canvas){canvas.width=canvas.height=1;});return;}
           var texture=configureTexture(new THREE.CanvasTexture(primary));satelliteTexture.dispose();satelliteTexture=texture;earthMaterial.uniforms.photoMap.value=texture;
           earthMaterial.uniforms.thermalEnabled.value=0;
-          photo={date:day,coverage:composite.coverage,width:primary.width};photoMix=0;wrapper.dataset.photo='ready';
+          installedCloud=null;photo={date:day,coverage:composite.coverage,width:primary.width};photoMix=loading?0:1;wrapper.dataset.photo='ready';
           canvases.slice(1).forEach(function(canvas){canvas.width=canvas.height=1;});updateLabels();announce();break;
         } catch(error) {
           if(error.name==='AbortError')return;
           // A PNG header can be valid while its compressed pixels are damaged.
           // Evict that day's responses so a later visit can recover.
-          await data.discardPhotoDay(day,textureWidth);
+          await data.discardPhotoDay(day,dailyWidth||textureWidth);
         }
       }
     } catch(_){}
@@ -510,32 +519,43 @@
     if(cloudController)cloudController.abort();
     if(detailController){detailController.abort();detailController=null;}
     cloudController=new AbortController();var signal=cloudController.signal,generation=++photoGeneration;
-    fetchingPhoto=true;requestedDay=key;var deadline=setTimeout(function(){cloudController&&generation===photoGeneration&&cloudController.abort();},45000);
+    fetchingPhoto=true;requestedDay=key;var deadline=setTimeout(function(){cloudController&&generation===photoGeneration&&cloudController.abort();},loading?24000:20000);
     try {
       if(instant-Date.now()>5*60000){photo=null;return;}
       if(!cloudCatalog){try{var stored=JSON.parse(localStorage.getItem('globe-cloud-catalog'));if(stored)cloudCatalog={start:new Date(stored.start),end:new Date(stored.end)};}catch(_){}}
       if(!offline&&(!cloudCatalog||Date.now()-cloudCatalogChecked>10*60000)){
-        try{cloudCatalog=await data.fetchCloudCatalog({timeout:10000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){if(error.name==='AbortError')return;}
+        try{cloudCatalog=await data.fetchCloudCatalog({timeout:6000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){if(error.name==='AbortError')return;}
       }
       var stamp=cloudCatalog&&data.cloudFrameAt(cloudCatalog,instant,new Date());
       if(!stamp||live&&new Date()-stamp>5*3600000)throw new Error('Dated cloud imagery unavailable');
       if(photo&&photo.time===stamp.toISOString())return;
-      var result;
-      try{result=await data.fetchCloudFrame(stamp,cloudWidth,{timeout:18000,signal:signal,cacheOnly:offline});}
-      catch(error){
-        if(error.name==='AbortError'||cloudWidth<=1024)throw error;
-        // Prefer a fresh observed frame at less detail to an older daily photo.
-        result=await data.fetchCloudFrame(stamp,1024,{timeout:10000,signal:signal,cacheOnly:offline});
+      var cached=cloudMemo.get(stamp.toISOString());
+      if(cached){installCloudRecord(cached,generation,signal,false);return;}
+      // A slow large image must not hold up a usable dated view. The smaller
+      // request starts after four seconds, or immediately if the larger fails.
+      var lowStart,lowTimer,lowStarted=false,lowReject;
+      var preview=new Promise(function(resolve,reject){lowReject=reject;lowStart=function(){
+        if(lowStarted)return;lowStarted=true;
+        requestCloudRecord(stamp,Math.min(1024,cloudWidth),signal,8000,offline).then(resolve,reject);
+      };});
+      var high=requestCloudRecord(stamp,cloudWidth,signal,14000,offline);
+      high.catch(lowStart);lowTimer=setTimeout(lowStart,4000);
+      var record;
+      try{record=await timeline.waitFor(Promise.any([high,preview]),signal);}
+      finally{clearTimeout(lowTimer);if(!lowStarted){var cancelled=new Error('Preview unnecessary');cancelled.name='AbortError';lowReject(cancelled);}}
+      installCloudRecord(record,generation,signal,false);
+      if(record.photo.width<cloudWidth){
+        var promotion=cloudController;detailController=promotion;
+        high.then(function(sharper){installCloudRecord(sharper,generation,signal,true);}).catch(function(){}).finally(function(){if(detailController===promotion)detailController=null;});
       }
-      await installCloudFrame(result,stamp,generation,signal,false);
     }catch(error){
       if(error.name!=='AbortError'&&generation===photoGeneration){cloudFailure=error.message||'primary imagery unavailable';await refreshDailyPhoto(generation,signal);}
     }finally{
       clearTimeout(deadline);
-      if(generation===photoGeneration){fetchingPhoto=false;photoChecked=Date.now();updateAstronomy();updateLabels();announce();}
+      if(generation===photoGeneration){fetchingPhoto=false;replayPendingCloud=false;photoChecked=Date.now();updateAstronomy();updateLabels();announce();}
     }
   }
-  async function installCloudFrame(result,stamp,generation,signal,upgrade) {
+  async function decodeCloudRecord(result,stamp,signal) {
     var canvases=[],installed=false;
     try {
       var infrared=await decodeBlob(result.infrared,result.width);canvases.push(infrared);
@@ -544,17 +564,37 @@
       if(valid/(pixels.length/4)<.15)throw new Error('Cloud image has no useful coverage');
       var natural=result.natural?await decodeBlob(result.natural,result.width):infrared;
       if(natural!==infrared)canvases.push(natural);
-      if(generation!==photoGeneration||signal.aborted||upgrade&&(!photo||photo.time!==stamp.toISOString()||photo.width>infrared.width||photo.width===infrared.width&&(photo.natural||!result.natural)||photo.natural&&!result.natural))return;
+      if(signal.aborted){var aborted=new Error('Cloud decode aborted');aborted.name='AbortError';throw aborted;}
       softenImageCoverage(infrared);if(natural!==infrared)softenImageCoverage(natural);
-      var newNatural=configureTexture(new THREE.CanvasTexture(natural)),newInfrared=configureTexture(new THREE.CanvasTexture(infrared));
-      satelliteTexture.dispose();infraredTexture.dispose();satelliteTexture=newNatural;infraredTexture=newInfrared;
-      earthMaterial.uniforms.photoMap.value=newNatural;earthMaterial.uniforms.infraredMap.value=newInfrared;
-      earthMaterial.uniforms.thermalEnabled.value=1;earthMaterial.uniforms.naturalEnabled.value=result.natural?1:0;
-      var sourceSun=math.solar(stamp);photoSunUniform.value.set(sourceSun.vector.x,sourceSun.vector.y,sourceSun.vector.z);
-      photo={date:data.utcDate(stamp),time:stamp.toISOString(),coverage:valid/(pixels.length/4),width:infrared.width,source:'EUMETSAT',natural:!!result.natural};
-      photoMix=upgrade?1:0;cloudFailure='';wrapper.dataset.photo='ready';installed=true;updateLabels();announce();
-    }catch(error){await data.discardCloudFrame(stamp,result.width);throw error;}
+      var record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),coverage:valid/(pixels.length/4),width:infrared.width,source:'EUMETSAT',natural:!!result.natural},canvases:canvases,natural:natural,infrared:infrared,memoized:true};
+      var bytes=canvases.reduce(function(total,canvas){return total+canvas.width*canvas.height*4;},0);
+      installed=true;return cloudMemo.put(stamp.toISOString(),record,bytes);
+    }catch(error){if(error.name!=='AbortError')await data.discardCloudFrame(stamp,result.width);throw error;}
     finally{if(!installed)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
+  }
+  function installCloudRecord(record,generation,signal,upgrade) {
+    if(!record||generation!==photoGeneration||signal&&signal.aborted||upgrade&&(!photo||photo.time!==record.photo.time||photo.width>record.photo.width||photo.width===record.photo.width&&(photo.natural||!record.photo.natural)||photo.natural&&!record.photo.natural))return;
+    if(installedCloud===record&&photo===record.photo)return;
+    var previous=installedCloud,oldCanvas=satelliteTexture.image;
+    satelliteTexture.dispose();infraredTexture.dispose();installedCloud=record;
+    satelliteTexture=configureTexture(new THREE.CanvasTexture(record.natural));infraredTexture=configureTexture(new THREE.CanvasTexture(record.infrared));
+    earthMaterial.uniforms.photoMap.value=satelliteTexture;earthMaterial.uniforms.infraredMap.value=infraredTexture;
+    earthMaterial.uniforms.thermalEnabled.value=1;earthMaterial.uniforms.naturalEnabled.value=record.photo.natural?1:0;
+    var sourceSun=math.solar(new Date(record.photo.time));photoSunUniform.value.set(sourceSun.vector.x,sourceSun.vector.y,sourceSun.vector.z);
+    photo=record.photo;cloudMemo.pin(photo.time);photoMix=loading&&!upgrade?0:1;cloudFailure='';replayPendingCloud=false;wrapper.dataset.photo='ready';
+    if(previous&&!previous.memoized)previous.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});
+    else if(!previous&&oldCanvas&&oldCanvas.getContext)oldCanvas.width=oldCanvas.height=1;
+    updateAstronomy();updateLabels();announce();
+  }
+  function requestCloudRecord(stamp,width,signal,timeout,offline,force) {
+    var key=stamp.toISOString()+'/'+width,cached=cloudMemo.get(stamp.toISOString());
+    if(cached&&cached.photo.width>=width&&(!force||cached.photo.natural))return Promise.resolve(cached);
+    if(cloudPending.has(key)&&cloudPending.get(key).signal.aborted)cloudPending.delete(key);
+    if(!cloudPending.has(key)){
+      var task={signal:signal};task.promise=(async function(){try{return await decodeCloudRecord(await data.fetchCloudFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline}),stamp,signal);}finally{if(cloudPending.get(key)===task)cloudPending.delete(key);}})();
+      cloudPending.set(key,task);
+    }
+    return timeline.waitFor(cloudPending.get(key).promise,signal);
   }
   async function upgradePhotoDetail() {
     if(loading||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
@@ -566,12 +606,13 @@
     var controller=new AbortController(),generation=photoGeneration,stamp=new Date(photo.time);detailController=controller;
     try {
       // Keep the installed frame and controls while a sharper copy arrives.
-      var result=await data.fetchCloudFrame(stamp,desired,{timeout:35000,signal:controller.signal});
-      await installCloudFrame(result,stamp,generation,controller.signal,true);
+      var record=await requestCloudRecord(stamp,desired,controller.signal,20000,false,true);
+      installCloudRecord(record,generation,controller.signal,true);
     }catch(_){}
     finally{if(detailController===controller)detailController=null;}
   }
   function setForecast(value) {
+    if(forecast===value)return;
     forecast=value;var rgba=new Uint8Array(362*181*4);
     // Duplicate the seam's neighbors instead of repeating a non-power-of-two
     // texture, which WebGL1 cannot wrap correctly.
@@ -588,12 +629,17 @@
     if(!weatherChecked){updateLabels();announce();}
     try {
       var results=await Promise.allSettled([data.fetchJSON('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json',{timeout:10000}),data.fetchJSON('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json',{timeout:10000})]);
-      if(results[0].status==='fulfilled'){try{var next=data.parseAurora(results[0].value);if(data.auroraFreshness(next,new Date()).fresh){liveForecast=next;if(live)setForecast(next);}}catch(error){}}
+      if(results[0].status==='fulfilled'){try{var next=data.parseAurora(results[0].value);if(data.auroraFreshness(next,new Date()).fresh){
+        liveForecast=next;if(live)setForecast(next);
+        var file='session:'+next.observation.toISOString()+'/'+next.forecast.toISOString();
+        if(!archiveCache.has(file)){sessionFrames.push({file:file,observation:next.observation,forecast:next.forecast,session:true});cacheArchive(file,Object.assign({},next,{historical:true}));if(sessionFrames.length>16)archiveCache.delete(sessionFrames.shift().file);}
+      }}catch(error){}}
       if(results[1].status==='fulfilled'){try{kp=data.parseKp(results[1].value);}catch(error){}}
     } finally {fetchingWeather=false;weatherChecked=Date.now();updateAstronomy();updateLabels();announce();}
   }
   async function refreshArchive() {
     if(archiveBusy||navigator.onLine===false||tilt!==undefined||live&&Date.now()-archiveChecked<10*60000)return;
+    if(!live&&instant>Date.now()+300000){forecast=null;replayPendingAurora=false;return;}
     archiveBusy=true;updateLabels();var generation=++archiveGeneration;
     if(archiveController)archiveController.abort();archiveController=new AbortController();var signal=archiveController.signal;
     try{
@@ -607,22 +653,75 @@
         }
       }
       if(!live){
-        var entry=data.auroraFrameAt(archiveFrames,instant);
+        var entry=data.auroraFrameAt(allAuroraFrames(),instant);
         if(!entry){forecast=null;return;}
         var value=archiveCache.get(entry.file);
-        if(!value){
-          try{value=await data.fetchAuroraArchive(entry,archiveBase,{timeout:10000,signal:signal});}
-          catch(error){if(error.name==='AbortError')return;value=await data.fetchAuroraArchive(entry,'assets/data/aurora/',{timeout:3000,signal:signal});}
-          archiveCache.set(entry.file,value);if(archiveCache.size>12)archiveCache.delete(archiveCache.keys().next().value);
-        }
+        if(!value)value=await requestArchive(entry,signal);
         if(generation===archiveGeneration&&!signal.aborted&&!live)setForecast(value);
       }
     }catch(_){}
-    finally{if(generation===archiveGeneration){archiveBusy=false;updateAstronomy();updateLabels();announce();}}
+    finally{if(generation===archiveGeneration){archiveBusy=false;replayPendingAurora=false;updateAstronomy();updateLabels();announce();}}
+  }
+  function allAuroraFrames(){return archiveFrames.concat(sessionFrames);}
+  function cacheArchive(file,value){archiveCache.delete(file);archiveCache.set(file,value);if(archiveCache.size>128)archiveCache.delete(archiveCache.keys().next().value);return value;}
+  function requestArchive(entry,signal){
+    if(archiveCache.has(entry.file))return Promise.resolve(archiveCache.get(entry.file));
+    if(archivePending.has(entry.file)&&archivePending.get(entry.file).signal.aborted)archivePending.delete(entry.file);
+    if(!archivePending.has(entry.file)){
+      var task={signal:signal};task.promise=(async function(){try{
+        var value;
+        try{value=await data.fetchAuroraArchive(entry,archiveBase,{timeout:6000,signal:signal});}
+        catch(error){if(error.name==='AbortError')throw error;value=await data.fetchAuroraArchive(entry,'assets/data/aurora/',{timeout:2000,signal:signal});}
+        if(signal.aborted){var aborted=new Error('Aurora request aborted');aborted.name='AbortError';throw aborted;}
+        return cacheArchive(entry.file,value);
+      }finally{if(archivePending.get(entry.file)===task)archivePending.delete(entry.file);}})();archivePending.set(entry.file,task);
+    }
+    return timeline.waitFor(archivePending.get(entry.file).promise,signal);
+  }
+  function applyCachedTime(){
+    replayPendingCloud=replayPendingAurora=false;
+    if(tilt!==undefined||!live&&instant>Date.now()+300000){photo=null;forecast=null;return;}
+    var stamp=cloudCatalog&&data.cloudFrameAt(cloudCatalog,instant,new Date());
+    if(live&&stamp&&Date.now()-stamp>5*3600000)stamp=null;
+    var record=stamp&&cloudMemo&&cloudMemo.get(stamp.toISOString());
+    if(record)installCloudRecord(record,photoGeneration,null,false);
+    else if(!stamp||!photo||photo.time!==stamp.toISOString()){photo=null;replayPendingCloud=instant<=Date.now()&&!!stamp;}
+    if(live){forecast=liveForecast;return;}
+    var entry=data.auroraFrameAt(allAuroraFrames(),instant),value=entry&&archiveCache.get(entry.file);
+    if(value)setForecast(value);else{forecast=null;replayPendingAurora=!!entry;}
+  }
+  function updateReplayLabel(){
+    var label=byId('globe-replay-status');if(!label)return;
+    if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
+    if(!live&&instant>Date.now()+300000){text(label,'Future time: sunlight only.');return;}
+    if(loading&&!replayBusy){text(label,'Preparing day replay');return;}
+    var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(function(t){return cloudMemo&&cloudMemo.has(t.toISOString());}).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;
+    text(label,replayBusy&&ready<total?'Preparing replay '+ready+'/'+total:!replayClouds.length&&!replayAurora.length?'Weather history unavailable.':replayFailed.size?'Replay ready, with data gaps.':'Clouds every 3h. Recorded aurora.');
+  }
+  function warmDayTimeline(initial){
+    if(loading&&!initial||tilt!==undefined||navigator.onLine===false)return;
+    var day=timeline.dayBounds(instant),frames=allAuroraFrames(),key=day.start.toISOString()+'/'+(cloudCatalog&&+cloudCatalog.end)+'/'+frames.length+'/'+(frames.length&&frames[frames.length-1].file);
+    if(replayKey===key&&(replayBusy||Date.now()-replayChecked<60000))return;
+    if(replayController)replayController.abort();replayController=new AbortController();var controller=replayController,signal=controller.signal;
+    replayKey=key;replayChecked=Date.now();replayBusy=true;replayFailed=new Set();
+    replayClouds=timeline.cloudFrames(cloudCatalog,instant,new Date());
+    replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-90*60000&&entry.forecast<+day.end+90*60000&&entry.observation<=Date.now();});
+    cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
+    var cloudQueue=timeline.order(replayClouds,instant).filter(function(t){return !cloudMemo.has(t.toISOString());}),auroraQueue=replayAurora.filter(function(e){return !archiveCache.has(e.file);});
+    // Three small cloud pairs at a time, plus the selected image's detail job.
+    // Decoded day frames are bounded in memory; only the active pair uses GPU textures.
+    async function clouds(){while(cloudQueue.length&&!signal.aborted){cloudQueue=timeline.order(cloudQueue,instant);var stamp=cloudQueue.shift();try{await requestCloudRecord(stamp,Math.min(1024,cloudWidth),signal,10000,false);}catch(error){if(error.name==='AbortError')return;replayFailed.add(stamp.toISOString());}if(replayController===controller)updateReplayLabel();}}
+    async function auroras(){while(auroraQueue.length&&!signal.aborted){var entry=auroraQueue.shift();try{await requestArchive(entry,signal);}catch(error){if(error.name==='AbortError')return;replayFailed.add(entry.file);}if(replayController===controller)updateReplayLabel();}}
+    var deadline=initial?setTimeout(function(){controller.abort();},Math.max(1,26000-(performance.now()-loadingStarted))):null;
+    updateReplayLabel();return Promise.allSettled([clouds(),clouds(),clouds(),auroras(),auroras()]).finally(function(){clearTimeout(deadline);if(replayController===controller){replayBusy=false;if(signal.aborted)replayKey='';updateReplayLabel();}});
   }
   function refreshData() {
     var jobs=[['clouds',refreshPhoto()],['aurora',refreshWeather()],['history',refreshArchive()]];
-    if(!loadingJobsStarted){loadingJobsStarted=true;jobs.forEach(function(job){Promise.resolve(job[1]).finally(function(){settleLoad(job[0]);});});}
+    if(!loading)warmDayTimeline();
+    if(!loadingJobsStarted){loadingJobsStarted=true;jobs.forEach(function(job){Promise.resolve(job[1]).finally(function(){settleLoad(job[0]);});});
+      Promise.allSettled(jobs.map(function(job){return job[1];})).then(function(){return warmDayTimeline(true);}).finally(function(){settleLoad('replay');});
+    }
+    Promise.allSettled(jobs.map(function(job){return job[1];})).then(function(){return warmDayTimeline();});
   }
   window.addEventListener('online',function(){requestedDay='';weatherChecked=0;refreshData();});
   updateAstronomy();updateLabels();announce();resume();refreshData();

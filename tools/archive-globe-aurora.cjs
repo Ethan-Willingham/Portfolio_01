@@ -16,7 +16,7 @@ const HEIGHT = 181;
 const SIZE = WIDTH * HEIGHT;
 const MINUTE = 60000;
 const RETENTION = 30 * 86400000;
-const MAX_FRAMES = 2000;
+const MAX_FRAMES = 4000;
 const FILE_PATTERN = /^\d{8}T\d{6}Z-\d{8}T\d{6}Z-[a-f0-9]{16}\.json\.gz$/;
 
 function timestamp(value) {
@@ -123,7 +123,7 @@ function readManifest(directory) {
   if (!manifest || manifest.version !== 1 || manifest.source !== SOURCE || !Array.isArray(manifest.frames)) {
     throw new Error('Invalid archive manifest');
   }
-  if (manifest.frames.length > MAX_FRAMES) throw new Error('Archive exceeds the supported 2000-frame limit');
+  if (manifest.frames.length > MAX_FRAMES) throw new Error('Archive exceeds the supported 4000-frame limit');
   timestamp(manifest.updatedAt);
   const files = new Set();
   for (const entry of manifest.frames) {
@@ -170,7 +170,7 @@ function archiveFrames(inputs, options = {}) {
   }
   entries.sort((a, b) => a.forecast.localeCompare(b.forecast) ||
     a.observation.localeCompare(b.observation) || a.file.localeCompare(b.file));
-  if (entries.length > MAX_FRAMES) throw new Error('Archive exceeds the supported 2000-frame limit');
+  if (entries.length > MAX_FRAMES) throw new Error('Archive exceeds the supported 4000-frame limit');
   if (!pending.length && !removed.length && fs.existsSync(path.join(directory, 'manifest.json'))) {
     return { added: 0, removed: 0, skipped, frames: entries.length, changed: false };
   }
