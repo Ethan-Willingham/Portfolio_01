@@ -14981,7 +14981,7 @@ window.EnoughData = {
     {
       "id": "sets",
       "question": "How many sets?",
-      "fact": "More sets can help, with diminishing returns. Few studies cover more than about 25 sets per muscle a week.",
+      "fact": "More sets are linked to more muscle growth (hypertrophy), with diminishing returns. Few studies cover more than about 25 weekly sets per muscle.",
       "kind": "continuous",
       "shape": "Uncertain ceiling",
       "unit": "sets/week",
@@ -15560,7 +15560,7 @@ window.EnoughData = {
       ],
       "step": 1,
       "xLabel": "Sets per muscle each week",
-      "yLabel": "Model difference vs no training (%)",
+      "yLabel": "Muscle size vs no training (%)",
       "verified": "2026-10-04",
       "doseDigits": 1,
       "yDigits": 1,
@@ -15576,12 +15576,12 @@ window.EnoughData = {
         "shape": "Uncertain ceiling",
         "answer": "No settled optimum",
         "lineStyle": "dashed",
-        "fact": "More sets can help, with diminishing returns. Few studies cover more than about 25 sets per muscle a week.",
+        "fact": "More sets are linked to more muscle growth (hypertrophy), with diminishing returns. Few studies cover more than about 25 weekly sets per muscle.",
         "range": [
           0,
           45
         ],
-        "rangeLabel": "0 to 45 weekly sets per muscle",
+        "rangeLabel": "Compared with no training, with starting muscle size accounted for",
         "default": 10,
         "ticks": [
           0,
@@ -15591,7 +15591,18 @@ window.EnoughData = {
         ],
         "modelLabel": "Study model; sparse evidence above 25 sets",
         "sparseFrom": 25,
-        "showEnough": false
+        "showEnough": false,
+        "yScale": {
+          "min": 0,
+          "max": 16,
+          "ticks": [
+            0,
+            5,
+            10,
+            15
+          ],
+          "label": "Muscle size vs no training, %"
+        }
       },
       "reverification": {
         "researcher": "v2_move",
