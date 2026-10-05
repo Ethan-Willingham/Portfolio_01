@@ -83,7 +83,9 @@ charcoal panels, off-white markings and restrained safety orange. Active and
 primary buttons are blue. The selection clipboard opens on the left so trucks
 remain visible on the right.
 
-Mouse, keyboard and landscape touch control the same view. Object selection,
+Mouse, keyboard and landscape touch control the same view. Drag with the right
+or middle mouse button to pan. A stationary right-click or Escape clears the
+selection; left-drag selects pallets. Object selection,
 a floor cursor and panel focus support keyboard play. The menu remaps controls,
 changes text scale, volume, reduced motion and redundant color marks. Buttons
 are at least 44 by 44 CSS pixels. Portrait on a touch device freezes the shift
