@@ -299,7 +299,7 @@
   }
   new ResizeObserver(resize).observe(container);resize();
   function frame(time) {
-    frameRequest=null;if(document.hidden||!inView)return;
+    frameRequest=null;if(!renderingVisible())return;
     var dt=Math.min(.1,lastFrame?(time-lastFrame)/1000:1/60);lastFrame=time;
     if(live)instant=new Date();
     if(autoSpin)targetTheta-=dt*.022;
@@ -313,9 +313,15 @@
     auroraMeshes.forEach(function (mesh) {mesh.material.uniforms.tick.value=time/1000;});
     renderer.render(scene,camera);frameRequest=requestAnimationFrame(frame);
   }
-  function resume() {if(!document.hidden&&inView&&frameRequest===null){lastFrame=0;frameRequest=requestAnimationFrame(frame);}}
+  function renderingVisible() {return !document.hidden&&(inView||wrapper.classList.contains('is-fullscreen'));}
+  function resume() {if(renderingVisible()&&frameRequest===null){lastFrame=0;frameRequest=requestAnimationFrame(frame);}}
+  function syncViewportVisibility() {
+    var rect=container.getBoundingClientRect();inView=rect.bottom>=-100&&rect.top<=innerHeight+100&&rect.right>=-100&&rect.left<=innerWidth+100;
+    if(!renderingVisible()&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}
+    resume();
+  }
   document.addEventListener('visibilitychange',function () {if(document.hidden&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}else{updateAstronomy();updateLabels();resume();refreshData();}});
-  new IntersectionObserver(function (entries) {inView=entries[0].isIntersecting;if(!inView&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}resume();},{rootMargin:'100px'}).observe(container);
+  new IntersectionObserver(function (entries) {inView=entries[0].isIntersecting;if(!renderingVisible()&&frameRequest!==null){cancelAnimationFrame(frameRequest);frameRequest=null;}resume();},{rootMargin:'100px'}).observe(container);
   var fullscreenButton=byId('globe-fullscreen'), savedOverflow='', inertElements=[];
   function isolateFullscreen(on) {
     if(!on){inertElements.forEach(function(item){item.element.inert=item.previous;});inertElements=[];return;}
@@ -330,14 +336,14 @@
     wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);
     fullscreenButton.setAttribute('aria-label','Enter fullscreen');
     if(document.fullscreenElement)document.exitFullscreen().catch(function(){});
-    requestAnimationFrame(resize);fullscreenButton.focus({preventScroll:true});
+    requestAnimationFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});
   }
   fullscreenButton.addEventListener('click',function () {
     if(wrapper.classList.contains('is-fullscreen')){exitFullscreen();return;}
     savedOverflow=document.body.style.overflow;document.body.style.overflow='hidden';wrapper.classList.add('is-fullscreen');isolateFullscreen(true);fullscreenButton.setAttribute('aria-label','Exit fullscreen');
-    if(wrapper.requestFullscreen)wrapper.requestFullscreen().catch(function(){});requestAnimationFrame(resize);
+    if(wrapper.requestFullscreen)wrapper.requestFullscreen().catch(function(){});requestAnimationFrame(resize);syncViewportVisibility();
   });
-  document.addEventListener('fullscreenchange',function () {if(!document.fullscreenElement&&wrapper.classList.contains('is-fullscreen')){wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);fullscreenButton.setAttribute('aria-label','Enter fullscreen');requestAnimationFrame(resize);fullscreenButton.focus({preventScroll:true});}});
+  document.addEventListener('fullscreenchange',function () {if(!document.fullscreenElement&&wrapper.classList.contains('is-fullscreen')){wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);fullscreenButton.setAttribute('aria-label','Enter fullscreen');requestAnimationFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});}});
   document.addEventListener('keydown',function (event) {
     if(!wrapper.classList.contains('is-fullscreen'))return;
     if(event.key==='Escape'&&!document.fullscreenElement)exitFullscreen();

@@ -26,6 +26,7 @@ const server = http.createServer((req,res) => {
           forecast:forecast?{observation:forecast.observation.toISOString(),forecast:forecast.forecast.toISOString()}:null,
           kp:kp?.kp,textureWidth,photoMix,autoSpin,targetTheta,targetPhi,targetRadius,
           pending:frameRequest!==null,aurora:auroraMeshes.some(m=>m.visible),moon:moon.visible,
+          inView,
           photoBusy:fetchingPhoto,weatherBusy:fetchingWeather,pinDayKey,
           textures:[baseTexture,nightTexture,satelliteTexture].map(t=>({w:t.image.width,h:t.image.height})),
           renderer:renderer.info,style:auroraStyle}),
@@ -228,6 +229,27 @@ let browser;
     await slowPage.waitForFunction(()=>__globeTest.state().forecast);
     check('a completed weather refresh announces its actual forecast timestamp',await slowPage.locator('#globe-summary').textContent().then(value=>value.includes('measurements from')&&!value.includes('Checking aurora forecast')));
     await slowWeather.close();
+    const fullscreenContext=await browser.newContext({viewport:{width:375,height:812}});
+    await fullscreenContext.route('https://gibs.earthdata.nasa.gov/**',route=>{const q=new URL(route.request().url()).searchParams;return route.fulfill({contentType:'image/png',body:image(Number(q.get('WIDTH')))});});
+    await fullscreenContext.route('https://services.swpc.noaa.gov/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(route.request().url().includes('ovation')?model:kps)}));
+    const fsPage=await fullscreenContext.newPage();await fsPage.clock.setFixedTime(new Date('2026-10-05T00:05:00Z'));
+    await fsPage.goto(`http://127.0.0.1:${server.address().port}/daylight-globe.html`);
+    await fsPage.waitForFunction(()=>window.__globeTest&&__globeTest.state().photo);
+    await fsPage.locator('#globe-explore-toggle').click();await fsPage.locator('#globe-date').fill('1900-01-01');await fsPage.locator('#globe-date').dispatchEvent('change');
+    await fsPage.locator('#globe-return').click();await fsPage.setViewportSize({width:568,height:320});
+    await fsPage.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+    await fsPage.waitForFunction(()=>!__globeTest.state().inView&&!__globeTest.state().pending);
+    const frames=await fsPage.evaluate(()=>__globeTest.state().renderer.render.frame);
+    await fsPage.evaluate(()=>{document.querySelector('.globe-wrapper').requestFullscreen=undefined;document.querySelector('#globe-fullscreen').click();});
+    await fsPage.waitForFunction(frame=>__globeTest.state().pending&&__globeTest.state().renderer.render.frame>frame,frames);
+    check('narrow fullscreen resumes a globe paused after offscreen Explore',await fsPage.evaluate(()=>__globeTest.state().live&&__globeTest.state().pending));
+    await fsPage.clock.setFixedTime(new Date('2026-10-05T00:06:00Z'));await fsPage.waitForFunction(()=>__globeTest.state().instant==='2026-10-05T00:06:00.000Z');
+    check('fullscreen rendering advances the actual Live instant',true);
+    await fsPage.screenshot({path:path.join(dump,'narrow-fullscreen-from-offscreen.png')});
+    await fsPage.locator('#globe-fullscreen').click();await fsPage.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+    await fsPage.waitForFunction(()=>!__globeTest.state().inView&&!__globeTest.state().pending);
+    check('leaving fullscreen restores the offscreen rendering pause',true);
+    await fullscreenContext.close();
     fs.writeFileSync(path.join(dump,'browser-results.json'),JSON.stringify({real,checks,evidence},null,2));
     console.log('Evidence: '+dump);
   } finally {await browser?.close();await new Promise(r=>server.close(r));}
