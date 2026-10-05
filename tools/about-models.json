@@ -246,6 +246,52 @@
           }
         }
       ]
+    },
+    "gpt-6-sol": {
+      "provider": "openai",
+      "label": "GPT-6 Sol",
+      "short": "G6S",
+      "color": "#8FB3C7",
+      "showInAttribution": true,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "verified": "2026-10-04",
+      "prices": [
+        {
+          "from": "2026-09-24",
+          "input": 2,
+          "cacheWrite5m": 2.5,
+          "cacheRead": 0.2,
+          "output": 10,
+          "longContext": {
+            "aboveInputTokens": 272000,
+            "inputMultiplier": 2,
+            "outputMultiplier": 1.5
+          }
+        }
+      ]
+    },
+    "gpt-6.1-sol": {
+      "provider": "openai",
+      "label": "GPT-6.1 Sol",
+      "short": "G6.1",
+      "color": "#DFC288",
+      "showInAttribution": true,
+      "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "verified": "2026-10-04",
+      "prices": [
+        {
+          "from": "2026-09-29",
+          "input": 2,
+          "cacheWrite5m": 2.5,
+          "cacheRead": 0.1,
+          "output": 10,
+          "longContext": {
+            "aboveInputTokens": 272000,
+            "inputMultiplier": 2,
+            "outputMultiplier": 1.5
+          }
+        }
+      ]
     }
   }
 }

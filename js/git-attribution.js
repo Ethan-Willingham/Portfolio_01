@@ -11,12 +11,7 @@
 
   var REDUCE = false; /* owner: animate for everyone, even with prefers-reduced-motion set */
   var MODELS = DATA.models;
-  // Posts that are unlisted everywhere public (no homepage card, no hub, and pulled from the
-  // archive page) should not surface a tile here either. Their data stays in
-  // git-attribution-data.js untouched; the model fuel totals still count them. We just don't
-  // render their tiles. To hide another post, add its key here.
-  var HIDDEN_TILES = { 'weather': 1, 'forty': 1, 'alcoholics-anonymous': 1, 'first-164': 1 };
-  var POSTS = DATA.posts.filter(function (p) { return !HIDDEN_TILES[p.key]; });
+  var POSTS = DATA.posts.slice();
   var MID = {};
   MODELS.forEach(function (m) { MID[m.id] = m; });
 
@@ -28,14 +23,18 @@
     var keyByIdx = GH.topics.map(function (t) { return t.key; });
     function dayIdx(ts) { var d = new Date(ts * 1000); return Math.round(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000); }
     function ymd(ts) { var d = new Date(ts * 1000); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-    GH.commits.forEach(function (c) {
-      var key = keyByIdx[c[5]]; if (!key) return;            // [hash, ts, adds, dels, files, topicIdx, subject]
+    function record(key, c) {
+      if (!key) return;
       var e = EFFORT[key] || (EFFORT[key] = { commits: 0, add: 0, del: 0, biggest: 0, first: Infinity, last: -Infinity, byDay: {} });
       e.commits++; e.add += c[2]; e.del += c[3];
       if (c[2] + c[3] > e.biggest) e.biggest = c[2] + c[3];
       if (c[1] < e.first) e.first = c[1];
       if (c[1] > e.last) e.last = c[1];
       var d = dayIdx(c[1]); e.byDay[d] = (e.byDay[d] || 0) + 1;
+    }
+    GH.commits.forEach(function (c) { record(keyByIdx[c[5]], c); });
+    POSTS.forEach(function (p) {
+      if (!EFFORT[p.key] && p.history) p.history.forEach(function (c) { record(p.key, ['', c[0], c[1], c[2]]); });
     });
     Object.keys(EFFORT).forEach(function (k) {
       var e = EFFORT[k], d0 = dayIdx(e.first), d1 = dayIdx(e.last);
@@ -63,6 +62,7 @@
     var p = s.split('-'); return mo[(+p[1]) - 1] + ' ' + (+p[2]);
   }
   function dateRange(a, b) {
+    if (!a || !b) return 'Dates unavailable';
     if (a === b) return fmtDate(a);
     var pa = a.split('-'), pb = b.split('-');
     if (pa[1] === pb[1]) { var mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; return mo[(+pa[1]) - 1] + ' ' + (+pa[2]) + '–' + (+pb[2]); }
@@ -235,9 +235,9 @@
   // ---------- build: card grid ----------
   function cardInner(post, parts) {
     var top = parts[0];
-    var arch = post.kind === 'archived' ? '<span class="cv-arch">(archived)</span>' : '';
-    var chip = top ? '<i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span>' : '';
-    return '<div class="cv-top"><span class="cv-chip">' + chip + '</span><span class="cv-val">' + fmtVal(total(post)) + '<small>changes</small></span></div>' +
+    var arch = post.kind === 'removed' ? '<span class="cv-arch">(removed)</span>' : post.kind === 'archived' ? '<span class="cv-arch">(archived)</span>' : '';
+    var chip = top ? '<i style="background:' + top.m.color + '"></i><span class="cv-chipn">' + top.m.label + '</span>' : '<span class="cv-chipn">No edit log</span>';
+    return '<div class="cv-top"><span class="cv-chip">' + chip + '</span><span class="cv-val">' + (total(post) ? fmtVal(total(post)) : 'n/a') + '<small>changes</small></span></div>' +
       '<div class="cv-title">' + post.label + arch + '</div><div class="cv-bar">' + barHTML(parts) + '</div><div class="cv-date">' + postDates(post) + '</div>';
   }
   var grid = document.createElement('div');
@@ -303,13 +303,16 @@
     tray.removeAttribute('inert');
     tray.setAttribute('aria-hidden', 'false');
     var parts = split(post);
-    tray.querySelector('.ma-tray-kind').textContent = post.kind === 'archived' ? 'Archived post' : 'Post';
+    tray.querySelector('.ma-tray-kind').textContent = post.kind === 'removed' ? 'Removed post' : post.kind === 'archived' ? 'Archived post' : 'Post';
     tray.querySelector('.ma-tray-kind').className = 'ma-tray-kind' + (post.kind === 'archived' ? ' is-arch' : '');
     tray.querySelector('.ma-tray-title').textContent = post.label;
     tray.querySelector('.ma-tray-when').textContent = 'Built ' + postDates(post);
     var link = tray.querySelector('.ma-tray-link');
-    if (post.href) { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
-    else link.style.display = 'none';
+    if (post.href && post.kind !== 'removed') { link.href = post.href.indexOf('/') === 0 ? post.href : '/' + post.href; link.style.display = ''; }
+    else { link.removeAttribute('href'); link.style.display = 'none'; }
+    tray.querySelector('.ma-detail-note').textContent = post.edits
+      ? (post.kind === 'removed' ? 'This post was removed. Its recorded work stays in the totals below.' : 'Recorded file changes, split by model.')
+      : 'No surviving edit log. The available commit history is shown below.';
     paintTray(post, parts, true);
     setTrayMode(); // mode (centred modal vs bottom sheet) is already committed; just spring open
     lockScroll();

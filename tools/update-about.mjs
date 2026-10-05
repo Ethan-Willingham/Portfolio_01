@@ -10,7 +10,7 @@
      2. RIVER     git log -> appends every commit since the last refresh to the
                   commit river (js/git-history-data.js), and adds a new topic for
                   each new post so its dots get their own color + legend entry.
-     3. TILES     appends a per-post attribution tile for every new post (the
+     3. TILES     retains a per-post history card for every known post (the
                   "which AI built which page" viz), computed from this machine's
                   Claude Code and Codex transcripts via build-attribution.mjs.
      4. SEARCH    rebuilds search-index.json so new posts are findable.
@@ -33,12 +33,13 @@
    - "New posts" are read from the index.html article list + the archive/ folder,
      the same authoritative list build-search-index.mjs uses. Ship a post (give it
      a homepage card) and it shows up here automatically. Posts built on another
-     machine get a river topic (their commits are real) but no attribution tile
-     (this machine has no transcripts for them) - that is correct, not a bug.
+     machine keep a history card without inventing local edit credit. Removed
+     and unlisted pages retain their cards.
    ============================================================================ */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { collectUsage } from './about-usage.mjs';
+import { isPost, postSlug, reconcilePost } from './about-post-history.mjs';
 import { execSync } from 'node:child_process';
 
 const REPO = process.cwd();
@@ -74,7 +75,7 @@ function loadData(file) {
 function saveData(file, banner, varName, obj) {
   writeFileSync(file, banner + 'window.' + varName + ' = ' + JSON.stringify(obj) + ';\n');
 }
-const today = () => { const d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const nowSec = () => Math.floor(Date.now() / 1000);
 const ymdLocal = value => {
   const d = new Date(value);
@@ -103,7 +104,7 @@ function enumeratePosts() {
     for (const block of listHtml.split(/<li class="article-list-item/).slice(1)) {
       const href = (block.match(/<a class="article-item" href="([^"]+)"/) || [])[1];
       if (!href || !/^[a-z0-9-]+\.html$/.test(href)) continue;      // skip external / sub-path links
-      if (href === 'grand-motherload.html') continue;               // frozen game demo (Sluice) is excluded from the build viz
+      if (href.endsWith('-lab.html') || !existsSync(join(REPO, href))) continue;
       if (seen.has(href)) continue;
       seen.add(href);
       const cardTitle = strip((block.match(/<h2 class="article-item-title">([\s\S]*?)<\/h2>/) || [, ''])[1]);
@@ -133,6 +134,9 @@ function enumeratePosts() {
   }
   for (const hub of hubs) if (existsSync(join(REPO, hub))) fromList(readFileSync(join(REPO, hub), 'utf8'), true);
 
+  // The archive also lists playable projects whose files remain at the root.
+  fromList(readFileSync(join(REPO, 'archive.html'), 'utf8'), true);
+
   // 3. archived posts
   let dirs = [];
   try { dirs = readdirSync(join(REPO, 'archive'), { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch {}
@@ -153,24 +157,25 @@ const postByKey = new Map(POSTS.map(p => [p.key, p]));
 // ============================================================================
 const hist = loadData(F_HIST);
 const topics = hist.obj.topics;
+for (const topic of topics) if (isPost(topic)) reconcilePost(topic, POSTS);
 const topicIndexByKey = new Map(topics.map((t, i) => [t.key, i]));
 const PALETTE = [...new Set(topics.map(t => t.color))];
 
 // add a river topic for any enumerated post that does not have one yet. Dedup by
-// HREF, not key: the same post is keyed short in the curated data ("forty") but
-// long by its archive folder ("forty-not-a-hundred"), and the game demo lives
+// canonical page slug, not key: the same post is keyed short ("forty") but
+// long by its archive folder ("forty-not-a-hundred"), and the game lives
 // under the "sluice" topic whose href is grand-motherload.html.
 log(H('1/4  RIVER  ') + dim('new posts -> topics'));
-const topicHrefs = new Set(topics.map(t => t.href).filter(Boolean));
+const topicHrefs = new Set(topics.map(postSlug));
 const newTopics = [];
 for (const p of POSTS) {
-  if (topicHrefs.has(p.href)) continue;
+  if (topicHrefs.has(postSlug(p))) continue;
   const color = PALETTE[(topics.length + newTopics.length) % PALETTE.length];
   const label = p.title || p.key;                               // full post title (relabel pass below keeps it exact)
   const topic = { key: p.key, label, color, kind: p.kind, href: p.href };
   topics.push(topic);
   topicIndexByKey.set(p.key, topics.length - 1);
-  topicHrefs.add(p.href);
+  topicHrefs.add(postSlug(p));
   newTopics.push(topic);
 }
 log(newTopics.length ? `  + ${newTopics.length} new topics: ` + newTopics.map(t => t.key).join(', ') : dim('  no new posts'));
@@ -198,11 +203,12 @@ log(relabeled ? `  relabeled ${relabeled} button(s) to their actual post titles`
 
 // file -> topic-key router (mirrors build-attribution.mjs, plus the new topics)
 const route = new Map();
-for (const t of topics) if (t.href) {
-  route.set(t.href, t.key);
-  const slug = t.href.replace(/.*\//, '').replace(/\.html$/, '');
+for (const t of topics) if (t.href || t.historicalHref) {
+  route.set(t.href || t.historicalHref, t.key);
+  const slug = postSlug(t);
   route.set(slug + '.html', t.key);
   route.set('js/' + slug + '.js', t.key);
+  route.set(slug + '.css', t.key);
 }
 const ALIAS = {
   'js/globe.js': 'daylight-globe',
@@ -214,6 +220,8 @@ for (const [f, k] of Object.entries(ALIAS)) if (topicIndexByKey.has(k)) route.se
 const GENERIC = new Set(['homepage', 'site', 'docs']);
 function fileKey(f) {
   if (route.has(f)) return route.get(f);
+  if (/^(js\/sluice(?:\.js|\/)|grand-motherload\.html|js\/(?:liquid|smoke|jello)-wgpu\.js|js\/audio\.js|assets\/(?:shop|music|sfx)\/)/.test(f)) return 'sluice';
+  for (const t of topics) if (isPost(t) && f.startsWith('js/' + postSlug(t) + '-')) return t.key;
   const am = f.match(/^archive\/([^/]+)\//);
   if (am && topicIndexByKey.has(am[1])) return am[1];
   if (/^docs\//.test(f)) return topicIndexByKey.has('docs') ? 'docs' : null;
@@ -386,6 +394,11 @@ const replaceStat = (html, key, value) => {
 about = replaceStat(about, 'tokens', tokStr);
 about = replaceStat(about, 'peak', peakStr);
 about = replaceStat(about, 'cost', costStr);
+about = replaceStat(about, 'commits', commits.length.toLocaleString('en-US'));
+about = replaceStat(about, 'posts', a2.obj.posts.length.toLocaleString('en-US'));
+about = replaceStat(about, 'removed', a2.obj.posts.filter(p => p.kind === 'removed').length.toLocaleString('en-US'));
+about = about.replace(/<p data-about-token-total>[\s\S]*?<\/p>/, `<p data-about-token-total>${dispTok.toLocaleString('en-US')} tokens in total: input, cache reads, cache writes, and output.</p>`);
+about = about.replace(/(<script src="js\/(?:git-history(?:-data)?|git-attribution(?:-data)?)\.js)(?:\?v=[^"]+)?("><\/script>)/g, '$1?v=' + hist.obj.generated + '$2');
 const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from Claude Code and Codex logs on my Mac and a September 9 to 23 usage report from my PC. These totals cover all my projects. Usage through July 22 is estimated; later records are deduplicated. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>`;
 if (!/<p data-about-freshness>[\s\S]*?<\/p>/.test(about)) throw new Error('about.html is missing the freshness marker');

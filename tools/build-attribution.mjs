@@ -41,6 +41,8 @@ import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { isPost, postSlug, reconcilePost } from './about-post-history.mjs';
 
 const REPO = process.cwd();
 const CODEX_TX = join(homedir(), '.codex/sessions');
@@ -73,11 +75,12 @@ const NEW = process.env.ATTR_NEW_JSON ? JSON.parse(process.env.ATTR_NEW_JSON) : 
 // ---- file -> post-key router ----
 const route = new Map();
 for (const t of GH.topics) {
-  if (t.href) {
-    const slug = t.href.replace(/.*\//, '').replace(/\.html$/, '');
-    route.set(t.href, t.key);
+  if (t.href || t.historicalHref || isPost(t)) {
+    const slug = postSlug(t);
+    route.set(t.href || t.historicalHref || t.key + '.html', t.key);
     route.set(slug + '.html', t.key);
     route.set('js/' + slug + '.js', t.key);
+    route.set(slug + '.css', t.key);
   }
 }
 const ALIAS = {
@@ -113,6 +116,7 @@ function keyFor(rel) {
   for (let i = 0; i < parts.length; i++) {
     const tail = parts.slice(i).join('/');
     if (route.has(tail)) return route.get(tail);
+    for (const topic of GH.topics) if (isPost(topic) && tail.startsWith('js/' + postSlug(topic) + '-')) return topic.key;
     const am = tail.match(/^archive\/([^/]+)\//);
     if (am) return am[1];
   }
@@ -418,18 +422,38 @@ for (const key of process.argv.slice(2).filter(a => !a.startsWith('--'))) {
 if (process.argv.includes('--write')) {
   const wordCount = file => {
     try {
-      let h = readFileSync(join(REPO, file), 'utf8');
+      let h;
+      if (existsSync(join(REPO, file))) h = readFileSync(join(REPO, file), 'utf8');
+      else {
+        const revision = execFileSync('git', ['log', '-1', '--format=%H', '--diff-filter=AM', '--', file], { encoding: 'utf8' }).trim();
+        if (!revision) return 0;
+        h = execFileSync('git', ['show', revision + ':' + file], { encoding: 'utf8', maxBuffer: 1 << 24 });
+      }
       h = (h.match(/<main[\s\S]*?<\/main>/i) || h.match(/<body[\s\S]*?<\/body>/i) || [h])[0]
         .replace(/<(script|style|noscript|template|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
       return h.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length;
     } catch { return 0; }
   };
   const out = JSON.parse(JSON.stringify(ATTR));
-  // Historical credit stays in the ledger; tiles require a page that still exists.
-  out.posts = out.posts.filter(post => post.href && existsSync(join(REPO, post.href)));
   const topicByKey = new Map(GH.topics.map(t => [t.key, t]));
+  for (const post of out.posts) reconcilePost(post, GH.topics);
   const postByKey = new Map(out.posts.map(p => [p.key, p]));
   let added = 0;
+
+  // Every known post keeps a card, even without a surviving edit transcript.
+  // Zero recorded changes describes the log, not the amount of work done.
+  for (const topic of GH.topics.filter(isPost)) {
+    if (postByKey.has(topic.key)) continue;
+    const dates = GH.commits.filter(c => GH.topics[c[5]].key === topic.key)
+      .map(c => new Date(c[1] * 1000).toISOString().slice(0, 10)).sort();
+    const post = { key: topic.key, label: topic.label, href: topic.href, kind: topic.kind,
+      first: dates[0] || '', last: dates.at(-1) || '', edits: 0, tokens: 0, models: {},
+      words: wordCount(topic.href || topic.historicalHref || topic.key + '.html') };
+    if (topic.historicalHref) post.historicalHref = topic.historicalHref;
+    out.posts.push(post);
+    postByKey.set(post.key, post);
+    added++;
+  }
 
   // Every tracked row is rebuilt from the durable ledger. Other metadata and the
   // order of existing tiles stay intact.
@@ -442,7 +466,7 @@ if (process.argv.includes('--write')) {
       const supplied = NEW[a.key];
       const topic = topicByKey.get(a.key);
       const meta = supplied || topic;
-      if (!meta || !meta.href || !['post', 'archived'].includes(meta.kind) || !existsSync(join(REPO, meta.href))) continue;
+      if (!meta || !isPost(meta)) continue;
       post = {
         key: a.key,
         label: supplied?.label || topic.label,
@@ -462,6 +486,25 @@ if (process.argv.includes('--write')) {
     post.models[a.model] = { edits: a.edits, tokens: Math.round(a.tokens) };
   }
   for (const post of out.posts) {
+    if (!post.history && !GH.commits.some(c => GH.topics[c[5]].key === post.key)) {
+      // Older removed posts can predate their first timeline topic. Recover the
+      // file's own Git history without rewriting the frozen timeline snapshot.
+      const file = post.href || post.historicalHref || post.key + '.html';
+      const raw = execFileSync('git', ['log', '--follow', '--numstat', '--format=%x1e%ct', '--', file], { encoding: 'utf8', maxBuffer: 1 << 24 });
+      post.history = raw.split('\x1e').filter(s => s.trim()).map(chunk => {
+        const lines = chunk.trim().split('\n');
+        let add = 0, del = 0;
+        for (const line of lines.slice(1)) {
+          const m = line.match(/^(\d+)\t(\d+)\t/);
+          if (m) { add += +m[1]; del += +m[2]; }
+        }
+        return [+lines[0], add, del];
+      }).sort((a, b) => a[0] - b[0]);
+      if (post.history.length) {
+        post.first = new Date(post.history[0][0] * 1000).toISOString().slice(0, 10);
+        post.last = new Date(post.history.at(-1)[0] * 1000).toISOString().slice(0, 10);
+      }
+    }
     const rows = Object.entries(post.models || {}).map(([model, a]) => ({ model, ...a, ...(durable.get(model + '\0' + post.key) || {}) }));
     if (!rows.length) continue;
     post.edits = rows.reduce((n, a) => n + (a.edits || 0), 0);

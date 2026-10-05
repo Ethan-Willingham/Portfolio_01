@@ -84,7 +84,10 @@ const displayPeak = Math.max(stats.legacy.peakTokens, ...dayRows.map(d => d.tota
 const expectedStats = {
   tokens: (displayTokens / 1e9).toFixed(1) + 'B',
   peak: (displayPeak / 1e9).toFixed(2) + 'B',
-  cost: '~$' + (Math.round(displayCost / 100) * 100).toLocaleString('en-US')
+  cost: '~$' + (Math.round(displayCost / 100) * 100).toLocaleString('en-US'),
+  commits: hist.commits.length.toLocaleString('en-US'),
+  posts: attr.posts.length.toLocaleString('en-US'),
+  removed: attr.posts.filter(p => p.kind === 'removed').length.toLocaleString('en-US')
 };
 for (const [key, value] of Object.entries(expectedStats)) {
   const matches = [...about.matchAll(new RegExp(`<span class="n" data-about-stat="${key}">([^<]*)</span>`, 'g'))];
@@ -94,6 +97,7 @@ for (const [key, value] of Object.entries(expectedStats)) {
 check((about.match(/<p data-about-freshness>/g) || []).length === 1, 'about.html must contain exactly one freshness marker');
 const freshnessDate = new Date(stats.updated + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 check(about.includes(`<p data-about-freshness>Updated ${freshnessDate} `), 'about.html freshness date does not match the usage ledger');
+check(about.includes(`<p data-about-token-total>${displayTokens.toLocaleString('en-US')} tokens in total:`), 'about.html exact token total disagrees with the usage ledger');
 
 check(ledger.version === 2 && ledger.residualsInitialized, 'attribution ledger migration is incomplete');
 const ledgerText = JSON.stringify(ledger);
@@ -119,11 +123,15 @@ const postKeys = new Set();
 for (const post of attr.posts) {
   check(!postKeys.has(post.key), `duplicate attribution post key ${post.key}`);
   postKeys.add(post.key);
-  check(Boolean(post.href) && existsSync(join(REPO, post.href)), `${post.key} points to a missing page: ${post.href}`);
+  if (post.kind === 'removed') {
+    check(post.href === null, `${post.key} is removed but still has an active link`);
+    check(Boolean(post.historicalHref) && !existsSync(join(REPO, post.historicalHref)), `${post.key} has no missing historical page to explain its removed status`);
+  } else check(Boolean(post.href) && existsSync(join(REPO, post.href)), `${post.key} points to a missing page: ${post.href}`);
   const rows = Object.values(post.models || {});
   check(post.edits === sum(rows.map(m => m.edits)), `${post.key} edit total does not equal its model rows`);
   check(post.tokens === sum(rows.map(m => m.tokens)), `${post.key} token total does not equal its model rows`);
   for (const id of Object.keys(post.models || {})) check(attrModels.has(id), `${post.key} uses model ${id}, which has no visible model definition`);
+  for (const row of post.history || []) check(row.length === 3 && row.every(n => Number.isSafeInteger(n) && n >= 0), `${post.key} has invalid recovered Git history`);
 }
 for (const model of attr.models) {
   const credited = attr.posts.filter(p => p.models?.[model.id]);
@@ -137,6 +145,11 @@ for (const model of attr.models) {
 check(generatedDaysOld(attr.generated) < 2, 'attribution data is more than two days old');
 
 check(new Set(hist.topics.map(t => t.key)).size === hist.topics.length, 'git-history topic keys are not unique');
+for (const topic of hist.topics) if (['post', 'archived', 'removed'].includes(topic.kind)) {
+  const post = attr.posts.find(p => p.key === topic.key);
+  check(Boolean(post), `${topic.key} has disappeared from the post history`);
+  if (post) check(post.kind === topic.kind && post.href === topic.href, `${topic.key} status disagrees between its card and timeline`);
+}
 check(Array.isArray(hist.daily) && hist.daily.length > 0, 'git-history fuel line is missing');
 check(hist.dailyMax >= Math.max(...hist.daily), 'git-history dailyMax is smaller than a daily token value');
 for (const [day, row] of Object.entries(stats.days)) {

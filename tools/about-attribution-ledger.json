@@ -115,7 +115,7 @@
       "models": {
         "gpt-5.6-sol": {
           "hebrew-bible": {
-            "edits": 38,
+            "edits": 40,
             "tokens": 81277,
             "first": "2026-07-18",
             "last": "2026-07-19"
@@ -158,8 +158,14 @@
             "last": "2026-07-19"
           },
           "analects": {
-            "edits": 7,
-            "tokens": 13748,
+            "edits": 19,
+            "tokens": 53516,
+            "first": "2026-07-19",
+            "last": "2026-07-19"
+          },
+          "quran-gpt": {
+            "edits": 12,
+            "tokens": 32282,
             "first": "2026-07-19",
             "last": "2026-07-19"
           }
@@ -1008,8 +1014,8 @@
       "models": {
         "gpt-6-astra": {
           "water-smoke-slime": {
-            "edits": 4,
-            "tokens": 7648,
+            "edits": 10,
+            "tokens": 14492,
             "first": "2026-09-12",
             "last": "2026-09-12"
           },
@@ -1253,8 +1259,8 @@
             "last": "2026-09-20"
           },
           "water-smoke-slime": {
-            "edits": 1,
-            "tokens": 344,
+            "edits": 3,
+            "tokens": 6071,
             "first": "2026-09-20",
             "last": "2026-09-20"
           }
@@ -1477,6 +1483,1720 @@
             "tokens": 3814,
             "first": "2026-09-21",
             "last": "2026-09-21"
+          }
+        }
+      }
+    },
+    "codex:570ad9e4ab53d82a": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 48,
+            "tokens": 30991,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:496501d407bef695": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 1126,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:90e172ff39b07bb4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 23,
+            "tokens": 18278,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          },
+          "water-smoke-slime": {
+            "edits": 2,
+            "tokens": 1030,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:a64fb55a1d28e8f6": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 5075,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:61917683a7b3cb2e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 28,
+            "tokens": 19880,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          },
+          "water-smoke-slime": {
+            "edits": 2,
+            "tokens": 1317,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:a1d73d28a6764601": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 3339,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:358a6b88c5c6d579": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 1500,
+            "first": "2026-09-24",
+            "last": "2026-09-24"
+          }
+        }
+      }
+    },
+    "codex:039e467f05861789": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "the-other-side": {
+            "edits": 5,
+            "tokens": 8589,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:35b25463b7adfda4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 10,
+            "tokens": 11169,
+            "first": "2026-09-26",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:ab0fab2fde99f476": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 7,
+            "tokens": 8147,
+            "first": "2026-09-26",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:c0609e6f178719cc": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 89,
+            "tokens": 60449,
+            "first": "2026-09-26",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:5de360380b39ab1e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 55,
+            "tokens": 29252,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:93cd1fcc4629af60": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 18,
+            "tokens": 12648,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:a5724d6581f00ca4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 11,
+            "tokens": 10446,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:6113b95770be2202": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 1793,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:aae92002c5b7d5fd": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 937,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:dc01bf4c1440e1fa": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 1450,
+            "first": "2026-09-26",
+            "last": "2026-09-26"
+          }
+        }
+      }
+    },
+    "codex:caea9ee57e480328": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 1354,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:0777f121414dc0d9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 3578,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:63c812d247c4631a": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 4217,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:b18d0900c3e44b3e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 2788,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:6415dc833ece5275": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 378,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        },
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 73,
+            "tokens": 69277,
+            "first": "2026-09-30",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:38b50f25a7a14f76": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 14,
+            "tokens": 16104,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:da68c4dd628162a8": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 2521,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:f5e25de08c5e466b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6-astra": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 1597,
+            "first": "2026-09-27",
+            "last": "2026-09-27"
+          }
+        }
+      }
+    },
+    "codex:02b3d7367c01e7e1": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 138,
+            "tokens": 288578,
+            "first": "2026-09-30",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:6c077aa05c1206f7": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "ocean": {
+            "edits": 2,
+            "tokens": 3883,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          },
+          "particles": {
+            "edits": 4,
+            "tokens": 10510,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          },
+          "particle-life": {
+            "edits": 4,
+            "tokens": 8996,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:47665e1a67f00656": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 10,
+            "tokens": 5871,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          },
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 521,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:c0530fa7a1ad5a35": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "daylight-globe": {
+            "edits": 2,
+            "tokens": 1955,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:aefb63acaf99f38f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "random-galaxy": {
+            "edits": 100,
+            "tokens": 172858,
+            "first": "2026-09-30",
+            "last": "2026-10-01"
+          }
+        }
+      }
+    },
+    "codex:ac8180a89261d975": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 3008,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:3bb4c6786f9e3348": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "particle-life": {
+            "edits": 17,
+            "tokens": 23977,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:574dc4f638ebb07c": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "gallery": {
+            "edits": 1,
+            "tokens": 390,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:22532450ce0484bf": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "space-age": {
+            "edits": 3,
+            "tokens": 6813,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:8cec359c2f79db14": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "ocean": {
+            "edits": 3,
+            "tokens": 2933,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:de7ef808ed6d14d2": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 1657,
+            "first": "2026-10-01",
+            "last": "2026-10-01"
+          }
+        }
+      }
+    },
+    "codex:70ad1ce7e5237bc3": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "the-other-side": {
+            "edits": 1,
+            "tokens": 1854,
+            "first": "2026-09-30",
+            "last": "2026-09-30"
+          }
+        }
+      }
+    },
+    "codex:6f8a62a2e266cfbe": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "hunting-game": {
+            "edits": 9,
+            "tokens": 28009,
+            "first": "2026-10-01",
+            "last": "2026-10-01"
+          }
+        }
+      }
+    },
+    "codex:d18eb4318c46a938": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 45,
+            "tokens": 33474,
+            "first": "2026-10-01",
+            "last": "2026-10-02"
+          },
+          "water-smoke-slime": {
+            "edits": 3,
+            "tokens": 2886,
+            "first": "2026-10-01",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:72dc86b79eabd813": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 1233,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:212936c85a5bb896": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 12,
+            "tokens": 8802,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:6353990ee4016c63": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "analects": {
+            "edits": 8,
+            "tokens": 7479,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:f6fd342cb1a990bd": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "tao-te-ching": {
+            "edits": 4,
+            "tokens": 6785,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:d19e51c2a1e2bb15": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "gita": {
+            "edits": 4,
+            "tokens": 11755,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:28b9c1e053807188": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "quran": {
+            "edits": 3,
+            "tokens": 8040,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:d497ddc7f35a541b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "guru-granth-sahib": {
+            "edits": 5,
+            "tokens": 9506,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:8534b9f9ffddb140": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "nagarjuna": {
+            "edits": 3,
+            "tokens": 2972,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:f88fde96237c1040": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "dhammapada": {
+            "edits": 13,
+            "tokens": 23657,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:ebb1a6cfd0eac299": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "warehouse": {
+            "edits": 4,
+            "tokens": 5241,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:de5db9edaa051640": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 14,
+            "tokens": 17421,
+            "first": "2026-10-02",
+            "last": "2026-10-02"
+          }
+        }
+      }
+    },
+    "codex:5a0c1c7c2dade5a9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 31,
+            "tokens": 41153,
+            "first": "2026-10-02",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:ecf5b7e65e97f2df": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 4,
+            "tokens": 8883,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:f6288ef6247c240e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 5,
+            "tokens": 7783,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:24ea2210c8b9f53b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 2,
+            "tokens": 2375,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:5dd462d2f0f2a0b4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 4,
+            "tokens": 4981,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:e481591b26286684": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 2,
+            "tokens": 1578,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:19d12287fa2beb01": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 5,
+            "tokens": 8163,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:1c878bcfca61737c": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 24,
+            "tokens": 33318,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:28a7aafa01c8fd23": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 11,
+            "tokens": 9209,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:ba55e7980774cfdd": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 6,
+            "tokens": 3647,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:985f03be72d338b8": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 7,
+            "tokens": 11943,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:3956aa2750c08673": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 14,
+            "tokens": 15392,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          },
+          "water-smoke-slime": {
+            "edits": 1,
+            "tokens": 1223,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:318ad1e0a3ca5d46": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "under-the-street": {
+            "edits": 32,
+            "tokens": 92327,
+            "first": "2026-10-03",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:a1d02edd0b6b502a": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "hunting-game": {
+            "edits": 4,
+            "tokens": 3143,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:dc5b30bcc77964c1": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 5853,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:7e2b0d4f96584b52": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "hunting-game": {
+            "edits": 13,
+            "tokens": 15972,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:b6f4af10e38f5dfc": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 13,
+            "tokens": 15790,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:c2491731d6934aef": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "under-the-street": {
+            "edits": 5,
+            "tokens": 17164,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:d100f9b3dc7571f4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "hunting-game": {
+            "edits": 11,
+            "tokens": 17158,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:3bfa1c4675505309": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "under-the-street": {
+            "edits": 18,
+            "tokens": 34209,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:e9e038e9beef9e3b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "under-the-street": {
+            "edits": 1,
+            "tokens": 1236,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:564b3bb1f7356f20": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "under-the-street": {
+            "edits": 11,
+            "tokens": 9373,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:8504c5944e58fc9f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 5,
+            "tokens": 7268,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:d16756e1d84d266b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 8,
+            "tokens": 5730,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          },
+          "water-smoke-slime": {
+            "edits": 4,
+            "tokens": 702,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:173900a84c732dfe": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 11,
+            "tokens": 9771,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:0d2eaf760e3b7bc4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 4,
+            "tokens": 3934,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:275f94f6fd4c6656": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 830,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:e23329f20cc14f83": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 12,
+            "tokens": 9223,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:013e2b19ca79b317": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 3696,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:bb429b8b8b242b10": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 2,
+            "tokens": 738,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:2818bd176cb4e482": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 1,
+            "tokens": 2293,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:8d66bec1c02cb49b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 16,
+            "tokens": 5703,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:3e85442dd2cb1143": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 26,
+            "tokens": 18982,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:5f5de208266912a9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 9,
+            "tokens": 7334,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:7bee0ef1692e9e54": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 5,
+            "tokens": 7633,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:7b3d59ca81951f94": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 9,
+            "tokens": 2595,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:03858ce1fc733649": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 10,
+            "tokens": 12669,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:8d7dfe0f363f26bf": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 4,
+            "tokens": 5237,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:7f97181f2934cdb9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "four-wheels": {
+            "edits": 2,
+            "tokens": 1013,
+            "first": "2026-10-03",
+            "last": "2026-10-03"
+          }
+        }
+      }
+    },
+    "codex:cfa057e965ce8cbf": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "social-contract": {
+            "edits": 3,
+            "tokens": 2091,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "meditations": {
+            "edits": 1,
+            "tokens": 531,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "plato": {
+            "edits": 1,
+            "tokens": 1371,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:c46ca8a97b03e09e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "machiavelli": {
+            "edits": 1,
+            "tokens": 98,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "grand-inquisitor": {
+            "edits": 1,
+            "tokens": 98,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "in-praise-of-shadows": {
+            "edits": 1,
+            "tokens": 876,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "art-of-war": {
+            "edits": 1,
+            "tokens": 265,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:c3b7aa539b0ebb91": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "fox": {
+            "edits": 1,
+            "tokens": 267,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "frankl": {
+            "edits": 1,
+            "tokens": 267,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "spirituality-of-imperfection": {
+            "edits": 1,
+            "tokens": 593,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:b3f1d3a7d9a10024": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "plato": {
+            "edits": 6,
+            "tokens": 10962,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:59322c19fd07e979": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "aristotle": {
+            "edits": 3,
+            "tokens": 2312,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:73b1230c8df207ae": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "first-year": {
+            "edits": 3,
+            "tokens": 4287,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "nothing-new": {
+            "edits": 1,
+            "tokens": 965,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "best-photographs": {
+            "edits": 1,
+            "tokens": 460,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "no-blood-test": {
+            "edits": 1,
+            "tokens": 460,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          },
+          "star-signs": {
+            "edits": 1,
+            "tokens": 1591,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:4ba0f8318ace0af9": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "euclid": {
+            "edits": 3,
+            "tokens": 6625,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:a3811dea9dab932b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "odyssey": {
+            "edits": 1,
+            "tokens": 549,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:2ac6b068cd84969e": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "meditation": {
+            "edits": 9,
+            "tokens": 13850,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:e339494e2f3633bf": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "symposium": {
+            "edits": 1,
+            "tokens": 571,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:43ede82ae6927e7d": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "what-to-eat": {
+            "edits": 6,
+            "tokens": 7484,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:8234a2d0491a8312": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "big-enough": {
+            "edits": 13,
+            "tokens": 38420,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:04786b4637e28aa8": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "warehouse": {
+            "edits": 4,
+            "tokens": 6174,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:2688bdacb4a5ab02": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "first-year": {
+            "edits": 6,
+            "tokens": 4738,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:ada170b55340cb85": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "no-blood-test": {
+            "edits": 1,
+            "tokens": 1968,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:6f41228bdb01b399": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "meditations": {
+            "edits": 2,
+            "tokens": 2779,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:f9e7f7a9f09cef70": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "social-contract": {
+            "edits": 3,
+            "tokens": 6515,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:0625c89ae02266f2": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "perennial-philosophy": {
+            "edits": 2,
+            "tokens": 2111,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:38cd4d123a03e6e2": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "in-praise-of-shadows": {
+            "edits": 5,
+            "tokens": 6181,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:0c663367e5b20723": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "marx": {
+            "edits": 4,
+            "tokens": 8277,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:85592163dded7594": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "modern-teachers": {
+            "edits": 2,
+            "tokens": 812,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:a821d674b2c5e85d": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "grand-inquisitor": {
+            "edits": 1,
+            "tokens": 606,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:fb54165111890559": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "cults-the-cage": {
+            "edits": 2,
+            "tokens": 1815,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:fd9fca09dfbd0319": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "camus": {
+            "edits": 2,
+            "tokens": 1123,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:a1d751221eb0ac1b": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "case-for-god": {
+            "edits": 1,
+            "tokens": 523,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:5da756fa398129d6": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "beginning-of-infinity": {
+            "edits": 1,
+            "tokens": 1110,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:b57f5004bdf3f4d4": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sapiens": {
+            "edits": 1,
+            "tokens": 8363,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:d30b2caa81b0a1bf": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "star-signs": {
+            "edits": 10,
+            "tokens": 11076,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:81bcbaddecdba851": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "third-thing": {
+            "edits": 4,
+            "tokens": 8346,
+            "first": "2026-10-04",
+            "last": "2026-10-04"
+          }
+        }
+      }
+    },
+    "codex:04cfdbdde30783fc": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "sluice": {
+            "edits": 3,
+            "tokens": 1635,
+            "first": "2026-10-05",
+            "last": "2026-10-05"
+          },
+          "water-smoke-slime": {
+            "edits": 19,
+            "tokens": 20025,
+            "first": "2026-10-05",
+            "last": "2026-10-05"
+          }
+        }
+      }
+    },
+    "codex:ed3a3eddd07648af": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "daylight-globe": {
+            "edits": 15,
+            "tokens": 17962,
+            "first": "2026-10-05",
+            "last": "2026-10-05"
+          }
+        }
+      }
+    },
+    "codex:c3415da5621b1dc5": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "water-smoke-slime": {
+            "edits": 5,
+            "tokens": 10927,
+            "first": "2026-10-05",
+            "last": "2026-10-05"
+          }
+        }
+      }
+    },
+    "claude:5869c10551d3de09": {
+      "provider": "claude",
+      "models": {
+        "claude-opus-4-8": {
+          "git-history": {
+            "edits": 1,
+            "tokens": 3259,
+            "first": "2026-07-23",
+            "last": "2026-07-23"
           }
         }
       }

@@ -106,6 +106,22 @@ Review the official sources and add dated rows before advancing `verified`.
 
 ## Per-page attribution
 
+The About page counts every known post and project, including unlisted and removed
+pages. The homepage, collection pages, archive index and archive folders supply new
+entries. Existing timeline topics and cards preserve the older entries. A moved page
+keeps its original identity; deleting a page changes its status to `removed` and clears
+its active link. Its title, recorded changes, model credit and commit history remain.
+Historical page text in Git supplies a word count when the file has been removed.
+Posts without a surviving edit transcript still have a card, labeled "No edit log."
+The October refresh also recovered five removed posts absent from the original
+topic list: The Quran: A Guided Reading, The Worst Pain in Medicine, Colophon,
+Every Push and Every Token, and Nobody Has Ever Explained Gravity. Their own file
+histories supply the build facts without changing the old timeline's commit rows.
+
+The change count is **commits**, not push events. One push can carry several commits.
+The append-only timeline retains its published snapshot from before the May history
+rewrite. It is not regenerated from only the commits that still exist in Git.
+
 The headline and model badges show total consumption across all projects: input,
 cache writes, cache reads and output. The page cards show **recorded file changes**,
 with each model's share. Their detail panels retain commit counts, build dates,
@@ -130,3 +146,13 @@ Run `node tools/test-about-usage.mjs` for duplicate, overlap, reset, inheritance
 pricing, date-boundary and persistence checks. `node tools/test-project-usage.mjs` covers
 the optional private audit. `node tools/check-about.mjs` validates the published totals,
 models, links, freshness dates and generated datasets without needing private logs.
+
+Run `node tools/test-about-post-history.mjs` for deletion, repeated refreshes, archive
+moves, unlisting, restoration and retained credit. The publication check also requires
+every historical post topic to have a card with the same status.
+
+GPT-6 Sol and GPT-6.1 Sol rates were checked October 4 against their official
+[GPT-6 Sol](https://developers.openai.com/api/docs/models/gpt-6-sol) and
+[GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol) pages. Each
+registry entry records its source and review date. The earlier models keep their
+September 23 review date.
