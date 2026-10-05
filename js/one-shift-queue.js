@@ -8,10 +8,10 @@
   if(task.kind==='service'){const job=sim.s.serviceJobs.find(j=>j.id===task.job),service=O.services.find(q=>q.id===job?.service);title=service?.name||title;detail=job?job.units+' finished cases':'';}
   if(task.kind==='putaway'&&dest?.lane)title='Stage pallet';
   if(task.kind==='pick')detail=task.count+' cases / '+item;
-  if(task.kind==='parcelPack')detail=task.units+' units / '+item;
+  if(task.kind==='parcelPack')detail=task.units+' units / '+item+' at Pack station';
   if(dest?.place==='storage')detail+=' to '+this.position({...dest,place:'storage'});
   else if(dest?.lane)detail+=' to '+(dest.lane==='receiving'?'Receiving':'Shipping');
-  else if(truck)detail+=' to '+(door?'Door '+door:O.client(truck.client).name);
+  else if(truck&&task.kind!=='parcelPack')detail+=' to '+(door?'Door '+door:O.client(truck.client).name);
   else if(task.kind==='walk')detail=task.exitTruck?'Required before truck departure':'Floor '+task.end.x+', '+task.end.y;
   return {id:task.id,title,detail:detail.trim()};
  };
