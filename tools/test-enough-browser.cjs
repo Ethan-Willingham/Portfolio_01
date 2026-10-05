@@ -67,6 +67,7 @@ const clickFraction=async(page,plot,f)=>{
   assert.match(await page.locator('#protein .enough-fact').textContent(),/62 lifting trials/);
   assert.match(await page.locator('#protein details').textContent(),/not a growth curve/);
   assert.match(await page.locator('#income .en-y-label').textContent(),/out of 100/);
+  assert.match(await page.locator('#savings .enough-readout').textContent(),/17 year-end contributions/);
   assert.equal(await page.locator('#savings .en-scenario').count(),1,'Alternate assumptions are labeled, not confidence limits');
   const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/8,000.*about 44%.*5,000/,'Walking opens at the lower edge of its broad flatter region');assert.match(await page.locator('#steps .enough-answer').textContent(),/8,000 to 10,000/);assert.equal(await page.locator('#steps-longer,[id^=longer-steps],.steps-longer').count(),0,'One walking card, no second study section');assert.equal(await page.locator('[data-steps-age]').count(),2,'Only one pair of walking age controls');
   await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'13300');assert.equal(await page.locator('#steps .enough-chart').getAttribute('aria-valuenow'),'13300','Opening and card share the same selected amount');

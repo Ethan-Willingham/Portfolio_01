@@ -33,6 +33,7 @@ assert.equal(M.enough(by('fruit-veg')),3);near(by('fruit-veg').points[3].sourceD
 near(M.estimate(by('fiber'),17),.90);near(M.estimate(by('fiber'),17,'low'),.86);near(M.estimate(by('fiber'),17,'high'),.93);assert.equal(by('fiber').evidenceSummary.yao2023.studies,14);const oldFiber=ctx.window.EnoughData.supportingEvidence.fiber2019;near(M.enough(oldFiber),31.857496,1e-5);near(M.estimate(oldFiber,15),.93);
 assert.equal(M.enough(by('income')),12);assert.match(by('income').points[12].label,/200,000 to \$300,000/);assert.ok(M.share(by('income'),14)<100,'Preserve highest income dip');
 near(M.enough(by('savings')),73.11250116948123);near(M.estimate(by('savings'),50),16.620772445041133);
+for(const fraction of [.2,.4,.5]){let balance=0,years=0;const target=(1-fraction)/.04;while(balance<target){balance=balance*1.05+fraction;years++;}assert.equal(Math.ceil(M.estimate(by('savings'),fraction*100)),years,'Whole annual contributions reach the target');}
 for(const p of by('savings').points){near(p.effect,M.estimate(by('savings'),p.dose));assert.ok(p.scenarioLow<=p.effect&&p.effect<=p.scenarioHigh);}
 near(M.enough(by('work')),53.48014871028985);near(M.basis(by('work')).best.dose,62.907897639532315);assert.ok(M.share(by('work'),72.5)<90);assert.equal(M.sensitivity(by('work')),null);
 near(M.sleepRange(by('sleep'))[0],6);near(M.sleepRange(by('sleep'))[1],7.25);assert.equal(by('meditation'),undefined);assert.equal(ctx.window.EnoughData.archivedEvidence.find(c=>c.id==='meditation').points.length,0);
