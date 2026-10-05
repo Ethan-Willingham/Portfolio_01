@@ -72,8 +72,8 @@ function chart(c,width,d,overview=false){
  const path=(values,key='effect')=>values.map((v,i)=>`${i?'L':'M'}${x(v).toFixed(2)},${y(value(v,key)).toFixed(2)}`).join(' ');
  const selected=M.clamp(d,min,max),point=value(selected);
  const baseY=y(0),line=path(ps);
- const tickValues=w<500&&c.id==='income'?[0,12,14]:w<500&&c.id==='smoking'?[0,2,3]:w<500&&c.id==='alcohol'?[0,2,5]:c.ticks;
- const ticks=tickValues.map(v=>{const label=c.kind==='categories'?c.points[v].shortLabel:c.id==='protein'?fmt(v,2):fmt(v,1);return `<text x="${x(v)}" y="${h-B+21}" text-anchor="${v===min?'start':v===max?'end':'middle'}">${esc(label)}</text>`;}).join('');
+ const tickValues=w<350&&riskChange?[0,8000,16000]:w<500&&c.id==='income'?[0,12,14]:w<500&&c.id==='smoking'?[0,2,3]:w<500&&c.id==='alcohol'?[0,2,5]:c.ticks;
+ const ticks=tickValues.map(v=>{const label=c.kind==='categories'?c.points[v].shortLabel:c.id==='protein'?fmt(v,2):fmt(v,1);return `<text class="en-x-tick" x="${x(v)}" y="${h-B+21}" text-anchor="${v===min?'start':v===max?'end':'middle'}">${esc(label)}</text>`;}).join('');
  const yticks=scale?scale.ticks:mode==='sweet'?[0,30,60]:mode==='model'?[0,5,10,15]:c.id==='alcohol'?[-10,0,20,40]:[0,50,100];
  const intervalPoints=ps.filter(v=>Number.isFinite(M.estimate(c,v,'low'))&&Number.isFinite(M.estimate(c,v,'high'))),hasInterval=intervalPoints.length===ps.length,scenario=c.id==='savings',bandPoints=scenario?ps:intervalPoints;
  const band=c.kind!=='categories'&&bandPoints.length>1?`<path class="en-uncertainty${scenario?' en-scenario':''}" d="${path(bandPoints,scenario?'scenarioLow':'low')} ${path([...bandPoints].reverse(),scenario?'scenarioHigh':'high').replace(/^M/,'L')} Z"/>`:'';

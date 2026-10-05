@@ -25,8 +25,8 @@ const clickFraction=async(page,plot,f)=>{
  fs.mkdirSync(destination,{recursive:true});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  browser=await chromium.launch({headless:true,executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing'});
  const url=process.env.ENOUGH_BASE_URL||'http://127.0.0.1:'+server.address().port;
- for(const width of [375,768,1440]){
-  const context=await browser.newContext({viewport:{width,height:width===375?812:900},hasTouch:width===375,isMobile:width===375,deviceScaleFactor:1});
+ for(const width of [320,375,768,1440]){
+  const context=await browser.newContext({viewport:{width,height:width<=375?812:900},hasTouch:width<=375,isMobile:width<=375,deviceScaleFactor:1});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)failures.push(r.url());});
   await page.goto(url+'/enough.html');await ready(page);await page.screenshot({path:path.join(destination,width+'-top.png')});
   assert.equal(await page.locator('.enough-card').count(),12);
@@ -142,6 +142,7 @@ const clickFraction=async(page,plot,f)=>{
    await page.keyboard.press('End');
    assert.equal(await steps.locator('.en-target,.en-guide,.enough-target-key').count(),0,'Walking has a broad flatter region, no exact enough guide');
    const clippedAge=await page.locator('#steps svg text,#overview-steps svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));assert.deepEqual(clippedAge,[]);
+   assert.ok(await page.locator('#steps svg,#overview-steps svg').evaluateAll(svgs=>svgs.every(svg=>[...svg.querySelectorAll('.en-x-tick')].every((el,i,els)=>{if(!i)return true;const left=els[i-1].getBBox(),right=el.getBBox();return right.x>=left.x+left.width+4;}))),'Walking step labels have visible separation on narrow phones');
    assert.ok(await steps.locator('.en-uncertainty').evaluate(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.y>=29&&b.y+b.height<=v.height-55;}),'Full source confidence band fits');
   }
   await page.keyboard.press('Home');await page.keyboard.press('PageUp');assert.equal(await steps.getAttribute('aria-valuenow'),'1000');
