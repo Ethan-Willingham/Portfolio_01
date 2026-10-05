@@ -26,6 +26,7 @@
     {id:'relay', name:'Field Relay', type:'Cross-dock', items:['stove','lantern'], rule:'FIFO', volume:8, receive:15, ship:16, storage:0, cases:.6, rep:60, requires:['crossdock'], days:14, profile:'crossdock', blurb:'In this morning, out this afternoon.'}
   ];
   const equipment = [
+    ['pallets','Empty pallets',20,[], 'throughput','Ten empty wooden pallets for building case orders.'],
     ['rack','Ground rack',55,[], 'storage','Two pallet positions. Choose where they go.'],
     ['walkie','Electric walkie',260,[], 'throughput','Less effort and faster floor moves. Training included.'],
     ['training','Forklift training',80,[], 'people','Instruction, practice and a workplace evaluation.'],
@@ -77,7 +78,7 @@
     ['asrs','Automated storage',2600,['autoLift','reach'], 'storage','High-density storage with automatic retrieval.'],
     ['secondShift','Second shift',450,['forklift'], 'people','Keep working under the lights until 9 PM.']
   ];
-  O.liveEquipment = new Set(['rack','walkie','training','usedLift','lift','upper','reach','door','appointments','wrapStand','wrapper','labeler','zones','cold','cage','bench','ticket','assembly','line','yard','drop','baler','repair','crossdock','expansion','charger','robot','autoLift','secondShift','shelves','cart','pack','narrow','heatmap','maintenance','cartonFlow','pickFace','waves']);
+  O.liveEquipment = new Set(['pallets','rack','walkie','training','usedLift','lift','upper','reach','door','appointments','wrapStand','wrapper','labeler','zones','cold','cage','bench','ticket','assembly','line','yard','drop','baler','repair','crossdock','expansion','charger','robot','autoLift','secondShift','shelves','cart','pack','narrow','heatmap','maintenance','cartonFlow','pickFace','waves']);
   O.equipment = equipment.map(([id,name,cost,requires,branch,description])=>({id,name,cost,requires,branch,description}));
   O.staff = [
     {name:'Mara',role:'receiver',wage:48,color:'#a1b59b'},

@@ -6,13 +6,13 @@
  let last=performance.now(),accumulator=0,lastUI=0;
  function orientation(){const before=app.rotated;app.rotated=matchMedia('(pointer:coarse)').matches&&innerHeight>innerWidth;document.getElementById('shift-rotate').hidden=!app.rotated;if(app.rotated&&!before)app.input.suspend();}
  function frame(now){const dt=Math.min(.15,(now-last)/1000);last=now;if(!app.paused&&!app.hubPause&&!app.menuPause&&!app.rotated&&!app.hidden){accumulator+=dt*app.speed;while(accumulator>=O.DT){app.sim.tick();accumulator-=O.DT;}}else accumulator=0;
-  app.renderer.draw(app.sim.s,app.ui);if(now-lastUI>150){app.ui.update();lastUI=now;}app.raf=requestAnimationFrame(frame);
+  app.renderer.draw(app.sim.s,app.ui);if(now-lastUI>150){app.ui.update();app.audio.update(app.sim.s,!app.paused&&!app.hubPause&&!app.menuPause&&!app.rotated&&!app.hidden);lastUI=now;}app.raf=requestAnimationFrame(frame);
  }
  window.addEventListener('resize',()=>{app.renderer.resize();orientation();});document.addEventListener('visibilitychange',()=>{app.hidden=document.hidden;accumulator=0;if(app.hidden)app.audio.suspend();else{last=performance.now();app.audio.unlock();}});
  window.addEventListener('pagehide',()=>{if(!app.preview)O.saves.save(app.sim.s);app.audio.suspend();});
  orientation();app.ui.update();canvas.focus({preventScroll:true});app.raf=requestAnimationFrame(frame);
  root.__oneShift={
-  newGame(seed=1,mode='normal'){app.sim=new O.Sim(seed,mode);app.ui.target=null;app.ui.selected=[];app.ui.lastPhase='shift';app.ui.closeHub();app.renderer.home(app.sim.s);app.ui.update();return this.state();},
+  newGame(seed=1,mode='normal'){app.sim=new O.Sim(seed,mode);app.ui.target=null;app.ui.selected=[];app.ui.lastPhase='shift';app.ui.osdSeen=false;app.ui.osdUntil=0;app.ui.closeHub();app.renderer.home(app.sim.s);app.ui.update();return this.state();},
   command(c){const r=app.ui.issue(c);return r;},
   step(n){app.sim.step(n);app.ui.update();app.renderer.draw(app.sim.s,app.ui);return this.state();},
   state:()=>app.sim.snapshot(),hash:()=>app.sim.hash(),reconcile:()=>app.sim.reconcile(),

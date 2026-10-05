@@ -6,9 +6,18 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+from fontTools.ttLib import TTFont
 import numpy as np
 
 folder = Path(sys.argv[1])
+for weight in ["regular", "bold"]:
+    font = TTFont(Path(__file__).resolve().parents[1] / "assets" / "fonts" / f"segoe_ui_{weight}.woff")
+    font.flavor = None
+    target = folder / f"segoe-ui-{weight}-plot.ttf"
+    font.save(target)
+    font_manager.fontManager.addfont(target)
+plt.rcParams["font.family"] = "Segoe UI"
 styles = ["casual", "average", "expert", "storage", "throughput", "services", "fulfillment", "crossdock", "mixed"]
 colors = ["#9bc3ae", "#a9b9ce", "#dac69b", "#9bc3ae", "#a9b9ce", "#dac69b", "#cba6b4", "#b4c392", "#daa58b"]
 plt.rcParams.update({"figure.facecolor":"#303931", "axes.facecolor":"#303931", "axes.edgecolor":"#a4a293", "text.color":"#ede0c0", "axes.labelcolor":"#b8b2a2", "xtick.color":"#b8b2a2", "ytick.color":"#b8b2a2", "font.size":10, "savefig.facecolor":"#303931"})

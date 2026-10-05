@@ -33,15 +33,23 @@ Single-unit fulfillment opens a case using its real case pack. Units travel
 with a packing task, become individually identified parcels and load against
 a specific order at the carrier cutoff. Cancelled or overnight packing returns
 unpacked units safely. Kitting and assembly consume actual component cases
-across partial pallets, with quantities capped to outbound demand.
+across partial pallets, with quantities capped to outbound demand. Packing and
+service recipes enforce client ownership. Ready parcels and queued carrier
+loads reserve the order balance, including orders packed in several parts.
 
 Drivers can replenish configured ground pick faces from upper reserve. Loaders
 can stage released waves before the truck arrives. A task can be reassigned
 from one worker's queue to another person while retaining its reservation.
+Idle staff can be dismissed, with final shift wages charged once. Evening
+dismissal safely returns stock from unfinished work. Empty pick pallets can be
+reused or returned to the stack. Shipping sends the wooden pallet away with its
+goods; replacement pallets cost packaging money. Evening purchases update the
+closing report, and consumables count against operating profit. Case picking takes an empty
+pallet from the stack to its source and visibly transfers cases.
 Painted zones supply putaway destinations. Cold and secure storage validate
 client requirements. Layouts can be shared by URL into a separate sandbox.
 
-Purchases have 38 available catalog entries. Unfinished gifts, displays,
+Purchases have 39 available catalog entries. Unfinished gifts, displays,
 returns, refurbishing, conveyors, sortation, kanban, inspection fixtures, robot
 arms, ASRS, a second building and yard tractors are hidden. Several available
 systems are still simplified: the line speeds a work order rather than moving
@@ -51,7 +59,8 @@ finished physical versions of those systems.
 
 Workers route independently using cached A*. They do not yet yield to each
 other, and vehicles are worker equipment rather than a scarce vehicle pool.
-Construction places racks immediately. Rack clearance enforces a working
+Construction places racks immediately. Rack and dock-door purchases check
+space before charging. Rack clearance enforces a working
 aisle, but routes do not model separate vehicle turning envelopes. Fatigue is
 recorded but does not yet cause accuracy errors. The active situation deck has
 10 events; the optional notebook has 160 definitions. These counts do not
@@ -70,15 +79,18 @@ Three save slots, end-of-day autosave, import/export and a version-zero migratio
 are supported. Import rejects malformed nested state, orphaned reservations,
 bad label data, goods imbalance and ledger imbalance. Imported names, lots
 and seals display as literal text. An art preview cannot
-replace the live autosave. `one-shift-lab.html` offers four playable color
+replace the live autosave. Standalone recall and power-outage challenges are
+hidden until their starting states are developed. `one-shift-lab.html` offers four playable color
 studies and five title proposals. They are provisional studies, not an owner
 art approval or four independently designed sprite systems.
 
 Sprites are procedural and cached at 192 by 192 pixels. Static floor chunks and
 light layers are cached; only the top stored pallet at a position is drawn in
 the world, with other levels available in the rack inset. Quiet Web Audio cues
-accompany important actions. Ambient audio and several animation details from
-the art bible remain unfinished.
+accompany important actions. Low air noise fades during
+pause, menus and hidden tabs. Equipment tones stop during an outage. Stations have distinct bench, packing,
+wrapping and recycling drawings; forklift operators sit within the vehicle.
+Several animation and lighting details from the art bible remain unfinished.
 
 ## Checks and reproduction
 
@@ -112,8 +124,8 @@ in `finally`. Never use the owner's personal Chrome binary for headless tests.
 
 On the Apple M1 Pro with 32 GB, the synthetic large fixture contains 8,000 stored
 pallets plus 30 inbound pallets, 60 workers, 20 rendered forklifts and 30 trucks.
-The last browser check measured about 2.6 ms mean and 8.9 ms 95th-percentile draw
-work at 1440 by 900. Five complete simulation shifts measured 400 to 470 ms.
+The last browser check measured about 2.5 ms mean and 8.7 ms 95th-percentile draw
+work at 1440 by 900. Five complete simulation shifts measured 403 to 473 ms.
 This is a synthetic load on one host, not a claim of performance on every phone
 or of 20 independently allocated vehicle entities. Headless frame-rate caps
 were disabled for the cadence check.

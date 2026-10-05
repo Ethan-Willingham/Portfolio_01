@@ -7,6 +7,7 @@
   O.post=function(s,category,amount,reason) {
     const cents=Math.round(amount*100);s.cash+=cents;
     s.journal.push({day:s.day,minute:s.minute,category,cents,reason});
+    const report=s.phase==='evening'&&s.reports.at(-1);if(report&&report.day===s.day){report.entries.push(s.journal.at(-1));report.by[category]=(report.by[category]||0)+cents;report.closing=s.cash;if(!['Purchases','Credit'].includes(category))report.profit+=cents;s.records.profit=Math.max(0,...s.reports.map(r=>r.profit));}
     s.events.push({kind:cents>=0?'fee':'cost',text:(cents>=0?'+':'-')+O.money(Math.abs(cents)/100)+' '+reason,tick:s.tick});if(s.events.length>80)s.events.shift();
   };
   O.afford=function(s,cost) {return s.cash+Math.max(0,50000-s.credit)>=Math.round(cost*100);};
@@ -21,7 +22,7 @@
     if(!e)return 'Unknown equipment.';
     if(!O.liveEquipment.has(id))return 'This equipment is not available in this release.';
     if(s.day<3&&id!=='rack')return 'The shop opens after your third shift.';
-    if(s.owned[id]&&!['rack','door','expansion','robot'].includes(id))return 'Already installed.';
+    if(s.owned[id]&&!['pallets','rack','door','expansion','robot'].includes(id))return 'Already installed.';
     if(e.requires.some(r=>!O.has(s,r)))return 'First: '+e.requires.filter(r=>!O.has(s,r)).map(r=>r==='forklift'?'a forklift':O.equipment.find(e=>e.id===r)?.name||r).join(', ')+'.';
     if(id==='usedLift'&&s.owned.lift||id==='lift'&&s.owned.usedLift)return 'You already have a forklift.';
     if(!O.afford(s,e.cost))return 'Save a little more, or choose a smaller purchase.';
