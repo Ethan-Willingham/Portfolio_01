@@ -8,14 +8,14 @@
  var BASE='https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/globe-clouds/',CACHE='daylight-globe-shared-v1';
  function validate(value){
   if(!value||value.version!==1||value.width!==2048||!Array.isArray(value.frames)||!value.frames.length||value.frames.length>30)throw new Error('Invalid shared cloud archive');
-  var generated=new Date(value.generatedAt);if(!Number.isFinite(+generated))throw new Error('Invalid archive clock');
+  var generated=new Date(value.generatedAt),processing=value.processing===undefined?0:value.processing;if(!Number.isFinite(+generated)||!Number.isInteger(processing)||processing<0||processing>100)throw new Error('Invalid archive clock or processing revision');
   var catalog=clouds.validate(value.catalog),last=-Infinity;
   var frames=value.frames.map(function(frame){
    var time=new Date(frame.time);if(!Number.isFinite(+time)||time.toISOString()!==frame.time||+time%3600000||+time<=last||time>generated||!clouds.published(catalog,+time)||typeof frame.natural!=='boolean')throw new Error('Invalid archived cloud time');last=+time;
    var out={time:time,natural:frame.natural};
    ['visible','infrared'].forEach(function(kind){var asset=frame[kind];if(!asset||!Number.isInteger(asset.bytes)||asset.bytes<40||asset.bytes>8000000||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.file!==frame.time.replace(/[-:]/g,'').slice(0,13)+'-'+kind+'-'+asset.sha256.slice(0,16)+'.webp')throw new Error('Invalid cloud asset');out[kind]={file:asset.file,bytes:asset.bytes,sha256:asset.sha256};});return out;
   });
-  return {version:1,width:value.width,generatedAt:generated,catalog:catalog,frames:frames};
+  return {version:1,processing:processing,width:value.width,generatedAt:generated,catalog:catalog,frames:frames};
  }
  function dimensions(bytes){
   function u24(i){return bytes[i]|bytes[i+1]<<8|bytes[i+2]<<16;}
@@ -35,9 +35,9 @@
   var hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(function(v){return v.toString(16).padStart(2,'0');}).join('');if(hash!==asset.sha256)throw new Error('Cloud checksum mismatch');
   return new Blob([bytes],{type:'image/webp'});
  }
- async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v='+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
+ async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v='+clouds.PROCESSING+'-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
  async function fetchFrame(manifest,time,options){
-  options=options||{};var frame=manifest.frames.find(function(f){return +f.time===+time;});if(!frame)throw new Error('Cloud hour not archived');
+  options=options||{};if(manifest.processing<clouds.PROCESSING)throw new Error('Cloud processing revision is outdated');var frame=manifest.frames.find(function(f){return +f.time===+time;});if(!frame)throw new Error('Cloud hour not archived');
   var cache=null;if(typeof caches!=='undefined')try{cache=await caches.open(CACHE);}catch(_){}
   var blobs=await Promise.all(['visible','infrared'].map(async function(kind){var asset=frame[kind],url=BASE+asset.file;if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,asset,manifest.width);}catch(_){await cache.delete(url);}}
    if(options.cacheOnly)throw new Error('Cloud hour not cached');return data.request(url,options,async function(response){var copy=cache?response.clone():null,blob=await imageBlob(response,asset,manifest.width);if(cache)try{await cache.put(url,copy);}catch(_){}return blob;});}));

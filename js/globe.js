@@ -613,7 +613,7 @@
     finally{if(!installed)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
   }
   function hourlyClouds(){return !!(cloudCatalog&&cloudCatalog.dense&&instant>=cloudCatalog.start);}
-  function cloudStamp(){if(!cloudCatalog)return null;return hourlyClouds()?clouds.frameAt(cloudCatalog,instant,new Date()):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
+  function cloudStamp(){if(!cloudCatalog)return null;if(recentMode&&hourlyClouds()&&sharedManifest&&sharedManifest.processing>=clouds.PROCESSING&&instant<=Date.now()+300000){var available=sharedManifest.frames.filter(function(f){return f.time<=instant&&instant-f.time<5*3600000;});if(available.length)return new Date(available[available.length-1].time);}return hourlyClouds()?clouds.frameAt(cloudCatalog,instant,new Date()):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
   async function requestCloudBytes(stamp,width,signal,timeout,offline,force){
     if(!cloudCatalog.dense||stamp<cloudCatalog.start)return data.fetchCloudFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline});
     var key=stamp.toISOString()+'/'+width,cached=compressedClouds.get(key);if(cached&&(!force||cached.shared||cached.blobs.slice(0,5).every(Boolean)))return cached;
@@ -649,10 +649,11 @@
         var context=canvas.getContext('2d'),pixels=context.getImageData(0,0,canvas.width,canvas.height);
         canvas.width=canvas.height=1;
         if(result.blobs[index].type==='image/jpeg')for(var blank=0;blank<pixels.data.length;blank+=4)if(Math.max(pixels.data[blank],pixels.data[blank+1],pixels.data[blank+2])<8)pixels.data[blank+3]=0;
-        if(clouds.GROUPS[index].source===clouds.NASA&&clouds.GROUPS[index].kind==='infrared')clouds.normalizeThermal(pixels.data);
-        sourcePixels.push(data.featherCoverage(pixels.data,result.width));
+        sourcePixels.push(pixels.data);
         if(signal.aborted){var e=new Error('Hourly decode aborted');e.name='AbortError';throw e;}
       }
+      clouds.maskScanArtifacts(sourcePixels,result.width);
+      for(var source=0;source<sourcePixels.length;source++)if(sourcePixels[source]){if(clouds.GROUPS[source].source===clouds.NASA&&clouds.GROUPS[source].kind==='infrared')clouds.normalizeThermal(sourcePixels[source]);sourcePixels[source]=data.featherCoverage(sourcePixels[source],result.width);}
       for(var group=0;group<2;group++){
         var output=document.createElement('canvas');output.width=result.width;output.height=result.width/2;outputs.push(output);
         var ctx=output.getContext('2d'),image=ctx.createImageData(result.width,result.width/2);image.data.set(clouds.composite(sourcePixels,result.width,group?'infrared':'visible'));ctx.putImageData(image,0,0);
@@ -805,6 +806,7 @@
     if(replayController)replayController.abort();replayController=new AbortController();var controller=replayController,signal=controller.signal;
     replayKey=key;replayChecked=Date.now();replayBusy=true;replayFailed=new Set();
     replayClouds=recentMode?timeline.rangeFrames(cloudCatalog&&cloudCatalog.dense&&!hourlyClouds()?cloudCatalog.legacy:cloudCatalog,day,new Date(),hourlyClouds()?3600000:3*3600000,hourlyClouds()?clouds.published:null):hourlyClouds()?clouds.frames(cloudCatalog,instant,new Date()):timeline.cloudFrames(cloudCatalog&&cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());
+    if(recentMode&&sharedManifest&&sharedManifest.processing>=clouds.PROCESSING&&sharedManifest.frames[sharedManifest.frames.length-1].time>=Date.now()-5*3600000)replayClouds=sharedManifest.frames.filter(function(f){return f.time>=Math.floor(+day.start/3600000)*3600000&&f.time<=day.end;}).map(function(f){return new Date(f.time);});
     replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-90*60000&&entry.forecast<+day.end+90*60000&&entry.observation<=Date.now();});
     cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
     var keepPrepared=new Set(replayClouds.map(function(t){return t.toISOString()+'/'+cloudWidth;}));preparedClouds=new Set(Array.from(preparedClouds).filter(function(k){return keepPrepared.has(k);}));
