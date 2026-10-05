@@ -3,7 +3,7 @@
 .post-header { margin-bottom: 1.6rem; }
 .globe-wrapper {
   margin: .5rem 0 2.2rem;
-  width: min(1040px, calc(100vw - 2 * var(--gutter)));
+  width: min(1040px, calc(100vw - 2 * min(var(--gutter), 24px)));
   margin-left: 50%; transform: translateX(-50%);
   box-shadow: none; background: var(--d-bg-raised);
 }
@@ -45,9 +45,10 @@
 .globe-explore { border-top: 1px solid var(--rule); margin-top: .85rem; padding-top: .85rem; }
 .globe-explore[hidden], .globe-pin[hidden], [hidden].globe-return, [hidden].globe-fs-btn { display: none; }
 .globe-explore-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: .75rem 1.5rem; align-items: start; }
+.globe-field { min-width: 0; }
 .globe-field label, .globe-tilts legend { display: block; font-size: .8rem; color: var(--text-dim); margin-bottom: .35rem; }
-.globe-field input[type=date] { width: 100%; min-height: 44px; padding: .4rem .65rem; background: var(--d-bg); color: var(--text); font-family: var(--font-mono); font-size: .8rem; border: 1px solid var(--d-rule-strong); border-radius: 3px; }
-.globe-hour-head { display: flex; justify-content: space-between; gap: 1rem; }
+.globe-field input[type=date] { width: 100%; min-width: 0; min-height: 44px; padding: .4rem .65rem; background: var(--d-bg); color: var(--text); font-family: var(--font-mono); font-size: .8rem; border: 1px solid var(--d-rule-strong); border-radius: 3px; }
+.globe-hour-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; }
 .globe-hour-head output { font-family: var(--font-mono); font-size: .75rem; white-space: nowrap; }
 .globe-field input[type=range] { width: 100%; height: 44px; accent-color: var(--accent); cursor: pointer; }
 .globe-tilts { border: 0; margin-top: .65rem; }
@@ -57,7 +58,7 @@
 .globe-tilt-note, .globe-time-basis { font-size: .75rem; color: var(--text-dim); margin: .45rem 0 !important; line-height: 1.5; }
 .globe-explore-actions { margin-top: .6rem; }
 .globe-pin { border-top: 1px solid var(--rule); margin-top: .85rem; padding-top: .85rem; }
-.globe-pin-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.globe-pin-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
 .globe-pin-head h2 { font: 1.05rem var(--font-heading); margin: 0; }
 .globe-pin-close { min-width: 44px; min-height: 44px; border: 0; padding: .4rem; background: none; color: var(--text-dim); font: .75rem var(--font-body); cursor: pointer; }
 .globe-pin dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem 1rem; margin-top: .35rem; }
@@ -72,18 +73,18 @@
 @media (max-width: 900px) { .globe-pin dl { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) {
   #globe-container { height: 355px; min-height: 260px; }
-  .globe-foot { padding: .8rem .85rem .9rem; }
+  .globe-foot { padding: min(.8rem, 16px) min(.85rem, 16px) min(.9rem, 18px); }
   .globe-status-row { flex-wrap: wrap; }
-  .globe-status-text { flex-basis: calc(100% - 108px); }
-  #globe-explore-toggle { padding: .55rem .65rem; max-width: 95px; }
+  .globe-status-text { flex-basis: calc(100% - max(108px, 7rem)); min-width: min(100%, 8rem); }
+  #globe-explore-toggle { padding: .55rem .65rem; max-width: min(100%, max(95px, 6rem)); }
   .globe-explore-grid { grid-template-columns: 1fr; gap: .7rem; }
   .globe-pin dl { grid-template-columns: 1fr 1fr; gap: .7rem 1rem; }
   .globe-info { font-size: .68rem; }
 }
 @media (max-height: 480px) and (orientation: landscape) {
-  .globe-wrapper.is-fullscreen { flex-direction: row; }
-  .is-fullscreen #globe-container { width: 65%; }
-  .is-fullscreen .globe-foot { max-height: 100dvh; width: 35%; border-top: 0; border-left: 1px solid var(--rule); }
+  .globe-wrapper.is-fullscreen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); grid-auto-rows: minmax(120px, 1fr); }
+  .is-fullscreen #globe-container { width: auto; height: auto; }
+  .is-fullscreen .globe-foot { min-height: 0; max-height: none; width: auto; border-top: 1px solid var(--rule); }
   .is-fullscreen .globe-status-row { flex-wrap: wrap; }
-  .is-fullscreen .globe-explore-grid, .is-fullscreen .globe-pin dl { grid-template-columns: 1fr; }
+  .is-fullscreen .globe-explore-grid, .is-fullscreen .globe-pin dl { grid-template-columns: minmax(0, 1fr); }
 }

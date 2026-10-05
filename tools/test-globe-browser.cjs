@@ -127,6 +127,16 @@ let browser;
       await page.locator('#globe-return').focus();await page.keyboard.press('Enter');s=await state();
       check(width+' Return to live restores real tilt and forecast',s.live&&s.tilt===null&&s.aurora&&s.moon);
       check(width+' Return to live preserves keyboard focus',await page.evaluate(()=>document.activeElement.id==='globe-explore-toggle'));
+      if(width===375){
+        await page.evaluate(()=>document.documentElement.style.fontSize='32px');
+        for(const size of [375,320]){
+          await page.setViewportSize({width:size,height:812});
+          check(size+' mobile enlarged text keeps status and Explore apart',await page.evaluate(()=>{const a=document.querySelector('.globe-status-text').getBoundingClientRect(),b=document.querySelector('#globe-explore-toggle').getBoundingClientRect();return a.right<=b.left+1||a.bottom<=b.top+1;}));
+          check(size+' enlarged mobile controls do not cause horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.querySelector('.globe-foot').scrollWidth<=document.querySelector('.globe-foot').clientWidth+1));
+          await page.screenshot({path:path.join(dump,size+'-mobile-large-text.png'),fullPage:true});
+        }
+        await page.evaluate(()=>document.documentElement.style.fontSize='');await page.setViewportSize({width,height:1000});
+      }
       if(width===768){
         await page.evaluate(()=>{document.documentElement.style.fontSize='32px';__globeTest.pin(0,0);});
         check('200 percent text preserves all four readable pin facts',await page.locator('#globe-pin dd').evaluateAll(elements=>elements.length===4&&elements.every(el=>el.scrollWidth<=el.clientWidth+1)));
@@ -246,6 +256,15 @@ let browser;
     await fsPage.clock.setFixedTime(new Date('2026-10-05T00:06:00Z'));await fsPage.waitForFunction(()=>__globeTest.state().instant==='2026-10-05T00:06:00.000Z');
     check('fullscreen rendering advances the actual Live instant',true);
     await fsPage.screenshot({path:path.join(dump,'narrow-fullscreen-from-offscreen.png')});
+    await fsPage.evaluate(()=>document.documentElement.style.fontSize='32px');
+    await fsPage.waitForFunction(()=>document.querySelector('.globe-foot').getBoundingClientRect().width===innerWidth);
+    if(!await fsPage.locator('#globe-explore').isVisible())await fsPage.locator('#globe-explore-toggle').click();
+    await fsPage.locator('[data-tilt="45"]').click();await fsPage.locator('#globe-return').focus();
+    check('200 percent text in narrow fullscreen has no horizontal footer scrolling',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollLeft===0));
+    await fsPage.screenshot({path:path.join(dump,'narrow-fullscreen-large-text.png')});
+    await fsPage.evaluate(()=>document.documentElement.style.fontSize='');
+    await fsPage.waitForFunction(()=>document.querySelector('.globe-foot').getBoundingClientRect().width<innerWidth);
+    check('ordinary narrow fullscreen retains a readable two-column layout',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
     await fsPage.locator('#globe-fullscreen').click();await fsPage.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
     await fsPage.waitForFunction(()=>!__globeTest.state().inView&&!__globeTest.state().pending);
     check('leaving fullscreen restores the offscreen rendering pause',true);
