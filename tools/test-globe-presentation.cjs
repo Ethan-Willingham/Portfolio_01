@@ -4,6 +4,7 @@
    REAL_WIDTHS=768 optionally limits an upstream retry to named widths.
    TARGETED=1 skips the full matrix for loading, cache and presentation regressions.
    NATIVE_ONLY=1 runs the real native-fullscreen Escape regression alone.
+   MOBILE_ONLY=1 runs phone, short-landscape and enlarged-text panel checks.
    DUMP=/absolute/folder writes evidence. All renderer hooks are private to the
    owned local server. Chrome for Testing and that server close in finally. */
 'use strict';
@@ -14,6 +15,7 @@ const root = path.resolve(__dirname, '..');
 const dump = process.env.DUMP || '/Users/ethan/Portfolio_01/research/daylight-live/sun-polish/presentation-browser';
 const realOnly = process.env.REAL_ONLY === '1', real = realOnly || process.env.REAL_DATA === '1';
 const nativeOnly = process.env.NATIVE_ONLY === '1';
+const mobileOnly = process.env.MOBILE_ONLY === '1';
 const fixedNow = '2026-10-05T03:10:00Z';
 const checks=[], evidence=[], errors=[], requests=[];
 fs.mkdirSync(dump,{recursive:true});
@@ -39,7 +41,7 @@ window.__globePresentation = {
   for(var i=0;i<positions.count;i++){point.fromBufferAttribute(positions,i).applyMatrix4(earth.matrixWorld).project(camera);bounds.left=Math.min(bounds.left,point.x);bounds.right=Math.max(bounds.right,point.x);bounds.top=Math.min(bounds.top,point.y);bounds.bottom=Math.max(bounds.bottom,point.y);}
   return bounds;
  },
- pin:function(lat,lon){setPin({lat:lat,lon:lon});},
+ pin:function(lat,lon){setPin(lat===null?null:{lat:lat,lon:lon});},
  pixelVisibility:function(kind){
   var w=container.clientWidth,h=container.clientHeight,rt=new THREE.WebGLRenderTarget(w,h),items=kind==='stars'?[starField]:[sunBody,sunGlow],previous=items.map(function(m){return m.visible;}),oldTarget=renderer.getRenderTarget();
   function read(){renderer.setRenderTarget(rt);renderer.render(scene,camera);var bytes=new Uint8Array(w*h*4);renderer.readRenderTargetPixels(rt,0,0,w,h,bytes);return bytes;}
@@ -198,16 +200,45 @@ async function nativeFullscreenCheck(browser){
  const background=await page.evaluate(()=>({focused:window.__nativeBackgroundFocus,trustedClick:window.__nativeBackgroundClick===true,inert:!!document.querySelector('.post-back').closest('[inert]')}));
  check('background link accepts focus and an ordinary trusted click after Escape',clicked&&background.focused&&background.trustedClick&&!background.inert,background);await capture(page,'native-fullscreen-exited');evidence.push({nativeFullscreen:{before,entered,exited,background}});await context.close();
 }
+async function mobilePanelsCheck(browser){
+ for(const [width,height]of[[320,568],[375,812],[667,375],[844,390]]){
+  const context=await browser.newContext({viewport:{width,height},hasTouch:true,isMobile:true,deviceScaleFactor:1,timezoneId:'America/Chicago'});await routes(context);const page=await context.newPage(),name='mobile-'+width;listen(page,name);await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);await capture(page,name+'-opening');
+  for(const mode of['page','fullscreen','fullscreen-200-text','page-200-text']){
+   if(mode==='fullscreen'){await page.locator('#globe-fullscreen').click();await page.locator('.globe-foot').evaluate(el=>{el.scrollTop=0;});await page.waitForTimeout(250);const core=await layout(page);check(name+' ordinary fullscreen shows date, time, Live and every tilt choice together',core.controls.every(c=>c.inViewport),core);await capture(page,name+'-fullscreen-controls');}
+   if(mode==='fullscreen-200-text')await page.evaluate(()=>{document.documentElement.style.fontSize='32px';});
+   if(mode==='page-200-text'){await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector('.globe-wrapper').classList.contains('is-fullscreen'));}
+   await page.evaluate(()=>__globePresentation.pin(69.6492,18.9553));await page.locator('.globe-sources').evaluate(el=>{el.open=true;});await page.waitForTimeout(250);
+   const fit=await page.evaluate(()=>{
+    const foot=document.querySelector('.globe-foot'),fr=foot.getBoundingClientRect(),targets=Array.from(document.querySelectorAll('.globe-wrapper button,.globe-wrapper input,.globe-sources summary')).filter(el=>el.getClientRects().length&&!el.closest('[hidden]')).map(el=>{const r=el.getBoundingClientRect();return {id:el.id||el.className,width:r.width,height:r.height,clipped:el.scrollWidth>el.clientWidth+2,horizontal:r.left>=-1&&r.right<=innerWidth+1};});
+    const text=Array.from(foot.querySelectorAll('p,output,h2,dt,dd')).filter(el=>el.getClientRects().length&&!el.closest('[hidden]')&&!el.classList.contains('globe-sr-only')).map(el=>({text:el.textContent.trim().slice(0,75),clipped:el.scrollWidth>el.clientWidth+2,horizontal:el.getBoundingClientRect().left>=fr.left-1&&el.getBoundingClientRect().right<=fr.right+1}));
+    return {overflow:document.documentElement.scrollWidth>innerWidth+1,foot:fr.toJSON(),targets,text,canvas:document.querySelector('#globe-container').getBoundingClientRect().toJSON(),space:getComputedStyle(document.querySelector('#globe-container')).backgroundColor};
+   });
+   check(name+' '+mode+' open Sources and pin panels fit horizontally',!fit.overflow&&fit.targets.every(t=>t.horizontal&&!t.clipped)&&fit.text.every(t=>t.horizontal&&!t.clipped),fit);
+   check(name+' '+mode+' control touch targets stay at least 44 pixels',fit.targets.every(t=>t.width>=43.9&&t.height>=43.9),fit.targets);
+   check(name+' '+mode+' scene fallback is physically black',fit.space==='rgb(0, 0, 0)',fit.space);
+   if(mode.startsWith('fullscreen'))check(name+' '+mode+' keeps the scene visible beside or above the panels',fit.canvas.height>=120&&fit.canvas.width>=120&&fit.canvas.left>=0&&fit.canvas.right<=width+1&&fit.canvas.top>=0&&fit.canvas.bottom<=height+1,fit.canvas);
+   const reachable=[];for(const selector of['#globe-date','#globe-hour','.globe-tilt-options button:last-child','#globe-pin-close','.globe-sources summary','.globe-sources a']){const el=page.locator(selector).last();await el.scrollIntoViewIfNeeded();reachable.push(await el.evaluate(el=>{const r=el.getBoundingClientRect();let good=r.top>=-1&&r.bottom<=innerHeight+1&&r.left>=-1&&r.right<=innerWidth+1;for(let p=el.parentElement;p;p=p.parentElement){if(/auto|scroll|hidden/.test(getComputedStyle(p).overflowY)){const b=p.getBoundingClientRect();good=good&&r.top>=b.top-1&&r.bottom<=b.bottom+1;}}return {text:el.textContent.trim().slice(0,40),good};}));if(selector==='#globe-pin-close')await capture(page,name+'-'+mode+'-pin');}
+   check(name+' '+mode+' every main control, pin close and source link can be revealed',reachable.every(x=>x.good),reachable);await capture(page,name+'-'+mode+'-sources-pin');evidence.push({mobilePanels:{width,height,mode,fit,reachable}});
+   if(mode==='fullscreen-200-text'){
+    await page.locator('#globe-container').focus();const focused=[];for(let i=0;i<28;i++){await page.keyboard.press('Tab');focused.push(await page.evaluate(()=>{const el=document.activeElement;if(!el.matches('#globe-date,#globe-hour,#globe-return,.tilt-btn,#globe-pin-close,.globe-sources summary'))return null;const r=el.getBoundingClientRect();let good=r.top>=-1&&r.bottom<=innerHeight+1&&r.left>=-1&&r.right<=innerWidth+1;for(let p=el.parentElement;p;p=p.parentElement){if(/auto|scroll|hidden/.test(getComputedStyle(p).overflowY)){const b=p.getBoundingClientRect();good=good&&r.top>=b.top-1&&r.bottom<=b.bottom+1;}}return {id:el.id||el.dataset.tilt||el.tagName,good};}));}
+    const main=focused.filter(Boolean),ids=new Set(main.map(x=>x.id));check(name+' enlarged keyboard focus reveals every main control, pin close and Sources',main.every(x=>x.good)&&['globe-date','globe-hour','globe-return','22.1','current','24.5','45','globe-pin-close','SUMMARY'].every(id=>ids.has(id)),main);evidence.push({mobileKeyboard:{width,height,focused}});
+   }
+   await page.locator('.globe-sources').evaluate(el=>{el.open=false;});await page.evaluate(()=>__globePresentation.pin(null));
+  }
+  await context.close();
+ }
+}
 let browser;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const startSources=hashes();
  try{
   browser=await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:process.env.HEADFUL!=='1'});
-  if(nativeOnly)await nativeFullscreenCheck(browser);
-  else{if(!realOnly){if(process.env.TARGETED!=='1')await matrix(browser,false);await loadingChecks(browser);await reducedResolutionCheck(browser);await damagedRetryRecoveryCheck(browser);await infraredOnlyCheck(browser);await enlargedLandscapeCheck(browser);await nativeFullscreenCheck(browser);}if(real)await matrix(browser,true);}
+  if(mobileOnly)await mobilePanelsCheck(browser);
+  else if(nativeOnly)await nativeFullscreenCheck(browser);
+  else{if(!realOnly){if(process.env.TARGETED!=='1'){await matrix(browser,false);await mobilePanelsCheck(browser);}await loadingChecks(browser);await reducedResolutionCheck(browser);await damagedRetryRecoveryCheck(browser);await infraredOnlyCheck(browser);await enlargedLandscapeCheck(browser);await nativeFullscreenCheck(browser);}if(real)await matrix(browser,true);}
   check('no JavaScript, shader or invalid-texture errors',errors.length===0,errors);
  }finally{
-  fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({real,realOnly,nativeOnly,fixedNow,startSources,endSources:hashes(),checks,evidence,errors,requests},null,2));
+  fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({real,realOnly,nativeOnly,mobileOnly,fixedNow,startSources,endSources:hashes(),checks,evidence,errors,requests},null,2));
   if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));
  }
  const failures=checks.filter(c=>!c.pass);if(failures.length)throw new Error(failures.length+' presentation checks failed');console.log(checks.length+' presentation checks passed');

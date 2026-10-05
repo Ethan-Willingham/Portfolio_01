@@ -75,6 +75,8 @@ Posts pick an accent (or per-section accents) from one shared, muted, chroma-equ
   and Commit Mono; this exception applies only to the game inspector.
 - The Living Ocean (`ocean.html`) has an owner-approved, page-local blue charcoal
   background (`#142328`), including its enlarged-photo viewer. The shared `--bg` stays locked.
+- The Daylight Globe sky uses a black canvas (`#000`) by owner request on 2026-10-05.
+  Its page background and control panels retain the shared palette.
 - Photographs and their `--img-bg` mattes (sampled from the photos).
 - `@media print` blocks (white bg, near-black ink).
 - `archive/best-photographs/` (a photographer's neutral zone-system scale).

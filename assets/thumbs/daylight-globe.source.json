@@ -1,28 +1,27 @@
 {
   "source": "Real browser capture of daylight-globe.html with EUMETSAT and NOAA live responses",
-  "capturedAt": "2026-10-05T14:00:17.220Z",
-  "rendererSha256": "a03b700bab83b59805cb04826c43cacf60dd6c5141c0a01a787abb839f568a00",
+  "capturedAt": "2026-10-05T14:59:39.380Z",
+  "rendererSha256": "61433b3b2f1f78e8d3dbb98036d77acdfc8b0d5e14ceef8f6ad61df4db38bc92",
   "satelliteTime": "2026-10-05T12:00:00.000Z",
   "photoLayers": [
-    "mumi:wideareacoverage_rgb_natural",
     "mumi:worldcloudmap_ir108"
   ],
-  "auroraObservation": "2026-10-05T13:50:00.000Z",
-  "auroraForecast": "2026-10-05T14:38:00.000Z",
+  "auroraObservation": "2026-10-05T14:49:00.000Z",
+  "auroraForecast": "2026-10-05T15:38:00.000Z",
   "starCatalog": "HYG4.1, 5070 actual V<=6 stars",
   "starCatalogSha256": "71e7d0587af9c8e2ec5ae999ceae29ca3ad7a7d189555c441920b08791ab2355",
   "view": "Dusk Earth and camera-relative real solar bearing, with the catalog sky",
   "derivatives": {
-    "daylight-globe-live-v3.jpg": [
+    "daylight-globe-live-v4.jpg": [
       600,
       400
     ],
-    "daylight-globe-og-v3.jpg": [
+    "daylight-globe-og-v4.jpg": [
       1200,
       630
     ]
   },
-  "processing": "Canvas-only browser screenshot with controls hidden. Centered crop and resize. Satellite colors retained; solar bloom and point exposure are illustrative.",
+  "processing": "Canvas-only browser screenshot with controls hidden. Centered crop and resize. Infrared imagery was the available cloud source at capture. Coverage edges fade inside observed pixels. Solar bloom and point exposure are illustrative.",
   "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NOAA SWPC OVATION. NASA Black Marble 2016. HYG 4.1 by David Nash / Astronexus, adapted under CC BY-SA 4.0.",
   "licenses": [
     "https://creativecommons.org/licenses/by/4.0/",
