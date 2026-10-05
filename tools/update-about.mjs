@@ -400,7 +400,7 @@ about = replaceStat(about, 'removed', a2.obj.posts.filter(p => p.kind === 'remov
 about = about.replace(/<p data-about-token-total>[\s\S]*?<\/p>/, `<p data-about-token-total>${dispTok.toLocaleString('en-US')} tokens in total: input, cache reads, cache writes, and output.</p>`);
 about = about.replace(/(<script src="js\/(?:git-history(?:-data)?|git-attribution(?:-data)?)\.js)(?:\?v=[^"]+)?("><\/script>)/g, '$1?v=' + hist.obj.generated + '$2');
 const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from Claude Code and Codex logs on my Mac and a September 9 to 23 usage report from my PC. These totals cover all my projects. Usage through July 22 is estimated; later records are deduplicated. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>`;
+const freshnessParagraph = `<p data-about-freshness>Updated ${stamp} from my Mac logs, with some usage from my PC. These totals cover all my projects. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>`;
 if (!/<p data-about-freshness>[\s\S]*?<\/p>/.test(about)) throw new Error('about.html is missing the freshness marker');
 about = about.replace(/<p data-about-freshness>[\s\S]*?<\/p>/, freshnessParagraph);
 const categoryTotals = Object.values(stats.days).flatMap(d => Object.values(d.models));

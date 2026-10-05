@@ -192,6 +192,7 @@
   .gh-card-link { margin-left: auto; color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; pointer-events: auto; }
   .gh-card-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
   .gh-fuel { display: flex; flex-wrap: wrap; gap: 1.5rem 2.6rem; margin: 2.2em 0; padding: 1.5rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .gh-production { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1.4rem 0 1.6rem; padding: 1.25rem 0; border-top: 0; }
   .gh-stat { display: flex; flex-direction: column; gap: 0.3rem; }
   .gh-stat .n { font-family: var(--font-heading); font-weight: 400; font-size: 2.15rem; line-height: 1; letter-spacing: -0.015em; color: var(--accent); }
   .gh-stat .l { font-family: var(--font-body); font-size: 0.8rem; line-height: 1.35; color: var(--text-dim); letter-spacing: 0.01em; max-width: 24ch; }
@@ -234,7 +235,7 @@
   .ma-filter-hint b { font-weight: 700; }
   .ma-filter-clear { font: inherit; font-size: 0.8rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
   .ma-filter-clear:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .ma-scope, .ma-detail-note { font: 0.84rem/1.6 var(--font-body); color: var(--text-dim); }
+  .ma-detail-note { font: 0.84rem/1.6 var(--font-body); color: var(--text-dim); }
   .ma-donut { position: relative; width: 66px; height: 66px; border-radius: 50%; background: #3a443b; }
   .ma-donut-hole { position: absolute; inset: 9px; border-radius: 50%; background: var(--ma-card); display: grid; place-items: center; }
   .ma-donut-val { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.02em; line-height: 1; }
@@ -394,13 +395,11 @@
           <!-- ===== HOW IT'S MADE (from Every Push and Every Token) ===== -->
           <div class="lab-seclead"><span class="n">01</span><span>How it's made</span></div>
 
-          <h2 class="u-h2">Work so far</h2>
-          <div class="gh-fuel">
-            <div class="gh-stat"><span class="n" data-about-stat="commits">3,035</span><span class="l">commits in the site history</span></div>
-            <div class="gh-stat"><span class="n" data-about-stat="posts">93</span><span class="l">posts and projects made</span></div>
-            <div class="gh-stat"><span class="n" data-about-stat="removed">15</span><span class="l">removed posts, still counted</span></div>
+          <div class="gh-fuel gh-production">
+            <div class="gh-stat"><span class="n" data-about-stat="commits">3,035</span><span class="l">commits</span></div>
+            <div class="gh-stat"><span class="n" data-about-stat="posts">93</span><span class="l">posts and projects</span></div>
+            <div class="gh-stat"><span class="n" data-about-stat="removed">15</span><span class="l">removed posts</span></div>
           </div>
-          <p>Each dot below is a commit, a saved change to the site. One push can send several commits. The history keeps the work on live, archived, and removed posts.</p>
 
           <div class="gh-wrap">
             <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website">
@@ -431,11 +430,9 @@
           <p data-about-token-total>30,907,660,108 tokens in total: input, cache reads, cache writes, and output.</p>
           <p data-about-token-mix>Most tokens are cached text the AI reads again as we work, including files and earlier messages. Since July 23, cache reads account for 96% of logged tokens and new output for 0.5%.</p>
 
-          <p data-about-freshness>Updated October 4, 2026 from Claude Code and Codex logs on my Mac and a September 9 to 23 usage report from my PC. These totals cover all my projects. Usage through July 22 is estimated; later records are deduplicated. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>
+          <p data-about-freshness>Updated October 4, 2026 from my Mac logs, with some usage from my PC. These totals cover all my projects. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>
 
           <h2 class="u-h2">Which AI built which page</h2>
-
-          <p>I use Claude and Codex to build the site. The model badges show token use across all my projects. Each page card shows recorded file changes by model. Removed and unlisted posts keep their cards and build history. Some older posts have no surviving edit log. Click a card for the breakdown.</p>
 
           <div id="ma-root"></div>
 
@@ -473,7 +470,6 @@
           <div class="lab-spec">
             <div class="co-spec-head">
               <span class="co-spec-name">Fonts</span>
-              <p class="co-spec-note">Three fonts, with the font files hosted here.</p>
             </div>
             <div class="co-faces">
               <div class="co-face">
@@ -513,7 +509,7 @@
   <script src="js/git-history.js?v=1791162230"></script>
   <script src="js/git-attribution-data.js?v=1791162230"></script>
   <script src="js/post-prompts-data.js"></script>
-  <script src="js/git-attribution.js?v=1791162230"></script>
+  <script src="js/git-attribution.js?v=1791163148"></script>
   <script src="js/backtotop.js"></script>
   <script>
   /* Palette: a copyable color popover with hover-intent (you can travel onto it),

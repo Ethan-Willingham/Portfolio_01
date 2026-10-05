@@ -480,10 +480,6 @@
   tray.querySelector('.ma-tray-x').addEventListener('click', closeTray);
 
   // ---------- mount ----------
-  var scope = document.createElement('p');
-  scope.className = 'ma-scope';
-  scope.textContent = 'By model, across all projects. Tokens include cached context; costs are API equivalents. The older model breakdown is incomplete.';
-  root.appendChild(scope);
   root.appendChild(legend);
   root.appendChild(hint);
   // wrap the grid so it can clamp to a few rows behind a frosted veil (see collapse controller below)
