@@ -5,7 +5,8 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const zlib=require('node:zlib'),assert=require('node:assert/strict'),crypto=require('node:crypto');
-const {chromium}=require('playwright');
+const {chromium,webkit}=require('playwright');
+const safariMobile=process.env.SAFARI_MOBILE==='1';
 const root=path.resolve(__dirname,'..'),dump=process.env.DUMP||'/tmp/daylight-globe-quality';
 fs.mkdirSync(dump,{recursive:true});
 const fixedNow='2026-10-05T03:10:00Z',checks=[],evidence=[],errors=[];
@@ -26,12 +27,13 @@ window.__globeQuality={
   targetTheta=theta=Math.PI/2+lon*DEG;targetPhi=phi=Math.PI/2-lat*DEG;targetRadius=radius=r;sunFraming=false;aimShift=0;autoSpin=false;
   camera.position.set(v.x*r,v.y*r,v.z*r);camera.lookAt(0,0,0);camera.updateMatrixWorld();
   var items=[atmosphere,moon,sunBody,sunGlow,starField,pinMarker].concat(auroraMeshes),visible=items.map(function(m){return m.visible;});
-  var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldTarget=renderer.getRenderTarget();
+  var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldTarget=renderer.getRenderTarget();
   var w=container.clientWidth,h=container.clientHeight,rt=new THREE.WebGLRenderTarget(w,h),pixel=new Uint8Array(4);
   try{items.forEach(function(m){m.visible=false;});if(options.aurora)auroraMeshes.forEach(function(m){m.visible=hasForecast();});
    if(options.reference)earthMaterial.uniforms.photoEnabled.value=0;if(options.thermal)earthMaterial.uniforms.naturalEnabled.value=0;
+   if(options.sourceNight)photoSunUniform.value.set(-v.x,-v.y,-v.z);
    renderer.setRenderTarget(rt);renderer.render(scene,camera);renderer.readRenderTargetPixels(rt,Math.floor(w/2),Math.floor(h/2),1,1,pixel);return Array.from(pixel);
-  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;renderer.setRenderTarget(oldTarget);rt.dispose();}
+  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;photoSunUniform.value.copy(oldPhotoSun);renderer.setRenderTarget(oldTarget);rt.dispose();}
  },
  nightForecastPoint:function(){if(!forecast)return null;var best=null;for(var lat=-80;lat<=80;lat++)for(var lon=0;lon<360;lon++){
   var p=forecast.grid[(lat+90)*360+lon],east=lon>180?lon-360:lon,elevation=math.solarElevation(instant,lat,east);
@@ -47,6 +49,7 @@ function image(width,kind,time){const key=width+'/'+kind+'/'+time;if(images.has(
  for(let y=0;y<height;y++){const lat=90-(y+.5)/height*180;for(let x=0;x<width;x++){const lon=-180+(x+.5)/width*360,at=y*stride+1+x*4;
   let c=kind==='infrared'?[100,100,100]:[110,110,110];
   if(kind==='natural'&&Math.abs(lat)<8){if(lon>=90&&lon<118)c=[20,180,190];else if(lon>=118&&lon<140)c=[35,170,45];else if(lon>=140&&lon<158)c=[175,120,60];}
+  if(kind==='infrared'&&Math.abs(lat)<8&&lon>=90&&lon<118)c=[245,245,245];
   if(kind==='infrared'&&Math.abs(lat)<8&&lon>=118&&lon<140)c=[0,0,0];
   if(earlier)c=kind==='infrared'?[80,80,80]:[150,125,110];
   pixels[at]=c[0];pixels[at+1]=c[1];pixels[at+2]=c[2];pixels[at+3]=Math.abs(lat)<75+3*Math.cos(lon*Math.PI/36)?255:0;
@@ -72,7 +75,7 @@ async function routeSources(context,options={}){
  await context.route('https://gibs.earthdata.nasa.gov/**',route=>route.fulfill({status:503,contentType:'text/plain',body:'Daily fallback must not be needed'}));
  return requests;
 }
-async function setup(browser,options={}){const context=await browser.newContext({viewport:{width:1440,height:900},deviceScaleFactor:1,timezoneId:'America/Chicago'}),requests=await routeSources(context,options),page=await context.newPage();
+async function setup(browser,options={}){const context=await browser.newContext({viewport:safariMobile?{width:375,height:812}:{width:1440,height:900},deviceScaleFactor:safariMobile?2:1,isMobile:safariMobile,hasTouch:safariMobile,timezoneId:'America/Chicago'}),requests=await routeSources(context,options),page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource'))errors.push(m.text());});
  await page.clock.setFixedTime(new Date(fixedNow));return {context,page,requests};}
 async function open(page){await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html');await page.waitForFunction(()=>window.__globeQuality&&!__globeQuality.state().loading,null,{timeout:30000});}
@@ -87,14 +90,21 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  const gap=await page.evaluate(()=>__globeQuality.sample(86,130)),reference=await page.evaluate(()=>__globeQuality.sample(86,130,{reference:true}));
  check('missing polar imagery exposes exactly the reference map',gap.slice(0,3).every((x,i)=>Math.abs(x-reference[i])<=1),{gap,reference});
  const blackIR=await page.evaluate(()=>__globeQuality.texture('infrared',0,130)),thermal=await page.evaluate(()=>__globeQuality.sample(0,130,{thermal:true}));
- check('opaque black infrared remains observed rather than becoming a cloud-opacity mask',blackIR[3]===255&&blackIR.slice(0,3).every(x=>x===0)&&thermal.slice(0,3).every(x=>x<=2),{texture:blackIR,pixel:thermal});
+ const warmReference=await page.evaluate(()=>__globeQuality.sample(0,130,{reference:true}));
+ check('opaque black infrared stays valid while warm terrain retains its reference colours',blackIR[3]===255&&blackIR.slice(0,3).every(x=>x===0)&&thermal.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{texture:blackIR,pixel:thermal,reference:warmReference});
+ const cold=await page.evaluate(()=>__globeQuality.sample(0,108,{thermal:true}));
+ check('bright cold infrared features still render in neutral white',Math.max(...cold.slice(0,3))-Math.min(...cold.slice(0,3))<=3&&cold[0]>200,cold);
+ const ocean=await page.evaluate(()=>__globeQuality.sample(0,164,{thermal:true}));
+ check('moderate infrared brightness preserves blue daytime oceans',ocean[2]>ocean[0]+15,ocean);
+ const sourceNight=await page.evaluate(()=>__globeQuality.sample(0,130,{sourceNight:true}));
+ check('terrain newly in daylight retains colour when the source image was dark',sourceNight.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{sourceNight,reference:warmReference});
  const edge=await page.evaluate(()=>({missing:__globeQuality.texture('infrared',79,0),edge:__globeQuality.texture('infrared',77.7,0),middle:__globeQuality.texture('infrared',76.5,0),southMiddle:__globeQuality.texture('infrared',-76.5,0),inside:__globeQuality.texture('infrared',74,0)}));
  check('installed polar coverage preserves gaps and fades only inside three degrees',edge.missing[3]===0&&edge.edge[3]>0&&edge.edge[3]<255&&edge.middle[3]>64&&edge.middle[3]<192&&edge.southMiddle[3]>64&&edge.southMiddle[3]<192&&edge.inside[3]===255,edge);
  const point=await page.evaluate(()=>__globeQuality.nightForecastPoint());assert(point&&point.probability>20,'Storm fixture has a dark forecast point');
  const base=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon),point),aurora=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon,{aurora:true}),point),gain=aurora[1]-base[1];
  check('strong dark aurora remains visible without washing cloud colors green',gain>0&&gain<=25,{point,base,aurora,gain});
  check('installed power-of-two weather textures have mip sampling enabled',initial.filters.natural.mips&&initial.filters.infrared.mips&&initial.filters.natural.anisotropy>=1,initial.filters);
- evidence.push({gpu:{initial,cyan,vegetation,land,gap,reference,blackIR,thermal,edge,point,base,aurora,gain},requests});await page.locator('#globe-container').screenshot({path:path.join(dump,'quality-gpu-fixture.png')});
+ evidence.push({gpu:{initial,cyan,vegetation,land,gap,reference,blackIR,thermal,warmReference,cold,ocean,sourceNight,edge,point,base,aurora,gain},requests});await page.locator('#globe-container').screenshot({path:path.join(dump,'quality-gpu-fixture.png')});
  }finally{await context.close();}}
 async function retainedUpgradeChecks(browser){const download=gate(),{context,page,requests}=await setup(browser,{failInitial2048:true,downloadGate:download});let decode;
  try{decode=await decodeGate(page,2048);await open(page);await page.waitForFunction(()=>__globeQuality.state().detailBusy);await download.entered;const pending=await state(page);
@@ -112,13 +122,19 @@ async function missingNaturalChecks(browser){const download=gate(),sharper=gate(
  try{decode=await decodeGate(page,2048,'2026-10-05T03:00:00.000Z');await open(page);await download.entered;const pending=await state(page);
  check('infrared-only frame retries its missing color at the existing resolution and timestamp',pending.photo.width===2048&&!pending.photo.natural&&pending.detailBusy&&requests.some(r=>r.width===2048&&r.kind==='natural'&&r.attempt===2&&r.time===pending.photo.time),{pending,requests});
  check('missing-color download preserves observed infrared and available controls',pending.textures.natural[0]===2048&&pending.textures.infrared[0]===2048&&pending.photoMix===1&&!pending.loading&&pending.controls,pending);
+ const fallbackOcean=await page.evaluate(()=>__globeQuality.sample(0,164)),fallbackCold=await page.evaluate(()=>__globeQuality.sample(0,108));
+ check('slow colour imagery opens with blue oceans and white thermal features',fallbackOcean[2]>fallbackOcean[0]+15&&Math.max(...fallbackCold.slice(0,3))-Math.min(...fallbackCold.slice(0,3))<=3&&fallbackCold[0]>200,{fallbackOcean,fallbackCold});
  download.release();await page.waitForFunction(()=>window.__qualityDecodePending===2048);const decoding=await state(page);
  check('same-resolution color decode retains the infrared frame until ready',!decoding.photo.natural&&decoding.photo.time===pending.photo.time&&decoding.photoMix===1&&!decoding.loading,decoding);
  decode.release();await page.waitForFunction(()=>__globeQuality.state().photo?.natural===true);const recovered=await state(page);
  check('ready color companion replaces infrared-only display without changing time or resolution',recovered.photo.width===2048&&recovered.photo.time===pending.photo.time&&recovered.textures.natural[0]===2048&&recovered.textures.infrared[0]===2048&&recovered.photoMix===1&&!recovered.loading,recovered);
- await page.evaluate(()=>__globeQuality.zoom(2.5));await sharper.entered;sharper.release();await page.waitForFunction(()=>!__globeQuality.state().detailBusy);const kept=await state(page);
- check('sharper infrared-only result cannot replace installed natural color',kept.photo.natural&&kept.photo.width===2048&&kept.photo.time===pending.photo.time&&kept.textures.natural[0]===2048&&kept.textures.infrared[0]===2048&&requests.some(r=>r.width===4096&&r.kind==='infrared'&&r.time===pending.photo.time),{kept,requests});
- evidence.push({missingNatural:{pending,decoding,recovered,kept},requests});
+ await page.evaluate(()=>__globeQuality.zoom(2.5));let kept;
+ if(safariMobile){await page.waitForTimeout(300);kept=await state(page);check('mobile zoom retains the 2048 colour frame within its texture budget',kept.textureWidth===2048&&kept.photo.width===2048&&kept.photo.natural&&!requests.some(r=>r.width===4096),{kept,requests});
+  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,status:document.getElementById('globe-status').textContent}));check('Safari mobile keeps the controls within the viewport',layout.scroll<=layout.width,layout);
+  await page.evaluate(()=>__globeQuality.sample(0,164));await page.locator('.globe-wrapper').screenshot({path:path.join(dump,'safari-mobile-colour-recovered.png')});
+ }else{await sharper.entered;sharper.release();await page.waitForFunction(()=>!__globeQuality.state().detailBusy);kept=await state(page);
+  check('sharper infrared-only result cannot replace installed natural color',kept.photo.natural&&kept.photo.width===2048&&kept.photo.time===pending.photo.time&&kept.textures.natural[0]===2048&&kept.textures.infrared[0]===2048&&requests.some(r=>r.width===4096&&r.kind==='infrared'&&r.time===pending.photo.time),{kept,requests});}
+ evidence.push({missingNatural:{pending,decoding,recovered,kept,fallbackOcean,fallbackCold},requests});
  }finally{download.release();sharper.release();if(decode)decode.release();await context.close();}}
 async function staleUpgradeCheck(browser){const {context,page,requests}=await setup(browser);let decode;
  try{decode=await decodeGate(page,4096,'2026-10-05T03:00:00.000Z');await open(page);await page.evaluate(()=>__globeQuality.zoom(2.5));await page.waitForFunction(()=>window.__qualityDecodePending===4096);const old=await state(page);
@@ -129,4 +145,4 @@ async function staleUpgradeCheck(browser){const {context,page,requests}=await se
  evidence.push({stale:{old,chosen,after},requests});
  }finally{if(decode)decode.release();await context.close();}}
 let browser;
-(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const startHash=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'js/globe.js'))).digest('hex');try{browser=await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:true,args:['--disable-gpu-vsync','--disable-frame-rate-limit']});await gpuChecks(browser);await retainedUpgradeChecks(browser);await missingNaturalChecks(browser);await staleUpgradeCheck(browser);check('quality run has no JavaScript, shader or texture errors',errors.length===0,errors);}finally{fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({fixedNow,startHash,checks,evidence,errors},null,2));if(browser)await browser.close();await new Promise(r=>server.close(r));}const failed=checks.filter(c=>!c.pass);assert.equal(failed.length,0,failed.map(c=>c.name).join('; '));console.log(checks.length+' quality checks passed');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const startHash=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'js/globe.js'))).digest('hex');try{browser=safariMobile?await webkit.launch({headless:true}):await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:true,args:['--disable-gpu-vsync','--disable-frame-rate-limit']});await gpuChecks(browser);if(!safariMobile)await retainedUpgradeChecks(browser);await missingNaturalChecks(browser);if(!safariMobile)await staleUpgradeCheck(browser);check('quality run has no JavaScript, shader or texture errors',errors.length===0,errors);}finally{fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({fixedNow,startHash,safariMobile,checks,evidence,errors},null,2));if(browser)await browser.close();await new Promise(r=>server.close(r));}const failed=checks.filter(c=>!c.pass);assert.equal(failed.length,0,failed.map(c=>c.name).join('; '));console.log(checks.length+' quality checks passed');})().catch(e=>{console.error(e);process.exitCode=1;});

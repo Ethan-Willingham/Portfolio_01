@@ -102,7 +102,7 @@
     if(photo&&!photo.time&&cloudFailure)parts.push('Daily fallback after '+cloudFailure+'.');
     text(dataLine,parts.join(' / '));
     byId('globe-gap-key').hidden=!photo||hypothetical;
-    text(byId('globe-gap-key'),photo&&photo.time?(photo.natural?'Visible and infrared imagery; reference map where coverage ends.':'Infrared imagery only; reference map where coverage ends.'):'Reference map where daily photo coverage ends.');
+    text(byId('globe-gap-key'),photo&&photo.time?(photo.natural?'Visible imagery and infrared overlay; reference map where coverage ends.':'Infrared brightness over reference terrain; gaps show the reference map.'):'Reference map where daily photo coverage ends.');
     text(byId('globe-weather-basis'),'Cloud images every 3 hours. '+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
     returnButton.setAttribute('aria-pressed',String(live));returnButton.title=live?'Following the current time':'Return to the current time';
     byId('globe-tilt-note').hidden=!hypothetical;
@@ -226,7 +226,11 @@
     'float cyan=min(photo.g,photo.b)-photo.r; float ice=smoothstep(.04,.16,cyan)*smoothstep(.18,.36,min(photo.g,photo.b))*(1.0-smoothstep(.12,.32,abs(photo.g-photo.b)));',
     'photo.rgb=mix(photo.rgb,vec3(max(photo.g,photo.b)),ice*thermalEnabled*naturalEnabled);',
     'float shotDay=smoothstep(.10,.25,dot(normalize(vNormal),photoSunDir))*naturalEnabled*photo.a;',
-    'vec4 shot=mix(photo,mix(infrared,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
+    // Thermal brightness includes ground temperature. Display cold features as
+    // white over reference terrain, not a grayscale replacement for Earth's
+    // entire surface. This is a display curve, not measured cloud opacity.
+    'vec4 thermal=vec4(mix(base,vec3(1.0),smoothstep(.35,.90,infrared.r)),infrared.a);',
+    'vec4 shot=mix(photo,mix(thermal,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
     'float light=dot(normalize(vNormal),sunDir); float daylight=smoothstep(-.10,.04,light);',
     'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
     'night+=infrared.rgb*.10*infrared.a*thermalEnabled*photoMix*photoEnabled;',
