@@ -90,8 +90,12 @@ are at least 44 by 44 CSS pixels. Portrait on a touch device freezes the shift
 without changing manual pause. An idle floor offers a jump to the next truck
 through normal simulation ticks.
 
-Three save slots, end-of-day autosave, import/export and a version-zero migration
-are supported. Import rejects malformed nested state, orphaned reservations,
+Every browser load starts a fresh day-one warehouse for now, including a
+return through browser history. Existing autosaves are not resumed automatically.
+Three manual save slots, end-of-day autosave, import/export and a version-zero
+migration remain supported. Continuing a saved game requires Menu > Load or
+Import save. Preferences and existing save slots survive a fresh browser load.
+Import rejects malformed nested state, orphaned reservations,
 bad label data, future label counters, floor wear, station identifiers,
 goods imbalance and ledger imbalance. Purchases cannot exceed the
 128-person team or 512-tile site limits, and workstations stay in the building. Imported names, lots
