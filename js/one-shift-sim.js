@@ -28,7 +28,7 @@
     }
     schedule(){
       const s=this.s;
-      if(s.day<=3&&s.mode==='normal'){
+      if(s.day<=3&&s.mode==='normal'&&s.contracts.length===1&&s.contracts[0].id==='trail'&&s.contracts[0].until>=s.day){
         this.truck('in','trail',420,[{item:'stove'},{item:'lantern',...(s.day===2?{cases:39,expected:40,bookCases:40,condition:'short'}:{})},{item:'chair'}]);
         this.truck('out','trail',600,[],s.day===1?[{item:'stove',cases:40,full:true}]:[{item:'lantern',cases:12,full:false}]);
         this.truck('in','trail',720,[{item:'lantern'},{item:'stove'},{item:'chair'},{item:'stove'}]);
@@ -39,7 +39,7 @@
       let slot=425;
       for(const contract of s.contracts){const c=O.client(contract.id);if(contract.until<s.day)continue;
         const stored=s.pallets.filter(p=>p.client===c.id&&p.place==='storage').length;
-        const volume=Math.min(26,Math.max(2,c.volume+Math.floor((s.day-4)/12)+(s.mode==='peak'?4:0)));
+        const volume=Math.min(26,Math.max(2,c.volume+Math.max(0,Math.floor((s.day-4)/12))+(s.mode==='peak'?4:0)));
         let actual=c.profile==='storage'?Math.max(0,Math.min(volume,80-stored)):volume;
         const parcelOrders=Math.min(24,8+Math.floor(s.day/6));if(c.profile==='parcel')actual=s.pallets.filter(p=>p.client===c.id&&['lane','storage'].includes(p.place)).reduce((a,p)=>a+p.cases*O.items[p.item].pack+(p.openUnits||0),0)<parcelOrders*4?1:0;
         const items=[];for(let i=0;i<actual;i++){const item=c.items[i%c.items.length],d=O.items[item];if(c.profile!=='storage'&&c.profile!=='parcel'){const count=s.pallets.filter(p=>p.client===c.id&&p.item===item&&!['empty','returned','shipped','scrap'].includes(p.place)).reduce((n,p)=>n+p.cases,0)+items.filter(q=>q.item===item).reduce((n,q)=>n+q.cases,0),target=Math.ceil(volume/c.items.length)*(c.profile==='kit'?8*3:d.ti*d.hi*2);if(count>=target)continue;}const discrepancy=s.day>5&&random(s)<.07;items.push({item,cases:(c.profile==='kit'?8:c.profile==='parcel'?Math.ceil(parcelOrders*2/d.pack):d.ti*d.hi)-(discrepancy?1:0),expected:c.profile==='kit'?8:c.profile==='parcel'?Math.ceil(parcelOrders*2/d.pack):d.ti*d.hi,bookCases:c.profile==='kit'?8:c.profile==='parcel'?Math.ceil(parcelOrders*2/d.pack):d.ti*d.hi,condition:discrepancy?'short':'sound'});}
@@ -161,11 +161,11 @@
         if(c.id==='cold'||c.id==='cage'){const b=s.map.building;s.map.zones.push({x:c.id==='cold'?b.x+b.w-6:b.x+1,y:c.id==='cold'?b.y+2:b.y+7,w:4,h:4,type:c.id});}
         if(c.id==='secondShift')s.shiftEnd=1260;
         s.map.revision++;return {ok:true};}
-      if(c.type==='contract'){if(s.day<3)return fail('Contracts open after your third shift.');const client=O.client(c.id);if(!client)return fail('Unknown client.');if(c.decline){s.contracts=s.contracts.filter(q=>q.id!==c.id);return {ok:true};}const old=s.contracts.find(q=>q.id===c.id);if(!old&&s.reputation<client.rep)return fail('Build your service record first.');if(client.requires.some(r=>!O.has(s,r)))return fail('Requires '+client.requires.join(', ')+'.');if(old){old.until=s.day+client.days;}else s.contracts.push({id:c.id,until:s.day+client.days,rating:100});return {ok:true};}
+      if(c.type==='contract'){if(s.day===1&&s.phase!=='evening')return fail('Choose clients after your first shift.');const client=O.client(c.id);if(!client)return fail('Unknown client.');if(c.decline){s.contracts=s.contracts.filter(q=>q.id!==c.id);return {ok:true};}const old=s.contracts.find(q=>q.id===c.id);if(!old&&s.reputation<client.rep)return fail('Build your service record first.');if(client.requires.some(r=>!O.has(s,r)))return fail('Requires '+client.requires.join(', ')+'.');if(old){old.until=s.day+client.days;}else s.contracts.push({id:c.id,until:s.day+client.days,rating:100});return {ok:true};}
       if(c.type==='hire'){if(s.workers.length>=128)return fail('The warehouse team is full.');if(!O.has(s,'forklift'))return fail('Buy the forklift before hiring.');if(!Number.isInteger(c.index)||c.index<0||c.index>=O.staff.length)return fail('Choose a person from the hiring board.');const person=O.staff[c.index];if(!O.spend(s,'Purchases',75,'Recruiting '+person.name))return fail('Not enough cash.');this.addWorker({...person,name:person.name+(s.workers.length>4?' '+s.workers.length:'')});return {ok:true};}
       if(c.type==='dismiss'){if(!w||w.role==='player'||w.role==='robot')return fail('Choose a hired person.');if(w.task&&s.phase==='shift')return fail('Let the current job finish before dismissal.');this.clearWork(w);if(s.phase==='shift')O.post(s,'Wages',-w.wage*(s.owned.secondShift?1.5:1),w.name+' final shift wages');s.workers=s.workers.filter(q=>q.id!==w.id);event(s,w.name+' has left the team.');return {ok:true};}
       if(c.type==='priority'){if(!w)return fail('Unknown worker.');if(!['load','unload','putaway','service'].includes(c.kind))return fail('Unknown job.');w.priorities=w.priorities.filter(q=>q!==c.kind);w.priorities.unshift(c.kind);return {ok:true};}
-      if(c.type==='build'){if(s.day<3)return fail('Build mode opens after day three.');const x=Math.round(c.x),y=Math.round(c.y),b=s.map.building;if(!O.pathing.inside(s,x,y))return fail('Build inside the warehouse.');if(this.occupied(x,y)||this.occupied(x+1,y)||s.workers.some(w=>Math.round(w.x)===x&&Math.round(w.y)===y))return fail('Clear the work area first.');
+      if(c.type==='build'){if(s.day===1&&s.phase!=='evening')return fail('Build mode opens after your first shift.');const x=Math.round(c.x),y=Math.round(c.y),b=s.map.building;if(!O.pathing.inside(s,x,y))return fail('Build inside the warehouse.');if(this.occupied(x,y)||this.occupied(x+1,y)||s.workers.some(w=>Math.round(w.x)===x&&Math.round(w.y)===y))return fail('Clear the work area first.');
         if(c.kind==='zone'){if(!s.owned.zones)return fail('Buy putaway zones first.');s.map.zones.push({x,y,w:Math.max(1,Math.min(c.w||4,b.x+b.w-x)),h:Math.max(1,Math.min(c.h||3,b.y+b.h-y)),type:c.zone||'storage',client:c.client||null});}
         else if(c.kind==='rack'){const reason=this.rackReason(x,y);if(reason)return fail(reason);if(!O.spend(s,'Purchases',55,'Placed rack'))return fail('Not enough cash.');s.map.racks.push({id:this.id(),x,y,levels:s.owned.upper?4:1});}
         else if(c.kind==='remove'){if(s.pallets.some(p=>p.place==='storage'&&p.y===y&&p.x>=x&&p.x<x+2))return fail('Empty every rack level before removing it.');s.map.racks=s.map.racks.filter(r=>r.x!==x||r.y!==y);s.map.zones=s.map.zones.filter(r=>r.x!==x||r.y!==y);}
@@ -246,7 +246,7 @@
           const c=O.client(t.client),line=t.order.find(l=>l.item===p.item),rate=(s.contracts.find(q=>q.id===c.id)?.rating||100)/100;
           O.post(s,line?.parcel?'Parcel':'Shipping',(line?.full?c.ship:c.ship+p.cases*c.cases)*rate,'Loaded '+O.items[p.item].name);
           if(c.profile==='crossdock')O.post(s,'Cross-dock',4,'Same-day transfer');
-        }}else{const was=p.place;Object.assign(p,d);p.truckId=null;if(was==='transit'&&task.kind==='unload'){O.post(s,'Receiving',O.client(p.client).receive,'Received '+O.items[p.item].name);s.cardboard+=p.cases*.15;}event(s,task.kind==='unload'?'Pallet in the receiving lane.':'Pallet put away.','setdown');}
+        }}else{const was=p.place;Object.assign(p,d);p.truckId=null;if(was==='transit'&&task.kind==='unload'){O.post(s,'Receiving',O.client(p.client).receive,'Received '+O.items[p.item].name);s.cardboard+=p.cases*.15;}event(s,task.kind==='unload'?(d.place==='storage'?'Received and stored in the rack.':'Pallet in the receiving lane.'):'Pallet put away.','setdown');}
       }
       if(p)p.reservedBy=null;if(task.output)this.p.get(task.output).reservedBy=null;return true;
     }
@@ -279,7 +279,7 @@
       t.progress+=DT;
       if(t.progress>=t.duration&&this.finish(w,t)){w.task=null;w.fatigue=Math.min(1,w.fatigue+DT*.002);}
     }
-    tick(){const s=this.s;if(s.phase!=='shift')return;s.tick++;s.minute+=DT*CLOCK;this.dock();if(s.tick%10===0)this.assign();for(const w of s.workers)this.work(w);if(s.machineDown>0)s.machineDown-=DT;
+    tick(advanceClock=true){const s=this.s;if(s.phase!=='shift')return;s.tick++;if(advanceClock)s.minute+=DT*CLOCK;this.dock();if(s.tick%10===0)this.assign();for(const w of s.workers)this.work(w);if(s.machineDown>0)s.machineDown-=DT;
       if(s.owned.conveyor&&s.tick%40===0){const t=s.trucks.find(t=>t.direction==='out'&&t.status==='docked');if(t){const p=s.pallets.find(p=>p.place==='lane'&&p.lane==='shipping'&&!p.reservedBy&&t.order.some(l=>l.item===p.item&&this.remaining(t,l)>=p.cases));if(p)this.command({type:'move',pallet:p.id,dest:{truck:t.id},worker:s.workers.find(w=>w.role==='robot')?.id||1});}}
       if(s.minute>=s.shiftEnd){for(const t of s.trucks)if(t.direction==='out'&&['docked','yard'].includes(t.status))this.depart(t);if(!s.trucks.some(t=>t.departureRequested&&['docked','yard','leaving'].includes(t.status)))O.settle(s);}
     }

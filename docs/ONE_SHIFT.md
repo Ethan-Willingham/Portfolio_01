@@ -5,16 +5,19 @@ editable sources are classic scripts under `js/one-shift-*.js`, with one global
 `OneShift` namespace and no bundle step. Keep the post in In Progress on
 `archive.html`. Bump every game CSS and script query version together.
 
-Version 1.2 is an expanded playable release. It is not the finished commercial
+Version 1.3 adds a playable, self-paced introduction. It is not the finished commercial
 quality game described in the kickoff brief. Research, raw evidence and the
 remaining work are kept locally in `research/one-shift/PROGRESS.md`.
 
 ## Model and boundaries
 
 The fixed 20 Hz simulation uses seeded randomness and plain JSON state. A tile
-represents four feet; the initial building is 100 by 80 feet. The clock advances
+represents four feet; the initial building is 100 by 80 feet. The normal clock advances
 1.37 game minutes per real second, independently of worker movement. A normal
-6:55 AM to 4:30 PM shift lasts about seven minutes.
+6:55 AM to 4:30 PM shift lasts about seven minutes. In guided shifts, worker and
+truck ticks continue while the game clock waits. Next appointment and Finish
+shift advance the normal simulation to the selected time. Manual pause, menus
+and the portrait gate still freeze both work and time.
 
 New warehouses have their dock doors on the east wall. Trucks back in from
 the right, and the first delivery is already approaching when a new game opens.
@@ -24,8 +27,22 @@ Saves and layout links without a dock orientation retain the original south
 doors. Imported layouts start the player on reachable floor inside the building.
 
 The first three shifts introduce receiving, manual putaway, full-pallet
-shipping, a visible 39-versus-40 shortage, case picking and wrapping. Later,
-clients and purchases are optional. Forklift training precedes operation and
+shipping, a visible 39-versus-40 shortage, case picking and wrapping. A live
+guide derives its next action from actual stock, trucks and queued jobs. It
+marks the physical object and the matching native control, offers a working
+next-step button, and shows stored-pallet or completed-truck progress. After
+the first staging and putaway cycle, checked pallets can go straight from the
+trailer into an empty rack. The worker still follows the real route, and each
+receipt earns its fee once. Removing a planned job returns the guide to the
+unfinished action.
+
+Shop, contracts and building open after the first shift. The first report
+offers an extra rack or a faster electric walkie. Another accepted client
+replaces the scripted appointments with the regular schedule the next morning,
+and ends the guide. Skip guide restores normal clock movement immediately.
+New-game and browser-load starts restore guidance. Sandbox and peak runs have
+no guide. Manual saves retain their existing format; the tutorial needs no
+extra persisted checklist. Clients and purchases are optional. Forklift training precedes operation and
 hiring. A small credit facility covers purchases and operating shortfalls.
 
 Eight fictional clients include full-pallet, retail case, food, electronics,
@@ -154,6 +171,11 @@ Suspension details from the art bible remain unfinished.
 
 ## Checks and reproduction
 
+- `node tools/test-one-shift-intro.cjs`: native beginner buttons complete all
+  three guided shifts, including direct receiving, shortage, pick, wrap, rack
+  capacity, first-evening upgrades, job cancellation, keyboard skip, fresh
+  reload, manual pause and landscape touch with enlarged text. Simulation
+  ticks accelerate real work without issuing hidden gameplay commands.
 - `node tools/test-one-shift.cjs`: ramp, deterministic state, goods and ledger,
   recipes, physical component collection, interrupted bench work, ownership,
   reservations, cancellation, worker clearance and rear-door sequencing, rack-only

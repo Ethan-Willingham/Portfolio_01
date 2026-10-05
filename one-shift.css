@@ -145,3 +145,28 @@
 .shift-page select:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
 @media(max-height:550px) {.shift-queue {right:10px;top:80px;width:240px;max-height:calc(100dvh - 138px)}#shift-queue-body {padding:8px}.shift-queue[data-open="false"] {width:224px}}
 @media(max-width:600px) {.shift-queue {right:8px;width:232px}}
+
+/* The live guide uses the same jobs and objects as the rest of the game. */
+#shift-intro {padding:14px;border-bottom:1px solid var(--rule-strong);overflow:auto;flex-shrink:0;max-height:60%}
+.shift-intro-top {display:flex;align-items:center;gap:8px;justify-content:space-between}
+.shift-intro-top .shift-kicker {letter-spacing:0;font-size:.625rem}
+.shift-intro-top button {font-size:.6875rem;padding:5px;flex-shrink:0}
+#shift-intro h2 {font-size:1.125rem;line-height:1.3;margin:9px 0 7px}
+#shift-intro p {font-size:.8125rem;line-height:1.5;margin:0 0 8px}
+.shift-intro-clock {display:block;color:var(--text-faint);font-size:.6875rem;line-height:1.5}
+#shift-intro > button {width:100%;margin-top:10px}
+.shift-next-action {outline:2px solid var(--warn);outline-offset:2px}
+.shift-guided .shift-queue {max-height:calc(100dvh - 190px)}
+@media(max-height:550px) {
+ .shift-guided .shift-queue {max-height:calc(100dvh - 138px);width:240px}
+ #shift-intro {padding:8px;max-height:calc(100dvh - 188px)}
+ #shift-intro h2 {font-size:.9375rem;margin:4px 0}
+ #shift-intro p {font-size:.75rem;line-height:1.35;margin-bottom:4px}
+ .shift-intro-clock {font-size:.625rem}
+ #shift-intro > button {margin-top:6px}
+ .shift-intro-top .shift-kicker {max-width:120px}
+}
+#shift-intro {display:flex;flex-direction:column}
+.shift-intro-copy {min-height:0;overflow:auto;overscroll-behavior:contain}
+.shift-intro-top,#shift-intro > button {flex-shrink:0}
+@media(max-height:550px) {.shift-intro-clock {display:none}.shift-intro-top {min-height:44px}.shift-intro-top .shift-kicker {font-size:.5625rem}#shift-intro h2 {margin-top:3px}}
