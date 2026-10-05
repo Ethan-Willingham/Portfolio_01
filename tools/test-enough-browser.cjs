@@ -32,7 +32,7 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await page.locator('.enough-card').count(),12);
   assert.equal(await page.locator('#meditation,#area-mind,#enough-form,.enough-personal,input').count(),0,'Removed personal panel and Mind section');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal page overflow');
-  const clipped=await page.locator('.enough-chart svg text,#overview-chart svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));
+  const clipped=await page.locator('.enough-chart svg text,#overview-chart svg text,.steps-long-panel:visible svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));
   assert.deepEqual(clipped,[],'All axis titles and ticks fit');await fullPainting(page);
   assert.equal(await page.locator('input[type=range]').count(),0,'No visible slider bars');
   assert.equal(await page.locator('.enough-chart[role=slider][tabindex="0"]').count(),12,'Every chart has direct keyboard control');
@@ -45,11 +45,11 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await page.locator('.enough-card details a[download]').count(),12,'Full evidence still available');
   const opening=page.locator('#overview-steps .overview-plot');
   assert.equal(await opening.getAttribute('aria-valuenow'),'7000');assert.match(await opening.getAttribute('aria-valuetext'),/47% lower risk of dying.*2,000/,'Opening uses actual outcome and baseline');
-  assert.equal(await page.locator('.overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
+  assert.equal(await page.locator('.enough-overview .overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
   assert.match(await page.locator('#protein .en-y-label').textContent(),/lean-mass gain, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/Lower risk of dying, %/);
   assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
   assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
-  const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
+  const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg,.steps-long-panel:visible svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
    const ticks=[...svg.querySelectorAll('.en-y-tick')];
    return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
   }));assert.deepEqual(crowdedTicks,[],'Y-axis labels have at least 4px separation');
@@ -107,6 +107,27 @@ const clickFraction=async(page,plot,f)=>{
   assert.match(await page.locator('#sets .enough-answer').textContent(),/No settled optimum/);
   assert.equal(await page.locator('#sets .en-uncertainty').count(),1,'Sets model has credible band');assert.equal(await page.locator('#sets .en-guide').count(),0,'No false 38-set enough marker');
   assert.match(await page.locator('#sets details').textContent(),/preprint/);assert.doesNotMatch(await page.locator('#sets .enough-readout').textContent(),/of the gain/);
+  assert.equal(await page.locator('#steps .en-uncertainty').count(),1,'2025 steps has its published confidence band');
+  assert.equal(await opening.locator('.en-uncertainty').count(),1,'Opening shares the same confidence band');
+  assert.match(await page.locator('#overview-steps .overview-context a').getAttribute('href'),/#steps-longer/);
+  const younger=page.locator('#longer-steps-younger .steps-long-plot'),older=page.locator('#longer-steps-older .steps-long-plot');
+  assert.equal(await page.locator('.steps-long-panel:visible').count(),1);
+  assert.equal(await younger.getAttribute('aria-valuenow'),'10000');assert.match(await younger.getAttribute('aria-valuetext'),/about 46%.*5,000.*under 60/);
+  for(const [id,plot,baseline,end]of [['steps-younger',younger,'5,000',39],['steps-older',older,'3,000',64]]){
+   await page.locator('[data-steps-age="'+id+'"]').click();assert.equal(await page.locator('.steps-long-panel:visible').count(),1);
+   assert.equal(await page.locator('[data-steps-age="'+id+'"]').getAttribute('aria-pressed'),'true');
+   await clickFraction(page,plot,.5);assert.ok(!/NaN|undefined|Infinity/.test(await plot.getAttribute('aria-valuetext')));
+   await page.keyboard.press('Home');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemin'));
+   await page.keyboard.press('ArrowRight');assert.equal(Number(await plot.getAttribute('aria-valuenow')),Number(await plot.getAttribute('aria-valuemin'))+100);
+   await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),'16000');assert.match(await plot.getAttribute('aria-valuetext'),new RegExp('about '+end+'%.*'+baseline));
+   assert.equal(await plot.locator('.en-uncertainty').count(),1);assert.equal(await plot.locator('.en-target,.en-guide,.enough-target-key').count(),0,'No exact enough rule on figure readings');
+   const clippedAge=await plot.locator('svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));assert.deepEqual(clippedAge,[]);
+   assert.ok(await plot.locator('.en-uncertainty').evaluate(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.y>=29&&b.y+b.height<=v.height-55;}),'Full confidence band fits inside plot');
+   if(width===375){await plot.scrollIntoViewIfNeeded();const r=await plot.boundingBox();await page.touchscreen.tap(r.x+r.width-12,r.y+80);assert.equal(await plot.getAttribute('aria-valuenow'),'16000');}
+  }
+  await page.locator('[data-steps-age="steps-younger"]').click();assert.equal(await younger.getAttribute('aria-valuenow'),'16000','Age selection retains independent markers');
+  await page.setViewportSize({width:width+20,height:900});await page.waitForTimeout(100);assert.equal(await younger.getAttribute('aria-valuenow'),'16000','Resize retains selection');await page.setViewportSize({width,height:width===375?812:900});await page.waitForTimeout(100);
+  assert.ok((await page.locator('#steps-longer details').textContent()).split(/\s+/).length<=115,'Longer evidence stays short');
   // Match the owner's chosen reference essay for shared chrome and links.
   const reference=await context.newPage();await reference.goto(url+'/what-you-get-used-to.html');await reference.evaluate(()=>document.fonts.ready);
   const compare=async(target,source,props)=>{
@@ -115,6 +136,7 @@ const clickFraction=async(page,plot,f)=>{
   };
   await compare('.post-back','.post-back',['font-family','font-size','color','text-decoration-line','padding-top']);await compare('.hero-title','.hero-title',['font-family','font-size','font-weight','line-height','letter-spacing','color']);await compare('.overview-context a','.sec a',['color','text-decoration-line','text-decoration-color','text-underline-offset']);await compare('.site-footer a','.site-footer a',['font-family','font-size','color','text-decoration-line']);await reference.close();
   await page.reload();await ready(page);await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:path.join(destination,width+'-top.png')});await page.screenshot({path:path.join(destination,width+'-page.png'),fullPage:true});await page.locator('.enough-overview').screenshot({path:path.join(destination,width+'-overview.png')});
+  await page.locator('#steps-longer').screenshot({path:path.join(destination,width+'-steps-younger.png')});await page.locator('[data-steps-age="steps-older"]').click();await page.locator('#steps-longer').screenshot({path:path.join(destination,width+'-steps-older.png')});await page.locator('[data-steps-age="steps-younger"]').click();
   for(const area of ['move','eat','money','work'])await page.locator('.enough-group').filter({has:page.locator('#area-'+area)}).screenshot({path:path.join(destination,width+'-'+area+'.png')});
   await page.locator('#sets summary').click();await page.locator('#sets').screenshot({path:path.join(destination,width+'-sets-detail.png')});await page.locator('#protein summary').click();await page.locator('#protein').screenshot({path:path.join(destination,width+'-protein-detail.png')});await page.locator('.site-footer').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(destination,width+'-footer.png')});
   await context.close();console.log('PASS '+width+' px: full art, click/drag/keyboard charts, axes, short evidence, removed panels, reference styling and accessibility');
@@ -125,6 +147,7 @@ const clickFraction=async(page,plot,f)=>{
   await page.goto(url+'/enough.html?curve='+curve);await ready(page);assert.equal(await page.locator('#overview-'+curve).getAttribute('hidden'),null);assert.equal(await page.locator('.overview-panel:visible').count(),1);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Alternative starting curve fits');
  }
+ await page.goto(url+'/enough.html?steps-age=older#steps-longer');await ready(page);assert.equal(await page.locator('#longer-steps-older').getAttribute('hidden'),null);assert.equal(await page.locator('[data-steps-age="steps-older"]').getAttribute('aria-pressed'),'true');
  await page.goto(url+'/enough-lab.html');assert.equal(await page.locator('select').count(),3);await page.locator('#lab-painting').selectOption('homer');await page.locator('#lab-curve').selectOption('protein');await page.locator('#lab-colors').selectOption('quiet');await page.waitForFunction(()=>document.querySelector('iframe').src.includes('homer')&&document.querySelector('iframe').src.includes('protein'));
  assert.deepEqual(errors,[],'No JavaScript errors');assert.deepEqual(failures,[],'No missing resources');console.log('PASS painting/curve chooser and resources');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -22432,6 +22432,903 @@ window.EnoughData = {
     "axes": "Physical doses and source outcome units; no normalized benefit percentages are plotted.",
     "enoughLine": "90% of improvement from the displayed baseline to the best result shown, placed on the actual outcome scale.",
     "opening": "One selectable curve; walking opens at 7,000 steps, 47% lower mortality risk compared with 2,000. The shown 12,000-step endpoint is 55%, not a universal maximum.",
-    "audit": "Primary agent rechecked Ding 2025 Table 2 and audited all eight previously normalized benefit curves. Source coordinates and enough computations are unchanged."
-  }
+    "audit": "Primary agent rechecked Ding 2025 Table 2 and audited all eight previously normalized benefit curves. Source coordinates and enough computations are unchanged.",
+    "longerSteps": "Separate Paluch 2022 Figure 3 age-group curves, approximate published points to 16,000 steps, with distinct 5,000 and 3,000 step references and 95% bands. No extrapolation or enough mark."
+  },
+  "stepComparisons": [
+    {
+      "id": "steps-younger",
+      "title": "Adults under 60",
+      "kind": "points",
+      "effectKind": "risk",
+      "effectUnit": "Approximate relative all-cause mortality risk; 5,000 steps/day = 1",
+      "better": "lower",
+      "domain": [
+        5000,
+        16000
+      ],
+      "ticks": [
+        5000,
+        10000,
+        16000
+      ],
+      "referenceDose": 5000,
+      "authorPlateauRange": [
+        8000,
+        10000
+      ],
+      "defaultDose": 10000,
+      "view": {
+        "mode": "comparison",
+        "range": [
+          5000,
+          16000
+        ],
+        "yScale": {
+          "min": -20,
+          "max": 80,
+          "ticks": [
+            -20,
+            0,
+            20,
+            40,
+            60,
+            80
+          ],
+          "label": "Approx. lower risk of dying, %"
+        },
+        "area": "move"
+      },
+      "points": [
+        {
+          "dose": 5000,
+          "effect": 1.0,
+          "low": 0.9985,
+          "high": 1.0015,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5250,
+          "effect": 0.9434,
+          "low": 0.9099,
+          "high": 0.978,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5500,
+          "effect": 0.8898,
+          "low": 0.8265,
+          "high": 0.9579,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5750,
+          "effect": 0.8396,
+          "low": 0.7513,
+          "high": 0.9384,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6000,
+          "effect": 0.793,
+          "low": 0.684,
+          "high": 0.9194,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6250,
+          "effect": 0.7502,
+          "low": 0.6244,
+          "high": 0.9013,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6500,
+          "effect": 0.7113,
+          "low": 0.5724,
+          "high": 0.884,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6750,
+          "effect": 0.6765,
+          "low": 0.5273,
+          "high": 0.8679,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7000,
+          "effect": 0.6456,
+          "low": 0.4887,
+          "high": 0.8529,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7250,
+          "effect": 0.6188,
+          "low": 0.4563,
+          "high": 0.8392,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7500,
+          "effect": 0.596,
+          "low": 0.4296,
+          "high": 0.8269,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7750,
+          "effect": 0.5773,
+          "low": 0.4083,
+          "high": 0.8163,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8000,
+          "effect": 0.5627,
+          "low": 0.3922,
+          "high": 0.8073,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8250,
+          "effect": 0.5516,
+          "low": 0.3804,
+          "high": 0.8,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8500,
+          "effect": 0.5437,
+          "low": 0.3722,
+          "high": 0.7942,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8750,
+          "effect": 0.5383,
+          "low": 0.3669,
+          "high": 0.7899,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9000,
+          "effect": 0.5352,
+          "low": 0.364,
+          "high": 0.787,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9250,
+          "effect": 0.534,
+          "low": 0.3631,
+          "high": 0.7853,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9500,
+          "effect": 0.5342,
+          "low": 0.3635,
+          "high": 0.7849,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9750,
+          "effect": 0.5356,
+          "low": 0.3651,
+          "high": 0.7857,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10000,
+          "effect": 0.5378,
+          "low": 0.3672,
+          "high": 0.7875,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10250,
+          "effect": 0.5405,
+          "low": 0.3697,
+          "high": 0.7902,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10500,
+          "effect": 0.5433,
+          "low": 0.372,
+          "high": 0.7936,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10750,
+          "effect": 0.5462,
+          "low": 0.374,
+          "high": 0.7978,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11000,
+          "effect": 0.5491,
+          "low": 0.3757,
+          "high": 0.8027,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11250,
+          "effect": 0.552,
+          "low": 0.3771,
+          "high": 0.8082,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11500,
+          "effect": 0.555,
+          "low": 0.3781,
+          "high": 0.8145,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11750,
+          "effect": 0.5579,
+          "low": 0.3789,
+          "high": 0.8215,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12000,
+          "effect": 0.5609,
+          "low": 0.3794,
+          "high": 0.8292,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12250,
+          "effect": 0.5639,
+          "low": 0.3796,
+          "high": 0.8375,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12500,
+          "effect": 0.5668,
+          "low": 0.3795,
+          "high": 0.8467,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12750,
+          "effect": 0.5699,
+          "low": 0.3792,
+          "high": 0.8564,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13000,
+          "effect": 0.5729,
+          "low": 0.3786,
+          "high": 0.867,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13250,
+          "effect": 0.5759,
+          "low": 0.3777,
+          "high": 0.8782,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13500,
+          "effect": 0.579,
+          "low": 0.3766,
+          "high": 0.8901,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13750,
+          "effect": 0.5821,
+          "low": 0.3753,
+          "high": 0.9026,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14000,
+          "effect": 0.5852,
+          "low": 0.3739,
+          "high": 0.9159,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14250,
+          "effect": 0.5883,
+          "low": 0.3722,
+          "high": 0.9298,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14500,
+          "effect": 0.5914,
+          "low": 0.3704,
+          "high": 0.9443,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14750,
+          "effect": 0.5945,
+          "low": 0.3684,
+          "high": 0.9595,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15000,
+          "effect": 0.5977,
+          "low": 0.3662,
+          "high": 0.9754,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15250,
+          "effect": 0.6009,
+          "low": 0.364,
+          "high": 0.9919,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15500,
+          "effect": 0.6041,
+          "low": 0.3616,
+          "high": 1.0091,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15750,
+          "effect": 0.6073,
+          "low": 0.3591,
+          "high": 1.0269,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 16000,
+          "effect": 0.6104,
+          "low": 0.3566,
+          "high": 1.0451,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        }
+      ],
+      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated.",
+      "source": "https://doi.org/10.1016/S2468-2667(21)00302-9",
+      "verified": "2026-10-05",
+      "population": "Age-stratified mortality curves from 14 cohorts in Figure 3; BLSA excluded from this figure.",
+      "intervalKind": "confidence",
+      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
+      "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
+      "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
+      "centerlineCheckMaxRiskDifference": 0.009550150370816968
+    },
+    {
+      "id": "steps-older",
+      "title": "Adults 60+",
+      "kind": "points",
+      "effectKind": "risk",
+      "effectUnit": "Approximate relative all-cause mortality risk; 3,000 steps/day = 1",
+      "better": "lower",
+      "domain": [
+        3000,
+        16000
+      ],
+      "ticks": [
+        3000,
+        10000,
+        16000
+      ],
+      "referenceDose": 3000,
+      "authorPlateauRange": [
+        6000,
+        8000
+      ],
+      "defaultDose": 10000,
+      "view": {
+        "mode": "comparison",
+        "range": [
+          3000,
+          16000
+        ],
+        "yScale": {
+          "min": -20,
+          "max": 80,
+          "ticks": [
+            -20,
+            0,
+            20,
+            40,
+            60,
+            80
+          ],
+          "label": "Approx. lower risk of dying, %"
+        },
+        "area": "move"
+      },
+      "points": [
+        {
+          "dose": 3000,
+          "effect": 1.0,
+          "low": 0.9991,
+          "high": 1.0009,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 3250,
+          "effect": 0.9412,
+          "low": 0.925,
+          "high": 0.9578,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 3500,
+          "effect": 0.8859,
+          "low": 0.8548,
+          "high": 0.9182,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 3750,
+          "effect": 0.8339,
+          "low": 0.79,
+          "high": 0.8801,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 4000,
+          "effect": 0.785,
+          "low": 0.7303,
+          "high": 0.8438,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 4250,
+          "effect": 0.7397,
+          "low": 0.6761,
+          "high": 0.8094,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 4500,
+          "effect": 0.6982,
+          "low": 0.6274,
+          "high": 0.7771,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 4750,
+          "effect": 0.6607,
+          "low": 0.5843,
+          "high": 0.7471,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5000,
+          "effect": 0.6272,
+          "low": 0.5467,
+          "high": 0.7195,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5250,
+          "effect": 0.5977,
+          "low": 0.5145,
+          "high": 0.6944,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5500,
+          "effect": 0.5723,
+          "low": 0.4875,
+          "high": 0.672,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5750,
+          "effect": 0.551,
+          "low": 0.4656,
+          "high": 0.6522,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6000,
+          "effect": 0.5336,
+          "low": 0.4483,
+          "high": 0.6351,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6250,
+          "effect": 0.5193,
+          "low": 0.4348,
+          "high": 0.6202,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6500,
+          "effect": 0.5077,
+          "low": 0.4244,
+          "high": 0.6074,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6750,
+          "effect": 0.4983,
+          "low": 0.4165,
+          "high": 0.5963,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7000,
+          "effect": 0.4907,
+          "low": 0.4105,
+          "high": 0.5867,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7250,
+          "effect": 0.4846,
+          "low": 0.406,
+          "high": 0.5783,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7500,
+          "effect": 0.4794,
+          "low": 0.4025,
+          "high": 0.5711,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7750,
+          "effect": 0.4751,
+          "low": 0.3997,
+          "high": 0.5647,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8000,
+          "effect": 0.4712,
+          "low": 0.3971,
+          "high": 0.559,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8250,
+          "effect": 0.4674,
+          "low": 0.3945,
+          "high": 0.5538,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8500,
+          "effect": 0.4637,
+          "low": 0.3916,
+          "high": 0.5491,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8750,
+          "effect": 0.46,
+          "low": 0.3885,
+          "high": 0.5447,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9000,
+          "effect": 0.4563,
+          "low": 0.3852,
+          "high": 0.5406,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9250,
+          "effect": 0.4527,
+          "low": 0.3816,
+          "high": 0.537,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9500,
+          "effect": 0.4491,
+          "low": 0.3779,
+          "high": 0.5337,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9750,
+          "effect": 0.4455,
+          "low": 0.374,
+          "high": 0.5307,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10000,
+          "effect": 0.4419,
+          "low": 0.3699,
+          "high": 0.528,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10250,
+          "effect": 0.4384,
+          "low": 0.3657,
+          "high": 0.5257,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10500,
+          "effect": 0.4349,
+          "low": 0.3613,
+          "high": 0.5236,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10750,
+          "effect": 0.4315,
+          "low": 0.3568,
+          "high": 0.5218,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11000,
+          "effect": 0.428,
+          "low": 0.3522,
+          "high": 0.5202,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11250,
+          "effect": 0.4246,
+          "low": 0.3475,
+          "high": 0.5188,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11500,
+          "effect": 0.4212,
+          "low": 0.3428,
+          "high": 0.5177,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11750,
+          "effect": 0.4179,
+          "low": 0.3379,
+          "high": 0.5167,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12000,
+          "effect": 0.4145,
+          "low": 0.3331,
+          "high": 0.5159,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12250,
+          "effect": 0.4112,
+          "low": 0.3282,
+          "high": 0.5152,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12500,
+          "effect": 0.4079,
+          "low": 0.3234,
+          "high": 0.5147,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12750,
+          "effect": 0.4047,
+          "low": 0.3184,
+          "high": 0.5143,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13000,
+          "effect": 0.4015,
+          "low": 0.3136,
+          "high": 0.514,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13250,
+          "effect": 0.3983,
+          "low": 0.3087,
+          "high": 0.5138,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13500,
+          "effect": 0.3951,
+          "low": 0.3038,
+          "high": 0.5137,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13750,
+          "effect": 0.3919,
+          "low": 0.299,
+          "high": 0.5137,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14000,
+          "effect": 0.3888,
+          "low": 0.2942,
+          "high": 0.5138,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14250,
+          "effect": 0.3857,
+          "low": 0.2895,
+          "high": 0.514,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14500,
+          "effect": 0.3826,
+          "low": 0.2847,
+          "high": 0.5142,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14750,
+          "effect": 0.3796,
+          "low": 0.2801,
+          "high": 0.5145,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15000,
+          "effect": 0.3766,
+          "low": 0.2754,
+          "high": 0.5149,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15250,
+          "effect": 0.3736,
+          "low": 0.2709,
+          "high": 0.5152,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15500,
+          "effect": 0.3706,
+          "low": 0.2663,
+          "high": 0.5157,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15750,
+          "effect": 0.3676,
+          "low": 0.2618,
+          "high": 0.5162,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 16000,
+          "effect": 0.3647,
+          "low": 0.2575,
+          "high": 0.5167,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        }
+      ],
+      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated.",
+      "source": "https://doi.org/10.1016/S2468-2667(21)00302-9",
+      "verified": "2026-10-05",
+      "population": "Age-stratified mortality curves from 14 cohorts in Figure 3; BLSA excluded from this figure.",
+      "intervalKind": "confidence",
+      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
+      "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
+      "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
+      "centerlineCheckMaxRiskDifference": 0.00854802152353884
+    }
+  ]
 };

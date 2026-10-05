@@ -134,6 +134,13 @@ function buildSections(post, file) {
       pushSection(curve.question, curve.id, [curve.fact, curve.view.answer, curve.view.rangeLabel,
         curve.evidence, curve.population, ...curve.caveats].join(' '));
     }
+    for (const curve of context.window.EnoughData.stepComparisons || []) {
+      pushSection('Longer walking curve: ' + curve.title, 'steps-longer',
+        ['Paluch 2022, Figure 3. Steps to 16,000. Approximate mortality-risk reduction.',
+          'Reference: ' + curve.referenceDose + ' steps/day.',
+          'Authors describe a flatter range around ' + curve.authorPlateauRange.join(' to ') + ' steps/day.',
+          'No exact cutoff. Published 95% confidence band.', curve.population].join(' '));
+    }
   }
 
   // These readers render their explanations from local data. Include every

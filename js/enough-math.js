@@ -58,6 +58,7 @@
   // Display source outcomes, never a rescaled share of all possible benefit.
   function outcome(c,d,key='effect'){
     const e=estimate(c,d,key);
+    if(c.view.mode==='comparison')return 100*(1-e);
     if(c.view.mode==='benefit'){
       if(c.effectKind==='risk')return 100*(1-e/estimate(c,c.view.range[0],key));
       if(c.id==='income')return e-estimate(c,c.view.range[0],key);

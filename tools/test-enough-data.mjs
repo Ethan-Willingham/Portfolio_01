@@ -42,4 +42,26 @@ near(M.outcome(by('fruit-veg'),3),13);near(M.outcome(by('fruit-veg'),4),11);
 near(M.outcome(by('fiber'),35),22.430620048399886);near(M.outcome(by('income'),13),4.947);
 near(M.outcome(by('savings'),50),16.620772445041133);near(M.outcome(by('work'),M.basis(by('work')).best.dose),4029.041452735495);
 assert.equal(by('sets').outcome,'modeled post/pre muscle-size ratio');assert.equal(by('work').outcome,'additional factory output index');assert.equal(by('alcohol').outcome,'all-cause mortality risk');
+// The longer figure keeps each age group's reference and published extent separate.
+const comparisons=ctx.window.EnoughData.stepComparisons;
+assert.equal(comparisons.length,2);
+for(const c of comparisons){
+ assert.equal(c.view.mode,'comparison');assert.equal(M.enough(c),null);assert.equal(c.domain[1],16000);
+ near(M.outcome(c,c.referenceDose),0);assert.ok(c.extraction.includes('figure readings'));
+ assert.match(c.sourcePDFSHA256,/^[a-f0-9]{64}$/);assert.ok(c.centerlineCheckMaxRiskDifference<.01);
+ for(let i=0;i<c.points.length;i++){
+  const p=c.points[i];assert.ok(Number.isFinite(p.effect)&&p.low<=p.effect&&p.effect<=p.high);assert.equal(p.source,'paluch2022');assert.match(p.location,/Figure 3/);
+  if(i)assert.equal(p.dose-c.points[i-1].dose,250);
+  for(const k of ['effect','low','high'])assert.ok(M.outcome(c,p.dose,k)>=c.view.yScale.min&&M.outcome(c,p.dose,k)<=c.view.yScale.max,'Unclipped published interval');
+ }
+ assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)));
+}
+const younger=comparisons[0],older=comparisons[1];
+assert.equal(younger.referenceDose,5000);assert.equal(older.referenceDose,3000);
+near(M.outcome(younger,16000),38.96);near(M.outcome(older,16000),63.53);
+assert.ok(M.outcome(younger,16000)<M.outcome(younger,10000),'Preserve younger tail bend');
+assert.ok(M.outcome(older,16000)>M.outcome(older,10000),'Preserve slowly improving older tail');
+assert.ok(M.outcome(younger,16000,'high')<0,'Younger uncertainty includes higher risk');
+near(M.outcome(by('steps'),12000,'low'),61);near(M.outcome(by('steps'),12000,'high'),47);
+console.log('PASS longer age curves, source baselines, figure uncertainty, 16,000 endpoints and no imposed cutoff');
 console.log('PASS 12 curves, retained source estimates, corrected sets interpretation, all benefit crossings, range endpoints, categories, signed risk, source units, uncertainty and exact models');
