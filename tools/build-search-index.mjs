@@ -131,7 +131,7 @@ function buildSections(post, file) {
     const context = { window: {} };
     runInNewContext(readFileSync(join(ROOT, 'js/enough-data.js'), 'utf8'), context, { timeout: 1000 });
     for (const curve of context.window.EnoughData.curves) {
-      pushSection(curve.question, curve.id, [curve.fact, curve.marker.label,
+      pushSection(curve.question, curve.id, [curve.fact, curve.view.answer, curve.view.rangeLabel,
         curve.evidence, curve.population, ...curve.caveats].join(' '));
     }
   }

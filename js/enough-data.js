@@ -1,18 +1,23 @@
-/* Published estimates, exact source locations and reproducible model assumptions. */
+/* Primary tables and models. See docs/ENOUGH.md. */
 window.EnoughData = {
-  "version": 1,
+  "version": 2,
   "verified": "2026-10-04",
   "screenedCount": 45,
+  "definition": {
+    "share": "Improvement from the lowest displayed dose divided by the largest improvement anywhere in the explicitly declared range.",
+    "enough": "First90% crossing, or first qualifying published category. This is a bounded summary, never an absolute lifetime maximum.",
+    "uncertainty": "Independently normalized pointwise bound curves give sensitivity, not a formal threshold confidence interval."
+  },
   "curves": [
     {
       "id": "steps",
-      "question": "How many steps a day?",
-      "fact": "7,000 steps a day was linked with a 47% lower death rate than 2,000.",
+      "question": "How much walking?",
+      "fact": "7,000 steps is roughly three miles, about an hour at a steady 3 mph.",
       "kind": "points",
-      "shape": "continues",
+      "shape": "Most arrives early",
       "unit": "steps/day",
       "effectKind": "risk",
-      "effectUnit": "% in the fitted size comparison",
+      "effectUnit": "Relative all-cause mortality risk",
       "outcome": "death rate",
       "better": "lower",
       "domain": [
@@ -21,7 +26,6 @@ window.EnoughData = {
       ],
       "ticks": [
         2000,
-        5000,
         7000,
         12000
       ],
@@ -29,11 +33,9 @@ window.EnoughData = {
       "evidence": "dose-response meta-analysis of prospective cohorts",
       "population": "14 cohorts/studies, 161176 adults, predominantly high-income countries",
       "caveats": [
-        "The association can reflect differences in baseline health and frailty as well as walking.",
-        "This combines adult age groups. Earlier age-specific curves used a different pooled sample.",
-        "Table 3 and Table 2 disagree on the 7,000-step value. This chart uses Table 2, which agrees with the abstract.",
-        "The separate published post-hoc comparison cannot be reconstructed by dividing these rounded estimates.",
-        "Device placement can change measured step counts."
+        "The studies followed people’s habits. They do not establish how much your personal risk would change if you added steps.",
+        "The curve improves quickly, flattens in the middle, then improves again near its upper end. Using a shorter 2,000 to 10,000 range would move the 90% point to about 5,067 steps.",
+        "At a measured average cadence of 113.6 steps a minute at 3 mph,7,000 steps is about 3.1 miles in 62 minutes. This is an illustration, not an extra walk on top of your daily steps."
       ],
       "extraction": "Direct transcription of Table 2 at 1000-step increments. No image digitization. Reference CI [1,1] is algebraic, not known risk.",
       "uncertainty": "95% confidence interval around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
@@ -43,6 +45,12 @@ window.EnoughData = {
           "url": "https://doi.org/10.1016/S2468-2667(25)00164-1",
           "citation": "Ding et al. 2025. Daily steps and health outcomes in adults: a systematic review and dose-response meta-analysis",
           "location": "Table 2, all-cause mortality column, e676"
+        },
+        {
+          "id": "cadence",
+          "url": "https://link.springer.com/article/10.1186/s12966-019-0769-6",
+          "citation": "Tudor-Locke et al.2019, CADENCE-Adults",
+          "location": "Table2,3.0 mph row, measured mean cadence"
         }
       ],
       "intervalKind": "confidence",
@@ -55,7 +63,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 1,
           "high": 1,
-          "location": "Table 2, all-cause mortality, 2000 steps/day row"
+          "location": "Table 2, all-cause mortality, 2000 steps/day row",
+          "share": 0
         },
         {
           "dose": 3000,
@@ -65,7 +74,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.71,
           "high": 0.83,
-          "location": "Table 2, all-cause mortality, 3000 steps/day row"
+          "location": "Table 2, all-cause mortality, 3000 steps/day row",
+          "share": 41.81818181818181
         },
         {
           "dose": 4000,
@@ -75,7 +85,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.57,
           "high": 0.73,
-          "location": "Table 2, all-cause mortality, 4000 steps/day row"
+          "location": "Table 2, all-cause mortality, 4000 steps/day row",
+          "share": 65.45454545454545
         },
         {
           "dose": 5000,
@@ -85,7 +96,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.5,
           "high": 0.66,
-          "location": "Table 2, all-cause mortality, 5000 steps/day row"
+          "location": "Table 2, all-cause mortality, 5000 steps/day row",
+          "share": 78.18181818181819
         },
         {
           "dose": 6000,
@@ -95,7 +107,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.47,
           "high": 0.62,
-          "location": "Table 2, all-cause mortality, 6000 steps/day row"
+          "location": "Table 2, all-cause mortality, 6000 steps/day row",
+          "share": 83.63636363636363
         },
         {
           "dose": 7000,
@@ -105,7 +118,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.46,
           "high": 0.6,
-          "location": "Table 2, all-cause mortality, 7000 steps/day row"
+          "location": "Table 2, all-cause mortality, 7000 steps/day row",
+          "share": 85.45454545454545
         },
         {
           "dose": 8000,
@@ -115,7 +129,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.46,
           "high": 0.6,
-          "location": "Table 2, all-cause mortality, 8000 steps/day row"
+          "location": "Table 2, all-cause mortality, 8000 steps/day row",
+          "share": 87.27272727272727
         },
         {
           "dose": 9000,
@@ -125,7 +140,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.46,
           "high": 0.6,
-          "location": "Table 2, all-cause mortality, 9000 steps/day row"
+          "location": "Table 2, all-cause mortality, 9000 steps/day row",
+          "share": 87.27272727272727
         },
         {
           "dose": 10000,
@@ -135,7 +151,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.45,
           "high": 0.59,
-          "location": "Table 2, all-cause mortality, 10000 steps/day row"
+          "location": "Table 2, all-cause mortality, 10000 steps/day row",
+          "share": 87.27272727272727
         },
         {
           "dose": 11000,
@@ -145,7 +162,8 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.43,
           "high": 0.57,
-          "location": "Table 2, all-cause mortality, 11000 steps/day row"
+          "location": "Table 2, all-cause mortality, 11000 steps/day row",
+          "share": 92.72727272727272
         },
         {
           "dose": 12000,
@@ -155,22 +173,10 @@ window.EnoughData = {
           "source": "steps-0",
           "low": 0.39,
           "high": 0.53,
-          "location": "Table 2, all-cause mortality, 12000 steps/day row"
+          "location": "Table 2, all-cause mortality, 12000 steps/day row",
+          "share": 100
         }
       ],
-      "marker": {
-        "type": "reported",
-        "doses": [
-          7000
-        ],
-        "label": "7,000: a large early gain",
-        "reason": "The reference is 2000 steps, not zero. The fitted risk declines again to 0.45 at 12000; a bounded display is not a lifetime maximum.",
-        "verification": {
-          "method": "source-dose",
-          "source": "steps-0",
-          "dose": 7000
-        }
-      },
       "unitLabel": "steps a day",
       "yDomain": [
         0.35,
@@ -193,17 +199,48 @@ window.EnoughData = {
         "adversary": "life_research",
         "statistician": "diet_research"
       },
-      "sourcePrecision": "source point grid with linear interpolation"
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "move",
+        "mode": "benefit",
+        "answer": "About 10,500 steps",
+        "fact": "7,000 steps is roughly three miles, about an hour at a steady 3 mph.",
+        "range": [
+          2000,
+          12000
+        ],
+        "rangeLabel": "2,000 to 12,000 steps a day",
+        "default": 7000,
+        "ticks": [
+          2000,
+          7000,
+          12000
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_move",
+        "adversary": "polish_audit"
+      },
+      "rangeMethod": "Range shown: 2,000 to 12,000 steps a day",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 10500.000000000015,
+        "sensitivity": [
+          9899.999999999993,
+          10649.999999999993
+        ],
+        "sweetRange": null
+      }
     },
     {
       "id": "exercise",
-      "question": "How much exercise a week?",
-      "fact": "150 minutes of moderate activity a week was associated with a 31% lower death rate.",
+      "question": "How much exercise?",
+      "fact": "Two and a half hours already captures 81% of the gain in this range.",
       "kind": "points",
-      "shape": "continues",
+      "shape": "Most arrives early",
       "unit": "min/week",
       "effectKind": "risk",
-      "effectUnit": "% in the fitted size comparison",
+      "effectUnit": "Relative all-cause mortality risk",
       "outcome": "death rate",
       "better": "lower",
       "domain": [
@@ -220,12 +257,9 @@ window.EnoughData = {
       "evidence": "dose-response meta-analysis of prospective cohorts",
       "population": "50 all-cause mortality results, 811616 events, 163415543 person-years; 94 cohorts overall",
       "caveats": [
-        "Associations, mainly self-reported baseline activity, with residual confounding and reverse causation.",
-        "Minutes are equivalents, not a uniform effect for every kind of activity.",
-        "The original model extends to 2228.9 equivalent minutes/week, with very little high-dose evidence. The display stops at 600; the complete grid is retained in the data.",
-        "94% of person-years were below 35 mMET-hours/week (600 moderate-equivalent minutes).",
-        "The spline slope is fixed beyond the last knot; its high-dose shape is a model choice, not proof that benefits continue indefinitely.",
-        "Rechecks found newer work on trajectories and small activity substitutions, but these estimate different exposures and do not replace this cross-sectional dose model."
+        "Activity was observed, not randomly assigned. Health and other habits can influence the association.",
+        "Minutes on this chart mean moderate exercise. One vigorous minute counts as two moderate minutes. The original source uses energy expenditure; the conversion assumes 3.5 marginal METs for moderate activity.",
+        "The source’s high-dose tail has less evidence. This selected 0 to 600 window contains 94% of the person-years."
       ],
       "extraction": "All 1,000 rows come from the author CSV. Original marginal MET-hours per week are retained. Multiplying by 60/3.5 gives moderate-equivalent minutes per week; vigorous activity takes half as many minutes.",
       "uncertainty": "95% confidence interval around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
@@ -254,7 +288,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 1,
           "high": 1,
-          "location": "CSV data row 1, original dose=0 mMET-hours/week"
+          "location": "CSV data row 1, original dose=0 mMET-hours/week",
+          "share": 0
         },
         {
           "dose": 2.2311454311454315,
@@ -265,7 +300,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9892051746809295,
           "high": 0.992373320509553,
-          "location": "CSV data row 2, original dose=0.13015015015015016 mMET-hours/week"
+          "location": "CSV data row 2, original dose=0.13015015015015016 mMET-hours/week",
+          "share": 2.3962341555827593
         },
         {
           "dose": 4.462290862290863,
@@ -276,7 +312,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9785358834217714,
           "high": 0.9848110075916944,
-          "location": "CSV data row 3, original dose=0.2603003003003003 mMET-hours/week"
+          "location": "CSV data row 3, original dose=0.2603003003003003 mMET-hours/week",
+          "share": 4.768415267113282
         },
         {
           "dose": 6.693436293436293,
@@ -287,7 +324,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9679994856997565,
           "high": 0.9773186290992479,
-          "location": "CSV data row 4, original dose=0.39045045045045046 mMET-hours/week"
+          "location": "CSV data row 4, original dose=0.39045045045045046 mMET-hours/week",
+          "share": 7.1148406190645135
         },
         {
           "dose": 8.924581724581726,
@@ -298,7 +336,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9576029777772512,
           "high": 0.969901571630987,
-          "location": "CSV data row 5, original dose=0.5206006006006006 mMET-hours/week"
+          "location": "CSV data row 5, original dose=0.5206006006006006 mMET-hours/week",
+          "share": 9.433876548850535
         },
         {
           "dose": 11.155727155727158,
@@ -309,7 +348,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9473530046891564,
           "high": 0.9625650450316131,
-          "location": "CSV data row 6, original dose=0.6507507507507508 mMET-hours/week"
+          "location": "CSV data row 6, original dose=0.6507507507507508 mMET-hours/week",
+          "share": 11.723956457231045
         },
         {
           "dose": 13.386872586872586,
@@ -320,7 +360,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9372558726794782,
           "high": 0.9553140871723462,
-          "location": "CSV data row 7, original dose=0.7809009009009009 mMET-hours/week"
+          "location": "CSV data row 7, original dose=0.7809009009009009 mMET-hours/week",
+          "share": 13.983578721263209
         },
         {
           "dose": 15.618018018018018,
@@ -331,7 +372,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9273175620368485,
           "high": 0.9481535689946303,
-          "location": "CSV data row 8, original dose=0.9110510510510511 mMET-hours/week"
+          "location": "CSV data row 8, original dose=0.9110510510510511 mMET-hours/week",
+          "share": 16.211304517992335
         },
         {
           "dose": 17.849163449163452,
@@ -342,7 +384,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9175437402818294,
           "high": 0.9410881998002901,
-          "location": "CSV data row 9, original dose=1.0412012012012013 mMET-hours/week"
+          "location": "CSV data row 9, original dose=1.0412012012012013 mMET-hours/week",
+          "share": 18.405755566633804
         },
         {
           "dose": 20.08030888030888,
@@ -353,7 +396,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.9079397756619533,
           "high": 0.9341225327723484,
-          "location": "CSV data row 10, original dose=1.1713513513513514 mMET-hours/week"
+          "location": "CSV data row 10, original dose=1.1713513513513514 mMET-hours/week",
+          "share": 20.565611796547387
         },
         {
           "dose": 22.311454311454316,
@@ -364,7 +408,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8985107509135808,
           "high": 0.9272609707116162,
-          "location": "CSV data row 11, original dose=1.3015015015015017 mMET-hours/week"
+          "location": "CSV data row 11, original dose=1.3015015015015017 mMET-hours/week",
+          "share": 22.689608947842284
         },
         {
           "dose": 24.542599742599744,
@@ -375,7 +420,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8892614772528236,
           "high": 0.9205077719751137,
-          "location": "CSV data row 12, original dose=1.4316516516516518 mMET-hours/week"
+          "location": "CSV data row 12, original dose=1.4316516516516518 mMET-hours/week",
+          "share": 24.77653611098202
         },
         {
           "dose": 26.773745173745173,
@@ -386,7 +432,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8801965085609305,
           "high": 0.9138670566033399,
-          "location": "CSV data row 13, original dose=1.5618018018018018 mMET-hours/week"
+          "location": "CSV data row 13, original dose=1.5618018018018018 mMET-hours/week",
+          "share": 26.825233211281088
         },
         {
           "dose": 29.00489060489061,
@@ -397,7 +444,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8713201557326973,
           "high": 0.9073428126244134,
-          "location": "CSV data row 14, original dose=1.6919519519519521 mMET-hours/week"
+          "location": "CSV data row 14, original dose=1.6919519519519521 mMET-hours/week",
+          "share": 28.834588443702277
         },
         {
           "dose": 31.236036036036037,
@@ -408,7 +456,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8626365011595977,
           "high": 0.9009389025241229,
-          "location": "CSV data row 15, original dose=1.8221021021021022 mMET-hours/week"
+          "location": "CSV data row 15, original dose=1.8221021021021022 mMET-hours/week",
+          "share": 30.803535662879018
         },
         {
           "dose": 33.467181467181476,
@@ -419,7 +468,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8541494133224494,
           "high": 0.8946590698719729,
-          "location": "CSV data row 16, original dose=1.9522522522522525 mMET-hours/week"
+          "location": "CSV data row 16, original dose=1.9522522522522525 mMET-hours/week",
+          "share": 32.73105173279681
         },
         {
           "dose": 35.698326898326904,
@@ -430,7 +480,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8458625614715217,
           "high": 0.8885069460943797,
-          "location": "CSV data row 17, original dose=2.0824024024024026 mMET-hours/week"
+          "location": "CSV data row 17, original dose=2.0824024024024026 mMET-hours/week",
+          "share": 34.61615384007836
         },
         {
           "dose": 37.92947232947233,
@@ -441,7 +492,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8377794303750414,
           "high": 0.8824860573872632,
-          "location": "CSV data row 18, original dose=2.2125525525525527 mMET-hours/week"
+          "location": "CSV data row 18, original dose=2.2125525525525527 mMET-hours/week",
+          "share": 36.45789677432443
         },
         {
           "dose": 40.16061776061776,
@@ -452,7 +504,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8299033351200701,
           "high": 0.8765998317613932,
-          "location": "CSV data row 19, original dose=2.3427027027027028 mMET-hours/week"
+          "location": "CSV data row 19, original dose=2.3427027027027028 mMET-hours/week",
+          "share": 38.255370178470784
         },
         {
           "dose": 42.3917631917632,
@@ -463,7 +516,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8222374359526986,
           "high": 0.8708516062149891,
-          "location": "CSV data row 20, original dose=2.4728528528528533 mMET-hours/week"
+          "location": "CSV data row 20, original dose=2.4728528528528533 mMET-hours/week",
+          "share": 40.00769577162943
         },
         {
           "dose": 44.62290862290863,
@@ -474,7 +528,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8147847531474318,
           "high": 0.8652446340292301,
-          "location": "CSV data row 21, original dose=2.6030030030030034 mMET-hours/week"
+          "location": "CSV data row 21, original dose=2.6030030030030034 mMET-hours/week",
+          "share": 41.71402454639035
         },
         {
           "dose": 46.85405405405406,
@@ -485,7 +540,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8075481818985152,
           "high": 0.8597820921835247,
-          "location": "CSV data row 22, original dose=2.7331531531531534 mMET-hours/week"
+          "location": "CSV data row 22, original dose=2.7331531531531534 mMET-hours/week",
+          "share": 43.37353394206787
         },
         {
           "dose": 49.08519948519949,
@@ -496,7 +552,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.8005305072287933,
           "high": 0.8544670888886069,
-          "location": "CSV data row 23, original dose=2.8633033033033035 mMET-hours/week"
+          "location": "CSV data row 23, original dose=2.8633033033033035 mMET-hours/week",
+          "share": 44.98542499488505
         },
         {
           "dose": 51.31634491634492,
@@ -507,7 +564,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.79373441891447,
           "high": 0.8493026712367742,
-          "location": "CSV data row 24, original dose=2.9934534534534536 mMET-hours/week"
+          "location": "CSV data row 24, original dose=2.9934534534534536 mMET-hours/week",
+          "share": 46.548919465596995
         },
         {
           "dose": 53.547490347490346,
@@ -518,7 +576,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7871625244650318,
           "high": 0.8442918315289601,
-          "location": "CSV data row 25, original dose=3.1236036036036037 mMET-hours/week"
+          "location": "CSV data row 25, original dose=3.1236036036036037 mMET-hours/week",
+          "share": 48.06325738977263
         },
         {
           "dose": 55.77863577863578,
@@ -529,7 +588,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7808152007022681,
           "high": 0.8394359223507732,
-          "location": "CSV data row 26, original dose=3.253753753753754 mMET-hours/week"
+          "location": "CSV data row 26, original dose=3.253753753753754 mMET-hours/week",
+          "share": 49.528185698517966
         },
         {
           "dose": 58.00978120978122,
@@ -540,7 +600,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7746865821060072,
           "high": 0.8347316741064219,
-          "location": "CSV data row 27, original dose=3.3839039039039043 mMET-hours/week"
+          "location": "CSV data row 27, original dose=3.3839039039039043 mMET-hours/week",
+          "share": 50.94487411258137
         },
         {
           "dose": 60.240926640926645,
@@ -551,7 +612,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7687698964780312,
           "high": 0.8301750871876035,
-          "location": "CSV data row 28, original dose=3.5140540540540544 mMET-hours/week"
+          "location": "CSV data row 28, original dose=3.5140540540540544 mMET-hours/week",
+          "share": 52.31470835715935
         },
         {
           "dose": 62.47207207207207,
@@ -562,7 +624,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7630586152642727,
           "high": 0.8257622784090172,
-          "location": "CSV data row 29, original dose=3.6442042042042044 mMET-hours/week"
+          "location": "CSV data row 29, original dose=3.6442042042042044 mMET-hours/week",
+          "share": 53.63902883129006
         },
         {
           "dose": 64.7032175032175,
@@ -573,7 +636,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7575464423104354,
           "high": 0.8214894762368656,
-          "location": "CSV data row 30, original dose=3.7743543543543545 mMET-hours/week"
+          "location": "CSV data row 30, original dose=3.7743543543543545 mMET-hours/week",
+          "share": 54.919132584367354
         },
         {
           "dose": 66.93436293436295,
@@ -584,7 +648,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7522273031380384,
           "high": 0.8173530162123877,
-          "location": "CSV data row 31, original dose=3.904504504504505 mMET-hours/week"
+          "location": "CSV data row 31, original dose=3.904504504504505 mMET-hours/week",
+          "share": 56.156275207052296
         },
         {
           "dose": 69.16550836550837,
@@ -595,7 +660,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7470953347150062,
           "high": 0.8133493365599497,
-          "location": "CSV data row 32, original dose=4.034654654654655 mMET-hours/week"
+          "location": "CSV data row 32, original dose=4.034654654654655 mMET-hours/week",
+          "share": 57.35167264078307
         },
         {
           "dose": 71.39665379665381,
@@ -606,7 +672,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7421448756959933,
           "high": 0.8094749739702025,
-          "location": "CSV data row 33, original dose=4.164804804804805 mMET-hours/week"
+          "location": "CSV data row 33, original dose=4.164804804804805 mMET-hours/week",
+          "share": 58.50650290985791
         },
         {
           "dose": 73.62779922779923,
@@ -617,7 +684,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7373704571087514,
           "high": 0.8057265595496023,
-          "location": "CSV data row 34, original dose=4.294954954954956 mMET-hours/week"
+          "location": "CSV data row 34, original dose=4.294954954954956 mMET-hours/week",
+          "share": 59.6219077798494
         },
         {
           "dose": 75.85894465894467,
@@ -628,7 +696,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7327667934639933,
           "high": 0.8021008149282548,
-          "location": "CSV data row 35, original dose=4.425105105105105 mMET-hours/week"
+          "location": "CSV data row 35, original dose=4.425105105105105 mMET-hours/week",
+          "share": 60.698994345907195
         },
         {
           "dose": 78.0900900900901,
@@ -639,7 +708,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7283287742673471,
           "high": 0.7985945485186072,
-          "location": "CSV data row 36, original dose=4.555255255255256 mMET-hours/week"
+          "location": "CSV data row 36, original dose=4.555255255255256 mMET-hours/week",
+          "share": 61.73883655431388
         },
         {
           "dose": 80.32123552123552,
@@ -650,7 +720,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7240514559131093,
           "high": 0.7952046519179996,
-          "location": "CSV data row 37, original dose=4.6854054054054055 mMET-hours/week"
+          "location": "CSV data row 37, original dose=4.6854054054054055 mMET-hours/week",
+          "share": 62.74247666047814
         },
         {
           "dose": 82.55238095238096,
@@ -661,7 +732,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.719930053940579,
           "high": 0.7919280964485217,
-          "location": "CSV data row 38, original dose=4.815555555555556 mMET-hours/week"
+          "location": "CSV data row 38, original dose=4.815555555555556 mMET-hours/week",
+          "share": 63.71092662637831
         },
         {
           "dose": 84.7835263835264,
@@ -672,7 +744,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7159599356347993,
           "high": 0.7887619298280137,
-          "location": "CSV data row 39, original dose=4.9457057057057066 mMET-hours/week"
+          "location": "CSV data row 39, original dose=4.9457057057057066 mMET-hours/week",
+          "share": 64.64516946030739
         },
         {
           "dose": 87.01467181467183,
@@ -683,7 +756,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7121366129545181,
           "high": 0.7857032729663977,
-          "location": "CSV data row 40, original dose=5.075855855855856 mMET-hours/week"
+          "location": "CSV data row 40, original dose=5.075855855855856 mMET-hours/week",
+          "share": 65.54616050161817
         },
         {
           "dose": 89.24581724581726,
@@ -694,7 +768,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7084557357711299,
           "high": 0.7827493168818519,
-          "location": "CSV data row 41, original dose=5.206006006006007 mMET-hours/week"
+          "location": "CSV data row 41, original dose=5.206006006006007 mMET-hours/week",
+          "share": 66.41482865302228
         },
         {
           "dose": 91.47696267696269,
@@ -705,7 +780,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.7049130854032617,
           "high": 0.7798973197316433,
-          "location": "CSV data row 42, original dose=5.336156156156156 mMET-hours/week"
+          "location": "CSV data row 42, original dose=5.336156156156156 mMET-hours/week",
+          "share": 67.25207756285972
         },
         {
           "dose": 93.70810810810812,
@@ -716,7 +792,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.701504568432518,
           "high": 0.7771446039527019,
-          "location": "CSV data row 43, original dose=5.466306306306307 mMET-hours/week"
+          "location": "CSV data row 43, original dose=5.466306306306307 mMET-hours/week",
+          "share": 68.05878675962622
         },
         {
           "dose": 95.93925353925356,
@@ -727,7 +804,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6982262107867144,
           "high": 0.7744885535072878,
-          "location": "CSV data row 44, original dose=5.596456456456457 mMET-hours/week"
+          "location": "CSV data row 44, original dose=5.596456456456457 mMET-hours/week",
+          "share": 68.83581274092289
         },
         {
           "dose": 98.17039897039898,
@@ -738,7 +816,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6950741520776965,
           "high": 0.7719266112293394,
-          "location": "CSV data row 45, original dose=5.726606606606607 mMET-hours/week"
+          "location": "CSV data row 45, original dose=5.726606606606607 mMET-hours/week",
+          "share": 69.58399001887622
         },
         {
           "dose": 100.40154440154443,
@@ -749,7 +828,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6920446401815694,
           "high": 0.7694562762673196,
-          "location": "CSV data row 46, original dose=5.8567567567567576 mMET-hours/week"
+          "location": "CSV data row 46, original dose=5.8567567567567576 mMET-hours/week",
+          "share": 70.30413212396674
         },
         {
           "dose": 102.63268983268983,
@@ -760,7 +840,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.689134026049856,
           "high": 0.7670751016195937,
-          "location": "CSV data row 47, original dose=5.986906906906907 mMET-hours/week"
+          "location": "CSV data row 47, original dose=5.986906906906907 mMET-hours/week",
+          "share": 70.99703256909922
         },
         {
           "dose": 104.86383526383528,
@@ -771,7 +852,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6863387587407493,
           "high": 0.7647806917585703,
-          "location": "CSV data row 48, original dose=6.117057057057058 mMET-hours/week"
+          "location": "CSV data row 48, original dose=6.117057057057058 mMET-hours/week",
+          "share": 71.66346577564966
         },
         {
           "dose": 107.09498069498069,
@@ -782,7 +864,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6836553806602517,
           "high": 0.7625707003400332,
-          "location": "CSV data row 49, original dose=6.247207207207207 mMET-hours/week"
+          "location": "CSV data row 49, original dose=6.247207207207207 mMET-hours/week",
+          "share": 72.3041879631292
         },
         {
           "dose": 109.32612612612614,
@@ -793,7 +876,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6810805230035688,
           "high": 0.7604428279942705,
-          "location": "CSV data row 50, original dose=6.377357357357358 mMET-hours/week"
+          "location": "CSV data row 50, original dose=6.377357357357358 mMET-hours/week",
+          "share": 72.9199380040163
         },
         {
           "dose": 111.55727155727156,
@@ -804,7 +888,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6786109013876903,
           "high": 0.7583948201957815,
-          "location": "CSV data row 51, original dose=6.507507507507508 mMET-hours/week"
+          "location": "CSV data row 51, original dose=6.507507507507508 mMET-hours/week",
+          "share": 73.51143824522447
         },
         {
           "dose": 113.788416988417,
@@ -815,7 +900,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6762433116666077,
           "high": 0.7564244652085009,
-          "location": "CSV data row 52, original dose=6.637657657657658 mMET-hours/week"
+          "location": "CSV data row 52, original dose=6.637657657657658 mMET-hours/week",
+          "share": 74.07939529759143
         },
         {
           "dose": 116.01956241956243,
@@ -826,7 +912,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6739746259211183,
           "high": 0.7545295921036421,
-          "location": "CSV data row 53, original dose=6.7678078078078086 mMET-hours/week"
+          "location": "CSV data row 53, original dose=6.7678078078078086 mMET-hours/week",
+          "share": 74.62450079470057
         },
         {
           "dose": 118.25070785070785,
@@ -837,7 +924,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6718017886156388,
           "high": 0.7527080688474045,
-          "location": "CSV data row 54, original dose=6.897957957957958 mMET-hours/week"
+          "location": "CSV data row 54, original dose=6.897957957957958 mMET-hours/week",
+          "share": 75.14743212227184
         },
         {
           "dose": 120.48185328185329,
@@ -848,7 +936,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6697218129148891,
           "high": 0.7509578004559302,
-          "location": "CSV data row 55, original dose=7.028108108108109 mMET-hours/week"
+          "location": "CSV data row 55, original dose=7.028108108108109 mMET-hours/week",
+          "share": 75.6488531192917
         },
         {
           "dose": 122.71299871299873,
@@ -859,7 +948,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.66773177715374,
           "high": 0.7492767272150342,
-          "location": "CSV data row 56, original dose=7.158258258258259 mMET-hours/week"
+          "location": "CSV data row 56, original dose=7.158258258258259 mMET-hours/week",
+          "share": 76.12941475198477
         },
         {
           "dose": 124.94414414414415,
@@ -870,7 +960,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6658288214539096,
           "high": 0.7476628229623584,
-          "location": "CSV data row 57, original dose=7.288408408408409 mMET-hours/week"
+          "location": "CSV data row 57, original dose=7.288408408408409 mMET-hours/week",
+          "share": 76.58975576166905
         },
         {
           "dose": 127.1752895752896,
@@ -881,7 +972,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6640101444815755,
           "high": 0.7461140934297184,
-          "location": "CSV data row 58, original dose=7.418558558558559 mMET-hours/week"
+          "location": "CSV data row 58, original dose=7.418558558558559 mMET-hours/week",
+          "share": 77.03050328747655
         },
         {
           "dose": 129.406435006435,
@@ -892,7 +984,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6622730003403301,
           "high": 0.7446285746435396,
-          "location": "CSV data row 59, original dose=7.548708708708709 mMET-hours/week"
+          "location": "CSV data row 59, original dose=7.548708708708709 mMET-hours/week",
+          "share": 77.45227346486485
         },
         {
           "dose": 131.63758043758045,
@@ -903,7 +996,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6606146955942437,
           "high": 0.7432043313813804,
-          "location": "CSV data row 60, original dose=7.6788588588588595 mMET-hours/week"
+          "location": "CSV data row 60, original dose=7.6788588588588595 mMET-hours/week",
+          "share": 77.85567200079217
         },
         {
           "dose": 133.8687258687259,
@@ -914,7 +1008,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6590325864161222,
           "high": 0.7418394556826554,
-          "location": "CSV data row 61, original dose=7.80900900900901 mMET-hours/week"
+          "location": "CSV data row 61, original dose=7.80900900900901 mMET-hours/week",
+          "share": 78.24129472637703
         },
         {
           "dose": 136.0998712998713,
@@ -925,7 +1020,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6575240758563531,
           "high": 0.7405320654117747,
-          "location": "CSV data row 62, original dose=7.93915915915916 mMET-hours/week"
+          "location": "CSV data row 62, original dose=7.93915915915916 mMET-hours/week",
+          "share": 78.60972812781503
         },
         {
           "dose": 138.33101673101675,
@@ -936,7 +1032,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6560866112280201,
           "high": 0.7392803028720113,
-          "location": "CSV data row 63, original dose=8.06930930930931 mMET-hours/week"
+          "location": "CSV data row 63, original dose=8.06930930930931 mMET-hours/week",
+          "share": 78.96154985627967
         },
         {
           "dose": 140.56216216216217,
@@ -947,7 +1044,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6547176816042394,
           "high": 0.7380823334685082,
-          "location": "CSV data row 64, original dose=8.19945945945946 mMET-hours/week"
+          "location": "CSV data row 64, original dose=8.19945945945946 mMET-hours/week",
+          "share": 79.29732921748975
         },
         {
           "dose": 142.79330759330762,
@@ -958,7 +1056,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6534148154239293,
           "high": 0.7369363444189285,
-          "location": "CSV data row 65, original dose=8.32960960960961 mMET-hours/week"
+          "location": "CSV data row 65, original dose=8.32960960960961 mMET-hours/week",
+          "share": 79.61762764158404
         },
         {
           "dose": 145.02445302445304,
@@ -969,7 +1068,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6521755782024703,
           "high": 0.7358405435103422,
-          "location": "CSV data row 66, original dose=8.459759759759761 mMET-hours/week"
+          "location": "CSV data row 66, original dose=8.459759759759761 mMET-hours/week",
+          "share": 79.9229991339044
         },
         {
           "dose": 147.25559845559846,
@@ -980,7 +1080,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6509975703439407,
           "high": 0.7347931579010263,
-          "location": "CSV data row 67, original dose=8.589909909909911 mMET-hours/week"
+          "location": "CSV data row 67, original dose=8.589909909909911 mMET-hours/week",
+          "share": 80.21399070725023
         },
         {
           "dose": 149.48674388674388,
@@ -991,7 +1092,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6498784250518296,
           "high": 0.7337924329659458,
-          "location": "CSV data row 68, original dose=8.72006006006006 mMET-hours/week"
+          "location": "CSV data row 68, original dose=8.72006006006006 mMET-hours/week",
+          "share": 80.49114279613177
         },
         {
           "dose": 151.71788931788933,
@@ -1002,7 +1104,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6488158063353371,
           "high": 0.7328366311847567,
-          "location": "CSV data row 69, original dose=8.85021021021021 mMET-hours/week"
+          "location": "CSV data row 69, original dose=8.85021021021021 mMET-hours/week",
+          "share": 80.75498965351463
         },
         {
           "dose": 153.94903474903478,
@@ -1013,7 +1116,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6478074071085621,
           "high": 0.7319240310712618,
-          "location": "CSV data row 70, original dose=8.980360360360361 mMET-hours/week"
+          "location": "CSV data row 70, original dose=8.980360360360361 mMET-hours/week",
+          "share": 81.00605973051525
         },
         {
           "dose": 156.1801801801802,
@@ -1024,7 +1128,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6468509473800568,
           "high": 0.7310529261433144,
-          "location": "CSV data row 71, original dose=9.110510510510512 mMET-hours/week"
+          "location": "CSV data row 71, original dose=9.110510510510512 mMET-hours/week",
+          "share": 81.24487603947775
         },
         {
           "dose": 158.41132561132562,
@@ -1035,7 +1140,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6459441725304002,
           "high": 0.7302216239322566,
-          "location": "CSV data row 72, original dose=9.240660660660662 mMET-hours/week"
+          "location": "CSV data row 72, original dose=9.240660660660662 mMET-hours/week",
+          "share": 81.47195650083013
         },
         {
           "dose": 160.64247104247104,
@@ -1046,7 +1152,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6450848516756005,
           "high": 0.7294284450310389,
-          "location": "CSV data row 73, original dose=9.370810810810811 mMET-hours/week"
+          "location": "CSV data row 73, original dose=9.370810810810811 mMET-hours/week",
+          "share": 81.68781427409252
         },
         {
           "dose": 162.8736164736165,
@@ -1057,7 +1164,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6442707761142817,
           "high": 0.7286717221802514,
-          "location": "CSV data row 74, original dose=9.500960960960962 mMET-hours/week"
+          "location": "CSV data row 74, original dose=9.500960960960962 mMET-hours/week",
+          "share": 81.89295807338196
         },
         {
           "dose": 165.10476190476192,
@@ -1068,7 +1176,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.643499757856752,
           "high": 0.7279497993913644,
-          "location": "CSV data row 75, original dose=9.631111111111112 mMET-hours/week"
+          "location": "CSV data row 75, original dose=9.631111111111112 mMET-hours/week",
+          "share": 82.08789246773331
         },
         {
           "dose": 167.33590733590736,
@@ -1079,7 +1188,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6427696282341714,
           "high": 0.7272610311065446,
-          "location": "CSV data row 76, original dose=9.761261261261263 mMET-hours/week"
+          "location": "CSV data row 76, original dose=9.761261261261263 mMET-hours/week",
+          "share": 82.27311816653288
         },
         {
           "dose": 169.5670527670528,
@@ -1090,7 +1200,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6420782365861653,
           "high": 0.7266037813944903,
-          "location": "CSV data row 77, original dose=9.891411411411413 mMET-hours/week"
+          "location": "CSV data row 77, original dose=9.891411411411413 mMET-hours/week",
+          "share": 82.44913229033709
         },
         {
           "dose": 171.7981981981982,
@@ -1101,7 +1212,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6414234490253256,
           "high": 0.725976423181792,
-          "location": "CSV data row 78, original dose=10.021561561561562 mMET-hours/week"
+          "location": "CSV data row 78, original dose=10.021561561561562 mMET-hours/week",
+          "share": 82.61642862732833
         },
         {
           "dose": 174.02934362934366,
@@ -1112,7 +1224,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6408031472771496,
           "high": 0.7253773375193928,
-          "location": "CSV data row 79, original dose=10.151711711711712 mMET-hours/week"
+          "location": "CSV data row 79, original dose=10.151711711711712 mMET-hours/week",
+          "share": 82.77549787564018
         },
         {
           "dose": 176.26048906048908,
@@ -1123,7 +1236,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6402152275940536,
           "high": 0.7248049128838008,
-          "location": "CSV data row 80, original dose=10.281861861861863 mMET-hours/week"
+          "location": "CSV data row 80, original dose=10.281861861861863 mMET-hours/week",
+          "share": 82.92682787176344
         },
         {
           "dose": 178.49163449163453,
@@ -1134,7 +1248,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6396575997421761,
           "high": 0.7242575445127565,
-          "location": "CSV data row 81, original dose=10.412012012012013 mMET-hours/week"
+          "location": "CSV data row 81, original dose=10.412012012012013 mMET-hours/week",
+          "share": 83.07090380522874
         },
         {
           "dose": 180.72277992277995,
@@ -1145,7 +1260,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6391281860597613,
           "high": 0.7237336337751415,
-          "location": "CSV data row 82, original dose=10.542162162162164 mMET-hours/week"
+          "location": "CSV data row 82, original dose=10.542162162162164 mMET-hours/week",
+          "share": 83.20820841974339
         },
         {
           "dose": 182.95392535392537,
@@ -1156,7 +1272,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6386249205859776,
           "high": 0.7232315875749694,
-          "location": "CSV data row 83, original dose=10.672312312312313 mMET-hours/week"
+          "location": "CSV data row 83, original dose=10.672312312312313 mMET-hours/week",
+          "share": 83.33922220094422
         },
         {
           "dose": 185.1850707850708,
@@ -1167,7 +1284,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6381457482590779,
           "high": 0.7227498177893712,
-          "location": "CSV data row 84, original dose=10.802462462462463 mMET-hours/week"
+          "location": "CSV data row 84, original dose=10.802462462462463 mMET-hours/week",
+          "share": 83.46442355091477
         },
         {
           "dose": 187.41621621621624,
@@ -1178,7 +1296,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6376886241828587,
           "high": 0.7222867407405497,
-          "location": "CSV data row 85, original dose=10.932612612612614 mMET-hours/week"
+          "location": "CSV data row 85, original dose=10.932612612612614 mMET-hours/week",
+          "share": 83.58428894960004
         },
         {
           "dose": 189.6473616473617,
@@ -1189,7 +1308,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6372515129604185,
           "high": 0.7218407767017424,
-          "location": "CSV data row 86, original dose=11.062762762762764 mMET-hours/week"
+          "location": "CSV data row 86, original dose=11.062762762762764 mMET-hours/week",
+          "share": 83.69929310324086
         },
         {
           "dose": 191.8785070785071,
@@ -1200,7 +1320,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6368323880942404,
           "high": 0.721410349437294,
-          "location": "CSV data row 87, original dose=11.192912912912915 mMET-hours/week"
+          "location": "CSV data row 87, original dose=11.192912912912915 mMET-hours/week",
+          "share": 83.8099090799376
         },
         {
           "dose": 194.1096525096525,
@@ -1211,7 +1332,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6364292314516593,
           "high": 0.7209938857770022,
-          "location": "CSV data row 88, original dose=11.323063063063064 mMET-hours/week"
+          "location": "CSV data row 88, original dose=11.323063063063064 mMET-hours/week",
+          "share": 83.91660843244182
         },
         {
           "dose": 196.34079794079796,
@@ -1222,7 +1344,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6360400327947889,
           "high": 0.7205898152249607,
-          "location": "CSV data row 89, original dose=11.453213213213214 mMET-hours/week"
+          "location": "CSV data row 89, original dose=11.453213213213214 mMET-hours/week",
+          "share": 84.01986130826643
         },
         {
           "dose": 198.5719433719434,
@@ -1233,7 +1356,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6356627893739965,
           "high": 0.7201965696031787,
-          "location": "CSV data row 90, original dose=11.583363363363365 mMET-hours/week"
+          "location": "CSV data row 90, original dose=11.583363363363365 mMET-hours/week",
+          "share": 84.12013654719459
         },
         {
           "dose": 200.80308880308885,
@@ -1244,7 +1368,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6352955055840248,
           "high": 0.7198125827303175,
-          "location": "CSV data row 91, original dose=11.713513513513515 mMET-hours/week"
+          "location": "CSV data row 91, original dose=11.713513513513515 mMET-hours/week",
+          "share": 84.21790176626085
         },
         {
           "dose": 203.03423423423425,
@@ -1255,7 +1380,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6349361926818595,
           "high": 0.7194362901359312,
-          "location": "CSV data row 92, original dose=11.843663663663666 mMET-hours/week"
+          "location": "CSV data row 92, original dose=11.843663663663666 mMET-hours/week",
+          "share": 84.31362343227121
         },
         {
           "dose": 205.26537966537967,
@@ -1266,7 +1392,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6345828685654413,
           "high": 0.7190661288106559,
-          "location": "CSV data row 93, original dose=11.973813813813814 mMET-hours/week"
+          "location": "CSV data row 93, original dose=11.973813813813814 mMET-hours/week",
+          "share": 84.40776692192235
         },
         {
           "dose": 207.49652509652512,
@@ -1277,7 +1404,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6342335576123143,
           "high": 0.7187005369928334,
-          "location": "CSV data row 94, original dose=12.103963963963965 mMET-hours/week"
+          "location": "CSV data row 94, original dose=12.103963963963965 mMET-hours/week",
+          "share": 84.50079656957575
         },
         {
           "dose": 209.72767052767057,
@@ -1288,7 +1416,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6338862905772894,
           "high": 0.7183379539921001,
-          "location": "CSV data row 95, original dose=12.234114114114115 mMET-hours/week"
+          "location": "CSV data row 95, original dose=12.234114114114115 mMET-hours/week",
+          "share": 84.59317570273957
         },
         {
           "dose": 211.95881595881596,
@@ -1299,7 +1428,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6335392153012319,
           "high": 0.717976908085715,
-          "location": "CSV data row 96, original dose=12.364264264264266 mMET-hours/week"
+          "location": "CSV data row 96, original dose=12.364264264264266 mMET-hours/week",
+          "share": 84.68534057529934
         },
         {
           "dose": 214.18996138996138,
@@ -1310,7 +1440,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6331916382225335,
           "high": 0.7176168451465579,
-          "location": "CSV data row 97, original dose=12.494414414414415 mMET-hours/week"
+          "location": "CSV data row 97, original dose=12.494414414414415 mMET-hours/week",
+          "share": 84.7774549264377
         },
         {
           "dose": 216.42110682110683,
@@ -1321,7 +1452,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6328435521366576,
           "high": 0.7172577558061618,
-          "location": "CSV data row 98, original dose=12.624564564564565 mMET-hours/week"
+          "location": "CSV data row 98, original dose=12.624564564564565 mMET-hours/week",
+          "share": 84.86952091179992
         },
         {
           "dose": 218.65225225225228,
@@ -1332,7 +1464,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.632494958919734,
           "high": 0.7168996378463551,
-          "location": "CSV data row 99, original dose=12.754714714714716 mMET-hours/week"
+          "location": "CSV data row 99, original dose=12.754714714714716 mMET-hours/week",
+          "share": 84.96153855678085
         },
         {
           "dose": 220.8833976833977,
@@ -1343,7 +1476,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6321458604827527,
           "high": 0.7165424890143673,
-          "location": "CSV data row 100, original dose=12.884864864864866 mMET-hours/week"
+          "location": "CSV data row 100, original dose=12.884864864864866 mMET-hours/week",
+          "share": 85.05350788676236
         },
         {
           "dose": 223.11454311454312,
@@ -1354,7 +1488,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6317962587712308,
           "high": 0.7161863070231651,
-          "location": "CSV data row 101, original dose=13.015015015015017 mMET-hours/week"
+          "location": "CSV data row 101, original dose=13.015015015015017 mMET-hours/week",
+          "share": 85.14542892711287
         },
         {
           "dose": 225.34568854568855,
@@ -1365,7 +1500,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6314461557648695,
           "high": 0.7158310895517956,
-          "location": "CSV data row 102, original dose=13.145165165165166 mMET-hours/week"
+          "location": "CSV data row 102, original dose=13.145165165165166 mMET-hours/week",
+          "share": 85.23730170318724
         },
         {
           "dose": 227.576833976834,
@@ -1376,7 +1512,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6310955534772004,
           "high": 0.7154768342457362,
-          "location": "CSV data row 103, original dose=13.275315315315316 mMET-hours/week"
+          "location": "CSV data row 103, original dose=13.275315315315316 mMET-hours/week",
+          "share": 85.32912624032735
         },
         {
           "dose": 229.80797940797945,
@@ -1387,7 +1524,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6307444539552278,
           "high": 0.7151235387172532,
-          "location": "CSV data row 104, original dose=13.405465465465467 mMET-hours/week"
+          "location": "CSV data row 104, original dose=13.405465465465467 mMET-hours/week",
+          "share": 85.42090256386179
         },
         {
           "dose": 232.03912483912487,
@@ -1398,7 +1536,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6303928592790644,
           "high": 0.7147712005457717,
-          "location": "CSV data row 105, original dose=13.535615615615617 mMET-hours/week"
+          "location": "CSV data row 105, original dose=13.535615615615617 mMET-hours/week",
+          "share": 85.51263069910536
         },
         {
           "dose": 234.2702702702703,
@@ -1409,7 +1548,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6300407715615526,
           "high": 0.7144198172782447,
-          "location": "CSV data row 106, original dose=13.665765765765768 mMET-hours/week"
+          "location": "CSV data row 106, original dose=13.665765765765768 mMET-hours/week",
+          "share": 85.60431067136014
         },
         {
           "dose": 236.5014157014157,
@@ -1420,7 +1560,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6296881929478858,
           "high": 0.7140693864295378,
-          "location": "CSV data row 107, original dose=13.795915915915916 mMET-hours/week"
+          "location": "CSV data row 107, original dose=13.795915915915916 mMET-hours/week",
+          "share": 85.69594250591462
         },
         {
           "dose": 238.73256113256116,
@@ -1431,7 +1572,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6293351256152193,
           "high": 0.7137199054828155,
-          "location": "CSV data row 108, original dose=13.926066066066067 mMET-hours/week"
+          "location": "CSV data row 108, original dose=13.926066066066067 mMET-hours/week",
+          "share": 85.78752622804426
         },
         {
           "dose": 240.96370656370658,
@@ -1442,7 +1584,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6289815717722759,
           "high": 0.7133713718899387,
-          "location": "CSV data row 109, original dose=14.056216216216217 mMET-hours/week"
+          "location": "CSV data row 109, original dose=14.056216216216217 mMET-hours/week",
+          "share": 85.87906186301089
         },
         {
           "dose": 243.19485199485203,
@@ -1453,7 +1596,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6286275336589422,
           "high": 0.7130237830718639,
-          "location": "CSV data row 110, original dose=14.186366366366368 mMET-hours/week"
+          "location": "CSV data row 110, original dose=14.186366366366368 mMET-hours/week",
+          "share": 85.97054943606337
         },
         {
           "dose": 245.42599742599745,
@@ -1464,7 +1608,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6282730135458613,
           "high": 0.7126771364190525,
-          "location": "CSV data row 111, original dose=14.316516516516518 mMET-hours/week"
+          "location": "CSV data row 111, original dose=14.316516516516518 mMET-hours/week",
+          "share": 86.06198897243723
         },
         {
           "dose": 247.65714285714287,
@@ -1475,7 +1620,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.627918013734018,
           "high": 0.7123314292918862,
-          "location": "CSV data row 112, original dose=14.446666666666667 mMET-hours/week"
+          "location": "CSV data row 112, original dose=14.446666666666667 mMET-hours/week",
+          "share": 86.15338049735466
         },
         {
           "dose": 249.8882882882883,
@@ -1486,7 +1632,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6275625365543186,
           "high": 0.7119866590210866,
-          "location": "CSV data row 113, original dose=14.576816816816818 mMET-hours/week"
+          "location": "CSV data row 113, original dose=14.576816816816818 mMET-hours/week",
+          "share": 86.24472403602451
         },
         {
           "dose": 252.11943371943374,
@@ -1497,7 +1644,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6272065843671614,
           "high": 0.71164282290814,
-          "location": "CSV data row 114, original dose=14.706966966966968 mMET-hours/week"
+          "location": "CSV data row 114, original dose=14.706966966966968 mMET-hours/week",
+          "share": 86.33601961364286
         },
         {
           "dose": 254.3505791505792,
@@ -1508,7 +1656,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6268501595620094,
           "high": 0.7112999182257325,
-          "location": "CSV data row 115, original dose=14.837117117117119 mMET-hours/week"
+          "location": "CSV data row 115, original dose=14.837117117117119 mMET-hours/week",
+          "share": 86.42726725539208
         },
         {
           "dose": 256.58172458172464,
@@ -1519,7 +1668,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6264932645569495,
           "high": 0.7109579422181849,
-          "location": "CSV data row 116, original dose=14.96726726726727 mMET-hours/week"
+          "location": "CSV data row 116, original dose=14.96726726726727 mMET-hours/week",
+          "share": 86.51846698644151
         },
         {
           "dose": 258.81287001287,
@@ -1530,7 +1680,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6261359017982504,
           "high": 0.7106168921018957,
-          "location": "CSV data row 117, original dose=15.097417417417418 mMET-hours/week"
+          "location": "CSV data row 117, original dose=15.097417417417418 mMET-hours/week",
+          "share": 86.6096188319473
         },
         {
           "dose": 261.04401544401543,
@@ -1541,7 +1692,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6257780737599163,
           "high": 0.7102767650657896,
-          "location": "CSV data row 118, original dose=15.227567567567569 mMET-hours/week"
+          "location": "CSV data row 118, original dose=15.227567567567569 mMET-hours/week",
+          "share": 86.7007228170522
         },
         {
           "dose": 263.2751608751609,
@@ -1552,7 +1704,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6254197829432331,
           "high": 0.7099375582717672,
-          "location": "CSV data row 119, original dose=15.357717717717719 mMET-hours/week"
+          "location": "CSV data row 119, original dose=15.357717717717719 mMET-hours/week",
+          "share": 86.79177896688594
         },
         {
           "dose": 265.5063063063063,
@@ -1563,7 +1716,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6250610318763112,
           "high": 0.7095992688551631,
-          "location": "CSV data row 120, original dose=15.48786786786787 mMET-hours/week"
+          "location": "CSV data row 120, original dose=15.48786786786787 mMET-hours/week",
+          "share": 86.8827873065652
         },
         {
           "dose": 267.7374517374518,
@@ -1574,7 +1728,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.624701823113627,
           "high": 0.7092618939252071,
-          "location": "CSV data row 121, original dose=15.61801801801802 mMET-hours/week"
+          "location": "CSV data row 121, original dose=15.61801801801802 mMET-hours/week",
+          "share": 86.97374786119323
         },
         {
           "dose": 269.96859716859717,
@@ -1585,7 +1740,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6243421592355555,
           "high": 0.7089254305654882,
-          "location": "CSV data row 122, original dose=15.748168168168169 mMET-hours/week"
+          "location": "CSV data row 122, original dose=15.748168168168169 mMET-hours/week",
+          "share": 87.06466065586021
         },
         {
           "dose": 272.1997425997426,
@@ -1596,7 +1752,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6239820428479033,
           "high": 0.7085898758344243,
-          "location": "CSV data row 123, original dose=15.87831831831832 mMET-hours/week"
+          "location": "CSV data row 123, original dose=15.87831831831832 mMET-hours/week",
+          "share": 87.15552571564295
         },
         {
           "dose": 274.43088803088807,
@@ -1607,7 +1764,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6236214765814347,
           "high": 0.7082552267657333,
-          "location": "CSV data row 124, original dose=16.00846846846847 mMET-hours/week"
+          "location": "CSV data row 124, original dose=16.00846846846847 mMET-hours/week",
+          "share": 87.24634306560513
         },
         {
           "dose": 276.6620334620335,
@@ -1618,7 +1776,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6232604630913958,
           "high": 0.7079214803689093,
-          "location": "CSV data row 125, original dose=16.13861861861862 mMET-hours/week"
+          "location": "CSV data row 125, original dose=16.13861861861862 mMET-hours/week",
+          "share": 87.33711273079746
         },
         {
           "dose": 278.8931788931789,
@@ -1629,7 +1788,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6228990050570344,
           "high": 0.7075886336297003,
-          "location": "CSV data row 126, original dose=16.26876876876877 mMET-hours/week"
+          "location": "CSV data row 126, original dose=16.26876876876877 mMET-hours/week",
+          "share": 87.42783473625768
         },
         {
           "dose": 281.12432432432433,
@@ -1640,7 +1800,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.622537105181122,
           "high": 0.7072566835105927,
-          "location": "CSV data row 127, original dose=16.39891891891892 mMET-hours/week"
+          "location": "CSV data row 127, original dose=16.39891891891892 mMET-hours/week",
+          "share": 87.5185091070099
         },
         {
           "dose": 283.35546975546976,
@@ -1651,7 +1812,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.622174766189466,
           "high": 0.7069256269512931,
-          "location": "CSV data row 128, original dose=16.52906906906907 mMET-hours/week"
+          "location": "CSV data row 128, original dose=16.52906906906907 mMET-hours/week",
+          "share": 87.60913586806531
         },
         {
           "dose": 285.58661518661523,
@@ -1662,7 +1824,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6218119908304223,
           "high": 0.7065954608692164,
-          "location": "CSV data row 129, original dose=16.65921921921922 mMET-hours/week"
+          "location": "CSV data row 129, original dose=16.65921921921922 mMET-hours/week",
+          "share": 87.69971504442206
         },
         {
           "dose": 287.81776061776065,
@@ -1673,7 +1836,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6214487818744072,
           "high": 0.706266182159974,
-          "location": "CSV data row 130, original dose=16.78936936936937 mMET-hours/week"
+          "location": "CSV data row 130, original dose=16.78936936936937 mMET-hours/week",
+          "share": 87.79024666106521
         },
         {
           "dose": 290.0489060489061,
@@ -1684,7 +1848,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6210851421134078,
           "high": 0.7059377876978677,
-          "location": "CSV data row 131, original dose=16.919519519519522 mMET-hours/week"
+          "location": "CSV data row 131, original dose=16.919519519519522 mMET-hours/week",
+          "share": 87.88073074296622
         },
         {
           "dose": 292.28005148005155,
@@ -1695,7 +1860,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6207210743604844,
           "high": 0.7056102743363789,
-          "location": "CSV data row 132, original dose=17.049669669669672 mMET-hours/week"
+          "location": "CSV data row 132, original dose=17.049669669669672 mMET-hours/week",
+          "share": 87.97116731508387
         },
         {
           "dose": 294.5111969111969,
@@ -1706,7 +1872,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6203565814492784,
           "high": 0.7052836389086655,
-          "location": "CSV data row 133, original dose=17.179819819819823 mMET-hours/week"
+          "location": "CSV data row 133, original dose=17.179819819819823 mMET-hours/week",
+          "share": 88.06155640236389
         },
         {
           "dose": 296.74234234234234,
@@ -1717,7 +1884,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6199916662335168,
           "high": 0.704957878228058,
-          "location": "CSV data row 134, original dose=17.30996996996997 mMET-hours/week"
+          "location": "CSV data row 134, original dose=17.30996996996997 mMET-hours/week",
+          "share": 88.15189802973852
         },
         {
           "dose": 298.97348777348776,
@@ -1728,7 +1896,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6196263315865109,
           "high": 0.7046329890885542,
-          "location": "CSV data row 135, original dose=17.44012012012012 mMET-hours/week"
+          "location": "CSV data row 135, original dose=17.44012012012012 mMET-hours/week",
+          "share": 88.24219222212761
         },
         {
           "dose": 301.20463320463324,
@@ -1739,7 +1908,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6192605804006629,
           "high": 0.7043089682653207,
-          "location": "CSV data row 136, original dose=17.57027027027027 mMET-hours/week"
+          "location": "CSV data row 136, original dose=17.57027027027027 mMET-hours/week",
+          "share": 88.33243900443753
         },
         {
           "dose": 303.43577863577866,
@@ -1750,7 +1920,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.618894415586966,
           "high": 0.7039858125151919,
-          "location": "CSV data row 137, original dose=17.70042042042042 mMET-hours/week"
+          "location": "CSV data row 137, original dose=17.70042042042042 mMET-hours/week",
+          "share": 88.42263840156103
         },
         {
           "dose": 305.6669240669241,
@@ -1761,7 +1932,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6185278400745016,
           "high": 0.7036635185771658,
-          "location": "CSV data row 138, original dose=17.830570570570572 mMET-hours/week"
+          "location": "CSV data row 138, original dose=17.830570570570572 mMET-hours/week",
+          "share": 88.51279043837839
         },
         {
           "dose": 307.89806949806956,
@@ -1772,7 +1944,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6181608568099404,
           "high": 0.7033420831729057,
-          "location": "CSV data row 139, original dose=17.960720720720722 mMET-hours/week"
+          "location": "CSV data row 139, original dose=17.960720720720722 mMET-hours/week",
+          "share": 88.60289513975702
         },
         {
           "dose": 310.129214929215,
@@ -1783,7 +1956,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6177934687570457,
           "high": 0.7030215030072419,
-          "location": "CSV data row 140, original dose=18.090870870870873 mMET-hours/week"
+          "location": "CSV data row 140, original dose=18.090870870870873 mMET-hours/week",
+          "share": 88.69295253055058
         },
         {
           "dose": 312.3603603603604,
@@ -1794,7 +1968,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6174256788961672,
           "high": 0.702701774768667,
-          "location": "CSV data row 141, original dose=18.221021021021024 mMET-hours/week"
+          "location": "CSV data row 141, original dose=18.221021021021024 mMET-hours/week",
+          "share": 88.78296263560057
         },
         {
           "dose": 314.5915057915058,
@@ -1805,7 +1980,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6170574902237488,
           "high": 0.7023828951298415,
-          "location": "CSV data row 142, original dose=18.351171171171174 mMET-hours/week"
+          "location": "CSV data row 142, original dose=18.351171171171174 mMET-hours/week",
+          "share": 88.87292547973458
         },
         {
           "dose": 316.82265122265125,
@@ -1816,7 +1992,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6166889057518238,
           "high": 0.7020648607480885,
-          "location": "CSV data row 143, original dose=18.481321321321325 mMET-hours/week"
+          "location": "CSV data row 143, original dose=18.481321321321325 mMET-hours/week",
+          "share": 88.96284108776742
         },
         {
           "dose": 319.05379665379667,
@@ -1827,7 +2004,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6163199285075148,
           "high": 0.7017476682658905,
-          "location": "CSV data row 144, original dose=18.61147147147147 mMET-hours/week"
+          "location": "CSV data row 144, original dose=18.61147147147147 mMET-hours/week",
+          "share": 89.0527094845017
         },
         {
           "dose": 321.2849420849421,
@@ -1838,7 +2016,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6159505615325457,
           "high": 0.7014313143113955,
-          "location": "CSV data row 145, original dose=18.741621621621622 mMET-hours/week"
+          "location": "CSV data row 145, original dose=18.741621621621622 mMET-hours/week",
+          "share": 89.14253069472534
         },
         {
           "dose": 323.51608751608757,
@@ -1849,7 +2028,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6155808078827304,
           "high": 0.7011157954989015,
-          "location": "CSV data row 146, original dose=18.871771771771773 mMET-hours/week"
+          "location": "CSV data row 146, original dose=18.871771771771773 mMET-hours/week",
+          "share": 89.23230474321505
         },
         {
           "dose": 325.747232947233,
@@ -1860,7 +2040,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6152106706274924,
           "high": 0.7008011084293635,
-          "location": "CSV data row 147, original dose=19.001921921921923 mMET-hours/week"
+          "location": "CSV data row 147, original dose=19.001921921921923 mMET-hours/week",
+          "share": 89.32203165473298
         },
         {
           "dose": 327.9783783783784,
@@ -1871,7 +2052,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.614840152849359,
           "high": 0.7004872496908795,
-          "location": "CSV data row 148, original dose=19.132072072072074 mMET-hours/week"
+          "location": "CSV data row 148, original dose=19.132072072072074 mMET-hours/week",
+          "share": 89.41171145402912
         },
         {
           "dose": 330.20952380952383,
@@ -1882,7 +2064,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6144692576434717,
           "high": 0.7001742158591837,
-          "location": "CSV data row 149, original dose=19.262222222222224 mMET-hours/week"
+          "location": "CSV data row 149, original dose=19.262222222222224 mMET-hours/week",
+          "share": 89.50134416584089
         },
         {
           "dose": 332.44066924066925,
@@ -1893,7 +2076,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.614097988117101,
           "high": 0.6998620034981424,
-          "location": "CSV data row 150, original dose=19.392372372372375 mMET-hours/week"
+          "location": "CSV data row 150, original dose=19.392372372372375 mMET-hours/week",
+          "share": 89.59092981489165
         },
         {
           "dose": 334.67181467181473,
@@ -1904,7 +2088,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6137263473891514,
           "high": 0.6995506091602381,
-          "location": "CSV data row 151, original dose=19.522522522522525 mMET-hours/week"
+          "location": "CSV data row 151, original dose=19.522522522522525 mMET-hours/week",
+          "share": 89.68046842589229
         },
         {
           "dose": 336.90296010296015,
@@ -1915,7 +2100,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6133543385896755,
           "high": 0.6992400293870557,
-          "location": "CSV data row 152, original dose=19.652672672672676 mMET-hours/week"
+          "location": "CSV data row 152, original dose=19.652672672672676 mMET-hours/week",
+          "share": 89.76996002354092
         },
         {
           "dose": 339.1341055341056,
@@ -1926,7 +2112,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6129819648593907,
           "high": 0.6989302607097697,
-          "location": "CSV data row 153, original dose=19.782822822822826 mMET-hours/week"
+          "location": "CSV data row 153, original dose=19.782822822822826 mMET-hours/week",
+          "share": 89.85940463252251
         },
         {
           "dose": 341.365250965251,
@@ -1937,7 +2124,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6126092293491988,
           "high": 0.698621299649626,
-          "location": "CSV data row 154, original dose=19.912972972972973 mMET-hours/week"
+          "location": "CSV data row 154, original dose=19.912972972972973 mMET-hours/week",
+          "share": 89.94880227750862
         },
         {
           "dose": 343.5963963963964,
@@ -1948,7 +2136,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6122361352197006,
           "high": 0.6983131427184179,
-          "location": "CSV data row 155, original dose=20.043123123123124 mMET-hours/week"
+          "location": "CSV data row 155, original dose=20.043123123123124 mMET-hours/week",
+          "share": 90.0381529831587
         },
         {
           "dose": 345.8275418275419,
@@ -1959,7 +2148,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6118626856407252,
           "high": 0.6980057864189672,
-          "location": "CSV data row 156, original dose=20.173273273273274 mMET-hours/week"
+          "location": "CSV data row 156, original dose=20.173273273273274 mMET-hours/week",
+          "share": 90.1274567741186
         },
         {
           "dose": 348.0586872586873,
@@ -1970,7 +2160,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6114888837908509,
           "high": 0.6976992272455936,
-          "location": "CSV data row 157, original dose=20.303423423423425 mMET-hours/week"
+          "location": "CSV data row 157, original dose=20.303423423423425 mMET-hours/week",
+          "share": 90.21671367502182
         },
         {
           "dose": 350.2898326898327,
@@ -1981,7 +2172,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6111147328569394,
           "high": 0.6973934616845917,
-          "location": "CSV data row 158, original dose=20.433573573573575 mMET-hours/week"
+          "location": "CSV data row 158, original dose=20.433573573573575 mMET-hours/week",
+          "share": 90.30592371048813
         },
         {
           "dose": 352.52097812097816,
@@ -1992,7 +2184,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6107402360336626,
           "high": 0.697088486214692,
-          "location": "CSV data row 159, original dose=20.563723723723726 mMET-hours/week"
+          "location": "CSV data row 159, original dose=20.563723723723726 mMET-hours/week",
+          "share": 90.39508690512507
         },
         {
           "dose": 354.7521235521236,
@@ -2003,7 +2196,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6103653965230411,
           "high": 0.6967842973075306,
-          "location": "CSV data row 160, original dose=20.693873873873876 mMET-hours/week"
+          "location": "CSV data row 160, original dose=20.693873873873876 mMET-hours/week",
+          "share": 90.48420328352691
         },
         {
           "dose": 356.98326898326906,
@@ -2014,7 +2208,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6099902175339827,
           "high": 0.6964808914281078,
-          "location": "CSV data row 161, original dose=20.824024024024027 mMET-hours/week"
+          "location": "CSV data row 161, original dose=20.824024024024027 mMET-hours/week",
+          "share": 90.57327287027489
         },
         {
           "dose": 359.2144144144145,
@@ -2025,7 +2220,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6096147022818215,
           "high": 0.6961782650352447,
-          "location": "CSV data row 162, original dose=20.954174174174177 mMET-hours/week"
+          "location": "CSV data row 162, original dose=20.954174174174177 mMET-hours/week",
+          "share": 90.66229568993792
         },
         {
           "dose": 361.4455598455599,
@@ -2036,7 +2232,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6092388539878694,
           "high": 0.6958764145820413,
-          "location": "CSV data row 163, original dose=21.084324324324328 mMET-hours/week"
+          "location": "CSV data row 163, original dose=21.084324324324328 mMET-hours/week",
+          "share": 90.75127176707122
         },
         {
           "dose": 363.6767052767053,
@@ -2047,7 +2244,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6088626758789603,
           "high": 0.6955753365163218,
-          "location": "CSV data row 164, original dose=21.214474474474475 mMET-hours/week"
+          "location": "CSV data row 164, original dose=21.214474474474475 mMET-hours/week",
+          "share": 90.84020112621761
         },
         {
           "dose": 365.90785070785074,
@@ -2058,7 +2256,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.608486171187004,
           "high": 0.6952750272810819,
-          "location": "CSV data row 165, original dose=21.344624624624625 mMET-hours/week"
+          "location": "CSV data row 165, original dose=21.344624624624625 mMET-hours/week",
+          "share": 90.92908379190754
         },
         {
           "dose": 368.1389961389961,
@@ -2069,7 +2268,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6081093431485514,
           "high": 0.6949754833149367,
-          "location": "CSV data row 166, original dose=21.474774774774776 mMET-hours/week"
+          "location": "CSV data row 166, original dose=21.474774774774776 mMET-hours/week",
+          "share": 91.01791978865721
         },
         {
           "dose": 370.3701415701416,
@@ -2080,7 +2280,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6077321950043442,
           "high": 0.6946767010525496,
-          "location": "CSV data row 167, original dose=21.604924924924926 mMET-hours/week"
+          "location": "CSV data row 167, original dose=21.604924924924926 mMET-hours/week",
+          "share": 91.10670914097128
         },
         {
           "dose": 372.601287001287,
@@ -2091,7 +2292,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.607354729998891,
           "high": 0.6943786769250749,
-          "location": "CSV data row 168, original dose=21.735075075075077 mMET-hours/week"
+          "location": "CSV data row 168, original dose=21.735075075075077 mMET-hours/week",
+          "share": 91.19545187334059
         },
         {
           "dose": 374.8324324324325,
@@ -2102,7 +2304,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6069769513800295,
           "high": 0.6940814073605802,
-          "location": "CSV data row 169, original dose=21.865225225225227 mMET-hours/week"
+          "location": "CSV data row 169, original dose=21.865225225225227 mMET-hours/week",
+          "share": 91.28414801024395
         },
         {
           "dose": 377.0635778635779,
@@ -2113,7 +2316,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6065988623985096,
           "high": 0.6937848887844802,
-          "location": "CSV data row 170, original dose=21.995375375375378 mMET-hours/week"
+          "location": "CSV data row 170, original dose=21.995375375375378 mMET-hours/week",
+          "share": 91.37279757614617
         },
         {
           "dose": 379.2947232947234,
@@ -2124,7 +2328,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6062204663075618,
           "high": 0.6934891176199471,
-          "location": "CSV data row 171, original dose=22.12552552552553 mMET-hours/week"
+          "location": "CSV data row 171, original dose=22.12552552552553 mMET-hours/week",
+          "share": 91.46140059550054
         },
         {
           "dose": 381.5258687258688,
@@ -2135,7 +2340,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6058417663624907,
           "high": 0.6931940902883363,
-          "location": "CSV data row 172, original dose=22.25567567567568 mMET-hours/week"
+          "location": "CSV data row 172, original dose=22.25567567567568 mMET-hours/week",
+          "share": 91.54995709274651
         },
         {
           "dose": 383.7570141570142,
@@ -2146,7 +2352,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6054627658202535,
           "high": 0.6928998032095903,
-          "location": "CSV data row 173, original dose=22.38582582582583 mMET-hours/week"
+          "location": "CSV data row 173, original dose=22.38582582582583 mMET-hours/week",
+          "share": 91.63846709231181
         },
         {
           "dose": 385.98815958815965,
@@ -2157,7 +2364,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6050834679390641,
           "high": 0.6926062528026532,
-          "location": "CSV data row 174, original dose=22.515975975975977 mMET-hours/week"
+          "location": "CSV data row 174, original dose=22.515975975975977 mMET-hours/week",
+          "share": 91.7269306186102
         },
         {
           "dose": 388.219305019305,
@@ -2168,7 +2376,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6047038759779829,
           "high": 0.6923134354858683,
-          "location": "CSV data row 175, original dose=22.646126126126127 mMET-hours/week"
+          "location": "CSV data row 175, original dose=22.646126126126127 mMET-hours/week",
+          "share": 91.81534769604282
         },
         {
           "dose": 390.45045045045043,
@@ -2179,7 +2388,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6043239931965207,
           "high": 0.6920213476773751,
-          "location": "CSV data row 176, original dose=22.776276276276278 mMET-hours/week"
+          "location": "CSV data row 176, original dose=22.776276276276278 mMET-hours/week",
+          "share": 91.90371834899835
         },
         {
           "dose": 392.6815958815959,
@@ -2190,7 +2400,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.603943822854249,
           "high": 0.6917299857955038,
-          "location": "CSV data row 177, original dose=22.906426426426428 mMET-hours/week"
+          "location": "CSV data row 177, original dose=22.906426426426428 mMET-hours/week",
+          "share": 91.99204260185215
         },
         {
           "dose": 394.91274131274133,
@@ -2201,7 +2412,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6035633682104063,
           "high": 0.6914393462591587,
-          "location": "CSV data row 178, original dose=23.03657657657658 mMET-hours/week"
+          "location": "CSV data row 178, original dose=23.03657657657658 mMET-hours/week",
+          "share": 92.08032047896768
         },
         {
           "dose": 397.1438867438868,
@@ -2212,7 +2424,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.603182632523523,
           "high": 0.6911494254882048,
-          "location": "CSV data row 179, original dose=23.16672672672673 mMET-hours/week"
+          "location": "CSV data row 179, original dose=23.16672672672673 mMET-hours/week",
+          "share": 92.16855200469493
         },
         {
           "dose": 399.37503217503223,
@@ -2223,7 +2436,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6028016190510398,
           "high": 0.6908602199038432,
-          "location": "CSV data row 180, original dose=23.29687687687688 mMET-hours/week"
+          "location": "CSV data row 180, original dose=23.29687687687688 mMET-hours/week",
+          "share": 92.25673720337129
         },
         {
           "dose": 401.6061776061777,
@@ -2234,7 +2448,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6024203310489357,
           "high": 0.6905717259289818,
-          "location": "CSV data row 181, original dose=23.42702702702703 mMET-hours/week"
+          "location": "CSV data row 181, original dose=23.42702702702703 mMET-hours/week",
+          "share": 92.34487609932164
         },
         {
           "dose": 403.8373230373231,
@@ -2245,7 +2460,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6020387717713647,
           "high": 0.6902839399886052,
-          "location": "CSV data row 182, original dose=23.55717717717718 mMET-hours/week"
+          "location": "CSV data row 182, original dose=23.55717717717718 mMET-hours/week",
+          "share": 92.43296871685749
         },
         {
           "dose": 406.0684684684685,
@@ -2256,7 +2472,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6016569444702894,
           "high": 0.6899968585101334,
-          "location": "CSV data row 183, original dose=23.68732732732733 mMET-hours/week"
+          "location": "CSV data row 183, original dose=23.68732732732733 mMET-hours/week",
+          "share": 92.52101508027795
         },
         {
           "dose": 408.2996138996139,
@@ -2267,7 +2484,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6012748523951272,
           "high": 0.6897104779237788,
-          "location": "CSV data row 184, original dose=23.81747747747748 mMET-hours/week"
+          "location": "CSV data row 184, original dose=23.81747747747748 mMET-hours/week",
+          "share": 92.60901521386923
         },
         {
           "dose": 410.53075933075934,
@@ -2278,7 +2496,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6008924987923974,
           "high": 0.6894247946628966,
-          "location": "CSV data row 185, original dose=23.94762762762763 mMET-hours/week"
+          "location": "CSV data row 185, original dose=23.94762762762763 mMET-hours/week",
+          "share": 92.69696914190523
         },
         {
           "dose": 412.76190476190476,
@@ -2289,7 +2508,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6005098869053802,
           "high": 0.6891398051643336,
-          "location": "CSV data row 186, original dose=24.07777777777778 mMET-hours/week"
+          "location": "CSV data row 186, original dose=24.07777777777778 mMET-hours/week",
+          "share": 92.78487688864602
         },
         {
           "dose": 414.99305019305024,
@@ -2300,7 +2520,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.6001270199737684,
           "high": 0.6888555058687618,
-          "location": "CSV data row 187, original dose=24.20792792792793 mMET-hours/week"
+          "location": "CSV data row 187, original dose=24.20792792792793 mMET-hours/week",
+          "share": 92.87273847834028
         },
         {
           "dose": 417.22419562419566,
@@ -2311,7 +2532,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5997439012333383,
           "high": 0.6885718932210181,
-          "location": "CSV data row 188, original dose=24.33807807807808 mMET-hours/week"
+          "location": "CSV data row 188, original dose=24.33807807807808 mMET-hours/week",
+          "share": 92.96055393522339
         },
         {
           "dose": 419.45534105534114,
@@ -2322,7 +2544,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5993605339156244,
           "high": 0.6882889636704368,
-          "location": "CSV data row 189, original dose=24.46822822822823 mMET-hours/week"
+          "location": "CSV data row 189, original dose=24.46822822822823 mMET-hours/week",
+          "share": 93.04832328351691
         },
         {
           "dose": 421.68648648648656,
@@ -2333,7 +2556,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5989769212475782,
           "high": 0.6880067136711596,
-          "location": "CSV data row 190, original dose=24.59837837837838 mMET-hours/week"
+          "location": "CSV data row 190, original dose=24.59837837837838 mMET-hours/week",
+          "share": 93.13604654743233
         },
         {
           "dose": 423.9176319176319,
@@ -2344,7 +2568,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5985930664512729,
           "high": 0.6877251396824723,
-          "location": "CSV data row 191, original dose=24.728528528528532 mMET-hours/week"
+          "location": "CSV data row 191, original dose=24.728528528528532 mMET-hours/week",
+          "share": 93.22372375116579
         },
         {
           "dose": 426.1487773487774,
@@ -2355,7 +2580,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5982089727435742,
           "high": 0.6874442381691049,
-          "location": "CSV data row 192, original dose=24.858678678678682 mMET-hours/week"
+          "location": "CSV data row 192, original dose=24.858678678678682 mMET-hours/week",
+          "share": 93.31135491890181
         },
         {
           "dose": 428.37992277992277,
@@ -2366,7 +2592,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5978246433358331,
           "high": 0.6871640056015392,
-          "location": "CSV data row 193, original dose=24.98882882882883 mMET-hours/week"
+          "location": "CSV data row 193, original dose=24.98882882882883 mMET-hours/week",
+          "share": 93.3989400748133
         },
         {
           "dose": 430.61106821106824,
@@ -2377,7 +2604,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5974400814335991,
           "high": 0.686884438456323,
-          "location": "CSV data row 194, original dose=25.11897897897898 mMET-hours/week"
+          "location": "CSV data row 194, original dose=25.11897897897898 mMET-hours/week",
+          "share": 93.48647924305781
         },
         {
           "dose": 432.84221364221366,
@@ -2388,7 +2616,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5970552902363088,
           "high": 0.686605533216354,
-          "location": "CSV data row 195, original dose=25.24912912912913 mMET-hours/week"
+          "location": "CSV data row 195, original dose=25.24912912912913 mMET-hours/week",
+          "share": 93.57397244778126
         },
         {
           "dose": 435.0733590733591,
@@ -2399,7 +2628,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5966702729369907,
           "high": 0.686327286371167,
-          "location": "CSV data row 196, original dose=25.37927927927928 mMET-hours/week"
+          "location": "CSV data row 196, original dose=25.37927927927928 mMET-hours/week",
+          "share": 93.6614197131188
         },
         {
           "dose": 437.30450450450456,
@@ -2410,7 +2640,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5962850327219948,
           "high": 0.6860496944172318,
-          "location": "CSV data row 197, original dose=25.50942942942943 mMET-hours/week"
+          "location": "CSV data row 197, original dose=25.50942942942943 mMET-hours/week",
+          "share": 93.74882106319147
         },
         {
           "dose": 439.53564993565,
@@ -2421,7 +2652,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5958995727707069,
           "high": 0.6857727538582286,
-          "location": "CSV data row 198, original dose=25.639579579579582 mMET-hours/week"
+          "location": "CSV data row 198, original dose=25.639579579579582 mMET-hours/week",
+          "share": 93.83617652210724
         },
         {
           "dose": 441.7667953667954,
@@ -2432,7 +2664,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5955138962552724,
           "high": 0.6854964612053202,
-          "location": "CSV data row 199, original dose=25.769729729729733 mMET-hours/week"
+          "location": "CSV data row 199, original dose=25.769729729729733 mMET-hours/week",
+          "share": 93.92348611396163
         },
         {
           "dose": 443.9979407979408,
@@ -2443,7 +2676,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5951280063403206,
           "high": 0.6852208129774148,
-          "location": "CSV data row 200, original dose=25.899879879879883 mMET-hours/week"
+          "location": "CSV data row 200, original dose=25.899879879879883 mMET-hours/week",
+          "share": 94.01074986283938
         },
         {
           "dose": 446.22908622908625,
@@ -2454,7 +2688,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5947419061827266,
           "high": 0.6849458057014525,
-          "location": "CSV data row 201, original dose=26.030030030030034 mMET-hours/week"
+          "location": "CSV data row 201, original dose=26.030030030030034 mMET-hours/week",
+          "share": 94.09796779280818
         },
         {
           "dose": 448.4602316602317,
@@ -2465,7 +2700,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5943555989313203,
           "high": 0.6846714359126321,
-          "location": "CSV data row 202, original dose=26.160180180180184 mMET-hours/week"
+          "location": "CSV data row 202, original dose=26.160180180180184 mMET-hours/week",
+          "share": 94.18513992792684
         },
         {
           "dose": 450.6913770913771,
@@ -2476,7 +2712,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5939690877266546,
           "high": 0.6843977001546843,
-          "location": "CSV data row 203, original dose=26.29033033033033 mMET-hours/week"
+          "location": "CSV data row 203, original dose=26.29033033033033 mMET-hours/week",
+          "share": 94.27226629224009
         },
         {
           "dose": 452.92252252252257,
@@ -2487,7 +2724,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5935823757007452,
           "high": 0.6841245949801049,
-          "location": "CSV data row 204, original dose=26.42048048048048 mMET-hours/week"
+          "location": "CSV data row 204, original dose=26.42048048048048 mMET-hours/week",
+          "share": 94.35934690978198
         },
         {
           "dose": 455.153667953668,
@@ -2498,7 +2736,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.593195465976846,
           "high": 0.683852116950412,
-          "location": "CSV data row 205, original dose=26.550630630630632 mMET-hours/week"
+          "location": "CSV data row 205, original dose=26.550630630630632 mMET-hours/week",
+          "share": 94.44638180457159
         },
         {
           "dose": 457.3848133848134,
@@ -2509,7 +2748,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5928083616691958,
           "high": 0.6835802626363677,
-          "location": "CSV data row 206, original dose=26.680780780780783 mMET-hours/week"
+          "location": "CSV data row 206, original dose=26.680780780780783 mMET-hours/week",
+          "share": 94.53337100061714
         },
         {
           "dose": 459.6159588159589,
@@ -2520,7 +2760,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5924210658828066,
           "high": 0.6833090286182254,
-          "location": "CSV data row 207, original dose=26.810930930930933 mMET-hours/week"
+          "location": "CSV data row 207, original dose=26.810930930930933 mMET-hours/week",
+          "share": 94.62031452191135
         },
         {
           "dose": 461.84710424710426,
@@ -2531,7 +2772,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5920335817132156,
           "high": 0.6830384114859347,
-          "location": "CSV data row 208, original dose=26.941081081081084 mMET-hours/week"
+          "location": "CSV data row 208, original dose=26.941081081081084 mMET-hours/week",
+          "share": 94.70721239243707
         },
         {
           "dose": 464.07824967824973,
@@ -2542,7 +2784,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5916459122462752,
           "high": 0.6827684078393711,
-          "location": "CSV data row 209, original dose=27.071231231231234 mMET-hours/week"
+          "location": "CSV data row 209, original dose=27.071231231231234 mMET-hours/week",
+          "share": 94.79406463616465
         },
         {
           "dose": 466.30939510939515,
@@ -2553,7 +2796,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.591258060557947,
           "high": 0.6824990142885599,
-          "location": "CSV data row 210, original dose=27.201381381381385 mMET-hours/week"
+          "location": "CSV data row 210, original dose=27.201381381381385 mMET-hours/week",
+          "share": 94.88087127704961
         },
         {
           "dose": 468.5405405405406,
@@ -2564,7 +2808,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5908700297140735,
           "high": 0.6822302274538669,
-          "location": "CSV data row 211, original dose=27.331531531531535 mMET-hours/week"
+          "location": "CSV data row 211, original dose=27.331531531531535 mMET-hours/week",
+          "share": 94.96763233903742
         },
         {
           "dose": 470.77168597168605,
@@ -2575,7 +2820,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.59048182277019,
           "high": 0.6819620439662191,
-          "location": "CSV data row 212, original dose=27.461681681681686 mMET-hours/week"
+          "location": "CSV data row 212, original dose=27.461681681681686 mMET-hours/week",
+          "share": 95.05434784605953
         },
         {
           "dose": 473.0028314028314,
@@ -2586,7 +2832,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5900934427713171,
           "high": 0.6816944604672958,
-          "location": "CSV data row 213, original dose=27.591831831831833 mMET-hours/week"
+          "location": "CSV data row 213, original dose=27.591831831831833 mMET-hours/week",
+          "share": 95.14101782203507
         },
         {
           "dose": 475.2339768339769,
@@ -2597,7 +2844,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5897048927517683,
           "high": 0.6814274736097247,
-          "location": "CSV data row 214, original dose=27.721981981981983 mMET-hours/week"
+          "location": "CSV data row 214, original dose=27.721981981981983 mMET-hours/week",
+          "share": 95.22764229087073
         },
         {
           "dose": 477.4651222651223,
@@ -2608,7 +2856,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5893161757349591,
           "high": 0.6811610800572687,
-          "location": "CSV data row 215, original dose=27.852132132132134 mMET-hours/week"
+          "location": "CSV data row 215, original dose=27.852132132132134 mMET-hours/week",
+          "share": 95.31422127646098
         },
         {
           "dose": 479.6962676962677,
@@ -2619,7 +2868,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5889272947332318,
           "high": 0.6808952764850177,
-          "location": "CSV data row 216, original dose=27.982282282282284 mMET-hours/week"
+          "location": "CSV data row 216, original dose=27.982282282282284 mMET-hours/week",
+          "share": 95.40075480268615
         },
         {
           "dose": 481.92741312741316,
@@ -2630,7 +2880,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5885382527476609,
           "high": 0.6806300595795535,
-          "location": "CSV data row 217, original dose=28.112432432432435 mMET-hours/week"
+          "location": "CSV data row 217, original dose=28.112432432432435 mMET-hours/week",
+          "share": 95.48724289341601
         },
         {
           "dose": 484.1585585585586,
@@ -2641,7 +2892,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.588149052767888,
           "high": 0.6803654260391316,
-          "location": "CSV data row 218, original dose=28.242582582582585 mMET-hours/week"
+          "location": "CSV data row 218, original dose=28.242582582582585 mMET-hours/week",
+          "share": 95.57368557250784
         },
         {
           "dose": 486.38970398970406,
@@ -2652,7 +2904,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5877596977719586,
           "high": 0.6801013725738553,
-          "location": "CSV data row 219, original dose=28.372732732732736 mMET-hours/week"
+          "location": "CSV data row 219, original dose=28.372732732732736 mMET-hours/week",
+          "share": 95.66008286380485
         },
         {
           "dose": 488.6208494208495,
@@ -2663,7 +2916,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5873701907261506,
           "high": 0.6798378959058331,
-          "location": "CSV data row 220, original dose=28.502882882882886 mMET-hours/week"
+          "location": "CSV data row 220, original dose=28.502882882882886 mMET-hours/week",
+          "share": 95.74643479113796
         },
         {
           "dose": 490.8519948519949,
@@ -2674,7 +2928,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5869805345848121,
           "high": 0.679574992769336,
-          "location": "CSV data row 221, original dose=28.633033033033037 mMET-hours/week"
+          "location": "CSV data row 221, original dose=28.633033033033037 mMET-hours/week",
+          "share": 95.83274137832653
         },
         {
           "dose": 493.0831402831404,
@@ -2685,7 +2940,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5865907322902135,
           "high": 0.6793126599109556,
-          "location": "CSV data row 222, original dose=28.763183183183187 mMET-hours/week"
+          "location": "CSV data row 222, original dose=28.763183183183187 mMET-hours/week",
+          "share": 95.91900264917702
         },
         {
           "dose": 495.31428571428575,
@@ -2696,7 +2952,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5862007867723961,
           "high": 0.6790508940897556,
-          "location": "CSV data row 223, original dose=28.893333333333334 mMET-hours/week"
+          "location": "CSV data row 223, original dose=28.893333333333334 mMET-hours/week",
+          "share": 96.00521862748275
         },
         {
           "dose": 497.5454311454312,
@@ -2707,7 +2964,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5858107009490207,
           "high": 0.6787896920774081,
-          "location": "CSV data row 224, original dose=29.023483483483485 mMET-hours/week"
+          "location": "CSV data row 224, original dose=29.023483483483485 mMET-hours/week",
+          "share": 96.09138933702607
         },
         {
           "dose": 499.7765765765766,
@@ -2718,7 +2976,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5854204777252394,
           "high": 0.6785290506583469,
-          "location": "CSV data row 225, original dose=29.153633633633635 mMET-hours/week"
+          "location": "CSV data row 225, original dose=29.153633633633635 mMET-hours/week",
+          "share": 96.17751480157514
         },
         {
           "dose": 502.007722007722,
@@ -2729,7 +2988,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5850301199935448,
           "high": 0.6782689666298879,
-          "location": "CSV data row 226, original dose=29.283783783783786 mMET-hours/week"
+          "location": "CSV data row 226, original dose=29.283783783783786 mMET-hours/week",
+          "share": 96.26359504488757
         },
         {
           "dose": 504.2388674388675,
@@ -2740,7 +3000,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5846396306336565,
           "high": 0.6780094368023775,
-          "location": "CSV data row 227, original dose=29.413933933933937 mMET-hours/week"
+          "location": "CSV data row 227, original dose=29.413933933933937 mMET-hours/week",
+          "share": 96.34963009070604
         },
         {
           "dose": 506.4700128700129,
@@ -2751,7 +3012,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5842490125123776,
           "high": 0.6777504579993042,
-          "location": "CSV data row 228, original dose=29.544084084084087 mMET-hours/week"
+          "location": "CSV data row 228, original dose=29.544084084084087 mMET-hours/week",
+          "share": 96.43561996276252
         },
         {
           "dose": 508.7011583011584,
@@ -2762,7 +3024,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5838582684834809,
           "high": 0.6774920270574277,
-          "location": "CSV data row 229, original dose=29.674234234234238 mMET-hours/week"
+          "location": "CSV data row 229, original dose=29.674234234234238 mMET-hours/week",
+          "share": 96.52156468477611
         },
         {
           "dose": 510.9323037323038,
@@ -2773,7 +3036,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.583467401387591,
           "high": 0.6772341408268977,
-          "location": "CSV data row 230, original dose=29.804384384384388 mMET-hours/week"
+          "location": "CSV data row 230, original dose=29.804384384384388 mMET-hours/week",
+          "share": 96.60746428045289
         },
         {
           "dose": 513.1634491634493,
@@ -2784,7 +3048,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.583076414052064,
           "high": 0.6769767961713605,
-          "location": "CSV data row 231, original dose=29.93453453453454 mMET-hours/week"
+          "location": "CSV data row 231, original dose=29.93453453453454 mMET-hours/week",
+          "share": 96.69331877348782
         },
         {
           "dose": 515.3945945945947,
@@ -2795,7 +3060,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5826853092908844,
           "high": 0.6767199899680746,
-          "location": "CSV data row 232, original dose=30.06468468468469 mMET-hours/week"
+          "location": "CSV data row 232, original dose=30.06468468468469 mMET-hours/week",
+          "share": 96.77912818756306
         },
         {
           "dose": 517.62574002574,
@@ -2806,7 +3072,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.582294089904567,
           "high": 0.6764637191080218,
-          "location": "CSV data row 233, original dose=30.194834834834836 mMET-hours/week"
+          "location": "CSV data row 233, original dose=30.194834834834836 mMET-hours/week",
+          "share": 96.8648925463461
         },
         {
           "dose": 519.8568854568855,
@@ -2817,7 +3084,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5819027586800369,
           "high": 0.6762079804959906,
-          "location": "CSV data row 234, original dose=30.324984984984987 mMET-hours/week"
+          "location": "CSV data row 234, original dose=30.324984984984987 mMET-hours/week",
+          "share": 96.95061187349482
         },
         {
           "dose": 522.0880308880309,
@@ -2828,7 +3096,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5815113183905488,
           "high": 0.6759527710506875,
-          "location": "CSV data row 235, original dose=30.455135135135137 mMET-hours/week"
+          "location": "CSV data row 235, original dose=30.455135135135137 mMET-hours/week",
+          "share": 97.03628619265311
         },
         {
           "dose": 524.3191763191763,
@@ -2839,7 +3108,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5811197717955848,
           "high": 0.6756980877048223,
-          "location": "CSV data row 236, original dose=30.585285285285288 mMET-hours/week"
+          "location": "CSV data row 236, original dose=30.585285285285288 mMET-hours/week",
+          "share": 97.12191552745341
         },
         {
           "dose": 526.5503217503218,
@@ -2850,7 +3120,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5807281216407677,
           "high": 0.6754439274051971,
-          "location": "CSV data row 237, original dose=30.715435435435438 mMET-hours/week"
+          "location": "CSV data row 237, original dose=30.715435435435438 mMET-hours/week",
+          "share": 97.2074999015161
         },
         {
           "dose": 528.7814671814673,
@@ -2861,7 +3132,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.580336370657784,
           "high": 0.6751902871127997,
-          "location": "CSV data row 238, original dose=30.84558558558559 mMET-hours/week"
+          "location": "CSV data row 238, original dose=30.84558558558559 mMET-hours/week",
+          "share": 97.29303933844751
         },
         {
           "dose": 531.0126126126127,
@@ -2872,7 +3144,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5799445215642964,
           "high": 0.6749371638028776,
-          "location": "CSV data row 239, original dose=30.97573573573574 mMET-hours/week"
+          "location": "CSV data row 239, original dose=30.97573573573574 mMET-hours/week",
+          "share": 97.37853386184169
         },
         {
           "dose": 533.2437580437581,
@@ -2883,7 +3156,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5795525770638587,
           "high": 0.6746845544650079,
-          "location": "CSV data row 240, original dose=31.10588588588589 mMET-hours/week"
+          "location": "CSV data row 240, original dose=31.10588588588589 mMET-hours/week",
+          "share": 97.46398349528229
         },
         {
           "dose": 535.4749034749036,
@@ -2894,7 +3168,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5791605398458547,
           "high": 0.674432456103183,
-          "location": "CSV data row 241, original dose=31.23603603603604 mMET-hours/week"
+          "location": "CSV data row 241, original dose=31.23603603603604 mMET-hours/week",
+          "share": 97.54938826233924
         },
         {
           "dose": 537.706048906049,
@@ -2905,7 +3180,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5787684125854339,
           "high": 0.6741808657358838,
-          "location": "CSV data row 242, original dose=31.36618618618619 mMET-hours/week"
+          "location": "CSV data row 242, original dose=31.36618618618619 mMET-hours/week",
+          "share": 97.6347481865678
         },
         {
           "dose": 539.9371943371943,
@@ -2916,7 +3192,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5783761979434096,
           "high": 0.6739297803961138,
-          "location": "CSV data row 243, original dose=31.496336336336338 mMET-hours/week"
+          "location": "CSV data row 243, original dose=31.496336336336338 mMET-hours/week",
+          "share": 97.72006329151728
         },
         {
           "dose": 542.1683397683398,
@@ -2927,7 +3204,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5779838985662459,
           "high": 0.6736791971315063,
-          "location": "CSV data row 244, original dose=31.62648648648649 mMET-hours/week"
+          "location": "CSV data row 244, original dose=31.62648648648649 mMET-hours/week",
+          "share": 97.80533360071868
         },
         {
           "dose": 544.3994851994852,
@@ -2938,7 +3216,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5775915170859662,
           "high": 0.6734291130043534,
-          "location": "CSV data row 245, original dose=31.75663663663664 mMET-hours/week"
+          "location": "CSV data row 245, original dose=31.75663663663664 mMET-hours/week",
+          "share": 97.89055913769283
         },
         {
           "dose": 546.6306306306307,
@@ -2949,7 +3228,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5771990561201136,
           "high": 0.6731795250916772,
-          "location": "CSV data row 246, original dose=31.88678678678679 mMET-hours/week"
+          "location": "CSV data row 246, original dose=31.88678678678679 mMET-hours/week",
+          "share": 97.9757399259464
         },
         {
           "dose": 548.8617760617761,
@@ -2960,7 +3240,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5768065182716804,
           "high": 0.6729304304852636,
-          "location": "CSV data row 247, original dose=32.01693693693694 mMET-hours/week"
+          "location": "CSV data row 247, original dose=32.01693693693694 mMET-hours/week",
+          "share": 98.06087598897652
         },
         {
           "dose": 551.0929214929215,
@@ -2971,7 +3252,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5764139061290737,
           "high": 0.6726818262917238,
-          "location": "CSV data row 248, original dose=32.14708708708709 mMET-hours/week"
+          "location": "CSV data row 248, original dose=32.14708708708709 mMET-hours/week",
+          "share": 98.14596735026717
         },
         {
           "dose": 553.324066924067,
@@ -2982,7 +3264,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5760212222660718,
           "high": 0.6724337096325429,
-          "location": "CSV data row 249, original dose=32.27723723723724 mMET-hours/week"
+          "location": "CSV data row 249, original dose=32.27723723723724 mMET-hours/week",
+          "share": 98.23101403328883
         },
         {
           "dose": 555.5552123552123,
@@ -2993,7 +3276,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5756284692417739,
           "high": 0.6721860776441138,
-          "location": "CSV data row 250, original dose=32.40738738738739 mMET-hours/week"
+          "location": "CSV data row 250, original dose=32.40738738738739 mMET-hours/week",
+          "share": 98.31601606150015
         },
         {
           "dose": 557.7863577863578,
@@ -3004,7 +3288,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5752356496005574,
           "high": 0.6719389274777718,
-          "location": "CSV data row 251, original dose=32.53753753753754 mMET-hours/week"
+          "location": "CSV data row 251, original dose=32.53753753753754 mMET-hours/week",
+          "share": 98.40097345834933
         },
         {
           "dose": 560.0175032175032,
@@ -3015,7 +3300,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5748427658720643,
           "high": 0.6716922562998529,
-          "location": "CSV data row 252, original dose=32.66768768768769 mMET-hours/week"
+          "location": "CSV data row 252, original dose=32.66768768768769 mMET-hours/week",
+          "share": 98.4858862472682
         },
         {
           "dose": 562.2486486486487,
@@ -3026,7 +3312,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.574449820571138,
           "high": 0.671446061291697,
-          "location": "CSV data row 253, original dose=32.79783783783784 mMET-hours/week"
+          "location": "CSV data row 253, original dose=32.79783783783784 mMET-hours/week",
+          "share": 98.57075445167987
         },
         {
           "dose": 564.4797940797941,
@@ -3037,7 +3324,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5740568161978161,
           "high": 0.6712003396496994,
-          "location": "CSV data row 254, original dose=32.92798798798799 mMET-hours/week"
+          "location": "CSV data row 254, original dose=32.92798798798799 mMET-hours/week",
+          "share": 98.65557809499323
         },
         {
           "dose": 566.7109395109395,
@@ -3048,7 +3336,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5736637552372857,
           "high": 0.6709550885853198,
-          "location": "CSV data row 255, original dose=33.05813813813814 mMET-hours/week"
+          "location": "CSV data row 255, original dose=33.05813813813814 mMET-hours/week",
+          "share": 98.74035720060722
         },
         {
           "dose": 568.942084942085,
@@ -3059,7 +3348,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5732706401598767,
           "high": 0.6707103053251251,
-          "location": "CSV data row 256, original dose=33.18828828828829 mMET-hours/week"
+          "location": "CSV data row 256, original dose=33.18828828828829 mMET-hours/week",
+          "share": 98.82509179190652
         },
         {
           "dose": 571.1732303732305,
@@ -3070,7 +3360,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5728774734210311,
           "high": 0.6704659871107981,
-          "location": "CSV data row 257, original dose=33.31843843843844 mMET-hours/week"
+          "location": "CSV data row 257, original dose=33.31843843843844 mMET-hours/week",
+          "share": 98.90978189226391
         },
         {
           "dose": 573.404375804376,
@@ -3081,7 +3372,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5724842574612916,
           "high": 0.6702221311991649,
-          "location": "CSV data row 258, original dose=33.44858858858859 mMET-hours/week"
+          "location": "CSV data row 258, original dose=33.44858858858859 mMET-hours/week",
+          "share": 98.99442752503867
         },
         {
           "dose": 575.6355212355213,
@@ -3092,7 +3384,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5720909947062608,
           "high": 0.669978734862186,
-          "location": "CSV data row 259, original dose=33.57873873873874 mMET-hours/week"
+          "location": "CSV data row 259, original dose=33.57873873873874 mMET-hours/week",
+          "share": 99.07902871358276
         },
         {
           "dose": 577.8666666666667,
@@ -3103,7 +3396,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5716976875666467,
           "high": 0.6697357953870234,
-          "location": "CSV data row 260, original dose=33.70888888888889 mMET-hours/week"
+          "location": "CSV data row 260, original dose=33.70888888888889 mMET-hours/week",
+          "share": 99.16358548122601
         },
         {
           "dose": 580.0978120978122,
@@ -3114,7 +3408,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5713043384381719,
           "high": 0.6694933100759767,
-          "location": "CSV data row 261, original dose=33.839039039039044 mMET-hours/week"
+          "location": "CSV data row 261, original dose=33.839039039039044 mMET-hours/week",
+          "share": 99.24809785129672
         },
         {
           "dose": 582.3289575289576,
@@ -3125,7 +3420,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5709109497016295,
           "high": 0.6692512762465498,
-          "location": "CSV data row 262, original dose=33.969189189189194 mMET-hours/week"
+          "location": "CSV data row 262, original dose=33.969189189189194 mMET-hours/week",
+          "share": 99.3325658471051
         },
         {
           "dose": 584.5601029601031,
@@ -3136,7 +3432,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5705175237228527,
           "high": 0.669009691231433,
-          "location": "CSV data row 263, original dose=34.099339339339345 mMET-hours/week"
+          "location": "CSV data row 263, original dose=34.099339339339345 mMET-hours/week",
+          "share": 99.41698949195002
         },
         {
           "dose": 586.7912483912485,
@@ -3147,7 +3444,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5701240628527131,
           "high": 0.6687685523785059,
-          "location": "CSV data row 264, original dose=34.229489489489495 mMET-hours/week"
+          "location": "CSV data row 264, original dose=34.229489489489495 mMET-hours/week",
+          "share": 99.50136880911849
         },
         {
           "dose": 589.0223938223938,
@@ -3158,7 +3456,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5697305694271206,
           "high": 0.668527857050839,
-          "location": "CSV data row 265, original dose=34.359639639639646 mMET-hours/week"
+          "location": "CSV data row 265, original dose=34.359639639639646 mMET-hours/week",
+          "share": 99.58570382188574
         },
         {
           "dose": 591.2535392535393,
@@ -3169,7 +3468,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5693370457670309,
           "high": 0.6682876026266972,
-          "location": "CSV data row 266, original dose=34.489789789789796 mMET-hours/week"
+          "location": "CSV data row 266, original dose=34.489789789789796 mMET-hours/week",
+          "share": 99.66999455351346
         },
         {
           "dose": 593.4846846846847,
@@ -3180,7 +3480,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5689434941784385,
           "high": 0.6680477864995236,
-          "location": "CSV data row 267, original dose=34.61993993993994 mMET-hours/week"
+          "location": "CSV data row 267, original dose=34.61993993993994 mMET-hours/week",
+          "share": 99.75424102725316
         },
         {
           "dose": 595.71583011583,
@@ -3191,7 +3492,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5685499169523892,
           "high": 0.6678084060779405,
-          "location": "CSV data row 268, original dose=34.75009009009009 mMET-hours/week"
+          "location": "CSV data row 268, original dose=34.75009009009009 mMET-hours/week",
+          "share": 99.83844326634406
         },
         {
           "dose": 597.9469755469755,
@@ -3202,7 +3504,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5681563163650016,
           "high": 0.6675694587857507,
-          "location": "CSV data row 269, original dose=34.88024024024024 mMET-hours/week"
+          "location": "CSV data row 269, original dose=34.88024024024024 mMET-hours/week",
+          "share": 99.9226012940103
         },
         {
           "dose": 600.178120978121,
@@ -3213,7 +3516,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5677626946774471,
           "high": 0.667330942061899,
-          "location": "CSV data row 270, original dose=35.01039039039039 mMET-hours/week"
+          "location": "CSV data row 270, original dose=35.01039039039039 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 602.4092664092665,
@@ -3224,7 +3528,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5673690541360175,
           "high": 0.6670928533605117,
-          "location": "CSV data row 271, original dose=35.14054054054054 mMET-hours/week"
+          "location": "CSV data row 271, original dose=35.14054054054054 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 604.6404118404118,
@@ -3235,7 +3540,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5669753969720535,
           "high": 0.6668551901507973,
-          "location": "CSV data row 272, original dose=35.27069069069069 mMET-hours/week"
+          "location": "CSV data row 272, original dose=35.27069069069069 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 606.8715572715573,
@@ -3246,7 +3552,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5665817254020495,
           "high": 0.666617949917115,
-          "location": "CSV data row 273, original dose=35.40084084084084 mMET-hours/week"
+          "location": "CSV data row 273, original dose=35.40084084084084 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 609.1027027027028,
@@ -3257,7 +3564,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5661880416276196,
           "high": 0.6663811301589041,
-          "location": "CSV data row 274, original dose=35.53099099099099 mMET-hours/week"
+          "location": "CSV data row 274, original dose=35.53099099099099 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 611.3338481338482,
@@ -3268,7 +3576,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5657943478355357,
           "high": 0.6661447283906804,
-          "location": "CSV data row 275, original dose=35.661141141141144 mMET-hours/week"
+          "location": "CSV data row 275, original dose=35.661141141141144 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 613.5649935649936,
@@ -3279,7 +3588,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5654006461977452,
           "high": 0.6659087421420088,
-          "location": "CSV data row 276, original dose=35.791291291291294 mMET-hours/week"
+          "location": "CSV data row 276, original dose=35.791291291291294 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 615.7961389961391,
@@ -3290,7 +3600,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5650069388714105,
           "high": 0.6656731689574932,
-          "location": "CSV data row 277, original dose=35.921441441441445 mMET-hours/week"
+          "location": "CSV data row 277, original dose=35.921441441441445 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 618.0272844272846,
@@ -3301,7 +3612,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5646132279989036,
           "high": 0.665438006396719,
-          "location": "CSV data row 278, original dose=36.051591591591595 mMET-hours/week"
+          "location": "CSV data row 278, original dose=36.051591591591595 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 620.25842985843,
@@ -3312,7 +3624,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5642195157078657,
           "high": 0.6652032520342572,
-          "location": "CSV data row 279, original dose=36.181741741741746 mMET-hours/week"
+          "location": "CSV data row 279, original dose=36.181741741741746 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 622.4895752895753,
@@ -3323,7 +3636,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5638258041112187,
           "high": 0.6649689034596151,
-          "location": "CSV data row 280, original dose=36.3118918918919 mMET-hours/week"
+          "location": "CSV data row 280, original dose=36.3118918918919 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 624.7207207207208,
@@ -3334,7 +3648,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5634320953072125,
           "high": 0.6647349582772228,
-          "location": "CSV data row 281, original dose=36.44204204204205 mMET-hours/week"
+          "location": "CSV data row 281, original dose=36.44204204204205 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 626.9518661518662,
@@ -3345,7 +3660,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5630383913794298,
           "high": 0.6645014141063722,
-          "location": "CSV data row 282, original dose=36.5721921921922 mMET-hours/week"
+          "location": "CSV data row 282, original dose=36.5721921921922 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 629.1830115830116,
@@ -3356,7 +3672,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5626446943968431,
           "high": 0.6642682685812036,
-          "location": "CSV data row 283, original dose=36.70234234234235 mMET-hours/week"
+          "location": "CSV data row 283, original dose=36.70234234234235 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 631.4141570141571,
@@ -3367,7 +3684,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5622510064138668,
           "high": 0.6640355193506879,
-          "location": "CSV data row 284, original dose=36.8324924924925 mMET-hours/week"
+          "location": "CSV data row 284, original dose=36.8324924924925 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 633.6453024453025,
@@ -3378,7 +3696,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5618573294703355,
           "high": 0.6638031640785302,
-          "location": "CSV data row 285, original dose=36.96264264264265 mMET-hours/week"
+          "location": "CSV data row 285, original dose=36.96264264264265 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 635.876447876448,
@@ -3389,7 +3708,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5614636655916043,
           "high": 0.6635712004431904,
-          "location": "CSV data row 286, original dose=37.0927927927928 mMET-hours/week"
+          "location": "CSV data row 286, original dose=37.0927927927928 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 638.1075933075933,
@@ -3400,7 +3720,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5610700167885623,
           "high": 0.6633396261378186,
-          "location": "CSV data row 287, original dose=37.22294294294294 mMET-hours/week"
+          "location": "CSV data row 287, original dose=37.22294294294294 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 640.3387387387387,
@@ -3411,7 +3732,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5606763850576578,
           "high": 0.6631084388701978,
-          "location": "CSV data row 288, original dose=37.353093093093094 mMET-hours/week"
+          "location": "CSV data row 288, original dose=37.353093093093094 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 642.5698841698842,
@@ -3422,7 +3744,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5602827723809933,
           "high": 0.6628776363627504,
-          "location": "CSV data row 289, original dose=37.483243243243244 mMET-hours/week"
+          "location": "CSV data row 289, original dose=37.483243243243244 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 644.8010296010297,
@@ -3433,7 +3756,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5598891807262963,
           "high": 0.6626472163524246,
-          "location": "CSV data row 290, original dose=37.613393393393395 mMET-hours/week"
+          "location": "CSV data row 290, original dose=37.613393393393395 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 647.0321750321751,
@@ -3444,7 +3768,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5594956120470439,
           "high": 0.6624171765907257,
-          "location": "CSV data row 291, original dose=37.743543543543545 mMET-hours/week"
+          "location": "CSV data row 291, original dose=37.743543543543545 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 649.2633204633205,
@@ -3455,7 +3780,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5591020682824283,
           "high": 0.6621875148435916,
-          "location": "CSV data row 292, original dose=37.873693693693696 mMET-hours/week"
+          "location": "CSV data row 292, original dose=37.873693693693696 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 651.494465894466,
@@ -3466,7 +3792,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5587085513574664,
           "high": 0.6619582288914045,
-          "location": "CSV data row 293, original dose=38.003843843843846 mMET-hours/week"
+          "location": "CSV data row 293, original dose=38.003843843843846 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 653.7256113256115,
@@ -3477,7 +3804,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5583150631830299,
           "high": 0.6617293165289245,
-          "location": "CSV data row 294, original dose=38.133993993994 mMET-hours/week"
+          "location": "CSV data row 294, original dose=38.133993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 655.9567567567568,
@@ -3488,7 +3816,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5579216056558821,
           "high": 0.6615007755652281,
-          "location": "CSV data row 295, original dose=38.26414414414415 mMET-hours/week"
+          "location": "CSV data row 295, original dose=38.26414414414415 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 658.1879021879023,
@@ -3499,7 +3828,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5575281806587437,
           "high": 0.6612726038236711,
-          "location": "CSV data row 296, original dose=38.3942942942943 mMET-hours/week"
+          "location": "CSV data row 296, original dose=38.3942942942943 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 660.4190476190477,
@@ -3510,7 +3840,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5571347900603305,
           "high": 0.6610447991418246,
-          "location": "CSV data row 297, original dose=38.52444444444445 mMET-hours/week"
+          "location": "CSV data row 297, original dose=38.52444444444445 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 662.650193050193,
@@ -3521,7 +3852,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5567414357154197,
           "high": 0.6608173593714327,
-          "location": "CSV data row 298, original dose=38.6545945945946 mMET-hours/week"
+          "location": "CSV data row 298, original dose=38.6545945945946 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 664.8813384813385,
@@ -3532,7 +3864,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5563481194649046,
           "high": 0.6605902823783634,
-          "location": "CSV data row 299, original dose=38.78474474474475 mMET-hours/week"
+          "location": "CSV data row 299, original dose=38.78474474474475 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 667.112483912484,
@@ -3543,7 +3876,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5559548431358431,
           "high": 0.6603635660425446,
-          "location": "CSV data row 300, original dose=38.9148948948949 mMET-hours/week"
+          "location": "CSV data row 300, original dose=38.9148948948949 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 669.3436293436295,
@@ -3554,7 +3888,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5555616085414907,
           "high": 0.6601372082578897,
-          "location": "CSV data row 301, original dose=39.04504504504505 mMET-hours/week"
+          "location": "CSV data row 301, original dose=39.04504504504505 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 671.5747747747748,
@@ -3565,7 +3900,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5551684174813941,
           "high": 0.6599112069322752,
-          "location": "CSV data row 302, original dose=39.1751951951952 mMET-hours/week"
+          "location": "CSV data row 302, original dose=39.1751951951952 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 673.8059202059203,
@@ -3576,7 +3912,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5547752717414414,
           "high": 0.6596855599874797,
-          "location": "CSV data row 303, original dose=39.30534534534535 mMET-hours/week"
+          "location": "CSV data row 303, original dose=39.30534534534535 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 676.0370656370658,
@@ -3587,7 +3924,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5543821730939029,
           "high": 0.6594602653591065,
-          "location": "CSV data row 304, original dose=39.4354954954955 mMET-hours/week"
+          "location": "CSV data row 304, original dose=39.4354954954955 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 678.2682110682111,
@@ -3598,7 +3936,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5539891232974852,
           "high": 0.6592353209965222,
-          "location": "CSV data row 305, original dose=39.56564564564565 mMET-hours/week"
+          "location": "CSV data row 305, original dose=39.56564564564565 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 680.4993564993566,
@@ -3609,7 +3948,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5535961240974272,
           "high": 0.6590107248628329,
-          "location": "CSV data row 306, original dose=39.6957957957958 mMET-hours/week"
+          "location": "CSV data row 306, original dose=39.6957957957958 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 682.730501930502,
@@ -3620,7 +3960,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5532031772255249,
           "high": 0.6587864749347895,
-          "location": "CSV data row 307, original dose=39.825945945945946 mMET-hours/week"
+          "location": "CSV data row 307, original dose=39.825945945945946 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 684.9616473616474,
@@ -3631,7 +3972,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5528102844001955,
           "high": 0.6585625692027315,
-          "location": "CSV data row 308, original dose=39.9560960960961 mMET-hours/week"
+          "location": "CSV data row 308, original dose=39.9560960960961 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 687.1927927927928,
@@ -3642,7 +3984,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5524174473265601,
           "high": 0.6583390056705444,
-          "location": "CSV data row 309, original dose=40.08624624624625 mMET-hours/week"
+          "location": "CSV data row 309, original dose=40.08624624624625 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 689.4239382239383,
@@ -3653,7 +3996,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5520246676964834,
           "high": 0.6581157823555781,
-          "location": "CSV data row 310, original dose=40.2163963963964 mMET-hours/week"
+          "location": "CSV data row 310, original dose=40.2163963963964 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 691.6550836550838,
@@ -3664,7 +4008,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5516319471886406,
           "high": 0.6578928972885874,
-          "location": "CSV data row 311, original dose=40.34654654654655 mMET-hours/week"
+          "location": "CSV data row 311, original dose=40.34654654654655 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 693.8862290862292,
@@ -3675,7 +4020,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5512392874686035,
           "high": 0.6576703485136929,
-          "location": "CSV data row 312, original dose=40.4766966966967 mMET-hours/week"
+          "location": "CSV data row 312, original dose=40.4766966966967 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 696.1173745173746,
@@ -3686,7 +4032,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5508466901888408,
           "high": 0.6574481340882531,
-          "location": "CSV data row 313, original dose=40.60684684684685 mMET-hours/week"
+          "location": "CSV data row 313, original dose=40.60684684684685 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 698.34851994852,
@@ -3697,7 +4044,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5504541569888823,
           "high": 0.657226252082901,
-          "location": "CSV data row 314, original dose=40.736996996997 mMET-hours/week"
+          "location": "CSV data row 314, original dose=40.736996996997 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 700.5796653796654,
@@ -3708,7 +4056,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5500616894952907,
           "high": 0.657004700581387,
-          "location": "CSV data row 315, original dose=40.86714714714715 mMET-hours/week"
+          "location": "CSV data row 315, original dose=40.86714714714715 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 702.8108108108108,
@@ -3719,7 +4068,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5496692893217637,
           "high": 0.656783477680551,
-          "location": "CSV data row 316, original dose=40.9972972972973 mMET-hours/week"
+          "location": "CSV data row 316, original dose=40.9972972972973 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 705.0419562419563,
@@ -3730,7 +4080,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5492769580692161,
           "high": 0.6565625814902722,
-          "location": "CSV data row 317, original dose=41.12744744744745 mMET-hours/week"
+          "location": "CSV data row 317, original dose=41.12744744744745 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 707.2731016731017,
@@ -3741,7 +4092,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.548884697325824,
           "high": 0.656342010133385,
-          "location": "CSV data row 318, original dose=41.2575975975976 mMET-hours/week"
+          "location": "CSV data row 318, original dose=41.2575975975976 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 709.5042471042472,
@@ -3752,7 +4104,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5484925086670877,
           "high": 0.6561217617456044,
-          "location": "CSV data row 319, original dose=41.38774774774775 mMET-hours/week"
+          "location": "CSV data row 319, original dose=41.38774774774775 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 711.7353925353926,
@@ -3763,7 +4116,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5481003936559039,
           "high": 0.6559018344754693,
-          "location": "CSV data row 320, original dose=41.5178978978979 mMET-hours/week"
+          "location": "CSV data row 320, original dose=41.5178978978979 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 713.9665379665381,
@@ -3774,7 +4128,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5477083538426291,
           "high": 0.6556822264842704,
-          "location": "CSV data row 321, original dose=41.648048048048054 mMET-hours/week"
+          "location": "CSV data row 321, original dose=41.648048048048054 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 716.1976833976835,
@@ -3785,7 +4140,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.547316390765181,
           "high": 0.6554629359460167,
-          "location": "CSV data row 322, original dose=41.778198198198204 mMET-hours/week"
+          "location": "CSV data row 322, original dose=41.778198198198204 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 718.428828828829,
@@ -3796,7 +4152,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5469245059490354,
           "high": 0.6552439610472973,
-          "location": "CSV data row 323, original dose=41.908348348348355 mMET-hours/week"
+          "location": "CSV data row 323, original dose=41.908348348348355 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 720.6599742599744,
@@ -3807,7 +4164,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5465327009073648,
           "high": 0.6550252999872859,
-          "location": "CSV data row 324, original dose=42.038498498498505 mMET-hours/week"
+          "location": "CSV data row 324, original dose=42.038498498498505 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 722.8911196911198,
@@ -3818,7 +4176,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5461409771410772,
           "high": 0.654806950977641,
-          "location": "CSV data row 325, original dose=42.168648648648656 mMET-hours/week"
+          "location": "CSV data row 325, original dose=42.168648648648656 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 725.1222651222652,
@@ -3829,7 +4188,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5457493361388637,
           "high": 0.6545889122424179,
-          "location": "CSV data row 326, original dose=42.2987987987988 mMET-hours/week"
+          "location": "CSV data row 326, original dose=42.2987987987988 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 727.3534105534106,
@@ -3840,7 +4200,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5453577793773003,
           "high": 0.6543711820180347,
-          "location": "CSV data row 327, original dose=42.42894894894895 mMET-hours/week"
+          "location": "CSV data row 327, original dose=42.42894894894895 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 729.584555984556,
@@ -3851,7 +4212,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5449663083208943,
           "high": 0.6541537585531785,
-          "location": "CSV data row 328, original dose=42.5590990990991 mMET-hours/week"
+          "location": "CSV data row 328, original dose=42.5590990990991 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 731.8157014157015,
@@ -3862,7 +4224,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.544574924422185,
           "high": 0.6539366401087701,
-          "location": "CSV data row 329, original dose=42.68924924924925 mMET-hours/week"
+          "location": "CSV data row 329, original dose=42.68924924924925 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 734.046846846847,
@@ -3873,7 +4236,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5441836291217723,
           "high": 0.6537198249578541,
-          "location": "CSV data row 330, original dose=42.8193993993994 mMET-hours/week"
+          "location": "CSV data row 330, original dose=42.8193993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 736.2779922779922,
@@ -3884,7 +4248,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.543792423848396,
           "high": 0.6535033113855377,
-          "location": "CSV data row 331, original dose=42.94954954954955 mMET-hours/week"
+          "location": "CSV data row 331, original dose=42.94954954954955 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 738.5091377091377,
@@ -3895,7 +4260,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5434013100190446,
           "high": 0.6532870976889644,
-          "location": "CSV data row 332, original dose=43.0796996996997 mMET-hours/week"
+          "location": "CSV data row 332, original dose=43.0796996996997 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 740.7402831402832,
@@ -3906,7 +4272,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5430102890389489,
           "high": 0.6530711821771659,
-          "location": "CSV data row 333, original dose=43.20984984984985 mMET-hours/week"
+          "location": "CSV data row 333, original dose=43.20984984984985 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 742.9714285714286,
@@ -3917,7 +4284,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.542619362301744,
           "high": 0.6528555631710835,
-          "location": "CSV data row 334, original dose=43.34 mMET-hours/week"
+          "location": "CSV data row 334, original dose=43.34 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 745.202574002574,
@@ -3928,7 +4296,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5422285311894453,
           "high": 0.6526402390034091,
-          "location": "CSV data row 335, original dose=43.470150150150154 mMET-hours/week"
+          "location": "CSV data row 335, original dose=43.470150150150154 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 747.4337194337195,
@@ -3939,7 +4308,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5418377970726033,
           "high": 0.6524252080185952,
-          "location": "CSV data row 336, original dose=43.600300300300304 mMET-hours/week"
+          "location": "CSV data row 336, original dose=43.600300300300304 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 749.664864864865,
@@ -3950,7 +4320,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5414471613102885,
           "high": 0.652210468572704,
-          "location": "CSV data row 337, original dose=43.730450450450455 mMET-hours/week"
+          "location": "CSV data row 337, original dose=43.730450450450455 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 751.8960102960103,
@@ -3961,7 +4332,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5410566252502685,
           "high": 0.6519960190334445,
-          "location": "CSV data row 338, original dose=43.860600600600606 mMET-hours/week"
+          "location": "CSV data row 338, original dose=43.860600600600606 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 754.1271557271558,
@@ -3972,7 +4344,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5406661902289519,
           "high": 0.6517818577799723,
-          "location": "CSV data row 339, original dose=43.990750750750756 mMET-hours/week"
+          "location": "CSV data row 339, original dose=43.990750750750756 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 756.3583011583013,
@@ -3983,7 +4356,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5402758575715738,
           "high": 0.6515679832029411,
-          "location": "CSV data row 340, original dose=44.12090090090091 mMET-hours/week"
+          "location": "CSV data row 340, original dose=44.12090090090091 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 758.5894465894468,
@@ -3994,7 +4368,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5398856285921682,
           "high": 0.6513543937043302,
-          "location": "CSV data row 341, original dose=44.25105105105106 mMET-hours/week"
+          "location": "CSV data row 341, original dose=44.25105105105106 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 760.8205920205921,
@@ -4005,7 +4380,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5394955045937121,
           "high": 0.6511410876974522,
-          "location": "CSV data row 342, original dose=44.38120120120121 mMET-hours/week"
+          "location": "CSV data row 342, original dose=44.38120120120121 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 763.0517374517376,
@@ -4016,7 +4392,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5391054868681905,
           "high": 0.6509280636068775,
-          "location": "CSV data row 343, original dose=44.51135135135136 mMET-hours/week"
+          "location": "CSV data row 343, original dose=44.51135135135136 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 765.2828828828831,
@@ -4027,7 +4404,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5387155766965663,
           "high": 0.6507153198682613,
-          "location": "CSV data row 344, original dose=44.64150150150151 mMET-hours/week"
+          "location": "CSV data row 344, original dose=44.64150150150151 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 767.5140283140285,
@@ -4038,7 +4416,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.538325775349026,
           "high": 0.6505028549284549,
-          "location": "CSV data row 345, original dose=44.77165165165166 mMET-hours/week"
+          "location": "CSV data row 345, original dose=44.77165165165166 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 769.7451737451738,
@@ -4049,7 +4428,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5379360840848566,
           "high": 0.6502906672452379,
-          "location": "CSV data row 346, original dose=44.9018018018018 mMET-hours/week"
+          "location": "CSV data row 346, original dose=44.9018018018018 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 771.9763191763193,
@@ -4060,7 +4440,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5375465041526366,
           "high": 0.6500787552873721,
-          "location": "CSV data row 347, original dose=45.03195195195195 mMET-hours/week"
+          "location": "CSV data row 347, original dose=45.03195195195195 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 774.2074646074645,
@@ -4071,7 +4452,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5371570367903473,
           "high": 0.6498671175345773,
-          "location": "CSV data row 348, original dose=45.162102102102104 mMET-hours/week"
+          "location": "CSV data row 348, original dose=45.162102102102104 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 776.43861003861,
@@ -4082,7 +4464,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5367676832252569,
           "high": 0.6496557524772667,
-          "location": "CSV data row 349, original dose=45.292252252252254 mMET-hours/week"
+          "location": "CSV data row 349, original dose=45.292252252252254 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 778.6697554697555,
@@ -4093,7 +4476,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5363784446742027,
           "high": 0.6494446586167011,
-          "location": "CSV data row 350, original dose=45.422402402402405 mMET-hours/week"
+          "location": "CSV data row 350, original dose=45.422402402402405 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 780.9009009009009,
@@ -4104,7 +4488,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5359893223434709,
           "high": 0.6492338344647209,
-          "location": "CSV data row 351, original dose=45.552552552552555 mMET-hours/week"
+          "location": "CSV data row 351, original dose=45.552552552552555 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 783.1320463320463,
@@ -4115,7 +4500,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5356003174290674,
           "high": 0.6490232785438871,
-          "location": "CSV data row 352, original dose=45.682702702702706 mMET-hours/week"
+          "location": "CSV data row 352, original dose=45.682702702702706 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 785.3631917631918,
@@ -4126,7 +4512,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5352114311166075,
           "high": 0.6488129893872252,
-          "location": "CSV data row 353, original dose=45.812852852852856 mMET-hours/week"
+          "location": "CSV data row 353, original dose=45.812852852852856 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 787.5943371943373,
@@ -4137,7 +4524,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.534822664581431,
           "high": 0.6486029655382052,
-          "location": "CSV data row 354, original dose=45.94300300300301 mMET-hours/week"
+          "location": "CSV data row 354, original dose=45.94300300300301 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 789.8254826254827,
@@ -4148,7 +4536,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5344340189887758,
           "high": 0.6483932055507806,
-          "location": "CSV data row 355, original dose=46.07315315315316 mMET-hours/week"
+          "location": "CSV data row 355, original dose=46.07315315315316 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 792.0566280566281,
@@ -4159,7 +4548,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5340454954936718,
           "high": 0.6481837079891389,
-          "location": "CSV data row 356, original dose=46.20330330330331 mMET-hours/week"
+          "location": "CSV data row 356, original dose=46.20330330330331 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 794.2877734877736,
@@ -4170,7 +4560,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5336570952411945,
           "high": 0.6479744714278265,
-          "location": "CSV data row 357, original dose=46.33345345345346 mMET-hours/week"
+          "location": "CSV data row 357, original dose=46.33345345345346 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 796.518918918919,
@@ -4181,7 +4572,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5332688193663504,
           "high": 0.6477654944514867,
-          "location": "CSV data row 358, original dose=46.46360360360361 mMET-hours/week"
+          "location": "CSV data row 358, original dose=46.46360360360361 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 798.7500643500645,
@@ -4192,7 +4584,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5328806689943311,
           "high": 0.6475567756549903,
-          "location": "CSV data row 359, original dose=46.59375375375376 mMET-hours/week"
+          "location": "CSV data row 359, original dose=46.59375375375376 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 800.9812097812099,
@@ -4203,7 +4596,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5324926452403671,
           "high": 0.6473483136431396,
-          "location": "CSV data row 360, original dose=46.72390390390391 mMET-hours/week"
+          "location": "CSV data row 360, original dose=46.72390390390391 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 803.2123552123554,
@@ -4214,7 +4608,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5321047492100679,
           "high": 0.6471401070308885,
-          "location": "CSV data row 361, original dose=46.85405405405406 mMET-hours/week"
+          "location": "CSV data row 361, original dose=46.85405405405406 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 805.4435006435008,
@@ -4225,7 +4620,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.531716981999159,
           "high": 0.6469321544429268,
-          "location": "CSV data row 362, original dose=46.98420420420421 mMET-hours/week"
+          "location": "CSV data row 362, original dose=46.98420420420421 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 807.6746460746461,
@@ -4236,7 +4632,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5313293446939075,
           "high": 0.6467244545139921,
-          "location": "CSV data row 363, original dose=47.11435435435436 mMET-hours/week"
+          "location": "CSV data row 363, original dose=47.11435435435436 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 809.9057915057916,
@@ -4247,7 +4644,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5309418383708258,
           "high": 0.6465170058884147,
-          "location": "CSV data row 364, original dose=47.24450450450451 mMET-hours/week"
+          "location": "CSV data row 364, original dose=47.24450450450451 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 812.136936936937,
@@ -4258,7 +4656,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5305544640971074,
           "high": 0.6463098072204457,
-          "location": "CSV data row 365, original dose=47.37465465465466 mMET-hours/week"
+          "location": "CSV data row 365, original dose=47.37465465465466 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 814.3680823680824,
@@ -4269,7 +4668,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5301672229302965,
           "high": 0.6461028571737669,
-          "location": "CSV data row 366, original dose=47.504804804804806 mMET-hours/week"
+          "location": "CSV data row 366, original dose=47.504804804804806 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 816.5992277992278,
@@ -4280,7 +4680,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5297801159188071,
           "high": 0.6458961544219051,
-          "location": "CSV data row 367, original dose=47.63495495495496 mMET-hours/week"
+          "location": "CSV data row 367, original dose=47.63495495495496 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 818.8303732303732,
@@ -4291,7 +4692,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5293931441014909,
           "high": 0.6456896976476383,
-          "location": "CSV data row 368, original dose=47.76510510510511 mMET-hours/week"
+          "location": "CSV data row 368, original dose=47.76510510510511 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 821.0615186615187,
@@ -4302,7 +4704,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5290063085081798,
           "high": 0.6454834855434335,
-          "location": "CSV data row 369, original dose=47.89525525525526 mMET-hours/week"
+          "location": "CSV data row 369, original dose=47.89525525525526 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 823.2926640926642,
@@ -4313,7 +4716,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5286196101593534,
           "high": 0.6452775168109605,
-          "location": "CSV data row 370, original dose=48.02540540540541 mMET-hours/week"
+          "location": "CSV data row 370, original dose=48.02540540540541 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 825.5238095238095,
@@ -4324,7 +4728,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5282330500665517,
           "high": 0.6450717901613934,
-          "location": "CSV data row 371, original dose=48.15555555555556 mMET-hours/week"
+          "location": "CSV data row 371, original dose=48.15555555555556 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 827.754954954955,
@@ -4335,7 +4740,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5278466292320645,
           "high": 0.6448663043149467,
-          "location": "CSV data row 372, original dose=48.28570570570571 mMET-hours/week"
+          "location": "CSV data row 372, original dose=48.28570570570571 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 829.9861003861005,
@@ -4346,7 +4752,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5274603486494455,
           "high": 0.6446610580012894,
-          "location": "CSV data row 373, original dose=48.41585585585586 mMET-hours/week"
+          "location": "CSV data row 373, original dose=48.41585585585586 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 832.217245817246,
@@ -4357,7 +4764,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5270742093030654,
           "high": 0.6444560499589337,
-          "location": "CSV data row 374, original dose=48.54600600600601 mMET-hours/week"
+          "location": "CSV data row 374, original dose=48.54600600600601 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 834.4483912483913,
@@ -4368,7 +4776,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.526688212168715,
           "high": 0.6442512789357466,
-          "location": "CSV data row 375, original dose=48.67615615615616 mMET-hours/week"
+          "location": "CSV data row 375, original dose=48.67615615615616 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 836.6795366795368,
@@ -4379,7 +4788,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5263023582131319,
           "high": 0.6440467436883114,
-          "location": "CSV data row 376, original dose=48.80630630630631 mMET-hours/week"
+          "location": "CSV data row 376, original dose=48.80630630630631 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 838.9106821106823,
@@ -4390,7 +4800,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.525916648394573,
           "high": 0.6438424429824066,
-          "location": "CSV data row 377, original dose=48.93645645645646 mMET-hours/week"
+          "location": "CSV data row 377, original dose=48.93645645645646 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 841.1418275418276,
@@ -4401,7 +4812,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5255310836624186,
           "high": 0.6436383755924547,
-          "location": "CSV data row 378, original dose=49.06660660660661 mMET-hours/week"
+          "location": "CSV data row 378, original dose=49.06660660660661 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 843.3729729729731,
@@ -4412,7 +4824,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.525145664957662,
           "high": 0.6434345403019104,
-          "location": "CSV data row 379, original dose=49.19675675675676 mMET-hours/week"
+          "location": "CSV data row 379, original dose=49.19675675675676 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 845.6041184041185,
@@ -4423,7 +4836,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5247603932125412,
           "high": 0.6432309359027383,
-          "location": "CSV data row 380, original dose=49.32690690690691 mMET-hours/week"
+          "location": "CSV data row 380, original dose=49.32690690690691 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 847.8352638352638,
@@ -4434,7 +4848,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5243752693510529,
           "high": 0.6430275611958354,
-          "location": "CSV data row 381, original dose=49.457057057057064 mMET-hours/week"
+          "location": "CSV data row 381, original dose=49.457057057057064 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 850.0664092664093,
@@ -4445,7 +4860,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5239902942885708,
           "high": 0.6428244149904891,
-          "location": "CSV data row 382, original dose=49.587207207207214 mMET-hours/week"
+          "location": "CSV data row 382, original dose=49.587207207207214 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 852.2975546975548,
@@ -4456,7 +4872,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5236054689322499,
           "high": 0.6426214961046863,
-          "location": "CSV data row 383, original dose=49.717357357357365 mMET-hours/week"
+          "location": "CSV data row 383, original dose=49.717357357357365 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 854.5287001287003,
@@ -4467,7 +4884,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5232207941809136,
           "high": 0.6424188033648606,
-          "location": "CSV data row 384, original dose=49.847507507507515 mMET-hours/week"
+          "location": "CSV data row 384, original dose=49.847507507507515 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 856.7598455598455,
@@ -4478,7 +4896,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5228362709252059,
           "high": 0.642216335605931,
-          "location": "CSV data row 385, original dose=49.97765765765766 mMET-hours/week"
+          "location": "CSV data row 385, original dose=49.97765765765766 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 858.990990990991,
@@ -4489,7 +4908,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5224519000475172,
           "high": 0.642014091671094,
-          "location": "CSV data row 386, original dose=50.10780780780781 mMET-hours/week"
+          "location": "CSV data row 386, original dose=50.10780780780781 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 861.2221364221365,
@@ -4500,7 +4920,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5220676824222685,
           "high": 0.6418120704120047,
-          "location": "CSV data row 387, original dose=50.23795795795796 mMET-hours/week"
+          "location": "CSV data row 387, original dose=50.23795795795796 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 863.4532818532819,
@@ -4511,7 +4932,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5216836189156658,
           "high": 0.6416102706883839,
-          "location": "CSV data row 388, original dose=50.36810810810811 mMET-hours/week"
+          "location": "CSV data row 388, original dose=50.36810810810811 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 865.6844272844273,
@@ -4522,7 +4944,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5212997103861213,
           "high": 0.64140869136835,
-          "location": "CSV data row 389, original dose=50.49825825825826 mMET-hours/week"
+          "location": "CSV data row 389, original dose=50.49825825825826 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 867.9155727155728,
@@ -4533,7 +4956,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5209159576839523,
           "high": 0.6412073313279677,
-          "location": "CSV data row 390, original dose=50.62840840840841 mMET-hours/week"
+          "location": "CSV data row 390, original dose=50.62840840840841 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 870.1467181467182,
@@ -4544,7 +4968,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5205323616517681,
           "high": 0.6410061894515444,
-          "location": "CSV data row 391, original dose=50.75855855855856 mMET-hours/week"
+          "location": "CSV data row 391, original dose=50.75855855855856 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 872.3778635778636,
@@ -4555,7 +4980,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5201489231241899,
           "high": 0.6408052646312008,
-          "location": "CSV data row 392, original dose=50.88870870870871 mMET-hours/week"
+          "location": "CSV data row 392, original dose=50.88870870870871 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 874.6090090090091,
@@ -4566,7 +4992,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5197656429283222,
           "high": 0.6406045557672618,
-          "location": "CSV data row 393, original dose=51.01885885885886 mMET-hours/week"
+          "location": "CSV data row 393, original dose=51.01885885885886 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 876.8401544401546,
@@ -4577,7 +5004,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5193825218833752,
           "high": 0.6404040617677246,
-          "location": "CSV data row 394, original dose=51.14900900900901 mMET-hours/week"
+          "location": "CSV data row 394, original dose=51.14900900900901 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 879.0712998713,
@@ -4588,7 +5016,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5189995608010262,
           "high": 0.6402037815485269,
-          "location": "CSV data row 395, original dose=51.279159159159164 mMET-hours/week"
+          "location": "CSV data row 395, original dose=51.279159159159164 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 881.3024453024454,
@@ -4599,7 +5028,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5186167604853971,
           "high": 0.6400037140334048,
-          "location": "CSV data row 396, original dose=51.409309309309315 mMET-hours/week"
+          "location": "CSV data row 396, original dose=51.409309309309315 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 883.5335907335908,
@@ -4610,7 +5040,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5182341217330299,
           "high": 0.6398038581537445,
-          "location": "CSV data row 397, original dose=51.539459459459465 mMET-hours/week"
+          "location": "CSV data row 397, original dose=51.539459459459465 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 885.7647361647362,
@@ -4621,7 +5052,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5178516453330814,
           "high": 0.6396042128486762,
-          "location": "CSV data row 398, original dose=51.669609609609616 mMET-hours/week"
+          "location": "CSV data row 398, original dose=51.669609609609616 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 887.9958815958817,
@@ -4632,7 +5064,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5174693320672435,
           "high": 0.6394047770648656,
-          "location": "CSV data row 399, original dose=51.799759759759766 mMET-hours/week"
+          "location": "CSV data row 399, original dose=51.799759759759766 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 890.2270270270271,
@@ -4643,7 +5076,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5170871827099687,
           "high": 0.6392055497566451,
-          "location": "CSV data row 400, original dose=51.92990990990992 mMET-hours/week"
+          "location": "CSV data row 400, original dose=51.92990990990992 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 892.4581724581725,
@@ -4654,7 +5088,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5167051980282404,
           "high": 0.6390065298856427,
-          "location": "CSV data row 401, original dose=52.06006006006007 mMET-hours/week"
+          "location": "CSV data row 401, original dose=52.06006006006007 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 894.689317889318,
@@ -4665,7 +5100,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5163233787820535,
           "high": 0.638807716421191,
-          "location": "CSV data row 402, original dose=52.19021021021022 mMET-hours/week"
+          "location": "CSV data row 402, original dose=52.19021021021022 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 896.9204633204635,
@@ -4676,7 +5112,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.515941725723952,
           "high": 0.6386091083397056,
-          "location": "CSV data row 403, original dose=52.32036036036037 mMET-hours/week"
+          "location": "CSV data row 403, original dose=52.32036036036037 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 899.1516087516089,
@@ -4687,7 +5124,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5155602395996384,
           "high": 0.6384107046252382,
-          "location": "CSV data row 404, original dose=52.45051051051052 mMET-hours/week"
+          "location": "CSV data row 404, original dose=52.45051051051052 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 901.3827541827542,
@@ -4698,7 +5136,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5151789211475034,
           "high": 0.638212504268842,
-          "location": "CSV data row 405, original dose=52.58066066066066 mMET-hours/week"
+          "location": "CSV data row 405, original dose=52.58066066066066 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 903.6138996138997,
@@ -4709,7 +5148,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5147977710990896,
           "high": 0.6380145062689698,
-          "location": "CSV data row 406, original dose=52.71081081081081 mMET-hours/week"
+          "location": "CSV data row 406, original dose=52.71081081081081 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 905.8450450450451,
@@ -4720,7 +5160,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5144167901789287,
           "high": 0.6378167096311793,
-          "location": "CSV data row 407, original dose=52.84096096096096 mMET-hours/week"
+          "location": "CSV data row 407, original dose=52.84096096096096 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 908.0761904761905,
@@ -4731,7 +5172,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5140359791046252,
           "high": 0.6376191133681149,
-          "location": "CSV data row 408, original dose=52.971111111111114 mMET-hours/week"
+          "location": "CSV data row 408, original dose=52.971111111111114 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 910.307335907336,
@@ -4742,7 +5184,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5136553385869674,
           "high": 0.6374217164995135,
-          "location": "CSV data row 409, original dose=53.101261261261264 mMET-hours/week"
+          "location": "CSV data row 409, original dose=53.101261261261264 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 912.5384813384815,
@@ -4753,7 +5196,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.51327486932993,
           "high": 0.637224518052099,
-          "location": "CSV data row 410, original dose=53.231411411411415 mMET-hours/week"
+          "location": "CSV data row 410, original dose=53.231411411411415 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 914.7696267696268,
@@ -4764,7 +5208,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5128945720307263,
           "high": 0.6370275170595272,
-          "location": "CSV data row 411, original dose=53.361561561561565 mMET-hours/week"
+          "location": "CSV data row 411, original dose=53.361561561561565 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 917.0007722007723,
@@ -4775,7 +5220,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5125144473799873,
           "high": 0.6368307125624721,
-          "location": "CSV data row 412, original dose=53.491711711711716 mMET-hours/week"
+          "location": "CSV data row 412, original dose=53.491711711711716 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 919.2319176319178,
@@ -4786,7 +5232,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5121344960615125,
           "high": 0.6366341036082456,
-          "location": "CSV data row 413, original dose=53.621861861861866 mMET-hours/week"
+          "location": "CSV data row 413, original dose=53.621861861861866 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 921.463063063063,
@@ -4797,7 +5244,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5117547187526994,
           "high": 0.6364376892511557,
-          "location": "CSV data row 414, original dose=53.75201201201202 mMET-hours/week"
+          "location": "CSV data row 414, original dose=53.75201201201202 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 923.6942084942085,
@@ -4808,7 +5256,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5113751161242289,
           "high": 0.6362414685520554,
-          "location": "CSV data row 415, original dose=53.88216216216217 mMET-hours/week"
+          "location": "CSV data row 415, original dose=53.88216216216217 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 925.925353925354,
@@ -4819,7 +5268,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5109956888405238,
           "high": 0.6360454405787438,
-          "location": "CSV data row 416, original dose=54.01231231231232 mMET-hours/week"
+          "location": "CSV data row 416, original dose=54.01231231231232 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 928.1564993564995,
@@ -4830,7 +5280,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5106164375593122,
           "high": 0.6358496044053678,
-          "location": "CSV data row 417, original dose=54.14246246246247 mMET-hours/week"
+          "location": "CSV data row 417, original dose=54.14246246246247 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 930.3876447876448,
@@ -4841,7 +5292,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5102373629321751,
           "high": 0.6356539591129332,
-          "location": "CSV data row 418, original dose=54.27261261261262 mMET-hours/week"
+          "location": "CSV data row 418, original dose=54.27261261261262 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 932.6187902187903,
@@ -4852,7 +5304,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5098584656041596,
           "high": 0.6354585037887608,
-          "location": "CSV data row 419, original dose=54.40276276276277 mMET-hours/week"
+          "location": "CSV data row 419, original dose=54.40276276276277 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 934.8499356499358,
@@ -4863,7 +5316,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5094797462142058,
           "high": 0.6352632375268604,
-          "location": "CSV data row 420, original dose=54.53291291291292 mMET-hours/week"
+          "location": "CSV data row 420, original dose=54.53291291291292 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 937.0810810810812,
@@ -4874,7 +5328,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5091012053948455,
           "high": 0.6350681594274897,
-          "location": "CSV data row 421, original dose=54.66306306306307 mMET-hours/week"
+          "location": "CSV data row 421, original dose=54.66306306306307 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 939.3122265122266,
@@ -4885,7 +5340,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5087228437726073,
           "high": 0.6348732685975019,
-          "location": "CSV data row 422, original dose=54.79321321321322 mMET-hours/week"
+          "location": "CSV data row 422, original dose=54.79321321321322 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 941.5433719433721,
@@ -4896,7 +5352,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5083446619676674,
           "high": 0.6346785641498531,
-          "location": "CSV data row 423, original dose=54.92336336336337 mMET-hours/week"
+          "location": "CSV data row 423, original dose=54.92336336336337 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 943.7745173745176,
@@ -4907,7 +5364,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5079666605943481,
           "high": 0.6344840452040568,
-          "location": "CSV data row 424, original dose=55.05351351351352 mMET-hours/week"
+          "location": "CSV data row 424, original dose=55.05351351351352 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 946.0056628056628,
@@ -4918,7 +5376,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5075888402607164,
           "high": 0.6342897108856319,
-          "location": "CSV data row 425, original dose=55.183663663663665 mMET-hours/week"
+          "location": "CSV data row 425, original dose=55.183663663663665 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 948.2368082368083,
@@ -4929,7 +5388,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5072112015690375,
           "high": 0.6340955603265119,
-          "location": "CSV data row 426, original dose=55.313813813813816 mMET-hours/week"
+          "location": "CSV data row 426, original dose=55.313813813813816 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 950.4679536679538,
@@ -4940,7 +5400,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5068337451154173,
           "high": 0.6339015926645394,
-          "location": "CSV data row 427, original dose=55.44396396396397 mMET-hours/week"
+          "location": "CSV data row 427, original dose=55.44396396396397 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 952.6990990990992,
@@ -4951,7 +5412,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5064564714903078,
           "high": 0.6337078070439379,
-          "location": "CSV data row 428, original dose=55.57411411411412 mMET-hours/week"
+          "location": "CSV data row 428, original dose=55.57411411411412 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 954.9302445302446,
@@ -4962,7 +5424,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5060793812780515,
           "high": 0.6335142026146975,
-          "location": "CSV data row 429, original dose=55.70426426426427 mMET-hours/week"
+          "location": "CSV data row 429, original dose=55.70426426426427 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 957.1613899613901,
@@ -4973,7 +5436,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5057024750574425,
           "high": 0.6333207785331072,
-          "location": "CSV data row 430, original dose=55.83441441441442 mMET-hours/week"
+          "location": "CSV data row 430, original dose=55.83441441441442 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 959.3925353925354,
@@ -4984,7 +5448,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5053257534012573,
           "high": 0.6331275339611304,
-          "location": "CSV data row 431, original dose=55.96456456456457 mMET-hours/week"
+          "location": "CSV data row 431, original dose=55.96456456456457 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 961.6236808236808,
@@ -4995,7 +5460,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5049492168768245,
           "high": 0.6329344680669494,
-          "location": "CSV data row 432, original dose=56.09471471471472 mMET-hours/week"
+          "location": "CSV data row 432, original dose=56.09471471471472 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 963.8548262548263,
@@ -5006,7 +5472,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5045728660455163,
           "high": 0.6327415800242939,
-          "location": "CSV data row 433, original dose=56.22486486486487 mMET-hours/week"
+          "location": "CSV data row 433, original dose=56.22486486486487 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 966.0859716859717,
@@ -5017,7 +5484,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.504196701463369,
           "high": 0.6325488690130445,
-          "location": "CSV data row 434, original dose=56.35501501501502 mMET-hours/week"
+          "location": "CSV data row 434, original dose=56.35501501501502 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 968.3171171171172,
@@ -5028,7 +5496,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.503820723680551,
           "high": 0.6323563342185384,
-          "location": "CSV data row 435, original dose=56.48516516516517 mMET-hours/week"
+          "location": "CSV data row 435, original dose=56.48516516516517 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 970.5482625482626,
@@ -5039,7 +5508,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5034449332420268,
           "high": 0.6321639748322261,
-          "location": "CSV data row 436, original dose=56.61531531531532 mMET-hours/week"
+          "location": "CSV data row 436, original dose=56.61531531531532 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 972.7794079794081,
@@ -5050,7 +5520,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5030693306869184,
           "high": 0.6319717900508505,
-          "location": "CSV data row 437, original dose=56.74546546546547 mMET-hours/week"
+          "location": "CSV data row 437, original dose=56.74546546546547 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 975.0105534105535,
@@ -5061,7 +5532,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5026939165492209,
           "high": 0.6317797790771671,
-          "location": "CSV data row 438, original dose=56.87561561561562 mMET-hours/week"
+          "location": "CSV data row 438, original dose=56.87561561561562 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 977.241698841699,
@@ -5072,7 +5544,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5023186913572159,
           "high": 0.6315879411191873,
-          "location": "CSV data row 439, original dose=57.00576576576577 mMET-hours/week"
+          "location": "CSV data row 439, original dose=57.00576576576577 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 979.4728442728444,
@@ -5083,7 +5556,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5019436556341557,
           "high": 0.6313962753908579,
-          "location": "CSV data row 440, original dose=57.13591591591592 mMET-hours/week"
+          "location": "CSV data row 440, original dose=57.13591591591592 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 981.7039897039898,
@@ -5094,7 +5568,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.501568809897666,
           "high": 0.6312047811112949,
-          "location": "CSV data row 441, original dose=57.266066066066074 mMET-hours/week"
+          "location": "CSV data row 441, original dose=57.266066066066074 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 983.9351351351353,
@@ -5105,7 +5580,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5011941546603114,
           "high": 0.6310134575053336,
-          "location": "CSV data row 442, original dose=57.396216216216224 mMET-hours/week"
+          "location": "CSV data row 442, original dose=57.396216216216224 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 986.1662805662808,
@@ -5116,7 +5592,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5008196904293047,
           "high": 0.6308223038031088,
-          "location": "CSV data row 443, original dose=57.526366366366375 mMET-hours/week"
+          "location": "CSV data row 443, original dose=57.526366366366375 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 988.3974259974262,
@@ -5127,7 +5604,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5004454177067434,
           "high": 0.630631319240235,
-          "location": "CSV data row 444, original dose=57.656516516516525 mMET-hours/week"
+          "location": "CSV data row 444, original dose=57.656516516516525 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 990.6285714285715,
@@ -5138,7 +5616,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.5000713369895018,
           "high": 0.63044050305759,
-          "location": "CSV data row 445, original dose=57.78666666666667 mMET-hours/week"
+          "location": "CSV data row 445, original dose=57.78666666666667 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 992.859716859717,
@@ -5149,7 +5628,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49969744876947153,
           "high": 0.6302498545015054,
-          "location": "CSV data row 446, original dose=57.91681681681682 mMET-hours/week"
+          "location": "CSV data row 446, original dose=57.91681681681682 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 995.0908622908624,
@@ -5160,7 +5640,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49932375353329916,
           "high": 0.6300593728233783,
-          "location": "CSV data row 447, original dose=58.04696696696697 mMET-hours/week"
+          "location": "CSV data row 447, original dose=58.04696696696697 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 997.3220077220077,
@@ -5171,7 +5652,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4989502517627932,
           "high": 0.6298690572800479,
-          "location": "CSV data row 448, original dose=58.17711711711712 mMET-hours/week"
+          "location": "CSV data row 448, original dose=58.17711711711712 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 999.5531531531532,
@@ -5182,7 +5664,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4985769439345663,
           "high": 0.629678907133298,
-          "location": "CSV data row 449, original dose=58.30726726726727 mMET-hours/week"
+          "location": "CSV data row 449, original dose=58.30726726726727 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1001.7842985842987,
@@ -5193,7 +5676,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4982038305205272,
           "high": 0.6294889216503395,
-          "location": "CSV data row 450, original dose=58.43741741741742 mMET-hours/week"
+          "location": "CSV data row 450, original dose=58.43741741741742 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1004.015444015444,
@@ -5204,7 +5688,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49783091198743534,
           "high": 0.6292991001032094,
-          "location": "CSV data row 451, original dose=58.56756756756757 mMET-hours/week"
+          "location": "CSV data row 451, original dose=58.56756756756757 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1006.2465894465895,
@@ -5215,7 +5700,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49745818879738446,
           "high": 0.6291094417692428,
-          "location": "CSV data row 452, original dose=58.69771771771772 mMET-hours/week"
+          "location": "CSV data row 452, original dose=58.69771771771772 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1008.477734877735,
@@ -5226,7 +5712,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4970856614075336,
           "high": 0.6289199459306797,
-          "location": "CSV data row 453, original dose=58.82786786786787 mMET-hours/week"
+          "location": "CSV data row 453, original dose=58.82786786786787 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1010.7088803088803,
@@ -5237,7 +5724,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49671333027023384,
           "high": 0.6287306118747271,
-          "location": "CSV data row 454, original dose=58.958018018018024 mMET-hours/week"
+          "location": "CSV data row 454, original dose=58.958018018018024 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1012.9400257400258,
@@ -5248,7 +5736,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4963411958331677,
           "high": 0.6285414388936366,
-          "location": "CSV data row 455, original dose=59.088168168168174 mMET-hours/week"
+          "location": "CSV data row 455, original dose=59.088168168168174 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1015.1711711711713,
@@ -5259,7 +5748,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49596925853924523,
           "high": 0.6283524262845002,
-          "location": "CSV data row 456, original dose=59.218318318318325 mMET-hours/week"
+          "location": "CSV data row 456, original dose=59.218318318318325 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1017.4023166023168,
@@ -5270,7 +5760,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4955975188267728,
           "high": 0.6281635733493663,
-          "location": "CSV data row 457, original dose=59.348468468468475 mMET-hours/week"
+          "location": "CSV data row 457, original dose=59.348468468468475 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1019.6334620334621,
@@ -5281,7 +5772,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4952259771292454,
           "high": 0.6279748793949163,
-          "location": "CSV data row 458, original dose=59.478618618618626 mMET-hours/week"
+          "location": "CSV data row 458, original dose=59.478618618618626 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1021.8646074646076,
@@ -5292,7 +5784,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49485463387584755,
           "high": 0.627786343732964,
-          "location": "CSV data row 459, original dose=59.608768768768776 mMET-hours/week"
+          "location": "CSV data row 459, original dose=59.608768768768776 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1024.095752895753,
@@ -5303,7 +5796,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4944834894908928,
           "high": 0.6275979656797266,
-          "location": "CSV data row 460, original dose=59.73891891891893 mMET-hours/week"
+          "location": "CSV data row 460, original dose=59.73891891891893 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1026.3268983268986,
@@ -5314,7 +5808,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4941125443944479,
           "high": 0.6274097445564657,
-          "location": "CSV data row 461, original dose=59.86906906906908 mMET-hours/week"
+          "location": "CSV data row 461, original dose=59.86906906906908 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1028.558043758044,
@@ -5325,7 +5820,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4937417990018014,
           "high": 0.6272216796887975,
-          "location": "CSV data row 462, original dose=59.99921921921923 mMET-hours/week"
+          "location": "CSV data row 462, original dose=59.99921921921923 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1030.7891891891893,
@@ -5336,7 +5832,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49337125372409935,
           "high": 0.6270337704073461,
-          "location": "CSV data row 463, original dose=60.12936936936938 mMET-hours/week"
+          "location": "CSV data row 463, original dose=60.12936936936938 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1033.0203346203348,
@@ -5347,7 +5844,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49300090896781307,
           "high": 0.6268460160470531,
-          "location": "CSV data row 464, original dose=60.25951951951952 mMET-hours/week"
+          "location": "CSV data row 464, original dose=60.25951951951952 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1035.25148005148,
@@ -5358,7 +5856,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4926307651351682,
           "high": 0.6266584159475926,
-          "location": "CSV data row 465, original dose=60.38966966966967 mMET-hours/week"
+          "location": "CSV data row 465, original dose=60.38966966966967 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1037.4826254826255,
@@ -5369,7 +5868,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49226082262402165,
           "high": 0.6264709694531585,
-          "location": "CSV data row 466, original dose=60.51981981981982 mMET-hours/week"
+          "location": "CSV data row 466, original dose=60.51981981981982 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1039.713770913771,
@@ -5380,7 +5880,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49189108182787183,
           "high": 0.6262836759123945,
-          "location": "CSV data row 467, original dose=60.64996996996997 mMET-hours/week"
+          "location": "CSV data row 467, original dose=60.64996996996997 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1041.9449163449165,
@@ -5391,7 +5892,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49152154313604235,
           "high": 0.6260965346785347,
-          "location": "CSV data row 468, original dose=60.780120120120124 mMET-hours/week"
+          "location": "CSV data row 468, original dose=60.780120120120124 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1044.1760617760617,
@@ -5402,7 +5904,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4911522069335134,
           "high": 0.6259095451091344,
-          "location": "CSV data row 469, original dose=60.910270270270274 mMET-hours/week"
+          "location": "CSV data row 469, original dose=60.910270270270274 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1046.4072072072072,
@@ -5413,7 +5916,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4907830736010698,
           "high": 0.6257227065661622,
-          "location": "CSV data row 470, original dose=61.040420420420425 mMET-hours/week"
+          "location": "CSV data row 470, original dose=61.040420420420425 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1048.6383526383527,
@@ -5424,7 +5928,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.490414143515476,
           "high": 0.6255360184161375,
-          "location": "CSV data row 471, original dose=61.170570570570575 mMET-hours/week"
+          "location": "CSV data row 471, original dose=61.170570570570575 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1050.8694980694981,
@@ -5435,7 +5940,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.49004541704907234,
           "high": 0.6253494800295797,
-          "location": "CSV data row 472, original dose=61.300720720720726 mMET-hours/week"
+          "location": "CSV data row 472, original dose=61.300720720720726 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1053.1006435006436,
@@ -5446,7 +5952,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48967689457043106,
           "high": 0.6251630907817053,
-          "location": "CSV data row 473, original dose=61.430870870870876 mMET-hours/week"
+          "location": "CSV data row 473, original dose=61.430870870870876 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1055.331788931789,
@@ -5457,7 +5964,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4893085764436732,
           "high": 0.6249768500515573,
-          "location": "CSV data row 474, original dose=61.56102102102103 mMET-hours/week"
+          "location": "CSV data row 474, original dose=61.56102102102103 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1057.5629343629346,
@@ -5468,7 +5976,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48894046302931105,
           "high": 0.6247907572229158,
-          "location": "CSV data row 475, original dose=61.69117117117118 mMET-hours/week"
+          "location": "CSV data row 475, original dose=61.69117117117118 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1059.7940797940798,
@@ -5479,7 +5988,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4885725546834207,
           "high": 0.6246048116832628,
-          "location": "CSV data row 476, original dose=61.82132132132133 mMET-hours/week"
+          "location": "CSV data row 476, original dose=61.82132132132133 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1062.0252252252253,
@@ -5490,7 +6000,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4882048517584924,
           "high": 0.6244190128247026,
-          "location": "CSV data row 477, original dose=61.95147147147148 mMET-hours/week"
+          "location": "CSV data row 477, original dose=61.95147147147148 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1064.2563706563708,
@@ -5501,7 +6012,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4878373546027181,
           "high": 0.624233360043061,
-          "location": "CSV data row 478, original dose=62.08162162162163 mMET-hours/week"
+          "location": "CSV data row 478, original dose=62.08162162162163 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1066.4875160875163,
@@ -5512,7 +6024,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48747006356069467,
           "high": 0.6240478527386386,
-          "location": "CSV data row 479, original dose=62.21177177177178 mMET-hours/week"
+          "location": "CSV data row 479, original dose=62.21177177177178 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1068.7186615186617,
@@ -5523,7 +6036,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48710297897285715,
           "high": 0.623862490315476,
-          "location": "CSV data row 480, original dose=62.34192192192193 mMET-hours/week"
+          "location": "CSV data row 480, original dose=62.34192192192193 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1070.9498069498072,
@@ -5534,7 +6048,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48673610117609784,
           "high": 0.6236772721820145,
-          "location": "CSV data row 481, original dose=62.47207207207208 mMET-hours/week"
+          "location": "CSV data row 481, original dose=62.47207207207208 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1073.1809523809525,
@@ -5545,7 +6060,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4863694305032102,
           "high": 0.6234921977503713,
-          "location": "CSV data row 482, original dose=62.60222222222223 mMET-hours/week"
+          "location": "CSV data row 482, original dose=62.60222222222223 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1075.412097812098,
@@ -5556,7 +6072,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4860029672833946,
           "high": 0.6233072664368706,
-          "location": "CSV data row 483, original dose=62.73237237237238 mMET-hours/week"
+          "location": "CSV data row 483, original dose=62.73237237237238 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1077.6432432432432,
@@ -5567,7 +6084,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4856367118419466,
           "high": 0.623122477661607,
-          "location": "CSV data row 484, original dose=62.862522522522525 mMET-hours/week"
+          "location": "CSV data row 484, original dose=62.862522522522525 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1079.8743886743887,
@@ -5578,7 +6096,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48527066450064,
           "high": 0.6229378308488321,
-          "location": "CSV data row 485, original dose=62.992672672672676 mMET-hours/week"
+          "location": "CSV data row 485, original dose=62.992672672672676 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1082.1055341055342,
@@ -5589,7 +6108,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4849048255772816,
           "high": 0.6227533254263615,
-          "location": "CSV data row 486, original dose=63.122822822822826 mMET-hours/week"
+          "location": "CSV data row 486, original dose=63.122822822822826 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1084.3366795366796,
@@ -5600,7 +6120,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4845391953863304,
           "high": 0.6225689608262428,
-          "location": "CSV data row 487, original dose=63.25297297297298 mMET-hours/week"
+          "location": "CSV data row 487, original dose=63.25297297297298 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1086.5678249678251,
@@ -5611,7 +6132,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48417377423828656,
           "high": 0.6223847364839648,
-          "location": "CSV data row 488, original dose=63.38312312312313 mMET-hours/week"
+          "location": "CSV data row 488, original dose=63.38312312312313 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1088.7989703989704,
@@ -5622,7 +6144,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4838085624403697,
           "high": 0.6222006518392018,
-          "location": "CSV data row 489, original dose=63.51327327327328 mMET-hours/week"
+          "location": "CSV data row 489, original dose=63.51327327327328 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1091.0301158301158,
@@ -5633,7 +6156,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4834435602959019,
           "high": 0.6220167063350112,
-          "location": "CSV data row 490, original dose=63.64342342342343 mMET-hours/week"
+          "location": "CSV data row 490, original dose=63.64342342342343 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1093.2612612612613,
@@ -5644,7 +6168,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48307876810498107,
           "high": 0.6218328994185739,
-          "location": "CSV data row 491, original dose=63.77357357357358 mMET-hours/week"
+          "location": "CSV data row 491, original dose=63.77357357357358 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1095.4924066924068,
@@ -5655,7 +6180,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48271418616385653,
           "high": 0.6216492305403887,
-          "location": "CSV data row 492, original dose=63.90372372372373 mMET-hours/week"
+          "location": "CSV data row 492, original dose=63.90372372372373 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1097.7235521235523,
@@ -5666,7 +6192,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48234981476561045,
           "high": 0.6214656991550167,
-          "location": "CSV data row 493, original dose=64.03387387387389 mMET-hours/week"
+          "location": "CSV data row 493, original dose=64.03387387387389 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1099.9546975546978,
@@ -5677,7 +6204,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48198565419963485,
           "high": 0.6212823047204019,
-          "location": "CSV data row 494, original dose=64.16402402402403 mMET-hours/week"
+          "location": "CSV data row 494, original dose=64.16402402402403 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1102.185842985843,
@@ -5688,7 +6216,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4816217047520278,
           "high": 0.6210990466982769,
-          "location": "CSV data row 495, original dose=64.29417417417417 mMET-hours/week"
+          "location": "CSV data row 495, original dose=64.29417417417417 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1104.4169884169885,
@@ -5699,7 +6228,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48125796670531285,
           "high": 0.620915924553771,
-          "location": "CSV data row 496, original dose=64.42432432432433 mMET-hours/week"
+          "location": "CSV data row 496, original dose=64.42432432432433 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1106.648133848134,
@@ -5710,7 +6240,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48089444033889917,
           "high": 0.6207329377558948,
-          "location": "CSV data row 497, original dose=64.55447447447447 mMET-hours/week"
+          "location": "CSV data row 497, original dose=64.55447447447447 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1108.8792792792794,
@@ -5721,7 +6252,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48053112592854375,
           "high": 0.6205500857768405,
-          "location": "CSV data row 498, original dose=64.68462462462463 mMET-hours/week"
+          "location": "CSV data row 498, original dose=64.68462462462463 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1111.1104247104247,
@@ -5732,7 +6264,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.48016802374697376,
           "high": 0.6203673680926655,
-          "location": "CSV data row 499, original dose=64.81477477477478 mMET-hours/week"
+          "location": "CSV data row 499, original dose=64.81477477477478 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1113.3415701415702,
@@ -5743,7 +6276,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47980513406336894,
           "high": 0.6201847841826122,
-          "location": "CSV data row 500, original dose=64.94492492492493 mMET-hours/week"
+          "location": "CSV data row 500, original dose=64.94492492492493 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1115.5727155727157,
@@ -5754,7 +6288,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47944245714379286,
           "high": 0.6200023335295677,
-          "location": "CSV data row 501, original dose=65.07507507507508 mMET-hours/week"
+          "location": "CSV data row 501, original dose=65.07507507507508 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1117.8038610038611,
@@ -5765,7 +6300,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47907999325102424,
           "high": 0.6198200156198003,
-          "location": "CSV data row 502, original dose=65.20522522522523 mMET-hours/week"
+          "location": "CSV data row 502, original dose=65.20522522522523 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1120.0350064350064,
@@ -5776,7 +6312,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4787177426446186,
           "high": 0.6196378299429791,
-          "location": "CSV data row 503, original dose=65.33537537537538 mMET-hours/week"
+          "location": "CSV data row 503, original dose=65.33537537537538 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1122.266151866152,
@@ -5787,7 +6324,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47835570558097024,
           "high": 0.6194557759921896,
-          "location": "CSV data row 504, original dose=65.46552552552554 mMET-hours/week"
+          "location": "CSV data row 504, original dose=65.46552552552554 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1124.4972972972973,
@@ -5798,7 +6336,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4779938823132803,
           "high": 0.6192738532638357,
-          "location": "CSV data row 505, original dose=65.59567567567568 mMET-hours/week"
+          "location": "CSV data row 505, original dose=65.59567567567568 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1126.7284427284428,
@@ -5809,7 +6348,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47763227309163125,
           "high": 0.6190920612576748,
-          "location": "CSV data row 506, original dose=65.72582582582584 mMET-hours/week"
+          "location": "CSV data row 506, original dose=65.72582582582584 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1128.9595881595883,
@@ -5820,7 +6360,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4772708781629647,
           "high": 0.6189103994767369,
-          "location": "CSV data row 507, original dose=65.85597597597598 mMET-hours/week"
+          "location": "CSV data row 507, original dose=65.85597597597598 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1131.1907335907338,
@@ -5831,7 +6372,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4769096977711717,
           "high": 0.618728867427372,
-          "location": "CSV data row 508, original dose=65.98612612612614 mMET-hours/week"
+          "location": "CSV data row 508, original dose=65.98612612612614 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1133.421879021879,
@@ -5842,7 +6384,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47654873215703486,
           "high": 0.6185474646191307,
-          "location": "CSV data row 509, original dose=66.11627627627628 mMET-hours/week"
+          "location": "CSV data row 509, original dose=66.11627627627628 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1135.6530244530247,
@@ -5853,7 +6396,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47618798155835523,
           "high": 0.6183661905648588,
-          "location": "CSV data row 510, original dose=66.24642642642644 mMET-hours/week"
+          "location": "CSV data row 510, original dose=66.24642642642644 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1137.88416988417,
@@ -5864,7 +6408,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47582744620990386,
           "high": 0.6181850447805866,
-          "location": "CSV data row 511, original dose=66.37657657657658 mMET-hours/week"
+          "location": "CSV data row 511, original dose=66.37657657657658 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1140.1153153153157,
@@ -5875,7 +6420,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.475467126343392,
           "high": 0.6180040267854353,
-          "location": "CSV data row 512, original dose=66.50672672672674 mMET-hours/week"
+          "location": "CSV data row 512, original dose=66.50672672672674 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1142.346460746461,
@@ -5886,7 +6432,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47510702218769646,
           "high": 0.6178231361018407,
-          "location": "CSV data row 513, original dose=66.63687687687688 mMET-hours/week"
+          "location": "CSV data row 513, original dose=66.63687687687688 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1144.5776061776062,
@@ -5897,7 +6444,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47474713396860607,
           "high": 0.6176423722551881,
-          "location": "CSV data row 514, original dose=66.76702702702703 mMET-hours/week"
+          "location": "CSV data row 514, original dose=66.76702702702703 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1146.808751608752,
@@ -5908,7 +6456,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47438746190917863,
           "high": 0.6174617347741961,
-          "location": "CSV data row 515, original dose=66.89717717717718 mMET-hours/week"
+          "location": "CSV data row 515, original dose=66.89717717717718 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1149.039897039897,
@@ -5919,7 +6468,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47402800622936525,
           "high": 0.617281223190406,
-          "location": "CSV data row 516, original dose=67.02732732732733 mMET-hours/week"
+          "location": "CSV data row 516, original dose=67.02732732732733 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1151.2710424710426,
@@ -5930,7 +6480,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4736687671464417,
           "high": 0.6171008370386541,
-          "location": "CSV data row 517, original dose=67.15747747747749 mMET-hours/week"
+          "location": "CSV data row 517, original dose=67.15747747747749 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1153.5021879021879,
@@ -5941,7 +6492,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47330974487467325,
           "high": 0.6169205758566115,
-          "location": "CSV data row 518, original dose=67.28762762762763 mMET-hours/week"
+          "location": "CSV data row 518, original dose=67.28762762762763 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1155.7333333333333,
@@ -5952,7 +6504,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47295093962567597,
           "high": 0.6167404391851783,
-          "location": "CSV data row 519, original dose=67.41777777777779 mMET-hours/week"
+          "location": "CSV data row 519, original dose=67.41777777777779 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1157.9644787644788,
@@ -5963,7 +6516,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4725923516080827,
           "high": 0.616560426568015,
-          "location": "CSV data row 520, original dose=67.54792792792793 mMET-hours/week"
+          "location": "CSV data row 520, original dose=67.54792792792793 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1160.1956241956243,
@@ -5974,7 +6528,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4722339810278439,
           "high": 0.61638053755187,
-          "location": "CSV data row 521, original dose=67.67807807807809 mMET-hours/week"
+          "location": "CSV data row 521, original dose=67.67807807807809 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1162.4267696267696,
@@ -5985,7 +6540,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47187582808820694,
           "high": 0.6162007716864959,
-          "location": "CSV data row 522, original dose=67.80822822822823 mMET-hours/week"
+          "location": "CSV data row 522, original dose=67.80822822822823 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1164.6579150579153,
@@ -5996,7 +6552,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4715178929895557,
           "high": 0.6160211285244098,
-          "location": "CSV data row 523, original dose=67.93837837837839 mMET-hours/week"
+          "location": "CSV data row 523, original dose=67.93837837837839 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1166.8890604890605,
@@ -6007,7 +6564,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.47116017592971454,
           "high": 0.6158416076212112,
-          "location": "CSV data row 524, original dose=68.06852852852853 mMET-hours/week"
+          "location": "CSV data row 524, original dose=68.06852852852853 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1169.1202059202062,
@@ -6018,7 +6576,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4708026771036191,
           "high": 0.6156622085351349,
-          "location": "CSV data row 525, original dose=68.19867867867869 mMET-hours/week"
+          "location": "CSV data row 525, original dose=68.19867867867869 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1171.3513513513515,
@@ -6029,7 +6588,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4704453967037772,
           "high": 0.6154829308275598,
-          "location": "CSV data row 526, original dose=68.32882882882883 mMET-hours/week"
+          "location": "CSV data row 526, original dose=68.32882882882883 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1173.582496782497,
@@ -6040,7 +6600,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4700883349198432,
           "high": 0.615303774062447,
-          "location": "CSV data row 527, original dose=68.45897897897899 mMET-hours/week"
+          "location": "CSV data row 527, original dose=68.45897897897899 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1175.8136422136424,
@@ -6051,7 +6612,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4697314919390356,
           "high": 0.6151247378067973,
-          "location": "CSV data row 528, original dose=68.58912912912913 mMET-hours/week"
+          "location": "CSV data row 528, original dose=68.58912912912913 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1178.0447876447877,
@@ -6062,7 +6624,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4693748679457328,
           "high": 0.6149458216301157,
-          "location": "CSV data row 529, original dose=68.71927927927929 mMET-hours/week"
+          "location": "CSV data row 529, original dose=68.71927927927929 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1180.2759330759332,
@@ -6073,7 +6636,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46901846312200846,
           "high": 0.6147670251050105,
-          "location": "CSV data row 530, original dose=68.84942942942943 mMET-hours/week"
+          "location": "CSV data row 530, original dose=68.84942942942943 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1182.5070785070786,
@@ -6084,7 +6648,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46866227764713897,
           "high": 0.6145883478065531,
-          "location": "CSV data row 531, original dose=68.97957957957959 mMET-hours/week"
+          "location": "CSV data row 531, original dose=68.97957957957959 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1184.738223938224,
@@ -6095,7 +6660,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46830631169803777,
           "high": 0.614409789312758,
-          "location": "CSV data row 532, original dose=69.10972972972974 mMET-hours/week"
+          "location": "CSV data row 532, original dose=69.10972972972974 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1186.9693693693694,
@@ -6106,7 +6672,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46795056544898267,
           "high": 0.6142313492042025,
-          "location": "CSV data row 533, original dose=69.23987987987988 mMET-hours/week"
+          "location": "CSV data row 533, original dose=69.23987987987988 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1189.200514800515,
@@ -6117,7 +6684,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4675950390717488,
           "high": 0.6140530270641498,
-          "location": "CSV data row 534, original dose=69.37003003003004 mMET-hours/week"
+          "location": "CSV data row 534, original dose=69.37003003003004 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1191.43166023166,
@@ -6128,7 +6696,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4672397327357534,
           "high": 0.6138748224786743,
-          "location": "CSV data row 535, original dose=69.50018018018018 mMET-hours/week"
+          "location": "CSV data row 535, original dose=69.50018018018018 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1193.6628056628058,
@@ -6139,7 +6708,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4668846466078165,
           "high": 0.6136967350363287,
-          "location": "CSV data row 536, original dose=69.63033033033034 mMET-hours/week"
+          "location": "CSV data row 536, original dose=69.63033033033034 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1195.893951093951,
@@ -6150,7 +6720,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4665297808523793,
           "high": 0.6135187643283644,
-          "location": "CSV data row 537, original dose=69.76048048048048 mMET-hours/week"
+          "location": "CSV data row 537, original dose=69.76048048048048 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1198.1250965250968,
@@ -6161,7 +6732,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4661751356315008,
           "high": 0.6133409099486847,
-          "location": "CSV data row 538, original dose=69.89063063063064 mMET-hours/week"
+          "location": "CSV data row 538, original dose=69.89063063063064 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1200.356241956242,
@@ -6172,7 +6744,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4658207111047638,
           "high": 0.6131631714936848,
-          "location": "CSV data row 539, original dose=70.02078078078078 mMET-hours/week"
+          "location": "CSV data row 539, original dose=70.02078078078078 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1202.5873873873877,
@@ -6183,7 +6756,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4654665074295058,
           "high": 0.6129855485624949,
-          "location": "CSV data row 540, original dose=70.15093093093094 mMET-hours/week"
+          "location": "CSV data row 540, original dose=70.15093093093094 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1204.818532818533,
@@ -6194,7 +6768,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4651125247603956,
           "high": 0.6128080407564109,
-          "location": "CSV data row 541, original dose=70.28108108108108 mMET-hours/week"
+          "location": "CSV data row 541, original dose=70.28108108108108 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1207.0496782496782,
@@ -6205,7 +6780,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4647587632502394,
           "high": 0.6126306476798508,
-          "location": "CSV data row 542, original dose=70.41123123123124 mMET-hours/week"
+          "location": "CSV data row 542, original dose=70.41123123123124 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1209.2808236808237,
@@ -6216,7 +6792,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4644052230490237,
           "high": 0.6124533689391257,
-          "location": "CSV data row 543, original dose=70.54138138138138 mMET-hours/week"
+          "location": "CSV data row 543, original dose=70.54138138138138 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1211.5119691119692,
@@ -6227,7 +6804,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4640519043048305,
           "high": 0.6122762041435355,
-          "location": "CSV data row 544, original dose=70.67153153153154 mMET-hours/week"
+          "location": "CSV data row 544, original dose=70.67153153153154 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1213.7431145431146,
@@ -6238,7 +6816,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4636988071631321,
           "high": 0.6120991529044478,
-          "location": "CSV data row 545, original dose=70.80168168168169 mMET-hours/week"
+          "location": "CSV data row 545, original dose=70.80168168168169 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1215.9742599742601,
@@ -6249,7 +6828,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46334593176741995,
           "high": 0.6119222148360386,
-          "location": "CSV data row 546, original dose=70.93183183183184 mMET-hours/week"
+          "location": "CSV data row 546, original dose=70.93183183183184 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1218.2054054054056,
@@ -6260,7 +6840,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46299327825870845,
           "high": 0.6117453895546359,
-          "location": "CSV data row 547, original dose=71.06198198198199 mMET-hours/week"
+          "location": "CSV data row 547, original dose=71.06198198198199 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1220.436550836551,
@@ -6271,7 +6852,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4626408467759894,
           "high": 0.6115686766792433,
-          "location": "CSV data row 548, original dose=71.19213213213214 mMET-hours/week"
+          "location": "CSV data row 548, original dose=71.19213213213214 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1222.6676962676963,
@@ -6282,7 +6864,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46228863745571863,
           "high": 0.6113920758308591,
-          "location": "CSV data row 549, original dose=71.32228228228229 mMET-hours/week"
+          "location": "CSV data row 549, original dose=71.32228228228229 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1224.8988416988418,
@@ -6293,7 +6876,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4619366504326141,
           "high": 0.6112155866334339,
-          "location": "CSV data row 550, original dose=71.45243243243245 mMET-hours/week"
+          "location": "CSV data row 550, original dose=71.45243243243245 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1227.1299871299873,
@@ -6304,7 +6888,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46158488583879803,
           "high": 0.6110392087127553,
-          "location": "CSV data row 551, original dose=71.58258258258259 mMET-hours/week"
+          "location": "CSV data row 551, original dose=71.58258258258259 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1229.3611325611328,
@@ -6315,7 +6900,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46123334380445963,
           "high": 0.6108629416972426,
-          "location": "CSV data row 552, original dose=71.71273273273275 mMET-hours/week"
+          "location": "CSV data row 552, original dose=71.71273273273275 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1231.5922779922782,
@@ -6326,7 +6912,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46088202445762916,
           "high": 0.6106867852176181,
-          "location": "CSV data row 553, original dose=71.84288288288289 mMET-hours/week"
+          "location": "CSV data row 553, original dose=71.84288288288289 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1233.8234234234235,
@@ -6337,7 +6924,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46053092792415307,
           "high": 0.6105107389068432,
-          "location": "CSV data row 554, original dose=71.97303303303303 mMET-hours/week"
+          "location": "CSV data row 554, original dose=71.97303303303303 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1236.0545688545692,
@@ -6348,7 +6936,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.46018005432767456,
           "high": 0.6103348024000498,
-          "location": "CSV data row 555, original dose=72.10318318318319 mMET-hours/week"
+          "location": "CSV data row 555, original dose=72.10318318318319 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1238.2857142857142,
@@ -6359,7 +6948,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45982940379009,
           "high": 0.6101589753350781,
-          "location": "CSV data row 556, original dose=72.23333333333333 mMET-hours/week"
+          "location": "CSV data row 556, original dose=72.23333333333333 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1240.51685971686,
@@ -6370,7 +6960,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.459478976430706,
           "high": 0.6099832573513807,
-          "location": "CSV data row 557, original dose=72.36348348348349 mMET-hours/week"
+          "location": "CSV data row 557, original dose=72.36348348348349 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1242.7480051480052,
@@ -6381,7 +6972,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45912877236734456,
           "high": 0.6098076480913673,
-          "location": "CSV data row 558, original dose=72.49363363363364 mMET-hours/week"
+          "location": "CSV data row 558, original dose=72.49363363363364 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1244.9791505791507,
@@ -6392,7 +6984,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4587787917152897,
           "high": 0.6096321471990532,
-          "location": "CSV data row 559, original dose=72.6237837837838 mMET-hours/week"
+          "location": "CSV data row 559, original dose=72.6237837837838 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1247.2102960102961,
@@ -6403,7 +6996,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4584290345881268,
           "high": 0.6094567543210674,
-          "location": "CSV data row 560, original dose=72.75393393393394 mMET-hours/week"
+          "location": "CSV data row 560, original dose=72.75393393393394 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1249.4414414414416,
@@ -6414,7 +7008,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45807950109724066,
           "high": 0.6092814691059906,
-          "location": "CSV data row 561, original dose=72.8840840840841 mMET-hours/week"
+          "location": "CSV data row 561, original dose=72.8840840840841 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1251.6725868725869,
@@ -6425,7 +7020,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45773019135215914,
           "high": 0.6091062912047481,
-          "location": "CSV data row 562, original dose=73.01423423423424 mMET-hours/week"
+          "location": "CSV data row 562, original dose=73.01423423423424 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1253.9037323037323,
@@ -6436,7 +7032,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45738110546039423,
           "high": 0.6089312202703747,
-          "location": "CSV data row 563, original dose=73.1443843843844 mMET-hours/week"
+          "location": "CSV data row 563, original dose=73.1443843843844 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1256.1348777348778,
@@ -6447,7 +7044,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45703224352738686,
           "high": 0.6087562559579087,
-          "location": "CSV data row 564, original dose=73.27453453453454 mMET-hours/week"
+          "location": "CSV data row 564, original dose=73.27453453453454 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1258.3660231660233,
@@ -6458,7 +7056,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4566836056567816,
           "high": 0.6085813979247038,
-          "location": "CSV data row 565, original dose=73.4046846846847 mMET-hours/week"
+          "location": "CSV data row 565, original dose=73.4046846846847 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1260.5971685971688,
@@ -6469,7 +7068,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4563351919502596,
           "high": 0.6084066458301787,
-          "location": "CSV data row 566, original dose=73.53483483483484 mMET-hours/week"
+          "location": "CSV data row 566, original dose=73.53483483483484 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1262.8283140283143,
@@ -6480,7 +7080,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4559870025075297,
           "high": 0.6082319993357764,
-          "location": "CSV data row 567, original dose=73.664984984985 mMET-hours/week"
+          "location": "CSV data row 567, original dose=73.664984984985 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1265.0594594594597,
@@ -6491,7 +7092,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45563903742649964,
           "high": 0.6080574581051403,
-          "location": "CSV data row 568, original dose=73.79513513513514 mMET-hours/week"
+          "location": "CSV data row 568, original dose=73.79513513513514 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1267.290604890605,
@@ -6502,7 +7104,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45529129680307834,
           "high": 0.6078830218038345,
-          "location": "CSV data row 569, original dose=73.9252852852853 mMET-hours/week"
+          "location": "CSV data row 569, original dose=73.9252852852853 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1269.5217503217505,
@@ -6513,7 +7116,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45494378073140485,
           "high": 0.6077086900995933,
-          "location": "CSV data row 570, original dose=74.05543543543544 mMET-hours/week"
+          "location": "CSV data row 570, original dose=74.05543543543544 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1271.752895752896,
@@ -6524,7 +7128,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45459648930366925,
           "high": 0.6075344626620665,
-          "location": "CSV data row 571, original dose=74.1855855855856 mMET-hours/week"
+          "location": "CSV data row 571, original dose=74.1855855855856 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1273.9840411840414,
@@ -6535,7 +7140,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45424942261035783,
           "high": 0.6073603391630903,
-          "location": "CSV data row 572, original dose=74.31573573573574 mMET-hours/week"
+          "location": "CSV data row 572, original dose=74.31573573573574 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1276.2151866151867,
@@ -6546,7 +7152,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45390258073996215,
           "high": 0.6071863192762919,
-          "location": "CSV data row 573, original dose=74.44588588588589 mMET-hours/week"
+          "location": "CSV data row 573, original dose=74.44588588588589 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1278.4463320463324,
@@ -6557,7 +7164,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4535559637793358,
           "high": 0.6070124026774998,
-          "location": "CSV data row 574, original dose=74.57603603603604 mMET-hours/week"
+          "location": "CSV data row 574, original dose=74.57603603603604 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1280.6774774774774,
@@ -6568,7 +7176,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45320957181346594,
           "high": 0.6068385890444288,
-          "location": "CSV data row 575, original dose=74.70618618618619 mMET-hours/week"
+          "location": "CSV data row 575, original dose=74.70618618618619 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1282.9086229086229,
@@ -6579,7 +7188,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4528634049255554,
           "high": 0.606664878056747,
-          "location": "CSV data row 576, original dose=74.83633633633634 mMET-hours/week"
+          "location": "CSV data row 576, original dose=74.83633633633634 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1285.1397683397684,
@@ -6590,7 +7200,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45251746319699054,
           "high": 0.6064912693960045,
-          "location": "CSV data row 577, original dose=74.96648648648649 mMET-hours/week"
+          "location": "CSV data row 577, original dose=74.96648648648649 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1287.3709137709138,
@@ -6601,7 +7212,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45217174670751664,
           "high": 0.6063177627458209,
-          "location": "CSV data row 578, original dose=75.09663663663665 mMET-hours/week"
+          "location": "CSV data row 578, original dose=75.09663663663665 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1289.6020592020593,
@@ -6612,7 +7224,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4518262555350682,
           "high": 0.6061443577916431,
-          "location": "CSV data row 579, original dose=75.22678678678679 mMET-hours/week"
+          "location": "CSV data row 579, original dose=75.22678678678679 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1291.8332046332048,
@@ -6623,7 +7236,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45148098975587525,
           "high": 0.6059710542208425,
-          "location": "CSV data row 580, original dose=75.35693693693695 mMET-hours/week"
+          "location": "CSV data row 580, original dose=75.35693693693695 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1294.0643500643503,
@@ -6634,7 +7248,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4511359494444958,
           "high": 0.6057978517227287,
-          "location": "CSV data row 581, original dose=75.48708708708709 mMET-hours/week"
+          "location": "CSV data row 581, original dose=75.48708708708709 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1296.2954954954955,
@@ -6645,7 +7260,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4507911346736623,
           "high": 0.6056247499883219,
-          "location": "CSV data row 582, original dose=75.61723723723725 mMET-hours/week"
+          "location": "CSV data row 582, original dose=75.61723723723725 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1298.526640926641,
@@ -6656,7 +7272,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45044654551462976,
           "high": 0.6054517487107672,
-          "location": "CSV data row 583, original dose=75.74738738738739 mMET-hours/week"
+          "location": "CSV data row 583, original dose=75.74738738738739 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1300.7577863577865,
@@ -6667,7 +7284,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.45010218203672453,
           "high": 0.6052788475847222,
-          "location": "CSV data row 584, original dose=75.87753753753755 mMET-hours/week"
+          "location": "CSV data row 584, original dose=75.87753753753755 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1302.988931788932,
@@ -6678,7 +7296,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44975804430795374,
           "high": 0.605106046307111,
-          "location": "CSV data row 585, original dose=76.00768768768769 mMET-hours/week"
+          "location": "CSV data row 585, original dose=76.00768768768769 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1305.2200772200774,
@@ -6689,7 +7308,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44941413239434586,
           "high": 0.6049333445762498,
-          "location": "CSV data row 586, original dose=76.13783783783785 mMET-hours/week"
+          "location": "CSV data row 586, original dose=76.13783783783785 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1307.451222651223,
@@ -6700,7 +7320,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4490704463605633,
           "high": 0.6047607420925964,
-          "location": "CSV data row 587, original dose=76.267987987988 mMET-hours/week"
+          "location": "CSV data row 587, original dose=76.267987987988 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1309.6823680823684,
@@ -6711,7 +7332,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4487269862693915,
           "high": 0.6045882385580735,
-          "location": "CSV data row 588, original dose=76.39813813813815 mMET-hours/week"
+          "location": "CSV data row 588, original dose=76.39813813813815 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1311.9135135135136,
@@ -6722,7 +7344,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4483837521823659,
           "high": 0.6044158336768349,
-          "location": "CSV data row 589, original dose=76.5282882882883 mMET-hours/week"
+          "location": "CSV data row 589, original dose=76.5282882882883 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1314.144658944659,
@@ -6733,7 +7356,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4480407441590059,
           "high": 0.6042435271542581,
-          "location": "CSV data row 590, original dose=76.65843843843845 mMET-hours/week"
+          "location": "CSV data row 590, original dose=76.65843843843845 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1316.3758043758046,
@@ -6744,7 +7368,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44769796225769903,
           "high": 0.6040713186980481,
-          "location": "CSV data row 591, original dose=76.7885885885886 mMET-hours/week"
+          "location": "CSV data row 591, original dose=76.7885885885886 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1318.6069498069498,
@@ -6755,7 +7380,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44735540653487843,
           "high": 0.6038992080171545,
-          "location": "CSV data row 592, original dose=76.91873873873874 mMET-hours/week"
+          "location": "CSV data row 592, original dose=76.91873873873874 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1320.8380952380953,
@@ -6766,7 +7392,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4470130770456291,
           "high": 0.6037271948225189,
-          "location": "CSV data row 593, original dose=77.0488888888889 mMET-hours/week"
+          "location": "CSV data row 593, original dose=77.0488888888889 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1323.0692406692408,
@@ -6777,7 +7404,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4466709738434969,
           "high": 0.6035552788268026,
-          "location": "CSV data row 594, original dose=77.17903903903904 mMET-hours/week"
+          "location": "CSV data row 594, original dose=77.17903903903904 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1325.300386100386,
@@ -6788,7 +7416,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44632909698048145,
           "high": 0.6033834597443474,
-          "location": "CSV data row 595, original dose=77.3091891891892 mMET-hours/week"
+          "location": "CSV data row 595, original dose=77.3091891891892 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1327.5315315315315,
@@ -6799,7 +7428,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.445987446506957,
           "high": 0.6032117372910494,
-          "location": "CSV data row 596, original dose=77.43933933933934 mMET-hours/week"
+          "location": "CSV data row 596, original dose=77.43933933933934 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1329.762676962677,
@@ -6810,7 +7440,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44564602247196033,
           "high": 0.6030401111846958,
-          "location": "CSV data row 597, original dose=77.5694894894895 mMET-hours/week"
+          "location": "CSV data row 597, original dose=77.5694894894895 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1331.9938223938225,
@@ -6821,7 +7452,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4453048249229093,
           "high": 0.602868581144582,
-          "location": "CSV data row 598, original dose=77.69963963963964 mMET-hours/week"
+          "location": "CSV data row 598, original dose=77.69963963963964 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1334.224967824968,
@@ -6832,7 +7464,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44496385390588794,
           "high": 0.6026971468918452,
-          "location": "CSV data row 599, original dose=77.8297897897898 mMET-hours/week"
+          "location": "CSV data row 599, original dose=77.8297897897898 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1336.4561132561134,
@@ -6843,7 +7476,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4446231094653315,
           "high": 0.6025258081490366,
-          "location": "CSV data row 600, original dose=77.95993993993994 mMET-hours/week"
+          "location": "CSV data row 600, original dose=77.95993993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1338.687258687259,
@@ -6854,7 +7488,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4442825916444019,
           "high": 0.6023545646405724,
-          "location": "CSV data row 601, original dose=78.0900900900901 mMET-hours/week"
+          "location": "CSV data row 601, original dose=78.0900900900901 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1340.9184041184042,
@@ -6865,7 +7500,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.443942300484598,
           "high": 0.6021834160922113,
-          "location": "CSV data row 602, original dose=78.22024024024024 mMET-hours/week"
+          "location": "CSV data row 602, original dose=78.22024024024024 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1343.1495495495496,
@@ -6876,7 +7512,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44360223602625887,
           "high": 0.6020123622316729,
-          "location": "CSV data row 603, original dose=78.3503903903904 mMET-hours/week"
+          "location": "CSV data row 603, original dose=78.3503903903904 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1345.3806949806951,
@@ -6887,7 +7524,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44326239830801367,
           "high": 0.6018414027879012,
-          "location": "CSV data row 604, original dose=78.48054054054055 mMET-hours/week"
+          "location": "CSV data row 604, original dose=78.48054054054055 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1347.6118404118406,
@@ -6898,7 +7536,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44292278736735236,
           "high": 0.6016705374917776,
-          "location": "CSV data row 605, original dose=78.6106906906907 mMET-hours/week"
+          "location": "CSV data row 605, original dose=78.6106906906907 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1349.842985842986,
@@ -6909,7 +7548,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.442583403240114,
           "high": 0.6014997660754328,
-          "location": "CSV data row 606, original dose=78.74084084084085 mMET-hours/week"
+          "location": "CSV data row 606, original dose=78.74084084084085 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1352.0741312741316,
@@ -6920,7 +7560,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44224424596107575,
           "high": 0.6013290882729824,
-          "location": "CSV data row 607, original dose=78.870990990991 mMET-hours/week"
+          "location": "CSV data row 607, original dose=78.870990990991 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1354.305276705277,
@@ -6931,7 +7572,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4419053155631678,
           "high": 0.6011585038194851,
-          "location": "CSV data row 608, original dose=79.00114114114115 mMET-hours/week"
+          "location": "CSV data row 608, original dose=79.00114114114115 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1356.5364221364223,
@@ -6942,7 +7584,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4415666120784448,
           "high": 0.6009880124521765,
-          "location": "CSV data row 609, original dose=79.1312912912913 mMET-hours/week"
+          "location": "CSV data row 609, original dose=79.1312912912913 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1358.7675675675675,
@@ -6953,7 +7596,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44122813553731716,
           "high": 0.6008176139094488,
-          "location": "CSV data row 610, original dose=79.26144144144145 mMET-hours/week"
+          "location": "CSV data row 610, original dose=79.26144144144145 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1360.9987129987132,
@@ -6964,7 +7608,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.44088988596894074,
           "high": 0.6006473079313278,
-          "location": "CSV data row 611, original dose=79.3915915915916 mMET-hours/week"
+          "location": "CSV data row 611, original dose=79.3915915915916 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1363.2298584298585,
@@ -6975,7 +7620,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4405518634010514,
           "high": 0.6004770942592349,
-          "location": "CSV data row 612, original dose=79.52174174174175 mMET-hours/week"
+          "location": "CSV data row 612, original dose=79.52174174174175 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1365.461003861004,
@@ -6986,7 +7632,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4402140678603128,
           "high": 0.6003069726364179,
-          "location": "CSV data row 613, original dose=79.65189189189189 mMET-hours/week"
+          "location": "CSV data row 613, original dose=79.65189189189189 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1367.6921492921495,
@@ -6997,7 +7644,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43987649937160805,
           "high": 0.6001369428069997,
-          "location": "CSV data row 614, original dose=79.78204204204205 mMET-hours/week"
+          "location": "CSV data row 614, original dose=79.78204204204205 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1369.9232947232947,
@@ -7008,7 +7656,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4395391579591172,
           "high": 0.5999670045173594,
-          "location": "CSV data row 615, original dose=79.9121921921922 mMET-hours/week"
+          "location": "CSV data row 615, original dose=79.9121921921922 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1372.1544401544402,
@@ -7019,7 +7668,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4392020436452026,
           "high": 0.5997971575146581,
-          "location": "CSV data row 616, original dose=80.04234234234235 mMET-hours/week"
+          "location": "CSV data row 616, original dose=80.04234234234235 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1374.3855855855857,
@@ -7030,7 +7680,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43886515645123886,
           "high": 0.5996274015478923,
-          "location": "CSV data row 617, original dose=80.1724924924925 mMET-hours/week"
+          "location": "CSV data row 617, original dose=80.1724924924925 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1376.6167310167311,
@@ -7041,7 +7692,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43852849639723485,
           "high": 0.5994577363673821,
-          "location": "CSV data row 618, original dose=80.30264264264265 mMET-hours/week"
+          "location": "CSV data row 618, original dose=80.30264264264265 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1378.8478764478766,
@@ -7052,7 +7704,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43819206350199885,
           "high": 0.5992881617249605,
-          "location": "CSV data row 619, original dose=80.4327927927928 mMET-hours/week"
+          "location": "CSV data row 619, original dose=80.4327927927928 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1381.079021879022,
@@ -7063,7 +7716,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43785585778303,
           "high": 0.5991186773738102,
-          "location": "CSV data row 620, original dose=80.56294294294295 mMET-hours/week"
+          "location": "CSV data row 620, original dose=80.56294294294295 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1383.3101673101676,
@@ -7074,7 +7728,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43751987925660973,
           "high": 0.5989492830685552,
-          "location": "CSV data row 621, original dose=80.6930930930931 mMET-hours/week"
+          "location": "CSV data row 621, original dose=80.6930930930931 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1385.5413127413128,
@@ -7085,7 +7740,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4371841279378212,
           "high": 0.5987799785652725,
-          "location": "CSV data row 622, original dose=80.82324324324325 mMET-hours/week"
+          "location": "CSV data row 622, original dose=80.82324324324325 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1387.7724581724583,
@@ -7096,7 +7752,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43684860384040375,
           "high": 0.5986107636212692,
-          "location": "CSV data row 623, original dose=80.9533933933934 mMET-hours/week"
+          "location": "CSV data row 623, original dose=80.9533933933934 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1390.0036036036038,
@@ -7107,7 +7764,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43651330697704693,
           "high": 0.5984416379954478,
-          "location": "CSV data row 624, original dose=81.08354354354356 mMET-hours/week"
+          "location": "CSV data row 624, original dose=81.08354354354356 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1392.2347490347493,
@@ -7118,7 +7776,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43617823735914873,
           "high": 0.598272601447974,
-          "location": "CSV data row 625, original dose=81.2136936936937 mMET-hours/week"
+          "location": "CSV data row 625, original dose=81.2136936936937 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1394.4658944658947,
@@ -7129,7 +7788,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4358433949969161,
           "high": 0.598103653740375,
-          "location": "CSV data row 626, original dose=81.34384384384386 mMET-hours/week"
+          "location": "CSV data row 626, original dose=81.34384384384386 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1396.69703989704,
@@ -7140,7 +7800,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4355087798994274,
           "high": 0.5979347946356085,
-          "location": "CSV data row 627, original dose=81.473993993994 mMET-hours/week"
+          "location": "CSV data row 627, original dose=81.473993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1398.9281853281857,
@@ -7151,7 +7812,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43517439207457076,
           "high": 0.5977660238979525,
-          "location": "CSV data row 628, original dose=81.60414414414416 mMET-hours/week"
+          "location": "CSV data row 628, original dose=81.60414414414416 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1401.1593307593307,
@@ -7162,7 +7824,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43484023152894474,
           "high": 0.5975973412928614,
-          "location": "CSV data row 629, original dose=81.7342942942943 mMET-hours/week"
+          "location": "CSV data row 629, original dose=81.7342942942943 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1403.3904761904764,
@@ -7173,7 +7836,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4345062982682273,
           "high": 0.5974287465874211,
-          "location": "CSV data row 630, original dose=81.86444444444446 mMET-hours/week"
+          "location": "CSV data row 630, original dose=81.86444444444446 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1405.6216216216217,
@@ -7184,7 +7848,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43417259229673594,
           "high": 0.5972602395497563,
-          "location": "CSV data row 631, original dose=81.9945945945946 mMET-hours/week"
+          "location": "CSV data row 631, original dose=81.9945945945946 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1407.8527670527671,
@@ -7195,7 +7860,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4338391136177611,
           "high": 0.5970918199494393,
-          "location": "CSV data row 632, original dose=82.12474474474475 mMET-hours/week"
+          "location": "CSV data row 632, original dose=82.12474474474475 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1410.0839124839126,
@@ -7206,7 +7872,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43350586223351645,
           "high": 0.5969234875574163,
-          "location": "CSV data row 633, original dose=82.2548948948949 mMET-hours/week"
+          "location": "CSV data row 633, original dose=82.2548948948949 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1412.315057915058,
@@ -7217,7 +7884,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43317283814495927,
           "high": 0.5967552421457365,
-          "location": "CSV data row 634, original dose=82.38504504504505 mMET-hours/week"
+          "location": "CSV data row 634, original dose=82.38504504504505 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1414.5462033462034,
@@ -7228,7 +7896,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4328400413519886,
           "high": 0.5965870834878009,
-          "location": "CSV data row 635, original dose=82.5151951951952 mMET-hours/week"
+          "location": "CSV data row 635, original dose=82.5151951951952 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1416.7773487773488,
@@ -7239,7 +7908,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43250747185349386,
           "high": 0.5964190113584018,
-          "location": "CSV data row 636, original dose=82.64534534534535 mMET-hours/week"
+          "location": "CSV data row 636, original dose=82.64534534534535 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1419.0084942084943,
@@ -7250,7 +7920,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43217512964718247,
           "high": 0.5962510255334791,
-          "location": "CSV data row 637, original dose=82.7754954954955 mMET-hours/week"
+          "location": "CSV data row 637, original dose=82.7754954954955 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1421.2396396396398,
@@ -7261,7 +7932,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43184301472966286,
           "high": 0.5960831257902043,
-          "location": "CSV data row 638, original dose=82.90564564564565 mMET-hours/week"
+          "location": "CSV data row 638, original dose=82.90564564564565 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1423.4707850707853,
@@ -7272,7 +7944,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43151112709655653,
           "high": 0.5959153119071128,
-          "location": "CSV data row 639, original dose=83.0357957957958 mMET-hours/week"
+          "location": "CSV data row 639, original dose=83.0357957957958 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1425.7019305019307,
@@ -7283,7 +7956,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4311794667423158,
           "high": 0.5957475836638397,
-          "location": "CSV data row 640, original dose=83.16594594594595 mMET-hours/week"
+          "location": "CSV data row 640, original dose=83.16594594594595 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1427.9330759330762,
@@ -7294,7 +7968,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4308480336603323,
           "high": 0.5955799408412464,
-          "location": "CSV data row 641, original dose=83.29609609609611 mMET-hours/week"
+          "location": "CSV data row 641, original dose=83.29609609609611 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1430.1642213642215,
@@ -7305,7 +7980,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4305168278431822,
           "high": 0.5954123832217239,
-          "location": "CSV data row 642, original dose=83.42624624624625 mMET-hours/week"
+          "location": "CSV data row 642, original dose=83.42624624624625 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1432.395366795367,
@@ -7316,7 +7992,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.43018584928200937,
           "high": 0.5952449105883579,
-          "location": "CSV data row 643, original dose=83.55639639639641 mMET-hours/week"
+          "location": "CSV data row 643, original dose=83.55639639639641 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1434.6265122265122,
@@ -7327,7 +8004,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42985509796733357,
           "high": 0.5950775227259785,
-          "location": "CSV data row 644, original dose=83.68654654654655 mMET-hours/week"
+          "location": "CSV data row 644, original dose=83.68654654654655 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1436.857657657658,
@@ -7338,7 +8016,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4295245738882977,
           "high": 0.594910219420142,
-          "location": "CSV data row 645, original dose=83.81669669669671 mMET-hours/week"
+          "location": "CSV data row 645, original dose=83.81669669669671 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1439.0888030888032,
@@ -7349,7 +8028,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4291942770333282,
           "high": 0.5947430004579916,
-          "location": "CSV data row 646, original dose=83.94684684684685 mMET-hours/week"
+          "location": "CSV data row 646, original dose=83.94684684684685 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1441.3199485199489,
@@ -7360,7 +8040,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42886420738952674,
           "high": 0.5945758656274287,
-          "location": "CSV data row 647, original dose=84.07699699699701 mMET-hours/week"
+          "location": "CSV data row 647, original dose=84.07699699699701 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1443.551093951094,
@@ -7371,7 +8052,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4285343649434174,
           "high": 0.5944088147180873,
-          "location": "CSV data row 648, original dose=84.20714714714715 mMET-hours/week"
+          "location": "CSV data row 648, original dose=84.20714714714715 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1445.7822393822396,
@@ -7382,7 +8064,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42820474968002314,
           "high": 0.5942418475200842,
-          "location": "CSV data row 649, original dose=84.33729729729731 mMET-hours/week"
+          "location": "CSV data row 649, original dose=84.33729729729731 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1448.0133848133848,
@@ -7393,7 +8076,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42787536158390965,
           "high": 0.594074963825399,
-          "location": "CSV data row 650, original dose=84.46744744744746 mMET-hours/week"
+          "location": "CSV data row 650, original dose=84.46744744744746 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1450.2445302445303,
@@ -7404,7 +8088,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4275462006381585,
           "high": 0.5939081634264723,
-          "location": "CSV data row 651, original dose=84.5975975975976 mMET-hours/week"
+          "location": "CSV data row 651, original dose=84.5975975975976 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1452.4756756756758,
@@ -7415,7 +8100,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4272172668252489,
           "high": 0.5937414461173813,
-          "location": "CSV data row 652, original dose=84.72774774774776 mMET-hours/week"
+          "location": "CSV data row 652, original dose=84.72774774774776 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1454.7068211068213,
@@ -7426,7 +8112,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42688856012656184,
           "high": 0.5935748116931463,
-          "location": "CSV data row 653, original dose=84.8578978978979 mMET-hours/week"
+          "location": "CSV data row 653, original dose=84.8578978978979 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1456.9379665379668,
@@ -7437,7 +8124,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4265600805225241,
           "high": 0.5934082599499095,
-          "location": "CSV data row 654, original dose=84.98804804804806 mMET-hours/week"
+          "location": "CSV data row 654, original dose=84.98804804804806 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1459.169111969112,
@@ -7448,7 +8136,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4262318279926874,
           "high": 0.5932417906850252,
-          "location": "CSV data row 655, original dose=85.1181981981982 mMET-hours/week"
+          "location": "CSV data row 655, original dose=85.1181981981982 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1461.4002574002575,
@@ -7459,7 +8148,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42590380251550786,
           "high": 0.5930754036967445,
-          "location": "CSV data row 656, original dose=85.24834834834836 mMET-hours/week"
+          "location": "CSV data row 656, original dose=85.24834834834836 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1463.631402831403,
@@ -7470,7 +8160,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4255760040687211,
           "high": 0.5929090987847006,
-          "location": "CSV data row 657, original dose=85.3784984984985 mMET-hours/week"
+          "location": "CSV data row 657, original dose=85.3784984984985 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1465.8625482625484,
@@ -7481,7 +8172,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4252484326291036,
           "high": 0.5927428757495714,
-          "location": "CSV data row 658, original dose=85.50864864864866 mMET-hours/week"
+          "location": "CSV data row 658, original dose=85.50864864864866 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1468.093693693694,
@@ -7492,7 +8184,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42492108817222296,
           "high": 0.5925767343927265,
-          "location": "CSV data row 659, original dose=85.6387987987988 mMET-hours/week"
+          "location": "CSV data row 659, original dose=85.6387987987988 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1470.3248391248394,
@@ -7503,7 +8196,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42459397067311666,
           "high": 0.5924106745171237,
-          "location": "CSV data row 660, original dose=85.76894894894896 mMET-hours/week"
+          "location": "CSV data row 660, original dose=85.76894894894896 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1472.5559845559844,
@@ -7514,7 +8208,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42426708010573483,
           "high": 0.5922446959265408,
-          "location": "CSV data row 661, original dose=85.8990990990991 mMET-hours/week"
+          "location": "CSV data row 661, original dose=85.8990990990991 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1474.7871299871301,
@@ -7525,7 +8220,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42394041644316416,
           "high": 0.5920787984258596,
-          "location": "CSV data row 662, original dose=86.02924924924926 mMET-hours/week"
+          "location": "CSV data row 662, original dose=86.02924924924926 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1477.0182754182754,
@@ -7536,7 +8232,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4236139796576416,
           "high": 0.5919129818210709,
-          "location": "CSV data row 663, original dose=86.1593993993994 mMET-hours/week"
+          "location": "CSV data row 663, original dose=86.1593993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1479.249420849421,
@@ -7547,7 +8244,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4232877697203487,
           "high": 0.5917472459189775,
-          "location": "CSV data row 664, original dose=86.28954954954956 mMET-hours/week"
+          "location": "CSV data row 664, original dose=86.28954954954956 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1481.4805662805663,
@@ -7558,7 +8256,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4229617866019087,
           "high": 0.591581590527847,
-          "location": "CSV data row 665, original dose=86.4196996996997 mMET-hours/week"
+          "location": "CSV data row 665, original dose=86.4196996996997 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1483.711711711712,
@@ -7569,7 +8268,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4226360302719026,
           "high": 0.5914160154567475,
-          "location": "CSV data row 666, original dose=86.54984984984986 mMET-hours/week"
+          "location": "CSV data row 666, original dose=86.54984984984986 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1485.9428571428573,
@@ -7580,7 +8280,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42231050069888304,
           "high": 0.5912505205155423,
-          "location": "CSV data row 667, original dose=86.68 mMET-hours/week"
+          "location": "CSV data row 667, original dose=86.68 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1488.174002574003,
@@ -7591,7 +8292,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.421985197850789,
           "high": 0.5910851055154428,
-          "location": "CSV data row 668, original dose=86.81015015015016 mMET-hours/week"
+          "location": "CSV data row 668, original dose=86.81015015015016 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1490.405148005148,
@@ -7602,7 +8304,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4216601216947506,
           "high": 0.5909197702687204,
-          "location": "CSV data row 669, original dose=86.94030030030031 mMET-hours/week"
+          "location": "CSV data row 669, original dose=86.94030030030031 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1492.6362934362937,
@@ -7613,7 +8316,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42133527219695316,
           "high": 0.5907545145885162,
-          "location": "CSV data row 670, original dose=87.07045045045047 mMET-hours/week"
+          "location": "CSV data row 670, original dose=87.07045045045047 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1494.867438867439,
@@ -7624,7 +8328,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42101064932261645,
           "high": 0.5905893382887821,
-          "location": "CSV data row 671, original dose=87.20060060060061 mMET-hours/week"
+          "location": "CSV data row 671, original dose=87.20060060060061 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1497.0985842985845,
@@ -7635,7 +8340,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42068625303630325,
           "high": 0.5904242411847005,
-          "location": "CSV data row 672, original dose=87.33075075075075 mMET-hours/week"
+          "location": "CSV data row 672, original dose=87.33075075075075 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1499.32972972973,
@@ -7646,7 +8352,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42036208330175806,
           "high": 0.5902592230924375,
-          "location": "CSV data row 673, original dose=87.46090090090091 mMET-hours/week"
+          "location": "CSV data row 673, original dose=87.46090090090091 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1501.5608751608754,
@@ -7657,7 +8364,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.42003814008201734,
           "high": 0.5900942838292849,
-          "location": "CSV data row 674, original dose=87.59105105105105 mMET-hours/week"
+          "location": "CSV data row 674, original dose=87.59105105105105 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1503.7920205920207,
@@ -7668,7 +8376,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41971442333896675,
           "high": 0.589929423213035,
-          "location": "CSV data row 675, original dose=87.72120120120121 mMET-hours/week"
+          "location": "CSV data row 675, original dose=87.72120120120121 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1506.0231660231661,
@@ -7679,7 +8388,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4193909330337988,
           "high": 0.5897646410625933,
-          "location": "CSV data row 676, original dose=87.85135135135135 mMET-hours/week"
+          "location": "CSV data row 676, original dose=87.85135135135135 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1508.2543114543116,
@@ -7690,7 +8400,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4190676691273867,
           "high": 0.5895999371984771,
-          "location": "CSV data row 677, original dose=87.98150150150151 mMET-hours/week"
+          "location": "CSV data row 677, original dose=87.98150150150151 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1510.4854568854569,
@@ -7701,7 +8412,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41874463157917247,
           "high": 0.5894353114412709,
-          "location": "CSV data row 678, original dose=88.11165165165166 mMET-hours/week"
+          "location": "CSV data row 678, original dose=88.11165165165166 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1512.7166023166026,
@@ -7712,7 +8424,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.418421820348223,
           "high": 0.5892707636130691,
-          "location": "CSV data row 679, original dose=88.24180180180181 mMET-hours/week"
+          "location": "CSV data row 679, original dose=88.24180180180181 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1514.9477477477478,
@@ -7723,7 +8436,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41809923539249366,
           "high": 0.5891062935364395,
-          "location": "CSV data row 680, original dose=88.37195195195196 mMET-hours/week"
+          "location": "CSV data row 680, original dose=88.37195195195196 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1517.1788931788935,
@@ -7734,7 +8448,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4177768766695439,
           "high": 0.5889419010353997,
-          "location": "CSV data row 681, original dose=88.50210210210211 mMET-hours/week"
+          "location": "CSV data row 681, original dose=88.50210210210211 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1519.4100386100386,
@@ -7745,7 +8460,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4174547441359683,
           "high": 0.5887775859346163,
-          "location": "CSV data row 682, original dose=88.63225225225226 mMET-hours/week"
+          "location": "CSV data row 682, original dose=88.63225225225226 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1521.6411840411843,
@@ -7756,7 +8472,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41713283774770527,
           "high": 0.5886133480598187,
-          "location": "CSV data row 683, original dose=88.76240240240242 mMET-hours/week"
+          "location": "CSV data row 683, original dose=88.76240240240242 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1523.8723294723295,
@@ -7767,7 +8484,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4168111574597083,
           "high": 0.5884491872373263,
-          "location": "CSV data row 684, original dose=88.89255255255256 mMET-hours/week"
+          "location": "CSV data row 684, original dose=88.89255255255256 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1526.1034749034752,
@@ -7778,7 +8496,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4164897032265918,
           "high": 0.5882851032949296,
-          "location": "CSV data row 685, original dose=89.02270270270272 mMET-hours/week"
+          "location": "CSV data row 685, original dose=89.02270270270272 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1528.3346203346205,
@@ -7789,7 +8508,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4161684750019627,
           "high": 0.5881210960609501,
-          "location": "CSV data row 686, original dose=89.15285285285286 mMET-hours/week"
+          "location": "CSV data row 686, original dose=89.15285285285286 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1530.5657657657662,
@@ -7800,7 +8520,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41584747273825406,
           "high": 0.5879571653640019,
-          "location": "CSV data row 687, original dose=89.28300300300302 mMET-hours/week"
+          "location": "CSV data row 687, original dose=89.28300300300302 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1532.7969111969112,
@@ -7811,7 +8532,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4155266963882238,
           "high": 0.5877933110350373,
-          "location": "CSV data row 688, original dose=89.41315315315316 mMET-hours/week"
+          "location": "CSV data row 688, original dose=89.41315315315316 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1535.028056628057,
@@ -7822,7 +8544,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41520614590316207,
           "high": 0.5876295329048703,
-          "location": "CSV data row 689, original dose=89.54330330330332 mMET-hours/week"
+          "location": "CSV data row 689, original dose=89.54330330330332 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1537.2592020592022,
@@ -7833,7 +8556,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4148858212338497,
           "high": 0.5874658308054739,
-          "location": "CSV data row 690, original dose=89.67345345345346 mMET-hours/week"
+          "location": "CSV data row 690, original dose=89.67345345345346 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1539.4903474903476,
@@ -7844,7 +8568,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41456572233015493,
           "high": 0.587302204569418,
-          "location": "CSV data row 691, original dose=89.8036036036036 mMET-hours/week"
+          "location": "CSV data row 691, original dose=89.8036036036036 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1541.721492921493,
@@ -7855,7 +8580,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41424584914141166,
           "high": 0.5871386540303731,
-          "location": "CSV data row 692, original dose=89.93375375375376 mMET-hours/week"
+          "location": "CSV data row 692, original dose=89.93375375375376 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1543.9526383526386,
@@ -7866,7 +8592,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4139262016164237,
           "high": 0.58697517902311,
-          "location": "CSV data row 693, original dose=90.0639039039039 mMET-hours/week"
+          "location": "CSV data row 693, original dose=90.0639039039039 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1546.183783783784,
@@ -7877,7 +8604,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41360677970326915,
           "high": 0.5868117793832048,
-          "location": "CSV data row 694, original dose=90.19405405405406 mMET-hours/week"
+          "location": "CSV data row 694, original dose=90.19405405405406 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1548.414929214929,
@@ -7888,7 +8616,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.413287583348802,
           "high": 0.586648454946346,
-          "location": "CSV data row 695, original dose=90.32420420420421 mMET-hours/week"
+          "location": "CSV data row 695, original dose=90.32420420420421 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1550.6460746460748,
@@ -7899,7 +8628,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41296861249973177,
           "high": 0.5864852055498102,
-          "location": "CSV data row 696, original dose=90.45435435435436 mMET-hours/week"
+          "location": "CSV data row 696, original dose=90.45435435435436 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1552.87722007722,
@@ -7910,7 +8640,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41264986710209334,
           "high": 0.5863220310317174,
-          "location": "CSV data row 697, original dose=90.58450450450451 mMET-hours/week"
+          "location": "CSV data row 697, original dose=90.58450450450451 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1555.1083655083658,
@@ -7921,7 +8652,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4123313471012153,
           "high": 0.586158931230974,
-          "location": "CSV data row 698, original dose=90.71465465465467 mMET-hours/week"
+          "location": "CSV data row 698, original dose=90.71465465465467 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1557.339510939511,
@@ -7932,7 +8664,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41201305244139586,
           "high": 0.5859959059868071,
-          "location": "CSV data row 699, original dose=90.84480480480481 mMET-hours/week"
+          "location": "CSV data row 699, original dose=90.84480480480481 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1559.5706563706567,
@@ -7943,7 +8676,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41169498306647206,
           "high": 0.5858329551395449,
-          "location": "CSV data row 700, original dose=90.97495495495497 mMET-hours/week"
+          "location": "CSV data row 700, original dose=90.97495495495497 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1561.8018018018017,
@@ -7954,7 +8688,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41137713891996186,
           "high": 0.585670078530802,
-          "location": "CSV data row 701, original dose=91.10510510510511 mMET-hours/week"
+          "location": "CSV data row 701, original dose=91.10510510510511 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1564.0329472329474,
@@ -7965,7 +8700,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41105951994453294,
           "high": 0.5855072760027268,
-          "location": "CSV data row 702, original dose=91.23525525525527 mMET-hours/week"
+          "location": "CSV data row 702, original dose=91.23525525525527 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1566.2640926640927,
@@ -7976,7 +8712,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4107421260817102,
           "high": 0.5853445473975789,
-          "location": "CSV data row 703, original dose=91.36540540540541 mMET-hours/week"
+          "location": "CSV data row 703, original dose=91.36540540540541 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1568.4952380952384,
@@ -7987,7 +8724,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41042495727324274,
           "high": 0.5851818925596273,
-          "location": "CSV data row 704, original dose=91.49555555555557 mMET-hours/week"
+          "location": "CSV data row 704, original dose=91.49555555555557 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1570.7263835263836,
@@ -7998,7 +8736,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.41010801345958453,
           "high": 0.5850193113330157,
-          "location": "CSV data row 705, original dose=91.62570570570571 mMET-hours/week"
+          "location": "CSV data row 705, original dose=91.62570570570571 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1572.9575289575293,
@@ -8009,7 +8748,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4097912945809894,
           "high": 0.5848568035632763,
-          "location": "CSV data row 706, original dose=91.75585585585587 mMET-hours/week"
+          "location": "CSV data row 706, original dose=91.75585585585587 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1575.1886743886746,
@@ -8020,7 +8760,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.409474800576592,
           "high": 0.5846943690960383,
-          "location": "CSV data row 707, original dose=91.88600600600601 mMET-hours/week"
+          "location": "CSV data row 707, original dose=91.88600600600601 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1577.4198198198198,
@@ -8031,7 +8772,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4091585313854375,
           "high": 0.5845320077784527,
-          "location": "CSV data row 708, original dose=92.01615615615617 mMET-hours/week"
+          "location": "CSV data row 708, original dose=92.01615615615617 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1579.6509652509653,
@@ -8042,7 +8784,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4088424869455942,
           "high": 0.5843697194579395,
-          "location": "CSV data row 709, original dose=92.14630630630631 mMET-hours/week"
+          "location": "CSV data row 709, original dose=92.14630630630631 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1581.8821106821108,
@@ -8053,7 +8796,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4085266671949515,
           "high": 0.5842075039832936,
-          "location": "CSV data row 710, original dose=92.27645645645646 mMET-hours/week"
+          "location": "CSV data row 710, original dose=92.27645645645646 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1584.1132561132563,
@@ -8064,7 +8808,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4082110720699669,
           "high": 0.5840453612029153,
-          "location": "CSV data row 711, original dose=92.40660660660662 mMET-hours/week"
+          "location": "CSV data row 711, original dose=92.40660660660662 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1586.3444015444015,
@@ -8075,7 +8820,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40789570150749327,
           "high": 0.5838832909673618,
-          "location": "CSV data row 712, original dose=92.53675675675676 mMET-hours/week"
+          "location": "CSV data row 712, original dose=92.53675675675676 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1588.5755469755472,
@@ -8086,7 +8832,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40758055544309185,
           "high": 0.5837212931269705,
-          "location": "CSV data row 713, original dose=92.66690690690692 mMET-hours/week"
+          "location": "CSV data row 713, original dose=92.66690690690692 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1590.8066924066923,
@@ -8097,7 +8844,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40726563381220043,
           "high": 0.5835593675334851,
-          "location": "CSV data row 714, original dose=92.79705705705706 mMET-hours/week"
+          "location": "CSV data row 714, original dose=92.79705705705706 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1593.037837837838,
@@ -8108,7 +8856,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40695093654900977,
           "high": 0.5833975140384634,
-          "location": "CSV data row 715, original dose=92.92720720720722 mMET-hours/week"
+          "location": "CSV data row 715, original dose=92.92720720720722 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1595.2689832689832,
@@ -8119,7 +8868,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.406636463587989,
           "high": 0.5832357324954164,
-          "location": "CSV data row 716, original dose=93.05735735735736 mMET-hours/week"
+          "location": "CSV data row 716, original dose=93.05735735735736 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1597.500128700129,
@@ -8130,7 +8880,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4063222148624389,
           "high": 0.5830740227577554,
-          "location": "CSV data row 717, original dose=93.18750750750752 mMET-hours/week"
+          "location": "CSV data row 717, original dose=93.18750750750752 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1599.7312741312742,
@@ -8141,7 +8892,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4060081903052865,
           "high": 0.5829123846799055,
-          "location": "CSV data row 718, original dose=93.31765765765766 mMET-hours/week"
+          "location": "CSV data row 718, original dose=93.31765765765766 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1601.9624195624199,
@@ -8152,7 +8904,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4056943898486627,
           "high": 0.582750818116693,
-          "location": "CSV data row 719, original dose=93.44780780780782 mMET-hours/week"
+          "location": "CSV data row 719, original dose=93.44780780780782 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1604.1935649935651,
@@ -8163,7 +8916,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40538081342456533,
           "high": 0.5825893229242738,
-          "location": "CSV data row 720, original dose=93.57795795795796 mMET-hours/week"
+          "location": "CSV data row 720, original dose=93.57795795795796 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1606.4247104247108,
@@ -8174,7 +8928,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4050674609643345,
           "high": 0.5824278989593804,
-          "location": "CSV data row 721, original dose=93.70810810810812 mMET-hours/week"
+          "location": "CSV data row 721, original dose=93.70810810810812 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1608.6558558558559,
@@ -8185,7 +8940,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40475433239830017,
           "high": 0.5822665460788136,
-          "location": "CSV data row 722, original dose=93.83825825825826 mMET-hours/week"
+          "location": "CSV data row 722, original dose=93.83825825825826 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1610.8870012870016,
@@ -8196,7 +8952,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40444142765650626,
           "high": 0.5821052641404539,
-          "location": "CSV data row 723, original dose=93.96840840840842 mMET-hours/week"
+          "location": "CSV data row 723, original dose=93.96840840840842 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1613.1181467181468,
@@ -8207,7 +8964,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4041287466688788,
           "high": 0.5819440530034898,
-          "location": "CSV data row 724, original dose=94.09855855855857 mMET-hours/week"
+          "location": "CSV data row 724, original dose=94.09855855855857 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1615.3492921492923,
@@ -8218,7 +8976,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4038162893644109,
           "high": 0.5817829125272533,
-          "location": "CSV data row 725, original dose=94.22870870870872 mMET-hours/week"
+          "location": "CSV data row 725, original dose=94.22870870870872 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1617.5804375804378,
@@ -8229,7 +8988,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4035040556713009,
           "high": 0.5816218425714053,
-          "location": "CSV data row 726, original dose=94.35885885885887 mMET-hours/week"
+          "location": "CSV data row 726, original dose=94.35885885885887 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1619.8115830115833,
@@ -8240,7 +9000,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4031920455175752,
           "high": 0.5814608429968039,
-          "location": "CSV data row 727, original dose=94.48900900900902 mMET-hours/week"
+          "location": "CSV data row 727, original dose=94.48900900900902 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1622.0427284427285,
@@ -8251,7 +9012,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4028802588309295,
           "high": 0.5812999136652773,
-          "location": "CSV data row 728, original dose=94.61915915915917 mMET-hours/week"
+          "location": "CSV data row 728, original dose=94.61915915915917 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1624.273873873874,
@@ -8262,7 +9024,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.402568695538211,
           "high": 0.5811390544388678,
-          "location": "CSV data row 729, original dose=94.74930930930933 mMET-hours/week"
+          "location": "CSV data row 729, original dose=94.74930930930933 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1626.5050193050195,
@@ -8273,7 +9036,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40225735556558745,
           "high": 0.5809782651800715,
-          "location": "CSV data row 730, original dose=94.87945945945947 mMET-hours/week"
+          "location": "CSV data row 730, original dose=94.87945945945947 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1628.7361647361647,
@@ -8284,7 +9048,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4019462388389405,
           "high": 0.5808175457523791,
-          "location": "CSV data row 731, original dose=95.00960960960961 mMET-hours/week"
+          "location": "CSV data row 731, original dose=95.00960960960961 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1630.9673101673104,
@@ -8295,7 +9060,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40163534528386935,
           "high": 0.5806568960202754,
-          "location": "CSV data row 732, original dose=95.13975975975977 mMET-hours/week"
+          "location": "CSV data row 732, original dose=95.13975975975977 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1633.1984555984557,
@@ -8306,7 +9072,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40132467482520867,
           "high": 0.5804963158485424,
-          "location": "CSV data row 733, original dose=95.26990990990991 mMET-hours/week"
+          "location": "CSV data row 733, original dose=95.26990990990991 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1635.4296010296014,
@@ -8317,7 +9084,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40101422738729126,
           "high": 0.580335805102623,
-          "location": "CSV data row 734, original dose=95.40006006006007 mMET-hours/week"
+          "location": "CSV data row 734, original dose=95.40006006006007 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1637.6607464607464,
@@ -8328,7 +9096,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.4007040028937914,
           "high": 0.5801753636483872,
-          "location": "CSV data row 735, original dose=95.53021021021021 mMET-hours/week"
+          "location": "CSV data row 735, original dose=95.53021021021021 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1639.891891891892,
@@ -8339,7 +9108,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40039400126834374,
           "high": 0.5800149913530042,
-          "location": "CSV data row 736, original dose=95.66036036036037 mMET-hours/week"
+          "location": "CSV data row 736, original dose=95.66036036036037 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1642.1230373230374,
@@ -8350,7 +9120,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.40008422243370484,
           "high": 0.5798546880837383,
-          "location": "CSV data row 737, original dose=95.79051051051052 mMET-hours/week"
+          "location": "CSV data row 737, original dose=95.79051051051052 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1644.354182754183,
@@ -8361,7 +9132,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3997746663123734,
           "high": 0.5796944537088228,
-          "location": "CSV data row 738, original dose=95.92066066066067 mMET-hours/week"
+          "location": "CSV data row 738, original dose=95.92066066066067 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1646.5853281853283,
@@ -8372,7 +9144,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3994653328261723,
           "high": 0.5795342880968547,
-          "location": "CSV data row 739, original dose=96.05081081081082 mMET-hours/week"
+          "location": "CSV data row 739, original dose=96.05081081081082 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1648.816473616474,
@@ -8383,7 +9156,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.399156221896576,
           "high": 0.5793741911172523,
-          "location": "CSV data row 740, original dose=96.18096096096097 mMET-hours/week"
+          "location": "CSV data row 740, original dose=96.18096096096097 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1651.047619047619,
@@ -8394,7 +9168,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39884733344455525,
           "high": 0.5792141626400215,
-          "location": "CSV data row 741, original dose=96.31111111111112 mMET-hours/week"
+          "location": "CSV data row 741, original dose=96.31111111111112 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1653.2787644787645,
@@ -8405,7 +9180,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39853866739057725,
           "high": 0.5790542025357494,
-          "location": "CSV data row 742, original dose=96.44126126126127 mMET-hours/week"
+          "location": "CSV data row 742, original dose=96.44126126126127 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1655.50990990991,
@@ -8416,7 +9192,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3982302236548057,
           "high": 0.5788943106758807,
-          "location": "CSV data row 743, original dose=96.57141141141142 mMET-hours/week"
+          "location": "CSV data row 743, original dose=96.57141141141142 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1657.7410553410555,
@@ -8427,7 +9204,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39792200215661905,
           "high": 0.5787344869320187,
-          "location": "CSV data row 744, original dose=96.70156156156158 mMET-hours/week"
+          "location": "CSV data row 744, original dose=96.70156156156158 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1659.972200772201,
@@ -8438,7 +9216,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39761400281542175,
           "high": 0.5785747311770779,
-          "location": "CSV data row 745, original dose=96.83171171171172 mMET-hours/week"
+          "location": "CSV data row 745, original dose=96.83171171171172 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1662.2033462033464,
@@ -8449,7 +9228,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.397306225549359,
           "high": 0.5784150432834273,
-          "location": "CSV data row 746, original dose=96.96186186186188 mMET-hours/week"
+          "location": "CSV data row 746, original dose=96.96186186186188 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1664.434491634492,
@@ -8460,7 +9240,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3969986702771558,
           "high": 0.5782554231255304,
-          "location": "CSV data row 747, original dose=97.09201201201202 mMET-hours/week"
+          "location": "CSV data row 747, original dose=97.09201201201202 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1666.6656370656372,
@@ -8471,7 +9252,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39669133691634817,
           "high": 0.5780958705773852,
-          "location": "CSV data row 748, original dose=97.22216216216218 mMET-hours/week"
+          "location": "CSV data row 748, original dose=97.22216216216218 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1668.8967824967826,
@@ -8482,7 +9264,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39638422538438467,
           "high": 0.5779363855141095,
-          "location": "CSV data row 749, original dose=97.35231231231232 mMET-hours/week"
+          "location": "CSV data row 749, original dose=97.35231231231232 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1671.1279279279279,
@@ -8493,7 +9276,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39607733559795233,
           "high": 0.5777769678109493,
-          "location": "CSV data row 750, original dose=97.48246246246246 mMET-hours/week"
+          "location": "CSV data row 750, original dose=97.48246246246246 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1673.3590733590736,
@@ -8504,7 +9288,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39577066747346273,
           "high": 0.5776176173439803,
-          "location": "CSV data row 751, original dose=97.61261261261262 mMET-hours/week"
+          "location": "CSV data row 751, original dose=97.61261261261262 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1675.5902187902188,
@@ -8515,7 +9300,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39546422092721567,
           "high": 0.5774583339903288,
-          "location": "CSV data row 752, original dose=97.74276276276277 mMET-hours/week"
+          "location": "CSV data row 752, original dose=97.74276276276277 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1677.8213642213645,
@@ -8526,7 +9312,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3951579958746958,
           "high": 0.5772991176271539,
-          "location": "CSV data row 753, original dose=97.87291291291292 mMET-hours/week"
+          "location": "CSV data row 753, original dose=97.87291291291292 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1680.0525096525096,
@@ -8537,7 +9324,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3948519922309654,
           "high": 0.5771399681322006,
-          "location": "CSV data row 754, original dose=98.00306306306307 mMET-hours/week"
+          "location": "CSV data row 754, original dose=98.00306306306307 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1682.2836550836553,
@@ -8548,7 +9336,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39454620991053585,
           "high": 0.5769808853836067,
-          "location": "CSV data row 755, original dose=98.13321321321322 mMET-hours/week"
+          "location": "CSV data row 755, original dose=98.13321321321322 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1684.5148005148005,
@@ -8559,7 +9348,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3942406488282022,
           "high": 0.5768218692611013,
-          "location": "CSV data row 756, original dose=98.26336336336337 mMET-hours/week"
+          "location": "CSV data row 756, original dose=98.26336336336337 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1686.7459459459462,
@@ -8570,7 +9360,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.393935308897738,
           "high": 0.5766629196441106,
-          "location": "CSV data row 757, original dose=98.39351351351353 mMET-hours/week"
+          "location": "CSV data row 757, original dose=98.39351351351353 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1688.9770913770915,
@@ -8581,7 +9372,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39363019003241095,
           "high": 0.5765040364124915,
-          "location": "CSV data row 758, original dose=98.52366366366367 mMET-hours/week"
+          "location": "CSV data row 758, original dose=98.52366366366367 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1691.208236808237,
@@ -8592,7 +9384,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39332529214527184,
           "high": 0.5763452194469423,
-          "location": "CSV data row 759, original dose=98.65381381381383 mMET-hours/week"
+          "location": "CSV data row 759, original dose=98.65381381381383 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1693.4393822393824,
@@ -8603,7 +9396,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39302061514937825,
           "high": 0.5761864686293222,
-          "location": "CSV data row 760, original dose=98.78396396396397 mMET-hours/week"
+          "location": "CSV data row 760, original dose=98.78396396396397 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1695.6705276705277,
@@ -8614,7 +9408,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.392716158956752,
           "high": 0.5760277838411293,
-          "location": "CSV data row 761, original dose=98.91411411411413 mMET-hours/week"
+          "location": "CSV data row 761, original dose=98.91411411411413 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1697.9016731016732,
@@ -8625,7 +9420,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3924119234792085,
           "high": 0.5758691649646906,
-          "location": "CSV data row 762, original dose=99.04426426426427 mMET-hours/week"
+          "location": "CSV data row 762, original dose=99.04426426426427 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1700.1328185328186,
@@ -8636,7 +9432,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3921079086284192,
           "high": 0.5757106118832563,
-          "location": "CSV data row 763, original dose=99.17441441441443 mMET-hours/week"
+          "location": "CSV data row 763, original dose=99.17441441441443 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1702.3639639639641,
@@ -8647,7 +9444,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3918041143153187,
           "high": 0.5755521244801156,
-          "location": "CSV data row 764, original dose=99.30456456456457 mMET-hours/week"
+          "location": "CSV data row 764, original dose=99.30456456456457 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1704.5951093951096,
@@ -8658,7 +9456,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39150054045079824,
           "high": 0.5753937026396096,
-          "location": "CSV data row 765, original dose=99.43471471471473 mMET-hours/week"
+          "location": "CSV data row 765, original dose=99.43471471471473 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1706.826254826255,
@@ -8669,7 +9468,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39119718694483024,
           "high": 0.5752353462458404,
-          "location": "CSV data row 766, original dose=99.56486486486487 mMET-hours/week"
+          "location": "CSV data row 766, original dose=99.56486486486487 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1709.0574002574006,
@@ -8680,7 +9480,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3908940537076965,
           "high": 0.5750770551844583,
-          "location": "CSV data row 767, original dose=99.69501501501503 mMET-hours/week"
+          "location": "CSV data row 767, original dose=99.69501501501503 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1711.2885456885458,
@@ -8691,7 +9492,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3905911406488617,
           "high": 0.5749188293410058,
-          "location": "CSV data row 768, original dose=99.82516516516517 mMET-hours/week"
+          "location": "CSV data row 768, original dose=99.82516516516517 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1713.519691119691,
@@ -8702,7 +9504,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.39028844767760074,
           "high": 0.5747606686018328,
-          "location": "CSV data row 769, original dose=99.95531531531532 mMET-hours/week"
+          "location": "CSV data row 769, original dose=99.95531531531532 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1715.7508365508368,
@@ -8713,7 +9516,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38998597470228286,
           "high": 0.5746025728530356,
-          "location": "CSV data row 770, original dose=100.08546546546548 mMET-hours/week"
+          "location": "CSV data row 770, original dose=100.08546546546548 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1717.981981981982,
@@ -8724,7 +9528,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3896837216318214,
           "high": 0.5744445419825698,
-          "location": "CSV data row 771, original dose=100.21561561561562 mMET-hours/week"
+          "location": "CSV data row 771, original dose=100.21561561561562 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1720.2131274131277,
@@ -8735,7 +9540,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3893816883741323,
           "high": 0.5742865758779926,
-          "location": "CSV data row 772, original dose=100.34576576576578 mMET-hours/week"
+          "location": "CSV data row 772, original dose=100.34576576576578 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1722.444272844273,
@@ -8746,7 +9552,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38907987483702194,
           "high": 0.5741286744277488,
-          "location": "CSV data row 773, original dose=100.47591591591592 mMET-hours/week"
+          "location": "CSV data row 773, original dose=100.47591591591592 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1724.6754182754187,
@@ -8757,7 +9564,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3887782809274954,
           "high": 0.5739708375201534,
-          "location": "CSV data row 774, original dose=100.60606606606608 mMET-hours/week"
+          "location": "CSV data row 774, original dose=100.60606606606608 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1726.9065637065637,
@@ -8768,7 +9576,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3884769065529858,
           "high": 0.5738130650451857,
-          "location": "CSV data row 775, original dose=100.73621621621622 mMET-hours/week"
+          "location": "CSV data row 775, original dose=100.73621621621622 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1729.1377091377092,
@@ -8779,7 +9588,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3881757516198824,
           "high": 0.5736553568923213,
-          "location": "CSV data row 776, original dose=100.86636636636638 mMET-hours/week"
+          "location": "CSV data row 776, original dose=100.86636636636638 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1731.3688545688547,
@@ -8790,7 +9600,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.387874816034787,
           "high": 0.5734977129523696,
-          "location": "CSV data row 777, original dose=100.99651651651652 mMET-hours/week"
+          "location": "CSV data row 777, original dose=100.99651651651652 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1733.6000000000001,
@@ -8801,7 +9612,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38757409970301465,
           "high": 0.5733401331152651,
-          "location": "CSV data row 778, original dose=101.12666666666668 mMET-hours/week"
+          "location": "CSV data row 778, original dose=101.12666666666668 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1735.8311454311456,
@@ -8812,7 +9624,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38727360253066095,
           "high": 0.5731826172730978,
-          "location": "CSV data row 779, original dose=101.25681681681682 mMET-hours/week"
+          "location": "CSV data row 779, original dose=101.25681681681682 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1738.062290862291,
@@ -8823,7 +9636,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3869733244229791,
           "high": 0.5730251653177149,
-          "location": "CSV data row 780, original dose=101.38696696696698 mMET-hours/week"
+          "location": "CSV data row 780, original dose=101.38696696696698 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1740.2934362934363,
@@ -8834,7 +9648,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38667326528472645,
           "high": 0.5728677771412352,
-          "location": "CSV data row 781, original dose=101.51711711711712 mMET-hours/week"
+          "location": "CSV data row 781, original dose=101.51711711711712 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1742.5245817245818,
@@ -8845,7 +9660,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38637342502026245,
           "high": 0.5727104526361713,
-          "location": "CSV data row 782, original dose=101.64726726726728 mMET-hours/week"
+          "location": "CSV data row 782, original dose=101.64726726726728 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1744.7557271557273,
@@ -8856,7 +9672,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.386073803534298,
           "high": 0.5725531916965367,
-          "location": "CSV data row 783, original dose=101.77741741741742 mMET-hours/week"
+          "location": "CSV data row 783, original dose=101.77741741741742 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1746.9868725868728,
@@ -8867,7 +9684,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38577440073061986,
           "high": 0.572395994215955,
-          "location": "CSV data row 784, original dose=101.90756756756758 mMET-hours/week"
+          "location": "CSV data row 784, original dose=101.90756756756758 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1749.2180180180183,
@@ -8878,7 +9696,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38547521651262706,
           "high": 0.5722388600884458,
-          "location": "CSV data row 785, original dose=102.03771771771773 mMET-hours/week"
+          "location": "CSV data row 785, original dose=102.03771771771773 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1751.4491634491637,
@@ -8889,7 +9708,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3851762507835165,
           "high": 0.5720817892086865,
-          "location": "CSV data row 786, original dose=102.16786786786788 mMET-hours/week"
+          "location": "CSV data row 786, original dose=102.16786786786788 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1753.6803088803092,
@@ -8900,7 +9720,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3848775034464728,
           "high": 0.571924781472292,
-          "location": "CSV data row 787, original dose=102.29801801801803 mMET-hours/week"
+          "location": "CSV data row 787, original dose=102.29801801801803 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1755.9114543114545,
@@ -8911,7 +9732,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38457897440423683,
           "high": 0.5717678367751667,
-          "location": "CSV data row 788, original dose=102.42816816816818 mMET-hours/week"
+          "location": "CSV data row 788, original dose=102.42816816816818 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1758.1425997426,
@@ -8922,7 +9744,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3842806635586756,
           "high": 0.5716109550128619,
-          "location": "CSV data row 789, original dose=102.55831831831833 mMET-hours/week"
+          "location": "CSV data row 789, original dose=102.55831831831833 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1760.3737451737452,
@@ -8933,7 +9756,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38398257081189735,
           "high": 0.5714541360822191,
-          "location": "CSV data row 790, original dose=102.68846846846847 mMET-hours/week"
+          "location": "CSV data row 790, original dose=102.68846846846847 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1762.604890604891,
@@ -8944,7 +9768,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38368469606579286,
           "high": 0.5712973798806854,
-          "location": "CSV data row 791, original dose=102.81861861861863 mMET-hours/week"
+          "location": "CSV data row 791, original dose=102.81861861861863 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1764.8360360360361,
@@ -8955,7 +9780,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3833870392215414,
           "high": 0.5711406863055732,
-          "location": "CSV data row 792, original dose=102.94876876876877 mMET-hours/week"
+          "location": "CSV data row 792, original dose=102.94876876876877 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1767.0671814671816,
@@ -8966,7 +9792,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38308960018047866,
           "high": 0.5709840552553413,
-          "location": "CSV data row 793, original dose=103.07891891891893 mMET-hours/week"
+          "location": "CSV data row 793, original dose=103.07891891891893 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1769.2983268983269,
@@ -8977,7 +9804,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3827923788428662,
           "high": 0.5708274866277641,
-          "location": "CSV data row 794, original dose=103.20906906906907 mMET-hours/week"
+          "location": "CSV data row 794, original dose=103.20906906906907 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1771.5294723294724,
@@ -8988,7 +9816,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3824953751095579,
           "high": 0.5706709803223917,
-          "location": "CSV data row 795, original dose=103.33921921921923 mMET-hours/week"
+          "location": "CSV data row 795, original dose=103.33921921921923 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1773.7606177606178,
@@ -8999,7 +9828,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3821985888806165,
           "high": 0.5705145362384986,
-          "location": "CSV data row 796, original dose=103.46936936936937 mMET-hours/week"
+          "location": "CSV data row 796, original dose=103.46936936936937 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1775.9917631917633,
@@ -9010,7 +9840,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38190202005583956,
           "high": 0.5703581542758511,
-          "location": "CSV data row 797, original dose=103.59951951951953 mMET-hours/week"
+          "location": "CSV data row 797, original dose=103.59951951951953 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1778.2229086229088,
@@ -9021,7 +9852,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3816056685347619,
           "high": 0.5702018343347082,
-          "location": "CSV data row 798, original dose=103.72966966966968 mMET-hours/week"
+          "location": "CSV data row 798, original dose=103.72966966966968 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1780.4540540540543,
@@ -9032,7 +9864,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38130953421684183,
           "high": 0.5700455763160922,
-          "location": "CSV data row 799, original dose=103.85981981981983 mMET-hours/week"
+          "location": "CSV data row 799, original dose=103.85981981981983 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1782.6851994851997,
@@ -9043,7 +9876,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.38101361700075936,
           "high": 0.5698893801207365,
-          "location": "CSV data row 800, original dose=103.98996996996998 mMET-hours/week"
+          "location": "CSV data row 800, original dose=103.98996996996998 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1784.916344916345,
@@ -9054,7 +9888,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.380717916785643,
           "high": 0.5697332456509057,
-          "location": "CSV data row 801, original dose=104.12012012012013 mMET-hours/week"
+          "location": "CSV data row 801, original dose=104.12012012012013 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1787.1474903474905,
@@ -9065,7 +9900,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3804224334695434,
           "high": 0.5695771728081159,
-          "location": "CSV data row 802, original dose=104.25027027027028 mMET-hours/week"
+          "location": "CSV data row 802, original dose=104.25027027027028 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1789.378635778636,
@@ -9076,7 +9912,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3801271669506873,
           "high": 0.5694211614949997,
-          "location": "CSV data row 803, original dose=104.38042042042044 mMET-hours/week"
+          "location": "CSV data row 803, original dose=104.38042042042044 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1791.6097812097814,
@@ -9087,7 +9924,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3798321171271779,
           "high": 0.5692652116148483,
-          "location": "CSV data row 804, original dose=104.51057057057058 mMET-hours/week"
+          "location": "CSV data row 804, original dose=104.51057057057058 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1793.840926640927,
@@ -9098,7 +9936,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37953728389604485,
           "high": 0.5691093230701945,
-          "location": "CSV data row 805, original dose=104.64072072072074 mMET-hours/week"
+          "location": "CSV data row 805, original dose=104.64072072072074 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1796.0720720720724,
@@ -9109,7 +9948,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37924266715511673,
           "high": 0.5689534957655943,
-          "location": "CSV data row 806, original dose=104.77087087087088 mMET-hours/week"
+          "location": "CSV data row 806, original dose=104.77087087087088 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1798.3032175032179,
@@ -9120,7 +9960,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37894826680118393,
           "high": 0.5687977296048842,
-          "location": "CSV data row 807, original dose=104.90102102102104 mMET-hours/week"
+          "location": "CSV data row 807, original dose=104.90102102102104 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1800.5343629343631,
@@ -9131,7 +9972,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3786540827311985,
           "high": 0.5686420244929625,
-          "location": "CSV data row 808, original dose=105.03117117117118 mMET-hours/week"
+          "location": "CSV data row 808, original dose=105.03117117117118 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1802.7655083655084,
@@ -9142,7 +9984,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3783601148414775,
           "high": 0.5684863803345946,
-          "location": "CSV data row 809, original dose=105.16132132132132 mMET-hours/week"
+          "location": "CSV data row 809, original dose=105.16132132132132 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1804.9966537966538,
@@ -9153,7 +9996,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3780663630281057,
           "high": 0.5683307970350101,
-          "location": "CSV data row 810, original dose=105.29147147147148 mMET-hours/week"
+          "location": "CSV data row 810, original dose=105.29147147147148 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1807.2277992277993,
@@ -9164,7 +10008,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37777282718742367,
           "high": 0.5681752745006252,
-          "location": "CSV data row 811, original dose=105.42162162162163 mMET-hours/week"
+          "location": "CSV data row 811, original dose=105.42162162162163 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1809.4589446589448,
@@ -9175,7 +10020,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3774795072151748,
           "high": 0.5680198126377656,
-          "location": "CSV data row 812, original dose=105.55177177177178 mMET-hours/week"
+          "location": "CSV data row 812, original dose=105.55177177177178 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1811.6900900900903,
@@ -9186,7 +10032,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3771864030065457,
           "high": 0.5678644113527088,
-          "location": "CSV data row 813, original dose=105.68192192192193 mMET-hours/week"
+          "location": "CSV data row 813, original dose=105.68192192192193 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1813.9212355212355,
@@ -9197,7 +10044,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3768935144566164,
           "high": 0.5677090705523673,
-          "location": "CSV data row 814, original dose=105.81207207207208 mMET-hours/week"
+          "location": "CSV data row 814, original dose=105.81207207207208 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1816.152380952381,
@@ -9208,7 +10056,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3766008414607319,
           "high": 0.5675537901448318,
-          "location": "CSV data row 815, original dose=105.94222222222223 mMET-hours/week"
+          "location": "CSV data row 815, original dose=105.94222222222223 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1818.3835263835265,
@@ -9219,7 +10068,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37630838391343935,
           "high": 0.567398570037771,
-          "location": "CSV data row 816, original dose=106.07237237237239 mMET-hours/week"
+          "location": "CSV data row 816, original dose=106.07237237237239 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1820.614671814672,
@@ -9230,7 +10080,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3760161417091902,
           "high": 0.567243410139484,
-          "location": "CSV data row 817, original dose=106.20252252252253 mMET-hours/week"
+          "location": "CSV data row 817, original dose=106.20252252252253 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1822.8458172458174,
@@ -9241,7 +10092,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37572411474188716,
           "high": 0.5670883103582086,
-          "location": "CSV data row 818, original dose=106.33267267267269 mMET-hours/week"
+          "location": "CSV data row 818, original dose=106.33267267267269 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1825.076962676963,
@@ -9252,7 +10104,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3754323029059147,
           "high": 0.5669332706036709,
-          "location": "CSV data row 819, original dose=106.46282282282283 mMET-hours/week"
+          "location": "CSV data row 819, original dose=106.46282282282283 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1827.3081081081084,
@@ -9263,7 +10116,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37514070609502137,
           "high": 0.5667782907853943,
-          "location": "CSV data row 820, original dose=106.59297297297299 mMET-hours/week"
+          "location": "CSV data row 820, original dose=106.59297297297299 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1829.5392535392537,
@@ -9274,7 +10128,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37484932420220496,
           "high": 0.5666233708125222,
-          "location": "CSV data row 821, original dose=106.72312312312313 mMET-hours/week"
+          "location": "CSV data row 821, original dose=106.72312312312313 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1831.7703989703991,
@@ -9285,7 +10140,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3745581571211892,
           "high": 0.5664685105960386,
-          "location": "CSV data row 822, original dose=106.85327327327329 mMET-hours/week"
+          "location": "CSV data row 822, original dose=106.85327327327329 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1834.0015444015446,
@@ -9296,7 +10152,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3742672047448015,
           "high": 0.5663137100463106,
-          "location": "CSV data row 823, original dose=106.98342342342343 mMET-hours/week"
+          "location": "CSV data row 823, original dose=106.98342342342343 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1836.23268983269,
@@ -9307,7 +10164,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3739764669658738,
           "high": 0.5661589690744557,
-          "location": "CSV data row 824, original dose=107.11357357357359 mMET-hours/week"
+          "location": "CSV data row 824, original dose=107.11357357357359 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1838.4638352638356,
@@ -9318,7 +10176,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3736859436767101,
           "high": 0.5660042875915163,
-          "location": "CSV data row 825, original dose=107.24372372372373 mMET-hours/week"
+          "location": "CSV data row 825, original dose=107.24372372372373 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1840.694980694981,
@@ -9329,7 +10188,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37339563476983356,
           "high": 0.5658496655095901,
-          "location": "CSV data row 826, original dose=107.37387387387389 mMET-hours/week"
+          "location": "CSV data row 826, original dose=107.37387387387389 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1842.926126126126,
@@ -9340,7 +10200,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3731055401374208,
           "high": 0.5656951027409767,
-          "location": "CSV data row 827, original dose=107.50402402402403 mMET-hours/week"
+          "location": "CSV data row 827, original dose=107.50402402402403 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1845.1572715572718,
@@ -9351,7 +10212,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3728156596713034,
           "high": 0.5655405991981617,
-          "location": "CSV data row 828, original dose=107.63417417417419 mMET-hours/week"
+          "location": "CSV data row 828, original dose=107.63417417417419 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1847.388416988417,
@@ -9362,7 +10224,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3725259932627013,
           "high": 0.5653861547934177,
-          "location": "CSV data row 829, original dose=107.76432432432433 mMET-hours/week"
+          "location": "CSV data row 829, original dose=107.76432432432433 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1849.6195624195625,
@@ -9373,7 +10236,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3722365408035418,
           "high": 0.5652317694407903,
-          "location": "CSV data row 830, original dose=107.89447447447448 mMET-hours/week"
+          "location": "CSV data row 830, original dose=107.89447447447448 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1851.850707850708,
@@ -9384,7 +10248,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3719473021847834,
           "high": 0.5650774430535589,
-          "location": "CSV data row 831, original dose=108.02462462462464 mMET-hours/week"
+          "location": "CSV data row 831, original dose=108.02462462462464 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1854.0818532818535,
@@ -9395,7 +10260,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.37165827729776835,
           "high": 0.5649231755462779,
-          "location": "CSV data row 832, original dose=108.15477477477478 mMET-hours/week"
+          "location": "CSV data row 832, original dose=108.15477477477478 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1856.312998712999,
@@ -9406,7 +10272,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3713694660325475,
           "high": 0.5647689668322278,
-          "location": "CSV data row 833, original dose=108.28492492492494 mMET-hours/week"
+          "location": "CSV data row 833, original dose=108.28492492492494 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1858.5441441441442,
@@ -9417,7 +10284,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3710808682802719,
           "high": 0.5646148168270518,
-          "location": "CSV data row 834, original dose=108.41507507507508 mMET-hours/week"
+          "location": "CSV data row 834, original dose=108.41507507507508 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1860.7752895752897,
@@ -9428,7 +10296,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3707924839311659,
           "high": 0.5644607254456594,
-          "location": "CSV data row 835, original dose=108.54522522522524 mMET-hours/week"
+          "location": "CSV data row 835, original dose=108.54522522522524 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1863.0064350064351,
@@ -9439,7 +10308,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.370504312875364,
           "high": 0.5643066926035012,
-          "location": "CSV data row 836, original dose=108.67537537537538 mMET-hours/week"
+          "location": "CSV data row 836, original dose=108.67537537537538 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1865.2375804375806,
@@ -9450,7 +10320,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3702163550024382,
           "high": 0.5641527182158367,
-          "location": "CSV data row 837, original dose=108.80552552552554 mMET-hours/week"
+          "location": "CSV data row 837, original dose=108.80552552552554 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1867.468725868726,
@@ -9461,7 +10332,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36992861020258644,
           "high": 0.5639988021995502,
-          "location": "CSV data row 838, original dose=108.93567567567568 mMET-hours/week"
+          "location": "CSV data row 838, original dose=108.93567567567568 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1869.6998712998716,
@@ -9472,7 +10344,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3696410783653272,
           "high": 0.5638449444711503,
-          "location": "CSV data row 839, original dose=109.06582582582584 mMET-hours/week"
+          "location": "CSV data row 839, original dose=109.06582582582584 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1871.931016731017,
@@ -9483,7 +10356,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36935375937962317,
           "high": 0.563691144946951,
-          "location": "CSV data row 840, original dose=109.19597597597598 mMET-hours/week"
+          "location": "CSV data row 840, original dose=109.19597597597598 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1874.1621621621623,
@@ -9494,7 +10368,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36906665313459247,
           "high": 0.5635374035441583,
-          "location": "CSV data row 841, original dose=109.32612612612614 mMET-hours/week"
+          "location": "CSV data row 841, original dose=109.32612612612614 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1876.3933075933078,
@@ -9505,7 +10380,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3687797595195127,
           "high": 0.5633837201808651,
-          "location": "CSV data row 842, original dose=109.45627627627628 mMET-hours/week"
+          "location": "CSV data row 842, original dose=109.45627627627628 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1878.6244530244533,
@@ -9516,7 +10392,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36849307842304874,
           "high": 0.5632300947748745,
-          "location": "CSV data row 843, original dose=109.58642642642644 mMET-hours/week"
+          "location": "CSV data row 843, original dose=109.58642642642644 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1880.8555984555985,
@@ -9527,7 +10404,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36820660973349584,
           "high": 0.5630765272440592,
-          "location": "CSV data row 844, original dose=109.71657657657659 mMET-hours/week"
+          "location": "CSV data row 844, original dose=109.71657657657659 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1883.0867438867442,
@@ -9538,7 +10416,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3679203533391925,
           "high": 0.5629230175069939,
-          "location": "CSV data row 845, original dose=109.84672672672674 mMET-hours/week"
+          "location": "CSV data row 845, original dose=109.84672672672674 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1885.3178893178895,
@@ -9549,7 +10428,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3676343091285247,
           "high": 0.5627695654829513,
-          "location": "CSV data row 846, original dose=109.97687687687689 mMET-hours/week"
+          "location": "CSV data row 846, original dose=109.97687687687689 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1887.5490347490352,
@@ -9560,7 +10440,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3673484769894518,
           "high": 0.5626161710911783,
-          "location": "CSV data row 847, original dose=110.10702702702704 mMET-hours/week"
+          "location": "CSV data row 847, original dose=110.10702702702704 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1889.7801801801802,
@@ -9571,7 +10452,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3670628568095711,
           "high": 0.5624628342509833,
-          "location": "CSV data row 848, original dose=110.23717717717719 mMET-hours/week"
+          "location": "CSV data row 848, original dose=110.23717717717719 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1892.0113256113257,
@@ -9582,7 +10464,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36677744847635385,
           "high": 0.5623095548820993,
-          "location": "CSV data row 849, original dose=110.36732732732733 mMET-hours/week"
+          "location": "CSV data row 849, original dose=110.36732732732733 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1894.2424710424712,
@@ -9593,7 +10476,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3664922518773818,
           "high": 0.5621563329050375,
-          "location": "CSV data row 850, original dose=110.49747747747749 mMET-hours/week"
+          "location": "CSV data row 850, original dose=110.49747747747749 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1896.4736164736166,
@@ -9604,7 +10488,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36620726689999694,
           "high": 0.5620031682405496,
-          "location": "CSV data row 851, original dose=110.62762762762763 mMET-hours/week"
+          "location": "CSV data row 851, original dose=110.62762762762763 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1898.704761904762,
@@ -9615,7 +10500,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36592249343135985,
           "high": 0.5618500608097114,
-          "location": "CSV data row 852, original dose=110.75777777777779 mMET-hours/week"
+          "location": "CSV data row 852, original dose=110.75777777777779 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1900.9359073359076,
@@ -9626,7 +10512,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36563793135769285,
           "high": 0.5616970105327498,
-          "location": "CSV data row 853, original dose=110.88792792792793 mMET-hours/week"
+          "location": "CSV data row 853, original dose=110.88792792792793 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1903.1670527670528,
@@ -9637,7 +10524,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3653535805662125,
           "high": 0.5615440173320209,
-          "location": "CSV data row 854, original dose=111.01807807807809 mMET-hours/week"
+          "location": "CSV data row 854, original dose=111.01807807807809 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1905.3981981981983,
@@ -9648,7 +10536,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3650694409434347,
           "high": 0.5613910811293867,
-          "location": "CSV data row 855, original dose=111.14822822822823 mMET-hours/week"
+          "location": "CSV data row 855, original dose=111.14822822822823 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1907.6293436293438,
@@ -9659,7 +10548,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36478551237552687,
           "high": 0.561238201846759,
-          "location": "CSV data row 856, original dose=111.27837837837839 mMET-hours/week"
+          "location": "CSV data row 856, original dose=111.27837837837839 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1909.8604890604893,
@@ -9670,7 +10560,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36450179474877664,
           "high": 0.5610853794068178,
-          "location": "CSV data row 857, original dose=111.40852852852854 mMET-hours/week"
+          "location": "CSV data row 857, original dose=111.40852852852854 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1912.0916344916347,
@@ -9681,7 +10572,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3642182879490688,
           "high": 0.5609326137321957,
-          "location": "CSV data row 858, original dose=111.53867867867869 mMET-hours/week"
+          "location": "CSV data row 858, original dose=111.53867867867869 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1914.3227799227802,
@@ -9692,7 +10584,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3639349918622377,
           "high": 0.5607799047460218,
-          "location": "CSV data row 859, original dose=111.66882882882884 mMET-hours/week"
+          "location": "CSV data row 859, original dose=111.66882882882884 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1916.5539253539257,
@@ -9703,7 +10596,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3636519063740675,
           "high": 0.5606272523719151,
-          "location": "CSV data row 860, original dose=111.798978978979 mMET-hours/week"
+          "location": "CSV data row 860, original dose=111.798978978979 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1918.7850707850707,
@@ -9714,7 +10608,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36336903137000315,
           "high": 0.5604746565335358,
-          "location": "CSV data row 861, original dose=111.92912912912914 mMET-hours/week"
+          "location": "CSV data row 861, original dose=111.92912912912914 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1921.0162162162164,
@@ -9725,7 +10620,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3630863667353842,
           "high": 0.5603221171549412,
-          "location": "CSV data row 862, original dose=112.0592792792793 mMET-hours/week"
+          "location": "CSV data row 862, original dose=112.0592792792793 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1923.2473616473617,
@@ -9736,7 +10632,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36280391235556325,
           "high": 0.5601696341607665,
-          "location": "CSV data row 863, original dose=112.18942942942944 mMET-hours/week"
+          "location": "CSV data row 863, original dose=112.18942942942944 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1925.4785070785074,
@@ -9747,7 +10644,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36252166811503594,
           "high": 0.5600172074748693,
-          "location": "CSV data row 864, original dose=112.3195795795796 mMET-hours/week"
+          "location": "CSV data row 864, original dose=112.3195795795796 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1927.7096525096526,
@@ -9758,7 +10656,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3622396338992443,
           "high": 0.5598648370231236,
-          "location": "CSV data row 865, original dose=112.44972972972974 mMET-hours/week"
+          "location": "CSV data row 865, original dose=112.44972972972974 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1929.9407979407983,
@@ -9769,7 +10668,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36195780959248525,
           "high": 0.5597125227301728,
-          "location": "CSV data row 866, original dose=112.5798798798799 mMET-hours/week"
+          "location": "CSV data row 866, original dose=112.5798798798799 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1932.1719433719434,
@@ -9780,7 +10680,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36167619507977056,
           "high": 0.5595602645223109,
-          "location": "CSV data row 867, original dose=112.71003003003004 mMET-hours/week"
+          "location": "CSV data row 867, original dose=112.71003003003004 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1934.4030888030888,
@@ -9791,7 +10692,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36139479024503207,
           "high": 0.5594080623246892,
-          "location": "CSV data row 868, original dose=112.84018018018018 mMET-hours/week"
+          "location": "CSV data row 868, original dose=112.84018018018018 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1936.6342342342343,
@@ -9802,7 +10704,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36111359497251333,
           "high": 0.5592559160634741,
-          "location": "CSV data row 869, original dose=112.97033033033034 mMET-hours/week"
+          "location": "CSV data row 869, original dose=112.97033033033034 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1938.8653796653798,
@@ -9813,7 +10716,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.36083260914671167,
           "high": 0.5591038256657627,
-          "location": "CSV data row 870, original dose=113.10048048048048 mMET-hours/week"
+          "location": "CSV data row 870, original dose=113.10048048048048 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1941.0965250965253,
@@ -9824,7 +10728,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3605518326513972,
           "high": 0.5589517910580387,
-          "location": "CSV data row 871, original dose=113.23063063063064 mMET-hours/week"
+          "location": "CSV data row 871, original dose=113.23063063063064 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1943.3276705276708,
@@ -9835,7 +10740,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3602712653701916,
           "high": 0.558799812167081,
-          "location": "CSV data row 872, original dose=113.36078078078079 mMET-hours/week"
+          "location": "CSV data row 872, original dose=113.36078078078079 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1945.5588159588162,
@@ -9846,7 +10752,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3599909071866882,
           "high": 0.5586478889201356,
-          "location": "CSV data row 873, original dose=113.49093093093094 mMET-hours/week"
+          "location": "CSV data row 873, original dose=113.49093093093094 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1947.7899613899615,
@@ -9857,7 +10764,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35971075798473867,
           "high": 0.5584960212453715,
-          "location": "CSV data row 874, original dose=113.62108108108109 mMET-hours/week"
+          "location": "CSV data row 874, original dose=113.62108108108109 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1950.021106821107,
@@ -9868,7 +10776,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3594308176476476,
           "high": 0.5583442090706102,
-          "location": "CSV data row 875, original dose=113.75123123123124 mMET-hours/week"
+          "location": "CSV data row 875, original dose=113.75123123123124 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1952.2522522522524,
@@ -9879,7 +10788,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3591510860585197,
           "high": 0.5581924523238707,
-          "location": "CSV data row 876, original dose=113.88138138138139 mMET-hours/week"
+          "location": "CSV data row 876, original dose=113.88138138138139 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1954.483397683398,
@@ -9890,7 +10800,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3588715631000922,
           "high": 0.5580407509330944,
-          "location": "CSV data row 877, original dose=114.01153153153155 mMET-hours/week"
+          "location": "CSV data row 877, original dose=114.01153153153155 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1956.7145431145432,
@@ -9901,7 +10812,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3585922486559964,
           "high": 0.5578891048281253,
-          "location": "CSV data row 878, original dose=114.14168168168169 mMET-hours/week"
+          "location": "CSV data row 878, original dose=114.14168168168169 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1958.9456885456889,
@@ -9912,7 +10824,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35831314260869274,
           "high": 0.5577375139374688,
-          "location": "CSV data row 879, original dose=114.27183183183185 mMET-hours/week"
+          "location": "CSV data row 879, original dose=114.27183183183185 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1961.176833976834,
@@ -9923,7 +10836,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3580342448405067,
           "high": 0.5575859781899081,
-          "location": "CSV data row 880, original dose=114.40198198198199 mMET-hours/week"
+          "location": "CSV data row 880, original dose=114.40198198198199 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1963.4079794079796,
@@ -9934,7 +10848,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35775555523454483,
           "high": 0.5574344975159434,
-          "location": "CSV data row 881, original dose=114.53213213213215 mMET-hours/week"
+          "location": "CSV data row 881, original dose=114.53213213213215 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1965.6391248391249,
@@ -9945,7 +10860,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3574770736729819,
           "high": 0.5572830718450928,
-          "location": "CSV data row 882, original dose=114.66228228228229 mMET-hours/week"
+          "location": "CSV data row 882, original dose=114.66228228228229 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1967.8702702702706,
@@ -9956,7 +10872,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35719880003825866,
           "high": 0.5571317011077775,
-          "location": "CSV data row 883, original dose=114.79243243243245 mMET-hours/week"
+          "location": "CSV data row 883, original dose=114.79243243243245 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1970.1014157014158,
@@ -9967,7 +10884,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.356920734212001,
           "high": 0.5569803852336124,
-          "location": "CSV data row 884, original dose=114.92258258258259 mMET-hours/week"
+          "location": "CSV data row 884, original dose=114.92258258258259 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1972.3325611325615,
@@ -9978,7 +10896,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3566428760767334,
           "high": 0.5568291241541014,
-          "location": "CSV data row 885, original dose=115.05273273273275 mMET-hours/week"
+          "location": "CSV data row 885, original dose=115.05273273273275 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1974.5637065637068,
@@ -9989,7 +10908,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3563652255141694,
           "high": 0.5566779177999436,
-          "location": "CSV data row 886, original dose=115.1828828828829 mMET-hours/week"
+          "location": "CSV data row 886, original dose=115.1828828828829 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1976.7948519948525,
@@ -10000,7 +10920,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35608778240629413,
           "high": 0.5565267661027306,
-          "location": "CSV data row 887, original dose=115.31303303303305 mMET-hours/week"
+          "location": "CSV data row 887, original dose=115.31303303303305 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1979.0259974259975,
@@ -10011,7 +10932,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3558105466340578,
           "high": 0.5563756689928868,
-          "location": "CSV data row 888, original dose=115.4431831831832 mMET-hours/week"
+          "location": "CSV data row 888, original dose=115.4431831831832 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1981.257142857143,
@@ -10022,7 +10944,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.355533518079653,
           "high": 0.5562246264032572,
-          "location": "CSV data row 889, original dose=115.57333333333334 mMET-hours/week"
+          "location": "CSV data row 889, original dose=115.57333333333334 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1983.4882882882885,
@@ -10033,7 +10956,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35525669662429527,
           "high": 0.556073638265602,
-          "location": "CSV data row 890, original dose=115.7034834834835 mMET-hours/week"
+          "location": "CSV data row 890, original dose=115.7034834834835 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1985.719433719434,
@@ -10044,7 +10968,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35498008214930904,
           "high": 0.5559227045123071,
-          "location": "CSV data row 891, original dose=115.83363363363364 mMET-hours/week"
+          "location": "CSV data row 891, original dose=115.83363363363364 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1987.9505791505794,
@@ -10055,7 +10980,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.354703674535388,
           "high": 0.5557718250752096,
-          "location": "CSV data row 892, original dose=115.9637837837838 mMET-hours/week"
+          "location": "CSV data row 892, original dose=115.9637837837838 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1990.181724581725,
@@ -10066,7 +10992,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3544274736640152,
           "high": 0.5556209998878411,
-          "location": "CSV data row 893, original dose=116.09393393393394 mMET-hours/week"
+          "location": "CSV data row 893, original dose=116.09393393393394 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1992.4128700128701,
@@ -10077,7 +11004,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3541514794159886,
           "high": 0.5554702288830972,
-          "location": "CSV data row 894, original dose=116.2240840840841 mMET-hours/week"
+          "location": "CSV data row 894, original dose=116.2240840840841 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1994.6440154440154,
@@ -10088,7 +11016,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3538756916723898,
           "high": 0.5553195119947576,
-          "location": "CSV data row 895, original dose=116.35423423423424 mMET-hours/week"
+          "location": "CSV data row 895, original dose=116.35423423423424 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1996.875160875161,
@@ -10099,7 +11028,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3536001103132763,
           "high": 0.5551688491554212,
-          "location": "CSV data row 896, original dose=116.4843843843844 mMET-hours/week"
+          "location": "CSV data row 896, original dose=116.4843843843844 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 1999.1063063063064,
@@ -10110,7 +11040,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35332473521967245,
           "high": 0.5550182402996467,
-          "location": "CSV data row 897, original dose=116.61453453453454 mMET-hours/week"
+          "location": "CSV data row 897, original dose=116.61453453453454 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2001.337451737452,
@@ -10121,7 +11052,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3530495662720913,
           "high": 0.5548676853616172,
-          "location": "CSV data row 898, original dose=116.7446846846847 mMET-hours/week"
+          "location": "CSV data row 898, original dose=116.7446846846847 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2003.5685971685973,
@@ -10132,7 +11064,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35277460335054167,
           "high": 0.5547171842751413,
-          "location": "CSV data row 899, original dose=116.87483483483484 mMET-hours/week"
+          "location": "CSV data row 899, original dose=116.87483483483484 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2005.799742599743,
@@ -10143,7 +11076,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3524998463352051,
           "high": 0.5545667369747251,
-          "location": "CSV data row 900, original dose=117.004984984985 mMET-hours/week"
+          "location": "CSV data row 900, original dose=117.004984984985 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2008.030888030888,
@@ -10154,7 +11088,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35222529510671985,
           "high": 0.5544163433960186,
-          "location": "CSV data row 901, original dose=117.13513513513514 mMET-hours/week"
+          "location": "CSV data row 901, original dose=117.13513513513514 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2010.2620334620337,
@@ -10165,7 +11100,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3519509495448824,
           "high": 0.5542660034737563,
-          "location": "CSV data row 902, original dose=117.2652852852853 mMET-hours/week"
+          "location": "CSV data row 902, original dose=117.2652852852853 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2012.493178893179,
@@ -10176,7 +11112,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35167680952944236,
           "high": 0.5541157171430082,
-          "location": "CSV data row 903, original dose=117.39543543543545 mMET-hours/week"
+          "location": "CSV data row 903, original dose=117.39543543543545 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2014.7243243243247,
@@ -10187,7 +11124,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.35140287494021283,
           "high": 0.5539654843393567,
-          "location": "CSV data row 904, original dose=117.5255855855856 mMET-hours/week"
+          "location": "CSV data row 904, original dose=117.5255855855856 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2016.95546975547,
@@ -10198,7 +11136,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3511291456571286,
           "high": 0.5538153049989891,
-          "location": "CSV data row 905, original dose=117.65573573573575 mMET-hours/week"
+          "location": "CSV data row 905, original dose=117.65573573573575 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2019.1866151866157,
@@ -10209,7 +11148,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.350855621559854,
           "high": 0.5536651790580626,
-          "location": "CSV data row 906, original dose=117.7858858858859 mMET-hours/week"
+          "location": "CSV data row 906, original dose=117.7858858858859 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2021.4177606177607,
@@ -10220,7 +11160,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3505823025275595,
           "high": 0.5535151064523508,
-          "location": "CSV data row 907, original dose=117.91603603603605 mMET-hours/week"
+          "location": "CSV data row 907, original dose=117.91603603603605 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2023.6489060489062,
@@ -10231,7 +11172,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3503091884396536,
           "high": 0.5533650871184044,
-          "location": "CSV data row 908, original dose=118.04618618618619 mMET-hours/week"
+          "location": "CSV data row 908, original dose=118.04618618618619 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2025.8800514800516,
@@ -10242,7 +11184,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3500362791757236,
           "high": 0.5532151209934586,
-          "location": "CSV data row 909, original dose=118.17633633633635 mMET-hours/week"
+          "location": "CSV data row 909, original dose=118.17633633633635 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2028.111196911197,
@@ -10253,7 +11196,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3497635746149839,
           "high": 0.5530652080145398,
-          "location": "CSV data row 910, original dose=118.30648648648649 mMET-hours/week"
+          "location": "CSV data row 910, original dose=118.30648648648649 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2030.3423423423426,
@@ -10264,7 +11208,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3494910746365486,
           "high": 0.5529153481189097,
-          "location": "CSV data row 911, original dose=118.43663663663665 mMET-hours/week"
+          "location": "CSV data row 911, original dose=118.43663663663665 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2032.5734877734878,
@@ -10275,7 +11220,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3492187791189922,
           "high": 0.552765541243349,
-          "location": "CSV data row 912, original dose=118.56678678678679 mMET-hours/week"
+          "location": "CSV data row 912, original dose=118.56678678678679 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2034.8046332046335,
@@ -10286,7 +11232,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34894668794174344,
           "high": 0.5526157873263926,
-          "location": "CSV data row 913, original dose=118.69693693693695 mMET-hours/week"
+          "location": "CSV data row 913, original dose=118.69693693693695 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2037.0357786357786,
@@ -10297,7 +11244,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3486748009834697,
           "high": 0.5524660863057349,
-          "location": "CSV data row 914, original dose=118.8270870870871 mMET-hours/week"
+          "location": "CSV data row 914, original dose=118.8270870870871 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2039.2669240669243,
@@ -10308,7 +11256,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34840311812291336,
           "high": 0.5523164381195685,
-          "location": "CSV data row 915, original dose=118.95723723723725 mMET-hours/week"
+          "location": "CSV data row 915, original dose=118.95723723723725 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2041.4980694980695,
@@ -10319,7 +11268,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3481316392387262,
           "high": 0.5521668427063166,
-          "location": "CSV data row 916, original dose=119.0873873873874 mMET-hours/week"
+          "location": "CSV data row 916, original dose=119.0873873873874 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2043.7292149292152,
@@ -10330,7 +11280,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3478603642094708,
           "high": 0.5520173000046285,
-          "location": "CSV data row 917, original dose=119.21753753753755 mMET-hours/week"
+          "location": "CSV data row 917, original dose=119.21753753753755 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2045.9603603603605,
@@ -10341,7 +11292,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3475892929136217,
           "high": 0.5518678099533868,
-          "location": "CSV data row 918, original dose=119.3476876876877 mMET-hours/week"
+          "location": "CSV data row 918, original dose=119.3476876876877 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2048.191505791506,
@@ -10352,7 +11304,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3473184252295673,
           "high": 0.5517183724916932,
-          "location": "CSV data row 919, original dose=119.47783783783785 mMET-hours/week"
+          "location": "CSV data row 919, original dose=119.47783783783785 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2050.4226512226514,
@@ -10363,7 +11316,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34704776103560636,
           "high": 0.5515689875588793,
-          "location": "CSV data row 920, original dose=119.607987987988 mMET-hours/week"
+          "location": "CSV data row 920, original dose=119.607987987988 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2052.653796653797,
@@ -10374,7 +11328,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3467773002099002,
           "high": 0.551419655094407,
-          "location": "CSV data row 921, original dose=119.73813813813815 mMET-hours/week"
+          "location": "CSV data row 921, original dose=119.73813813813815 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2054.8849420849424,
@@ -10385,7 +11340,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34650704263085813,
           "high": 0.551270375038502,
-          "location": "CSV data row 922, original dose=119.8682882882883 mMET-hours/week"
+          "location": "CSV data row 922, original dose=119.8682882882883 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2057.116087516088,
@@ -10396,7 +11352,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3462369881760863,
           "high": 0.5511211473304457,
-          "location": "CSV data row 923, original dose=119.99843843843846 mMET-hours/week"
+          "location": "CSV data row 923, original dose=119.99843843843846 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2059.347232947233,
@@ -10407,7 +11364,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34596713672377305,
           "high": 0.5509719719108146,
-          "location": "CSV data row 924, original dose=120.1285885885886 mMET-hours/week"
+          "location": "CSV data row 924, original dose=120.1285885885886 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2061.5783783783786,
@@ -10418,7 +11376,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34569748815180446,
           "high": 0.5508228487200424,
-          "location": "CSV data row 925, original dose=120.25873873873876 mMET-hours/week"
+          "location": "CSV data row 925, original dose=120.25873873873876 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2063.809523809524,
@@ -10429,7 +11388,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34542804233820773,
           "high": 0.550673777699144,
-          "location": "CSV data row 926, original dose=120.3888888888889 mMET-hours/week"
+          "location": "CSV data row 926, original dose=120.3888888888889 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2066.0406692406696,
@@ -10440,7 +11400,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3451587991604354,
           "high": 0.5505247587885443,
-          "location": "CSV data row 927, original dose=120.51903903903904 mMET-hours/week"
+          "location": "CSV data row 927, original dose=120.51903903903904 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2068.271814671815,
@@ -10451,7 +11412,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34488975849586184,
           "high": 0.5503757919288861,
-          "location": "CSV data row 928, original dose=120.6491891891892 mMET-hours/week"
+          "location": "CSV data row 928, original dose=120.6491891891892 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2070.50296010296,
@@ -10462,7 +11424,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3446209202225568,
           "high": 0.5502268770622715,
-          "location": "CSV data row 929, original dose=120.77933933933934 mMET-hours/week"
+          "location": "CSV data row 929, original dose=120.77933933933934 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2072.7341055341058,
@@ -10473,7 +11436,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3443522842180707,
           "high": 0.5500780141303038,
-          "location": "CSV data row 930, original dose=120.9094894894895 mMET-hours/week"
+          "location": "CSV data row 930, original dose=120.9094894894895 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2074.965250965251,
@@ -10484,7 +11448,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3440838503594986,
           "high": 0.5499292030741797,
-          "location": "CSV data row 931, original dose=121.03963963963965 mMET-hours/week"
+          "location": "CSV data row 931, original dose=121.03963963963965 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2077.1963963963967,
@@ -10495,7 +11460,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34381561852402487,
           "high": 0.5497804438355703,
-          "location": "CSV data row 932, original dose=121.1697897897898 mMET-hours/week"
+          "location": "CSV data row 932, original dose=121.1697897897898 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2079.427541827542,
@@ -10506,7 +11472,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34354758858942,
           "high": 0.5496317363574243,
-          "location": "CSV data row 933, original dose=121.29993993993995 mMET-hours/week"
+          "location": "CSV data row 933, original dose=121.29993993993995 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2081.6586872586877,
@@ -10517,7 +11484,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34327976043288805,
           "high": 0.5494830805820989,
-          "location": "CSV data row 934, original dose=121.4300900900901 mMET-hours/week"
+          "location": "CSV data row 934, original dose=121.4300900900901 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2083.889832689833,
@@ -10528,7 +11496,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3430121339311797,
           "high": 0.5493344764515398,
-          "location": "CSV data row 935, original dose=121.56024024024025 mMET-hours/week"
+          "location": "CSV data row 935, original dose=121.56024024024025 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2086.1209781209786,
@@ -10539,7 +11508,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34274470896119685,
           "high": 0.5491859239082532,
-          "location": "CSV data row 936, original dose=121.6903903903904 mMET-hours/week"
+          "location": "CSV data row 936, original dose=121.6903903903904 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2088.3521235521234,
@@ -10550,7 +11520,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34247748540053485,
           "high": 0.5490374228961947,
-          "location": "CSV data row 937, original dose=121.82054054054055 mMET-hours/week"
+          "location": "CSV data row 937, original dose=121.82054054054055 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2090.583268983269,
@@ -10561,7 +11532,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3422104631260664,
           "high": 0.5488889733584573,
-          "location": "CSV data row 938, original dose=121.9506906906907 mMET-hours/week"
+          "location": "CSV data row 938, original dose=121.9506906906907 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2092.8144144144144,
@@ -10572,7 +11544,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34194364201405464,
           "high": 0.5487405752374543,
-          "location": "CSV data row 939, original dose=122.08084084084085 mMET-hours/week"
+          "location": "CSV data row 939, original dose=122.08084084084085 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2095.04555984556,
@@ -10583,7 +11556,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3416770219417822,
           "high": 0.5485922284775716,
-          "location": "CSV data row 940, original dose=122.21099099099101 mMET-hours/week"
+          "location": "CSV data row 940, original dose=122.21099099099101 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2097.2767052767053,
@@ -10594,7 +11568,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34141060278598084,
           "high": 0.5484439330226019,
-          "location": "CSV data row 941, original dose=122.34114114114115 mMET-hours/week"
+          "location": "CSV data row 941, original dose=122.34114114114115 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2099.507850707851,
@@ -10605,7 +11580,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3411443844233694,
           "high": 0.5482956888166254,
-          "location": "CSV data row 942, original dose=122.47129129129131 mMET-hours/week"
+          "location": "CSV data row 942, original dose=122.47129129129131 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2101.7389961389963,
@@ -10616,7 +11592,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3408783667300077,
           "high": 0.5481474958029463,
-          "location": "CSV data row 943, original dose=122.60144144144145 mMET-hours/week"
+          "location": "CSV data row 943, original dose=122.60144144144145 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2103.970141570142,
@@ -10627,7 +11604,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34061254958287024,
           "high": 0.5479993539266625,
-          "location": "CSV data row 944, original dose=122.73159159159161 mMET-hours/week"
+          "location": "CSV data row 944, original dose=122.73159159159161 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2106.2012870012873,
@@ -10638,7 +11616,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.34034693285849194,
           "high": 0.5478512631324522,
-          "location": "CSV data row 945, original dose=122.86174174174175 mMET-hours/week"
+          "location": "CSV data row 945, original dose=122.86174174174175 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2108.4324324324325,
@@ -10649,7 +11628,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3400815164333442,
           "high": 0.5477032233651874,
-          "location": "CSV data row 946, original dose=122.99189189189191 mMET-hours/week"
+          "location": "CSV data row 946, original dose=122.99189189189191 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2110.663577863578,
@@ -10660,7 +11640,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3398163001833529,
           "high": 0.5475552345691377,
-          "location": "CSV data row 947, original dose=123.12204204204205 mMET-hours/week"
+          "location": "CSV data row 947, original dose=123.12204204204205 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2112.8947232947235,
@@ -10671,7 +11652,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3395512839853061,
           "high": 0.547407296690273,
-          "location": "CSV data row 948, original dose=123.2521921921922 mMET-hours/week"
+          "location": "CSV data row 948, original dose=123.2521921921922 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2115.125868725869,
@@ -10682,7 +11664,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3392864677149597,
           "high": 0.5472594096731631,
-          "location": "CSV data row 949, original dose=123.38234234234235 mMET-hours/week"
+          "location": "CSV data row 949, original dose=123.38234234234235 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2117.357014157014,
@@ -10693,7 +11676,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33902185124914874,
           "high": 0.5471115734644322,
-          "location": "CSV data row 950, original dose=123.5124924924925 mMET-hours/week"
+          "location": "CSV data row 950, original dose=123.5124924924925 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2119.5881595881597,
@@ -10704,7 +11688,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33875743446324696,
           "high": 0.5469637880085904,
-          "location": "CSV data row 951, original dose=123.64264264264266 mMET-hours/week"
+          "location": "CSV data row 951, original dose=123.64264264264266 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2121.819305019305,
@@ -10715,7 +11700,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33849321723381565,
           "high": 0.5468160532523757,
-          "location": "CSV data row 952, original dose=123.7727927927928 mMET-hours/week"
+          "location": "CSV data row 952, original dose=123.7727927927928 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2124.0504504504506,
@@ -10726,7 +11712,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3382291994368205,
           "high": 0.5466683691418289,
-          "location": "CSV data row 953, original dose=123.90294294294296 mMET-hours/week"
+          "location": "CSV data row 953, original dose=123.90294294294296 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2126.281595881596,
@@ -10737,7 +11724,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3379653809483916,
           "high": 0.5465207356235372,
-          "location": "CSV data row 954, original dose=124.0330930930931 mMET-hours/week"
+          "location": "CSV data row 954, original dose=124.0330930930931 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2128.5127413127416,
@@ -10748,7 +11736,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3377017616437971,
           "high": 0.5463731526429457,
-          "location": "CSV data row 955, original dose=124.16324324324326 mMET-hours/week"
+          "location": "CSV data row 955, original dose=124.16324324324326 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2130.743886743887,
@@ -10759,7 +11748,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33743834139960066,
           "high": 0.546225620147897,
-          "location": "CSV data row 956, original dose=124.2933933933934 mMET-hours/week"
+          "location": "CSV data row 956, original dose=124.2933933933934 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2132.9750321750325,
@@ -10770,7 +11760,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33717512009145134,
           "high": 0.5460781380850045,
-          "location": "CSV data row 957, original dose=124.42354354354356 mMET-hours/week"
+          "location": "CSV data row 957, original dose=124.42354354354356 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2135.206177606178,
@@ -10781,7 +11772,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33691209759489943,
           "high": 0.5459307064009805,
-          "location": "CSV data row 958, original dose=124.5536936936937 mMET-hours/week"
+          "location": "CSV data row 958, original dose=124.5536936936937 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2137.4373230373235,
@@ -10792,7 +11784,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3366492737854421,
           "high": 0.545783325042718,
-          "location": "CSV data row 959, original dose=124.68384384384386 mMET-hours/week"
+          "location": "CSV data row 959, original dose=124.68384384384386 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2139.6684684684687,
@@ -10803,7 +11796,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.336386648539335,
           "high": 0.5456359939586203,
-          "location": "CSV data row 960, original dose=124.813993993994 mMET-hours/week"
+          "location": "CSV data row 960, original dose=124.813993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2141.8996138996145,
@@ -10814,7 +11808,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3361242217320869,
           "high": 0.5454887130961223,
-          "location": "CSV data row 961, original dose=124.94414414414416 mMET-hours/week"
+          "location": "CSV data row 961, original dose=124.94414414414416 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2144.1307593307597,
@@ -10825,7 +11820,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33586199323894966,
           "high": 0.5453414824024887,
-          "location": "CSV data row 962, original dose=125.0742942942943 mMET-hours/week"
+          "location": "CSV data row 962, original dose=125.0742942942943 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2146.361904761905,
@@ -10836,7 +11832,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3355999629355011,
           "high": 0.5451943018257827,
-          "location": "CSV data row 963, original dose=125.20444444444446 mMET-hours/week"
+          "location": "CSV data row 963, original dose=125.20444444444446 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2148.59305019305,
@@ -10847,7 +11844,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3353381306973804,
           "high": 0.5450471713144198,
-          "location": "CSV data row 964, original dose=125.3345945945946 mMET-hours/week"
+          "location": "CSV data row 964, original dose=125.3345945945946 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2150.824195624196,
@@ -10858,7 +11856,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33507649640013065,
           "high": 0.5449000908169087,
-          "location": "CSV data row 965, original dose=125.46474474474476 mMET-hours/week"
+          "location": "CSV data row 965, original dose=125.46474474474476 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2153.055341055341,
@@ -10869,7 +11868,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33481505991898436,
           "high": 0.5447530602814946,
-          "location": "CSV data row 966, original dose=125.5948948948949 mMET-hours/week"
+          "location": "CSV data row 966, original dose=125.5948948948949 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2155.2864864864864,
@@ -10880,7 +11880,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3345538211290239,
           "high": 0.544606079656421,
-          "location": "CSV data row 967, original dose=125.72504504504505 mMET-hours/week"
+          "location": "CSV data row 967, original dose=125.72504504504505 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2157.517631917632,
@@ -10891,7 +11892,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33429277990598383,
           "high": 0.5444591488912534,
-          "location": "CSV data row 968, original dose=125.85519519519521 mMET-hours/week"
+          "location": "CSV data row 968, original dose=125.85519519519521 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2159.7487773487774,
@@ -10902,7 +11904,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3340319361249168,
           "high": 0.5443122679346767,
-          "location": "CSV data row 969, original dose=125.98534534534535 mMET-hours/week"
+          "location": "CSV data row 969, original dose=125.98534534534535 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2161.979922779923,
@@ -10913,7 +11916,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33377128966131436,
           "high": 0.5441654367363377,
-          "location": "CSV data row 970, original dose=126.11549549549551 mMET-hours/week"
+          "location": "CSV data row 970, original dose=126.11549549549551 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2164.2110682110683,
@@ -10924,7 +11928,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3335108403898335,
           "high": 0.5440186552447406,
-          "location": "CSV data row 971, original dose=126.24564564564565 mMET-hours/week"
+          "location": "CSV data row 971, original dose=126.24564564564565 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2166.442213642214,
@@ -10935,7 +11940,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33325058818609893,
           "high": 0.5438719234102318,
-          "location": "CSV data row 972, original dose=126.37579579579581 mMET-hours/week"
+          "location": "CSV data row 972, original dose=126.37579579579581 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2168.6733590733593,
@@ -10946,7 +11952,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33299053292506087,
           "high": 0.5437252411822733,
-          "location": "CSV data row 973, original dose=126.50594594594595 mMET-hours/week"
+          "location": "CSV data row 973, original dose=126.50594594594595 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2170.904504504505,
@@ -10957,7 +11964,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33273067448184396,
           "high": 0.5435786085108497,
-          "location": "CSV data row 974, original dose=126.63609609609611 mMET-hours/week"
+          "location": "CSV data row 974, original dose=126.63609609609611 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2173.1356499356502,
@@ -10968,7 +11976,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33247101273137997,
           "high": 0.543432025345849,
-          "location": "CSV data row 975, original dose=126.76624624624625 mMET-hours/week"
+          "location": "CSV data row 975, original dose=126.76624624624625 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2175.366795366796,
@@ -10979,7 +11988,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33221154754872007,
           "high": 0.5432854916375958,
-          "location": "CSV data row 976, original dose=126.89639639639641 mMET-hours/week"
+          "location": "CSV data row 976, original dose=126.89639639639641 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2177.5979407979407,
@@ -10990,7 +12000,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33195227880872413,
           "high": 0.5431390073363151,
-          "location": "CSV data row 977, original dose=127.02654654654656 mMET-hours/week"
+          "location": "CSV data row 977, original dose=127.02654654654656 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2179.8290862290864,
@@ -11001,7 +12012,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33169320638663874,
           "high": 0.5429925723931053,
-          "location": "CSV data row 978, original dose=127.15669669669671 mMET-hours/week"
+          "location": "CSV data row 978, original dose=127.15669669669671 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2182.0602316602317,
@@ -11012,7 +12024,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33143433015699364,
           "high": 0.5428461867580868,
-          "location": "CSV data row 979, original dose=127.28684684684686 mMET-hours/week"
+          "location": "CSV data row 979, original dose=127.28684684684686 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2184.2913770913774,
@@ -11023,7 +12036,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33117564999491295,
           "high": 0.5426998503825974,
-          "location": "CSV data row 980, original dose=127.41699699699701 mMET-hours/week"
+          "location": "CSV data row 980, original dose=127.41699699699701 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2186.5225225225226,
@@ -11034,7 +12048,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33091716577528413,
           "high": 0.5425535632177937,
-          "location": "CSV data row 981, original dose=127.54714714714716 mMET-hours/week"
+          "location": "CSV data row 981, original dose=127.54714714714716 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2188.7536679536684,
@@ -11045,7 +12060,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3306588773722743,
           "high": 0.5424073252138485,
-          "location": "CSV data row 982, original dose=127.67729729729732 mMET-hours/week"
+          "location": "CSV data row 982, original dose=127.67729729729732 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2190.9848133848136,
@@ -11056,7 +12072,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.33040078466138995,
           "high": 0.5422611363233857,
-          "location": "CSV data row 983, original dose=127.80744744744746 mMET-hours/week"
+          "location": "CSV data row 983, original dose=127.80744744744746 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2193.215958815959,
@@ -11067,7 +12084,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3301428875171073,
           "high": 0.5421149964975184,
-          "location": "CSV data row 984, original dose=127.93759759759762 mMET-hours/week"
+          "location": "CSV data row 984, original dose=127.93759759759762 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2195.4471042471046,
@@ -11078,7 +12096,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32988518581413706,
           "high": 0.5419689056879632,
-          "location": "CSV data row 985, original dose=128.06774774774777 mMET-hours/week"
+          "location": "CSV data row 985, original dose=128.06774774774777 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2197.67824967825,
@@ -11089,7 +12108,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32962767942710947,
           "high": 0.541822863846511,
-          "location": "CSV data row 986, original dose=128.19789789789792 mMET-hours/week"
+          "location": "CSV data row 986, original dose=128.19789789789792 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2199.9093951093955,
@@ -11100,7 +12120,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3293703682307803,
           "high": 0.5416768709253706,
-          "location": "CSV data row 987, original dose=128.32804804804806 mMET-hours/week"
+          "location": "CSV data row 987, original dose=128.32804804804806 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2202.1405405405408,
@@ -11111,7 +12132,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3291132520998817,
           "high": 0.5415309268769127,
-          "location": "CSV data row 988, original dose=128.4581981981982 mMET-hours/week"
+          "location": "CSV data row 988, original dose=128.4581981981982 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2204.371685971686,
@@ -11122,7 +12144,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32885633090869887,
           "high": 0.541385031652964,
-          "location": "CSV data row 989, original dose=128.58834834834835 mMET-hours/week"
+          "location": "CSV data row 989, original dose=128.58834834834835 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2206.6028314028317,
@@ -11133,7 +12156,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3285996045318581,
           "high": 0.5412391852061229,
-          "location": "CSV data row 990, original dose=128.71849849849852 mMET-hours/week"
+          "location": "CSV data row 990, original dose=128.71849849849852 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2208.833976833977,
@@ -11144,7 +12168,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3283430728441691,
           "high": 0.5410933874894946,
-          "location": "CSV data row 991, original dose=128.84864864864866 mMET-hours/week"
+          "location": "CSV data row 991, original dose=128.84864864864866 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2211.065122265122,
@@ -11155,7 +12180,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3280867357199464,
           "high": 0.5409476384555528,
-          "location": "CSV data row 992, original dose=128.9787987987988 mMET-hours/week"
+          "location": "CSV data row 992, original dose=128.9787987987988 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2213.296267696268,
@@ -11166,7 +12192,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3278305930337429,
           "high": 0.5408019380573611,
-          "location": "CSV data row 993, original dose=129.10894894894895 mMET-hours/week"
+          "location": "CSV data row 993, original dose=129.10894894894895 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2215.5274131274136,
@@ -11177,7 +12204,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32757464465998165,
           "high": 0.5406562862479652,
-          "location": "CSV data row 994, original dose=129.23909909909912 mMET-hours/week"
+          "location": "CSV data row 994, original dose=129.23909909909912 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2217.758558558559,
@@ -11188,7 +12216,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3273188904732749,
           "high": 0.5405106829809144,
-          "location": "CSV data row 995, original dose=129.36924924924926 mMET-hours/week"
+          "location": "CSV data row 995, original dose=129.36924924924926 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2219.989703989704,
@@ -11199,7 +12228,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3270633303478966,
           "high": 0.5403651282093835,
-          "location": "CSV data row 996, original dose=129.4993993993994 mMET-hours/week"
+          "location": "CSV data row 996, original dose=129.4993993993994 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2222.2208494208494,
@@ -11210,7 +12240,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.3268079641582575,
           "high": 0.5402196218869634,
-          "location": "CSV data row 997, original dose=129.62954954954955 mMET-hours/week"
+          "location": "CSV data row 997, original dose=129.62954954954955 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2224.451994851995,
@@ -11221,7 +12252,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32655279177890406,
           "high": 0.5400741639676597,
-          "location": "CSV data row 998, original dose=129.75969969969972 mMET-hours/week"
+          "location": "CSV data row 998, original dose=129.75969969969972 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2226.6831402831403,
@@ -11232,7 +12264,8 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32629781308405087,
           "high": 0.5399287544051015,
-          "location": "CSV data row 999, original dose=129.88984984984987 mMET-hours/week"
+          "location": "CSV data row 999, original dose=129.88984984984987 mMET-hours/week",
+          "share": null
         },
         {
           "dose": 2228.914285714286,
@@ -11243,23 +12276,10 @@ window.EnoughData = {
           "source": "activity-1",
           "low": 0.32604302794804824,
           "high": 0.5397833931533318,
-          "location": "CSV data row 1000, original dose=130.02 mMET-hours/week"
+          "location": "CSV data row 1000, original dose=130.02 mMET-hours/week",
+          "share": null
         }
       ],
-      "marker": {
-        "type": "reported",
-        "doses": [
-          150
-        ],
-        "label": "150 minutes: a large early gain",
-        "reason": "Spline keeps falling above the last knot and reaches its minimum at the largest modeled dose, not an asymptote. Neither 300 nor 600 minutes is a scientifically justified maximum.",
-        "verification": {
-          "method": "conversion",
-          "source": "activity-0",
-          "originalDose": 8.75,
-          "multiplier": 17.142857142857142
-        }
-      },
       "unitLabel": "moderate-equivalent minutes a week",
       "yDomain": [
         0.5,
@@ -11282,28 +12302,59 @@ window.EnoughData = {
         "adversary": "life_research",
         "statistician": "diet_research"
       },
-      "sourcePrecision": "source point grid with linear interpolation"
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "move",
+        "mode": "benefit",
+        "answer": "About 5¾ hours a week",
+        "fact": "Two and a half hours already captures 81% of the gain in this range.",
+        "range": [
+          0,
+          600
+        ],
+        "rangeLabel": "0 to 600 minutes a week",
+        "default": 150,
+        "ticks": [
+          0,
+          150,
+          300,
+          600
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_move",
+        "adversary": "polish_audit"
+      },
+      "rangeMethod": "Range shown: 0 to 600 minutes of moderate exercise a week",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 342.6436915079478,
+        "sensitivity": [
+          327.07033630676074,
+          350.88575755499915
+        ],
+        "sweetRange": null
+      }
     },
     {
       "id": "protein",
       "question": "How much protein?",
-      "shape": "plateau",
-      "fact": "For a 150 lb lifter, one model flattens near 110 g a day; the amount is uncertain.",
+      "shape": "Most arrives early",
+      "fact": "For a 150-pound lifter, that’s about 105 grams a day: three cooked 4-ounce chicken portions.",
       "kind": "model",
       "unit": "g/lb/day",
       "xLabel": "Protein each day (g/lb)",
       "yLabel": "Lean gain vs 0.41 g/lb (lb)",
       "domain": [
-        0.408233133,
-        1.088621689
+        0.4082331329997733,
+        1.0886216879993955
       ],
       "ticks": [
-        0.41,
-        0.6,
-        0.8,
-        1.09
+        0.4082331329997733,
+        0.7,
+        1.0886216879993955
       ],
-      "defaultDose": 0.7348196394,
+      "defaultDose": 0.7021609887596101,
       "effectKind": "lean",
       "better": "higher",
       "model": {
@@ -11311,33 +12362,19 @@ window.EnoughData = {
         "slope": 1.75,
         "baselineKg": 0.9,
         "breakpointKg": 1.62,
-        "lbPerKg": 2.20462262185
+        "lbPerKg": 2.20462262185,
+        "responseFormulaKg": "1.75*(min(totalProteinGPerKg,1.62)-0.9)",
+        "shareFormula": "(min(totalProteinGPerKg,1.62)-0.9)/(1.62-0.9)",
+        "d90FormulaKg": "0.9+0.9*(1.62-0.9)"
       },
-      "marker": {
-        "type": "reported",
-        "doses": [
-          0.7348196394
-        ],
-        "interval": [
-          0.4672001411,
-          0.997903214
-        ],
-        "label": "Estimated flattening: 0.74 g/lb",
-        "reason": "Published breakpoint, not a 90 percent threshold. Zero protein was outside the studied range. The flat second segment was imposed by the model.",
-        "verification": {
-          "method": "conversion",
-          "source": "morton",
-          "originalDose": 1.62,
-          "multiplier": 0.4535923699997481
-        }
-      },
-      "uncertainty": "The vertical strip is the published 95 percent confidence interval for the breakpoint, about 0.47 to 1.00 g/lb. It is an uncertainty range for the estimated bend, not the range of individual needs. Response confidence limits were not published here; none are invented.",
+      "uncertainty": "The published bend interval is 0.47 to 1.00 g/lb. Propagating those endpoints through this chosen model moves the 90% mark to 0.46 to 0.94 g/lb. This is conditional sensitivity, not a new threshold confidence interval. No full response bands are published.",
       "evidence": "Meta-analysis of randomized training trials; dose curve is a comparison across study arms",
       "population": "Healthy adults doing resistance training, 42 study arms and 723 participants in the breakpoint model.",
       "caveats": [
-        "Lean mass includes water and other tissue, not only muscle. Groups differed in age and training program.",
-        "The segmented fit did not clearly beat a straight line (p = 0.079). Newer broad analyses use different populations and do not establish one universal ceiling.",
-        "This curve shows one published model. It does not predict your muscle gain or cover dieting, children or treatment of kidney disease."
+        "This curve applies to adults doing resistance training. Protein here means total daily intake, not the size of a supplement.",
+        "The model forces a flat second segment. Its bend is about 0.73 g/lb, with a broad published interval of 0.47 to 1.00. The segmented model did not clearly outperform a straight line (p=0.079).",
+        "Newer reviews support small extra gains from protein during training, but their populations and intake measures differ. They do not establish a universal ceiling.",
+        "Cooked roasted chicken breast contains 31.02 grams of protein per 100 grams in USDA Standard Reference 27. Three 4-ounce portions contain about 105.5 grams."
       ],
       "extraction": "Reconstructed change relative to a chart reference intake, 0.9 g/kg/day, using the reported slope 1.75 and breakpoint 1.62. Both axes converted with 1 kg = 2.20462262185 lb. No extrapolation to zero. Stored response CI values are null.",
       "sources": [
@@ -11358,337 +12395,933 @@ window.EnoughData = {
           "citation": "Li et al., 2026. Dose, protein type and population in protein supplementation with resistance training.",
           "url": "https://www.frontiersin.org/journals/nutrition/articles/10.3389/fnut.2026.1860234/full",
           "location": "Abstract and dose-response model; supplementary protein dose differs from total intake"
+        },
+        {
+          "id": "usda-chicken",
+          "url": "https://www.ars.usda.gov/ARSUserFiles/80400525/Data/SR27/reports/sr27fg05.pdf",
+          "citation": "USDA Standard Reference27, cooked roasted chicken breast",
+          "location": "NDB 05064, printed PDF page 118, Proximates; half-breast measure on page 120"
         }
       ],
       "verified": "2026-10-04",
       "points": [
         {
-          "dose": 0.408233133,
+          "dose": 0.4082331329997733,
           "effect": 0,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 0
         },
         {
-          "dose": 0.4252428469,
-          "effect": 0.14467835977355548,
+          "dose": 0.41503701854976954,
+          "effect": 0.05787134382356255,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 2.083333333333335
         },
         {
-          "dose": 0.4422525608,
-          "effect": 0.289356719545183,
+          "dose": 0.42184090409976577,
+          "effect": 0.1157426876471251,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 4.16666666666667
         },
         {
-          "dose": 0.45926227470000003,
-          "effect": 0.4340350793168105,
+          "dose": 0.428644789649762,
+          "effect": 0.17361403147068766,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 6.250000000000004
         },
         {
-          "dose": 0.47627198860000003,
-          "effect": 0.5787134390884381,
+          "dose": 0.4354486751997582,
+          "effect": 0.2314853752942502,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 8.33333333333334
         },
         {
-          "dose": 0.49328170250000003,
-          "effect": 0.7233917988600657,
+          "dose": 0.44225256074975444,
+          "effect": 0.28935671911781274,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 10.416666666666673
         },
         {
-          "dose": 0.5102914164000001,
-          "effect": 0.8680701586316932,
+          "dose": 0.44905644629975067,
+          "effect": 0.3472280629413753,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 12.500000000000009
         },
         {
-          "dose": 0.5273011303,
-          "effect": 1.0127485184033198,
+          "dose": 0.4558603318497469,
+          "effect": 0.4050994067649379,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 14.583333333333345
         },
         {
-          "dose": 0.5443108442,
-          "effect": 1.1574268781749466,
+          "dose": 0.4626642173997431,
+          "effect": 0.4629707505885,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 16.66666666666666
         },
         {
-          "dose": 0.5613205581,
-          "effect": 1.3021052379465747,
+          "dose": 0.46946810294973934,
+          "effect": 0.520842094412063,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 18.75000000000001
         },
         {
-          "dose": 0.5783302720000001,
-          "effect": 1.4467835977182024,
+          "dose": 0.4762719884997355,
+          "effect": 0.5787134382356252,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 20.833333333333332
         },
         {
-          "dose": 0.5953399859,
-          "effect": 1.5914619574898299,
+          "dose": 0.48307587404973173,
+          "effect": 0.6365847820591871,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 22.916666666666647
         },
         {
-          "dose": 0.6123496998,
-          "effect": 1.7361403172614567,
+          "dose": 0.489879759599728,
+          "effect": 0.6944561258827502,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 25.000000000000004
         },
         {
-          "dose": 0.6293594137,
-          "effect": 1.8808186770330841,
+          "dose": 0.4966836451497242,
+          "effect": 0.7523274697063124,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 27.08333333333332
         },
         {
-          "dose": 0.6463691276,
-          "effect": 2.025497036804711,
+          "dose": 0.5034875306997204,
+          "effect": 0.8101988135298743,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 29.166666666666632
         },
         {
-          "dose": 0.6633788415,
-          "effect": 2.1701753965763393,
+          "dose": 0.5102914162497166,
+          "effect": 0.8680701573534374,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 31.24999999999999
         },
         {
-          "dose": 0.6803885554,
-          "effect": 2.314853756347966,
+          "dose": 0.5170953017997129,
+          "effect": 0.9259415011769996,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 33.33333333333331
         },
         {
-          "dose": 0.6973982693,
-          "effect": 2.4595321161195938,
+          "dose": 0.5238991873497091,
+          "effect": 0.9838128450005625,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 35.41666666666666
         },
         {
-          "dose": 0.7144079832000001,
-          "effect": 2.6042104758912217,
+          "dose": 0.5307030728997053,
+          "effect": 1.0416841888241246,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 37.49999999999998
         },
         {
-          "dose": 0.7314176971,
-          "effect": 2.7488888356628487,
+          "dose": 0.5375069584497015,
+          "effect": 1.0995555326476876,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 39.58333333333332
         },
         {
-          "dose": 0.748427411,
+          "dose": 0.5443108439996978,
+          "effect": 1.1574268764712499,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 41.66666666666665
+        },
+        {
+          "dose": 0.551114729549694,
+          "effect": 1.2152982202948128,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 43.75
+        },
+        {
+          "dose": 0.5579186150996902,
+          "effect": 1.273169564118375,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 45.83333333333332
+        },
+        {
+          "dose": 0.5647225006496864,
+          "effect": 1.3310409079419379,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 47.916666666666664
+        },
+        {
+          "dose": 0.5715263861996827,
+          "effect": 1.3889122517655,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 49.999999999999986
+        },
+        {
+          "dose": 0.5783302717496789,
+          "effect": 1.446783595589063,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 52.08333333333334
+        },
+        {
+          "dose": 0.5851341572996751,
+          "effect": 1.504654939412625,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 54.16666666666666
+        },
+        {
+          "dose": 0.5919380428496713,
+          "effect": 1.562526283236188,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 56.24999999999999
+        },
+        {
+          "dose": 0.5987419283996676,
+          "effect": 1.6203976270597502,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 58.33333333333333
+        },
+        {
+          "dose": 0.6055458139496638,
+          "effect": 1.6782689708833132,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 60.41666666666668
+        },
+        {
+          "dose": 0.61234969949966,
+          "effect": 1.7361403147068752,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 62.49999999999999
+        },
+        {
+          "dose": 0.6191535850496562,
+          "effect": 1.7940116585304375,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 64.58333333333331
+        },
+        {
+          "dose": 0.6259574705996525,
+          "effect": 1.8518830023540005,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 66.66666666666667
+        },
+        {
+          "dose": 0.6327613561496487,
+          "effect": 1.9097543461775623,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 68.74999999999997
+        },
+        {
+          "dose": 0.6395652416996449,
+          "effect": 1.9676256900011255,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 70.83333333333334
+        },
+        {
+          "dose": 0.6463691272496411,
+          "effect": 2.0254970338246876,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 72.91666666666664
+        },
+        {
+          "dose": 0.6531730127996374,
+          "effect": 2.0833683776482506,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 75
+        },
+        {
+          "dose": 0.6599768983496336,
+          "effect": 2.1412397214718126,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 77.08333333333331
+        },
+        {
+          "dose": 0.6667807838996298,
+          "effect": 2.1991110652953756,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 79.16666666666667
+        },
+        {
+          "dose": 0.6735846694496259,
+          "effect": 2.2569824091189368,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 81.24999999999994
+        },
+        {
+          "dose": 0.6803885549996223,
+          "effect": 2.3148537529425006,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 83.33333333333333
+        },
+        {
+          "dose": 0.6871924405496184,
+          "effect": 2.372725096766062,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 85.41666666666661
+        },
+        {
+          "dose": 0.6939963260996147,
+          "effect": 2.430596440589626,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 87.50000000000001
+        },
+        {
+          "dose": 0.7008002116496108,
+          "effect": 2.4884677844131873,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 89.5833333333333
+        },
+        {
+          "dose": 0.7021609887596101,
+          "effect": 2.5000420531779004,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 90
+        },
+        {
+          "dose": 0.7076040971996072,
+          "effect": 2.546339128236751,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 91.66666666666669
+        },
+        {
+          "dose": 0.7144079827496033,
+          "effect": 2.6042104720603123,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 93.74999999999997
+        },
+        {
+          "dose": 0.7212118682995996,
+          "effect": 2.6620818158838753,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 95.83333333333331
+        },
+        {
+          "dose": 0.7280157538495957,
+          "effect": 2.7199531597074373,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 97.91666666666663
+        },
+        {
+          "dose": 0.734819639399592,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.7654371249,
+          "dose": 0.7416235249495882,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.7824468388000001,
+          "dose": 0.7484274104995845,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.7994565527,
+          "dose": 0.7552312960495806,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.8164662666,
+          "dose": 0.762035181599577,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.8334759805,
+          "dose": 0.7688390671495731,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.8504856944000001,
+          "dose": 0.7756429526995694,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.8674954083000002,
+          "dose": 0.7824468382495655,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.8845051222,
+          "dose": 0.7892507237995618,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.9015148361,
+          "dose": 0.796054609349558,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.9185245500000001,
+          "dose": 0.8028584948995542,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.9355342638999999,
+          "dose": 0.8096623804495504,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.9525439778,
+          "dose": 0.8164662659995467,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.9695536917,
+          "dose": 0.8232701515495429,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 0.9865634056000001,
+          "dose": 0.8300740370995391,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 1.0035731195000002,
+          "dose": 0.8368779226495353,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 1.0205828334,
+          "dose": 0.8436818081995315,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 1.0375925473,
+          "dose": 0.8504856937495278,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 1.0546022612000001,
+          "dose": 0.8572895792995241,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 1.0716119751,
+          "dose": 0.8640934648495202,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         },
         {
-          "dose": 1.088621689,
+          "dose": 0.8708973503995164,
           "effect": 2.7778245035310007,
           "low": null,
           "high": null,
           "source": "morton",
-          "location": "Figure 5; Results, Protein intake and changes in FFM"
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8777012359495127,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.884505121499509,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8913090070495051,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.8981128925995013,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9049167781494976,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9117206636994939,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.91852454924949,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9253284347994861,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9321323203494825,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9389362058994786,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9457400914494749,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.952543976999471,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9593478625494674,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9661517480994635,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9729556336494598,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9797595191994561,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9865634047494523,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 0.9933672902994484,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0001711758494447,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0069750613994408,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0137789469494372,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0205828324994333,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0273867180494296,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0341906035994257,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.040994489149422,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0477983746994182,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0546022602494145,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0614061457994108,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.068210031349407,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.075013916899403,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0818178024493994,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
+        },
+        {
+          "dose": 1.0886216879993955,
+          "effect": 2.7778245035310007,
+          "low": null,
+          "high": null,
+          "source": "morton",
+          "location": "Figure 5, reported model coefficients and observed intake range",
+          "share": 100.00000000000001
         }
       ],
       "unitLabel": "g/lb a day",
@@ -11710,56 +13343,98 @@ window.EnoughData = {
         "adversary": "movement_research",
         "statistician": "diet_research"
       },
-      "sourcePrecision": "source point grid with linear interpolation"
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "lift",
+        "mode": "benefit",
+        "answer": "About 0.70 g per pound",
+        "fact": "For a 150-pound lifter, that’s about 105 grams a day: three cooked 4-ounce chicken portions.",
+        "range": [
+          0.4082331329997733,
+          1.0886216879993955
+        ],
+        "rangeLabel": "0.41 to 1.09 grams per pound a day",
+        "default": 0.7021609887596101,
+        "ticks": [
+          0.4082331329997733,
+          0.7,
+          1.0886216879993955
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_move",
+        "adversary": "polish_audit"
+      },
+      "rangeMethod": "Range shown: about 0.41 to 1.09 grams per pound a day",
+      "breakpoint": {
+        "dose": 0.734819639399592,
+        "interval": [
+          0.46720014109974056,
+          0.9979032139994459
+        ],
+        "intervalType": "Published 95% confidence interval for model breakpoint, not response band",
+        "modelComparisonP": 0.079,
+        "flatSecondSlopeImposed": true,
+        "modelArms": 42,
+        "modelParticipants": 723
+      },
+      "conditionalSensitivity": [
+        0.4613034402897438,
+        0.9389362058994786
+      ],
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 0.7021609887596101,
+        "sensitivity": null,
+        "sweetRange": null
+      },
+      "effectUnit": "Modeled extra fat-free mass gain, lb, relative to 0.41 g/lb/day while lifting"
     },
     {
       "id": "sets",
-      "question": "How many sets for muscle?",
-      "fact": "More weekly sets kept paying in the model, with smaller gains; doubling 8 to 16 did not double the result.",
-      "kind": "points",
-      "shape": "continues",
+      "question": "How many sets?",
+      "fact": "More weekly sets went with more growth. Each added set bought less than the last.",
+      "kind": "continuous",
+      "shape": "Keeps paying",
       "unit": "sets/week",
       "effectKind": "change",
-      "effectUnit": "% in the estimated size comparison",
+      "effectUnit": "Percent difference in modeled post/pre muscle-size ratios, relative to zero weekly sets",
       "outcome": "death rate",
       "better": "higher",
       "domain": [
-        1,
-        30
+        0,
+        45
       ],
       "ticks": [
-        1,
-        10,
-        20,
-        30
+        0,
+        15,
+        30,
+        45
       ],
-      "defaultDose": 10,
+      "defaultDose": 16,
       "evidence": "Bayesian meta-regression of resistance-training intervention studies",
       "population": "35 studies, 220 effects, 1032 participants for hypertrophy models. Overall review: 67 studies, 2058 participants, 79.1% male, mean age 25.16 years.",
       "caveats": [
-        "Count direct sets as one, indirect sets as half. A squat may count as one quadriceps set; a row may count as half a biceps set.",
-        "This is added modeled change relative to another training dose, not percent of all possible muscle or predicted pounds gained.",
-        "Interventions were short; individual recovery and training status matter.",
-        "At high volumes the data remain compatible with a functional plateau or inverted-U; a best-fit rising model does not prove unlimited gains.",
-        "One-set reference avoids treating a zero-dose model extrapolation as an observed no-training group. Supplemental zero-reference rows are supplied for auditing only.",
-        "A 10-set marker is a practical benchmark, supported by the ACSM 2026 overview, not a minimum or optimum.",
-        "A 2% contrast is a relative difference between post/pre muscle-size ratios. It is neither 2% of the muscle gained nor an absolute two-percentage-point gain.",
-        "The plotted percentage is a ratio of modeled post/pre muscle-size ratios. It is not a percentage of maximum muscle or the percentage improvement in an individual."
+        "Direct work counts as one set; indirect work counts as half. The amount is per muscle, not total gym sets.",
+        "The model compares post/pre muscle-size ratios with zero weekly sets. It does not predict pounds of muscle or a percentage of all possible growth.",
+        "Going from 8 to 16 sets gives a 2.01% relative difference between those modeled ratios, with a 1.20 to 2.77% credible interval. The 16-to 32 contrast is 2.91%; doubling adds more total sets even while each additional set buys less.",
+        "After weekly volume was accounted for, twice-weekly training had no clear growth advantage over once weekly. This does not establish equivalence or apply to strength.",
+        "The 90% crossing near 38 sets describes this 0 to 45 range. It is not an ideal routine. These short interventions cannot settle long-term recovery or the high-volume ceiling."
       ],
-      "extraction": "The author HTML table supplies comparisons against one weekly set, including the algebraic zero at 1 versus 1. Its percentages are (exp(log-response-ratio contrast)-1)*100, adjusted for frequency, duration and training status. Each interval is the published interval for that contrast.",
+      "extraction": "Exact author-deposited High=x, Low=0 muscle-size model contrasts. Zero-training controls and observed maximum 45 verified against data.hyp.RData.",
       "uncertainty": "95% credible interval (not frequentist confidence interval) around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
       "sources": [
         {
           "id": "sets-0",
           "url": "https://doi.org/10.1007/s40279-025-02344-w",
           "citation": "Pelland et al. 2026. The Resistance Training Dose Response",
-          "location": "Figure 7; OSF supplementary pairwise.comparisons.sets.week.fractional.hyp.doc, High=x, Low=1"
+          "location": "Figure 7; OSF supplementary set contrasts, High=x, Low=0"
         },
         {
           "id": "sets-1",
           "url": "https://osf.io/download/2c3bt/",
           "citation": "Pelland et al. 2026. The Resistance Training Dose Response",
-          "location": "Author-deposited estimates; Figure 7; OSF supplementary pairwise.comparisons.sets.week.fractional.hyp.doc, High=x, Low=1"
+          "location": "Author-deposited estimates; Figure 7; OSF supplementary pairwise.comparisons.sets.week.fractional.hyp.doc, High=x, Low=0"
         },
         {
           "id": "acsm2026",
@@ -11771,469 +13446,512 @@ window.EnoughData = {
       "intervalKind": "credible",
       "points": [
         {
-          "dose": 1,
+          "dose": 0,
           "effect": 0,
           "ciLow": 0,
           "ciHigh": 0,
           "source": "sets-1",
           "low": 0,
           "high": 0,
-          "location": "Reference 1 versus itself"
+          "location": "Reference 0 versus itself",
+          "share": 0
+        },
+        {
+          "dose": 1,
+          "effect": 0.74,
+          "ciLow": 0.44,
+          "ciHigh": 1.01,
+          "source": "sets-1",
+          "low": 0.44,
+          "high": 1.01,
+          "location": "High=1, Low=0 row",
+          "share": 6.870937790157846
         },
         {
           "dose": 2,
-          "effect": 0.56,
-          "ciLow": 0.34,
-          "ciHigh": 0.78,
+          "effect": 1.3,
+          "ciLow": 0.78,
+          "ciHigh": 1.8,
           "source": "sets-1",
-          "low": 0.34,
-          "high": 0.78,
-          "location": "High=2, Low=1 row"
+          "low": 0.78,
+          "high": 1.8,
+          "location": "High=2, Low=0 row",
+          "share": 12.070566388115136
         },
         {
           "dose": 3,
-          "effect": 1.04,
-          "ciLow": 0.62,
-          "ciHigh": 1.44,
+          "effect": 1.78,
+          "ciLow": 1.07,
+          "ciHigh": 2.47,
           "source": "sets-1",
-          "low": 0.62,
-          "high": 1.44,
-          "location": "High=3, Low=1 row"
+          "low": 1.07,
+          "high": 2.47,
+          "location": "High=3, Low=0 row",
+          "share": 16.527390900649955
         },
         {
           "dose": 4,
-          "effect": 1.46,
-          "ciLow": 0.88,
-          "ciHigh": 2.02,
+          "effect": 2.21,
+          "ciLow": 1.32,
+          "ciHigh": 3.06,
           "source": "sets-1",
-          "low": 0.88,
-          "high": 2.02,
-          "location": "High=4, Low=1 row"
+          "low": 1.32,
+          "high": 3.06,
+          "location": "High=4, Low=0 row",
+          "share": 20.51996285979573
         },
         {
           "dose": 5,
-          "effect": 1.85,
-          "ciLow": 1.1,
-          "ciHigh": 2.55,
+          "effect": 2.6,
+          "ciLow": 1.55,
+          "ciHigh": 3.59,
           "source": "sets-1",
-          "low": 1.1,
-          "high": 2.55,
-          "location": "High=5, Low=1 row"
+          "low": 1.55,
+          "high": 3.59,
+          "location": "High=5, Low=0 row",
+          "share": 24.141132776230272
         },
         {
           "dose": 6,
-          "effect": 2.2,
-          "ciLow": 1.31,
-          "ciHigh": 3.05,
+          "effect": 2.95,
+          "ciLow": 1.76,
+          "ciHigh": 4.09,
           "source": "sets-1",
-          "low": 1.31,
-          "high": 3.05,
-          "location": "High=6, Low=1 row"
+          "low": 1.76,
+          "high": 4.09,
+          "location": "High=6, Low=0 row",
+          "share": 27.390900649953576
         },
         {
           "dose": 7,
-          "effect": 2.53,
-          "ciLow": 1.51,
-          "ciHigh": 3.51,
+          "effect": 3.29,
+          "ciLow": 1.96,
+          "ciHigh": 4.55,
           "source": "sets-1",
-          "low": 1.51,
-          "high": 3.51,
-          "location": "High=7, Low=1 row"
+          "low": 1.96,
+          "high": 4.55,
+          "location": "High=7, Low=0 row",
+          "share": 30.547818012999073
         },
         {
           "dose": 8,
-          "effect": 2.84,
-          "ciLow": 1.7,
-          "ciHigh": 3.94,
+          "effect": 3.6,
+          "ciLow": 2.14,
+          "ciHigh": 4.99,
           "source": "sets-1",
-          "low": 1.7,
-          "high": 3.94,
-          "location": "High=8, Low=1 row"
+          "low": 2.14,
+          "high": 4.99,
+          "location": "High=8, Low=0 row",
+          "share": 33.42618384401114
         },
         {
           "dose": 9,
-          "effect": 3.14,
-          "ciLow": 1.87,
-          "ciHigh": 4.35,
+          "effect": 3.9,
+          "ciLow": 2.32,
+          "ciHigh": 5.41,
           "source": "sets-1",
-          "low": 1.87,
-          "high": 4.35,
-          "location": "High=9, Low=1 row"
+          "low": 2.32,
+          "high": 5.41,
+          "location": "High=9, Low=0 row",
+          "share": 36.211699164345404
         },
         {
           "dose": 10,
-          "effect": 3.42,
-          "ciLow": 2.04,
-          "ciHigh": 4.74,
+          "effect": 4.18,
+          "ciLow": 2.49,
+          "ciHigh": 5.81,
           "source": "sets-1",
-          "low": 2.04,
-          "high": 4.74,
-          "location": "High=10, Low=1 row"
+          "low": 2.49,
+          "high": 5.81,
+          "location": "High=10, Low=0 row",
+          "share": 38.81151346332405
         },
         {
           "dose": 11,
-          "effect": 3.69,
-          "ciLow": 2.2,
-          "ciHigh": 5.12,
+          "effect": 4.45,
+          "ciLow": 2.65,
+          "ciHigh": 6.19,
           "source": "sets-1",
-          "low": 2.2,
-          "high": 5.12,
-          "location": "High=11, Low=1 row"
+          "low": 2.65,
+          "high": 6.19,
+          "location": "High=11, Low=0 row",
+          "share": 41.318477251624884
         },
         {
           "dose": 12,
-          "effect": 3.95,
-          "ciLow": 2.35,
-          "ciHigh": 5.48,
+          "effect": 4.72,
+          "ciLow": 2.8,
+          "ciHigh": 6.55,
           "source": "sets-1",
-          "low": 2.35,
-          "high": 5.48,
-          "location": "High=12, Low=1 row"
+          "low": 2.8,
+          "high": 6.55,
+          "location": "High=12, Low=0 row",
+          "share": 43.82544103992572
         },
         {
           "dose": 13,
-          "effect": 4.2,
-          "ciLow": 2.5,
-          "ciHigh": 5.83,
+          "effect": 4.97,
+          "ciLow": 2.95,
+          "ciHigh": 6.91,
           "source": "sets-1",
-          "low": 2.5,
-          "high": 5.83,
-          "location": "High=13, Low=1 row"
+          "low": 2.95,
+          "high": 6.91,
+          "location": "High=13, Low=0 row",
+          "share": 46.14670380687094
         },
         {
           "dose": 14,
-          "effect": 4.44,
-          "ciLow": 2.64,
-          "ciHigh": 6.17,
+          "effect": 5.21,
+          "ciLow": 3.09,
+          "ciHigh": 7.25,
           "source": "sets-1",
-          "low": 2.64,
-          "high": 6.17,
-          "location": "High=14, Low=1 row"
+          "low": 3.09,
+          "high": 7.25,
+          "location": "High=14, Low=0 row",
+          "share": 48.37511606313835
         },
         {
           "dose": 15,
-          "effect": 4.68,
-          "ciLow": 2.78,
-          "ciHigh": 6.5,
+          "effect": 5.45,
+          "ciLow": 3.23,
+          "ciHigh": 7.58,
           "source": "sets-1",
-          "low": 2.78,
-          "high": 6.5,
-          "location": "High=15, Low=1 row"
+          "low": 3.23,
+          "high": 7.58,
+          "location": "High=15, Low=0 row",
+          "share": 50.60352831940576
         },
         {
           "dose": 16,
-          "effect": 4.91,
-          "ciLow": 2.91,
-          "ciHigh": 6.82,
+          "effect": 5.68,
+          "ciLow": 3.37,
+          "ciHigh": 7.91,
           "source": "sets-1",
-          "low": 2.91,
-          "high": 6.82,
-          "location": "High=16, Low=1 row"
+          "low": 3.37,
+          "high": 7.91,
+          "location": "High=16, Low=0 row",
+          "share": 52.73909006499536
         },
         {
           "dose": 17,
-          "effect": 5.13,
-          "ciLow": 3.04,
-          "ciHigh": 7.13,
+          "effect": 5.9,
+          "ciLow": 3.5,
+          "ciHigh": 8.22,
           "source": "sets-1",
-          "low": 3.04,
-          "high": 7.13,
-          "location": "High=17, Low=1 row"
+          "low": 3.5,
+          "high": 8.22,
+          "location": "High=17, Low=0 row",
+          "share": 54.78180129990715
         },
         {
           "dose": 18,
-          "effect": 5.35,
-          "ciLow": 3.17,
-          "ciHigh": 7.44,
+          "effect": 6.12,
+          "ciLow": 3.63,
+          "ciHigh": 8.53,
           "source": "sets-1",
-          "low": 3.17,
-          "high": 7.44,
-          "location": "High=18, Low=1 row"
+          "low": 3.63,
+          "high": 8.53,
+          "location": "High=18, Low=0 row",
+          "share": 56.82451253481894
         },
         {
           "dose": 19,
-          "effect": 5.56,
-          "ciLow": 3.3,
-          "ciHigh": 7.73,
+          "effect": 6.33,
+          "ciLow": 3.75,
+          "ciHigh": 8.83,
           "source": "sets-1",
-          "low": 3.3,
-          "high": 7.73,
-          "location": "High=19, Low=1 row"
+          "low": 3.75,
+          "high": 8.83,
+          "location": "High=19, Low=0 row",
+          "share": 58.77437325905293
         },
         {
           "dose": 20,
-          "effect": 5.76,
-          "ciLow": 3.42,
-          "ciHigh": 8.02,
+          "effect": 6.54,
+          "ciLow": 3.87,
+          "ciHigh": 9.12,
           "source": "sets-1",
-          "low": 3.42,
-          "high": 8.02,
-          "location": "High=20, Low=1 row"
+          "low": 3.87,
+          "high": 9.12,
+          "location": "High=20, Low=0 row",
+          "share": 60.72423398328691
         },
         {
           "dose": 21,
-          "effect": 5.96,
-          "ciLow": 3.53,
-          "ciHigh": 8.31,
+          "effect": 6.74,
+          "ciLow": 3.99,
+          "ciHigh": 9.41,
           "source": "sets-1",
-          "low": 3.53,
-          "high": 8.31,
-          "location": "High=21, Low=1 row"
+          "low": 3.99,
+          "high": 9.41,
+          "location": "High=21, Low=0 row",
+          "share": 62.58124419684309
         },
         {
           "dose": 22,
-          "effect": 6.16,
-          "ciLow": 3.65,
-          "ciHigh": 8.59,
+          "effect": 6.94,
+          "ciLow": 4.11,
+          "ciHigh": 9.69,
           "source": "sets-1",
-          "low": 3.65,
-          "high": 8.59,
-          "location": "High=22, Low=1 row"
+          "low": 4.11,
+          "high": 9.69,
+          "location": "High=22, Low=0 row",
+          "share": 64.43825441039925
         },
         {
           "dose": 23,
-          "effect": 6.36,
-          "ciLow": 3.76,
-          "ciHigh": 8.86,
+          "effect": 7.14,
+          "ciLow": 4.22,
+          "ciHigh": 9.96,
           "source": "sets-1",
-          "low": 3.76,
-          "high": 8.86,
-          "location": "High=23, Low=1 row"
+          "low": 4.22,
+          "high": 9.96,
+          "location": "High=23, Low=0 row",
+          "share": 66.29526462395543
         },
         {
           "dose": 24,
-          "effect": 6.55,
-          "ciLow": 3.88,
-          "ciHigh": 9.13,
+          "effect": 7.33,
+          "ciLow": 4.33,
+          "ciHigh": 10.23,
           "source": "sets-1",
-          "low": 3.88,
-          "high": 9.13,
-          "location": "High=24, Low=1 row"
+          "low": 4.33,
+          "high": 10.23,
+          "location": "High=24, Low=0 row",
+          "share": 68.0594243268338
         },
         {
           "dose": 25,
-          "effect": 6.73,
-          "ciLow": 3.98,
-          "ciHigh": 9.39,
+          "effect": 7.52,
+          "ciLow": 4.44,
+          "ciHigh": 10.5,
           "source": "sets-1",
-          "low": 3.98,
-          "high": 9.39,
-          "location": "High=25, Low=1 row"
+          "low": 4.44,
+          "high": 10.5,
+          "location": "High=25, Low=0 row",
+          "share": 69.82358402971217
         },
         {
           "dose": 26,
-          "effect": 6.92,
-          "ciLow": 4.09,
-          "ciHigh": 9.65,
+          "effect": 7.7,
+          "ciLow": 4.55,
+          "ciHigh": 10.76,
           "source": "sets-1",
-          "low": 4.09,
-          "high": 9.65,
-          "location": "High=26, Low=1 row"
+          "low": 4.55,
+          "high": 10.76,
+          "location": "High=26, Low=0 row",
+          "share": 71.49489322191272
         },
         {
           "dose": 27,
-          "effect": 7.1,
-          "ciLow": 4.2,
-          "ciHigh": 9.91,
+          "effect": 7.88,
+          "ciLow": 4.66,
+          "ciHigh": 11.02,
           "source": "sets-1",
-          "low": 4.2,
-          "high": 9.91,
-          "location": "High=27, Low=1 row"
+          "low": 4.66,
+          "high": 11.02,
+          "location": "High=27, Low=0 row",
+          "share": 73.16620241411329
         },
         {
           "dose": 28,
-          "effect": 7.27,
-          "ciLow": 4.3,
-          "ciHigh": 10.16,
+          "effect": 8.06,
+          "ciLow": 4.76,
+          "ciHigh": 11.27,
           "source": "sets-1",
-          "low": 4.3,
-          "high": 10.16,
-          "location": "High=28, Low=1 row"
+          "low": 4.76,
+          "high": 11.27,
+          "location": "High=28, Low=0 row",
+          "share": 74.83751160631384
         },
         {
           "dose": 29,
-          "effect": 7.45,
-          "ciLow": 4.4,
-          "ciHigh": 10.4,
+          "effect": 8.24,
+          "ciLow": 4.86,
+          "ciHigh": 11.52,
           "source": "sets-1",
-          "low": 4.4,
-          "high": 10.4,
-          "location": "High=29, Low=1 row"
+          "low": 4.86,
+          "high": 11.52,
+          "location": "High=29, Low=0 row",
+          "share": 76.50882079851439
         },
         {
           "dose": 30,
-          "effect": 7.62,
-          "ciLow": 4.5,
-          "ciHigh": 10.65,
+          "effect": 8.41,
+          "ciLow": 4.96,
+          "ciHigh": 11.77,
           "source": "sets-1",
-          "low": 4.5,
-          "high": 10.65,
-          "location": "High=30, Low=1 row"
+          "low": 4.96,
+          "high": 11.77,
+          "location": "High=30, Low=0 row",
+          "share": 78.08727948003714
         },
         {
           "dose": 31,
-          "effect": 7.79,
-          "ciLow": 4.6,
-          "ciHigh": 10.89,
+          "effect": 8.58,
+          "ciLow": 5.06,
+          "ciHigh": 12.01,
           "source": "sets-1",
-          "low": 4.6,
-          "high": 10.89,
-          "location": "High=31, Low=1 row"
+          "low": 5.06,
+          "high": 12.01,
+          "location": "High=31, Low=0 row",
+          "share": 79.66573816155989
         },
         {
           "dose": 32,
-          "effect": 7.96,
-          "ciLow": 4.7,
-          "ciHigh": 11.13,
+          "effect": 8.75,
+          "ciLow": 5.16,
+          "ciHigh": 12.25,
           "source": "sets-1",
-          "low": 4.7,
-          "high": 11.13,
-          "location": "High=32, Low=1 row"
+          "low": 5.16,
+          "high": 12.25,
+          "location": "High=32, Low=0 row",
+          "share": 81.24419684308263
         },
         {
           "dose": 33,
-          "effect": 8.12,
-          "ciLow": 4.79,
-          "ciHigh": 11.36,
-          "source": "sets-1",
-          "low": 4.79,
-          "high": 11.36,
-          "location": "High=33, Low=1 row"
-        },
-        {
-          "dose": 34,
-          "effect": 8.29,
-          "ciLow": 4.89,
-          "ciHigh": 11.59,
-          "source": "sets-1",
-          "low": 4.89,
-          "high": 11.59,
-          "location": "High=34, Low=1 row"
-        },
-        {
-          "dose": 35,
-          "effect": 8.45,
-          "ciLow": 4.98,
-          "ciHigh": 11.82,
-          "source": "sets-1",
-          "low": 4.98,
-          "high": 11.82,
-          "location": "High=35, Low=1 row"
-        },
-        {
-          "dose": 36,
-          "effect": 8.61,
-          "ciLow": 5.07,
-          "ciHigh": 12.04,
-          "source": "sets-1",
-          "low": 5.07,
-          "high": 12.04,
-          "location": "High=36, Low=1 row"
-        },
-        {
-          "dose": 37,
-          "effect": 8.76,
-          "ciLow": 5.17,
-          "ciHigh": 12.27,
-          "source": "sets-1",
-          "low": 5.17,
-          "high": 12.27,
-          "location": "High=37, Low=1 row"
-        },
-        {
-          "dose": 38,
           "effect": 8.92,
           "ciLow": 5.26,
           "ciHigh": 12.49,
           "source": "sets-1",
           "low": 5.26,
           "high": 12.49,
-          "location": "High=38, Low=1 row"
+          "location": "High=33, Low=0 row",
+          "share": 82.8226555246054
+        },
+        {
+          "dose": 34,
+          "effect": 9.08,
+          "ciLow": 5.35,
+          "ciHigh": 12.72,
+          "source": "sets-1",
+          "low": 5.35,
+          "high": 12.72,
+          "location": "High=34, Low=0 row",
+          "share": 84.30826369545032
+        },
+        {
+          "dose": 35,
+          "effect": 9.24,
+          "ciLow": 5.44,
+          "ciHigh": 12.95,
+          "source": "sets-1",
+          "low": 5.44,
+          "high": 12.95,
+          "location": "High=35, Low=0 row",
+          "share": 85.79387186629526
+        },
+        {
+          "dose": 36,
+          "effect": 9.4,
+          "ciLow": 5.54,
+          "ciHigh": 13.18,
+          "source": "sets-1",
+          "low": 5.54,
+          "high": 13.18,
+          "location": "High=36, Low=0 row",
+          "share": 87.2794800371402
+        },
+        {
+          "dose": 37,
+          "effect": 9.56,
+          "ciLow": 5.63,
+          "ciHigh": 13.41,
+          "source": "sets-1",
+          "low": 5.63,
+          "high": 13.41,
+          "location": "High=37, Low=0 row",
+          "share": 88.76508820798514
+        },
+        {
+          "dose": 38,
+          "effect": 9.72,
+          "ciLow": 5.72,
+          "ciHigh": 13.63,
+          "source": "sets-1",
+          "low": 5.72,
+          "high": 13.63,
+          "location": "High=38, Low=0 row",
+          "share": 90.2506963788301
         },
         {
           "dose": 39,
-          "effect": 9.07,
-          "ciLow": 5.34,
-          "ciHigh": 12.71,
+          "effect": 9.87,
+          "ciLow": 5.81,
+          "ciHigh": 13.85,
           "source": "sets-1",
-          "low": 5.34,
-          "high": 12.71,
-          "location": "High=39, Low=1 row"
+          "low": 5.81,
+          "high": 13.85,
+          "location": "High=39, Low=0 row",
+          "share": 91.6434540389972
         },
         {
           "dose": 40,
-          "effect": 9.22,
-          "ciLow": 5.43,
-          "ciHigh": 12.92,
+          "effect": 10.03,
+          "ciLow": 5.9,
+          "ciHigh": 14.07,
           "source": "sets-1",
-          "low": 5.43,
-          "high": 12.92,
-          "location": "High=40, Low=1 row"
+          "low": 5.9,
+          "high": 14.07,
+          "location": "High=40, Low=0 row",
+          "share": 93.12906220984215
         },
         {
           "dose": 41,
-          "effect": 9.37,
-          "ciLow": 5.52,
-          "ciHigh": 13.14,
+          "effect": 10.18,
+          "ciLow": 5.98,
+          "ciHigh": 14.28,
           "source": "sets-1",
-          "low": 5.52,
-          "high": 13.14,
-          "location": "High=41, Low=1 row"
+          "low": 5.98,
+          "high": 14.28,
+          "location": "High=41, Low=0 row",
+          "share": 94.5218198700093
         },
         {
           "dose": 42,
-          "effect": 9.52,
-          "ciLow": 5.6,
-          "ciHigh": 13.35,
+          "effect": 10.33,
+          "ciLow": 6.07,
+          "ciHigh": 14.5,
           "source": "sets-1",
-          "low": 5.6,
-          "high": 13.35,
-          "location": "High=42, Low=1 row"
+          "low": 6.07,
+          "high": 14.5,
+          "location": "High=42, Low=0 row",
+          "share": 95.91457753017642
         },
         {
           "dose": 43,
-          "effect": 9.67,
-          "ciLow": 5.69,
-          "ciHigh": 13.56,
+          "effect": 10.47,
+          "ciLow": 6.15,
+          "ciHigh": 14.71,
           "source": "sets-1",
-          "low": 5.69,
-          "high": 13.56,
-          "location": "High=43, Low=1 row"
+          "low": 6.15,
+          "high": 14.71,
+          "location": "High=43, Low=0 row",
+          "share": 97.21448467966574
         },
         {
           "dose": 44,
-          "effect": 9.81,
-          "ciLow": 5.77,
-          "ciHigh": 13.77,
+          "effect": 10.62,
+          "ciLow": 6.24,
+          "ciHigh": 14.92,
           "source": "sets-1",
-          "low": 5.77,
-          "high": 13.77,
-          "location": "High=44, Low=1 row"
+          "low": 6.24,
+          "high": 14.92,
+          "location": "High=44, Low=0 row",
+          "share": 98.60724233983288
         },
         {
           "dose": 45,
-          "effect": 9.96,
-          "ciLow": 5.86,
-          "ciHigh": 13.97,
+          "effect": 10.77,
+          "ciLow": 6.32,
+          "ciHigh": 15.13,
           "source": "sets-1",
-          "low": 5.86,
-          "high": 13.97,
-          "location": "High=45, Low=1 row"
+          "low": 6.32,
+          "high": 15.13,
+          "location": "High=45, Low=0 row",
+          "share": 100
         }
       ],
-      "marker": {
-        "type": "reported",
-        "doses": [
-          10
-        ],
-        "label": "10 sets: a starting benchmark",
-        "reason": "Best-fit square-root model has no finite asymptote. A truncated plot does not define maximum growth.",
-        "verification": {
-          "method": "source-dose",
-          "source": "acsm2026",
-          "dose": 10
-        }
-      },
       "unitLabel": "counted sets per muscle a week",
       "yDomain": [
         0,
@@ -12255,8 +13973,7394 @@ window.EnoughData = {
         "adversary": "life_research",
         "statistician": "diet_research"
       },
-      "sourcePrecision": "source point grid with linear interpolation"
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "lift",
+        "mode": "benefit",
+        "shape": "Keeps paying",
+        "answer": "More sets, more growth",
+        "fact": "More weekly sets went with more growth. Each added set bought less than the last.",
+        "range": [
+          0,
+          45
+        ],
+        "rangeLabel": "0 to 45 weekly sets per muscle",
+        "default": 16,
+        "ticks": [
+          0,
+          15,
+          30,
+          45
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_move",
+        "adversary": "polish_audit"
+      },
+      "rangeMethod": "Range shown: 0 to 45 weekly sets per muscle",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 37.83125,
+        "sensitivity": [
+          37.64444444444446,
+          37.940909090909074
+        ],
+        "sweetRange": null
+      }
     },
+    {
+      "id": "sleep",
+      "status": "recommend",
+      "question": "How much sleep?",
+      "shape": "A sweet spot",
+      "contradictsEnough": true,
+      "fact": "Seven hours was the low point in this older self-report curve. Watches can draw a different curve.",
+      "doseUnit": "hours per day",
+      "effectUnit": "relative mortality risk, 7 hours = 1",
+      "direction": "lower",
+      "points": [
+        {
+          "dose": 3,
+          "effect": 1.12,
+          "low": 1.1,
+          "high": 1.14,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 4,
+          "effect": 1.08,
+          "low": 1.06,
+          "high": 1.09,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 5,
+          "effect": 1.04,
+          "low": 1.03,
+          "high": 1.05,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 6,
+          "effect": 1.01,
+          "low": 1,
+          "high": 1.01,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 7,
+          "effect": 1,
+          "low": null,
+          "high": null,
+          "source": "yin2017",
+          "reference": true,
+          "ciByDefinition": 1,
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 8,
+          "effect": 1.04,
+          "low": 1.04,
+          "high": 1.05,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 9,
+          "effect": 1.15,
+          "low": 1.14,
+          "high": 1.16,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 10,
+          "effect": 1.32,
+          "low": 1.29,
+          "high": 1.35,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        },
+        {
+          "dose": 11,
+          "effect": 1.53,
+          "low": 1.47,
+          "high": 1.59,
+          "source": "yin2017",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "share": null
+        }
+      ],
+      "uncertainty": "The soft band spans 6 to 7.25 hours, where this interpolated curve stays within 1% of its lowest risk. That tolerance is our display choice, not a clinical sleep range. Repeating it on lower and upper curves shifts the edges slightly; neither gives a confidence interval for a prescription.",
+      "evidenceType": "meta-analysis of prospective observational cohorts",
+      "population": "Generally healthy adult cohorts; 40 risk estimates in this nonlinear mortality table. All sleep estimates were self-reported or interviewed.",
+      "caveats": [
+        "Existing illness can cause longer sleep. These associations do not show that shortening sleep improves health.",
+        "These older studies used self-reports or interviews. A 2024 device study found no increased risk from longer sleep, and a 2026 comparison found different low-risk ranges by measurement method.",
+        "Sleep quality, timing, age, regularity and sleep disorders also matter. This curve is not a personal sleep prescription."
+      ],
+      "sources": [
+        {
+          "id": "yin2017",
+          "citation": "Yin et al. 2017. Relationship of sleep duration with all-cause mortality and cardiovascular events. Journal of the American Heart Association 6:e005947.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5634263/",
+          "table": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A",
+          "extraction": "Published numerical table, retrieved as NCBI BioC XML. No digitization.",
+          "doi": "10.1161/JAHA.117.005947",
+          "verified": "2026-10-04",
+          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2 A"
+        },
+        {
+          "id": "yuan2024",
+          "citation": "Yuan et al. 2024. Self-supervised learning of accelerometer data provides new insights for sleep and its association with mortality. npj Digital Medicine 7:86.",
+          "url": "https://www.nature.com/articles/s41746-024-01065-0",
+          "table": "Figure 4 and Supplementary Figure 23",
+          "extraction": "Primary text used for the conflicting longer-sleep finding, not for chart points.",
+          "doi": "10.1038/s41746-024-01065-0",
+          "verified": "2026-10-04",
+          "location": "Figure 4 and Supplementary Figure 23"
+        },
+        {
+          "id": "chaput2026",
+          "citation": "Chaput et al. 2026. Dose-response associations between sleep duration and health outcomes in adults: comparison between self-reported and device-based measures. Sleep: zsag193.",
+          "url": "https://academic.oup.com/sleep/advance-article-abstract/doi/10.1093/sleep/zsag193/8734745",
+          "table": "Primaryabstract,7 hour mortality estimates and outcome-spanning reported minima",
+          "doi": "10.1093/sleep/zsag193",
+          "verified": "2026-10-04",
+          "location": "Primaryabstract,7 hour mortality estimates and outcome-spanning reported minima"
+        }
+      ],
+      "extraction": "Exact Table 2 all-cause mortality column, NCBI BioC XML. Direct table values, no inferred CI or figure digitization.",
+      "verified": "2026-10-04",
+      "kind": "continuous",
+      "unit": "hours/night",
+      "evidence": "meta-analysis of prospective observational cohorts",
+      "better": "lower",
+      "unitLabel": "hours a night",
+      "effectKind": "risk",
+      "outcome": "death rate",
+      "domain": [
+        3,
+        11
+      ],
+      "ticks": [
+        3,
+        5,
+        7,
+        9,
+        11
+      ],
+      "yDomain": [
+        0.95,
+        1.6
+      ],
+      "yTicks": [
+        1,
+        1.3,
+        1.6
+      ],
+      "defaultDose": 7,
+      "step": 0.1,
+      "xLabel": "Sleep (hours a night)",
+      "yLabel": "Death rate vs 7 hours",
+      "personalNote": "Seven hours is the low point of this association, not your sleep requirement. Longer sleep can reflect illness; do not use this graph to decide to sleep less.",
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "life_research",
+        "adversary": "diet_research",
+        "statistician": "movement_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "rest",
+        "mode": "sweet",
+        "answer": "Around 7 hours",
+        "fact": "Seven hours was the low point in this older self-report curve. Watches can draw a different curve.",
+        "range": [
+          3,
+          11
+        ],
+        "rangeLabel": "3 to 11 hours a night",
+        "margin": 0.01,
+        "default": 7,
+        "ticks": [
+          3,
+          5,
+          7,
+          9,
+          11
+        ]
+      },
+      "reverification": {
+        "researcher": "polish_audit",
+        "adversary": "v2_food"
+      },
+      "rangeMethod": "Yin 2017 Table 2 numeric evaluation range",
+      "sweetSpot": {
+        "method": "Piecewise linear interpolation between exact hourly Table 2 point estimates. Highlight RR(h) <= 1.01 * min(RR).",
+        "tolerance": {
+          "type": "relative-risk-distance-from-best",
+          "fraction": 0.01,
+          "chosenBy": "Enough design choice, not source recommendation"
+        },
+        "central": {
+          "bestEffect": 1,
+          "thresholdEffect": 1.01,
+          "bestDose": [
+            7
+          ],
+          "intervals": [
+            [
+              6,
+              7.25
+            ]
+          ]
+        },
+        "lowerPointwiseCurve": {
+          "bestEffect": 1,
+          "thresholdEffect": 1.01,
+          "bestDose": [
+            6,
+            7
+          ],
+          "intervals": [
+            [
+              5.666666666666667,
+              7.25
+            ]
+          ]
+        },
+        "upperPointwiseCurve": {
+          "bestEffect": 1,
+          "thresholdEffect": 1.01,
+          "bestDose": [
+            7
+          ],
+          "intervals": [
+            [
+              6,
+              7.2
+            ]
+          ]
+        },
+        "ciInterpretation": "Reapplying a tolerance to pointwise limits is a sensitivity illustration, not a confidence interval for the best sleep amount.",
+        "displayPrecision": "About 7 hours. The 6 to 7.25 hour highlight belongs to this rounded older curve. Do not sell it as a clinical sleep range.",
+        "personalPrescription": false,
+        "alternativeShareTolerance": {
+          "method": "Share>=0.9, equivalent to RR <= 1.012 for central curve",
+          "range": [
+            5.933333333333334,
+            7.3
+          ],
+          "sourceRecommendation": false
+        }
+      },
+      "enoughPolicy": "none",
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": [
+          6,
+          7.25
+        ]
+      }
+    },
+    {
+      "verified": "2026-10-04",
+      "status": "recommend",
+      "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
+      "direction": "lower",
+      "uncertainty": "published-95-percent-ci. Pointwise uncertainty in a group association or mean treatment difference, not a prediction interval for one person. The reference value is fixed by definition.",
+      "id": "fruit-veg",
+      "question": "How much fruit and veg?",
+      "shape": "Most arrives early",
+      "contradictsEnough": false,
+      "fact": "The group eating about five servings did best; seven did no better.",
+      "doseUnit": "servings/day",
+      "effectUnit": "relative death rate, lowest intake quintile = 1",
+      "coordinate": "category-index",
+      "evidenceType": "prospective observational cohort",
+      "population": "66, 719 women in the Nurses Health Study, US health professionals initially without cardiovascular disease, cancer, or diabetes.",
+      "points": [
+        {
+          "dose": 0,
+          "originalDose": 2.1,
+          "effect": 1,
+          "low": 1,
+          "high": 1,
+          "source": "wang2021",
+          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
+          "reference": true,
+          "categoryIndex": 0,
+          "label": "2.1 servings (group median)",
+          "doseLow": 1.7,
+          "doseHigh": 2.5,
+          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
+          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
+          "share": 0,
+          "shareFromLowerEffectCurve": 0,
+          "shareFromUpperEffectCurve": 0,
+          "sourceDose": 2.1,
+          "shortLabel": "2.1"
+        },
+        {
+          "dose": 1,
+          "originalDose": 3.3,
+          "effect": 0.96,
+          "low": 0.91,
+          "high": 1,
+          "source": "wang2021",
+          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
+          "reference": false,
+          "categoryIndex": 1,
+          "label": "3.3 servings (group median)",
+          "doseLow": 3,
+          "doseHigh": 3.5,
+          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
+          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
+          "share": 30.769230769230795,
+          "shareFromLowerEffectCurve": 0.5294117647058821,
+          "shareFromUpperEffectCurve": 0,
+          "sourceDose": 3.3,
+          "shortLabel": "3.3"
+        },
+        {
+          "dose": 2,
+          "originalDose": 4.2,
+          "effect": 0.9,
+          "low": 0.86,
+          "high": 0.94,
+          "source": "wang2021",
+          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
+          "reference": false,
+          "categoryIndex": 2,
+          "label": "4.2 servings (group median)",
+          "doseLow": 4,
+          "doseHigh": 4.5,
+          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
+          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
+          "share": 76.9230769230769,
+          "shareFromLowerEffectCurve": 0.823529411764706,
+          "shareFromUpperEffectCurve": 0.7500000000000007,
+          "sourceDose": 4.2,
+          "shortLabel": "4.2"
+        },
+        {
+          "dose": 3,
+          "originalDose": 5.3,
+          "effect": 0.87,
+          "low": 0.83,
+          "high": 0.92,
+          "source": "wang2021",
+          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
+          "reference": false,
+          "categoryIndex": 3,
+          "label": "5.3 servings (group median)",
+          "doseLow": 5,
+          "doseHigh": 5.7,
+          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
+          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
+          "share": 100,
+          "shareFromLowerEffectCurve": 1.0000000000000002,
+          "shareFromUpperEffectCurve": 0.9999999999999994,
+          "sourceDose": 5.3,
+          "shortLabel": "5.3"
+        },
+        {
+          "dose": 4,
+          "originalDose": 7.3,
+          "effect": 0.89,
+          "low": 0.84,
+          "high": 0.93,
+          "source": "wang2021",
+          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
+          "reference": false,
+          "categoryIndex": 4,
+          "label": "7.3 servings (group median)",
+          "doseLow": 6.6,
+          "doseHigh": 8.5,
+          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
+          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
+          "share": 84.6153846153846,
+          "shareFromLowerEffectCurve": 0.9411764705882354,
+          "shareFromUpperEffectCurve": 0.8749999999999993,
+          "sourceDose": 7.3,
+          "shortLabel": "7.3"
+        }
+      ],
+      "sources": [
+        {
+          "id": "wang2021",
+          "citation": "Wang et al. Fruit and Vegetable Intake and Mortality. Circulation 2021;143:1642-1654.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8084888/",
+          "doi": "10.1161/CIRCULATIONAHA.120.048996",
+          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
+          "year": 2021
+        },
+        {
+          "id": "aune2017fruit",
+          "citation": "Aune et al. Fruit and vegetable intake and the risk of cardiovascular disease, total cancer and all-cause mortality. Int J Epidemiol 2017;46:1029-1056.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5837313/",
+          "doi": "10.1093/ije/dyw319",
+          "location": "Dose-response results and nonlinear all-cause mortality figure",
+          "year": 2017
+        },
+        {
+          "id": "umbrella2025",
+          "citation": "Food groups and risk of all-cause mortality: systematic review and umbrella review.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11931306/",
+          "location": "Included meta-analyses for fruit and vegetables, whole grains, and coffee",
+          "year": 2025
+        }
+      ],
+      "extraction": "Exact Table 2 Nurses Health Study total fruit and vegetable quintiles, multivariable-adjusted all-cause mortality. Both medians and confidence intervals are transcribed from the table. No figure digitization. Keep this as categorical evidence, not a fitted spline.",
+      "caveats": [
+        "The dots are median intakes within NHS women’s groups, not exact doses assigned in a trial. The first qualifying group ate about 5.3 servings.",
+        "The 7.3-serving group has a slightly worse central estimate, about 85% of the range’s best improvement. More is not automatically above the 90% mark.",
+        "The pooled 2021 paper supports about five servings; a broader 2017 meta-analysis found associations continuing toward ten. Five is not a universal biological ceiling.",
+        "This source’s servings are food-specific questionnaire portions. They are not interchangeable with cups or a single weight of produce."
+      ],
+      "newerEvidence": "The 2025 food-mortality umbrella includes Wang 2021 as a comprehensive recent source. Disease-specific 2025 cohorts are not replacements for a general adult curve. Earlier Aune 2017 is inconvenient counterevidence against a hard five-serving ceiling.",
+      "interaction": "Snap to the five measured intake groups. Display the actual group median and explain the interquartile range in detail. Do not interpolate a personal effect between quintiles.",
+      "kind": "categories",
+      "unit": "servings/day",
+      "evidence": "prospective observational cohort",
+      "better": "lower",
+      "effectKind": "risk",
+      "outcome": "death rate",
+      "defaultDose": 3,
+      "unitLabel": "servings a day",
+      "domain": [
+        0,
+        4
+      ],
+      "ticks": [
+        0,
+        3,
+        4
+      ],
+      "xLabel": "Servings a day (study groups)",
+      "yLabel": "Death rate vs lowest-intake group",
+      "yDomain": [
+        0.75,
+        1.05
+      ],
+      "yTicks": [
+        0.8,
+        0.9,
+        1
+      ],
+      "step": 1,
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "diet_research",
+        "adversary": "movement_research",
+        "statistician": "life_research"
+      },
+      "sourcePrecision": "published groups",
+      "shapeLabel": "Similar results above about 5",
+      "view": {
+        "area": "eat",
+        "mode": "benefit",
+        "answer": "About 5 servings a day",
+        "fact": "The group eating about five servings did best; seven did no better.",
+        "range": [
+          0,
+          4
+        ],
+        "rangeLabel": "Groups eating about 2.1 to 7.3 servings a day",
+        "default": 3,
+        "ticks": [
+          0,
+          3,
+          4
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_food",
+        "adversary": "v2_move"
+      },
+      "rangeMethod": "Lowest and highest published group medians, not the full individual exposure range.",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 3,
+        "sensitivity": [
+          3,
+          3
+        ],
+        "sweetRange": null
+      }
+    },
+    {
+      "id": "fiber",
+      "view": {
+        "area": "eat",
+        "mode": "benefit",
+        "shape": "Keeps paying",
+        "answer": "About 32 grams a day",
+        "fact": "Each extra 8 grams went with 7% lower risk of dying. The model keeps improving at the edge.",
+        "range": [
+          7,
+          35
+        ],
+        "rangeLabel": "2019 linear model: 7 to 35 grams a day",
+        "default": 25,
+        "ticks": [
+          7,
+          15,
+          25,
+          35
+        ]
+      },
+      "question": "How much fiber?",
+      "fact": "Each extra 8 grams went with 7% lower risk of dying. The model keeps improving at the edge.",
+      "shape": "Keeps paying",
+      "defaultDose": 25,
+      "domain": [
+        7,
+        35
+      ],
+      "ticks": [
+        7,
+        15,
+        25,
+        35
+      ],
+      "verified": "2026-10-04",
+      "reverification": {
+        "researcher": "v2_food",
+        "adversary": "v2_move"
+      },
+      "rangeMethod": "Analyst-declared conservative subset of the author figure model exposure extent, approximately 6 to 35 g/day. These are not claimed to be the exact observed exposure extremes.",
+      "points": [
+        {
+          "dose": 7,
+          "originalDose": 7,
+          "effect": 1,
+          "low": 1,
+          "high": 1,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": true,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 0
+        },
+        {
+          "dose": 8,
+          "originalDose": 8,
+          "effect": 0.9909696838390821,
+          "low": 0.9869162813660015,
+          "high": 0.993608849045455,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 4.025887889604755
+        },
+        {
+          "dose": 9,
+          "originalDose": 9,
+          "effect": 0.9820209142881304,
+          "low": 0.9740037464252967,
+          "high": 0.9872585449014338,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 8.01542073873795
+        },
+        {
+          "dose": 10,
+          "originalDose": 10,
+          "effect": 0.9731529549554749,
+          "low": 0.9612601554586079,
+          "high": 0.9809488265098043,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 11.968926844909145
+        },
+        {
+          "dose": 11,
+          "originalDose": 11,
+          "effect": 0.9643650760992956,
+          "low": 0.9486832980505138,
+          "high": 0.9746794344808963,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 15.88673154099746
+        },
+        {
+          "dose": 12,
+          "originalDose": 12,
+          "effect": 0.9556565545675713,
+          "low": 0.9362709927060472,
+          "high": 0.9684501110828384,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 19.7691572220234
+        },
+        {
+          "dose": 13,
+          "originalDose": 13,
+          "effect": 0.9470266737385726,
+          "low": 0.9240210864723069,
+          "high": 0.9622606002309622,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 23.616523371678387
+        },
+        {
+          "dose": 14,
+          "originalDose": 14,
+          "effect": 0.9384747234618909,
+          "low": 0.9119314545650217,
+          "high": 0.9561106474772749,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 27.429146588615193
+        },
+        {
+          "dose": 15,
+          "originalDose": 15,
+          "effect": 0.93,
+          "low": 0.9,
+          "high": 0.95,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 31.20734061250058
+        },
+        {
+          "dose": 16,
+          "originalDose": 16,
+          "effect": 0.9216018059703465,
+          "low": 0.8882246532294015,
+          "high": 0.9439284065931822,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 34.95141634983299
+        },
+        {
+          "dose": 17,
+          "originalDose": 17,
+          "effect": 0.9132794502879613,
+          "low": 0.8766033717827671,
+          "high": 0.9378956176563621,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 38.66168189952689
+        },
+        {
+          "dose": 18,
+          "originalDose": 18,
+          "effect": 0.9050322481085917,
+          "low": 0.865134139912747,
+          "high": 0.9319013851843141,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 42.33844257826609
+        },
+        {
+          "dose": 19,
+          "originalDose": 19,
+          "effect": 0.8968595207723449,
+          "low": 0.8538149682454624,
+          "high": 0.9259454627568515,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 45.982000945628236
+        },
+        {
+          "dose": 20,
+          "originalDose": 20,
+          "effect": 0.8887605957478413,
+          "low": 0.8426438934354425,
+          "high": 0.9200276055286964,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 49.59265682898236
+        },
+        {
+          "dose": 21,
+          "originalDose": 21,
+          "effect": 0.8807348065768726,
+          "low": 0.8316189778250762,
+          "high": 0.914147570219414,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 53.17070734816146
+        },
+        {
+          "dose": 22,
+          "originalDose": 22,
+          "effect": 0.8727814928195585,
+          "low": 0.8207383091085195,
+          "high": 0.9083051151034112,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 56.716446939912736
+        },
+        {
+          "dose": 23,
+          "originalDose": 23,
+          "effect": 0.8649000000000001,
+          "low": 0.81,
+          "high": 0.9025,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 60.23016738212612
+        },
+        {
+          "dose": 24,
+          "originalDose": 24,
+          "effect": 0.8570896795524222,
+          "low": 0.7994021879064613,
+          "high": 0.896731986263523,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 63.71215781784529
+        },
+        {
+          "dose": 25,
+          "originalDose": 25,
+          "effect": 0.849349888767804,
+          "low": 0.7889430346044904,
+          "high": 0.8910008367735439,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 67.1627047790606
+        },
+        {
+          "dose": 26,
+          "originalDose": 26,
+          "effect": 0.8416799907409903,
+          "low": 0.7786207259214724,
+          "high": 0.8853063159250983,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 70.58209221028807
+        },
+        {
+          "dose": 27,
+          "originalDose": 27,
+          "effect": 0.8340793543182808,
+          "low": 0.7684334714209162,
+          "high": 0.8796481896190089,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 73.97060149193483
+        },
+        {
+          "dose": 28,
+          "originalDose": 28,
+          "effect": 0.8265473540454925,
+          "low": 0.7583795040918982,
+          "high": 0.8740262252522616,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 77.32851146345415
+        },
+        {
+          "dose": 29,
+          "originalDose": 29,
+          "effect": 0.8190833701164916,
+          "low": 0.7484570800425686,
+          "high": 0.8684401917084432,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 80.65609844629077
+        },
+        {
+          "dose": 30,
+          "originalDose": 30,
+          "effect": 0.8116867883221895,
+          "low": 0.7386644781976676,
+          "high": 0.8628898593482406,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 83.95363626661938
+        },
+        {
+          "dose": 31,
+          "originalDose": 31,
+          "effect": 0.8043570000000001,
+          "low": 0.7290000000000001,
+          "high": 0.8573749999999999,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 87.22139627787789
+        },
+        {
+          "dose": 32,
+          "originalDose": 32,
+          "effect": 0.7970934019837527,
+          "low": 0.7194619691158152,
+          "high": 0.8518953869503468,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 90.45964738309672
+        },
+        {
+          "dose": 33,
+          "originalDose": 33,
+          "effect": 0.7898953965540578,
+          "low": 0.7100487311440414,
+          "high": 0.8464507949348666,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 93.66865605702694
+        },
+        {
+          "dose": 34,
+          "originalDose": 34,
+          "effect": 0.7827623913891211,
+          "low": 0.7007586533293252,
+          "high": 0.8410410001288433,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 96.84868636806847
+        },
+        {
+          "dose": 35,
+          "originalDose": 35,
+          "effect": 0.7756937995160011,
+          "low": 0.6915901242788246,
+          "high": 0.8356657801380584,
+          "source": "reynolds2019",
+          "location": "Primary author manuscript Figure 2a, PDF page21 (published journal Figure 1A), printed linear-model caption",
+          "reference": false,
+          "method": "reconstructed-from-printed-per8 g-log-linear-model",
+          "share": 100
+        }
+      ],
+      "population": "Reynolds 2019 mortality dose-response analysis: 68,183 deaths over 11.3 million person-years; general-population prospective cohorts.",
+      "caveats": [
+        "This is the 2019 paper’s published log-linear model. The source also presents a nonlinear fit, but it supplies no exact numeric grid for that curve.",
+        "We chose 7 to 35 grams inside the figure’s approximate 6 to 35 gram extent. These are not the exact observed exposure extremes. A different window changes the enough point.",
+        "The source prints 0.93 relative risk per extra 8 grams, with limits 0.90 to 0.95. This reconstruction is observational, not a personal risk forecast.",
+        "The line keeps improving at 35 grams. Its 90% point is a summary of this window, not an optimal fiber prescription."
+      ],
+      "evidence": "dose-response meta-analysis of prospective observational studies",
+      "sources": [
+        {
+          "id": "reynolds2019",
+          "citation": "Reynolds et al. Carbohydrate quality and human health. Lancet 2019;393:434-445.",
+          "url": "https://discovery.dundee.ac.uk/ws/files/30375889/Final_Lancet_for_John.pdf",
+          "doi": "10.1016/S0140-6736(18)31809-9",
+          "location": "Primary author manuscript Figure 2a, PDF page 21; published journal Figure 1A",
+          "year": 2019,
+          "primaryPublicationUrl": "https://doi.org/10.1016/S0140-6736(18)31809-9",
+          "method": "Printed per8 g linear slope andCI. Figure exposure extent visually inspected; conservative analyst domain7 to 35 g declared. No nonlinear predictions digitized."
+        },
+        {
+          "id": "yao2023",
+          "citation": "Yao et al. Dietary intake of total vegetable, fruit, cereal, soluble and insoluble fiber and risk of all-cause, cardiovascular, and cancer mortality. Front Nutr 2023;10:1153165.",
+          "url": "https://www.frontiersin.org/journals/nutrition/articles/10.3389/fnut.2023.1153165/full",
+          "doi": "10.3389/fnut.2023.1153165",
+          "location": "Table 2, total dietary fiber, all-cause dose-response; Results 3.2 and Figure2 first panel; Data_Sheet_1.docx",
+          "verified": "LinearRR 0.90(0.86 to 0.93) per 10 g; nonlinear P 0.0096, steep below15 g. No numeric spline grid/coefficient table found in source or DOCX supplement.",
+          "use": "Newer counterevidence and optional future independently digitized nonlinear upgrade."
+        },
+        {
+          "id": "ramezani2024",
+          "citation": "Ramezani et al. Dietary fiber intake and all-cause and cause-specific mortality: An updated systematic review and meta-analysis of prospective cohort studies. Clin Nutr 2024;43:65-83.",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/38011755/",
+          "doi": "10.1016/j.clnu.2023.11.005",
+          "location": "Abstract,64 eligible studies and3,512,828 participants",
+          "use": "Newer highest-versus-lowest review supports association but abstract supplies no continuous dose-response curve. Corrects earlier dossier misattribution to Mirrafiei."
+        },
+        {
+          "id": "niddkFiberTable",
+          "citation": "NIDDK. Eating, Diet, and Nutrition for Diverticular Disease. Food and Portion Size tables, sourceUSDA/HHS 2020-2025 Dietary Guidelines.",
+          "url": "https://www.niddk.nih.gov/health-information/digestive-diseases/diverticulosis-diverticulitis/eating-diet-nutrition",
+          "location": "Vegetables table, half cup cooked lentils7.8 g dietary fiber",
+          "use": "Food-unit example only."
+        },
+        {
+          "id": "veronese2025fiber",
+          "citation": "Veronese et al. The impact of dietary fiber consumption on human health: An umbrella review of evidence from 17,155,277 individuals. Clin Nutr 2025;51:325-333.",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40651334/",
+          "doi": "10.1016/j.clnu.2025.06.021",
+          "location": "Abstract and accessible primary publisher Results, literature search through December 1, 2024",
+          "use": "Newest screened umbrella: all-cause mortality association graded highly suggestive, Class II. No original continuous dose curve supplied in accessible results."
+        }
+      ],
+      "unit": "g/day",
+      "unitLabel": "grams a day",
+      "kind": "model",
+      "better": "lower",
+      "model": {
+        "form": "log-linear",
+        "formula": "RR(d)=0.93^((d-7)/8)",
+        "increment": 8,
+        "incrementUnit": "g/day",
+        "riskRatioPerIncrement": 0.93,
+        "riskRatioPerIncrementLow": 0.9,
+        "riskRatioPerIncrementHigh": 0.95,
+        "coefficientsExactFromPrintedSource": true,
+        "parameterPrecision": "Source ratios printed to two decimals; generated dose estimates carry computational precision only.",
+        "reconstructedRiskIntervalFormula": "[0.90^((d-7)/8),0.95^((d-7)/8)]",
+        "method": "Arithmetic reconstruction of the published linear model. This is not the published nonlinear spline and no model points were hand digitized."
+      },
+      "extraction": "Reconstructed published log-linear slope, RR = 0.93 per extra 8 g/day, with pointwise slope limits. Analyst-selected 7 to 35 g window within the source figure extent; endpoints are not exact observed exposure extremes.",
+      "uncertainty": "The published slope limits are 0.90 to 0.95 per 8 grams. They imply different gain curves; their crossings are a sensitivity check, not a confidence interval for an optimal amount.",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 31.857503285276195,
+        "sensitivity": [
+          31.687290750655407,
+          31.96268978995299
+        ],
+        "sweetRange": null
+      },
+      "effectUnit": "Relative all-cause mortality risk, 7 grams/day =1"
+    },
+    {
+      "id": "income",
+      "status": "recommend",
+      "question": "When does money stop helping?",
+      "shape": "No settled ceiling",
+      "contradictsEnough": true,
+      "fact": "Doubling household income went with about one extra point on a 100-point feeling scale.",
+      "doseUnit": "annual household dollars before tax, original study dollars",
+      "effectUnit": "average feeling score, 0 to 100",
+      "direction": "higher",
+      "points": [
+        {
+          "dose": 0,
+          "effect": 60.863,
+          "low": 60.1974382198058,
+          "high": 61.5285617801942,
+          "standardError": 0.339572336833776,
+          "n": 1494,
+          "source": "incomeCSV",
+          "sourceRow": 2,
+          "label": "$10,000 to $20,000 a year",
+          "incomeBand": {
+            "lower": 10000,
+            "lowerOpen": true,
+            "upper": 20000,
+            "upperClosed": true,
+            "representative": 15000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 15000,
+          "shortLabel": "$10k",
+          "from": 10000,
+          "to": 20000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 0
+        },
+        {
+          "dose": 1,
+          "effect": 62.032,
+          "low": 61.47592847160666,
+          "high": 62.588071528393336,
+          "standardError": 0.283709963465988,
+          "n": 2132,
+          "source": "incomeCSV",
+          "sourceRow": 3,
+          "label": "$20,000 to $30,000 a year",
+          "incomeBand": {
+            "lower": 20000,
+            "lowerOpen": true,
+            "upper": 30000,
+            "upperClosed": true,
+            "representative": 25000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 25000,
+          "shortLabel": "$20k",
+          "from": 20000,
+          "to": 30000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 23.630483121083408
+        },
+        {
+          "dose": 2,
+          "effect": 62.379,
+          "low": 61.911681433134135,
+          "high": 62.84631856686586,
+          "standardError": 0.238427840237687,
+          "n": 2620,
+          "source": "incomeCSV",
+          "sourceRow": 4,
+          "label": "$30,000 to $40,000 a year",
+          "incomeBand": {
+            "lower": 30000,
+            "lowerOpen": true,
+            "upper": 40000,
+            "upperClosed": true,
+            "representative": 35000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 35000,
+          "shortLabel": "$30k",
+          "from": 30000,
+          "to": 40000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 30.644835253689052
+        },
+        {
+          "dose": 3,
+          "effect": 62.658,
+          "low": 62.196053515899145,
+          "high": 63.11994648410086,
+          "standardError": 0.235686981684111,
+          "n": 2647,
+          "source": "incomeCSV",
+          "sourceRow": 5,
+          "label": "$40,000 to $50,000 a year",
+          "incomeBand": {
+            "lower": 40000,
+            "lowerOpen": true,
+            "upper": 50000,
+            "upperClosed": true,
+            "representative": 45000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 45000,
+          "shortLabel": "$40k",
+          "from": 40000,
+          "to": 50000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 36.28461693955934
+        },
+        {
+          "dose": 4,
+          "effect": 62.83,
+          "low": 62.34853688097627,
+          "high": 63.31146311902373,
+          "standardError": 0.245644448481494,
+          "n": 2709,
+          "source": "incomeCSV",
+          "sourceRow": 6,
+          "label": "$50,000 to $60,000 a year",
+          "incomeBand": {
+            "lower": 50000,
+            "lowerOpen": true,
+            "upper": 60000,
+            "upperClosed": true,
+            "representative": 55000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 55000,
+          "shortLabel": "$50k",
+          "from": 50000,
+          "to": 60000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 39.76147159894881
+        },
+        {
+          "dose": 5,
+          "effect": 63.015,
+          "low": 62.51251359242515,
+          "high": 63.51748640757485,
+          "standardError": 0.256370616109618,
+          "n": 2377,
+          "source": "incomeCSV",
+          "sourceRow": 7,
+          "label": "$60,000 to $70,000 a year",
+          "incomeBand": {
+            "lower": 60000,
+            "lowerOpen": true,
+            "upper": 70000,
+            "upperClosed": true,
+            "representative": 65000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 65000,
+          "shortLabel": "$60k",
+          "from": 60000,
+          "to": 70000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 43.50111178492015
+        },
+        {
+          "dose": 6,
+          "effect": 63.299,
+          "low": 62.789014011917956,
+          "high": 63.80898598808204,
+          "standardError": 0.260196932694921,
+          "n": 2355,
+          "source": "incomeCSV",
+          "sourceRow": 8,
+          "label": "$70,000 to $80,000 a year",
+          "incomeBand": {
+            "lower": 70000,
+            "lowerOpen": true,
+            "upper": 80000,
+            "upperClosed": true,
+            "representative": 75000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 75000,
+          "shortLabel": "$70k",
+          "from": 70000,
+          "to": 80000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 49.241964827167955
+        },
+        {
+          "dose": 7,
+          "effect": 63.55,
+          "low": 63.02427467729483,
+          "high": 64.07572532270517,
+          "standardError": 0.268227205461822,
+          "n": 2069,
+          "source": "incomeCSV",
+          "sourceRow": 9,
+          "label": "$80,000 to $90,000 a year",
+          "incomeBand": {
+            "lower": 80000,
+            "lowerOpen": true,
+            "upper": 90000,
+            "upperClosed": true,
+            "representative": 85000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 85000,
+          "shortLabel": "$80k",
+          "from": 80000,
+          "to": 90000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 54.31574691732355
+        },
+        {
+          "dose": 8,
+          "effect": 63.737,
+          "low": 63.23465666039471,
+          "high": 64.2393433396053,
+          "standardError": 0.256297622247597,
+          "n": 2226,
+          "source": "incomeCSV",
+          "sourceRow": 10,
+          "label": "$90,000 to $100,000 a year",
+          "incomeBand": {
+            "lower": 90000,
+            "lowerOpen": true,
+            "upper": 100000,
+            "upperClosed": true,
+            "representative": 95000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 95000,
+          "shortLabel": "$90k",
+          "from": 90000,
+          "to": 100000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 58.095815645845974
+        },
+        {
+          "dose": 9,
+          "effect": 63.916,
+          "low": 63.538023740915406,
+          "high": 64.29397625908459,
+          "standardError": 0.192845030145198,
+          "n": 3710,
+          "source": "incomeCSV",
+          "sourceRow": 11,
+          "label": "$100,000 to $125,000 a year",
+          "incomeBand": {
+            "lower": 100000,
+            "lowerOpen": true,
+            "upper": 125000,
+            "upperClosed": true,
+            "representative": 112500,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 112500,
+          "shortLabel": "$100k",
+          "from": 100000,
+          "to": 125000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 61.71417020416405
+        },
+        {
+          "dose": 10,
+          "effect": 64.187,
+          "low": 63.735417465759916,
+          "high": 64.63858253424007,
+          "standardError": 0.230399252163306,
+          "n": 2856,
+          "source": "incomeCSV",
+          "sourceRow": 12,
+          "label": "$125,000 to $150,000 a year",
+          "incomeBand": {
+            "lower": 125000,
+            "lowerOpen": true,
+            "upper": 150000,
+            "upperClosed": true,
+            "representative": 137500,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 137500,
+          "shortLabel": "$125k",
+          "from": 125000,
+          "to": 150000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 67.19223771983012
+        },
+        {
+          "dose": 11,
+          "effect": 64.44,
+          "low": 64.01566385311328,
+          "high": 64.86433614688671,
+          "standardError": 0.216498034125874,
+          "n": 3168,
+          "source": "incomeCSV",
+          "sourceRow": 13,
+          "label": "$150,000 to $200,000 a year",
+          "incomeBand": {
+            "lower": 150000,
+            "lowerOpen": true,
+            "upper": 200000,
+            "upperClosed": true,
+            "representative": 175000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 175000,
+          "shortLabel": "$150k",
+          "from": 150000,
+          "to": 200000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 72.30644835253682
+        },
+        {
+          "dose": 12,
+          "effect": 65.537,
+          "low": 64.96678391949554,
+          "high": 66.10721608050447,
+          "standardError": 0.290926571685955,
+          "n": 1776,
+          "source": "incomeCSV",
+          "sourceRow": 14,
+          "label": "$200,000 to $300,000 a year",
+          "incomeBand": {
+            "lower": 200000,
+            "lowerOpen": true,
+            "upper": 300000,
+            "upperClosed": true,
+            "representative": 250000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 250000,
+          "shortLabel": "$200k",
+          "from": 200000,
+          "to": 300000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 94.48150394178298
+        },
+        {
+          "dose": 13,
+          "effect": 65.81,
+          "low": 64.97759664140266,
+          "high": 66.64240335859735,
+          "standardError": 0.424695591121095,
+          "n": 832,
+          "source": "incomeCSV",
+          "sourceRow": 15,
+          "label": "$300,000 to $500,000 a year",
+          "incomeBand": {
+            "lower": 300000,
+            "lowerOpen": true,
+            "upper": 500000,
+            "upperClosed": true,
+            "representative": 400000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 400000,
+          "shortLabel": "$300k",
+          "from": 300000,
+          "to": 500000,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 100
+        },
+        {
+          "dose": 14,
+          "effect": 65.341,
+          "low": 64.08809013110324,
+          "high": 66.59390986889674,
+          "standardError": 0.639239729028958,
+          "n": 420,
+          "source": "incomeCSV",
+          "sourceRow": 16,
+          "label": "Over $500,000 a year, pooled",
+          "incomeBand": {
+            "lower": 500000,
+            "lowerOpen": true,
+            "upper": null,
+            "upperClosed": false,
+            "representative": 625000,
+            "representativeType": "author midpoint; pooled top group uses assigned coordinate"
+          },
+          "sourceDose": 625000,
+          "shortLabel": ">$500k",
+          "from": 500000,
+          "to": null,
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "share": 90.51950677178071
+        }
+      ],
+      "model": {
+        "kind": "published-coefficient",
+        "formula": "Change in standardized feeling score = 0.113 * natural_log(income2/income1)",
+        "coefficient": 0.113,
+        "source": "killingsworth2021",
+        "location": "Table 1, column Main results, Overall slope",
+        "doublingChangeStandardized": 0.07832563140327382,
+        "coefficientCI": null,
+        "use": "Optional detail only. Show actual deposited means and their own bands on the chart, not an arbitrary fitted happiness scale."
+      },
+      "uncertainty": "Mean-score limits use the published standard errors. The first central group at 90% is $200 k to$300 k; repeating the normalization on each limit curve puts the first qualifying groups between$200 k to$300 k and$300 k to$500 k. These are sensitivity groups, not a threshold confidence interval.",
+      "evidenceType": "observational experience sampling; adversarial reanalysis",
+      "population": "33391 employed US adults ages 18 to 65, household incomes at least $10000; median age 33. Original app volunteers, not a representative US sample.",
+      "caveats": [
+        "Income is annual pre-tax household income in original study dollars. The data were gathered in 2009 to 2015, not adjusted to 2026 buying power.",
+        "The top group pools every income above $500,000. The assigned$625,000 coordinate is a representative value, not an observed cap. Its 420 respondents are about 1.26% of the 33,391-person sample.",
+        "The observed group means peak in the$300,000 to $500,000 band and then dip. The author’s overall smooth log-income trend keeps rising. These are distinct summaries.",
+        "In the 2023 reanalysis, the lowest fifth of the conditional happiness distribution leveled off around $100,000, while the higher groups kept rising. Those quantiles are not fixed personality types.",
+        "A 2024 reanalysis argued for a plateau near$200,000. A 2026 author working paper showed how continuity assumptions move that result. The ceiling remains model-dependent and disputed.",
+        "The about-one-point doubling fact converts the author’s 0.113 standardized log-income slope using the deposited raw-to-standardized scale factor 12.41043. It is a small score difference, not a percentage happier or a causal guarantee."
+      ],
+      "sources": [
+        {
+          "id": "killingsworth2021",
+          "citation": "Killingsworth 2021. Experienced well-being rises with income, even above $75,000 per year. PNAS 118:e2016976118.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7848527/",
+          "table": "Table 1, main results; Methods, Income Measure; author OSF income_wellbeing.csv",
+          "extraction": "Read author-deposited income-band means, standard errors and counts.",
+          "doi": "10.1073/pnas.2016976118",
+          "verified": "2026-10-04",
+          "location": "Table 1, main results; Methods, Income Measure; author OSF income_wellbeing.csv"
+        },
+        {
+          "id": "incomeCSV",
+          "citation": "Killingsworth author-deposited income_wellbeing.csv. OSF nguwz.",
+          "url": "https://osf.io/download/cfnbv/",
+          "table": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
+          "extraction": "Direct CSV read. Approximate pointwise mean interval = mean +/- 1.96 times the published standard error.",
+          "verified": "2026-10-04",
+          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount"
+        },
+        {
+          "id": "kkm2023",
+          "citation": "Killingsworth, Kahneman and Mellers 2023. Income and emotional well-being: A conflict resolved. PNAS 120:e2208661120.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10013834/",
+          "table": "Figure 2 and Table 1",
+          "extraction": "Primary text and published quantile regression table, used as interpretation check.",
+          "doi": "10.1073/pnas.2208661120",
+          "verified": "2026-10-04",
+          "location": "Figure 2 and Table 1"
+        },
+        {
+          "id": "incomeReanalysis2024",
+          "citation": "Bennedsen, 2024. Income and emotional well-being: Evidence for well-being plateauing around $200,000 per year. Economics Letters 238:111730.",
+          "url": "https://doi.org/10.1016/j.econlet.2024.111730",
+          "table": "Abstract and reanalysis of high-income observations",
+          "extraction": "Screened as contradictory reanalysis; not a replacement data table.",
+          "status": "Published May 2024, not preprint-only",
+          "authorManuscriptRecord": "https://pure.au.dk/portal/en/publications/income-and-emotional-well-being-evidence-for-well-being-plateauin/",
+          "verified": "2026-10-04",
+          "location": "Abstract and reanalysis of high-income observations"
+        },
+        {
+          "id": "incomeContinuity2026",
+          "citation": "Derlin M, Keldenich C and Knabe A. 2026. Connecting the dots: continuity in the relationship between income and emotional well-being. Magdeburg Faculty of Economics and Management Working Paper02/2026.",
+          "url": "https://www.fww.ovgu.de/fww_media/femm/femm_2026/2026_02.pdf",
+          "table": "Abstract; section 3.2 and 3.3, Figures 1 to 3",
+          "extraction": "Primaryauthor working paper interpretation only; no new curve points extracted. Not peer reviewed here.",
+          "verified": "2026-10-04",
+          "location": "Abstract; section 3.2 and 3.3, Figures 1 to 3"
+        }
+      ],
+      "extraction": "Exact author OSF CSV group means, standard errors and counts. Pointwise mean limits are mean plus or minus1.96 standard errors. Dotted connections are visual guides, not a regression.",
+      "sourceDigest": {
+        "url": "https://osf.io/download/cfnbv/",
+        "sha256": "ac750a7f748a156b1f79dfed1e717dad14a59578c644654f52d0d5ef2fbeccfa",
+        "bytes": 16851
+      },
+      "verified": "2026-10-04",
+      "kind": "categories",
+      "unit": "USD/year",
+      "evidence": "observational experience sampling; adversarial reanalysis",
+      "better": "higher",
+      "unitLabel": "dollars a year",
+      "effectKind": "mood",
+      "domain": [
+        0,
+        14
+      ],
+      "ticks": [
+        0,
+        8,
+        12,
+        14
+      ],
+      "defaultDose": 8,
+      "step": 1,
+      "xLabel": "Household income (study groups)",
+      "yLabel": "Average reported mood / 100",
+      "yDomain": [
+        0,
+        100
+      ],
+      "yTicks": [
+        0,
+        50,
+        100
+      ],
+      "doseDigits": 1,
+      "yDigits": 1,
+      "coordinate": "category-index",
+      "reviews": {
+        "researcher": "life_research",
+        "adversary": "diet_research",
+        "statistician": "movement_research"
+      },
+      "sourcePrecision": "published groups",
+      "view": {
+        "area": "money",
+        "mode": "benefit",
+        "shape": "No settled ceiling",
+        "answer": "More still helps, on average",
+        "fact": "Doubling household income went with about one extra point on a 100-point feeling scale.",
+        "range": [
+          0,
+          14
+        ],
+        "rangeLabel": "Income groups from $10,000 to $500,000+ a year",
+        "default": 8,
+        "ticks": [
+          0,
+          8,
+          12,
+          14
+        ]
+      },
+      "reverification": {
+        "researcher": "polish_audit",
+        "adversary": "v2_food"
+      },
+      "rangeMethod": "Author income-band coordinates, not exact boundaries of sampled income.",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 12,
+        "sensitivity": [
+          12,
+          13
+        ],
+        "sweetRange": null
+      }
+    },
+    {
+      "id": "savings",
+      "status": "recommend",
+      "question": "What does saving more buy?",
+      "shape": "Most arrives early",
+      "contradictsEnough": true,
+      "fact": "Saving 40% instead of 20% cuts the wait from 37 years to 22, under these assumptions.",
+      "doseUnit": "percent of take-home income saved",
+      "effectUnit": "model years to chosen portfolio target",
+      "direction": "lower",
+      "points": [
+        {
+          "dose": 5,
+          "effect": 65.76787644885793,
+          "low": null,
+          "high": null,
+          "scenarioLow": 49.037570917591744,
+          "scenarioHigh": 101.348229507877,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 0
+        },
+        {
+          "dose": 5.25,
+          "effect": 64.75752235198995,
+          "low": null,
+          "high": null,
+          "scenarioLow": 48.30573447621583,
+          "scenarioHigh": 99.69761579996234,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 1.5673648093454333
+        },
+        {
+          "dose": 5.5,
+          "effect": 63.79369183706285,
+          "low": null,
+          "high": null,
+          "scenarioLow": 47.60744323155883,
+          "scenarioHigh": 98.12380319230836,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 3.0625574709607863
+        },
+        {
+          "dose": 5.75,
+          "effect": 62.872246862482484,
+          "low": null,
+          "high": null,
+          "scenarioLow": 46.93971314183841,
+          "scenarioHigh": 96.6199613854723,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 4.4919973390055565
+        },
+        {
+          "dose": 6,
+          "effect": 61.98957798823874,
+          "low": null,
+          "high": null,
+          "scenarioLow": 46.29994135167452,
+          "scenarioHigh": 95.18013259704531,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 5.86128374669452
+        },
+        {
+          "dose": 6.25,
+          "effect": 61.14251800808932,
+          "low": null,
+          "high": null,
+          "scenarioLow": 45.68584391032594,
+          "scenarioHigh": 93.79908900175103,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 7.175329988904712
+        },
+        {
+          "dose": 6.5,
+          "effect": 60.32827253112972,
+          "low": null,
+          "high": null,
+          "scenarioLow": 45.095405712508274,
+          "scenarioHigh": 92.47221814843354,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 8.438471011157544
+        },
+        {
+          "dose": 6.75,
+          "effect": 59.54436367153171,
+          "low": null,
+          "high": null,
+          "scenarioLow": 44.52683989180527,
+          "scenarioHigh": 91.19543001356779,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 9.654550763866823
+        },
+        {
+          "dose": 7,
+          "effect": 58.78858398399354,
+          "low": null,
+          "high": null,
+          "scenarioLow": 43.978554602491926,
+          "scenarioHigh": 89.9650809664822,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 10.826993662388764
+        },
+        {
+          "dose": 7.25,
+          "effect": 58.05895848616762,
+          "low": null,
+          "high": null,
+          "scenarioLow": 43.44912563305797,
+          "scenarioHigh": 88.77791108305745,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 11.95886350172383
+        },
+        {
+          "dose": 7.5,
+          "effect": 57.353713122022576,
+          "low": null,
+          "high": null,
+          "scenarioLow": 42.93727366443303,
+          "scenarioHigh": 87.63099209091935,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 13.052912379381201
+        },
+        {
+          "dose": 7.75,
+          "effect": 56.67124839818462,
+          "low": null,
+          "high": null,
+          "scenarioLow": 42.44184525856285,
+          "scenarioHigh": 86.52168385322273,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 14.111621593387605
+        },
+        {
+          "dose": 8,
+          "effect": 56.01011720728537,
+          "low": null,
+          "high": null,
+          "scenarioLow": 41.96179686632954,
+          "scenarioHigh": 85.44759776356521,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 15.137236044982714
+        },
+        {
+          "dose": 8.25,
+          "effect": 55.369006064857786,
+          "low": null,
+          "high": null,
+          "scenarioLow": 41.49618129705768,
+          "scenarioHigh": 84.40656577535071,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 16.131793345868818
+        },
+        {
+          "dose": 8.5,
+          "effect": 54.74671914804823,
+          "low": null,
+          "high": null,
+          "scenarioLow": 41.04413620847256,
+          "scenarioHigh": 83.39661405586855,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 17.097148578996368
+        },
+        {
+          "dose": 8.75,
+          "effect": 54.14216464860913,
+          "low": null,
+          "high": null,
+          "scenarioLow": 40.6048742655381,
+          "scenarioHigh": 82.41594046035625,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 18.034995469200144
+        },
+        {
+          "dose": 9,
+          "effect": 53.554343048828265,
+          "low": null,
+          "high": null,
+          "scenarioLow": 40.177674685967204,
+          "scenarioHigh": 81.46289518008767,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 18.9468845707792
+        },
+        {
+          "dose": 9.25,
+          "effect": 52.98233700414375,
+          "low": null,
+          "high": null,
+          "scenarioLow": 39.761875944349164,
+          "scenarioHigh": 80.53596404247867,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 19.834238962621214
+        },
+        {
+          "dose": 9.5,
+          "effect": 52.425302575258975,
+          "low": null,
+          "high": null,
+          "scenarioLow": 39.35686944943164,
+          "scenarioHigh": 79.63375403869577,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 20.698367849844313
+        },
+        {
+          "dose": 9.75,
+          "effect": 51.88246159935555,
+          "low": null,
+          "high": null,
+          "scenarioLow": 38.96209404283171,
+          "scenarioHigh": 78.75498073147588,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 21.540478398353255
+        },
+        {
+          "dose": 10,
+          "effect": 51.35309502730669,
+          "low": null,
+          "high": null,
+          "scenarioLow": 38.577031194351356,
+          "scenarioHigh": 77.89845725743925,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 22.361686070836836
+        },
+        {
+          "dose": 10.25,
+          "effect": 50.836537083724615,
+          "low": null,
+          "high": null,
+          "scenarioLow": 38.20120079065704,
+          "scenarioHigh": 77.06308468758367,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 23.163023686300754
+        },
+        {
+          "dose": 10.5,
+          "effect": 50.33217013083449,
+          "low": null,
+          "high": null,
+          "scenarioLow": 37.83415743150431,
+          "scenarioHigh": 76.24784354952457,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 23.945449387752685
+        },
+        {
+          "dose": 10.75,
+          "effect": 49.839420136776546,
+          "low": null,
+          "high": null,
+          "scenarioLow": 37.47548716182905,
+          "scenarioHigh": 75.45178634741228,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 24.70985367223643
+        },
+        {
+          "dose": 11,
+          "effect": 49.35775266493935,
+          "low": null,
+          "high": null,
+          "scenarioLow": 37.124804579565975,
+          "scenarioHigh": 74.6740309418706,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 25.457065612589112
+        },
+        {
+          "dose": 11.25,
+          "effect": 48.88666931405045,
+          "low": null,
+          "high": null,
+          "scenarioLow": 36.78175026851835,
+          "scenarioHigh": 73.9137546739617,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 26.18785837993735
+        },
+        {
+          "dose": 11.5,
+          "effect": 48.425704549566134,
+          "low": null,
+          "high": null,
+          "scenarioLow": 36.44598851340218,
+          "scenarioHigh": 73.17018913503455,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 26.902954159170207
+        },
+        {
+          "dose": 11.75,
+          "effect": 47.9744228758552,
+          "low": null,
+          "high": null,
+          "scenarioLow": 36.1172052606447,
+          "scenarioHigh": 72.44261549909281,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 27.60302853573747
+        },
+        {
+          "dose": 12,
+          "effect": 47.53241630611743,
+          "low": null,
+          "high": null,
+          "scenarioLow": 35.79510629388592,
+          "scenarioHigh": 71.73036034660755,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 28.28871442057135
+        },
+        {
+          "dose": 12.25,
+          "effect": 47.09930209319372,
+          "low": null,
+          "high": null,
+          "scenarioLow": 35.479415597615024,
+          "scenarioHigh": 71.03279191896146,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 28.960605570286425
+        },
+        {
+          "dose": 12.5,
+          "effect": 46.67472068963663,
+          "low": null,
+          "high": null,
+          "scenarioLow": 35.169873886131555,
+          "scenarioHigh": 70.34931675131327,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 29.619259751727164
+        },
+        {
+          "dose": 12.75,
+          "effect": 46.25833390979588,
+          "low": null,
+          "high": null,
+          "scenarioLow": 34.866237278184094,
+          "scenarioHigh": 69.67937663891091,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 30.265201593129255
+        },
+        {
+          "dose": 13,
+          "effect": 45.849823270377506,
+          "low": null,
+          "high": null,
+          "scenarioLow": 34.56827610031033,
+          "scenarioHigh": 69.02244589799578,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 30.89892515841433
+        },
+        {
+          "dose": 13.25,
+          "effect": 45.44888848907519,
+          "low": null,
+          "high": null,
+          "scenarioLow": 34.275773804166434,
+          "scenarioHigh": 68.37802888762305,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 31.520896276266857
+        },
+        {
+          "dose": 13.5,
+          "effect": 45.055246123542126,
+          "low": null,
+          "high": null,
+          "scenarioLow": 33.98852598505925,
+          "scenarioHigh": 67.74565776313003,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 32.13155465150046
+        },
+        {
+          "dose": 13.75,
+          "effect": 44.668628335249906,
+          "low": null,
+          "high": null,
+          "scenarioLow": 33.706339490537125,
+          "scenarioHigh": 67.12489043574465,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 32.731315782686686
+        },
+        {
+          "dose": 14,
+          "effect": 44.28878176473043,
+          "low": null,
+          "high": null,
+          "scenarioLow": 33.429031609301745,
+          "scenarioHigh": 66.51530871604446,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 33.320572706995044
+        },
+        {
+          "dose": 14.25,
+          "effect": 43.9154665063703,
+          "low": null,
+          "high": null,
+          "scenarioLow": 33.15642933190929,
+          "scenarioHigh": 65.91651662173814,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 33.899697590596936
+        },
+        {
+          "dose": 14.5,
+          "effect": 43.54845517236749,
+          "low": null,
+          "high": null,
+          "scenarioLow": 32.88836867576864,
+          "scenarioHigh": 65.32813883261969,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 34.46904318075204
+        },
+        {
+          "dose": 14.75,
+          "effect": 43.18753203670416,
+          "low": null,
+          "high": null,
+          "scenarioLow": 32.62469406784098,
+          "scenarioHigh": 64.74981927759814,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 35.02894413376537
+        },
+        {
+          "dose": 15,
+          "effect": 42.832492251064934,
+          "low": null,
+          "high": null,
+          "scenarioLow": 32.36525777922082,
+          "scenarioHigh": 64.18121984048159,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 35.57971823133523
+        },
+        {
+          "dose": 15.25,
+          "effect": 42.48314112556469,
+          "low": null,
+          "high": null,
+          "scenarioLow": 32.10991940645269,
+          "scenarioHigh": 63.622019172736714,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 36.1216674963619
+        },
+        {
+          "dose": 15.5,
+          "effect": 42.139293467961785,
+          "low": null,
+          "high": null,
+          "scenarioLow": 31.858545395022915,
+          "scenarioHigh": 63.071911602784965,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 36.65507921802791
+        },
+        {
+          "dose": 15.75,
+          "effect": 41.80077297574125,
+          "low": null,
+          "high": null,
+          "scenarioLow": 31.611008600977243,
+          "scenarioHigh": 62.530606132566916,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 37.180226894860745
+        },
+        {
+          "dose": 16,
+          "effect": 41.4674116760717,
+          "low": null,
+          "high": null,
+          "scenarioLow": 31.367187887061032,
+          "scenarioHigh": 61.997825513127445,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 37.69737110352919
+        },
+        {
+          "dose": 16.25,
+          "effect": 41.139049409181794,
+          "low": null,
+          "high": null,
+          "scenarioLow": 31.126967750170525,
+          "scenarioHigh": 61.473305391869815,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 38.206760300282625
+        },
+        {
+          "dose": 16.5,
+          "effect": 40.81553335117844,
+          "low": null,
+          "high": null,
+          "scenarioLow": 30.890237977246255,
+          "scenarioHigh": 60.95679352491295,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 38.7086315612044
+        },
+        {
+          "dose": 16.75,
+          "effect": 40.496717572747535,
+          "low": null,
+          "high": null,
+          "scenarioLow": 30.65689332704221,
+          "scenarioHigh": 60.44804904867688,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 39.20321126680039
+        },
+        {
+          "dose": 17,
+          "effect": 40.18246263054723,
+          "low": null,
+          "high": null,
+          "scenarioLow": 30.426833235470333,
+          "scenarioHigh": 59.946841805430786,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 39.69071573587169
+        },
+        {
+          "dose": 17.25,
+          "effect": 39.87263518842986,
+          "low": null,
+          "high": null,
+          "scenarioLow": 30.199961542455124,
+          "scenarioHigh": 59.4529517180769,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 40.17135181311395
+        },
+        {
+          "dose": 17.5,
+          "effect": 39.56710766591699,
+          "low": null,
+          "high": null,
+          "scenarioLow": 29.976186238441013,
+          "scenarioHigh": 58.96616820991849,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 40.6453174144389
+        },
+        {
+          "dose": 17.75,
+          "effect": 39.2657579116079,
+          "low": null,
+          "high": null,
+          "scenarioLow": 29.755419228879905,
+          "scenarioHigh": 58.48628966558356,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 41.11280203361661
+        },
+        {
+          "dose": 18,
+          "effect": 38.96846889942898,
+          "low": null,
+          "high": null,
+          "scenarioLow": 29.537576115189708,
+          "scenarioHigh": 58.01312292964992,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 41.573987213484486
+        },
+        {
+          "dose": 18.25,
+          "effect": 38.675128445833465,
+          "low": null,
+          "high": null,
+          "scenarioLow": 29.322575990820727,
+          "scenarioHigh": 57.54648283985122,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 42.029046984656084
+        },
+        {
+          "dose": 18.5,
+          "effect": 38.385628946241226,
+          "low": null,
+          "high": null,
+          "scenarioLow": 29.11034125119633,
+          "scenarioHigh": 57.0861917920409,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 42.478148274382704
+        },
+        {
+          "dose": 18.75,
+          "effect": 38.09986712916863,
+          "low": null,
+          "high": null,
+          "scenarioLow": 28.90079741641056,
+          "scenarioHigh": 56.63207933435563,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 42.921451287972324
+        },
+        {
+          "dose": 19,
+          "effect": 37.81774382664289,
+          "low": null,
+          "high": null,
+          "scenarioLow": 28.69387296566856,
+          "scenarioHigh": 56.18398178825802,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 43.35910986494639
+        },
+        {
+          "dose": 19.25,
+          "effect": 37.539163759623136,
+          "low": null,
+          "high": null,
+          "scenarioLow": 28.489499182548997,
+          "scenarioHigh": 55.74174189434986,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 43.79127181191666
+        },
+        {
+          "dose": 19.5,
+          "effect": 37.26403533726665,
+          "low": null,
+          "high": null,
+          "scenarioLow": 28.287610010250223,
+          "scenarioHigh": 55.30520848103813,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 44.21807921398397
+        },
+        {
+          "dose": 19.75,
+          "effect": 36.992270468981616,
+          "low": null,
+          "high": null,
+          "scenarioLow": 28.088141916057367,
+          "scenarioHigh": 54.8742361543068,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 44.63966872630127
+        },
+        {
+          "dose": 20,
+          "effect": 36.72378438830152,
+          "low": null,
+          "high": null,
+          "scenarioLow": 27.891033764334086,
+          "scenarioHigh": 54.44868500700148,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 45.05617184729771
+        },
+        {
+          "dose": 20.25,
+          "effect": 36.45849548769982,
+          "low": null,
+          "high": null,
+          "scenarioLow": 27.696226697403684,
+          "scenarioHigh": 54.028420346172375,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 45.46771517493106
+        },
+        {
+          "dose": 20.5,
+          "effect": 36.196325163539605,
+          "low": null,
+          "high": null,
+          "scenarioLow": 27.50366402373871,
+          "scenarioHigh": 53.613312437145915,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 45.874420647217676
+        },
+        {
+          "dose": 20.75,
+          "effect": 35.93719767042071,
+          "low": null,
+          "high": null,
+          "scenarioLow": 27.313291112927445,
+          "scenarioHigh": 53.20323626310837,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 46.276405768184155
+        },
+        {
+          "dose": 21,
+          "effect": 35.68103998424952,
+          "low": null,
+          "high": null,
+          "scenarioLow": 27.125055296930277,
+          "scenarioHigh": 52.798071299086814,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 46.67378382028753
+        },
+        {
+          "dose": 21.25,
+          "effect": 35.427781673411445,
+          "low": null,
+          "high": null,
+          "scenarioLow": 26.9389057771793,
+          "scenarioHigh": 52.39770129930483,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 47.06666406426574
+        },
+        {
+          "dose": 21.5,
+          "effect": 35.17735477747792,
+          "low": null,
+          "high": null,
+          "scenarioLow": 26.754793537111112,
+          "scenarioHigh": 52.002014096974534,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 47.45515192729966
+        },
+        {
+          "dose": 21.75,
+          "effect": 34.92969369292488,
+          "low": null,
+          "high": null,
+          "scenarioLow": 26.572671259755772,
+          "scenarioHigh": 51.61090141566204,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 47.83934918029846
+        },
+        {
+          "dose": 22,
+          "effect": 34.68473506538214,
+          "low": null,
+          "high": null,
+          "scenarioLow": 26.392493250035365,
+          "scenarioHigh": 51.224258691432844,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 48.21935410505328
+        },
+        {
+          "dose": 22.25,
+          "effect": 34.442417687970774,
+          "low": null,
+          "high": null,
+          "scenarioLow": 26.21421536145271,
+          "scenarioHigh": 50.84198490504606,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 48.59526165194679
+        },
+        {
+          "dose": 22.5,
+          "effect": 34.20268240532028,
+          "low": null,
+          "high": null,
+          "scenarioLow": 26.03779492687593,
+          "scenarioHigh": 50.463982423523944,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 48.967163588851555
+        },
+        {
+          "dose": 22.75,
+          "effect": 33.96547202288906,
+          "low": null,
+          "high": null,
+          "scenarioLow": 25.86319069314734,
+          "scenarioHigh": 50.090156850475026,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 49.33514864180141
+        },
+        {
+          "dose": 23,
+          "effect": 33.73073122124032,
+          "low": null,
+          "high": null,
+          "scenarioLow": 25.690362759265813,
+          "scenarioHigh": 49.72041688459679,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 49.69930262797548
+        },
+        {
+          "dose": 23.25,
+          "effect": 33.498406474952006,
+          "low": null,
+          "high": null,
+          "scenarioLow": 25.519272517910814,
+          "scenarioHigh": 49.35467418582731,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 50.059708581493354
+        },
+        {
+          "dose": 23.5,
+          "effect": 33.26844597586336,
+          "low": null,
+          "high": null,
+          "scenarioLow": 25.34988260009375,
+          "scenarioHigh": 48.99284324865504,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 50.41644687248299
+        },
+        {
+          "dose": 23.75,
+          "effect": 33.04079956038272,
+          "low": null,
+          "high": null,
+          "scenarioLow": 25.182156822737856,
+          "scenarioHigh": 48.63484128213206,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 50.76959531984817
+        },
+        {
+          "dose": 24,
+          "effect": 32.81541864060144,
+          "low": null,
+          "high": null,
+          "scenarioLow": 25.01606013900288,
+          "scenarioHigh": 48.2805880961698,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 51.11922929813176
+        },
+        {
+          "dose": 24.25,
+          "effect": 32.592256138977206,
+          "low": null,
+          "high": null,
+          "scenarioLow": 24.851558591183654,
+          "scenarioHigh": 47.930005993726496,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 51.46542183884161
+        },
+        {
+          "dose": 24.5,
+          "effect": 32.3712664263671,
+          "low": null,
+          "high": null,
+          "scenarioLow": 24.68861926602427,
+          "scenarioHigh": 47.58301966852371,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 51.80824372657993
+        },
+        {
+          "dose": 24.75,
+          "effect": 32.152405263206376,
+          "low": null,
+          "high": null,
+          "scenarioLow": 24.52721025230071,
+          "scenarioHigh": 47.23955610795531,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 52.147763590292975
+        },
+        {
+          "dose": 25,
+          "effect": 31.93562974364325,
+          "low": null,
+          "high": null,
+          "scenarioLow": 24.367300600535113,
+          "scenarioHigh": 46.899544500875514,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 52.48404798993471
+        },
+        {
+          "dose": 25.25,
+          "effect": 31.720898242453142,
+          "low": null,
+          "high": null,
+          "scenarioLow": 24.20886028471436,
+          "scenarioHigh": 46.56291614997491,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 52.817161498818976
+        },
+        {
+          "dose": 25.5,
+          "effect": 31.50817036456813,
+          "low": null,
+          "high": null,
+          "scenarioLow": 24.05186016589456,
+          "scenarioHigh": 46.22960438847314,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 53.14716678191456
+        },
+        {
+          "dose": 25.75,
+          "effect": 31.297406897068544,
+          "low": null,
+          "high": null,
+          "scenarioLow": 23.896271957581025,
+          "scenarioHigh": 45.899544500875514,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 53.47412467032073
+        },
+        {
+          "dose": 26,
+          "effect": 31.088569763493826,
+          "low": null,
+          "high": null,
+          "scenarioLow": 23.74206819278075,
+          "scenarioHigh": 45.57267364755801,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 53.798094232144905
+        },
+        {
+          "dose": 26.25,
+          "effect": 30.88162198033968,
+          "low": null,
+          "high": null,
+          "scenarioLow": 23.589222192631414,
+          "scenarioHigh": 45.24893079296085,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 54.11913283998878
+        },
+        {
+          "dose": 26.5,
+          "effect": 30.67652761561695,
+          "low": null,
+          "high": null,
+          "scenarioLow": 23.437708036517233,
+          "scenarioHigh": 44.92825663718529,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 54.43729623523601
+        },
+        {
+          "dose": 26.75,
+          "effect": 30.47325174935632,
+          "low": null,
+          "high": null,
+          "scenarioLow": 23.287500533587863,
+          "scenarioHigh": 44.610593550802115,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 54.75263858932134
+        },
+        {
+          "dose": 27,
+          "effect": 30.27176043594992,
+          "low": null,
+          "high": null,
+          "scenarioLow": 23.138575195602087,
+          "scenarioHigh": 44.295885512692266,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 55.06521256215026
+        },
+        {
+          "dose": 27.25,
+          "effect": 30.072020668228546,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.99090821102294,
+          "scenarioHigh": 43.98407805075221,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 55.37506935782593
+        },
+        {
+          "dose": 27.5,
+          "effect": 29.874000343179198,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.844476420295823,
+          "scenarioHigh": 43.675118185306886,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 55.68225877783187
+        },
+        {
+          "dose": 27.75,
+          "effect": 29.677668229213943,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.69925729224524,
+          "scenarioHigh": 43.36895437508325,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 55.98682927180765
+        },
+        {
+          "dose": 28,
+          "effect": 29.482993934906588,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.55522890153004,
+          "scenarioHigh": 43.0655364656067,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 56.2888279860479
+        },
+        {
+          "dose": 28.25,
+          "effect": 29.289947879118923,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.412369907100693,
+          "scenarioHigh": 42.76481563989095,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 56.588300809845485
+        },
+        {
+          "dose": 28.5,
+          "effect": 29.09850126244297,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.27065953160557,
+          "scenarioHigh": 42.46674437130037,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 56.88529241979325
+        },
+        {
+          "dose": 28.75,
+          "effect": 28.908626039890414,
+          "low": null,
+          "high": null,
+          "scenarioLow": 22.13007754169662,
+          "scenarioHigh": 42.17127637847083,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 57.1798463221509
+        },
+        {
+          "dose": 29,
+          "effect": 28.720294894764358,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.990604229187568,
+          "scenarioHigh": 41.87836658218193,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 57.472004893377914
+        },
+        {
+          "dose": 29.25,
+          "effect": 28.533481213652426,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.852220393020858,
+          "scenarioHigh": 41.587971064080484,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 57.76180941892673
+        },
+        {
+          "dose": 29.5,
+          "effect": 28.348159062484072,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.714907322001928,
+          "scenarioHigh": 41.30004702716038,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 58.049300130385106
+        },
+        {
+          "dose": 29.75,
+          "effect": 28.164303163598223,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.57864677826207,
+          "scenarioHigh": 41.01455275791005,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 58.33451624105122
+        },
+        {
+          "dose": 30,
+          "effect": 27.98188887377035,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.44342098141322,
+          "scenarioHigh": 40.731447590043835,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 58.6174959800202
+        },
+        {
+          "dose": 30.25,
+          "effect": 27.800892163151424,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.30921259336022,
+          "scenarioHigh": 40.45069186973825,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 58.898276624856294
+        },
+        {
+          "dose": 30.5,
+          "effect": 27.621289595073517,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.17600470373815,
+          "scenarioHigh": 40.17224692229895,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 59.176894532920414
+        },
+        {
+          "dose": 30.75,
+          "effect": 27.44305830667977,
+          "low": null,
+          "high": null,
+          "scenarioLow": 21.043780815944057,
+          "scenarioHigh": 39.89607502018826,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 59.453385171418965
+        },
+        {
+          "dose": 31,
+          "effect": 27.266175990338535,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.912524833734178,
+          "scenarioHigh": 39.622139352347205,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 59.72778314623609
+        },
+        {
+          "dose": 31.25,
+          "effect": 27.09062087580401,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.7822210483595,
+          "scenarioHigh": 39.350403994749556,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 60.00012222960795
+        },
+        {
+          "dose": 31.5,
+          "effect": 26.91637171308758,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.652854126213807,
+          "scenarioHigh": 39.08083388212917,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 60.270435386694416
+        },
+        {
+          "dose": 31.75,
+          "effect": 26.74340775600626,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.524409096970004,
+          "scenarioHigh": 38.81339478082475,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 60.53875480110049
+        },
+        {
+          "dose": 32,
+          "effect": 26.57170874637625,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.396871342181647,
+          "scenarioHigh": 38.548053262689685,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 60.805111899396806
+        },
+        {
+          "dose": 32.25,
+          "effect": 26.401254898821602,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.270226584328043,
+          "scenarioHigh": 38.28477668001689,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 61.06953737468598
+        },
+        {
+          "dose": 32.5,
+          "effect": 26.2320268861694,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.1444608762823,
+          "scenarioHigh": 38.02353314143205,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 61.33206120925917
+        },
+        {
+          "dose": 32.75,
+          "effect": 26.06400582540456,
+          "low": null,
+          "high": null,
+          "scenarioLow": 20.019560591182916,
+          "scenarioHigh": 37.76429148871044,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 61.59271269638439
+        },
+        {
+          "dose": 33,
+          "effect": 25.897173264158656,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.895512412690493,
+          "scenarioHigh": 37.50702127447519,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 61.85152046126643
+        },
+        {
+          "dose": 33.25,
+          "effect": 25.731511167708653,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.772303325612125,
+          "scenarioHigh": 37.251692740737276,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 62.10851248121569
+        },
+        {
+          "dose": 33.5,
+          "effect": 25.567001906462515,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.64992060687692,
+          "scenarioHigh": 36.99827679823912,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 62.36371610506194
+        },
+        {
+          "dose": 33.75,
+          "effect": 25.40362824391015,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.52835181684703,
+          "scenarioHigh": 36.7467450065663,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 62.6171580718459
+        },
+        {
+          "dose": 34,
+          "effect": 25.241373325018895,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.407584790949333,
+          "scenarioHigh": 36.497069554993026,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 62.86886452882142
+        },
+        {
+          "dose": 34.25,
+          "effect": 25.080220665054142,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.287607631613582,
+          "scenarioHigh": 36.24922324402932,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 63.118861048798095
+        },
+        {
+          "dose": 34.5,
+          "effect": 24.92015413880645,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.168408700503782,
+          "scenarioHigh": 36.00317946763915,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 63.367172646853184
+        },
+        {
+          "dose": 34.75,
+          "effect": 24.7611579702076,
+          "low": null,
+          "high": null,
+          "scenarioLow": 19.049976611030004,
+          "scenarioHigh": 35.75891219610069,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 63.61382379644036
+        },
+        {
+          "dose": 35,
+          "effect": 24.60321672231886,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.93230022112857,
+          "scenarioHigh": 35.51639595948074,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 63.85883844492081
+        },
+        {
+          "dose": 35.25,
+          "effect": 24.446315287675542,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.815368626299236,
+          "scenarioHigh": 35.2756058316974,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 64.10224002854194
+        },
+        {
+          "dose": 35.5,
+          "effect": 24.29043887897271,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.699171152888333,
+          "scenarioHigh": 35.03651741514581,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 64.34405148688641
+        },
+        {
+          "dose": 35.75,
+          "effect": 24.135573020077764,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.58369735160765,
+          "scenarioHigh": 34.79910682586342,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 64.58429527681456
+        },
+        {
+          "dose": 36,
+          "effect": 23.981703537356143,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.468936991279115,
+          "scenarioHigh": 34.56335067921216,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 64.82299338592073
+        },
+        {
+          "dose": 36.25,
+          "effect": 23.82881655129723,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.354880052795924,
+          "scenarioHigh": 34.32922607605597,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 65.06016734552405
+        },
+        {
+          "dose": 36.5,
+          "effect": 23.67689846842796,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.241516723291216,
+          "scenarioHigh": 34.09671058941347,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 65.29583824321293
+        },
+        {
+          "dose": 36.75,
+          "effect": 23.525935973502495,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.12883739050573,
+          "scenarioHigh": 33.86578225156607,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 65.53002673496115
+        },
+        {
+          "dose": 37,
+          "effect": 23.37591602195661,
+          "low": null,
+          "high": null,
+          "scenarioLow": 18.0168326373464,
+          "scenarioHigh": 33.636419541603146,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 65.7627530568335
+        },
+        {
+          "dose": 37.25,
+          "effect": 23.22682583261618,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.905493236628214,
+          "scenarioHigh": 33.40860137338658,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 65.99403703629696
+        },
+        {
+          "dose": 37.5,
+          "effect": 23.078652880649503,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.794810145991853,
+          "scenarioHigh": 33.18230708391787,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 66.22389810315396
+        },
+        {
+          "dose": 37.75,
+          "effect": 22.931384890753787,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.68477450299022,
+          "scenarioHigh": 32.9575164220916,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 66.45235530011203
+        },
+        {
+          "dose": 38,
+          "effect": 22.785009830566516,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.575377620337125,
+          "scenarioHigh": 32.734209537820256,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 66.67942729300496
+        },
+        {
+          "dose": 38.25,
+          "effect": 22.63951590429282,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.466610981311756,
+          "scenarioHigh": 32.5123669715155,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 66.90513238067848
+        },
+        {
+          "dose": 38.5,
+          "effect": 22.49489154654047,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.35846623531283,
+          "scenarioHigh": 32.2919696439121,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 67.12948850455416
+        },
+        {
+          "dose": 38.75,
+          "effect": 22.351125416354297,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.250935193556597,
+          "scenarioHigh": 32.07299884622124,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 67.35251325788383
+        },
+        {
+          "dose": 39,
+          "effect": 22.208206391442555,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.144009824913244,
+          "scenarioHigh": 31.85543623060037,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 67.57422389470612
+        },
+        {
+          "dose": 39.25,
+          "effect": 22.066123562587677,
+          "low": null,
+          "high": null,
+          "scenarioLow": 17.037682251876237,
+          "scenarioHigh": 31.639263800927615,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 67.79463733851729
+        },
+        {
+          "dose": 39.5,
+          "effect": 21.924866228234453,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.931944746659674,
+          "scenarioHigh": 31.424463903869036,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 68.01377019066636
+        },
+        {
+          "dose": 39.75,
+          "effect": 21.78442388924901,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.82678972741871,
+          "scenarioHigh": 31.21101922022765,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 68.2316387384857
+        },
+        {
+          "dose": 40,
+          "effect": 21.644786243841978,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.7222097545885,
+          "scenarioHigh": 30.99891275656372,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 68.44825896316664
+        },
+        {
+          "dose": 40.25,
+          "effect": 21.505943182649936,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.618197527337173,
+          "scenarioHigh": 30.78812783707604,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 68.66364654738962
+        },
+        {
+          "dose": 40.5,
+          "effect": 21.36788478396904,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.514745880128594,
+          "scenarioHigh": 30.578648095734614,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 68.87781688271839
+        },
+        {
+          "dose": 40.75,
+          "effect": 21.23060130913537,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.41184777939095,
+          "scenarioHigh": 30.37045746865539,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 69.09078507676638
+        },
+        {
+          "dose": 41,
+          "effect": 21.09408319804652,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.309496320287128,
+          "scenarioHigh": 30.163540186708154,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 69.30256596014407
+        },
+        {
+          "dose": 41.25,
+          "effect": 20.958321064819316,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.20768472358332,
+          "scenarioHigh": 29.95788076834924,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 69.51317409319525
+        },
+        {
+          "dose": 41.5,
+          "effect": 20.823305693578767,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.106406332612217,
+          "scenarioHigh": 29.753464012670612,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 69.7226237725296
+        },
+        {
+          "dose": 41.75,
+          "effect": 20.6890280343734,
+          "low": null,
+          "high": null,
+          "scenarioLow": 16.005654610327387,
+          "scenarioHigh": 29.550274992657805,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 69.93092903735923
+        },
+        {
+          "dose": 42,
+          "effect": 20.55547919921257,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.905423136445561,
+          "scenarioHigh": 29.34829904864906,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 70.13810367564598
+        },
+        {
+          "dose": 42.25,
+          "effect": 20.422650458221373,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.805705604673737,
+          "scenarioHigh": 29.14752178198859,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 70.34416123006639
+        },
+        {
+          "dose": 42.5,
+          "effect": 20.29053323590895,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.7064958200181,
+          "scenarioHigh": 28.947929048867067,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 70.54911500380064
+        },
+        {
+          "dose": 42.75,
+          "effect": 20.15911910754625,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.607787696171803,
+          "scenarioHigh": 28.749506954342728,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 70.75297806615175
+        },
+        {
+          "dose": 43,
+          "effect": 20.02839979564938,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.509575252978944,
+          "scenarioHigh": 28.55224184653677,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 70.95576325800096
+        },
+        {
+          "dose": 43.25,
+          "effect": 19.898367166564903,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.411852613972028,
+          "scenarioHigh": 28.356120310997074,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 71.15748319710494
+        },
+        {
+          "dose": 43.5,
+          "effect": 19.769013227153543,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.314614003980418,
+          "scenarioHigh": 28.161129165224278,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 71.35815028324045
+        },
+        {
+          "dose": 43.75,
+          "effect": 19.6403301215689,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.217853746807265,
+          "scenarioHigh": 27.96725545335477,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 71.55777670320141
+        },
+        {
+          "dose": 44,
+          "effect": 19.512310128127968,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.121566262972658,
+          "scenarioHigh": 27.774486440995094,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 71.7563744356538
+        },
+        {
+          "dose": 44.25,
+          "effect": 19.384945656270247,
+          "low": null,
+          "high": null,
+          "scenarioLow": 15.0257460675207,
+          "scenarioHigh": 27.58280961020273,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 71.95395525585285
+        },
+        {
+          "dose": 44.5,
+          "effect": 19.25822924360261,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.930387767888321,
+          "scenarioHigh": 27.3922126546083,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 72.15053074022751
+        },
+        {
+          "dose": 44.75,
+          "effect": 19.13215355302686,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.835486061833834,
+          "scenarioHigh": 27.202683474674348,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 72.34611227083636
+        },
+        {
+          "dose": 45,
+          "effect": 19.00671136994733,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.741035735423148,
+          "scenarioHigh": 27.01421017308619,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 72.54071103969949
+        },
+        {
+          "dose": 45.25,
+          "effect": 18.881895599555854,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.64703166107177,
+          "scenarioHigh": 26.82678105027049,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 72.73433805301033
+        },
+        {
+          "dose": 45.5,
+          "effect": 18.757699264191515,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.553468795640768,
+          "scenarioHigh": 26.64038460003727,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 72.92700413523157
+        },
+        {
+          "dose": 45.75,
+          "effect": 18.634115500772737,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.46034217858487,
+          "scenarioHigh": 26.455009505341305,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 73.11871993307861
+        },
+        {
+          "dose": 46,
+          "effect": 18.511137558299318,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.367646930151011,
+          "scenarioHigh": 26.27064463415903,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 73.30949591939475
+        },
+        {
+          "dose": 46.25,
+          "effect": 18.38875879542219,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.275378249625728,
+          "scenarioHigh": 26.08727903547718,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 73.49934239692124
+        },
+        {
+          "dose": 46.5,
+          "effect": 18.266972678078723,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.183531413629785,
+          "scenarioHigh": 25.904901935389557,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 73.68826950196559
+        },
+        {
+          "dose": 46.75,
+          "effect": 18.1457727771913,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.092101774458483,
+          "scenarioHigh": 25.723502733298435,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 73.8762872079718
+        },
+        {
+          "dose": 47,
+          "effect": 18.02515276642741,
+          "low": null,
+          "high": null,
+          "scenarioLow": 14.00108475846627,
+          "scenarioHigh": 25.54307099821729,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 74.06340532899516
+        },
+        {
+          "dose": 47.25,
+          "effect": 17.905106420019052,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.91047586449415,
+          "scenarioHigh": 25.36359646517153,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 74.24963352308494
+        },
+        {
+          "dose": 47.5,
+          "effect": 17.78562761063972,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.820270662338638,
+          "scenarioHigh": 25.185069031694297,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 74.43498129557794
+        },
+        {
+          "dose": 47.75,
+          "effect": 17.66671030733712,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.730464791260834,
+          "scenarioHigh": 25.00747875441419,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 74.61945800230536
+        },
+        {
+          "dose": 48,
+          "effect": 17.548348573519817,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.641053958534469,
+          "scenarioHigh": 24.83081584573204,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 74.80307285271616
+        },
+        {
+          "dose": 48.25,
+          "effect": 17.430536564996206,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.55203393803164,
+          "scenarioHigh": 24.655070670584088,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 74.98583491291924
+        },
+        {
+          "dose": 48.5,
+          "effect": 17.313268528064185,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.463400568845081,
+          "scenarioHigh": 24.480233743288732,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 75.16775310864689
+        },
+        {
+          "dose": 48.75,
+          "effect": 17.196538797649865,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.375149753945859,
+          "scenarioHigh": 24.30629572447441,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 75.34883622814226
+        },
+        {
+          "dose": 49,
+          "effect": 17.080341795493954,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.287277458875401,
+          "scenarioHigh": 24.133247418085954,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 75.52909292497279
+        },
+        {
+          "dose": 49.25,
+          "effect": 16.964672028384243,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.199779710470779,
+          "scenarioHigh": 23.961079768467236,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 75.70853172077216
+        },
+        {
+          "dose": 49.5,
+          "effect": 16.849524086432844,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.112652595622272,
+          "scenarioHigh": 23.78978385751756,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 75.88716100791281
+        },
+        {
+          "dose": 49.75,
+          "effect": 16.734892641396872,
+          "low": null,
+          "high": null,
+          "scenarioLow": 13.025892260062236,
+          "scenarioHigh": 23.619350901919763,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 76.06498905211114
+        },
+        {
+          "dose": 50,
+          "effect": 16.620772445041133,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.939494907184306,
+          "scenarioHigh": 23.449772250437757,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 76.24202399496735
+        },
+        {
+          "dose": 50.25,
+          "effect": 16.507158327541713,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.853456796892031,
+          "scenarioHigh": 23.281039381281474,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 76.4182738564421
+        },
+        {
+          "dose": 50.5,
+          "effect": 16.394045195929127,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.767774244476099,
+          "scenarioHigh": 23.113143899537157,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 76.59374653727154
+        },
+        {
+          "dose": 50.75,
+          "effect": 16.28142803256997,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.682443619519285,
+          "scenarioHigh": 22.94607753466119,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 76.76844982132278
+        },
+        {
+          "dose": 51,
+          "effect": 16.169301893685798,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.59746134482826,
+          "scenarioHigh": 22.77983213803539,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 76.94239137789151
+        },
+        {
+          "dose": 51.25,
+          "effect": 16.057661907908297,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.512823895391564,
+          "scenarioHigh": 22.614399680582192,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 77.1155787639435
+        },
+        {
+          "dose": 51.5,
+          "effect": 15.946503274869535,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.428527797362886,
+          "scenarioHigh": 22.449772250437757,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 77.28801942630136
+        },
+        {
+          "dose": 51.75,
+          "effect": 15.83582126382642,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.344569627068994,
+          "scenarioHigh": 22.2859420506815,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 77.45972070377857
+        },
+        {
+          "dose": 52,
+          "effect": 15.725611212318231,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.260946010041529,
+          "scenarioHigh": 22.12290139712026,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 77.63068982926197
+        },
+        {
+          "dose": 52.25,
+          "effect": 15.615868524856412,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.177653620072062,
+          "scenarioHigh": 21.96064271612567,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 77.80093393174431
+        },
+        {
+          "dose": 52.5,
+          "effect": 15.506588671645558,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.094689178289647,
+          "scenarioHigh": 21.799158542523088,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 77.97046003830842
+        },
+        {
+          "dose": 52.75,
+          "effect": 15.397767187334878,
+          "low": null,
+          "high": null,
+          "scenarioLow": 12.012049452260316,
+          "scenarioHigh": 21.638441517530755,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 78.13927507606402
+        },
+        {
+          "dose": 53,
+          "effect": 15.289399669799074,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.929731255107836,
+          "scenarioHigh": 21.47848438674753,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 78.30738587403897
+        },
+        {
+          "dose": 53.25,
+          "effect": 15.181481778947976,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.847731444655196,
+          "scenarioHigh": 21.31927999818816,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 78.4747991650259
+        },
+        {
+          "dose": 53.5,
+          "effect": 15.074009235564006,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.766046922586112,
+          "scenarioHigh": 21.160821300364354,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 78.64152158738561
+        },
+        {
+          "dose": 53.75,
+          "effect": 14.966977820166807,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.68467463362617,
+          "scenarioHigh": 21.003101340410804,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 78.80755968680842
+        },
+        {
+          "dose": 54,
+          "effect": 14.860383371904108,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.60361156474288,
+          "scenarioHigh": 20.846113262254505,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 78.97291991803473
+        },
+        {
+          "dose": 54.25,
+          "effect": 14.754221787468328,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.522854744364285,
+          "scenarioHigh": 20.68985030482646,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 79.13760864653577
+        },
+        {
+          "dose": 54.5,
+          "effect": 14.648489020037973,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.442401241615416,
+          "scenarioHigh": 20.53430580031445,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 79.3016321501557
+        },
+        {
+          "dose": 54.75,
+          "effect": 14.54318107824335,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.362248165572346,
+          "scenarioHigh": 20.379473172455825,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 79.4649966207162
+        },
+        {
+          "dose": 55,
+          "effect": 14.438294025155754,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.282392664533129,
+          "scenarioHigh": 20.225345934869125,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 79.62770816558455
+        },
+        {
+          "dose": 55.25,
+          "effect": 14.333823977299668,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.202831925305329,
+          "scenarioHigh": 20.071917689423604,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 79.78977280920589
+        },
+        {
+          "dose": 55.5,
+          "effect": 14.229767103687164,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.123563172509572,
+          "scenarioHigh": 19.919182124645495,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 79.95119649460126
+        },
+        {
+          "dose": 55.75,
+          "effect": 14.126119624874088,
+          "low": null,
+          "high": null,
+          "scenarioLow": 11.044583667898827,
+          "scenarioHigh": 19.767133014160144,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 80.11198508483174
+        },
+        {
+          "dose": 56,
+          "effect": 14.022877812037288,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.965890709692806,
+          "scenarioHigh": 19.615764215168937,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 80.2721443644299
+        },
+        {
+          "dose": 56.25,
+          "effect": 13.920037986072469,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.887481631927292,
+          "scenarioHigh": 19.465069666960225,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 80.43168004079932
+        },
+        {
+          "dose": 56.5,
+          "effect": 13.817596516711962,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.809353803817793,
+          "scenarioHigh": 19.315043389453184,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 80.59059774558327
+        },
+        {
+          "dose": 56.75,
+          "effect": 13.715549821662034,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.731504629137312,
+          "scenarioHigh": 19.165679481773882,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 80.7489030360028
+        },
+        {
+          "dose": 57,
+          "effect": 13.613894365759164,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.653931545607763,
+          "scenarioHigh": 19.01697212086262,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 80.90660139616588
+        },
+        {
+          "dose": 57.25,
+          "effect": 13.512626660144692,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.576632024304681,
+          "scenarioHigh": 18.86891556011172,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.06369823834756
+        },
+        {
+          "dose": 57.5,
+          "effect": 13.411743261457582,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.499603569074923,
+          "scenarioHigh": 18.72150412803307,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.22019890424232
+        },
+        {
+          "dose": 57.75,
+          "effect": 13.311240771044567,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.422843715966982,
+          "scenarioHigh": 18.574732226954456,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.37610866618938
+        },
+        {
+          "dose": 58,
+          "effect": 13.21111583418745,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.346350032673628,
+          "scenarioHigh": 18.428594331744172,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.5314327283714
+        },
+        {
+          "dose": 58.25,
+          "effect": 13.111365139346944,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.270120117986476,
+          "scenarioHigh": 18.28308498856295,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.68617622798745
+        },
+        {
+          "dose": 58.5,
+          "effect": 13.011985417422794,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.194151601262286,
+          "scenarioHigh": 18.138198813642724,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.84034423640084
+        },
+        {
+          "dose": 58.75,
+          "effect": 12.912973441029562,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.118442141900607,
+          "scenarioHigh": 17.99393049209132,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 81.99394176026259
+        },
+        {
+          "dose": 59,
+          "effect": 12.81432602378789,
+          "low": null,
+          "high": null,
+          "scenarioLow": 10.042989428832527,
+          "scenarioHigh": 17.850274776722618,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 82.14697374261087
+        },
+        {
+          "dose": 59.25,
+          "effect": 12.716040019630682,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.967791180020196,
+          "scenarioHigh": 17.707226486911388,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 82.29944506394735
+        },
+        {
+          "dose": 59.5,
+          "effect": 12.618112322123933,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.892845141966927,
+          "scenarioHigh": 17.564780507472292,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 82.45136054329078
+        },
+        {
+          "dose": 59.75,
+          "effect": 12.520539863801742,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.81814908923751,
+          "scenarioHigh": 17.422931787562284,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 82.60272493920861
+        },
+        {
+          "dose": 60,
+          "effect": 12.423319615515284,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.743700823988595,
+          "scenarioHigh": 17.28167533960608,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 82.7535429508269
+        },
+        {
+          "dose": 60.25,
+          "effect": 12.326448585795234,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.669498175508771,
+          "scenarioHigh": 17.141006238243783,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 82.90381921881941
+        },
+        {
+          "dose": 60.5,
+          "effect": 12.229923820227473,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.595538999768229,
+          "scenarioHigh": 17.00091961930049,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.05355832637608
+        },
+        {
+          "dose": 60.75,
+          "effect": 12.133742400841568,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.52182117897764,
+          "scenarioHigh": 16.861410678776974,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.20276480015163
+        },
+        {
+          "dose": 61,
+          "effect": 12.03790144551192,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.44834262115615,
+          "scenarioHigh": 16.722474671861193,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.35144311119465
+        },
+        {
+          "dose": 61.25,
+          "effect": 11.942398107371071,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.375101259708147,
+          "scenarioHigh": 16.584106911959992,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.49959767585769
+        },
+        {
+          "dose": 61.5,
+          "effect": 11.847229574234984,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.302095053008694,
+          "scenarioHigh": 16.44630276975051,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.64723285668876
+        },
+        {
+          "dose": 61.75,
+          "effect": 11.752393068040007,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.229321983997334,
+          "scenarioHigh": 16.30905767225083,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.7943529633049
+        },
+        {
+          "dose": 62,
+          "effect": 11.657885844291178,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.15678005978011,
+          "scenarioHigh": 16.172367101909447,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 83.94096225324795
+        },
+        {
+          "dose": 62.25,
+          "effect": 11.56370519152163,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.084467311239573,
+          "scenarioHigh": 16.036226595712964,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.08706493282311
+        },
+        {
+          "dose": 62.5,
+          "effect": 11.469848430762875,
+          "low": null,
+          "high": null,
+          "scenarioLow": 9.012381792652645,
+          "scenarioHigh": 15.900631744311797,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.23266515792088
+        },
+        {
+          "dose": 62.75,
+          "effect": 11.376312915025581,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.94052158131604,
+          "scenarioHigh": 15.765578191163197,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.37776703482233
+        },
+        {
+          "dose": 63,
+          "effect": 11.283096028790744,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.868884777179177,
+          "scenarioHigh": 15.631061631691406,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.52237462098856
+        },
+        {
+          "dose": 63.25,
+          "effect": 11.19019518751092,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.797469502484356,
+          "scenarioHigh": 15.497077812464438,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.6664919258344
+        },
+        {
+          "dose": 63.5,
+          "effect": 11.097607837121233,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.726273901413984,
+          "scenarioHigh": 15.363622530387003,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.81012291148706
+        },
+        {
+          "dose": 63.75,
+          "effect": 11.005331453560094,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.655296139744788,
+          "scenarioHigh": 15.230691631909426,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 84.95327149352946
+        },
+        {
+          "dose": 64,
+          "effect": 10.913363542299194,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.584534404508736,
+          "scenarioHigh": 15.098281012251928,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.09594154172957
+        },
+        {
+          "dose": 64.25,
+          "effect": 10.82170163788275,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.513986903660605,
+          "scenarioHigh": 14.966386614644104,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.23813688075505
+        },
+        {
+          "dose": 64.5,
+          "effect": 10.730343303475602,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.443651865751969,
+          "scenarioHigh": 14.835004429579124,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.37986129087429
+        },
+        {
+          "dose": 64.75,
+          "effect": 10.639286130420164,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.373527539611514,
+          "scenarioHigh": 14.704130494082404,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.52111850864378
+        },
+        {
+          "dose": 65,
+          "effect": 10.548527737801784,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.303612194031484,
+          "scenarioHigh": 14.573760890994294,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.66191222758228
+        },
+        {
+          "dose": 65.25,
+          "effect": 10.458065772022573,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.233904117460167,
+          "scenarioHigh": 14.443891748266639,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.80224609883206
+        },
+        {
+          "dose": 65.5,
+          "effect": 10.367897906383263,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.164401617700223,
+          "scenarioHigh": 14.314519238272682,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 85.94212373180741
+        },
+        {
+          "dose": 65.75,
+          "effect": 10.27802184067313,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.095103021612799,
+          "scenarioHigh": 14.185639577130214,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.08154869483091
+        },
+        {
+          "dose": 66,
+          "effect": 10.18843530076762,
+          "low": null,
+          "high": null,
+          "scenarioLow": 8.026006674827208,
+          "scenarioHigh": 14.057249024037441,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.22052451575765
+        },
+        {
+          "dose": 66.25,
+          "effect": 10.099136038233645,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.957110941456129,
+          "scenarioHigh": 13.929343880621575,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.35905468258741
+        },
+        {
+          "dose": 66.5,
+          "effect": 10.010121829942246,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.888414203816129,
+          "scenarioHigh": 13.801920490299514,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.49714264406565
+        },
+        {
+          "dose": 66.75,
+          "effect": 9.921390477688593,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.819914862153473,
+          "scenarioHigh": 13.67497523765066,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.63479181027296
+        },
+        {
+          "dose": 67,
+          "effect": 9.832939807819017,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.751611334374997,
+          "scenarioHigh": 13.548504547801357,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.77200555320363
+        },
+        {
+          "dose": 67.25,
+          "effect": 9.744767670865054,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.683502055784049,
+          "scenarioHigh": 13.422504885820882,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 86.90878720733345
+        },
+        {
+          "dose": 67.5,
+          "effect": 9.65687194118421,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.615585478821261,
+          "scenarioHigh": 13.296972756128541,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.04514007017683
+        },
+        {
+          "dose": 67.75,
+          "effect": 9.569250516607438,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.5478600728101775,
+          "scenarioHigh": 13.171904701911844,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.18106740283383
+        },
+        {
+          "dose": 68,
+          "effect": 9.481901318093033,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.480324323707493,
+          "scenarioHigh": 13.04729730455527,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.316572430527
+        },
+        {
+          "dose": 68.25,
+          "effect": 9.394822289386948,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.4129767338579295,
+          "scenarioHigh": 12.923147183079626,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.45165834312833
+        },
+        {
+          "dose": 68.5,
+          "effect": 9.308011396689242,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.345815821753547,
+          "scenarioHigh": 12.799450993591552,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.5863282956767
+        },
+        {
+          "dose": 68.75,
+          "effect": 9.221466628326697,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.278840121797467,
+          "scenarioHigh": 12.676205428743163,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.72058540888571
+        },
+        {
+          "dose": 69,
+          "effect": 9.135185994431275,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.212048184071847,
+          "scenarioHigh": 12.55340721720139,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.8544327696426
+        },
+        {
+          "dose": 69.25,
+          "effect": 9.04916752662446,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.145438574110068,
+          "scenarioHigh": 12.431053123126986,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 87.98787343149785
+        },
+        {
+          "dose": 69.5,
+          "effect": 8.963409277707287,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.079009872673038,
+          "scenarioHigh": 12.309139945662926,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.12091041514599
+        },
+        {
+          "dose": 69.75,
+          "effect": 8.87790932135586,
+          "low": null,
+          "high": null,
+          "scenarioLow": 7.012760675529452,
+          "scenarioHigh": 12.187664518431912,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.25354670889807
+        },
+        {
+          "dose": 70,
+          "effect": 8.79266575182243,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.946689593240044,
+          "scenarioHigh": 12.06662370904298,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.38578526914529
+        },
+        {
+          "dose": 70.25,
+          "effect": 8.70767668364168,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.880795250945623,
+          "scenarioHigh": 11.946014418606792,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.51762902081462
+        },
+        {
+          "dose": 70.5,
+          "effect": 8.62294025134235,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.8150762881589335,
+          "scenarioHigh": 11.825833581259637,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.64908085781627
+        },
+        {
+          "dose": 70.75,
+          "effect": 8.538454609163841,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.749531358560107,
+          "scenarioHigh": 11.706078163695764,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.78014364348323
+        },
+        {
+          "dose": 71,
+          "effect": 8.454217930777931,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.68415912979582,
+          "scenarioHigh": 11.586745164708049,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 88.91082021100299
+        },
+        {
+          "dose": 71.25,
+          "effect": 8.370228409015278,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.618958283281881,
+          "scenarioHigh": 11.46783161473665,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.0411133638418
+        },
+        {
+          "dose": 71.5,
+          "effect": 8.28648425559681,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.553927514009352,
+          "scenarioHigh": 11.349334575425663,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.17102587616141
+        },
+        {
+          "dose": 71.75,
+          "effect": 8.20298370086971,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.48906553035398,
+          "scenarioHigh": 11.231251139187407,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.30056049322862
+        },
+        {
+          "dose": 72,
+          "effect": 8.119724993548077,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.424371053888997,
+          "scenarioHigh": 11.113578428774398,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.42971993181756
+        },
+        {
+          "dose": 72.25,
+          "effect": 8.036706400457996,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.359842819201103,
+          "scenarioHigh": 10.99631359685862,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.55850688060525
+        },
+        {
+          "dose": 72.5,
+          "effect": 7.953926206287103,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.295479573709686,
+          "scenarioHigh": 10.879453825618207,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.68692400055998
+        },
+        {
+          "dose": 72.75,
+          "effect": 7.87138271333836,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.2312800774890835,
+          "scenarioHigh": 10.762996326331084,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.81497392532334
+        },
+        {
+          "dose": 73,
+          "effect": 7.789074241288149,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.167243103093949,
+          "scenarioHigh": 10.64693833897571,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 89.94265926158556
+        },
+        {
+          "dose": 73.25,
+          "effect": 7.706999126948421,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.103367435387543,
+          "scenarioHigh": 10.531277131838552,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.06998258945436
+        },
+        {
+          "dose": 73.5,
+          "effect": 7.625155724032958,
+          "low": null,
+          "high": null,
+          "scenarioLow": 6.039651871372999,
+          "scenarioHigh": 10.41601000112831,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.19694646281758
+        },
+        {
+          "dose": 73.75,
+          "effect": 7.543542402927548,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.976095220027392,
+          "scenarioHigh": 10.30113427059665,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.32355340969983
+        },
+        {
+          "dose": 74,
+          "effect": 7.4621575504641,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.912696302138673,
+          "scenarioHigh": 10.186647291165386,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.44980593261275
+        },
+        {
+          "dose": 74.25,
+          "effect": 7.380999569698523,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.849453950145291,
+          "scenarioHigh": 10.072546440559908,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.57570650889963
+        },
+        {
+          "dose": 74.5,
+          "effect": 7.300066879692378,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.7863670079785505,
+          "scenarioHigh": 9.958829122948831,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.70125759107421
+        },
+        {
+          "dose": 74.75,
+          "effect": 7.21935791529814,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.723434330907565,
+          "scenarioHigh": 9.845492768589603,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.8264616071537
+        },
+        {
+          "dose": 75,
+          "effect": 7.138871126948098,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.660654785386839,
+          "scenarioHigh": 9.732534833480113,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 90.95132096098634
+        },
+        {
+          "dose": 75.25,
+          "effect": 7.058604980446718,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.598027248906341,
+          "scenarioHigh": 9.619952799016028,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.07583803257344
+        },
+        {
+          "dose": 75.5,
+          "effect": 6.978557956766477,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.535550609844072,
+          "scenarioHigh": 9.507744171653844,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.20001517838614
+        },
+        {
+          "dose": 75.75,
+          "effect": 6.898728551847075,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.473223767321092,
+          "scenarioHigh": 9.395906482579512,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.32385473167696
+        },
+        {
+          "dose": 76,
+          "effect": 6.819115276397917,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.411045631058879,
+          "scenarioHigh": 9.2844372873825,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.44735900278602
+        },
+        {
+          "dose": 76.25,
+          "effect": 6.739716655703898,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.349015121239077,
+          "scenarioHigh": 9.173334165735232,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.57053027944251
+        },
+        {
+          "dose": 76.5,
+          "effect": 6.6605312294343,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.287131168365493,
+          "scenarioHigh": 9.06259472107774,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.69337082706114
+        },
+        {
+          "dose": 76.75,
+          "effect": 6.581557551454861,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.225392713128379,
+          "scenarioHigh": 8.95221658030752,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.81588288903355
+        },
+        {
+          "dose": 77,
+          "effect": 6.502794189642856,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.163798706270874,
+          "scenarioHigh": 8.842197393474345,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 91.93806868701523
+        },
+        {
+          "dose": 77.25,
+          "effect": 6.424239725705215,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.102348108457655,
+          "scenarioHigh": 8.732534833480115,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.05993042120775
+        },
+        {
+          "dose": 77.5,
+          "effect": 6.345892754999537,
+          "low": null,
+          "high": null,
+          "scenarioLow": 5.041039890145647,
+          "scenarioHigh": 8.62322659578348,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.18147027063634
+        },
+        {
+          "dose": 77.75,
+          "effect": 6.267751886358028,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.979873031456877,
+          "scenarioHigh": 8.514270398109286,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.30269039342305
+        },
+        {
+          "dose": 78,
+          "effect": 6.189815741914222,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.918846522053294,
+          "scenarioHigh": 8.40566398016261,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.42359292705551
+        },
+        {
+          "dose": 78.25,
+          "effect": 6.112082956932508,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.857959361013661,
+          "scenarioHigh": 8.297405103347456,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.54417998865148
+        },
+        {
+          "dose": 78.5,
+          "effect": 6.034552179640356,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.7972105567123196,
+          "scenarioHigh": 8.189491550489858,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.66445367521901
+        },
+        {
+          "dose": 78.75,
+          "effect": 5.957222071063224,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.736599126699975,
+          "scenarioHigh": 8.081921125565446,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.78441606391262
+        },
+        {
+          "dose": 79,
+          "effect": 5.880091304862054,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.676124097586276,
+          "scenarioHigh": 7.974691653431275,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 92.90406921228536
+        },
+        {
+          "dose": 79.25,
+          "effect": 5.8031585671733765,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.615784504924307,
+          "scenarioHigh": 7.867800979561964,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.02341515853692
+        },
+        {
+          "dose": 79.5,
+          "effect": 5.726422556451882,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.555579393096856,
+          "scenarioHigh": 7.761246969789891,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.14245592175772
+        },
+        {
+          "dose": 79.75,
+          "effect": 5.649881983315523,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.495507815204503,
+          "scenarioHigh": 7.6550275100495755,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.26119350216932
+        },
+        {
+          "dose": 80,
+          "effect": 5.573535570392966,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.435568832955394,
+          "scenarioHigh": 7.549140506125961,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.37962988136105
+        },
+        {
+          "dose": 80.25,
+          "effect": 5.497382052173505,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.375761516556807,
+          "scenarioHigh": 7.4435838834067125,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.49776702252278
+        },
+        {
+          "dose": 80.5,
+          "effect": 5.421420174859228,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.316084944608323,
+          "scenarioHigh": 7.3383555866382855,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.61560687067431
+        },
+        {
+          "dose": 80.75,
+          "effect": 5.345648696219544,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.256538203996718,
+          "scenarioHigh": 7.233453579685848,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.73315135289107
+        },
+        {
+          "dose": 81,
+          "effect": 5.270066385447902,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.197120389792409,
+          "scenarioHigh": 7.128875845296859,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.85040237852624
+        },
+        {
+          "dose": 81.25,
+          "effect": 5.194672023020768,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.137830605147553,
+          "scenarioHigh": 7.02462038486833,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 93.96736183942974
+        },
+        {
+          "dose": 81.5,
+          "effect": 5.119464400558714,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.07866796119565,
+          "scenarioHigh": 6.920685218217627,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.08403161016358
+        },
+        {
+          "dose": 81.75,
+          "effect": 5.0444423206896785,
+          "low": null,
+          "high": null,
+          "scenarioLow": 4.0196315769527216,
+          "scenarioHigh": 6.817068383356805,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.20041354821394
+        },
+        {
+          "dose": 82,
+          "effect": 4.969604596914301,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.9607205792199767,
+          "scenarioHigh": 6.713767936270396,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.31650949420025
+        },
+        {
+          "dose": 82.25,
+          "effect": 4.894950053473277,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.901934102487943,
+          "scenarioHigh": 6.610781950696538,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.43232127208084
+        },
+        {
+          "dose": 82.5,
+          "effect": 4.820477525216785,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.843271288842072,
+          "scenarioHigh": 6.508108517911483,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.54785068935549
+        },
+        {
+          "dose": 82.75,
+          "effect": 4.746185857475816,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.7847312878697417,
+          "scenarioHigh": 6.405745746517299,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.6630995372651
+        },
+        {
+          "dose": 83,
+          "effect": 4.67207390593551,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.726313256568683,
+          "scenarioHigh": 6.303691762232854,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.77806959098811
+        },
+        {
+          "dose": 83.25,
+          "effect": 4.598140536510337,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.6680163592567503,
+          "scenarioHigh": 6.201944707687852,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 94.89276260983425
+        },
+        {
+          "dose": 83.5,
+          "effect": 4.524384625221211,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.6098397674830696,
+          "scenarioHigh": 6.100502742220045,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.00718033743503
+        },
+        {
+          "dose": 83.75,
+          "effect": 4.450805058074375,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.5517826599404816,
+          "scenarioHigh": 5.999364041675395,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.12132450193174
+        },
+        {
+          "dose": 84,
+          "effect": 4.377400730942149,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.4938442223793076,
+          "scenarioHigh": 5.8985267982112966,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.23519681616037
+        },
+        {
+          "dose": 84.25,
+          "effect": 4.304170549445397,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.4360236475223718,
+          "scenarioHigh": 5.797989220102642,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.34879897783397
+        },
+        {
+          "dose": 84.5,
+          "effect": 4.23111342883779,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.3783201349813,
+          "scenarioHigh": 5.697749531550831,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.46213266972222
+        },
+        {
+          "dose": 84.75,
+          "effect": 4.158228293891716,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.3207328911740204,
+          "scenarioHigh": 5.597805972495538,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.57519955982838
+        },
+        {
+          "dose": 85,
+          "effect": 4.085514078785929,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.263261129243512,
+          "scenarioHigh": 5.498156798429312,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.68800130156356
+        },
+        {
+          "dose": 85.25,
+          "effect": 4.0129697269947995,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.2059040689776976,
+          "scenarioHigh": 5.398800280214846,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.8005395339186
+        },
+        {
+          "dose": 85.5,
+          "effect": 3.9405941911792253,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.148660936730547,
+          "scenarioHigh": 5.299734703904969,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 95.91281588163322
+        },
+        {
+          "dose": 85.75,
+          "effect": 3.8683864330790905,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.091530965344289,
+          "scenarioHigh": 5.200958370565209,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.02483195536294
+        },
+        {
+          "dose": 86,
+          "effect": 3.7963454234073417,
+          "low": null,
+          "high": null,
+          "scenarioLow": 3.034513394072787,
+          "scenarioHigh": 5.102469596099012,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.13658935184326
+        },
+        {
+          "dose": 86.25,
+          "effect": 3.7244701417455452,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.9776074685059846,
+          "scenarioHigh": 5.004266711075421,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.2480896540519
+        },
+        {
+          "dose": 86.5,
+          "effect": 3.6527595764410092,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.920812440495473,
+          "scenarioHigh": 4.906348060559316,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.3593344313681
+        },
+        {
+          "dose": 86.75,
+          "effect": 3.5812127245053382,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.8641275680810994,
+          "scenarioHigh": 4.808712003944046,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.47032523973029
+        },
+        {
+          "dose": 87,
+          "effect": 3.509828591514493,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.8075521154186527,
+          "scenarioHigh": 4.711356914786525,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.5810636217909
+        },
+        {
+          "dose": 87.25,
+          "effect": 3.4386061915102446,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.7510853527085533,
+          "scenarioHigh": 4.614281180644634,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.69155110706942
+        },
+        {
+          "dose": 87.5,
+          "effect": 3.36754454690307,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.694726556125586,
+          "scenarioHigh": 4.517483202917014,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.80178921210285
+        },
+        {
+          "dose": 87.75,
+          "effect": 3.2966426883764064,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.638475007749606,
+          "scenarioHigh": 4.4209613966850805,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 96.9117794405944
+        },
+        {
+          "dose": 88,
+          "effect": 3.225899654792278,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.5823299954972367,
+          "scenarioHigh": 4.32471419055733,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.02152328355977
+        },
+        {
+          "dose": 88.25,
+          "effect": 3.1553144930982757,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.5262908130545427,
+          "scenarioHigh": 4.228740026515851,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.13102221947153
+        },
+        {
+          "dose": 88.5,
+          "effect": 3.084886258235811,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.470356759810617,
+          "scenarioHigh": 4.133037359764969,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.24027771440142
+        },
+        {
+          "dose": 88.75,
+          "effect": 3.014614013049717,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.4145271407921407,
+          "scenarioHigh": 4.037604658582085,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.34929122216055
+        },
+        {
+          "dose": 89,
+          "effect": 2.9444968281990636,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.3588012665988165,
+          "scenarioHigh": 3.942440404170545,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.45806418443779
+        },
+        {
+          "dose": 89.25,
+          "effect": 2.8745337820692796,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.3031784533397466,
+          "scenarioHigh": 3.8475430905146446,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.56659803093612
+        },
+        {
+          "dose": 89.5,
+          "effect": 2.8047239606854486,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.2476580225706426,
+          "scenarioHigh": 3.7529112242365903,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.67489417950709
+        },
+        {
+          "dose": 89.75,
+          "effect": 2.735066457626862,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.192239301231966,
+          "scenarioHigh": 3.6585433244555206,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.78295403628339
+        },
+        {
+          "dose": 90,
+          "effect": 2.6655603739427174,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.1369216215878635,
+          "scenarioHigh": 3.5644379226484295,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.89077899580961
+        },
+        {
+          "dose": 90.25,
+          "effect": 2.596204818069027,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.0817043211659967,
+          "scenarioHigh": 3.4705935625130766,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 97.99837044117119
+        },
+        {
+          "dose": 90.5,
+          "effect": 2.526998905746628,
+          "low": null,
+          "high": null,
+          "scenarioLow": 2.0265867426981545,
+          "scenarioHigh": 3.377008799832731,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.10572974412153
+        },
+        {
+          "dose": 90.75,
+          "effect": 2.4579417599403754,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.9715682340617164,
+          "scenarioHigh": 3.283682202342848,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.21285826520744
+        },
+        {
+          "dose": 91,
+          "effect": 2.3890325107593915,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.916648148221885,
+          "scenarioHigh": 3.1906123495995113,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.31975735389278
+        },
+        {
+          "dose": 91.25,
+          "effect": 2.3202702953784624,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.8618258431747303,
+          "scenarioHigh": 3.0977978328497473,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.42642834868046
+        },
+        {
+          "dose": 91.5,
+          "effect": 2.251654257960457,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.8071006818909832,
+          "scenarioHigh": 3.005237254903547,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.5328725772327
+        },
+        {
+          "dose": 91.75,
+          "effect": 2.183183549579851,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.7524720322606213,
+          "scenarioHigh": 2.912929230007698,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.63909135648977
+        },
+        {
+          "dose": 92,
+          "effect": 2.1148573281472514,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.697939267038165,
+          "scenarioHigh": 2.8208723837212712,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.74508599278707
+        },
+        {
+          "dose": 92.25,
+          "effect": 2.0466747583349765,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.6435017637887508,
+          "scenarioHigh": 2.7290653527928623,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.85085778197046
+        },
+        {
+          "dose": 92.5,
+          "effect": 1.978635011503612,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.589158904834888,
+          "scenarioHigh": 2.637506785039421,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 98.95640800951034
+        },
+        {
+          "dose": 92.75,
+          "effect": 1.9107372656295916,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.534910077203971,
+          "scenarioHigh": 2.5461953392267938,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.06173795061386
+        },
+        {
+          "dose": 93,
+          "effect": 1.8429807052337115,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.4807546725764493,
+          "scenarioHigh": 2.4551296849517974,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.16684887033597
+        },
+        {
+          "dose": 93.25,
+          "effect": 1.7753645213106493,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.4266920872347288,
+          "scenarioHigh": 2.3643085025259465,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.2717420236886
+        },
+        {
+          "dose": 93.5,
+          "effect": 1.7078879112593761,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.3727217220127113,
+          "scenarioHigh": 2.2737304828606764,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.37641865574874
+        },
+        {
+          "dose": 93.75,
+          "effect": 1.6405500788145484,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.3188429822460441,
+          "scenarioHigh": 2.1833943273541494,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.48088000176476
+        },
+        {
+          "dose": 94,
+          "effect": 1.5733502339787646,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.2650552777229847,
+          "scenarioHigh": 2.0932987477795257,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.58512728726159
+        },
+        {
+          "dose": 94.25,
+          "effect": 1.5062875929557544,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.2113580226359428,
+          "scenarioHigh": 2.003442466174742,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.68916172814428
+        },
+        {
+          "dose": 94.5,
+          "effect": 1.4393613780844454,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.157750635533652,
+          "scenarioHigh": 1.9138242147337647,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.79298453080047
+        },
+        {
+          "dose": 94.75,
+          "effect": 1.3725708177738796,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.1042325392739507,
+          "scenarioHigh": 1.8244427356992243,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 99.89659689220105
+        },
+        {
+          "dose": 95,
+          "effect": 1.3059151464390226,
+          "low": null,
+          "high": null,
+          "scenarioLow": 1.0508031609772075,
+          "scenarioHigh": 1.7352967812565396,
+          "source": "savingsArithmetic",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "share": 100
+        }
+      ],
+      "model": {
+        "kind": "ordinary-annuity",
+        "formula": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+        "zeroReturnFormula": "n = (1-s)/(w*s)",
+        "baseParameters": {
+          "realAnnualReturn": 0.05,
+          "withdrawalFraction": 0.04,
+          "startingSavings": 0,
+          "contributions": "end of year",
+          "takeHomeIncome": "constant in real dollars",
+          "spending": "constant at (1-s) times income",
+          "target": "annual spending divided by withdrawal fraction"
+        },
+        "scenarioParameters": [
+          {
+            "realAnnualReturn": 0.07,
+            "withdrawalFraction": 0.05
+          },
+          {
+            "realAnnualReturn": 0.03,
+            "withdrawalFraction": 0.03
+          }
+        ],
+        "limits": {
+          "doseMinimumExclusive": 0,
+          "doseMaximumExclusive": 100
+        },
+        "effectAt50": 16.620772445041133
+      },
+      "uncertainty": "Alternative steady assumptions move the 90% rate to about 71 to 74%. Those are model scenarios, not statistical confidence limits.",
+      "evidenceType": "arithmetic, with historical retirement research as context",
+      "population": "A hypothetical saver starting with no assets and no debt. No research population is implied.",
+      "caveats": [
+        "This is arithmetic, not a studied population. Starting savings are zero; real income and spending stay constant; contributions arrive at year end.",
+        "Annual spending is(1−saving fraction) times take-home pay. The target is that spending divided by 0.04. Years=log(1+r(1−s)/(w s))/log(1+r), where r=0.05 and w=0.04.",
+        "Alternatives use 7% growth with 5% withdrawals, or 3% growth with 3% withdrawals. Their 90% rates are 74.25% and 70.77%. These are assumptions, not confidence limits.",
+        "Markets, taxes, changing needs and sequence of returns can break these steady assumptions. The withdrawal fraction is an illustrative target, not a guarantee."
+      ],
+      "sources": [
+        {
+          "id": "savingsArithmetic",
+          "citation": "Enough accumulation model, derived from an ordinary end-of-year savings annuity.",
+          "url": "#savings",
+          "table": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
+          "extraction": "Reproducible arithmetic. No observed population or statistical confidence interval.",
+          "verified": "2026-10-04",
+          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
+        },
+        {
+          "id": "bengen1994",
+          "citation": "Bengen 1994. Determining withdrawal rates using historical data. Journal of Financial Planning 7:171-180.",
+          "url": "https://finalytiq.co.uk/wp-content/uploads/2017/02/Determining-Withdrawal-Rates-Using-Historical-Data.pdf",
+          "table": "Historical 30-year portfolio survival discussion and Figures 1(a), 1(b)",
+          "extraction": "Original paper reprint; historical withdrawal context only. All savings points are our arithmetic.",
+          "verified": "2026-10-04",
+          "location": "Historical 30-year portfolio survival discussion and Figures 1(a), 1(b)"
+        }
+      ],
+      "extraction": "Calculated from disclosed annuity assumptions, each point reproducible. CI fields deliberately null; scenario bands stored separately.",
+      "verified": "2026-10-04",
+      "kind": "model",
+      "unit": "percent",
+      "evidence": "arithmetic, with historical retirement research as context",
+      "better": "lower",
+      "unitLabel": "% of take-home pay saved",
+      "effectKind": "years",
+      "domain": [
+        5,
+        95
+      ],
+      "ticks": [
+        5,
+        25,
+        50,
+        75,
+        95
+      ],
+      "defaultDose": 50,
+      "xLabel": "Take-home pay saved (%)",
+      "yLabel": "Years to the portfolio target",
+      "yDomain": [
+        0,
+        105
+      ],
+      "yTicks": [
+        0,
+        50,
+        100
+      ],
+      "scenarioEnvelope": true,
+      "step": 1,
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "life_research",
+        "adversary": "diet_research",
+        "statistician": "movement_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "money",
+        "mode": "benefit",
+        "answer": "About 73%, in this model",
+        "fact": "Saving 40% instead of 20% cuts the wait from 37 years to 22, under these assumptions.",
+        "range": [
+          5,
+          95
+        ],
+        "rangeLabel": "Model window: 5% to 95% of take-home pay",
+        "default": 50,
+        "ticks": [
+          5,
+          25,
+          50,
+          75,
+          95
+        ]
+      },
+      "reverification": {
+        "researcher": "polish_audit",
+        "adversary": "v2_food"
+      },
+      "rangeMethod": "Chosen model illustration range, not a studied population range",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 73.11250116948122,
+        "sensitivity": null,
+        "sweetRange": null
+      }
+    },
+    {
+      "id": "work",
+      "status": "recommend",
+      "question": "How much work captures most of the gain?",
+      "shape": "Most arrives early",
+      "contradictsEnough": true,
+      "fact": "These munitions workers produced about as much in 56 hours as in 70.",
+      "doseUnit": "hours worked per week",
+      "effectUnit": "Additional factory output relative to 24 hours",
+      "direction": "lower",
+      "points": [
+        {
+          "dose": 24,
+          "effect": 0,
+          "share": 0,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 24.5,
+          "effect": 63.0445,
+          "share": 1.5647518333969062,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 25,
+          "effect": 126.089,
+          "share": 3.1295036667938123,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 25.5,
+          "effect": 189.1335,
+          "share": 4.694255500190718,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 26,
+          "effect": 252.178,
+          "share": 6.259007333587625,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 26.5,
+          "effect": 315.22249999999997,
+          "share": 7.823759166984529,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 27,
+          "effect": 378.267,
+          "share": 9.388511000381436,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 27.5,
+          "effect": 441.3115,
+          "share": 10.953262833778343,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 28,
+          "effect": 504.356,
+          "share": 12.51801466717525,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 28.5,
+          "effect": 567.4005,
+          "share": 14.082766500572154,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 29,
+          "effect": 630.4449999999999,
+          "share": 15.647518333969058,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 29.5,
+          "effect": 693.4895,
+          "share": 17.212270167365965,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 30,
+          "effect": 756.534,
+          "share": 18.777022000762873,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 30.5,
+          "effect": 819.5785,
+          "share": 20.341773834159778,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 31,
+          "effect": 882.623,
+          "share": 21.906525667556686,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 31.5,
+          "effect": 945.6675,
+          "share": 23.47127750095359,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 32,
+          "effect": 1008.712,
+          "share": 25.0360293343505,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 32.5,
+          "effect": 1071.7565,
+          "share": 26.600781167747403,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 33,
+          "effect": 1134.801,
+          "share": 28.165533001144308,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 33.5,
+          "effect": 1197.8455,
+          "share": 29.730284834541212,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 34,
+          "effect": 1260.8899999999999,
+          "share": 31.295036667938117,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 34.5,
+          "effect": 1323.9345,
+          "share": 32.85978850133503,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 35,
+          "effect": 1386.979,
+          "share": 34.42454033473193,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 35.5,
+          "effect": 1450.0235,
+          "share": 35.98929216812884,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 36,
+          "effect": 1513.068,
+          "share": 37.554044001525746,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 36.5,
+          "effect": 1576.1125,
+          "share": 39.11879583492265,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 37,
+          "effect": 1639.157,
+          "share": 40.683547668319555,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 37.5,
+          "effect": 1702.2015,
+          "share": 42.24829950171647,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 38,
+          "effect": 1765.246,
+          "share": 43.81305133511337,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 38.5,
+          "effect": 1828.2905,
+          "share": 45.37780316851028,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 39,
+          "effect": 1891.335,
+          "share": 46.94255500190718,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 39.5,
+          "effect": 1954.3795,
+          "share": 48.50730683530409,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 40,
+          "effect": 2017.424,
+          "share": 50.072058668701,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 40.5,
+          "effect": 2080.4685,
+          "share": 51.6368105020979,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 41,
+          "effect": 2143.513,
+          "share": 53.201562335494806,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 41.5,
+          "effect": 2206.5575,
+          "share": 54.76631416889171,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 42,
+          "effect": 2269.602,
+          "share": 56.331066002288615,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 42.5,
+          "effect": 2332.6465,
+          "share": 57.89581783568553,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 43,
+          "effect": 2395.691,
+          "share": 59.460569669082425,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 43.5,
+          "effect": 2458.7355,
+          "share": 61.025321502479336,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 44,
+          "effect": 2521.7799999999997,
+          "share": 62.590073335876234,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 44.5,
+          "effect": 2584.8245,
+          "share": 64.15482516927315,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 45,
+          "effect": 2647.869,
+          "share": 65.71957700267006,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 45.5,
+          "effect": 2710.9135,
+          "share": 67.28432883606698,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 46,
+          "effect": 2773.958,
+          "share": 68.84908066946386,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 46.5,
+          "effect": 2837.0025,
+          "share": 70.41383250286077,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 47,
+          "effect": 2900.047,
+          "share": 71.97858433625768,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 47.5,
+          "effect": 2963.0915,
+          "share": 73.5433361696546,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 48,
+          "effect": 3026.136,
+          "share": 75.10808800305149,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 48.5,
+          "effect": 3089.1805,
+          "share": 76.67283983644839,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 49,
+          "effect": 3152.225,
+          "share": 78.2375916698453,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 49.5,
+          "effect": 3214.13625,
+          "share": 79.77421646574969,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 50,
+          "effect": 3273.781,
+          "share": 81.25458718666904,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 50.5,
+          "effect": 3331.1592499999997,
+          "share": 82.67870383260336,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 51,
+          "effect": 3386.2709999999997,
+          "share": 84.04656640355263,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 51.5,
+          "effect": 3439.1162499999996,
+          "share": 85.35817489951687,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 52,
+          "effect": 3489.695,
+          "share": 86.6135293204961,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 52.5,
+          "effect": 3538.00725,
+          "share": 87.81262966649028,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 53,
+          "effect": 3584.0530000000003,
+          "share": 88.95547593749941,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 53.48014871028985,
+          "effect": 3626.137307461946,
+          "share": 90.00000000000001,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 53.5,
+          "effect": 3627.83225,
+          "share": 90.0420681335235,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 54,
+          "effect": 3669.3450000000003,
+          "share": 91.07240625456258,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 54.5,
+          "effect": 3708.59125,
+          "share": 92.04649030061661,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 55,
+          "effect": 3745.571,
+          "share": 92.9643202716856,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 55.5,
+          "effect": 3780.28425,
+          "share": 93.82589616776956,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 56,
+          "effect": 3812.7309999999998,
+          "share": 94.63121798886849,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 56.5,
+          "effect": 3842.91125,
+          "share": 95.38028573498238,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 57,
+          "effect": 3870.825,
+          "share": 96.07309940611123,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 57.5,
+          "effect": 3896.47225,
+          "share": 96.70965900225504,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 58,
+          "effect": 3919.853,
+          "share": 97.28996452341381,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 58.5,
+          "effect": 3940.9672499999997,
+          "share": 97.81401596958756,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 59,
+          "effect": 3959.8149999999996,
+          "share": 98.28181334077625,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 59.5,
+          "effect": 3976.39625,
+          "share": 98.69335663697994,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 60,
+          "effect": 3990.711,
+          "share": 99.04864585819858,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 60.5,
+          "effect": 4002.7592499999996,
+          "share": 99.34768100443218,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 61,
+          "effect": 4012.5409999999997,
+          "share": 99.59046207568075,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 61.5,
+          "effect": 4020.0562499999996,
+          "share": 99.77698907194427,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 62,
+          "effect": 4025.3049999999994,
+          "share": 99.90726199322276,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 62.5,
+          "effect": 4028.2872499999994,
+          "share": 99.98128083951622,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 62.907897639532315,
+          "effect": 4029.041452735495,
+          "share": 99.99999999999999,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 63,
+          "effect": 4029.0029999999997,
+          "share": 99.99904561082465,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 63.5,
+          "effect": 4027.4522499999994,
+          "share": 99.96055630714802,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 64,
+          "effect": 4023.6349999999993,
+          "share": 99.86581292848638,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 64.5,
+          "effect": 4017.5512500000004,
+          "share": 99.71481547483972,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 65,
+          "effect": 4009.201,
+          "share": 99.50756394620798,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 65.5,
+          "effect": 3998.58425,
+          "share": 99.24405834259123,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 66,
+          "effect": 3985.701,
+          "share": 98.92429866398943,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 66.5,
+          "effect": 3970.5512500000004,
+          "share": 98.54828491040263,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 67,
+          "effect": 3953.135,
+          "share": 98.11601708183075,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 67.5,
+          "effect": 3933.4522500000003,
+          "share": 97.62749517827386,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 68,
+          "effect": 3911.5029999999997,
+          "share": 97.08271919973191,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 68.5,
+          "effect": 3887.2872500000003,
+          "share": 96.48168914620494,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 69,
+          "effect": 3860.8050000000003,
+          "share": 95.82440501769294,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 69.5,
+          "effect": 3832.0562499999996,
+          "share": 95.11086681419587,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 70,
+          "effect": 3801.041,
+          "share": 94.34107453571382,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 70.5,
+          "effect": 3767.75925,
+          "share": 93.5150281822467,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 71,
+          "effect": 3732.211,
+          "share": 92.63272775379454,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 71.5,
+          "effect": 3694.39625,
+          "share": 91.69417325035737,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 72,
+          "effect": 3654.3149999999996,
+          "share": 90.69936467193513,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 72.33564656877478,
+          "effect": 3626.137307461946,
+          "share": 90.00000000000001,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "dose": 72.5,
+          "effect": 3611.9672499999997,
+          "share": 89.64830201852787,
+          "low": null,
+          "high": null,
+          "source": "pencavel2015",
+          "pointType": "author-model-evaluation",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        }
+      ],
+      "uncertainty": "Coefficient standard errors are published, but their covariance is not. No valid confidence curve can be reconstructed. The exact historical model is shown without an invented band.",
+      "evidenceType": "meta-analysis of observational worker cohorts",
+      "population": "British First World War munitions workers, mainly women, four worker groups. 122 weekly group observations.",
+      "caveats": [
+        "These are historical British munitions workers, mostly women. Not every worker group covers the whole pooled 24 to 72.5-hour range. The result is not a recommended modern workweek.",
+        "The curve shows additional output relative to 24 hours, not total output. Common group intercepts cancel. Its peak is 62.91 hours; its first 90% crossing is 53.48.",
+        "We used the accessible 2014 author working paper’s Equation 4 and Table 4(ii). The final journal coefficient table could not be separately verified.",
+        "The model forces continuity and a common slope at 49 hours. Output, demand, machinery and fatigue differ across jobs.",
+        "Separate WHO/ILO evidence linked 55+ weekly hours with increased stroke risk. That is a different outcome from the output curve."
+      ],
+      "sources": [
+        {
+          "id": "workStroke2020",
+          "citation": "Descatha et al. 2020. The effect of exposure to long working hours on stroke: WHO/ILO systematic review and meta-analysis. Environment International 142:105746.",
+          "url": "https://doi.org/10.1016/j.envint.2020.105746",
+          "table": "Abstract and Table 5, Acquired Stroke",
+          "extraction": "Published category-specific incidence relative risks and 95% intervals. Do not use illustrative absolute risks in Table 5, which have inconsistent arithmetic.",
+          "doi": "10.1016/j.envint.2020.105746",
+          "location": "Abstract and Table 5, Acquired Stroke"
+        },
+        {
+          "id": "pencavel2015",
+          "citation": "Pencavel 2015. The productivity of working hours. Economic Journal 125:2052-2076.",
+          "url": "https://doi.org/10.1111/ecoj.12166",
+          "table": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs.",
+          "extraction": "Published working-paper coefficients, standard errors and primary text. No chart digitization.",
+          "workingPaperUrl": "https://docs.iza.org/dp8129.pdf",
+          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
+        },
+        {
+          "id": "fourDay2025",
+          "citation": "Fan et al. 2025. Work time reduction via a 4-day workweek finds improvements in workers’ well-being. Nature Human Behaviour 9:2153-2168.",
+          "url": "https://doi.org/10.1038/s41562-025-02259-6",
+          "table": "Abstract, 2896 employees in 141 organizations plus 12 control companies",
+          "extraction": "Primary abstract screened. Volunteering organizations, intervention changes work design as well as hours.",
+          "location": "Abstract, 2896 employees in 141 organizations plus 12 control companies"
+        },
+        {
+          "id": "pencavel-author",
+          "citation": "Pencavel,2014 author version of The Productivity of Working Hours",
+          "url": "https://docs.iza.org/dp8129.pdf",
+          "location": "Equation4, Table4(ii) and Table1"
+        }
+      ],
+      "extraction": "Exact author working-paper equation 4 and Table 4 column(ii) coefficients. Table 1 gives studied range. Evaluated from equation, not observed raw points or figure digitization.",
+      "verified": "2026-10-04",
+      "kind": "model",
+      "unit": "hours/week",
+      "evidence": "Historical workplace observations modeled by author; no randomized work hour trial",
+      "better": "higher",
+      "coordinate": "category-index",
+      "unitLabel": "hours a week",
+      "effectKind": "output",
+      "outcome": "stroke rate",
+      "domain": [
+        24,
+        72.5
+      ],
+      "ticks": [
+        24,
+        40,
+        56,
+        72.5
+      ],
+      "defaultDose": 40,
+      "xLabel": "Work (hours a week, groups)",
+      "yLabel": "Stroke rate vs 35-40 hours",
+      "yDomain": [
+        0.9,
+        1.7
+      ],
+      "yTicks": [
+        1,
+        1.3,
+        1.6
+      ],
+      "personalNote": "The 55+ hour group had higher stroke incidence. These categories do not supply an optimum for your job or a precise safe-hour cutoff.",
+      "step": 1,
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "life_research",
+        "adversary": "diet_research",
+        "statistician": "movement_research"
+      },
+      "sourcePrecision": "published groups",
+      "view": {
+        "area": "work",
+        "mode": "benefit",
+        "answer": "About 54 hours, in this factory",
+        "fact": "These munitions workers produced about as much in 56 hours as in 70.",
+        "range": [
+          24,
+          72.5
+        ],
+        "rangeLabel": "24 to 72.5 hours a week, historical factory model",
+        "default": 40,
+        "ticks": [
+          24,
+          40,
+          56,
+          72.5
+        ]
+      },
+      "reverification": {
+        "researcher": "polish_audit",
+        "adversary": "v2_food"
+      },
+      "rangeMethod": "Pooled weekly work hours in authorTable 1; not every worker group has support across the whole range",
+      "model": {
+        "kind": "continuous-linear-quadratic-spline",
+        "baselineHours": 24,
+        "knotHours": 49,
+        "linearCoefficient": 126.089,
+        "linearCoefficientSE": 8.036,
+        "quadraticCoefficient": -4.533,
+        "quadraticCoefficientSE": 0.657,
+        "belowKnotQuadratic": 0,
+        "belowKnotQuadraticIsConstrained": true,
+        "deltaFormula": "126.089*(h-24)-4.533*max(0,h-49)^2",
+        "generalFormula": "b*(h-h0)+c*max(0,h-k)^2",
+        "unknownGroupInterceptCancels": true,
+        "groupSlopesAssumedCommon": true,
+        "reason": "Continuity at 49 plus identical slopes there makes a 2=a 1+b*(49-24). Subtracting the same group fitted value at 24 removes a 1. The resulting share is additional output, not total output divided by a maximum.",
+        "R2": 0.736,
+        "residualStandardError": 591.28,
+        "coefficientCovariance": null
+      },
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 53.480148710289846,
+        "sensitivity": null,
+        "sweetRange": null
+      }
+    },
+    {
+      "id": "meditation",
+      "status": "recommend-with-unknown-display",
+      "question": "How long should I meditate?",
+      "shape": "Still unknown",
+      "contradictsEnough": true,
+      "fact": "Practice can help. Research hasn’t pinned down how many daily minutes are enough.",
+      "doseUnit": "minutes per day",
+      "effectUnit": null,
+      "direction": null,
+      "points": [],
+      "unidentifiedDoseRange": [
+        0,
+        60
+      ],
+      "uncertainty": "No dependable daily dose curve, so no percentage or enough point is manufactured.",
+      "evidenceType": "meta-regression of randomized-program trials; later observational practice studies",
+      "population": "Adults in 203 mindfulness-program trials, 15971 participants; subsequent 2025 volunteer cohort of 1052 meditators. Program doses and personal practice time are different.",
+      "caveats": [
+        "Program benefits and daily dose are different questions. A practice can help without more minutes consistently predicting a larger gain.",
+        "A 2023 trial with 161 completers compared 10 and 30 daily minutes for two weeks and found no clear difference. It had no no-practice control; a null difference does not establish equivalence.",
+        "A 2025 prospective study found small associations, often stronger for frequency than session length. Some published interval and P-value pairs disagree, so we did not reconstruct precise daily thresholds.",
+        "A 2026 single-session trial compared 5 and 20 minutes. Outcomes and participant traits differed; that does not establish a daily ceiling."
+      ],
+      "sources": [
+        {
+          "id": "strohmaier2020",
+          "citation": "Strohmaier 2020. The relationship between doses of mindfulness-based programs and depression, anxiety, stress, and mindfulness. Mindfulness 11:1315-1335.",
+          "url": "https://link.springer.com/article/10.1007/s12671-020-01319-4",
+          "table": "Abstract, dose-response meta-regressions of 203 randomized-program trials",
+          "extraction": "Primary abstract and institutional author record. Daily-minute estimates not available; no numerical dose curve extracted.",
+          "doi": "10.1007/s12671-020-01319-4",
+          "verified": "2026-10-04",
+          "location": "Abstract, dose-response meta-regressions of 203 randomized-program trials"
+        },
+        {
+          "id": "bowles2025",
+          "citation": "Bowles NI and Van Dam NT. 2025. Dose-response effects of reported meditation practice on mental-health and wellbeing: A prospective longitudinal study. Applied Psychology: Health and Well-Being17:e70063.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12336962/",
+          "table": "Methods, Results, Tables 3 to 6;1052 longitudinal participants,578 follow-up. Abstractreports 1053.",
+          "extraction": "Published tables and text screened. Small prospective associations conflict with a simple no-dose finding. Some printed table CIs and P values are inconsistent; no daily-minute curve extracted.",
+          "doi": "10.1111/aphw.70063",
+          "correction": "Priorlife.md/json incorrectly called journalBritish Journal of Psychology. This file corrects it.",
+          "verified": "2026-10-04",
+          "location": "Methods, Results, Tables 3 to 6;1052 longitudinal participants,578 follow-up. Abstractreports 1053."
+        },
+        {
+          "id": "jmirMeditation2023",
+          "citation": "The effects of dose, practice habits, and objects of focus on digital meditation effectiveness and adherence. 2023.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10548318/",
+          "table": "Figure 1",
+          "extraction": "Primary text screened, app-practice dose associations differ by prior sessions.",
+          "verified": "2026-10-04",
+          "location": "Figure 1"
+        },
+        {
+          "id": "strohmaier2026",
+          "citation": "Strohmaier S, Jones F and Medvedev O. 2026. Evaluating the Effectiveness of Mindfulness Practice Doses in the General Population Through Personalization: A Randomized Controlled Experiment. Mindfulness17:731-745.",
+          "url": "https://link.springer.com/article/10.1007/s12671-026-02762-5",
+          "table": "Abstract and Table 4; 636 adults, 5 vs 20 minutes",
+          "doi": "10.1007/s12671-026-02762-5",
+          "verified": "2026-10-04",
+          "location": "Abstract and Table 4; 636 adults, 5 vs 20 minutes"
+        },
+        {
+          "id": "fincham2023",
+          "citation": "Fincham GW, Mavor K and Dritschel B. 2023. Effects of Mindfulness Meditation Duration and Type on Well-being: an Online Dose-Ranging Randomized Controlled Trial. Mindfulness14:1171-1182.",
+          "url": "https://link.springer.com/article/10.1007/s12671-023-02119-2",
+          "doi": "10.1007/s12671-023-02119-2",
+          "table": "Abstract, Methods andDiscussion",
+          "extraction": "DirectRCTcomparison used as uncertainty context; no universalcurve extracted.",
+          "verified": "2026-10-04",
+          "location": "Abstract, Methods andDiscussion"
+        }
+      ],
+      "extraction": "Primary review and trial texts screened. No dependable continuous daily-minute curve or uncertainty grid could be extracted.",
+      "verified": "2026-10-04",
+      "kind": "unknown",
+      "unit": "min/day",
+      "evidence": "meta-regression of randomized-program trials; later observational practice studies",
+      "better": null,
+      "unitLabel": "minutes a day",
+      "effectKind": "unknown",
+      "domain": null,
+      "ticks": [
+        0,
+        30,
+        60
+      ],
+      "yDomain": [
+        0,
+        1
+      ],
+      "yTicks": [],
+      "defaultDose": null,
+      "xLabel": "Practice (minutes a day)",
+      "yLabel": "Benefit cannot be estimated",
+      "step": 1,
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "life_research",
+        "adversary": "diet_research",
+        "statistician": "movement_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "mind",
+        "mode": "unknown",
+        "answer": "No known enough point",
+        "fact": "Practice can help. Research hasn’t pinned down how many daily minutes are enough.",
+        "range": null,
+        "rangeLabel": "No measured daily dose curve",
+        "default": null,
+        "ticks": [
+          0,
+          30,
+          60
+        ]
+      },
+      "reverification": {
+        "researcher": "polish_audit",
+        "adversary": "v2_food"
+      },
+      "rangeMethod": "Minute control: 0 to 60, no measured dose curve",
+      "enoughPolicy": "none",
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      }
+    },
+    {
+      "verified": "2026-10-04",
+      "status": "recommend",
+      "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
+      "direction": "lower",
+      "uncertainty": "Light-drinking point estimates are below zero extra risk, but their published intervals include no difference. This is not reliable evidence of protection.",
+      "id": "alcohol",
+      "question": "Does a little drinking help?",
+      "shape": "Less is better",
+      "contradictsEnough": true,
+      "fact": "Once common biases were corrected, light drinking had no clear link to living longer.",
+      "doseUnit": "US standard drinks/week",
+      "originalDoseUnit": "g alcohol/day",
+      "effectUnit": "Relative all-cause mortality risk, lifetime nondrinkers as reference",
+      "evidenceType": "meta-analysis of prospective observational cohorts",
+      "population": "107 cohort studies, 4,838,825 participants and 425,564 deaths. Men and women combined in Table 2.",
+      "points": [
+        {
+          "dose": 0,
+          "categoryIndex": 0,
+          "label": "Lifetime nondrinker",
+          "originalDoseLowGramsPerDay": 0,
+          "originalDoseHighGramsPerDay": 0,
+          "doseLow": 0,
+          "doseHigh": 0,
+          "doseUnit": "US standard drinks/week",
+          "lowerInclusive": true,
+          "upperInclusive": true,
+          "effect": 1,
+          "low": 1,
+          "high": 1,
+          "extraRiskPercent": 0,
+          "extraRiskLowPercent": 0,
+          "extraRiskHighPercent": 0,
+          "reference": true,
+          "source": "zhao2023",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "studyCount": 107,
+          "riskEstimateCount": 191,
+          "doseMeaning": "dose is a category index for layout only; physical exposure is given by doseLow/doseHigh",
+          "shortLabel": "None",
+          "share": null
+        },
+        {
+          "dose": 1,
+          "categoryIndex": 1,
+          "label": "under 0.65 drinks a week",
+          "originalDoseLowGramsPerDay": 0,
+          "originalDoseHighGramsPerDay": 1.3,
+          "doseLow": 0,
+          "doseHigh": 0.65,
+          "doseUnit": "US standard drinks/week",
+          "lowerInclusive": false,
+          "upperInclusive": false,
+          "effect": 0.96,
+          "low": 0.86,
+          "high": 1.06,
+          "extraRiskPercent": -4,
+          "extraRiskLowPercent": -14,
+          "extraRiskHighPercent": 6,
+          "reference": false,
+          "source": "zhao2023",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "studyCount": 24,
+          "riskEstimateCount": 57,
+          "doseMeaning": "dose is a category index for layout only; physical exposure is given by doseLow/doseHigh",
+          "shortLabel": "<0.65",
+          "share": null
+        },
+        {
+          "dose": 2,
+          "categoryIndex": 2,
+          "label": "0.65 to under 12.5 drinks a week",
+          "originalDoseLowGramsPerDay": 1.3,
+          "originalDoseHighGramsPerDay": 25,
+          "doseLow": 0.65,
+          "doseHigh": 12.5,
+          "doseUnit": "US standard drinks/week",
+          "lowerInclusive": true,
+          "upperInclusive": false,
+          "effect": 0.93,
+          "low": 0.85,
+          "high": 1.01,
+          "extraRiskPercent": -7,
+          "extraRiskLowPercent": -15,
+          "extraRiskHighPercent": 1,
+          "reference": false,
+          "source": "zhao2023",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "studyCount": 99,
+          "riskEstimateCount": 306,
+          "doseMeaning": "dose is a category index for layout only; physical exposure is given by doseLow/doseHigh",
+          "shortLabel": "0.65 to 12.5",
+          "share": null
+        },
+        {
+          "dose": 3,
+          "categoryIndex": 3,
+          "label": "12.5 to under 22.5 drinks a week",
+          "originalDoseLowGramsPerDay": 25,
+          "originalDoseHighGramsPerDay": 45,
+          "doseLow": 12.5,
+          "doseHigh": 22.5,
+          "doseUnit": "US standard drinks/week",
+          "lowerInclusive": true,
+          "upperInclusive": false,
+          "effect": 1.05,
+          "low": 0.96,
+          "high": 1.14,
+          "extraRiskPercent": 5,
+          "extraRiskLowPercent": -4,
+          "extraRiskHighPercent": 14,
+          "reference": false,
+          "source": "zhao2023",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "studyCount": 80,
+          "riskEstimateCount": 146,
+          "doseMeaning": "dose is a category index for layout only; physical exposure is given by doseLow/doseHigh",
+          "shortLabel": "12.5 to 22.5",
+          "share": null
+        },
+        {
+          "dose": 4,
+          "categoryIndex": 4,
+          "label": "22.5 to under 32.5 drinks a week",
+          "originalDoseLowGramsPerDay": 45,
+          "originalDoseHighGramsPerDay": 65,
+          "doseLow": 22.5,
+          "doseHigh": 32.5,
+          "doseUnit": "US standard drinks/week",
+          "lowerInclusive": true,
+          "upperInclusive": false,
+          "effect": 1.19,
+          "low": 1.07,
+          "high": 1.32,
+          "extraRiskPercent": 19,
+          "extraRiskLowPercent": 7,
+          "extraRiskHighPercent": 32,
+          "reference": false,
+          "source": "zhao2023",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "studyCount": 52,
+          "riskEstimateCount": 76,
+          "doseMeaning": "dose is a category index for layout only; physical exposure is given by doseLow/doseHigh",
+          "shortLabel": "22.5 to 32.5",
+          "share": null
+        },
+        {
+          "dose": 5,
+          "categoryIndex": 5,
+          "label": "32.5+ drinks a week",
+          "originalDoseLowGramsPerDay": 65,
+          "originalDoseHighGramsPerDay": null,
+          "doseLow": 32.5,
+          "doseHigh": null,
+          "doseUnit": "US standard drinks/week",
+          "lowerInclusive": true,
+          "upperInclusive": false,
+          "effect": 1.35,
+          "low": 1.23,
+          "high": 1.47,
+          "extraRiskPercent": 35,
+          "extraRiskLowPercent": 23,
+          "extraRiskHighPercent": 47,
+          "reference": false,
+          "source": "zhao2023",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "studyCount": 45,
+          "riskEstimateCount": 83,
+          "doseMeaning": "dose is a category index for layout only; physical exposure is given by doseLow/doseHigh",
+          "shortLabel": "32.5+",
+          "share": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "niaaa",
+          "citation": "NIAAA. What Is a Standard Drink?",
+          "url": "https://www.niaaa.nih.gov/alcohols-effects-health/what-standard-drink",
+          "location": "A United States standard drink contains 14 grams of pure alcohol"
+        },
+        {
+          "id": "zhao2023",
+          "citation": "Zhao et al. Association Between Daily Alcohol Intake and Risk of All-Cause Mortality. JAMA Netw Open 2023;6:e236185.",
+          "url": "https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2802963",
+          "doi": "10.1001/jamanetworkopen.2023.6185",
+          "location": "Table 2, upper reference block lifetime nondrinker, Fully adjusted column",
+          "year": 2023
+        }
+      ],
+      "extraction": "Exact Table 2 fully adjusted all-cause mortality categories, lifetime nondrinkers as reference. Grams/day converted to weekly US standard drinks by multiplying 7/14. Keep early negative estimates and open-ended highest group.",
+      "caveats": [
+        "The baseline is lifetime nondrinkers. Former drinkers have a separate higher estimate, so zero current drinking is not interchangeable with never drinking.",
+        "The occasional and low-drinking central estimates are 4% and 7% below the baseline, but their uncertainty includes no difference. No clear protection does not mean the estimates equal zero.",
+        "Bias adjustment handles study characteristics, including whether former drinkers were counted as abstainers. It does not turn observational evidence into a randomized experiment.",
+        "Broad bins cannot supply an exact risk for one drink a day. The highest bin is open. A US standard drink contains 14 grams of alcohol.",
+        "Results differ by sex. The combined curve does not establish that risk rises strictly at every nonzero dose."
+      ],
+      "newerEvidence": "Published November 2024, with searches through November 2023. No newer larger prospective breast-cancer dose-response synthesis was found in searches through October 2026. Zhao 2023 all-cause mortality is screened separately and does not support drawing a monotonic low-dose mortality curve.",
+      "interaction": "Use exact US drink conversion and a risk axis. Never show percent of benefit on a harmful curve.",
+      "kind": "categories",
+      "unit": "drinks/week",
+      "evidence": "systematic review and meta-analysis of prospective cohort studies; study-level bias-adjusted meta-regression",
+      "better": "lower",
+      "effectKind": "risk",
+      "outcome": "breast cancer rate",
+      "defaultDose": 2,
+      "unitLabel": "US drinks a week",
+      "domain": [
+        0,
+        5
+      ],
+      "ticks": [
+        0,
+        2,
+        4,
+        5
+      ],
+      "step": 0.5,
+      "xLabel": "US drinks a week (14 g each)",
+      "yLabel": "Breast cancer rate vs no alcohol",
+      "yDomain": [
+        1,
+        1.5
+      ],
+      "yTicks": [
+        1,
+        1.25,
+        1.5
+      ],
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "diet_research",
+        "adversary": "movement_research",
+        "statistician": "life_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "harm",
+        "mode": "harm",
+        "answer": "No proven longevity upside",
+        "fact": "Once common biases were corrected, light drinking had no clear link to living longer.",
+        "range": [
+          0,
+          5
+        ],
+        "rangeLabel": "Lifetime nondrinkers to 32.5+ US drinks a week",
+        "default": 2,
+        "ticks": [
+          0,
+          2,
+          4,
+          5
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_food",
+        "adversary": "v2_move"
+      },
+      "rangeMethod": "Lifetime nondrinkers and five active-drinking categories, from>0 to >=65 g ethanol/day. The highest bin is open-ended. No finite continuous study maximum can be inferred.",
+      "enoughPolicy": "none",
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      }
+    },
+    {
+      "verified": "2026-10-04",
+      "status": "recommend",
+      "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
+      "direction": "lower",
+      "uncertainty": "published-95-percent-ci. Pointwise uncertainty in a group association or mean treatment difference, not a prediction interval for one person. The reference value is fixed by definition.",
+      "id": "smoking",
+      "question": "How many cigarettes?",
+      "shape": "Less is better",
+      "contradictsEnough": true,
+      "fact": "For men, one cigarette a day carried nearly half the extra heart risk of a pack a day.",
+      "doseUnit": "cigarettes/day",
+      "effectUnit": "relative coronary heart disease incidence, never smoked = 1",
+      "evidenceType": "meta-analysis of prospective observational cohorts",
+      "population": "Men: 26 contributing study reports, about 2.31 million participants and 57,152 coronary heart disease events.",
+      "points": [
+        {
+          "dose": 0,
+          "originalDose": 0,
+          "effect": 1,
+          "low": 1,
+          "high": 1,
+          "source": "hackshaw2018",
+          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
+          "reference": true,
+          "extraRiskPercent": 0,
+          "extraRiskLowPercent": 0,
+          "extraRiskHighPercent": 0,
+          "sourceDose": 0,
+          "shortLabel": "0",
+          "label": "Never smoked",
+          "share": null
+        },
+        {
+          "dose": 1,
+          "originalDose": 1,
+          "effect": 1.48,
+          "low": 1.3,
+          "high": 1.69,
+          "source": "hackshaw2018",
+          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
+          "reference": false,
+          "extraRiskPercent": 48,
+          "extraRiskLowPercent": 30.000000000000004,
+          "extraRiskHighPercent": 69,
+          "sourceDose": 1,
+          "shortLabel": "1",
+          "label": "1 cigarette a day",
+          "share": null
+        },
+        {
+          "dose": 2,
+          "originalDose": 5,
+          "effect": 1.58,
+          "low": 1.39,
+          "high": 1.8,
+          "source": "hackshaw2018",
+          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
+          "reference": false,
+          "extraRiskPercent": 58.00000000000001,
+          "extraRiskLowPercent": 38.99999999999999,
+          "extraRiskHighPercent": 80,
+          "sourceDose": 5,
+          "shortLabel": "5",
+          "label": "5 cigarettes a day",
+          "share": null
+        },
+        {
+          "dose": 3,
+          "originalDose": 20,
+          "effect": 2.04,
+          "low": 1.86,
+          "high": 2.24,
+          "source": "hackshaw2018",
+          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
+          "reference": false,
+          "extraRiskPercent": 104,
+          "extraRiskLowPercent": 86.00000000000001,
+          "extraRiskHighPercent": 124.00000000000003,
+          "sourceDose": 20,
+          "shortLabel": "20",
+          "label": "20 cigarettes a day",
+          "share": null
+        }
+      ],
+      "sources": [
+        {
+          "id": "hackshaw2018",
+          "citation": "Hackshaw et al. Low cigarette consumption and risk of coronary heart disease and stroke. BMJ 2018;360:j5855.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5781309/",
+          "doi": "10.1136/bmj.j5855",
+          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
+          "year": 2018
+        }
+      ],
+      "extraction": "Exact Table 1, coronary heart disease, men, all studies: pooled predictions at 1, 5 and 20 cigarettes/day. Zero is the explicitly defined never-smoking reference, not an estimated dose-response confidence interval.",
+      "caveats": [
+        "The baseline is never smoking. Quitting does not instantly erase past risk.",
+        "These are pooled predictions for men’s coronary heart disease, not randomized doses. Women have separate estimates.",
+        "One cigarette’s 48% extra relative risk divided by a pack’s 104% is 46.15%, nearly half. It is not a 48-percentage-point absolute risk.",
+        "The dotted guide between the published doses is not a validated prediction at every amount."
+      ],
+      "newerEvidence": "No newer large dose-response synthesis replacing these exact low-consumption coronary heart disease estimates was found through October 2026.",
+      "interaction": "Snap to never smoked, 1, 5 and 20 cigarettes/day; label the zero category never smoked. Do not imply a current smoker instantly obtains the never-smoking risk by dragging to zero.",
+      "kind": "categories",
+      "unit": "cigarettes/day",
+      "evidence": "meta-analysis of prospective observational cohorts",
+      "better": "lower",
+      "effectKind": "risk",
+      "outcome": "heart disease rate",
+      "defaultDose": 1,
+      "coordinate": "category-index",
+      "unitLabel": "cigarettes a day",
+      "domain": [
+        0,
+        3
+      ],
+      "ticks": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "xLabel": "Published smoking comparisons",
+      "yLabel": "Heart disease rate vs never-smokers",
+      "yDomain": [
+        1,
+        2.5
+      ],
+      "yTicks": [
+        1,
+        1.75,
+        2.5
+      ],
+      "step": 1,
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "diet_research",
+        "adversary": "movement_research",
+        "statistician": "life_research"
+      },
+      "sourcePrecision": "published groups",
+      "view": {
+        "area": "harm",
+        "mode": "harm",
+        "answer": "Enough is zero",
+        "fact": "For men, one cigarette a day carried nearly half the extra heart risk of a pack a day.",
+        "range": [
+          0,
+          3
+        ],
+        "rangeLabel": "Never smokers, then 1, 5 and 20 cigarettes a day",
+        "default": 1,
+        "ticks": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_food",
+        "adversary": "v2_move"
+      },
+      "rangeMethod": "Never smokers, then 1, 5 and 20 cigarettes a day",
+      "enoughPolicy": "none",
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      }
+    }
+  ],
+  "archivedEvidence": [
     {
       "id": "frequency",
       "question": "How often should I train a muscle?",
@@ -12635,380 +21739,6 @@ window.EnoughData = {
       "sourcePrecision": "published groups"
     },
     {
-      "id": "sleep",
-      "status": "recommend",
-      "question": "How much sleep?",
-      "shape": "sweet",
-      "contradictsEnough": true,
-      "fact": "Seven hours was the low point in this pooled adult evidence; longer sleep can also be a sign of illness.",
-      "doseUnit": "hours per day",
-      "effectUnit": "relative mortality risk, 7 hours = 1",
-      "direction": "lower",
-      "points": [
-        {
-          "dose": 3,
-          "effect": 1.12,
-          "low": 1.1,
-          "high": 1.14,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 4,
-          "effect": 1.08,
-          "low": 1.06,
-          "high": 1.09,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 5,
-          "effect": 1.04,
-          "low": 1.03,
-          "high": 1.05,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 6,
-          "effect": 1.01,
-          "low": 1,
-          "high": 1.01,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 7,
-          "effect": 1,
-          "low": 1,
-          "high": 1,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 8,
-          "effect": 1.04,
-          "low": 1.04,
-          "high": 1.05,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 9,
-          "effect": 1.15,
-          "low": 1.14,
-          "high": 1.16,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 10,
-          "effect": 1.32,
-          "low": 1.29,
-          "high": 1.35,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "dose": 11,
-          "effect": 1.53,
-          "low": 1.47,
-          "high": 1.59,
-          "source": "yin2017",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        }
-      ],
-      "marker": {
-        "type": "minimum",
-        "doses": [
-          7
-        ],
-        "label": "Lowest observed risk",
-        "reason": "argmin of stored Table 2 point estimates"
-      },
-      "uncertainty": "published-95-percent-ci. Pointwise uncertainty in a pooled association, not the range of outcomes for an individual. Reference point fixed by construction.",
-      "evidenceType": "meta-analysis of prospective observational cohorts",
-      "population": "Generally healthy adult cohorts; 40 risk estimates in this nonlinear mortality table. All sleep estimates were self-reported or interviewed.",
-      "caveats": [
-        "Existing illness may cause longer sleep. The long-sleep arm is especially vulnerable to reverse causation.",
-        "The association does not establish that shortening sleep improves health. These values are not an individual sleep prescription.",
-        "Yuan 2024 used device-inferred overnight sleep in 66262 adults and found no higher risk for longer sleep. Other device cohorts differ.",
-        "Sleep quality, timing, age, sleep disorders and regularity are not captured by this one-hour axis.",
-        "Table rounding means some intervals touch their point estimate. The chart retains the source precision.",
-        "A 2026 UK Biobank comparison found different low-risk ranges for self-report and device measures. A single exact-hour target hides that measurement difference."
-      ],
-      "sources": [
-        {
-          "id": "yin2017",
-          "citation": "Yin et al. 2017. Relationship of sleep duration with all-cause mortality and cardiovascular events. Journal of the American Heart Association 6:e005947.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5634263/",
-          "table": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A",
-          "extraction": "Published numerical table, retrieved as NCBI BioC XML. No digitization.",
-          "doi": "10.1161/JAHA.117.005947",
-          "location": "Table 2, All-Cause Mortality column (40 risk estimates); Figure 2A"
-        },
-        {
-          "id": "yuan2024",
-          "citation": "Yuan et al. 2024. Self-supervised learning of accelerometer data provides new insights for sleep and its association with mortality. npj Digital Medicine 7:86.",
-          "url": "https://www.nature.com/articles/s41746-024-01065-0",
-          "table": "Figure 4 and Supplementary Figure 23",
-          "extraction": "Primary text used for the conflicting longer-sleep finding, not for chart points.",
-          "doi": "10.1038/s41746-024-01065-0",
-          "location": "Figure 4 and Supplementary Figure 23"
-        },
-        {
-          "id": "regularity2024",
-          "citation": "Windred et al. 2024. Sleep regularity is a stronger predictor of mortality risk than sleep duration: A prospective cohort study. Sleep 47:zsad253.",
-          "url": "https://doi.org/10.1093/sleep/zsad253",
-          "table": "Tables 2 and 3; sleep regularity index quintiles",
-          "extraction": "Primary abstract and author manuscript screened. SRI cannot be converted to a number of minutes of bedtime variation.",
-          "location": "Tables 2 and 3; sleep regularity index quintiles"
-        },
-        {
-          "id": "chaput2026",
-          "citation": "Chaput et al., 2026. Sleep duration and health outcomes, comparing self-report and devices. Sleep.",
-          "url": "https://pubmed.ncbi.nlm.nih.gov/42454954/",
-          "table": "Abstract, measurement-dependent minima; UK Biobank prospective cohort",
-          "location": "Abstract, measurement-dependent minima; UK Biobank prospective cohort"
-        }
-      ],
-      "extraction": "Exact Table 2 all-cause mortality column, NCBI BioC XML. Direct table values, no inferred CI or figure digitization.",
-      "verified": "2026-10-04",
-      "kind": "points",
-      "unit": "hours/night",
-      "evidence": "meta-analysis of prospective observational cohorts",
-      "better": "lower",
-      "unitLabel": "hours a night",
-      "effectKind": "risk",
-      "outcome": "death rate",
-      "domain": [
-        3,
-        11
-      ],
-      "ticks": [
-        3,
-        5,
-        7,
-        9,
-        11
-      ],
-      "yDomain": [
-        0.95,
-        1.6
-      ],
-      "yTicks": [
-        1,
-        1.3,
-        1.6
-      ],
-      "defaultDose": 7,
-      "step": 0.1,
-      "xLabel": "Sleep (hours a night)",
-      "yLabel": "Death rate vs 7 hours",
-      "personalNote": "Seven hours is the low point of this association, not your sleep requirement. Longer sleep can reflect illness; do not use this graph to decide to sleep less.",
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "life_research",
-        "adversary": "diet_research",
-        "statistician": "movement_research"
-      },
-      "sourcePrecision": "source point grid with linear interpolation"
-    },
-    {
-      "verified": "2026-10-04",
-      "status": "recommend",
-      "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
-      "direction": "lower",
-      "uncertainty": "published-95-percent-ci. Pointwise uncertainty in a group association or mean treatment difference, not a prediction interval for one person. The reference value is fixed by definition.",
-      "id": "fruit-veg",
-      "question": "How much fruit and veg?",
-      "shape": "plateau",
-      "contradictsEnough": false,
-      "fact": "About five daily servings was linked with 13% lower death risk than two; more did not clearly help.",
-      "doseUnit": "servings/day",
-      "effectUnit": "relative death rate, lowest intake quintile = 1",
-      "coordinate": "category-index",
-      "evidenceType": "prospective observational cohort",
-      "population": "66,719 women in the Nurses Health Study, US health professionals initially without cardiovascular disease, cancer, or diabetes.",
-      "points": [
-        {
-          "dose": 0,
-          "originalDose": 2.1,
-          "effect": 1,
-          "low": 1,
-          "high": 1,
-          "source": "wang2021",
-          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
-          "reference": true,
-          "categoryIndex": 0,
-          "label": "Group around 2.1 servings a day",
-          "doseLow": 1.7,
-          "doseHigh": 2.5,
-          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
-          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
-          "sourceDose": 2.1,
-          "shortLabel": "2.1"
-        },
-        {
-          "dose": 1,
-          "originalDose": 3.3,
-          "effect": 0.96,
-          "low": 0.91,
-          "high": 1,
-          "source": "wang2021",
-          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
-          "reference": false,
-          "categoryIndex": 1,
-          "label": "Group around 3.3 servings a day",
-          "doseLow": 3,
-          "doseHigh": 3.5,
-          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
-          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
-          "sourceDose": 3.3,
-          "shortLabel": "3.3"
-        },
-        {
-          "dose": 2,
-          "originalDose": 4.2,
-          "effect": 0.9,
-          "low": 0.86,
-          "high": 0.94,
-          "source": "wang2021",
-          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
-          "reference": false,
-          "categoryIndex": 2,
-          "label": "Group around 4.2 servings a day",
-          "doseLow": 4,
-          "doseHigh": 4.5,
-          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
-          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
-          "sourceDose": 4.2,
-          "shortLabel": "4.2"
-        },
-        {
-          "dose": 3,
-          "originalDose": 5.3,
-          "effect": 0.87,
-          "low": 0.83,
-          "high": 0.92,
-          "source": "wang2021",
-          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
-          "reference": false,
-          "categoryIndex": 3,
-          "label": "Group around 5.3 servings a day",
-          "doseLow": 5,
-          "doseHigh": 5.7,
-          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
-          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
-          "sourceDose": 5.3,
-          "shortLabel": "5.3"
-        },
-        {
-          "dose": 4,
-          "originalDose": 7.3,
-          "effect": 0.89,
-          "low": 0.84,
-          "high": 0.93,
-          "source": "wang2021",
-          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
-          "reference": false,
-          "categoryIndex": 4,
-          "label": "Group around 7.3 servings a day",
-          "doseLow": 6.6,
-          "doseHigh": 8.5,
-          "rangeMeaning": "Interquartile range within this intake quintile, not category boundaries",
-          "doseMeaning": "Published median intake in a cohort quintile, not an effect measured at an exact continuous dose",
-          "sourceDose": 7.3,
-          "shortLabel": "7.3"
-        }
-      ],
-      "marker": {
-        "type": "minimum",
-        "doses": [
-          3
-        ],
-        "label": "Lowest group: about 5 servings",
-        "reason": "Lowest point estimate among stored Nurses Health Study intake quintiles This is a source-group minimum, not a biological ceiling."
-      },
-      "sources": [
-        {
-          "id": "wang2021",
-          "citation": "Wang et al. Fruit and Vegetable Intake and Mortality. Circulation 2021;143:1642-1654.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8084888/",
-          "doi": "10.1161/CIRCULATIONAHA.120.048996",
-          "location": "Table 2, Nurses Health Study, total fruit and vegetables, multivariable-adjusted model",
-          "year": 2021
-        },
-        {
-          "id": "aune2017fruit",
-          "citation": "Aune et al. Fruit and vegetable intake and the risk of cardiovascular disease, total cancer and all-cause mortality. Int J Epidemiol 2017;46:1029-1056.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5837313/",
-          "doi": "10.1093/ije/dyw319",
-          "location": "Dose-response results and nonlinear all-cause mortality figure",
-          "year": 2017
-        },
-        {
-          "id": "umbrella2025",
-          "citation": "Food groups and risk of all-cause mortality: systematic review and umbrella review.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11931306/",
-          "location": "Included meta-analyses for fruit and vegetables, whole grains, and coffee",
-          "year": 2025
-        }
-      ],
-      "extraction": "Exact Table 2 Nurses Health Study total fruit and vegetable quintiles, multivariable-adjusted all-cause mortality. Group medians and confidence intervals come directly from the table. The plotted groups are categorical, rather than a fitted continuous curve.",
-      "caveats": [
-        "This is an association. People eating more produce may differ in other ways despite statistical adjustment.",
-        "The reference is 2.1 servings/day, not zero. A 90% benefit point relative to zero cannot be computed from this table.",
-        "The source servings are questionnaire portions. They do not have one universal weight. Potatoes and fruit juice were excluded from the total used here.",
-        "The plotted numerical table is the Nurses Health Study alone. The plotted amounts and risks describe these women, rather than the combined male and female sample.",
-        "Aune 2017 found smaller additional associations up to about 10 standard 80 g servings. Five is not a proven universal ceiling.",
-        "Mostly White US health professionals; diets and risks differ elsewhere."
-      ],
-      "newerEvidence": "The 2025 food-mortality umbrella includes Wang 2021 as a comprehensive recent source. Disease-specific 2025 cohorts are not replacements for a general adult curve. Earlier Aune 2017 is inconvenient counterevidence against a hard five-serving ceiling.",
-      "interaction": "Snap to the five measured intake groups. Display the actual group median and explain the interquartile range in detail. Do not interpolate a personal effect between quintiles.",
-      "kind": "categories",
-      "unit": "servings/day",
-      "evidence": "prospective observational cohort",
-      "better": "lower",
-      "effectKind": "risk",
-      "outcome": "death rate",
-      "defaultDose": 3,
-      "unitLabel": "servings a day",
-      "domain": [
-        0,
-        4
-      ],
-      "ticks": [
-        0,
-        1,
-        2,
-        3,
-        4
-      ],
-      "xLabel": "Servings a day (study groups)",
-      "yLabel": "Death rate vs lowest-intake group",
-      "yDomain": [
-        0.75,
-        1.05
-      ],
-      "yTicks": [
-        0.8,
-        0.9,
-        1
-      ],
-      "step": 1,
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "diet_research",
-        "adversary": "movement_research",
-        "statistician": "life_research"
-      },
-      "sourcePrecision": "published groups",
-      "shapeLabel": "Similar results above about 5"
-    },
-    {
       "verified": "2026-10-04",
       "status": "recommend",
       "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
@@ -13263,324 +21993,6 @@ window.EnoughData = {
         0.6,
         0.8,
         1
-      ],
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "diet_research",
-        "adversary": "movement_research",
-        "statistician": "life_research"
-      },
-      "sourcePrecision": "source point grid with linear interpolation"
-    },
-    {
-      "verified": "2026-10-04",
-      "status": "recommend",
-      "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
-      "direction": "lower",
-      "uncertainty": "published-95-percent-ci. Pointwise uncertainty in a group association or mean treatment difference, not a prediction interval for one person. The reference value is fixed by definition.",
-      "id": "smoking",
-      "question": "How many cigarettes?",
-      "shape": "less",
-      "contradictsEnough": true,
-      "fact": "Less is better: one cigarette a day was linked with 48% higher heart disease risk in men.",
-      "doseUnit": "cigarettes/day",
-      "effectUnit": "relative coronary heart disease incidence, never smoked = 1",
-      "evidenceType": "meta-analysis of prospective observational cohorts",
-      "population": "Men: 26 contributing study reports, about 2.31 million participants and 57,152 coronary heart disease events.",
-      "points": [
-        {
-          "dose": 0,
-          "originalDose": 0,
-          "effect": 1,
-          "low": 1,
-          "high": 1,
-          "source": "hackshaw2018",
-          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
-          "reference": true,
-          "sourceDose": 0,
-          "shortLabel": "Never",
-          "label": "Never smoked"
-        },
-        {
-          "dose": 1,
-          "originalDose": 1,
-          "effect": 1.48,
-          "low": 1.3,
-          "high": 1.69,
-          "source": "hackshaw2018",
-          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
-          "reference": false,
-          "sourceDose": 1,
-          "shortLabel": "1",
-          "label": "1 cigarette a day"
-        },
-        {
-          "dose": 2,
-          "originalDose": 5,
-          "effect": 1.58,
-          "low": 1.39,
-          "high": 1.8,
-          "source": "hackshaw2018",
-          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
-          "reference": false,
-          "sourceDose": 5,
-          "shortLabel": "5",
-          "label": "5 cigarettes a day"
-        },
-        {
-          "dose": 3,
-          "originalDose": 20,
-          "effect": 2.04,
-          "low": 1.86,
-          "high": 2.24,
-          "source": "hackshaw2018",
-          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
-          "reference": false,
-          "sourceDose": 20,
-          "shortLabel": "20",
-          "label": "20 cigarettes a day"
-        }
-      ],
-      "marker": {
-        "type": "minimum",
-        "doses": [
-          0
-        ],
-        "label": "Lowest risk: never-smokers",
-        "reason": "Minimum of the stored point estimates, anchored to never-smokers This is never-smoking history, not immediate risk after quitting."
-      },
-      "sources": [
-        {
-          "id": "hackshaw2018",
-          "citation": "Hackshaw et al. Low cigarette consumption and risk of coronary heart disease and stroke. BMJ 2018;360:j5855.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5781309/",
-          "doi": "10.1136/bmj.j5855",
-          "location": "Table 1, coronary heart disease, men, all studies; dose-specific pooled relative risks",
-          "year": 2018
-        }
-      ],
-      "extraction": "Exact Table 1, coronary heart disease, men, all studies: pooled predictions at 1, 5 and 20 cigarettes/day. Zero is the explicitly defined never-smoking reference, not an estimated dose-response confidence interval.",
-      "caveats": [
-        "Zero represents never-smoking history. The reference is never-smokers; past smoking still matters after cessation.",
-        "These are published pooled model predictions at three smoking doses, not four randomized groups.",
-        "The chart uses the all-study row for men. The source also reports women and a more-adjusted subset separately.",
-        "All included studies adjusted at least for age, but covariate adjustment differs. Smoking histories and cigarette counts were generally self-reported.",
-        "Risk is strongly nonlinear near zero. The dotted connecting guide does not predict risk at unreported doses.",
-        "The one-cigarette comparison is 48% higher relative risk than never smoking. It is not 48 percentage points."
-      ],
-      "newerEvidence": "No newer large dose-response synthesis replacing these exact low-consumption coronary heart disease estimates was found through October 2026.",
-      "interaction": "Snap to never smoked, 1, 5 and 20 cigarettes/day; label the zero category never smoked. Do not imply a current smoker instantly obtains the never-smoking risk by dragging to zero.",
-      "kind": "categories",
-      "unit": "cigarettes/day",
-      "evidence": "meta-analysis of prospective observational cohorts",
-      "better": "lower",
-      "effectKind": "risk",
-      "outcome": "heart disease rate",
-      "defaultDose": 1,
-      "coordinate": "category-index",
-      "unitLabel": "cigarettes a day",
-      "domain": [
-        0,
-        3
-      ],
-      "ticks": [
-        0,
-        1,
-        2,
-        3
-      ],
-      "xLabel": "Published smoking comparisons",
-      "yLabel": "Heart disease rate vs never-smokers",
-      "yDomain": [
-        1,
-        2.5
-      ],
-      "yTicks": [
-        1,
-        1.75,
-        2.5
-      ],
-      "step": 1,
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "diet_research",
-        "adversary": "movement_research",
-        "statistician": "life_research"
-      },
-      "sourcePrecision": "published groups"
-    },
-    {
-      "verified": "2026-10-04",
-      "status": "recommend",
-      "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
-      "direction": "lower",
-      "uncertainty": "published-95-percent-ci. Pointwise uncertainty in a group association or mean treatment difference, not a prediction interval for one person. The reference value is fixed by definition.",
-      "id": "alcohol",
-      "question": "How much alcohol?",
-      "shape": "less",
-      "contradictsEnough": true,
-      "fact": "Less is better: five US drinks a week was linked with 10% higher breast cancer risk in women.",
-      "doseUnit": "US standard drinks/week",
-      "originalDoseUnit": "g alcohol/day",
-      "effectUnit": "relative breast cancer incidence, no alcohol = 1",
-      "evidenceType": "meta-analysis of prospective observational cohorts",
-      "population": "Women in prospective breast cancer incidence studies, 23 eligible publications using individual and pooled study data.",
-      "points": [
-        {
-          "dose": 0,
-          "originalDose": 0,
-          "effect": 1,
-          "low": 1,
-          "high": 1,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": true
-        },
-        {
-          "dose": 2.5,
-          "originalDose": 5,
-          "effect": 1.05,
-          "low": 1.04,
-          "high": 1.06,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        },
-        {
-          "dose": 5,
-          "originalDose": 10,
-          "effect": 1.1,
-          "low": 1.08,
-          "high": 1.12,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        },
-        {
-          "dose": 10,
-          "originalDose": 20,
-          "effect": 1.18,
-          "low": 1.15,
-          "high": 1.21,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        },
-        {
-          "dose": 15,
-          "originalDose": 30,
-          "effect": 1.22,
-          "low": 1.19,
-          "high": 1.25,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        },
-        {
-          "dose": 20,
-          "originalDose": 40,
-          "effect": 1.24,
-          "low": 1.2,
-          "high": 1.28,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        },
-        {
-          "dose": 25,
-          "originalDose": 50,
-          "effect": 1.26,
-          "low": 1.21,
-          "high": 1.31,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        },
-        {
-          "dose": 30,
-          "originalDose": 60,
-          "effect": 1.28,
-          "low": 1.21,
-          "high": 1.35,
-          "source": "sohi2024",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "reference": false
-        }
-      ],
-      "marker": {
-        "type": "minimum",
-        "doses": [
-          0
-        ],
-        "label": "Lowest risk: no alcohol",
-        "reason": "Minimum of stored nonlinear model point estimates occurs at the zero-alcohol reference"
-      },
-      "sources": [
-        {
-          "id": "sohi2024",
-          "citation": "Sohi et al. Alcoholic beverage consumption and female breast cancer risk: A systematic review and meta-analysis of prospective cohort studies. Alcohol Clin Exp Res 2024;48:2222-2241.",
-          "url": "https://onlinelibrary.wiley.com/doi/10.1111/acer.15493",
-          "doi": "10.1111/acer.15493",
-          "location": "Results, Relative risks for standard drink per day, categories of consumption, and HED; Supplementary Table S6",
-          "year": 2024
-        },
-        {
-          "id": "niaaa",
-          "citation": "NIAAA. What Is a Standard Drink?",
-          "url": "https://www.niaaa.nih.gov/alcohols-effects-health/what-standard-drink",
-          "location": "A United States standard drink contains 14 grams of pure alcohol"
-        },
-        {
-          "id": "zhao2023",
-          "citation": "Zhao et al. Association Between Daily Alcohol Intake and Risk of All-Cause Mortality. JAMA Netw Open 2023;6:e236185.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10066463/",
-          "doi": "10.1001/jamanetworkopen.2023.6185",
-          "location": "Table 2, fully adjusted model relative to lifetime nondrinkers",
-          "year": 2023
-        }
-      ],
-      "extraction": "Eight nonlinear predictions and intervals are printed in the Results and Supplementary Table S6. The source uses 10-gram drinks. This chart converts grams per day to US 14-gram drinks per week by multiplying by 7/14.",
-      "caveats": [
-        "The outcome is female breast cancer incidence, not overall mortality or every consequence of drinking. Men are not represented by this endpoint.",
-        "Relative increases are not percentage-point increases in a personal cancer probability.",
-        "The model is nonlinear: risk keeps rising but the slope declines at larger doses. A straight-line model would give a different answer.",
-        "Reference definitions vary among contributing studies, including current and lifetime abstention. This is not the abstainer-bias-corrected all-cause mortality analysis.",
-        "Self-reported intake, residual confounding, and different breast cancer subtypes limit individual predictions.",
-        "The upper 40 to 60 g/day region has fewer contributing studies and wider uncertainty."
-      ],
-      "newerEvidence": "Published November 2024, with searches through November 2023. No newer larger prospective breast-cancer dose-response synthesis was found in searches through October 2026. Zhao 2023 all-cause mortality is screened separately and does not support drawing a monotonic low-dose mortality curve.",
-      "interaction": "Use exact US drink conversion and a risk axis. Never show percent of benefit on a harmful curve.",
-      "kind": "points",
-      "unit": "drinks/week",
-      "evidence": "meta-analysis of prospective observational cohorts",
-      "better": "lower",
-      "effectKind": "risk",
-      "outcome": "breast cancer rate",
-      "defaultDose": 5,
-      "unitLabel": "US drinks a week",
-      "domain": [
-        0,
-        30
-      ],
-      "ticks": [
-        0,
-        5,
-        15,
-        30
-      ],
-      "step": 0.5,
-      "xLabel": "US drinks a week (14 g each)",
-      "yLabel": "Breast cancer rate vs no alcohol",
-      "yDomain": [
-        1,
-        1.5
-      ],
-      "yTicks": [
-        1,
-        1.25,
-        1.5
       ],
       "doseDigits": 1,
       "yDigits": 1,
@@ -13951,966 +22363,6 @@ window.EnoughData = {
         "statistician": "life_research"
       },
       "sourcePrecision": "published groups"
-    },
-    {
-      "id": "income",
-      "status": "recommend",
-      "question": "How much income?",
-      "shape": "continues",
-      "contradictsEnough": true,
-      "fact": "Across 33,391 working adults, happiness kept rising with income on average, including above $100,000.",
-      "doseUnit": "annual household dollars before tax, original study dollars",
-      "effectUnit": "average feeling score, 0 to 100",
-      "direction": "higher",
-      "points": [
-        {
-          "dose": 0,
-          "effect": 60.863,
-          "low": 60.19743822,
-          "high": 61.52856178,
-          "standardError": 0.339572336833776,
-          "n": 1494,
-          "source": "incomeCSV",
-          "sourceRow": 2,
-          "label": "$10,000 to $20,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 15000,
-          "from": 10000,
-          "to": 20000,
-          "shortLabel": "$10k"
-        },
-        {
-          "dose": 1,
-          "effect": 62.032,
-          "low": 61.475928472,
-          "high": 62.588071528,
-          "standardError": 0.283709963465988,
-          "n": 2132,
-          "source": "incomeCSV",
-          "sourceRow": 3,
-          "label": "$20,000 to $30,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 25000,
-          "from": 20000,
-          "to": 30000,
-          "shortLabel": "$20k"
-        },
-        {
-          "dose": 2,
-          "effect": 62.379,
-          "low": 61.911681433,
-          "high": 62.846318567,
-          "standardError": 0.238427840237687,
-          "n": 2620,
-          "source": "incomeCSV",
-          "sourceRow": 4,
-          "label": "$30,000 to $40,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 35000,
-          "from": 30000,
-          "to": 40000,
-          "shortLabel": "$30k"
-        },
-        {
-          "dose": 3,
-          "effect": 62.658,
-          "low": 62.196053516,
-          "high": 63.119946484,
-          "standardError": 0.235686981684111,
-          "n": 2647,
-          "source": "incomeCSV",
-          "sourceRow": 5,
-          "label": "$40,000 to $50,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 45000,
-          "from": 40000,
-          "to": 50000,
-          "shortLabel": "$40k"
-        },
-        {
-          "dose": 4,
-          "effect": 62.83,
-          "low": 62.348536881,
-          "high": 63.311463119,
-          "standardError": 0.245644448481494,
-          "n": 2709,
-          "source": "incomeCSV",
-          "sourceRow": 6,
-          "label": "$50,000 to $60,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 55000,
-          "from": 50000,
-          "to": 60000,
-          "shortLabel": "$50k"
-        },
-        {
-          "dose": 5,
-          "effect": 63.015,
-          "low": 62.512513592,
-          "high": 63.517486408,
-          "standardError": 0.256370616109618,
-          "n": 2377,
-          "source": "incomeCSV",
-          "sourceRow": 7,
-          "label": "$60,000 to $70,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 65000,
-          "from": 60000,
-          "to": 70000,
-          "shortLabel": "$60k"
-        },
-        {
-          "dose": 6,
-          "effect": 63.299,
-          "low": 62.789014012,
-          "high": 63.808985988,
-          "standardError": 0.260196932694921,
-          "n": 2355,
-          "source": "incomeCSV",
-          "sourceRow": 8,
-          "label": "$70,000 to $80,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 75000,
-          "from": 70000,
-          "to": 80000,
-          "shortLabel": "$70k"
-        },
-        {
-          "dose": 7,
-          "effect": 63.55,
-          "low": 63.024274677,
-          "high": 64.075725323,
-          "standardError": 0.268227205461822,
-          "n": 2069,
-          "source": "incomeCSV",
-          "sourceRow": 9,
-          "label": "$80,000 to $90,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 85000,
-          "from": 80000,
-          "to": 90000,
-          "shortLabel": "$80k"
-        },
-        {
-          "dose": 8,
-          "effect": 63.737,
-          "low": 63.23465666,
-          "high": 64.23934334,
-          "standardError": 0.256297622247597,
-          "n": 2226,
-          "source": "incomeCSV",
-          "sourceRow": 10,
-          "label": "$90,000 to $100,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 95000,
-          "from": 90000,
-          "to": 100000,
-          "shortLabel": "$90k"
-        },
-        {
-          "dose": 9,
-          "effect": 63.916,
-          "low": 63.538023741,
-          "high": 64.293976259,
-          "standardError": 0.192845030145198,
-          "n": 3710,
-          "source": "incomeCSV",
-          "sourceRow": 11,
-          "label": "$100,000 to $125,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 112500,
-          "from": 100000,
-          "to": 125000,
-          "shortLabel": "$100k"
-        },
-        {
-          "dose": 10,
-          "effect": 64.187,
-          "low": 63.735417466,
-          "high": 64.638582534,
-          "standardError": 0.230399252163306,
-          "n": 2856,
-          "source": "incomeCSV",
-          "sourceRow": 12,
-          "label": "$125,000 to $150,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 137500,
-          "from": 125000,
-          "to": 150000,
-          "shortLabel": "$125k"
-        },
-        {
-          "dose": 11,
-          "effect": 64.44,
-          "low": 64.015663853,
-          "high": 64.864336147,
-          "standardError": 0.216498034125874,
-          "n": 3168,
-          "source": "incomeCSV",
-          "sourceRow": 13,
-          "label": "$150,000 to $200,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 175000,
-          "from": 150000,
-          "to": 200000,
-          "shortLabel": "$150k"
-        },
-        {
-          "dose": 12,
-          "effect": 65.537,
-          "low": 64.966783919,
-          "high": 66.107216081,
-          "standardError": 0.290926571685955,
-          "n": 1776,
-          "source": "incomeCSV",
-          "sourceRow": 14,
-          "label": "$200,000 to $300,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 250000,
-          "from": 200000,
-          "to": 300000,
-          "shortLabel": "$200k"
-        },
-        {
-          "dose": 13,
-          "effect": 65.81,
-          "low": 64.977596641,
-          "high": 66.642403359,
-          "standardError": 0.424695591121095,
-          "n": 832,
-          "source": "incomeCSV",
-          "sourceRow": 15,
-          "label": "$300,000 to $500,000 a year",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 400000,
-          "from": 300000,
-          "to": 500000,
-          "shortLabel": "$300k"
-        },
-        {
-          "dose": 14,
-          "effect": 65.341,
-          "low": 64.088090131,
-          "high": 66.593909869,
-          "standardError": 0.639239729028958,
-          "n": 420,
-          "source": "incomeCSV",
-          "sourceRow": 16,
-          "label": "Over $500,000 a year, pooled",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "sourceDose": 625000,
-          "from": 500000,
-          "to": null,
-          "shortLabel": ">$500k"
-        }
-      ],
-      "marker": {
-        "type": "none",
-        "doses": [],
-        "label": "No general ceiling found",
-        "reason": "No 90 percent benefit point is identifiable. A numerical endpoint is not a maximum. The average log-income fit adds about 0.078 standard deviations per doubling (0.113 × ln 2); this is not a percentage of happiness."
-      },
-      "model": {
-        "kind": "published-coefficient",
-        "formula": "Change in standardized feeling score = 0.113 * natural_log(income2/income1)",
-        "coefficient": 0.113,
-        "source": "killingsworth2021",
-        "location": "Table 1, column Main results, Overall slope",
-        "doublingChangeStandardized": 0.07832563140327382,
-        "coefficientCI": null,
-        "use": "Optional detail only. Show actual deposited means and their own bands on the chart, not an arbitrary fitted happiness scale."
-      },
-      "uncertainty": "derived-approximate-95-percent-mean-ci. published mean +/- 1.96 * published standard error. Uncertainty of a group mean. These bands do not show how widely individual happiness varies.",
-      "evidenceType": "observational experience sampling; adversarial reanalysis",
-      "population": "33391 employed US adults ages 18 to 65, household incomes at least $10000; median age 33. Original app volunteers, not a representative US sample.",
-      "caveats": [
-        "Income is associated with happiness. This chart does not predict the effect of a raise for one person.",
-        "All incomes above $500000 were pooled and plotted by the authors at $625000. That point is not evidence at an exact salary of $625000.",
-        "The highest-income group contains 420 people and has a lower observed mean than the preceding group. Both the lower mean and the wider interval are shown.",
-        "2023 collaboration found flattening above $100000 in the unhappiest 15 to 20 percent, while the happier majority kept rising.",
-        "Happiness percentiles in the 2023 analysis are conditional on income, not a permanent personal type or a predicted response for the reader.",
-        "A 2024 Economics Letters reanalysis argues for a plateau around $200000, illustrating sparse-data sensitivity. No ceiling established is more defensible than income always improves happiness.",
-        "Prices, household size and geography differ; dollars are the source dollars, not silently adjusted to 2026.",
-        "The y-axis is a feeling scale, not percent of maximum happiness. It cannot support a percentage-of-benefit or 90 percent marker."
-      ],
-      "sources": [
-        {
-          "id": "incomeCSV",
-          "citation": "Killingsworth author-deposited income_wellbeing.csv. OSF nguwz.",
-          "url": "https://osf.io/download/cfnbv/",
-          "table": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount",
-          "extraction": "Direct CSV read. Approximate pointwise mean interval = mean +/- 1.96 times the published standard error.",
-          "location": "Columns household_income, experienced_wellbeing.Mean, experienced_wellbeing.std.error, experienced_wellbeing.personcount"
-        },
-        {
-          "id": "killingsworth2021",
-          "citation": "Killingsworth 2021. Experienced well-being rises with income, even above $75,000 per year. PNAS 118:e2016976118.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7848527/",
-          "table": "Table 1, main results; Methods, Income Measure; author OSF income_wellbeing.csv",
-          "extraction": "Read author-deposited income-band means, standard errors and counts.",
-          "doi": "10.1073/pnas.2016976118",
-          "location": "Table 1, main results; Methods, Income Measure; author OSF income_wellbeing.csv"
-        },
-        {
-          "id": "kkm2023",
-          "citation": "Killingsworth, Kahneman and Mellers 2023. Income and emotional well-being: A conflict resolved. PNAS 120:e2208661120.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10013834/",
-          "table": "Figure 2 and Table 1",
-          "extraction": "Primary text and published quantile regression table, used as interpretation check.",
-          "doi": "10.1073/pnas.2208661120",
-          "location": "Figure 2 and Table 1"
-        },
-        {
-          "id": "incomeReanalysis2024",
-          "citation": "Bennedsen, 2024. Income and emotional well-being: Evidence for well-being plateauing around $200,000 per year. Economics Letters 238:111730.",
-          "url": "https://doi.org/10.1016/j.econlet.2024.111730",
-          "table": "Abstract and reanalysis of high-income observations",
-          "extraction": "Screened as contradictory reanalysis; not a replacement data table.",
-          "location": "Abstract and reanalysis of high-income observations"
-        },
-        {
-          "id": "lottery2020",
-          "citation": "Lindqvist, Ostling and Cesarini 2020. Long-run effects of lottery wealth on psychological well-being. Review of Economic Studies 87:2703-2726.",
-          "url": "https://www.ifn.se/media/tgufbbv5/2020-lindqvist-%C3%B6stling-cesarini-long-run-effects-of-lottery-wealth-on-psychological-well-being.pdf",
-          "table": "Table 3 and Figure 1",
-          "extraction": "Primary paper screened; quasi-random prize variation affects evaluative satisfaction more than emotional outcomes.",
-          "location": "Table 3 and Figure 1"
-        }
-      ],
-      "extraction": "Exact author OSF CSV means, standard errors and group counts. Approximate confidence limits are mean plus or minus 1.96 standard errors. Equally spaced dots represent published groups; the dotted line is a visual connector. All incomes over $500,000 are pooled.",
-      "sourceDigest": {
-        "url": "https://osf.io/download/cfnbv/",
-        "sha256": "ac750a7f748a156b1f79dfed1e717dad14a59578c644654f52d0d5ef2fbeccfa",
-        "bytes": 16851
-      },
-      "verified": "2026-10-04",
-      "kind": "categories",
-      "unit": "USD/year",
-      "evidence": "observational experience sampling; adversarial reanalysis",
-      "better": "higher",
-      "unitLabel": "dollars a year",
-      "effectKind": "mood",
-      "domain": [
-        0,
-        14
-      ],
-      "ticks": [
-        0,
-        4,
-        9,
-        14
-      ],
-      "defaultDose": 6,
-      "step": 1,
-      "xLabel": "Household income (study groups)",
-      "yLabel": "Average reported mood / 100",
-      "yDomain": [
-        0,
-        100
-      ],
-      "yTicks": [
-        0,
-        50,
-        100
-      ],
-      "doseDigits": 1,
-      "yDigits": 1,
-      "coordinate": "category-index",
-      "reviews": {
-        "researcher": "life_research",
-        "adversary": "diet_research",
-        "statistician": "movement_research"
-      },
-      "sourcePrecision": "published groups"
-    },
-    {
-      "id": "savings",
-      "status": "recommend",
-      "question": "How much should I save?",
-      "shape": "continues",
-      "contradictsEnough": true,
-      "fact": "Saving half your take-home pay reaches 25 years of spending in about 17 years under this steady-return model.",
-      "doseUnit": "percent of take-home income saved",
-      "effectUnit": "model years to chosen portfolio target",
-      "direction": "lower",
-      "points": [
-        {
-          "dose": 5,
-          "effect": 65.767876449,
-          "low": null,
-          "high": null,
-          "scenarioLow": 49.037570918,
-          "scenarioHigh": 101.348229508,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 10,
-          "effect": 51.353095027,
-          "low": null,
-          "high": null,
-          "scenarioLow": 38.577031194,
-          "scenarioHigh": 77.898457257,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 15,
-          "effect": 42.832492251,
-          "low": null,
-          "high": null,
-          "scenarioLow": 32.365257779,
-          "scenarioHigh": 64.18121984,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 20,
-          "effect": 36.723784388,
-          "low": null,
-          "high": null,
-          "scenarioLow": 27.891033764,
-          "scenarioHigh": 54.448685007,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 25,
-          "effect": 31.935629744,
-          "low": null,
-          "high": null,
-          "scenarioLow": 24.367300601,
-          "scenarioHigh": 46.899544501,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 30,
-          "effect": 27.981888874,
-          "low": null,
-          "high": null,
-          "scenarioLow": 21.443420981,
-          "scenarioHigh": 40.73144759,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 35,
-          "effect": 24.603216722,
-          "low": null,
-          "high": null,
-          "scenarioLow": 18.932300221,
-          "scenarioHigh": 35.516395959,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 40,
-          "effect": 21.644786244,
-          "low": null,
-          "high": null,
-          "scenarioLow": 16.722209755,
-          "scenarioHigh": 30.998912757,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 45,
-          "effect": 19.00671137,
-          "low": null,
-          "high": null,
-          "scenarioLow": 14.741035735,
-          "scenarioHigh": 27.014210173,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 50,
-          "effect": 16.620772445,
-          "low": null,
-          "high": null,
-          "scenarioLow": 12.939494907,
-          "scenarioHigh": 23.44977225,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 55,
-          "effect": 14.438294025,
-          "low": null,
-          "high": null,
-          "scenarioLow": 11.282392665,
-          "scenarioHigh": 20.225345935,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 60,
-          "effect": 12.423319616,
-          "low": null,
-          "high": null,
-          "scenarioLow": 9.743700824,
-          "scenarioHigh": 17.28167534,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 65,
-          "effect": 10.548527738,
-          "low": null,
-          "high": null,
-          "scenarioLow": 8.303612194,
-          "scenarioHigh": 14.573760891,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 70,
-          "effect": 8.792665752,
-          "low": null,
-          "high": null,
-          "scenarioLow": 6.946689593,
-          "scenarioHigh": 12.066623709,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 75,
-          "effect": 7.138871127,
-          "low": null,
-          "high": null,
-          "scenarioLow": 5.660654785,
-          "scenarioHigh": 9.732534833,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 80,
-          "effect": 5.57353557,
-          "low": null,
-          "high": null,
-          "scenarioLow": 4.435568833,
-          "scenarioHigh": 7.549140506,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 85,
-          "effect": 4.085514079,
-          "low": null,
-          "high": null,
-          "scenarioLow": 3.263261129,
-          "scenarioHigh": 5.498156798,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 90,
-          "effect": 2.665560374,
-          "low": null,
-          "high": null,
-          "scenarioLow": 2.136921622,
-          "scenarioHigh": 3.564437923,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "dose": 95,
-          "effect": 1.305915146,
-          "low": null,
-          "high": null,
-          "scenarioLow": 1.050803161,
-          "scenarioHigh": 1.735296781,
-          "source": "savingsArithmetic",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        }
-      ],
-      "marker": {
-        "type": "example",
-        "doses": [
-          50
-        ],
-        "label": "Example: save 50%, about 17 years",
-        "reason": "Evaluate the stored model at 50 percent. This is an example, not an optimal savings rate or 90 percent threshold.",
-        "verification": {
-          "method": "model-input",
-          "dose": 50
-        }
-      },
-      "model": {
-        "kind": "ordinary-annuity",
-        "formula": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
-        "zeroReturnFormula": "n = (1-s)/(w*s)",
-        "baseParameters": {
-          "realAnnualReturn": 0.05,
-          "withdrawalFraction": 0.04,
-          "startingSavings": 0,
-          "contributions": "end of year",
-          "takeHomeIncome": "constant in real dollars",
-          "spending": "constant at (1-s) times income",
-          "target": "annual spending divided by withdrawal fraction"
-        },
-        "scenarioParameters": [
-          {
-            "realAnnualReturn": 0.07,
-            "withdrawalFraction": 0.05
-          },
-          {
-            "realAnnualReturn": 0.03,
-            "withdrawalFraction": 0.03
-          }
-        ],
-        "limits": {
-          "doseMinimumExclusive": 0,
-          "doseMaximumExclusive": 100
-        },
-        "effectAt50": 16.620772445041133
-      },
-      "uncertainty": "The band compares 3 percent real return with 3 percent withdrawal against 7 percent real return with 5 percent withdrawal. These are different assumptions, not confidence limits. Actual market outcomes can fall outside them.",
-      "evidenceType": "arithmetic, with historical retirement research as context",
-      "population": "A hypothetical saver starting with no assets and no debt. No research population is implied.",
-      "caveats": [
-        "Five percent real growth is an assumption, not a forecast. Real market returns vary and their sequence matters.",
-        "The 4 percent input is a target multiplier of 25 annual spending. It is not a promise of permanent financial independence.",
-        "Bengen historical US portfolios informed 30-year withdrawals. Early retirement can last much longer; taxes, fees, country and asset mix differ.",
-        "This toy model omits pensions, Social Security, housing, health costs, debt, taxes on withdrawal, changing income and changing expenses.",
-        "Fractional years extend an annual-contribution formula continuously. The result is approximate model years, rather than a predicted retirement date.",
-        "Zero saving cannot reach the target from zero assets; 100 percent saving implies zero spending and is not a meaningful living scenario."
-      ],
-      "sources": [
-        {
-          "id": "savingsArithmetic",
-          "citation": "Enough accumulation model, derived from an ordinary end-of-year savings annuity.",
-          "url": "#savings",
-          "table": "n = log(1 + r*(1-s)/(w*s))/log(1+r)",
-          "extraction": "Reproducible arithmetic. No observed population or statistical confidence interval.",
-          "location": "n = log(1 + r*(1-s)/(w*s))/log(1+r)"
-        },
-        {
-          "id": "bengen1994",
-          "citation": "Bengen 1994. Determining withdrawal rates using historical data. Journal of Financial Planning 7:171-180.",
-          "url": "https://finalytiq.co.uk/wp-content/uploads/2017/02/Determining-Withdrawal-Rates-Using-Historical-Data.pdf",
-          "table": "Historical 30-year portfolio survival discussion and Figures 1(a), 1(b)",
-          "extraction": "Original paper reprint; historical withdrawal context only. All savings points are our arithmetic.",
-          "location": "Historical 30-year portfolio survival discussion and Figures 1(a), 1(b)"
-        }
-      ],
-      "extraction": "Calculated from disclosed annuity assumptions, each point reproducible. CI fields deliberately null; scenario bands stored separately. Model: n = ln(1 + r(1-s)/(w s))/ln(1+r). Base real return r=0.05; withdrawal fraction w=0.04. Contributions arrive at year end. Scenarios: r=0.07,w=0.05 and r=0.03,w=0.03.",
-      "verified": "2026-10-04",
-      "kind": "model",
-      "unit": "percent",
-      "evidence": "arithmetic, with historical retirement research as context",
-      "better": "lower",
-      "unitLabel": "% of take-home pay saved",
-      "effectKind": "years",
-      "domain": [
-        5,
-        95
-      ],
-      "ticks": [
-        5,
-        25,
-        50,
-        75,
-        95
-      ],
-      "defaultDose": 50,
-      "xLabel": "Take-home pay saved (%)",
-      "yLabel": "Years to the portfolio target",
-      "yDomain": [
-        0,
-        105
-      ],
-      "yTicks": [
-        0,
-        50,
-        100
-      ],
-      "scenarioEnvelope": true,
-      "step": 1,
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "life_research",
-        "adversary": "diet_research",
-        "statistician": "movement_research"
-      },
-      "sourcePrecision": "source point grid with linear interpolation"
-    },
-    {
-      "id": "work",
-      "status": "recommend",
-      "question": "How long a workweek?",
-      "shape": "less",
-      "contradictsEnough": true,
-      "fact": "Working 55 hours or more was associated with 35 percent higher stroke risk than a 35 to 40 hour week.",
-      "doseUnit": "hours worked per week",
-      "effectUnit": "relative stroke incidence risk,35 to 40 hours =1",
-      "direction": "lower",
-      "points": [
-        {
-          "dose": 0,
-          "doseLow": 35,
-          "doseHigh": 40,
-          "effect": 1,
-          "low": 1,
-          "high": 1,
-          "source": "workStroke2020",
-          "category": "35 to 40 hours",
-          "from": 35,
-          "to": 41,
-          "label": "35 to 40 hours",
-          "shortLabel": "35-40",
-          "location": "Abstract and Table 5, Acquired Stroke"
-        },
-        {
-          "dose": 1,
-          "doseLow": 41,
-          "doseHigh": 48,
-          "effect": 1.04,
-          "low": 0.94,
-          "high": 1.14,
-          "source": "workStroke2020",
-          "category": "41 to 48 hours",
-          "studies": 18,
-          "n": 277202,
-          "from": 41,
-          "to": 49,
-          "label": "41 to 48 hours",
-          "shortLabel": "41-48",
-          "location": "Abstract and Table 5, Acquired Stroke"
-        },
-        {
-          "dose": 2,
-          "doseLow": 49,
-          "doseHigh": 54,
-          "effect": 1.13,
-          "low": 1,
-          "high": 1.28,
-          "source": "workStroke2020",
-          "category": "49 to 54 hours",
-          "studies": 17,
-          "n": 275181,
-          "from": 49,
-          "to": 55,
-          "label": "49 to 54 hours",
-          "shortLabel": "49-54",
-          "location": "Abstract and Table 5, Acquired Stroke"
-        },
-        {
-          "dose": 3,
-          "doseLow": 55,
-          "doseHigh": null,
-          "effect": 1.35,
-          "low": 1.13,
-          "high": 1.61,
-          "source": "workStroke2020",
-          "category": "55 hours or more",
-          "studies": 7,
-          "n": 162644,
-          "from": 55,
-          "to": null,
-          "label": "55 hours or more",
-          "shortLabel": "55+",
-          "location": "Abstract and Table 5, Acquired Stroke"
-        }
-      ],
-      "marker": {
-        "type": "reported",
-        "doses": [
-          3
-        ],
-        "label": "Higher risk in the 55+ hour group",
-        "reason": "Published lower bound of highest exposure category, not an identified biological threshold. Below 35 hours was not studied; less is better here describes avoiding the longest studied working week, not zero work.",
-        "verification": {
-          "method": "category-label",
-          "label": "55 hours or more"
-        }
-      },
-      "uncertainty": "Published 95 percent intervals describe group associations. The open-ended 55-or-more group has no dose-specific slope, so it cannot predict risks at 65 or 80 hours.",
-      "evidenceType": "meta-analysis of observational worker cohorts",
-      "population": "Working adults, multinational cohorts with 1 to 20years follow-up. Category-specific participant and study counts differ.",
-      "caveats": [
-        "The endpoint is stroke incidence, not death from stroke, all-cause mortality or productivity.",
-        "The source groups working hours into ranges. The 55-or-more group has a 35 percent higher estimated stroke rate; it is not a prediction at exactly 55 hours.",
-        "There are no data here below 35 hours. This card cannot show that zero work is best.",
-        "Confounding from occupation, stress and socioeconomic conditions remains possible.",
-        "55 hours is an exposure category boundary, not a precise safe-versus-dangerous cutoff.",
-        "Pencavel historic output plateau and modern four-day-week wellbeing studies address different outcomes, not the same curve."
-      ],
-      "sources": [
-        {
-          "id": "workStroke2020",
-          "citation": "Descatha et al. 2020. The effect of exposure to long working hours on stroke: WHO/ILO systematic review and meta-analysis. Environment International 142:105746.",
-          "url": "https://doi.org/10.1016/j.envint.2020.105746",
-          "table": "Abstract and Table 5, Acquired Stroke",
-          "extraction": "Published category-specific incidence relative risks and 95% intervals. Do not use illustrative absolute risks in Table 5, which have inconsistent arithmetic.",
-          "doi": "10.1016/j.envint.2020.105746",
-          "location": "Abstract and Table 5, Acquired Stroke"
-        },
-        {
-          "id": "pencavel2015",
-          "citation": "Pencavel 2015. The productivity of working hours. Economic Journal 125:2052-2076.",
-          "url": "https://doi.org/10.1111/ecoj.12166",
-          "table": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs.",
-          "extraction": "Published working-paper coefficients, standard errors and primary text. No chart digitization.",
-          "workingPaperUrl": "https://docs.iza.org/dp8129.pdf",
-          "location": "IZA DP8129 (April 2014), Table 4 column ii and Table 5; Figures 4 and 5. Final journal table numbering differs."
-        },
-        {
-          "id": "fourDay2025",
-          "citation": "Fan et al. 2025. Work time reduction via a 4-day workweek finds improvements in workers’ well-being. Nature Human Behaviour 9:2153-2168.",
-          "url": "https://doi.org/10.1038/s41562-025-02259-6",
-          "table": "Abstract, 2896 employees in 141 organizations plus 12 control companies",
-          "extraction": "Primary abstract screened. Volunteering organizations, intervention changes work design as well as hours.",
-          "location": "Abstract, 2896 employees in 141 organizations plus 12 control companies"
-        }
-      ],
-      "extraction": "Exact published cohort-incidence relative risks and confidence intervals, from the abstract and summary table. Published hour ranges are spaced equally and selected directly, without assigning a midpoint to the final group.",
-      "verified": "2026-10-04",
-      "kind": "categories",
-      "unit": "hours/week",
-      "evidence": "meta-analysis of observational worker cohorts",
-      "better": "lower",
-      "coordinate": "category-index",
-      "unitLabel": "hours a week",
-      "effectKind": "risk",
-      "outcome": "stroke rate",
-      "domain": [
-        0,
-        3
-      ],
-      "ticks": [
-        0,
-        1,
-        2,
-        3
-      ],
-      "defaultDose": 0,
-      "xLabel": "Work (hours a week, groups)",
-      "yLabel": "Stroke rate vs 35-40 hours",
-      "yDomain": [
-        0.9,
-        1.7
-      ],
-      "yTicks": [
-        1,
-        1.3,
-        1.6
-      ],
-      "personalNote": "The 55+ hour group had higher stroke incidence. These categories do not supply an optimum for your job or a precise safe-hour cutoff.",
-      "step": 1,
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "life_research",
-        "adversary": "diet_research",
-        "statistician": "movement_research"
-      },
-      "sourcePrecision": "published groups"
-    },
-    {
-      "id": "meditation",
-      "status": "recommend-with-unknown-display",
-      "question": "How much meditation?",
-      "shape": "unknown",
-      "contradictsEnough": true,
-      "fact": "Across 203 trials, more practice did not reliably predict better mental health; newer observational work found small gains.",
-      "doseUnit": "minutes per day",
-      "effectUnit": null,
-      "direction": null,
-      "points": [],
-      "unidentifiedDoseRange": [
-        0,
-        60
-      ],
-      "marker": {
-        "type": "none",
-        "doses": [],
-        "label": "No established daily curve",
-        "reason": "No universal daily-minute benefit curve or 90 percent point can be estimated from this mixed evidence."
-      },
-      "uncertainty": "The daily response itself is unidentified, so a numerical uncertainty band would be invented. The empty chart means unknown response, not equal benefit at every dose.",
-      "evidenceType": "meta-regression of randomized-program trials; later observational practice studies",
-      "population": "Adults in 203 mindfulness-program trials, 15,971 participants; a later 2025 volunteer cohort enrolled 1,052 meditators. Program doses and personal practice time are different.",
-      "caveats": [
-        "Trial programs may help even if more minutes fail to predict larger improvements. Absence of a dose relationship is not absence of benefit.",
-        "Dose is largely not randomized; adherence and prior wellbeing can influence practice.",
-        "Strohmaier found significant dose relationships for mindfulness itself. The mental-health result does not cover every outcome.",
-        "Bowles 2025 found small prospective practice associations and uncertain thresholds, with 1052 enrolled and 578 long-term follow-up participants.",
-        "The 2025 paper reports some inconsistent rounded CIs/P values in tables; no precise minutes-to-effect reconstruction is justified here.",
-        "App 2023 data show associations vary with practice history and session length. No universal 20 minute optimum is supported.",
-        "A 2026 trial compared one 5-minute and one 20-minute session: effects varied by outcome and participant traits. It does not establish a daily practice ceiling."
-      ],
-      "sources": [
-        {
-          "id": "strohmaier2020",
-          "citation": "Strohmaier 2020. The relationship between doses of mindfulness-based programs and depression, anxiety, stress, and mindfulness. Mindfulness 11:1315-1335.",
-          "url": "https://link.springer.com/article/10.1007/s12671-020-01319-4",
-          "table": "Abstract, dose-response meta-regressions of 203 randomized-program trials",
-          "extraction": "Primary abstract and institutional author record. Daily-minute estimates not available; no numerical dose curve extracted.",
-          "doi": "10.1007/s12671-020-01319-4",
-          "location": "Abstract, dose-response meta-regressions of 203 randomized-program trials"
-        },
-        {
-          "id": "bowles2025",
-          "citation": "Bowles et al. 2025. Dose-response effects of reported meditation practice on mental-health and wellbeing: A prospective longitudinal study. British Journal of Psychology.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12336962/",
-          "table": "Tables 3 and 4, Figure 2",
-          "extraction": "Published tables and text screened. Small prospective associations conflict with a simple no-dose finding. Some printed table CIs and P values are inconsistent; no daily-minute curve extracted.",
-          "location": "Tables 3 and 4, Figure 2"
-        },
-        {
-          "id": "jmirMeditation2023",
-          "citation": "The effects of dose, practice habits, and objects of focus on digital meditation effectiveness and adherence. 2023.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10548318/",
-          "table": "Figure 1",
-          "extraction": "Primary text screened, app-practice dose associations differ by prior sessions.",
-          "location": "Figure 1"
-        },
-        {
-          "id": "strohmaier2026",
-          "citation": "Strohmaier, Jones and Medvedev, 2026. Randomized shorter and longer single-session mindfulness practice. Mindfulness 17:731-745.",
-          "url": "https://doi.org/10.1007/s12671-026-02762-5",
-          "table": "Abstract and Table 4; 636 adults, 5 vs 20 minutes",
-          "location": "Abstract and Table 4; 636 adults, 5 vs 20 minutes"
-        }
-      ],
-      "extraction": "No daily dose curve can be reconstructed, so no numerical points or confidence band are drawn. The 203-trial count is the number in the card fact.",
-      "verified": "2026-10-04",
-      "kind": "unknown",
-      "unit": "min/day",
-      "evidence": "meta-regression of randomized-program trials; later observational practice studies",
-      "better": null,
-      "unitLabel": "minutes a day",
-      "effectKind": "unknown",
-      "domain": [
-        0,
-        60
-      ],
-      "ticks": [
-        0,
-        20,
-        40,
-        60
-      ],
-      "yDomain": [
-        0,
-        1
-      ],
-      "yTicks": [],
-      "defaultDose": 10,
-      "xLabel": "Practice (minutes a day)",
-      "yLabel": "Benefit cannot be estimated",
-      "step": 1,
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "life_research",
-        "adversary": "diet_research",
-        "statistician": "movement_research"
-      },
-      "sourcePrecision": "source point grid with linear interpolation"
     }
   ]
 };

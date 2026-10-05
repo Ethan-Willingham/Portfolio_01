@@ -1,40 +1,55 @@
 # How Much Is Enough?
 
-`enough.html` is an interactive evidence page in In Progress. It displays 17 researched questions about movement, muscle, sleep, food, harmful exposures, income, savings, work and meditation. The title and first walking card introduce the page before the optional personal panel.
+`enough.html` is an explorable post in In Progress. Version2 rebuilds its presentation around bounded share of improvement, a painting-led opening, a shared range control, optional personal bars and13 cards grouped by life area. The chooser is `enough-lab.html`. All three fonts and the dark-green background come from the site kit.
 
-## Data and interpretation
+## Calculation
 
-All numerical estimates, references, population limits, extraction methods and review identities live in `js/enough-data.js`. Primary tables and author deposits supply the empirical values. The protein response is reconstructed from a published segmented model; savings uses the disclosed annuity formula. No curve was digitized from an image.
+For each curve where more helps, share = improvement from the lowest displayed dose divided by the largest improvement anywhere in the explicitly declared displayed range. It is0% at that range’s origin and100% at its best point. Enough is the first90% crossing. The denominator is a bounded descriptive comparison, not an absolute biological maximum, causal effect or personal forecast. Selected model windows are labeled as such.
 
-Published exposure groups stay categorical. Equal spacing and dotted connectors do not imply equal dose intervals or predict a response within a group. Numeric source grids use straight interpolation for display. Full grids remain in the data file; long evidence tables show an identified sample.
+`js/enough-data.js` contains the primary coordinates, source location per point, full retained activity grid, raw uncertainty, model parameters, declared range and computed share/crossings. `js/enough-math.js` supplies the shared calculation to the UI and validator. For exact reconstructable models, analytical expressions evaluate the selected dose; root-finding gives the crossing. Otherwise we use straight lines between source coordinates. Categorical evidence selects the first qualifying source group and never invents a continuous threshold. The old off-topic cards remain as archived evidence in the data file.
 
-A mark can identify a source benchmark, a model breakpoint, the lowest observed group, an example model input or the last published dose. Structured marker verification lets `tools/test-enough-data.mjs` reproduce every selected coordinate. A benchmark is not an individual prescription.
+The overview overlays steps, exercise and protein. Its x-axis is the fraction through each curve’s displayed dose range. The range endpoints differ, so it is not equal physical effort. Its y-axis compares shares of distinct outcomes, not equal health gains. A shared40% point initially displays about83 to 86% of those range-bounded gains. Each card and the overview drawer disclose the physical ranges.
 
-None of these extractions establishes a defensible 90 percent benefit threshold relative to zero. A chart endpoint is not a maximum. Protein's shaded strip describes uncertainty in the breakpoint, rather than response uncertainty. Meditation has no numerical daily response curve, so its empty plot means unknown. Savings has an assumption envelope, rather than a confidence interval.
+Separately normalizing complete lower and upper pointwise curves provides a sensitivity check. It is not a formal confidence interval for a threshold. Protein’s published breakpoint interval can be propagated conditionally through the chosen model; it is not a new response band. Work has no reconstructable covariance, so no band is invented. Savings alternatives are assumptions, never confidence limits.
 
-The optional personal panel orders changes toward the walking, activity and protein marks by their size as a share of each mark. Sleep and work have no personal target. Different outcomes cannot support a common ranking of health benefits. Values are not stored or sent anywhere.
+## Cards
 
-## Interface and checks
+|Card|Range shown|Enough or other shape|
+|---|---|---|
+|Steps|2,000 to 12,000/day|10,500;7,000 reaches85.5%|
+|Exercise|0 to 600 moderate minutes/week|342.64 minutes;150 reaches80.6%|
+|Protein|0.41 to 1.09g/lb/day|0.7022g/lb, about105g at150lb|
+|Weekly sets per muscle|0 to 45|Keeps paying; descriptive90% point37.83|
+|Sleep|3 to 11hours|Low point7; highlighted6 to 7.25 stays within1% of the minimum|
+|Fruit and vegetables|Source groups eating about2.1 to 7.3servings|First qualifying group has median intake5.3; later7.3 group falls below90%|
+|Fiber|Chosen7 to 35g window,2019 log-linear model|31.86g; model still improves at35|
+|Income|Source bands$10k to$500k+|First qualifying band$200k to $300k; no settled ceiling|
+|Savings|Chosen5 to 95% window|73.11% under stated steady assumptions|
+|Work|Historical factory model24 to 72.5hours|53.48hours captures90%; peak62.91hours|
+|Meditation|No reliable measured daily curve|Unknown; no invented minute slider|
+|Alcohol|Published categories, top32.5+US drinks/week|No proven longevity benefit; signed excess risk|
+|Smoking|Never,1,5,20cigarettes/day|Enough zero; men’s excess coronary risk|
 
-Each chart uses a native range input with a visible handle, keyboard support, a text readout and an accessible name. Opening evidence reveals available uncertainty and source tables. The SVG is hidden from assistive technology because the controls, readout and tables provide its text equivalent.
+## Primary-data decisions
 
-Run:
+Ding2025 Table2 uses all11 predictions. Its tail improves again, so do not truncate the range to force a7,000-step threshold. Garcia2023’s0 to 600window contains94% of the source’s person-years. The full author curve extends to about2,229minutes and gives a different crossing; alternatives are disclosed in the drawer. Arem2015 remains a research cross-check.
 
-```sh
-node tools/test-enough-data.mjs
-node --check js/enough.js
-node --check js/enough-data.js
-NODE_PATH=/Users/ethan/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules node tools/test-enough-browser.cjs
-```
+Morton2018’s plateau is imposed in a segmented model; its superiority over a straight line is uncertain. The90% point differs from the1.62g/kg bend. Pelland2026’s source has observed zero-training controls. Version2 corrects the old one-set origin to exact High=x,Low=0 contrasts. A2.01% model contrast compares post/pre muscle-size ratios, not2% more of an individual’s muscle gain. Frequency is folded into its evidence.
 
-The browser harness owns its ephemeral server and Chrome for Testing process, and closes both in `finally`. It checks 375, 768 and 1440px, horizontal mouse and touch input, every slider's keyboard readout, native disclosure keyboard behavior, chart-label bounds, 44px evidence targets, optional input subsets, invalid weight, reset, cross-unit ranking, accessibility names, resource loading and the design chooser. Screenshots reload the default state before capture.
+Fruit and veg preserves NHS women’s Table2 groups and their later dip. Fiber reconstructs the printed Reynolds2019 log-linear RR0.93 per8g rather than digitizing the nonlinear figure. The selected7 to 35window is a conservative subset of its approximate6 to 35figure extent, not exact observed extremes. Newer meta-analyses were screened but supply no defensible replacement numeric spline.
 
-These checks establish Chromium behavior and browser accessibility-tree semantics. They do not establish actual VoiceOver or TalkBack speech, physical-device browser behavior, or human ten-second comprehension. The polish panel uses AI reader-role reviews, with those limits recorded in the research log.
+Income preserves author-deposited group means and SE-derived limits, including the top group’s dip. The top$500k+ band is open;625k is an assigned representative coordinate, not an observed cap. The smooth log-income trend is distinct from these means. About one feeling-score point per doubling comes from the author’s0.113 log coefficient and the raw-to-standardized scale factor. The general ceiling remains disputed.
 
-## Maintenance
+Pencavel’s IZA DP8129 Equation4 and Table4(ii) give additional output126.089(h−24)−4.533max(0,h−49)^2. Unknown group intercepts cancel. Its historical factory result is not a modern recommended workweek. Separate WHO/ILO stroke evidence belongs in the drawer.
 
-Edit the canonical data file and preserve its source locators and uncertainty distinctions. Bump the `?v=` values in both HTML pages when changing page scripts or styles. Rebuild the search index after changing questions or facts. The search builder reads the local data and indexes each card's stable anchor. Regenerate the sitemap after committing a new page.
+Zhao2023 Table2 corrects abstainer bias and uses lifetime nondrinkers. Keep the low-drinking central estimates of−4% and−7% excess risk, with intervals including zero. Do not manufacture midpoints or a finite maximum for its open top category. One US standard drink is14g. Hackshaw2018 men’s extra coronary risk is48% for one cigarette and104% for20; their ratio is46.15%.
 
-`enough-lab.html` is a noindex chooser with four layouts, three chart treatments and five titles. The provisional choices are two columns with one column on phones, thin lines with source dots, and How Much Is Enough?
+## Interaction and checks
 
-Thumbnail: Jean Simeon Chardin, *Fruit, Jug, and a Glass*, c. 1726/1728, National Gallery of Art, Chester Dale Collection, 1943.7.4. The museum identifies it as public domain: https://www.nga.gov/artworks/12202-fruit-jug-and-glass.
+Every numeric card has a native labeled range control, a human readout and an evidence drawer with source estimates with outcome units. Chart pointer gestures focus and update that same control. Categories snap to source points; keyboard navigation remains native. The optional personal inputs collapse under a native disclosure. The panel accepts any subset, pairs protein with body weight in pounds, rejects invalid values and declines extrapolation. It makes no network request or storage write. Sleep’s bar marks hours across its displayed range, not a health-share score. Work explicitly uses the factory curve.
+
+Run `node tools/test-enough-data.mjs`. Then, with Playwright on NODE_PATH, run `node tools/test-enough-browser.cjs`. The browser harness owns an ephemeral server and `/Users/ethan/.local/bin/agent-chrome-for-testing`, closing both in `finally`. It verifies375x812,768x900 and1440x900, keyboard, mouse, actual dispatched touch, drawer Enter, input subsets/reset/error cases,44px controls, SVG label bounds, accessibility names and no missing resources. This is automation, not physical-device or real screen-reader certification.
+
+Research and AI reader reviews are local, ignored files in `/Users/ethan/Portfolio_01/research/enough/v2/`; progress and polish logs are in its parent. AI reader personas are simulations, never human user testing. The local write-post skill is applied in a separate editing pass. An installed dataviz skill could not be found; primary design references and explicit statistical/art reviews fill that gap without claiming the skill ran.
+
+Painting options: Bruegel’s The Harvesters (Met), Homer’s Breezing Up (NGA), Chardin’s Fruit,Jug,andGlass (NGA), all public domain. Provisional choices: Bruegel, shared overlay, area colors. `enough-lab.html` previews all painting/layout/color combinations.

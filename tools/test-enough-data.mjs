@@ -1,59 +1,38 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import vm from 'node:vm';
-import {fileURLToPath} from 'node:url';
-import path from 'node:path';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const context={window:{}};
-vm.runInNewContext(fs.readFileSync(path.join(root,'js/enough-data.js'),'utf8'),context);
-vm.runInNewContext(fs.readFileSync(path.join(root,'js/enough.js'),'utf8'),context);
-const {curves}=context.window.EnoughData, math=context.window.EnoughMath;
-assert.ok(curves.length>=14&&curves.length<=18,'14 to 18 cards');
-assert.ok(context.window.EnoughData.screenedCount>=30,'At least 30 candidates screened');
-assert.equal(new Set(curves.map(c=>c.id)).size,curves.length);
-const allowedUnits=new Set(['g/lb/day','hours/night','USD/year','percent','min/day','hours/week','steps/day','min/week','sets/week','sessions/week','servings/day','oz/day','cigarettes/day','cups/day','drinks/week','IU/day']);
+import fs from 'node:fs';import vm from 'node:vm';import path from 'node:path';import{fileURLToPath}from'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),ctx={window:{}};
+for(const file of['enough-data.js','enough-math.js'])vm.runInNewContext(fs.readFileSync(path.join(root,'js',file),'utf8'),ctx);
+const{curves}=ctx.window.EnoughData,M=ctx.window.EnoughMath,by=id=>curves.find(c=>c.id===id),near=(a,b,tol=1e-7)=>assert.ok(Math.abs(a-b)<=tol,`${a} != ${b}`);
+assert.equal(curves.length,13);assert.equal(new Set(curves.map(c=>c.id)).size,13);
 for(const c of curves){
-  const prefix=c.id+': ';
-  for(const field of ['question','fact','kind','shape','unit','xLabel','yLabel','extraction','evidence','population','uncertainty','verified'])assert.equal(typeof c[field],'string',prefix+field);
-  assert.ok(allowedUnits.has(c.unit),prefix+'physical unit supported');
-  assert.match(c.verified,/^2026-10-04$/);
-  assert.ok(c.domain.length===2&&c.domain.every(Number.isFinite)&&c.domain[0]<c.domain[1],prefix+'dose domain');
-  assert.ok(c.yDomain.length===2&&c.yDomain.every(Number.isFinite)&&c.yDomain[0]<c.yDomain[1],prefix+'effect domain');
-  assert.ok(c.step>0&&c.defaultDose>=c.domain[0]&&c.defaultDose<=c.domain[1],prefix+'slider bounds');
-  const sources=new Set(c.sources.map(s=>s.id));
-  for(const s of c.sources){assert.ok(s.citation&&s.location,prefix+'source locator');assert.match(s.url,/^(https:\/\/|#)/);}
-  if(c.kind==='unknown')assert.equal(c.points.length,0,prefix+'unknown is not a fabricated flat curve');
-  else assert.ok(c.points.length>=2,prefix+'enough points to draw');
-  for(let i=0;i<c.points.length;i++){
-    const p=c.points[i];assert.ok(Number.isFinite(p.dose)&&Number.isFinite(p.effect),prefix+'finite source point');
-    if(i)assert.ok(c.points[i-1].dose<p.dose,prefix+'strictly ordered coordinates');
-    assert.ok(sources.has(p.source)&&p.location,prefix+'every point has a source and locator');
-    assert.equal(p.low===null,p.high===null,prefix+'missing limits paired');
-    if(p.low!==null)assert.ok(Number.isFinite(p.low)&&Number.isFinite(p.high)&&p.low<=p.effect&&p.effect<=p.high,prefix+'uncertainty ordering');
-    if(c.kind==='categories'){assert.equal(c.coordinate,'category-index');assert.ok(p.label&&p.shortLabel,prefix+'category labels');if(c.id==='work')assert.ok(Number.isFinite(p.from)&&(p.to===null||p.to>p.from),prefix+'work category bounds');}
-  }
-  for(const d of c.marker.doses)assert.ok(Number.isFinite(d)&&d>=c.domain[0]&&d<=c.domain[1],prefix+'marker inside plot');
-  assert.ok(c.marker.label&&c.marker.reason,prefix+'marker method');
-  if(['reported','example'].includes(c.marker.type)){
-    const v=c.marker.verification;assert.ok(v,prefix+'structured marker verification');
-    if(v.source)assert.ok(sources.has(v.source),prefix+'marker source exists');
-    let expected;
-    if(v.method==='conversion')expected=v.originalDose*v.multiplier;
-    else if(v.method==='source-dose'||v.method==='model-input')expected=v.dose;
-    else if(v.method==='last-stored-dose')expected=c.points.at(-1).dose;
-    else if(v.method==='category-label')expected=c.points.find(p=>p.label===v.label)?.dose;
-    else assert.fail(prefix+'unknown marker verification');
-    assert.ok(Number.isFinite(expected)&&Math.abs(expected-c.marker.doses[0])<1e-7,prefix+'marker reproduced from source claim, category or model input');
-  }
-  if(c.marker.type==='minimum')assert.equal(c.marker.doses[0],c.points.reduce((a,b)=>a.effect<b.effect?a:b).dose,prefix+'reproducible minimum');
-  if(c.marker.type==='ninety'){assert.ok(c.ceiling?.source&&sources.has(c.ceiling.source));assert.ok(Math.abs(math.ninety(c)-c.marker.doses[0])<1e-6,prefix+'reproducible ninety percent');}
-  else assert.equal(math.ninety(c),null,prefix+'no fabricated maximum or ninety percent threshold');
-  const review=c.reviews;assert.ok(review&&new Set(Object.values(review)).size===3,prefix+'three independent review roles');
-  const allText=[c.question,c.fact,c.marker.label].join(' ');assert.ok(!/confidence interval|hazard ratio|meta-analysis|dose-response/i.test(allText),prefix+'surface uses plain language');
-  assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)),prefix+'no em dashes or emoji');
+ assert.ok(c.question&&c.fact&&c.extraction&&c.population&&c.uncertainty&&c.sources.length,c.id+' complete provenance');
+ assert.equal(c.verified,'2026-10-04');assert.equal(c.reverification.researcher===c.reverification.adversary,false);
+ const sources=new Set(c.sources.map(s=>s.id));for(const s of c.sources)assert.ok(s.citation&&s.location&&/^(https:\/\/|#)/.test(s.url));
+ if(c.kind==='unknown'){assert.equal(c.domain,null);assert.equal(c.view.range,null);assert.equal(M.series(c).length,0);}else assert.ok(c.domain[0]<c.domain[1]&&c.defaultDose>=c.domain[0]&&c.defaultDose<=c.domain[1]);
+ for(let i=0;i<c.points.length;i++){const p=c.points[i];assert.ok(Number.isFinite(p.dose)&&Number.isFinite(p.effect));if(i)assert.ok(p.dose>c.points[i-1].dose,c.id+' ordered');assert.ok(sources.has(p.source)&&p.location,c.id+' point provenance');assert.equal(p.low===null,p.high===null);if(p.low!==null)assert.ok(p.low<=p.effect+1e-10&&p.effect<=p.high+1e-10,c.id+' limits order');}
+ const d=M.enough(c);if(c.view.mode==='benefit'){
+  assert.ok(Number.isFinite(d));near(c.computed.enough,d);near(M.share(c,c.domain[0]),0);near(M.share(c,M.basis(c).best.dose),100);
+  if(c.kind==='categories'){assert.ok(M.share(c,d)>=90);if(d>0)assert.ok(M.share(c,d-1)<90);}
+  else{near(M.share(c,d),90,1e-7);assert.ok(M.share(c,d-1e-5)<90);}
+  for(const p of M.series(c))assert.ok(M.share(c,p.dose)<=100+1e-9);
+  for(const p of c.points)if(p.share!==null)near(p.share,M.share(c,p.dose));
+ }else assert.equal(d,null,c.id+' no forced enough mark');
+ assert.ok(!/hazard ratio|death rate|vs reference|counted|fitted/.test(c.question+' '+c.fact+' '+c.view.answer));
+ assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)),c.id+' voice rules');
 }
-const exercise=curves.find(c=>c.id==='exercise');for(const p of exercise.points)assert.ok(Math.abs(p.dose-p.originalDose*60/3.5)<1e-9,'Source activity units converted exactly');
-const savings=curves.find(c=>c.id==='savings');for(const p of savings.points){const actual=math.estimate(savings,p.dose);assert.ok(Math.abs(actual.effect-p.effect)<1e-7,'Savings model reproduces source points');assert.ok(p.scenarioLow<=p.effect&&p.effect<=p.scenarioHigh);assert.equal(p.low,null,'Scenario envelope is not a CI');}
-for(const p of curves.find(c=>c.id==='income').points)assert.ok(Math.abs((p.high-p.effect)-1.96*p.standardError)<1e-7,'Income mean limits reproduce published SE');
-assert.ok(curves.filter(c=>['continues','unknown','unresolved','less'].includes(c.shape)).length>=3,'At least three visible exceptions to a universal enough point');
-console.log('PASS '+curves.length+' curves, provenance, units, limits, marker methods, arithmetic, independent review roles and plain surface copy');
+near(M.enough(by('steps')),10500);near(M.share(by('steps'),7000),85.45454545454545);
+near(M.enough(by('exercise')),342.64369150794863);near(M.share(by('exercise'),150),80.5518385314365);
+for(const p of by('exercise').points)near(p.dose,p.originalDose*60/3.5,1e-9);
+near(M.enough(by('protein')),.7021609887596101);near(M.estimate(by('protein'),.8),M.estimate(by('protein'),1));
+near(M.enough(by('sets')),37.83125);assert.equal(by('sets').points[0].dose,0);assert.ok(M.share(by('sets'),40)<M.share(by('sets'),45));
+assert.equal(M.enough(by('fruit-veg')),3);near(by('fruit-veg').points[3].sourceDose,5.3);assert.ok(M.share(by('fruit-veg'),4)<90,'Preserve produce tail dip');
+near(M.enough(by('fiber')),31.857496,1e-5);near(M.estimate(by('fiber'),15),.93);
+assert.equal(M.enough(by('income')),12);assert.match(by('income').points[12].label,/200,000 to \$300,000/);assert.ok(M.share(by('income'),14)<100,'Preserve highest income dip');
+near(M.enough(by('savings')),73.11250116948123);near(M.estimate(by('savings'),50),16.620772445041133);
+for(const p of by('savings').points){near(p.effect,M.estimate(by('savings'),p.dose));assert.ok(p.scenarioLow<=p.effect&&p.effect<=p.scenarioHigh);}
+near(M.enough(by('work')),53.48014871028985);near(M.basis(by('work')).best.dose,62.907897639532315);assert.ok(M.share(by('work'),72.5)<90);assert.equal(M.sensitivity(by('work')),null);
+near(M.sleepRange(by('sleep'))[0],6);near(M.sleepRange(by('sleep'))[1],7.25);assert.equal(by('meditation').points.length,0);
+near(M.extraRisk(by('alcohol'),1),-4);near(M.extraRisk(by('alcohol'),2),-7);near(M.extraRisk(by('alcohol'),5),35);assert.equal(by('alcohol').points.at(-1).doseHigh,null,'Open last bin');
+for(const p of by('income').points)near(p.high-p.effect,1.96*p.standardError);
+near(M.extraRisk(by('smoking'),1)/M.extraRisk(by('smoking'),3),.48/1.04);
+console.log('PASS13 reviewed curves, all90% crossings, range endpoints, categories, signed risk, source units, uncertainty and exact models');

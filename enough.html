@@ -5,69 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>How Much Is Enough?</title>
-  <meta name="description" content="Drag through the evidence for movement, food, sleep, muscle, money and work. See where more helps, where it flattens, and where the answer is still unknown.">
+  <meta name="description" content="Much of the benefit comes early. Explore how much walking, exercise, protein, sleep and more is enough.">
   <link rel="canonical" href="https://ethanwillingham.com/enough.html">
   <meta property="og:title" content="How Much Is Enough?">
-  <meta property="og:description" content="Drag through the evidence for movement, food, sleep, muscle, money and work. See where more helps, where it flattens, and where the answer is still unknown.">
+  <meta property="og:description" content="Much of the benefit comes early. Explore how much walking, exercise, protein, sleep and more is enough.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/enough.html">
   <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/enough-og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Fruit, a brown jug and a glass on a table, painted by Jean Simeon Chardin.">
+  <meta property="og:image:alt" content="Workers resting beneath a tree in Pieter Bruegel’s The Harvesters.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="How Much Is Enough?">
-  <meta name="twitter:description" content="Drag through the evidence for movement, food, sleep, muscle, money and work.">
+  <meta name="twitter:description" content="Much of the benefit comes early. Explore where enough lies.">
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/enough-og.jpg">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css?v=20261004">
-  <link rel="stylesheet" href="enough.css?v=1">
-  <script defer src="js/enough-data.js?v=1"></script>
-  <script defer src="js/enough.js?v=1"></script>
+  <link rel="stylesheet" href="enough.css?v=2-1">
+  <script defer src="js/enough-data.js?v=2-1"></script>
+  <script defer src="js/enough-math.js?v=2-1"></script>
+  <script defer src="js/enough.js?v=2-1"></script>
 </head>
 <body>
   <div class="enough-shell">
     <nav class="enough-top" aria-label="Site"><a href="/">Home</a><a href="archive.html">In Progress</a></nav>
     <main>
-      <header class="u-hero enough-hero">
-        <h1 class="u-title">How Much Is Enough?</h1>
-        <p class="u-dek">Where more helps, where it stops, and where we still don't know.</p>
+      <header class="enough-hero">
+        <div class="enough-title"><h1>How Much<br>Is Enough?</h1><p>Much of the benefit comes early.<br>See where, for the things that fill a life.</p></div>
+        <picture id="hero-picture"><source type="image/webp" srcset="assets/enough/harvesters.webp"><img id="hero-painting" src="assets/enough/harvesters.jpg" width="1600" height="1179" loading="eager" decoding="async" alt="Workers rest and eat beneath a tree while the harvest continues, in Pieter Bruegel’s The Harvesters."></picture>
       </header>
-      <p class="enough-instruction" id="enough-help">Drag across a chart. Use arrow keys when it has focus. Open the evidence to see how sure we are.</p>
-      <div id="enough-grid" class="enough-grid" aria-describedby="enough-help"></div>
-      <p id="enough-loading">Loading the research. If the charts don't appear, reload or read the <a href="js/enough-data.js">source data</a>.</p>
-      <noscript><p>The draggable charts need JavaScript. The <a href="js/enough-data.js">source data</a> includes every estimate, limit and citation.</p></noscript>
-      <div class="enough-after">
-        <p>In the smoking model, one cigarette a day carried about half the extra heart disease risk of twenty. Small amounts can matter in both directions. The income ceiling remains disputed, and the meditation evidence still cannot put a dependable daily amount on the benefit.</p>
-        <details class="enough-personal">
-          <summary>Your enough</summary>
-          <p>Enter what you know. Leave the rest blank. Your numbers stay on this page.</p>
-          <form id="enough-form">
-            <div class="enough-fields">
-              <label>Steps a day<input name="steps" type="number" min="0" max="100000" step="1" inputmode="numeric"></label>
-              <label>Sleep, hours a night<input name="sleep" type="number" min="0" max="24" step="0.1" inputmode="decimal"></label>
-              <label>Protein, grams a day<input name="protein" type="number" min="0" max="1000" step="1" inputmode="numeric"></label>
-              <label>Body weight, lb<input name="weight" type="number" min="1" max="1500" step="1" inputmode="numeric"></label>
-              <label>Moderate activity, minutes a week<input name="exercise" type="number" min="0" max="10080" step="1" inputmode="numeric"></label>
-              <label>Work, hours a week<input name="work" type="number" min="0" max="168" step="1" inputmode="numeric"></label>
-            </div>
-            <button class="enough-clear" type="reset">Clear numbers</button>
-          </form>
-          <div id="enough-results" class="enough-results" role="status" aria-live="polite" aria-atomic="true"></div>
-          <p>Smaller changes to reach the walking, activity and protein marks come first, as a share of each amount. Sleep and work follow without a personal target. The studies measure different outcomes, so this cannot rank health benefits.</p>
-        </details>
-        <details class="u-collapse enough-sources">
-          <summary class="u-collapse-s">Sources and how to read the charts</summary>
-          <p>Each chart keeps its own units and comparison group. Lines do not put happiness, muscle growth and death on one scale. Open a card for its population, uncertainty, stored numbers and drawing method.</p>
-          <ol class="u-collapse-list" id="enough-sources"></ol>
-          <p>Thumbnail: Jean Simeon Chardin, <a href="https://www.nga.gov/artworks/12202-fruit-jug-and-glass">Fruit, Jug, and a Glass</a>, c. 1726/1728. National Gallery of Art, Chester Dale Collection, 1943.7.4. Public domain.</p>
-          <p>Research checked October 4, 2026. <a href="enough-lab.html">Compare layouts, chart styles and titles.</a></p>
-        </details>
-      </div>
+      <section class="enough-overview" aria-labelledby="overview-title">
+        <div class="overview-heading"><h2 id="overview-title">Most arrives early.</h2><p id="overview-message"></p></div>
+        <p class="overview-definition">Each curve starts at 0% gain. Its best point is 100%. We call 90% enough.</p><div class="overview-control"><label for="overview-effort">Selected position: <output id="overview-percent" for="overview-effort">40%</output></label><input id="overview-effort" type="range" min="0" max="100" step="1" value="40" aria-describedby="overview-meaning"><span id="overview-meaning">Fraction of each dose range, not equal effort.</span></div>
+        <p class="overview-outcomes">Walking and exercise: lower risk of dying.<br class="phone-break"> Protein: muscle gain while lifting, per lb of body weight.</p>
+        <div id="overview-chart"></div>
+        <p class="overview-selected">At the selected amounts</p><div id="overview-legend" class="overview-legend"></div>
+
+        <details class="enough-detail overview-detail"><summary>What does “enough” mean?</summary><p>Here, enough means the first amount that captures 90% of the improvement within a stated range. Walking covers 2,000 to 12,000 steps a day; exercise covers 0 to 600 moderate minutes a week; protein covers 0.41 to 1.09 grams per pound a day, while lifting.</p><p>The horizontal scale is the fraction of each displayed range, not equal effort. Its endpoints shape the curves. The vertical scale is the share of each curve’s own gain, not equal health benefits or a personal prediction. These three curves measure different things: risk of dying and muscle gain.</p><p>Some curves keep rising. Some have a sweet spot. For a few things, enough is zero. The cards below keep those differences.</p></details>
+      </section>
+      <section class="enough-personal" aria-labelledby="personal-title">
+        <div><span class="enough-kicker">Your life</span><h2 id="personal-title">Your enough</h2><p>Put in a few numbers. See how much of each curve’s gain you already reach.</p><p class="personal-privacy">Optional. Nothing is saved or sent.</p></div>
+        <div><details class="personal-inputs enough-detail"><summary>Add your numbers</summary><form id="enough-form"><div class="enough-fields">
+          <label>Steps a day<input name="steps" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="7,000"></label>
+          <label>Moderate exercise, minutes a week<input name="exercise" type="number" min="0" max="10080" step="1" inputmode="numeric" placeholder="150"><small>Count each vigorous minute as two.</small></label>
+          <label>Sleep, hours a night<input name="sleep" type="number" min="0" max="24" step="0.1" inputmode="decimal" placeholder="7"></label>
+          <label>Fruit and veg, servings a day<input name="fruit-veg" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="5"></label>
+          <label>Protein, grams a day<input name="protein" type="number" min="0" max="1000" step="1" inputmode="numeric" placeholder="105"></label>
+          <label>Body weight, lb<input name="weight" type="number" min="1" max="1500" step="1" inputmode="numeric" placeholder="150"></label>
+          <label>Work, hours a week<input name="work" type="number" min="0" max="168" step="0.5" inputmode="decimal" placeholder="40"></label>
+        </div><button type="reset" class="enough-clear">Clear numbers</button></form></details>
+        <div id="enough-results" class="enough-results" role="status" aria-live="polite" aria-atomic="true"></div>
+        <details class="enough-detail"><summary>About your bars</summary><p>Each share belongs to its own outcome and study. The bars place your numbers on those curves. Sleep shows your position near or away from the low point; work uses this historical factory’s output, not your productivity. Fruit and veg snaps to the nearest published group. Beyond a chart’s range, no estimate is made.</p><p>Exercise means moderate activity, such as brisk walking. Count each vigorous minute as two moderate minutes for this chart. Protein is total daily intake while resistance training.</p></details></div>
+      </section>
+      <div id="enough-groups"></div>
+      <p id="enough-loading">Loading the curves. <a href="js/enough-data.js">Read the source data.</a></p>
+      <noscript><p>The charts need JavaScript. In the shown ranges, 90% of the modeled gain arrives at about 10,500 steps a day, 343 exercise minutes a week and 0.70 grams of protein per pound a day. These are study summaries. <a href="js/enough-data.js">All data and citations.</a></p></noscript>
+      <div class="enough-after"><details class="enough-detail"><summary>Sources, method and painting</summary><p>Every chart names its range. For a curve where more helps, its gain is the improvement from the lowest displayed amount to the best point anywhere in that range. We divide the improvement at each amount by that total. The first 90% crossing is its enough point. For published groups, we select the first qualifying group rather than inventing an exact dose between them.</p><p>A lower or upper confidence curve can produce a different crossing. Those separately normalized crossings are sensitivity checks, not a formal confidence interval for an optimal amount. An absent uncertainty band stays absent.</p><ol id="enough-sources"></ol><p id="painting-credit">Pieter Bruegel the Elder, <a href="https://www.metmuseum.org/art/collection/search/435809">The Harvesters</a>, 1565. The Metropolitan Museum of Art, Rogers Fund, 1919. Public domain.</p><p>Checked October 4, 2026. <a href="enough-lab.html">Compare paintings, overview layouts and colors.</a></p></details></div>
     </main>
-    <footer class="enough-footer"><a href="archive.html">In Progress</a> &middot; <a href="big-enough.html">Big Enough</a> &middot; <a href="/">Ethan Willingham</a></footer>
+    <footer class="enough-footer"><a href="archive.html">In Progress</a> · <a href="big-enough.html">Big Enough</a> · <a href="/">Ethan Willingham</a></footer>
   </div>
 </body>
 </html>

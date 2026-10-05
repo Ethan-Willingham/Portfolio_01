@@ -1,152 +1,122 @@
-/* Enough: source points stay distinct from connecting guides and predictions. */
 (() => {
-  'use strict';
-  const data = window.EnoughData;
-  const format = (n, digits = 1) => Number(n).toLocaleString('en-US', { maximumFractionDigits: digits });
-  const escape = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-  function estimate(curve, dose) {
-    if (curve.id === 'savings') {
-      const rate=dose/100; const calc=(r,w)=>Math.log1p(r*(1-rate)/(w*rate))/Math.log1p(r);
-      return {dose,effect:calc(.05,.04),low:null,high:null,scenarioLow:calc(.07,.05),scenarioHigh:calc(.03,.03)};
-    }
-    if (curve.kind === 'unknown') return { dose, effect: null, low: null, high: null };
-    if (curve.kind === 'categories') return curve.points[Math.round(clamp(dose, 0, curve.points.length-1))];
-    const pts = curve.points;
-    if (dose <= pts[0].dose) return pts[0];
-    if (dose >= pts.at(-1).dose) return pts.at(-1);
-    const i = pts.findIndex(p => p.dose >= dose), a = pts[i-1], b = pts[i], t = (dose-a.dose)/(b.dose-a.dose);
-    const mix = key => a[key] === null || b[key] === null ? null : a[key] + (b[key]-a[key])*t;
-    return { dose, effect: mix('effect'), low: mix('low'), high: mix('high'), source: a.source };
-  }
-  function ninety(curve) {
-    if (!curve.ceiling || curve.ceiling.referenceDose !== 0) return null;
-    const pts = curve.points, start = pts.find(p => p.dose === 0);
-    if (!start) return null;
-    const target = start.effect + .9 * (curve.ceiling.effect - start.effect);
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i-1], b = pts[i];
-      if ((target-a.effect)*(target-b.effect) <= 0 && a.effect !== b.effect) return a.dose + (b.dose-a.dose)*(target-a.effect)/(b.effect-a.effect);
-    }
-    return null;
-  }
-  function doseText(c, n) {
-    if (c.kind === 'categories') return c.points[Math.round(clamp(n,0,c.points.length-1))].label;
-    if (c.unit === 'USD/year') return '$' + format(n,0) + ' a year';
-    if (c.unit === 'g/lb/day') return format(n,2) + ' g/lb a day';
-    return format(n,c.doseDigits ?? 1) + ' ' + c.unitLabel;
-  }
-  function effectText(c,p) {
-    if (p.effect === null) return 'no reliable benefit estimate';
-    if (c.effectKind === 'risk') {
-      const delta = Math.round((p.effect-1)*100);
-      return delta === 0 ? 'comparison group' : Math.abs(delta) + '% ' + (delta < 0 ? 'lower' : 'higher') + ' ' + c.outcome + ' in the study';
-    }
-    if (c.effectKind === 'years') return format(p.effect,1) + ' years in this calculation';
-    if (c.effectKind === 'mood') return format(p.effect,1) + ' / 100 average reported mood';
-    if (c.effectKind === 'lean') return '+' + format(p.effect,1) + ' lb in the fitted comparison';
-    if (c.effectKind === 'change') return (p.effect>=0 ? '+' : '') + format(p.effect,2) + ' ' + c.effectUnit;
-    return format(p.effect,2) + ' ' + c.effectUnit;
-  }
-  window.EnoughMath = { estimate, ninety, doseText, effectText };
-  if (!data || typeof document === 'undefined') return;
-  const grid = document.getElementById('enough-grid');
-  if (!grid) return;
-  const states = new Map();
-  const shapes = { plateau:'Flattens in this model', continues:'No ceiling established', sweet:'A low point, with limits', less:'Less is better', unknown:'No daily curve established', unresolved:'No clear gain from more', similar:'Similar results across groups', association:'A link, with a disputed cause' };
-  function chart(c) {
-    const [xmin,xmax] = c.domain, [ymin,ymax] = c.yDomain;
-    const x = n => 46 + (n-xmin)/(xmax-xmin)*340;
-    const y = n => 181 - (n-ymin)/(ymax-ymin)*127;
-    const path = (pts,key) => pts.map((p,i) => `${i?'L':'M'}${x(p.dose).toFixed(2)},${y(p[key]).toFixed(2)}`).join(' ');
-    const finite = c.points.filter(p => p.effect !== null && p.dose>=xmin && p.dose<=xmax);
-    let band = '';
-    if (c.scenarioEnvelope) band = `<path class="e-band" d="${path(finite,'scenarioLow')} ${path([...finite].reverse(),'scenarioHigh').replace(/^M/,'L')} Z"/>`;
-    if (finite.length && finite.every(p => p.low !== null && p.high !== null)) band = `<path class="e-band" d="${path(finite,'low')} ${path([...finite].reverse(),'high').replace(/^M/,'L')} Z"/>`;
-    if (c.marker.interval) band += `<rect class="e-band" x="${x(c.marker.interval[0])}" y="46" width="${x(c.marker.interval[1])-x(c.marker.interval[0])}" height="135"/>`;
-    const markers = c.marker.doses.map(d => `<line class="e-marker" x1="${x(d)}" x2="${x(d)}" y1="48" y2="181"/>`).join('');
-    return `<div class="enough-chart"><svg viewBox="0 0 400 238" aria-hidden="true">
-      <text x="4" y="20">${escape(c.yLabel)}</text>
-      <g class="enough-bands" style="display:none">${band}</g>
-      <line class="e-axis" x1="46" x2="386" y1="181" y2="181"/>
-      ${c.kind==='unknown'?'':c.yTicks.map(n=>`<text x="38" y="${y(n)+4}" text-anchor="end">${format(n,c.yDigits ?? 1)}</text>`).join('')}
-      ${c.ticks.map(n=>`<line class="e-axis" x1="${x(clamp(n,xmin,xmax))}" x2="${x(clamp(n,xmin,xmax))}" y1="181" y2="185"/><text x="${x(clamp(n,xmin,xmax))}" y="207" text-anchor="${n<=xmin+(xmax-xmin)*.025?'start':n>=xmax-(xmax-xmin)*.025?'end':'middle'}">${c.kind==='categories'?escape(c.points[n].shortLabel):c.unit==='USD/year'?'$'+format(n/1000,0)+'k':format(n,c.doseDigits??1)}</text>`).join('')}
-      <text x="216" y="232" text-anchor="middle">${escape(c.xLabel)}</text>
-      ${markers}${finite.length?`<path class="e-line ${c.kind==='categories'?'e-category-line':''}" d="${path(finite,'effect')}"/>`:''}
-      ${c.kind==='unknown'?'<text class="e-unknown" x="216" y="106" text-anchor="middle">More minutes: benefit unknown</text>':finite.filter((_,i)=>i%Math.max(1,Math.ceil(finite.length/20))===0||i===finite.length-1).map(p=>`<circle class="e-point" cx="${x(p.dose)}" cy="${y(p.effect)}" r="3"/>`).join('')}
-      <circle class="e-handle" r="7" cx="${x(c.defaultDose)}" cy="${c.kind==='unknown'?181:y(estimate(c,c.defaultDose).effect)}"/>
-    </svg><label class="enough-sr" for="range-${c.id}">${escape(c.question)} Choose ${escape(c.xLabel)}.</label>
-    <input class="enough-range" id="range-${c.id}" type="range" min="${xmin}" max="${xmax}" step="${c.step}" value="${c.defaultDose}" aria-describedby="readout-${c.id} fact-${c.id}" />
-    </div>`;
-  }
-  function detail(c) {
-    const sources = c.sources.map(s=>`<a href="${escape(s.url)}">${escape(s.citation)}</a> (${escape(s.location)})`).join('<br>');
-    const table = c.points.length ? `<div class="enough-table-wrap"><table><caption class="enough-sr">Stored estimates for ${escape(c.question)}</caption><thead><tr><th scope="col">Amount</th><th scope="col">Estimate</th><th scope="col">Limits</th></tr></thead><tbody>${c.points.filter((_,i)=>i%Math.max(1,Math.ceil(c.points.length/30))===0||i===c.points.length-1).map(p=>`<tr><th scope="row">${escape(p.label||doseText(c,p.dose))}</th><td>${format(p.effect,c.effectKind==='risk'?3:2)}</td><td>${p.low===null?'Unavailable':format(p.low,3)+' to '+format(p.high,3)}</td></tr>`).join('')}</tbody></table></div>` : '';
-    return `<details class="enough-detail"><summary>Evidence and limits</summary>
-      <p><strong>${escape(c.evidence)}.</strong> ${escape(c.population)}</p>
-      <p>${c.evidence.toLowerCase().includes('meta')?'A pooled analysis combines results from several studies. A dose regression asks whether those results change as the amount changes. ':''}${c.evidence.toLowerCase().includes('cohort')?'A cohort study follows people over time; their daily habits were observed rather than assigned. ':''}</p>
-      <p>${escape(c.marker.reason)}</p><p>${escape(c.uncertainty)}</p>
-      ${c.kind==='categories'?'<p>Dots are published groups. The dotted line is a guide between them, not a prediction for every amount. Groups are spaced equally; dragging selects a published range.</p>':c.kind==='unknown'?'<p>The empty plot means the response is unknown. It does not mean the practice has no benefit.</p>':'<p>Between stored points the display uses straight lines. These are study estimates, not personal predictions.</p>'}
-      ${c.effectKind==='risk'?'<p>The numbers compare rates between groups. A value of 0.70 means a 30 percent lower rate, not 30 extra years or a 30 percent guarantee. Observational associations can reflect differences in health and habits.</p>':''}
-      ${c.intervalKind==='credible'?'<p>The shaded band is a 95 percent credible interval: under this statistical model, the estimated comparison has a 95 percent probability of lying inside it. It does not describe individual results.</p>':c.scenarioEnvelope?'<p>The shaded band shows two sets of assumptions, not statistical confidence limits. Actual market outcomes can fall outside it.</p>':'<p>Shaded limits show uncertainty in the estimate, not the range of outcomes for individuals. A confidence interval is a range compatible with the data and the method. An absent interval stays absent.</p>'}
-      ${c.caveats.map(t=>`<p>${escape(t)}</p>`).join('')}${table}${c.points.length>30?'<p>The table shows selected stored points. <a href="js/enough-data.js">All curve data</a> includes the complete grid and a source for each value.</p>':''}
-      <p><strong>How this was drawn.</strong> ${escape(c.extraction)}</p><p>${sources}</p><p>Checked ${escape(c.verified)}.</p>
-    </details>`;
-  }
-  for (const c of data.curves) {
-    const card = document.createElement('article'); card.className = 'enough-card'; card.id = c.id;
-    card.innerHTML = `<span class="enough-shape">${escape(c.shapeLabel||shapes[c.shape])}</span><h2>${escape(c.question)}</h2><p class="enough-marker-label">${escape(c.marker.label)}</p>${chart(c)}<output class="enough-readout" id="readout-${c.id}" for="range-${c.id}"></output><p class="enough-fact" id="fact-${c.id}">${escape(c.fact)}</p>${detail(c)}`;
-    grid.append(card);
-    const input = card.querySelector('input'), output = card.querySelector('output');
-    const update = () => {
-      const n = Number(input.value), p = estimate(c,n), [xmin,xmax]=c.domain, [ymin,ymax]=c.yDomain;
-      const text = 'You: ' + doseText(c,n) + '. '+(c.scenarioEnvelope?'Calculation: ':c.kind==='unknown'?'Evidence: ':'Study: ') + effectText(c,p) + '.';
-      output.textContent=text; input.setAttribute('aria-valuetext',text);
-      const circle=card.querySelector('.e-handle'); circle.setAttribute('cx',46+(p.effect===null?n:p.dose)/(xmax-xmin)*340-xmin/(xmax-xmin)*340);
-      // Continuous readout uses the selected dose, category plots snap to the source dot.
-      if(c.kind!=='categories') circle.setAttribute('cx',46+(n-xmin)/(xmax-xmin)*340);
-      circle.setAttribute('cy',p.effect===null?181:181-(p.effect-ymin)/(ymax-ymin)*127);
-    };
-    input.addEventListener('input',update); update();
-    card.querySelector('details').addEventListener('toggle',e=>{card.querySelector('.enough-bands').style.display=e.target.open?'':'none';});
-    states.set(c.id,{c,input,update});
-  }
-  document.getElementById('enough-loading')?.remove();
-  const sourceList = document.getElementById('enough-sources');
-  const unique = new Map(); data.curves.forEach(c=>c.sources.forEach(s=>unique.set(s.url,s)));
-  for(const s of unique.values()){const li=document.createElement('li');li.innerHTML=`<a href="${escape(s.url)}">${escape(s.citation)}</a> ${escape(s.location)}.`;sourceList.append(li);}
-  const form=document.getElementById('enough-form'), results=document.getElementById('enough-results');
-  function personal(){
-    const values=Object.fromEntries(new FormData(form)), suggestions=[]; let invalid=false;
-    const add=(id,raw,label)=>{
-      if(raw.trim()==='')return;
-      const field=form.elements.namedItem(id==='work'?'work':id);if(field&&(!field.validity.valid)){invalid=true;return;}
-      const n=Number(raw), state=states.get(id); if(!state||!Number.isFinite(n)||n<0){invalid=true;return;}
-      const c=state.c, lo=c.kind==='categories'?c.points[0].from:c.domain[0],hi=c.kind==='categories'?(c.points.at(-1).to??Infinity):c.domain[1];
-      const selected=c.kind==='categories'?c.points.find(p=>n>=p.from&&(p.to===null||n<p.to))?.dose:clamp(n,lo,hi);
-      const marker=c.marker.doses[0], target=c.kind==='categories'?c.points[marker]?.from:marker, p=estimate(c,selected??0);
-      state.input.value=selected??0;state.update();
-      const outside=n<lo||n>hi;
-      const gap=target===undefined||c.id==='sleep'||c.id==='work'?null:Math.max(0,c.better==='lower'?n-target:target-n);
-      let sentence=`${label}: ${c.kind==='categories'?format(n,1)+' '+c.unitLabel:doseText(c,n)}. `;
-      if(outside)sentence+='That is outside this plot; no estimate is extrapolated. ';
-      else sentence+=effectText(c,p)+'. ';
-      sentence+=c.personalNote || (gap>0?`The marked amount is ${doseText(c,marker)}.`:'You are at or past the marked amount; the study does not set your personal need.');
-      suggestions.push({id,sentence,rank:gap===null?2:gap/(target>0?target:1)});
-    };
-    add('steps',values.steps,'Walking');add('sleep',values.sleep,'Sleep');add('exercise',values.exercise,'Activity');
-    if(values.protein.trim()!==''||values.weight.trim()!==''){
-      const g=Number(values.protein),w=Number(values.weight);
-      if(values.protein.trim()===''||values.weight.trim()==='')suggestions.push({sentence:'To place protein, enter both daily grams and body weight in pounds.',rank:3});
-      else if(!Number.isFinite(g)||!Number.isFinite(w)||g<0||w<=0||!form.elements.protein.validity.valid||!form.elements.weight.validity.valid)invalid=true;
-      else add('protein',String(g/w),'Protein');
-    }
-    if(values.work.trim()!=='')add('work',values.work,'Work');
-    results.replaceChildren();
-    if(invalid){const p=document.createElement('p');p.className='enough-error';p.textContent='Use a nonnegative number within the input limits. Body weight must be greater than zero.';results.append(p);}
-    if(!suggestions.length&&!invalid){results.textContent='Enter any number to see where it falls. Leave the rest blank.';return;}
-    const list=document.createElement('ol');suggestions.sort((a,b)=>a.rank-b.rank).forEach(s=>{const li=document.createElement('li');li.textContent=s.sentence;if(s.id){const a=document.createElement('a');a.href='#'+s.id;a.textContent=' See the curve.';li.append(a);}list.append(li);});results.append(list);
-  }
-  form.addEventListener('input',personal);form.addEventListener('submit',e=>e.preventDefault());form.addEventListener('reset',()=>{setTimeout(()=>{for(const s of states.values()){s.input.value=s.c.defaultDose;s.update();}personal();},0);});personal();
-  const hash=decodeURIComponent(location.hash.slice(1));if(states.has(hash))document.getElementById(hash).scrollIntoView();
+'use strict';
+const data=window.EnoughData,M=window.EnoughMath;if(!data||!M)return;
+const plain=s=>String(s??'').replace(/([a-zA-Z%])(?=\d)/g,'$1 ').replace(/(\d)(?=[a-zA-Z])/g,'$1 ');
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=(n,d=0)=>(Math.abs(n)<.5*10**(-d)?0:Number(n)).toLocaleString('en-US',{maximumFractionDigits:d});
+const curves=new Map(data.curves.map(c=>[c.id,c])),states=new Map();
+const groups=[['move','Move','The first steps count.',['steps','exercise']],['lift','Lift','Protein has a bend. Training volume keeps climbing.',['protein','sets']],['rest','Rest','A low point, with room for your own needs.',['sleep']],['eat','Eat','More plants. More fiber.',['fruit-veg','fiber']],['money','Money','Income and savings answer different questions.',['income','savings']],['work','Work','Hours and output part ways.',['work']],['mind','Mind','Leave room for what we don’t know.',['meditation']],['harm','Where enough is zero','A little can carry a lot of risk.',['alcohol','smoking']]];
+const shape=c=>c.view.shape||({benefit:'Most arrives early',sweet:'A sweet spot',harm:'Less is better',unknown:'Still unknown'}[c.view.mode]);
+function amount(c,d){
+ if(c.kind==='categories')return c.points[Math.round(d)].label;
+ if(c.id==='protein')return fmt(d,2)+' grams per pound';
+ if(c.id==='sets')return fmt(d)+' weekly sets per muscle';
+ if(c.id==='savings')return 'Saving '+fmt(d)+'%';
+ if(c.id==='steps')return fmt(d)+' steps a day';
+ if(c.id==='exercise')return fmt(d)+' minutes a week';
+ if(c.id==='fiber')return fmt(d,1)+' grams a day';
+ if(c.id==='sleep')return fmt(d,1)+' hours a night';
+ if(c.id==='work')return fmt(d,1)+' hours a week';
+ return fmt(d)+' minutes a day';
+}
+function threshold(c,d){
+ if(c.id==='fruit-veg')return 'the group eating about '+fmt(c.points[d].sourceDose,1)+' servings a day';
+ if(c.id==='income')return 'the '+c.points[d].label+' group';
+ return amount(c,d);
+}
+function text(c,d){
+ const a=amount(c,d),share=M.share(c,d),extra=M.extraRisk(c,d);
+ if(c.id==='sleep')return `${a}: ${Math.abs(d-7)<.0001?'the lowest estimated risk in this curve':Math.abs(extra)<.5?'near the low point of this curve':fmt(extra)+'% higher risk of dying than the low point, in this study'}.`;
+ if(c.id==='smoking')return d===0?'Never smoking is the baseline. Quitting does not erase past risk overnight.':`${a}: about ${fmt(extra)}% extra heart disease risk in men.`;
+ if(c.id==='alcohol')return d===0?'Lifetime nondrinkers are the baseline.':`${a}: ${extra<0?fmt(Math.abs(extra))+'% lower':fmt(extra)+'% higher'} estimated risk of dying. ${d<3?'The uncertainty includes no difference.':''}`;
+ if(c.id==='meditation')return `${a}. The right daily dose is still unknown.`;
+ if(c.id==='savings')return `${a} gets you to the target in about ${fmt(M.estimate(c,d))} years: ${fmt(share)}% of this model’s time reduction.`;
+ if(c.id==='work')return `${a} captures about ${fmt(share)}% of the added output in this factory curve.`;
+ if(c.id==='income')return `${a}: about ${fmt(share)}% of the difference between these groups’ feeling scores.`;
+ if(c.id==='fruit-veg')return `The ${fmt(c.points[d].sourceDose,1)}-serving group captures about ${fmt(share)}% of the measured gain.`;
+ return `${a} gets you about ${fmt(share)}% of the gain in this range.`;
+}
+function physical(c,d){return c.kind==='categories'&&c.id!=='alcohol'?c.points[Math.round(d)].sourceDose:d;}
+function chart(c,width,d,overview=false){
+ const w=Math.max(180,width),h=overview?(w<500?154:186):194,L=42,R=12,T=26,B=34,pw=w-L-R,ph=h-T-B;
+ let [min,max]=c.view.range;
+ const pMin=physical(c,min),pMax=physical(c,max),x=v=>L+(physical(c,v)-pMin)/(pMax-pMin)*pw;
+ const mode=c.view.mode,minY=mode==='harm'&&c.id==='alcohol'?-10:0,maxY=mode==='harm'?(c.id==='smoking'?110:40):mode==='sweet'?60:100;
+ const y=v=>T+(maxY-v)/(maxY-minY)*ph;
+ const value=(v,key='effect')=>mode==='benefit'?M.share(c,v,key):100*(M.estimate(c,v,key)-1);
+ const ps=c.kind==='categories'?c.points.map(p=>p.dose):M.series(c).map(p=>p.dose);
+ const path=(values,key='effect')=>values.map((v,i)=>`${i?'L':'M'}${x(v).toFixed(2)},${y(value(v,key)).toFixed(2)}`).join(' ');
+ const selected=Math.min(d,max),point=value(selected),clip='en-clip-'+c.id+(overview?'-overview':'');
+ const baseY=y(0),line=path(ps);
+ const tickValues=w<500&&c.id==='income'?[0,12,14]:w<500&&c.id==='smoking'?[0,2,3]:w<500&&c.id==='alcohol'?[0,2,5]:c.ticks;
+ const ticks=tickValues.map(v=>{let label=c.kind==='categories'?c.points[v].shortLabel:c.id==='protein'?fmt(v,2):fmt(v,1);return `<text x="${x(v)}" y="${h-15}" text-anchor="${v===min?'start':v===max?'end':'middle'}">${esc(label)}</text>`;}).join('');
+ const yticks=mode==='benefit'?[0,90,100]:mode==='sweet'?[0,30,60]:c.id==='alcohol'?[-10,0,20,40]:[0,50,100];
+ const d90=M.enough(c),sweet=mode==='sweet'?M.sleepRange(c):null;
+ const band=sweet?`<rect x="${x(sweet[0])}" y="${T}" width="${x(sweet[1])-x(sweet[0])}" height="${ph}" class="en-area"/>`:'';
+ const dots=c.kind==='categories'?ps.map(v=>`<circle cx="${x(v)}" cy="${y(value(v))}" r="3" fill="var(--area)"/>`).join(''):'';
+ return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><clipPath id="${clip}"><rect x="${L}" y="${T-2}" width="${Math.max(0,x(selected)-L)}" height="${ph+3}"/></clipPath></defs><text x="${L}" y="14">${mode==='benefit'?'Share of the gain':mode==='sweet'?'Extra risk of dying, %':'Extra risk, %'}</text>${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}${mode==='benefit'?'%':''}</text>`).join('')}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${baseY}" y2="${baseY}"/>${d90!==null?`<line class="en-guide" x1="${x(d90)}" x2="${x(d90)}" y1="${T}" y2="${T+ph}"/>`:''}<path class="en-area" clip-path="url(#${clip})" d="${line} L${x(max)},${baseY} L${x(min)},${baseY}Z"/><path class="en-curve en-remainder" style="${c.kind==='categories'?'stroke-dasharray:3 5':''}" d="${line}"/><path class="en-curve" clip-path="url(#${clip})" style="${c.kind==='categories'?'stroke-dasharray:3 5':''}" d="${line}"/>${dots}<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="5"/>${ticks}</svg>`;
+}
+function detail(c){
+ const d=M.enough(c),s=M.sensitivity(c),src=c.sources.map(s=>`<a href="${esc(s.url)}">${esc(s.citation)}</a> (${esc(s.location)})`).join('<br>');
+ let method=c.view.mode==='benefit'?`Within the range shown, ${threshold(c,d)} reaches ${c.kind==='categories'?'at least':'about'} 90% of the gain. This is a bounded summary, not a personal target or an absolute maximum.`:c.view.mode==='sweet'?'The highlighted 6 to 7.25 hours stays within 1% of this curve’s lowest estimated risk. That margin is a display choice, not a clinical sleep range.':'';
+ let sensitivity=s?`Separately normalizing curves from the reported lower and upper limits moves the crossing from ${threshold(c,s[0])} to ${threshold(c,s[1])}. This is sensitivity to pointwise limits, not a confidence interval for the enough point.`:c.uncertainty;
+ if(c.id==='protein')sensitivity=c.uncertainty;
+ const categories=c.kind==='categories'?'Dots are published groups. Any dotted connection is a visual guide, not a continuous dose prediction. Dragging selects a group.':'';
+ const table=c.points.length?`<div class="enough-table-wrap"><table><caption>Stored study estimates: ${esc(c.effectUnit)}${c.points.length>40?' (selected rows)':''}</caption><thead><tr><th scope="col">Amount</th><th scope="col">Estimate</th><th scope="col">Limits</th></tr></thead><tbody>${c.points.filter((_,i)=>i%Math.max(1,Math.ceil(c.points.length/30))===0||i===c.points.length-1).map(p=>`<tr><th scope="row">${esc(amount(c,p.dose))}</th><td>${fmt(p.effect,3)}</td><td>${p.low===null?'Unavailable':fmt(p.low,3)+' to '+fmt(p.high,3)}</td></tr>`).join('')}</tbody></table></div>`:'';
+ return `<details class="enough-detail"><summary>Evidence and limits</summary><p>${esc(c.evidence)}. ${esc(c.population)}</p><p>${esc(plain(method))}</p><p>${esc(plain(sensitivity))}</p>${s?`<p>${esc(plain(c.uncertainty))}</p>`:''}<p>${c.kind==='unknown'?'The empty space means the daily dose curve is unknown. It does not mean meditation has no benefit.':categories||'The line uses published coordinates or an explicitly reconstructed author model. Between published coordinates, straight lines preserve the stored values.'}</p>${c.id==='exercise'?'<p>This window contains 94% of the source’s person-years. The author model extends to about 2,229 minutes. Its full-range 90% point is about 1,678 minutes; restricting it to 0–300 instead gives about 142 minutes. The chosen range matters.</p>':''}${c.id==='fiber'?'<p>We chose 7–35 grams, inside the figure’s approximate 6–35 gram extent. The source prints a log-linear slope of 0.93 per 8 grams. This reconstruction uses that slope, not digitized points from the separate curved fit. Its endpoint-dependent 90% mark is not a fiber optimum.</p>':''}${c.caveats.map(t=>`<p>${esc(t)}</p>`).join('')}${table}<p><strong>How this was drawn.</strong> ${esc(c.extraction)}</p><p>${src}</p><p><a href="js/enough-data.js">Complete data and model definitions</a>. Checked ${esc(c.verified)}.</p></details>`;
+}
+for(const [area,title,dek,ids]of groups){
+ const section=document.createElement('section');section.className='enough-group';section.style.setProperty('--area',`var(--en-${area})`);section.setAttribute('aria-labelledby','area-'+area);
+ section.innerHTML=`<div class="area-heading"><h2 id="area-${area}">${esc(title)}</h2><p>${esc(dek)}</p></div><div class="${ids.length>1?'enough-grid':'enough-feature'}"></div>`;
+ for(const id of ids){const c=curves.get(id),card=document.createElement('article');card.id=id;card.className='enough-card'+(ids.length===1?' feature':'');
+ const d90=M.enough(c),enoughSentence=d90!==null?`90% in this range: ${threshold(c,d90)}.`:'';
+ const controls=c.kind==='unknown'?'':`<label class="enough-sr" for="range-${id}">${esc(c.question)} ${esc(c.view.rangeLabel)}</label><input id="range-${id}" type="range" min="${c.domain[0]}" max="${c.domain[1]}" value="${c.defaultDose}" step="${c.kind==='categories'?1:c.id==='steps'?100:c.id==='protein'?.001:c.id==='sleep'?.1:c.id==='work'?.5:1}" aria-describedby="readout-${id} range-note-${id}"><output class="enough-readout" id="readout-${id}" for="range-${id}"></output>`;
+ card.innerHTML=`<div class="card-copy"><span class="shape">${esc(shape(c))}</span><h3>${esc(c.question)}</h3><p class="enough-answer">${esc(c.view.answer)}</p><p class="enough-fact">${esc(c.fact)}</p>${c.id==='savings'?'<p class="enough-range-note">Start at $0. Assume 5% annual growth after inflation and a 4% annual withdrawal target.</p>':''}</div><div class="card-plot">${c.kind==='unknown'?'<div class="enough-unknown-space">The curve is still missing.</div>':'<div class="enough-chart"></div>'}${controls}<p class="enough-range-note" id="range-note-${id}">${esc(c.view.rangeLabel)}.${enoughSentence?' '+esc(enoughSentence):''}</p></div>${detail(c)}`;
+ if(c.kind==='unknown'){card.querySelector('.enough-range-note').textContent='A trial compared 10 and 30 minutes. It found no clear difference, which does not prove they work equally.';section.lastElementChild.append(card);continue;}
+ section.lastElementChild.append(card);const input=card.querySelector('input'),output=card.querySelector('output'),plot=card.querySelector('.enough-chart');
+ const update=()=>{const d=Number(input.value),t=text(c,d);output.textContent=t;input.setAttribute('aria-valuetext',t);if(plot)plot.innerHTML=chart(c,plot.clientWidth,d);};
+ input.addEventListener('input',update);states.set(id,{c,input,update});
+ if(plot){let active=false;const choose=e=>{const r=plot.getBoundingClientRect(),f=M.clamp((e.clientX-r.left-42)/(r.width-54),0,1);let value;
+ if(c.kind==='categories'&&c.id!=='alcohol'){const target=physical(c,0)+f*(physical(c,c.points.length-1)-physical(c,0));value=c.points.reduce((best,p)=>Math.abs(p.sourceDose-target)<Math.abs(best.sourceDose-target)?p:best).dose;}else value=c.domain[0]+f*(c.domain[1]-c.domain[0]);input.value=value;update();};
+ plot.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;active=true;input.focus({preventScroll:true});plot.setPointerCapture(e.pointerId);choose(e);});plot.addEventListener('pointermove',e=>{if(active)choose(e);});for(const event of['pointerup','pointercancel'])plot.addEventListener(event,()=>{active=false;});plot.style.touchAction='pan-y';}
+ }
+ $('enough-groups').append(section);
+}
+$('enough-loading')?.remove();
+const overviewIds=['steps','exercise','protein'];let layout=new URLSearchParams(location.search).get('layout')||'overlay';
+function overview(){
+ const f=Number($('overview-effort').value)/100,box=$('overview-chart'),w=box.clientWidth,h=w<500?154:186,L=42,R=12,T=26,B=34,pw=w-L-R,ph=h-T-B,x=v=>L+v*pw,y=v=>T+(100-v)/100*ph;
+ const records=overviewIds.map(id=>{const c=curves.get(id),d=c.domain[0]+f*(c.domain[1]-c.domain[0]);return{c,d,s:M.share(c,d)};});
+ $('overview-percent').textContent=fmt(f*100)+'%';$('overview-effort').setAttribute('aria-valuetext',fmt(f*100)+' percent through each displayed dose range');
+ $('overview-message').textContent=`${fmt(f*100)}% through each range: ${fmt(Math.min(...records.map(r=>r.s)))}–${fmt(Math.max(...records.map(r=>r.s)))}% of its gain.`;
+ let lines='';for(const {c,d}of records){const ps=M.series(c),line=ps.map((p,i)=>`${i?'L':'M'}${x((p.dose-c.domain[0])/(c.domain[1]-c.domain[0])).toFixed(2)},${y(M.share(c,p.dose)).toFixed(2)}`).join(' '),dash=c.id==='exercise'?'stroke-dasharray:5 5;':'';
+ lines+=`<g style="--area:var(--en-${c.view.area})"><path class="en-area" clip-path="url(#overview-clip)" d="${line}L${x(1)},${y(0)}L${x(0)},${y(0)}Z"/><path class="en-curve en-remainder" style="${dash}" d="${line}"/><path class="en-curve" clip-path="url(#overview-clip)" style="${dash}" d="${line}"/><circle class="en-dot" cx="${x(f)}" cy="${y(M.share(c,d))}" r="4.5"/></g>`;
+ }
+ if(layout==='rings')box.innerHTML=`<div class="enough-rings">${records.map(({c,s})=>`<div class="enough-ring" style="--area:var(--en-${c.view.area})"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="none" stroke="var(--rule)" stroke-width="8"/><circle cx="60" cy="60" r="48" fill="none" stroke="var(--area)" stroke-width="8" pathLength="100" stroke-dasharray="${s} 100" transform="rotate(-90 60 60)"/></svg><b>${fmt(s)}%</b></div>`).join('')}</div>`;
+ else if(layout==='smalls')box.innerHTML=`<div class="enough-smalls">${records.map(({c,d})=>`<div style="--area:var(--en-${c.view.area})">${chart(c,w<500?w:(w-32)/3,d,true)}</div>`).join('')}</div>`;
+ else box.innerHTML=`<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><clipPath id="overview-clip"><rect x="${L}" y="${T-3}" width="${f*pw}" height="${ph+5}"/></clipPath></defs><text x="${L}" y="14">Share of each curve’s gain</text>${[0,50,90,100].map(n=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(n)}" y2="${y(n)}"/><text x="${L-7}" y="${y(n)+4}" text-anchor="end">${n}%</text>`).join('')}<line class="en-guide" x1="${x(f)}" x2="${x(f)}" y1="${T}" y2="${T+ph}"/>${lines}${[0,.5,1].map(n=>`<text x="${x(n)}" y="${h-12}" text-anchor="${n===0?'start':n===1?'end':'middle'}">${n*100}%</text>`).join('')}</svg>`;
+ $('overview-legend').innerHTML=records.map(({c,d,s})=>`<div class="overview-key" style="--area:var(--en-${c.view.area})"><a href="#${c.id}">${c.id==='steps'?'Walking':c.id==='exercise'?'Exercise':'Protein'}</a><b>${fmt(s)}%<small>of this gain</small></b><span>${c.id==='steps'?fmt(d)+'/day':c.id==='exercise'?fmt(d)+' min/week':fmt(d,2)+' g/lb/day'}</span><small class="overview-range">${c.id==='steps'?'2,000–12,000<br>steps/day':c.id==='exercise'?'0–600<br>min/week':'0.41–1.09<br>g/lb/day'}</small><em class="overview-enough">90% at ${c.id==='steps'?'10,500/day':c.id==='exercise'?'343 min/week':'0.70 g/lb/day'}</em></div>`).join('');
+}
+$('overview-effort').addEventListener('input',overview);
+function personal(){
+ const form=$('enough-form'),result=$('enough-results'),rows=[];let invalid=false;
+ for(const id of ['steps','exercise','sleep','fruit-veg','protein','work']){
+  const raw=form.elements.namedItem(id).value.trim();if(!raw)continue;const el=form.elements.namedItem(id),c=curves.get(id);if(!el.validity.valid){invalid=true;continue;}let d=Number(raw);
+  if(id==='protein'){const wt=form.elements.weight;if(!wt.value){rows.push('<p>Add body weight to place your protein.</p>');continue;}if(!wt.validity.valid){invalid=true;continue;}d/=Number(wt.value);}
+  let out=false;if(id==='fruit-veg'){const p=c.points;out=d<p[0].sourceDose||d>p.at(-1).sourceDose;d=p.reduce((a,p)=>Math.abs(p.sourceDose-d)<Math.abs(a.sourceDose-d)?p:a).dose;}else out=d<c.domain[0]||d>c.domain[1];
+  if(out){rows.push(`<div class="personal-row" style="--area:var(--en-${c.view.area})"><p>${esc(c.question)} Your amount is outside the shown range.</p><small>${esc(c.view.rangeLabel)}. No estimate beyond it.</small></div>`);continue;}
+  const share=id==='sleep'?100*(d-c.domain[0])/(c.domain[1]-c.domain[0]):M.share(c,d);const label=id==='sleep'?`${fmt(d,1)} hours: ${d>=6&&d<=7.25?'near the low point of this curve':'away from this curve’s low point'}.`:text(c,d);
+  rows.push(`<div class="personal-row" style="--area:var(--en-${c.view.area})"><p>${esc(label)}</p>${id==='sleep'?`<div class="sleep-track" role="img" aria-label="${esc(label)}"><span class="sleep-zone"></span><i style="left:${share}%"></i></div>`:`<div class="personal-bar" role="img" aria-label="${esc(label)}"><span style="width:${M.clamp(share,0,100)}%"></span></div>`}${id==='sleep'?'<small>The bar marks hours across 3–11; it is not a share of health benefits.</small>':id==='work'?'<small>Historical factory output, not your productivity.</small>':''}<small><a href="#${id}">See the curve</a></small></div>`);
+ }
+ result.innerHTML=(invalid?'<p class="enough-error">Use a number within the field’s limits. Body weight must be greater than zero.</p>':'')+rows.join('');
+}
+$('enough-form').addEventListener('input',personal);$('enough-form').addEventListener('submit',e=>e.preventDefault());$('enough-form').addEventListener('reset',()=>setTimeout(personal,0));
+const sources=new Map();for(const c of data.curves)for(const s of c.sources)sources.set(s.url,s);$('enough-sources').innerHTML=[...sources.values()].map(s=>`<li><a href="${esc(s.url)}">${esc(s.citation)}</a></li>`).join('');
+const params=new URLSearchParams(location.search),painting=params.get('painting');if(['homer','chardin'].includes(painting)){
+ $('hero-painting').src='assets/enough/'+painting+'.jpg';$('hero-painting').style.objectPosition=painting==='homer'?'center 55%':'center 65%';$('hero-picture').querySelector('source').srcset='assets/enough/'+painting+'.webp';$('hero-painting').alt=painting==='homer'?'Four people sail a small boat in Winslow Homer’s Breezing Up.':'Fruit, a jug and a glass on a table, painted by Chardin.';
+ $('painting-credit').innerHTML=painting==='homer'?'Winslow Homer, <a href="https://www.nga.gov/artworks/30228-breezing-fair-wind">Breezing Up (A Fair Wind)</a>,1873–1876. National Gallery of Art,1943.13.1. Public domain.':'Jean Simeon Chardin, <a href="https://www.nga.gov/artworks/12202-fruit-jug-and-glass">Fruit, Jug, and a Glass</a>,c.1726/1728. National Gallery of Art,1943.7.4. Public domain.';
+}
+if(params.get('colors')==='quiet'){for(const area of ['move','lift','rest','eat','money','work'])document.querySelector('.enough-shell').style.setProperty('--en-'+area,'var(--accent)');}
+let timer;const resize=()=>{clearTimeout(timer);timer=setTimeout(()=>{overview();for(const s of states.values())s.update();},60);};window.addEventListener('resize',resize);$('overview-chart').classList.add('en-initial');overview();for(const s of states.values())s.update();personal();
+const hash=decodeURIComponent(location.hash.slice(1));if(states.has(hash))requestAnimationFrame(()=>$ (hash)?.scrollIntoView());
 })();
