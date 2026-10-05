@@ -105,9 +105,11 @@ hidden until their starting states are developed. `one-shift-lab.html` offers fo
 studies and five title proposals. They are provisional studies, not an owner
 art approval or four independently designed sprite systems.
 
-Sprites are procedural and cached at 192 by 192 pixels. Static floor chunks and
-light layers are cached; only the top stored pallet at a position is drawn in
-the world, with other levels available in the rack inset. Quiet Web Audio cues
+Sprites are procedural and cached at 192 by 192 pixels. World labels are drawn
+at display resolution so zooming does not enlarge cached text. The facility sign
+sits below the roof cap; truck labels fit the visible trailer and avoid the
+camera controls. Static floor chunks and light layers are cached; only the top
+stored pallet at a position is drawn in the world, with other levels available in the rack inset. Quiet Web Audio cues
 accompany important actions. Low air noise fades during
 pause, menus and hidden tabs. Equipment tones stop during an outage. Stations have distinct bench, packing,
 wrapping and recycling drawings; forklift operators sit within the vehicle.

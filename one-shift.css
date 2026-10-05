@@ -46,8 +46,10 @@
 .shift-paper button {background:var(--shift-primary);color:var(--text-bright);width:100%;margin-top:6px;border-color:var(--shift-primary)}
 .shift-paper button:hover {background:var(--shift-primary-hover)}
 .shift-manifest {display:grid;gap:6px;margin-top:16px}
-.shift-manifest button {display:grid;grid-template-columns:30px 1fr auto;text-align:left;gap:6px;align-items:center;font-size:0.75rem;min-height:48px}
+.shift-manifest button {display:grid;grid-template-columns:24px minmax(0,1fr) auto;text-align:left;gap:6px;align-items:center;font-size:0.75rem;min-height:48px}
 .shift-manifest small {font:0.625rem var(--font-mono);color:var(--text-faint)}
+.shift-manifest button > span {min-width:0;overflow-wrap:anywhere;line-height:1.35}
+.shift-manifest button > span > small {display:block;margin-top:3px;line-height:1.4}
 .shift-actions {display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}
 .shift-actions button {flex:1;font-size:0.8125rem}
 .shift-label {width:100%;height:auto;background:var(--text-bright);display:block;margin-top:10px;image-rendering:auto}
