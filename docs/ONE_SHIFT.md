@@ -124,7 +124,9 @@ Truck backing is visible; suspension details from the art bible remain unfinishe
   saves validate every ten shifts. The first three shifts have no missed truck
   and positive operating profit. Results include full profit and cash curves,
   acquisition days, missed trucks and simulation timing. Service policies bring
-  upper component reserve to floor level and finish partial work orders.
+  upper component reserve to floor level and finish partial work orders. The
+  fulfillment policy disposes of unresolved held stock through the scrap control
+  so those goods cannot suppress replenishment indefinitely.
   `SHIFT_STYLES` selects policies for a targeted rerun; `summarize` verifies
   recorded results against the current core hash and checks profitability.
   Set `SHIFT_EVIDENCE`

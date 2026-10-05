@@ -5,6 +5,8 @@ function load(){const context=vm.createContext({console,performance});for(const 
 function act(sim,O,style='average'){
  const s=sim.s,w=s.workers[0];if(s.phase!=='shift'||w.task||w.queue.length)return;
  if(style==='casual'&&s.tick%40>3)return;
+ // Clear unresolved held stock so it cannot suppress replenishment forever.
+ if(style==='fulfillment'){const held=s.pallets.find(p=>p.hold&&!p.reservedBy&&['lane','storage'].includes(p.place));if(held&&sim.command({type:'scrap',pallet:held.id}).ok)return;}
  if(s.situation?.effect==='seal'){const t=s.trucks.find(t=>t.status==='docked'&&t.direction==='in'&&t.seal!==t.expectedSeal);if(t){sim.command({type:'reject',truck:t.id});return;}}
  const outbound=s.trucks.filter(t=>t.direction==='out'&&t.status==='docked').sort((a,b)=>a.deadline-b.deadline);
  for(const t of outbound){
