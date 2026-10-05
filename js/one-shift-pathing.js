@@ -1,8 +1,15 @@
 (function (root) {
   'use strict';
   const O=root.OneShift;
+  // Missing orientation identifies the original south-dock saves and layouts.
+  const side=s=>s.map.dockSide||'south';
+  O.docks={side,entrance:(s,d)=>side(s)==='east'?{x:d.x+1,y:d.y}:{x:d.x,y:d.y+1},slot:(s,d,i)=>side(s)==='east'?{x:d.x+1+Math.floor(i/2),y:d.y+i%2}:{x:d.x+i%2,y:d.y+1+Math.floor(i/2)},
+    lane(s,kind){const b=s.map.building;return side(s)==='east'?{x:b.x+b.w-5,y:kind==='receiving'?b.y+4:b.y+b.h-7,w:4,h:6}:{x:kind==='receiving'?b.x+3:b.x+b.w-10,y:b.y+b.h-5,w:6,h:4};},
+    stack(s){const b=s.map.building;return side(s)==='east'?{x:b.x+b.w-7,y:b.y+b.h-3}:{x:b.x+1,y:b.y+b.h-3};},
+    spawn(s){const b=s.map.building;return side(s)==='east'?{x:b.x+b.w-3,y:b.y+Math.min(10,b.h-2)}:{x:b.x+Math.min(12,b.w-2),y:b.y+b.h-2};}
+  };
   const grids=new WeakMap();
-  function obstacles(s){let q=grids.get(s.map);if(q?.revision===s.map.revision)return q.cells;const cells=new Set(),b=s.map.building,key=(x,y)=>y*s.map.w+x;for(let y=b.y-1;y<=b.y+b.h;y++){cells.add(key(b.x-1,y));cells.add(key(b.x+b.w,y));}for(let x=b.x-1;x<=b.x+b.w;x++){cells.add(key(x,b.y-1));cells.add(key(x,b.y+b.h));}for(const d of s.map.doors){cells.delete(key(d.x,d.y));cells.delete(key(d.x+1,d.y));}for(const r of s.map.racks){cells.add(key(r.x,r.y));cells.add(key(r.x+1,r.y));}for(const r of s.map.blocks)cells.add(key(r.x,r.y));grids.set(s.map,{revision:s.map.revision,cells});return cells;}
+  function obstacles(s){let q=grids.get(s.map);if(q?.revision===s.map.revision)return q.cells;const cells=new Set(),b=s.map.building,key=(x,y)=>y*s.map.w+x;for(let y=b.y-1;y<=b.y+b.h;y++){cells.add(key(b.x-1,y));cells.add(key(b.x+b.w,y));}for(let x=b.x-1;x<=b.x+b.w;x++){cells.add(key(x,b.y-1));cells.add(key(x,b.y+b.h));}for(const d of s.map.doors){cells.delete(key(d.x,d.y));cells.delete(key(d.x+(side(s)==='east'?0:1),d.y+(side(s)==='east'?1:0)));}for(const r of s.map.racks){cells.add(key(r.x,r.y));cells.add(key(r.x+1,r.y));}for(const r of s.map.blocks)cells.add(key(r.x,r.y));grids.set(s.map,{revision:s.map.revision,cells});return cells;}
   function inside(s,x,y) { const b=s.map.building; return x>=b.x&&y>=b.y&&x<b.x+b.w&&y<b.y+b.h; }
   function blocked(s,x,y,vehicle=false) {
     const b=s.map.building;

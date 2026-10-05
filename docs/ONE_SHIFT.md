@@ -5,7 +5,7 @@ editable sources are classic scripts under `js/one-shift-*.js`, with one global
 `OneShift` namespace and no bundle step. Keep the post in In Progress on
 `archive.html`. Bump every game CSS and script query version together.
 
-Version 1.1 is an expanded playable release. It is not the finished commercial
+Version 1.2 is an expanded playable release. It is not the finished commercial
 quality game described in the kickoff brief. Research, raw evidence and the
 remaining work are kept locally in `research/one-shift/PROGRESS.md`.
 
@@ -15,6 +15,13 @@ The fixed 20 Hz simulation uses seeded randomness and plain JSON state. A tile
 represents four feet; the initial building is 100 by 80 feet. The clock advances
 1.37 game minutes per real second, independently of worker movement. A normal
 6:55 AM to 4:30 PM shift lasts about seven minutes.
+
+New warehouses have their dock doors on the east wall. Trucks back in from
+the right, and the first delivery is already approaching when a new game opens.
+The Home view frames the warehouse and active trucks. Receiving and shipping
+lanes sit beside the dock; expansions extend the building along that wall.
+Saves and layout links without a dock orientation retain the original south
+doors. Imported layouts start the player on reachable floor inside the building.
 
 The first three shifts introduce receiving, manual putaway, full-pallet
 shipping, a visible 39-versus-40 shortage, case picking and wrapping. Later,
@@ -71,6 +78,11 @@ establish the requested 90 working situations or 150 taught terms.
 
 ## Interface and assets
 
+The warehouse uses a separate palette: concrete gray, blue steel,
+charcoal panels, off-white markings and restrained safety orange. Active and
+primary buttons are blue. The selection clipboard opens on the left so trucks
+remain visible on the right.
+
 Mouse, keyboard and landscape touch control the same view. Object selection,
 a floor cursor and panel focus support keyboard play. The menu remaps controls,
 changes text scale, volume, reduced motion and redundant color marks. Buttons
@@ -99,7 +111,7 @@ Opened cartons show loose units, and bench workers push a component cart.
 Dock shutters ease open, pallets settle when set down, and a brief label flash
 confirms scanning. Night work has fixed light pools and forklift lamps; an
 outage removes powered lights. Reduced motion removes settle and idle sway.
-Truck backing and suspension details from the art bible remain unfinished.
+Truck backing is visible; suspension details from the art bible remain unfinished.
 
 ## Checks and reproduction
 
@@ -122,7 +134,8 @@ Truck backing and suspension details from the art bible remain unfinished.
   inventory reconciliation. This fixture supplies starting cash and hires to
   exercise routing; it is not an economy playthrough.
 - `node tools/test-one-shift-browser.cjs`: real browser clicks, native buttons,
-  bench collection and component returns, opened-case unit counts, keyboard
+  right-side arrivals and opening camera bounds, bench collection and component
+  returns, opened-case unit counts, keyboard
   receiving, remapping, autosave, viewport checks, landscape touch,
   portrait freeze, 1.3 text scale, phone panels and preview save isolation.
   Playwright and Sharp must be available in `NODE_PATH`. `ASSETS=1` refreshes
@@ -139,10 +152,9 @@ in `finally`. Never use the owner's personal Chrome binary for headless tests.
 
 On the Apple M1 Pro with 32 GB, the synthetic large fixture contains 8,000 stored
 pallets plus 30 inbound pallets, 60 workers, 20 rendered forklifts and 30 trucks.
-The last browser check measured about 2.6 ms mean and 8.9 ms 95th-percentile draw
-work at 1440 by 900. The night scene measured 2.7 ms mean and 8.3 ms
-95th percentile with work lights and forklift lamps. Five complete simulation
-shifts measured 425 to 526 ms.
+The latest browser check measured 9.0 ms 95th-percentile draw work at
+1440 by 900 in daylight and 8.8 ms at night with work lights and forklift lamps.
+The previous release measured 425 to 526 ms for five complete simulation shifts.
 This is a synthetic load on one host, not a claim of performance on every phone
 or of 20 independently allocated vehicle entities. Headless frame-rate caps
 were disabled for the cadence check.

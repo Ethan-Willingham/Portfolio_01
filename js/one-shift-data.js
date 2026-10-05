@@ -1,17 +1,17 @@
 (function (root) {
   'use strict';
   const O = root.OneShift = root.OneShift || {};
-  O.VERSION = '1.1';
+  O.VERSION = '1.2';
   O.items = {
     stove: {name:'Camp stoves', color:'#bd916c', ti:8, hi:5, pack:4},
-    lantern: {name:'Trail lanterns', color:'#c7b26e', ti:8, hi:5, pack:6},
-    chair: {name:'Folding chairs', color:'#879a87', ti:6, hi:4, pack:2},
-    soup: {name:'Garden soup', color:'#a7b48b', ti:10, hi:5, pack:12},
+    lantern: {name:'Trail lanterns', color:'#cb9c73', ti:8, hi:5, pack:6},
+    chair: {name:'Folding chairs', color:'#7c9fbc', ti:6, hi:4, pack:2},
+    soup: {name:'Garden soup', color:'#99acba', ti:10, hi:5, pack:12},
     berry: {name:'Berry cups', color:'#b68f92', ti:10, hi:4, pack:12},
     towel: {name:'Cotton towels', color:'#d4c9b3', ti:8, hi:5, pack:8},
     radio: {name:'Pocket radios', color:'#92a7aa', ti:8, hi:4, pack:8},
     notebook: {name:'Pocket notebooks', color:'#be9e80', ti:10, hi:5, pack:24},
-    housing: {name:'Lamp housings', color:'#acb3a2', ti:8, hi:4, pack:10},
+    housing: {name:'Lamp housings', color:'#acb9c3', ti:8, hi:4, pack:10},
     cable: {name:'Power cables', color:'#9ca4b0', ti:8, hi:5, pack:10},
     kit: {name:'Reading lamp kits', color:'#c6ae8b', ti:8, hi:4, pack:10}
   };
@@ -69,7 +69,7 @@
     ['baler','Cardboard baler',260,[], 'recycling','Turn stripped cardboard into saleable bales.'],
     ['repair','Pallet repair bench',145,[], 'recycling','Repair empty wooden pallets for reuse.'],
     ['crossdock','Cross-dock lane',130,[], 'services','Transfer inbound goods directly to outbound.'],
-    ['expansion','Expansion bay',540,[], 'storage','Another 1,920 square feet of working floor.'],
+    ['expansion','Expansion bay',540,[], 'storage','More working floor along the dock wall.'],
     ['secondBuilding','Second building',1800,['expansion'], 'storage','More storage and a linked dock.'],
     ['charger','Battery charger',160,['forklift'], 'throughput','Swap and recharge batteries during the shift.'],
     ['maintenance','Maintenance bench',170,['forklift'], 'throughput','Prevent breakdowns between shifts.'],

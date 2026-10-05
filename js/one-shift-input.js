@@ -10,7 +10,7 @@
     if(hit?.kind==='pallet'){if(shift){if(!ui.selected.includes(hit.id))ui.selected.push(hit.id);ui.update();return;}if(ui.selected.includes(hit.id)){ui.select(hit);return;}ui.select(hit);return;}
     const destination=hit?.kind==='truck'?{truck:hit.id}:{x:Math.floor(pos.x),y:Math.floor(pos.y),level:0,place:'storage'};
     // Painted receiving/shipping strips accept a batch, nearest free position first.
-    const b=s.map.building;if(!destination.truck&&pos.y>=b.y+b.h-5&&pos.y<b.y+b.h-1){if(pos.x>=b.x+3&&pos.x<b.x+9)destination.lane='receiving';if(pos.x>=b.x+b.w-10&&pos.x<b.x+b.w-4)destination.lane='shipping';}
+    if(!destination.truck)for(const kind of ['receiving','shipping']){const r=O.docks.lane(s,kind);if(pos.x>=r.x&&pos.x<r.x+r.w&&pos.y>=r.y&&pos.y<r.y+r.h)destination.lane=kind;}
     let moved=0;for(const id of ui.selected){const dest={...destination};if(ui.selected.length>1&&!dest.truck&&!dest.lane){const p=app.sim.p.get(id),spot=app.sim.spot(p);if(!spot)break;Object.assign(dest,spot);}if(ui.issue({type:'move',pallet:id,dest}).ok)moved++;}
     if(moved&&!shift){ui.selected=[];ui.target=null;ui.selectionKey='';}ui.update();return;
    }
