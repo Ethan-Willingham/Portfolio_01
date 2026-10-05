@@ -262,6 +262,16 @@ let browser;
     await fsPage.locator('[data-tilt="45"]').click();await fsPage.locator('#globe-return').focus();
     check('200 percent text in narrow fullscreen has no horizontal footer scrolling',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollLeft===0));
     await fsPage.screenshot({path:path.join(dump,'narrow-fullscreen-large-text.png')});
+    for(const width of [640,740,800,844,1024]){
+      await fsPage.setViewportSize({width,height:400});
+      for(const expanded of [false,true]){
+        await fsPage.evaluate(expanded=>{const section=document.querySelector('#globe-explore');if(section.hidden===expanded)document.querySelector('#globe-explore-toggle').click();},expanded);
+        check(width+' fullscreen enlarged '+(expanded?'expanded':'collapsed')+' status stays clear of Explore',await fsPage.evaluate(()=>{const a=document.querySelector('.globe-status-text').getBoundingClientRect(),b=document.querySelector('#globe-explore-toggle').getBoundingClientRect();return a.right<=b.left+1||a.bottom<=b.top+1;}));
+        check(width+' fullscreen enlarged '+(expanded?'expanded':'collapsed')+' has no horizontal footer overflow',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+      }
+      await fsPage.screenshot({path:path.join(dump,width+'-fullscreen-large-text.png')});
+    }
+    await fsPage.setViewportSize({width:568,height:320});
     await fsPage.evaluate(()=>document.documentElement.style.fontSize='');
     await fsPage.waitForFunction(()=>document.querySelector('.globe-foot').getBoundingClientRect().width<innerWidth);
     check('ordinary narrow fullscreen retains a readable two-column layout',await fsPage.locator('.globe-foot').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
