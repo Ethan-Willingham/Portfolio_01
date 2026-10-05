@@ -27,9 +27,10 @@
 .globe-button, .globe-fs-btn { font-family: var(--font-body); color: var(--text); font-size: .78rem; line-height: 1.25; min-height: 44px; padding: .55rem .8rem; background: transparent; border: 1px solid var(--d-rule-strong); border-radius: 4px; cursor: pointer; }
 .globe-button:hover, .globe-fs-btn:hover { border-color: var(--accent); background: var(--row-hover); }
 .globe-button:disabled { opacity: .5; cursor: default; }
-.globe-fs-btn, .globe-sun-btn { position: absolute; top: max(10px, env(safe-area-inset-top)); z-index: 5; background: color-mix(in srgb, var(--globe-space) 82%, transparent); }
-.globe-fs-btn { right: max(10px, env(safe-area-inset-right)); display: grid; place-content: center; width: 44px; height: 44px; padding: 0; }
-.globe-sun-btn { right: max(62px, calc(env(safe-area-inset-right) + 52px)); }
+.globe-view-controls { position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); z-index: 5; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; pointer-events: none; }
+.globe-fs-btn, .globe-sun-btn, .globe-location-btn { position: static; flex: 0 0 auto; pointer-events: auto; background: color-mix(in srgb, var(--globe-space) 82%, transparent); }
+.globe-fs-btn { display: grid; place-content: center; width: 44px; height: 44px; padding: 0; }
+.globe-location-btn { margin-right: auto; }
 .globe-fs-btn svg { width: 18px; height: 18px; }
 .fs-icon-close { display: none; }
 .is-fullscreen .fs-icon-close { display: block; }
@@ -41,6 +42,7 @@
 .globe-return[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
 .globe-status-row { display: flex; flex-wrap: wrap; gap: .25rem .7rem; margin: .55rem 0 1rem; }
 .globe-status { font: .7rem/1.5 var(--font-body); color: var(--text-dim); margin: 0 !important; }
+.globe-location-status { font: .7rem/1.5 var(--font-body); color: var(--text-dim); margin: -.4rem 0 .7rem !important; }
 .globe-explore-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .9rem; }
 .globe-field { min-width: 0; }
 .globe-field label, .globe-tilts legend { display: block; font: .78rem var(--font-body); color: var(--text-dim); margin-bottom: .3rem; }
@@ -58,7 +60,7 @@
 .tilt-btn[aria-pressed=true] { color: var(--bg-raised); background: var(--accent); border-color: var(--accent); }
 .globe-tilt-note { font: .72rem/1.5 var(--font-body); color: var(--text-dim); margin: .55rem 0 0 !important; }
 .globe-pin { border-top: 1px solid var(--rule); margin-top: 1rem; padding-top: .6rem; }
-.globe-pin[hidden], .globe-tilt-note[hidden], [hidden].globe-fs-btn, [hidden].globe-sun-btn { display: none; }
+.globe-pin[hidden], .globe-tilt-note[hidden], .globe-location-status[hidden], [hidden].globe-fs-btn, [hidden].globe-sun-btn, [hidden].globe-location-btn { display: none; }
 .globe-pin-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem; }
 .globe-pin-head h2 { flex: 1 1 10ch; min-width: 0; font: .95rem var(--font-heading); margin: 0; overflow-wrap: anywhere; }
 .globe-pin-close { min-width: 44px; min-height: 44px; border: 0; padding: .3rem 0; background: none; color: var(--text-dim); font: .7rem var(--font-body); cursor: pointer; }

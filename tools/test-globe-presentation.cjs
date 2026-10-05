@@ -88,12 +88,12 @@ async function state(page){return page.evaluate(()=>__globePresentation.state())
 async function ready(page){await page.waitForFunction(()=>window.__globePresentation&&!__globePresentation.state().loading,null,{timeout:60000});}
 async function capture(page,name){await page.screenshot({path:path.join(dump,name+'.png'),fullPage:!await page.locator('.globe-wrapper.is-fullscreen').count()});}
 async function layout(page){return page.evaluate(()=>{
- const selectors=['#globe-date','#globe-hour','#globe-return','.globe-tilt-options'];
+ const selectors=['#globe-date','#globe-hour','#globe-return','.globe-tilt-options','#globe-location','#globe-sun','#globe-fullscreen'];
  const results=selectors.map(selector=>{const el=document.querySelector(selector),r=el.getBoundingClientRect();let clip={left:0,top:0,right:innerWidth,bottom:innerHeight};for(let p=el.parentElement;p;p=p.parentElement){const cs=getComputedStyle(p);if(/auto|scroll|hidden|clip/.test(cs.overflowX+' '+cs.overflowY)){const b=p.getBoundingClientRect();clip={left:Math.max(clip.left,b.left),top:Math.max(clip.top,b.top),right:Math.min(clip.right,b.right),bottom:Math.min(clip.bottom,b.bottom)};}}
  return {selector,rect:r.toJSON(),displayed:r.width>0&&r.height>0&&!el.closest('[hidden]')&&!el.disabled,inViewport:r.left>=clip.left-1&&r.right<=clip.right+1&&r.top>=clip.top-1&&r.bottom<=clip.bottom+1,horizontal:r.left>=0&&r.right<=innerWidth+1,clipped:el.scrollWidth>el.clientWidth+2};});
  const source=document.querySelector('.globe-sources');
  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),pieces=[];
- while(walker.nextNode()){const n=walker.currentNode,p=n.parentElement;if(!n.textContent.trim()||p.closest('script,style,.globe-sr-only')||p.closest('details:not([open])')&&!p.closest('summary'))continue;const cs=getComputedStyle(p);if(cs.display==='none'||cs.visibility==='hidden'||p.closest('[hidden]'))continue;pieces.push(n.textContent.trim());}
+ while(walker.nextNode()){const n=walker.currentNode,p=n.parentElement;if(!n.textContent.trim()||p.closest('script,style,.globe-sr-only')||p.closest('details:not([open])')&&!p.closest('summary'))continue;const cs=getComputedStyle(p);if(!p.getClientRects().length||cs.display==='none'||cs.visibility==='hidden'||p.closest('[hidden]'))continue;pieces.push(n.textContent.trim());}
  return {controls:results,sourceClosed:!source.open,sourceInert:source.inert||!!source.closest('[inert]'),words:pieces.join(' ').split(/\s+/).length,text:pieces.join(' '),overflow:document.documentElement.scrollWidth>innerWidth+1};
  });}
 async function matrix(browser,isReal){
@@ -105,8 +105,8 @@ async function matrix(browser,isReal){
   check(name+' date, time, tilt and Live are present without disclosure',initial.controls.every(c=>c.displayed&&c.horizontal)&&!initial.overflow,initial);
   check(name+' source detail stays closed and default words stay concise',initial.sourceClosed&&initial.words<=75,{words:initial.words,text:initial.text});
   check(name+' exactly 5070 catalog stars are installed',s.starCount===5070&&s.pointCount===5070);
-  const sun=await page.evaluate(()=>__globePresentation.pixelVisibility('sun')),stars=await page.evaluate(()=>__globePresentation.pixelVisibility('stars'));
-  check(name+' initial Sun is projected and changes nearby pixels',s.sun.inFrame&&sun.nearSun>=2&&sun.maxGain>30,{sun:s.sun,pixels:sun});
+  const stars=await page.evaluate(()=>__globePresentation.pixelVisibility('stars'));
+  check(name+' opening centers Earth while location permission is unavailable',!s.sunFraming);
   check(name+' catalog stars visibly change sky pixels',stars.changed>=10&&stars.maxGain>8,stars);
   if(isReal)check(name+' actual dated satellite frame is installed',['EUMETSAT','NASA / EUMETSAT'].includes(s.photo?.source)&&!!s.photo.time&&!s.photoBusy,s.photo);
   await page.locator('#globe-container').focus();for(let i=0;i<12;i++)await page.keyboard.press('ArrowRight');await page.waitForTimeout(700);
@@ -132,7 +132,7 @@ async function matrix(browser,isReal){
   const focusedControls=nativeFocus.filter(Boolean),focusedKeys=new Set(focusedControls.map(c=>c.id||'tilt:'+c.tilt));check(name+' keyboard focus scrolls each enlarged control fully into view',['globe-date','globe-hour','globe-return','tilt:22.1','tilt:current','tilt:24.5','tilt:45'].every(k=>focusedKeys.has(k))&&focusedControls.every(c=>c.good),focusedControls);
   check(name+' enlarged fullscreen keeps a visible globe area',(await state(page)).canvas.height>=120);
   evidence.push({keyboard:{name,tabOrder,nativeFocus}});
-  evidence.push({name,state:s,initial,sun,stars,restored,fullscreen:fsLayout,large});await context.close();
+  evidence.push({name,state:s,initial,sun:restoredPixels,stars,restored,fullscreen:fsLayout,large});await context.close();
  }
 }
 async function loadingChecks(browser){
@@ -182,7 +182,7 @@ async function infraredOnlyCheck(browser){
 }
 async function enlargedLandscapeCheck(browser){
  for(const [width,height]of[[667,375],[844,390]]){const context=await browser.newContext({viewport:{width,height},timezoneId:'America/Chicago'});await routes(context);const page=await context.newPage();listen(page,'large-landscape-'+width);await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);await page.locator('#globe-fullscreen').click();await page.evaluate(()=>{document.documentElement.style.fontSize='32px';});await page.waitForTimeout(400);const s=await state(page),bounds=await page.evaluate(()=>__globePresentation.earthBounds()),l=await layout(page);
- check(width+' enlarged short landscape projects the entire Earth inside the scene',bounds.left>=-1&&bounds.right<=1&&bounds.top>=-1&&bounds.bottom<=1&&s.sun.inFrame,{bounds,state:s});check(width+' enlarged short landscape has no horizontal control overflow',!l.overflow&&l.controls.every(c=>c.horizontal&&!c.clipped),l);await capture(page,'enlarged-landscape-'+width);evidence.push({enlargedLandscape:{width,height,bounds,state:s,layout:l}});await context.close();}
+ check(width+' enlarged short landscape projects the entire Earth inside the scene',bounds.left>=-1&&bounds.right<=1&&bounds.top>=-1&&bounds.bottom<=1,{bounds,state:s});check(width+' enlarged short landscape has no horizontal control overflow',!l.overflow&&l.controls.every(c=>c.horizontal&&!c.clipped),l);await capture(page,'enlarged-landscape-'+width);evidence.push({enlargedLandscape:{width,height,bounds,state:s,layout:l}});await context.close();}
 }
 async function nativeFullscreenCheck(browser){
  const context=await browser.newContext({viewport:{width:1440,height:900},timezoneId:'America/Chicago'});await routes(context);const page=await context.newPage();listen(page,'native-fullscreen');await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);

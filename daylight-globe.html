@@ -21,7 +21,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="globe.css?v=20261005-22">
+  <link rel="stylesheet" href="globe.css?v=20261005-25">
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -41,15 +41,19 @@
               <div class="globe-loading-inner"><p id="globe-loading-label">Loading Earth</p><progress id="globe-loading-progress" max="14" value="0" aria-label="Globe loading progress"></progress></div>
             </div>
             <div class="globe-info"><span id="hover-info">Drag to orbit. Tap Earth to pin.</span></div>
-            <button id="globe-sun" class="globe-sun-btn globe-button" type="button" title="Frame Earth and the Sun">Sun</button>
-            <button id="globe-fullscreen" class="globe-fs-btn" type="button" aria-label="Enter fullscreen">
-              <svg class="fs-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
-              <svg class="fs-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h4V4M20 8h-4V4M4 16h4v4M20 16h-4v4"/></svg>
-            </button>
+            <div class="globe-view-controls">
+              <button id="globe-location" class="globe-location-btn globe-button" type="button" title="Center on your location">My location</button>
+              <button id="globe-sun" class="globe-sun-btn globe-button" type="button" title="Frame Earth and the Sun">Sun</button>
+              <button id="globe-fullscreen" class="globe-fs-btn" type="button" aria-label="Enter fullscreen">
+                <svg class="fs-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
+                <svg class="fs-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h4V4M20 8h-4V4M4 16h4v4M20 16h-4v4"/></svg>
+              </button>
+            </div>
           </div>
           <div class="globe-foot">
             <div class="globe-clock-row"><time class="globe-clock" id="globe-clock"></time><button id="globe-return" class="globe-button globe-return" type="button" aria-pressed="true">Live</button></div>
             <div class="globe-status-row"><p class="globe-status" id="globe-status">Loading clouds</p><p class="globe-status" id="globe-aurora-status">Loading aurora</p></div>
+            <p id="globe-location-status" class="globe-location-status" role="status" aria-live="polite" hidden></p>
             <section id="globe-explore" class="globe-explore" aria-label="Time and tilt controls">
               <div class="globe-explore-grid">
                 <div class="globe-field">
@@ -90,6 +94,7 @@
               <p id="globe-gap-key" hidden>Reference map where satellite coverage ends.</p>
               <p id="globe-time-basis"></p>
               <p id="globe-weather-basis">Hourly cloud images. Aurora history covers saved forecasts only.</p>
+              <p>The opening view uses your device location, with browser permission. A rounded position is remembered on this device and refreshed each visit. Coordinates stay on your device. Night clouds soften the historical city lights; their transparency is illustrative.</p>
               <p>Hourly satellite maps: <a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a> (NOAA GOES and JMA Himawari) and <a href="https://view.eumetsat.int/">EUMETSAT EUMETView</a> (Meteosat). Visible and infrared brightness show white clouds over reference terrain; snow and cold ground can also appear bright. Overlapping images favour the more direct satellite view. Blank image areas fade into the reference map. Older dates use three-hour EUMETSAT maps. Contains modified EUMETSAT data, 2021 to 2026, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Daily fallback: <a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a>, NOAA-21 and NOAA-20 VIIRS. City lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA Black Marble, 2016</a>.</p>
               <p>Aurora: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA SWPC</a>. The glow shows modeled probabilities above 10%, with illustrative curtain detail. A forecast does not guarantee a sighting. Clouds, daylight and local lights can hide it.</p>
               <p>Stars: <a href="https://github.com/astronexus/HYG-Database">HYG 4.1</a>, David Nash / Astronexus. 5,070 measured stars, magnitude 6 and brighter. Adapted catalog under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Positions follow the selected time; point sizes and exposure are adjusted for the screen. Sun and Moon directions follow the selected time, with compressed distances. Glare illustrates a camera's response to the visible Sun. Pin clocks use local solar time.</p>
@@ -119,7 +124,7 @@
   <script src="js/globe-timeline.js?v=20261005-22"></script>
   <script src="js/globe-stars.js?v=20261005-11"></script>
   <script src="js/globe-optics.js?v=20261005-11"></script>
-  <script src="js/globe.js?v=20261005-24"></script>
+  <script src="js/globe.js?v=20261005-25"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>

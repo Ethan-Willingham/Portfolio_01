@@ -27,16 +27,18 @@ window.__globeQuality={
   targetTheta=theta=Math.PI/2+lon*DEG;targetPhi=phi=Math.PI/2-lat*DEG;targetRadius=radius=r;sunFraming=false;aimShift=0;autoSpin=false;
   camera.position.set(v.x*r,v.y*r,v.z*r);camera.lookAt(0,0,0);camera.updateMatrixWorld();
   var items=[atmosphere,moon,sunBody,sunGlow,starField,pinMarker].concat(auroraMeshes),visible=items.map(function(m){return m.visible;});
-  var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldDense=earthMaterial.uniforms.denseEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldSun=sunUniform.value.clone(),oldNight=earthMaterial.uniforms.nightMap.value,oldTarget=renderer.getRenderTarget();
+  var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldDense=earthMaterial.uniforms.denseEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldSun=sunUniform.value.clone(),oldNight=earthMaterial.uniforms.nightMap.value,oldBase=earthMaterial.uniforms.baseMap.value,oldTarget=renderer.getRenderTarget();
   var w=container.clientWidth,h=container.clientHeight,rt=new THREE.WebGLRenderTarget(w,h),pixel=new Uint8Array(4);
   try{items.forEach(function(m){m.visible=false;});if(options.aurora)auroraMeshes.forEach(function(m){m.visible=hasForecast();});
    if(options.reference)earthMaterial.uniforms.photoEnabled.value=0;if(options.thermal)earthMaterial.uniforms.naturalEnabled.value=0;
    if(options.dense)earthMaterial.uniforms.denseEnabled.value=1;
    if(options.sourceNight)photoSunUniform.value.set(-v.x,-v.y,-v.z);
    if(options.night){sunUniform.value.set(-v.x,-v.y,-v.z);photoSunUniform.value.set(-v.x,-v.y,-v.z);}
+   if(options.sourceDay)photoSunUniform.value.set(v.x,v.y,v.z);
+   if(options.terrain!==undefined)earthMaterial.uniforms.baseMap.value=solidTexture(options.terrain,options.terrain,options.terrain);
    if(options.lights!==undefined)earthMaterial.uniforms.nightMap.value=solidTexture(options.lights,options.lights,options.lights);
    renderer.setRenderTarget(rt);renderer.render(scene,camera);renderer.readRenderTargetPixels(rt,Math.floor(w/2),Math.floor(h/2),1,1,pixel);return Array.from(pixel);
-  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;earthMaterial.uniforms.denseEnabled.value=oldDense;photoSunUniform.value.copy(oldPhotoSun);sunUniform.value.copy(oldSun);if(earthMaterial.uniforms.nightMap.value!==oldNight)earthMaterial.uniforms.nightMap.value.dispose();earthMaterial.uniforms.nightMap.value=oldNight;renderer.setRenderTarget(oldTarget);rt.dispose();}
+  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;earthMaterial.uniforms.denseEnabled.value=oldDense;photoSunUniform.value.copy(oldPhotoSun);sunUniform.value.copy(oldSun);if(earthMaterial.uniforms.nightMap.value!==oldNight)earthMaterial.uniforms.nightMap.value.dispose();earthMaterial.uniforms.nightMap.value=oldNight;if(earthMaterial.uniforms.baseMap.value!==oldBase)earthMaterial.uniforms.baseMap.value.dispose();earthMaterial.uniforms.baseMap.value=oldBase;renderer.setRenderTarget(oldTarget);rt.dispose();}
  },
  nightForecastPoint:function(){if(!forecast)return null;var best=null;for(var lat=-80;lat<=80;lat++)for(var lon=0;lon<360;lon++){
   var p=forecast.grid[(lat+90)*360+lon],east=lon>180?lon-360:lon,elevation=math.solarElevation(instant,lat,east);
@@ -109,6 +111,8 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  check('city lights remain visible but dimmer through thick night clouds',nightLights.every((v,i)=>i===3||v>nightCloud[i]+20&&v<clearLights[i]-20),{nightLights,nightCloud,clearLights});
  const nightGap=await page.evaluate(()=>__globeQuality.sample(86,130,{night:true,lights:160})),nightGapReference=await page.evaluate(()=>__globeQuality.sample(86,130,{night:true,lights:160,reference:true}));
  check('missing night imagery leaves the historical city lights unobscured',nightGap.slice(0,3).every((v,i)=>Math.abs(v-nightGapReference[i])<=1),{nightGap,nightGapReference});
+ const brightGround=await page.evaluate(()=>__globeQuality.sample(0,130,{night:true,sourceDay:true,dense:true,terrain:220,lights:160})),brightGroundReference=await page.evaluate(()=>__globeQuality.sample(0,130,{night:true,sourceDay:true,dense:true,terrain:220,lights:160,reference:true}));
+ check('bright reference terrain cannot invent a night cloud over dark source pixels',brightGround.slice(0,3).every((v,i)=>Math.abs(v-brightGroundReference[i])<=1),{brightGround,brightGroundReference});
  const edge=await page.evaluate(()=>({missing:__globeQuality.texture('infrared',79,0),edge:__globeQuality.texture('infrared',77.7,0),middle:__globeQuality.texture('infrared',76.5,0),southMiddle:__globeQuality.texture('infrared',-76.5,0),inside:__globeQuality.texture('infrared',74,0)}));
  check('installed polar coverage preserves gaps and fades only inside three degrees',edge.missing[3]===0&&edge.edge[3]>0&&edge.edge[3]<255&&edge.middle[3]>64&&edge.middle[3]<192&&edge.southMiddle[3]>64&&edge.southMiddle[3]<192&&edge.inside[3]===255,edge);
  const point=await page.evaluate(()=>__globeQuality.nightForecastPoint());assert(point&&point.probability>20,'Storm fixture has a dark forecast point');

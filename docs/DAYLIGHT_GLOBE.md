@@ -1,6 +1,6 @@
 # Daylight Globe
 
-The globe combines dated NASA and EUMETSAT satellite imagery, calculated sunlight, historical city lights and NOAA's short-term aurora forecasts. Each source keeps its own clock. The time controls select actual dated images and saved forecast grids where available. The site remains static, with locally vendored Three.js r128 and no new runtime library. The default view frames a dusk Earth and the real solar bearing; its controls remain visible.
+The globe combines dated NASA and EUMETSAT satellite imagery, calculated sunlight, historical city lights and NOAA's short-term aurora forecasts. Each source keeps its own clock. The time controls select actual dated images and saved forecast grids where available. The site remains static, with locally vendored Three.js r128 and no new runtime library. The opening view centres on the device location with browser permission; its controls remain visible. The Sun button frames a dusk Earth and the real solar bearing.
 
 ## Satellite clouds and their history
 
@@ -56,6 +56,10 @@ The reader's clock and Explore use the browser's civil zone and Intl, including 
 
 ## Controls and accessibility
 
+Every visit requests the device location through the browser's Geolocation API, with an eight-second acquisition timeout, low-power accuracy and at most five minutes of browser-cached position age. Location permission does not hold the loading screen open. A latitude and longitude rounded to one decimal place are remembered in local storage for at most 30 days, allowing an immediate initial view while the fresh fix arrives. A new fix replaces that remembered view, including after travel. The site sends no location coordinates to the global imagery, weather or astronomy services. Denied permission clears the remembered position and gives a short explanation; My location retries. Dragging, zooming, keyboard exploration or selecting Sun prevents a late position from moving the camera. My location explicitly returns to the current device position. Without a valid location, the initial view faces Africa rather than claiming a guessed home location.
+
+Opening the page directly as a local file uses the public raw-GitHub copies of the Earth, historical lights, Moon and star catalog. Chrome blocks fetches to neighbouring file URLs; the published copies allow cross-origin requests and still decode into the same bounded canvas textures. HTTP and HTTPS pages retain local same-origin asset requests. Each asset has a 12-second deadline; a failed city-light map is now disclosed along with unavailable terrain and stars. The reference terrain stays below the selected visible or infrared clouds. Night opacity uses observed brightness before any reference-land colour is mixed in, avoiding false cloud masking over bright terrain. Both cloud structure and partially attenuated historical lights remain visible across the night hemisphere.
+
 Live is the default and keeps advancing. Date, time and tilt controls are always visible, beside the scene on desktop and below it on phones. Date, time or tilt changes leave Live; Live restores the current instant, rolling 12-hour window and actual tilt. Rolling hours use elapsed time through daylight-saving changes; historical dates keep their civil-day controls. Short cloud and aurora labels retain their actual source times. Full timestamps, missing-data explanations, Kp and credits live in the optional Sources section, which stays reachable in fullscreen. The visible time output includes its civil-zone abbreviation. Dragging, zooming, pinning and fullscreen preserve the astronomical state. The pin has four semantic facts: solar time, daylight, sunrise/sunset and aurora. Its text summary updates after mode, source or pin changes rather than every animation frame.
 
 With the globe focused, arrows rotate, plus/minus zoom, Enter pins the centre and Escape leaves fullscreen before clearing a pin. Controls have explicit labels and 44-pixel targets. Native fullscreen has a CSS fallback. Its focus cycle includes source summaries and links. Enlarged text can scroll the rail/dock to reveal each full control without horizontal clipping. Rendering stops in hidden or offscreen tabs and resumes on return. Animation remains enabled for every reader by owner instruction.
@@ -64,10 +68,14 @@ The loading screen covers the scene until local Earth, city lights, Moon and sta
 
 ## Verification
 
+The location harness checks HTTP and direct-file loading, actual terrain and city-light GPU pixels, browser-granted centering, travel updates, denied permission, rounded storage, expired coordinates and late responses after keyboard, drag, wheel and Sun actions. It also checks enlarged camera buttons at 375 pixels in WebKit. The real-source proof loaded the local file in Chrome in 2.8 seconds and mobile WebKit in 2.3 seconds, including 11 available cloud hours, with all four astronomy assets ready. It used a controlled Chicago device position and actual shared cloud frames, then replayed the same location at night. These are observed fresh-context runs, not physical iPhone tests or a network-speed guarantee.
+
 ```sh
 node --check js/globe.js
 node --check js/globe-data.js
 node --check js/globe-timeline.js
+NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-location.cjs
+NODE_PATH=/path/to/playwright/node_modules SAFARI_MOBILE=1 node tools/test-globe-location.cjs
 node tools/test-globe-clouds.cjs
 node tools/test-globe-replay.cjs
 node tools/test-globe-math.cjs

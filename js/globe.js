@@ -47,12 +47,14 @@
   var replayPendingCloud=false,replayPendingAurora=false;
   var archiveFrames=[],archiveChecked=0,archiveBusy=false,archiveController=null,archiveGeneration=0,archiveCache=new Map();
   var archiveBase='https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/aurora/';
-  var baseState = 'loading';
+  var baseState = 'loading', nightState = 'loading';
   var requestedDay = '', photoChecked = 0, weatherChecked = 0, photoGeneration = 0;
   var photoMix = 0, lastLabels = 0, lastFrame = 0, frameRequest = null, inView = true;
   var autoSpin = true, targetTheta = 0, targetPhi = 1.1, targetRadius = 4;
   var theta = 0, phi = 1.1, radius = 4;
   var sunFraming = true, aimShift = 0;
+  var locationButton=byId('globe-location'),locationStatus=byId('globe-location-status');
+  var locationKey='daylight-globe-location',homeLocation=null,viewGeneration=0,locationGeneration=0;
   var auroraStyle = new URLSearchParams(location.search).get('auroraStyle') || 'curtain';
   if (!['shell','halo','curtain','layered'].includes(auroraStyle)) auroraStyle = 'curtain';
   var css = getComputedStyle(document.documentElement);
@@ -108,6 +110,7 @@
     if(live&&kpAge>=-5*60000&&kpAge<9*3600000)parts.push('Magnetic activity: Kp '+kp.kp.toFixed(2)+' at '+forecastFormatter.format(kp.time));
     if(wrapper.dataset.stars==='unavailable')parts.push('Star catalog unavailable.');
     if(baseState==='unavailable')parts.push('Reference map unavailable.');else if(baseState==='loading')parts.push('Loading reference map.');
+    if(nightState==='unavailable')parts.push('City-light map unavailable.');
     if(photo&&!photo.time&&cloudFailure)parts.push('Daily fallback after '+cloudFailure+'.');
     text(dataLine,parts.join(' / '));
     byId('globe-gap-key').hidden=!photo||hypothetical;
@@ -192,7 +195,7 @@
   function unavailable(message) {
     text(status,message); text(dataLine,'You can still follow the source links below.');
     text(loadingLabel,'Interactive globe unavailable');
-    explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;byId('globe-sun').hidden=true;container.setAttribute('aria-busy','false');loadingProgress.hidden=true;
+    explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;byId('globe-sun').hidden=true;locationButton.hidden=true;container.setAttribute('aria-busy','false');loadingProgress.hidden=true;
     byId('globe-fullscreen').hidden = true; byId('globe-fullscreen').disabled = true;
     container.removeAttribute('tabindex');container.setAttribute('aria-label','Earth globe unavailable');
     container.removeAttribute('aria-describedby');container.querySelector('.globe-info').remove();
@@ -240,6 +243,9 @@
     // Neutralize that bright cyan only, retaining observed structure and land.
     'float cyan=min(photo.g,photo.b)-photo.r; float ice=smoothstep(.04,.16,cyan)*smoothstep(.18,.36,min(photo.g,photo.b))*(1.0-smoothstep(.12,.32,abs(photo.g-photo.b)));',
     'photo.rgb=mix(photo.rgb,vec3(max(photo.g,photo.b)),ice*thermalEnabled*naturalEnabled);',
+    // Capture observed brightness before mixing in the reference terrain.
+    // Otherwise bright reference land could become an invented night cloud.
+    'float visibleCloud=smoothstep(.22,.85,min(photo.r,min(photo.g,photo.b)))*photo.a;',
     // One reference surface avoids regional RGB and monochrome products
     // switching the colour of land and oceans at their coverage borders.
     'vec3 cloudColour=mix(base,vec3(1.0),smoothstep(.22,.85,min(photo.r,min(photo.g,photo.b))));',
@@ -255,10 +261,9 @@
     'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
     // Use the source-time visible/thermal cloud structure on both hemispheres.
     // Night clouds dim the historical lights without completely hiding them.
-    'float visibleCloud=smoothstep(.22,.85,min(photo.r,min(photo.g,photo.b)))*photo.a;',
     'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a;',
     'float cloudCover=mix(visibleCloud,mix(thermalCloud,visibleCloud,shotDay),thermalEnabled)*photoMix*photoEnabled;',
-    'night=night*(1.0-cloudCover*.65)+vec3(.065,.075,.085)*cloudCover;',
+    'night=night*(1.0-cloudCover*.65)+vec3(.085,.10,.115)*cloudCover;',
     'gl_FragColor=vec4(mix(night,litDay,daylight),1.0); }'
   ].join('\n')});
   var earth = new THREE.Mesh(new THREE.SphereGeometry(1,128,96),earthMaterial); scene.add(earth);
@@ -324,21 +329,26 @@
       canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);return canvas;
     } finally {if(bitmap) bitmap.close();}
   }
+  function astronomyAsset(path) {
+    // file:// pages cannot fetch their neighbouring files in Chrome. The
+    // published copies explicitly allow CORS, including a local-file origin.
+    return location.protocol==='file:'?'https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/'+path:path;
+  }
   async function loadLocal(path,kind) {
     var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},12000);
     try {
-      var response=await fetch(path,{signal:controller.signal});if(!response.ok)throw new Error('Local texture unavailable');
+      var response=await fetch(astronomyAsset(path),{signal:controller.signal});if(!response.ok)throw new Error('Reference texture unavailable');
       var canvas=await decodeBlob(await response.blob(),textureWidth),texture=configureTexture(new THREE.CanvasTexture(canvas));
       if(kind==='base'){baseTexture.dispose();baseTexture=texture;earthMaterial.uniforms.baseMap.value=texture;baseState='ready';}
-      else if(kind==='night'){nightTexture.dispose();nightTexture=texture;earthMaterial.uniforms.nightMap.value=texture;}
+      else if(kind==='night'){nightTexture.dispose();nightTexture=texture;earthMaterial.uniforms.nightMap.value=texture;nightState='ready';}
       else{moonTexture.dispose();moonTexture=texture;moonMaterial.uniforms.moonMap.value=texture;}
-    }catch(error){if(kind==='base')baseState='unavailable';}
+    }catch(error){if(kind==='base')baseState='unavailable';if(kind==='night')nightState='unavailable';}
     finally{clearTimeout(timer);settleLoad(kind);updateLabels();announce();}
   }
   async function loadStars() {
     var controller=new AbortController(),timer=setTimeout(function(){controller.abort();},12000);
     try{
-      starCatalog=await stars.load('assets/data/stars-hyg-v41.bin',{signal:controller.signal});
+      starCatalog=await stars.load(astronomyAsset('assets/data/stars-hyg-v41.bin'),{signal:controller.signal});
       starGeometry.setAttribute('position',new THREE.BufferAttribute(stars.worldPositions(starCatalog,instant,120),3));starDate=+instant;
       starGeometry.setAttribute('magnitude',new THREE.BufferAttribute(starCatalog.magnitudes,1));
       // Tone-map measured colors for a display without tinting every star gold.
@@ -351,6 +361,7 @@
   explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;
   loadLocal('assets/images/earth.jpg','base');loadLocal('assets/images/earth-night-2016.jpg','night');loadLocal('assets/images/moon.jpg','moon');loadStars();
   function frameSun() {
+    viewGeneration++;
     var sun=math.solar(instant,tilt),up=new THREE.Vector3(0,1,0),direction=new THREE.Vector3(sun.vector.x,sun.vector.y,sun.vector.z);
     // Rotate the observer 145 degrees from the Sun, perpendicular to north.
     // The resulting 35-degree separation fits a dusk Earth and the real Sun.
@@ -358,8 +369,55 @@
     var observer=direction.clone().applyAxisAngle(axis,145*DEG);
     targetTheta=Math.atan2(observer.x,observer.z);targetPhi=Math.acos(observer.y);targetRadius=4;sunFraming=true;autoSpin=false;
   }
-  frameSun();theta=targetTheta;phi=targetPhi;
   byId('globe-sun').addEventListener('click',frameSun);
+  function validLocation(point) {
+    return point&&Number.isFinite(point.lat)&&Math.abs(point.lat)<=90&&Number.isFinite(point.lon)&&Math.abs(point.lon)<=180;
+  }
+  function centerLocation(point,immediate) {
+    var desired=Math.PI/2+point.lon*DEG;
+    targetTheta=theta+Math.atan2(Math.sin(desired-theta),Math.cos(desired-theta));
+    targetPhi=Math.max(.001,Math.min(Math.PI-.001,Math.PI/2-point.lat*DEG));targetRadius=4;
+    sunFraming=false;autoSpin=false;
+    if(immediate){theta=targetTheta;phi=targetPhi;radius=targetRadius;aimShift=0;}
+  }
+  function locationMessage(message,state) {
+    wrapper.dataset.location=state;locationStatus.hidden=!message;text(locationStatus,message);
+    locationButton.setAttribute('aria-busy',String(state==='loading'));
+    locationButton.title=state==='ready'?'Center on your current location':state==='loading'?'Finding your location':state==='blocked'?'Location blocked. Allow location access in your browser, then retry.':message||'Center on your location';
+  }
+  function requestLocation() {
+    var generation=++locationGeneration,view=viewGeneration,timer;
+    function failed(error) {
+      if(generation!==locationGeneration)return;clearTimeout(timer);
+      if(error&&error.code===1){homeLocation=null;try{localStorage.removeItem(locationKey);}catch(ignore){} }
+      locationMessage(error&&error.code===1?'Allow location to start here.':'Location unavailable. Try My location.',error&&error.code===1?'blocked':'unavailable');
+    }
+    if(!navigator.geolocation){failed();return;}
+    locationMessage('', 'loading');
+    // Permission may remain pending longer than the device-position timeout.
+    // It never holds the Earth or replay loading screen open.
+    timer=setTimeout(function(){if(generation===locationGeneration)locationMessage('Allow location to start here.','pending');},9000);
+    try{navigator.geolocation.getCurrentPosition(function(position){
+      if(generation!==locationGeneration)return;clearTimeout(timer);
+      var point={lat:position.coords.latitude,lon:position.coords.longitude};
+      if(!validLocation(point)){failed();return;}
+      homeLocation=point;
+      // Only a rounded camera position is remembered on this device. No
+      // coordinates are included in the global weather or astronomy requests.
+      try{localStorage.setItem(locationKey,JSON.stringify({lat:Math.round(point.lat*10)/10,lon:Math.round(point.lon*10)/10,savedAt:Date.now()}));}catch(ignore){}
+      locationMessage('','ready');
+      if(view===viewGeneration)centerLocation(point,loading);
+    },failed,{enableHighAccuracy:false,maximumAge:300000,timeout:8000});}catch(error){failed(error);}
+  }
+  // Start over land while permission is pending. A previously granted position
+  // appears immediately and is refreshed on every visit, including after travel.
+  centerLocation({lat:20,lon:0},true);
+  try{
+    var savedLocation=JSON.parse(localStorage.getItem(locationKey));
+    if(validLocation(savedLocation)&&Number.isFinite(savedLocation.savedAt)&&Date.now()-savedLocation.savedAt>=0&&Date.now()-savedLocation.savedAt<30*DAY){homeLocation=savedLocation;centerLocation(homeLocation,true);}
+  }catch(ignore){}
+  locationButton.addEventListener('click',function(){viewGeneration++;if(homeLocation)centerLocation(homeLocation,false);requestLocation();});
+  requestLocation();
   function updateAstronomy() {
     expireLivePhoto();
     var sun=math.solar(instant,tilt);sunUniform.value.set(sun.vector.x,sun.vector.y,sun.vector.z);
@@ -383,7 +441,7 @@
   }
   var pointers=new Map(), dragTotal=0, pinchDistance=0, gesturePin=null;
   renderer.domElement.addEventListener('pointerdown',function (event) {
-    event.preventDefault();container.focus({preventScroll:true});autoSpin=false;dragTotal=pointers.size?999:0;
+    event.preventDefault();container.focus({preventScroll:true});viewGeneration++;autoSpin=false;dragTotal=pointers.size?999:0;
     pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});renderer.domElement.setPointerCapture(event.pointerId);
     gesturePin=hitAt(event.clientX,event.clientY);pinchDistance=0;
   });
@@ -404,12 +462,12 @@
   }
   renderer.domElement.addEventListener('pointerup',endPointer);renderer.domElement.addEventListener('pointercancel',endPointer);renderer.domElement.addEventListener('lostpointercapture',function (event) {pointers.delete(event.pointerId);});
   window.addEventListener('blur',function () {pointers.clear();pinchDistance=0;});
-  renderer.domElement.addEventListener('wheel',function (event) {event.preventDefault();autoSpin=false;sunFraming=false;targetRadius=Math.max(1.5,Math.min(10,targetRadius+event.deltaY*.002));},{passive:false});
+  renderer.domElement.addEventListener('wheel',function (event) {event.preventDefault();viewGeneration++;autoSpin=false;sunFraming=false;targetRadius=Math.max(1.5,Math.min(10,targetRadius+event.deltaY*.002));},{passive:false});
   container.addEventListener('keydown',function (event) {
     if(event.target!==container)return;
     if(event.key==='Escape'&&wrapper.classList.contains('is-fullscreen'))return;
     if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','Enter','Escape'].indexOf(event.key)<0)return;
-    event.preventDefault();autoSpin=false;if(event.key!=='Enter'&&event.key!=='Escape')sunFraming=false;
+    event.preventDefault();viewGeneration++;autoSpin=false;if(event.key!=='Enter'&&event.key!=='Escape')sunFraming=false;
     if(event.key==='ArrowLeft')targetTheta-=.14;if(event.key==='ArrowRight')targetTheta+=.14;
     if(event.key==='ArrowUp')targetPhi=Math.max(.08,targetPhi-.14);if(event.key==='ArrowDown')targetPhi=Math.min(Math.PI-.08,targetPhi+.14);
     if(event.key==='+'||event.key==='=')targetRadius=Math.max(1.5,targetRadius-.25);if(event.key==='-')targetRadius=Math.min(10,targetRadius+.25);
