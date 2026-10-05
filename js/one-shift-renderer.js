@@ -50,13 +50,13 @@
    const visible=s.pallets.filter(p=>['lane','storage','transit'].includes(p.place)||p.place==='trailer'&&s.trucks.find(t=>t.id===p.truckId)?.opened);
    const stacked=new Map(),loose=[];for(const q of visible){if(q.place==='storage'){const key=q.x+'/'+q.y,old=stacked.get(key);if(!old||q.level>=old.level)stacked.set(key,q);}else loose.push(q);}const top=[...stacked.values(),...loose];
    for(const q of top){if(Math.abs((q.x+.5-c.x)*z)>this.w/2+z||Math.abs((q.y+.5-c.y)*z)>this.h/2+z)continue;g.drawImage(O.sprites.pallet(q),q.x+.05,q.y+.05,.9,.9);this.hits.push({kind:'pallet',id:q.id,x:q.x,y:q.y,w:1,h:1});
-    if(q.level){g.fillStyle='#3d534a';g.fillRect(q.x+.65,q.y-.14,.35,.28);g.fillStyle='#f3ebd3';g.font='.2px monospace';g.fillText(String(q.level+1),q.x+.71,q.y+.06);}
+    if(q.level){g.fillStyle='#3d534a';g.fillRect(q.x+.65,q.y-.14,.35,.28);g.fillStyle='#f3ebd3';g.font='.2px "Commit Mono",monospace';g.fillText(String(q.level+1),q.x+.71,q.y+.06);}
     if(ui.selected.includes(q.id)){g.strokeStyle='#faf0c4';g.lineWidth=.06;g.strokeRect(q.x-.02,q.y-.02,1.04,1.04);}
    }
    for(const q of s.parcels||[]){if(q.place==='shipped')continue;g.fillStyle='#c7ad85';g.fillRect(q.x+.25,q.y+.25,.5,.5);g.fillStyle='#e4dbbf';g.fillRect(q.x+.46,q.y+.25,.08,.5);g.fillStyle='#f0e9d8';g.fillRect(q.x+.55,q.y+.5,.14,.1);this.hits.push({kind:'parcel',id:q.id,x:q.x,y:q.y,w:1,h:1});}
    for(const w of s.workers){if(O.has(s,'forklift')&&(w.id===1||w.role==='driver'||w.role==='robot')){g.save();g.translate(w.x+.5,w.y+.5);g.rotate((w.angle||0)+Math.PI/2);g.fillStyle='#b8985d';g.fillRect(-.38,-.52,.76,1);g.fillStyle='#53695d';g.fillRect(-.23,-.34,.46,.36);g.fillStyle='#354239';g.fillRect(-.46,-.3,.14,.3);g.fillRect(.32,-.3,.14,.3);g.restore();}O.sprites.worker(g,w,s.tick*.05,z,ui.settings.reducedMotion);}
    for(const r of s.map.racks)this.hits.push({kind:'rack',id:r.id,x:r.x,y:r.y,w:2,h:1});
-   for(const w of s.workers)for(const [i,t]of [w.task,...w.queue].filter(Boolean).entries()){const d=t.dest||t.end;g.fillStyle='#405848';g.beginPath();g.arc(d.x+.5,d.y+.5,.18,0,Math.PI*2);g.fill();g.fillStyle='#f1e6c5';g.font='.23px monospace';g.textAlign='center';g.fillText(String(i+1),d.x+.5,d.y+.57);}
+   for(const w of s.workers)for(const [i,t]of [w.task,...w.queue].filter(Boolean).entries()){const d=t.dest||t.end;g.fillStyle='#405848';g.beginPath();g.arc(d.x+.5,d.y+.5,.18,0,Math.PI*2);g.fill();g.fillStyle='#f1e6c5';g.font='.23px "Commit Mono",monospace';g.textAlign='center';g.fillText(String(i+1),d.x+.5,d.y+.57);}
    if(ui.hover){const h=ui.hover;g.strokeStyle='#f2e4b4';g.lineWidth=.05;g.strokeRect(h.x-.06,h.y-.06,h.w+.12,h.h+.12);}
    if(ui.cursor){g.strokeStyle='#f1e0ac';g.lineWidth=.07;g.strokeRect(ui.cursor.x,ui.cursor.y,1,1);}
    if(ui.build){g.fillStyle='#80977150';const cursor=ui.cursor||{x:10,y:10};g.fillRect(cursor.x,cursor.y,ui.build==='zone'?4:2,ui.build==='zone'?3:1);}
