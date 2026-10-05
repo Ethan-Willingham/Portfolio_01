@@ -18,7 +18,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="one-shift.css?v=14">
+  <link rel="stylesheet" href="one-shift.css?v=15">
 </head>
 <body class="shift-page">
 <main id="shift-game" aria-label="One Shift warehouse game">
@@ -33,6 +33,7 @@
   </header>
   <button id="shift-next-truck" data-action="next-truck" hidden>Next truck</button>
   <aside id="shift-selection" class="shift-panel" aria-label="Selected object" hidden></aside>
+  <aside id="shift-queue" class="shift-queue" aria-label="Worker work queue"><button data-action="queue-toggle" aria-expanded="true" aria-controls="shift-queue-body"><strong>Work queue</strong><span id="shift-queue-summary">Ready</span></button><div id="shift-queue-body"></div></aside>
   <nav class="shift-toolbar" id="shift-toolbar" aria-label="Warehouse tools" hidden><button data-hub="contracts">Contracts</button><button data-hub="shop">Shop</button><button data-hub="build">Build</button><button data-hub="people">People</button><button data-hub="services">Services</button><button data-hub="reports">Reports</button></nav>
   <div class="shift-bottom"><span class="shift-wordmark">One Shift</span><p id="shift-hint" role="status">A truck is on its way to Door 1.</p><div class="shift-camera"><button id="shift-zoom-out" aria-label="Zoom out">-</button><button id="shift-home" aria-label="Frame the warehouse">Home</button><button id="shift-zoom-in" aria-label="Zoom in">+</button></div></div>
   <p id="shift-toast" role="status" aria-live="polite" hidden></p>
@@ -41,21 +42,22 @@
   <div id="shift-rotate" hidden><h2>Turn your phone sideways.</h2><p>Your shift will wait.</p></div>
   <p class="sr-only" id="shift-live" aria-live="polite" aria-atomic="true"></p>
 </main>
-<script src="js/one-shift-data.js?v=14"></script>
-<script src="js/one-shift-content.js?v=14"></script>
-<script src="js/one-shift-labels.js?v=14"></script>
-<script src="js/one-shift-pathing.js?v=14"></script>
-<script src="js/one-shift-economy.js?v=14"></script>
-<script src="js/one-shift-sim.js?v=14"></script>
-<script src="js/one-shift-fulfillment.js?v=14"></script>
-<script src="js/one-shift-rules.js?v=14"></script>
-<script src="js/one-shift-saves.js?v=14"></script>
-<script src="js/one-shift-sprites.js?v=14"></script>
-<script src="js/one-shift-lighting.js?v=14"></script>
-<script src="js/one-shift-renderer.js?v=14"></script>
-<script src="js/one-shift-audio.js?v=14"></script>
-<script src="js/one-shift-ui.js?v=14"></script>
-<script src="js/one-shift-input.js?v=14"></script>
-<script src="js/one-shift-main.js?v=14"></script>
+<script src="js/one-shift-data.js?v=15"></script>
+<script src="js/one-shift-content.js?v=15"></script>
+<script src="js/one-shift-labels.js?v=15"></script>
+<script src="js/one-shift-pathing.js?v=15"></script>
+<script src="js/one-shift-economy.js?v=15"></script>
+<script src="js/one-shift-sim.js?v=15"></script>
+<script src="js/one-shift-fulfillment.js?v=15"></script>
+<script src="js/one-shift-rules.js?v=15"></script>
+<script src="js/one-shift-saves.js?v=15"></script>
+<script src="js/one-shift-sprites.js?v=15"></script>
+<script src="js/one-shift-lighting.js?v=15"></script>
+<script src="js/one-shift-renderer.js?v=15"></script>
+<script src="js/one-shift-audio.js?v=15"></script>
+<script src="js/one-shift-ui.js?v=15"></script>
+<script src="js/one-shift-queue.js?v=15"></script>
+<script src="js/one-shift-input.js?v=15"></script>
+<script src="js/one-shift-main.js?v=15"></script>
 </body>
 </html>

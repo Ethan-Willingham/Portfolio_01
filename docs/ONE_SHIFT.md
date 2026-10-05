@@ -47,6 +47,18 @@ from an unfinished job. Overnight cleanup and holds also return those cases. Pac
 service recipes enforce client ownership. Ready parcels and queued carrier
 loads reserve the order balance, including orders packed in several parts.
 
+The right-side Work queue shows the selected worker's active job, its current
+stage, and numbered waiting jobs with their goods and destinations. Pause to
+plan stops shift time while pallet and destination commands remain available.
+Run queue resumes the shift. Up and Down reorder waiting jobs; Remove releases
+that job's goods and destination; Clear planned retains the active job. Required
+trailer exits remain first and cannot be removed or reassigned. Hired people
+appear in the worker selector, and new floor commands go to the selected person.
+The simulation queue is the single source for both this panel and saved games.
+Desktop Home framing leaves room for the rail and visible trucks. Short or narrow
+screens start with its header collapsed; the same controls remain available when
+opened, with scrollable content and 44px touch targets.
+
 Drivers can replenish configured ground pick faces from upper reserve. Loaders
 can stage released waves before the truck arrives. A task can be reassigned
 from one worker's queue to another person while retaining its reservation.
@@ -172,6 +184,9 @@ Suspension details from the art bible remain unfinished.
   portrait freeze, 1.3 text scale, phone panels and preview save isolation.
   Playwright and Sharp must be available in `NODE_PATH`. `ASSETS=1` refreshes
   the card and sharing images from actual gameplay.
+- `node tools/test-one-shift-queue.cjs`: native planning pause and resume, exact
+  execution order, keyboard reorder, reservation release, active-job retention,
+  staff assignment, camera framing and phone controls with enlarged text.
 - `node tools/test-one-shift-motion.cjs`: frame-by-frame truck movement at all
   three speeds, pause, menu freeze, queued docking, departure, hit positions and
   presentation-state isolation, native refused-load exit, closing doors and road turns.

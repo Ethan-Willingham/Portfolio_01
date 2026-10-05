@@ -116,3 +116,32 @@
 .shift-storage-choices small {font:0.625rem var(--font-mono);color:var(--text-faint);line-height:1.4}
 
 .shift-panel > .shift-kicker {padding-right:44px}
+
+.shift-queue {position:absolute;right:24px;top:110px;width:288px;max-height:calc(100dvh - 190px);display:flex;flex-direction:column;background:var(--bg-raised);border:1px solid var(--rule-strong);border-radius:5px;box-shadow:0 4px 16px var(--shift-shadow);overflow:hidden}
+.shift-queue > button {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;column-gap:8px;row-gap:2px;border:0;border-radius:0;padding:12px;text-align:left;flex-shrink:0}
+.shift-queue > button strong {white-space:nowrap}
+#shift-queue-summary {font:0.625rem var(--font-mono);color:var(--text-dim);white-space:nowrap}
+#shift-queue-body {padding:12px;overflow:auto;overscroll-behavior:contain;min-height:0}
+.shift-queue[data-open="false"] {width:248px}
+.shift-queue[data-open="false"] #shift-queue-body {display:none}
+.shift-queue .shift-kicker {margin:0;font:0.625rem var(--font-mono);color:var(--text-faint);line-height:1.5;letter-spacing:.05em}
+.shift-queue-plan {width:100%;margin-top:10px}
+.shift-queue-help,.shift-queue-empty {font-size:0.75rem;line-height:1.5;color:var(--text-dim);margin:10px 0 14px}
+.shift-queue-current {padding:12px;border-left:3px solid var(--accent);background:var(--shift-button)}
+.shift-queue-current strong {display:block;font-size:0.875rem;margin-top:5px}
+.shift-queue-current p,.shift-queue-job p {font-size:0.75rem;line-height:1.5;color:var(--text-dim);margin:5px 0;overflow-wrap:anywhere}
+#shift-queue-status {display:block;font:0.625rem var(--font-mono);color:var(--accent);line-height:1.5;margin-top:8px}
+.shift-queue-next {display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 6px}
+.shift-queue-next button {font-size:0.6875rem;padding:6px}
+.shift-queue-jobs {list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.shift-queue-jobs li {border:1px solid var(--rule);padding:10px;border-radius:3px}
+.shift-queue-job {display:flex;align-items:flex-start;gap:10px}
+.shift-queue-job strong {font-size:0.8125rem}
+.shift-queue-number {font:0.75rem var(--font-mono);color:var(--accent);padding-top:3px}
+.shift-queue-actions {display:flex;gap:5px;margin-top:8px}
+.shift-queue-actions button {font-size:0.6875rem;padding:6px;flex:1}
+.shift-queue-worker {display:grid;gap:5px;font:0.625rem var(--font-mono);color:var(--text-faint)}
+.shift-queue-worker select {width:100%;min-height:44px;padding:8px;color:var(--text);background:var(--shift-button);border:1px solid var(--rule-strong)}
+.shift-page select:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
+@media(max-height:550px) {.shift-queue {right:10px;top:80px;width:240px;max-height:calc(100dvh - 138px)}#shift-queue-body {padding:8px}.shift-queue[data-open="false"] {width:224px}}
+@media(max-width:600px) {.shift-queue {right:8px;width:232px}}

@@ -9,7 +9,7 @@
  function frame(now){const dt=Math.min(.15,(now-last)/1000);last=now;if(!app.paused&&!app.hubPause&&!app.menuPause&&!app.rotated&&!app.hidden){accumulator+=dt*app.speed;while(accumulator>=O.DT){app.sim.tick();accumulator-=O.DT;}}
   app.renderer.draw(app.sim.s,app.ui,accumulator/O.DT);if(now-lastUI>150){app.ui.update();app.audio.update(app.sim.s,!app.paused&&!app.hubPause&&!app.menuPause&&!app.rotated&&!app.hidden);lastUI=now;}app.raf=requestAnimationFrame(frame);
  }
- window.addEventListener('resize',()=>{const r=app.renderer,fit=r.homeCamera&&['x','y','zoom'].every(k=>Math.abs(r.camera[k]-r.homeCamera[k])<.001);r.resize();if(fit)r.home(app.sim.s);orientation();});document.addEventListener('visibilitychange',()=>{app.hidden=document.hidden;if(app.hidden)app.audio.suspend();else{last=performance.now();app.audio.unlock();}});
+ window.addEventListener('resize',()=>{const r=app.renderer,fit=r.homeCamera&&['x','y','zoom'].every(k=>Math.abs(r.camera[k]-r.homeCamera[k])<.001);r.resize();app.ui.queueLayout();if(fit)r.home(app.sim.s);orientation();});document.addEventListener('visibilitychange',()=>{app.hidden=document.hidden;if(app.hidden)app.audio.suspend();else{last=performance.now();app.audio.unlock();}});
  window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
  window.addEventListener('pagehide',()=>{if(!app.preview)O.saves.save(app.sim.s);app.audio.suspend();});
  orientation();app.ui.update();canvas.focus({preventScroll:true});app.raf=requestAnimationFrame(frame);
