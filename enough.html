@@ -23,47 +23,31 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css?v=20261004">
-  <link rel="stylesheet" href="enough.css?v=2-2">
-  <script defer src="js/enough-data.js?v=2-1"></script>
+  <link rel="stylesheet" href="enough.css?v=2-3">
+  <script defer src="js/enough-data.js?v=2-3"></script>
   <script defer src="js/enough-math.js?v=2-1"></script>
-  <script defer src="js/enough.js?v=2-2"></script>
+  <script defer src="js/enough.js?v=2-3"></script>
 </head>
 <body data-post-nav="none">
   <a href="/" class="post-back essay-back"><span class="pb-label">Home</span></a>
   <div class="enough-shell">
     <main>
       <header class="enough-hero">
-        <div class="enough-title"><h1 class="hero-title">How Much Is Enough?</h1><p>Much of the benefit comes early.<br>See where, for the things that fill a life.</p></div>
+        <div class="enough-title"><h1 class="hero-title">How Much Is Enough?</h1><p>Much of the benefit comes early.</p></div>
         <picture id="hero-picture"><source type="image/webp" srcset="assets/enough/harvesters.webp"><img id="hero-painting" src="assets/enough/harvesters.jpg" width="1600" height="1179" loading="eager" decoding="async" alt="Workers rest and eat beneath a tree while the harvest continues, in Pieter Bruegel’s The Harvesters."></picture>
       </header>
       <section class="enough-overview" aria-labelledby="overview-title">
-        <div class="overview-heading"><h2 id="overview-title">Most arrives early.</h2><p id="overview-message"></p></div>
-        <p class="overview-definition">Each curve starts at 0% gain. Its best point is 100%. We call 90% enough.</p>
-        <p class="overview-outcomes">Walking and exercise: lower risk of dying.<br class="phone-break"> Protein: muscle gain while lifting, per lb of body weight.</p>
+        <h2 id="overview-title" class="enough-sr-only">Most arrives early</h2>
+        <p id="overview-message" class="overview-selected"></p>
         <div id="overview-chart"></div>
-        <p class="overview-meaning">Fraction of each dose range, not equal effort.</p>
-        <p class="overview-selected">At 40% through each range</p><div id="overview-legend" class="overview-legend"></div>
-
-        <details class="enough-detail overview-detail"><summary>What does “enough” mean?</summary><p>Here, enough means the first amount that captures 90% of the improvement within a stated range. Walking covers 2,000 to 12,000 steps a day; exercise covers 0 to 600 moderate minutes a week; protein covers 0.41 to 1.09 grams per pound a day, while lifting.</p><p>The horizontal scale is the fraction of each displayed range, not equal effort. Its endpoints shape the curves. The vertical scale is the share of each curve’s own gain, not equal health benefits or a personal prediction. These three curves measure different things: risk of dying and muscle gain.</p><p>Some curves keep rising. Some have a sweet spot. For a few things, enough is zero. The cards below keep those differences.</p></details>
+        <div id="overview-legend" class="overview-legend"></div>
+        <details class="enough-detail overview-detail"><summary>What does “enough” mean?</summary><p>Enough is 90% of the improvement within a shown range. These cover 2,000 to 12,000 steps/day, 0 to 600 exercise minutes/week and 0.41 to 1.09 grams of protein/lb/day while lifting.</p><p>The x-axis compares positions within those ranges, not equal effort. The y-axis compares shares of different outcomes: lower risk of dying and muscle gain. The endpoints affect the result. These are study summaries, not personal forecasts.</p></details>
       </section>
-      <section class="enough-personal" aria-labelledby="personal-title">
-        <div><span class="enough-kicker">Your life</span><h2 id="personal-title">Your enough</h2><p>Put in a few numbers. See how much of each curve’s gain you already reach.</p><p class="personal-privacy">Optional. Nothing is saved or sent.</p></div>
-        <div><details class="personal-inputs enough-detail"><summary>Add your numbers</summary><form id="enough-form"><div class="enough-fields">
-          <label>Steps a day<input name="steps" type="number" min="0" max="100000" step="1" inputmode="numeric" placeholder="7,000"></label>
-          <label>Moderate exercise, minutes a week<input name="exercise" type="number" min="0" max="10080" step="1" inputmode="numeric" placeholder="150"><small>Count each vigorous minute as two.</small></label>
-          <label>Sleep, hours a night<input name="sleep" type="number" min="0" max="24" step="0.1" inputmode="decimal" placeholder="7"></label>
-          <label>Fruit and veg, servings a day<input name="fruit-veg" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="5"></label>
-          <label>Protein, grams a day<input name="protein" type="number" min="0" max="1000" step="1" inputmode="numeric" placeholder="105"></label>
-          <label>Body weight, lb<input name="weight" type="number" min="1" max="1500" step="1" inputmode="numeric" placeholder="150"></label>
-          <label>Work, hours a week<input name="work" type="number" min="0" max="168" step="0.5" inputmode="decimal" placeholder="40"></label>
-        </div><button type="reset" class="enough-clear">Clear numbers</button></form></details>
-        <div id="enough-results" class="enough-results" role="status" aria-live="polite" aria-atomic="true"></div>
-        <details class="enough-detail"><summary>About your bars</summary><p>Each share belongs to its own outcome and study. The bars place your numbers on those curves. Sleep shows your position near or away from the low point; work uses this historical factory’s output, not your productivity. Fruit and veg snaps to the nearest published group. Beyond a chart’s range, no estimate is made.</p><p>Exercise means moderate activity, such as brisk walking. Count each vigorous minute as two moderate minutes for this chart. Protein is total daily intake while resistance training.</p></details></div>
-      </section>
+      <p id="chart-help" class="enough-sr-only">Click or drag across a chart to move its marker. Arrow keys change the amount; Home and End select the endpoints.</p>
       <div id="enough-groups"></div>
       <p id="enough-loading">Loading the curves. <a href="js/enough-data.js">Read the source data.</a></p>
       <noscript><p>The charts need JavaScript. In the shown ranges, 90% of the modeled gain arrives at about 10,500 steps a day, 343 exercise minutes a week and 0.70 grams of protein per pound a day. These are study summaries. <a href="js/enough-data.js">All data and citations.</a></p></noscript>
-      <div class="enough-after"><details class="enough-detail"><summary>Sources, method and painting</summary><p>Every chart names its range. For a curve where more helps, its gain is the improvement from the lowest displayed amount to the best point anywhere in that range. We divide the improvement at each amount by that total. The first 90% crossing is its enough point. For published groups, we select the first qualifying group rather than inventing an exact dose between them.</p><p>A lower or upper confidence curve can produce a different crossing. Those separately normalized crossings are sensitivity checks, not a formal confidence interval for an optimal amount. An absent uncertainty band stays absent.</p><ol id="enough-sources"></ol><p id="painting-credit">Pieter Bruegel the Elder, <a href="https://www.metmuseum.org/art/collection/search/435809">The Harvesters</a>, 1565. The Metropolitan Museum of Art, Rogers Fund, 1919. Public domain.</p><p>Checked October 4, 2026. <a href="enough-lab.html">Compare paintings, overview layouts and colors.</a></p></details></div>
+      <div class="enough-after"><details class="enough-detail"><summary>Sources, method and painting</summary><p>For benefit curves, gain is improvement from the lowest amount to the best point within the shown range. The first 90% crossing is “enough.” Published groups stay groups. The sets chart instead shows the uncertain model in its original units, without an enough marker.</p><p>Normalizing lower and upper estimates gives sensitivity checks, not confidence intervals for an optimum. <a href="js/enough-data.js" download>All sources, data and methods.</a></p><p id="painting-credit">Pieter Bruegel the Elder, <a href="https://www.metmuseum.org/art/collection/search/435809">The Harvesters</a>, 1565. The Metropolitan Museum of Art, Rogers Fund, 1919. Public domain.</p><p>Checked October 4, 2026. <a href="enough-lab.html">Compare paintings, overview layouts and colors.</a></p></details></div>
     </main>
   </div>
   <footer class="site-footer">

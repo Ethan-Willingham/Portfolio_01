@@ -2,7 +2,7 @@
 window.EnoughData = {
   "version": 2,
   "verified": "2026-10-04",
-  "screenedCount": 45,
+  "screenedCount": 46,
   "definition": {
     "share": "Improvement from the lowest displayed dose divided by the largest improvement anywhere in the explicitly declared range.",
     "enough": "First90% crossing, or first qualifying published category. This is a bounded summary, never an absolute lifetime maximum.",
@@ -13393,9 +13393,9 @@ window.EnoughData = {
     {
       "id": "sets",
       "question": "How many sets?",
-      "fact": "More weekly sets went with more growth. Each added set bought less than the last.",
+      "fact": "More sets may help. The high-volume payoff is still uncertain.",
       "kind": "continuous",
-      "shape": "Keeps paying",
+      "shape": "Uncertain ceiling",
       "unit": "sets/week",
       "effectKind": "change",
       "effectUnit": "Percent difference in modeled post/pre muscle-size ratios, relative to zero weekly sets",
@@ -13411,15 +13411,16 @@ window.EnoughData = {
         30,
         45
       ],
-      "defaultDose": 16,
+      "defaultDose": 10,
       "evidence": "Bayesian meta-regression of resistance-training intervention studies",
       "population": "35 studies, 220 effects, 1032 participants for hypertrophy models. Overall review: 67 studies, 2058 participants, 79.1% male, mean age 25.16 years.",
       "caveats": [
         "Direct work counts as one set; indirect work counts as half. The amount is per muscle, not total gym sets.",
         "The model compares post/pre muscle-size ratios with zero weekly sets. It does not predict pounds of muscle or a percentage of all possible growth.",
-        "Going from 8 to 16 sets gives a 2.01% relative difference between those modeled ratios, with a 1.20 to 2.77% credible interval. The 16-to 32 contrast is 2.91%; doubling adds more total sets even while each additional set buys less.",
         "After weekly volume was accounted for, twice-weekly training had no clear growth advantage over once weekly. This does not establish equivalence or apply to strength.",
-        "The 90% crossing near 38 sets describes this 0 to 45 range. It is not an ideal routine. These short interventions cannot settle long-term recovery or the high-volume ceiling."
+        "High=30, Low=10 is a 4.06% difference in modeled post/pre muscle-size ratios (95% credible interval 2.42 to 5.64), not a claim that an individual doubles their hypertrophy. The zero-set contrasts are 4.18% at 10 and 8.41% at 30. Ratios of these contrasts cannot establish a personal growth multiplier.",
+        "Pelland section 4.4 warns that few studies explored about 25 or more fractional sets. The high-volume uncertainty is compatible with a functional plateau or an inverted U. The chosen square-root model does not settle the ceiling.",
+        "Steele et al. 2026 is a preprint, not a peer-reviewed replacement meta-analysis. Its 12-week trained-adult trial compared 9 and 36 fractional sets; equivalence was supported within a prespecified plus or minus 0.1 standardized-effect margin. Muscle area was estimated by circumference and skinfolds, post-testing had dropouts, and the preregistered analysis and significance threshold were revised. Very small differences are not excluded."
       ],
       "extraction": "Exact author-deposited High=x, Low=0 muscle-size model contrasts. Zero-training controls and observed maximum 45 verified against data.hyp.RData.",
       "uncertainty": "95% credible interval (not frequentist confidence interval) around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
@@ -13441,6 +13442,12 @@ window.EnoughData = {
           "url": "https://pubmed.ncbi.nlm.nih.gov/41843416/",
           "citation": "Currier et al. 2026. ACSM position stand: Resistance training prescription for muscle function, hypertrophy, and physical performance in healthy adults.",
           "location": "Abstract, higher weekly volumes (at least 10 sets)"
+        },
+        {
+          "id": "steele2026",
+          "url": "https://sportrxiv.org/index.php/server/preprint/view/810",
+          "citation": "Steele, Gschneidner, Carlson and Fisher. 2026. A test of higher and lower fractional volumes of resistance training upon arm and thigh muscle area: A multi-site randomised trial. SportRxiv preprint, April 23 version.",
+          "location": "PDF pages 1 to 4 (design, amendments and measurement), page 8 Primary Hypertrophy Results and page 10 Discussion; DOI 10.51224/SportRxiv.810"
         }
       ],
       "intervalKind": "credible",
@@ -13454,7 +13461,7 @@ window.EnoughData = {
           "low": 0,
           "high": 0,
           "location": "Reference 0 versus itself",
-          "share": 0
+          "share": null
         },
         {
           "dose": 1,
@@ -13465,7 +13472,7 @@ window.EnoughData = {
           "low": 0.44,
           "high": 1.01,
           "location": "High=1, Low=0 row",
-          "share": 6.870937790157846
+          "share": null
         },
         {
           "dose": 2,
@@ -13476,7 +13483,7 @@ window.EnoughData = {
           "low": 0.78,
           "high": 1.8,
           "location": "High=2, Low=0 row",
-          "share": 12.070566388115136
+          "share": null
         },
         {
           "dose": 3,
@@ -13487,7 +13494,7 @@ window.EnoughData = {
           "low": 1.07,
           "high": 2.47,
           "location": "High=3, Low=0 row",
-          "share": 16.527390900649955
+          "share": null
         },
         {
           "dose": 4,
@@ -13498,7 +13505,7 @@ window.EnoughData = {
           "low": 1.32,
           "high": 3.06,
           "location": "High=4, Low=0 row",
-          "share": 20.51996285979573
+          "share": null
         },
         {
           "dose": 5,
@@ -13509,7 +13516,7 @@ window.EnoughData = {
           "low": 1.55,
           "high": 3.59,
           "location": "High=5, Low=0 row",
-          "share": 24.141132776230272
+          "share": null
         },
         {
           "dose": 6,
@@ -13520,7 +13527,7 @@ window.EnoughData = {
           "low": 1.76,
           "high": 4.09,
           "location": "High=6, Low=0 row",
-          "share": 27.390900649953576
+          "share": null
         },
         {
           "dose": 7,
@@ -13531,7 +13538,7 @@ window.EnoughData = {
           "low": 1.96,
           "high": 4.55,
           "location": "High=7, Low=0 row",
-          "share": 30.547818012999073
+          "share": null
         },
         {
           "dose": 8,
@@ -13542,7 +13549,7 @@ window.EnoughData = {
           "low": 2.14,
           "high": 4.99,
           "location": "High=8, Low=0 row",
-          "share": 33.42618384401114
+          "share": null
         },
         {
           "dose": 9,
@@ -13553,7 +13560,7 @@ window.EnoughData = {
           "low": 2.32,
           "high": 5.41,
           "location": "High=9, Low=0 row",
-          "share": 36.211699164345404
+          "share": null
         },
         {
           "dose": 10,
@@ -13564,7 +13571,7 @@ window.EnoughData = {
           "low": 2.49,
           "high": 5.81,
           "location": "High=10, Low=0 row",
-          "share": 38.81151346332405
+          "share": null
         },
         {
           "dose": 11,
@@ -13575,7 +13582,7 @@ window.EnoughData = {
           "low": 2.65,
           "high": 6.19,
           "location": "High=11, Low=0 row",
-          "share": 41.318477251624884
+          "share": null
         },
         {
           "dose": 12,
@@ -13586,7 +13593,7 @@ window.EnoughData = {
           "low": 2.8,
           "high": 6.55,
           "location": "High=12, Low=0 row",
-          "share": 43.82544103992572
+          "share": null
         },
         {
           "dose": 13,
@@ -13597,7 +13604,7 @@ window.EnoughData = {
           "low": 2.95,
           "high": 6.91,
           "location": "High=13, Low=0 row",
-          "share": 46.14670380687094
+          "share": null
         },
         {
           "dose": 14,
@@ -13608,7 +13615,7 @@ window.EnoughData = {
           "low": 3.09,
           "high": 7.25,
           "location": "High=14, Low=0 row",
-          "share": 48.37511606313835
+          "share": null
         },
         {
           "dose": 15,
@@ -13619,7 +13626,7 @@ window.EnoughData = {
           "low": 3.23,
           "high": 7.58,
           "location": "High=15, Low=0 row",
-          "share": 50.60352831940576
+          "share": null
         },
         {
           "dose": 16,
@@ -13630,7 +13637,7 @@ window.EnoughData = {
           "low": 3.37,
           "high": 7.91,
           "location": "High=16, Low=0 row",
-          "share": 52.73909006499536
+          "share": null
         },
         {
           "dose": 17,
@@ -13641,7 +13648,7 @@ window.EnoughData = {
           "low": 3.5,
           "high": 8.22,
           "location": "High=17, Low=0 row",
-          "share": 54.78180129990715
+          "share": null
         },
         {
           "dose": 18,
@@ -13652,7 +13659,7 @@ window.EnoughData = {
           "low": 3.63,
           "high": 8.53,
           "location": "High=18, Low=0 row",
-          "share": 56.82451253481894
+          "share": null
         },
         {
           "dose": 19,
@@ -13663,7 +13670,7 @@ window.EnoughData = {
           "low": 3.75,
           "high": 8.83,
           "location": "High=19, Low=0 row",
-          "share": 58.77437325905293
+          "share": null
         },
         {
           "dose": 20,
@@ -13674,7 +13681,7 @@ window.EnoughData = {
           "low": 3.87,
           "high": 9.12,
           "location": "High=20, Low=0 row",
-          "share": 60.72423398328691
+          "share": null
         },
         {
           "dose": 21,
@@ -13685,7 +13692,7 @@ window.EnoughData = {
           "low": 3.99,
           "high": 9.41,
           "location": "High=21, Low=0 row",
-          "share": 62.58124419684309
+          "share": null
         },
         {
           "dose": 22,
@@ -13696,7 +13703,7 @@ window.EnoughData = {
           "low": 4.11,
           "high": 9.69,
           "location": "High=22, Low=0 row",
-          "share": 64.43825441039925
+          "share": null
         },
         {
           "dose": 23,
@@ -13707,7 +13714,7 @@ window.EnoughData = {
           "low": 4.22,
           "high": 9.96,
           "location": "High=23, Low=0 row",
-          "share": 66.29526462395543
+          "share": null
         },
         {
           "dose": 24,
@@ -13718,7 +13725,7 @@ window.EnoughData = {
           "low": 4.33,
           "high": 10.23,
           "location": "High=24, Low=0 row",
-          "share": 68.0594243268338
+          "share": null
         },
         {
           "dose": 25,
@@ -13729,7 +13736,7 @@ window.EnoughData = {
           "low": 4.44,
           "high": 10.5,
           "location": "High=25, Low=0 row",
-          "share": 69.82358402971217
+          "share": null
         },
         {
           "dose": 26,
@@ -13740,7 +13747,7 @@ window.EnoughData = {
           "low": 4.55,
           "high": 10.76,
           "location": "High=26, Low=0 row",
-          "share": 71.49489322191272
+          "share": null
         },
         {
           "dose": 27,
@@ -13751,7 +13758,7 @@ window.EnoughData = {
           "low": 4.66,
           "high": 11.02,
           "location": "High=27, Low=0 row",
-          "share": 73.16620241411329
+          "share": null
         },
         {
           "dose": 28,
@@ -13762,7 +13769,7 @@ window.EnoughData = {
           "low": 4.76,
           "high": 11.27,
           "location": "High=28, Low=0 row",
-          "share": 74.83751160631384
+          "share": null
         },
         {
           "dose": 29,
@@ -13773,7 +13780,7 @@ window.EnoughData = {
           "low": 4.86,
           "high": 11.52,
           "location": "High=29, Low=0 row",
-          "share": 76.50882079851439
+          "share": null
         },
         {
           "dose": 30,
@@ -13784,7 +13791,7 @@ window.EnoughData = {
           "low": 4.96,
           "high": 11.77,
           "location": "High=30, Low=0 row",
-          "share": 78.08727948003714
+          "share": null
         },
         {
           "dose": 31,
@@ -13795,7 +13802,7 @@ window.EnoughData = {
           "low": 5.06,
           "high": 12.01,
           "location": "High=31, Low=0 row",
-          "share": 79.66573816155989
+          "share": null
         },
         {
           "dose": 32,
@@ -13806,7 +13813,7 @@ window.EnoughData = {
           "low": 5.16,
           "high": 12.25,
           "location": "High=32, Low=0 row",
-          "share": 81.24419684308263
+          "share": null
         },
         {
           "dose": 33,
@@ -13817,7 +13824,7 @@ window.EnoughData = {
           "low": 5.26,
           "high": 12.49,
           "location": "High=33, Low=0 row",
-          "share": 82.8226555246054
+          "share": null
         },
         {
           "dose": 34,
@@ -13828,7 +13835,7 @@ window.EnoughData = {
           "low": 5.35,
           "high": 12.72,
           "location": "High=34, Low=0 row",
-          "share": 84.30826369545032
+          "share": null
         },
         {
           "dose": 35,
@@ -13839,7 +13846,7 @@ window.EnoughData = {
           "low": 5.44,
           "high": 12.95,
           "location": "High=35, Low=0 row",
-          "share": 85.79387186629526
+          "share": null
         },
         {
           "dose": 36,
@@ -13850,7 +13857,7 @@ window.EnoughData = {
           "low": 5.54,
           "high": 13.18,
           "location": "High=36, Low=0 row",
-          "share": 87.2794800371402
+          "share": null
         },
         {
           "dose": 37,
@@ -13861,7 +13868,7 @@ window.EnoughData = {
           "low": 5.63,
           "high": 13.41,
           "location": "High=37, Low=0 row",
-          "share": 88.76508820798514
+          "share": null
         },
         {
           "dose": 38,
@@ -13872,7 +13879,7 @@ window.EnoughData = {
           "low": 5.72,
           "high": 13.63,
           "location": "High=38, Low=0 row",
-          "share": 90.2506963788301
+          "share": null
         },
         {
           "dose": 39,
@@ -13883,7 +13890,7 @@ window.EnoughData = {
           "low": 5.81,
           "high": 13.85,
           "location": "High=39, Low=0 row",
-          "share": 91.6434540389972
+          "share": null
         },
         {
           "dose": 40,
@@ -13894,7 +13901,7 @@ window.EnoughData = {
           "low": 5.9,
           "high": 14.07,
           "location": "High=40, Low=0 row",
-          "share": 93.12906220984215
+          "share": null
         },
         {
           "dose": 41,
@@ -13905,7 +13912,7 @@ window.EnoughData = {
           "low": 5.98,
           "high": 14.28,
           "location": "High=41, Low=0 row",
-          "share": 94.5218198700093
+          "share": null
         },
         {
           "dose": 42,
@@ -13916,7 +13923,7 @@ window.EnoughData = {
           "low": 6.07,
           "high": 14.5,
           "location": "High=42, Low=0 row",
-          "share": 95.91457753017642
+          "share": null
         },
         {
           "dose": 43,
@@ -13927,7 +13934,7 @@ window.EnoughData = {
           "low": 6.15,
           "high": 14.71,
           "location": "High=43, Low=0 row",
-          "share": 97.21448467966574
+          "share": null
         },
         {
           "dose": 44,
@@ -13938,7 +13945,7 @@ window.EnoughData = {
           "low": 6.24,
           "high": 14.92,
           "location": "High=44, Low=0 row",
-          "share": 98.60724233983288
+          "share": null
         },
         {
           "dose": 45,
@@ -13949,22 +13956,23 @@ window.EnoughData = {
           "low": 6.32,
           "high": 15.13,
           "location": "High=45, Low=0 row",
-          "share": 100
+          "share": null
         }
       ],
-      "unitLabel": "counted sets per muscle a week",
+      "unitLabel": "fractional sets per muscle a week",
       "yDomain": [
         0,
-        12
+        16
       ],
       "yTicks": [
         0,
-        6,
-        12
+        5,
+        10,
+        15
       ],
       "step": 1,
       "xLabel": "Sets per muscle each week",
-      "yLabel": "Size vs 1 set a week (%)",
+      "yLabel": "Model difference vs no training (%)",
       "verified": "2026-10-04",
       "doseDigits": 1,
       "yDigits": 1,
@@ -13976,16 +13984,16 @@ window.EnoughData = {
       "sourcePrecision": "source point grid with linear interpolation",
       "view": {
         "area": "lift",
-        "mode": "benefit",
-        "shape": "Keeps paying",
-        "answer": "More sets, more growth",
-        "fact": "More weekly sets went with more growth. Each added set bought less than the last.",
+        "mode": "model",
+        "shape": "Uncertain ceiling",
+        "answer": "No settled optimum",
+        "fact": "More sets may help. The high-volume payoff is still uncertain.",
         "range": [
           0,
           45
         ],
         "rangeLabel": "0 to 45 weekly sets per muscle",
-        "default": 16,
+        "default": 10,
         "ticks": [
           0,
           15,
@@ -13998,14 +14006,64 @@ window.EnoughData = {
         "adversary": "polish_audit"
       },
       "rangeMethod": "Range shown: 0 to 45 weekly sets per muscle",
-      "enoughPolicy": "first90-in-declared-range",
+      "enoughPolicy": "No settled optimum. Show original model contrasts with credible intervals, without a normalized gain score or enough marker.",
       "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      },
+      "retiredNormalization": {
         "enough": 37.83125,
         "sensitivity": [
           37.64444444444446,
           37.940909090909074
         ],
-        "sweetRange": null
+        "sweetRange": null,
+        "reason": "Removed from the page on 2026-10-04. Normalizing this uncertain high-volume model to a 0 to 100 gain score exaggerated its practical certainty and suggested a prescriptive 38-set target."
+      },
+      "followupAudit": {
+        "date": "2026-10-04",
+        "reviewer": "Codex primary agent",
+        "scope": "Fresh source check after owner challenged 10 versus 30 sets. The existing researcher/adversary review predates this correction.",
+        "contrast": {
+          "high": 30,
+          "low": 10,
+          "effect": 4.06,
+          "interval": [
+            2.42,
+            5.64
+          ],
+          "source": "sets-1",
+          "location": "High=30, Low=10 row"
+        },
+        "counterevidence": {
+          "source": "steele2026",
+          "status": "preprint",
+          "fractionalSets": [
+            9,
+            36
+          ],
+          "durationWeeks": 12,
+          "randomized": 120,
+          "baselineTested": 112,
+          "postTested": 87,
+          "standardizedDifference": 0.023,
+          "confidenceLevel": 0.9,
+          "interval": [
+            -0.045,
+            0.091
+          ],
+          "abstractInterval": [
+            -0.044,
+            0.091
+          ],
+          "equivalenceBounds": [
+            -0.1,
+            0.1
+          ],
+          "equivalenceP": 0.032,
+          "location": "PDF page 8 Primary Hypertrophy Results. Body lower limit differs by 0.001 from abstract; body retained."
+        }
       }
     },
     {
@@ -20787,138 +20845,6 @@ window.EnoughData = {
       }
     },
     {
-      "id": "meditation",
-      "status": "recommend-with-unknown-display",
-      "question": "How long should I meditate?",
-      "shape": "Still unknown",
-      "contradictsEnough": true,
-      "fact": "Practice can help. Research hasn’t pinned down how many daily minutes are enough.",
-      "doseUnit": "minutes per day",
-      "effectUnit": null,
-      "direction": null,
-      "points": [],
-      "unidentifiedDoseRange": [
-        0,
-        60
-      ],
-      "uncertainty": "No dependable daily dose curve, so no percentage or enough point is manufactured.",
-      "evidenceType": "meta-regression of randomized-program trials; later observational practice studies",
-      "population": "Adults in 203 mindfulness-program trials, 15971 participants; subsequent 2025 volunteer cohort of 1052 meditators. Program doses and personal practice time are different.",
-      "caveats": [
-        "Program benefits and daily dose are different questions. A practice can help without more minutes consistently predicting a larger gain.",
-        "A 2023 trial with 161 completers compared 10 and 30 daily minutes for two weeks and found no clear difference. It had no no-practice control; a null difference does not establish equivalence.",
-        "A 2025 prospective study found small associations, often stronger for frequency than session length. Some published interval and P-value pairs disagree, so we did not reconstruct precise daily thresholds.",
-        "A 2026 single-session trial compared 5 and 20 minutes. Outcomes and participant traits differed; that does not establish a daily ceiling."
-      ],
-      "sources": [
-        {
-          "id": "strohmaier2020",
-          "citation": "Strohmaier 2020. The relationship between doses of mindfulness-based programs and depression, anxiety, stress, and mindfulness. Mindfulness 11:1315-1335.",
-          "url": "https://link.springer.com/article/10.1007/s12671-020-01319-4",
-          "table": "Abstract, dose-response meta-regressions of 203 randomized-program trials",
-          "extraction": "Primary abstract and institutional author record. Daily-minute estimates not available; no numerical dose curve extracted.",
-          "doi": "10.1007/s12671-020-01319-4",
-          "verified": "2026-10-04",
-          "location": "Abstract, dose-response meta-regressions of 203 randomized-program trials"
-        },
-        {
-          "id": "bowles2025",
-          "citation": "Bowles NI and Van Dam NT. 2025. Dose-response effects of reported meditation practice on mental-health and wellbeing: A prospective longitudinal study. Applied Psychology: Health and Well-Being17:e70063.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12336962/",
-          "table": "Methods, Results, Tables 3 to 6;1052 longitudinal participants,578 follow-up. Abstractreports 1053.",
-          "extraction": "Published tables and text screened. Small prospective associations conflict with a simple no-dose finding. Some printed table CIs and P values are inconsistent; no daily-minute curve extracted.",
-          "doi": "10.1111/aphw.70063",
-          "correction": "Priorlife.md/json incorrectly called journalBritish Journal of Psychology. This file corrects it.",
-          "verified": "2026-10-04",
-          "location": "Methods, Results, Tables 3 to 6;1052 longitudinal participants,578 follow-up. Abstractreports 1053."
-        },
-        {
-          "id": "jmirMeditation2023",
-          "citation": "The effects of dose, practice habits, and objects of focus on digital meditation effectiveness and adherence. 2023.",
-          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10548318/",
-          "table": "Figure 1",
-          "extraction": "Primary text screened, app-practice dose associations differ by prior sessions.",
-          "verified": "2026-10-04",
-          "location": "Figure 1"
-        },
-        {
-          "id": "strohmaier2026",
-          "citation": "Strohmaier S, Jones F and Medvedev O. 2026. Evaluating the Effectiveness of Mindfulness Practice Doses in the General Population Through Personalization: A Randomized Controlled Experiment. Mindfulness17:731-745.",
-          "url": "https://link.springer.com/article/10.1007/s12671-026-02762-5",
-          "table": "Abstract and Table 4; 636 adults, 5 vs 20 minutes",
-          "doi": "10.1007/s12671-026-02762-5",
-          "verified": "2026-10-04",
-          "location": "Abstract and Table 4; 636 adults, 5 vs 20 minutes"
-        },
-        {
-          "id": "fincham2023",
-          "citation": "Fincham GW, Mavor K and Dritschel B. 2023. Effects of Mindfulness Meditation Duration and Type on Well-being: an Online Dose-Ranging Randomized Controlled Trial. Mindfulness14:1171-1182.",
-          "url": "https://link.springer.com/article/10.1007/s12671-023-02119-2",
-          "doi": "10.1007/s12671-023-02119-2",
-          "table": "Abstract, Methods andDiscussion",
-          "extraction": "DirectRCTcomparison used as uncertainty context; no universalcurve extracted.",
-          "verified": "2026-10-04",
-          "location": "Abstract, Methods andDiscussion"
-        }
-      ],
-      "extraction": "Primary review and trial texts screened. No dependable continuous daily-minute curve or uncertainty grid could be extracted.",
-      "verified": "2026-10-04",
-      "kind": "unknown",
-      "unit": "min/day",
-      "evidence": "meta-regression of randomized-program trials; later observational practice studies",
-      "better": null,
-      "unitLabel": "minutes a day",
-      "effectKind": "unknown",
-      "domain": null,
-      "ticks": [
-        0,
-        30,
-        60
-      ],
-      "yDomain": [
-        0,
-        1
-      ],
-      "yTicks": [],
-      "defaultDose": null,
-      "xLabel": "Practice (minutes a day)",
-      "yLabel": "Benefit cannot be estimated",
-      "step": 1,
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "life_research",
-        "adversary": "diet_research",
-        "statistician": "movement_research"
-      },
-      "sourcePrecision": "source point grid with linear interpolation",
-      "view": {
-        "area": "mind",
-        "mode": "unknown",
-        "answer": "No known enough point",
-        "fact": "Practice can help. Research hasn’t pinned down how many daily minutes are enough.",
-        "range": null,
-        "rangeLabel": "No measured daily dose curve",
-        "default": null,
-        "ticks": [
-          0,
-          30,
-          60
-        ]
-      },
-      "reverification": {
-        "researcher": "polish_audit",
-        "adversary": "v2_food"
-      },
-      "rangeMethod": "Minute control: 0 to 60, no measured dose curve",
-      "enoughPolicy": "none",
-      "computed": {
-        "enough": null,
-        "sensitivity": null,
-        "sweetRange": null
-      }
-    },
-    {
       "verified": "2026-10-04",
       "status": "recommend",
       "reviewStatus": "Researcher extraction complete; independent adversary and statistician review required",
@@ -22363,6 +22289,139 @@ window.EnoughData = {
         "statistician": "life_research"
       },
       "sourcePrecision": "published groups"
+    },
+    {
+      "id": "meditation",
+      "status": "recommend-with-unknown-display",
+      "question": "How long should I meditate?",
+      "shape": "Still unknown",
+      "contradictsEnough": true,
+      "fact": "Practice can help. Research hasn’t pinned down how many daily minutes are enough.",
+      "doseUnit": "minutes per day",
+      "effectUnit": null,
+      "direction": null,
+      "points": [],
+      "unidentifiedDoseRange": [
+        0,
+        60
+      ],
+      "uncertainty": "No dependable daily dose curve, so no percentage or enough point is manufactured.",
+      "evidenceType": "meta-regression of randomized-program trials; later observational practice studies",
+      "population": "Adults in 203 mindfulness-program trials, 15971 participants; subsequent 2025 volunteer cohort of 1052 meditators. Program doses and personal practice time are different.",
+      "caveats": [
+        "Program benefits and daily dose are different questions. A practice can help without more minutes consistently predicting a larger gain.",
+        "A 2023 trial with 161 completers compared 10 and 30 daily minutes for two weeks and found no clear difference. It had no no-practice control; a null difference does not establish equivalence.",
+        "A 2025 prospective study found small associations, often stronger for frequency than session length. Some published interval and P-value pairs disagree, so we did not reconstruct precise daily thresholds.",
+        "A 2026 single-session trial compared 5 and 20 minutes. Outcomes and participant traits differed; that does not establish a daily ceiling."
+      ],
+      "sources": [
+        {
+          "id": "strohmaier2020",
+          "citation": "Strohmaier 2020. The relationship between doses of mindfulness-based programs and depression, anxiety, stress, and mindfulness. Mindfulness 11:1315-1335.",
+          "url": "https://link.springer.com/article/10.1007/s12671-020-01319-4",
+          "table": "Abstract, dose-response meta-regressions of 203 randomized-program trials",
+          "extraction": "Primary abstract and institutional author record. Daily-minute estimates not available; no numerical dose curve extracted.",
+          "doi": "10.1007/s12671-020-01319-4",
+          "verified": "2026-10-04",
+          "location": "Abstract, dose-response meta-regressions of 203 randomized-program trials"
+        },
+        {
+          "id": "bowles2025",
+          "citation": "Bowles NI and Van Dam NT. 2025. Dose-response effects of reported meditation practice on mental-health and wellbeing: A prospective longitudinal study. Applied Psychology: Health and Well-Being17:e70063.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12336962/",
+          "table": "Methods, Results, Tables 3 to 6;1052 longitudinal participants,578 follow-up. Abstractreports 1053.",
+          "extraction": "Published tables and text screened. Small prospective associations conflict with a simple no-dose finding. Some printed table CIs and P values are inconsistent; no daily-minute curve extracted.",
+          "doi": "10.1111/aphw.70063",
+          "correction": "Priorlife.md/json incorrectly called journalBritish Journal of Psychology. This file corrects it.",
+          "verified": "2026-10-04",
+          "location": "Methods, Results, Tables 3 to 6;1052 longitudinal participants,578 follow-up. Abstractreports 1053."
+        },
+        {
+          "id": "jmirMeditation2023",
+          "citation": "The effects of dose, practice habits, and objects of focus on digital meditation effectiveness and adherence. 2023.",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10548318/",
+          "table": "Figure 1",
+          "extraction": "Primary text screened, app-practice dose associations differ by prior sessions.",
+          "verified": "2026-10-04",
+          "location": "Figure 1"
+        },
+        {
+          "id": "strohmaier2026",
+          "citation": "Strohmaier S, Jones F and Medvedev O. 2026. Evaluating the Effectiveness of Mindfulness Practice Doses in the General Population Through Personalization: A Randomized Controlled Experiment. Mindfulness17:731-745.",
+          "url": "https://link.springer.com/article/10.1007/s12671-026-02762-5",
+          "table": "Abstract and Table 4; 636 adults, 5 vs 20 minutes",
+          "doi": "10.1007/s12671-026-02762-5",
+          "verified": "2026-10-04",
+          "location": "Abstract and Table 4; 636 adults, 5 vs 20 minutes"
+        },
+        {
+          "id": "fincham2023",
+          "citation": "Fincham GW, Mavor K and Dritschel B. 2023. Effects of Mindfulness Meditation Duration and Type on Well-being: an Online Dose-Ranging Randomized Controlled Trial. Mindfulness14:1171-1182.",
+          "url": "https://link.springer.com/article/10.1007/s12671-023-02119-2",
+          "doi": "10.1007/s12671-023-02119-2",
+          "table": "Abstract, Methods andDiscussion",
+          "extraction": "DirectRCTcomparison used as uncertainty context; no universalcurve extracted.",
+          "verified": "2026-10-04",
+          "location": "Abstract, Methods andDiscussion"
+        }
+      ],
+      "extraction": "Primary review and trial texts screened. No dependable continuous daily-minute curve or uncertainty grid could be extracted.",
+      "verified": "2026-10-04",
+      "kind": "unknown",
+      "unit": "min/day",
+      "evidence": "meta-regression of randomized-program trials; later observational practice studies",
+      "better": null,
+      "unitLabel": "minutes a day",
+      "effectKind": "unknown",
+      "domain": null,
+      "ticks": [
+        0,
+        30,
+        60
+      ],
+      "yDomain": [
+        0,
+        1
+      ],
+      "yTicks": [],
+      "defaultDose": null,
+      "xLabel": "Practice (minutes a day)",
+      "yLabel": "Benefit cannot be estimated",
+      "step": 1,
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "life_research",
+        "adversary": "diet_research",
+        "statistician": "movement_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "mind",
+        "mode": "unknown",
+        "answer": "No known enough point",
+        "fact": "Practice can help. Research hasn’t pinned down how many daily minutes are enough.",
+        "range": null,
+        "rangeLabel": "No measured daily dose curve",
+        "default": null,
+        "ticks": [
+          0,
+          30,
+          60
+        ]
+      },
+      "reverification": {
+        "researcher": "polish_audit",
+        "adversary": "v2_food"
+      },
+      "rangeMethod": "Minute control: 0 to 60, no measured dose curve",
+      "enoughPolicy": "none",
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      },
+      "archiveReason": "Owner requested removal of the Mind section on 2026-10-04. Evidence retained only for provenance."
     }
   ]
 };
