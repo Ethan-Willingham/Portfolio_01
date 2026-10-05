@@ -7,7 +7,7 @@
   O.post=function(s,category,amount,reason) {
     const cents=Math.round(amount*100);s.cash+=cents;
     s.journal.push({day:s.day,minute:s.minute,category,cents,reason});
-    s.events.push({kind:cents>=0?'fee':'cost',text:(cents>=0?'+':'-')+O.money(Math.abs(cents)/100)+' '+reason,tick:s.tick});
+    s.events.push({kind:cents>=0?'fee':'cost',text:(cents>=0?'+':'-')+O.money(Math.abs(cents)/100)+' '+reason,tick:s.tick});if(s.events.length>80)s.events.shift();
   };
   O.afford=function(s,cost) {return s.cash+Math.max(0,50000-s.credit)>=Math.round(cost*100);};
   O.spend=function(s,category,cost,reason) {
@@ -28,14 +28,10 @@
     return '';
   };
   O.settle=function(s) {
-    for(const p of s.pallets)if(['lane','storage','transit'].includes(p.place)&&p.cases>0){
-      const c=O.client(p.client);let rate=c.storage;
-      if(s.day-p.receivedDay>180)rate*=1.5;
-      O.post(s,'Storage',rate,'Storage: '+c.name);
-    }
+    const storage={};for(const p of s.pallets)if(['lane','storage','transit'].includes(p.place)&&(p.cases>0||p.openUnits>0)){const c=O.client(p.client),rate=c.storage*(s.day-p.receivedDay>180?1.5:1);storage[c.id]=(storage[c.id]||0)+rate;}for(const [id,total]of Object.entries(storage))O.post(s,'Storage',total,'Storage: '+O.client(id).name);
     O.post(s,'Rent',-(s.map.building.w*s.map.building.h*.09),'Building rent');
     for(const w of s.workers.slice(1))O.post(s,'Wages',-w.wage*(s.owned.secondShift?1.5:1),w.name+' worked the shift');
-    if(O.has(s,'forklift'))O.post(s,'Equipment',-(s.owned.usedLift?9:5),'Power and maintenance');
+    if(O.has(s,'forklift'))O.post(s,'Equipment',-(s.owned.maintenance?3:s.owned.usedLift?9:5),'Power and maintenance');
     if(s.owned.cold)O.post(s,'Utilities',-7,'Cold room power');
     if(s.owned.yard)O.post(s,'Yard',18+6*(s.owned.drop||0),'Trailer parking');
     if(s.owned.baler&&s.cardboard>0){O.post(s,'Recycling',s.cardboard*.06,'Cardboard bales');s.cardboard=0;}

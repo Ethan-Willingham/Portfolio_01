@@ -1,76 +1,142 @@
 # One Shift
 
-A standalone top-down warehouse game. Its editable sources are classic scripts
-under `js/one-shift-*.js`; it has no bundle step or other-game dependencies.
-One tile represents four feet. Rates, equipment prices and daily wages are
-scaled game-balance values, not quotations or training advice.
+One Shift is a standalone overhead warehouse game at `one-shift.html`. Its
+editable sources are classic scripts under `js/one-shift-*.js`, with one global
+`OneShift` namespace and no bundle step. Keep the post in In Progress on
+`archive.html`. Bump every game CSS and script query version together.
 
-## Simulation
+Version 1.1 is an expanded playable release. It is not the finished commercial
+quality game described in the kickoff brief. Research, raw evidence and the
+remaining work are kept locally in `research/one-shift/PROGRESS.md`.
 
-Fixed 20 Hz steps use seeded randomness. The clock advances 1.37 game minutes
-per real second. People move independently of that clock. Cases retain their
-item, client, lot, received day and best-by date through picking. Holds and
-task reservations remove stock from availability.
+## Model and boundaries
 
-Receiving requires paperwork, a matching seal, a reachable rear pallet label
-and a count confirmation. A* supplies the worker's walk and pallet-jack route.
-Workers stage, store, build case pallets, wrap and load through the same
-validated commands used by the test driver. Wrong loading scans return a
-reason; deliberately bypassed scans can cause a chargeback.
+The fixed 20 Hz simulation uses seeded randomness and plain JSON state. A tile
+represents four feet; the initial building is 100 by 80 feet. The clock advances
+1.37 game minutes per real second, independently of worker movement. A normal
+6:55 AM to 4:30 PM shift lasts about seven minutes.
 
-The forklift requires training and precedes hiring. Upper rack levels require
-the forklift. The third shift opens optional contracts and purchases.
+The first three shifts introduce receiving, manual putaway, full-pallet
+shipping, a visible 39-versus-40 shortage, case picking and wrapping. Later,
+clients and purchases are optional. Forklift training precedes operation and
+hiring. A small credit facility covers purchases and operating shortfalls.
 
-The SSCC uses GS1's documentation prefix 0614141. The label encodes AI 00
-and an 18-digit SSCC in Code 128 C with FNC1, symbol checksum and quiet zones.
-The published GS1 example `106141412345678908` is a regression vector.
+Eight fictional clients include full-pallet, retail case, food, electronics,
+parcel, kit, slow-storage and cross-dock work. Goods retain client ownership,
+item, lot, received date and best-by date. Holds, task reservations, FIFO and
+FEFO restrict availability. A loading scan catches wrong items and ownership;
+a deliberate bypass can earn a chargeback. Food past the contractual best-by
+cutoff is held. This cutoff is a game contract, not a claim that every best-by
+date is a legal safety deadline.
+
+Single-unit fulfillment opens a case using its real case pack. Units travel
+with a packing task, become individually identified parcels and load against
+a specific order at the carrier cutoff. Cancelled or overnight packing returns
+unpacked units safely. Kitting and assembly consume actual component cases
+across partial pallets, with quantities capped to outbound demand.
+
+Drivers can replenish configured ground pick faces from upper reserve. Loaders
+can stage released waves before the truck arrives. A task can be reassigned
+from one worker's queue to another person while retaining its reservation.
+Painted zones supply putaway destinations. Cold and secure storage validate
+client requirements. Layouts can be shared by URL into a separate sandbox.
+
+Purchases have 38 available catalog entries. Unfinished gifts, displays,
+returns, refurbishing, conveyors, sortation, kanban, inspection fixtures, robot
+arms, ASRS, a second building and yard tractors are hidden. Several available
+systems are still simplified: the line speeds a work order rather than moving
+it through separate stations; carts and carton flow shorten picking time;
+yard and recycling income settle as ledger abstractions. They do not establish
+finished physical versions of those systems.
+
+Workers route independently using cached A*. They do not yet yield to each
+other, and vehicles are worker equipment rather than a scarce vehicle pool.
+Construction places racks immediately. Rack clearance enforces a working
+aisle, but routes do not model separate vehicle turning envelopes. Fatigue is
+recorded but does not yet cause accuracy errors. The active situation deck has
+10 events; the optional notebook has 160 definitions. These counts do not
+establish the requested 90 working situations or 150 taught terms.
+
+## Interface and assets
+
+Mouse, keyboard and landscape touch control the same view. Object selection,
+a floor cursor and panel focus support keyboard play. The menu remaps controls,
+changes text scale, volume, reduced motion and redundant color marks. Buttons
+are at least 44 by 44 CSS pixels. Portrait on a touch device freezes the shift
+without changing manual pause. An idle floor offers a jump to the next truck
+through normal simulation ticks.
+
+Three save slots, end-of-day autosave, import/export and a version-zero migration
+are supported. Import rejects malformed nested state, orphaned reservations,
+bad label data, goods imbalance and ledger imbalance. An art preview cannot
+replace the live autosave. `one-shift-lab.html` offers four playable color
+studies and five title proposals. They are provisional studies, not an owner
+art approval or four independently designed sprite systems.
+
+Sprites are procedural and cached at 192 by 192 pixels. Static floor chunks and
+light layers are cached; only the top stored pallet at a position is drawn in
+the world, with other levels available in the rack inset. Quiet Web Audio cues
+accompany important actions. Ambient audio and several animation details from
+the art bible remain unfinished.
+
+## Checks and reproduction
+
+- `node tools/test-one-shift.cjs`: ramp, deterministic state, goods and ledger,
+  recipes, ownership, reservations, cancellation, pick faces, waves, task
+  handoff, layouts, migration and corrupt saves.
+- `node tools/test-one-shift-economy.cjs`: nine command-driven policies, each
+  running 200 seeds for 60 shifts. Every shift reconciles goods and its ledger;
+  saves validate every ten shifts. The first three shifts have no missed truck
+  and positive operating profit. Results include full profit and cash curves,
+  acquisition days, missed trucks and simulation timing. Set `SHIFT_EVIDENCE`
+  to choose the output directory. Policies cannot edit cash or inventory.
+- `node tools/test-one-shift-pathing.cjs`: 1,000 randomized rack-layout shifts,
+  accepted and rejected placements, route checks, task-progress monitoring and
+  inventory reconciliation. This fixture supplies starting cash and hires to
+  exercise routing; it is not an economy playthrough.
+- `node tools/test-one-shift-browser.cjs`: real browser clicks, native buttons,
+  keyboard receiving, remapping, autosave, viewport checks, landscape touch,
+  portrait freeze, 1.3 text scale, phone panels and preview save isolation.
+  Playwright and Sharp must be available in `NODE_PATH`. `ASSETS=1` refreshes
+  the card and sharing images from actual gameplay.
+- `node tools/test-one-shift-barcode.cjs <desktop-label.png> <phone-label.png>`:
+  independent ZXing decoding of the published GS1 vector, generated labels and
+  actual CSS-sized browser labels. Set `ZXING_PATH` to `@zxing/library` installed
+  as a local test dependency. It is not shipped with the game.
+- `node tools/capture-one-shift.cjs`: five real gameplay captures, their source
+  states and automated ramp measurements. This does not measure human confusion.
+
+Browser harnesses own Google Chrome for Testing and close that exact process
+in `finally`. Never use the owner's personal Chrome binary for headless tests.
+
+On the Apple M1 Pro with 32 GB, the synthetic large fixture contains 8,000 stored
+pallets plus 30 inbound pallets, 60 workers, 20 rendered forklifts and 30 trucks.
+The last browser check measured about 2.6 ms mean and 8.9 ms 95th-percentile draw
+work at 1440 by 900. Five complete simulation shifts measured 400 to 470 ms.
+This is a synthetic load on one host, not a claim of performance on every phone
+or of 20 independently allocated vehicle entities. Headless frame-rate caps
+were disabled for the cadence check.
+
+The strategy test's positive-profit and less-than-threefold median-spread gates
+are useful regressions. They do not prove equal strategy strength, human fun,
+cold-player clarity or absence of a dominant strategy. No human playtest panel,
+independent art-director review or ten qualifying polish rounds has occurred.
 
 ## Sources
 
+The label carries AI 00 and an 18-digit SSCC in real GS1-128: Code 128 C, FNC1,
+mod-10 data check digit, symbol checksum and quiet zones. It uses GS1's
+example prefix 0614141; `106141412345678908` is a published regression vector.
+
 - [GS1 logistic label guideline](https://ref.gs1.org/guidelines/logistic-label/)
-  for logistics labels and SSCC structure.
-- [GS1 tag data standard](https://ref.gs1.org/standards/tds/1.12.0/)
-  for the example prefix and SSCC vector.
+  and [tag data standard](https://ref.gs1.org/standards/tds/1.12.0/).
 - [OSHA powered industrial trucks](https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.178)
-  for operator training, evaluation and workplace safety.
-- [Red Stag warehouse services](https://redstagfulfillment.com/warehouse-services/)
-  for kitting and cross-docking as actual services.
-- [MET CO pricing](https://metcorpusa.com/pricing) for a published example of
-  per-pallet storage and handling. Game prices remain scaled.
+  and [warehousing hazards](https://www.osha.gov/warehousing/hazards-solutions).
+- [Red Stag warehouse services](https://redstagfulfillment.com/warehouse-services/).
+- [MET CO published rates](https://metcorpusa.com/pricing).
+- [FMCSA detention research](https://www.fmcsa.dot.gov/research-and-analysis/impact-driver-detention-time-safety-and-operations).
+- [FDA traceability lot codes](https://www.fda.gov/food/food-safety-modernization-act-fsma/traceability-lot-code).
+- [CHEP North American pallet](https://www.chep.com/us/en/product/pooled-wood-block-pallet-north-america-48-x-40-inches).
 
-## Checks
-
-Run `node tools/test-one-shift.cjs`. Verified at M1:
-
-- Correct check digit on the GS1 example and 999 generated SSCCs; FNC1,
-  Code C numeric pairs, checksum, stop symbol and quiet-zone width.
-- Bot completes day one through player commands: seven received pallets,
-  three shipped pallets and both outbound trucks complete.
-- Three-day ramp: shortage recorded, case pallet built and wrapped, positive
-  daily operating profit and no missed outbound truck.
-- Goods conservation and ledger reconciliation on the ramp.
-- Equal state hashes for equal seeds and commands; JSON state round trip.
-- Forklift training and hiring prerequisite; holds, reservations and FEFO.
-
-Run the browser checks with the bundled Playwright packages in `NODE_PATH`:
-`node tools/test-one-shift-browser.cjs`. The harness owns Chrome for Testing and
-closes that exact process in `finally`. `ASSETS=1` captures the actual game for
-the 1200 by 750 card and 1200 by 630 sharing image.
-
-Verified at the first playable release:
-
-- Fresh start has no modal or tutorial screen. A real canvas click opens the
-  bill of lading; real buttons check the seal, scan, confirm and receive.
-- Day one completes in the browser through validated commands; autosave loads.
-- Every evening screen and the three save slots open without JavaScript errors
-  or failed resources.
-- Layout fits at 1280 by 800, 1440 by 900, 1920 by 1080, 1024 by 768,
-  844 by 390 and 667 by 375. Real landscape touch opens paperwork.
-- Portrait on a touch device shows the rotate screen and freezes simulation.
-- Empty-floor lighting render work: about 0.03 ms mean and 0.10 ms 95th
-  percentile on this test host. This is a small scene, not the late-game budget.
-
-Long-run strategy balance, corruption and migration coverage, pathing stress,
-the full situation/term catalog and late-game frame budgets remain in progress.
-Equipment catalog entries are not evidence that every advanced branch is
-finished. Automated ramp checks do not establish cold-player usability.
+Fees, equipment prices, wages, frequencies and service times are scaled game
+balance values. They are not quotations, operating instructions or training.

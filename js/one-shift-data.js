@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const O = root.OneShift = root.OneShift || {};
-  O.VERSION = '1.0';
+  O.VERSION = '1.1';
   O.items = {
     stove: {name:'Camp stoves', color:'#bd916c', ti:8, hi:5, pack:4},
     lantern: {name:'Trail lanterns', color:'#c7b26e', ti:8, hi:5, pack:6},
@@ -13,7 +13,7 @@
     notebook: {name:'Pocket notebooks', color:'#be9e80', ti:10, hi:5, pack:24},
     housing: {name:'Lamp housings', color:'#acb3a2', ti:8, hi:4, pack:10},
     cable: {name:'Power cables', color:'#9ca4b0', ti:8, hi:5, pack:10},
-    kit: {name:'Reading lamp kits', color:'#c6ae8b', ti:8, hi:4, pack:1}
+    kit: {name:'Reading lamp kits', color:'#c6ae8b', ti:8, hi:4, pack:10}
   };
   O.clients = [
     {id:'trail', name:'Fern Trail Goods', type:'Outdoor goods', items:['stove','lantern','chair'], rule:'FIFO', volume:4, receive:18, ship:12, storage:.67, cases:.65, rep:0, requires:[], days:14, profile:'pallet', blurb:'Full pallets, a few case orders. Room to learn.'},
@@ -21,7 +21,7 @@
     {id:'linen', name:'Linen Window', type:'Retail', items:['towel'], rule:'FIFO', volume:6, receive:20, ship:18, storage:.75, cases:.9, rep:70, requires:['labeler'], days:14, profile:'case', blurb:'Retail labels and a firm pickup window.'},
     {id:'signal', name:'Still Signal', type:'Electronics', items:['radio'], rule:'FIFO', volume:4, receive:25, ship:20, storage:1.2, cases:1.2, rep:75, requires:['cage'], days:21, profile:'pallet', blurb:'A locked cage earns a better rate.'},
     {id:'paper', name:'Paper Finch', type:'Online seller', items:['notebook'], rule:'FIFO', volume:3, receive:18, ship:12, storage:.7, cases:1.5, rep:60, requires:['pack'], days:14, profile:'parcel', blurb:'Small orders, all due at the parcel cutoff.'},
-    {id:'lumen', name:'Lumen Workshop', type:'Manufacturer', items:['housing','cable'], rule:'FIFO', volume:4, receive:18, ship:16, storage:.67, cases:.9, rep:65, requires:['bench'], days:21, profile:'kit', blurb:'Two components become one lamp kit.'},
+    {id:'lumen', name:'Lumen Workshop', type:'Manufacturer', items:['housing','cable'], rule:'FIFO', volume:2, receive:18, ship:16, storage:.67, cases:.9, rep:65, requires:['bench'], days:21, profile:'kit', blurb:'Two components become one lamp kit.'},
     {id:'reserve', name:'Quiet Reserve', type:'Long storage', items:['chair'], rule:'FIFO', volume:10, receive:12, ship:10, storage:1.4, cases:.5, rep:55, requires:[], days:30, profile:'storage', blurb:'Low turnover. Your space does the work.'},
     {id:'relay', name:'Field Relay', type:'Cross-dock', items:['stove','lantern'], rule:'FIFO', volume:8, receive:15, ship:16, storage:0, cases:.6, rep:60, requires:['crossdock'], days:14, profile:'crossdock', blurb:'In this morning, out this afternoon.'}
   ];
@@ -37,7 +37,7 @@
     ['door','Another dock door',240,[], 'throughput','Receive and ship at the same time.'],
     ['appointments','Dock appointments',120,[], 'rules','Spread new arrivals through the shift.'],
     ['wrapStand','Wrap stand',95,[], 'throughput','A dedicated place to wrap picked pallets.'],
-    ['wrapper','Stretch-wrap machine',430,['wrapStand'], 'throughput','Wrap while your worker does something else.'],
+    ['wrapper','Stretch-wrap machine',430,['wrapStand'], 'throughput','A powered head shortens each wrapping job.'],
     ['labeler','Print-and-apply labeler',180,[], 'throughput','Correct retail labels, less hand work.'],
     ['conveyor','Shipping conveyor',520,['wrapper'], 'robots','Carries staged pallets to waiting outbound trucks.'],
     ['sorter','Parcel sortation',840,['conveyor','pack'], 'robots','Separates parcel orders by route.'],
@@ -55,13 +55,13 @@
     ['refurb','Refurbishing tools',280,['returns'], 'services','Recover damaged cases after repair.'],
     ['assembly','Assembly station',450,['bench'], 'factory','Make lamp kits under a work order.'],
     ['kanban','Line-side bins',160,['assembly'], 'factory','Replenish both components before the line stops.'],
-    ['line','Two-station line',720,['assembly'], 'factory','Assembly followed by inspection.'],
+    ['line','Two-station line',720,['assembly'], 'factory','Complete lamp work orders with two work positions.'],
     ['inspection','Inspection fixture',310,['line'], 'factory','Catch defective kits before shipping.'],
     ['arm','Palletizing arm',1400,['line','inspection'], 'robots','Finish factory pallets automatically.'],
     ['shelves','Picking shelves',110,[], 'fulfillment','More pick faces for small products.'],
-    ['cart','Pick cart',130,['shelves'], 'fulfillment','Move several parcel orders in one walk.'],
+    ['cart','Pick cart',130,['shelves'], 'fulfillment','Carry small orders with less walking effort.'],
     ['pack','Pack station',210,['shelves'], 'fulfillment','Pick, pack and label small orders.'],
-    ['cartonFlow','Carton flow rack',350,['pack'], 'fulfillment','Cases roll forward to the pick face.'],
+    ['cartonFlow','Carton flow rack',350,['pack'], 'fulfillment','Shorten the time spent picking cases and units.'],
     ['yard','Trailer parking',135,[], 'yard','Paid parking for visiting trailers.'],
     ['drop','Drop-trailer spaces',240,['yard'], 'yard','Store trailers without their tractors.'],
     ['shunter','Yard tractor',680,['drop'], 'yard','Move dropped trailers between doors.'],
@@ -77,13 +77,14 @@
     ['asrs','Automated storage',2600,['autoLift','reach'], 'storage','High-density storage with automatic retrieval.'],
     ['secondShift','Second shift',450,['forklift'], 'people','Keep working under the lights until 9 PM.']
   ];
-  O.liveEquipment = new Set(['rack','walkie','training','usedLift','lift','upper','reach','door','appointments','wrapStand','wrapper','labeler','zones','cold','cage','bench','ticket','gifts','displays','returns','refurb','assembly','line','yard','drop','baler','repair','crossdock','expansion','charger','robot','autoLift','secondShift']);
+  O.liveEquipment = new Set(['rack','walkie','training','usedLift','lift','upper','reach','door','appointments','wrapStand','wrapper','labeler','zones','cold','cage','bench','ticket','assembly','line','yard','drop','baler','repair','crossdock','expansion','charger','robot','autoLift','secondShift','shelves','cart','pack','narrow','heatmap','maintenance','cartonFlow','pickFace','waves']);
   O.equipment = equipment.map(([id,name,cost,requires,branch,description])=>({id,name,cost,requires,branch,description}));
   O.staff = [
     {name:'Mara',role:'receiver',wage:48,color:'#a1b59b'},
     {name:'Eli',role:'driver',wage:58,color:'#a5b9bf'},
     {name:'June',role:'picker',wage:48,color:'#cab28e'},
-    {name:'Ravi',role:'loader',wage:48,color:'#b5a5bd'}
+    {name:'Ravi',role:'loader',wage:48,color:'#b5a5bd'},
+    {name:'Nina',role:'maker',wage:52,color:'#c3a18d'}
   ];
   O.services = [
     {id:'kit', name:'Lamp kits', requires:'bench', inputs:{housing:1,cable:1}, output:'kit', fee:3, seconds:2},
@@ -99,7 +100,10 @@
     safety:'https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.178',
     services:'https://redstagfulfillment.com/warehouse-services/',
     rates:'https://metcorpusa.com/pricing',
-    production:'https://www.lean.org/lexicon-terms/',
-    freight:'https://www.fmcsa.dot.gov/research-and-analysis/research/investigation-detention-time-commercial-motor-vehicle-industry'
+    production:'https://www.lean.org/explore-lean/lexicon-terms/',
+    carrier:'https://www.odfl.com/us/en/resources/freight-knowledge/glossary.html',
+    storage:'https://www.interlakemecalux.com/flow-racks/carton-flow-racks',
+    food:'https://www.fda.gov/food/food-safety-modernization-act-fsma/traceability-lot-code',
+    freight:'https://www.fmcsa.dot.gov/research-and-analysis/impact-driver-detention-time-safety-and-operations'
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
