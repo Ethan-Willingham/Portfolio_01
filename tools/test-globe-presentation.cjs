@@ -3,6 +3,7 @@
    REAL_ONLY=1 runs only the actual-data viewport matrix.
    REAL_WIDTHS=768 optionally limits an upstream retry to named widths.
    TARGETED=1 skips the full matrix for loading, cache and presentation regressions.
+   NATIVE_ONLY=1 runs the real native-fullscreen Escape regression alone.
    DUMP=/absolute/folder writes evidence. All renderer hooks are private to the
    owned local server. Chrome for Testing and that server close in finally. */
 'use strict';
@@ -12,6 +13,7 @@ const {chromium} = require('playwright');
 const root = path.resolve(__dirname, '..');
 const dump = process.env.DUMP || '/Users/ethan/Portfolio_01/research/daylight-live/sun-polish/presentation-browser';
 const realOnly = process.env.REAL_ONLY === '1', real = realOnly || process.env.REAL_DATA === '1';
+const nativeOnly = process.env.NATIVE_ONLY === '1';
 const fixedNow = '2026-10-05T03:10:00Z';
 const checks=[], evidence=[], errors=[], requests=[];
 fs.mkdirSync(dump,{recursive:true});
@@ -180,16 +182,32 @@ async function enlargedLandscapeCheck(browser){
  for(const [width,height]of[[667,375],[844,390]]){const context=await browser.newContext({viewport:{width,height},timezoneId:'America/Chicago'});await routes(context);const page=await context.newPage();listen(page,'large-landscape-'+width);await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);await page.locator('#globe-fullscreen').click();await page.evaluate(()=>{document.documentElement.style.fontSize='32px';});await page.waitForTimeout(400);const s=await state(page),bounds=await page.evaluate(()=>__globePresentation.earthBounds()),l=await layout(page);
  check(width+' enlarged short landscape projects the entire Earth inside the scene',bounds.left>=-1&&bounds.right<=1&&bounds.top>=-1&&bounds.bottom<=1&&s.sun.inFrame,{bounds,state:s});check(width+' enlarged short landscape has no horizontal control overflow',!l.overflow&&l.controls.every(c=>c.horizontal&&!c.clipped),l);await capture(page,'enlarged-landscape-'+width);evidence.push({enlargedLandscape:{width,height,bounds,state:s,layout:l}});await context.close();}
 }
+async function nativeFullscreenCheck(browser){
+ const context=await browser.newContext({viewport:{width:1440,height:900},timezoneId:'America/Chicago'});await routes(context);const page=await context.newPage();listen(page,'native-fullscreen');await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);
+ const before=await page.evaluate(()=>({available:document.fullscreenEnabled&&typeof document.querySelector('.globe-wrapper').requestFullscreen==='function',native:/\[native code\]/.test(Function.prototype.toString.call(Element.prototype.requestFullscreen)),overflow:document.body.style.overflow,inert:Array.from(document.querySelectorAll('[inert]')).map(el=>el.id||el.className)}));
+ check('native fullscreen uses the real available browser API',before.available&&before.native,before);
+ await page.locator('#globe-fullscreen').click();await page.waitForFunction(()=>document.fullscreenElement===document.querySelector('.globe-wrapper'),null,{timeout:5000}).catch(()=>{});
+ const entered=await page.evaluate(()=>({native:document.fullscreenElement===document.querySelector('.globe-wrapper'),css:document.querySelector('.globe-wrapper').classList.contains('is-fullscreen'),overflow:document.body.style.overflow,backgroundInert:!!document.querySelector('.post-back').closest('[inert]')}));
+ check('native fullscreen entry installs both browser fullscreen and page isolation',entered.native&&entered.css&&entered.overflow==='hidden'&&entered.backgroundInert,entered);await capture(page,'native-fullscreen-entered');
+ await page.locator('#globe-container').focus();await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector('.globe-wrapper').classList.contains('is-fullscreen'),null,{timeout:5000}).catch(()=>{});
+ const exited=await page.evaluate(()=>({native:!!document.fullscreenElement,css:document.querySelector('.globe-wrapper').classList.contains('is-fullscreen'),focus:document.activeElement.id,label:document.querySelector('#globe-fullscreen').getAttribute('aria-label'),overflow:document.body.style.overflow,inert:Array.from(document.querySelectorAll('[inert]')).map(el=>el.id||el.className),backgroundInert:!!document.querySelector('.post-back').closest('[inert]')}));
+ check('Escape clears both native fullscreen and the wrapper fullscreen class',!exited.native&&!exited.css,exited);
+ check('Escape restores launcher focus, page scrolling and prior background isolation',exited.focus==='globe-fullscreen'&&exited.label==='Enter fullscreen'&&exited.overflow===before.overflow&&JSON.stringify(exited.inert)===JSON.stringify(before.inert)&&!exited.backgroundInert,exited);
+ await page.evaluate(()=>{const home=document.querySelector('.post-back');home.focus();window.__nativeBackgroundFocus=document.activeElement===home;home.addEventListener('click',function(event){event.preventDefault();window.__nativeBackgroundClick=event.isTrusted;},{once:true});});
+ let clicked=false;try{await page.locator('.post-back').click({timeout:5000});clicked=true;}catch{}
+ const background=await page.evaluate(()=>({focused:window.__nativeBackgroundFocus,trustedClick:window.__nativeBackgroundClick===true,inert:!!document.querySelector('.post-back').closest('[inert]')}));
+ check('background link accepts focus and an ordinary trusted click after Escape',clicked&&background.focused&&background.trustedClick&&!background.inert,background);await capture(page,'native-fullscreen-exited');evidence.push({nativeFullscreen:{before,entered,exited,background}});await context.close();
+}
 let browser;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const startSources=hashes();
  try{
   browser=await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:process.env.HEADFUL!=='1'});
-  if(!realOnly){if(process.env.TARGETED!=='1')await matrix(browser,false);await loadingChecks(browser);await reducedResolutionCheck(browser);await damagedRetryRecoveryCheck(browser);await infraredOnlyCheck(browser);await enlargedLandscapeCheck(browser);}
-  if(real)await matrix(browser,true);
+  if(nativeOnly)await nativeFullscreenCheck(browser);
+  else{if(!realOnly){if(process.env.TARGETED!=='1')await matrix(browser,false);await loadingChecks(browser);await reducedResolutionCheck(browser);await damagedRetryRecoveryCheck(browser);await infraredOnlyCheck(browser);await enlargedLandscapeCheck(browser);await nativeFullscreenCheck(browser);}if(real)await matrix(browser,true);}
   check('no JavaScript, shader or invalid-texture errors',errors.length===0,errors);
  }finally{
-  fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({real,realOnly,fixedNow,startSources,endSources:hashes(),checks,evidence,errors,requests},null,2));
+  fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({real,realOnly,nativeOnly,fixedNow,startSources,endSources:hashes(),checks,evidence,errors,requests},null,2));
   if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));
  }
  const failures=checks.filter(c=>!c.pass);if(failures.length)throw new Error(failures.length+' presentation checks failed');console.log(checks.length+' presentation checks passed');

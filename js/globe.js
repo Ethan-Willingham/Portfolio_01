@@ -451,7 +451,7 @@
   document.addEventListener('fullscreenchange',function () {if(!document.fullscreenElement&&wrapper.classList.contains('is-fullscreen')){wrapper.classList.remove('is-fullscreen');document.body.style.overflow=savedOverflow;isolateFullscreen(false);fullscreenButton.setAttribute('aria-label','Enter fullscreen');requestAnimationFrame(resize);syncViewportVisibility();fullscreenButton.focus({preventScroll:true});}});
   document.addEventListener('keydown',function (event) {
     if(!wrapper.classList.contains('is-fullscreen'))return;
-    if(event.key==='Escape'&&!document.fullscreenElement)exitFullscreen();
+    if(event.key==='Escape'){event.preventDefault();exitFullscreen();return;}
     if(event.key==='Tab'){
       var candidates=Array.from(wrapper.querySelectorAll('button,input,summary,a[href],[tabindex="0"]')).filter(function(element){return !element.disabled&&element.getClientRects().length>0;});
       var first=candidates[0],last=candidates[candidates.length-1];
