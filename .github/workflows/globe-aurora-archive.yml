@@ -1,0 +1,56 @@
+name: Archive NOAA aurora grids
+
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: globe-aurora-archive
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capture and publish the data subtree
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/archive-globe-aurora.cjs
+          git add -A -- assets/data/aurora
+          if git diff --cached --quiet -- assets/data/aurora; then
+            echo 'No new NOAA frame or retention change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Archive NOAA aurora forecast' -- assets/data/aurora
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              break
+            fi
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort
+              echo 'Archive publication stopped because main changed incompatibly.' >&2
+              exit 1
+            fi
+          done
+          echo 'Archive publication failed after three push attempts.' >&2
+          exit 1
