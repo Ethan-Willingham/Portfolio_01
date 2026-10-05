@@ -6,7 +6,7 @@ const{curves}=ctx.window.EnoughData,M=ctx.window.EnoughMath,by=id=>curves.find(c
 assert.equal(curves.length,12);assert.equal(new Set(curves.map(c=>c.id)).size,12);
 for(const c of curves){
  assert.ok(c.question&&c.fact&&c.extraction&&c.population&&c.uncertainty&&c.sources.length,c.id+' complete provenance');
- assert.equal(c.verified,'2026-10-04');assert.equal(c.reverification.researcher===c.reverification.adversary,false);
+ if(c.id==='steps'){assert.equal(c.verified,'2026-10-05');assert.match(c.followupAudit.method,/No independent review/);}else{assert.equal(c.verified,'2026-10-04');assert.equal(c.reverification.researcher===c.reverification.adversary,false);}
  const sources=new Set(c.sources.map(s=>s.id));for(const s of c.sources)assert.ok(s.citation&&s.location&&/^(https:\/\/|#)/.test(s.url));
  if(c.kind==='unknown'){assert.equal(c.domain,null);assert.equal(c.view.range,null);assert.equal(M.series(c).length,0);}else assert.ok(c.domain[0]<c.domain[1]&&c.defaultDose>=c.domain[0]&&c.defaultDose<=c.domain[1]);
  for(let i=0;i<c.points.length;i++){const p=c.points[i];assert.ok(Number.isFinite(p.dose)&&Number.isFinite(p.effect));if(i)assert.ok(p.dose>c.points[i-1].dose,c.id+' ordered');assert.ok(sources.has(p.source)&&p.location,c.id+' point provenance');assert.equal(p.low===null,p.high===null);if(p.low!==null)assert.ok(p.low<=p.effect+1e-10&&p.effect<=p.high+1e-10,c.id+' limits order');}
@@ -20,7 +20,10 @@ for(const c of curves){
  assert.ok(!/hazard ratio|death rate|vs reference|counted|fitted/.test(c.question+' '+c.fact+' '+c.view.answer));
  assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)),c.id+' voice rules');
 }
-near(M.enough(by('steps')),10500);near(M.share(by('steps'),7000),85.45454545454545);
+const ding=ctx.window.EnoughData.supportingEvidence.steps2025;
+assert.equal(M.enough(by('steps')),null);assert.equal(by('steps').computed.enough,null);assert.equal(by('steps').referenceDose,5000);assert.equal(by('steps').defaultDose,8000);
+assert.equal(ding.points.length,11);near(M.enough(ding),10500);near(M.share(ding,7000),85.45454545454545);
+for(const p of ding.points){assert.ok(p.low<=p.effect&&p.effect<=p.high);assert.equal(p.source,'steps-0');assert.match(p.location,/Table 2/);}
 near(M.enough(by('exercise')),342.64369150794863);near(M.share(by('exercise'),150),80.5518385314365);
 for(const p of by('exercise').points)near(p.dose,p.originalDose*60/3.5,1e-9);
 near(M.enough(by('protein')),.7021609887596101);near(M.estimate(by('protein'),.8),M.estimate(by('protein'),1));
@@ -36,7 +39,8 @@ near(M.extraRisk(by('alcohol'),1),-4);near(M.extraRisk(by('alcohol'),2),-7);near
 for(const p of by('income').points)near(p.high-p.effect,1.96*p.standardError);
 near(M.extraRisk(by('smoking'),1)/M.extraRisk(by('smoking'),3),.48/1.04);
 // Source-outcome presentation must never turn a chosen endpoint into 100% benefit.
-near(M.outcome(by('steps'),7000),47);near(M.outcome(by('steps'),12000),55);near(M.outcome(by('steps'),M.enough(by('steps'))),49.5);
+near(M.outcome(ding,7000),47);near(M.outcome(ding,12000),55);near(M.outcome(ding,M.enough(ding)),49.5);
+near(M.outcome(by('steps'),8200),44.618);near(M.outcome(by('steps'),10000),46.22);assert.ok(M.outcome(by('steps'),10000)-M.outcome(by('steps'),8200)<2);
 near(M.outcome(by('exercise'),600),38.44373343584258);near(M.outcome(by('protein'),1),2.7778245035310007);
 near(M.outcome(by('fruit-veg'),3),13);near(M.outcome(by('fruit-veg'),4),11);
 near(M.outcome(by('fiber'),35),22.430620048399886);near(M.outcome(by('income'),13),4.947);
@@ -62,6 +66,7 @@ near(M.outcome(younger,16000),38.96);near(M.outcome(older,16000),63.53);
 assert.ok(M.outcome(younger,16000)<M.outcome(younger,10000),'Preserve younger tail bend');
 assert.ok(M.outcome(older,16000)>M.outcome(older,10000),'Preserve slowly improving older tail');
 assert.ok(M.outcome(younger,16000,'high')<0,'Younger uncertainty includes higher risk');
-near(M.outcome(by('steps'),12000,'low'),61);near(M.outcome(by('steps'),12000,'high'),47);
+near(M.outcome(ding,12000,'low'),61);near(M.outcome(ding,12000,'high'),47);
+assert.equal(younger.defaultDose,8000);assert.equal(older.defaultDose,6000);assert.equal(JSON.stringify(by('steps').points),JSON.stringify(younger.points));
 console.log('PASS longer age curves, source baselines, figure uncertainty, 16,000 endpoints and no imposed cutoff');
 console.log('PASS 12 curves, retained source estimates, corrected sets interpretation, all benefit crossings, range endpoints, categories, signed risk, source units, uncertainty and exact models');

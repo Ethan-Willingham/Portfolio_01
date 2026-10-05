@@ -32,7 +32,7 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await page.locator('.enough-card').count(),12);
   assert.equal(await page.locator('#meditation,#area-mind,#enough-form,.enough-personal,input').count(),0,'Removed personal panel and Mind section');
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal page overflow');
-  const clipped=await page.locator('.enough-chart svg text,#overview-chart svg text,.steps-long-panel:visible svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));
+  const clipped=await page.locator('.enough-chart svg text,#overview-chart svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));
   assert.deepEqual(clipped,[],'All axis titles and ticks fit');await fullPainting(page);
   assert.equal(await page.locator('input[type=range]').count(),0,'No visible slider bars');
   assert.equal(await page.locator('.enough-chart[role=slider][tabindex="0"]').count(),12,'Every chart has direct keyboard control');
@@ -44,12 +44,12 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await page.locator('.enough-card details table').count(),0,'Raw tables removed from short drawers');
   assert.equal(await page.locator('.enough-card details a[download]').count(),12,'Full evidence still available');
   const opening=page.locator('#overview-steps .overview-plot');
-  assert.equal(await opening.getAttribute('aria-valuenow'),'7000');assert.match(await opening.getAttribute('aria-valuetext'),/47% lower risk of dying.*2,000/,'Opening uses actual outcome and baseline');
+  assert.equal(await opening.getAttribute('aria-valuenow'),'8000');assert.match(await opening.getAttribute('aria-valuetext'),/about 44% lower risk of dying.*5,000.*under 60/,'Opening uses actual outcome and baseline');
   assert.equal(await page.locator('.enough-overview .overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
-  assert.match(await page.locator('#protein .en-y-label').textContent(),/lean-mass gain, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/Lower risk of dying, %/);
+  assert.match(await page.locator('#protein .en-y-label').textContent(),/lean-mass gain, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/lower risk of dying, %/i);
   assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
   assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
-  const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg,.steps-long-panel:visible svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
+  const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
    const ticks=[...svg.querySelectorAll('.en-y-tick')];
    return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
   }));assert.deepEqual(crowdedTicks,[],'Y-axis labels have at least 4px separation');
@@ -64,16 +64,16 @@ const clickFraction=async(page,plot,f)=>{
     return Math.abs(Number(svg.querySelector('.en-target').getAttribute('y1'))-expected)<.01;
    },id),'Enough line uses the actual outcome value');
   }
-  const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/10,500.*49.5%.*2,000/,'Enough point reports actual relative risk reduction');
-  await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'9500');
-  await page.keyboard.press('Home');assert.equal(await opening.getAttribute('aria-valuenow'),'2000');await page.keyboard.press('ArrowRight');assert.equal(await opening.getAttribute('aria-valuenow'),'2100');await page.keyboard.press('End');assert.equal(await opening.getAttribute('aria-valuenow'),'12000');assert.match(await opening.getAttribute('aria-valuetext'),/55% lower risk/,'12,000 steps is 55%, never 100%');
+  const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/8,000.*about 44%.*5,000/,'Walking opens at the lower edge of its broad flatter region');assert.match(await page.locator('#steps .enough-answer').textContent(),/8,000 to 10,000/);assert.equal(await page.locator('#steps-longer,[id^=longer-steps],.steps-longer').count(),0,'One walking card, no second study section');assert.equal(await page.locator('[data-steps-age]').count(),2,'Only one pair of walking age controls');
+  await clickFraction(page,opening,.75);assert.equal(await opening.getAttribute('aria-valuenow'),'13300');assert.equal(await page.locator('#steps .enough-chart').getAttribute('aria-valuenow'),'13300','Opening and card share the same selected amount');
+  await page.keyboard.press('Home');assert.equal(await opening.getAttribute('aria-valuenow'),'5000');await page.keyboard.press('ArrowRight');assert.equal(await opening.getAttribute('aria-valuenow'),'5100');await page.keyboard.press('End');assert.equal(await opening.getAttribute('aria-valuenow'),'16000');assert.match(await opening.getAttribute('aria-valuetext'),/about 39% lower risk/,'Figure endpoint is not normalized to 100%');
   for(const id of ['exercise','protein']){
    await page.locator('[data-opening-curve="'+id+'"]').click();const plot=page.locator('#overview-'+id+' .overview-plot');
    assert.equal(await page.locator('.overview-panel:visible').count(),1);assert.equal(await page.locator('[data-opening-curve="'+id+'"]').getAttribute('aria-pressed'),'true');
    await clickFraction(page,plot,.5);await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
    assert.match(await plot.getAttribute('aria-valuetext'),id==='exercise'?/38.4% lower risk.*no exercise/:/2.8 lb more lean-mass gain.*model/);
   }
-  await page.locator('[data-opening-curve="steps"]').click();assert.equal(await opening.getAttribute('aria-valuenow'),'12000','Curve changes preserve each selection');
+  await page.locator('[data-opening-curve="steps"]').click();assert.equal(await opening.getAttribute('aria-valuenow'),'16000','Curve changes preserve each selection');
   for(const plot of await page.locator('.enough-chart').all()){
    await clickFraction(page,plot,.2);const low=Number(await plot.getAttribute('aria-valuenow')),cx=await plot.locator('.en-dot').getAttribute('cx');
    await clickFraction(page,plot,.8);assert.ok(Number(await plot.getAttribute('aria-valuenow'))>low,'Click moves every chart marker');assert.notEqual(await plot.locator('.en-dot').getAttribute('cx'),cx);
@@ -82,7 +82,7 @@ const clickFraction=async(page,plot,f)=>{
    await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
   }
   const steps=page.locator('#steps .enough-chart');await steps.scrollIntoViewIfNeeded();const b=await steps.boundingBox();
-  await page.mouse.move(b.x+42,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width+20,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'12000','Drag moves marker to endpoint');
+  await page.mouse.move(b.x+42,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width+20,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'16000','Drag moves marker to endpoint');
   // Leaving a pointer-focused box changes its decoration only, even during capture.
   assert.equal(await steps.evaluate(el=>getComputedStyle(el).outlineStyle),'none','Captured drag outside clears highlight');
   await clickFraction(page,steps,.3);const selected=await steps.getAttribute('aria-valuenow'),rFocus=await steps.boundingBox();
@@ -94,40 +94,41 @@ const clickFraction=async(page,plot,f)=>{
   await page.locator('#steps summary').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.keyboard.press('Enter');
   if(width===375){
    await page.locator('#steps summary').tap();assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.locator('#steps summary').tap();
-   await steps.scrollIntoViewIfNeeded();const r=await steps.boundingBox();await page.touchscreen.tap(r.x+42+.5*(r.width-54),r.y+80);assert.equal(await steps.getAttribute('aria-valuenow'),'7000','Touch tap selects dose');
+   await steps.scrollIntoViewIfNeeded();const r=await steps.boundingBox();await page.touchscreen.tap(r.x+42+.5*(r.width-54),r.y+80);assert.equal(await steps.getAttribute('aria-valuenow'),'10500','Touch tap selects dose');
    // Real touch events verify dragging while vertical page scrolling remains possible.
    const cdp=await context.newCDPSession(page);
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+42+.2*(r.width-54),y:r.y+80}]});
-   for(const f of [.3,.5,.7,.8])await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+42+f*(r.width-54),y:r.y+80}]});
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await steps.getAttribute('aria-valuenow'),'10000','Touch drag selects dose');
-   const beforeScroll=await page.evaluate(()=>scrollY);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+100,y:r.y+125}]});
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+100,y:r.y+75}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+100,y:r.y+25}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   for(const f of [.3,.5,.7,.8]){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+42+f*(r.width-54),y:r.y+80}]});await page.evaluate(()=>new Promise(requestAnimationFrame));}
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await steps.getAttribute('aria-valuenow'),'13800','Touch drag selects dose');
+   await steps.scrollIntoViewIfNeeded();const scrollRect=await steps.boundingBox(),beforeScroll=await page.evaluate(()=>scrollY);
+   // A controlled native touch swipe tests panning without synthetic fling velocity.
+   await cdp.send('Input.synthesizeScrollGesture',{x:scrollRect.x+100,y:scrollRect.y+125,yDistance:-100,speed:500,gestureSourceType:'touch',preventFling:true});
    await page.waitForFunction(before=>scrollY>before,beforeScroll,{timeout:2000});assert.ok(await page.evaluate(()=>scrollY)>beforeScroll,'Vertical touch scroll passes through charts');await cdp.detach();
   }
   assert.match(await page.locator('#sets .enough-answer').textContent(),/No settled optimum/);
   assert.equal(await page.locator('#sets .en-uncertainty').count(),1,'Sets model has credible band');assert.equal(await page.locator('#sets .en-guide').count(),0,'No false 38-set enough marker');
   assert.match(await page.locator('#sets details').textContent(),/preprint/);assert.doesNotMatch(await page.locator('#sets .enough-readout').textContent(),/of the gain/);
-  assert.equal(await page.locator('#steps .en-uncertainty').count(),1,'2025 steps has its published confidence band');
-  assert.equal(await opening.locator('.en-uncertainty').count(),1,'Opening shares the same confidence band');
-  assert.match(await page.locator('#overview-steps .overview-context a').getAttribute('href'),/#steps-longer/);
-  const younger=page.locator('#longer-steps-younger .steps-long-plot'),older=page.locator('#longer-steps-older .steps-long-plot');
-  assert.equal(await page.locator('.steps-long-panel:visible').count(),1);
-  assert.equal(await younger.getAttribute('aria-valuenow'),'10000');assert.match(await younger.getAttribute('aria-valuetext'),/about 46%.*5,000.*under 60/);
-  for(const [id,plot,baseline,end]of [['steps-younger',younger,'5,000',39],['steps-older',older,'3,000',64]]){
-   await page.locator('[data-steps-age="'+id+'"]').click();assert.equal(await page.locator('.steps-long-panel:visible').count(),1);
-   assert.equal(await page.locator('[data-steps-age="'+id+'"]').getAttribute('aria-pressed'),'true');
-   await clickFraction(page,plot,.5);assert.ok(!/NaN|undefined|Infinity/.test(await plot.getAttribute('aria-valuetext')));
-   await page.keyboard.press('Home');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemin'));
-   await page.keyboard.press('ArrowRight');assert.equal(Number(await plot.getAttribute('aria-valuenow')),Number(await plot.getAttribute('aria-valuemin'))+100);
-   await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),'16000');assert.match(await plot.getAttribute('aria-valuetext'),new RegExp('about '+end+'%.*'+baseline));
-   assert.equal(await plot.locator('.en-uncertainty').count(),1);assert.equal(await plot.locator('.en-target,.en-guide,.enough-target-key').count(),0,'No exact enough rule on figure readings');
-   const clippedAge=await plot.locator('svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));assert.deepEqual(clippedAge,[]);
-   assert.ok(await plot.locator('.en-uncertainty').evaluate(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.y>=29&&b.y+b.height<=v.height-55;}),'Full confidence band fits inside plot');
-   if(width===375){await plot.scrollIntoViewIfNeeded();const r=await plot.boundingBox();await page.touchscreen.tap(r.x+r.width-12,r.y+80);assert.equal(await plot.getAttribute('aria-valuenow'),'16000');}
+  assert.equal(await steps.locator('.en-uncertainty').count(),1,'Walking has the published confidence band');
+  assert.equal(await opening.locator('.en-uncertainty').count(),1,'Opening shares the same source band');
+  assert.equal(await page.locator('#overview-steps .overview-context a').getAttribute('href'),'#steps');
+  assert.doesNotMatch(await page.locator('#steps').textContent(),/About 10,500|See a longer study|Where does walking flatten/);
+  for(const [id,baseline,end,minimum,range]of [['steps-younger','5,000',39,5000,'8,000 to 10,000'],['steps-older','3,000',64,3000,'6,000 to 8,000']]){
+   await page.locator('[data-steps-age="'+id+'"]').click();assert.equal(await page.locator('[data-steps-age="'+id+'"]').getAttribute('aria-pressed'),'true');
+   assert.match(await page.locator('#steps .enough-answer').textContent(),new RegExp(range));assert.match(await page.locator('#overview-baseline-steps').textContent(),new RegExp(baseline));
+   assert.equal(Number(await steps.getAttribute('aria-valuemin')),minimum);assert.equal(await opening.getAttribute('aria-valuemin'),await steps.getAttribute('aria-valuemin'));
+   await clickFraction(page,steps,.5);assert.equal(await opening.getAttribute('aria-valuenow'),await steps.getAttribute('aria-valuenow'));
+   await page.keyboard.press('Home');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum);await page.keyboard.press('ArrowRight');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum+100);
+   await page.keyboard.press('End');assert.equal(await steps.getAttribute('aria-valuenow'),'16000');assert.match(await steps.getAttribute('aria-valuetext'),new RegExp('about '+end+'%.*'+baseline));
+   assert.equal(await opening.getAttribute('aria-valuetext'),await steps.getAttribute('aria-valuetext'),'Same curve and baseline in both views');
+   assert.equal(await steps.locator('.en-target,.en-guide,.enough-target-key').count(),0,'Walking has a broad flatter region, no exact enough guide');
+   const clippedAge=await page.locator('#steps svg text,#overview-steps svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));assert.deepEqual(clippedAge,[]);
+   assert.ok(await steps.locator('.en-uncertainty').evaluate(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.y>=29&&b.y+b.height<=v.height-55;}),'Full source confidence band fits');
   }
-  await page.locator('[data-steps-age="steps-younger"]').click();assert.equal(await younger.getAttribute('aria-valuenow'),'16000','Age selection retains independent markers');
-  await page.setViewportSize({width:width+20,height:900});await page.waitForTimeout(100);assert.equal(await younger.getAttribute('aria-valuenow'),'16000','Resize retains selection');await page.setViewportSize({width,height:width===375?812:900});await page.waitForTimeout(100);
-  assert.ok((await page.locator('#steps-longer details').textContent()).split(/\s+/).length<=115,'Longer evidence stays short');
+  await page.keyboard.press('Home');await page.keyboard.press('PageUp');assert.equal(await steps.getAttribute('aria-valuenow'),'4000');
+  await page.locator('[data-steps-age="steps-younger"]').click();assert.equal(await steps.getAttribute('aria-valuenow'),'16000','Age selection retains its own marker');
+  await page.locator('[data-steps-age="steps-older"]').click();assert.equal(await steps.getAttribute('aria-valuenow'),'4000','The second age marker is independent');
+  await page.setViewportSize({width:width+20,height:900});await page.waitForTimeout(100);assert.equal(await opening.getAttribute('aria-valuenow'),'4000','Resize retains synchronized selection');await page.setViewportSize({width,height:width===375?812:900});await page.waitForTimeout(100);
+  assert.match(await page.locator('#steps details').textContent(),/don’t require 10,000 steps/);
   // Match the owner's chosen reference essay for shared chrome and links.
   const reference=await context.newPage();await reference.goto(url+'/what-you-get-used-to.html');await reference.evaluate(()=>document.fonts.ready);
   const compare=async(target,source,props)=>{
@@ -136,7 +137,7 @@ const clickFraction=async(page,plot,f)=>{
   };
   await compare('.post-back','.post-back',['font-family','font-size','color','text-decoration-line','padding-top']);await compare('.hero-title','.hero-title',['font-family','font-size','font-weight','line-height','letter-spacing','color']);await compare('.overview-context a','.sec a',['color','text-decoration-line','text-decoration-color','text-underline-offset']);await compare('.site-footer a','.site-footer a',['font-family','font-size','color','text-decoration-line']);await reference.close();
   await page.reload();await ready(page);await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:path.join(destination,width+'-top.png')});await page.screenshot({path:path.join(destination,width+'-page.png'),fullPage:true});await page.locator('.enough-overview').screenshot({path:path.join(destination,width+'-overview.png')});
-  await page.locator('#steps-longer').screenshot({path:path.join(destination,width+'-steps-younger.png')});await page.locator('[data-steps-age="steps-older"]').click();await page.locator('#steps-longer').screenshot({path:path.join(destination,width+'-steps-older.png')});await page.locator('[data-steps-age="steps-younger"]').click();
+  await page.locator('#steps').screenshot({path:path.join(destination,width+'-steps-younger.png')});await page.locator('[data-steps-age="steps-older"]').click();await page.locator('#steps').screenshot({path:path.join(destination,width+'-steps-older.png')});await page.locator('[data-steps-age="steps-younger"]').click();
   for(const area of ['move','eat','money','work'])await page.locator('.enough-group').filter({has:page.locator('#area-'+area)}).screenshot({path:path.join(destination,width+'-'+area+'.png')});
   await page.locator('#sets summary').click();await page.locator('#sets').screenshot({path:path.join(destination,width+'-sets-detail.png')});await page.locator('#protein summary').click();await page.locator('#protein').screenshot({path:path.join(destination,width+'-protein-detail.png')});await page.locator('.site-footer').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(destination,width+'-footer.png')});
   await context.close();console.log('PASS '+width+' px: full art, click/drag/keyboard charts, axes, short evidence, removed panels, reference styling and accessibility');
@@ -147,7 +148,7 @@ const clickFraction=async(page,plot,f)=>{
   await page.goto(url+'/enough.html?curve='+curve);await ready(page);assert.equal(await page.locator('#overview-'+curve).getAttribute('hidden'),null);assert.equal(await page.locator('.overview-panel:visible').count(),1);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Alternative starting curve fits');
  }
- await page.goto(url+'/enough.html?steps-age=older#steps-longer');await ready(page);assert.equal(await page.locator('#longer-steps-older').getAttribute('hidden'),null);assert.equal(await page.locator('[data-steps-age="steps-older"]').getAttribute('aria-pressed'),'true');
+ await page.goto(url+'/enough.html?steps-age=older#steps-longer');await ready(page);assert.equal(await page.locator('[data-steps-age="steps-older"]').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#steps .enough-chart').getAttribute('aria-valuenow'),'6000');assert.match(await page.locator('#overview-baseline-steps').textContent(),/3,000/);assert.ok(await page.locator('#steps').evaluate(el=>Math.abs(el.getBoundingClientRect().top-20)<3),'Old longer-study link reaches the consolidated walking card');
  await page.goto(url+'/enough-lab.html');assert.equal(await page.locator('select').count(),3);await page.locator('#lab-painting').selectOption('homer');await page.locator('#lab-curve').selectOption('protein');await page.locator('#lab-colors').selectOption('quiet');await page.waitForFunction(()=>document.querySelector('iframe').src.includes('homer')&&document.querySelector('iframe').src.includes('protein'));
  assert.deepEqual(errors,[],'No JavaScript errors');assert.deepEqual(failures,[],'No missing resources');console.log('PASS painting/curve chooser and resources');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

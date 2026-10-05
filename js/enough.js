@@ -5,6 +5,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=(n,d=0)=>(Math.abs(n)<.5*10**(-d)?0:Number(n)).toLocaleString('en-US',{maximumFractionDigits:d});
 const curves=new Map(data.curves.map(c=>[c.id,c])),states=new Map();
+const params=new URLSearchParams(location.search),walkingCurves=new Map(data.stepComparisons.map(c=>[c.id,c])),walkingDoses=new Map(data.stepComparisons.map(c=>[c.id,c.defaultDose])),walkingViews=[];
+let walkingAge=params.get('steps-age')==='older'?'steps-older':'steps-younger';
 const groups=[
  ['move','Move','The first steps count.',['steps','exercise']],
  ['lift','Lift','Protein and training volume.',['protein','sets']],
@@ -56,7 +58,7 @@ function readout(c,d){
 }
 function physical(c,d){return c.kind==='categories'&&c.id!=='alcohol'?c.points[Math.round(d)].sourceDose:d;}
 function geometry(width,overview=false,longer=false){
- const w=Math.max(180,width),h=longer?(w<500?260:320):overview?(w<500?170:212):220,L=42,R=12,T=30,B=56;
+ const w=Math.max(180,width),h=overview?(longer?(w<500?200:240):(w<500?170:212)):220,L=42,R=12,T=30,B=56;
  return {w,h,L,R,T,B,pw:w-L-R,ph:h-T-B};
 }
 function chart(c,width,d,overview=false){
@@ -77,12 +79,12 @@ function chart(c,width,d,overview=false){
  const band=sweet?`<rect x="${x(sweet[0])}" y="${T}" width="${x(sweet[1])-x(sweet[0])}" height="${ph}" class="en-area"/>`:mode==='model'||mode==='comparison'||c.id==='steps'?`<path class="en-uncertainty" d="${path(ps,'low')} ${path([...ps].reverse(),'high').replace(/^M/,'L')} Z"/>`:'';
  const dots=c.kind==='categories'?ps.map(v=>`<circle cx="${x(v)}" cy="${y(value(v))}" r="3" fill="var(--area)"/>`).join(''):'';
  const openingAxes={steps:'Lower risk than at 2,000 steps, %',exercise:'Lower risk than no exercise, %',protein:'Extra lean-mass gain, lb (model)'};
- const yLabel=overview?openingAxes[c.id]:scale?scale.label:mode==='model'?'Model difference vs no training, %':mode==='sweet'?'Extra risk of dying, %':c.id==='smoking'?'Extra heart disease risk, %':'Extra risk of dying, %';
+ const yLabel=overview?(mode==='comparison'?`Lower risk than at ${fmt(c.referenceDose)} steps, %`:openingAxes[c.id]):scale?scale.label:mode==='model'?'Model difference vs no training, %':mode==='sweet'?'Extra risk of dying, %':c.id==='smoking'?'Extra heart disease risk, %':'Extra risk of dying, %';
  return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><clipPath id="${clip}"><rect x="${L}" y="${T-3}" width="${Math.max(0,x(selected)-L)}" height="${ph+6}"/></clipPath></defs><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`).join('')}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${baseY}" y2="${baseY}"/>${d90!==null?`<line class="en-target" x1="${L}" x2="${w-R}" y1="${y(value(d90))}" y2="${y(value(d90))}"/><line class="en-guide" x1="${x(d90)}" x2="${x(d90)}" y1="${T}" y2="${T+ph}"/>`:''}${mode==='benefit'&&c.id!=='savings'?`${c.id==='steps'?'':`<path class="en-area" clip-path="url(#${clip})" d="${line} L${x(max)},${baseY} L${x(min)},${baseY}Z"/>`}<path class="en-curve en-remainder" style="${c.kind==='categories'?'stroke-dasharray:3 5':''}" d="${line}"/><path class="en-curve" clip-path="url(#${clip})" style="${c.kind==='categories'?'stroke-dasharray:3 5':''}" d="${line}"/>`:`<path class="en-curve" style="${c.kind==='categories'?'stroke-dasharray:3 5':''}" d="${line}"/>`}${dots}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/><circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${mode==='benefit'&&!overview?targetKey():''}`;
 }
 // Keep the on-page evidence brief. Full extraction, tables and caveats remain in the data file.
 const evidence={
- steps:[['steps-0','Ding 2025'],['Fourteen cohorts followed people’s habits rather than assigning walks. The chart uses Table 2’s estimates, with 2,000 steps as its baseline.','The late improvement moves the 90% mark to 10,500. A shorter range would move it substantially. Shading shows the published 95% limits. Higher counts were too sparse to plot.']],
+ steps:[['paluch2022','Paluch 2022'],['The age-group curves follow observed habits, not assigned walks. Values are approximate readings of Figure 3, with published 95% confidence bands. High counts are sparsely studied, and neither flatter range is an exact cutoff.','US guidelines don’t require 10,000 steps. They recommend 150 to 300 minutes of moderate activity a week and strength training on at least two days. Step count doesn’t capture all activity.'],['guidelines','US guidelines']],
  exercise:[['activity-0','Garcia 2023'],['Observed activity and mortality. The shown window contains 94% of the source’s person-years; the sparse high-dose tail continues beyond it. The chosen endpoint affects “enough.”','Minutes mean moderate exercise. Count a vigorous minute as two. Published 95% limits and the original energy units are in the data.']],
  protein:[['morton','Morton 2018'],['Healthy adults lifting weights. The model forces a plateau near 0.73 g/lb/day; it did not clearly beat a straight line (p=0.079). Protein means food and supplements together.','The published bend interval is broad: 0.47 to 1.00 g/lb. The 0.70 mark summarizes this model, not a universal ceiling. Lean mass includes muscle and water.']],
  sets:[['sets-0','Pelland 2026'],['The model favors more volume with diminishing returns, but evidence above about 25 sets is sparse. The shaded band is a 95% credible interval for modeled muscle-size ratios, not your percentage of growth. Indirect work counts as half a set.','A newer trial found similar outcomes at 9 and 36 sets in trained adults. It is a preprint, used circumference and skinfolds, had dropouts and revised its analysis plan. No optimum is established.'],['steele2026','Steele 2026 preprint']],
@@ -100,7 +102,7 @@ function detail(c){
  const link=([id,label])=>{const source=c.sources.find(s=>s.id===id);return `<a href="${esc(source.url)}">${esc(label)}</a>`;};
  return `<details class="enough-detail"><summary>Evidence and limits</summary><p>${paragraphs[0]} ${link(primary)}.</p><p>${paragraphs[1]}${other?' '+link(other)+'.':''}</p><p><a href="js/enough-data.js" download>Full data and methods</a></p></details>`;
 }
-function interactive(box,{min,max,step,name,description,get,set,fromPointer}){
+function interactive(box,{min,max,step,name,description,get,set,fromPointer,bounds=()=>[min,max]}){
  box.setAttribute('role','slider');box.tabIndex=0;box.setAttribute('aria-label',name);
  box.setAttribute('aria-valuemin',min);box.setAttribute('aria-valuemax',max);
  box.setAttribute('aria-describedby',description+' chart-help');box.setAttribute('aria-orientation','horizontal');
@@ -108,7 +110,7 @@ function interactive(box,{min,max,step,name,description,get,set,fromPointer}){
  box.addEventListener('keydown',e=>{
   pointerFocus=false;box.classList.remove('en-pointer-away');
   const deltas={ArrowRight:step,ArrowUp:step,ArrowLeft:-step,ArrowDown:-step,PageUp:step*10,PageDown:-step*10};
-  if(e.key==='Home'||e.key==='End'||e.key in deltas){e.preventDefault();set(e.key==='Home'?min:e.key==='End'?max:get()+deltas[e.key]);}
+  if(e.key==='Home'||e.key==='End'||e.key in deltas){const [minimum,maximum]=bounds();e.preventDefault();set(e.key==='Home'?minimum:e.key==='End'?maximum:get()+deltas[e.key]);}
  });
  box.addEventListener('pointerleave',e=>{if(pointerFocus&&e.pointerType!=='touch')box.classList.add('en-pointer-away');});
  box.addEventListener('pointerenter',e=>{if(pointerFocus&&e.pointerType!=='touch')box.classList.remove('en-pointer-away');});
@@ -141,13 +143,44 @@ function doseFromPointer(c,box,e){
  }
  return min+f*(max-min);
 }
+// One walking study and age selection drive both the opening preview and its card.
+const textIfChanged=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
+function walkingBaseline(c){return `${c.title}. Compared with ${fmt(c.referenceDose)} steps/day. Shading: 95% confidence interval.`;}
+function bindWalking(plot,output,baseline,card=null){
+ const preview=!card;
+ const update=()=>{
+  const c=walkingCurves.get(walkingAge),dose=walkingDoses.get(walkingAge),value=readout(c,dose);
+  plot.innerHTML=chart(c,plot.clientWidth,dose,preview);
+  plot.setAttribute('aria-valuemin',c.view.range[0]);plot.setAttribute('aria-valuemax',c.view.range[1]);plot.setAttribute('aria-valuenow',dose);plot.setAttribute('aria-valuetext',value);
+  textIfChanged(baseline,walkingBaseline(c));
+  if(card){
+   output.textContent=`${fmt(dose)} steps/day: about ${fmt(M.outcome(c,dose))}% lower risk of dying.`;
+   textIfChanged(card.querySelector('.enough-answer'),c.view.answer);textIfChanged(card.querySelector('.enough-fact'),c.fact);
+   for(const button of card.querySelectorAll('[data-steps-age]'))button.setAttribute('aria-pressed',button.dataset.stepsAge===walkingAge);
+  }else{
+   if(!output.firstElementChild)output.innerHTML='<span></span><strong></strong>';
+   textIfChanged(output.firstElementChild,`${fmt(dose)} steps/day`);textIfChanged(output.lastElementChild,`About ${fmt(M.outcome(c,dose))}% lower risk of dying`);
+   const context=plot.parentElement.querySelector('.overview-context');if(context.dataset.age!==walkingAge){context.innerHTML=`Flatter around ${fmt(c.authorPlateauRange[0])} to ${fmt(c.authorPlateauRange[1])} steps/day. <a href="#steps">Walking details</a>`;context.dataset.age=walkingAge;}
+  }
+ };
+ const set=value=>{const c=walkingCurves.get(walkingAge);walkingDoses.set(walkingAge,M.clamp(Math.round(value/100)*100,...c.view.range));for(const view of walkingViews)view.update();};
+ const c=walkingCurves.get(walkingAge);
+ interactive(plot,{min:c.view.range[0],max:c.view.range[1],step:100,name:(preview?'Opening chart: ':'')+'How much walking?',description:baseline.id,get:()=>walkingDoses.get(walkingAge),set,bounds:()=>walkingCurves.get(walkingAge).view.range,fromPointer:e=>doseFromPointer(walkingCurves.get(walkingAge),plot,e)});
+ const state={update};walkingViews.push(state);return state;
+}
 for(const [area,title,dek,ids]of groups){
  const section=document.createElement('section');section.className='enough-group';section.style.setProperty('--area',`var(--en-${area})`);section.setAttribute('aria-labelledby','area-'+area);
  section.innerHTML=`<div class="area-heading"><h2 id="area-${area}">${esc(title)}</h2><p>${esc(dek)}</p></div><div class="${ids.length>1?'enough-grid':'enough-feature'}"></div>`;
  for(const id of ids){
   const c=curves.get(id),card=document.createElement('article');card.id=id;card.className='enough-card'+(ids.length===1?' feature':'');
-  card.innerHTML=`<div class="card-copy"><span class="shape">${esc(shape(c))}</span><h3>${esc(c.question)}</h3><p class="enough-answer">${esc(c.view.answer)}</p><p class="enough-fact">${esc(c.fact)}</p></div><div class="card-plot"><div class="enough-chart"></div><p class="enough-readout" id="readout-${id}"></p><p class="enough-range-note" id="range-note-${id}">${esc(c.view.rangeLabel)}.${id==='steps'?' Shading: 95% confidence interval. <a href="#steps-longer">See a longer study</a>':''}</p></div>${detail(c)}`;
+  card.innerHTML=`<div class="card-copy"><span class="shape">${esc(shape(c))}</span><h3>${esc(c.question)}</h3><p class="enough-answer">${esc(c.view.answer)}</p><p class="enough-fact">${esc(c.fact)}</p></div><div class="card-plot"><div class="enough-chart"></div><p class="enough-readout" id="readout-${id}"></p><p class="enough-range-note" id="range-note-${id}">${esc(c.view.rangeLabel)}.</p></div>${detail(c)}`;
   section.lastElementChild.append(card);const plot=card.querySelector('.enough-chart'),output=card.querySelector('.enough-readout');
+  if(id==='steps'){
+   card.querySelector('.enough-answer').insertAdjacentHTML('beforebegin','<div class="overview-choices walking-age-choices" role="group" aria-label="Choose the walking study age group"><button type="button" data-steps-age="steps-younger">Under 60</button><button type="button" data-steps-age="steps-older">60+</button></div>');
+   const state=bindWalking(plot,output,card.querySelector('.enough-range-note'),card);states.set(id,{c,...state});
+   for(const button of card.querySelectorAll('[data-steps-age]'))button.addEventListener('click',()=>{walkingAge=button.dataset.stepsAge;for(const view of walkingViews)view.update();});
+   continue;
+  }
   const [min,max]=c.view.range,step=c.kind==='categories'?1:c.id==='steps'?100:c.id==='protein'?.01:c.id==='sleep'?.1:c.id==='work'?.5:1;
   let dose=M.enough(c)??(c.view.mode==='sweet'?7:c.id==='sets'?10:0);
   const update=()=>{plot.innerHTML=chart(c,plot.clientWidth,dose);const value=readout(c,dose);output.textContent=value;plot.setAttribute('aria-valuenow',dose);plot.setAttribute('aria-valuetext',value);};
@@ -159,16 +192,17 @@ for(const [area,title,dek,ids]of groups){
 }
 $('enough-loading')?.remove();
 const overviewIds=['steps','exercise','protein'];
-const params=new URLSearchParams(location.search),overviewBox=$('overview-chart'),overviewStates=new Map();
+const overviewBox=$('overview-chart'),overviewStates=new Map();
 const openingCopy={
- steps:{name:'Walking',default:7000,amount:d=>fmt(d)+' steps/day',result:v=>fmt(v,1)+'% lower risk of dying',baseline:'Compared with 2,000 steps/day in these studies. Shading: 95% confidence interval.',context:'At 12,000 steps: 55% lower risk. No established maximum.'},
+ steps:{name:'Walking'},
  exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:v=>fmt(v,1)+'% lower risk of dying',baseline:'Compared with no exercise in these studies.',context:'At 600 minutes: 38.4% lower risk. The source continues beyond this range.'},
  protein:{name:'Protein',default:.7,amount:d=>fmt(d,2)+' g/lb/day',result:v=>fmt(v,1)+' lb more lean-mass gain',baseline:'Compared with 0.41 g/lb/day while lifting, in this model.',context:'The model levels off near 0.73 g/lb/day. The bend is uncertain.'}
 };
 for(const id of overviewIds){
  const c=curves.get(id),copy=openingCopy[id],panel=document.createElement('div');panel.className='overview-panel';panel.id='overview-'+id;panel.style.setProperty('--area',`var(--en-${c.view.area})`);
- panel.innerHTML=`<div class="overview-plot"></div><p class="overview-reading" id="overview-readout-${id}"></p><p class="overview-baseline" id="overview-baseline-${id}">${esc(copy.baseline)}</p><p class="overview-context">${esc(copy.context)} <a href="#${id==='steps'?'steps-longer':id}">${id==='steps'?'See a longer study':copy.name+' details'}</a></p>`;
+ panel.innerHTML=`<div class="overview-plot"></div><p class="overview-reading" id="overview-readout-${id}"></p><p class="overview-baseline" id="overview-baseline-${id}">${esc(copy.baseline||'')}</p><p class="overview-context">${esc(copy.context||'')} <a href="#${id}">${copy.name} details</a></p>`;
  overviewBox.append(panel);const plot=panel.querySelector('.overview-plot'),output=panel.querySelector('.overview-reading'),[min,max]=c.view.range,step=id==='steps'?100:id==='protein'?.01:1;let dose=copy.default;
+ if(id==='steps'){overviewStates.set(id,{panel,...bindWalking(plot,output,panel.querySelector('.overview-baseline'))});continue;}
  const update=()=>{plot.innerHTML=chart(c,plot.clientWidth,dose,true);output.innerHTML=`<span>${esc(copy.amount(dose))}</span><strong>${esc(copy.result(M.outcome(c,dose)))}</strong>`;plot.setAttribute('aria-valuenow',dose);plot.setAttribute('aria-valuetext',readout(c,dose));};
  const set=value=>{dose=value<=min?min:value>=max?max:Number((Math.round(value/step)*step).toFixed(4));dose=M.clamp(dose,min,max);update();};
  interactive(plot,{min,max,step,name:'Opening chart: '+c.question,description:'overview-baseline-'+id,get:()=>dose,set,fromPointer:e=>doseFromPointer(c,plot,e)});
@@ -180,35 +214,13 @@ function overview(){
  for(const button of document.querySelectorAll('[data-opening-curve]')){const selected=button.dataset.openingCurve===opening;button.setAttribute('aria-pressed',selected);button.setAttribute('aria-controls','overview-'+button.dataset.openingCurve);}
 }
 for(const button of document.querySelectorAll('[data-opening-curve]'))button.addEventListener('click',()=>{opening=button.dataset.openingCurve;overview();});
-// A separate older study supplies a longer observed range; never splice its baselines.
-const longerStates=new Map(),longerSection=document.createElement('section');
-longerSection.id='steps-longer';longerSection.className='steps-longer';longerSection.setAttribute('aria-labelledby','steps-longer-title');
-longerSection.innerHTML=`<h3 id="steps-longer-title">Where does walking flatten out?</h3><p class="steps-long-intro">A 2022 study plots a longer range: 16,000 steps.</p><div class="overview-choices steps-age-choices" role="group" aria-label="Choose the study age group"><button type="button" data-steps-age="steps-younger">Under 60</button><button type="button" data-steps-age="steps-older">60+</button></div>`;
-for(const c of data.stepComparisons){
- const panel=document.createElement('div');panel.id='longer-'+c.id;panel.className='steps-long-panel';panel.hidden=true;
- const note=c.id==='steps-younger'?'Flatter around 8,000 to 10,000. The tail bends back and uncertainty widens.':'Flatter around 6,000 to 8,000. This curve keeps improving slowly afterward.';
- panel.innerHTML=`<div class="steps-long-plot"></div><p class="enough-readout" id="longer-readout-${c.id}"></p><p class="steps-long-note">${note}</p><p class="enough-range-note" id="longer-baseline-${c.id}">Adults ${c.id==='steps-younger'?'under 60':'60+'}. Compared with ${fmt(c.referenceDose)} steps/day. Shading: 95% confidence interval.</p>`;
- longerSection.append(panel);const plot=panel.querySelector('.steps-long-plot'),output=panel.querySelector('.enough-readout'),[min,max]=c.view.range;let dose=c.defaultDose;
- const update=()=>{plot.innerHTML=chart(c,plot.clientWidth,dose);const value=readout(c,dose);output.textContent=`${fmt(dose)} steps/day: about ${fmt(M.outcome(c,dose))}% lower risk of dying.`;plot.setAttribute('aria-valuenow',dose);plot.setAttribute('aria-valuetext',value);};
- const set=value=>{dose=M.clamp(Math.round(value/100)*100,min,max);update();};
- interactive(plot,{min,max,step:100,name:'Longer walking chart: '+c.title,description:'longer-baseline-'+c.id,get:()=>dose,set,fromPointer:e=>doseFromPointer(c,plot,e)});
- longerStates.set(c.id,{panel,update});
-}
-longerSection.insertAdjacentHTML('beforeend',`<details class="enough-detail"><summary>Evidence and limits</summary><p>Neither flatter range is an exact cutoff. The 2025 curve ends at 12,000 because higher counts were too sparse.</p><p>These are approximate readings of <a href="https://doi.org/10.1016/S2468-2667(21)00302-9">Paluch 2022, Figure 3</a>, with different groups and baselines. They track habits, so adding steps may not change your own risk by the amount shown. <a href="js/enough-data.js" download>Full data and methods</a>.</p></details>`);
-$('area-move').closest('.enough-group').append(longerSection);
-let stepsAge=params.get('steps-age')==='older'?'steps-older':'steps-younger';
-function longer(){
- for(const [id,state]of longerStates){state.panel.hidden=id!==stepsAge;if(id===stepsAge)state.update();}
- for(const button of longerSection.querySelectorAll('[data-steps-age]')){button.setAttribute('aria-pressed',button.dataset.stepsAge===stepsAge);button.setAttribute('aria-controls','longer-'+button.dataset.stepsAge);}
-}
-for(const button of longerSection.querySelectorAll('[data-steps-age]'))button.addEventListener('click',()=>{stepsAge=button.dataset.stepsAge;longer();});
 const painting=params.get('painting');if(['homer','chardin'].includes(painting)){
  $('hero-painting').src='assets/enough/'+painting+'.jpg';$('hero-picture').querySelector('source').srcset='assets/enough/'+painting+'.webp';
  $('hero-painting').alt=painting==='homer'?'Four people sail a small boat in Winslow Homer’s Breezing Up.':'Fruit, a jug and a glass on a table, painted by Chardin.';
  $('painting-credit').innerHTML=painting==='homer'?'Winslow Homer, <a href="https://www.nga.gov/artworks/30228-breezing-fair-wind">Breezing Up (A Fair Wind)</a>, 1873 to 1876. National Gallery of Art, 1943.13.1. Public domain.':'Jean Simeon Chardin, <a href="https://www.nga.gov/artworks/12202-fruit-jug-and-glass">Fruit, Jug, and a Glass</a>, c. 1726/1728. National Gallery of Art, 1943.7.4. Public domain.';
 }
 if(params.get('colors')==='quiet')for(const area of ['move','lift','rest','eat','money','work'])document.querySelector('.enough-shell').style.setProperty('--en-'+area,'var(--accent)');
-let timer;window.addEventListener('resize',()=>{clearTimeout(timer);timer=setTimeout(()=>{overview();longer();for(const s of states.values())s.update();},60);});
-overviewBox.classList.add('en-initial');overview();longer();for(const s of states.values())s.update();
-const hash=decodeURIComponent(location.hash.slice(1));if(states.has(hash)||hash==='steps-longer')requestAnimationFrame(()=>$(hash)?.scrollIntoView());
+let timer;window.addEventListener('resize',()=>{clearTimeout(timer);timer=setTimeout(()=>{overview();for(const s of states.values())s.update();},60);});
+overviewBox.classList.add('en-initial');overview();for(const s of states.values())s.update();
+const hash=decodeURIComponent(location.hash.slice(1)),target=hash==='steps-longer'?'steps':hash;if(states.has(target))requestAnimationFrame(()=>$(target)?.scrollIntoView());
 })();

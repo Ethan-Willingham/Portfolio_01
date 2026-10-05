@@ -11,226 +11,454 @@ window.EnoughData = {
   "curves": [
     {
       "id": "steps",
-      "question": "How much walking?",
-      "fact": "7,000 steps went with 47% lower risk of dying than 2,000.",
+      "title": "Adults under 60",
       "kind": "points",
-      "shape": "Most arrives early",
-      "unit": "steps/day",
       "effectKind": "risk",
-      "effectUnit": "Relative all-cause mortality risk",
-      "outcome": "all-cause mortality risk",
+      "effectUnit": "Approximate relative all-cause mortality risk; 5,000 steps/day = 1",
       "better": "lower",
       "domain": [
-        2000,
-        12000
+        5000,
+        16000
       ],
       "ticks": [
-        2000,
-        7000,
-        12000
+        5000,
+        10000,
+        16000
       ],
-      "defaultDose": 7000,
-      "evidence": "dose-response meta-analysis of prospective cohorts",
-      "population": "14 cohorts/studies, 161176 adults, predominantly high-income countries",
-      "caveats": [
-        "The studies followed people’s habits. They do not establish how much your personal risk would change if you added steps.",
-        "The curve improves quickly, flattens in the middle, then improves again near its upper end. Using a shorter 2,000 to 10,000 range would move the 90% point to about 5,067 steps.",
-        "At a measured average cadence of 113.6 steps a minute at 3 mph,7,000 steps is about 3.1 miles in 62 minutes. This is an illustration, not an extra walk on top of your daily steps."
+      "referenceDose": 5000,
+      "authorPlateauRange": [
+        8000,
+        10000
       ],
-      "extraction": "Direct transcription of Table 2 at 1000-step increments. No image digitization. Reference CI [1,1] is algebraic, not known risk.",
-      "uncertainty": "95% confidence interval around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
-      "sources": [
-        {
-          "id": "steps-0",
-          "url": "https://doi.org/10.1016/S2468-2667(25)00164-1",
-          "citation": "Ding et al. 2025. Daily steps and health outcomes in adults: a systematic review and dose-response meta-analysis",
-          "location": "Table 2, all-cause mortality column, e676"
+      "defaultDose": 8000,
+      "view": {
+        "mode": "comparison",
+        "range": [
+          5000,
+          16000
+        ],
+        "yScale": {
+          "min": -20,
+          "max": 80,
+          "ticks": [
+            -20,
+            0,
+            20,
+            40,
+            60,
+            80
+          ],
+          "label": "Approx. lower risk of dying, %"
         },
-        {
-          "id": "cadence",
-          "url": "https://link.springer.com/article/10.1186/s12966-019-0769-6",
-          "citation": "Tudor-Locke et al.2019, CADENCE-Adults",
-          "location": "Table2,3.0 mph row, measured mean cadence"
-        }
-      ],
-      "intervalKind": "confidence",
+        "area": "move",
+        "shape": "Flatter region",
+        "answer": "8,000 to 10,000 steps/day",
+        "rangeLabel": "5,000 to 16,000 steps a day"
+      },
       "points": [
         {
-          "dose": 2000,
-          "effect": 1,
-          "ciLow": 1,
-          "ciHigh": 1,
-          "source": "steps-0",
-          "low": 1,
-          "high": 1,
-          "location": "Table 2, all-cause mortality, 2000 steps/day row",
-          "share": 0
-        },
-        {
-          "dose": 3000,
-          "effect": 0.77,
-          "ciLow": 0.71,
-          "ciHigh": 0.83,
-          "source": "steps-0",
-          "low": 0.71,
-          "high": 0.83,
-          "location": "Table 2, all-cause mortality, 3000 steps/day row",
-          "share": 41.81818181818181
-        },
-        {
-          "dose": 4000,
-          "effect": 0.64,
-          "ciLow": 0.57,
-          "ciHigh": 0.73,
-          "source": "steps-0",
-          "low": 0.57,
-          "high": 0.73,
-          "location": "Table 2, all-cause mortality, 4000 steps/day row",
-          "share": 65.45454545454545
-        },
-        {
           "dose": 5000,
-          "effect": 0.57,
-          "ciLow": 0.5,
-          "ciHigh": 0.66,
-          "source": "steps-0",
-          "low": 0.5,
-          "high": 0.66,
-          "location": "Table 2, all-cause mortality, 5000 steps/day row",
-          "share": 78.18181818181819
+          "effect": 1.0,
+          "low": 0.9985,
+          "high": 1.0015,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5250,
+          "effect": 0.9434,
+          "low": 0.9099,
+          "high": 0.978,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5500,
+          "effect": 0.8898,
+          "low": 0.8265,
+          "high": 0.9579,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 5750,
+          "effect": 0.8396,
+          "low": 0.7513,
+          "high": 0.9384,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 6000,
-          "effect": 0.54,
-          "ciLow": 0.47,
-          "ciHigh": 0.62,
-          "source": "steps-0",
-          "low": 0.47,
-          "high": 0.62,
-          "location": "Table 2, all-cause mortality, 6000 steps/day row",
-          "share": 83.63636363636363
+          "effect": 0.793,
+          "low": 0.684,
+          "high": 0.9194,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6250,
+          "effect": 0.7502,
+          "low": 0.6244,
+          "high": 0.9013,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6500,
+          "effect": 0.7113,
+          "low": 0.5724,
+          "high": 0.884,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 6750,
+          "effect": 0.6765,
+          "low": 0.5273,
+          "high": 0.8679,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 7000,
-          "effect": 0.53,
-          "ciLow": 0.46,
-          "ciHigh": 0.6,
-          "source": "steps-0",
-          "low": 0.46,
-          "high": 0.6,
-          "location": "Table 2, all-cause mortality, 7000 steps/day row",
-          "share": 85.45454545454545
+          "effect": 0.6456,
+          "low": 0.4887,
+          "high": 0.8529,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7250,
+          "effect": 0.6188,
+          "low": 0.4563,
+          "high": 0.8392,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7500,
+          "effect": 0.596,
+          "low": 0.4296,
+          "high": 0.8269,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 7750,
+          "effect": 0.5773,
+          "low": 0.4083,
+          "high": 0.8163,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 8000,
-          "effect": 0.52,
-          "ciLow": 0.46,
-          "ciHigh": 0.6,
-          "source": "steps-0",
-          "low": 0.46,
-          "high": 0.6,
-          "location": "Table 2, all-cause mortality, 8000 steps/day row",
-          "share": 87.27272727272727
+          "effect": 0.5627,
+          "low": 0.3922,
+          "high": 0.8073,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8250,
+          "effect": 0.5516,
+          "low": 0.3804,
+          "high": 0.8,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8500,
+          "effect": 0.5437,
+          "low": 0.3722,
+          "high": 0.7942,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 8750,
+          "effect": 0.5383,
+          "low": 0.3669,
+          "high": 0.7899,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 9000,
-          "effect": 0.52,
-          "ciLow": 0.46,
-          "ciHigh": 0.6,
-          "source": "steps-0",
-          "low": 0.46,
-          "high": 0.6,
-          "location": "Table 2, all-cause mortality, 9000 steps/day row",
-          "share": 87.27272727272727
+          "effect": 0.5352,
+          "low": 0.364,
+          "high": 0.787,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9250,
+          "effect": 0.534,
+          "low": 0.3631,
+          "high": 0.7853,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9500,
+          "effect": 0.5342,
+          "low": 0.3635,
+          "high": 0.7849,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 9750,
+          "effect": 0.5356,
+          "low": 0.3651,
+          "high": 0.7857,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 10000,
-          "effect": 0.52,
-          "ciLow": 0.45,
-          "ciHigh": 0.59,
-          "source": "steps-0",
-          "low": 0.45,
-          "high": 0.59,
-          "location": "Table 2, all-cause mortality, 10000 steps/day row",
-          "share": 87.27272727272727
+          "effect": 0.5378,
+          "low": 0.3672,
+          "high": 0.7875,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10250,
+          "effect": 0.5405,
+          "low": 0.3697,
+          "high": 0.7902,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10500,
+          "effect": 0.5433,
+          "low": 0.372,
+          "high": 0.7936,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 10750,
+          "effect": 0.5462,
+          "low": 0.374,
+          "high": 0.7978,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 11000,
-          "effect": 0.49,
-          "ciLow": 0.43,
-          "ciHigh": 0.57,
-          "source": "steps-0",
-          "low": 0.43,
-          "high": 0.57,
-          "location": "Table 2, all-cause mortality, 11000 steps/day row",
-          "share": 92.72727272727272
+          "effect": 0.5491,
+          "low": 0.3757,
+          "high": 0.8027,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11250,
+          "effect": 0.552,
+          "low": 0.3771,
+          "high": 0.8082,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11500,
+          "effect": 0.555,
+          "low": 0.3781,
+          "high": 0.8145,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 11750,
+          "effect": 0.5579,
+          "low": 0.3789,
+          "high": 0.8215,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         },
         {
           "dose": 12000,
-          "effect": 0.45,
-          "ciLow": 0.39,
-          "ciHigh": 0.53,
-          "source": "steps-0",
-          "low": 0.39,
-          "high": 0.53,
-          "location": "Table 2, all-cause mortality, 12000 steps/day row",
-          "share": 100
+          "effect": 0.5609,
+          "low": 0.3794,
+          "high": 0.8292,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12250,
+          "effect": 0.5639,
+          "low": 0.3796,
+          "high": 0.8375,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12500,
+          "effect": 0.5668,
+          "low": 0.3795,
+          "high": 0.8467,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 12750,
+          "effect": 0.5699,
+          "low": 0.3792,
+          "high": 0.8564,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13000,
+          "effect": 0.5729,
+          "low": 0.3786,
+          "high": 0.867,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13250,
+          "effect": 0.5759,
+          "low": 0.3777,
+          "high": 0.8782,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13500,
+          "effect": 0.579,
+          "low": 0.3766,
+          "high": 0.8901,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 13750,
+          "effect": 0.5821,
+          "low": 0.3753,
+          "high": 0.9026,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14000,
+          "effect": 0.5852,
+          "low": 0.3739,
+          "high": 0.9159,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14250,
+          "effect": 0.5883,
+          "low": 0.3722,
+          "high": 0.9298,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14500,
+          "effect": 0.5914,
+          "low": 0.3704,
+          "high": 0.9443,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 14750,
+          "effect": 0.5945,
+          "low": 0.3684,
+          "high": 0.9595,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15000,
+          "effect": 0.5977,
+          "low": 0.3662,
+          "high": 0.9754,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15250,
+          "effect": 0.6009,
+          "low": 0.364,
+          "high": 0.9919,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15500,
+          "effect": 0.6041,
+          "low": 0.3616,
+          "high": 1.0091,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 15750,
+          "effect": 0.6073,
+          "low": 0.3591,
+          "high": 1.0269,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
+        },
+        {
+          "dose": 16000,
+          "effect": 0.6104,
+          "low": 0.3566,
+          "high": 1.0451,
+          "source": "paluch2022",
+          "location": "Figure 3, PDF page 6, printed e224"
         }
       ],
-      "unitLabel": "steps a day",
-      "yDomain": [
-        0.35,
-        1.05
+      "extraction": "Approximate reconstruction of Figure 3 vector 95% bands using linear x and logarithmic HR calibration. Central estimates use the geometric midpoint of those bands, checked against the drawn centerline with less than 1 percentage point of risk-reduction deviation. A fixed multiplier for the stated reference corrects a graphical anchor offset below 0.4%, shared by center and both bounds. Samples every 250 steps inside the plotted range only. These are figure readings, not author coefficients. No exact enough point is calculated.",
+      "source": "https://doi.org/10.1016/S2468-2667(21)00302-9",
+      "verified": "2026-10-05",
+      "population": "Age-stratified mortality curves from 14 cohorts in Figure 3; BLSA excluded from this figure.",
+      "intervalKind": "confidence",
+      "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
+      "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
+      "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
+      "centerlineCheckMaxRiskDifference": 0.009550150370816968,
+      "question": "How much walking?",
+      "shape": "Diminishing returns",
+      "unit": "steps/day",
+      "outcome": "all-cause mortality risk",
+      "evidence": "age-specific dose-response meta-analysis of prospective cohorts",
+      "sources": [
+        {
+          "id": "paluch2022",
+          "url": "https://doi.org/10.1016/S2468-2667(21)00302-9",
+          "citation": "Paluch et al. 2022. Daily steps and all-cause mortality: a meta-analysis of 15 international cohorts. Lancet Public Health 7:e219-e228.",
+          "location": "Figure 3, e224, 14 studies; BLSA excluded."
+        },
+        {
+          "id": "guidelines",
+          "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
+          "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
+          "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
+        }
       ],
-      "yTicks": [
-        0.4,
-        0.7,
-        1
+      "caveats": [
+        "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
+        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+."
       ],
-      "xLabel": "Steps a day",
-      "yLabel": "Death rate vs 2,000 steps",
-      "step": 100,
-      "personalNote": "The 7,000-step mark is a study benchmark, not a stopping point. Smaller increases were also associated with lower risk.",
-      "verified": "2026-10-04",
-      "doseDigits": 1,
-      "yDigits": 1,
-      "reviews": {
-        "researcher": "movement_research",
-        "adversary": "life_research",
-        "statistician": "diet_research"
+      "followupAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-figure and numerical validation. No independent review or human test claimed."
       },
-      "sourcePrecision": "source point grid with linear interpolation",
-      "view": {
-        "area": "move",
-        "mode": "benefit",
-        "answer": "About 10,500 steps",
-        "fact": "7,000 steps went with 47% lower risk of dying than 2,000.",
-        "range": [
-          2000,
-          12000
-        ],
-        "rangeLabel": "2,000 to 12,000 steps a day",
-        "default": 7000,
-        "ticks": [
-          2000,
-          7000,
-          12000
-        ]
-      },
-      "reverification": {
-        "researcher": "v2_move",
-        "adversary": "polish_audit"
-      },
-      "rangeMethod": "Range shown: 2,000 to 12,000 steps a day",
-      "enoughPolicy": "first90-in-declared-range",
       "computed": {
-        "enough": 10500.000000000015,
-        "sensitivity": [
-          9899.999999999993,
-          10649.999999999993
-        ],
+        "enough": null,
+        "sensitivity": null,
         "sweetRange": null
-      }
+      },
+      "fact": "Later results are uncertain."
     },
     {
       "id": "exercise",
@@ -22431,9 +22659,9 @@ window.EnoughData = {
     "revised": "2026-10-05",
     "axes": "Physical doses and source outcome units; no normalized benefit percentages are plotted.",
     "enoughLine": "90% of improvement from the displayed baseline to the best result shown, placed on the actual outcome scale.",
-    "opening": "One selectable curve; walking opens at 7,000 steps, 47% lower mortality risk compared with 2,000. The shown 12,000-step endpoint is 55%, not a universal maximum.",
+    "opening": "Walking uses the same Paluch 2022 age-group curve as its single card. Age selection and the physical marker stay synchronized. The initial marker is at the lower edge of the author-described flatter range, not a prescription.",
     "audit": "Primary agent rechecked Ding 2025 Table 2 and audited all eight previously normalized benefit curves. Source coordinates and enough computations are unchanged.",
-    "longerSteps": "Separate Paluch 2022 Figure 3 age-group curves, approximate published points to 16,000 steps, with distinct 5,000 and 3,000 step references and 95% bands. No extrapolation or enough mark."
+    "longerSteps": "One walking card, with under-60 and 60+ selection, approximate Figure 3 values to 16,000 steps and published 95% bands. No second walking section, extrapolation or enough mark. Ding 2025 is retained as supporting evidence."
   },
   "stepComparisons": [
     {
@@ -22457,7 +22685,7 @@ window.EnoughData = {
         8000,
         10000
       ],
-      "defaultDose": 10000,
+      "defaultDose": 8000,
       "view": {
         "mode": "comparison",
         "range": [
@@ -22477,7 +22705,10 @@ window.EnoughData = {
           ],
           "label": "Approx. lower risk of dying, %"
         },
-        "area": "move"
+        "area": "move",
+        "shape": "Flatter region",
+        "answer": "8,000 to 10,000 steps/day",
+        "rangeLabel": "5,000 to 16,000 steps a day"
       },
       "points": [
         {
@@ -22849,7 +23080,40 @@ window.EnoughData = {
       "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
       "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
       "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
-      "centerlineCheckMaxRiskDifference": 0.009550150370816968
+      "centerlineCheckMaxRiskDifference": 0.009550150370816968,
+      "question": "How much walking?",
+      "shape": "Diminishing returns",
+      "unit": "steps/day",
+      "outcome": "all-cause mortality risk",
+      "evidence": "age-specific dose-response meta-analysis of prospective cohorts",
+      "sources": [
+        {
+          "id": "paluch2022",
+          "url": "https://doi.org/10.1016/S2468-2667(21)00302-9",
+          "citation": "Paluch et al. 2022. Daily steps and all-cause mortality: a meta-analysis of 15 international cohorts. Lancet Public Health 7:e219-e228.",
+          "location": "Figure 3, e224, 14 studies; BLSA excluded."
+        },
+        {
+          "id": "guidelines",
+          "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
+          "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
+          "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
+        }
+      ],
+      "caveats": [
+        "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
+        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+."
+      ],
+      "followupAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-figure and numerical validation. No independent review or human test claimed."
+      },
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      },
+      "fact": "Later results are uncertain."
     },
     {
       "id": "steps-older",
@@ -22872,7 +23136,7 @@ window.EnoughData = {
         6000,
         8000
       ],
-      "defaultDose": 10000,
+      "defaultDose": 6000,
       "view": {
         "mode": "comparison",
         "range": [
@@ -22892,7 +23156,10 @@ window.EnoughData = {
           ],
           "label": "Approx. lower risk of dying, %"
         },
-        "area": "move"
+        "area": "move",
+        "shape": "Flatter region",
+        "answer": "6,000 to 8,000 steps/day",
+        "rangeLabel": "3,000 to 16,000 steps a day"
       },
       "points": [
         {
@@ -23328,7 +23595,265 @@ window.EnoughData = {
       "uncertainty": "Approximate readings of published pointwise 95% confidence bands, not a confidence interval for a plateau.",
       "sourcePDF": "https://myweighless.com/wp-content/uploads/2023/05/PIIS2468266721003029.pdf",
       "sourcePDFSHA256": "7938f2210b0e3642ab16b1dbb295bc6d727874347effbccdead120d4162ed323",
-      "centerlineCheckMaxRiskDifference": 0.00854802152353884
+      "centerlineCheckMaxRiskDifference": 0.00854802152353884,
+      "question": "How much walking?",
+      "shape": "Diminishing returns",
+      "unit": "steps/day",
+      "outcome": "all-cause mortality risk",
+      "evidence": "age-specific dose-response meta-analysis of prospective cohorts",
+      "sources": [
+        {
+          "id": "paluch2022",
+          "url": "https://doi.org/10.1016/S2468-2667(21)00302-9",
+          "citation": "Paluch et al. 2022. Daily steps and all-cause mortality: a meta-analysis of 15 international cohorts. Lancet Public Health 7:e219-e228.",
+          "location": "Figure 3, e224, 14 studies; BLSA excluded."
+        },
+        {
+          "id": "guidelines",
+          "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
+          "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
+          "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
+        }
+      ],
+      "caveats": [
+        "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
+        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+."
+      ],
+      "followupAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-figure and numerical validation. No independent review or human test claimed."
+      },
+      "computed": {
+        "enough": null,
+        "sensitivity": null,
+        "sweetRange": null
+      },
+      "fact": "This curve keeps improving slowly afterward."
     }
-  ]
+  ],
+  "supportingEvidence": {
+    "steps2025": {
+      "id": "steps",
+      "question": "How much walking?",
+      "fact": "7,000 steps went with 47% lower risk of dying than 2,000.",
+      "kind": "points",
+      "shape": "Most arrives early",
+      "unit": "steps/day",
+      "effectKind": "risk",
+      "effectUnit": "Relative all-cause mortality risk",
+      "outcome": "all-cause mortality risk",
+      "better": "lower",
+      "domain": [
+        2000,
+        12000
+      ],
+      "ticks": [
+        2000,
+        7000,
+        12000
+      ],
+      "defaultDose": 7000,
+      "evidence": "dose-response meta-analysis of prospective cohorts",
+      "population": "14 cohorts/studies, 161176 adults, predominantly high-income countries",
+      "caveats": [
+        "The studies followed people’s habits. They do not establish how much your personal risk would change if you added steps.",
+        "The curve improves quickly, flattens in the middle, then improves again near its upper end. Using a shorter 2,000 to 10,000 range would move the 90% point to about 5,067 steps.",
+        "At a measured average cadence of 113.6 steps a minute at 3 mph,7,000 steps is about 3.1 miles in 62 minutes. This is an illustration, not an extra walk on top of your daily steps."
+      ],
+      "extraction": "Direct transcription of Table 2 at 1000-step increments. No image digitization. Reference CI [1,1] is algebraic, not known risk.",
+      "uncertainty": "95% confidence interval around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
+      "sources": [
+        {
+          "id": "steps-0",
+          "url": "https://doi.org/10.1016/S2468-2667(25)00164-1",
+          "citation": "Ding et al. 2025. Daily steps and health outcomes in adults: a systematic review and dose-response meta-analysis",
+          "location": "Table 2, all-cause mortality column, e676"
+        },
+        {
+          "id": "cadence",
+          "url": "https://link.springer.com/article/10.1186/s12966-019-0769-6",
+          "citation": "Tudor-Locke et al.2019, CADENCE-Adults",
+          "location": "Table2,3.0 mph row, measured mean cadence"
+        }
+      ],
+      "intervalKind": "confidence",
+      "points": [
+        {
+          "dose": 2000,
+          "effect": 1,
+          "ciLow": 1,
+          "ciHigh": 1,
+          "source": "steps-0",
+          "low": 1,
+          "high": 1,
+          "location": "Table 2, all-cause mortality, 2000 steps/day row",
+          "share": 0
+        },
+        {
+          "dose": 3000,
+          "effect": 0.77,
+          "ciLow": 0.71,
+          "ciHigh": 0.83,
+          "source": "steps-0",
+          "low": 0.71,
+          "high": 0.83,
+          "location": "Table 2, all-cause mortality, 3000 steps/day row",
+          "share": 41.81818181818181
+        },
+        {
+          "dose": 4000,
+          "effect": 0.64,
+          "ciLow": 0.57,
+          "ciHigh": 0.73,
+          "source": "steps-0",
+          "low": 0.57,
+          "high": 0.73,
+          "location": "Table 2, all-cause mortality, 4000 steps/day row",
+          "share": 65.45454545454545
+        },
+        {
+          "dose": 5000,
+          "effect": 0.57,
+          "ciLow": 0.5,
+          "ciHigh": 0.66,
+          "source": "steps-0",
+          "low": 0.5,
+          "high": 0.66,
+          "location": "Table 2, all-cause mortality, 5000 steps/day row",
+          "share": 78.18181818181819
+        },
+        {
+          "dose": 6000,
+          "effect": 0.54,
+          "ciLow": 0.47,
+          "ciHigh": 0.62,
+          "source": "steps-0",
+          "low": 0.47,
+          "high": 0.62,
+          "location": "Table 2, all-cause mortality, 6000 steps/day row",
+          "share": 83.63636363636363
+        },
+        {
+          "dose": 7000,
+          "effect": 0.53,
+          "ciLow": 0.46,
+          "ciHigh": 0.6,
+          "source": "steps-0",
+          "low": 0.46,
+          "high": 0.6,
+          "location": "Table 2, all-cause mortality, 7000 steps/day row",
+          "share": 85.45454545454545
+        },
+        {
+          "dose": 8000,
+          "effect": 0.52,
+          "ciLow": 0.46,
+          "ciHigh": 0.6,
+          "source": "steps-0",
+          "low": 0.46,
+          "high": 0.6,
+          "location": "Table 2, all-cause mortality, 8000 steps/day row",
+          "share": 87.27272727272727
+        },
+        {
+          "dose": 9000,
+          "effect": 0.52,
+          "ciLow": 0.46,
+          "ciHigh": 0.6,
+          "source": "steps-0",
+          "low": 0.46,
+          "high": 0.6,
+          "location": "Table 2, all-cause mortality, 9000 steps/day row",
+          "share": 87.27272727272727
+        },
+        {
+          "dose": 10000,
+          "effect": 0.52,
+          "ciLow": 0.45,
+          "ciHigh": 0.59,
+          "source": "steps-0",
+          "low": 0.45,
+          "high": 0.59,
+          "location": "Table 2, all-cause mortality, 10000 steps/day row",
+          "share": 87.27272727272727
+        },
+        {
+          "dose": 11000,
+          "effect": 0.49,
+          "ciLow": 0.43,
+          "ciHigh": 0.57,
+          "source": "steps-0",
+          "low": 0.43,
+          "high": 0.57,
+          "location": "Table 2, all-cause mortality, 11000 steps/day row",
+          "share": 92.72727272727272
+        },
+        {
+          "dose": 12000,
+          "effect": 0.45,
+          "ciLow": 0.39,
+          "ciHigh": 0.53,
+          "source": "steps-0",
+          "low": 0.39,
+          "high": 0.53,
+          "location": "Table 2, all-cause mortality, 12000 steps/day row",
+          "share": 100
+        }
+      ],
+      "unitLabel": "steps a day",
+      "yDomain": [
+        0.35,
+        1.05
+      ],
+      "yTicks": [
+        0.4,
+        0.7,
+        1
+      ],
+      "xLabel": "Steps a day",
+      "yLabel": "Death rate vs 2,000 steps",
+      "step": 100,
+      "personalNote": "The 7,000-step mark is a study benchmark, not a stopping point. Smaller increases were also associated with lower risk.",
+      "verified": "2026-10-04",
+      "doseDigits": 1,
+      "yDigits": 1,
+      "reviews": {
+        "researcher": "movement_research",
+        "adversary": "life_research",
+        "statistician": "diet_research"
+      },
+      "sourcePrecision": "source point grid with linear interpolation",
+      "view": {
+        "area": "move",
+        "mode": "benefit",
+        "answer": "About 10,500 steps",
+        "fact": "7,000 steps went with 47% lower risk of dying than 2,000.",
+        "range": [
+          2000,
+          12000
+        ],
+        "rangeLabel": "2,000 to 12,000 steps a day",
+        "default": 7000,
+        "ticks": [
+          2000,
+          7000,
+          12000
+        ]
+      },
+      "reverification": {
+        "researcher": "v2_move",
+        "adversary": "polish_audit"
+      },
+      "rangeMethod": "Range shown: 2,000 to 12,000 steps a day",
+      "enoughPolicy": "first90-in-declared-range",
+      "computed": {
+        "enough": 10500.000000000015,
+        "sensitivity": [
+          9899.999999999993,
+          10649.999999999993
+        ],
+        "sweetRange": null
+      }
+    }
+  }
 };
