@@ -11,7 +11,7 @@
   .post-back.essay-back { display: block; max-width: var(--measure); margin-inline: auto; padding-inline: var(--gutter); padding-top: clamp(1.5rem, 5vw, 3.5rem); }
 
   .hero { margin-bottom: 2.75rem; }
-  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(2.375rem, 5vw, 3.125rem); line-height: 1.18; letter-spacing: -0.02em; color: var(--text-bright); margin: 0; }
+  .hero-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(3.7rem, 12vw, 7.5rem); line-height: .94; letter-spacing: -.035em; color: var(--text-bright); margin: 0; }
 
   .sec p { font-size: var(--body-size); line-height: var(--body-leading); color: var(--text); margin: 0 0 1em; text-wrap: pretty; }
   .sec > :last-child { margin-bottom: 0; }
