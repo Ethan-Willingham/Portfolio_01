@@ -1,5 +1,5 @@
-﻿/* ============================================================
-   GLOBE.JS — WebGL Earth with day/night shader, city lights,
+/* ============================================================
+   GLOBE.JS: WebGL Earth with day/night shader, city lights,
    moon, timezone selector, tilt buttons.
    ============================================================ */
 (function () {
@@ -18,6 +18,9 @@
   if (!THREE) return;
   container.classList.add('is-loading');
 
+  var astronomy = window.GlobeMath;
+  if (!astronomy) return;
+  var simulationYear = new Date().getFullYear();
   var DEG = Math.PI / 180;
   var TWO_PI = Math.PI * 2;
 
@@ -70,7 +73,7 @@
   function markEdited() { if (isLive) setLive(false); }
 
   var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var MDAYS = [31,29,31,30,31,30,31,31,30,31,30,31];
+  var MDAYS = [31,new Date(simulationYear, 2, 0).getDate(),31,30,31,30,31,31,30,31,30,31];
   function dayToDate(d) {
     var day = d | 0, cum = 0;
     for (var m = 0; m < 12; m++) {
@@ -108,17 +111,14 @@
     return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm + ' ' + currentTZ;
   }
 
-  function daylightHours(latDeg, dayOfYear, tilt) {
-    var decl = tilt * DEG * Math.sin(TWO_PI * (dayOfYear - 81) / 365);
-    var latRad = latDeg * DEG;
-    var cosHA = -Math.tan(latRad) * Math.tan(decl);
-    if (cosHA < -1) return { hours: 24, rise: 0, set: 24 };
-    if (cosHA > 1) return { hours: 0, rise: 0, set: 0 };
-    var hours = (2 * Math.acos(cosHA) / TWO_PI) * 24;
-    var half = hours / 2;
-    return { hours: hours, rise: 12 - half, set: 12 + half };
+  function simulationDate(localHour, day) {
+    return new Date(Date.UTC(simulationYear, 0, day + 1) + (localHour - TZ_OFFSETS[currentTZ]) * 3600000);
   }
-
+  function daylightHours(latDeg, dayOfYear, tilt, localHour, longitude) {
+    var result = astronomy.daylight(simulationDate(localHour, dayOfYear), latDeg, longitude, currentTiltIdx === 1 ? undefined : tilt);
+    return {hours: result.hours, rise: result.sunrise ? result.sunrise.getUTCHours() + result.sunrise.getUTCMinutes() / 60 : 0,
+      set: result.sunset ? result.sunset.getUTCHours() + result.sunset.getUTCMinutes() / 60 : 0};
+  }
   /* ---- Scene ---- */
   var W = container.clientWidth;
   var H = container.clientHeight;
@@ -206,7 +206,7 @@
     '}'
   ].join('\n');
 
-  var earth, moonMesh, atmosMesh;
+  var earth, moonMesh, atmosMesh, moonLight;
   var sunDirUniform = { value: new THREE.Vector3(5, 2, 5).normalize() };
 
   function buildBodies() {
@@ -238,8 +238,8 @@
     moonMesh.position.set(-6, 1.5, -4);
     scene.add(moonMesh);
 
-    /* Moon light (so it's visible) */
-    var moonLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    /* Moon light follows the calculated solar direction. */
+    moonLight = new THREE.DirectionalLight(0xffffff, 0.6);
     moonLight.position.set(5, 3, 5);
     moonLight.target = moonMesh;
     scene.add(moonLight);
@@ -305,23 +305,11 @@
     camera.lookAt(0, 0, 0);
   }
 
-  /* ---- Sun ----
-     Three.js SphereGeometry maps the equirectangular earth texture so that
-     longitude 0 (Greenwich) sits on the +X axis, longitude -90°W on +Z,
-     +90°E on -Z, 180° on -X. At UTC hour h the subsolar longitude is
-     lon_sun = -(h - 12)·15° (positive east). Substituting into the texture's
-     surface formula:
-       x = cos(decl) · cos(lon_sun)
-       y = sin(decl)
-       z = -cos(decl) · sin(lon_sun)                                        */
+  /* NOAA solar direction in the texture's Earth-fixed coordinate frame. */
   function updateSun(hour, day, tilt) {
-    var decl = tilt * DEG * Math.sin(TWO_PI * (day - 81) / 365);
-    var lonSun = -(hour - 12) * 15 * DEG;
-    sunDirUniform.value.set(
-       Math.cos(decl) * Math.cos(lonSun),
-       Math.sin(decl),
-      -Math.cos(decl) * Math.sin(lonSun)
-    ).normalize();
+    var localHour = hourSlider ? parseFloat(hourSlider.value) : 12;
+    var sun = astronomy.solar(simulationDate(localHour, day), currentTiltIdx === 1 ? undefined : tilt);
+    sunDirUniform.value.set(sun.vector.x, sun.vector.y, sun.vector.z);
   }
 
   /* ---- Moon visibility ---- */
@@ -335,14 +323,10 @@
       moonMesh.visible = moonCurrentOpacity > 0.01;
       moonMesh.material.opacity = moonCurrentOpacity;
       moonMesh.material.transparent = moonCurrentOpacity < 0.99;
-      // Slow orbit (frozen to a fixed pose when reduce-motion is on)
-      var t = reducedMotion ? 0.6 : Date.now() * 0.00003;
-      moonMesh.position.set(
-        Math.cos(t) * 7,
-        1.2 + Math.sin(t * 0.7) * 0.8,
-        Math.sin(t) * 7
-      );
-      if (!reducedMotion) moonMesh.rotation.y += 0.001;
+      var position = astronomy.moon(simulationDate(parseFloat(hourSlider.value), parseInt(daySlider.value, 10)));
+      moonMesh.position.set(position.vector.x, position.vector.y, position.vector.z).multiplyScalar(7 * position.distance / 60.2666);
+      moonMesh.lookAt(0, 0, 0);
+      moonLight.position.copy(moonMesh.position).addScaledVector(sunDirUniform.value, 10);
     }
   }
 
@@ -509,14 +493,12 @@
     if (pinnedLat !== null) { lat = pinnedLat; lon = pinnedLon; latSource = 'pinned'; }
     else if (hoverLat !== null) { lat = hoverLat; lon = hoverLon; latSource = 'hover'; }
     else { lat = 0; lon = 0; latSource = 'default'; }
-    var dl = daylightHours(lat, day, tilt);
-    // Sunrise/sunset in the selected timezone's wall clock. dl.rise/dl.set are
-    // in local apparent solar time (noon = subsolar); solarTime - lon/15 = UTC,
-    // then + off = clock time. Omitting the longitude term is what pushed
-    // sunrise past midnight for locations far from the prime meridian.
+    var dl = daylightHours(lat, day, tilt, hour, lon);
+    // The astronomy module returns actual UTC events; apply the selected
+    // wall-clock offset until the automatic time-zone controls replace it.
     var off = TZ_OFFSETS[currentTZ] || -5;
-    var riseLocal = dl.rise - lon / 15 + off;
-    var setLocal = dl.set - lon / 15 + off;
+    var riseLocal = dl.rise + off;
+    var setLocal = dl.set + off;
     while (riseLocal < 0) riseLocal += 24; while (riseLocal >= 24) riseLocal -= 24;
     while (setLocal < 0) setLocal += 24; while (setLocal >= 24) setLocal -= 24;
     if (daylightBarCanvas) {
@@ -547,7 +529,7 @@
       for (var t = 0; t < 24; t += 6) bc.fillRect((t / 24) * w, 0, 1, h);
     }
     var ls;
-    if (latSource === 'pinned') ls = '\u{1F4CD} ' + Math.abs(Math.round(lat)) + '\u00B0' + (lat >= 0 ? 'N' : 'S');
+    if (latSource === 'pinned') ls = 'Pinned ' + Math.abs(Math.round(lat)) + '\u00B0' + (lat >= 0 ? 'N' : 'S');
     else if (latSource === 'hover') ls = Math.abs(Math.round(lat)) + '\u00B0' + (lat >= 0 ? 'N' : 'S');
     else ls = 'Equator';
     if (daylightLabel) {
@@ -581,7 +563,7 @@
         hoverInfo.textContent = Math.abs(Math.round(hoverLat)) + '\u00B0' + (hoverLat >= 0 ? 'N' : 'S') +
           ', ' + Math.abs(Math.round(hoverLon)) + '\u00B0' + (hoverLon >= 0 ? 'E' : 'W') + '  tap to pin';
       } else if (pinnedLat !== null) {
-        hoverInfo.textContent = '\u{1F4CD} ' + Math.abs(Math.round(pinnedLat)) + '\u00B0' + (pinnedLat >= 0 ? 'N' : 'S') +
+        hoverInfo.textContent = 'Pinned ' + Math.abs(Math.round(pinnedLat)) + '\u00B0' + (pinnedLat >= 0 ? 'N' : 'S') +
           ', ' + Math.abs(Math.round(pinnedLon)) + '\u00B0' + (pinnedLon >= 0 ? 'E' : 'W');
       } else {
         hoverInfo.textContent = 'drag to spin \u2022 scroll to zoom \u2022 tap to pin';
