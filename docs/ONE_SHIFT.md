@@ -77,7 +77,9 @@ through normal simulation ticks.
 
 Three save slots, end-of-day autosave, import/export and a version-zero migration
 are supported. Import rejects malformed nested state, orphaned reservations,
-bad label data, goods imbalance and ledger imbalance. Imported names, lots
+bad label data, future label counters, floor wear, station identifiers,
+goods imbalance and ledger imbalance. Purchases stop before reaching the
+128-person team or 512-tile site limits, and workstations stay in the building. Imported names, lots
 and seals display as literal text. An art preview cannot
 replace the live autosave. Standalone recall and power-outage challenges are
 hidden until their starting states are developed. `one-shift-lab.html` offers four playable color
