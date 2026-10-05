@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
+  <title>How Much Is Enough?</title>
+  <meta name="description" content="Drag through the evidence for movement, food, sleep, muscle, money and work. See where more helps, where it flattens, and where the answer is still unknown.">
+  <link rel="canonical" href="https://ethanwillingham.com/enough.html">
+  <meta property="og:title" content="How Much Is Enough?">
+  <meta property="og:description" content="Drag through the evidence for movement, food, sleep, muscle, money and work. See where more helps, where it flattens, and where the answer is still unknown.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/enough.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/thumbs/enough-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Fruit, a brown jug and a glass on a table, painted by Jean Simeon Chardin.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How Much Is Enough?">
+  <meta name="twitter:description" content="Drag through the evidence for movement, food, sleep, muscle, money and work.">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/thumbs/enough-og.jpg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=20261004">
+  <link rel="stylesheet" href="enough.css?v=1">
+  <script defer src="js/enough-data.js?v=1"></script>
+  <script defer src="js/enough.js?v=1"></script>
+</head>
+<body>
+  <div class="enough-shell">
+    <nav class="enough-top" aria-label="Site"><a href="/">Home</a><a href="archive.html">In Progress</a></nav>
+    <main>
+      <header class="u-hero enough-hero">
+        <h1 class="u-title">How Much Is Enough?</h1>
+        <p class="u-dek">Where more helps, where it stops, and where we still don't know.</p>
+      </header>
+      <p class="enough-instruction" id="enough-help">Drag across a chart. Use arrow keys when it has focus. Open the evidence to see how sure we are.</p>
+      <div id="enough-grid" class="enough-grid" aria-describedby="enough-help"></div>
+      <p id="enough-loading">Loading the research. If the charts don't appear, reload or read the <a href="js/enough-data.js">source data</a>.</p>
+      <noscript><p>The draggable charts need JavaScript. The <a href="js/enough-data.js">source data</a> includes every estimate, limit and citation.</p></noscript>
+      <div class="enough-after">
+        <p>In the smoking model, one cigarette a day carried about half the extra heart disease risk of twenty. Small amounts can matter in both directions. The income ceiling remains disputed, and the meditation evidence still cannot put a dependable daily amount on the benefit.</p>
+        <details class="enough-personal">
+          <summary>Your enough</summary>
+          <p>Enter what you know. Leave the rest blank. Your numbers stay on this page.</p>
+          <form id="enough-form">
+            <div class="enough-fields">
+              <label>Steps a day<input name="steps" type="number" min="0" max="100000" step="1" inputmode="numeric"></label>
+              <label>Sleep, hours a night<input name="sleep" type="number" min="0" max="24" step="0.1" inputmode="decimal"></label>
+              <label>Protein, grams a day<input name="protein" type="number" min="0" max="1000" step="1" inputmode="numeric"></label>
+              <label>Body weight, lb<input name="weight" type="number" min="1" max="1500" step="1" inputmode="numeric"></label>
+              <label>Moderate activity, minutes a week<input name="exercise" type="number" min="0" max="10080" step="1" inputmode="numeric"></label>
+              <label>Work, hours a week<input name="work" type="number" min="0" max="168" step="1" inputmode="numeric"></label>
+            </div>
+            <button class="enough-clear" type="reset">Clear numbers</button>
+          </form>
+          <div id="enough-results" class="enough-results" role="status" aria-live="polite" aria-atomic="true"></div>
+          <p>Smaller changes to reach the walking, activity and protein marks come first, as a share of each amount. Sleep and work follow without a personal target. The studies measure different outcomes, so this cannot rank health benefits.</p>
+        </details>
+        <details class="u-collapse enough-sources">
+          <summary class="u-collapse-s">Sources and how to read the charts</summary>
+          <p>Each chart keeps its own units and comparison group. Lines do not put happiness, muscle growth and death on one scale. Open a card for its population, uncertainty, stored numbers and drawing method.</p>
+          <ol class="u-collapse-list" id="enough-sources"></ol>
+          <p>Thumbnail: Jean Simeon Chardin, <a href="https://www.nga.gov/artworks/12202-fruit-jug-and-glass">Fruit, Jug, and a Glass</a>, c. 1726/1728. National Gallery of Art, Chester Dale Collection, 1943.7.4. Public domain.</p>
+          <p>Research checked October 4, 2026. <a href="enough-lab.html">Compare layouts, chart styles and titles.</a></p>
+        </details>
+      </div>
+    </main>
+    <footer class="enough-footer"><a href="archive.html">In Progress</a> &middot; <a href="big-enough.html">Big Enough</a> &middot; <a href="/">Ethan Willingham</a></footer>
+  </div>
+</body>
+</html>

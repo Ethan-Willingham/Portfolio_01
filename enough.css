@@ -1,0 +1,60 @@
+.enough-shell { max-width: 1200px; margin: 0 auto; padding-inline: var(--gutter); }
+.enough-shell a { color: var(--accent); text-decoration: underline; text-underline-offset: .15em; }
+.enough-top { padding: 1.5rem 0 0; font-size: 1rem; display: flex; gap: 1.5rem; }
+.enough-top a { color: var(--text-dim); }
+.enough-hero { margin: 2.4rem 0 1.8rem; text-align: left; }
+.enough-hero .u-title { font-size: clamp(3rem, 9vw, 6rem); }
+.enough-hero .u-dek { max-width: 42ch; margin: .8rem 0 0; font-size: clamp(1.18rem, 2.5vw, 1.5rem); }
+.enough-instruction { margin: 0 0 1.8rem; font-size: .95rem; color: var(--text-dim); }
+.enough-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 2.8rem 3rem; }
+.enough-card { min-width: 0; border-top: 1px solid var(--rule-strong); padding-top: 1rem; scroll-margin-top: 1.5rem; }
+.enough-card h2 { font-family: var(--font-heading); font-size: clamp(1.5rem, 3vw, 1.9rem); font-weight: 400; line-height: 1.2; margin: .3rem 0 .4rem; }
+.enough-shape { font-family: var(--font-mono); font-size: .76rem; color: var(--accent); }
+.enough-marker-label { min-height: 1.6em; font-size: .95rem; color: var(--text-dim); margin: 0; }
+.enough-chart { position: relative; margin: .5rem 0; border-radius: 2px; }
+.enough-chart:focus-within { outline: 2px solid var(--accent); outline-offset: 4px; }
+.enough-chart svg { width: 100%; display: block; overflow: visible; }
+.enough-chart text { font-family: var(--font-mono); font-size: 15px; fill: var(--text-dim); }
+.enough-chart .e-axis { stroke: var(--rule-strong); stroke-width: 1; }
+.enough-chart .e-line { stroke: var(--accent); stroke-width: 2.5; fill: none; }
+.enough-chart .e-category-line { stroke-dasharray: 3 5; opacity: .6; }
+.enough-chart .e-point { fill: var(--accent); }
+.enough-chart .e-marker { stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 4 4; }
+.enough-chart .e-band { fill: var(--accent); opacity: .15; }
+.enough-chart .e-handle { fill: var(--bg); stroke: var(--text-bright); stroke-width: 3; }
+.enough-chart .e-unknown { fill: var(--text-dim); font-family: var(--font-body); font-size: 16px; }
+.enough-range { position: absolute; left: 11.5%; top: 12%; width: 85%; height: 66%; margin: 0; opacity: 0; cursor: ew-resize; touch-action: pan-y; }
+.enough-readout { display: block; min-height: 3.4em; font-family: var(--font-mono); font-size: .88rem; line-height: 1.55; color: var(--text-bright); margin: .75rem 0 .5rem; }
+.enough-fact { font-size: 1.05rem; line-height: 1.5; margin: .5rem 0 .75rem; }
+.enough-detail { font-size: .96rem; line-height: 1.65; }
+.enough-detail summary { cursor: pointer; min-height: 44px; color: var(--accent); display: flex; align-items: center; gap: .6em; }
+.enough-detail summary::before { content: '+'; font-family: var(--font-mono); }
+.enough-detail[open] summary::before { content: '-'; }
+.enough-detail summary::-webkit-details-marker { display: none; }
+.enough-detail p { margin: .7rem 0; }
+.enough-detail strong { font-weight: 600; }
+.enough-detail a { color: var(--accent); overflow-wrap: anywhere; }
+.enough-table-wrap { overflow: auto; }
+.enough-detail table { font-family: var(--font-mono); font-size: .78rem; width: 100%; border-collapse: collapse; }
+.enough-detail th, .enough-detail td { text-align: left; padding: .5rem .3rem; border-bottom: 1px solid var(--rule); }
+.enough-detail th { font-weight: 400; color: var(--text-dim); }
+.enough-after { max-width: 760px; margin: 3.5rem auto; }
+.enough-after > p { margin: 1.5rem 0; }
+.enough-personal { border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); padding: .5rem 0; margin: 2.5rem 0; }
+.enough-personal > summary { font-family: var(--font-heading); font-size: 1.7rem; cursor: pointer; min-height: 52px; }
+.enough-personal p { font-size: 1rem; line-height: 1.6; margin: .75rem 0; }
+.enough-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; margin: 1.25rem 0; }
+.enough-fields label { font-size: .95rem; line-height: 1.4; }
+.enough-fields input { display: block; width: 100%; background: var(--bg-raised); color: var(--text); border: 1px solid var(--rule-strong); font-family: var(--font-mono); font-size: 1rem; min-height: 44px; padding: .6rem; margin-top: .4rem; }
+.enough-results { font-size: 1rem; }
+.enough-results li { margin: .9rem 0 .9rem 1.2rem; padding-left: .3rem; }
+.enough-clear { background: none; border: 1px solid var(--rule-strong); color: var(--text); font: inherit; font-size: .9rem; min-height: 44px; padding: .4rem .8rem; cursor: pointer; }
+.enough-error { color: var(--warn, var(--text-bright)); }
+.enough-sources { margin-top: 2rem; }
+.enough-sources li { font-size: .9rem; line-height: 1.6; margin-bottom: .9rem; }
+.enough-footer { margin: 3rem 0 2rem; font-size: .95rem; color: var(--text-dim); border-top: 1px solid var(--rule); padding-top: 1rem; }
+.enough-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media(max-width: 699px) { .enough-grid { grid-template-columns: 1fr; gap: 2rem; } .enough-hero { margin-top: 1.8rem; } .enough-readout { min-height: 0; } }
+@media(max-width: 359px) { .enough-fields { grid-template-columns: 1fr; } }
+@media(prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print { .enough-grid { display: block; } .enough-card { break-inside: avoid; } .enough-range { display: none; } }

@@ -126,6 +126,16 @@ function buildSections(post, file) {
       pushSection(heads[i].head, heads[i].id, raw);
     }
   }
+  // Enough renders its researched questions and limits from a local data file.
+  if (post.url === 'enough.html') {
+    const context = { window: {} };
+    runInNewContext(readFileSync(join(ROOT, 'js/enough-data.js'), 'utf8'), context, { timeout: 1000 });
+    for (const curve of context.window.EnoughData.curves) {
+      pushSection(curve.question, curve.id, [curve.fact, curve.marker.label,
+        curve.evidence, curve.population, ...curve.caveats].join(' '));
+    }
+  }
+
   // These readers render their explanations from local data. Include every
   // passage, with its existing numeric hash, so search can reach the explanation
   // rather than stopping at the introduction in the static HTML shell.
