@@ -109,3 +109,10 @@
 #shift-settings input[type="text"],#shift-settings input[type="range"] {min-height:44px}
 #shift-settings input[type="checkbox"],#shift-settings input[type="range"] {accent-color:var(--shift-primary)}
 #shift-settings a {display:inline-block;min-height:44px;padding:12px 0}
+
+.shift-putaway-note {padding:10px;border-left:3px solid var(--accent);background:var(--shift-button)}
+.shift-storage-choices {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:14px 0}
+.shift-storage-choices button {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;text-align:left;padding:8px;font-size:0.75rem;overflow-wrap:anywhere}
+.shift-storage-choices small {font:0.625rem var(--font-mono);color:var(--text-faint);line-height:1.4}
+
+.shift-panel > .shift-kicker {padding-right:44px}

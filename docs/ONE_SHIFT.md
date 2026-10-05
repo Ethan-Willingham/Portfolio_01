@@ -81,7 +81,11 @@ establish the requested 90 working situations or 150 taught terms.
 The warehouse uses a separate palette: concrete gray, blue steel,
 charcoal panels, off-white markings and restrained safety orange. Active and
 primary buttons are blue. The selection clipboard opens on the left so trucks
-remain visible on the right.
+remain visible on the right. A received pallet offers Put away / choose storage.
+The panel lists named rack positions and highlights available ground positions
+on the floor. Occupied positions, reserved moves, required storage areas and
+forklift access are checked before offering a destination. The selected pallet
+shows its destination while the worker moves it, then its named storage position.
 
 Mouse, keyboard and landscape touch control the same view. Drag with the right
 or middle mouse button to pan. A stationary right-click or Escape clears the

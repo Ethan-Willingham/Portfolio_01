@@ -14,7 +14,7 @@
    // Draw type at the display resolution, independently of the cached floor art.
    for(const kind of ['receiving','shipping']){const r=O.docks.lane(s,kind);this.worldText(kind.toUpperCase(),r.x+r.w/2,r.y-.28,11,'#344b60');}
    for(const q of s.map.zones)if(z>=12)this.worldText(q.type.toUpperCase(),q.x+.2,q.y+.6,9,'#34526b','left',9);
-   if(z>=8)for(const r of s.map.racks)this.worldText('A'+r.id,r.x+1,r.y+.65,9,'#edf2f6','center',9);
+   if(z>=8)for(const r of s.map.racks){this.worldText('A'+r.id,r.x+1,r.y+.65,9,'#edf2f6','center',9);if(z>=16)this.worldText('STORAGE',r.x+1,r.y-.3,8,'#34526b','center',9);}
    if(z>=16)for(const q of s.map.stations)this.worldText(q.id.toUpperCase(),q.x+1,q.y+1.32,8,'#34526b','center',9);
    for(const [i,d]of s.map.doors.entries())this.worldText(String(i+1),d.x+(east?-.55:1),d.y+(east?1.2:-.5),15,'#34526b');
    const stack=O.docks.stack(s);if(z>=16)this.worldText('EMPTIES',stack.x+.5,stack.y+1.25,7,'#405568','center',9);
@@ -84,6 +84,7 @@
    }
    for(const q of s.parcels||[]){if(q.place==='shipped')continue;g.fillStyle='#c7ad85';g.fillRect(q.x+.25,q.y+.25,.5,.5);g.fillStyle='#e4dbbf';g.fillRect(q.x+.46,q.y+.25,.08,.5);g.fillStyle='#f0e9d8';g.fillRect(q.x+.55,q.y+.5,.14,.1);this.hits.push({kind:'parcel',id:q.id,x:q.x,y:q.y,w:1,h:1});}
    for(const w of s.workers){const job=w.task?.kind==='service'?s.serviceJobs.find(j=>j.id===w.task.job):null;if(job)O.sprites.materialCart(g,w,job,s);const lift=w.task?.kind!=='service'&&!(s.powerUntil>s.minute)&&O.has(s,'forklift')&&(w.id===1||w.role==='driver'||w.role==='robot');if(lift)O.sprites.forklift(g,w);O.sprites.worker(g,w,s.tick*.05,z,ui.settings.reducedMotion,lift);if(w.task?.kind==='pick'&&w.task.phase==='dest'&&w.task.progress>0){const q=s.pallets.find(p=>p.id===w.task.pallet),f=ui.settings.reducedMotion?.5:(w.task.progress*3)%1;if(q){g.fillStyle=O.items[q.item].color;g.fillRect(w.x+.35,w.y+.35-f*.2,.28,.22);}}}
+   if(ui.target?.kind==='putaway')for(const q of ui.storageOptions||[]){g.fillStyle='#65b6ec30';g.strokeStyle='#65b6ec';g.lineWidth=.08;g.fillRect(q.x+.06,q.y+.06,.88,.88);g.strokeRect(q.x+.06,q.y+.06,.88,.88);}
    for(const r of s.map.racks)this.hits.push({kind:'rack',id:r.id,x:r.x,y:r.y,w:2,h:1});
    for(const w of s.workers)for(const [i,t]of [w.task,...w.queue].filter(Boolean).entries()){const d=t.dest||t.end;g.fillStyle='#246b9c';g.beginPath();g.arc(d.x+.5,d.y+.5,.18,0,Math.PI*2);g.fill();g.fillStyle='#edf2f6';g.font='.23px "Commit Mono",monospace';g.textAlign='center';g.fillText(String(i+1),d.x+.5,d.y+.57);}
    if(ui.hover){const h=ui.hover;g.strokeStyle='#edf2f6';g.lineWidth=.05;g.strokeRect(h.x-.06,h.y-.06,h.w+.12,h.h+.12);}
