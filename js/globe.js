@@ -4,7 +4,7 @@
   'use strict';
   var container = document.getElementById('globe-container');
   if (!container) return;
-  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline;
+  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds;
   var byId = function (id) { return document.getElementById(id); };
   var wrapper = document.querySelector('.globe-wrapper');
   var status = byId('globe-status'), clock = byId('globe-clock'), dataLine = byId('globe-data');
@@ -41,6 +41,7 @@
   var cloudCatalog=null,cloudCatalogChecked=0,cloudController=null,timeEditTimer=null;
   var detailController=null,detailKey='',detailChecked=0;
   var cloudMemo=null,installedCloud=null,cloudPending=new Map(),archivePending=new Map();
+  var compressedClouds=null,preparedClouds=new Set(),decodingReplay=false,startupReplay=null;
   var replayController=null,replayKey='',replayBusy=false,replayChecked=0,replayClouds=[],replayAurora=[],replayFailed=new Set(),sessionFrames=[];
   var replayPendingCloud=false,replayPendingAurora=false;
   var archiveFrames=[],archiveChecked=0,archiveBusy=false,archiveController=null,archiveGeneration=0,archiveCache=new Map();
@@ -193,7 +194,7 @@
     text(byId('globe-keyboard'),'The interactive globe is unavailable. Source links are below.');
     text(summary,message+' '+dataLine.textContent);
   }
-  if (!THREE || !math || !data || !stars || !optics || !timeline) {
+  if (!THREE || !math || !data || !stars || !optics || !timeline || !clouds) {
     unavailable('The interactive globe could not load.'); return;
   }
   var renderer;
@@ -214,6 +215,7 @@
   var textureWidth = Math.min(mobile ? 2048 : 4096,renderer.capabilities.maxTextureSize);
   textureWidth = Math.pow(2,Math.floor(Math.log2(textureWidth)));
   var cloudWidth=Math.min(textureWidth,2048);
+  compressedClouds=timeline.memoryCache((mobile?48:96)*1024*1024,{prefer:function(next,old){return next.width>=old.width;}});
   cloudMemo=timeline.memoryCache((mobile?64:96)*1024*1024,{
     prefer:function(next,old){return next.photo.width>=old.photo.width&&(!old.photo.natural||next.photo.natural);},
     dispose:function(record){record.memoized=false;if(record!==installedCloud)record.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
@@ -233,6 +235,10 @@
     // Neutralize that bright cyan only, retaining observed structure and land.
     'float cyan=min(photo.g,photo.b)-photo.r; float ice=smoothstep(.04,.16,cyan)*smoothstep(.18,.36,min(photo.g,photo.b))*(1.0-smoothstep(.12,.32,abs(photo.g-photo.b)));',
     'photo.rgb=mix(photo.rgb,vec3(max(photo.g,photo.b)),ice*thermalEnabled*naturalEnabled);',
+    // Himawari's visible band is monochrome. Keep reference land colours beneath
+    // its bright cloud structure instead of painting that hemisphere grey.
+    'float mono=1.0-smoothstep(.005,.025,max(photo.r,max(photo.g,photo.b))-min(photo.r,min(photo.g,photo.b)));',
+    'photo.rgb=mix(photo.rgb,mix(base,vec3(1.0),smoothstep(.22,.85,photo.r)),mono*thermalEnabled);',
     'float shotDay=smoothstep(.10,.25,dot(normalize(vNormal),photoSunDir))*naturalEnabled*photo.a;',
     // Thermal brightness includes ground temperature. Display cold features as
     // white over reference terrain, not a grayscale replacement for Earth's
@@ -514,7 +520,7 @@
   }
   async function refreshPhoto() {
     if(tilt!==undefined)return;
-    var key=String(Math.floor(instant.getTime()/(3*3600000))),offline=navigator.onLine===false;
+    var key=String(Math.floor(instant.getTime()/3600000)),offline=navigator.onLine===false;
     if(requestedDay===key&&(fetchingPhoto||Date.now()-photoChecked<5*60000))return;
     if(cloudController)cloudController.abort();
     if(detailController){detailController.abort();detailController=null;}
@@ -522,25 +528,31 @@
     fetchingPhoto=true;requestedDay=key;var deadline=setTimeout(function(){cloudController&&generation===photoGeneration&&cloudController.abort();},loading?24000:20000);
     try {
       if(instant-Date.now()>5*60000){photo=null;return;}
-      if(!cloudCatalog){try{var stored=JSON.parse(localStorage.getItem('globe-cloud-catalog'));if(stored)cloudCatalog={start:new Date(stored.start),end:new Date(stored.end)};}catch(_){}}
+      if(!cloudCatalog){try{var stored=JSON.parse(localStorage.getItem('globe-cloud-catalog'));if(stored)cloudCatalog=stored.dense?clouds.validate(stored):{start:new Date(stored.start),end:new Date(stored.end)};}catch(_){}}
       if(!offline&&(!cloudCatalog||Date.now()-cloudCatalogChecked>10*60000)){
-        try{cloudCatalog=await data.fetchCloudCatalog({timeout:6000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){
+        try{cloudCatalog=await clouds.fetchCatalog({timeout:6000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){
           if(error.name==='AbortError')return;
           try{
             var snapshots=await Promise.allSettled([
+              data.fetchJSON('https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/globe-hourly-catalog.json?v='+Math.floor(Date.now()/300000),{timeout:2000,signal:signal,allowText:true}).then(clouds.validate),
+              data.fetchJSON('assets/data/globe-hourly-catalog.json',{timeout:1000,signal:signal}).then(clouds.validate),
               data.fetchJSON('https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/globe-cloud-catalog.json?v='+Math.floor(Date.now()/300000),{timeout:2000,signal:signal,allowText:true}).then(data.parseCloudSnapshot),
               data.fetchJSON('assets/data/globe-cloud-catalog.json',{timeout:1000,signal:signal}).then(data.parseCloudSnapshot)
             ]);
-            snapshots.forEach(function(result){if(result.status==='fulfilled'&&(!cloudCatalog||result.value.end>cloudCatalog.end))cloudCatalog=result.value;});
+            snapshots.forEach(function(result){if(result.status==='fulfilled'&&+result.value.end<=Date.now()+300000&&(!cloudCatalog||result.value.dense&&!cloudCatalog.dense||result.value.dense===cloudCatalog.dense&&result.value.end>cloudCatalog.end))cloudCatalog=result.value;});
             if(cloudCatalog){cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}
           }catch(_){}
         }
       }
-      var stamp=cloudCatalog&&data.cloudFrameAt(cloudCatalog,instant,new Date());
+      if(!cloudCatalog)cloudCatalog=await data.fetchCloudCatalog({timeout:2000,signal:signal});
+      if(cloudCatalog.dense&&instant<cloudCatalog.start&&!cloudCatalog.legacy)try{cloudCatalog.legacy=await data.fetchCloudCatalog({timeout:2000,signal:signal});}catch(_){}
+      var stamp=cloudStamp();
       if(!stamp||live&&new Date()-stamp>5*3600000)throw new Error('Dated cloud imagery unavailable');
+      if(loading&&!startupReplay&&hourlyClouds())startupReplay=warmDayTimeline(true);
       if(photo&&photo.time===stamp.toISOString())return;
       var cached=cloudMemo.get(stamp.toISOString());
       if(cached){installCloudRecord(cached,generation,signal,false);return;}
+      if(hourlyClouds()){var dense=await requestCloudRecord(stamp,cloudWidth,signal,14000,offline);installCloudRecord(dense,generation,signal,false);return;}
       // A slow large image must not hold up a usable dated view. The smaller
       // request starts after four seconds, or immediately if the larger fails.
       var lowStart,lowTimer,lowStarted=false,lowReject;
@@ -566,6 +578,7 @@
     }
   }
   async function decodeCloudRecord(result,stamp,signal) {
+    if(result.dense)return decodeDenseCloudRecord(result,stamp,signal);
     var canvases=[],installed=false;
     try {
       var infrared=await decodeBlob(result.infrared,result.width);canvases.push(infrared);
@@ -582,6 +595,51 @@
     }catch(error){if(error.name!=='AbortError')await data.discardCloudFrame(stamp,result.width);throw error;}
     finally{if(!installed)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
   }
+  function hourlyClouds(){return !!(cloudCatalog&&cloudCatalog.dense&&instant>=cloudCatalog.start);}
+  function cloudStamp(){if(!cloudCatalog)return null;return hourlyClouds()?clouds.frameAt(cloudCatalog,instant,new Date()):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
+  async function requestCloudBytes(stamp,width,signal,timeout,offline,force){
+    if(!cloudCatalog.dense||stamp<cloudCatalog.start)return data.fetchCloudFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline});
+    var key=stamp.toISOString()+'/'+width,cached=compressedClouds.get(key);if(cached&&(!force||cached.blobs[0]&&cached.blobs[1]))return cached;
+    var pendingKey='bytes/'+key;
+    if(cloudPending.has(pendingKey)&&cloudPending.get(pendingKey).signal.aborted)cloudPending.delete(pendingKey);
+    if(!cloudPending.has(pendingKey)){
+      var task={signal:signal};task.promise=(async function(){try{
+        var result=await clouds.fetchFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline});
+        var bytes=result.blobs.reduce(function(total,b){return total+(b?b.size:0);},0);
+        compressedClouds.put(key,result,bytes);preparedClouds.add(key);return result;
+      }finally{if(cloudPending.get(pendingKey)===task)cloudPending.delete(pendingKey);}})();cloudPending.set(pendingKey,task);
+    }
+    return timeline.waitFor(cloudPending.get(pendingKey).promise,signal);
+  }
+  async function decodeDenseCloudRecord(result,stamp,signal){
+    var sourceCanvases=[],outputs=[],memoized=false;
+    try{
+      for(var index=0;index<4;index++){
+        if(!result.blobs[index]){sourceCanvases.push(null);continue;}
+        var canvas=await decodeBlob(result.blobs[index],result.width);sourceCanvases.push(canvas);
+        var context=canvas.getContext('2d'),pixels=context.getImageData(0,0,canvas.width,canvas.height);
+        if(result.blobs[index].type==='image/jpeg')for(var blank=0;blank<pixels.data.length;blank+=4)if(Math.max(pixels.data[blank],pixels.data[blank+1],pixels.data[blank+2])<8)pixels.data[blank+3]=0;
+        if(index===2)clouds.normalizeThermal(pixels.data);
+        pixels.data.set(data.featherCoverage(pixels.data,canvas.width));context.putImageData(pixels,0,0);
+        if(signal.aborted){var e=new Error('Hourly decode aborted');e.name='AbortError';throw e;}
+      }
+      for(var group=0;group<2;group++){
+        var output=document.createElement('canvas');output.width=result.width;output.height=result.width/2;outputs.push(output);
+        var ctx=output.getContext('2d');for(var part=group*2;part<group*2+2;part++)if(sourceCanvases[part])ctx.drawImage(sourceCanvases[part],0,0);
+      }
+      var raw=outputs[1].getContext('2d').getImageData(0,0,result.width,result.width/2).data,valid=0;for(var i=3;i<raw.length;i+=4)if(raw[i]>200)valid++;
+      if(valid/(raw.length/4)<.15)throw new Error('Hourly satellite image has no useful coverage');
+      var natural=!!(result.blobs[0]||result.blobs[1]),record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),width:result.width,coverage:valid/(raw.length/4),source:'NASA / EUMETSAT',natural:natural,dense:true},canvases:outputs,natural:outputs[0],infrared:outputs[1],memoized:true};
+      memoized=true;return cloudMemo.put(stamp.toISOString(),record,result.width*result.width*4);
+    }catch(error){if(error.name!=='AbortError'){await clouds.discard(stamp,result.width);compressedClouds.delete(stamp.toISOString()+'/'+result.width);preparedClouds.delete(stamp.toISOString()+'/'+result.width);}throw error;}
+    finally{sourceCanvases.forEach(function(c){if(c)c.width=c.height=1;});if(!memoized)outputs.forEach(function(c){c.width=c.height=1;});}
+  }
+  function decodeCachedSelection(){
+    if(decodingReplay||!hourlyClouds())return;
+    var stamp=cloudStamp(),record=stamp&&compressedClouds.get(stamp.toISOString()+'/'+cloudWidth);if(!record)return;
+    decodingReplay=true;var controller=new AbortController();
+    decodeCloudRecord(record,stamp,controller.signal).then(function(value){var current=cloudStamp();if(tilt===undefined&&current&&+current===+stamp)installCloudRecord(value,photoGeneration,null,false);}).catch(function(){}).finally(function(){decodingReplay=false;var current=cloudStamp();if(current&&+current!==+stamp)decodeCachedSelection();});
+  }
   function installCloudRecord(record,generation,signal,upgrade) {
     if(!record||generation!==photoGeneration||signal&&signal.aborted||upgrade&&(!photo||photo.time!==record.photo.time||photo.width>record.photo.width||photo.width===record.photo.width&&(photo.natural||!record.photo.natural)||photo.natural&&!record.photo.natural))return;
     if(installedCloud===record&&photo===record.photo)return;
@@ -591,7 +649,7 @@
     earthMaterial.uniforms.photoMap.value=satelliteTexture;earthMaterial.uniforms.infraredMap.value=infraredTexture;
     earthMaterial.uniforms.thermalEnabled.value=1;earthMaterial.uniforms.naturalEnabled.value=record.photo.natural?1:0;
     var sourceSun=math.solar(new Date(record.photo.time));photoSunUniform.value.set(sourceSun.vector.x,sourceSun.vector.y,sourceSun.vector.z);
-    photo=record.photo;cloudMemo.pin(photo.time);photoMix=loading&&!upgrade?0:1;cloudFailure='';replayPendingCloud=false;wrapper.dataset.photo='ready';
+    photo=record.photo;cloudMemo.pin(photo.time);compressedClouds.pin(photo.time+'/'+cloudWidth);photoMix=loading&&!upgrade?0:1;cloudFailure='';replayPendingCloud=false;wrapper.dataset.photo='ready';
     if(previous&&!previous.memoized)previous.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});
     else if(!previous&&oldCanvas&&oldCanvas.getContext)oldCanvas.width=oldCanvas.height=1;
     updateAstronomy();updateLabels();announce();
@@ -601,7 +659,7 @@
     if(cached&&cached.photo.width>=width&&(!force||cached.photo.natural))return Promise.resolve(cached);
     if(cloudPending.has(key)&&cloudPending.get(key).signal.aborted)cloudPending.delete(key);
     if(!cloudPending.has(key)){
-      var task={signal:signal};task.promise=(async function(){try{return await decodeCloudRecord(await data.fetchCloudFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline}),stamp,signal);}finally{if(cloudPending.get(key)===task)cloudPending.delete(key);}})();
+      var task={signal:signal};task.promise=(async function(){try{return await decodeCloudRecord(await requestCloudBytes(stamp,width,signal,timeout,offline,force),stamp,signal);}finally{if(cloudPending.get(key)===task)cloudPending.delete(key);}})();
       cloudPending.set(key,task);
     }
     return timeline.waitFor(cloudPending.get(key).promise,signal);
@@ -673,7 +731,7 @@
     finally{if(generation===archiveGeneration){archiveBusy=false;replayPendingAurora=false;updateAstronomy();updateLabels();announce();}}
   }
   function allAuroraFrames(){return archiveFrames.concat(sessionFrames);}
-  function cacheArchive(file,value){archiveCache.delete(file);archiveCache.set(file,value);if(archiveCache.size>128)archiveCache.delete(archiveCache.keys().next().value);return value;}
+  function cacheArchive(file,value){archiveCache.delete(file);archiveCache.set(file,value);if(archiveCache.size>400)archiveCache.delete(archiveCache.keys().next().value);return value;}
   function requestArchive(entry,signal){
     if(archiveCache.has(entry.file))return Promise.resolve(archiveCache.get(entry.file));
     if(archivePending.has(entry.file)&&archivePending.get(entry.file).signal.aborted)archivePending.delete(entry.file);
@@ -691,11 +749,11 @@
   function applyCachedTime(){
     replayPendingCloud=replayPendingAurora=false;
     if(tilt!==undefined||!live&&instant>Date.now()+300000){photo=null;forecast=null;return;}
-    var stamp=cloudCatalog&&data.cloudFrameAt(cloudCatalog,instant,new Date());
+    var stamp=cloudStamp();
     if(live&&stamp&&Date.now()-stamp>5*3600000)stamp=null;
     var record=stamp&&cloudMemo&&cloudMemo.get(stamp.toISOString());
     if(record)installCloudRecord(record,photoGeneration,null,false);
-    else if(!stamp||!photo||photo.time!==stamp.toISOString()){photo=null;replayPendingCloud=instant<=Date.now()&&!!stamp;}
+    else if(!stamp||!photo||photo.time!==stamp.toISOString()){photo=null;replayPendingCloud=instant<=Date.now()&&!!stamp;decodeCachedSelection();}
     if(live){forecast=liveForecast;return;}
     var entry=data.auroraFrameAt(allAuroraFrames(),instant),value=entry&&archiveCache.get(entry.file);
     if(value)setForecast(value);else{forecast=null;replayPendingAurora=!!entry;}
@@ -705,31 +763,34 @@
     if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
     if(!live&&instant>Date.now()+300000){text(label,'Future time: sunlight only.');return;}
     if(loading&&!replayBusy){text(label,'Preparing day replay');return;}
-    var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(function(t){return cloudMemo&&cloudMemo.has(t.toISOString());}).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;
-    text(label,replayBusy&&ready<total?'Preparing replay '+ready+'/'+total:!replayClouds.length&&!replayAurora.length?'Weather history unavailable.':replayFailed.size?'Replay ready, with data gaps.':'Clouds every 3h. Recorded aurora.');
+    var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(cloudPrepared).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;
+    text(label,replayBusy&&ready<total?'Preparing replay '+ready+'/'+total:!replayClouds.length&&!replayAurora.length?'Weather history unavailable.':replayFailed.size?'Replay ready, with data gaps.':(hourlyClouds()?'Hourly clouds. ':'Clouds every 3h. ')+'Recorded aurora.');
   }
+  function cloudPrepared(t){return cloudMemo&&cloudMemo.has(t.toISOString())||preparedClouds.has(t.toISOString()+'/'+cloudWidth);}
   function warmDayTimeline(initial){
     if(loading&&!initial||tilt!==undefined||navigator.onLine===false)return;
     var day=timeline.dayBounds(instant),frames=allAuroraFrames(),key=day.start.toISOString()+'/'+(cloudCatalog&&+cloudCatalog.end)+'/'+frames.length+'/'+(frames.length&&frames[frames.length-1].file);
     if(replayKey===key&&(replayBusy||Date.now()-replayChecked<60000))return;
     if(replayController)replayController.abort();replayController=new AbortController();var controller=replayController,signal=controller.signal;
     replayKey=key;replayChecked=Date.now();replayBusy=true;replayFailed=new Set();
-    replayClouds=timeline.cloudFrames(cloudCatalog,instant,new Date());
+    replayClouds=hourlyClouds()?clouds.frames(cloudCatalog,instant,new Date()):timeline.cloudFrames(cloudCatalog&&cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());
     replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-90*60000&&entry.forecast<+day.end+90*60000&&entry.observation<=Date.now();});
     cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
-    var cloudQueue=timeline.order(replayClouds,instant).filter(function(t){return !cloudMemo.has(t.toISOString());}),auroraQueue=replayAurora.filter(function(e){return !archiveCache.has(e.file);});
-    // Three small cloud pairs at a time, plus the selected image's detail job.
-    // Decoded day frames are bounded in memory; only the active pair uses GPU textures.
-    async function clouds(){while(cloudQueue.length&&!signal.aborted){cloudQueue=timeline.order(cloudQueue,instant);var stamp=cloudQueue.shift();try{await requestCloudRecord(stamp,Math.min(1024,cloudWidth),signal,10000,false);}catch(error){if(error.name==='AbortError')return;replayFailed.add(stamp.toISOString());}if(replayController===controller)updateReplayLabel();}}
+    var keepPrepared=new Set(replayClouds.map(function(t){return t.toISOString()+'/'+cloudWidth;}));preparedClouds=new Set(Array.from(preparedClouds).filter(function(k){return keepPrepared.has(k);}));
+    compressedClouds.retain(replayClouds.map(function(t){return t.toISOString()+'/'+cloudWidth;}));
+    var cloudQueue=timeline.order(replayClouds,instant).filter(function(t){return !cloudPrepared(t);}),auroraQueue=replayAurora.filter(function(e){return !archiveCache.has(e.file);});
+    // Preload compressed hourly maps at one resolution. Decoded frames remain
+    // bounded in memory; only the active pair uses GPU textures.
+    async function cloudWorker(){while(cloudQueue.length&&!signal.aborted){cloudQueue=timeline.order(cloudQueue,instant);var stamp=cloudQueue.shift();try{if(hourlyClouds())await requestCloudBytes(stamp,cloudWidth,signal,12000,false);else await requestCloudRecord(stamp,Math.min(1024,cloudWidth),signal,10000,false);}catch(error){if(error.name==='AbortError')return;replayFailed.add(stamp.toISOString());}if(replayController===controller)updateReplayLabel();}}
     async function auroras(){while(auroraQueue.length&&!signal.aborted){var entry=auroraQueue.shift();try{await requestArchive(entry,signal);}catch(error){if(error.name==='AbortError')return;replayFailed.add(entry.file);}if(replayController===controller)updateReplayLabel();}}
     var deadline=initial?setTimeout(function(){controller.abort();},Math.max(1,26000-(performance.now()-loadingStarted))):null;
-    updateReplayLabel();return Promise.allSettled([clouds(),clouds(),clouds(),auroras(),auroras()]).finally(function(){clearTimeout(deadline);if(replayController===controller){replayBusy=false;if(signal.aborted)replayKey='';updateReplayLabel();}});
+    updateReplayLabel();return Promise.allSettled([cloudWorker(),cloudWorker(),cloudWorker(),cloudWorker(),auroras(),auroras()]).finally(function(){clearTimeout(deadline);if(replayController===controller){replayBusy=false;if(signal.aborted)replayKey='';updateReplayLabel();}});
   }
   function refreshData() {
     var jobs=[['clouds',refreshPhoto()],['aurora',refreshWeather()],['history',refreshArchive()]];
     if(!loading)warmDayTimeline();
     if(!loadingJobsStarted){loadingJobsStarted=true;jobs.forEach(function(job){Promise.resolve(job[1]).finally(function(){settleLoad(job[0]);});});
-      Promise.allSettled(jobs.map(function(job){return job[1];})).then(function(){return warmDayTimeline(true);}).finally(function(){settleLoad('replay');});
+      Promise.allSettled(jobs.map(function(job){return job[1];})).then(function(){return startupReplay||warmDayTimeline(true);}).finally(function(){settleLoad('replay');});
     }
     Promise.allSettled(jobs.map(function(job){return job[1];})).then(function(){return warmDayTimeline();});
   }

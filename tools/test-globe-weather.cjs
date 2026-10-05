@@ -284,7 +284,7 @@ function fetchArchive(bytes, frame = compressed().frame, options = {}) {
     }
     assert.throws(() => D.parseAuroraManifest(manifest([a, a])), /entry/);
     assert.throws(() => D.parseAuroraManifest(manifest([{ ...a, sha256: 'bad' }])), /entry/);
-    assert.throws(() => D.parseAuroraManifest(manifest(Array(4001).fill(a))), /manifest/);
+    assert.throws(() => D.parseAuroraManifest(manifest(Array(10001).fill(a))), /manifest/);
     assert.throws(() => D.parseAuroraManifest({ version: 2, frames: [] }), /manifest/);
   });
   await check('new aurora archive and manifest timestamps reject non-UTC and impossible dates', () => {

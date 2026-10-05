@@ -79,7 +79,7 @@ async function routes(context,options={}){
   if(options.cloudGate)await options.cloudGate;
   try{let body=png(Number(q.get('width')),options.failed?[0,0,0,0]:q.get('layers').endsWith('ir108')?[56,93,132,255]:[120,150,185,255]);if(options.reducedDamage?.corrupt&&Number(q.get('width'))===1024&&q.get('layers').endsWith('ir108'))body=body.subarray(0,33);await route.fulfill({contentType:'image/png',body});}catch{}
  });
- await context.route('https://gibs.earthdata.nasa.gov/**',route=>{const q=new URL(route.request().url()).searchParams;requests.push({kind:'daily',time:q.get('TIME')});return route.fulfill({contentType:'image/png',body:png(Number(q.get('WIDTH')),[0,0,0,255])});});
+ await context.route('https://gibs.earthdata.nasa.gov/**',route=>{const q=new URL(route.request().url()).searchParams;if(q.get('request')==='GetCapabilities')return route.fulfill({contentType:'text/xml',body:'<WMS_Capabilities/>'});requests.push({kind:'daily',time:q.get('TIME')});return route.fulfill({contentType:'image/png',body:png(Number(q.get('WIDTH')),[0,0,0,255])});});
  await context.route('https://services.swpc.noaa.gov/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(options.failed?{}:route.request().url().includes('ovation')?fixture:[['time_tag','Kp'],['2026-10-05 00:00:00','4.67']])}));
  await context.route('https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/aurora/**',route=>{const name=path.basename(new URL(route.request().url()).pathname);return route.fulfill({contentType:name.endsWith('.gz')?'application/gzip':'application/json',body:fs.readFileSync(path.join(root,'assets/data/aurora',name))});});
 }

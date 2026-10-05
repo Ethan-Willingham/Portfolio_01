@@ -142,28 +142,28 @@ try {
       assert.throws(() => tool.decodeFrame({ ...base, runs }));
     }
   });
-  test('An oversized existing manifest fails its 4000-frame limit before referenced-file I/O or mutation', () => {
+  test('An oversized existing manifest fails its 10000-frame limit before referenced-file I/O or mutation', () => {
     const oversizedDirectory = path.join(directory, 'oversized-count');
     fs.mkdirSync(oversizedDirectory);
     const entry = { file: '20261005T020000Z-20261005T025000Z-' + 'a'.repeat(16) + '.json.gz',
       sha256: 'a'.repeat(64), observation: '2026-10-05T02:00:00.000Z', forecast: '2026-10-05T02:50:00.000Z' };
     const bytes = Buffer.from(JSON.stringify({ version: 1, source: tool.SOURCE,
-      updatedAt: '2026-10-05T03:00:00.000Z', frames: Array(4001).fill(entry) }));
+      updatedAt: '2026-10-05T03:00:00.000Z', frames: Array(10001).fill(entry) }));
     const file = path.join(oversizedDirectory, 'manifest.json');
     fs.writeFileSync(file, bytes);
     // No frame files exist. A file-I/O-first implementation would fail with ENOENT.
-    assert.throws(() => tool.archiveFrames([], { directory: oversizedDirectory, now }), /4000-frame limit/);
+    assert.throws(() => tool.archiveFrames([], { directory: oversizedDirectory, now }), /10000-frame limit/);
     assert.deepEqual(fs.readFileSync(file), bytes);
     assert.deepEqual(fs.readdirSync(oversizedDirectory), ['manifest.json']);
   });
-  test('A valid 4000-frame consumer-compatible archive cannot publish one additional distinct source', () => {
+  test('A valid 10000-frame consumer-compatible archive cannot publish one additional distinct source', () => {
     const fullDirectory = path.join(directory, 'full-count');
     fs.mkdirSync(fullDirectory);
     const frames = [];
-    // Tiny valid RLE revisions avoid constructing 4000 complete raw NOAA grids.
-    for (let i = 0; i < 4000; i++) {
+    // Tiny valid RLE revisions avoid constructing 10000 complete raw NOAA grids.
+    for (let i = 0; i < 10000; i++) {
       const frame = { version: 1, observation: '2026-10-05T02:00:00.000Z',
-        forecast: '2026-10-05T02:50:00.000Z', runs: [[0, [(i + 1) / 40]]] };
+        forecast: '2026-10-05T02:50:00.000Z', runs: [[0, [(i + 1) / 100]]] };
       const bytes = zlib.gzipSync(Buffer.from(JSON.stringify(frame) + '\n'), { level: 9, mtime: 0 });
       const sha256 = sha(bytes);
       const file = '20261005T020000Z-20261005T025000Z-' + sha256.slice(0, 16) + '.json.gz';
@@ -174,10 +174,10 @@ try {
     const manifestPath = path.join(fullDirectory, 'manifest.json');
     const before = Buffer.from(JSON.stringify(manifest));
     fs.writeFileSync(manifestPath, before);
-    assert.equal(consumer.parseAuroraManifest(manifest).length, 4000);
-    assert.throws(() => tool.archiveFrames([source()], { directory: fullDirectory, now }), /4000-frame limit/);
+    assert.equal(consumer.parseAuroraManifest(manifest).length, 10000);
+    assert.throws(() => tool.archiveFrames([source()], { directory: fullDirectory, now }), /10000-frame limit/);
     assert.deepEqual(fs.readFileSync(manifestPath), before);
-    assert.equal(fs.readdirSync(fullDirectory).length, 4001);
+    assert.equal(fs.readdirSync(fullDirectory).length, 10001);
   });
   test('A damaged existing frame fails checksum without overwriting the index', () => {
     const before = fs.readFileSync(path.join(directory, 'manifest.json')); const entry = JSON.parse(before).frames[0];

@@ -448,7 +448,7 @@
   }
 
   function parseAuroraManifest(value) {
-    if(!value||value.version!==1||!Array.isArray(value.frames)||value.frames.length>4000) throw new Error('Invalid aurora manifest');
+    if(!value||value.version!==1||!Array.isArray(value.frames)||value.frames.length>10000) throw new Error('Invalid aurora manifest');
     var seen=new Set();
     return value.frames.map(function(frame){
       if(!frame||typeof frame.file!=='string'||!/^[-A-Za-z0-9_.]+\.json\.gz$/.test(frame.file)||!(/^[a-f0-9]{64}$/.test(frame.sha256))||seen.has(frame.file)) throw new Error('Invalid archive entry');
@@ -570,6 +570,7 @@
     CLOUD_SERVICE:CLOUD_SERVICE,CLOUD_LAYERS:CLOUD_LAYERS.slice(),CLOUD_CACHE:CLOUD_CACHE,
     parseCloudCatalog:parseCloudCatalog,fetchCloudCatalog:fetchCloudCatalog,parseCloudSnapshot:parseCloudSnapshot,cloudFrameAt:cloudFrameAt,cloudURL:cloudURL,fetchCloudFrame:fetchCloudFrame,discardCloudFrame:discardCloudFrame,
     PHOTO_LAYERS: PHOTO_LAYERS.slice(), GRID_WIDTH: GRID_WIDTH, GRID_HEIGHT: GRID_HEIGHT,
+    request:request,imageBlob:imageBlob,fetchText:function(url,options){return request(url,options,function(r){return r.text();});},
     fetchJSON: fetchJSON, photoURL: photoURL, fetchPhotoDay: fetchPhotoDay, latestPhoto: latestPhoto,
     cachedPhotoDay: cachedPhotoDay, discardPhotoDay: discardPhotoDay, evictPhoto: evictPhoto,
     utcDate:utcDate, previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA, featherCoverage:featherCoverage,

@@ -26,7 +26,7 @@
     function get(key){key=String(key);var item=items.get(key);if(!item)return null;items.delete(key);items.set(key,item);return item.value;}
     function trim(){for(var key of items.keys()){if(bytes<=limit)break;if(key!==pinned)remove(key);}}
     return {
-      get:get,has:function(key){return items.has(String(key));},
+      get:get,delete:function(key){remove(String(key));},has:function(key){return items.has(String(key));},
       put:function(key,value,size){key=String(key);var previous=items.get(key);
         if(previous&&options.prefer&&!options.prefer(value,previous.value)){if(options.dispose)options.dispose(value);return get(key);}
         remove(key);items.set(key,{value:value,bytes:size});bytes+=size;trim();return items.has(key)?value:null;
