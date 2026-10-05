@@ -228,17 +228,18 @@
   var baseTexture = solidTexture(60,90,87), nightTexture = solidTexture(1,2,1), satelliteTexture = solidTexture(60,90,87), infraredTexture=solidTexture(0,0,0), moonTexture = solidTexture(130,128,117);
   var photoSunUniform={value:new THREE.Vector3(1,0,0)};
   var vertex = 'varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld; void main(){ vUv=uv; vNormal=normalize((modelMatrix*vec4(normal,0.0)).xyz); vWorld=(modelMatrix*vec4(position,1.0)).xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
-  var earthMaterial = new THREE.ShaderMaterial({uniforms:{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0}},vertexShader:vertex,fragmentShader:[
-    'uniform sampler2D baseMap, nightMap, photoMap,infraredMap; uniform vec3 sunDir,photoSunDir; uniform float photoMix,photoEnabled,thermalEnabled,naturalEnabled; varying vec2 vUv; varying vec3 vNormal;',
+  var earthMaterial = new THREE.ShaderMaterial({uniforms:{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0},denseEnabled:{value:0}},vertexShader:vertex,fragmentShader:[
+    'uniform sampler2D baseMap, nightMap, photoMap,infraredMap; uniform vec3 sunDir,photoSunDir; uniform float photoMix,photoEnabled,thermalEnabled,naturalEnabled,denseEnabled; varying vec2 vUv; varying vec3 vNormal;',
     'void main(){ vec3 base=texture2D(baseMap,vUv).rgb; vec4 photo=texture2D(photoMap,vUv); vec4 infrared=texture2D(infraredMap,vUv);',
     // Natural RGB puts near infrared in red: ice clouds and snow become cyan.
     // Neutralize that bright cyan only, retaining observed structure and land.
     'float cyan=min(photo.g,photo.b)-photo.r; float ice=smoothstep(.04,.16,cyan)*smoothstep(.18,.36,min(photo.g,photo.b))*(1.0-smoothstep(.12,.32,abs(photo.g-photo.b)));',
     'photo.rgb=mix(photo.rgb,vec3(max(photo.g,photo.b)),ice*thermalEnabled*naturalEnabled);',
-    // Himawari's visible band is monochrome. Keep reference land colours beneath
-    // its bright cloud structure instead of painting that hemisphere grey.
+    // One reference surface avoids regional RGB and monochrome products
+    // switching the colour of land and oceans at their coverage borders.
+    'vec3 cloudColour=mix(base,vec3(1.0),smoothstep(.22,.85,min(photo.r,min(photo.g,photo.b))));',
     'float mono=1.0-smoothstep(.005,.025,max(photo.r,max(photo.g,photo.b))-min(photo.r,min(photo.g,photo.b)));',
-    'photo.rgb=mix(photo.rgb,mix(base,vec3(1.0),smoothstep(.22,.85,photo.r)),mono*thermalEnabled);',
+    'photo.rgb=mix(photo.rgb,cloudColour,thermalEnabled*mix(mono,1.0,denseEnabled));',
     'float shotDay=smoothstep(.10,.25,dot(normalize(vNormal),photoSunDir))*naturalEnabled*photo.a;',
     // Thermal brightness includes ground temperature. Display cold features as
     // white over reference terrain, not a grayscale replacement for Earth's
@@ -599,7 +600,7 @@
   function cloudStamp(){if(!cloudCatalog)return null;return hourlyClouds()?clouds.frameAt(cloudCatalog,instant,new Date()):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
   async function requestCloudBytes(stamp,width,signal,timeout,offline,force){
     if(!cloudCatalog.dense||stamp<cloudCatalog.start)return data.fetchCloudFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline});
-    var key=stamp.toISOString()+'/'+width,cached=compressedClouds.get(key);if(cached&&(!force||cached.blobs[0]&&cached.blobs[1]))return cached;
+    var key=stamp.toISOString()+'/'+width,cached=compressedClouds.get(key);if(cached&&(!force||cached.blobs.slice(0,3).every(Boolean)))return cached;
     var pendingKey='bytes/'+key;
     if(cloudPending.has(pendingKey)&&cloudPending.get(pendingKey).signal.aborted)cloudPending.delete(pendingKey);
     if(!cloudPending.has(pendingKey)){
@@ -612,27 +613,28 @@
     return timeline.waitFor(cloudPending.get(pendingKey).promise,signal);
   }
   async function decodeDenseCloudRecord(result,stamp,signal){
-    var sourceCanvases=[],outputs=[],memoized=false;
+    var sourcePixels=[],outputs=[],memoized=false;
     try{
-      for(var index=0;index<4;index++){
-        if(!result.blobs[index]){sourceCanvases.push(null);continue;}
-        var canvas=await decodeBlob(result.blobs[index],result.width);sourceCanvases.push(canvas);
+      for(var index=0;index<clouds.GROUPS.length;index++){
+        if(!result.blobs[index]){sourcePixels.push(null);continue;}
+        var canvas=await decodeBlob(result.blobs[index],result.width);
         var context=canvas.getContext('2d'),pixels=context.getImageData(0,0,canvas.width,canvas.height);
+        canvas.width=canvas.height=1;
         if(result.blobs[index].type==='image/jpeg')for(var blank=0;blank<pixels.data.length;blank+=4)if(Math.max(pixels.data[blank],pixels.data[blank+1],pixels.data[blank+2])<8)pixels.data[blank+3]=0;
-        if(index===2)clouds.normalizeThermal(pixels.data);
-        pixels.data.set(data.featherCoverage(pixels.data,canvas.width));context.putImageData(pixels,0,0);
+        if(clouds.GROUPS[index].source===clouds.NASA&&clouds.GROUPS[index].kind==='infrared')clouds.normalizeThermal(pixels.data);
+        sourcePixels.push(data.featherCoverage(pixels.data,result.width));
         if(signal.aborted){var e=new Error('Hourly decode aborted');e.name='AbortError';throw e;}
       }
       for(var group=0;group<2;group++){
         var output=document.createElement('canvas');output.width=result.width;output.height=result.width/2;outputs.push(output);
-        var ctx=output.getContext('2d');for(var part=group*2;part<group*2+2;part++)if(sourceCanvases[part])ctx.drawImage(sourceCanvases[part],0,0);
+        var ctx=output.getContext('2d'),image=ctx.createImageData(result.width,result.width/2);image.data.set(clouds.composite(sourcePixels,result.width,group?'infrared':'visible'));ctx.putImageData(image,0,0);
       }
       var raw=outputs[1].getContext('2d').getImageData(0,0,result.width,result.width/2).data,valid=0;for(var i=3;i<raw.length;i+=4)if(raw[i]>200)valid++;
       if(valid/(raw.length/4)<.15)throw new Error('Hourly satellite image has no useful coverage');
-      var natural=!!(result.blobs[0]||result.blobs[1]),record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),width:result.width,coverage:valid/(raw.length/4),source:'NASA / EUMETSAT',natural:natural,dense:true},canvases:outputs,natural:outputs[0],infrared:outputs[1],memoized:true};
+      var natural=result.blobs.slice(0,3).some(Boolean),record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),width:result.width,coverage:valid/(raw.length/4),source:'NASA / EUMETSAT',natural:natural,dense:true},canvases:outputs,natural:outputs[0],infrared:outputs[1],memoized:true};
       memoized=true;return cloudMemo.put(stamp.toISOString(),record,result.width*result.width*4);
     }catch(error){if(error.name!=='AbortError'){await clouds.discard(stamp,result.width);compressedClouds.delete(stamp.toISOString()+'/'+result.width);preparedClouds.delete(stamp.toISOString()+'/'+result.width);}throw error;}
-    finally{sourceCanvases.forEach(function(c){if(c)c.width=c.height=1;});if(!memoized)outputs.forEach(function(c){c.width=c.height=1;});}
+    finally{sourcePixels.length=0;if(!memoized)outputs.forEach(function(c){c.width=c.height=1;});}
   }
   function decodeCachedSelection(){
     if(decodingReplay||!hourlyClouds())return;
@@ -648,6 +650,7 @@
     satelliteTexture=configureTexture(new THREE.CanvasTexture(record.natural));infraredTexture=configureTexture(new THREE.CanvasTexture(record.infrared));
     earthMaterial.uniforms.photoMap.value=satelliteTexture;earthMaterial.uniforms.infraredMap.value=infraredTexture;
     earthMaterial.uniforms.thermalEnabled.value=1;earthMaterial.uniforms.naturalEnabled.value=record.photo.natural?1:0;
+    earthMaterial.uniforms.denseEnabled.value=record.photo.dense?1:0;
     var sourceSun=math.solar(new Date(record.photo.time));photoSunUniform.value.set(sourceSun.vector.x,sourceSun.vector.y,sourceSun.vector.z);
     photo=record.photo;cloudMemo.pin(photo.time);compressedClouds.pin(photo.time+'/'+cloudWidth);photoMix=loading&&!upgrade?0:1;cloudFailure='';replayPendingCloud=false;wrapper.dataset.photo='ready';
     if(previous&&!previous.memoized)previous.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});

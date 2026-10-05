@@ -27,13 +27,14 @@ window.__globeQuality={
   targetTheta=theta=Math.PI/2+lon*DEG;targetPhi=phi=Math.PI/2-lat*DEG;targetRadius=radius=r;sunFraming=false;aimShift=0;autoSpin=false;
   camera.position.set(v.x*r,v.y*r,v.z*r);camera.lookAt(0,0,0);camera.updateMatrixWorld();
   var items=[atmosphere,moon,sunBody,sunGlow,starField,pinMarker].concat(auroraMeshes),visible=items.map(function(m){return m.visible;});
-  var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldTarget=renderer.getRenderTarget();
+  var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldDense=earthMaterial.uniforms.denseEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldTarget=renderer.getRenderTarget();
   var w=container.clientWidth,h=container.clientHeight,rt=new THREE.WebGLRenderTarget(w,h),pixel=new Uint8Array(4);
   try{items.forEach(function(m){m.visible=false;});if(options.aurora)auroraMeshes.forEach(function(m){m.visible=hasForecast();});
    if(options.reference)earthMaterial.uniforms.photoEnabled.value=0;if(options.thermal)earthMaterial.uniforms.naturalEnabled.value=0;
+   if(options.dense)earthMaterial.uniforms.denseEnabled.value=1;
    if(options.sourceNight)photoSunUniform.value.set(-v.x,-v.y,-v.z);
    renderer.setRenderTarget(rt);renderer.render(scene,camera);renderer.readRenderTargetPixels(rt,Math.floor(w/2),Math.floor(h/2),1,1,pixel);return Array.from(pixel);
-  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;photoSunUniform.value.copy(oldPhotoSun);renderer.setRenderTarget(oldTarget);rt.dispose();}
+  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;earthMaterial.uniforms.denseEnabled.value=oldDense;photoSunUniform.value.copy(oldPhotoSun);renderer.setRenderTarget(oldTarget);rt.dispose();}
  },
  nightForecastPoint:function(){if(!forecast)return null;var best=null;for(var lat=-80;lat<=80;lat++)for(var lon=0;lon<360;lon++){
   var p=forecast.grid[(lat+90)*360+lon],east=lon>180?lon-360:lon,elevation=math.solarElevation(instant,lat,east);
@@ -91,6 +92,9 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  check('missing polar imagery exposes exactly the reference map',gap.slice(0,3).every((x,i)=>Math.abs(x-reference[i])<=1),{gap,reference});
  const blackIR=await page.evaluate(()=>__globeQuality.texture('infrared',0,130)),thermal=await page.evaluate(()=>__globeQuality.sample(0,130,{thermal:true}));
  const warmReference=await page.evaluate(()=>__globeQuality.sample(0,130,{reference:true}));
+ const denseGround=await page.evaluate(()=>__globeQuality.sample(0,130,{dense:true})),denseCloud=await page.evaluate(()=>__globeQuality.sample(0,108,{dense:true}));
+ check('hourly visible products preserve the same terrain colours beneath darker surface pixels',denseGround.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{denseGround,reference:warmReference});
+ check('hourly observed bright cloud remains bright and nearly neutral',denseCloud[0]>180&&Math.max(...denseCloud.slice(0,3))-Math.min(...denseCloud.slice(0,3))<25,denseCloud);
  check('opaque black infrared stays valid while warm terrain retains its reference colours',blackIR[3]===255&&blackIR.slice(0,3).every(x=>x===0)&&thermal.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{texture:blackIR,pixel:thermal,reference:warmReference});
  const cold=await page.evaluate(()=>__globeQuality.sample(0,108,{thermal:true}));
  check('bright cold infrared features still render in neutral white',Math.max(...cold.slice(0,3))-Math.min(...cold.slice(0,3))<=3&&cold[0]>200,cold);
