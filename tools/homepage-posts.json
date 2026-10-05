@@ -47,5 +47,18 @@
     "keywords": "management managing professionals leadership people work trust teams responsibility",
     "title": "All In: Managing Professionals",
     "desc": "People can meet every requirement and still hold back their best work. Managing professionals means making room for judgment while staying clear about responsibility and the problems you need solved."
+  },
+  {
+    "href": "daylight-globe.html",
+    "thumb": "daylight-globe.jpg",
+    "date": "2026-04-23",
+    "dateDisplay": "23 Apr 2026",
+    "createdCommit": "92854590a411ef73c7480a3030b230a1eabcfbfe",
+    "createdAt": "2026-05-29T18:12:00-05:00",
+    "alt": "Actual daily satellite clouds over Earth, with night lights and an elevated green aurora forecast.",
+    "credit": "NASA GIBS NOAA-21 and NOAA-20 VIIRS daily true color, NASA Black Marble 2016, NOAA SWPC OVATION. Real Daylight Globe screenshot.",
+    "keywords": "daylight earth globe satellite clouds sun moon aurora NOAA NASA live space",
+    "title": "Daylight Globe",
+    "desc": "Clouds from the latest daily satellite mosaic cover the sunlit Earth. Spin the globe to see city lights and NOAA's aurora forecast, or pin a spot."
   }
 ]

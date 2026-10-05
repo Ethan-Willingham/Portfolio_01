@@ -28,7 +28,8 @@ for (const ref of solarReference.cases) {
   close(length(sun.vector), 1, 1e-12, label + ' Sun vector');
   close(math.solarElevation(instant, sun.declination, sun.longitude), 90, 1e-5, label + ' subsolar point');
   // Select the stated local solar date even at east longitudes, where UTC
-  // noon falls on the following local solar date.
+  // noon falls on the following local solar date. Mean noon is safely within
+  // the same apparent date for all equation-of-time corrections.
   const localNoon = new Date(Date.parse(ref.date + 'T12:00:00Z') - ref.longitude * 240000);
   const result = math.daylight(localNoon, ref.latitude, ref.longitude);
   assert.equal(result.polar, ref.polarState, label + ' polar state');
@@ -84,14 +85,27 @@ assert(briefDay.hours > 0 && briefDay.hours < 4 / 60, 'brief day duration');
 const transition = math.daylight(new Date('2026-06-21T12:00:00Z'), 65.7294, 0);
 assert.equal(transition.polar, null, 'single sunset is not perpetual day');
 assert.equal(transition.sunrise, null, 'no invented sunrise on transition day');
-assert(transition.sunset && transition.hours < 24 && transition.hours > 23.99, 'partial-day sunset');
+assert(transition.sunset && transition.hours < 24 && transition.hours > 23.95, 'partial-day sunset');
 for (const longitude of [-179.9, 179.9]) {
   const date = new Date('2026-03-20T00:01:00Z');
   const events = math.daylight(date, 0, longitude);
   assert(events.sunrise < events.sunset, 'date-line events remain chronological');
   assert(events.sunrise >= events.start && events.sunset <= events.end, 'date-line events retain UTC dates');
-  assert.equal(Math.floor((events.start.getTime() + longitude * 240000) / DAY), Math.floor((date.getTime() + longitude * 240000) / DAY), 'correct local solar date');
+  const apparentStamp=date.getTime()+(longitude*4+math.solar(date).equationOfTime)*60000;
+  assert.equal(events.solarDate,new Date(apparentStamp).toISOString().slice(0,10),'correct apparent solar date');
+  const firstStamp=events.start.getTime()+(longitude*4+math.solar(events.start).equationOfTime)*60000;
+  const lastStamp=events.end.getTime()+(longitude*4+math.solar(events.end).equationOfTime)*60000;
+  close(firstStamp,Math.floor(apparentStamp/DAY)*DAY,1,'apparent midnight start solved in UTC');
+  close(lastStamp,(Math.floor(apparentStamp/DAY)+1)*DAY,1,'apparent midnight end solved in UTC');
 }
+// The apparent date advances before UTC midnight when EOT is positive.
+// Both instants must describe the same displayed day and the same events.
+const beforeMidnight=math.daylight(new Date('2026-10-04T23:49:00Z'),40,0);
+const afterMidnight=math.daylight(new Date('2026-10-05T00:01:00Z'),40,0);
+assert.equal(beforeMidnight.solarDate,'2026-10-05','positive EOT advances displayed date');
+assert.equal(afterMidnight.solarDate,beforeMidnight.solarDate,'same displayed date across UTC midnight');
+assert.equal(beforeMidnight.sunrise.getTime(),afterMidnight.sunrise.getTime(),'same sunrise across UTC midnight');
+assert.equal(beforeMidnight.sunset.getTime(),afterMidnight.sunset.getTime(),'same sunset across UTC midnight');
 // Default obliquity comes from the observation date rather than the fixed
 // what-if button. Explicit tilt changes declination coherently.
 const june = new Date('2026-06-21T12:00:00Z');
@@ -112,7 +126,29 @@ assert.equal(offset('2026-10-03T15:59:00Z', 'Australia/Sydney'), 'GMT+10:00');
 assert.equal(offset('2026-10-03T16:00:00Z', 'Australia/Sydney'), 'GMT+11:00');
 assert.equal(offset('2026-06-21T12:00:00Z', 'Asia/Kathmandu'), 'GMT+05:45');
 assert.equal(offset('2026-06-21T12:00:00Z', 'America/Phoenix'), 'GMT-07:00');
+// The visible distance is compressed. The display's light must preserve the
+// actual Moon-Sun-camera angle rather than invent a phase as the camera turns.
+function unit(vector) { const size=length(vector);return {x:vector.x/size,y:vector.y/size,z:vector.z/size}; }
+function dot(a,b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
+function scale(vector,value) { return {x:vector.x*value,y:vector.y*value,z:vector.z*value}; }
+function minus(a,b) { return {x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}; }
+for (const iso of ['2026-01-18T19:52:00Z','2026-10-18T16:12:00Z','2026-10-26T04:12:00Z','2026-11-01T20:28:00Z']) {
+  const lunar=math.moon(new Date(iso));
+  const physicalPosition=scale(lunar.vector,lunar.distance);
+  const displayDistance=5.5*lunar.distance/60.2666;
+  const displayPosition=scale(lunar.vector,displayDistance);
+  const physicalLight=unit(minus(scale(lunar.sunVector,lunar.sunDistanceEarthRadii),physicalPosition));
+  // Last camera sits between the two Moon distances, exercising the
+  // antiparallel direction branch of the minimal quaternion.
+  for (const camera of [{x:3,y:0,z:0},{x:0,y:3,z:0},{x:0,y:0,z:-3},{x:1,y:-2,z:5},scale(lunar.vector,10)]) {
+    const physicalView=unit(minus(camera,physicalPosition));
+    const displayView=unit(minus(camera,displayPosition));
+    const displayLight=math.moonDisplayLight(lunar,camera,displayDistance);
+    close(length(displayLight),1,1e-12,iso+' normalized display Moon light');
+    close(dot(displayView,displayLight),dot(physicalView,physicalLight),1e-10,iso+' compressed Moon phase preserves physical view angle');
+  }
+}
 console.log('Solar: ' + solarReference.cases.length + ' NOAA city/date cases; maximum sunrise/set error ' + maxSolarSeconds.toFixed(3) + ' seconds.');
 console.log('Moon phases: ' + phaseReference.cases.length + ' USNO new/full instants; maximum error ' + maxPhaseMinutes.toFixed(2) + ' minutes.');
 console.log('Moon position: ' + moonReference.cases.length + ' independent ephemeris samples; maximum angular error ' + maxMoonDegrees.toFixed(4) + ' degree, illumination fraction error ' + maxIllumination.toFixed(6) + '.');
-console.log('Polar transitions, date line, physical Sun vectors, hypothetical tilt, real obliquity and Intl DST checks passed.');
+console.log('Polar transitions, date line, physical Sun vectors, hypothetical tilt, real obliquity, Intl DST and compressed Moon phase checks passed.');

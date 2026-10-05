@@ -1,6 +1,6 @@
 # Daylight Globe astronomy
 
-`js/globe-math.js` provides rendering-independent functions in `window.GlobeMath` and CommonJS. It is 11,348 bytes uncompressed and 3,666 bytes gzip in its initial version. It adds no runtime library, remote dependency or fixed DST table.
+`js/globe-math.js` provides rendering-independent functions in `window.GlobeMath` and CommonJS. It adds no runtime library, remote dependency or fixed DST table.
 
 ## Sun
 
@@ -8,7 +8,7 @@ The Sun uses NOAA's Meeus-based Julian-century equations for orbital eccentricit
 
 Subsolar longitude includes the equation of time. Unit vectors match Three.js's existing Earth texture orientation: Greenwich is +X, north +Y and east longitude -Z. `solarElevation()` is geometric. Refraction is not applied to the globe's physical day/night direction.
 
-`daylight()` finds crossings of the standard -0.833 degree geometric horizon, accounting for approximate refraction and the Sun's radius. It selects the calendar day at the pin's local mean solar time and returns actual UTC `Date` objects, total sunlight hours and a polar-day/polar-night state. A polar transition can have only one event. Extrema searches preserve very brief daylight or night intervals between coarse time samples.
+`daylight()` finds crossings of the standard -0.833 degree geometric horizon, accounting for approximate refraction and the Sun's radius. It selects the same apparent solar calendar date shown by the pin clock and solves both midnight boundaries in UTC, including the equation of time. It returns actual UTC `Date` objects, total sunlight hours, a `solarDate` string and a polar-day/polar-night state. A polar transition can have only one event. Extrema searches preserve very brief daylight or night intervals between coarse time samples. Apparent solar days can differ from 24 elapsed UTC hours by seconds; a full polar day is expressed as 24 solar-clock hours.
 
 NOAA reports theoretical rise/set accuracy of approximately one minute within 72 degrees north/south and ten minutes beyond it. Atmospheric pressure, temperature, weather, observer height and terrain can move an observed sunrise. Our test tolerance compares numerical results to NOAA's calculator, not physical observations. See [NOAA calculation details](https://gml.noaa.gov/grad/solcalc/calcdetails.html) and the [official calculator source](https://gml.noaa.gov/grad/solcalc/main.js).
 
@@ -16,7 +16,9 @@ NOAA reports theoretical rise/set accuracy of approximately one minute within 72
 
 The Moon uses [Paul Schlyter's published low-precision orbital algorithm](https://stjarnhimlen.se/comp/ppcomp.html). Kepler's equation is solved numerically, followed by all twelve listed longitude, five latitude and two distance perturbations. Equatorial coordinates of the observation date are rotated into Earth-fixed coordinates with Greenwich sidereal time.
 
-Moon illumination uses the same real Sun vector as Earth and accounts for the Sun's finite distance. Phase is a circular ecliptic longitude difference: 0 degrees is new and 180 degrees full. Angular elongation is the direct three-dimensional Sun separation. Moon distance is expressed in Earth radii. A display that brings the Moon closer for visibility compresses distance; it must retain the calculated direction and lighting.
+Moon illumination uses the same real Sun vector as Earth and accounts for the Sun's finite distance. Phase is a circular ecliptic longitude difference: 0 degrees is new and 180 degrees full. Angular elongation is the direct three-dimensional Sun separation. Moon distance is expressed in Earth radii.
+
+The display brings the Moon closer for visibility. `moonDisplayLight()` preserves the Sun-Moon-camera angle from the actual lunar distance. It computes the Moon's physical light and physical/view directions, then transports that light through the minimal quaternion rotation into the compressed display's viewing frame. This preserves physical phase as the globe's camera rotates, rather than letting the compressed distance invent a new illuminated fraction. The Sun source remains the same astronomical position as Earth's lighting. Tests compare physical/display light-view dot products at all four principal phases from five camera locations, including antiparallel view directions.
 
 This is a geocentric model, appropriate for a globe viewed from space. It omits the full periodic lunar series, observer parallax, detailed libration and full light-time, nutation and precession corrections. It does not predict eclipses or supply precision telescope pointing.
 
@@ -39,4 +41,4 @@ The fixtures in `tools/fixtures/globe/` have independent provenance:
 - All 25 new/full Moon instants published by the [US Naval Observatory for 2026](https://aa.usno.navy.mil/calculated/moon/phases?year=2026). Maximum calculated phase event difference is 9.26 minutes, against the requested three-hour tolerance.
 - 24 Moon vector/distance/illumination samples from unmodified [Astronomy Engine](https://github.com/cosinekitty/astronomy), a model independently tested against NOVAS and JPL Horizons. Maximum angular difference is 0.0705 degrees and illuminated-fraction difference 0.000422. These samples verify the intended precision; they do not establish universal error bounds for all dates.
 
-JSON metadata retains source URLs and hashes. Extra tests cover a daylight appearance shorter than four minutes, a day with only one polar sunset, UTC ordering across the date line, true obliquity, physical unit vectors, explicit tilt what-ifs and DST changes including the repeated fall hour. Rendering, network fallbacks and controls are covered separately by the browser/data tests.
+JSON metadata retains source URLs and hashes. Extra tests cover a daylight appearance shorter than four minutes, a day with only one polar sunset, UTC ordering across the date line, apparent solar midnight boundaries and date consistency across UTC midnight, true obliquity, physical unit vectors, explicit tilt what-ifs, DST changes including the repeated fall hour, and phase invariance when compressing the Moon's distance. Rendering, network fallbacks and controls are covered separately by the browser/data tests.

@@ -1,0 +1,25 @@
+{
+  "source": "Real browser capture of daylight-globe.html using NASA GIBS and NOAA SWPC live responses",
+  "capturedAt": "2026-10-05T00:46:02.244Z",
+  "rendererSha256": "c77faa786a5ccb13c12ea85cd3e3be04ec78aae0a325519b57635ee376709623",
+  "satelliteDay": "2026-10-04",
+  "photoLayers": [
+    "VIIRS_NOAA21_CorrectedReflectance_TrueColor",
+    "VIIRS_NOAA20_CorrectedReflectance_TrueColor"
+  ],
+  "auroraObservation": "2026-10-05T00:35:00.000Z",
+  "auroraForecast": "2026-10-05T01:22:00.000Z",
+  "kp": 4.67,
+  "derivatives": {
+    "daylight-globe.jpg": [
+      600,
+      400
+    ],
+    "daylight-globe-og.jpg": [
+      1200,
+      630
+    ]
+  },
+  "processing": "One-pixel UI border removed, then centered crop and resize. No cloud or forecast data were altered.",
+  "credit": "NASA GIBS, NOAA SWPC, NASA Black Marble 2016"
+}

@@ -57,11 +57,20 @@
   function daylight(date, latitude, longitude, tilt) {
     if (!Number.isFinite(latitude) || Math.abs(latitude) > 90 || !Number.isFinite(longitude)) throw new RangeError('Invalid geographic coordinate');
     longitude = signed(longitude);
-    // Select the calendar date at the pin's local mean solar time. UTC events
-    // retain their true date across midnight and the International Date Line.
-    var start = Math.floor((epoch(date) + longitude * 240000) / DAY) * DAY - longitude * 240000;
-    var end = start + DAY;
-    var step = DAY / 48;
+    // Select the displayed local apparent solar date, including equation of
+    // time. Solve both midnight boundaries in UTC so brief polar events cannot
+    // be assigned to a neighboring solar date near midnight.
+    var ms = epoch(date);
+    var solarStamp = ms + (longitude * 4 + solar(ms,tilt).equationOfTime) * 60000;
+    var dayStamp = Math.floor(solarStamp / DAY) * DAY;
+    function midnight(stamp) {
+      var utc = stamp - longitude * 240000;
+      for (var iteration = 0; iteration < 6; iteration++) utc = stamp - (longitude * 4 + solar(utc,tilt).equationOfTime) * 60000;
+      return utc;
+    }
+    var start = midnight(dayStamp);
+    var end = midnight(dayStamp + DAY);
+    var step = (end - start) / 48;
     var samples = [];
     for (var sample = -1; sample <= 49; sample++) samples.push({time: start + sample * step, elevation: solarElevation(start + sample * step, latitude, longitude, tilt) - HORIZON});
     // Near the polar circles a day or night can last less than one sample.
@@ -118,7 +127,11 @@
       previous = elevation;
     }
     if (up) daylightMs += end - upSince;
-    return {sunrise: sunrise, sunset: sunset, hours: daylightMs / 3600000, polar: sunrise === null && sunset === null ? (initiallyUp ? 'day' : 'night') : null, start: new Date(start), end: new Date(end)};
+    var polar = sunrise === null && sunset === null ? (initiallyUp ? 'day' : 'night') : null;
+    // Apparent solar days vary by seconds in elapsed UTC length. A complete
+    // polar solar day still represents 24 solar-clock hours in the pin panel.
+    var hours = polar === 'day' ? 24 : polar === 'night' ? 0 : Math.max(0,Math.min(24,daylightMs / 3600000));
+    return {sunrise: sunrise, sunset: sunset, hours: hours, polar: polar, start: new Date(start), end: new Date(end), solarDate: new Date(dayStamp).toISOString().slice(0,10)};
   }
   function moon(date) {
     var ms = epoch(date);
@@ -167,11 +180,38 @@
     var dot = clamp(vector.x * sun.vector.x + vector.y * sun.vector.y + vector.z * sun.vector.z);
     var sunDistance = sun.distanceAU * AU_EARTH_RADII;
     var incidenceCos = (distance - sunDistance * dot) / Math.sqrt(sunDistance * sunDistance + distance * distance - 2 * sunDistance * distance * dot);
-    return {vector: vector, distance: distance, illumination: (1 + clamp(incidenceCos)) / 2, phase: modulo(longitude - sun.eclipticLongitude, 360), elongation: Math.acos(dot) / DEG, longitude: earthLongitude, declination: dec, sunVector: sun.vector};
+    return {vector: vector, distance: distance, illumination: (1 + clamp(incidenceCos)) / 2, phase: modulo(longitude - sun.eclipticLongitude, 360), elongation: Math.acos(dot) / DEG, longitude: earthLongitude, declination: dec, sunVector: sun.vector, sunDistanceEarthRadii: sunDistance};
   }
-  function apparentSolarMinutes(date, longitude) {
+  // The UI compresses Earth-Moon separation. Rotate the physical light through
+  // the same minimal view-frame rotation so that compression cannot change the
+  // Moon's phase or the bright limb's orientation for the actual globe camera.
+  function moonDisplayLight(lunar, camera, displayDistance) {
+    function normalize(vector, fallback) {
+      var length = Math.hypot(vector.x, vector.y, vector.z);
+      if (length < 1e-12) return fallback;
+      return {x: vector.x / length, y: vector.y / length, z: vector.z / length};
+    }
+    function cross(a, b) { return {x:a.y*b.z-a.z*b.y, y:a.z*b.x-a.x*b.z, z:a.x*b.y-a.y*b.x}; }
+    var direction = lunar.vector;
+    var earthward = {x:-direction.x,y:-direction.y,z:-direction.z};
+    var physicalView = normalize({x:camera.x-direction.x*lunar.distance,y:camera.y-direction.y*lunar.distance,z:camera.z-direction.z*lunar.distance},earthward);
+    var displayView = normalize({x:camera.x-direction.x*displayDistance,y:camera.y-direction.y*displayDistance,z:camera.z-direction.z*displayDistance},earthward);
+    var sunDistance = lunar.sunDistanceEarthRadii || AU_EARTH_RADII;
+    var physicalLight = normalize({x:lunar.sunVector.x*sunDistance-direction.x*lunar.distance,y:lunar.sunVector.y*sunDistance-direction.y*lunar.distance,z:lunar.sunVector.z*sunDistance-direction.z*lunar.distance},lunar.sunVector);
+    var axis = cross(physicalView,displayView);
+    var w = 1 + clamp(physicalView.x*displayView.x+physicalView.y*displayView.y+physicalView.z*displayView.z);
+    var qLength = Math.hypot(axis.x,axis.y,axis.z,w);
+    if (qLength < 1e-10) {
+      axis = normalize(cross(physicalView,Math.abs(physicalView.x)<.9?{x:1,y:0,z:0}:{x:0,y:1,z:0}),{x:0,y:0,z:1});
+      w = 0;
+    } else { axis.x/=qLength;axis.y/=qLength;axis.z/=qLength;w/=qLength; }
+    var firstCross = cross(axis,physicalLight);
+    var secondCross = cross(axis,firstCross);
+    return normalize({x:physicalLight.x+2*w*firstCross.x+2*secondCross.x,y:physicalLight.y+2*w*firstCross.y+2*secondCross.y,z:physicalLight.z+2*w*firstCross.z+2*secondCross.z},physicalLight);
+  }
+  function apparentSolarMinutes(date, longitude, tilt) {
     var ms = epoch(date);
-    return modulo(ms / 60000 + longitude * 4 + solar(ms).equationOfTime, 1440);
+    return modulo(ms / 60000 + longitude * 4 + solar(ms,tilt).equationOfTime, 1440);
   }
-  return {solar: solar, solarElevation: solarElevation, daylight: daylight, moon: moon, apparentSolarMinutes: apparentSolarMinutes, geographicVector: geographicVector};
+  return {solar: solar, solarElevation: solarElevation, daylight: daylight, moon: moon, moonDisplayLight: moonDisplayLight, apparentSolarMinutes: apparentSolarMinutes, geographicVector: geographicVector};
 }));
