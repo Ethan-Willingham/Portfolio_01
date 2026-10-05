@@ -44,9 +44,27 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await page.locator('.enough-card details table').count(),0,'Raw tables removed from short drawers');
   assert.equal(await page.locator('.enough-card details a[download]').count(),12,'Full evidence still available');
   assert.ok((await page.locator('.overview-legend').textContent()).trim().split(/\s+/).length<28,'Quiet overview legend');
+  assert.deepEqual(await page.locator('.overview-benefit').allTextContents(),['of mortality-risk reduction','of mortality-risk reduction','of muscle growth'],'Overview names each measured outcome');
+  assert.match(await page.locator('#protein .en-y-label').textContent(),/muscle growth/);assert.match(await page.locator('#steps .en-y-label').textContent(),/mortality-risk reduction/);
+  assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range/i,'Removed unclear range phrase');
+  assert.equal(await page.locator('#overview-chart .enough-target-key').textContent(),'90% = enough');
+  const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
+   const ticks=[...svg.querySelectorAll('.en-y-tick')];
+   return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
+  }));assert.deepEqual(crowdedTicks,[],'Ordinary y-axis labels have at least 4px separation');
+  const benefitIds=await page.evaluate(()=>EnoughData.curves.filter(c=>c.view.mode==='benefit').map(c=>c.id));
+  for(const id of benefitIds){
+   assert.deepEqual(await page.locator('#'+id+' .en-y-tick').allTextContents(),['0','50','100'],'90 is a threshold, not a crowded axis tick');
+   assert.equal(await page.locator('#'+id+' .enough-target-key').textContent(),'90% = enough');
+   assert.ok(await page.locator('#'+id+' svg').evaluate(svg=>{
+    const ticks=[...svg.querySelectorAll('.en-y-tick')],y=n=>Number(ticks.find(t=>t.textContent===n).getAttribute('y'))-4;
+    const target=Number(svg.querySelector('.en-target').getAttribute('y1'));
+    return Math.abs(target-(y('100')+.2*(y('50')-y('100'))))<.01;
+   }),'Threshold stays at the true 90% position');
+  }
   assert.equal(await page.locator('.overview-range,.overview-enough,.overview-definition,.overview-outcomes').count(),0,'No repeated overview explanations');
   const initialSnapshot=await page.locator('#steps').ariaSnapshot();assert.match(initialSnapshot,/slider "How much walking\?"/,'Accessible named chart control');assert.match(await page.locator('#steps .enough-chart').getAttribute('aria-valuetext'),/10,500.*90%/,'Accessible selected chart value');
-  const overview=page.locator('#overview-chart');await clickFraction(page,overview,.75);assert.equal(await overview.getAttribute('aria-valuenow'),'75');assert.match(await page.locator('#overview-message').textContent(),/75%/);
+  const overview=page.locator('#overview-chart');await clickFraction(page,overview,.75);assert.equal(await overview.getAttribute('aria-valuenow'),'75');assert.match(await overview.getAttribute('aria-valuetext'),/75% from the lowest to highest amount.*mortality-risk reduction.*muscle growth/);
   await page.keyboard.press('Home');assert.equal(await overview.getAttribute('aria-valuenow'),'0');await page.keyboard.press('ArrowRight');assert.equal(await overview.getAttribute('aria-valuenow'),'1');await page.keyboard.press('End');assert.equal(await overview.getAttribute('aria-valuenow'),'100');
   for(const plot of await page.locator('.enough-chart').all()){
    await clickFraction(page,plot,.2);const low=Number(await plot.getAttribute('aria-valuenow')),cx=await plot.locator('.en-dot').getAttribute('cx');

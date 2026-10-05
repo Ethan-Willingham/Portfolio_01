@@ -10,7 +10,6 @@
 .enough-hero picture{display:block;}
 .enough-hero img{display:block;width:100%;height:auto;object-fit:contain;}
 .enough-overview{border-block:1px solid var(--rule-strong);padding:16px 0;margin-bottom:48px;}
-.overview-selected{font-size:.85rem;color:var(--text-dim);margin:0 0 12px;}
 .enough-overview svg,.enough-chart svg{display:block;width:100%;overflow:visible;}
 .enough-overview svg text,.enough-chart svg text{font:12px var(--font-mono);fill:var(--text-dim);}
 #overview-chart,.enough-chart{cursor:crosshair;touch-action:pan-y;outline-offset:6px;}
@@ -23,12 +22,16 @@
 .en-uncertainty{fill:var(--area);opacity:.15;}
 .en-dot{fill:var(--bg);stroke:var(--area,var(--en-move));stroke-width:3;}
 .en-guide{stroke:var(--text-dim);stroke-dasharray:3 5;opacity:.4;}
+.en-target{stroke:var(--text-dim);stroke-width:1;stroke-dasharray:6 4;opacity:.75;}
+.enough-target-key{display:flex;align-items:center;justify-content:flex-end;gap:8px;font:.72rem var(--font-mono);color:var(--text-dim);margin:6px 12px 0 0;}
+.enough-target-key span{width:26px;border-top:1px dashed currentColor;}
 .en-selection{stroke:var(--text-dim);stroke-width:1;opacity:.5;}
 .overview-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:12px 0;}
 .overview-key{border-left:3px solid var(--area);padding-left:12px;font-size:.85rem;color:var(--text-dim);}
 .overview-key:nth-child(2){border-left-style:dashed;}
 .overview-key b{display:block;font:400 2rem/1.15 var(--font-heading);color:var(--area);margin:4px 0;}
 .overview-key span{display:block;}
+.overview-key .overview-benefit{font-size:.8rem;margin-bottom:8px;line-height:1.35;}
 .overview-key a{font-size:1rem;}
 .enough-detail{font-size:.92rem;line-height:1.6;}
 .enough-detail summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--text-dim);gap:8px;list-style:none;}
@@ -68,11 +71,11 @@
  .hero-title{margin-bottom:14px;}
  .enough-title p{font-size:1rem;line-height:1.35;}
  .enough-overview{padding:16px 0;margin-bottom:36px;}
- .overview-selected{font-size:.78rem;}
  .overview-legend{gap:10px;}
  .overview-key{padding-left:8px;font-size:.75rem;}
  .overview-key a{font-size:.85rem;}
  .overview-key b{font-size:1.75rem;}
+ .overview-key .overview-benefit{font-size:.72rem;min-height:2.7em;}
  .area-heading{display:block;margin-bottom:24px;}
  .area-heading h2{font-size:2.5rem;margin:0 0 8px;}
  .area-heading p{font-size:.9rem;}
