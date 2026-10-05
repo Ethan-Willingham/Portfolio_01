@@ -24,7 +24,7 @@ const outcomeScales={
  fiber:{max:40,ticks:[0,10,20,30,40],label:'Lower risk of dying, %'},
  income:{max:5,ticks:[0,1,2,3,4,5],label:'Feeling-score increase, points'},
  savings:{max:110,ticks:[0,50,100],label:'Years to target (approximate)'},
- work:{max:4500,ticks:[0,1500,3000,4500],label:'Added factory output, index units'}
+ work:{max:4500,ticks:[0,1500,3000,4500],label:'Output added vs 24 h, units'}
 };
 const modelKey=c=>`<p class="enough-model-key"><span aria-hidden="true"></span>${esc(c.view.modelLabel||'Study model')}</p>`;
 const shape=c=>c.view.shape||({benefit:'Most arrives early',sweet:'A sweet spot',harm:'Less is better',model:'Uncertain ceiling'}[c.view.mode]);
@@ -49,7 +49,7 @@ function readout(c,d){
  if(c.id==='smoking')return d===0?'Never smoking is the baseline.':`${a}: ${fmt(value)}% extra heart disease risk in men.`;
  if(c.id==='alcohol')return d===0?'Lifetime nondrinkers are the baseline.':`${a}: ${fmt(Math.abs(value))}% ${value<0?'lower':'higher'} estimated risk of dying.${d<3?' Uncertainty includes no difference.':''}`;
  if(c.id==='savings')return `${a}: ${fmt(Math.ceil(value))} year-end contributions to reach the target, under these assumptions.`;
- if(c.id==='work')return `${a}: ${fmt(value)} added output-index units above a 24-hour week in this factory model.`;
+ if(c.id==='work')return value===null?`${a}: no estimate below 24 hours.`:`${a}: ${fmt(value)} added output-index units above a 24-hour week in this factory model.`;
  if(c.id==='income')return `${a}: average feeling score ${fmt(value,1)} out of 100.`;
  const baseline={steps:'2,000 steps a day',exercise:'no exercise','fruit-veg':'2.1 servings a day',fiber:'7 grams a day'}[c.id];
  const dose=c.id==='fruit-veg'?`About ${fmt(c.points[d].sourceDose,1)} servings a day`:a;
@@ -58,7 +58,7 @@ function readout(c,d){
 function walkingRisk(c,d){const value=M.outcome(c,d);return value===null?'No estimate at this amount':Math.abs(value)<.5?'About the same risk of dying':`about ${fmt(Math.abs(value))}% ${value<0?'higher':'lower'} risk of dying`;}
 function physical(c,d){return c.kind==='categories'&&c.id!=='alcohol'?c.points[Math.round(d)].sourceDose:d;}
 function geometry(width,overview=false,longer=false){
- const w=Math.max(180,width),h=overview?(longer?(w<500?220:260):(w<500?170:212)):longer?240:220,L=longer?96:42,R=12,T=longer?42:30,B=56;
+ const w=Math.max(180,width),h=overview?(w<500?220:260):240,L=longer?96:42,R=12,T=42,B=56;
  return {w,h,L,R,T,B,pw:w-L-R,ph:h-T-B};
 }
 function chart(c,width,d,overview=false){
@@ -72,18 +72,24 @@ function chart(c,width,d,overview=false){
  const path=(values,key='effect')=>values.map((v,i)=>`${i?'L':'M'}${x(v).toFixed(2)},${y(value(v,key)).toFixed(2)}`).join(' ');
  const selected=M.clamp(d,min,max),point=value(selected);
  const baseY=y(0),line=path(ps);
- const tickValues=w<350&&riskChange?[0,8000,16000]:w<500&&c.id==='income'?[0,12,14]:w<500&&c.id==='smoking'?[0,2,3]:w<500&&c.id==='alcohol'?[0,2,5]:c.ticks;
+ const tickValues=w<350&&riskChange?[0,8000,16000]:w<500&&c.id==='work'?[0,24,48,72.5]:w<500&&c.id==='income'?[0,12,14]:w<500&&c.id==='smoking'?[0,2,3]:w<500&&c.id==='alcohol'?[0,2,5]:c.ticks;
  const ticks=tickValues.map(v=>{const label=c.kind==='categories'?c.points[v].shortLabel:c.id==='protein'?fmt(v,2):fmt(v,1);return `<text class="en-x-tick" x="${x(v)}" y="${h-B+21}" text-anchor="${v===min?'start':v===max?'end':'middle'}">${esc(label)}</text>`;}).join('');
  const yticks=scale?scale.ticks:mode==='sweet'?[0,30,60]:mode==='model'?[0,5,10,15]:c.id==='alcohol'?[-10,0,20,40]:[0,50,100];
  const intervalPoints=ps.filter(v=>Number.isFinite(M.estimate(c,v,'low'))&&Number.isFinite(M.estimate(c,v,'high'))),hasInterval=intervalPoints.length===ps.length,scenario=c.id==='savings',bandPoints=scenario?ps:intervalPoints;
  const band=c.kind!=='categories'&&bandPoints.length>1?`<path class="en-uncertainty${scenario?' en-scenario':''}" d="${path(bandPoints,scenario?'scenarioLow':'low')} ${path([...bandPoints].reverse(),scenario?'scenarioHigh':'high').replace(/^M/,'L')} Z"/>`:'';
  const dots=c.kind==='categories'?ps.map(v=>`${hasInterval?`<path class="en-whisker" d="M${x(v)},${y(value(v,'low'))}V${y(value(v,'high'))} M${x(v)-4},${y(value(v,'low'))}h8 M${x(v)-4},${y(value(v,'high'))}h8"/>`:''}<circle cx="${x(v)}" cy="${y(value(v))}" r="3" fill="var(--area)"/>`).join(''):'';
  const sparse=c.view.sparseFrom?`<rect class="en-sparse" x="${x(c.view.sparseFrom)}" y="${T}" width="${x(max)-x(c.view.sparseFrom)}" height="${ph}"/>`:'';
+ const gap=c.view.noExtrapolation&&min<c.domain[0]?`<rect class="en-unobserved" x="${L}" y="${T}" width="${x(c.domain[0])-L}" height="${ph}"/>${c.id==='work'?`<text class="en-gap-label" x="${(L+x(c.domain[0]))/2}" y="${T+ph/2}" text-anchor="middle">No data</text>`:''}`:'';
  const openingAxes={steps:'Lower risk than at 2,000 steps, %',exercise:'Lower risk than no exercise, %',protein:'Lean-mass change, lb'};
  const yLabel=riskChange?scale.label:overview?openingAxes[c.id]:scale?scale.label:mode==='model'?'Model difference vs no training, %':mode==='sweet'?'Extra risk of dying, %':c.id==='smoking'?'Extra heart disease risk, %':'Extra risk of dying, %';
  const riskTick=v=>v===0?'Same risk':`${fmt(Math.abs(v))}% ${v>0?'higher':'lower'}`;
  const stroke=c.view.uncertainUntil?`<path class="en-curve en-model en-low-tail" d="${path(ps.filter(v=>v<=c.view.uncertainUntil))}"/><path class="en-curve" d="${path(ps.filter(v=>v>=c.view.uncertainUntil))}"/>`:`<path class="${curveClass}" d="${line}"/>`;
- return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${riskChange?`<text class="en-comparison-label" x="${L}" y="29">vs ${fmt(c.referenceDose)} steps/day</text>`:''}${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${riskChange?riskTick(v):v}</text>`).join('')}${sparse}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${c.id==='income'?y(minY):baseY}" y2="${c.id==='income'?y(minY):baseY}"/>${c.kind==='categories'?'':stroke}${dots}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/>${Number.isFinite(point)?`<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>`:''}${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${modelLine?modelKey(c):''}`;
+ const diamond=(cx,cy,cls)=>`<path class="${cls}" d="M${cx},${cy-5}l5,5 -5,5 -5,-5 Z"/>`;
+ const reference=riskChange?`<line class="en-reference-guide" x1="${x(c.referenceDose)}" x2="${x(c.referenceDose)}" y1="${T}" y2="${T+ph}"/>`:'';
+ const referencePoint=riskChange?diamond(x(c.referenceDose),baseY,'en-reference-point'):'';
+ // Joins organize published groups visually; selection still snaps to source groups.
+ const groupLine=c.kind==='categories'?`<path class="en-curve en-model en-group-join" d="${line}"/>`:'';
+ return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${riskChange?`${diamond(L-14,25,'en-reference-key')}<text class="en-comparison-label" x="${L}" y="29">Compare: ${fmt(c.referenceDose)} steps/day</text>`:''}${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${riskChange?riskTick(v):v}</text>`).join('')}${gap}${sparse}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${c.id==='income'?y(minY):baseY}" y2="${c.id==='income'?y(minY):baseY}"/>${c.kind==='categories'?groupLine:stroke}${dots}${reference}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/>${Number.isFinite(point)?`<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>`:''}${referencePoint}${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${c.kind==='categories'?'<p class="enough-model-key"><span aria-hidden="true"></span>Dots: study groups. Dashed joins guide the eye.</p>':modelLine?modelKey(c):''}`;
 }
 // Keep the on-page evidence brief. Full extraction, tables and caveats remain in the data file.
 const evidence={
@@ -148,7 +154,7 @@ function doseFromPointer(c,box,e){
 }
 // One walking study and age selection drive both the opening preview and its card.
 const textIfChanged=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
-function walkingBaseline(c){return `${c.title}. Difference from ${fmt(c.referenceDose)} steps/day, not a chance of dying. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
+function walkingBaseline(c){return `${c.title}. Diamond: ${fmt(c.referenceDose)} steps/day. 100% higher = double the risk; 50% lower = half. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
 function bindWalking(plot,output,baseline,card=null){
  const preview=!card;
  const update=()=>{
@@ -199,7 +205,7 @@ const overviewBox=$('overview-chart'),overviewStates=new Map();
 const openingCopy={
  steps:{name:'Walking'},
  exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:v=>fmt(v,1)+'% lower risk of dying',baseline:'Compared with no exercise in these studies.',context:'At 600 minutes: 38.4% lower risk. The source continues beyond this range.'},
- protein:{name:'Protein',default:.8,amount:d=>fmt(d,2)+' g/lb/day',result:v=>'About '+fmt(v,1)+' lb modeled lean-mass change',baseline:'Across lifting-trial groups. Lean mass includes water; this is not a personal forecast.',context:'Daily intake guidance: about 0.65 to 0.9 g/lb. No exact growth cutoff is established.'}
+ protein:{name:'Protein',default:.8,amount:d=>fmt(d,2)+' g/lb/day',result:v=>'About '+fmt(v,1)+' lb modeled lean-mass change',baseline:'Across lifting-trial groups. Lean mass includes water.',context:'Daily intake guidance: about 0.65 to 0.9 g/lb. No exact growth cutoff is established.'}
 };
 for(const id of overviewIds){
  const c=curves.get(id),copy=openingCopy[id],panel=document.createElement('div');panel.className='overview-panel';panel.id='overview-'+id;panel.style.setProperty('--area',`var(--en-${c.view.area})`);

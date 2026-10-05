@@ -25,6 +25,10 @@
 .en-whisker{stroke:var(--area);stroke-width:1.5;opacity:.65;fill:none;}
 .en-sparse{fill:var(--text-dim);opacity:.08;}
 .en-dot{fill:var(--bg);stroke:var(--area,var(--en-move));stroke-width:3;}
+.en-reference-point,.en-reference-key{fill:var(--accent);stroke:var(--bg);stroke-width:1.5;}
+.en-reference-guide{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 4;opacity:.6;}
+.enough-overview svg .en-comparison-label,.enough-chart svg .en-comparison-label{fill:var(--accent);}
+.en-unobserved{fill:var(--text-dim);opacity:.07;}
 .enough-model-key{display:flex;align-items:center;gap:8px;font:.78rem var(--font-body);color:var(--text-dim);margin:6px 12px 0 42px;}
 .enough-model-key span{width:26px;border-top:2px dashed var(--area);}
 .en-selection{stroke:var(--text-dim);stroke-width:1;opacity:.5;}

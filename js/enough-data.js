@@ -15894,7 +15894,7 @@ window.EnoughData = {
       "question": "How much sleep?",
       "shape": "A sweet spot",
       "contradictsEnough": true,
-      "fact": "Adults are generally advised to sleep at least seven hours. An older mortality curve is not a personal sleep target.",
+      "fact": "Adults are generally advised to sleep at least seven hours.",
       "doseUnit": "hours per day",
       "effectUnit": "relative mortality risk, 7 hours = 1",
       "direction": "lower",
@@ -16075,7 +16075,7 @@ window.EnoughData = {
         "area": "rest",
         "mode": "sweet",
         "answer": "Usually 7 to 9 hours",
-        "fact": "Adults are generally advised to sleep at least seven hours. An older mortality curve is not a personal sleep target.",
+        "fact": "Adults are generally advised to sleep at least seven hours.",
         "range": [
           3,
           11
@@ -22709,6 +22709,7 @@ window.EnoughData = {
         72.5
       ],
       "ticks": [
+        0,
         24,
         40,
         56,
@@ -22742,12 +22743,13 @@ window.EnoughData = {
         "answer": "No universal workweek",
         "fact": "In this historical model, output barely changed between 56 and 70 hours. It does not set a modern workweek.",
         "range": [
-          24,
+          0,
           72.5
         ],
-        "rangeLabel": "24 to 72.5 hours a week, historical factory model",
+        "rangeLabel": "24 hours is the shortest week studied and the comparison point. No estimates below 24 hours",
         "default": 40,
         "ticks": [
+          0,
           24,
           40,
           56,
@@ -22756,7 +22758,8 @@ window.EnoughData = {
         "shape": "A historical example",
         "lineStyle": "dashed",
         "modelLabel": "Historical factory model",
-        "showEnough": false
+        "showEnough": false,
+        "noExtrapolation": true
       },
       "reverification": {
         "researcher": "polish_audit",

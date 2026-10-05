@@ -56,9 +56,13 @@ const clickFraction=async(page,plot,f)=>{
   assert.equal(await page.locator('.en-target,.en-guide,.enough-target-key').count(),0,'No endpoint-derived 90% optimum');
   for(const id of ['exercise','protein','fiber','sleep'])assert.equal(await page.locator('#'+id+' .en-uncertainty').count(),1,'Published interval displayed: '+id);
   for(const id of ['fruit-veg','income','alcohol','smoking']){
-   assert.equal(await page.locator('#'+id+' .en-curve').count(),0,'No invented response line between source groups');
+   assert.equal(await page.locator('#'+id+' .en-group-join.en-model').count(),1,'Group estimates share a dashed chart format');
+   assert.match(await page.locator('#'+id+' .enough-model-key').textContent(),/Dots: study groups. Dashed joins guide the eye/);
+   assert.ok(await page.locator('#'+id+' .en-group-join').evaluate((el,id)=>{const points=window.EnoughData.curves.find(c=>c.id===id).points;return (el.getAttribute('d').match(/[ML]/g)||[]).length===points.length;},id),'Joins use only published group coordinates');
+   assert.equal(await page.locator('#'+id+' .en-uncertainty').count(),0,'No continuous confidence band invented between groups');
    assert.ok(await page.locator('#'+id+' .en-whisker').count()>1,'Source-group intervals displayed');
   }
+  assert.ok(await page.locator('.enough-chart svg').evaluateAll(svgs=>svgs.every(svg=>svg.viewBox.baseVal.height===240)),'Cards share the same chart height');
   const intervalClips=await page.locator('.enough-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>[...svg.querySelectorAll('.en-uncertainty,.en-whisker')].filter(el=>{const b=el.getBBox(),v=svg.viewBox.baseVal;return b.y<29.9||b.y+b.height>v.height-55.9;}).map(el=>el.closest('article').id)));
   assert.deepEqual(intervalClips,[],'Full intervals and scenario ranges fit on every chart');
   assert.equal(await page.locator('#sleep .en-area').count(),0,'No artificial six-hour sweet spot');
@@ -83,12 +87,17 @@ const clickFraction=async(page,plot,f)=>{
   }
   await page.locator('[data-opening-curve="steps"]').click();assert.equal(await opening.getAttribute('aria-valuenow'),'16000','Curve changes preserve each selection');
   for(const plot of await page.locator('.enough-chart').all()){
-   await clickFraction(page,plot,.2);const low=Number(await plot.getAttribute('aria-valuenow')),cx=await plot.locator('.en-dot').getAttribute('cx');
+   const id=await plot.evaluate(el=>el.closest('article').id);
+   await clickFraction(page,plot,id==='work'?.4:.2);const low=Number(await plot.getAttribute('aria-valuenow')),cx=await plot.locator('.en-dot').getAttribute('cx');
    await clickFraction(page,plot,.8);assert.ok(Number(await plot.getAttribute('aria-valuenow'))>low,'Click moves every chart marker');assert.notEqual(await plot.locator('.en-dot').getAttribute('cx'),cx);
    assert.ok(!/NaN|undefined|Infinity/.test(await plot.getAttribute('aria-valuetext')),'Finite selected value');
    await page.keyboard.press('Home');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemin'));await page.keyboard.press('ArrowRight');assert.ok(Number(await plot.getAttribute('aria-valuenow'))>Number(await plot.getAttribute('aria-valuemin')));
    await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
   }
+  const work=page.locator('#work .enough-chart');await work.focus();await page.keyboard.press('Home');
+  assert.equal(await work.getAttribute('aria-valuenow'),'0');assert.match(await work.getAttribute('aria-valuetext'),/no estimate below 24/);assert.equal(await work.locator('.en-dot').count(),0,'No invented output at zero work hours');assert.equal(await work.locator('.en-gap-label').textContent(),'No data');
+  assert.ok(await work.evaluate(el=>{const c=window.EnoughData.curves.find(c=>c.id==='work'),svg=el.querySelector('svg'),grid=svg.querySelector('.en-grid'),start=Number(svg.querySelector('.en-curve').getAttribute('d').match(/^M([\d.]+)/)[1]),L=Number(grid.getAttribute('x1')),R=Number(grid.getAttribute('x2'));return Math.abs(start-(L+24/72.5*(R-L)))<.01&&c.domain[0]===24;}),'Work line starts at the first supported hour, leaving 0 to 24 blank');
+  await clickFraction(page,work,24/72.5);assert.equal(await work.getAttribute('aria-valuenow'),'24');assert.match(await work.getAttribute('aria-valuetext'),/0 added output-index units above a 24-hour week/);
   const steps=page.locator('#steps .enough-chart');await steps.scrollIntoViewIfNeeded();const b=await steps.boundingBox();
   await page.mouse.move(b.x+96,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width+20,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'16000','Drag moves marker to endpoint');
   // Leaving a pointer-focused box changes its decoration only, even during capture.
@@ -131,11 +140,13 @@ const clickFraction=async(page,plot,f)=>{
    await page.locator('[data-steps-age="'+id+'"]').click();assert.equal(await page.locator('[data-steps-age="'+id+'"]').getAttribute('aria-pressed'),'true');
    assert.match(await page.locator('#steps .enough-answer').textContent(),new RegExp(range));assert.match(await page.locator('#overview-baseline-steps').textContent(),new RegExp(baseline));
    assert.equal(Number(await steps.getAttribute('aria-valuemin')),minimum);assert.equal(await opening.getAttribute('aria-valuemin'),await steps.getAttribute('aria-valuemin'));
-   await clickFraction(page,steps,.5);assert.equal(await opening.getAttribute('aria-valuenow'),await steps.getAttribute('aria-valuenow'));
+   const fixedMarker=await steps.locator('.en-reference-point').getAttribute('d');
+   for(const plot of [steps,opening])assert.ok(await plot.evaluate((el,reference)=>{const svg=el.querySelector('svg'),grid=svg.querySelector('.en-grid'),guide=svg.querySelector('.en-reference-guide'),point=svg.querySelector('.en-reference-point').getBBox(),L=Number(grid.getAttribute('x1')),R=Number(grid.getAttribute('x2')),zero=Number(svg.querySelector('.en-axis').getAttribute('y1')),expected=L+reference/16000*(R-L);return Math.abs(Number(guide.getAttribute('x1'))-expected)<.01&&Math.abs(point.x+point.width/2-expected)<.01&&Math.abs(point.y+point.height/2-zero)<.01;},Number(baseline.replace(',',''))),'Both walking views mark the age-specific study reference at Same risk');
+   await clickFraction(page,steps,.5);assert.equal(await opening.getAttribute('aria-valuenow'),await steps.getAttribute('aria-valuenow'));assert.equal(await steps.locator('.en-reference-point').getAttribute('d'),fixedMarker,'Moving selection leaves the reference fixed');
    await page.keyboard.press('Home');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum);assert.match(await steps.getAttribute('aria-valuetext'),/no estimate/i);assert.equal(await steps.locator('.en-dot').count(),0,'No false zero-step risk point');assert.equal(await steps.locator('.en-low-tail').count(),1,'Uncertain near-zero tail is dashed');await page.keyboard.press('ArrowRight');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum+100);
    await page.keyboard.press('End');assert.equal(await steps.getAttribute('aria-valuenow'),'16000');assert.match(await steps.getAttribute('aria-valuetext'),new RegExp('about '+end+'%.*'+baseline));
    assert.equal(await opening.getAttribute('aria-valuetext'),await steps.getAttribute('aria-valuetext'),'Same curve and baseline in both views');
-   assert.deepEqual(await steps.locator('.en-y-tick').allTextContents(),['200% higher','100% higher','Same risk','50% lower'],'Axis describes differences, not mortality probabilities');assert.match(await steps.locator('.en-comparison-label').textContent(),new RegExp('vs '+baseline+' steps/day'));assert.doesNotMatch(await page.locator('#overview-steps svg,#steps svg,#overview-baseline-steps,#range-note-steps').allTextContents().then(a=>a.join(' ')),/0×|1×|2×|3×|baseline/,'No exposed multiplier scale or unexplained baseline');
+   assert.deepEqual(await steps.locator('.en-y-tick').allTextContents(),['200% higher','100% higher','Same risk','50% lower'],'Axis describes differences, not mortality probabilities');assert.match(await steps.locator('.en-comparison-label').textContent(),new RegExp('Compare: '+baseline+' steps/day'));assert.match(await page.locator('#range-note-steps').textContent(),/100% higher = double the risk; 50% lower = half/);assert.equal(await steps.locator('.en-reference-point').getAttribute('d'),fixedMarker,'Zero and endpoint selection preserve the comparison marker');assert.doesNotMatch(await page.locator('#overview-steps svg,#steps svg,#overview-baseline-steps,#range-note-steps').allTextContents().then(a=>a.join(' ')),/0×|1×|2×|3×|baseline/,'No exposed multiplier scale or unexplained baseline');
    await clickFraction(page,steps,Number(baseline.replace(',',''))/16000);assert.match(await steps.getAttribute('aria-valuetext'),/same risk/i);assert.ok(await steps.evaluate(el=>Math.abs(Number(el.querySelector('.en-dot').getAttribute('cy'))-Number(el.querySelector('.en-axis').getAttribute('y1')))<.1),'Study reference sits on the Same risk line');
    await clickFraction(page,steps,.0625);assert.match(await steps.getAttribute('aria-valuetext'),/higher risk/);assert.ok(await steps.evaluate(el=>Number(el.querySelector('.en-dot').getAttribute('cy'))<Number(el.querySelector('.en-axis').getAttribute('y1'))),'Higher risk is drawn above the reference');
    await clickFraction(page,steps,.5);assert.match(await steps.getAttribute('aria-valuetext'),/lower risk/);assert.ok(await steps.evaluate(el=>Number(el.querySelector('.en-dot').getAttribute('cy'))>Number(el.querySelector('.en-axis').getAttribute('y1'))),'Lower risk is drawn below the reference');

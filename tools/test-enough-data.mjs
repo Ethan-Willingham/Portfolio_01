@@ -50,6 +50,7 @@ near(M.enough(by('savings')),73.11250116948123);near(M.estimate(by('savings'),50
 for(const fraction of [.2,.4,.5]){let balance=0,years=0;const target=(1-fraction)/.04;while(balance<target){balance=balance*1.05+fraction;years++;}assert.equal(Math.ceil(M.estimate(by('savings'),fraction*100)),years,'Whole annual contributions reach the target');}
 for(const p of by('savings').points){near(p.effect,M.estimate(by('savings'),p.dose));assert.ok(p.scenarioLow<=p.effect&&p.effect<=p.scenarioHigh);}
 near(M.enough(by('work')),53.48014871028985);near(M.basis(by('work')).best.dose,62.907897639532315);assert.ok(M.share(by('work'),72.5)<90);assert.equal(M.sensitivity(by('work')),null);
+assert.equal(by('work').view.range[0],0);assert.equal(by('work').domain[0],24);assert.equal(M.outcome(by('work'),0),null);assert.equal(M.outcome(by('work'),23.5),null);near(M.outcome(by('work'),24),0);assert.equal(M.series(by('work'))[0].dose,24,'Wider axis leaves unsupported work hours without estimates');
 near(M.sleepRange(by('sleep'))[0],6);near(M.sleepRange(by('sleep'))[1],7.25);assert.equal(by('meditation'),undefined);assert.equal(ctx.window.EnoughData.archivedEvidence.find(c=>c.id==='meditation').points.length,0);
 near(M.extraRisk(by('alcohol'),1),-4);near(M.extraRisk(by('alcohol'),2),-7);near(M.extraRisk(by('alcohol'),5),35);assert.equal(by('alcohol').points.at(-1).doseHigh,null,'Open last bin');
 for(const p of by('income').points)near(p.high-p.effect,1.96*p.standardError);
