@@ -53,7 +53,7 @@ const clickFraction=async(page,plot,f)=>{
    const ticks=[...svg.querySelectorAll('.en-y-tick')];
    return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
   }));assert.deepEqual(crowdedTicks,[],'Y-axis labels have at least 4px separation');
-  const benefitIds=await page.evaluate(()=>EnoughData.curves.filter(c=>c.view.mode==='benefit').map(c=>c.id));
+  const benefitIds=await page.evaluate(()=>EnoughData.curves.filter(c=>c.view.mode==='benefit'&&c.view.lineStyle!=='dashed').map(c=>c.id));
   for(const id of benefitIds){
    assert.ok(!(await page.locator('#'+id+' .en-y-tick').allTextContents()).includes('100'),'Benefit axis has source units, not a normalized maximum');
    assert.equal(await page.locator('#'+id+' .enough-target-key').textContent(),'Enough: 90% of shown improvement');
@@ -106,6 +106,14 @@ const clickFraction=async(page,plot,f)=>{
    await page.waitForFunction(before=>scrollY>before,beforeScroll,{timeout:2000});assert.ok(await page.evaluate(()=>scrollY)>beforeScroll,'Vertical touch scroll passes through charts');await cdp.detach();
   }
   assert.match(await page.locator('#sets .enough-answer').textContent(),/No settled optimum/);
+  for(const selector of ['#sets .enough-chart','#protein .enough-chart','#overview-protein .overview-plot']){
+   assert.ok(await page.locator(selector+' .en-curve').evaluateAll(els=>els.length>0&&els.every(el=>getComputedStyle(el).strokeDasharray!=='none')),'Sets and protein model curves remain dashed through the selected amount and remainder');
+   assert.equal(await page.locator(selector+' .enough-model-key').textContent(),'Study model');
+   assert.equal(await page.locator(selector+' .en-area,'+selector+' .en-target,'+selector+' .en-guide').count(),0,'Tentative models have no solid benefit fill or exact enough guide');
+  }
+  assert.match(await page.locator('#protein .enough-answer').textContent(),/No exact cutoff/);
+  assert.match(await page.locator('#protein .enough-fact').textContent(),/forced plateau/);
+  assert.match(await page.locator('#sets .enough-fact').textContent(),/about 25/);
   assert.equal(await page.locator('#sets .en-uncertainty').count(),1,'Sets model has credible band');assert.equal(await page.locator('#sets .en-guide').count(),0,'No false 38-set enough marker');
   assert.match(await page.locator('#sets details').textContent(),/preprint/);assert.doesNotMatch(await page.locator('#sets .enough-readout').textContent(),/of the gain/);
   assert.equal(await steps.locator('.en-uncertainty').count(),1,'Walking has the published confidence band');

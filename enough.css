@@ -18,6 +18,7 @@
 .en-axis{stroke:var(--rule-strong);stroke-width:1;}
 .en-grid{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 5;}
 .en-curve{stroke:var(--area,var(--en-move));fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;}
+.en-model{stroke-dasharray:7 6;}
 .en-remainder{opacity:.65;}
 .en-area{fill:var(--area,var(--en-move));opacity:.18;}
 .en-uncertainty{fill:var(--area);opacity:.15;}
@@ -26,6 +27,8 @@
 .en-target{stroke:var(--text-dim);stroke-width:1;stroke-dasharray:6 4;opacity:.75;}
 .enough-target-key{display:flex;align-items:center;justify-content:flex-end;gap:8px;font:.72rem var(--font-mono);color:var(--text-dim);margin:6px 12px 0 0;}
 .enough-target-key span{width:26px;border-top:1px dashed currentColor;}
+.enough-model-key{display:flex;align-items:center;gap:8px;font:.78rem var(--font-body);color:var(--text-dim);margin:6px 12px 0 42px;}
+.enough-model-key span{width:26px;border-top:2px dashed var(--area);}
 .en-selection{stroke:var(--text-dim);stroke-width:1;opacity:.5;}
 .overview-choices{display:flex;gap:24px;margin:0 0 16px;}
 .overview-choices button{min-height:44px;padding:0 0 5px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--accent);font:1rem var(--font-body);cursor:pointer;}

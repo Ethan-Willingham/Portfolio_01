@@ -12568,7 +12568,7 @@ window.EnoughData = {
       "id": "protein",
       "question": "How much protein?",
       "shape": "Most arrives early",
-      "fact": "For a 150-pound lifter, that’s about 105 grams a day: three 4-ounce portions of cooked chicken breast.",
+      "fact": "The sharp turn at 0.73 g/lb/day comes from a forced plateau in the model.",
       "kind": "model",
       "unit": "g/lb/day",
       "xLabel": "Protein each day (g/lb)",
@@ -13575,8 +13575,10 @@ window.EnoughData = {
       "view": {
         "area": "lift",
         "mode": "benefit",
-        "answer": "About 0.70 g per pound",
-        "fact": "For a 150-pound lifter, that’s about 105 grams a day: three 4-ounce portions of cooked chicken breast.",
+        "answer": "No exact cutoff",
+        "shape": "Uncertain plateau",
+        "lineStyle": "dashed",
+        "fact": "The sharp turn at 0.73 g/lb/day comes from a forced plateau in the model.",
         "range": [
           0.4082331329997733,
           1.0886216879993955
@@ -13622,7 +13624,7 @@ window.EnoughData = {
     {
       "id": "sets",
       "question": "How many sets?",
-      "fact": "More sets may help. The high-volume payoff is still uncertain.",
+      "fact": "Few studies cover more than about 25 weekly sets. The payoff above that is uncertain.",
       "kind": "continuous",
       "shape": "Uncertain ceiling",
       "unit": "sets/week",
@@ -14216,7 +14218,8 @@ window.EnoughData = {
         "mode": "model",
         "shape": "Uncertain ceiling",
         "answer": "No settled optimum",
-        "fact": "More sets may help. The high-volume payoff is still uncertain.",
+        "lineStyle": "dashed",
+        "fact": "Few studies cover more than about 25 weekly sets. The payoff above that is uncertain.",
         "range": [
           0,
           45
