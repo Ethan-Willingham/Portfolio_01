@@ -39,15 +39,15 @@ window.EnoughData = {
           16000
         ],
         "yScale": {
-          "min": 0,
-          "max": 3.5,
+          "min": -75,
+          "max": 250,
           "ticks": [
+            200,
+            100,
             0,
-            1,
-            2,
-            3
+            -50
           ],
-          "label": "Risk of dying, × baseline"
+          "label": "Change in risk of dying"
         },
         "area": "move",
         "shape": "Flatter region",
@@ -56,7 +56,7 @@ window.EnoughData = {
         "showEnough": false,
         "noExtrapolation": true,
         "uncertainUntil": 3000,
-        "plotMetric": "relative-risk"
+        "plotMetric": "risk-change"
       },
       "points": [
         {
@@ -24467,15 +24467,15 @@ window.EnoughData = {
           16000
         ],
         "yScale": {
-          "min": 0,
-          "max": 3.5,
+          "min": -75,
+          "max": 250,
           "ticks": [
+            200,
+            100,
             0,
-            1,
-            2,
-            3
+            -50
           ],
-          "label": "Risk of dying, × baseline"
+          "label": "Change in risk of dying"
         },
         "area": "move",
         "shape": "Flatter region",
@@ -24483,7 +24483,7 @@ window.EnoughData = {
         "rangeLabel": "0 to 16,000 steps a day",
         "noExtrapolation": true,
         "uncertainUntil": 3000,
-        "plotMetric": "relative-risk"
+        "plotMetric": "risk-change"
       },
       "points": [
         {
@@ -25116,15 +25116,15 @@ window.EnoughData = {
           16000
         ],
         "yScale": {
-          "min": 0,
-          "max": 3.5,
+          "min": -75,
+          "max": 250,
           "ticks": [
+            200,
+            100,
             0,
-            1,
-            2,
-            3
+            -50
           ],
-          "label": "Risk of dying, × baseline"
+          "label": "Change in risk of dying"
         },
         "area": "move",
         "shape": "Flatter region",
@@ -25132,7 +25132,7 @@ window.EnoughData = {
         "rangeLabel": "0 to 16,000 steps a day",
         "noExtrapolation": true,
         "uncertainUntil": 500,
-        "plotMetric": "relative-risk"
+        "plotMetric": "risk-change"
       },
       "points": [
         {

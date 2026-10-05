@@ -19,7 +19,7 @@ const ready=async page=>{
 };
 const fullPainting=async page=>assert.ok(await page.locator('#hero-painting').evaluate(img=>{const r=img.getBoundingClientRect();return img.naturalWidth>0&&Math.abs(r.width/r.height-img.naturalWidth/img.naturalHeight)<.01;}),'Full painting at its natural aspect ratio');
 const clickFraction=async(page,plot,f)=>{
- await plot.scrollIntoViewIfNeeded();const b=await plot.boundingBox();await page.mouse.click(b.x+42+f*(b.width-54),b.y+80);
+ await plot.scrollIntoViewIfNeeded();const b=await plot.boundingBox(),axis=await plot.locator('.en-grid').first().evaluate(el=>({left:Number(el.getAttribute('x1')),right:Number(el.getAttribute('x2'))}));await page.mouse.click(b.x+axis.left+f*(axis.right-axis.left),b.y+80);
 };
 (async()=>{try{
  fs.mkdirSync(destination,{recursive:true});await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -46,7 +46,7 @@ const clickFraction=async(page,plot,f)=>{
   const opening=page.locator('#overview-steps .overview-plot');
   assert.equal(await opening.getAttribute('aria-valuenow'),'8000');assert.match(await opening.getAttribute('aria-valuetext'),/about 44% lower risk of dying.*5,000.*under 60/,'Opening uses actual outcome and baseline');
   assert.equal(await page.locator('.enough-overview .overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
-  assert.equal(await page.locator('#protein .en-model').count(),1,'Protein uses the shared graph with a named model');assert.match(await page.locator('#protein .en-y-label').textContent(),/Lean-mass change, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/Risk of dying, × baseline/);
+  assert.equal(await page.locator('#protein .en-model').count(),1,'Protein uses the shared graph with a named model');assert.match(await page.locator('#protein .en-y-label').textContent(),/Lean-mass change, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/Change in risk of dying/);
   assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
   assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
   const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
@@ -90,7 +90,7 @@ const clickFraction=async(page,plot,f)=>{
    await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
   }
   const steps=page.locator('#steps .enough-chart');await steps.scrollIntoViewIfNeeded();const b=await steps.boundingBox();
-  await page.mouse.move(b.x+42,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width+20,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'16000','Drag moves marker to endpoint');
+  await page.mouse.move(b.x+96,b.y+80);await page.mouse.down();await page.mouse.move(b.x+b.width+20,b.y+80,{steps:8});await page.mouse.up();assert.equal(await steps.getAttribute('aria-valuenow'),'16000','Drag moves marker to endpoint');
   // Leaving a pointer-focused box changes its decoration only, even during capture.
   assert.equal(await steps.evaluate(el=>getComputedStyle(el).outlineStyle),'none','Captured drag outside clears highlight');
   await clickFraction(page,steps,.3);const selected=await steps.getAttribute('aria-valuenow'),rFocus=await steps.boundingBox();
@@ -102,11 +102,11 @@ const clickFraction=async(page,plot,f)=>{
   await page.locator('#steps summary').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.keyboard.press('Enter');
   if(width===375){
    await page.locator('#steps summary').tap();assert.equal(await page.locator('#steps details').getAttribute('open'),'');await page.locator('#steps summary').tap();
-   await steps.scrollIntoViewIfNeeded();const r=await steps.boundingBox();await page.touchscreen.tap(r.x+42+.5*(r.width-54),r.y+80);assert.equal(await steps.getAttribute('aria-valuenow'),'8000','Touch tap selects dose');
+   await steps.scrollIntoViewIfNeeded();const r=await steps.boundingBox();await page.touchscreen.tap(r.x+96+.5*(r.width-108),r.y+80);assert.equal(await steps.getAttribute('aria-valuenow'),'8000','Touch tap selects dose');
    // Real touch events verify dragging while vertical page scrolling remains possible.
    const cdp=await context.newCDPSession(page);
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+42+.2*(r.width-54),y:r.y+80}]});
-   for(const f of [.3,.5,.7,.8]){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+42+f*(r.width-54),y:r.y+80}]});await page.evaluate(()=>new Promise(requestAnimationFrame));}
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+96+.2*(r.width-108),y:r.y+80}]});
+   for(const f of [.3,.5,.7,.8]){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:r.x+96+f*(r.width-108),y:r.y+80}]});await page.evaluate(()=>new Promise(requestAnimationFrame));}
    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal(await steps.getAttribute('aria-valuenow'),'12800','Touch drag selects dose');
    await steps.scrollIntoViewIfNeeded();const scrollRect=await steps.boundingBox(),beforeScroll=await page.evaluate(()=>scrollY);
    // A controlled native touch swipe tests panning without synthetic fling velocity.
@@ -135,6 +135,11 @@ const clickFraction=async(page,plot,f)=>{
    await page.keyboard.press('Home');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum);assert.match(await steps.getAttribute('aria-valuetext'),/no estimate/i);assert.equal(await steps.locator('.en-dot').count(),0,'No false zero-step risk point');assert.equal(await steps.locator('.en-low-tail').count(),1,'Uncertain near-zero tail is dashed');await page.keyboard.press('ArrowRight');assert.equal(Number(await steps.getAttribute('aria-valuenow')),minimum+100);
    await page.keyboard.press('End');assert.equal(await steps.getAttribute('aria-valuenow'),'16000');assert.match(await steps.getAttribute('aria-valuetext'),new RegExp('about '+end+'%.*'+baseline));
    assert.equal(await opening.getAttribute('aria-valuetext'),await steps.getAttribute('aria-valuetext'),'Same curve and baseline in both views');
+   assert.deepEqual(await steps.locator('.en-y-tick').allTextContents(),['200% higher','100% higher','Same risk','50% lower'],'Axis describes differences, not mortality probabilities');assert.match(await steps.locator('.en-comparison-label').textContent(),new RegExp('vs '+baseline+' steps/day'));assert.doesNotMatch(await page.locator('#overview-steps svg,#steps svg,#overview-baseline-steps,#range-note-steps').allTextContents().then(a=>a.join(' ')),/0×|1×|2×|3×|baseline/,'No exposed multiplier scale or unexplained baseline');
+   await clickFraction(page,steps,Number(baseline.replace(',',''))/16000);assert.match(await steps.getAttribute('aria-valuetext'),/same risk/i);assert.ok(await steps.evaluate(el=>Math.abs(Number(el.querySelector('.en-dot').getAttribute('cy'))-Number(el.querySelector('.en-axis').getAttribute('y1')))<.1),'Study reference sits on the Same risk line');
+   await clickFraction(page,steps,.0625);assert.match(await steps.getAttribute('aria-valuetext'),/higher risk/);assert.ok(await steps.evaluate(el=>Number(el.querySelector('.en-dot').getAttribute('cy'))<Number(el.querySelector('.en-axis').getAttribute('y1'))),'Higher risk is drawn above the reference');
+   await clickFraction(page,steps,.5);assert.match(await steps.getAttribute('aria-valuetext'),/lower risk/);assert.ok(await steps.evaluate(el=>Number(el.querySelector('.en-dot').getAttribute('cy'))>Number(el.querySelector('.en-axis').getAttribute('y1'))),'Lower risk is drawn below the reference');
+   await page.keyboard.press('End');
    assert.equal(await steps.locator('.en-target,.en-guide,.enough-target-key').count(),0,'Walking has a broad flatter region, no exact enough guide');
    const clippedAge=await page.locator('#steps svg text,#overview-steps svg text').evaluateAll(els=>els.filter(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.x<-.5||b.x+b.width>v.width+.5||b.y<-.5||b.y+b.height>v.height+.5;}).map(el=>el.textContent));assert.deepEqual(clippedAge,[]);
    assert.ok(await steps.locator('.en-uncertainty').evaluate(el=>{const b=el.getBBox(),v=el.ownerSVGElement.viewBox.baseVal;return b.y>=29&&b.y+b.height<=v.height-55;}),'Full source confidence band fits');

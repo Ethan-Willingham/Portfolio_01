@@ -67,7 +67,7 @@ const comparisons=ctx.window.EnoughData.stepComparisons;
 assert.equal(comparisons.length,2);
 for(const c of comparisons){
  assert.equal(c.view.mode,'comparison');assert.equal(M.enough(c),null);assert.equal(c.domain[1],16000);
- assert.equal(c.view.range[0],0);assert.equal(c.view.plotMetric,'relative-risk');assert.equal(c.view.noExtrapolation,true);
+ assert.equal(c.view.range[0],0);assert.equal(c.view.plotMetric,'risk-change');assert.equal(c.view.noExtrapolation,true);
  assert.equal(M.estimate(c,0),null,'No invented zero-step estimate');assert.equal(M.outcome(c,0),null);
  assert.equal(M.estimate(c,c.domain[0]-1),null,'No endpoint clamping outside the published stroke');assert.equal(M.series(c)[0].dose,c.domain[0]);
  assert.ok(M.outcome(c,1000)<0,'Lower counts can have higher risk than the source reference');
@@ -78,7 +78,7 @@ for(const c of comparisons){
   if(i>1)assert.equal(p.dose-c.points[i-1].dose,250);
   if(p.dose<c.view.uncertainUntil){assert.equal(p.low,null,'Clipped source intervals must not be reconstructed');assert.equal(p.high,null);}
   else assert.ok(p.low<=p.effect&&p.effect<=p.high,'Complete interval contains estimate');
-  for(const k of ['effect','low','high']){const v=M.estimate(c,p.dose,k);if(v!==null)assert.ok(v>=c.view.yScale.min&&v<=c.view.yScale.max,'Unclipped published interval');}
+  for(const k of ['effect','low','high']){const outcome=M.outcome(c,p.dose,k);if(outcome!==null)assert.ok(-outcome>=c.view.yScale.min&&-outcome<=c.view.yScale.max,'Unclipped published interval in percent-difference units');}
  }
  assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)));
 }

@@ -58,7 +58,7 @@ function readout(c,d){
 function walkingRisk(c,d){const value=M.outcome(c,d);return value===null?'No estimate at this amount':Math.abs(value)<.5?'About the same risk of dying':`about ${fmt(Math.abs(value))}% ${value<0?'higher':'lower'} risk of dying`;}
 function physical(c,d){return c.kind==='categories'&&c.id!=='alcohol'?c.points[Math.round(d)].sourceDose:d;}
 function geometry(width,overview=false,longer=false){
- const w=Math.max(180,width),h=overview?(longer?(w<500?200:240):(w<500?170:212)):220,L=42,R=12,T=30,B=56;
+ const w=Math.max(180,width),h=overview?(longer?(w<500?220:260):(w<500?170:212)):longer?240:220,L=longer?96:42,R=12,T=longer?42:30,B=56;
  return {w,h,L,R,T,B,pw:w-L-R,ph:h-T-B};
 }
 function chart(c,width,d,overview=false){
@@ -67,11 +67,11 @@ function chart(c,width,d,overview=false){
  const mode=c.view.mode,modelLine=c.view.lineStyle==='dashed',curveClass='en-curve'+(modelLine?' en-model':''),scale=c.view.yScale||outcomeScales[c.id],minY=scale?.min??(mode==='harm'&&c.id==='alcohol'?-20:0);
  const maxY=scale?scale.max:mode==='harm'?(c.id==='smoking'?130:50):mode==='sweet'?60:16;
  const y=v=>T+(maxY-v)/(maxY-minY)*ph;
- const relativeRisk=c.view.plotMetric==='relative-risk',value=(v,key='effect')=>relativeRisk?M.estimate(c,v,key):M.outcome(c,v,key);
+ const riskChange=c.view.plotMetric==='risk-change',value=(v,key='effect')=>{const outcome=M.outcome(c,v,key);return riskChange&&outcome!==null?-outcome:outcome;};
  const ps=c.kind==='categories'?c.points.map(p=>p.dose):M.series(c).map(p=>p.dose);
  const path=(values,key='effect')=>values.map((v,i)=>`${i?'L':'M'}${x(v).toFixed(2)},${y(value(v,key)).toFixed(2)}`).join(' ');
  const selected=M.clamp(d,min,max),point=value(selected);
- const baseY=y(relativeRisk?1:0),line=path(ps);
+ const baseY=y(0),line=path(ps);
  const tickValues=w<500&&c.id==='income'?[0,12,14]:w<500&&c.id==='smoking'?[0,2,3]:w<500&&c.id==='alcohol'?[0,2,5]:c.ticks;
  const ticks=tickValues.map(v=>{const label=c.kind==='categories'?c.points[v].shortLabel:c.id==='protein'?fmt(v,2):fmt(v,1);return `<text x="${x(v)}" y="${h-B+21}" text-anchor="${v===min?'start':v===max?'end':'middle'}">${esc(label)}</text>`;}).join('');
  const yticks=scale?scale.ticks:mode==='sweet'?[0,30,60]:mode==='model'?[0,5,10,15]:c.id==='alcohol'?[-10,0,20,40]:[0,50,100];
@@ -80,9 +80,10 @@ function chart(c,width,d,overview=false){
  const dots=c.kind==='categories'?ps.map(v=>`${hasInterval?`<path class="en-whisker" d="M${x(v)},${y(value(v,'low'))}V${y(value(v,'high'))} M${x(v)-4},${y(value(v,'low'))}h8 M${x(v)-4},${y(value(v,'high'))}h8"/>`:''}<circle cx="${x(v)}" cy="${y(value(v))}" r="3" fill="var(--area)"/>`).join(''):'';
  const sparse=c.view.sparseFrom?`<rect class="en-sparse" x="${x(c.view.sparseFrom)}" y="${T}" width="${x(max)-x(c.view.sparseFrom)}" height="${ph}"/>`:'';
  const openingAxes={steps:'Lower risk than at 2,000 steps, %',exercise:'Lower risk than no exercise, %',protein:'Lean-mass change, lb'};
- const yLabel=relativeRisk?scale.label:overview?openingAxes[c.id]:scale?scale.label:mode==='model'?'Model difference vs no training, %':mode==='sweet'?'Extra risk of dying, %':c.id==='smoking'?'Extra heart disease risk, %':'Extra risk of dying, %';
+ const yLabel=riskChange?scale.label:overview?openingAxes[c.id]:scale?scale.label:mode==='model'?'Model difference vs no training, %':mode==='sweet'?'Extra risk of dying, %':c.id==='smoking'?'Extra heart disease risk, %':'Extra risk of dying, %';
+ const riskTick=v=>v===0?'Same risk':`${fmt(Math.abs(v))}% ${v>0?'higher':'lower'}`;
  const stroke=c.view.uncertainUntil?`<path class="en-curve en-model en-low-tail" d="${path(ps.filter(v=>v<=c.view.uncertainUntil))}"/><path class="en-curve" d="${path(ps.filter(v=>v>=c.view.uncertainUntil))}"/>`:`<path class="${curveClass}" d="${line}"/>`;
- return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}${relativeRisk?'×':''}</text>`).join('')}${sparse}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${c.id==='income'?y(minY):baseY}" y2="${c.id==='income'?y(minY):baseY}"/>${c.kind==='categories'?'':stroke}${dots}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/>${Number.isFinite(point)?`<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>`:''}${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${modelLine?modelKey(c):''}`;
+ return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${riskChange?`<text class="en-comparison-label" x="${L}" y="29">vs ${fmt(c.referenceDose)} steps/day</text>`:''}${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${riskChange?riskTick(v):v}</text>`).join('')}${sparse}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${c.id==='income'?y(minY):baseY}" y2="${c.id==='income'?y(minY):baseY}"/>${c.kind==='categories'?'':stroke}${dots}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/>${Number.isFinite(point)?`<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>`:''}${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${modelLine?modelKey(c):''}`;
 }
 // Keep the on-page evidence brief. Full extraction, tables and caveats remain in the data file.
 const evidence={
@@ -137,7 +138,7 @@ function interactive(box,{min,max,step,name,description,get,set,fromPointer,boun
  box.addEventListener('pointerup',finish);box.addEventListener('pointercancel',finish);
 }
 function doseFromPointer(c,box,e){
- const rect=box.getBoundingClientRect(),g=geometry(rect.width),f=M.clamp((e.clientX-rect.left-g.L)/g.pw,0,1),[min,max]=c.view.range;
+ const rect=box.getBoundingClientRect(),g=geometry(rect.width,false,c.view.mode==='comparison'),f=M.clamp((e.clientX-rect.left-g.L)/g.pw,0,1),[min,max]=c.view.range;
  if(c.kind==='categories'){
   if(c.id==='alcohol')return Math.round(min+f*(max-min));
   const value=physical(c,min)+f*(physical(c,max)-physical(c,min));
@@ -147,7 +148,7 @@ function doseFromPointer(c,box,e){
 }
 // One walking study and age selection drive both the opening preview and its card.
 const textIfChanged=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
-function walkingBaseline(c){return `${c.title}. 1× = risk at ${fmt(c.referenceDose)} steps/day. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
+function walkingBaseline(c){return `${c.title}. Difference from ${fmt(c.referenceDose)} steps/day, not a chance of dying. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
 function bindWalking(plot,output,baseline,card=null){
  const preview=!card;
  const update=()=>{
