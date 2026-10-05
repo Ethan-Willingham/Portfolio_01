@@ -248,7 +248,12 @@
     'vec4 shot=mix(photo,mix(thermal,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
     'float light=dot(normalize(vNormal),sunDir); float daylight=smoothstep(-.10,.04,light);',
     'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
-    'night+=infrared.rgb*.10*infrared.a*thermalEnabled*photoMix*photoEnabled;',
+    // Use the source-time visible/thermal cloud structure on both hemispheres.
+    // Night clouds dim the historical lights without completely hiding them.
+    'float visibleCloud=smoothstep(.22,.85,min(photo.r,min(photo.g,photo.b)))*photo.a;',
+    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a;',
+    'float cloudCover=mix(visibleCloud,mix(thermalCloud,visibleCloud,shotDay),thermalEnabled)*photoMix*photoEnabled;',
+    'night=night*(1.0-cloudCover*.65)+vec3(.065,.075,.085)*cloudCover;',
     'gl_FragColor=vec4(mix(night,litDay,daylight),1.0); }'
   ].join('\n')});
   var earth = new THREE.Mesh(new THREE.SphereGeometry(1,128,96),earthMaterial); scene.add(earth);

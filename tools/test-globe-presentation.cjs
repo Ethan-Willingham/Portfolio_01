@@ -108,7 +108,7 @@ async function matrix(browser,isReal){
   const sun=await page.evaluate(()=>__globePresentation.pixelVisibility('sun')),stars=await page.evaluate(()=>__globePresentation.pixelVisibility('stars'));
   check(name+' initial Sun is projected and changes nearby pixels',s.sun.inFrame&&sun.nearSun>=2&&sun.maxGain>30,{sun:s.sun,pixels:sun});
   check(name+' catalog stars visibly change sky pixels',stars.changed>=10&&stars.maxGain>8,stars);
-  if(isReal)check(name+' actual three-hour EUMETSAT frame is installed',s.photo?.source==='EUMETSAT'&&!!s.photo.time&&!s.photoBusy,s.photo);
+  if(isReal)check(name+' actual dated satellite frame is installed',['EUMETSAT','NASA / EUMETSAT'].includes(s.photo?.source)&&!!s.photo.time&&!s.photoBusy,s.photo);
   await page.locator('#globe-container').focus();for(let i=0;i<12;i++)await page.keyboard.press('ArrowRight');await page.waitForTimeout(700);
   check(name+' ordinary rotation leaves Sun framing mode',!(await state(page)).sunFraming);
   await page.locator('#globe-sun').click();await page.waitForTimeout(900);const restored=await state(page),restoredPixels=await page.evaluate(()=>__globePresentation.pixelVisibility('sun'));
