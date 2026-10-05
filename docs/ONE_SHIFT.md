@@ -86,6 +86,9 @@ The panel lists named rack positions and highlights available ground positions
 on the floor. Occupied positions, reserved moves, required storage areas and
 forklift access are checked before offering a destination. The selected pallet
 shows its destination while the worker moves it, then its named storage position.
+A stored pallet offers the next accessible delivery pallet. Selecting freight
+behind an occupied trailer row explains which pallet to unload first and offers
+a direct button. Counting becomes available when that row clears.
 
 Mouse, keyboard and landscape touch control the same view. Drag with the right
 or middle mouse button to pan. A stationary right-click or Escape clears the
@@ -123,7 +126,10 @@ Opened cartons show loose units, and bench workers push a component cart.
 Dock shutters ease open, pallets settle when set down, and a brief label flash
 confirms scanning. Night work has fixed light pools and forklift lamps; an
 outage removes powered lights. Reduced motion removes settle and idle sway.
-Truck backing is visible; suspension details from the art bible remain unfinished.
+Truck positions advance between simulation ticks, with eased backing and smooth
+transitions between yard positions and the dock. Departing trucks continue out
+of view after their simulation release. Pause and menus freeze truck motion.
+Suspension details from the art bible remain unfinished.
 
 ## Checks and reproduction
 
@@ -154,6 +160,9 @@ Truck backing is visible; suspension details from the art bible remain unfinishe
   portrait freeze, 1.3 text scale, phone panels and preview save isolation.
   Playwright and Sharp must be available in `NODE_PATH`. `ASSETS=1` refreshes
   the card and sharing images from actual gameplay.
+- `node tools/test-one-shift-motion.cjs`: frame-by-frame truck movement at all
+  three speeds, pause, menu freeze, queued docking, departure, hit positions and
+  presentation-state isolation.
 - `node tools/test-one-shift-barcode.cjs <desktop-label.png> <phone-label.png>`:
   independent ZXing decoding of the published GS1 vector, generated labels and
   actual CSS-sized browser labels. Set `ZXING_PATH` to `@zxing/library` installed
@@ -166,8 +175,8 @@ in `finally`. Never use the owner's personal Chrome binary for headless tests.
 
 On the Apple M1 Pro with 32 GB, the synthetic large fixture contains 8,000 stored
 pallets plus 30 inbound pallets, 60 workers, 20 rendered forklifts and 30 trucks.
-The latest browser check measured 9.0 ms 95th-percentile draw work at
-1440 by 900 in daylight and 8.8 ms at night with work lights and forklift lamps.
+The latest browser check measured 13.9 ms 95th-percentile draw work at
+1440 by 900 in daylight and 13.7 ms at night with work lights and forklift lamps.
 The previous release measured 425 to 526 ms for five complete simulation shifts.
 This is a synthetic load on one host, not a claim of performance on every phone
 or of 20 independently allocated vehicle entities. Headless frame-rate caps
