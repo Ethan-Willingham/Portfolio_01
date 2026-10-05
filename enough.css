@@ -23,7 +23,6 @@
 .en-area{fill:var(--area,var(--en-move));opacity:.18;}
 .en-uncertainty{fill:var(--area);opacity:.15;}
 .en-whisker{stroke:var(--area);stroke-width:1.5;opacity:.65;fill:none;}
-.en-intake-band{fill:var(--area);opacity:.3;}
 .en-sparse{fill:var(--text-dim);opacity:.08;}
 .en-dot{fill:var(--bg);stroke:var(--area,var(--en-move));stroke-width:3;}
 .enough-model-key{display:flex;align-items:center;gap:8px;font:.78rem var(--font-body);color:var(--text-dim);margin:6px 12px 0 42px;}

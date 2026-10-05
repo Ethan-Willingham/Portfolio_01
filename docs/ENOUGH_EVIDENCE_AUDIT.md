@@ -10,7 +10,7 @@ Priority went to relevant systematic reviews and direct assigned-dose trials. Ne
 
 Sources were checked through publishers, PubMed/PMC, author repositories and deposited data. Protein and training review full texts were also inspected using NCBI BioC XML; older numerical extracts remain documented with their source locations. Some recent papers were accessible only through abstracts. Those support contextual findings, not newly invented chart coordinates. No independent human reviewer or exhaustive database screening certifies this follow-up.
 
-## Protein: why the old curve was removed
+## Protein: a published study curve, without a forced cutoff
 
 The old chart turned a model across study arms into predicted extra pounds of lean mass at each daily intake. Its sharp bend near 0.73 g/lb/day was not an observed biological switch. Changing the drawing to a smooth curve would have concealed the same problem.
 
@@ -24,7 +24,11 @@ The old chart turned a model across study arms into predicted extra pounds of le
 
 [Li 2026](https://www.frontiersin.org/journals/nutrition/articles/10.3389/fnut.2026.1860234/full) used 36 trials and 1,552 participants. Its dose axis is supplemental grams/day, not total intake per pound. Exploratory supplement-specific plateaus cannot replace the total-intake curve. [Tagawa 2025](https://pubmed.ncbi.nlm.nih.gov/40914512/) estimates requirements using nitrogen balance and amino-acid oxidation, not measured hypertrophy. It was excluded as a source of growth coordinates. A small 2026 three-dose trial in older women and very small high-protein feasibility studies were screened as population-specific evidence, not substituted for the broader review.
 
-The page therefore shows an **intake guide**, not an invented gain curve. The [ISSN position stand](https://pmc.ncbi.nlm.nih.gov/articles/PMC5477153/) gives 1.4 to 2.0 g/kg/day for most exercising individuals. Dividing by 2.20462262185 gives approximately 0.64 to 0.91 g/lb/day, rounded in the headline to about 0.65 to 0.9. Food and supplements count together. The band is a recommendation, not a confidence interval, a proven minimum, or an upper limit. Energy restriction and clinical conditions can change needs. The selectable axis is just an intake axis; moving its marker does not predict growth.
+The page now plots **Tagawa Figure 2(h)** in the same graph layout as the other topics. It is the fully adjusted resistance-training panel, controlling for age, sex, intervention duration and weight change. It compares lean-body-mass changes across study arms; it does not isolate the causal gain from adding a particular protein dose. Adjustment for weight change also conditions on a potential mediator. Other panels have different shapes and magnitudes, so this curve is named as one study model, not treated as a consensus forecast.
+
+The source figure was inspected at its native 3990 by 2993 resolution through PMC’s image tiles. The centerline and both dashed 95% confidence outlines were traced, calibrated against axis ticks, and sampled at 111 intakes from 0.30 to 1.40 g/lb/day. These are approximate figure readings, inside the visible source range. Short gaps between confidence-outline dashes were linearly interpolated. No curve was refitted or smoothed into a plateau. Source readings are rounded to 0.01 kg before conversion to pounds, and the readout shows one decimal place. The data file preserves original kg values, pixel coordinates, calibration and a source-image checksum. Its pointwise confidence band does not cover individual variation, all confounding or model-selection uncertainty.
+
+The intake recommendation stays separate from the graph and its uncertainty band. The [ISSN position stand](https://pmc.ncbi.nlm.nih.gov/articles/PMC5477153/) gives 1.4 to 2.0 g/kg/day for most exercising individuals. Dividing by 2.20462262185 gives approximately 0.64 to 0.91 g/lb/day, rounded in the headline to about 0.65 to 0.9. Food and supplements count together. The headline is a recommendation, not a confidence interval, a proven minimum, or an upper limit. Energy restriction and clinical conditions can change needs. Moving the graph marker reads this named study model; it does not predict personal muscle growth.
 
 ## Every other live topic
 
@@ -78,8 +82,8 @@ Savings is an ordinary annuity calculation. With saved fraction s, real annual r
 
 ## Numerical and visual safeguards
 
-Every displayed estimate remains attached to a source and location. Categorical results are dots with interval whiskers, without interpolated response lines. Continuous bands use the source’s own limits. Income limits stay in the published score units. Savings alternatives are labeled assumptions. Protein guidance has no outcome axis or predicted gain. Models are dashed, and the sparse sets tail is named and shaded.
+Every displayed estimate remains attached to a source and location. Categorical results are dots with interval whiskers, without interpolated response lines. Continuous bands use the source’s own limits. Income limits stay in the published score units. Savings alternatives are labeled assumptions. Protein has a lean-mass outcome axis and a named study-model line with its published limits; its intake-guidance headline is separate. Models are dashed, and the sparse sets tail is named and shaded.
 
 All exact 90% markers are removed from the live presentation. They changed when plotting endpoints changed and were not medical, financial or work recommendations. Earlier models and calculations remain in supporting data for reproducibility, explicitly historical. The change does not invent a smooth protein plateau, flat high-set ceiling, certainty band for work, or extrapolation beyond a study’s observed range.
 
-The data validator checks source values, units, intervals, guidance conversion and historical calculations. The browser harness checks direct chart control, touch scrolling, keyboard access, pointer-exit behavior, axes and unclipped intervals at 375, 768 and 1440 pixels, with brief evidence drawers. Those checks do not constitute scientific peer review or physical-device testing.
+The data validator checks source values, units, intervals, protein figure units, guidance conversion and historical calculations. The browser harness checks direct chart control, touch scrolling, keyboard access, pointer-exit behavior, axes and unclipped intervals at 375, 768 and 1440 pixels, with brief evidence drawers. Those checks do not constitute scientific peer review or physical-device testing.

@@ -59,7 +59,7 @@ window.EnoughData = {
       "points": [
         {
           "dose": 5000,
-          "effect": 1.0,
+          "effect": 1,
           "low": 0.9985,
           "high": 1.0015,
           "source": "paluch2022",
@@ -12604,34 +12604,46 @@ window.EnoughData = {
       "id": "protein",
       "question": "How much protein?",
       "shape": "Most arrives early",
-      "fact": "Adding protein led to small extra lean-mass gains across 62 lifting trials. An exact daily cutoff is still unknown.",
-      "kind": "guidance",
+      "fact": "The curve compares lean-mass changes across lifting trials. It cannot tell you how much extra muscle a higher intake would cause.",
+      "kind": "points",
       "unit": "g/lb/day",
       "xLabel": "Protein each day (g/lb)",
       "domain": [
         0.3,
-        1.3
+        1.4
       ],
       "ticks": [
         0.3,
         0.6,
-        0.9,
-        1.3
+        1,
+        1.4
       ],
       "defaultDose": 0.8,
-      "effectKind": "guidance",
-      "better": null,
-      "model": null,
-      "uncertainty": "No confidence interval for a universal intake cutoff is available. The recommended range is not a statistical interval. Added-protein pooled effects and their own limits are stored separately.",
-      "evidence": "Systematic reviews of randomized trials, a directly assigned protein-intake trial and published sports nutrition guidance",
-      "population": "Published sports nutrition guidance for most exercising adults; trial summaries concern healthy adults doing resistance exercise, generally without intentional energy restriction.",
+      "effectKind": "model",
+      "better": "higher",
+      "model": {
+        "type": "published-protein-spline",
+        "source": "tagawa",
+        "panel": "Figure 2(h)",
+        "adjustment": [
+          "age",
+          "sex",
+          "intervention duration",
+          "weight change"
+        ],
+        "method": "Approximate figure readings, no refitting"
+      },
+      "uncertainty": "Pointwise 95% confidence limits digitized from the same published adjusted spline. These concern the fitted study-arm association, not individual gains or a daily intake cutoff. Figure readings are approximate.",
+      "evidence": "Published adjusted spline across resistance-training trial arms, supported and qualified by pooled randomized effects and direct assigned-dose trials",
+      "population": "Resistance-training trial arms reporting total intake in Tagawa 2021; adults of varied ages and energy-balance conditions. Model 2 adjusts for age, sex, duration and weight change.",
       "caveats": [
-        "Food and supplements together. Individual needs vary with age, energy intake and training.",
-        "Energy restriction and clinical conditions are outside this guide.",
-        "Nunes intake subgroups compare different studies and cannot establish a causal dose curve.",
-        "A nonsignificant difference in one small high-dose trial does not prove equivalence or a universal ceiling."
+        "The dose curve compares different study arms, not randomized intake levels under identical conditions. Only four articles in the full review compared multiple supplementation doses under identical conditions.",
+        "Lean body mass includes water and other non-fat tissue, not only muscle. Varied ages, study durations and energy balance prevent personal forecasts.",
+        "Adjusting for weight change conditions on a potential mediator. Other source panels give different magnitudes and shapes; this is one study model, not a pooled consensus curve.",
+        "Pointwise confidence limits do not include all confounding or model-selection uncertainty. Nunes pooled supplementation effects answer a different question.",
+        "ISSN guidance is a recommendation, not a fitted optimum. Bagheri found no significant higher-dose advantage in one small trial; that does not prove equivalence."
       ],
-      "extraction": "ISSN position statement item 2: 1.4 to 2.0 g/kg/day, divided by 2.20462262185 for g/lb/day. This is guidance, not a measured growth curve. Nunes Table 2 provides the supporting pooled treatment effect, not a continuous dose-response.",
+      "extraction": "Approximate native-resolution figure readings. Centerline traced in each pixel column; confidence-outline dash gaps linearly interpolated. Readings rounded to .01 kg before conversion. No refitting, normalization, forced plateau or extrapolation. Source: Tagawa 2021 Figure 2(h), resistance-training arms, multivariate-adjusted model 2. X uses total g/kg/day divided by 2.20462262185; Y uses lean-body-mass change in kg multiplied by the same factor. Values are absolute adjusted within-arm changes, not differences from a protein baseline.",
       "sources": [
         {
           "id": "morton",
@@ -12643,7 +12655,7 @@ window.EnoughData = {
           "id": "tagawa",
           "citation": "Tagawa et al., 2021. Protein intake and lean body mass.",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/",
-          "location": "Dose-response results, broad mixed-population sensitivity check"
+          "location": "Figure 2(h), resistance-training arms in multivariate-adjusted model 2; methods, dose-response results and limitations."
         },
         {
           "id": "li",
@@ -12676,8 +12688,2118 @@ window.EnoughData = {
           "location": "Abstract Methods/Results; Figure 3. 48 randomized, 44 completed; assigned 1.6 versus 3.2 g/kg/day."
         }
       ],
-      "verified": "2026-10-04",
-      "points": [],
+      "verified": "2026-10-05",
+      "points": [
+        {
+          "dose": 0.3,
+          "originalDose": 0.6613867865549999,
+          "effect": 0.970033953614,
+          "low": 0.5732018816810001,
+          "high": 1.366866025547,
+          "originalEffectKg": 0.44,
+          "originalLowKg": 0.26,
+          "originalHighKg": 0.62,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 303.632,
+            "effect": 467,
+            "low": 485,
+            "high": 449.684
+          },
+          "share": null
+        },
+        {
+          "dose": 0.31,
+          "originalDose": 0.6834330127735,
+          "effect": 1.014126406051,
+          "low": 0.617294334118,
+          "high": 1.410958477984,
+          "originalEffectKg": 0.46,
+          "originalLowKg": 0.28,
+          "originalHighKg": 0.64,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 311.71,
+            "effect": 465,
+            "low": 482.29,
+            "high": 447.645
+          },
+          "share": null
+        },
+        {
+          "dose": 0.32,
+          "originalDose": 0.705479238992,
+          "effect": 1.058218858488,
+          "low": 0.6613867865549999,
+          "high": 1.4770971566395001,
+          "originalEffectKg": 0.48,
+          "originalLowKg": 0.3,
+          "originalHighKg": 0.67,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 319.788,
+            "effect": 463,
+            "low": 480.746,
+            "high": 445.664
+          },
+          "share": null
+        },
+        {
+          "dose": 0.33,
+          "originalDose": 0.7275254652105,
+          "effect": 1.1243575371435,
+          "low": 0.7275254652105,
+          "high": 1.499143382858,
+          "originalEffectKg": 0.51,
+          "originalLowKg": 0.33,
+          "originalHighKg": 0.68,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 327.865,
+            "effect": 461,
+            "low": 477.933,
+            "high": 443.933
+          },
+          "share": null
+        },
+        {
+          "dose": 0.34,
+          "originalDose": 0.749571691429,
+          "effect": 1.1684499895805,
+          "low": 0.7936641438659999,
+          "high": 1.543235835295,
+          "originalEffectKg": 0.53,
+          "originalLowKg": 0.36,
+          "originalHighKg": 0.7,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 335.943,
+            "effect": 458.528,
+            "low": 475.028,
+            "high": 442
+          },
+          "share": null
+        },
+        {
+          "dose": 0.35,
+          "originalDose": 0.7716179176475,
+          "effect": 1.2125424420175002,
+          "low": 0.837756596303,
+          "high": 1.5873282877319999,
+          "originalEffectKg": 0.55,
+          "originalLowKg": 0.38,
+          "originalHighKg": 0.72,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 344.021,
+            "effect": 456.49,
+            "low": 472.99,
+            "high": 440
+          },
+          "share": null
+        },
+        {
+          "dose": 0.36,
+          "originalDose": 0.7936641438659999,
+          "effect": 1.2566348944544998,
+          "low": 0.9038952749585,
+          "high": 1.631420740169,
+          "originalEffectKg": 0.57,
+          "originalLowKg": 0.41,
+          "originalHighKg": 0.74,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 352.099,
+            "effect": 454.451,
+            "low": 470.241,
+            "high": 438.337
+          },
+          "share": null
+        },
+        {
+          "dose": 0.37,
+          "originalDose": 0.8157103700845,
+          "effect": 1.3227735731099999,
+          "low": 0.9479877273955,
+          "high": 1.6975594188245,
+          "originalEffectKg": 0.6,
+          "originalLowKg": 0.43,
+          "originalHighKg": 0.77,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 360.176,
+            "effect": 452,
+            "low": 468,
+            "high": 436
+          },
+          "share": null
+        },
+        {
+          "dose": 0.38,
+          "originalDose": 0.837756596303,
+          "effect": 1.366866025547,
+          "low": 1.014126406051,
+          "high": 1.7416518712615001,
+          "originalEffectKg": 0.62,
+          "originalLowKg": 0.46,
+          "originalHighKg": 0.79,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 368.254,
+            "effect": 450,
+            "low": 465.746,
+            "high": 434
+          },
+          "share": null
+        },
+        {
+          "dose": 0.39,
+          "originalDose": 0.8598028225215001,
+          "effect": 1.410958477984,
+          "low": 1.058218858488,
+          "high": 1.7857443236985002,
+          "originalEffectKg": 0.64,
+          "originalLowKg": 0.48,
+          "originalHighKg": 0.81,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 376.332,
+            "effect": 448,
+            "low": 463.258,
+            "high": 431.934
+          },
+          "share": null
+        },
+        {
+          "dose": 0.4,
+          "originalDose": 0.88184904874,
+          "effect": 1.455050930421,
+          "low": 1.1243575371435,
+          "high": 1.8298367761354999,
+          "originalEffectKg": 0.66,
+          "originalLowKg": 0.51,
+          "originalHighKg": 0.83,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 384.409,
+            "effect": 446,
+            "low": 460.688,
+            "high": 430.318
+          },
+          "share": null
+        },
+        {
+          "dose": 0.41,
+          "originalDose": 0.9038952749585,
+          "effect": 1.5211896090764998,
+          "low": 1.1684499895805,
+          "high": 1.8739292285725,
+          "originalEffectKg": 0.69,
+          "originalLowKg": 0.53,
+          "originalHighKg": 0.85,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 392.487,
+            "effect": 443.756,
+            "low": 459,
+            "high": 428.256
+          },
+          "share": null
+        },
+        {
+          "dose": 0.42,
+          "originalDose": 0.925941501177,
+          "effect": 1.5652820615135,
+          "low": 1.2125424420175002,
+          "high": 1.9180216810095,
+          "originalEffectKg": 0.71,
+          "originalLowKg": 0.55,
+          "originalHighKg": 0.87,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 400.565,
+            "effect": 441.718,
+            "low": 456.718,
+            "high": 426.435
+          },
+          "share": null
+        },
+        {
+          "dose": 0.43,
+          "originalDose": 0.9479877273955,
+          "effect": 1.6093745139505,
+          "low": 1.278681120673,
+          "high": 1.940067907228,
+          "originalEffectKg": 0.73,
+          "originalLowKg": 0.58,
+          "originalHighKg": 0.88,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 408.643,
+            "effect": 439.179,
+            "low": 454.205,
+            "high": 424.589
+          },
+          "share": null
+        },
+        {
+          "dose": 0.44,
+          "originalDose": 0.970033953614,
+          "effect": 1.6534669663875001,
+          "low": 1.3227735731099999,
+          "high": 2.0062065858835,
+          "originalEffectKg": 0.75,
+          "originalLowKg": 0.6,
+          "originalHighKg": 0.91,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 416.72,
+            "effect": 437.14,
+            "low": 452,
+            "high": 422.28
+          },
+          "share": null
+        },
+        {
+          "dose": 0.45,
+          "originalDose": 0.9920801798325001,
+          "effect": 1.7196056450430002,
+          "low": 1.366866025547,
+          "high": 2.0502990383205,
+          "originalEffectKg": 0.78,
+          "originalLowKg": 0.62,
+          "originalHighKg": 0.93,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 424.798,
+            "effect": 435.101,
+            "low": 450,
+            "high": 420.5
+          },
+          "share": null
+        },
+        {
+          "dose": 0.46,
+          "originalDose": 1.014126406051,
+          "effect": 1.76369809748,
+          "low": 1.410958477984,
+          "high": 2.0943914907575,
+          "originalEffectKg": 0.8,
+          "originalLowKg": 0.64,
+          "originalHighKg": 0.95,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 432.876,
+            "effect": 433,
+            "low": 447.761,
+            "high": 418.062
+          },
+          "share": null
+        },
+        {
+          "dose": 0.47,
+          "originalDose": 1.0361726322695,
+          "effect": 1.807790549917,
+          "low": 1.4770971566395001,
+          "high": 2.160530169413,
+          "originalEffectKg": 0.82,
+          "originalLowKg": 0.67,
+          "originalHighKg": 0.98,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 440.954,
+            "effect": 431,
+            "low": 445.558,
+            "high": 415.914
+          },
+          "share": null
+        },
+        {
+          "dose": 0.48,
+          "originalDose": 1.058218858488,
+          "effect": 1.851883002354,
+          "low": 1.5211896090764998,
+          "high": 2.1825763956315,
+          "originalEffectKg": 0.84,
+          "originalLowKg": 0.69,
+          "originalHighKg": 0.99,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 449.031,
+            "effect": 428.984,
+            "low": 443.484,
+            "high": 414.484
+          },
+          "share": null
+        },
+        {
+          "dose": 0.49,
+          "originalDose": 1.0802650847065,
+          "effect": 1.895975454791,
+          "low": 1.5652820615135,
+          "high": 2.2266688480685,
+          "originalEffectKg": 0.86,
+          "originalLowKg": 0.71,
+          "originalHighKg": 1.01,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 457.109,
+            "effect": 427,
+            "low": 441,
+            "high": 412.445
+          },
+          "share": null
+        },
+        {
+          "dose": 0.5,
+          "originalDose": 1.102311310925,
+          "effect": 1.940067907228,
+          "low": 1.6093745139505,
+          "high": 2.2707613005055003,
+          "originalEffectKg": 0.88,
+          "originalLowKg": 0.73,
+          "originalHighKg": 1.03,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 465.187,
+            "effect": 424.907,
+            "low": 439.885,
+            "high": 410.404
+          },
+          "share": null
+        },
+        {
+          "dose": 0.51,
+          "originalDose": 1.1243575371435,
+          "effect": 1.9841603596650002,
+          "low": 1.675513192606,
+          "high": 2.336899979161,
+          "originalEffectKg": 0.9,
+          "originalLowKg": 0.76,
+          "originalHighKg": 1.06,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 473.265,
+            "effect": 422.868,
+            "low": 437,
+            "high": 408.201
+          },
+          "share": null
+        },
+        {
+          "dose": 0.52,
+          "originalDose": 1.1464037633620001,
+          "effect": 2.028252812102,
+          "low": 1.6975594188245,
+          "high": 2.380992431598,
+          "originalEffectKg": 0.92,
+          "originalLowKg": 0.77,
+          "originalHighKg": 1.08,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 481.342,
+            "effect": 421,
+            "low": 435.329,
+            "high": 406.329
+          },
+          "share": null
+        },
+        {
+          "dose": 0.53,
+          "originalDose": 1.1684499895805,
+          "effect": 2.072345264539,
+          "low": 1.7416518712615001,
+          "high": 2.4030386578165004,
+          "originalEffectKg": 0.94,
+          "originalLowKg": 0.79,
+          "originalHighKg": 1.09,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 489.42,
+            "effect": 419,
+            "low": 433.29,
+            "high": 404.79
+          },
+          "share": null
+        },
+        {
+          "dose": 0.54,
+          "originalDose": 1.190496215799,
+          "effect": 2.116437716976,
+          "low": 1.807790549917,
+          "high": 2.4471311102535003,
+          "originalEffectKg": 0.96,
+          "originalLowKg": 0.82,
+          "originalHighKg": 1.11,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 497.498,
+            "effect": 417,
+            "low": 431.051,
+            "high": 403.151
+          },
+          "share": null
+        },
+        {
+          "dose": 0.55,
+          "originalDose": 1.2125424420175002,
+          "effect": 2.160530169413,
+          "low": 1.8298367761354999,
+          "high": 2.4912235626904997,
+          "originalEffectKg": 0.98,
+          "originalLowKg": 0.83,
+          "originalHighKg": 1.13,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 505.576,
+            "effect": 415,
+            "low": 429.712,
+            "high": 401
+          },
+          "share": null
+        },
+        {
+          "dose": 0.56,
+          "originalDose": 1.234588668236,
+          "effect": 2.20462262185,
+          "low": 1.8739292285725,
+          "high": 2.5353160151275,
+          "originalEffectKg": 1,
+          "originalLowKg": 0.85,
+          "originalHighKg": 1.15,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 513.653,
+            "effect": 413.347,
+            "low": 428,
+            "high": 399
+          },
+          "share": null
+        },
+        {
+          "dose": 0.57,
+          "originalDose": 1.2566348944544998,
+          "effect": 2.248715074287,
+          "low": 1.9180216810095,
+          "high": 2.5794084675645,
+          "originalEffectKg": 1.02,
+          "originalLowKg": 0.87,
+          "originalHighKg": 1.17,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 521.731,
+            "effect": 412,
+            "low": 426.107,
+            "high": 397.5
+          },
+          "share": null
+        },
+        {
+          "dose": 0.58,
+          "originalDose": 1.278681120673,
+          "effect": 2.2928075267240002,
+          "low": 1.9621141334465,
+          "high": 2.6235009200015,
+          "originalEffectKg": 1.04,
+          "originalLowKg": 0.89,
+          "originalHighKg": 1.19,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 529.809,
+            "effect": 410.096,
+            "low": 424.271,
+            "high": 395.725
+          },
+          "share": null
+        },
+        {
+          "dose": 0.59,
+          "originalDose": 1.3007273468915,
+          "effect": 2.3148537529425,
+          "low": 1.9841603596650002,
+          "high": 2.6455471462199998,
+          "originalEffectKg": 1.05,
+          "originalLowKg": 0.9,
+          "originalHighKg": 1.2,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 537.886,
+            "effect": 408.557,
+            "low": 423,
+            "high": 394
+          },
+          "share": null
+        },
+        {
+          "dose": 0.6,
+          "originalDose": 1.3227735731099999,
+          "effect": 2.3589462053795,
+          "low": 2.028252812102,
+          "high": 2.689639598657,
+          "originalEffectKg": 1.07,
+          "originalLowKg": 0.92,
+          "originalHighKg": 1.22,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 545.964,
+            "effect": 407,
+            "low": 421.018,
+            "high": 392.518
+          },
+          "share": null
+        },
+        {
+          "dose": 0.61,
+          "originalDose": 1.3448197993285,
+          "effect": 2.4030386578165004,
+          "low": 2.072345264539,
+          "high": 2.733732051094,
+          "originalEffectKg": 1.09,
+          "originalLowKg": 0.94,
+          "originalHighKg": 1.24,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 554.042,
+            "effect": 405,
+            "low": 419.49,
+            "high": 390.947
+          },
+          "share": null
+        },
+        {
+          "dose": 0.62,
+          "originalDose": 1.366866025547,
+          "effect": 2.4250848840350003,
+          "low": 2.0943914907575,
+          "high": 2.7557782773125,
+          "originalEffectKg": 1.1,
+          "originalLowKg": 0.95,
+          "originalHighKg": 1.25,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 562.12,
+            "effect": 404,
+            "low": 418,
+            "high": 389.44
+          },
+          "share": null
+        },
+        {
+          "dose": 0.63,
+          "originalDose": 1.3889122517655,
+          "effect": 2.469177336472,
+          "low": 2.1384839431944997,
+          "high": 2.7998707297495002,
+          "originalEffectKg": 1.12,
+          "originalLowKg": 0.97,
+          "originalHighKg": 1.27,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 570.197,
+            "effect": 402,
+            "low": 416.5,
+            "high": 388
+          },
+          "share": null
+        },
+        {
+          "dose": 0.64,
+          "originalDose": 1.410958477984,
+          "effect": 2.4912235626904997,
+          "low": 2.160530169413,
+          "high": 2.821916955968,
+          "originalEffectKg": 1.13,
+          "originalLowKg": 0.98,
+          "originalHighKg": 1.28,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 578.275,
+            "effect": 401,
+            "low": 415,
+            "high": 386.725
+          },
+          "share": null
+        },
+        {
+          "dose": 0.65,
+          "originalDose": 1.4330047042025,
+          "effect": 2.5353160151275,
+          "low": 2.20462262185,
+          "high": 2.866009408405,
+          "originalEffectKg": 1.15,
+          "originalLowKg": 1,
+          "originalHighKg": 1.3,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 586.353,
+            "effect": 399.5,
+            "low": 413.663,
+            "high": 385.027
+          },
+          "share": null
+        },
+        {
+          "dose": 0.66,
+          "originalDose": 1.455050930421,
+          "effect": 2.557362241346,
+          "low": 2.2266688480685,
+          "high": 2.8880556346235,
+          "originalEffectKg": 1.16,
+          "originalLowKg": 1.01,
+          "originalHighKg": 1.31,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 594.431,
+            "effect": 398,
+            "low": 412.5,
+            "high": 384
+          },
+          "share": null
+        },
+        {
+          "dose": 0.67,
+          "originalDose": 1.4770971566395001,
+          "effect": 2.5794084675645,
+          "low": 2.2707613005055003,
+          "high": 2.910101860842,
+          "originalEffectKg": 1.17,
+          "originalLowKg": 1.03,
+          "originalHighKg": 1.32,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 602.508,
+            "effect": 397,
+            "low": 411,
+            "high": 382.492
+          },
+          "share": null
+        },
+        {
+          "dose": 0.68,
+          "originalDose": 1.499143382858,
+          "effect": 2.6235009200015,
+          "low": 2.2928075267240002,
+          "high": 2.9321480870605003,
+          "originalEffectKg": 1.19,
+          "originalLowKg": 1.04,
+          "originalHighKg": 1.33,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 610.586,
+            "effect": 395.5,
+            "low": 409.784,
+            "high": 381.5
+          },
+          "share": null
+        },
+        {
+          "dose": 0.69,
+          "originalDose": 1.5211896090764998,
+          "effect": 2.6455471462199998,
+          "low": 2.3148537529425,
+          "high": 2.9762405394975002,
+          "originalEffectKg": 1.2,
+          "originalLowKg": 1.05,
+          "originalHighKg": 1.35,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 618.664,
+            "effect": 394,
+            "low": 408.682,
+            "high": 380.107
+          },
+          "share": null
+        },
+        {
+          "dose": 0.7,
+          "originalDose": 1.543235835295,
+          "effect": 2.6675933724385,
+          "low": 2.3589462053795,
+          "high": 2.998286765716,
+          "originalEffectKg": 1.21,
+          "originalLowKg": 1.07,
+          "originalHighKg": 1.36,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 626.742,
+            "effect": 393,
+            "low": 407,
+            "high": 379
+          },
+          "share": null
+        },
+        {
+          "dose": 0.71,
+          "originalDose": 1.5652820615135,
+          "effect": 2.689639598657,
+          "low": 2.380992431598,
+          "high": 3.0423792181529996,
+          "originalEffectKg": 1.22,
+          "originalLowKg": 1.08,
+          "originalHighKg": 1.38,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 634.819,
+            "effect": 392,
+            "low": 406,
+            "high": 377.181
+          },
+          "share": null
+        },
+        {
+          "dose": 0.72,
+          "originalDose": 1.5873282877319999,
+          "effect": 2.733732051094,
+          "low": 2.4030386578165004,
+          "high": 3.0644254443715,
+          "originalEffectKg": 1.24,
+          "originalLowKg": 1.09,
+          "originalHighKg": 1.39,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 642.897,
+            "effect": 390.551,
+            "low": 404.969,
+            "high": 376.215
+          },
+          "share": null
+        },
+        {
+          "dose": 0.73,
+          "originalDose": 1.6093745139505,
+          "effect": 2.7557782773125,
+          "low": 2.4250848840350003,
+          "high": 3.08647167059,
+          "originalEffectKg": 1.25,
+          "originalLowKg": 1.1,
+          "originalHighKg": 1.4,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 650.975,
+            "effect": 389.5,
+            "low": 403.513,
+            "high": 375.004
+          },
+          "share": null
+        },
+        {
+          "dose": 0.74,
+          "originalDose": 1.631420740169,
+          "effect": 2.7998707297495002,
+          "low": 2.469177336472,
+          "high": 3.1085178968085,
+          "originalEffectKg": 1.27,
+          "originalLowKg": 1.12,
+          "originalHighKg": 1.41,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 659.053,
+            "effect": 388,
+            "low": 402,
+            "high": 374
+          },
+          "share": null
+        },
+        {
+          "dose": 0.75,
+          "originalDose": 1.6534669663875001,
+          "effect": 2.821916955968,
+          "low": 2.4912235626904997,
+          "high": 3.130564123027,
+          "originalEffectKg": 1.28,
+          "originalLowKg": 1.13,
+          "originalHighKg": 1.42,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 667.13,
+            "effect": 387,
+            "low": 401,
+            "high": 373
+          },
+          "share": null
+        },
+        {
+          "dose": 0.76,
+          "originalDose": 1.675513192606,
+          "effect": 2.8439631821865,
+          "low": 2.5132697889089997,
+          "high": 3.1526103492454998,
+          "originalEffectKg": 1.29,
+          "originalLowKg": 1.14,
+          "originalHighKg": 1.43,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 675.208,
+            "effect": 386,
+            "low": 399.948,
+            "high": 372.235
+          },
+          "share": null
+        },
+        {
+          "dose": 0.77,
+          "originalDose": 1.6975594188245,
+          "effect": 2.866009408405,
+          "low": 2.5353160151275,
+          "high": 3.1746565754639997,
+          "originalEffectKg": 1.3,
+          "originalLowKg": 1.15,
+          "originalHighKg": 1.44,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 683.286,
+            "effect": 385,
+            "low": 399,
+            "high": 371
+          },
+          "share": null
+        },
+        {
+          "dose": 0.78,
+          "originalDose": 1.7196056450430002,
+          "effect": 2.8880556346235,
+          "low": 2.557362241346,
+          "high": 3.1967028016825,
+          "originalEffectKg": 1.31,
+          "originalLowKg": 1.16,
+          "originalHighKg": 1.45,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 691.364,
+            "effect": 384,
+            "low": 397.818,
+            "high": 370
+          },
+          "share": null
+        },
+        {
+          "dose": 0.79,
+          "originalDose": 1.7416518712615001,
+          "effect": 2.910101860842,
+          "low": 2.601454693783,
+          "high": 3.218749027901,
+          "originalEffectKg": 1.32,
+          "originalLowKg": 1.18,
+          "originalHighKg": 1.46,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 699.441,
+            "effect": 383,
+            "low": 396.738,
+            "high": 369
+          },
+          "share": null
+        },
+        {
+          "dose": 0.8,
+          "originalDose": 1.76369809748,
+          "effect": 2.9321480870605003,
+          "low": 2.6235009200015,
+          "high": 3.2407952541195,
+          "originalEffectKg": 1.33,
+          "originalLowKg": 1.19,
+          "originalHighKg": 1.47,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 707.519,
+            "effect": 382,
+            "low": 395.269,
+            "high": 368.316
+          },
+          "share": null
+        },
+        {
+          "dose": 0.81,
+          "originalDose": 1.7857443236985002,
+          "effect": 2.9541943132790003,
+          "low": 2.6455471462199998,
+          "high": 3.2848877065565,
+          "originalEffectKg": 1.34,
+          "originalLowKg": 1.2,
+          "originalHighKg": 1.49,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 715.597,
+            "effect": 381,
+            "low": 394.403,
+            "high": 367
+          },
+          "share": null
+        },
+        {
+          "dose": 0.82,
+          "originalDose": 1.807790549917,
+          "effect": 2.9762405394975002,
+          "low": 2.6675933724385,
+          "high": 3.3069339327750003,
+          "originalEffectKg": 1.35,
+          "originalLowKg": 1.21,
+          "originalHighKg": 1.5,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 723.674,
+            "effect": 380,
+            "low": 393.5,
+            "high": 366
+          },
+          "share": null
+        },
+        {
+          "dose": 0.83,
+          "originalDose": 1.8298367761354999,
+          "effect": 2.998286765716,
+          "low": 2.689639598657,
+          "high": 3.3069339327750003,
+          "originalEffectKg": 1.36,
+          "originalLowKg": 1.22,
+          "originalHighKg": 1.5,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 731.752,
+            "effect": 379,
+            "low": 392.488,
+            "high": 365.261
+          },
+          "share": null
+        },
+        {
+          "dose": 0.84,
+          "originalDose": 1.851883002354,
+          "effect": 3.0203329919345,
+          "low": 2.7116858248755,
+          "high": 3.3289801589935,
+          "originalEffectKg": 1.37,
+          "originalLowKg": 1.23,
+          "originalHighKg": 1.51,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 739.83,
+            "effect": 378,
+            "low": 391.5,
+            "high": 364.16
+          },
+          "share": null
+        },
+        {
+          "dose": 0.85,
+          "originalDose": 1.8739292285725,
+          "effect": 3.0423792181529996,
+          "low": 2.733732051094,
+          "high": 3.3730726114305,
+          "originalEffectKg": 1.38,
+          "originalLowKg": 1.24,
+          "originalHighKg": 1.53,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 747.908,
+            "effect": 377,
+            "low": 390.046,
+            "high": 363.046
+          },
+          "share": null
+        },
+        {
+          "dose": 0.86,
+          "originalDose": 1.895975454791,
+          "effect": 3.0644254443715,
+          "low": 2.777824503531,
+          "high": 3.395118837649,
+          "originalEffectKg": 1.39,
+          "originalLowKg": 1.26,
+          "originalHighKg": 1.54,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 755.985,
+            "effect": 376,
+            "low": 389.007,
+            "high": 362
+          },
+          "share": null
+        },
+        {
+          "dose": 0.87,
+          "originalDose": 1.9180216810095,
+          "effect": 3.08647167059,
+          "low": 2.777824503531,
+          "high": 3.395118837649,
+          "originalEffectKg": 1.4,
+          "originalLowKg": 1.26,
+          "originalHighKg": 1.54,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 764.063,
+            "effect": 375,
+            "low": 388.449,
+            "high": 361.631
+          },
+          "share": null
+        },
+        {
+          "dose": 0.88,
+          "originalDose": 1.940067907228,
+          "effect": 3.1085178968085,
+          "low": 2.821916955968,
+          "high": 3.4171650638675,
+          "originalEffectKg": 1.41,
+          "originalLowKg": 1.28,
+          "originalHighKg": 1.55,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 772.141,
+            "effect": 374,
+            "low": 387,
+            "high": 360.93
+          },
+          "share": null
+        },
+        {
+          "dose": 0.89,
+          "originalDose": 1.9621141334465,
+          "effect": 3.130564123027,
+          "low": 2.821916955968,
+          "high": 3.4392112900860003,
+          "originalEffectKg": 1.42,
+          "originalLowKg": 1.28,
+          "originalHighKg": 1.56,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 780.219,
+            "effect": 373,
+            "low": 386.391,
+            "high": 360
+          },
+          "share": null
+        },
+        {
+          "dose": 0.9,
+          "originalDose": 1.9841603596650002,
+          "effect": 3.1526103492454998,
+          "low": 2.8439631821865,
+          "high": 3.4612575163045003,
+          "originalEffectKg": 1.43,
+          "originalLowKg": 1.29,
+          "originalHighKg": 1.57,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 788.296,
+            "effect": 372,
+            "low": 385.946,
+            "high": 359
+          },
+          "share": null
+        },
+        {
+          "dose": 0.91,
+          "originalDose": 2.0062065858835,
+          "effect": 3.1746565754639997,
+          "low": 2.866009408405,
+          "high": 3.4833037425230002,
+          "originalEffectKg": 1.44,
+          "originalLowKg": 1.3,
+          "originalHighKg": 1.58,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 796.374,
+            "effect": 371,
+            "low": 384.477,
+            "high": 357.841
+          },
+          "share": null
+        },
+        {
+          "dose": 0.92,
+          "originalDose": 2.028252812102,
+          "effect": 3.1967028016825,
+          "low": 2.910101860842,
+          "high": 3.5053499687415,
+          "originalEffectKg": 1.45,
+          "originalLowKg": 1.32,
+          "originalHighKg": 1.59,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 804.452,
+            "effect": 370,
+            "low": 383.274,
+            "high": 357
+          },
+          "share": null
+        },
+        {
+          "dose": 0.93,
+          "originalDose": 2.0502990383205,
+          "effect": 3.218749027901,
+          "low": 2.910101860842,
+          "high": 3.52739619496,
+          "originalEffectKg": 1.46,
+          "originalLowKg": 1.32,
+          "originalHighKg": 1.6,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 812.53,
+            "effect": 369,
+            "low": 382.5,
+            "high": 356
+          },
+          "share": null
+        },
+        {
+          "dose": 0.94,
+          "originalDose": 2.072345264539,
+          "effect": 3.2407952541195,
+          "low": 2.9321480870605003,
+          "high": 3.5494424211785,
+          "originalEffectKg": 1.47,
+          "originalLowKg": 1.33,
+          "originalHighKg": 1.61,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 820.607,
+            "effect": 368,
+            "low": 381.763,
+            "high": 354.945
+          },
+          "share": null
+        },
+        {
+          "dose": 0.95,
+          "originalDose": 2.0943914907575,
+          "effect": 3.262841480338,
+          "low": 2.9541943132790003,
+          "high": 3.5714886473970004,
+          "originalEffectKg": 1.48,
+          "originalLowKg": 1.34,
+          "originalHighKg": 1.62,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 828.685,
+            "effect": 367.157,
+            "low": 381.029,
+            "high": 354.21
+          },
+          "share": null
+        },
+        {
+          "dose": 0.96,
+          "originalDose": 2.116437716976,
+          "effect": 3.3069339327750003,
+          "low": 2.9762405394975002,
+          "high": 3.5935348736155,
+          "originalEffectKg": 1.5,
+          "originalLowKg": 1.35,
+          "originalHighKg": 1.63,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 836.763,
+            "effect": 366,
+            "low": 380,
+            "high": 353
+          },
+          "share": null
+        },
+        {
+          "dose": 0.97,
+          "originalDose": 2.1384839431944997,
+          "effect": 3.3069339327750003,
+          "low": 2.998286765716,
+          "high": 3.615581099834,
+          "originalEffectKg": 1.5,
+          "originalLowKg": 1.36,
+          "originalHighKg": 1.64,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 844.841,
+            "effect": 365.5,
+            "low": 378.58,
+            "high": 352
+          },
+          "share": null
+        },
+        {
+          "dose": 0.98,
+          "originalDose": 2.160530169413,
+          "effect": 3.3289801589935,
+          "low": 3.0203329919345,
+          "high": 3.6376273260525,
+          "originalEffectKg": 1.51,
+          "originalLowKg": 1.37,
+          "originalHighKg": 1.65,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 852.918,
+            "effect": 365,
+            "low": 377.829,
+            "high": 351.469
+          },
+          "share": null
+        },
+        {
+          "dose": 0.99,
+          "originalDose": 2.1825763956315,
+          "effect": 3.351026385212,
+          "low": 3.0423792181529996,
+          "high": 3.6596735522709998,
+          "originalEffectKg": 1.52,
+          "originalLowKg": 1.38,
+          "originalHighKg": 1.66,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 860.996,
+            "effect": 363.502,
+            "low": 377,
+            "high": 350.001
+          },
+          "share": null
+        },
+        {
+          "dose": 1,
+          "originalDose": 2.20462262185,
+          "effect": 3.3730726114305,
+          "low": 3.0644254443715,
+          "high": 3.6817197784894997,
+          "originalEffectKg": 1.53,
+          "originalLowKg": 1.39,
+          "originalHighKg": 1.67,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 869.074,
+            "effect": 362.926,
+            "low": 376,
+            "high": 349
+          },
+          "share": null
+        },
+        {
+          "dose": 1.01,
+          "originalDose": 2.2266688480685,
+          "effect": 3.395118837649,
+          "low": 3.08647167059,
+          "high": 3.703766004708,
+          "originalEffectKg": 1.54,
+          "originalLowKg": 1.4,
+          "originalHighKg": 1.68,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 877.151,
+            "effect": 361.5,
+            "low": 375,
+            "high": 348.424
+          },
+          "share": null
+        },
+        {
+          "dose": 1.02,
+          "originalDose": 2.248715074287,
+          "effect": 3.4171650638675,
+          "low": 3.1085178968085,
+          "high": 3.7258122309265,
+          "originalEffectKg": 1.55,
+          "originalLowKg": 1.41,
+          "originalHighKg": 1.69,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 885.229,
+            "effect": 361,
+            "low": 374.014,
+            "high": 347.787
+          },
+          "share": null
+        },
+        {
+          "dose": 1.03,
+          "originalDose": 2.2707613005055003,
+          "effect": 3.4392112900860003,
+          "low": 3.130564123027,
+          "high": 3.747858457145,
+          "originalEffectKg": 1.56,
+          "originalLowKg": 1.42,
+          "originalHighKg": 1.7,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 893.307,
+            "effect": 360,
+            "low": 373,
+            "high": 346.347
+          },
+          "share": null
+        },
+        {
+          "dose": 1.04,
+          "originalDose": 2.2928075267240002,
+          "effect": 3.4612575163045003,
+          "low": 3.1526103492454998,
+          "high": 3.7699046833635,
+          "originalEffectKg": 1.57,
+          "originalLowKg": 1.43,
+          "originalHighKg": 1.71,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 901.385,
+            "effect": 359,
+            "low": 372,
+            "high": 345
+          },
+          "share": null
+        },
+        {
+          "dose": 1.05,
+          "originalDose": 2.3148537529425,
+          "effect": 3.4833037425230002,
+          "low": 3.1746565754639997,
+          "high": 3.791950909582,
+          "originalEffectKg": 1.58,
+          "originalLowKg": 1.44,
+          "originalHighKg": 1.72,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 909.462,
+            "effect": 358,
+            "low": 371.301,
+            "high": 344.731
+          },
+          "share": null
+        },
+        {
+          "dose": 1.06,
+          "originalDose": 2.336899979161,
+          "effect": 3.5053499687415,
+          "low": 3.1967028016825,
+          "high": 3.8139971358005,
+          "originalEffectKg": 1.59,
+          "originalLowKg": 1.45,
+          "originalHighKg": 1.73,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 917.54,
+            "effect": 357,
+            "low": 370.199,
+            "high": 343.629
+          },
+          "share": null
+        },
+        {
+          "dose": 1.07,
+          "originalDose": 2.3589462053795,
+          "effect": 3.52739619496,
+          "low": 3.218749027901,
+          "high": 3.836043362019,
+          "originalEffectKg": 1.6,
+          "originalLowKg": 1.46,
+          "originalHighKg": 1.74,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 925.618,
+            "effect": 356,
+            "low": 369.5,
+            "high": 342.691
+          },
+          "share": null
+        },
+        {
+          "dose": 1.08,
+          "originalDose": 2.380992431598,
+          "effect": 3.5494424211785,
+          "low": 3.218749027901,
+          "high": 3.8580895882375,
+          "originalEffectKg": 1.61,
+          "originalLowKg": 1.46,
+          "originalHighKg": 1.75,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 933.696,
+            "effect": 355,
+            "low": 369,
+            "high": 341.304
+          },
+          "share": null
+        },
+        {
+          "dose": 1.09,
+          "originalDose": 2.4030386578165004,
+          "effect": 3.5714886473970004,
+          "low": 3.2407952541195,
+          "high": 3.880135814456,
+          "originalEffectKg": 1.62,
+          "originalLowKg": 1.47,
+          "originalHighKg": 1.76,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 941.773,
+            "effect": 354,
+            "low": 367.985,
+            "high": 340.678
+          },
+          "share": null
+        },
+        {
+          "dose": 1.1,
+          "originalDose": 2.4250848840350003,
+          "effect": 3.5935348736155,
+          "low": 3.2848877065565,
+          "high": 3.9021820406745,
+          "originalEffectKg": 1.63,
+          "originalLowKg": 1.49,
+          "originalHighKg": 1.77,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 949.851,
+            "effect": 353,
+            "low": 367,
+            "high": 339.209
+          },
+          "share": null
+        },
+        {
+          "dose": 1.11,
+          "originalDose": 2.4471311102535003,
+          "effect": 3.615581099834,
+          "low": 3.3069339327750003,
+          "high": 3.924228266893,
+          "originalEffectKg": 1.64,
+          "originalLowKg": 1.5,
+          "originalHighKg": 1.78,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 957.929,
+            "effect": 352,
+            "low": 366,
+            "high": 338.536
+          },
+          "share": null
+        },
+        {
+          "dose": 1.12,
+          "originalDose": 2.469177336472,
+          "effect": 3.6376273260525,
+          "low": 3.3289801589935,
+          "high": 3.9683207193300003,
+          "originalEffectKg": 1.65,
+          "originalLowKg": 1.51,
+          "originalHighKg": 1.8,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 966.007,
+            "effect": 351,
+            "low": 365,
+            "high": 337
+          },
+          "share": null
+        },
+        {
+          "dose": 1.13,
+          "originalDose": 2.4912235626904997,
+          "effect": 3.6596735522709998,
+          "low": 3.351026385212,
+          "high": 3.9903669455485002,
+          "originalEffectKg": 1.66,
+          "originalLowKg": 1.52,
+          "originalHighKg": 1.81,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 974.084,
+            "effect": 350.458,
+            "low": 364.087,
+            "high": 336.076
+          },
+          "share": null
+        },
+        {
+          "dose": 1.14,
+          "originalDose": 2.5132697889089997,
+          "effect": 3.6817197784894997,
+          "low": 3.3730726114305,
+          "high": 4.012413171767,
+          "originalEffectKg": 1.67,
+          "originalLowKg": 1.53,
+          "originalHighKg": 1.82,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 982.162,
+            "effect": 349,
+            "low": 363,
+            "high": 335
+          },
+          "share": null
+        },
+        {
+          "dose": 1.15,
+          "originalDose": 2.5353160151275,
+          "effect": 3.703766004708,
+          "low": 3.3730726114305,
+          "high": 4.034459397985501,
+          "originalEffectKg": 1.68,
+          "originalLowKg": 1.53,
+          "originalHighKg": 1.83,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 990.24,
+            "effect": 348.38,
+            "low": 362.38,
+            "high": 334
+          },
+          "share": null
+        },
+        {
+          "dose": 1.16,
+          "originalDose": 2.557362241346,
+          "effect": 3.7258122309265,
+          "low": 3.395118837649,
+          "high": 4.056505624204,
+          "originalEffectKg": 1.69,
+          "originalLowKg": 1.54,
+          "originalHighKg": 1.84,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 998.318,
+            "effect": 347.341,
+            "low": 361.468,
+            "high": 333
+          },
+          "share": null
+        },
+        {
+          "dose": 1.17,
+          "originalDose": 2.5794084675645,
+          "effect": 3.747858457145,
+          "low": 3.4171650638675,
+          "high": 4.0785518504225005,
+          "originalEffectKg": 1.7,
+          "originalLowKg": 1.55,
+          "originalHighKg": 1.85,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1006.395,
+            "effect": 346.302,
+            "low": 360.66,
+            "high": 331.992
+          },
+          "share": null
+        },
+        {
+          "dose": 1.18,
+          "originalDose": 2.601454693783,
+          "effect": 3.7699046833635,
+          "low": 3.4392112900860003,
+          "high": 4.100598076641,
+          "originalEffectKg": 1.71,
+          "originalLowKg": 1.56,
+          "originalHighKg": 1.86,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1014.473,
+            "effect": 345.264,
+            "low": 360,
+            "high": 331
+          },
+          "share": null
+        },
+        {
+          "dose": 1.19,
+          "originalDose": 2.6235009200015,
+          "effect": 3.791950909582,
+          "low": 3.4612575163045003,
+          "high": 4.1226443028595,
+          "originalEffectKg": 1.72,
+          "originalLowKg": 1.57,
+          "originalHighKg": 1.87,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1022.551,
+            "effect": 344.725,
+            "low": 359,
+            "high": 330.275
+          },
+          "share": null
+        },
+        {
+          "dose": 1.2,
+          "originalDose": 2.6455471462199998,
+          "effect": 3.791950909582,
+          "low": 3.4833037425230002,
+          "high": 4.144690529078,
+          "originalEffectKg": 1.72,
+          "originalLowKg": 1.58,
+          "originalHighKg": 1.88,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1030.628,
+            "effect": 344,
+            "low": 357.67,
+            "high": 329.204
+          },
+          "share": null
+        },
+        {
+          "dose": 1.21,
+          "originalDose": 2.6675933724385,
+          "effect": 3.836043362019,
+          "low": 3.5053499687415,
+          "high": 4.1667367552965,
+          "originalEffectKg": 1.74,
+          "originalLowKg": 1.59,
+          "originalHighKg": 1.89,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1038.706,
+            "effect": 343,
+            "low": 357,
+            "high": 327.735
+          },
+          "share": null
+        },
+        {
+          "dose": 1.22,
+          "originalDose": 2.689639598657,
+          "effect": 3.8580895882375,
+          "low": 3.52739619496,
+          "high": 4.188782981515,
+          "originalEffectKg": 1.75,
+          "originalLowKg": 1.6,
+          "originalHighKg": 1.9,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1046.784,
+            "effect": 342,
+            "low": 356.216,
+            "high": 327
+          },
+          "share": null
+        },
+        {
+          "dose": 1.23,
+          "originalDose": 2.7116858248755,
+          "effect": 3.880135814456,
+          "low": 3.52739619496,
+          "high": 4.2108292077335,
+          "originalEffectKg": 1.76,
+          "originalLowKg": 1.6,
+          "originalHighKg": 1.91,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1054.862,
+            "effect": 341,
+            "low": 355.569,
+            "high": 326
+          },
+          "share": null
+        },
+        {
+          "dose": 1.24,
+          "originalDose": 2.733732051094,
+          "effect": 3.9021820406745,
+          "low": 3.5714886473970004,
+          "high": 4.232875433952,
+          "originalEffectKg": 1.77,
+          "originalLowKg": 1.62,
+          "originalHighKg": 1.92,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1062.939,
+            "effect": 340,
+            "low": 354.46,
+            "high": 324.963
+          },
+          "share": null
+        },
+        {
+          "dose": 1.25,
+          "originalDose": 2.7557782773125,
+          "effect": 3.924228266893,
+          "low": 3.5714886473970004,
+          "high": 4.2549216601705,
+          "originalEffectKg": 1.78,
+          "originalLowKg": 1.62,
+          "originalHighKg": 1.93,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1071.017,
+            "effect": 339,
+            "low": 353.991,
+            "high": 324
+          },
+          "share": null
+        },
+        {
+          "dose": 1.26,
+          "originalDose": 2.777824503531,
+          "effect": 3.9462744931115,
+          "low": 3.5935348736155,
+          "high": 4.2769678863889995,
+          "originalEffectKg": 1.79,
+          "originalLowKg": 1.63,
+          "originalHighKg": 1.94,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1079.095,
+            "effect": 338,
+            "low": 353,
+            "high": 323
+          },
+          "share": null
+        },
+        {
+          "dose": 1.27,
+          "originalDose": 2.7998707297495002,
+          "effect": 3.9683207193300003,
+          "low": 3.615581099834,
+          "high": 4.2990141126075,
+          "originalEffectKg": 1.8,
+          "originalLowKg": 1.64,
+          "originalHighKg": 1.95,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1087.173,
+            "effect": 337,
+            "low": 351.984,
+            "high": 322
+          },
+          "share": null
+        },
+        {
+          "dose": 1.28,
+          "originalDose": 2.821916955968,
+          "effect": 3.9903669455485002,
+          "low": 3.6376273260525,
+          "high": 4.3431065650445,
+          "originalEffectKg": 1.81,
+          "originalLowKg": 1.65,
+          "originalHighKg": 1.97,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1095.25,
+            "effect": 336,
+            "low": 351.25,
+            "high": 320.864
+          },
+          "share": null
+        },
+        {
+          "dose": 1.29,
+          "originalDose": 2.8439631821865,
+          "effect": 4.012413171767,
+          "low": 3.6596735522709998,
+          "high": 4.3431065650445,
+          "originalEffectKg": 1.82,
+          "originalLowKg": 1.66,
+          "originalHighKg": 1.97,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1103.328,
+            "effect": 335,
+            "low": 350.336,
+            "high": 320
+          },
+          "share": null
+        },
+        {
+          "dose": 1.3,
+          "originalDose": 2.866009408405,
+          "effect": 4.034459397985501,
+          "low": 3.6817197784894997,
+          "high": 4.3871990174815,
+          "originalEffectKg": 1.83,
+          "originalLowKg": 1.67,
+          "originalHighKg": 1.99,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1111.406,
+            "effect": 334,
+            "low": 349.594,
+            "high": 319
+          },
+          "share": null
+        },
+        {
+          "dose": 1.31,
+          "originalDose": 2.8880556346235,
+          "effect": 4.056505624204,
+          "low": 3.703766004708,
+          "high": 4.4092452437,
+          "originalEffectKg": 1.84,
+          "originalLowKg": 1.68,
+          "originalHighKg": 2,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1119.484,
+            "effect": 333,
+            "low": 348.774,
+            "high": 317.912
+          },
+          "share": null
+        },
+        {
+          "dose": 1.32,
+          "originalDose": 2.910101860842,
+          "effect": 4.0785518504225005,
+          "low": 3.703766004708,
+          "high": 4.4312914699184995,
+          "originalEffectKg": 1.85,
+          "originalLowKg": 1.68,
+          "originalHighKg": 2.01,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1127.561,
+            "effect": 332.439,
+            "low": 348.04,
+            "high": 316.443
+          },
+          "share": null
+        },
+        {
+          "dose": 1.33,
+          "originalDose": 2.9321480870605003,
+          "effect": 4.100598076641,
+          "low": 3.7258122309265,
+          "high": 4.453337696137,
+          "originalEffectKg": 1.86,
+          "originalLowKg": 1.69,
+          "originalHighKg": 2.02,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1135.639,
+            "effect": 331.361,
+            "low": 347,
+            "high": 315.68
+          },
+          "share": null
+        },
+        {
+          "dose": 1.34,
+          "originalDose": 2.9541943132790003,
+          "effect": 4.100598076641,
+          "low": 3.747858457145,
+          "high": 4.475383922355499,
+          "originalEffectKg": 1.86,
+          "originalLowKg": 1.7,
+          "originalHighKg": 2.03,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1143.717,
+            "effect": 330.642,
+            "low": 346.358,
+            "high": 314.5
+          },
+          "share": null
+        },
+        {
+          "dose": 1.35,
+          "originalDose": 2.9762405394975002,
+          "effect": 4.144690529078,
+          "low": 3.7699046833635,
+          "high": 4.497430148574,
+          "originalEffectKg": 1.88,
+          "originalLowKg": 1.71,
+          "originalHighKg": 2.04,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1151.795,
+            "effect": 329.205,
+            "low": 345.564,
+            "high": 313.865
+          },
+          "share": null
+        },
+        {
+          "dose": 1.36,
+          "originalDose": 2.998286765716,
+          "effect": 4.1667367552965,
+          "low": 3.791950909582,
+          "high": 4.541522601011001,
+          "originalEffectKg": 1.89,
+          "originalLowKg": 1.72,
+          "originalHighKg": 2.06,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1159.872,
+            "effect": 328.564,
+            "low": 344.564,
+            "high": 312.029
+          },
+          "share": null
+        },
+        {
+          "dose": 1.37,
+          "originalDose": 3.0203329919345,
+          "effect": 4.188782981515,
+          "low": 3.791950909582,
+          "high": 4.5635688272295,
+          "originalEffectKg": 1.9,
+          "originalLowKg": 1.72,
+          "originalHighKg": 2.07,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1167.95,
+            "effect": 327.525,
+            "low": 344,
+            "high": 311
+          },
+          "share": null
+        },
+        {
+          "dose": 1.38,
+          "originalDose": 3.0423792181529996,
+          "effect": 4.188782981515,
+          "low": 3.836043362019,
+          "high": 4.5856150534480005,
+          "originalEffectKg": 1.9,
+          "originalLowKg": 1.74,
+          "originalHighKg": 2.08,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1176.028,
+            "effect": 327,
+            "low": 343,
+            "high": 310
+          },
+          "share": null
+        },
+        {
+          "dose": 1.39,
+          "originalDose": 3.0644254443715,
+          "effect": 4.2108292077335,
+          "low": 3.836043362019,
+          "high": 4.5856150534480005,
+          "originalEffectKg": 1.91,
+          "originalLowKg": 1.74,
+          "originalHighKg": 2.08,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1184.105,
+            "effect": 326,
+            "low": 342.354,
+            "high": 309.734
+          },
+          "share": null
+        },
+        {
+          "dose": 1.4,
+          "originalDose": 3.08647167059,
+          "effect": 4.232875433952,
+          "low": 3.880135814456,
+          "high": 4.629707505885,
+          "originalEffectKg": 1.92,
+          "originalLowKg": 1.76,
+          "originalHighKg": 2.1,
+          "source": "tagawa",
+          "location": "Figure 2(h), resistance-training trials, adjusted model 2; approximate figure reading",
+          "sourcePixels": {
+            "x": 1192.183,
+            "effect": 325,
+            "low": 341,
+            "high": 308
+          },
+          "share": null
+        }
+      ],
       "unitLabel": "g/lb a day",
       "step": 0.01,
       "doseDigits": 2,
@@ -12688,37 +14810,52 @@ window.EnoughData = {
       },
       "view": {
         "area": "lift",
-        "mode": "guidance",
-        "shape": "Intake guide",
+        "mode": "model",
+        "shape": "No exact cutoff",
         "answer": "About 0.65 to 0.9 g/lb/day",
         "range": [
           0.3,
-          1.3
+          1.4
         ],
-        "rangeLabel": "Food and supplements together. Guide for most exercising adults",
+        "rangeLabel": "Total daily protein, food and supplements together",
         "default": 0.8,
         "ticks": [
           0.3,
           0.6,
-          0.9,
-          1.3
+          1,
+          1.4
         ],
-        "showEnough": false
+        "showEnough": false,
+        "lineStyle": "dashed",
+        "modelLabel": "Study model, shaded 95% interval",
+        "yScale": {
+          "min": 0,
+          "max": 5,
+          "ticks": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "label": "Lean-mass change, lb"
+        }
       },
       "reverification": {
         "researcher": "v2_move",
         "adversary": "polish_audit"
       },
-      "rangeMethod": "Selectable physical intake axis, not a studied effect range. The guide uses published recommendations.",
+      "rangeMethod": "0.30 to 1.40 g/lb/day is inside the published panel extent. No extension beyond the visible source curves; no endpoint normalization.",
       "breakpoint": null,
       "conditionalSensitivity": null,
-      "enoughPolicy": "No response curve or enough calculation. A sourced intake guide replaces the arm-level segmented regression.",
+      "enoughPolicy": "No exact threshold or normalized benefit calculation. The plotted study model and sports nutrition guidance remain separate.",
       "computed": {
         "enough": null,
         "share": null
       },
-      "effectUnit": null,
-      "outcome": "published total-protein intake guidance, not a muscle-gain estimate",
+      "effectUnit": "lb of modeled lean-body-mass change within trial arms",
+      "outcome": "modeled lean-body-mass change across resistance-training trial arms, not the causal effect of additional protein",
       "guidance": {
         "source": "issn2017",
         "low": 0.6350293179996473,
@@ -12728,7 +14865,7 @@ window.EnoughData = {
         "originalUnit": "g/kg/day",
         "type": "recommendation",
         "rangeMeaning": "Published sports nutrition guidance, not a confidence interval or a proven minimum/maximum.",
-        "displayRangeMeaning": "0.3 to 1.3 is a selectable intake axis only, not an observed trial range."
+        "displayRangeMeaning": "The recommendation is stated in the headline, not used to draw the response or its confidence band."
       },
       "evidenceSummary": {
         "nunes2022": {
@@ -12784,8 +14921,13 @@ window.EnoughData = {
         "tagawa2021": {
           "source": "tagawa",
           "articles": 105,
-          "comparison": "Mixed populations and studies with/without training; adjusted study-arm spline differs from Morton.",
-          "doseLimit": "Only four articles compared multiple supplementation doses under identical conditions. Study-arm associations do not isolate the effect of adding a particular daily dose."
+          "comparison": "The active curve is the resistance-training-specific adjusted spline in Figure 2(h), not the mixed all-trials spline or the pooled between-group treatment effect.",
+          "doseLimit": "Only four articles compared multiple supplementation doses under identical conditions. Study-arm associations do not isolate the effect of adding a particular daily dose.",
+          "participants": 5402,
+          "resistanceTrainingArticles": 53,
+          "resistanceTrainingInterventionGroups": 72,
+          "plottedTrialCount": "The review reports 53 resistance-training articles overall. The exact article count entering panel h is not separately stated; the total-intake spline uses the intake-reporting subset.",
+          "modelSelection": "Use the fully adjusted resistance-training panel, with age, sex, duration and weight change. No averaging of inconsistent models, no shape selected to impose a ceiling."
         },
         "bagheri2023": {
           "source": "bagheri2023",
@@ -12810,6 +14952,30 @@ window.EnoughData = {
         "method": "Primary-agent broad source and claim audit; no independent reviewer in this follow-up.",
         "report": "docs/ENOUGH_EVIDENCE_AUDIT.md",
         "status": "Revised or retained with population, outcome and uncertainty checked."
+      },
+      "followupAudit": {
+        "date": "2026-10-05",
+        "method": "Primary-agent source-figure extraction and numerical/visual audit. No independent review in this follow-up.",
+        "figure": "Tagawa 2021, Figure 2(h)",
+        "sourceFigureURL": "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/fb4b/7727026/bbd30afbdaad/nuaa104f2.jpg",
+        "sourceTileManifestURL": "https://www.ncbi.nlm.nih.gov/corecgi/tileshop/tileshop.fcgi?manifest=1&p=PMC3&id=7727026_nuaa104f2.jpg&w=2000&h=2000",
+        "cropSHA256": "ee28fafbff34f6b8368f1b3c6680a2a5d94e97483aa40b95ba009ad68b36fd5e",
+        "nativeFigureSize": [
+          3990,
+          2993
+        ],
+        "cropOrigin": [
+          1280,
+          2048
+        ],
+        "calibration": {
+          "xHalfGkg": 244.5,
+          "pixelsPerGkg": 366.4,
+          "yZeroKg": 509.5,
+          "pixelsPerKg": 95.95
+        },
+        "rounding": "Readings rounded to .01 kg before conversion; UI shows .1 lb. One source pixel is approximately .0104 kg.",
+        "uncertainty": "Published pointwise 95% confidence interval, not a personal prediction interval or threshold interval."
       }
     },
     {
@@ -22111,7 +24277,7 @@ window.EnoughData = {
       "points": [
         {
           "dose": 5000,
-          "effect": 1.0,
+          "effect": 1,
           "low": 0.9985,
           "high": 1.0015,
           "source": "paluch2022",
@@ -22562,7 +24728,7 @@ window.EnoughData = {
       "points": [
         {
           "dose": 3000,
-          "effect": 1.0,
+          "effect": 1,
           "low": 0.9991,
           "high": 1.0009,
           "source": "paluch2022",

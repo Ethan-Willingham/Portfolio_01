@@ -36,7 +36,7 @@ const clickFraction=async(page,plot,f)=>{
   assert.deepEqual(clipped,[],'All axis titles and ticks fit');await fullPainting(page);
   assert.equal(await page.locator('input[type=range]').count(),0,'No visible slider bars');
   assert.equal(await page.locator('.enough-chart[role=slider][tabindex="0"]').count(),12,'Every chart has direct keyboard control');
-  assert.equal(await page.locator('.enough-chart .en-x-label').count(),12);assert.equal(await page.locator('.enough-chart .en-y-label').count(),11);assert.equal(await page.locator('#protein .en-guidance-label').textContent(),'Published intake guide');
+  assert.equal(await page.locator('.enough-chart .en-x-label').count(),12);assert.equal(await page.locator('.enough-chart .en-y-label').count(),12);
   assert.ok(await page.locator('.enough-detail summary').evaluateAll(els=>els.every(el=>el.getBoundingClientRect().height>=44)),'44px disclosure targets');
   if(width===375)assert.equal(await page.locator('.enough-card').first().evaluate(el=>Math.round(el.getBoundingClientRect().left)),20,'Site mobile gutter');
   const wordCounts=await page.locator('.enough-card details').evaluateAll(els=>els.map(el=>({id:el.closest('article').id,words:el.textContent.trim().split(/\s+/).length})));
@@ -46,7 +46,7 @@ const clickFraction=async(page,plot,f)=>{
   const opening=page.locator('#overview-steps .overview-plot');
   assert.equal(await opening.getAttribute('aria-valuenow'),'8000');assert.match(await opening.getAttribute('aria-valuetext'),/about 44% lower risk of dying.*5,000.*under 60/,'Opening uses actual outcome and baseline');
   assert.equal(await page.locator('.enough-overview .overview-choices button').count(),3);assert.equal(await page.locator('.overview-panel:visible').count(),1,'Only one physical curve shown');
-  assert.equal(await page.locator('#protein .en-y-label,#protein .en-curve').count(),0,'Guidance is not a predicted muscle-gain curve');assert.match(await page.locator('#steps .en-y-label').textContent(),/lower risk of dying, %/i);
+  assert.equal(await page.locator('#protein .en-model').count(),1,'Protein uses the shared graph with a named model');assert.match(await page.locator('#protein .en-y-label').textContent(),/Lean-mass change, lb/);assert.match(await page.locator('#steps .en-y-label').textContent(),/lower risk of dying, %/i);
   assert.doesNotMatch(await page.locator('.enough-overview').textContent(),/through each dose range|Amount within each shown range|Share of measured benefit/i,'No shared abstract scale');
   assert.equal(await page.locator('#overview-chart .en-target').count(),0,'Opening has only the outcome curve and selected marker');
   const crowdedTicks=await page.locator('.enough-chart svg,#overview-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>{
@@ -54,7 +54,7 @@ const clickFraction=async(page,plot,f)=>{
    return ticks.flatMap((a,i)=>ticks.slice(i+1).filter(b=>{const x=a.getBBox(),y=b.getBBox();return x.y<y.y+y.height+4&&y.y<x.y+x.height+4;}).map(b=>a.textContent+'/'+b.textContent));
   }));assert.deepEqual(crowdedTicks,[],'Y-axis labels have at least 4px separation');
   assert.equal(await page.locator('.en-target,.en-guide,.enough-target-key').count(),0,'No endpoint-derived 90% optimum');
-  for(const id of ['exercise','fiber','sleep'])assert.equal(await page.locator('#'+id+' .en-uncertainty').count(),1,'Published interval displayed: '+id);
+  for(const id of ['exercise','protein','fiber','sleep'])assert.equal(await page.locator('#'+id+' .en-uncertainty').count(),1,'Published interval displayed: '+id);
   for(const id of ['fruit-veg','income','alcohol','smoking']){
    assert.equal(await page.locator('#'+id+' .en-curve').count(),0,'No invented response line between source groups');
    assert.ok(await page.locator('#'+id+' .en-whisker').count()>1,'Source-group intervals displayed');
@@ -62,10 +62,12 @@ const clickFraction=async(page,plot,f)=>{
   const intervalClips=await page.locator('.enough-chart svg').evaluateAll(svgs=>svgs.flatMap(svg=>[...svg.querySelectorAll('.en-uncertainty,.en-whisker')].filter(el=>{const b=el.getBBox(),v=svg.viewBox.baseVal;return b.y<29.9||b.y+b.height>v.height-55.9;}).map(el=>el.closest('article').id)));
   assert.deepEqual(intervalClips,[],'Full intervals and scenario ranges fit on every chart');
   assert.equal(await page.locator('#sleep .en-area').count(),0,'No artificial six-hour sweet spot');
-  assert.equal(await page.locator('#protein .en-intake-band').count(),1);
+  assert.equal(await page.locator('#protein .en-intake-band,.en-guidance-label').count(),0,'Replaced one-axis guidance with the shared outcome graph');
   assert.match(await page.locator('#protein .enough-answer').textContent(),/0.65 to 0.9/);
-  assert.match(await page.locator('#protein .enough-fact').textContent(),/62 lifting trials/);
-  assert.match(await page.locator('#protein details').textContent(),/not a growth curve/);
+  assert.match(await page.locator('#protein .enough-fact').textContent(),/compares lean-mass changes across lifting trials/);
+  assert.match(await page.locator('#protein details').textContent(),/cannot isolate.*extra muscle/);
+  assert.match(await page.locator('#protein .enough-readout').textContent(),/2.9 lb modeled lean-mass change.*2.6 to 3.2 lb/);
+  assert.equal(await page.locator('#protein .en-curve').evaluate(el=>getComputedStyle(el).strokeDasharray),'7px, 6px');
   assert.match(await page.locator('#income .en-y-label').textContent(),/out of 100/);
   assert.match(await page.locator('#savings .enough-readout').textContent(),/17 year-end contributions/);
   assert.equal(await page.locator('#savings .en-scenario').count(),1,'Alternate assumptions are labeled, not confidence limits');
@@ -76,7 +78,8 @@ const clickFraction=async(page,plot,f)=>{
    await page.locator('[data-opening-curve="'+id+'"]').click();const plot=page.locator('#overview-'+id+' .overview-plot');
    assert.equal(await page.locator('.overview-panel:visible').count(),1);assert.equal(await page.locator('[data-opening-curve="'+id+'"]').getAttribute('aria-pressed'),'true');
    await clickFraction(page,plot,.5);await page.keyboard.press('End');assert.equal(await plot.getAttribute('aria-valuenow'),await plot.getAttribute('aria-valuemax'));
-   assert.match(await plot.getAttribute('aria-valuetext'),id==='exercise'?/38.4% lower risk.*no exercise/:/above the published intake guide.*cutoff is unknown/i);
+   assert.match(await plot.getAttribute('aria-valuetext'),id==='exercise'?/38.4% lower risk.*no exercise/:/1.4 g\/lb\/day.*4.2 lb modeled lean-mass change.*95% interval/i);
+   if(id==='protein'){assert.equal(await plot.locator('.en-model,.en-uncertainty').count(),2);assert.match(await plot.locator('.en-y-label').textContent(),/Lean-mass change, lb/);}
   }
   await page.locator('[data-opening-curve="steps"]').click();assert.equal(await opening.getAttribute('aria-valuenow'),'16000','Curve changes preserve each selection');
   for(const plot of await page.locator('.enough-chart').all()){

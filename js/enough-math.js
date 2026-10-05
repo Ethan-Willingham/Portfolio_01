@@ -6,7 +6,7 @@
     if(c.kind==='unknown'||c.kind==='guidance')return null;
     if(c.kind==='categories')return c.points[Math.round(clamp(d,0,c.points.length-1))][key];
     if(key==='effect'){
-      if(c.id==='protein')return 1.75*(Math.min(d*2.20462262185,1.62)-.9)*2.20462262185;
+      if(c.model?.type==='protein')return 1.75*(Math.min(d*2.20462262185,1.62)-.9)*2.20462262185;
       if(c.id==='work')return 126.089*(d-24)-4.533*Math.max(0,d-49)**2;
     }
     if(c.id==='fiber'){
