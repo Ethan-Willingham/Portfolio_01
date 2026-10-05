@@ -96,7 +96,7 @@
     enqueue(w,t){t.id=this.id();t.phase='source';t.progress=0;t.path=null;w.queue.push(t);if(this.occ&&this.occTick!==-1&&t.dest){const k=t.dest.x+'/'+t.dest.y+'/'+(t.dest.level||0);if(!this.occ.has(k))this.occ.set(k,new Set());this.occ.get(k).add(t.pallet||-t.id);}if(t.pallet)this.p.get(t.pallet).reservedBy=t.id;if(t.output)this.p.get(t.output).reservedBy=t.id;return {ok:true};}
     pending(t,item){return this.s.workers.reduce((n,w)=>n+[w.task,...w.queue].filter(q=>q?.kind==='load'&&q.dest.truck===t.id&&this.p.get(q.pallet)?.item===item).reduce((a,q)=>a+this.p.get(q.pallet).cases,0),0);}
     unassigned(t,line){if(line.parcel)return this.remaining(t,line);const before=t.order.slice(0,t.order.indexOf(line)).filter(l=>l.item===line.item).reduce((a,l)=>a+this.remaining(t,l),0);return Math.max(0,this.remaining(t,line)-Math.max(0,this.pending(t,line.item)-before));}
-    release(task){if(task.pallet&&this.p.get(task.pallet)?.reservedBy===task.id)this.p.get(task.pallet).reservedBy=null;if(task.output&&this.p.get(task.output)?.reservedBy===task.id)this.p.get(task.output).reservedBy=null;const job=this.s.serviceJobs.find(q=>q.id===task.job);if(job&&job.status==='queued'){job.status='cancelled';for(const q of job.sources)this.p.get(q.id).reservedBy=null;}if(task.kind==='parcelPack'){const line=this.t.get(task.truck)?.order.find(l=>l.orderId===task.orderId);if(line?.reservedBy===task.id)line.reservedBy=null;}if(task.parcel){const q=this.s.parcels.find(q=>q.id===task.parcel);if(q?.reservedBy===task.id)q.reservedBy=null;}this.occTick=-1;}
+    release(task){if(task.pallet&&this.p.get(task.pallet)?.reservedBy===task.id)this.p.get(task.pallet).reservedBy=null;if(task.output&&this.p.get(task.output)?.reservedBy===task.id)this.p.get(task.output).reservedBy=null;const job=this.s.serviceJobs.find(q=>q.id===task.job);if(job&&job.status==='queued'){job.status='cancelled';for(const q of job.sources){const p=this.p.get(q.id);p.cases+=q.collected||0;p.bookCases+=q.collected||0;q.collected=0;p.reservedBy=null;}}if(task.kind==='parcelPack'){const line=this.t.get(task.truck)?.order.find(l=>l.orderId===task.orderId);if(line?.reservedBy===task.id)line.reservedBy=null;}if(task.parcel){const q=this.s.parcels.find(q=>q.id===task.parcel);if(q?.reservedBy===task.id)q.reservedBy=null;}this.occTick=-1;}
     clearWork(w){const task=w.task;if(task?.heldUnits){const p=this.p.get(task.pallet),pack=O.items[p.item].pack,total=p.cases*pack+(p.openUnits||0)+task.heldUnits;p.cases=Math.floor(total/pack);p.openUnits=total%pack;p.bookCases=p.cases;task.heldUnits=0;}if(task?.pallet){const p=this.p.get(task.pallet);if(p.place==='transit'){p.place='lane';p.x=Math.round(w.x);p.y=Math.round(w.y);}}if(task?.output){const q=this.p.get(task.output);if(q.place==='transit'){q.place='lane';q.level=0;q.x=Math.round(w.x);q.y=Math.round(w.y);}}if(task?.parcel){const q=this.s.parcels.find(q=>q.id===task.parcel);if(q.place==='transit')q.place='ready';}for(const q of w.queue)this.release(q);if(task)this.release(task);w.queue=[];w.task=null;}
     rackReason(x,y){const s=this.s,aisle=s.owned.narrow?2:3;if(!Number.isInteger(x)||!Number.isInteger(y)||!O.pathing.inside(s,x,y)||!O.pathing.inside(s,x+1,y+aisle))return 'Leave room for both rack positions and the working aisle inside the building.';if(s.map.racks.some(r=>Math.abs(r.y-y)<aisle+1&&Math.abs(r.x-x)<3))return 'Leave a clear working aisle between racks.';for(let yy=y;yy<=y+aisle;yy++)for(let xx=x;xx<x+2;xx++)if(this.occupied(xx,yy)||O.pathing.blocked(s,xx,yy)||s.map.stations.some(q=>q.x===xx&&q.y===yy)||s.workers.some(w=>Math.round(w.x)===xx&&Math.round(w.y)===yy))return 'Clear the rack and its working aisle first.';return '';}
     command(c){const s=this.s,w=s.workers.find(w=>w.id===(c.worker||1)),p=this.p.get(c.pallet),t=this.t.get(c.truck),fail=reason=>({ok:false,reason});
@@ -173,9 +173,11 @@
           demand=orders-made-s.serviceJobs.filter(j=>['kit','assembly'].includes(j.service)&&j.status==='queued').reduce((a,j)=>a+j.units,0);
         }
         if(demand<units)return fail('No work order for that many cases.');if(!O.pathing.path(s,w,station))return fail('Clear a route to the service station.');
-        for(const [item,n]of Object.entries(service.inputs)){let remaining=n*units;for(const p of this.available(item,['kit','assembly'].includes(service.id)?'lumen':service.id==='ticket'?'linen':null)){const count=Math.min(remaining,p.cases);if(count){sources.push({id:p.id,count});remaining-=count;}if(!remaining)break;}if(remaining)return fail('Need '+(n*units)+' cases of '+O.items[item].name+'.');}
-        const job={id:this.id(),service:service.id,units,sources,status:'queued'};s.serviceJobs.push(job);for(const q of sources)this.p.get(q.id).reservedBy=job.id;return this.enqueue(w,{kind:'service',job:job.id,start:station,end:station,duration:service.seconds*units/(s.owned.line?2:1)});
+        for(const [item,n]of Object.entries(service.inputs)){let remaining=n*units;for(const p of this.available(item,['kit','assembly'].includes(service.id)?'lumen':service.id==='ticket'?'linen':null).filter(p=>p.level===0)){const count=Math.min(remaining,p.cases);if(count){sources.push({id:p.id,count,collected:0});remaining-=count;}if(!remaining)break;}if(remaining)return fail('Need '+(n*units)+' floor-level cases of '+O.items[item].name+'.');}
+        let from=w;for(const q of sources){const at=this.approach(this.p.get(q.id));if(!O.pathing.path(s,from,at)||!O.pathing.path(s,at,station))return fail('Clear a route between the components and bench.');from=at;}
+        const job={id:this.id(),service:service.id,units,sources,status:'queued'};s.serviceJobs.push(job);for(const q of sources)this.p.get(q.id).reservedBy=job.id;return this.enqueue(w,{kind:'service',job:job.id,serviceIndex:0,gatherProgress:0,start:this.approach(this.p.get(sources[0].id)),end:{x:station.x,y:station.y},duration:service.seconds*units/(s.owned.line?2:1)});
       }
+      if(c.type==='cancelService'){const job=s.serviceJobs.find(q=>q.id===c.job&&q.status==='queued');if(!job)return fail('That work order has already closed.');for(const worker of s.workers){if(worker.task?.job===job.id){this.release(worker.task);worker.task=null;return {ok:true};}const index=worker.queue.findIndex(q=>q.job===job.id);if(index!==-1){this.release(worker.queue[index]);worker.queue.splice(index,1);return {ok:true};}}return fail('No worker has that work order.');}
       if(c.type==='charge'){if(!O.has(s,'forklift'))return fail('No forklift to charge.');return this.enqueue(w,{kind:'charge',start:{x:7,y:21},end:{x:7,y:21},duration:s.owned.charger?3:8});}
       if(c.type==='nextDay'){if(s.phase!=='evening')return fail('Finish the current shift first.');this.nextDay();return {ok:true};}
       return fail('Unknown command.');
@@ -217,7 +219,7 @@
       else if(task.kind==='charge'){w.battery=100;event(s,'Battery charged.');}
       else if(task.kind==='service'){
         const job=s.serviceJobs.find(j=>j.id===task.job),service=O.services.find(q=>q.id===job.service);if(s.machineDown>0){task.progress=Math.max(0,task.progress-DT);return false;}
-        let consumed=0;for(const q of job.sources){const source=this.p.get(q.id);source.cases-=q.count;source.bookCases-=q.count;consumed+=q.count;source.reservedBy=null;if(!source.cases&&!source.openUnits){source.place='empty';s.emptyPallets++;}}
+        let consumed=0;for(const q of job.sources){const source=this.p.get(q.id);consumed+=q.collected;q.collected=0;source.reservedBy=null;if(!source.cases&&!source.openUnits){source.place='empty';s.emptyPallets++;}}
         s.goods.consumed+=consumed;const output=this.pallet(service.output,service.id==='kit'||service.id==='assembly'?'lumen':this.p.get(job.sources[0].id).client,job.units,null,{confirmed:true,scanned:true,x:w.x+1,y:w.y,pick:true});s.goods.produced+=job.units;job.status='done';job.output=output.id;O.post(s,'Services',service.fee*job.units,service.name);s.cardboard+=consumed;event(s,job.units+' '+service.name+' finished.','service');
       }
       else if(task.kind!=='walk'){
@@ -231,10 +233,18 @@
       }
       if(p)p.reservedBy=null;if(task.output)this.p.get(task.output).reservedBy=null;return true;
     }
+    collectService(w,t){const s=this.s,job=s.serviceJobs.find(j=>j.id===t.job),q=job.sources[t.serviceIndex];if(!q){t.phase='dest';t.progress=0;return;}
+      const p=this.p.get(q.id);if(p.hold||p.cases<q.count||p.reservedBy!==job.id){this.release(t);w.task=null;event(s,'Component stock is unavailable. Work order stopped.');return;}
+      t.gatherProgress+=DT;if(t.gatherProgress<Math.max(.5,q.count*.2))return;
+      p.cases-=q.count;p.bookCases=Math.max(0,p.bookCases-q.count);q.collected=q.count;t.serviceIndex++;t.gatherProgress=0;this.occTick=-1;
+      const next=job.sources[t.serviceIndex],dest=next?this.approach(this.p.get(next.id)):t.end;if(!next)t.phase='dest';t.path=O.pathing.path(s,w,dest);
+      if(!t.path){this.release(t);w.task=null;event(s,'Route blocked. Components returned to stock.');}
+    }
     work(w){const s=this.s;if(!w.task&&w.queue.length){w.task=w.queue.shift();w.task.path=O.pathing.path(s,w,w.task.start,O.has(s,'forklift'));if(!w.task.path){event(s,'Aisle blocked. Replan the move.');this.release(w.task);w.task=null;return;}}
       const t=w.task;if(!t)return;
+      if(t.kind==='service'&&s.serviceJobs.find(j=>j.id===t.job).sources.some(q=>this.p.get(q.id).hold)){this.release(t);w.task=null;event(s,'Component stock is on hold. Work order stopped.');return;}
       s.workMinutes[t.kind]=(s.workMinutes[t.kind]||0)+DT;
-      const lift=O.has(s,'forklift')&&!(s.powerUntil>s.minute)&&(w.id===1||w.role==='driver'||w.role==='robot'),speed=lift?(s.owned.reach?6.4:5.5):s.owned.walkie?4.6:3.2;
+      const lift=t.kind!=='service'&&O.has(s,'forklift')&&!(s.powerUntil>s.minute)&&(w.id===1||w.role==='driver'||w.role==='robot'),speed=lift?(s.owned.reach?6.4:5.5):s.owned.walkie?4.6:3.2;
       if(lift&&w.battery<=0&&t.kind!=='charge'){w.battery=1;event(s,'Low battery. Finishing this move with the hand jack.');}
       if(t.path?.length){const next=t.path[0],dx=next.x-w.x,dy=next.y-w.y,dist=Math.hypot(dx,dy),move=speed*DT*(lift&&w.battery>2?1:.65);w.angle=Math.atan2(dy,dx);if(dist<=move){w.x=next.x;w.y=next.y;t.path.shift();}else{w.x+=dx/dist*move;w.y+=dy/dist*move;}
         const key=Math.round(w.y)*s.map.w+Math.round(w.x);if(s.tick%10===0)s.map.wear[key]=(s.map.wear[key]||0)+1;
@@ -247,6 +257,8 @@
       if(t.phase==='source'&&t.kind==='parcelPack'){const p=this.p.get(t.pallet),pack=O.items[p.item].pack,total=p.cases*pack+(p.openUnits||0)-t.units;p.cases=Math.floor(total/pack);p.openUnits=total%pack;p.bookCases=p.cases;t.heldUnits=t.units;t.phase='dest';t.path=O.pathing.path(s,w,t.end);return;}
       if(t.phase==='source'&&t.kind==='parcelLoad'){const q=s.parcels.find(q=>q.id===t.parcel);q.place='transit';t.phase='dest';t.path=O.pathing.path(s,w,t.end);return;}
       if(t.phase==='source'&&['load','unload','putaway'].includes(t.kind)){const p=this.p.get(t.pallet);p.place='transit';this.occTick=-1;t.phase='dest';t.path=O.pathing.path(s,w,t.end,lift);if(!t.path){p.place='lane';p.reservedBy=null;w.task=null;event(s,'Route blocked. Pallet staged safely.');}return;}
+      if(t.kind==='service'&&t.phase==='source'){this.collectService(w,t);return;}
+      if(t.kind==='service'&&s.machineDown>0)return;
       t.progress+=DT;
       if(t.progress>=t.duration&&this.finish(w,t)){w.task=null;w.fatigue=Math.min(1,w.fatigue+DT*.002);}
     }
@@ -266,8 +278,9 @@
     }
     hash(){const json=JSON.stringify(this.s);let h=2166136261;for(let i=0;i<json.length;i++)h=Math.imul(h^json.charCodeAt(i),16777619);return (h>>>0).toString(16);}
     snapshot(){return copy(this.s);}
-    restore(s){this.s=copy(s);this.s.parcels=this.s.parcels||[];this.s.serviceDemand=this.s.serviceDemand||{};this.reindex();}
-    reconcile(){const s=this.s;const onHand=s.pallets.filter(p=>!['shipped','returned','scrap','empty'].includes(p.place)).reduce((a,p)=>a+p.cases+(p.openUnits||0)/O.items[p.item].pack,0)+(s.parcels||[]).filter(q=>q.place!=='shipped').reduce((a,q)=>a+q.units/O.items[q.item].pack,0)+s.workers.reduce((a,w)=>a+(w.task?.heldUnits||0)/(O.items[this.p.get(w.task?.pallet)?.item]?.pack||1),0);return {expected:s.goods.arrived+s.goods.produced,accounted:onHand+s.goods.shipped+s.goods.scrapped+s.goods.consumed,onHand};}
+    restore(s){this.s=copy(s);this.s.parcels=this.s.parcels||[];this.s.serviceDemand=this.s.serviceDemand||{};this.reindex();for(const w of this.s.workers)for(const t of [w.task,...w.queue].filter(q=>q?.kind==='service'))if(t.serviceIndex===undefined){const job=this.s.serviceJobs.find(j=>j.id===t.job);for(const q of job.sources)q.collected=0;t.serviceIndex=0;t.gatherProgress=0;t.start=this.approach(this.p.get(job.sources[0].id));t.phase='source';t.path=w.task===t?O.pathing.path(this.s,w,t.start):null;t.progress=0;if(w.task===t&&!t.path){this.release(t);w.task=null;}}}
+
+    reconcile(){const s=this.s;const onHand=s.pallets.filter(p=>!['shipped','returned','scrap','empty'].includes(p.place)).reduce((a,p)=>a+p.cases+(p.openUnits||0)/O.items[p.item].pack,0)+(s.parcels||[]).filter(q=>q.place!=='shipped').reduce((a,q)=>a+q.units/O.items[q.item].pack,0)+s.workers.reduce((a,w)=>a+(w.task?.heldUnits||0)/(O.items[this.p.get(w.task?.pallet)?.item]?.pack||1),0);const materials=s.serviceJobs.filter(j=>j.status==='queued').reduce((a,j)=>a+j.sources.reduce((n,q)=>n+(q.collected||0),0),0);return {expected:s.goods.arrived+s.goods.produced,accounted:onHand+materials+s.goods.shipped+s.goods.scrapped+s.goods.consumed,onHand:onHand+materials};}
   }
   O.Sim=Sim;O.DT=DT;O.CLOCK=CLOCK;
 })(typeof globalThis !== 'undefined' ? globalThis : window);

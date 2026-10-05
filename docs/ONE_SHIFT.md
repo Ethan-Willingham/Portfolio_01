@@ -32,8 +32,11 @@ date is a legal safety deadline.
 Single-unit fulfillment opens a case using its real case pack. Units travel
 with a packing task, become individually identified parcels and load against
 a specific order at the carrier cutoff. Cancelled or overnight packing returns
-unpacked units safely. Kitting and assembly consume actual component cases
-across partial pallets, with quantities capped to outbound demand. Packing and
+unpacked units safely. Kitting and assembly collect floor-level component cases
+from partial pallets, carry them to the bench and build against outbound
+demand. Collected cases remain inventory until the work finishes. The services
+panel shows the worker and collection progress, and can return components
+from an unfinished job. Overnight cleanup and holds also return those cases. Packing and
 service recipes enforce client ownership. Ready parcels and queued carrier
 loads reserve the order balance, including orders packed in several parts.
 
@@ -78,7 +81,7 @@ through normal simulation ticks.
 Three save slots, end-of-day autosave, import/export and a version-zero migration
 are supported. Import rejects malformed nested state, orphaned reservations,
 bad label data, future label counters, floor wear, station identifiers,
-goods imbalance and ledger imbalance. Purchases stop before reaching the
+goods imbalance and ledger imbalance. Purchases cannot exceed the
 128-person team or 512-tile site limits, and workstations stay in the building. Imported names, lots
 and seals display as literal text. An art preview cannot
 replace the live autosave. Standalone recall and power-outage challenges are
@@ -92,25 +95,35 @@ the world, with other levels available in the rack inset. Quiet Web Audio cues
 accompany important actions. Low air noise fades during
 pause, menus and hidden tabs. Equipment tones stop during an outage. Stations have distinct bench, packing,
 wrapping and recycling drawings; forklift operators sit within the vehicle.
-Several animation and lighting details from the art bible remain unfinished.
+Opened cartons show loose units, and bench workers push a component cart.
+Dock shutters ease open, pallets settle when set down, and a brief label flash
+confirms scanning. Night work has fixed light pools and forklift lamps; an
+outage removes powered lights. Reduced motion removes settle and idle sway.
+Truck backing and suspension details from the art bible remain unfinished.
 
 ## Checks and reproduction
 
 - `node tools/test-one-shift.cjs`: ramp, deterministic state, goods and ledger,
-  recipes, ownership, reservations, cancellation, pick faces, waves, task
+  recipes, physical component collection, interrupted bench work, ownership,
+  reservations, cancellation, pick faces, waves, task
   handoff, layouts, migration and corrupt saves.
 - `node tools/test-one-shift-economy.cjs`: nine command-driven policies, each
   running 200 seeds for 60 shifts. Every shift reconciles goods and its ledger;
   saves validate every ten shifts. The first three shifts have no missed truck
   and positive operating profit. Results include full profit and cash curves,
-  acquisition days, missed trucks and simulation timing. Set `SHIFT_EVIDENCE`
+  acquisition days, missed trucks and simulation timing. Service policies bring
+  upper component reserve to floor level and finish partial work orders.
+  `SHIFT_STYLES` selects policies for a targeted rerun; `summarize` verifies
+  recorded results against the current core hash and checks profitability.
+  Set `SHIFT_EVIDENCE`
   to choose the output directory. Policies cannot edit cash or inventory.
 - `node tools/test-one-shift-pathing.cjs`: 1,000 randomized rack-layout shifts,
   accepted and rejected placements, route checks, task-progress monitoring and
   inventory reconciliation. This fixture supplies starting cash and hires to
   exercise routing; it is not an economy playthrough.
 - `node tools/test-one-shift-browser.cjs`: real browser clicks, native buttons,
-  keyboard receiving, remapping, autosave, viewport checks, landscape touch,
+  bench collection and component returns, opened-case unit counts, keyboard
+  receiving, remapping, autosave, viewport checks, landscape touch,
   portrait freeze, 1.3 text scale, phone panels and preview save isolation.
   Playwright and Sharp must be available in `NODE_PATH`. `ASSETS=1` refreshes
   the card and sharing images from actual gameplay.
@@ -126,8 +139,10 @@ in `finally`. Never use the owner's personal Chrome binary for headless tests.
 
 On the Apple M1 Pro with 32 GB, the synthetic large fixture contains 8,000 stored
 pallets plus 30 inbound pallets, 60 workers, 20 rendered forklifts and 30 trucks.
-The last browser check measured about 2.5 ms mean and 8.7 ms 95th-percentile draw
-work at 1440 by 900. Five complete simulation shifts measured 403 to 473 ms.
+The last browser check measured about 2.6 ms mean and 8.9 ms 95th-percentile draw
+work at 1440 by 900. The night scene measured 2.7 ms mean and 8.3 ms
+95th percentile with work lights and forklift lamps. Five complete simulation
+shifts measured 425 to 526 ms.
 This is a synthetic load on one host, not a claim of performance on every phone
 or of 20 independently allocated vehicle entities. Headless frame-rate caps
 were disabled for the cadence check.
