@@ -36,7 +36,7 @@ jobs:
           successful=0
           for sample in {1..12}; do
             if ! node tools/archive-globe-clouds.cjs; then
-              echo 'Cloud capture incomplete; retaining valid archived hours.'
+              echo 'Cloud capture incomplete; retaining valid archived frames.'
             fi
             if node tools/archive-globe-weather.cjs; then
               successful=$((successful + 1))

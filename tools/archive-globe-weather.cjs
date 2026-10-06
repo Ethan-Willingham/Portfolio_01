@@ -7,7 +7,7 @@ async function captureHourlyCatalog(options={}){
  const file=options.file||path.resolve(__dirname,'../assets/data/globe-hourly-catalog.json');
  const catalog=await clouds.fetchCatalog({timeout:10000,fetch:options.fetch});
  catalog.checkedAt=new Date(options.now===undefined?Date.now():options.now).toISOString();clouds.validate(catalog);
- if(fs.existsSync(file)){const old=JSON.parse(fs.readFileSync(file,'utf8'));clouds.validate(old);if(JSON.stringify(old.products)===JSON.stringify(catalog.products))return {changed:false,end:catalog.end.toISOString()};}
+ if(fs.existsSync(file)){const old=JSON.parse(fs.readFileSync(file,'utf8')),known=clouds.validate(old);if(known.end>catalog.end)return {changed:false,end:known.end.toISOString()};if(JSON.stringify(old.products)===JSON.stringify(catalog.products)&&old.step===catalog.step)return {changed:false,end:catalog.end.toISOString()};}
  fs.mkdirSync(path.dirname(file),{recursive:true});const temp=file+'.'+process.pid+'.tmp';
  try{fs.writeFileSync(temp,JSON.stringify(catalog,null,2)+'\n');fs.renameSync(temp,file);}finally{if(fs.existsSync(temp))fs.unlinkSync(temp);}
  return {changed:true,end:catalog.end.toISOString()};

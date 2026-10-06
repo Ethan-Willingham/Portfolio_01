@@ -7,15 +7,18 @@
  'use strict';
  var BASE='https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/globe-clouds/',CACHE='daylight-globe-shared-v1';
  function validate(value){
-  if(!value||value.version!==1||value.width!==2048||!Array.isArray(value.frames)||!value.frames.length||value.frames.length>30)throw new Error('Invalid shared cloud archive');
+  if(!value||![1,2].includes(value.version)||value.width!==2048||!Array.isArray(value.frames)||!value.frames.length||value.frames.length>(value.version===2?108:30))throw new Error('Invalid shared cloud archive');
   var generated=new Date(value.generatedAt),processing=value.processing===undefined?0:value.processing;if(!Number.isFinite(+generated)||!Number.isInteger(processing)||processing<0||processing>100)throw new Error('Invalid archive clock or processing revision');
   var catalog=clouds.validate(value.catalog),last=-Infinity;
   var frames=value.frames.map(function(frame){
-   var time=new Date(frame.time);if(!Number.isFinite(+time)||time.toISOString()!==frame.time||+time%3600000||+time<=last||time>generated||!clouds.published(catalog,+time)||typeof frame.natural!=='boolean')throw new Error('Invalid archived cloud time');last=+time;
-   var out={time:time,natural:frame.natural};
+   var time=new Date(frame.time);if(!Number.isFinite(+time)||time.toISOString()!==frame.time||+time%(value.version===2?clouds.STEP:3600000)||+time<=last||time>generated||!clouds.published(catalog,+time)||typeof frame.natural!=='boolean')throw new Error('Invalid archived cloud time');last=+time;
+   var observed=frame.sourceTimes||clouds.GROUPS.map(function(g,i){var t=clouds.productTime(catalog.products[i],+time);return (!frame.sources||frame.sources[i])&&t&&+t===+time?frame.time:null;});
+   if(!Array.isArray(observed)||observed.length!==10||value.version===2&&!frame.sourceTimes)throw new Error('Missing satellite observation clocks');
+   observed.forEach(function(t,i){if(t===null){if(clouds.GROUPS[i].kind==='infrared')throw new Error('Missing infrared observation');return;}var d=new Date(t),product=catalog.products[i];if(!Number.isFinite(+d)||d.toISOString()!==t||d>time||!product.periods.some(function(p){return d>=new Date(p.start)&&d<=new Date(p.end)&&(+d-Date.parse(p.start))%p.step===0&&time-d<p.step;}))throw new Error('Invalid satellite observation clock');});
+   var out={time:time,natural:frame.natural,sourceTimes:observed};
    ['visible','infrared'].forEach(function(kind){var asset=frame[kind];if(!asset||!Number.isInteger(asset.bytes)||asset.bytes<40||asset.bytes>8000000||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.file!==frame.time.replace(/[-:]/g,'').slice(0,13)+'-'+kind+'-'+asset.sha256.slice(0,16)+'.webp')throw new Error('Invalid cloud asset');out[kind]={file:asset.file,bytes:asset.bytes,sha256:asset.sha256};});return out;
   });
-  return {version:1,processing:processing,width:value.width,generatedAt:generated,catalog:catalog,frames:frames};
+  return {version:value.version,processing:processing,width:value.width,generatedAt:generated,catalog:catalog,frames:frames};
  }
  function dimensions(bytes){
   function u24(i){return bytes[i]|bytes[i+1]<<8|bytes[i+2]<<16;}
@@ -41,8 +44,8 @@
   var cache=null;if(typeof caches!=='undefined')try{cache=await caches.open(CACHE);}catch(_){}
   var blobs=await Promise.all(['visible','infrared'].map(async function(kind){var asset=frame[kind],url=BASE+asset.file;if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,asset,manifest.width);}catch(_){await cache.delete(url);}}
    if(options.cacheOnly)throw new Error('Cloud hour not cached');return data.request(url,options,async function(response){var copy=cache?response.clone():null,blob=await imageBlob(response,asset,manifest.width);if(cache)try{await cache.put(url,copy);}catch(_){}return blob;});}));
-  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-60)).map(function(k){return cache.delete(k);}));}catch(_){}
-  return {time:new Date(time),width:manifest.width,dense:true,shared:true,natural:frame.natural,blobs:blobs};
+  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-128)).map(function(k){return cache.delete(k);}));}catch(_){}
+  return {time:new Date(time),width:manifest.width,dense:true,shared:true,natural:frame.natural,sourceTimes:frame.sourceTimes,blobs:blobs};
  }
  return {BASE:BASE,validate:validate,dimensions:dimensions,imageBlob:imageBlob,fetchManifest:fetchManifest,fetchFrame:fetchFrame};
 }));

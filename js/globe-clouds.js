@@ -1,12 +1,12 @@
-/* Hourly replay from the geostationary satellites. Every request uses an
+/* Quarter-hour replay from the geostationary satellites. Every request uses an
    explicitly published time. See docs/DAYLIGHT_GLOBE.md for display limits. */
 (function(root,factory){
  'use strict';
- if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'),require('./globe-math.js'));
- else root.GlobeClouds=factory(root.GlobeData,root.GlobeMath);
-}(typeof globalThis!=='undefined'?globalThis:this,function(data,math){
+ if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'));
+ else root.GlobeClouds=factory(root.GlobeData);
+}(typeof globalThis!=='undefined'?globalThis:this,function(data){
  'use strict';
- var HOUR=3600000, NASA='https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', EUM=data.CLOUD_SERVICE, CACHE='daylight-globe-hourly-v1';
+ var STEP=900000, NASA='https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', EUM=data.CLOUD_SERVICE, CACHE='daylight-globe-hourly-v1';
  var GROUPS=[
   {source:NASA,layers:['GOES-West_ABI_GeoColor'],kind:'visible',longitudes:[-137.2]},
   {source:NASA,layers:['GOES-East_ABI_GeoColor'],kind:'visible',longitudes:[-75.2]},
@@ -34,15 +34,23 @@
   if(!value||value.version!==1||!Array.isArray(value.products)||value.products.length!==10)throw new Error('Invalid hourly catalog');
   var checked=timestamp(value.checkedAt),expected=[];GROUPS.forEach(function(g){g.layers.forEach(function(l){expected.push([g.source,l]);});});
   var starts=[],ends=[],products=value.products.map(function(p,i){if(!p||p.source!==expected[i][0]||p.layer!==expected[i][1]||!Array.isArray(p.periods)||!p.periods.length||p.periods.length>4000)throw new Error('Invalid hourly product');
-   var intervals=p.periods.map(function(v){var a=timestamp(v.start),b=timestamp(v.end);if(![600000,900000].includes(v.step)||b<a||(+b-a)%v.step||b-checked>300000)throw new Error('Invalid hourly publication');return {start:a.toISOString(),end:b.toISOString(),step:v.step};});intervals.sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});starts.push(Date.parse(intervals[0].start));if(GROUPS[i].kind==='infrared')ends.push(Date.parse(intervals[intervals.length-1].end));return {source:p.source,layer:p.layer,periods:intervals};});
-  var start=new Date(Math.ceil(Math.max.apply(null,starts)/HOUR)*HOUR),end=new Date(Math.floor(Math.min.apply(null,ends)/HOUR)*HOUR);
-  if(end<start)throw new Error('No common hourly coverage');var catalog={version:1,products:products,checkedAt:checked.toISOString(),start:start,end:end,step:HOUR,dense:true};if(value.legacy)catalog.legacy=data.parseCloudSnapshot({version:1,source:EUM,layers:data.CLOUD_LAYERS,start:value.legacy.start,end:value.legacy.end,step:value.legacy.step,checkedAt:checked.toISOString()});return catalog;
+   var intervals=p.periods.map(function(v){var a=timestamp(v.start),b=timestamp(v.end);if(![600000,900000].includes(v.step)||b<a||(+b-a)%v.step||b-checked>300000)throw new Error('Invalid hourly publication');return {start:a.toISOString(),end:b.toISOString(),step:v.step};});intervals.sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});if(GROUPS[i].kind==='infrared'){starts.push(Date.parse(intervals[0].start));ends.push(Date.parse(intervals[intervals.length-1].end));}return {source:p.source,layer:p.layer,periods:intervals};});
+  var start=new Date(Math.ceil(Math.max.apply(null,starts)/STEP)*STEP),end=new Date(Math.floor(Math.min.apply(null,ends)/STEP)*STEP);
+  if(end<start)throw new Error('No common satellite coverage');var catalog={version:1,products:products,checkedAt:checked.toISOString(),start:start,end:end,step:STEP,dense:true};if(value.legacy)catalog.legacy=data.parseCloudSnapshot({version:1,source:EUM,layers:data.CLOUD_LAYERS,start:value.legacy.start,end:value.legacy.end,step:value.legacy.step,checkedAt:checked.toISOString()});return catalog;
  }
- function published(catalog,time){return catalog.products.every(function(p,i){return p.periods.some(function(v){var start=Date.parse(v.start);return time>=start&&time<=Date.parse(v.end)&&(time-start)%v.step===0;})||GROUPS[i].kind==='visible'&&math.solarElevation(new Date(time),0,GROUPS[i].longitudes[0])<-60;});}
- function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;var limit=Math.floor(Math.min(t,+catalog.end)/HOUR)*HOUR;for(var k=0;k<6&&limit>=catalog.start;k++,limit-=HOUR)if(published(catalog,limit))return new Date(limit);return null;}
- function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/HOUR)*HOUR);t<end&&t<=catalog.end&&t<=clock;t+=HOUR)if(published(catalog,t))out.push(new Date(t));return out;}
- async function fetchCatalog(options){var xml=await Promise.all([data.fetchText(NASA+'?service=WMS&version=1.3.0&request=GetCapabilities',options),data.fetchText(EUM+'?service=WMS&version=1.3.0&request=GetCapabilities',options)]);return parseCatalog(xml[0],xml[1]);}
- function urls(time,width){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid hourly image dimensions');return GROUPS.map(function(g){var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?timestamp(time).toISOString().replace(/\.000Z$/,'Z'):timestamp(time).toISOString()});return g.source+'?'+p;});}
+ function productTime(product,time){var best=null;product.periods.forEach(function(v){var start=Date.parse(v.start),end=Date.parse(v.end),candidate=start+Math.floor((Math.min(time,end)-start)/v.step)*v.step;if(candidate>=start&&candidate<=time&&time-candidate<v.step&&(!best||candidate>+best))best=new Date(candidate);});return best;}
+ function sourceTimes(catalog,time){return catalog.products.map(function(p){return productTime(p,+timestamp(time));});}
+ function published(catalog,time){return catalog.products.every(function(p,i){return GROUPS[i].kind==='visible'||!!productTime(p,time);});}
+ function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;var limit=Math.floor(Math.min(t,+catalog.end)/STEP)*STEP;for(var k=0;k<24&&limit>=catalog.start;k++,limit-=STEP)if(published(catalog,limit))return new Date(limit);return null;}
+ function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/STEP)*STEP);t<end&&t<=catalog.end&&t<=clock;t+=STEP)if(published(catalog,t))out.push(new Date(t));return out;}
+ async function fetchCatalog(options){
+  var query='?service=WMS&version=1.3.0&request=GetCapabilities',fresh=query+'&fresh='+Math.floor(Date.now()/60000);
+  var xml=await Promise.allSettled([data.fetchText(NASA+query,options),data.fetchText(NASA+fresh,options),data.fetchText(EUM+fresh,options)]);
+  if(xml[2].status!=='fulfilled')throw xml[2].reason;
+  var catalogs=[];for(var i=0;i<2;i++)if(xml[i].status==='fulfilled')try{catalogs.push(parseCatalog(xml[i].value,xml[2].value));}catch(_){}
+  if(!catalogs.length)throw new Error('Satellite metadata unavailable');catalogs.sort(function(a,b){return b.end-a.end;});return catalogs[0];
+ }
+ function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
  async function imageBlob(response,width){
   var mime=(response.headers.get('content-type')||'').split(';')[0].trim();if(mime==='image/png')return data.imageBlob(response,width);if(mime!=='image/jpeg')throw new Error('Invalid hourly image type');
   var blob=await response.blob(),bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());if(bytes.length<12||bytes[0]!==255||bytes[1]!==216)throw new Error('Invalid satellite JPEG');
@@ -50,14 +58,14 @@
   throw new Error('Missing satellite JPEG dimensions');
  }
  async function fetchFrame(time,width,options){options=options||{};var cache=null,store=options.cacheStorage===undefined?(typeof caches!=='undefined'?caches:null):options.cacheStorage;if(store)try{cache=await store.open(CACHE);}catch(_){}
-  var links=urls(time,width),images=await Promise.allSettled(links.map(async function(url){if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,width);}catch(_){await cache.delete(url);}}if(options.cacheOnly)throw new Error('Hourly image not cached');return data.request(url,options,async function(r){var copy=cache?r.clone():null,b=await imageBlob(r,width);if(cache)try{await cache.put(url,copy);}catch(_){}return b;});}));
+  var links=urls(time,width,options.catalog),images=await Promise.allSettled(links.map(async function(url){if(!url)throw new Error('Satellite channel not published');if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,width);}catch(_){await cache.delete(url);}}if(options.cacheOnly)throw new Error('Satellite image not cached');return data.request(url,options,async function(r){var copy=cache?r.clone():null,b=await imageBlob(r,width);if(cache)try{await cache.put(url,copy);}catch(_){}return b;});}));
   if(options.signal&&options.signal.aborted){var e=new Error('Hourly request aborted');e.name='AbortError';throw e;}
   // Require both providers, while allowing an individual Meteosat feed to fail.
   if(images.slice(5,8).some(function(r){return r.status!=='fulfilled';})||images[8].status!=='fulfilled'&&images[9].status!=='fulfilled')throw new Error('Hourly infrared coverage unavailable');
-  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-260)).map(function(k){return cache.delete(k);}));}catch(_){}
-  return {time:timestamp(time),width:width,dense:true,urls:links,blobs:images.map(function(r){return r.status==='fulfilled'?r.value:null;})};
+  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-640)).map(function(k){return cache.delete(k);}));}catch(_){}
+  return {time:timestamp(time),width:width,dense:true,urls:links,sourceTimes:links.map(function(u,i){return u&&images[i].status==='fulfilled'?new Date(new URL(u).searchParams.get('time')).toISOString():null;}),blobs:images.map(function(r){return r.status==='fulfilled'?r.value:null;})};
  }
- async function discard(time,width){if(typeof caches==='undefined')return;try{var c=await caches.open(CACHE);await Promise.all(urls(time,width).map(function(u){return c.delete(u);}));}catch(_){} }
+ async function discard(time,width,catalog){if(typeof caches==='undefined')return;try{var c=await caches.open(CACHE);await Promise.all(urls(time,width,catalog).filter(Boolean).map(function(u){return c.delete(u);}));}catch(_){} }
  // NASA's published colour table is a display palette, with some repeated grey
  // values. Prefer the warm interpretation of ambiguous greys rather than turning
  // warm land into cloud. This is an illustrative thermal overlay, not cloud fraction.
@@ -93,5 +101,5 @@
    if(total){var edge=Math.max(0,Math.min(1,(bestView-.15)/.15));out[at]=r/total;out[at+1]=g/total;out[at+2]=b/total;out[at+3]=255*alpha*edge*edge*(3-2*edge);}
   }}return out;
  }
- return {PROCESSING:3,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,maskScanArtifacts:maskScanArtifacts,composite:composite};
+ return {STEP:STEP,PROCESSING:3,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,maskScanArtifacts:maskScanArtifacts,composite:composite};
 }));
