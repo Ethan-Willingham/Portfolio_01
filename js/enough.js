@@ -43,7 +43,7 @@ function amount(c,d){
 function readout(c,d){
  const a=amount(c,d),value=M.outcome(c,d);
  if(c.id==='protein')return `${fmt(d,2)} g/lb/day: about ${fmt(value,1)} lb modeled lean-mass change (${fmt(M.estimate(c,d,'low'),1)} to ${fmt(M.estimate(c,d,'high'),1)} lb, 95% interval).`;
- if(c.view.mode==='comparison')return value===null?`${a}: no estimate at this amount.`:`${a}: ${walkingRisk(c,d)} compared with ${fmt(c.referenceDose)} steps a day, in ${c.title.toLowerCase()}.`;
+ if(c.view.mode==='comparison')return value===null?`${a}: no estimate at this amount.`:`${a}: ${walkingRisk(c,d)}, in ${c.title.toLowerCase()}.`;
  if(c.id==='sets')return `${a}: modeled muscle size is ${fmt(value,1)}% greater than with no training (${fmt(M.estimate(c,d,'low'),1)} to ${fmt(M.estimate(c,d,'high'),1)}%).`;
  if(c.id==='sleep')return `${a}: ${Math.abs(value)<.5?'near this curve’s low point':fmt(value)+'% higher risk of dying than the low point'}.`;
  if(c.id==='smoking')return d===0?'Never smoking is the baseline.':`${a}: ${fmt(value)}% extra heart disease risk in men.`;
@@ -55,7 +55,10 @@ function readout(c,d){
  const dose=c.id==='fruit-veg'?`About ${fmt(c.points[d].sourceDose,1)} servings a day`:a;
  return `${dose}: ${fmt(value,1)}% lower risk of dying compared with ${baseline}, in ${c.id==='fiber'?'this model':'these studies'}.`;
 }
-function walkingRisk(c,d){const value=M.outcome(c,d);return value===null?'No estimate at this amount':Math.abs(value)<.5?'About the same risk of dying':`about ${fmt(Math.abs(value))}% ${value<0?'higher':'lower'} risk of dying`;}
+function walkingRisk(c,d){
+ const value=M.outcome(c,d),reference=`${fmt(c.referenceDose)} steps/day`;
+ return value===null?'No estimate at this amount':Math.abs(value)<.5?`About the same risk of dying as at ${reference}`:`about ${fmt(Math.abs(value))}% ${value<0?'higher':'lower'} risk of dying than at ${reference}`;
+}
 function physical(c,d){return c.kind==='categories'&&c.id!=='alcohol'?c.points[Math.round(d)].sourceDose:d;}
 function geometry(width,overview=false,longer=false){
  const w=Math.max(180,width),h=overview?(w<500?220:260):240,L=longer?96:42,R=12,T=42,B=56;
@@ -151,7 +154,7 @@ function doseFromPointer(c,box,e){
 }
 // One walking study and age selection drive both the opening preview and its card.
 const textIfChanged=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
-function walkingBaseline(c){return `${c.title}. Risk changes are relative to the study’s ${fmt(c.referenceDose)}-step group. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
+function walkingBaseline(c){return `${c.title}. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
 function bindWalking(plot,output,baseline,card=null){
  const preview=!card;
  const update=()=>{
