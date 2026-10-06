@@ -5,9 +5,11 @@ const data=require('../js/globe-data.js'),clouds=require('../js/globe-clouds.js'
 const BRANCH='globe-clouds',REF='refs/heads/'+BRANCH,WIDTH=2048,HOUR=3600000,STEP=clouds.STEP;
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function usableSources(blobs){return blobs.length===clouds.GROUPS.length&&blobs.every((blob,i)=>blob||clouds.GROUPS[i].kind==='visible');}
+function needsRepair(frame,catalog){return frame.sourceTimes.slice(0,5).some((t,i)=>!t&&clouds.productTime(catalog.products[i],Date.parse(frame.time)));}
+function improvesSources(next,old){return next.sourceTimes.every((t,i)=>!old.sourceTimes[i]||t)&&next.sourceTimes.filter(Boolean).length>old.sourceTimes.filter(Boolean).length;}
 function git(args,options={}){return execFileSync('git',args,{maxBuffer:32000000,...options});}
 async function renderFrame(time,options={}){
- const sharp=options.sharp||require('sharp'),result=await clouds.fetchFrame(time,WIDTH,{timeout:25000,cacheStorage:null,fetch:options.fetch,signal:options.signal,catalog:options.catalog});
+ const sharp=options.sharp||require('sharp'),result=await clouds.fetchFrame(time,WIDTH,{timeout:25000,retries:2,cacheStorage:null,fetch:options.fetch,signal:options.signal,catalog:options.catalog});
  // Infrared clocks determine complete weather coverage. A slower visible
  // channel falls back to the same dated infrared over reference terrain.
  if(!usableSources(result.blobs,time))throw new Error('Incomplete satellite hour');
@@ -41,12 +43,30 @@ async function collect(previous,options={}){
  if(previous&&previous.manifest.processing===clouds.PROCESSING){const parsed=archive.validate(previous.manifest);for(const frame of parsed.frames)if(frame.time>=lower&&frame.time<=now&&clouds.published(catalog,+frame.time)){
    const original=previous.manifest.frames.find(f=>f.time===frame.time.toISOString());for(const kind of ['visible','infrared']){const asset=original[kind],bytes=previous.files.get(asset.file);if(!bytes||bytes.length!==asset.bytes||digest(bytes)!==asset.sha256||archive.dimensions(bytes).join('/')!==WIDTH+'/'+WIDTH/2)throw new Error('Corrupt retained cloud asset');files.set(asset.file,bytes);}frames.push({...original,sourceTimes:frame.sourceTimes});
   }}
- const existing=new Set(frames.map(f=>f.time)),queue=[];
+ const retained=new Map(frames.map(f=>[f.time,f])),existing=new Set(retained.keys()),queue=[];
  for(let t=Math.max(lower,+catalog.start);t<=catalog.end&&t<=now;t+=STEP)if(clouds.published(catalog,t)&&!existing.has(new Date(t).toISOString()))queue.push(new Date(t));
  queue.sort((a,b)=>b-a);
- async function worker(){while(queue.length){const time=queue.shift(),controller=new AbortController();let deadline;try{const result=await Promise.race([(options.render||renderFrame)(time,{...options,catalog,signal:controller.signal}),new Promise((_,reject)=>{deadline=setTimeout(()=>{controller.abort();reject(new Error('Cloud frame preparation timed out'));},options.frameTimeout||45000);})]);frames.push(result.frame);for(const [file,bytes]of result.files)files.set(file,bytes);if(options.progress)options.progress({time:time.toISOString(),bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0)});}catch(error){errors.push({time:time.toISOString(),error:error.message});}finally{clearTimeout(deadline);}}}
+ // Capture new weather first. Retry a bounded set of incomplete colour pairs,
+ // oldest attempt first, so a persistent failure cannot starve other repairs.
+ const repairLimit=options.repairLimit===undefined?6:Math.max(0,Math.min(108,Math.floor(options.repairLimit)));
+ const repairs=frames.filter(f=>needsRepair(f,catalog)&&(!f.repairCheckedAt||now-new Date(f.repairCheckedAt)>=15*60000));
+ repairs.sort((a,b)=>(Date.parse(a.repairCheckedAt)||0)-(Date.parse(b.repairCheckedAt)||0)||Date.parse(b.time)-Date.parse(a.time));
+ queue.push(...repairs.slice(0,repairLimit).map(f=>new Date(f.time)));
+ async function worker(){while(queue.length){const time=queue.shift(),key=time.toISOString(),prior=retained.get(key),controller=new AbortController();let deadline;
+  if(prior)prior.repairCheckedAt=now.toISOString();
+  try{const result=await Promise.race([(options.render||renderFrame)(time,{...options,catalog,signal:controller.signal}),new Promise((_,reject)=>{deadline=setTimeout(()=>{controller.abort();reject(new Error('Cloud frame preparation timed out'));},options.frameTimeout||45000);})]);
+   // A repair must recover missing observations without losing any existing
+   // channel. Failed or poorer attempts preserve the entire valid old pair.
+   if(prior&&!improvesSources(result.frame,prior))continue;
+   if(needsRepair(result.frame,catalog))result.frame.repairCheckedAt=now.toISOString();
+   retained.set(key,result.frame);for(const [file,bytes]of result.files)files.set(file,bytes);
+   if(options.progress)options.progress({time:key,repair:!!prior,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0)});
+  }catch(error){errors.push({time:key,error:error.message});}finally{clearTimeout(deadline);}
+ }}
  await Promise.all([worker(),worker(),worker()]);
+ frames.splice(0,frames.length,...retained.values());
  frames.sort((a,b)=>Date.parse(a.time)-Date.parse(b.time));
+ const referenced=new Set(frames.flatMap(f=>[f.visible.file,f.infrared.file]));for(const file of files.keys())if(!referenced.has(file))files.delete(file);
  if(!frames.length)throw new Error('No valid cloud frames; existing snapshot preserved');
  const manifest={version:2,processing:clouds.PROCESSING,width:WIDTH,generatedAt:now.toISOString(),catalog,frames};archive.validate(manifest);
  return {manifest,files,errors,changed:!previous||previous.manifest.version!==2||previous.manifest.processing!==clouds.PROCESSING||JSON.stringify(previous.manifest.frames)!==JSON.stringify(frames)||JSON.stringify(previous.manifest.catalog.products)!==JSON.stringify(catalog.products)};
@@ -76,10 +96,12 @@ function publish(snapshot,old){
  // generated branch is replaced, guarded against another writer by its old SHA.
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'globe-cloud-index-')),env={...process.env,GIT_INDEX_FILE:path.join(directory,'index')};
  try{
-  git(['read-tree','--empty'],{env});const entries=[];
+  git(['read-tree','--empty'],{env});const entries=[],payload=path.join(directory,'payload');
   for(const [file,bytes]of [...snapshot.files,['manifest.json',Buffer.from(JSON.stringify(snapshot.manifest)+'\n')]]){
    if(file!=='manifest.json'&&!snapshot.manifest.frames.some(f=>['visible','infrared'].some(k=>f[k].file===file)))continue;
-   const hash=git(['hash-object','-w','--stdin'],{input:bytes}).toString().trim();entries.push('100644 '+hash+'\t'+file+'\n');
+   // A regular file avoids large synchronous stdin writes stalling in Git's
+   // EOF read on macOS. No filters may alter the verified image bytes.
+   fs.writeFileSync(payload,bytes);const hash=git(['hash-object','-w','--no-filters',payload]).toString().trim();entries.push('100644 '+hash+'\t'+file+'\n');
   }
   git(['update-index','--index-info'],{env,input:entries.join('')});const tree=git(['write-tree'],{env}).toString().trim();
   const author={...env,GIT_AUTHOR_NAME:'globe-weather',GIT_AUTHOR_EMAIL:'globe-weather@users.noreply.github.com',GIT_COMMITTER_NAME:'globe-weather',GIT_COMMITTER_EMAIL:'globe-weather@users.noreply.github.com'};
@@ -93,5 +115,5 @@ async function main(){
  const commit=result.changed?publish(result,old):old;console.log(JSON.stringify({frames:result.manifest.frames.length,first:result.manifest.frames[0].time,last:result.manifest.frames.at(-1).time,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0),changed:result.changed,commit}));
  if(result.errors.length)process.exitCode=1;
 }
-module.exports={BRANCH,REF,usableSources,renderFrame,collect,readPrevious,pushSnapshot,publish};
+module.exports={BRANCH,REF,usableSources,needsRepair,improvesSources,renderFrame,collect,readPrevious,pushSnapshot,publish};
 if(require.main===module)main().catch(error=>{console.error(error.message);process.exitCode=1;});

@@ -16,6 +16,7 @@
    if(!Array.isArray(observed)||observed.length!==10||value.version===2&&!frame.sourceTimes)throw new Error('Missing satellite observation clocks');
    observed.forEach(function(t,i){if(t===null){if(clouds.GROUPS[i].kind==='infrared')throw new Error('Missing infrared observation');return;}var d=new Date(t),product=catalog.products[i];if(!Number.isFinite(+d)||d.toISOString()!==t||d>time||!product.periods.some(function(p){return d>=new Date(p.start)&&d<=new Date(p.end)&&(+d-Date.parse(p.start))%p.step===0&&time-d<p.step;}))throw new Error('Invalid satellite observation clock');});
    var out={time:time,natural:frame.natural,sourceTimes:observed};
+   if(frame.repairCheckedAt!==undefined){var repaired=new Date(frame.repairCheckedAt);if(!Number.isFinite(+repaired)||repaired.toISOString()!==frame.repairCheckedAt||repaired<time||repaired>generated)throw new Error('Invalid cloud repair clock');out.repairCheckedAt=frame.repairCheckedAt;}
    ['visible','infrared'].forEach(function(kind){var asset=frame[kind];if(!asset||!Number.isInteger(asset.bytes)||asset.bytes<40||asset.bytes>8000000||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.file!==frame.time.replace(/[-:]/g,'').slice(0,13)+'-'+kind+'-'+asset.sha256.slice(0,16)+'.webp')throw new Error('Invalid cloud asset');out[kind]={file:asset.file,bytes:asset.bytes,sha256:asset.sha256};});return out;
   });
   return {version:value.version,processing:processing,width:value.width,generatedAt:generated,catalog:catalog,frames:frames};
@@ -38,7 +39,7 @@
   var hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(function(v){return v.toString(16).padStart(2,'0');}).join('');if(hash!==asset.sha256)throw new Error('Cloud checksum mismatch');
   return new Blob([bytes],{type:'image/webp'});
  }
- async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v=2-'+clouds.PROCESSING+'-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
+ async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v=2-'+clouds.PROCESSING+'-repair1-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
  async function fetchFrame(manifest,time,options){
   options=options||{};if(manifest.processing<clouds.PROCESSING)throw new Error('Cloud processing revision is outdated');var frame=manifest.frames.find(function(f){return +f.time===+time;});if(!frame)throw new Error('Cloud hour not archived');
   var cache=null;if(typeof caches!=='undefined')try{cache=await caches.open(CACHE);}catch(_){}

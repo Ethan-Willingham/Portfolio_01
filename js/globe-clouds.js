@@ -58,7 +58,16 @@
   throw new Error('Missing satellite JPEG dimensions');
  }
  async function fetchFrame(time,width,options){options=options||{};var cache=null,store=options.cacheStorage===undefined?(typeof caches!=='undefined'?caches:null):options.cacheStorage;if(store)try{cache=await store.open(CACHE);}catch(_){}
-  var links=urls(time,width,options.catalog),images=await Promise.allSettled(links.map(async function(url){if(!url)throw new Error('Satellite channel not published');if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,width);}catch(_){await cache.delete(url);}}if(options.cacheOnly)throw new Error('Satellite image not cached');return data.request(url,options,async function(r){var copy=cache?r.clone():null,b=await imageBlob(r,width);if(cache)try{await cache.put(url,copy);}catch(_){}return b;});}));
+  var retries=Number.isFinite(options.retries)?Math.max(0,Math.min(2,Math.floor(options.retries))):1,links=urls(time,width,options.catalog),images=await Promise.allSettled(links.map(async function(url){
+   if(!url)throw new Error('Satellite channel not published');
+   if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,width);}catch(_){await cache.delete(url);}}
+   if(options.cacheOnly)throw new Error('Satellite image not cached');
+   for(var attempt=0;attempt<=retries;attempt++)try{
+    // Keep the published observation clock and canonical cache identity. A
+    // retry bypasses cached provider errors rather than changing the time.
+    return await data.request(url+(attempt?'&retry='+Date.now()+'-'+attempt:''),options,async function(r){var copy=cache?r.clone():null,b=await imageBlob(r,width);if(cache)try{await cache.put(url,copy);}catch(_){}return b;});
+   }catch(error){if(error.name==='AbortError'||options.signal&&options.signal.aborted||attempt===retries)throw error;}
+  }));
   if(options.signal&&options.signal.aborted){var e=new Error('Hourly request aborted');e.name='AbortError';throw e;}
   // Require both providers, while allowing an individual Meteosat feed to fail.
   if(images.slice(5,8).some(function(r){return r.status!=='fulfilled';})||images[8].status!=='fulfilled'&&images[9].status!=='fulfilled')throw new Error('Hourly infrared coverage unavailable');

@@ -25,6 +25,20 @@ check('a server error after accepting publication recovers without replacing ano
  assert.equal((await A.imageBlob(new Response(bytes),asset,2048)).type,'image/webp');await assert.rejects(A.imageBlob(new Response(bytes),{...asset,sha256:'0'.repeat(64)},2048),/checksum/);await assert.rejects(A.imageBlob(new Response(bytes),asset,1024),/dimensions/);checks++;console.log('PASS archived downloads require the exact size, dimensions and SHA-256');
  const unchanged=await runner.collect(snapshot,{now,catalog,render:()=>{throw new Error('Cached frames must not be fetched again');}});
  check('repeat captures preserve the same assets without redownloading them',()=>{assert(!unchanged.changed);assert.equal(unchanged.errors.length,0);});
+ const partial={manifest:structuredClone(snapshot.manifest),files:new Map(snapshot.files)},last=partial.manifest.frames.at(-1);
+ last.sourceTimes[2]=null;const repairs=[];
+ const repaired=await runner.collect(partial,{now,catalog,render:time=>{repairs.push(time.toISOString());return render(time);}});
+ check('an available missing daytime channel is repaired at its exact archived observation time',()=>{assert.deepEqual(repairs,[last.time]);assert.equal(repaired.manifest.frames.at(-1).sourceTimes[2],last.time);assert.equal(repaired.manifest.frames.length,partial.manifest.frames.length);assert(repaired.changed);assert(A.validate(repaired.manifest));});
+ const unrepaired=await runner.collect(partial,{now,catalog,render:()=>{throw new Error('Colour source still down');}});
+ check('failed colour repairs preserve the valid old pixels and record a retry clock',()=>{assert.equal(unrepaired.errors.length,1);assert.deepEqual(unrepaired.manifest.frames.at(-1).visible,last.visible);assert.deepEqual(unrepaired.manifest.frames.at(-1).infrared,last.infrared);assert.equal(unrepaired.manifest.frames.at(-1).sourceTimes[2],null);assert.equal(unrepaired.manifest.frames.at(-1).repairCheckedAt,now);assert.equal(unrepaired.files.size,partial.files.size);});
+ const cooled=await runner.collect(unrepaired,{now,catalog,render:()=>assert.fail('Repairs must back off')});
+ check('recent repair attempts back off without redownloading a whole history',()=>{assert.equal(cooled.errors.length,0);assert(!cooled.changed);});
+ const degraded=await runner.collect(partial,{now,catalog,render:time=>{const r=render(time);r.frame.sourceTimes[1]=null;return r;}});
+ check('recovering one channel cannot replace a frame that loses another channel',()=>{assert.equal(degraded.manifest.frames.at(-1).sourceTimes[2],null);assert(degraded.manifest.frames.at(-1).sourceTimes[1]);assert.deepEqual(degraded.manifest.frames.at(-1).visible,last.visible);});
+ const many=structuredClone(partial.manifest);for(const f of many.frames.slice(-8))f.sourceTimes[2]=null;
+ let repairCalls=0;const bounded=await runner.collect({manifest:many,files:partial.files},{now,catalog,repairLimit:2,render:time=>{repairCalls++;return render(time);}});
+ check('each capture repairs a bounded number of incomplete frames',()=>{assert.equal(repairCalls,2);assert.equal(bounded.manifest.frames.filter(f=>!f.sourceTimes[2]).length,6);});
+ const invalidRepair=structuredClone(unrepaired.manifest);invalidRepair.frames.at(-1).repairCheckedAt='2026-10-06T00:00:00Z';check('untrusted future repair metadata cannot suppress recovery',()=>assert.throws(()=>A.validate(invalidRepair),/repair clock/));
  const laggedProducts=structuredClone(products);laggedProducts.forEach(p=>p.periods[0].end='2026-10-05T17:00:00Z');const laggedCatalog=C.validate({version:1,checkedAt:now,products:laggedProducts});
  const lagged=await runner.collect(snapshot,{now,catalog:laggedCatalog,render:()=>{throw new Error('Verified images must not be fetched again');}});
  check('a lagging metadata replica cannot remove already verified newer snapshots',()=>{assert.deepEqual(lagged.manifest.frames,snapshot.manifest.frames);assert.equal(lagged.manifest.catalog.end.toISOString(),'2026-10-05T18:00:00.000Z');assert(!lagged.changed);});
@@ -35,12 +49,17 @@ check('a server error after accepting publication recovers without replacing ano
  await assert.rejects(runner.collect(null,{now,catalog,render:()=>{throw new Error('Unavailable');}}),/preserved/);checks++;console.log('PASS an entirely failed first capture cannot publish an empty archive');
  const broken={manifest:snapshot.manifest,files:new Map(snapshot.files)};broken.files.set(asset.file,Buffer.alloc(bytes.length));await assert.rejects(runner.collect(broken,{now,catalog,render}),/Corrupt/);checks++;console.log('PASS corrupt retained pixels stop publication');
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'globe-branch-test-')),cwd=process.cwd();
+ const noise=crypto.randomBytes(2048*1024*4);for(let i=3;i<noise.length;i+=4)noise[i]=255;
+ const large=await sharp(noise,{raw:{width:2048,height:1024,channels:4}}).webp({quality:90,effort:1}).toBuffer();assert(large.length>65536);
+ const publication={manifest:structuredClone(snapshot.manifest),files:new Map(snapshot.files)},largeFrame=publication.manifest.frames[0],largeHash=crypto.createHash('sha256').update(large).digest('hex'),largeFile=largeFrame.time.replace(/[-:]/g,'').slice(0,13)+'-visible-'+largeHash.slice(0,16)+'.webp';
+ publication.files.delete(largeFrame.visible.file);largeFrame.visible={file:largeFile,sha256:largeHash,bytes:large.length};publication.files.set(largeFile,large);
  function git(args,options={}){return execFileSync('git',args,{stdio:['pipe','pipe','pipe'],...options}).toString().trim();}
  try{
   const remote=path.join(directory,'remote.git'),work=path.join(directory,'work');fs.mkdirSync(work);git(['init','--bare',remote]);process.chdir(work);git(['init','-b','main']);git(['config','user.name','test']);git(['config','user.email','test@example.com']);fs.writeFileSync('owner.txt','Owner content\n');git(['add','owner.txt']);git(['commit','-m','Initial owner content']);git(['remote','add','origin',remote]);git(['push','origin','main']);const main=git(['rev-parse','HEAD']);
-  const published=runner.publish(snapshot,'');
+  const published=runner.publish(publication,'');
   check('publishing changes only the generated branch and creates one parentless snapshot',()=>{assert.equal(git(['ls-remote','origin','refs/heads/main']).split(/\s/)[0],main);assert.equal(git(['rev-list','--count',published]),'1');assert(!git(['ls-tree','--name-only',published]).includes('owner.txt'));assert.equal(git(['status','--porcelain']),'');});
-  const previous=runner.readPrevious();assert.equal(previous.old,published);assert.deepEqual(previous.previous.manifest.frames,snapshot.manifest.frames);checks++;console.log('PASS a fresh recorder recovers shared history from the remote branch');
+  const expectedBlob=crypto.createHash('sha1').update(Buffer.from('blob '+large.length+'\0')).update(large).digest('hex');check('publication writes a large image byte-for-byte without a synchronous stdin pipe',()=>assert.equal(git(['rev-parse',published+':'+largeFile]),expectedBlob));
+  const previous=runner.readPrevious();assert.equal(previous.old,published);assert.deepEqual(previous.previous.manifest.frames,publication.manifest.frames);checks++;console.log('PASS a fresh recorder recovers shared history from the remote branch');
   const updated=runner.publish(failed,published);assert.notEqual(updated,published);assert.throws(()=>runner.publish(snapshot,published));check('concurrent publication is protected by the old branch SHA',()=>{assert.equal(git(['ls-remote','origin',runner.REF]).split(/\s/)[0],updated);});
  }finally{process.chdir(cwd);fs.rmSync(directory,{recursive:true,force:true});}
  console.log(checks+' shared cloud checks passed');

@@ -236,7 +236,7 @@
   });
   var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
   replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-30',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-32',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -318,12 +318,12 @@
     auroraMeshes.forEach(function (mesh) {scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}); auroraMeshes=[];
     var layers = auroraStyle === 'shell' ? [1.018] : auroraStyle === 'halo' ? [1.025,1.04] : auroraStyle === 'curtain' ? [1.018] : [1.018,1.028];
     layers.forEach(function (height,index) {
-      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:.18/layers.length}},vertexShader:vertex,fragmentShader:[
+      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:.50/layers.length}},vertexShader:vertex,fragmentShader:[
         'uniform sampler2D auroraMap; uniform vec3 sunDir; uniform float tick,layer,style,strength; varying vec2 vUv; varying vec3 vNormal,vWorld;',
         'void main(){ vec2 gridUv=vec2((vUv.x*360.0+1.5)/362.0,(vUv.y*180.0+.5)/181.0); float probability=texture2D(auroraMap,gridUv).r; float night=1.0-smoothstep(-.20,-.035,dot(normalize(vNormal),sunDir));',
         'float angle=vUv.x*6.2831853; float fold=sin(angle*7.0+vUv.y*17.0+tick*.10)*.9+sin(angle*19.0-vUv.y*11.0)*.35;',
         'float filaments=.5+.25*sin(angle*61.0+fold)+.15*sin(angle*103.0+fold*2.0)+.1*sin(angle*151.0-fold); float curtain=.78+.22*clamp(filaments,0.0,1.0);',
-        'float pulse=.96+.04*sin(tick*.35+vUv.x*24.0); float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(cameraPosition-vWorld))),.8); float glow=probability*smoothstep(.10,.22,probability)*night*strength*pulse*mix(1.0,curtain,style)*(.2+.8*rim);',
+        'float pulse=.96+.04*sin(tick*.35+vUv.x*24.0); float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(cameraPosition-vWorld))),.8); float glow=probability*smoothstep(.10,.22,probability)*night*strength*pulse*mix(1.0,curtain,style)*(.35+.65*rim);',
         'vec3 color=mix(vec3(.28,.86,.43),vec3(.43,.74,.36),layer/4.0); gl_FragColor=vec4(color,glow); }'
       ].join('\n'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
       var mesh = new THREE.Mesh(new THREE.SphereGeometry(height,128,96),material); mesh.visible=false; scene.add(mesh); auroraMeshes.push(mesh);

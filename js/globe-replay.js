@@ -29,7 +29,7 @@
   async function prepare(blobs,width,natural){
     var visible,infrared;
     if(blobs.length===10){
-      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-28');
+      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-32');
       var clouds=globalThis.GlobeClouds,data=globalThis.GlobeData,sources=[];
       for(var index=0;index<10;index++){var source=blobs[index]?await read(blobs[index],width):null;if(source&&blobs[index].type==='image/jpeg')for(var blank=0;blank<source.length;blank+=4)if(Math.max(source[blank],source[blank+1],source[blank+2])<8)source[blank+3]=0;sources.push(source);}
       clouds.maskScanArtifacts(sources,width);
