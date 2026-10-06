@@ -47,8 +47,7 @@ window.EnoughData = {
             0,
             -50
           ],
-          "label": "Risk change (log scale)",
-          "transform": "log-risk"
+          "label": "Change in risk of dying"
         },
         "area": "move",
         "shape": "Flatter region",
@@ -652,7 +651,7 @@ window.EnoughData = {
         "The displayed comparison is about 6,500 steps/day, rounded from the measured mean of 6,540 in NHANES 2005-2006 (Tudor-Locke 2009). This dated, device-specific survey mean is not the current US average or average national mortality risk.",
         "Displayed risk reduction is 100 times (1 minus source hazard ratio at the selected dose divided by source hazard ratio at 6,500). The source referenceDose and all raw points retain the original 5,000 or 3,000-step reference.",
         "The covariance needed for confidence intervals against 6,500 is unavailable from the published figure. Do not divide the original bounds by an estimated reference and call that a 95% interval for the new comparison. No band is displayed; raw source limits remain downloadable.",
-        "The risk axis uses a logarithmic risk-ratio scale with signed percent-change labels. Equal vertical distances represent equal ratios, not equal percentage-point differences."
+        "The displayed risk axis is linear: equal vertical distances mean equal percentage-point differences from the US-average step-count comparison. Source points and risk percentages are unchanged."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -24530,8 +24529,7 @@ window.EnoughData = {
             0,
             -50
           ],
-          "label": "Risk change (log scale)",
-          "transform": "log-risk"
+          "label": "Change in risk of dying"
         },
         "area": "move",
         "shape": "Flatter region",
@@ -25128,7 +25126,7 @@ window.EnoughData = {
         "The displayed comparison is about 6,500 steps/day, rounded from the measured mean of 6,540 in NHANES 2005-2006 (Tudor-Locke 2009). This dated, device-specific survey mean is not the current US average or average national mortality risk.",
         "Displayed risk reduction is 100 times (1 minus source hazard ratio at the selected dose divided by source hazard ratio at 6,500). The source referenceDose and all raw points retain the original 5,000 or 3,000-step reference.",
         "The covariance needed for confidence intervals against 6,500 is unavailable from the published figure. Do not divide the original bounds by an estimated reference and call that a 95% interval for the new comparison. No band is displayed; raw source limits remain downloadable.",
-        "The risk axis uses a logarithmic risk-ratio scale with signed percent-change labels. Equal vertical distances represent equal ratios, not equal percentage-point differences."
+        "The displayed risk axis is linear: equal vertical distances mean equal percentage-point differences from the US-average step-count comparison. Source points and risk percentages are unchanged."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -25203,8 +25201,7 @@ window.EnoughData = {
             0,
             -50
           ],
-          "label": "Risk change (log scale)",
-          "transform": "log-risk"
+          "label": "Change in risk of dying"
         },
         "area": "move",
         "shape": "Flatter region",
@@ -25793,7 +25790,7 @@ window.EnoughData = {
         "The displayed comparison is about 6,500 steps/day, rounded from the measured mean of 6,540 in NHANES 2005-2006 (Tudor-Locke 2009). This dated, device-specific survey mean is not the current US average or average national mortality risk.",
         "Displayed risk reduction is 100 times (1 minus source hazard ratio at the selected dose divided by source hazard ratio at 6,500). The source referenceDose and all raw points retain the original 5,000 or 3,000-step reference.",
         "The covariance needed for confidence intervals against 6,500 is unavailable from the published figure. Do not divide the original bounds by an estimated reference and call that a 95% interval for the new comparison. No band is displayed; raw source limits remain downloadable.",
-        "The risk axis uses a logarithmic risk-ratio scale with signed percent-change labels. Equal vertical distances represent equal ratios, not equal percentage-point differences."
+        "The displayed risk axis is linear: equal vertical distances mean equal percentage-point differences from the US-average step-count comparison. Source points and risk percentages are unchanged."
       ],
       "followupAudit": {
         "date": "2026-10-05",

@@ -72,7 +72,7 @@ for(const c of comparisons){
  assert.equal(M.estimate(c,0),null,'No invented zero-step estimate');assert.equal(M.outcome(c,0),null);
  assert.equal(M.estimate(c,c.domain[0]-1),null,'No endpoint clamping outside the published stroke');assert.equal(M.series(c)[0].dose,c.domain[0]);
  assert.ok(M.outcome(c,1000)<0,'Lower counts can have higher risk than the source reference');
- near(M.estimate(c,c.referenceDose),1);assert.equal(c.view.comparisonDose,6500);near(M.outcome(c,6500),0);assert.equal(c.view.displayInterval,false);assert.equal(c.view.yScale.transform,'log-risk');assert.ok(c.extraction.includes('figure readings'));
+ near(M.estimate(c,c.referenceDose),1);assert.equal(c.view.comparisonDose,6500);near(M.outcome(c,6500),0);assert.equal(c.view.displayInterval,false);assert.equal(c.view.yScale.transform,undefined);assert.ok(c.extraction.includes('figure readings'));
  assert.match(c.sourcePDFSHA256,/^[a-f0-9]{64}$/);assert.ok(c.centerlineCheckMaxRiskDifference<.01);
  for(let i=0;i<c.points.length;i++){
   const p=c.points[i];assert.ok(Number.isFinite(p.effect));assert.equal(p.source,'paluch2022');assert.match(p.location,/Figure 3/);
