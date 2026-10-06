@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
+import { jsonlLines } from './about-jsonl.mjs';
 
 const hash = s => createHash('sha256').update(s).digest('hex');
 const fields = ['input_tokens', 'cached_input_tokens', 'cache_write_input_tokens', 'output_tokens', 'reasoning_output_tokens'];
@@ -14,7 +15,7 @@ export function jsonlFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? jsonlFiles(join(dir, e.name)) : e.name.endsWith('.jsonl') ? [join(dir, e.name)] : []);
 }
 async function* rows(file) {
-  for (const line of readFileSync(file, 'utf8').split('\n')) {
+  for await (const line of jsonlLines(file)) {
     if (!line.trim()) continue;
     let row;
     try { row = JSON.parse(line); } catch { throw new Error(`Invalid JSONL in ${file}`); }

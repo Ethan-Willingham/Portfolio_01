@@ -43,6 +43,7 @@ import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { isPost, postSlug, reconcilePost } from './about-post-history.mjs';
+import { jsonlLines } from './about-jsonl.mjs';
 
 const REPO = process.cwd();
 const CODEX_TX = join(homedir(), '.codex/sessions');
@@ -137,11 +138,11 @@ function cleanSnapshot(models) {
   for (const posts of Object.values(models)) for (const a of Object.values(posts)) a.tokens = Math.round(a.tokens);
   return models;
 }
-function claudeSession(file) {
+async function claudeSession(file) {
   let sessionId = basename(file);
   const models = {};
   const messages = new Map();
-  for (const ln of readFileSync(file, 'utf8').split('\n')) {
+  for await (const ln of jsonlLines(file)) {
     if (!ln) continue;
     let o; try { o = JSON.parse(ln); } catch { continue; }
     if (o.timestamp > cutoff) continue;
@@ -206,7 +207,7 @@ function jsonlFiles(dir) {
   return out;
 }
 
-function codexSession(file) {
+async function codexSession(file) {
   let sessionId = basename(file);
   let excluded = false;
   let ownSession = false, inheritedUntil = 0, ordinal = 0;
@@ -231,7 +232,7 @@ function codexSession(file) {
     pending.clear();
   };
 
-  for (const ln of readFileSync(file, 'utf8').split('\n')) {
+  for await (const ln of jsonlLines(file)) {
     if (!ln) continue;
     let o; try { o = JSON.parse(ln); } catch { continue; }
     const p = o.payload || {};
@@ -355,14 +356,14 @@ let claudeScanned = 0;
 const claudeProjects = join(homedir(), '.claude/projects');
 const claudeDirs = existsSync(claudeProjects) ? readdirSync(claudeProjects).filter(n => n.includes('Portfolio-01') || n.endsWith('sluice-alpha')).map(n => join(claudeProjects, n)) : [];
 for (const file of claudeDirs.flatMap(jsonlFiles)) {
-  const found = claudeSession(file);
+  const found = await claudeSession(file);
   if (!found) continue;
   mergeSession(found[0], found[1]);
   claudeScanned++;
 }
 let codexScanned = 0;
 for (const file of [...jsonlFiles(CODEX_TX), ...jsonlFiles(join(homedir(), '.codex/archived_sessions'))]) {
-  const found = codexSession(file);
+  const found = await codexSession(file);
   if (!found) continue;
   mergeSession(found[0], found[1]);
   codexScanned++;

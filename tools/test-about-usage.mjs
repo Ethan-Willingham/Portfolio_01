@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { aggregateUsage, codexDeltas, collectUsage, localDay, mergeClaude, mergePoint, priceUsage } from './about-usage.mjs';
+import { jsonlLines } from './about-jsonl.mjs';
 
 const registry = JSON.parse(readFileSync(new URL('./about-models.json', import.meta.url)));
 const point = (timestamp, input, cached, output) => ({ timestamp, model: 'gpt-6-astra', cumulative: [input, cached, 0, output, 0] });
@@ -43,6 +44,14 @@ assert.equal(daily['2026-09-12'].totalTokens, 427);
 // Exercise file parsing, copied parent metadata, child identity, durability and repeat imports.
 const temp = mkdtempSync(join(tmpdir(), 'about-usage-test-'));
 try {
+  // A record crosses several stream chunks, with non-ASCII text, CRLF and an
+  // unterminated final record. Whole-file splitting is unnecessary.
+  const chunkFile = join(temp, 'chunks.txt');
+  const largeRecord = JSON.stringify({ text: 'café'.repeat(40000) + '\u2028\u2029paragraph' });
+  writeFileSync(chunkFile, largeRecord + '\r\n\r\n' + '{"last":true}');
+  const chunkLines = [];
+  for await (const line of jsonlLines(chunkFile)) chunkLines.push(line);
+  assert.deepEqual(chunkLines, [largeRecord, '', '{"last":true}']);
   const parent = 'parent', child = 'child';
   const usage = { input_tokens: 100, cached_input_tokens: 80, output_tokens: 10, total_tokens: 110 };
   const record = (ordinal, type, payload) => JSON.stringify({ ordinal, timestamp: '2026-09-12T12:00:00Z', type, payload });
