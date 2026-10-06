@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const O = root.OneShift = root.OneShift || {};
-  O.VERSION = '2.2';
+  O.VERSION = '2.3';
   O.items = {
     stove: {name:'Camp stoves', color:'#bd916c', ti:8, hi:5, pack:4},
     lantern: {name:'Trail lanterns', color:'#cb9c73', ti:8, hi:5, pack:6},

@@ -5,24 +5,29 @@
   const btn=(text,action,extra='',primary=false)=>'<button data-action="business-'+action+'" '+extra+' class="'+(primary?'primary':'')+'">'+text+'</button>';
   const orderValue=o=>o.lines.reduce((n,l)=>n+l.cases*l.price,0);
   const legacy={update:P.update,selection:P.selection,renderQueue:P.renderQueue,queueLayout:P.queueLayout,renderHub:P.renderHub,action:P.action,guideActive:P.guideActive,drawGuide:P.drawGuide,settingsMenu:P.settingsMenu};
-  function goal(s){const c=s.commerce;
-    if(!c.completed)return {text:'First sale',n:0,max:1};
-    if(!c.restocked)return {text:'First restock',n:0,max:1};
-    if(c.completed<8)return {text:'Unlock radios',n:c.completed,max:8};
-    if(c.completed<20)return {text:'Unlock notebooks',n:c.completed,max:20};
-    if(c.completed<50)return {text:'50 deliveries',n:c.completed,max:50};
-    return {text:c.won?'Established':'$3,000 net worth',n:Math.floor(O.businessAssets(s)/100),max:3000};
+  O.businessOpening=function(sim){const s=sim.s;if(!O.business(s)||s.commerce.completed||s.day!==1)return null;const o=s.commerce.orders[0];return o&&o.lines.length===1&&['offered','queued'].includes(o.status)&&(o.status==='queued'||o.lines.every(l=>sim.businessStock(l.item).free>=l.cases))?o:null;};
+  function orderStage(sim,o){
+    const task=sim.s.workers.find(w=>w.task?.businessOrder===o.id)?.task,t=sim.t.get(o.truck),total=o.lines.reduce((n,l)=>n+l.cases,0),loaded=t?.loaded.reduce((n,l)=>n+l.cases,0)||0;
+    const outputs=[...new Set(o.allocations.map(a=>a.output))].map(id=>sim.p.get(id)).filter(Boolean),collected=o.allocations.reduce((n,a)=>n+(a.collected?a.count:0),0),wrapped=outputs.reduce((n,p)=>n+(p.wrapped?p.cases:0),0),progress=(collected+wrapped+loaded)/total;
+    if(o.status==='complete')return {index:3,label:'Paid',progress:3};
+    if(sim.s.commerce.queue.indexOf(o.id)>0&&!task&&!collected)return {index:0,label:'Queued',progress};
+    if(task?.kind==='wrap')return {index:1,label:'Packing your order',progress};
+    if(task?.kind==='load')return {index:2,label:'Loading the truck',progress};
+    if(task?.kind==='salePick')return {index:0,label:task.phase==='dest'?'Carrying to packing':'Picking stock',progress};
+    if(outputs.some(p=>p.cases&&!p.wrapped&&o.allocations.filter(a=>a.output===p.id).every(a=>a.collected)))return {index:1,label:'Moving to packing',progress};
+    if(collected<total)return {index:0,label:'Starting your order',progress};
+    return {index:2,label:t?.status==='yard'?'Waiting for a dock':t?.status==='docked'?'Moving to the truck':'Truck arriving',progress};
   }
   function preserveHTML(node,html){if(node._businessHTML===html)return;node._businessHTML=html;
     const focused=node.contains(document.activeElement)?{...document.activeElement.dataset}:null,scroll=node.scrollTop;
     node.innerHTML=html;node.scrollTop=scroll;
     if(focused){const next=Array.from(node.querySelectorAll('button')).find(b=>!b.disabled&&Object.keys(focused).every(k=>b.dataset[k]===focused[k]));next?.focus({preventScroll:true});}
   }
-  P.guideActive=function(){return O.business(this.app.sim.s)?this.app.sim.s.commerce.firstDecision:legacy.guideActive.call(this);};
+  P.guideActive=function(){return O.business(this.app.sim.s)?this.app.sim.s.commerce.firstDecision&&!!O.businessOpening(this.app.sim):legacy.guideActive.call(this);};
   P.queueLayout=function(){if(!O.business(this.app.sim.s)){el('queue').classList.remove('shift-business-rail','is-first');el('queue').querySelector('[data-action="queue-toggle"] strong').textContent='Work queue';return legacy.queueLayout.call(this);}const panel=el('queue');panel.classList.add('shift-business-rail');panel.dataset.open=String(this.queueOpen!==false);panel.querySelector('[data-action="queue-toggle"]').setAttribute('aria-expanded',String(this.queueOpen!==false));};
   P.businessStockHTML=function(){const sim=this.app.sim,s=sim.s,c=s.commerce,capacity=sim.businessCapacity(),size=this.stockSize||16;
     let html='<div class="shift-stock-top"><span>'+capacity.used+' / '+capacity.slots+' slots</span>'+btn('Rack $55','buy','data-id="rack" '+(O.purchaseReason(s,'rack')?'disabled':''))+'</div><div class="shift-stock-sizes" role="group" aria-label="Purchase size">'+[8,16,32].map(n=>btn(n+' cases','size','data-id="'+n+'" aria-pressed="'+(size===n)+'"')).join('')+'</div>';
-    for(const item of O.unlockedGoods(s)){
+    for(const item of O.unlockedGoods(s).sort((a,b)=>Number(b===this.stockItem)-Number(a===this.stockItem))){
       const surplus=sim.surplusQuote(item);
       const d=O.catalog[item],q=sim.restockQuote(item,size),stock=sim.businessStock(item),remaining=c.orders.filter(o=>['future','offered'].includes(o.status)).reduce((n,o)=>n+o.lines.filter(l=>l.item===item).reduce((n,l)=>n+l.cases,0),0),credit=q.credit?'<small class="shift-credit">Credit '+O.price(q.credit)+'</small>':'';
       html+='<article class="shift-stock-card" data-stock="'+item+'"><div><strong>'+d.name+'</strong><span>'+stock.free+' ready'+(stock.incoming?' / '+stock.incoming+' incoming':'')+'</span></div><small>'+ (s.phase==='evening'?'Sell '+O.price(d.sell)+'/case':remaining+' needed today')+' / '+O.price(q.unitCost)+'/case</small>'+btn('Buy '+size+' / '+O.price(q.cost),'restock','data-item="'+item+'" data-count="'+size+'" '+(q.reason?'disabled aria-label="'+esc(d.name+': '+q.reason)+'"':''),true)+'<small>'+esc(q.reason||('Arrives '+(s.phase==='evening'||s.minute+q.lead>=s.shiftEnd-20?'tomorrow':O.time(s.minute+q.lead))))+'</small>'+credit+(s.phase==='shift'&&surplus?'<details><summary>Surplus</summary>'+btn('Sell '+surplus.count+' / '+O.price(surplus.value),'surplus','data-item="'+item+'"')+'<small>70% of cost</small></details>':'')+'</article>';
@@ -33,9 +38,23 @@
   };
   P.renderQueue=function(){const app=this.app,sim=app.sim,s=sim.s;if(!O.business(s))return legacy.renderQueue.call(this);
     const c=s.commerce,panel=el('queue');panel.hidden=app.hubPause;panel.classList.toggle('is-first',c.firstDecision);this.queueLayout();el('intro').hidden=true;panel.classList.remove('has-guide');document.body.classList.remove('shift-guided');
-    const queued=c.queue.map(id=>c.orders.find(o=>o.id===id)).filter(Boolean),offered=c.orders.filter(o=>o.status==='offered'),tab=this.businessTab||'orders',g=goal(s);
-    panel.querySelector('[data-action="queue-toggle"] strong').textContent='Orders';el('queue-summary').textContent=[queued.length?queued.length+' queued':'',offered.length?offered.length+' new':''].filter(Boolean).join(' / ')||'Clear';
-    let html='<div class="shift-business-goal"><strong>'+esc(g.text)+'</strong><span>'+Math.min(g.n,g.max)+' / '+g.max+'</span><progress value="'+g.n+'" max="'+g.max+'"></progress></div><nav class="shift-business-tabs" aria-label="Warehouse board">'+['orders','stock','work'].map(id=>btn(({orders:'Orders',stock:'Stock',work:'Worker'})[id],'tab','data-id="'+id+'" aria-pressed="'+(id===tab)+'"')).join('')+'</nav>';
+    const queued=c.queue.map(id=>c.orders.find(o=>o.id===id)).filter(Boolean),offered=c.orders.filter(o=>o.status==='offered'),tab=this.businessTab||'orders';
+    panel.querySelector('[data-action="queue-toggle"] strong').textContent=({orders:'Orders',stock:'Stock',work:'Worker'})[tab];el('queue-summary').textContent=tab==='orders'?([queued.length?queued.length+' queued':'',offered.length?offered.length+' new':''].filter(Boolean).join(' / ')||'Clear'):'';
+    const opening=O.businessOpening(sim);
+    if(opening){
+      const o=opening;
+      const stage=orderStage(sim,o),line=o.lines[0];
+      let html='<article class="shift-opening-card" data-order="'+o.id+'"><p class="shift-kicker">First order</p><h2>'+line.cases+' '+esc(O.catalog[line.item].name)+'</h2><p class="shift-opening-reward">'+O.price(orderValue(o))+'</p>';
+      if(o.status==='offered')html+='<p class="shift-opening-copy">Your worker packs and loads it.</p>'+btn('Ship order','fulfill','data-id="'+o.id+'"',true);
+      else html+='<ol class="shift-opening-stages" aria-label="Order progress">'+['pick','pack','ship'].map((id,i)=>'<li data-stage="'+id+'" data-state="'+(i<stage.index?'done':i===stage.index?'active':'waiting')+'">'+id[0].toUpperCase()+id.slice(1)+'</li>').join('')+'</ol><p class="shift-opening-status" role="status">'+esc(stage.label)+'</p>';
+      preserveHTML(el('queue-body'),html+'</article>');return;
+    }
+    let html='';
+    const firstPaid=c.completed===1&&!c.restocked&&c.orders.find(o=>o.status==='complete'&&!o.buyback);
+    if(firstPaid&&tab==='orders'){
+      html+='<section class="shift-first-receipt"><strong>+'+O.price(firstPaid.paid)+'</strong><p>First order paid. Buy more stock.</p>'+btn('Buy stock','need-stock','data-item="'+firstPaid.lines[0].item+'"',true)+'</section>';
+    }
+    html+='<nav class="shift-business-tabs" aria-label="Warehouse board">'+['orders','stock','work'].map(id=>btn(({orders:'Orders',stock:'Stock',work:'Worker'})[id],'tab','data-id="'+id+'" aria-pressed="'+(id===tab)+'"')).join('')+'</nav>';
     if(tab==='stock')html+=this.businessStockHTML();
     else if(tab==='work'){
       const w=s.workers.find(w=>w.id===this.queueWorker)||s.workers[0];
@@ -44,12 +63,12 @@
       html+=w.queue.length?'<ol class="shift-queue-jobs">'+w.queue.map(t=>'<li><strong>'+esc(t.kind==='salePick'?'Pick '+t.count+' cases':this.queueTask(t).title)+'</strong></li>').join('')+'</ol>':'';
     }else{
       for(const o of [...queued,...offered]){
-        const t=sim.t.get(o.truck),loaded=t?.loaded.reduce((n,l)=>n+l.cases,0)||0,total=o.lines.reduce((n,l)=>n+l.cases,0),missing=o.lines.find(l=>sim.businessStock(l.item).free<l.cases),i=c.queue.indexOf(o.id);
+        const t=sim.t.get(o.truck),loaded=t?.loaded.reduce((n,l)=>n+l.cases,0)||0,missing=o.lines.find(l=>sim.businessStock(l.item).free<l.cases),i=c.queue.indexOf(o.id);
         html+='<article class="shift-order-card '+(o.rush?'rush':'')+'" data-order="'+o.id+'"><header><strong>'+esc(o.customer)+'</strong><span>'+O.price(orderValue(o))+'</span></header><small>'+(o.rush?'RUSH / ':'')+'Due '+O.time(o.due)+'</small><div class="shift-order-lines">'+o.lines.map(l=>'<span><b>'+l.cases+'</b> '+O.catalog[l.item].name+'</span>').join('')+'</div>';
         if(o.status==='offered')html+=missing?btn('Restock '+O.catalog[missing.item].name,'need-stock','data-item="'+missing.item+'"',true):btn('Ship order','fulfill','data-id="'+o.id+'"',true);
         else{
-          const work=s.workers.find(w=>w.task?.businessOrder===o.id),label=loaded?'Loading '+loaded+' / '+total:work?.task?.kind==='salePick'?'Picking':work?.task?.kind==='wrap'?'Wrapping':t?.status==='yard'?'Waiting for dock':'Queued';
-          html+='<div class="shift-order-progress"><span>'+label+'</span><progress value="'+loaded+'" max="'+total+'"></progress></div><div class="shift-order-actions">'+btn('Up','priority','data-id="'+o.id+'" data-direction="-1" '+(i===0?'disabled':''))+btn('Down','priority','data-id="'+o.id+'" data-direction="1" '+(i===c.queue.length-1?'disabled':''))+btn('Cancel','cancel','data-id="'+o.id+'" '+(loaded?'disabled':''))+'</div>';
+          const stage=orderStage(sim,o),label=stage.label;
+          html+='<div class="shift-order-progress"><span>'+label+'</span><progress value="'+stage.progress+'" max="3"></progress></div><div class="shift-order-actions">'+btn('Up','priority','data-id="'+o.id+'" data-direction="-1" '+(i===0?'disabled':''))+btn('Down','priority','data-id="'+o.id+'" data-direction="1" '+(i===c.queue.length-1?'disabled':''))+btn('Cancel','cancel','data-id="'+o.id+'" '+(loaded?'disabled':''))+'</div>';
         }html+='</article>';
       }
       const future=c.orders.find(o=>o.status==='future');
@@ -73,9 +92,9 @@
     }else if(r){html+='<p class="shift-kicker">STORAGE</p><h2>Rack A'+r.id+'</h2>';for(const q of this.rackPositions(null,[r]))html+='<p>'+ (q.side?'Right':'Left')+' / '+(q.stock?q.stock.cases+' '+O.catalog[q.stock.item]?.name:'Empty')+'</p>';}
     else{node.hidden=true;return;}node.hidden=false;preserveHTML(node,html);this.barcode(p||{});
   };
-  P.update=function(){const app=this.app,s=app.sim.s;if(!O.business(s)){const was=document.body.classList.contains('shift-business');document.body.classList.remove('shift-business');if(was){this.queueOpen=null;this.queueKey=null;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;el('toolbar')._businessHTML=null;el('toolbar').innerHTML=Object.entries({contracts:'Contracts',shop:'Shop',build:'Build',people:'People',services:'Services',reports:'Reports'}).map(([id,label])=>'<button data-hub="'+id+'">'+label+'</button>').join('');}return legacy.update.call(this);}document.body.classList.add('shift-business');if(this.businessState!==s){this.businessState=s;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;this.businessTab='orders';this.businessNotice=null;this.queueOpen=true;}
+  P.update=function(){const app=this.app,s=app.sim.s;if(!O.business(s)){const was=document.body.classList.contains('shift-business');document.body.classList.remove('shift-business','shift-opening','shift-first-sale');el('store').hidden=true;if(was){this.queueOpen=null;this.queueKey=null;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;el('toolbar')._businessHTML=null;el('toolbar').innerHTML=Object.entries({contracts:'Contracts',shop:'Shop',build:'Build',people:'People',services:'Services',reports:'Reports'}).map(([id,label])=>'<button data-hub="'+id+'">'+label+'</button>').join('');}return legacy.update.call(this);}document.body.classList.add('shift-business');document.body.classList.toggle('shift-opening',!!O.businessOpening(app.sim));document.body.classList.toggle('shift-first-sale',s.commerce.completed===1&&!s.commerce.restocked);if(this.businessState!==s){this.businessState=s;el('queue-body')._businessHTML=null;el('selection')._businessHTML=null;el('hub')._businessHTML=null;this.businessTab='orders';this.stockItem=null;this.businessNotice=null;this.queueOpen=true;}
     el('day').textContent='DAY '+s.day;el('clock').textContent=O.time(s.minute);el('money').textContent=O.money(s.cash/100);el('pause').textContent=app.paused?'Run':'Pause';el('pause').setAttribute('aria-pressed',String(app.paused));
-    const toolbar=el('toolbar');toolbar.hidden=false;preserveHTML(toolbar,'<button data-hub="shop">Store</button>');
+    el('toolbar').hidden=true;el('store').hidden=!!O.businessOpening(app.sim);
     const start=480,end=s.shiftEnd;el('timeline').innerHTML=s.commerce.orders.map(o=>'<i class="out '+(['complete','missed','cancelled'].includes(o.status)?'gone':'')+'" style="left:'+Math.max(0,Math.min(100,(o.arrival-start)/(end-start)*100))+'%"></i>').join('')+'<b style="left:'+Math.max(0,Math.min(100,(s.minute-start)/(end-start)*100))+'%"></b>';
     el('next-truck').hidden=true;this.selection();el('hint').hidden=true;
     if(this.build){el('hint').textContent='Click to place a rack.';el('hint').hidden=false;}
@@ -104,7 +123,7 @@
   P.action=function(node){const app=this.app,sim=app.sim,s=sim.s,name=node.dataset.action;if(!O.business(s)||!name?.startsWith('business-'))return legacy.action.call(this,node);
     const action=name.slice(9),id=Number(node.dataset.id);
     if(action==='surplus'){this.issue({type:'sellSurplus',item:node.dataset.item});this.businessTab='orders';}
-    else if(action==='tab'||action==='need-stock'){this.businessTab=action==='need-stock'?'stock':node.dataset.id;this.queueOpen=true;}
+    else if(action==='tab'||action==='need-stock'){this.businessTab=action==='need-stock'?'stock':node.dataset.id;this.queueOpen=true;if(action==='need-stock')this.stockItem=node.dataset.item;}
     else if(action==='size'){this.stockSize=id;if(app.hubPause)this.renderHub();}
     else if(action==='fulfill')this.issue({type:'fulfill',order:id});
     else if(action==='cancel')this.issue({type:'cancelOrder',order:id});
@@ -143,6 +162,15 @@
         if(compact)renderer.text(g,String(count),at.x,y+10,size,'#edf2f6','center','middle');
       });
     }
-    const sale=s.events.findLast(e=>e.kind==='sale'&&s.tick-e.tick<50);if(sale){renderer.text(g,sale.text,renderer.w/2,104,17,'#b8dff8','center');}
+    if(O.businessOpening(this.app.sim)){
+      const order=O.businessOpening(this.app.sim);
+      if(order){
+        const sources=order.allocations.length?order.allocations.map(a=>this.app.sim.p.get(a.source)):s.pallets.filter(p=>p.place==='storage'&&order.lines.some(l=>l.item===p.item));
+        g.save();g.strokeStyle='#ea9860';g.fillStyle='#ea986018';g.lineWidth=2;
+        for(const r of s.map.racks.filter(r=>sources.some(p=>p&&p.y===r.y&&p.x>=r.x&&p.x<r.x+2))){const at=renderer.screen(r.x-.1,r.y-.1);g.fillRect(at.x,at.y,2.2*z,1.2*z);g.strokeRect(at.x,at.y,2.2*z,1.2*z);}
+        if(order.status==='queued'){const w=s.workers.find(w=>w.id===order.worker)||s.workers[0],at=renderer.screen(w.x+.5,w.y-.25);g.font='10px "Commit Mono",monospace';const width=g.measureText('Worker').width+12;g.fillStyle='#182530';g.fillRect(at.x-width/2,at.y-16,width,19);renderer.text(g,'Worker',at.x,at.y-6,10,'#edf2f6','center','middle');}
+        g.restore();
+      }
+    }
   };
 })(window);

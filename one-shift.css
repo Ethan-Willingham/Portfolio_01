@@ -177,23 +177,39 @@
 .shift-business button:active:not(:disabled) {box-shadow:inset 0 2px 4px #080d1450}
 .shift-business button:disabled {opacity:.5;box-shadow:none}
 .shift-business button.primary {background:linear-gradient(var(--shift-primary-hover),var(--shift-primary));border-color:#5297c1;box-shadow:inset 0 1px 0 #b8dff829,0 2px 4px #080d1430}
-.shift-business .shift-hud {max-width:728px;gap:18px;border-color:var(--rule);border-radius:12px;padding:12px 16px 24px;box-shadow:0 6px 20px var(--shift-shadow)}
-.shift-business .shift-speed {gap:3px;padding:3px;border:1px solid var(--rule);border-radius:9px;background:#0f1822}
-.shift-business .shift-speed button {border-color:transparent;box-shadow:none;min-width:44px;font-size:.8125rem}
-.shift-business .shift-speed button[aria-pressed="true"] {border-color:#5297c1}
-.shift-business .shift-toolbar {top:auto;bottom:16px;left:164px;max-width:220px}
-.shift-business .shift-toolbar button {padding:10px 22px;background:var(--bg-raised);font-size:.8125rem;min-width:88px;box-shadow:0 4px 12px var(--shift-shadow)}
-.shift-business .shift-bottom {justify-content:space-between}
-.shift-business .shift-camera {margin-left:auto;padding:3px;background:var(--bg-raised);border:1px solid var(--rule);border-radius:10px;gap:3px}
-.shift-business .shift-camera button {border:0;background:transparent;box-shadow:none;font:1.25rem var(--font-mono)}
-.shift-business .shift-panel {top:162px;width:260px;max-height:420px;border-color:var(--rule);border-radius:12px;padding:20px}
+/* The masthead, scene and order board form one centered game surface. */
+.shift-brand,#shift-store,#shift-view {display:none}
+.shift-business {--shift-layout-left:max(32px,calc((100vw - 1280px)/2));--shift-board-width:300px;--shift-board-gap:24px;--shift-view-top:128px;--shift-view-bottom:28px;--shift-scene-height:min(740px,calc(100dvh - var(--shift-view-top) - var(--shift-view-bottom)))}
+.shift-business .shift-hud {top:24px;left:var(--shift-layout-left);right:var(--shift-layout-left);max-width:none;height:80px;margin:0;padding:0 0 20px;display:grid;grid-template-columns:minmax(180px,1fr) auto auto auto auto auto;align-items:center;gap:20px;background:transparent;border:0;border-bottom:1px solid var(--rule);border-radius:0;box-shadow:none}
+.shift-business.shift-opening .shift-hud {grid-template-columns:minmax(180px,1fr) auto auto auto auto}
+.shift-business .shift-brand {display:block;min-width:0}
+.shift-business .shift-brand h1 {font:600 2.25rem var(--font-body);letter-spacing:-.045em;line-height:1.05;margin:0;color:var(--text-bright)}
+.shift-business .shift-brand p {font:.8125rem var(--font-body);line-height:1.3;margin:6px 0 0;color:var(--text-dim)}
+.shift-business .shift-clock {min-width:0;gap:5px}
+.shift-business .shift-clock output {font-size:1.125rem;line-height:1.2}
+.shift-business .shift-clock span,.shift-business .shift-cash span {font-size:.5625rem;letter-spacing:.09em}
+.shift-business .shift-cash {margin:0;gap:5px;min-width:64px}
+.shift-business .shift-cash output {font-size:1.125rem;line-height:1.2}
+.shift-business .shift-speed {gap:2px;padding:3px;border:1px solid var(--rule);border-radius:8px;background:var(--bg-raised)}
+.shift-business .shift-speed button {border-color:transparent;background:transparent;box-shadow:none;min-width:44px;padding:8px;font-size:.75rem}
+.shift-business .shift-speed button[aria-pressed="true"] {background:var(--shift-button);border-color:var(--rule-strong)}
+.shift-business #shift-menu,.shift-business #shift-store {display:block;min-width:64px;padding:8px 14px;font-size:.8125rem;background:var(--bg-raised)}
+.shift-business #shift-timeline {display:none}
+.shift-business .shift-toolbar,.shift-business .shift-wordmark {display:none!important}
+.shift-business.shift-opening #shift-store,.shift-business.shift-opening .shift-speed [data-speed] {display:none!important}
+.shift-business #shift-view {display:block;position:absolute;left:var(--shift-layout-left);right:calc(var(--shift-layout-left) + var(--shift-board-width) + var(--shift-board-gap));top:var(--shift-view-top);height:var(--shift-scene-height);bottom:auto;pointer-events:none}
+.shift-business .shift-bottom {left:var(--shift-layout-left);right:calc(var(--shift-layout-left) + var(--shift-board-width) + var(--shift-board-gap));top:calc(var(--shift-view-top) + var(--shift-scene-height) - 52px);bottom:auto;justify-content:flex-start;gap:12px;z-index:2}
+.shift-business .shift-camera {margin:0;padding:3px;background:var(--bg-raised);border:1px solid var(--rule);border-radius:8px;gap:1px;box-shadow:0 3px 12px var(--shift-shadow)}
+.shift-business .shift-camera button {border:0;background:transparent;box-shadow:none;font:1rem var(--font-mono);padding:4px;min-width:44px}
+.shift-business .shift-panel {top:var(--shift-view-top);left:var(--shift-layout-left);width:260px;max-height:min(420px,var(--shift-scene-height));border-color:var(--rule);border-radius:12px;padding:20px}
 .shift-business .shift-panel h2 {font-size:1.25rem}
 .shift-business .shift-panel details {margin-top:18px;border-top:1px solid var(--rule)}
 .shift-business details summary {cursor:pointer;min-height:44px;padding:12px 0;font-size:.75rem;color:var(--text-dim)}
-.shift-business-rail {width:288px;top:108px;bottom:auto;max-height:calc(100dvh - 184px);border-color:var(--rule);border-radius:12px;box-shadow:0 8px 24px var(--shift-shadow)}
+.shift-business-rail {width:var(--shift-board-width);right:var(--shift-layout-left);top:var(--shift-view-top);bottom:auto;max-height:var(--shift-scene-height);border-color:var(--rule);border-radius:12px;box-shadow:0 8px 24px var(--shift-shadow)}
 .shift-business-rail > button {padding:10px 14px;min-height:44px;border-radius:0;background:transparent;border-bottom:1px solid var(--rule)}
 .shift-business-rail > button strong {font-size:.8125rem;font-weight:600}
 .shift-business-rail #shift-queue-body {padding:14px}
+.shift-business-rail #shift-queue-body > button {width:100%}
 .shift-business-goal {display:grid;grid-template-columns:1fr auto;gap:7px;font-size:.6875rem;margin-bottom:12px;color:var(--text-dim)}
 .shift-business-goal strong {font-weight:500}
 .shift-business-goal > span {color:var(--text-faint);font-family:var(--font-mono);font-size:.625rem}
@@ -232,6 +248,23 @@
 .shift-business-job p {font-size:.75rem;color:var(--text-faint);margin:0}
 .shift-business-job button {width:100%}
 .shift-business-rail .shift-sold-summary {font:.625rem var(--font-mono);color:var(--text-faint);border-top:1px solid var(--rule);padding-top:14px;margin-top:18px;text-align:center}
+.shift-business.shift-opening .shift-business-rail > button {display:none}
+.shift-business.shift-opening .shift-business-rail #shift-queue-body {padding:0}
+.shift-opening-card {padding:24px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 8px}
+.shift-opening-card .shift-kicker {grid-column:1/-1;margin:0;font:.625rem var(--font-mono);letter-spacing:.12em;color:var(--text-faint)}
+.shift-opening-card h2 {grid-column:1;grid-row:2;align-self:center;font:600 1.625rem var(--font-body);line-height:1.15;letter-spacing:-.025em;color:var(--text-bright);margin:0}
+.shift-opening-reward {grid-column:2;grid-row:2;align-self:center;margin:0;font:1.375rem var(--font-mono);line-height:1.2;color:var(--accent)}
+.shift-opening-copy {grid-column:1/-1;font:.8125rem var(--font-body);line-height:1.5;color:var(--text-dim);margin:0}
+.shift-opening-card > button {grid-column:1/-1;width:100%;margin-top:5px;min-height:48px;font-size:.875rem}
+.shift-opening-stages {grid-column:1/-1;list-style:none;padding:14px 0 0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--rule)}
+.shift-opening-stages li {text-align:center;color:var(--text-faint);font:.625rem var(--font-mono);border-top:3px solid var(--rule);padding-top:8px}
+.shift-opening-stages li[data-state="active"] {border-color:var(--warn);color:var(--text-bright)}
+.shift-opening-stages li[data-state="done"] {border-color:var(--accent);color:var(--accent)}
+.shift-opening-status {grid-column:1/-1;font:.8125rem var(--font-body);line-height:1.4;margin:0;color:var(--text-bright)}
+.shift-first-receipt {display:grid;gap:10px;padding:16px 14px;margin-bottom:14px;border:1px solid var(--rule);border-radius:9px;background:var(--shift-button)}
+.shift-first-receipt strong {font:1.375rem var(--font-mono);color:var(--accent)}
+.shift-first-receipt p {font:.8125rem var(--font-body);color:var(--text-dim);line-height:1.4;margin:0}
+.shift-first-receipt > button {width:100%;margin-top:4px}
 .shift-business .shift-hub {inset:92px 20px 64px;width:min(1040px,calc(100% - 40px));height:fit-content;max-height:calc(100dvh - 156px);margin:auto;border-color:var(--rule);border-radius:16px;padding:24px 28px;background:var(--bg-raised);box-shadow:0 20px 80px #080d14b3}
 .shift-business:has(#shift-hub:not([hidden])) .shift-toolbar {visibility:hidden}
 .shift-business:has(#shift-hub:not([hidden])) #shift-canvas {filter:brightness(.65)}
@@ -287,15 +320,40 @@
 .shift-business .shift-menu-note {font-size:.6875rem;color:var(--text-faint);line-height:1.4;margin:14px 0}
 .shift-business #shift-settings details p {font-size:.75rem;color:var(--text-dim);line-height:1.5}
 .shift-business #shift-settings a {font-size:.75rem}
-@media (max-height:550px) {
- .shift-business .shift-hud {top:6px;gap:9px;max-width:650px;border-radius:9px;padding:5px 10px 14px}
- .shift-business .shift-speed {padding:2px;gap:2px}
- .shift-business .shift-speed button {padding:5px}
- .shift-business-rail {top:78px;max-height:calc(100dvh - 136px);width:250px;border-radius:9px}
+@media (max-height:550px), (max-width:900px) {
+ .shift-business {--shift-layout-left:12px;--shift-board-width:240px;--shift-board-gap:12px;--shift-view-top:124px;--shift-view-bottom:12px}
+ .shift-business .shift-hud {top:8px;height:106px;gap:5px 12px;padding:0 0 10px;grid-template-columns:minmax(115px,1fr) auto auto auto;grid-template-rows:44px 44px}
+ .shift-business .shift-brand {grid-column:1;grid-row:1/3}
+ .shift-business .shift-clock {grid-column:2;grid-row:1}
+ .shift-business .shift-cash {grid-column:3;grid-row:1}
+ .shift-business #shift-menu {grid-column:4;grid-row:1}
+ .shift-business .shift-speed {grid-column:2/4;grid-row:2;justify-self:stretch;justify-content:center}
+ .shift-business #shift-store {grid-column:4;grid-row:2}
+ .shift-business.shift-opening {--shift-view-top:84px}
+ .shift-business.shift-opening .shift-hud {height:64px;grid-template-columns:minmax(115px,1fr) auto auto auto auto;grid-template-rows:1fr;gap:12px}
+ .shift-business.shift-opening .shift-brand,.shift-business.shift-opening .shift-clock,.shift-business.shift-opening .shift-cash,.shift-business.shift-opening .shift-speed,.shift-business.shift-opening #shift-menu {grid-column:auto;grid-row:auto}
+ .shift-business.shift-opening .shift-speed {justify-self:auto}
+ .shift-business .shift-brand h1 {font-size:1.5rem}
+ .shift-business .shift-brand p {font-size:.625rem;margin-top:4px}
+ .shift-business .shift-clock {gap:3px}
+ .shift-business .shift-clock output,.shift-business .shift-cash output {font-size:.9375rem}
+ .shift-business .shift-clock span,.shift-business .shift-cash span {font-size:.5rem}
+ .shift-business .shift-cash {gap:3px;min-width:52px}
+ .shift-business .shift-speed {padding:2px;gap:1px}
+ .shift-business .shift-speed button {padding:6px;font-size:.6875rem}
+ .shift-business #shift-menu,.shift-business #shift-store {min-width:54px;padding:7px 9px;font-size:.6875rem}
+ .shift-business-rail {border-radius:9px}
  .shift-business-rail #shift-queue-body {padding:10px}
- .shift-business .shift-toolbar {top:auto;left:12px;bottom:10px}
- .shift-business .shift-toolbar button {padding:8px 14px}
- .shift-business .shift-panel {top:128px;bottom:58px;width:238px;padding:14px}
+ .shift-business.shift-opening .shift-business-rail #shift-queue-body {padding:0}
+ .shift-opening-card {padding:16px 14px;gap:11px 6px}
+ .shift-opening-card h2 {font-size:1.125rem}
+ .shift-opening-reward {font-size:1rem}
+ .shift-opening-copy {font-size:.6875rem;line-height:1.4}
+ .shift-opening-card > button {font-size:.75rem;min-height:44px;margin-top:2px}
+ .shift-opening-stages {padding-top:10px;gap:5px}
+ .shift-opening-stages li {font-size:.5625rem;padding-top:6px}
+ .shift-opening-status {font-size:.6875rem}
+ .shift-business .shift-panel {top:var(--shift-view-top);left:var(--shift-layout-left);bottom:58px;width:238px;padding:14px}
  .shift-business .shift-hub {inset:76px 10px 54px;width:calc(100% - 20px);max-height:calc(100dvh - 130px);padding:14px 18px;border-radius:12px}
  .shift-business .shift-hub > header {padding-bottom:12px;gap:10px}
  .shift-business .shift-hub h2 {font-size:1.25rem}
@@ -314,8 +372,7 @@
  .shift-business-rail.is-first .shift-order-card > small {display:none}
 }
 @media (max-width:700px) {
- .shift-business-rail {width:250px;right:12px}
- .shift-business .shift-hud {left:12px;right:12px;gap:9px}
+ .shift-business .shift-hud {gap:9px}
  .shift-business .shift-hub > nav button {padding:6px 9px}
  .shift-business .shift-store-balance strong {font-size:.875rem}
 }

@@ -94,12 +94,22 @@ while workers pick. A single shipment pallet collects several partial lots of th
 same item, so fragmentation does not multiply wrapping and loading clicks or
 silently trap the business in leftover pallets.
 
-The beginning board stays below 65 words. It has a concrete goal, a product
-quantity, a payout, and Ship order. Barcode and lot details are optional. Stock
+The title and short premise belong in the top masthead. The opening has one
+order, its quantity and payout, and Ship order. The source rack is highlighted;
+the worker and live Pick, Pack, Ship stages connect that action to the physical
+simulation. The first paid order reveals planning tabs, time speeds, and Store.
+Its receipt points to buying stock. No tutorial flag is saved: eligibility follows
+the actual order and business state, and imported states that need supplies use
+the normal buying board immediately.
+
+The first board stays below 35 words. Barcode and lot details are optional. Stock
 prices, arrival estimates, space, and credit appear where a buying decision is
-made. The growth shop only offers upgrades that change the current simulation.
-The layout survives enlarged type and landscape phone dimensions with the same
-controls; the first action remains visible and at least 44 pixels tall.
+made. Store only offers upgrades that change the current simulation. Its later
+equipment stays visibly locked. The scene and interface share measured bounds,
+so the warehouse and dock fit beside the order on desktop and landscape phone.
+The first action and first paid-stock action stay visible with enlarged type
+and targets at least 44 pixels tall. This makes the intended sequence explicit;
+it still needs human playtesting to establish whether that sequence feels good.
 
 ## What testing establishes
 

@@ -1,6 +1,6 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.2.
+The public game at `one-shift.html` is an inventory business game, version 2.3.
 Start with six stocked pallets and $200. Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
 rack space, doors, and people. The first screen has one order and no tutorial dialog.
@@ -94,12 +94,27 @@ scarce vehicle pool. Construction is immediate. These are current abstractions.
 Steel blue, concrete gray, charcoal, white markings, and restrained safety orange.
 Local Century Supra, Segoe UI, and Commit Mono fonts. Procedural Canvas art and
 crisp display-resolution labels. The stocked racks show their product and quantity.
-Orders, Stock, and Worker share the right board. Floor details open on the left.
-The ordinary beginning screen stays below 35 words on the board. Store is the
-only floor toolbar button, positioned below the floor. Store and Menu are centered
-with consistent buttons. Secondary settings and stock details stay collapsed. Daily totals appear automatically at closing. Later
-equipment and products stay gray until their order milestones; Team needs a
-forklift. There are no Results or Home buttons. Warehouse walls have a plain
+The masthead names the game and its loop: fill orders, build the warehouse.
+The warehouse, dock, order board, and zoom controls share one centered frame.
+A fresh opening shows one order, its quantity and payout, and Ship order.
+The clock holds for this decision. The source rack is highlighted, and after
+shipping starts a Worker label and Pick, Pack, Ship stages explain the real
+movement. Picking, carrying, packing, truck arrival, and loading have live
+statuses, including gaps between tasks. The first sale takes about 30 seconds
+at 1x. Payment does not imply the departing truck has already cleared the dock.
+
+The first paid sale reveals Store, speed controls, and the Orders, Stock, and
+Worker tabs. A receipt leads to Buy stock, with the relevant product first in
+the stock board. The ordinary opening stays below 35 words on the board, with
+no duplicate heading, tutorial dialog, goal meter, or planning controls.
+Imported no-sale businesses with mixed demand or unavailable stock use the
+normal board and buying controls; they are never trapped in the first lesson.
+Their clock runs so a needed supplier can arrive.
+
+Store and Menu are centered with consistent buttons. Secondary settings and
+stock details stay collapsed. Daily totals appear automatically at closing.
+Later equipment and products stay gray until their order milestones; Team needs
+a forklift. There are no Results or Home buttons. Warehouse walls have a plain
 perimeter without roof stripes, detached pipes, vents, or parking outlines.
 
 Right or middle mouse drag pans. Wheel, + and - zoom. The camera starts close
@@ -133,6 +148,9 @@ Use Node. Browser checks require Playwright in `NODE_PATH`.
 - `node tools/test-one-shift-business-balance.cjs`: 20 seeds, 24 days, two ordinary
   buying policies, 960 shifts. Validates every shift and compares reinvestment
   against reactive restocking. Writes a source-hashed result.
+- `node tools/test-one-shift-opening-browser.cjs`: four viewport compositions,
+  native keyboard and touch first shipment, actual work stages, receipt and
+  physical restocking, fresh reload, saved-game recovery, and legacy transitions.
 - `node tools/test-one-shift-business-browser.cjs`: native mouse and keyboard
   actions, first sale, replenishment, mixed orders, reload, explicit save loading,
   reports, upgrades, right-drag camera, landscape touch, enlarged type, and portrait
