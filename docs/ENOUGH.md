@@ -1,6 +1,6 @@
 # How Much Is Enough?
 
-`enough.html` is an explorable post in In Progress. It has a whole public-domain painting, an opening topic selector and 12 cards: walking, exercise, protein, sets, sleep, fruit and vegetables, fiber, income, savings, work, alcohol and smoking. The owner removed the personal form, separate slider controls and Mind section. Shared fonts, links, navigation and footer follow `what-you-get-used-to.html`. The chooser is `enough-lab.html`.
+`enough.html` is the first homepage post, followed by Daylight Globe. It is no longer listed in In Progress. It has a whole public-domain painting, an opening topic selector and 12 cards: walking, exercise, protein, sets, sleep, fruit and vegetables, fiber, income, savings, work, alcohol and smoking. The owner removed the personal form, separate slider controls and Mind section. Shared fonts, links, navigation and footer follow `what-you-get-used-to.html`. The chooser is `enough-lab.html`.
 
 The current scientific decisions and primary sources are documented in [ENOUGH_EVIDENCE_AUDIT.md](ENOUGH_EVIDENCE_AUDIT.md). That report is downloadable from the post. Research artifacts and historical reviews live in the main checkout’s ignored `research/enough/v2/` directory. Historical AI reader reviews do not certify the current edits.
 

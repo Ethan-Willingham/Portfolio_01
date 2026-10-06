@@ -1,6 +1,7 @@
 /* Generate the In Progress collection pages and refresh the standalone homepage cards.
    Membership lives in HUBS. Homepage cards and their original GitHub creation
-   commits live in homepage-posts.json, with dates in America/Chicago.
+   commits live in homepage-posts.json, with homepage display dates and original
+   creation timestamps in America/Chicago.
    Use --hub=<slug> to generate just one collection, or --homepage for cards only.
    Imports are side-effect free. Re-run wrap-picture and build-search-index after generation. */
 import { readFileSync, writeFileSync } from 'node:fs';

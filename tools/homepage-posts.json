@@ -1,5 +1,17 @@
 [
   {
+    "href": "enough.html",
+    "thumb": "enough.jpg",
+    "date": "2026-10-04",
+    "dateDisplay": "4 Oct 2026",
+    "createdCommit": "405a1c23635232a2ff30b71388561a3e765b8794",
+    "createdAt": "2026-10-04T19:15:14-05:00",
+    "alt": "Workers resting beneath a tree in Pieter Bruegel’s The Harvesters.",
+    "keywords": "enough dose response steps walking exercise protein training sets sleep fruit fiber income savings work alcohol smoking research health",
+    "title": "How Much Is Enough?",
+    "desc": "Move the markers to compare amounts of walking, protein, sleep and more. Twelve charts show the outcomes, with research sources and calculation details for each."
+  },
+  {
     "href": "customer-success.html",
     "thumb": "customer-success.jpg",
     "date": "2026-07-09",
@@ -50,15 +62,16 @@
   },
   {
     "href": "daylight-globe.html",
-    "thumb": "daylight-globe-live-v2.jpg",
-    "date": "2026-04-23",
-    "dateDisplay": "23 Apr 2026",
+    "thumb": "daylight-globe-live-v4.jpg",
+    "date": "2026-10-03",
+    "dateDisplay": "3 Oct 2026",
     "createdCommit": "92854590a411ef73c7480a3030b230a1eabcfbfe",
     "createdAt": "2026-05-29T18:12:00-05:00",
-    "alt": "Dated satellite clouds, including two storm spirals over the Pacific, on the Daylight Globe.",
-    "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NASA Black Marble 2016 and NOAA SWPC OVATION. Real Daylight Globe screenshot.",
-    "keywords": "daylight earth globe satellite clouds sun moon aurora NOAA NASA EUMETSAT live space weather history time",
+    "alt": "Earth at dusk, the Sun and measured stars on the Daylight Globe.",
+    "credit": "Contains modified EUMETSAT data (2026), CC BY 4.0, with NOAA and JMA imagery. NASA Black Marble 2016 and NOAA SWPC OVATION. HYG 4.1 stars, David Nash / Astronexus, CC BY-SA 4.0. Real Daylight Globe screenshot.",
+    "keywords": "daylight earth globe satellite clouds sun moon stars eclipse aurora NOAA NASA EUMETSAT live space weather history time",
     "title": "Daylight Globe",
-    "desc": "Live sunlight, dated satellite clouds and NOAA's aurora forecasts. Spin the globe, pin a spot or follow real weather frames through time."
+    "desc": "Real clouds, moving sunlight and aurora forecasts. Orbit Earth or replay another time.",
+    "dateNote": "Homepage display date chosen by the owner on October 5, 2026 to place this post immediately after Enough."
   }
 ]
