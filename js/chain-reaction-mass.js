@@ -2,7 +2,7 @@
 (function(global){
   'use strict';
   const CR=global.ChainReaction=global.ChainReaction||{},U=.0508,PI=3.141592653589793;
-  CR.mass={VERSION:'0.1.0',properties(material,geometry){
+  CR.mass={VERSION:'0.2.0',properties(material,geometry){
     if(!material||!(material.densityKgM3>0))throw Error('Invalid bulk density');
     const rho=material.densityKgM3*U*U*U;
     const {width:w,height:h,depth:d,radius:r,thickness:t}=geometry;let mass,inertia;
@@ -21,5 +21,17 @@
     }
     if(!Number.isFinite(mass)||!Number.isFinite(inertia)||mass<=0||inertia<=0)throw Error('Invalid mass result');
     return {mass,inertia};
+  },compoundProperties(material,colliders,depth){
+    if(!Array.isArray(colliders)||!colliders.length)throw Error('Empty compound stock');
+    let total=0,x=0,y=0,inertia=0;
+    for(const c of colliders){
+      if(![c.x||0,c.y||0].every(Number.isFinite))throw Error('Invalid stock offset');
+      const p=this.properties(material,c.shape==='ball'?{construction:'disk',radius:c.radius,depth:c.depth??depth}:{construction:'box',width:c.width,height:c.height,depth:c.depth??depth});
+      total+=p.mass;x+=p.mass*(c.x||0);y+=p.mass*(c.y||0);
+      inertia+=p.inertia+p.mass*((c.x||0)*(c.x||0)+(c.y||0)*(c.y||0));
+    }
+    x/=total;y/=total;inertia-=total*(x*x+y*y);
+    if(!(inertia>0))throw Error('Invalid compound inertia');
+    return {mass:total,inertia,centerOfMass:{x,y}};
   }};
 })(globalThis);

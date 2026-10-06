@@ -35,7 +35,7 @@ node tools/chain-reaction/verify.mjs --full
 node tools/chain-reaction/lint.mjs
 ```
 
-The full verifier is read-only. It checks the vendored engine fingerprint and twenty-two
+The full verifier is read-only. It checks the vendored engine fingerprint and twenty-eight
 stored isolation hashes, reruns their numerical checks, and rejects any public stage
 until stage recording, robustness, step events and chain checks are implemented.
 A zero-stage result never proves a chain, a baton handoff or a robustness gate.
@@ -69,12 +69,52 @@ A desktop GPU at phone resolution remains a proxy, not an iPhone measurement. A 
 excludes other foundation tools, captures and browser runs during performance tests.
 A stale lock is reclaimed only after its recorded process has exited. Stress bodies are rendered and stepped together.
 
-Not implemented: stage emission normalization, kits, stage schema, step-event verification,
+Not implemented: recorded stage emission normalization, complete kit, stage schema,
 200-run stage robustness, recorder, stage manifests, camera planner, material/prop
 image lint, storyboard, sound, overview, first-load still, reveal flights and soak.
 Gate 0 evidence is complete: cross-engine spike parity, the phone proxy budget, the
 private chooser, the owner direction request and the owner tin-toy choice. Final
 look and sound approval, Gate 1 and all stage gates remain open.
+
+## Mechanical releases
+
+Physics version 0.2.0 adds compound bodies, sliding guides and limited revolute
+bearings. Compound bodies sum each piece's actual volume, mass, center of mass and
+moment of inertia. Every collider has zero automatic density; the explicit total
+is assigned to the body. Mass version 0.2.0 exposes the same arithmetic to Node and
+browsers. The original primitive mass results and twenty-two isolation hashes remain
+unchanged. Prismatic limits follow their stored axis; mirrored angular stops reverse
+their limits. These constraints represent mounted guides and bearing stop tabs.
+
+New mechanisms use the versioned `fresh-v1` contact profile. The pinned engine's
+default contact cache retained support after a thin latch moved clear at this scale.
+An identity contact hook requests fresh contact determination at every tick. It
+accepts every permitted pair and keeps the ordinary impulse solver. It changes no
+poses, velocities, forces or contact coefficients. Existing baseline fixtures keep
+their prior profile. The engine documents the hook in its
+[collision guide](https://rapier.rs/docs/user_guides/javascript/advanced_collision_detection/);
+its [contact-update code](https://github.com/dimforge/rapier/blob/master/src/geometry/narrow_phase/pair_update.rs)
+excludes hooked pairs from contact recycling. A pinned-engine reproduction and its
+fresh-contact replacement are checked together.
+
+Depth groups describe separate front and rear planes. Each compound piece can
+declare its own depth, depth offset and layer. The validator rejects a filtered pair
+whose visible depth intervals overlap. A bridge piece spans both planes and collides
+with both. The renderer must use these same dimensions and offsets. Nothing is
+filtered merely to avoid a jam.
+
+`geometry.mjs` rejects an intersecting armed layout before the first solver tick.
+`chain-reaction-events.js` observes contact, blocker withdrawal and marble clearance.
+It never drives a body. Contact time is the handoff time; a separate travel threshold
+confirms the recipient's motion. Comparing those threshold completion times would
+misorder two correctly timed contacts. The observer still rejects motion before
+contact, a blocked release and a marble released before clearance.
+
+`kit.mjs` checks the sliding latch, supported hanging cup and wheel knocker in both
+orientations, including exact masses, initial geometry, depth groups, transfer order,
+snapshot-preserving observation and disconnected-source controls. Five negative
+controls cover early motion, overlap, filtered visible collision, an unknown profile
+and reversed transfers. These are isolated kit tests, not approved public stages.
 
 ## Credits
 

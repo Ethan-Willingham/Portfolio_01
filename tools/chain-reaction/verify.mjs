@@ -6,6 +6,7 @@ import { ROOT, hash, deadline, fixtures, isolation, validate, physics } from './
 import { verifyCausality } from './causality.mjs';
 import { verifyMaterials } from './materials.mjs';
 import { measureLimits } from './limits.mjs';
+import { verifyKit } from './kit.mjs';
 const release=await toolLock();
 const clear=deadline(1800000);
 try {
@@ -25,9 +26,10 @@ try {
     if(fixture.causality){await verifyCausality(fixture);console.log('Contact causality and disconnected controls PASS: '+name);}
     count++;
   }
-  const materials=await verifyMaterials(),limits=await measureLimits();
+  const materials=await verifyMaterials(),limits=await measureLimits(),kit=await verifyKit();
   console.log('Material recipes: '+materials.recipes.length+' PASS; '+materials.massModelsChecked+' dimensional mass checks; stored masses unchanged');
   console.log('Limits: '+limits.railCornersPassed+' rail samples PASS; CCD, motion threshold and camera samples PASS; no stage robustness claimed');
   console.log('Isolation: '+count+' stored hashes and invariants PASS');
+  console.log('Kit: '+kit.report.length+' fresh-contact fixtures, exact compound mass, geometry, semantic transfers and '+kit.disconnectedControls+' disconnected controls PASS; '+kit.mutationsRejected+' mutations rejected');
   console.log('verify --full PASS 0/0 public stages; vendor hash PASS. Stage gates unavailable; foundations only.');
 } finally {clear();await release();}

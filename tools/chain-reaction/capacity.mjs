@@ -5,16 +5,17 @@ import {ROOT,toolLock} from './core.mjs';
 import {materialData,mass} from './materials.mjs';
 import {serve,browserRun} from './browser.mjs';
 const local=process.env.CHAIN_REACTION_RESEARCH;if(!local)throw Error('Set CHAIN_REACTION_RESEARCH');
+const fresh=process.argv.includes('--fresh'),counts=fresh?[32]:[32,48,64];
 const release=await toolLock(),server=await serve(local),report=[];
 const percentile=(values,p)=>{const sorted=[...values].sort((a,b)=>a-b);return sorted[Math.floor((sorted.length-1)*p)];};
 function fixture(count){
  const props=mass.properties(materialData.materials.maple,{construction:'box',width:.7,height:.6,depth:.3});
  const parts=[{id:'floor',shape:'box',fixed:true,mount:'bench',x:8,y:-.2,width:18,height:.4}];
  for(let n=0;n<count;n++)parts.push({id:'block'+n,shape:'box',x:2.5+(n%8)*.9,y:.301+Math.floor(n/8)*.61,width:.7,height:.6,...props});
- return {parts,causality:{source:'floor',targets:parts.slice(1).map(p=>p.id),maxRestAngle:.02,maxRestTravel:.01,fallenAngle:1.1,minimumImpulse:1e-8,required:false}};
+ return {parts,...(fresh?{contactProfile:'fresh-v1'}:{}),causality:{source:'floor',targets:parts.slice(1).map(p=>p.id),maxRestAngle:.02,maxRestTravel:.01,fallenAngle:1.1,minimumImpulse:1e-8,required:false}};
 }
 try{
- for(const count of [32,48,64])await browserRun('chromium',async browser=>{
+ for(const count of counts)await browserRun('chromium',async browser=>{
   for(const profile of [{width:1440,height:900,throttle:1},{width:844,height:390,throttle:4}]){
    const runs=[];
    for(let run=1;run<=5;run++){
@@ -54,5 +55,5 @@ try{
    report.push(measured);console.log(JSON.stringify({countPerWorld:count,profile,p95:measured.medianFrameP95,gpu:measured.medianGpuP95}));
   }
  });
- const out=resolve(local,'evidence/cycle-4');await mkdir(out,{recursive:true});await writeFile(resolve(out,'capacity.json'),JSON.stringify(report,null,2)+'\n');
+ const out=resolve(local,fresh?'evidence/cycle-5':'evidence/cycle-4');await mkdir(out,{recursive:true});await writeFile(resolve(out,'capacity.json'),JSON.stringify(report,null,2)+'\n');
 }finally{await server.close();await release();}

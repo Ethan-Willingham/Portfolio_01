@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 await import(pathToFileURL(resolve(ROOT, 'js/chain-reaction-physics.js')));
+await import(pathToFileURL(resolve(ROOT, 'js/chain-reaction-events.js')));
 export const physics = globalThis.ChainReaction.physics;
 export const moduleURL = pathToFileURL(resolve(ROOT, 'js/vendor/rapier2d-0.21.0/rapier.mjs')).href;
 export const hash = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -18,9 +19,10 @@ export function deadline(ms) {
 }
 export async function run(definition, collect = false) {
   const sim = await physics.create(definition, moduleURL), history = [];
+  const watch=definition.steps?.length?globalThis.ChainReaction.events.watch(sim,definition):null;
   try {
-    for (let i = 0; i < definition.ticks; i++) { sim.step(); if (collect) history.push(sim.state()); }
-    return { name: definition.name, ticks: sim.tick, hash: hash(sim.snapshot()), state: sim.state(), history };
+    for (let i = 0; i < definition.ticks; i++) { sim.step();watch?.sample();if (collect) history.push(sim.state()); }
+    return { name: definition.name, ticks: sim.tick, hash: hash(sim.snapshot()), state: sim.state(), history,...(watch?{events:watch.report()}:{} ) };
   } finally { sim.dispose(); }
 }
 export function validate(definition, result) {

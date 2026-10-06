@@ -1,0 +1,236 @@
+{
+  "parts": [
+    {
+      "id": "floor",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 8,
+      "y": -0.2,
+      "width": 16,
+      "height": 0.4,
+      "depth": 1.4,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "layer": 3,
+      "z": 0
+    },
+    {
+      "id": "entry-rail",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 1.85,
+      "y": 0.95,
+      "width": 4.7,
+      "height": 0.1,
+      "depth": 0.2,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "marble-in",
+      "shape": "ball",
+      "radius": 0.15625,
+      "x": 0,
+      "y": 1.15625,
+      "material": "glazed-ceramic",
+      "mass": 0.005027488269170486,
+      "inertia": 0.000049096565128618034,
+      "friction": 0.22,
+      "restitution": 0.15,
+      "vx": 4,
+      "spin": -25.6,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "mallet",
+      "shape": "box",
+      "x": 6.0410288743869955,
+      "y": 1.8976702090827755,
+      "width": 0.14,
+      "height": 3.4,
+      "depth": 0.12,
+      "material": "maple",
+      "mass": 0.005283697039294463,
+      "inertia": 0.005098591519684513,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "angle": 0.05235987755982989,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "mallet-pin",
+      "shape": "ball",
+      "radius": 0.018,
+      "depth": 0.12,
+      "fixed": true,
+      "mount": "bearing stand",
+      "x": 6.13,
+      "y": 0.2,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "wheel",
+      "shape": "compound",
+      "x": 5.05,
+      "y": 1.85,
+      "colliders": [
+        {
+          "shape": "ball",
+          "radius": 0.32,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "shape": "box",
+          "width": 2.2,
+          "height": 0.08,
+          "x": 0,
+          "y": 0,
+          "angle": 0.7853981633974483
+        },
+        {
+          "shape": "box",
+          "width": 2.2,
+          "height": 0.08,
+          "x": 0,
+          "y": 0,
+          "angle": -0.7853981633974483
+        }
+      ],
+      "depth": 0.1,
+      "material": "maple",
+      "mass": 0.006231831014008532,
+      "inertia": 0.0014673735040948085,
+      "centerOfMass": {
+        "x": 0,
+        "y": 0
+      },
+      "friction": 0.45,
+      "restitution": 0.15,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "wheel-pin",
+      "shape": "ball",
+      "radius": 0.045,
+      "fixed": true,
+      "mount": "wheel bearing stand",
+      "x": 5.05,
+      "y": 1.85,
+      "layer": 2,
+      "z": 0.15,
+      "depth": 0.12
+    },
+    {
+      "id": "spent-catch",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 5.8,
+      "y": 0.25,
+      "width": 0.12,
+      "height": 0.5,
+      "depth": 0.25,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "spent-left",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 3.75,
+      "y": 0.25,
+      "width": 0.12,
+      "height": 0.5,
+      "depth": 0.25,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "layer": 2,
+      "z": 0.15
+    }
+  ],
+  "joints": [
+    {
+      "type": "revolute",
+      "a": "mallet-pin",
+      "b": "mallet",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": -1.7
+      },
+      "limits": [
+        -1.5,
+        0.05235987755982989
+      ],
+      "stop": "bearing collar with fixed stop tab"
+    },
+    {
+      "type": "revolute",
+      "a": "wheel-pin",
+      "b": "wheel",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "contactProfile": "fresh-v1",
+  "noSleep": true,
+  "steps": [
+    {
+      "id": "transfer-1",
+      "kind": "contact",
+      "from": "marble-in",
+      "to": "wheel",
+      "minimumImpulse": 0.000001,
+      "motion": {
+        "axis": "angle",
+        "sign": 1,
+        "travel": 0.025
+      }
+    },
+    {
+      "id": "transfer-2",
+      "kind": "contact",
+      "from": "wheel",
+      "to": "mallet",
+      "minimumImpulse": 0.000001,
+      "motion": {
+        "axis": "angle",
+        "sign": -1,
+        "travel": 0.025
+      }
+    }
+  ],
+  "ticks": 720,
+  "name": "wheel-knocker",
+  "checks": [
+    {
+      "type": "finite"
+    },
+    {
+      "type": "fallen",
+      "id": "mallet",
+      "min": 0.5
+    }
+  ]
+}
