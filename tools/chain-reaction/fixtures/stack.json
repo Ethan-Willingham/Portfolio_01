@@ -1,0 +1,94 @@
+{
+  "name": "stack",
+  "ticks": 2400,
+  "parts": [
+    {
+      "id": "floor",
+      "fixed": true,
+      "shape": "box",
+      "x": 8,
+      "y": -0.2,
+      "width": 18,
+      "height": 0.4,
+      "mount": "bench"
+    },
+    {
+      "id": "block0",
+      "shape": "box",
+      "x": 5,
+      "y": 0.3,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block1",
+      "shape": "box",
+      "x": 5,
+      "y": 0.905,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block2",
+      "shape": "box",
+      "x": 5,
+      "y": 1.51,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block3",
+      "shape": "box",
+      "x": 5,
+      "y": 2.1149999999999998,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block4",
+      "shape": "box",
+      "x": 5,
+      "y": 2.7199999999999998,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block5",
+      "shape": "box",
+      "x": 5,
+      "y": 3.3249999999999997,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block6",
+      "shape": "box",
+      "x": 5,
+      "y": 3.9299999999999997,
+      "width": 1.2,
+      "height": 0.6
+    },
+    {
+      "id": "block7",
+      "shape": "box",
+      "x": 5,
+      "y": 4.534999999999999,
+      "width": 1.2,
+      "height": 0.6
+    }
+  ],
+  "joints": [],
+  "checks": [
+    {
+      "type": "range",
+      "id": "block7",
+      "key": "y",
+      "min": 4.45,
+      "max": 4.65
+    },
+    {
+      "type": "sleep",
+      "id": "block7"
+    }
+  ]
+}

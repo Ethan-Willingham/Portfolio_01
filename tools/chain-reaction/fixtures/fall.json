@@ -1,0 +1,37 @@
+{
+  "name": "fall",
+  "ticks": 1200,
+  "parts": [
+    {
+      "id": "floor",
+      "fixed": true,
+      "shape": "box",
+      "x": 8,
+      "y": -0.2,
+      "width": 18,
+      "height": 0.4,
+      "mount": "bench"
+    },
+    {
+      "id": "marble",
+      "shape": "ball",
+      "x": 3,
+      "y": 8,
+      "radius": 0.15625
+    }
+  ],
+  "joints": [],
+  "checks": [
+    {
+      "type": "range",
+      "id": "marble",
+      "key": "y",
+      "min": 0.14,
+      "max": 0.18
+    },
+    {
+      "type": "sleep",
+      "id": "marble"
+    }
+  ]
+}

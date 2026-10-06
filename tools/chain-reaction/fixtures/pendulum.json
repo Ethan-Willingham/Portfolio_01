@@ -1,0 +1,62 @@
+{
+  "name": "pendulum",
+  "ticks": 1200,
+  "parts": [
+    {
+      "id": "floor",
+      "fixed": true,
+      "shape": "box",
+      "x": 8,
+      "y": -0.2,
+      "width": 18,
+      "height": 0.4,
+      "mount": "bench"
+    },
+    {
+      "id": "anchor",
+      "shape": "box",
+      "x": 5,
+      "y": 7,
+      "width": 0.2,
+      "height": 0.2,
+      "fixed": true,
+      "mount": "wall"
+    },
+    {
+      "id": "arm",
+      "shape": "box",
+      "x": 5.784030843395989,
+      "y": 5.721213216910741,
+      "width": 0.18,
+      "height": 3,
+      "angle": 0.55
+    }
+  ],
+  "joints": [
+    {
+      "type": "revolute",
+      "a": "anchor",
+      "b": "arm",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": 1.5
+      }
+    }
+  ],
+  "checks": [
+    {
+      "type": "jointError",
+      "index": 0,
+      "max": 0.012
+    },
+    {
+      "type": "motion",
+      "id": "arm",
+      "min": 1
+    }
+  ]
+}

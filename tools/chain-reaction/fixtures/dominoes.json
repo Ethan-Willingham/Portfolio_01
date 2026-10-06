@@ -1,0 +1,150 @@
+{
+  "name": "dominoes",
+  "ticks": 1600,
+  "parts": [
+    {
+      "id": "floor",
+      "fixed": true,
+      "shape": "box",
+      "x": 8,
+      "y": -0.2,
+      "width": 18,
+      "height": 0.4,
+      "mount": "bench"
+    },
+    {
+      "id": "domino0",
+      "shape": "box",
+      "x": 2.0,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": -0.2
+    },
+    {
+      "id": "domino1",
+      "shape": "box",
+      "x": 2.65,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino2",
+      "shape": "box",
+      "x": 3.3,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino3",
+      "shape": "box",
+      "x": 3.95,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino4",
+      "shape": "box",
+      "x": 4.6,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino5",
+      "shape": "box",
+      "x": 5.25,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino6",
+      "shape": "box",
+      "x": 5.9,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino7",
+      "shape": "box",
+      "x": 6.55,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino8",
+      "shape": "box",
+      "x": 7.2,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino9",
+      "shape": "box",
+      "x": 7.8500000000000005,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino10",
+      "shape": "box",
+      "x": 8.5,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino11",
+      "shape": "box",
+      "x": 9.15,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino12",
+      "shape": "box",
+      "x": 9.8,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    },
+    {
+      "id": "domino13",
+      "shape": "box",
+      "x": 10.450000000000001,
+      "y": 0.65,
+      "width": 0.16,
+      "height": 1.3,
+      "angle": 0
+    }
+  ],
+  "joints": [],
+  "checks": [
+    {
+      "type": "fallen",
+      "id": "domino13",
+      "min": 1.1
+    }
+  ]
+}

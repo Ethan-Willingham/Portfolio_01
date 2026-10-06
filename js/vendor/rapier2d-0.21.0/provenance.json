@@ -1,0 +1,8 @@
+{
+  "package": "@dimforge/rapier2d-deterministic-compat",
+  "version": "0.21.0",
+  "tarball": "https://registry.npmjs.org/@dimforge/rapier2d-deterministic-compat/-/rapier2d-deterministic-compat-0.21.0.tgz",
+  "npmSha1": "c5544317e78178917dfdf7917d672677b86238b4",
+  "moduleSha256": "3cdab94005c1c90f18579715e14747982271ca50c3caa2ee6c996b4e2874d0c8",
+  "license": "Apache-2.0"
+}
