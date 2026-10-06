@@ -21,7 +21,7 @@ async function renderFrame(time,options={}){
   pixels.push(raw);
  }
  clouds.maskScanArtifacts(pixels,WIDTH);
- for(let i=0;i<pixels.length;i++)if(pixels[i]){if(clouds.GROUPS[i].source===clouds.NASA&&clouds.GROUPS[i].kind==='infrared')clouds.normalizeThermal(pixels[i]);pixels[i]=data.featherCoverage(pixels[i],WIDTH);}
+ for(let i=0;i<pixels.length;i++)if(pixels[i]){if(clouds.GROUPS[i].source===clouds.NASA&&clouds.GROUPS[i].kind==='infrared')clouds.normalizeThermal(pixels[i],WIDTH);pixels[i]=data.featherCoverage(pixels[i],WIDTH);}
  const frame={time:time.toISOString(),natural:result.blobs.slice(0,5).some(Boolean),sources:result.blobs.map(Boolean),sourceTimes:result.sourceTimes},files=new Map();
  for(const kind of ['visible','infrared']){
   const rgba=clouds.composite(pixels,WIDTH,kind);let covered=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i]>200)covered++;

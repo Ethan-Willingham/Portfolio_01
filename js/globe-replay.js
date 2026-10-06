@@ -37,13 +37,13 @@
   async function prepare(blobs,width,natural,sourceWidth){
     var visible,infrared;
     if(blobs.length===10){
-      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-35');
+      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-36');
       var clouds=globalThis.GlobeClouds,data=globalThis.GlobeData,sources=[],nativeWidth=sourceWidth||width;
       // Decode the original temperature codes before resizing. Interpolating
       // palette RGB first invents colors with unrelated thermal meanings.
       for(var index=0;index<10;index++){var source=blobs[index]?await read(blobs[index],nativeWidth):null;if(source&&blobs[index].type==='image/jpeg')for(var blank=0;blank<source.length;blank+=4)if(Math.max(source[blank],source[blank+1],source[blank+2])<8)source[blank+3]=0;sources.push(source);}
       clouds.maskScanArtifacts(sources,nativeWidth);
-      for(var group=0;group<10;group++)if(sources[group]){if(clouds.GROUPS[group].source===clouds.NASA&&clouds.GROUPS[group].kind==='infrared')clouds.normalizeThermal(sources[group]);sources[group]=reduce(sources[group],nativeWidth,width);sources[group]=data.featherCoverage(sources[group],width);if(typeof document!=='undefined')await new Promise(function(resolve){setTimeout(resolve,0);});}
+      for(var group=0;group<10;group++)if(sources[group]){if(clouds.GROUPS[group].source===clouds.NASA&&clouds.GROUPS[group].kind==='infrared')clouds.normalizeThermal(sources[group],nativeWidth);sources[group]=reduce(sources[group],nativeWidth,width);sources[group]=data.featherCoverage(sources[group],width);if(typeof document!=='undefined')await new Promise(function(resolve){setTimeout(resolve,0);});}
       visible=clouds.composite(sources,width,'visible');infrared=clouds.composite(sources,width,'infrared');
     }else{visible=await read(blobs[0],width);infrared=await read(blobs[1],width);}
     var pixels=new Uint8Array(visible.length),valid=0;

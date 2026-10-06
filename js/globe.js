@@ -4,7 +4,7 @@
   'use strict';
   var container = document.getElementById('globe-container');
   if (!container) return;
-  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds, shared=window.GlobeArchive, replay=window.GlobeReplay;
+  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds, shared=window.GlobeArchive, replay=window.GlobeReplay, aurora=window.GlobeAurora;
   var byId = function (id) { return document.getElementById(id); };
   var wrapper = document.querySelector('.globe-wrapper');
   var status = byId('globe-status'), clock = byId('globe-clock'), dataLine = byId('globe-data');
@@ -61,12 +61,11 @@
   var sunFraming = true, aimShift = 0;
   var locationButton=byId('globe-location'),locationStatus=byId('globe-location-status');
   var locationKey='daylight-globe-location',homeLocation=null,viewGeneration=0,locationGeneration=0;
-  var auroraStyle = new URLSearchParams(location.search).get('auroraStyle') || 'curtain';
-  if (!['shell','halo','curtain','layered'].includes(auroraStyle)) auroraStyle = 'curtain';
+  var auroraStyle = 'curtain';
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v35');
+  text(byId('globe-version'),'v36');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -209,7 +208,7 @@
     text(byId('globe-keyboard'),'The interactive globe is unavailable. Source links are below.');
     text(summary,message+' '+dataLine.textContent);
   }
-  if (!THREE || !math || !data || !stars || !optics || !timeline || !clouds || !replay) {
+  if (!THREE || !math || !data || !stars || !optics || !timeline || !clouds || !replay || !aurora) {
     unavailable('The interactive globe could not load.'); return;
   }
   var renderer;
@@ -237,7 +236,7 @@
   });
   var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
   replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-35',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-36',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -319,19 +318,32 @@
   var pinMarker = new THREE.Mesh(new THREE.RingGeometry(.014,.021,24),new THREE.MeshBasicMaterial({color:cssColor('--accent-hover'),side:THREE.DoubleSide}));
   pinMarker.visible=false; scene.add(pinMarker);
   var auroraTexture = solidTexture(0,0,0), auroraMeshes = [];
+  var auroraScaffold = aurora.scaffold();
   function buildAurora() {
-    auroraMeshes.forEach(function (mesh) {scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}); auroraMeshes=[];
-    var layers = auroraStyle === 'shell' ? [1.018] : auroraStyle === 'halo' ? [1.025,1.04] : auroraStyle === 'curtain' ? [1.018] : [1.018,1.028];
-    layers.forEach(function (height,index) {
-      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:.75/layers.length}},vertexShader:vertex,fragmentShader:[
-        'uniform sampler2D auroraMap; uniform vec3 sunDir; uniform float tick,layer,style,strength; varying vec2 vUv; varying vec3 vNormal,vWorld;',
-        'void main(){ vec2 gridUv=vec2((vUv.x*360.0+1.5)/362.0,(vUv.y*180.0+.5)/181.0); float probability=texture2D(auroraMap,gridUv).r; float night=1.0-smoothstep(-.20,-.035,dot(normalize(vNormal),sunDir));',
-        'float angle=vUv.x*6.2831853; float fold=sin(angle*7.0+vUv.y*17.0+tick*.10)*.9+sin(angle*19.0-vUv.y*11.0)*.35;',
-        'float filaments=.5+.25*sin(angle*61.0+fold)+.15*sin(angle*103.0+fold*2.0)+.1*sin(angle*151.0-fold); float curtain=.78+.22*clamp(filaments,0.0,1.0);',
-        'float pulse=.96+.04*sin(tick*.35+vUv.x*24.0); float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(cameraPosition-vWorld))),.8); float glow=probability*smoothstep(.10,.22,probability)*night*strength*pulse*mix(1.0,curtain,style)*(.35+.65*rim);',
-        'vec3 color=mix(vec3(.28,.86,.43),vec3(.43,.74,.36),layer/4.0); gl_FragColor=vec4(color,glow); }'
-      ].join('\n'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
-      var mesh = new THREE.Mesh(new THREE.SphereGeometry(height,128,96),material); mesh.visible=false; scene.add(mesh); auroraMeshes.push(mesh);
+    // Thin double-sided curtains have real depth, rise above the limb and are
+    // occluded by Earth. Their geographic footpoints sample the untouched grid.
+    auroraScaffold.forEach(function(group){
+      var geometry=new THREE.BufferGeometry();
+      ['position','foot','pattern','uv'].forEach(function(name){geometry.setAttribute(name,new THREE.BufferAttribute(group[name],name==='position'||name==='foot'?3:2));});
+      geometry.setIndex(new THREE.BufferAttribute(group.indices,1).setUsage(THREE.DynamicDrawUsage));geometry.setDrawRange(0,0);geometry.computeBoundingSphere();
+      var material=new THREE.ShaderMaterial({
+        uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},strength:{value:1.5}},
+        vertexShader:[
+          'attribute vec3 foot; attribute vec2 pattern; uniform float tick; varying vec3 vFoot; varying vec2 vPattern,vUv;',
+          'void main(){vFoot=foot;vPattern=pattern;vUv=uv;vec3 lifted=position+normalize(position-foot)*uv.y*uv.y*.0012*sin(pattern.x*13.0+pattern.y+tick*.22);gl_Position=projectionMatrix*modelViewMatrix*vec4(lifted,1.0);}'
+        ].join('\n'),
+        fragmentShader:[
+          'uniform sampler2D auroraMap; uniform vec3 sunDir; uniform float tick,strength; varying vec3 vFoot; varying vec2 vPattern,vUv;',
+          'void main(){vec3 n=normalize(vFoot);float lon=atan(-n.z,n.x);vec2 gridUv=vec2((lon/6.2831853*360.0+181.5)/362.0,(asin(clamp(n.y,-1.0,1.0))/3.14159265*180.0+90.5)/181.0);',
+          'float p=texture2D(auroraMap,gridUv).r;float night=1.0-smoothstep(-.20,-.035,dot(n,sunDir));float probability=p*smoothstep(.10,.22,p);if(probability*night<.0001)discard;',
+          'float h=vUv.y,angle=vPattern.x,phase=vPattern.y;float folds=sin(angle*9.0+phase+tick*.13)*.6+sin(angle*23.0-phase)*.25;',
+          'float ray=angle*311.0+folds*3.0;float fine=.5+.5*sin(ray);fine=mix(fine,.5,smoothstep(.7,2.5,fwidth(ray)));float threads=.30+.70*pow(fine,2.0);',
+          'float bands=.70+.30*sin(angle*61.0+phase+tick*.27);float tips=.58+.24*sin(angle*17.0+phase)+.12*sin(angle*43.0-phase);float fade=1.0-smoothstep(tips-.15,min(1.0,tips+.24),h);',
+          'float lower=smoothstep(0.0,.10,h);float green=exp(-pow((h-.23)/.30,2.0));float red=exp(-pow((h-.67)/.26,2.0))*.22;float violet=exp(-pow((h-.075)/.055,2.0))*.13;',
+          'vec3 emission=vec3(.12,.95,.38)*green+vec3(.65,.075,.12)*red+vec3(.38,.12,.58)*violet;',
+          'float glow=probability*night*strength*lower*fade*threads*bands;gl_FragColor=vec4(emission,glow);}'
+        ].join('\n'),extensions:{derivatives:true},side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
+      var mesh=new THREE.Mesh(geometry,material);mesh.visible=false;scene.add(mesh);auroraMeshes.push(mesh);
     });
   }
   buildAurora();
@@ -760,7 +772,7 @@
         if(signal.aborted){var e=new Error('Hourly decode aborted');e.name='AbortError';throw e;}
       }
       clouds.maskScanArtifacts(sourcePixels,result.width);
-      for(var source=0;source<sourcePixels.length;source++)if(sourcePixels[source]){if(clouds.GROUPS[source].source===clouds.NASA&&clouds.GROUPS[source].kind==='infrared')clouds.normalizeThermal(sourcePixels[source]);sourcePixels[source]=data.featherCoverage(sourcePixels[source],result.width);}
+      for(var source=0;source<sourcePixels.length;source++)if(sourcePixels[source]){if(clouds.GROUPS[source].source===clouds.NASA&&clouds.GROUPS[source].kind==='infrared')clouds.normalizeThermal(sourcePixels[source],result.width);sourcePixels[source]=data.featherCoverage(sourcePixels[source],result.width);}
       for(var group=0;group<2;group++){
         var output=document.createElement('canvas');output.width=result.width;output.height=result.width/2;outputs.push(output);
         var ctx=output.getContext('2d'),image=ctx.createImageData(result.width,result.width/2);image.data.set(clouds.composite(sourcePixels,result.width,group?'infrared':'visible'));ctx.putImageData(image,0,0);
@@ -877,7 +889,8 @@
       var offset=((lat+90)*362+column)*4;rgba[offset]=Math.round(value.grid[(lat+90)*360+lon]/100*255);rgba[offset+3]=255;
     }
     auroraTexture.dispose();auroraTexture=configureTexture(new THREE.DataTexture(rgba,362,181,THREE.RGBAFormat));auroraTexture.wrapS=THREE.ClampToEdgeWrapping;
-    auroraMeshes.forEach(function(mesh){mesh.material.uniforms.auroraMap.value=auroraTexture;});updateAstronomy();
+    aurora.select(auroraScaffold,value.grid);
+    auroraMeshes.forEach(function(mesh,i){mesh.material.uniforms.auroraMap.value=auroraTexture;var geometry=mesh.geometry;geometry.index.needsUpdate=true;geometry.index.updateRange.offset=0;geometry.index.updateRange.count=auroraScaffold[i].count;geometry.setDrawRange(0,auroraScaffold[i].count);});updateAstronomy();
   }
   async function refreshWeather() {
     if(fetchingWeather||navigator.onLine===false||Date.now()-weatherChecked<60000)return;
