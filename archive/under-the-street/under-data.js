@@ -426,6 +426,14 @@
     "hasInactive": true
   }
 };
+  var lineGroups = [
+    {id:'water',label:'Water',color:C.water,layers:[],detail:'No water-main routes',missing:'Water mains and service-pipe routes are absent.'},
+    {id:'sewer',label:'Sewage',color:C.sewer,layers:['interceptors'],detail:'Interceptors only',missing:'Local sanitary mains and laterals are absent.'},
+    {id:'storm',label:'Storm drains',color:C.water,layers:['troutBrook','rwmwdPipes','buried'],detail:'Partial storm routes',missing:'Most local storm drains and laterals are absent.'},
+    {id:'gas',label:'Gas / pipes',color:C.gas,layers:['pipelines'],detail:'2 gas; 30 unknown',missing:'The gas-distribution and district-heat networks are absent.'},
+    {id:'power',label:'Power',color:C.power,layers:['power','feeders'],detail:'Partial electric lines',missing:'A complete buried-cable and duct-bank network is absent.'},
+    {id:'cables',label:'Cables',color:C.net,layers:['signalLines'],detail:'Traffic signals only',missing:'Residential and commercial telecom routes are absent.'}
+  ];
   var topics = {
   "water": {
     "title": "Saint Paul drinking water",
@@ -512,6 +520,8 @@
     ]
   }
 };
+
+  topics.lines = {title:'All available utility lines',text:'Every retained utility-line record in Saint Paul, including former segments, empty conduit and radio connections. None of these sources covers a complete city network. Streets provide dim navigation context.',layers:lineGroups.reduce(function(ids,g){return ids.concat(g.layers);},[])};
 
   var hydroTypes = {43:'Aqueduct or tunnel',70:'Road culvert',71:'Underground storm sewer',72:'Force main',90:'Superseded channel'};
   var plantKinds = {nuclear:'nuclearplant',coal:'coalplant',gas:'gasplant',hydro:'hydroplant',solar:'solarplant',wind:'windplant',waste:'wasteplant',biomass:'biomassplant',oil:'oilplant',battery:'batteryplant'};
@@ -884,5 +894,5 @@
       return inside||onEdge;
     });
   }
-  window.UnderStreetData = {topics:topics,layers:layers,name:name,type:type,facts:facts,wiki:wiki,isNamed:isNamed,status:status,isVisible:isVisible,typeInfo:typeInfo,recordURL:recordURL,primarySources:primarySources,color:color,lineStyle:lineStyle,sourceNotes:sourceNotes,applyManifest:applyManifest,displayDate:displayDate,contains:contains};
+  window.UnderStreetData = {lineGroups:lineGroups,topics:topics,layers:layers,name:name,type:type,facts:facts,wiki:wiki,isNamed:isNamed,status:status,isVisible:isVisible,typeInfo:typeInfo,recordURL:recordURL,primarySources:primarySources,color:color,lineStyle:lineStyle,sourceNotes:sourceNotes,applyManifest:applyManifest,displayDate:displayDate,contains:contains};
 }());

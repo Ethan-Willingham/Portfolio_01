@@ -4,8 +4,8 @@ const output=process.env.UNDER_MAP_TEST_OUTPUT||'/tmp/saint-paul-qa';fs.mkdirSyn
 (async()=>{const h=await harness();try{
  const {page,context}=await h.page();await settle(page);
  assert.equal(await page.title(),"What's Under a Saint Paul Street");
- assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,'storm');
- assert.equal(await page.locator('.um-topics button').count(),7);
+ assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,'lines');
+ assert.equal(await page.locator('.um-topics button').count(),8);
  assert.equal(await page.locator('#um-city,[data-um-topic="tour"],.rail,.top-nav').count(),0);
  assert.doesNotMatch(await page.locator('body').textContent(),/Twin Cities|Minneapolis|Bloomington|Eagan|Maplewood|West Saint Paul|Bassett|Field guide|Start here/i);
  for(const topic of ['water','wastewater','storm','power','gas','networks','ground']){

@@ -1,7 +1,9 @@
 # What's Under a Saint Paul Street: data notes
 
-The published post and explorer cover Saint Paul city limits only. The map opens on the Trout Brook and district storm routes. The October 3,
-2026 release contains 40 selectable layers, 44 downloadable datasets and four
+The published post and explorer cover Saint Paul city limits only. The map opens
+on All lines. The October 6, 2026 interface combines eight utility-line
+sources and 2,806 records, with visible counts and coverage gaps for six systems.
+The retained city snapshot contains 40 selectable layers, 44 downloadable datasets and four
 photographs of exact mapped sites. Source snapshots vary in age; the retrieval
 or clipping date does not establish the condition of an asset today.
 
@@ -59,7 +61,9 @@ alignment or size of a water main. Keep the December 2021 snapshot date visible.
 include 1,297 fiber, 65 copper, 31 empty, six radio, four low-voltage, two abandoned,
 one overhead low-voltage and one unclassified record. Radio is not cable. Empty
 conduit does not establish an installed cable. These routes do not establish burial
-depth, current operation or a home's internet service. Abandoned records are hidden
+depth, current operation or a home's internet service. All lines includes
+abandoned records, radio links and empty conduit, each with its
+source classification. In the separate Cables system, abandoned records are hidden
 until the inactive-record switch is enabled.
 
 ## Other retained records
@@ -116,8 +120,65 @@ These public snapshots do not supply complete current city water-main, local
 sanitary-sewer, storm-drain, gas-distribution or residential-fiber networks. The
 2021 Hillcrest PDF is linked as published project-area evidence, without invented
 traces. The old 2014 storm-drain KML was not recovered and is not fabricated here.
-The owner's SPRWS access request is separate from these anonymous public exports.
+No additional water-main or local sanitary-main geometry was obtained.
+A GitHub and GitLab repository search found no verified complete public route
+export; search limitations and rejected candidates are recorded below.
 A blank street means no route in the retained sources; it does not mean no utility.
+
+## All lines inventory
+
+| System | Retained line records | Limits |
+| --- | ---: | --- |
+| Drinking water | 0 | No water mains or service-pipe alignments |
+| Sewage | 1,203 | MCES interceptors; local municipal mains and laterals absent |
+| Storm drains | 76 | Six Trout Brook, 60 RWMWD and 10 DNR buried-route records; partial coverage |
+| Gas / unidentified pipelines | 32 | Two gas-tagged segments and 30 unclassified-substance pipes |
+| Power | 88 | 55 transmission and 33 local electric line records; incomplete, often above ground |
+| Cables | 1,407 | Traffic-signal connections only, including empty conduit and radio |
+
+Counts describe source records, not unique installed pipes or cable runs. The
+interceptor export includes 1,112 online, 64 abandoned, 22 removed and five offline
+segments. All lines shows the former records with their retained status and style.
+No point, polygon, raster, facility photograph or aerial image is shown in this
+view. Dim street centerlines and the city outline provide navigation context.
+All eight utility sources load at city scale. Group and source switches are
+independent of the separate system tabs, and survive a copied map link.
+
+## Repository search, October 6, 2026
+
+The search used GitHub code and repository APIs, GitLab public-project search,
+repository file trees, and web searches restricted to those two hosts. Terms
+included Saint Paul, St. Paul, St Paul, SaintPaul, stpaul, SPRWS, watermain,
+WaterMain, SewerMain, pwSanitary, pwStormSewer, sewer, SWMM, EPANET, MCES,
+TroutBrookInterceptor and the public agencies' domains. GeoJSON, KML, CSV and
+INP searches were checked separately. Existing project copies of the data
+were excluded as new evidence.
+
+No verified complete Saint Paul water-main or local sanitary-sewer line dataset
+was recovered. These were the closest candidates:
+
+| Candidate | What inspection established |
+| --- | --- |
+| [ccollins12000/SaintPaulData](https://github.com/ccollins12000/SaintPaulData) | Seven files covering budget, crashes, crime and administrative shapes; no pipes |
+| [OpenTwinCities](https://github.com/OpenTwinCities) | Civic repositories and portal links; no identified pipe export |
+| [MacGIS urban maps](https://github.com/MacGIS/MacGIS.github.io) | Ward maps; no utility route files in its 17-file tree |
+| [LeadServiceLineVerdict](https://github.com/ichbinhyeok/LeadServiceLineVerdict/blob/main/data/normalized/utilities/saint-paul-regional-water-services-mn.json) | SPRWS summary counts and official lead-program links, without route geometry |
+| [cmorbitzer/jeeves](https://github.com/cmorbitzer/jeeves/blob/463ad76d29f60d75957ab98884e95035e2b4e44f/functions/src/sprws.ts) | Water-bill statement retrieval code; no pipe dataset |
+| [gunnaraas/watermeter](https://github.com/gunnaraas/watermeter) | Home water-meter readings; no route geometry |
+| [Harvard wastewater equity study](https://github.com/gradlab/wastewater_equity) | Minnesota collection-system survey tables and Census boundary shapes; no local pipe routes |
+| [EPIC drinking-water funding tracker](https://github.com/Environmental-Policy-Innovation-Center/dw-dashboard) | Minnesota project funding lists and descriptions; no pipe geometry |
+| [AmericasWater/AWASH](https://github.com/AmericasWater/awash) | Supply/demand modeling and utility cost tables; no identified Saint Paul pipe export |
+| [USEPA/Sewersheds](https://github.com/USEPA/Sewersheds) | Sewershed polygons, including modeled areas; not sewer-pipe alignments |
+| [GeoCommons archive](https://github.com/geoiq/gc_data) | Ten Saint Paul name-matching exports inspected: points, wards and planning areas; none a pipe-line export |
+| [Minnesota GIS workshop on GitLab](https://gitlab.com/mhaffner/mngis-workshop) | Counties, springs, hazard data and a raster; no identified utility route export |
+
+GitHub code searches have a ten-request-per-minute limit. Two initial queries
+were rate-limited and were rerun successfully after the window reset. Results
+were capped at 100 per query; broad place-name matches were dominated by global
+place lists and unrelated data. GitLab's anonymous global code-search endpoint
+returned HTTP 401. Its public project search and the relevant workshop file tree
+were accessible. Neither platform search covers private repositories, and a
+negative search result does not establish that no public copy exists anywhere.
 
 ## Reproduction and checks
 
@@ -132,6 +193,7 @@ Run these from the repository root:
 ```sh
 python tools/under-street/build-saint-paul.py --input /path/to/source-archive
 node tools/under-street/test-data.cjs
+node tools/under-street/test-lines.cjs
 python tools/under-street/test-scope.py
 node tools/under-street/test-explorer.cjs
 node tools/under-street/test-explorer-deep.cjs

@@ -20,12 +20,12 @@
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/archive/under-the-street/under-the-street.html">
-  <meta property="og:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-sp1">
+  <meta property="og:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261006-lines1">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Saint Paul public storm-pipe routes inside the city boundary.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261003-sp1">
+  <meta name="twitter:image" content="https://ethanwillingham.com/archive/under-the-street/assets/under-the-street-og.jpg?v=20261006-lines1">
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -98,7 +98,7 @@
   /* sources */
   .srcs { margin: 4rem 0 2rem; }
   </style>
-  <link rel="stylesheet" href="under-map.css?v=20261003-sp1">
+  <link rel="stylesheet" href="under-map.css?v=20261006-lines1">
 </head>
 <body>
   <script src="/js/archive-banner.js"></script>
@@ -111,7 +111,7 @@
         <p class="u-eyebrow">Saint Paul</p>
         <h1 class="u-title">What's Under a Saint Paul Street</h1>
         <p class="u-dek">Trout Brook carries rain under the city. Other pipes bring drinking water, take sewage away and heat downtown buildings.</p>
-        <p class="u-meta"><b>Saint Paul public records</b> <span class="u-sep">/</span> 6 min read</p><p class="u-entry-links"><a href="#undermap">Explore the map</a><a href="#street">Read the article</a></p>
+        <p class="u-meta"><b>Saint Paul public records</b> <span class="u-sep">/</span> 6 min read</p><p class="u-entry-links"><a href="#undermap" data-map-topic="lines">Explore all lines</a><a href="#street">Read the article</a></p>
       </header>
 
 <section class="ummap" id="undermap" aria-labelledby="um-title">
@@ -125,9 +125,10 @@
     </header>
 
     <nav class="um-topics" aria-label="Choose a system">
+      <button type="button" data-um-topic="lines" aria-pressed="true">All lines<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="water" aria-pressed="false">Drinking water<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="wastewater" aria-pressed="false">Sewage<span class="um-topic-count" aria-hidden="true"></span></button>
-      <button type="button" data-um-topic="storm" aria-pressed="true">Rain &amp; river<span class="um-topic-count" aria-hidden="true"></span></button>
+      <button type="button" data-um-topic="storm" aria-pressed="false">Rain &amp; river<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="power" aria-pressed="false">Power<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="gas" aria-pressed="false">Gas &amp; heat<span class="um-topic-count" aria-hidden="true"></span></button>
       <button type="button" data-um-topic="networks" aria-pressed="false">Cables<span class="um-topic-count" aria-hidden="true"></span></button>
@@ -149,13 +150,25 @@
     <details class="um-layers">
       <summary>Map details <small>Layers and legend</small></summary>
       <div class="um-topic-copy">
-        <h3>Saint Paul storm drains</h3>
-        <p>The Trout Brook interceptor and district storm pipes, including Beltline and Battle Creek.</p>
+        <h3>All available utility lines</h3>
+        <p>Every retained utility-line record in Saint Paul. None of these sources covers a complete city network.</p>
       </div>
       <div class="um-inactive" hidden><button type="button" data-um-inactive aria-pressed="false">Include inactive records</button><p>Show reported former, removed, planned or offline assets alongside operating records.</p></div>
       <div class="um-layer-list" aria-label="Optional map layers"></div>
       <div class="um-legend" aria-label="Map legend"></div>
     </details>
+
+    <section class="um-line-coverage" aria-label="Available line data and missing networks">
+      <div class="um-line-groups">
+        <button type="button" data-line-group="water" aria-pressed="false" style="--line-color:var(--mark-water)" disabled><span>Water <b class="um-line-total">0</b></span><small>No water-main routes</small></button>
+        <button type="button" data-line-group="sewer" aria-pressed="true" style="--line-color:#9ec79a"><span>Sewage <b class="um-line-total">1,203</b></span><small>Interceptors only</small></button>
+        <button type="button" data-line-group="storm" aria-pressed="true" style="--line-color:var(--mark-water)"><span>Storm drains <b class="um-line-total">76</b></span><small>Partial storm routes</small></button>
+        <button type="button" data-line-group="gas" aria-pressed="true" style="--line-color:var(--mark-gas)"><span>Gas / pipes <b class="um-line-total">32</b></span><small>2 gas; 30 unknown</small></button>
+        <button type="button" data-line-group="power" aria-pressed="true" style="--line-color:#d9978c"><span>Power <b class="um-line-total">88</b></span><small>Partial electric lines</small></button>
+        <button type="button" data-line-group="cables" aria-pressed="true" style="--line-color:var(--mark-comms)"><span>Cables <b class="um-line-total">1,407</b></span><small>Traffic signals only</small></button>
+      </div>
+      <div class="um-line-note"><p>Includes former lines, empty conduit and radio links. Water mains and local sanitary mains are missing.</p><button type="button" data-lines-all disabled>Show all lines</button></div>
+    </section>
 
     <div class="um-map-key" aria-label="Map color key" hidden></div>
 
@@ -246,7 +259,7 @@
   <p>A <a href="https://en.wikipedia.org/wiki/Water_distribution_system">water main</a> supplies the street. A smaller service line runs toward each building. SPRWS owns the service from the main to the property line; the property owner owns the section from there to the meter. Some older service lines contain <a href="https://en.wikipedia.org/wiki/Lead_service_line">lead</a>. The city's material map records what is known about those pipes; it is not a test of the water coming from a tap. <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/customer-resources/lead-free-sprws">Lead Free SPRWS and address lookup</a></span></p>
   <p>The map includes 6,441 public hydrant records from the December 2021 snapshot and nine mapped water towers. A hydrant connects to the water network, but its location does not reveal the main's route. Highland Park's historic tower is no longer in water-storage service. <span class="u-src"><a href="https://services9.arcgis.com/OhApV2tSBivqSpuX/arcgis/rest/services/Public_Hydrants_2021_View/FeatureServer/0">Public hydrant inventory</a></span> <span class="u-src"><a href="https://www.stpaul.gov/departments/saint-paul-regional-water-services/about-sprws/highland-tower">Highland Tower</a></span></p>
   <p>Some actual water and sewer routes appear in the city's <a href="https://www.stpaul.gov/sites/default/files/2021-11/190487_Report_November12_2021_DRAFT.pdf">2021 Hillcrest utility plans</a>. Those drawings cover a project area. A complete current water-main network is not included here.</p>
-  <figure class="u-figure is-portrait"><picture><source type="image/webp" srcset="assets/map/img/tower-highland.webp?v=20261003-sp1"><img class="u-figure-img" src="assets/map/img/tower-highland.jpg?v=20261003-sp1" width="604" height="1200" alt="The stone Highland Park Water Tower in Saint Paul." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">Highland Park Water Tower in Saint Paul, photographed in December 2006. SPRWS identifies the historic tower as no longer in service. <a href="https://commons.wikimedia.org/wiki/File:Highland_Park_Water_Tower_2.jpg">Elkman</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>.</figcaption></figure>
+  <figure class="u-figure is-portrait"><picture><source type="image/webp" srcset="assets/map/img/tower-highland.webp?v=20261006-lines1"><img class="u-figure-img" src="assets/map/img/tower-highland.jpg?v=20261006-lines1" width="604" height="1200" alt="The stone Highland Park Water Tower in Saint Paul." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">Highland Park Water Tower in Saint Paul, photographed in December 2006. SPRWS identifies the historic tower as no longer in service. <a href="https://commons.wikimedia.org/wiki/File:Highland_Park_Water_Tower_2.jpg">Elkman</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>.</figcaption></figure>
   <p class="section-map-link"><a href="#undermap" data-map-topic="water">Explore drinking water</a></p>
 </section>
 
@@ -262,7 +275,7 @@
   <p>Xcel supplies Saint Paul's natural gas. Street mains feed smaller service pipes into buildings, where the gas can be burned for heating or cooking. Published community maps cover only some pipeline routes; their substance tags are retained here. <span class="u-src"><a href="https://www.stpaul.gov/residents/live-saint-paul/utilities">Saint Paul utilities</a></span></p>
   <p><a href="https://en.wikipedia.org/wiki/District_heating">District Energy Saint Paul</a> sends hot water through underground supply pipes. A heat exchanger transfers its heat to a building's own water circuit. The district water returns through another pipe to be heated again. Wood waste supplies part of the plant's fuel. <span class="u-src"><a href="https://www.districtenergy.com/services/how-it-works/">How district heat works</a></span> <span class="u-src"><a href="https://www.districtenergy.com/services/sustainability/environmental-stewardship/">Fuel sources</a></span></p>
   <p>The district's brochure lists 56 miles of supply and return piping combined, with hot-water supply temperatures of 180 to 250 degrees Fahrenheit. A separate chilled-water system provides cooling. Those pipes carry thermal energy. <span class="u-src"><a href="https://www.districtenergy.com/wp-content/uploads/2025/02/DESP_tour_brochure_print-2025.pdf">2025 plant brochure</a></span></p>
-  <figure class="u-figure"><picture><source type="image/webp" srcset="assets/map/img/district-stpaul.webp?v=20261003-sp1"><img class="u-figure-img" src="assets/map/img/district-stpaul.jpg?v=20261003-sp1" width="960" height="628" alt="District Energy Saint Paul building at 76 West Kellogg Boulevard." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">District Energy Saint Paul at 76 West Kellogg Boulevard, photographed in July 2020. <a href="https://commons.wikimedia.org/wiki/File:District_Energy_St._Paul.jpg">McGhiever</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>.</figcaption></figure>
+  <figure class="u-figure"><picture><source type="image/webp" srcset="assets/map/img/district-stpaul.webp?v=20261006-lines1"><img class="u-figure-img" src="assets/map/img/district-stpaul.jpg?v=20261006-lines1" width="960" height="628" alt="District Energy Saint Paul building at 76 West Kellogg Boulevard." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">District Energy Saint Paul at 76 West Kellogg Boulevard, photographed in July 2020. <a href="https://commons.wikimedia.org/wiki/File:District_Energy_St._Paul.jpg">McGhiever</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>.</figcaption></figure>
   <p class="section-map-link"><a href="#undermap" data-map-topic="gas">Explore gas and district heat</a></p>
 </section>
 
@@ -287,7 +300,7 @@
   <p>Saint Paul maintains about 804 miles of <a href="https://en.wikipedia.org/wiki/Sanitary_sewer">sanitary sewer</a>. Smaller pipes collect wastewater from buildings and feed larger regional interceptors. The map includes 1,203 interceptor records within the city, together with lift stations and flow meters. Former and removed records are available through the inactive-record switch. <span class="u-src"><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division">City sewer utility</a></span></p>
   <p>The Metro plant near Pig's Eye Lake opened in 1938. It treats wastewater before releasing treated water to the Mississippi. The interceptor map does not include every local branch or trace a building's entire route to the plant. <span class="u-src"><a href="https://metrocouncil.org/Wastewater-Water/Services/Wastewater-Treatment/Communities/Metro.aspx">Metropolitan Council</a></span></p>
   <p>The older <a href="https://en.wikipedia.org/wiki/Combined_sewer">combined system</a> carried sewage and runoff in the same pipes. Separating them reduced the amount of rainwater sent toward sewage treatment. The city still cleans and inspects its sewer pipes with cameras to identify obstructions and repairs. <span class="u-src"><a href="https://www.stpaul.gov/departments/public-works/sewer-utility-division/cleaning-and-televising">Cleaning and televising</a></span></p>
-  <figure class="u-figure"><picture><source type="image/webp" srcset="assets/map/img/aerial-ww-metro.webp?v=20261003-sp1"><img class="u-figure-img" src="assets/map/img/aerial-ww-metro.jpg?v=20261003-sp1" width="960" height="640" alt="Aerial photograph of Metropolitan Water Resource Recovery Facility." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">Metropolitan Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied. <a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USDA / USGS, The National Map</a>, <a href="https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits">Public domain</a>.</figcaption></figure>
+  <figure class="u-figure"><picture><source type="image/webp" srcset="assets/map/img/aerial-ww-metro.webp?v=20261006-lines1"><img class="u-figure-img" src="assets/map/img/aerial-ww-metro.jpg?v=20261006-lines1" width="960" height="640" alt="Aerial photograph of Metropolitan Water Resource Recovery Facility." loading="lazy" decoding="async"></picture><figcaption class="u-figure-cap">Metropolitan Water Resource Recovery Facility from above. USDA/USGS aerial imagery from the 2017 to 2021 source mosaic, refreshed in June 2024; the individual frame date is not supplied. <a href="https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer">USDA / USGS, The National Map</a>, <a href="https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits">Public domain</a>.</figcaption></figure>
   <p class="section-map-link"><a href="#undermap" data-map-topic="wastewater">Explore sewage</a></p>
 </section>
 
@@ -325,10 +338,10 @@
       }, { passive: true });
     })();
   </script>
-  <script src="assets/map/city-boundary.js?v=20261003-sp1" defer></script>
-  <script src="under-data.js?v=20261003-sp1" defer></script>
-  <script src="under-map.js?v=20261003-sp1" defer></script>
-  <script src="under-locate.js?v=20261003-sp1" defer></script>
+  <script src="assets/map/city-boundary.js?v=20261006-lines1" defer></script>
+  <script src="under-data.js?v=20261006-lines1" defer></script>
+  <script src="under-map.js?v=20261006-lines1" defer></script>
+  <script src="under-locate.js?v=20261006-lines1" defer></script>
   <script src="/js/backtotop.js"></script>
 
 

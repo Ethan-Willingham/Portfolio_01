@@ -6,7 +6,8 @@ const manifest=read('datasets.json'),s={window:{},Intl};
 vm.runInNewContext(fs.readFileSync(path.join(base,'city-boundary.js'),'utf8'),s);vm.runInNewContext(fs.readFileSync(path.join(root,'archive/under-the-street/under-data.js'),'utf8'),s);
 const data=s.window.UnderStreetData;data.applyManifest(manifest);
 assert.equal(manifest.scope,'Saint Paul city limits only');assert.equal(manifest.datasets.length,44);
-assert.deepEqual(Object.keys(data.topics).sort(),['gas','ground','networks','power','storm','wastewater','water']);
+assert.deepEqual(Object.keys(data.topics).sort(),['gas','ground','lines','networks','power','storm','wastewater','water']);
+assert.equal(data.topics.lines.layers.length,8);assert.ok(data.topics.lines.layers.every(id=>data.layers[id].kind==='line'));assert.equal(data.lineGroups.find(g=>g.id==='water').layers.length,0);
 assert.equal(data.contains(-93.12,44.95),true);for(const p of [[-93.265,44.975],[-93.08,44.904],[-93.1,44.997],[-93.3,44.83]])assert.equal(data.contains(...p),false);
 const files=new Set(),ids=new Set();let records=0,vertices=0;
 for(const d of manifest.datasets){
