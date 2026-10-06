@@ -1,6 +1,6 @@
 # Chain Reaction
 
-Chain Reaction is preparing its Phase 1 vertical slice, with no public machine or shipped stages. Its brief is
+Chain Reaction has an unlinked three-stage review slice at `chain-reaction.html`. Its look and sound remain unapproved. The brief is
 `research/next/09-chain-reaction.md` in the main checkout. Private project state and the
 local look chooser live in `research/chain-reaction/`, a separate local Git repository.
 Read the brief and that folder's current state before continuing.
@@ -36,10 +36,10 @@ node tools/chain-reaction/lint.mjs
 ```
 
 The full verifier is read-only. It checks the vendored engine fingerprint and twenty-eight
-stored isolation hashes, reruns their numerical checks, and rejects any public stage
-until stage recording, robustness, step events and chain checks are implemented.
-A zero-stage result never proves a chain, a baton handoff or a robustness gate.
-`--record` is unavailable during foundations.
+stored isolation hashes, reruns their numerical checks, and replays all recorded stage
+orientations. `--record` validates changed stages, runs their variations and interruption
+controls, then records poses, events, camera paths and hashes. A zero-stage result
+only proves the foundations.
 
 For browser tools, install Playwright in a scratch directory outside this repo. Match
 the cached WebKit build. Set `CHAIN_REACTION_PLAYWRIGHT` to its package path. The
@@ -69,12 +69,13 @@ A desktop GPU at phone resolution remains a proxy, not an iPhone measurement. A 
 excludes other foundation tools, captures and browser runs during performance tests.
 A stale lock is reclaimed only after its recorded process has exited. Stress bodies are rendered and stepped together.
 
-Not implemented: recorded stage emission normalization, complete kit, stage schema,
-200-run stage robustness, recorder, stage manifests, camera planner, material/prop
-image lint, storyboard, sound, overview, first-load still, reveal flights and soak.
+Remaining: the complete kit, row connector, material/prop image lint, full stage
+storyboards, fresh visual review and long soak. The review slice has emission
+normalization, schema, recorder, variation tests, manifest, camera paths, provisional
+sound, overview, loading stills and reveal flights.
 Gate 0 evidence is complete: cross-engine spike parity, the phone proxy budget, the
 private chooser, the owner direction request and the owner tin-toy choice. Final
-look and sound approval, Gate 1 and all stage gates remain open.
+look and sound approval and Gate 1 remain open.
 
 ## Mechanical releases
 
