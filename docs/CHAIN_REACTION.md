@@ -146,8 +146,9 @@ effects and physics mass assumptions remain provisional. No look approval is cla
 
 The lab uses a 13.039-degree vertical field, approximately a 105 mm lens with a
 24 mm sensor height, and a five-degree elevation. Its reveal demonstration eases
-camera distance in log space; reduced motion cuts directly. The finished stage camera,
-first-visit reveal, depth of field, motion blur, grain and bake/live matching are pending.
+camera distance in log space; reduced motion cuts directly. The public slice now has a baked stage camera, first-visit reveal, depth of field,
+motion blur and grain. Fallback stills use the live renderer; exact compression
+matching remains limited by WebP quantization.
 
 `rotation.mjs` creates exact 0, 45, 90, 135 and 180-degree captures at all three zooms,
 plus sheets beside the private source photographs. Set `CHAIN_REACTION_SHARP` to the
@@ -348,8 +349,10 @@ titles, durations and step counts.
 Camera paths use quintic easing and logarithmic zoom. Actual contact points are
 projected at 1440x900, 844x390 and 390x844 for both follow and reveal paths. The first
 pullback uses 2.3-second flights and a 1.5-second hold to keep the existing jerk caps.
-The cup's early contacts occur during this wider shot; it does not yet have the
-brief's four-second entry breather. The same width, height and target position join
+After the owner's zoom-flashing feedback, the reveal moved into stage 1's slow arm
+fall. It returns at 6.7 seconds, before the first contact at 6.896 seconds. Stage 2
+stays close through the cup setup. This solves the hidden-contact problem without
+retiming physics; it differs from the brief's proposed four-second stage-2 breather. The same width, height and target position join
 stages. The renderer carries the marble's painted rotation into the next entry and
 hides each future canonical entry until its predecessor arrives.
 
@@ -358,13 +361,33 @@ beveled edges, visible bearings, stops, guide slots, stands and dashpots. Depth 
 uses the depth buffer and distance to the focus plane. Two exposure samples provide
 an approximation of a 180-degree shutter at 60 fps. They change display poses only.
 Physics stays at 240 Hz. Film grain stops when playback pauses. The renderer warms
-both scene and film shaders before motion.
+both scene and film shaders before motion. Both shutter targets have depth buffers.
+The row light and its shadow volume stay anchored to the set during camera travel.
+A missing depth buffer formerly let rear objects overwrite front objects in one
+shutter sample, changing brightness by up to 82 RGB levels on the frozen scene.
 
 `slice.mjs` compares six full-stage snapshots and semantic reports in Chrome and
 WebKit, then checks controls, layouts, deep links and reduced motion. `film.mjs`
 measures five busy and overview runs per profile, captures sixteen splice frames,
 and checks continuous playback. `opening.mjs` checks the automatic reveal, return
-and saved-stage resume in both browsers. The browser harness owns each test process
+and saved-stage resume in both browsers. Its return-before-contact assertion prevents
+future opening edits from hiding the first transfer. `temporal.mjs` freezes bodies
+and grain, compares both shutter passes at three zooms and three screen shapes in
+both browsers, and checks a 121-frame pullback-and-return sequence. All 24 comparisons
+are now pixel-identical. These checks isolate occlusion and return stability; they
+do not substitute for watching the moving scene.
+
+`storyboard.mjs` steps each canonical stage in Node, checks its stored state hash,
+then renders exact requested ticks in the browser without rAF. It writes twelve
+event frames, half-second timelines, sixteen frames at 30 fps around the payoff
+and handoff, a fixed-camera maximum-light exposure of swept surfaces, and three
+1:1 pixel crops at the closest allowed zoom. The first-visit reveal gets half-second
+sheets at desktop and both phone shapes. Reports retain physics and renderer hashes.
+All images and traces stay private. Set `CHAIN_REACTION_SHARP` to the scratch Sharp
+package, and optionally set `CHAIN_REACTION_EVIDENCE` to a cycle directory. Otherwise
+new capture tools use `research/chain-reaction/evidence/latest`.
+
+The browser harness owns each test process
 and closes it in a finally block.
 
 ## Sound for owner review
