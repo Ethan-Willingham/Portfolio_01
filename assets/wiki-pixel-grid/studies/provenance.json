@@ -1,0 +1,38 @@
+[
+  {
+    "article": "Jichang Garden",
+    "articleId": 584099,
+    "revision": "9983524",
+    "source": "https://simple.wikipedia.org/w/index.php?oldid=9983524",
+    "evidence": "sty|Northern Song dynasty]].He built it on the basis of old building, making hills and ponds, planting flowers and trees, building houses, and changing it to a garden. After the death of Qin Jin, the garden was inherited by his family member ",
+    "artwork": "random-1-jichang-garden.webp",
+    "selection": "Three fresh SQLite ORDER BY random() selections, excluding the original 250. No replacements.",
+    "textLicense": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "creation": "Individually authored LLM drawing code and raster brush strokes. No image-generation model.",
+    "interpretation": "Artistic interpretation of the article subject."
+  },
+  {
+    "article": "Läufelfingen",
+    "articleId": 671099,
+    "revision": "9072590",
+    "source": "https://simple.wikipedia.org/w/index.php?oldid=9072590",
+    "evidence": "me\t\t= Läufelfingen\n | image_photo          = Laeufelfingen 370.JPG\n | municipality_name\t= Läufelfingen\n | municipality_type\t= municipality\n | imagepath_coa\t= Wappen Laeufelfingen.png|pixel_coa=\n | map\t\t\t= Karte Gemeinde Läufelfingen",
+    "artwork": "random-2-laufelfingen.webp",
+    "selection": "Three fresh SQLite ORDER BY random() selections, excluding the original 250. No replacements.",
+    "textLicense": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "creation": "Individually authored LLM drawing code and raster brush strokes. No image-generation model.",
+    "interpretation": "Artistic interpretation of the article subject."
+  },
+  {
+    "article": "Filippa Reinfeldt",
+    "articleId": 205609,
+    "revision": "7603320",
+    "source": "https://simple.wikipedia.org/w/index.php?oldid=7603320",
+    "evidence": "px\n| caption = Filippa and [[Fredrik Reinfeldt]] in 2009\n| office = [[Municipal Commissioner]] of [[Täby Municipality|Täby]], [[Uppland]]\n| term_start =\n| term_end =\n| predecessor =\n| successor =\n| constituency =\n| majority =\n| birth_date = {",
+    "artwork": "random-3-filippa-reinfeldt.webp",
+    "selection": "Three fresh SQLite ORDER BY random() selections, excluding the original 250. No replacements.",
+    "textLicense": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "creation": "Individually authored LLM drawing code and raster brush strokes. No image-generation model.",
+    "interpretation": "Artistic interpretation of the article subject."
+  }
+]
