@@ -426,19 +426,24 @@
     "hasInactive": true
   }
 };
+  ['water','sanitary','storm','gas','electric','telecom'].forEach(function(system){
+    var detail={water:['Water','watermain',C.water],sanitary:['Sanitary sewer','sanitary',C.sewer],storm:['Storm sewer','stormsewer',C.water],gas:['Gas','gas',C.gas],electric:['Electric','undergroundpower',C.power],telecom:['Telecom','telecomdrawing',C.net]}[system];
+    layers['drawing'+system.charAt(0).toUpperCase()+system.slice(1)]={title:'St. Thomas '+detail[0].toLowerCase()+', 2023 drawing',file:'data/drawing-ust-'+system+'.json',kind:'line',color:detail[2],type:detail[1],minZ:13,on:true,drawing:true,note:'Approximate PDF registration; drawing fragments, present status unverified'};
+  });
   var lineGroups = [
-    {id:'water',label:'Water',color:C.water,layers:[],detail:'No water-main routes',missing:'Water mains and service-pipe routes are absent.'},
-    {id:'sewer',label:'Sewage',color:C.sewer,layers:['interceptors'],detail:'Interceptors only',missing:'Local sanitary mains and laterals are absent.'},
-    {id:'storm',label:'Storm drains',color:C.water,layers:['troutBrook','rwmwdPipes','buried'],detail:'Partial storm routes',missing:'Most local storm drains and laterals are absent.'},
-    {id:'gas',label:'Gas / pipes',color:C.gas,layers:['pipelines'],detail:'2 gas; 30 unknown',missing:'The gas-distribution and district-heat networks are absent.'},
-    {id:'power',label:'Power',color:C.power,layers:['power','feeders'],detail:'Partial electric lines',missing:'A complete buried-cable and duct-bank network is absent.'},
-    {id:'cables',label:'Cables',color:C.net,layers:['signalLines'],detail:'Traffic signals only',missing:'Residential and commercial telecom routes are absent.'}
+    {id:'water',label:'Water',color:C.water,layers:['drawingWater'],detail:'2023 drawing only',missing:'Water routes cover one 2023 campus drawing; the city network is missing.'},
+    {id:'sewer',label:'Sewage',color:C.sewer,layers:['interceptors','drawingSanitary'],detail:'Interceptors + drawing',missing:'Local sanitary coverage is limited to a 2023 campus drawing.'},
+    {id:'storm',label:'Storm drains',color:C.water,layers:['troutBrook','rwmwdPipes','buried','drawingStorm'],detail:'GIS + 2023 drawing',missing:'Most local storm drains and laterals are absent.'},
+    {id:'gas',label:'Gas / pipes',color:C.gas,layers:['pipelines','drawingGas'],detail:'Partial pipes + drawing',missing:'Citywide gas-distribution and district-heat routes are missing.'},
+    {id:'power',label:'Power',color:C.power,layers:['power','feeders','drawingElectric'],detail:'GIS + 2023 drawing',missing:'A complete buried-cable and duct-bank network is absent.'},
+    {id:'cables',label:'Cables',color:C.net,layers:['signalLines','drawingTelecom'],detail:'Signals + campus drawing',missing:'Citywide residential and commercial telecom routes are missing.'}
   ];
   var topics = {
   "water": {
     "title": "Saint Paul drinking water",
-    "text": "Historic towers and the public hydrant inventory. Hydrants mark connections to the water system. Main routes are not included in the public exports used here.",
+    "text": "Water lines recovered from a May 2023 St. Thomas drawing, plus towers and public hydrants. Drawing lines are approximate and dated; the full city water-main network is absent.",
     "layers": [
+      "drawingWater",
       "towers",
       "hydrants",
       "protection",
@@ -450,6 +455,7 @@
     "text": "Interceptor pipes, the Metro treatment plant, lift stations and flow meters inside Saint Paul. Local sanitary branches are not included as a complete city network.",
     "layers": [
       "interceptors",
+      "drawingSanitary",
       "plants",
       "lifts",
       "meters",
@@ -463,6 +469,7 @@
     "layers": [
       "troutBrook",
       "rwmwdPipes",
+      "drawingStorm",
       "rwmwdStructures",
       "rwmwdPonds",
       "buried",
@@ -475,6 +482,7 @@
     "text": "Transmission lines, substations and generating sites within the city. Mapped local feeders are partial coverage. A power line is not necessarily underground.",
     "layers": [
       "power",
+      "drawingElectric",
       "substations",
       "powerplants",
       "generators",
@@ -487,7 +495,8 @@
     "title": "Saint Paul gas and district heat",
     "text": "Tagged pipeline routes and District Energy Saint Paul. Recorded substances are kept separate; many source records do not identify what the pipe carries.",
     "layers": [
-      "pipelines"
+      "pipelines",
+      "drawingGas"
     ]
   },
   "networks": {
@@ -495,6 +504,7 @@
     "text": "City traffic-signal connections include fiber and copper. Their routes do not establish residential broadband service. Data-center, exchange and railway records add local context.",
     "layers": [
       "signalLines",
+      "drawingTelecom",
       "comms",
       "exchanges",
       "telephoneAreas",
@@ -521,7 +531,7 @@
   }
 };
 
-  topics.lines = {title:'All available utility lines',text:'Every retained utility-line record in Saint Paul, including former segments, empty conduit and radio connections. None of these sources covers a complete city network. Streets provide dim navigation context.',layers:lineGroups.reduce(function(ids,g){return ids.concat(g.layers);},[])};
+  topics.lines = {title:'All available utility lines',text:'Public GIS records and recovered drawing fragments. Dashed drawing lines show May 2023 routes around St. Thomas; their present condition is unverified. Empty areas mean missing data. No source covers a complete city network.',layers:lineGroups.reduce(function(ids,g){return ids.concat(g.layers);},[])};
 
   var hydroTypes = {43:'Aqueduct or tunnel',70:'Road culvert',71:'Underground storm sewer',72:'Force main',90:'Superseded channel'};
   var plantKinds = {nuclear:'nuclearplant',coal:'coalplant',gas:'gasplant',hydro:'hydroplant',solar:'solarplant',wind:'windplant',waste:'wasteplant',biomass:'biomassplant',oil:'oilplant',battery:'batteryplant'};
@@ -605,6 +615,7 @@
   function type(f) {
     if (f.layer === 'tour') return f.type;
     var p = pof(f), id = f.layer;
+    if (config(f).drawing) return p.type || config(f).type;
     if (id === 'signalLines') return p.TYPE === 'FIBER' ? 'signalfiber' : p.TYPE === 'COPPER' ? 'signalcopper' : p.TYPE === 'RADIO' ? 'signalradio' : p.TYPE === 'EMPTY' ? 'emptyconduit' : 'signalconnection';
     if (id === 'rwmwdStructures') return /outlet|outfall/i.test(p.STRCT_TYPE || '') ? 'stormoutfall' : /manhole/i.test(p.STRCT_TYPE || '') ? 'stormmanhole' : /catch basin|inlet|intake/i.test(p.STRCT_TYPE || '') ? 'storminlet' : 'stormstructure';
     if (id==='waterworks') return confirmedWaterFacilities[p.i]?confirmedWaterFacilities[p.i].type:'waterfacility';
@@ -636,6 +647,7 @@
   function name(f) {
     if (f.layer === 'tour') return f.name;
     var p = pof(f), id = f.layer, n = namedValue(p);
+    if (config(f).drawing) return 'St. Thomas '+p.system.toLowerCase()+', 2023 drawing fragment '+String(p.fragment).split('-').pop();
     if (id === 'troutBrook') return 'Trout Brook storm interceptor, segment ' + p.OBJECTID;
     if (id === 'rwmwdPipes') return (p.PROJECT || 'District storm pipe') + ', segment ' + p.OBJECTID;
     if (id === 'rwmwdStructures') return (p.Name || p.PROJECT || 'Storm structure') + ', record ' + p.OBJECTID;
@@ -674,6 +686,7 @@
   function fuelLabel(code) { return (fuelNames[code] || 'Unmapped source code') + ' (' + code + ')'; }
   function facts(f) {
     if (f.layer === 'tour' || f.layer === 'depth') return f.facts || [];
+    if (config(f).drawing) return [['Drawing date','May 10, 2023'],['Record meaning','Drawing fragment, not an installed-pipe identifier'],['Published line type',pof(f).subtype],['Present alignment and operation','Not verified'],['Location method','Approximate registration of PDF vectors'],['Source page','56'],['Original CAD layer',pof(f).cadLayer],['Fragment identifier',pof(f).fragment],['Geometry limits','No inferred joins; curves and short fragments omitted']];
     var p = pof(f), id = f.layer, rows = [], used = {};
     function add(label, value, field) { if (present(value)) rows.push([label, String(value)]); if (field) used[field] = true; }
     function field(label, key, unit, unknown) { add(label, present(p[key]) ? (typeof p[key] === 'number' && !/^(?:i|id|y|OBJECTID|FID|YEAR_INST_|YEAR_INST)$/.test(key) ? number.format(p[key]) : p[key]) + (unit || '') : unknown ? 'Not reported' : null, key); }
@@ -790,6 +803,7 @@
   }
   function recordURL(f) {
     var p = pof(f);
+    if (config(f).drawing) return config(f).source && config(f).source.url || '';
     if (config(f).native && config(f).source) return config(f).source.url + '/query?f=pjson&where=' + encodeURIComponent((config(f).oid || 'OBJECTID') + '=' + p[config(f).oid || 'OBJECTID']) + '&outFields=' + encodeURIComponent((config(f).metadata.sourceFields || []).map(function(d){return d.name;}).join(','));
     if (/^https?:\/\//i.test(p.url || '')) return p.url;
     if (/^(?:node|way|relation)\/\d+$/.test(String(p.i || ''))) return 'https://www.openstreetmap.org/' + p.i;
@@ -799,12 +813,14 @@
   }
   function isNamed(f) {
     if (f.layer === 'tour') return true;
+    if (config(f).drawing) return true;
     if (/^rwmwd/.test(f.layer)) return !!pof(f).PROJECT;
     if (f.layer === 'troutBrook') return true;
     return !!namedValue(pof(f)) || ['bedrock','surficial','electricAreas'].indexOf(f.layer) >= 0;
   }
   function status(f) {
     var p = pof(f);
+    if (config(f).drawing) return 'May 2023 drawing';
     if (f.layer === 'signalLines') return p.TYPE === 'ABANDONED' ? 'Abandoned' : '';
     if (['plants','interceptors','lifts','meters'].indexOf(f.layer) >= 0) return p.s || 'Status unreported';
     if (f.layer === 'generators' || f.layer === 'powerplants') return p.status || p.stage || 'Status unreported';
@@ -831,6 +847,7 @@
   }
   function lineStyle(f) {
     var p = pof(f);
+    if (config(f).drawing) return {dash:[6,4],opacity:.85};
     if (f.layer === 'signalLines') return {dash:p.TYPE === 'RADIO' ? [2,5] : p.TYPE === 'EMPTY' || p.TYPE === 'ABANDONED' ? [4,4] : [],opacity:p.TYPE === 'ABANDONED' ? .45 : 1};
     if (f.layer === 'interceptors') return {dash:retiredRecord(p) ? [3,5] : /forcemain/i.test(p.type || '') ? [7,4] : /siphon/i.test(p.type || '') ? [1,3] : [],opacity:p.s === 'Online' ? 1 : .45};
     if (f.layer === 'cables') return {dash:[5,3],opacity:p.location === 'underground' ? .9 : .45};
@@ -844,6 +861,7 @@
     HP:['Heat-pump well record','Ground_source_heat_pump']
   };
   function typeInfo(f) {
+    if (config(f).drawing) {var kind={watermain:['Water line','Water_supply_network'],sanitary:['Sanitary sewer','Sanitary_sewer'],stormsewer:['Storm sewer','Storm_drain'],gas:['Natural-gas line','Natural_gas#Transportation'],undergroundpower:['Electric line','Undergrounding'],telecomdrawing:[pof(f).subtype,/Fiber/.test(pof(f).subtype)?'Optical_fiber_cable':'Telephone_line']}[type(f)];return {label:kind[0]+' in 2023 drawing',wiki:'https://en.wikipedia.org/wiki/'+kind[1],description:'Linework extracted from the existing-survey CAD layers of the May 10, 2023 St. Thomas plan. Its approximate map registration does not establish survey accuracy, current operation or a complete utility network.'};}
     if (f.layer === 'rwmwdPipes' && pof(f).PIPE_MAT === 'RCP') return {label:'Reinforced-concrete storm pipe',wiki:'https://en.wikipedia.org/wiki/Reinforced_concrete',description:'The district classifies this storm pipe as RCP, reinforced concrete pipe. Size and installation year are displayed only when supplied in the record.'};
     if (f.layer === 'wells') {
       var use=String(pof(f).u || '').trim(), known=wellReferences[use], supply=/^(?:DO|IR|LA|LN|MD|MU|PC|PN|PP|PS)$/.test(use);

@@ -1,9 +1,9 @@
 # What's Under a Saint Paul Street: data notes
 
 The published post and explorer cover Saint Paul city limits only. The map opens
-on All lines. The October 6, 2026 interface combines eight utility-line
-sources and 2,806 records, with visible counts and coverage gaps for six systems.
-The retained city snapshot contains 40 selectable layers, 44 downloadable datasets and four
+on All lines. The October 6, 2026 interface combines fourteen utility-line
+sources and 3,331 records and drawing fragments, with visible counts and coverage gaps for six systems.
+The retained city snapshot contains 46 selectable layers, 50 downloadable datasets and four
 photographs of exact mapped sites. Source snapshots vary in age; the retrieval
 or clipping date does not establish the condition of an asset today.
 
@@ -117,10 +117,12 @@ A separate place link appears when a named site's article is available.
 ## Coverage gaps
 
 These public snapshots do not supply complete current city water-main, local
-sanitary-sewer, storm-drain, gas-distribution or residential-fiber networks. The
-2021 Hillcrest PDF is linked as published project-area evidence, without invented
-traces. The old 2014 storm-drain KML was not recovered and is not fabricated here.
-No additional water-main or local sanitary-main geometry was obtained.
+sanitary-sewer, storm-drain, gas-distribution or residential-fiber networks.
+Six dated line exports have now been recovered from the 2023 St. Thomas PDF.
+These provide partial water and local sanitary geometry, with explicit drawing
+dates and approximate registration. Additional Hillcrest, St. Albans, Crocus
+Place and Ford drawings are linked without fabricating their georeferencing.
+The old 2014 storm-drain KML was not recovered.
 A GitHub and GitLab repository search found no verified complete public route
 export; search limitations and rejected candidates are recorded below.
 A blank street means no route in the retained sources; it does not mean no utility.
@@ -129,20 +131,75 @@ A blank street means no route in the retained sources; it does not mean no utili
 
 | System | Retained line records | Limits |
 | --- | ---: | --- |
-| Drinking water | 0 | No water mains or service-pipe alignments |
-| Sewage | 1,203 | MCES interceptors; local municipal mains and laterals absent |
-| Storm drains | 76 | Six Trout Brook, 60 RWMWD and 10 DNR buried-route records; partial coverage |
-| Gas / unidentified pipelines | 32 | Two gas-tagged segments and 30 unclassified-substance pipes |
-| Power | 88 | 55 transmission and 33 local electric line records; incomplete, often above ground |
-| Cables | 1,407 | Traffic-signal connections only, including empty conduit and radio |
+| Drinking water | 86 | May 2023 St. Thomas drawing fragments only; no citywide current main network |
+| Sewage | 1,247 | 1,203 MCES records and 44 St. Thomas drawing fragments |
+| Storm drains | 223 | 76 public GIS records and 147 St. Thomas drawing fragments |
+| Gas / unidentified pipelines | 77 | Two gas-tagged and 30 unclassified GIS pipes, plus 45 gas drawing fragments |
+| Power | 195 | 88 GIS records and 107 electric drawing fragments; incomplete coverage |
+| Cables | 1,503 | 1,407 signal connections and 96 campus telecom drawing fragments |
 
-Counts describe source records, not unique installed pipes or cable runs. The
+Counts describe source records and drawing fragments, not unique installed pipes or cable runs. The
 interceptor export includes 1,112 online, 64 abandoned, 22 removed and five offline
 segments. All lines shows the former records with their retained status and style.
 No point, polygon, raster, facility photograph or aerial image is shown in this
 view. Dim street centerlines and the city outline provide navigation context.
-All eight utility sources load at city scale. Group and source switches are
+All fourteen utility sources load at city scale. Group and source switches are
 independent of the separate system tabs, and survive a copied map link.
+
+## Recovered public drawings, October 6, 2026
+
+The [city-hosted UST environmental review](https://www.stpaul.gov/sites/default/files/archive/ustarenaeaw062023.pdf#page=56)
+contains an Existing Conditions Plan dated May 10, 2023 on PDF page 56. Its original
+CAD layers survive as PDF optional-content groups. Six published exports retain
+525 drawing fragments: 86 water, 44 sanitary, 147 storm, 45 gas, 107 electric and
+96 telecom. They are dashed in the map and each inspector identifies the drawing
+date, PDF page, original CAD layer, extraction identifier and unverified current
+status. The St. Thomas lines button moves directly to this drawing's coverage.
+
+`build-drawing-lines.py` extracts open straight vectors from precisely selected
+`701480 VBASE|V-*` survey layers. It excludes proposed `C-*`, `DEMO-*`, label,
+structure and legend layers. The map frame clips the linework before the official
+city intersection. Closed symbols, curves and fragments shorter than two metres
+are omitted. Gaps caused by line symbols, text or excluded geometry are never
+joined. Counts are extraction fragments, not unique assets; no size, depth, owner
+or installation year is inferred from nearby text. The 2023 drawing is not a
+current condition survey.
+
+Registration uses four named building corners from OpenStreetMap footprints in
+UTM zone 15N. Two Grace Hall corners excluded from the fit differ by 2.03 and
+0.61 metres. This is a registration check against those footprint controls, not a
+guarantee of underground utility accuracy. Control points, source identifiers,
+coordinate system and frame are retained in `drawing-controls.json`. The builder
+requires the exact source PDF SHA256 and aborts if the independent corner checks
+exceed three metres. The original PDF remains hosted by the city; no report
+photography or copyrighted basemap is republished as a map asset.
+
+These additional primary documents contain line evidence and are linked in the
+folded Map details section. Their geometry has not been added to the map:
+
+| Document | Confirmed content | Limits |
+| --- | --- | --- |
+| [St. Albans at Grand, pages 8 and 9](https://www.stpaul.gov/DocumentCenter/View2/80468.pdf#page=8) | September 2014 SPRWS drawings label existing sanitary and storm sewer, water and gas; the report is an August 2015 preservation review | Scanned plan; proposed water replacements must stay separate from existing assets |
+| [27 Crocus Place survey, page 2](https://rcxnet.co.ramsey.mn.us/GISLibrary/ScannedSurveyRecords/Parcels/RecordedSurveys/4628721.pdf#page=2) | 2016 recorded parcel survey shows utilities around Crocus Place and St. Albans | Underground locations are approximate; one parcel, not the neighborhood network |
+| [Hillcrest final plan, page 12](https://www.stpaul.gov/sites/default/files/2022-06/20220614_HillcrestReport_FINAL.pdf#page=12) | March 27, 2020 existing water and sanitary maps; the water paths retain vectors | Final report published June 2022; no verified coordinate registration recovered for these excerpts |
+| [Ford survey, pages 18 to 22](https://www.stpaul.gov/DocumentCenter/View2/17151.pdf#page=18) | 2010 drawings label water, sanitary, storm, gas, electric and fire lines | Historical plant and Highland coverage, approximate source locations; current operation unverified |
+| [Raymond Avenue county as-built](https://rcxnet.co.ramsey.mn.us/GISLibrary/ScannedSurveyRecords/Roads/County/AsBuilts-Current/28-427_Raymond%20Phase%20II%20-%20AS%20BUILT.pdf) | 2015 street-project as-built sheets with water and other utilities | Scanned sheets and limited corridor coverage; not a complete GIS export |
+
+The city Regional Water Map (EAMS), public web-map item
+`f369ef2ce11145feb6b261affafb447d`, references distribution-main layer 8 and
+service-lateral layer 14. Both anonymous metadata requests returned ArcGIS error
+499, Token Required. The public web-map configuration contains no embedded pipe
+features. No authentication was bypassed. Public SPRWS project layers are work-area
+polygons, and city utility-construction lines are project corridors; neither is
+published here as actual water-main geometry.
+
+The further search inspected the public city and water-utility ArcGIS catalogs,
+public web-map configurations, city project attachments, county as-builts and
+recorded surveys. Six additional GitHub code searches targeted the exact main and
+lateral service names, EAMS references, EPANET and KML filenames. No verified full
+network was recovered. Four focused Wayback CDX requests returned HTTP 503, so
+those archives were not successfully inspected. Absence from our exports remains
+an evidence gap, not a claim that the neighborhood lacks pipes.
 
 ## Repository search, October 6, 2026
 
@@ -183,15 +240,17 @@ negative search result does not establish that no public copy exists anywhere.
 ## Reproduction and checks
 
 `tools/under-street/build-saint-paul.py` is the publication build. It requires
-Shapely and pyproj. Supply a preserved source-acquisition directory with `--input`;
-it clips retained sources, queries all six new anonymous layers by native ObjectID
-in batches, regenerates city street tiles and removes out-of-scope published assets.
+Shapely, pyproj, PyMuPDF and numpy. Supply a preserved source-acquisition directory with `--input` and the verified
+UST arena PDF with `--drawing-pdf`. The build clips native GIS, queries the six
+anonymous layers by native ObjectID in batches, regenerates city street tiles,
+removes out-of-scope assets and then appends the verified PDF vector excerpts.
+The PDF dependency is checked before published data are rebuilt.
 Historical acquisition tools do not define the current published scope.
 
 Run these from the repository root:
 
 ```sh
-python tools/under-street/build-saint-paul.py --input /path/to/source-archive
+python tools/under-street/build-saint-paul.py --input /path/to/source-archive --drawing-pdf /path/to/ustarenaeaw062023.pdf
 node tools/under-street/test-data.cjs
 node tools/under-street/test-lines.cjs
 python tools/under-street/test-scope.py
@@ -204,7 +263,7 @@ node tools/under-street/test-compression.cjs
 
 The data checks verify hashes, complete record counts, full geometry coverage,
 raster centers, native fields, dimension preservation and exact disjoint tiles.
-Browser checks cover all 40 layers, source/type panels, inactive records, deep links,
+Browser checks cover all 46 layers, source/type panels, inactive records, deep links,
 city-only inspection, six-size address search with a live civic query, street-cache
 travel and retries, photograph focus restoration and lossless gzip fallback.
 The normal laptop checks include 1512 by 820, 1440 by 760 and 1280 by 720 CSS pixels

@@ -39,7 +39,7 @@ const output=process.env.UNDER_MAP_TEST_OUTPUT||'/tmp/saint-paul-qa';fs.mkdirSyn
   await page.locator('[data-id="highland"]').click();await page.waitForFunction(()=>document.querySelector('.um-pimg img')?.naturalWidth>0);
   await page.locator('#undermap').screenshot({path:path.join(output,'highland-'+size.width+'.png')});
   await page.locator('.um-photo-open').click();assert.equal(await page.locator('.um-photo-dialog').evaluate(d=>d.open),true);await page.locator('[data-photo-close]').click();assert.equal(await page.locator('.um-photo-open').evaluate(b=>b===document.activeElement),true);
-  await page.locator('.um-data').evaluate(d=>d.open=true);await page.locator('[data-um-source-scope="all"]').click();assert.equal(await page.locator('.um-source-item').count(),44);
+  await page.locator('.um-data').evaluate(d=>d.open=true);await page.locator('[data-um-source-scope="all"]').click();assert.equal(await page.locator('.um-source-item').count(),50);
   await page.locator('.um-source-search input').fill('Saint Paul street centerlines');await page.waitForFunction(()=>document.querySelectorAll('.um-source-item').length===1);assert.ok(await page.locator('.um-source-item a[download]').count());
   await context.close();
  }

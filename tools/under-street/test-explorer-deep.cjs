@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const {harness,settle}=require('./test-support.cjs');
 (async()=>{const h=await harness();try{
  const {page,context}=await h.page();await settle(page);
- const registry=await page.evaluate(()=>__mapAudit.layerInfo());assert.equal(Object.keys(registry).length,40);
+ const registry=await page.evaluate(()=>__mapAudit.layerInfo());assert.equal(Object.keys(registry).length,46);
  for(const [id,cfg] of Object.entries(registry)){
   await page.locator('[data-um-topic="'+cfg.topic+'"]').click();await page.locator('.um-layers').evaluate(d=>d.open=true);
   for(const other of await page.locator('.um-layer[aria-pressed="true"]').evaluateAll(bs=>bs.map(b=>b.dataset.layer)))if(other!==id)await page.locator('[data-layer="'+other+'"]').click();
@@ -29,5 +29,5 @@ const {harness,settle}=require('./test-support.cjs');
   await page.locator('.um-source-search input').fill(id);await page.waitForFunction(()=>document.querySelectorAll('.um-source-item').length===1);
   assert.ok(await page.locator('.um-source-item a[download]').count());assert.match(await page.locator('.um-source-item').textContent(),/Saint Paul/);
  }
- await context.close();assert.deepEqual(h.errors,[]);assert.deepEqual(h.failures,[]);console.log('PASS all 40 layers, city anchors, precise Wikipedia types, source and record panels, inactive signal records and six new downloads');
+ await context.close();assert.deepEqual(h.errors,[]);assert.deepEqual(h.failures,[]);console.log('PASS all 46 layers, city anchors, precise Wikipedia types, source and record panels, inactive signal records and six new downloads');
 }finally{await h.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,35 +1,47 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {harness,settle}=require('./test-support.cjs');
 const output=process.env.UNDER_MAP_TEST_OUTPUT||'/tmp/saint-paul-qa';fs.mkdirSync(output,{recursive:true});
-const sources=['interceptors','troutBrook','rwmwdPipes','buried','pipelines','power','feeders','signalLines'];
+const sources=['interceptors','troutBrook','rwmwdPipes','buried','pipelines','power','feeders','signalLines','drawingWater','drawingSanitary','drawingStorm','drawingGas','drawingElectric','drawingTelecom'];
 (async()=>{const h=await harness();try{
  const {page,context}=await h.page();await settle(page);
  assert.equal((await page.evaluate(()=>__mapAudit.state())).topic,'lines');
  assert.deepEqual((await page.evaluate(()=>__mapAudit.active())).sort(),sources.sort());
  const initial=await page.evaluate(()=>({state:__mapAudit.state(),results:__mapAudit.results(),layers:__mapAudit.layerInfo()}));
- assert.equal(initial.results.length,2806);assert.ok(initial.results.every(f=>f.kind==='line'));
+ assert.equal(initial.results.length,3331);assert.ok(initial.results.every(f=>f.kind==='line'));
  assert.ok(sources.every(id=>initial.state.data[id].loaded>0&&initial.layers[id].kind==='line'));
  assert.equal(initial.state.sat.on,false);assert.ok(!initial.state.data.hydrants&&!initial.state.data.plants&&!initial.state.data.towers);
- assert.deepEqual(await page.locator('.um-line-total').allTextContents(),['0','1,203','76','32','88','1,407']);
+ assert.deepEqual(await page.locator('.um-line-total').allTextContents(),['86','1,247','223','77','195','1,503']);
  assert.ok(initial.results.some(f=>f.type==='signalradio'));assert.ok(initial.results.some(f=>f.type==='emptyconduit'));
  assert.equal(await page.locator('.um-basemap [data-um-base="sat"]:visible,.um-result-thumb,.um-inactive:visible').count(),0);
  await page.locator('.um-layers').evaluate(d=>d.open=true);
- assert.equal(await page.locator('.um-layer-list button').count(),8);await page.locator('[data-layer="rwmwdPipes"]').click();assert.equal(await page.locator('[data-line-group="storm"]').getAttribute('aria-pressed'),'mixed');await page.locator('[data-layer="rwmwdPipes"]').click();
+ assert.equal(await page.locator('.um-layer-list button').count(),14);await page.locator('[data-layer="rwmwdPipes"]').click();assert.equal(await page.locator('[data-line-group="storm"]').getAttribute('aria-pressed'),'mixed');await page.locator('[data-layer="rwmwdPipes"]').click();
  assert.match(await page.locator('.um-line-gaps').textContent(),/Water mains|Local sanitary mains|gas-distribution|buried-cable|telecom routes/);
- await page.locator('[data-layer="interceptors"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,1603);
+ await page.locator('[data-layer="interceptors"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,2128);
  await page.locator('.um-layers').evaluate(d=>d.open=false);
- await page.locator('[data-line-group="sewer"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,2806);
- await page.locator('[data-line-group="cables"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,1399);
+ await page.locator('[data-line-group="sewer"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,3331);
+ await page.locator('[data-line-group="cables"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,1828);
  assert.match(await page.evaluate(()=>location.hash),/topic=lines/);assert.doesNotMatch(await page.evaluate(()=>location.hash),/signalLines/);
- await page.locator('[data-lines-all]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,2806);
+ await page.locator('[data-lines-all]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,3331);
  // Individual systems and combined lines retain separate visibility choices.
  await page.locator('[data-um-topic="wastewater"]').click();await settle(page);await page.locator('.um-layers').evaluate(d=>d.open=true);await page.locator('[data-layer="interceptors"]').click();await page.locator('.um-layers').evaluate(d=>d.open=false);
- await page.locator('[data-um-topic="lines"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,2806);
+ await page.locator('[data-um-topic="lines"]').click();assert.equal((await page.evaluate(()=>__mapAudit.results())).length,3331);
  const former=await page.evaluate(()=>__mapAudit.layer('interceptors').findIndex(f=>f.p.s&&f.p.s!=='Online'));
  assert.ok(former>=0);const selected=await page.evaluate(i=>__mapAudit.select('interceptors',i),former);
  assert.equal(await page.locator('.um-pimg,[data-pa="aerial"]:visible').count(),0);assert.equal(await page.locator('[data-pa="closer"]').textContent(),'Zoom to line');
  const hash=await page.evaluate(()=>location.hash),restored=await h.page({width:1280,height:720},hash);await restored.page.waitForFunction(id=>__mapAudit.state().selected===id,selected);assert.equal((await restored.page.evaluate(()=>__mapAudit.state())).topic,'lines');await restored.context.close();
  await page.locator('.um-pback').click();
+ // Drawing fragments preserve their date, source CAD type and uncertainty.
+ await page.locator('[data-drawing-view]').click();await settle(page);
+ assert.ok(Math.abs((await page.evaluate(()=>__mapAudit.state())).view.lon+93.1941)<.002);
+ for(const id of ['drawingWater','drawingSanitary','drawingStorm','drawingGas','drawingElectric','drawingTelecom']){
+  await page.evaluate(id=>__mapAudit.select(id),id);
+  assert.match(await page.locator('.um-facts').textContent(),/May 10, 2023/);
+  assert.match(await page.locator('.um-facts').textContent(),/Not verified/);
+  assert.match(await page.locator('.um-record-note').textContent(),/drawing fragments/);
+  assert.ok(await page.locator('.um-links a[href$="#page=56"]').count());
+  await page.locator('.um-pback').click();
+ }
+ await page.locator('#undermap').screenshot({path:path.join(output,'st-thomas-drawing-lines.png')});
  // The city overview and a close neighborhood both inspect line records only.
  for(const z of [12,15.5]){await page.evaluate(z=>__mapAudit.move(-93.1,44.95,z),z);await settle(page);assert.ok((await page.evaluate(()=>__mapAudit.results())).every(f=>f.kind==='line'));const hits=await page.evaluate(()=>{let s=__mapAudit.state(),hits=[];for(let x=20;x<s.W;x+=50)for(let y=20;y<s.H;y+=50){let f=__mapAudit.hit(x,y);if(f)hits.push(f.kind);}return hits;});assert.ok(hits.length);assert.ok(hits.every(k=>k==='line'));}
  await context.close();
@@ -41,6 +53,6 @@ const sources=['interceptors','troutBrook','rwmwdPipes','buried','pipelines','po
   await test.page.locator('#undermap').screenshot({path:path.join(output,'all-lines-'+size.width+'.png')});await test.context.close();
  }
  // An intentionally empty line list stays empty after reload and can be restored.
- const blank=await h.page();await blank.page.goto(h.url+'/archive/under-the-street/under-the-street.html#map=12/44.95/-93.1&topic=lines&layers=');await blank.page.reload();await blank.page.waitForFunction(()=>window.__mapAudit);await settle(blank.page);assert.equal((await blank.page.evaluate(()=>__mapAudit.active())).length,0);assert.equal((await blank.page.evaluate(()=>__mapAudit.results())).length,0);await blank.page.locator('[data-lines-all]').click();await settle(blank.page);assert.equal((await blank.page.evaluate(()=>__mapAudit.results())).length,2806);await blank.context.close();
- assert.deepEqual(h.errors,[]);assert.deepEqual(h.failures,[]);console.log('PASS 2,806 line records, eight line-only sources, six coverage totals, former/radio/empty distinctions, independent toggles, deep links, line-only hits and normal laptop fit');
+ const blank=await h.page();await blank.page.goto(h.url+'/archive/under-the-street/under-the-street.html#map=12/44.95/-93.1&topic=lines&layers=');await blank.page.reload();await blank.page.waitForFunction(()=>window.__mapAudit);await settle(blank.page);assert.equal((await blank.page.evaluate(()=>__mapAudit.active())).length,0);assert.equal((await blank.page.evaluate(()=>__mapAudit.results())).length,0);await blank.page.locator('[data-lines-all]').click();await settle(blank.page);assert.equal((await blank.page.evaluate(()=>__mapAudit.results())).length,3331);await blank.context.close();
+ assert.deepEqual(h.errors,[]);assert.deepEqual(h.failures,[]);console.log('PASS 3,331 line records and drawing fragments, fourteen line-only sources, six coverage totals, former/radio/empty distinctions, independent toggles, deep links, line-only hits and normal laptop fit');
 }finally{await h.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

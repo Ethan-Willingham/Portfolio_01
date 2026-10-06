@@ -102,6 +102,10 @@
 #undermap .um-line-total { font: 500 0.8rem/1.6 var(--font-mono); }
 #undermap .um-line-groups small { display: block; margin-top: 0.15rem; color: var(--text-dim); font-size: 0.73rem; line-height: 1.4; }
 #undermap .um-line-note { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+#undermap .um-line-actions { display: flex; flex: none; gap: 0.35rem; }
+#undermap .um-drawing-sources { margin-top: 0.75rem; color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; }
+#undermap .um-drawing-sources summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--text-bright); }
+#undermap .um-drawing-sources li { margin-block: 0.6rem; }
 #undermap .um-line-note p { margin: 0.4rem 0 0; color: var(--text-dim); font-size: 0.77rem; line-height: 1.45; }
 #undermap .um-line-note button { flex: none; padding: 0.3rem 0.5rem; border: none; background: transparent; color: var(--accent); font-size: 0.8rem; text-decoration: underline; text-underline-offset: 0.2em; }
 #undermap .um-line-gaps { margin: 0.75rem 0; }
@@ -498,6 +502,7 @@
   #undermap .um-layers { margin: 0 1rem 0.85rem; }
   #undermap .um-line-groups { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #undermap .um-line-note { align-items: flex-start; }
+  #undermap .um-line-actions { flex-direction: column; }
   #undermap .um-line-note button { max-width: 5.5rem; line-height: 1.35; }
   #undermap .um-browser { padding-inline: 1rem; }
   #undermap :is(.um-basemap, .um-base) { top: 0.75rem; left: 0.75rem; }

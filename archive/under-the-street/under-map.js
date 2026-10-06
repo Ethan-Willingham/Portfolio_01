@@ -5,7 +5,7 @@
   var CANVAS=HOST.querySelector('canvas'),STAGE=HOST.querySelector('.um-stage'),PANEL=HOST.querySelector('.um-panel');
   var STATUS=HOST.querySelector('.um-status'),SCALE=HOST.querySelector('.um-scale'),TOOLTIP=HOST.querySelector('.um-tooltip');
   var RESULTS=HOST.querySelector('.um-results'),SEARCH=HOST.querySelector('.um-search input'),ctx=CANVAS.getContext('2d');
-  var ROOT='assets/map/',VERSION='20261006-lines1',W=0,H=0,DPR=1,raf=null,started=false,topic='lines',scope='all';
+  var ROOT='assets/map/',VERSION='20261006-drawings1',W=0,H=0,DPR=1,raf=null,started=false,topic='lines',scope='all';
   var showInactive=false,sourceScope='current',catalogLoading=false,catalogError=false;
   var selection=null,hovered=null,addressPin=null,media={photos:[],types:{}},manifest=null,visibleLimit=30,resultItems=[],data={};
   var fmt=new Intl.NumberFormat('en-US'),MINZ=11.5,MAXZ=18,view={x:mx(-93.10797),y:my(44.9437),z:12.3};
@@ -416,7 +416,7 @@
   function renderSources(){
     if(!manifest)return;
     var all=manifest.datasets||[],mapped=Object.keys(layers).map(function(id){return layers[id].file;}).concat(['cities.json','water.json','roads-context.json','data/context-streets.json.gz']),selected=topics[topic].layers.map(function(id){return layers[id].file;}),query=(HOST.querySelector('.um-source-search input').value||'').trim().toLowerCase();
-    HOST.querySelector('.um-summary').textContent=topic==='lines'?fmt.format(topics.lines.layers.reduce(function(n,id){return n+(countFor(id)||0);},0))+' line records · Saint Paul':Object.keys(layers).length+' map layers · Saint Paul';
+    HOST.querySelector('.um-summary').textContent=topic==='lines'?fmt.format(topics.lines.layers.reduce(function(n,id){return n+(countFor(id)||0);},0))+' line records and fragments · Saint Paul':Object.keys(layers).length+' map layers · Saint Paul';
     HOST.querySelectorAll('[data-um-topic]').forEach(function(b){var key=b.dataset.umTopic,n=topics[key].layers.length;b.querySelector('.um-topic-count').textContent=n;b.setAttribute('aria-label',b.firstChild.textContent.trim()+', '+n+' layers');});
     var list=all.filter(function(m){
       var current=mapped.indexOf(m.file)>=0,match=sourceScope==='all'||selected.indexOf(m.file)>=0;
@@ -475,6 +475,13 @@
   function setBase(sat){if(!sat&&data.contextStreets&&(data.contextStreets.error||data.contextStreets.tileError)){delete data.contextStreets;loadStreets();}if(sat&&SAT.failed){SAT.cache.forEach(function(t,k){if(t.dead)SAT.cache.delete(k);});SAT.failed=false;}SAT.on=!!sat;updateLayers();HOST.querySelectorAll('[data-um-base]').forEach(function(b){b.setAttribute('aria-pressed',String((b.dataset.umBase==='sat')===SAT.on));});noteMoved();requestDraw();}
   document.querySelectorAll('[data-map-topic]').forEach(function(a){a.addEventListener('click',function(){setTopic(a.dataset.mapTopic,true);HOST.querySelector('[data-um-topic="'+a.dataset.mapTopic+'"]').focus({preventScroll:true});});});
   HOST.querySelectorAll('[data-line-group]').forEach(function(b){b.addEventListener('click',function(){var g=lineGroups.find(function(g){return g.id===b.dataset.lineGroup;}),on=!g.layers.every(function(id){return lineEnabled.has(id);});g.layers.forEach(function(id){setLayerOn(id,on);});if(selection&&!layerOn(selection.layer))closePanel(false);ensureActive();updateLayers();updateLegend();renderResults();requestDraw();writeHash();});});
+  HOST.querySelector('[data-drawing-view]').addEventListener('click',function(){
+    if(topic!=='lines')setTopic('lines',false);
+    var bounds=[-93.196376,44.938537,-93.192285,44.940705],left=mx(bounds[0]),right=mx(bounds[2]),top=my(bounds[3]),bottom=my(bounds[1]);
+    topics.lines.layers.filter(function(id){return layers[id].drawing;}).forEach(function(id){setLayerOn(id,true);});
+    scope='view';HOST.querySelectorAll('[data-um-scope]').forEach(function(button){button.setAttribute('aria-pressed',String(button.dataset.umScope===scope));});
+    ensureActive();updateLayers();updateLegend();flyTo((left+right)/2,(top+bottom)/2,Math.min(17.7,Math.log2(Math.max(60,W-64)/((right-left)*256)),Math.log2(Math.max(60,H-70)/((bottom-top)*256))));showMap();writeHash();
+  });
   HOST.querySelector('[data-lines-all]').addEventListener('click',function(){topics.lines.layers.forEach(function(id){lineEnabled.add(id);});ensureActive();updateLayers();updateLegend();renderResults();requestDraw();writeHash();});
   HOST.querySelectorAll('[data-um-topic]').forEach(function(b){b.addEventListener('click',function(){setTopic(b.dataset.umTopic,false);});});
   HOST.querySelectorAll('[data-um-scope]').forEach(function(b){b.addEventListener('click',function(){scope=b.dataset.umScope;visibleLimit=30;HOST.querySelectorAll('[data-um-scope]').forEach(function(c){c.setAttribute('aria-pressed',String(c===b));});renderResults();});});

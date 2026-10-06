@@ -1,0 +1,22 @@
+{
+  "source": "UST Arena Existing Conditions Plan, May 10, 2023, PDF page 56",
+  "pdfSha256": "5ae9213f80404832775849bf49e33ac548915d0c43e6d1af323d59f7c0bafa7d",
+  "pdfCoordinates": "Points in the displayed, rotated page; origin at top left. Original page rotation is 270 degrees.",
+  "mapFrame": [71.76, 64.92, 1965.96, 1440.0],
+  "metricCRS": "EPSG:26915",
+  "method": "Least-squares affine registration using named building corners. Approximate display registration only; source underground-utility accuracy is unknown.",
+  "controlSource": "https://api.openstreetmap.org/api/0.6/map?bbox=-93.196,44.938,-93.1917,44.941",
+  "controlRetrievedAt": "2026-10-06",
+  "controlAttribution": "OpenStreetMap contributors, ODbL",
+  "controlLicense": "https://www.openstreetmap.org/copyright",
+  "registrationControls": [
+    {"name": "Grace Hall northwest", "osmWay": 70079215, "pdfPoint": [615.30, 1080.06], "coordinate": [-93.1951978, 44.9391169]},
+    {"name": "Anderson Parking Facility northwest", "osmWay": 70079205, "pdfPoint": [1355.22, 539.22], "coordinate": [-93.1936033, 44.9399562]},
+    {"name": "Anderson Parking Facility southwest", "osmWay": 70079205, "pdfPoint": [1354.02, 1028.52], "coordinate": [-93.1936031, 44.9392067]},
+    {"name": "Brady Education Center northeast", "osmWay": 70079133, "pdfPoint": [304.68, 1093.14], "coordinate": [-93.1958686, 44.9390420]}
+  ],
+  "checkPoints": [
+    {"name": "Grace Hall northeast, excluded from fit", "osmWay": 70079215, "pdfPoint": [694.20, 1079.76], "coordinate": [-93.1950186, 44.9391166]},
+    {"name": "Grace Hall southeast, excluded from fit", "osmWay": 70079215, "pdfPoint": [693.24, 1411.38], "coordinate": [-93.1950201, 44.9385973]}
+  ]
+}

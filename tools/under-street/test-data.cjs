@@ -5,9 +5,9 @@ function read(file){let bytes=fs.readFileSync(path.join(base,file));return JSON.
 const manifest=read('datasets.json'),s={window:{},Intl};
 vm.runInNewContext(fs.readFileSync(path.join(base,'city-boundary.js'),'utf8'),s);vm.runInNewContext(fs.readFileSync(path.join(root,'archive/under-the-street/under-data.js'),'utf8'),s);
 const data=s.window.UnderStreetData;data.applyManifest(manifest);
-assert.equal(manifest.scope,'Saint Paul city limits only');assert.equal(manifest.datasets.length,44);
+assert.equal(manifest.scope,'Saint Paul city limits only');assert.equal(manifest.datasets.length,50);
 assert.deepEqual(Object.keys(data.topics).sort(),['gas','ground','lines','networks','power','storm','wastewater','water']);
-assert.equal(data.topics.lines.layers.length,8);assert.ok(data.topics.lines.layers.every(id=>data.layers[id].kind==='line'));assert.equal(data.lineGroups.find(g=>g.id==='water').layers.length,0);
+assert.equal(data.topics.lines.layers.length,14);assert.ok(data.topics.lines.layers.every(id=>data.layers[id].kind==='line'));assert.equal(data.lineGroups.find(g=>g.id==='water').layers.length,1);
 assert.equal(data.contains(-93.12,44.95),true);for(const p of [[-93.265,44.975],[-93.08,44.904],[-93.1,44.997],[-93.3,44.83]])assert.equal(data.contains(...p),false);
 const files=new Set(),ids=new Set();let records=0,vertices=0;
 for(const d of manifest.datasets){
@@ -38,4 +38,4 @@ for(const [id,cfg] of Object.entries(data.layers)){
  for(const f of read(cfg.file).features){assert.ok(cfg.kind==='line'?/LineString/.test(f.geometry.type):cfg.kind==='polygon'?/Polygon/.test(f.geometry.type):f.geometry.type==='Point','Geometry dimension '+id);const o=feature(id,f.properties);assert.equal(typeof data.name(o),'string');assert.ok(Array.isArray(data.facts(o)),'Facts array '+id);assert.equal(typeof data.isVisible(o,false),'boolean');const info=data.typeInfo(o);if(info)assert.ok(info.wiki.startsWith('https://en.wikipedia.org/wiki/'));}
 }
 const photos=read('media.json').photos;assert.equal(photos.length,4);for(const p of photos){assert.ok(data.contains(...p.match.near));for(const file of [p.src,p.webp])assert.ok(fs.existsSync(path.join(base,file.replace('assets/map/',''))));assert.ok(p.sourceUrl&&p.license);}
-console.log('PASS 44 city-only datasets, '+records+' features, '+vertices+' city-boundary coordinates, '+tiled+' exact street-tile records, native attributes, source URLs, lifecycle and four exact-site photographs');
+console.log('PASS 50 city-only datasets, '+records+' features, '+vertices+' city-boundary coordinates, '+tiled+' exact street-tile records, native attributes, source URLs, lifecycle and four exact-site photographs');

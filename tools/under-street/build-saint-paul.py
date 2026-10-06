@@ -2,7 +2,8 @@
 """Build city-only exports from a source archive and anonymous public GIS.
 
 Requires shapely and pyproj. Pass the earlier acquisition directory as --input.
-No geometry is inferred from drawings, drain locations or neighboring pipes.
+This step acquires native GIS, without inferring routes from drain locations.
+Use --drawing-pdf to append the separately verified, dated PDF vector excerpts.
 """
 import argparse
 import concurrent.futures
@@ -240,4 +241,12 @@ def build(args):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input',required=True)
-    build(parser.parse_args())
+    parser.add_argument('--drawing-pdf',required=True,help='Verified UST arena PDF used for the published drawing excerpts')
+    args=parser.parse_args()
+    # Check the local drawing dependency before rebuilding any published data.
+    assert Path(args.drawing_pdf).is_file(), 'Drawing PDF is required for the complete publication build'
+    expected_pdf=json.loads((ROOT/'tools/under-street/drawing-controls.json').read_text())['pdfSha256']
+    assert hashlib.sha256(Path(args.drawing_pdf).read_bytes()).hexdigest()==expected_pdf, 'Drawing PDF changed; review it before rebuilding'
+    build(args)
+    import subprocess,sys
+    subprocess.run([sys.executable,str(ROOT/'tools/under-street/build-drawing-lines.py'),'--input',args.drawing_pdf],check=True)
