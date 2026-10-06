@@ -4,20 +4,20 @@
   const canvas = document.getElementById('grid');
   const context = canvas.getContext('2d', {alpha: false});
   const status = document.getElementById('status');
-  const pointers = new Map(), images = new Map();
+  const pointers = new Map(), images = new Map(), thumbnails = new Map();
   const styles = getComputedStyle(document.documentElement);
   const colors = ['--bg', '--bg-raised', '--rule'].map(v => styles.getPropertyValue(v).trim());
   const camera = {x: 0, y: 0, scale: 1};
-  const SIZE = 256, GAP = 4, STEP = SIZE + GAP, MAX_RESIDENT = 12;
+  const SIZE = 256, GAP = 4, STEP = SIZE + GAP, MAX_RESIDENT = 12, MAX_THUMBNAILS = 64;
   let data, width = 0, height = 0, dpr = 1, frame = 0, moving = false;
   let lastGesture, press = null, velocity = {x: 0, y: 0}, lastMove = 0;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  let atlas = null;
+  let atlas = null, lastFrame = 0;
   function extent() { return {w: data.columns * STEP - GAP, h: Math.ceil(data.tiles.length / data.columns) * STEP - GAP}; }
-  function fit() {
+  function fit(cover = false) {
     if (!data) return;
     const {w,h} = extent();
-    camera.scale = Math.min(width / w, height / h) * .96;
+    camera.scale = cover ? Math.max(width / w, height / h) : Math.min(width / w, height / h) * .96;
     camera.x = (width - w * camera.scale) / 2;
     camera.y = (height - h * camera.scale) / 2;
     velocity.x = velocity.y = 0;
@@ -40,16 +40,18 @@
     limit(); schedule();
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(draw); }
-  function detail(tile) {
+  function detail(tile, small = false) {
+    const cache = small ? thumbnails : images;
     if (!tile.image) return null;
-    let entry = images.get(tile.id);
+    let entry = cache.get(tile.id);
     if (!entry) {
       const img = new Image();
       entry = {img, ready: false, used: performance.now()};
-      images.set(tile.id, entry);
+      cache.set(tile.id, entry);
+      img.decoding = "async";
       img.onload = () => {entry.ready = true; schedule();};
       img.onerror = () => {entry.failed = true; schedule();};
-      img.src = tile.image;
+      img.src = (small ? tile.thumbnail : tile.image) + "?v=" + encodeURIComponent(data.assetVersion || "1");
     }
     entry.used = performance.now();
     return entry.ready ? entry.img : null;
@@ -57,9 +59,11 @@
   function draw(now) {
     frame = 0;
     if (!data) return;
+    const elapsed = lastFrame ? Math.min(32, now-lastFrame) / 16 : 1;
+    lastFrame = now;
     if (!pointers.size && moving && !reduced.matches) {
-      camera.x += velocity.x; camera.y += velocity.y;
-      velocity.x *= .91; velocity.y *= .91;
+      camera.x += velocity.x*elapsed; camera.y += velocity.y*elapsed;
+      velocity.x *= Math.pow(.91,elapsed); velocity.y *= Math.pow(.91,elapsed);
       limit();
       moving = Math.hypot(velocity.x,velocity.y) > .1;
     }
@@ -78,7 +82,12 @@
         if(tile?.image) candidates.push({id:tile.id,distance:Math.hypot(camera.x+(col*STEP+SIZE/2)*camera.scale-width/2,camera.y+(row*STEP+SIZE/2)*camera.scale-height/2)});
       }
     }
-    const wanted=new Set(candidates.sort((a,b)=>a.distance-b.distance).slice(0,MAX_RESIDENT).map(t=>t.id));
+    candidates.sort((a,b)=>a.distance-b.distance);
+    const wanted = new Set(SIZE*camera.scale*dpr>256 ? candidates.slice(0,MAX_RESIDENT).map(t=>t.id) : []);
+    const wantedThumbnails = new Set(candidates.slice(0,MAX_THUMBNAILS).map(t=>t.id));
+    for(const [id,entry] of thumbnails) if(!wantedThumbnails.has(id)) {
+      entry.img.onload=entry.img.onerror=null;entry.img.src="";thumbnails.delete(id);
+    }
     // Release old decoded buffers before allocating the next viewport's images.
     for(const [id,entry] of images) if(!wanted.has(id)) {
       entry.img.onload=entry.img.onerror=null; entry.img.src='';images.delete(id);
@@ -92,6 +101,10 @@
         const [sx,sy,sw,sh] = tile.preview;
         context.imageSmoothingEnabled = tile.medium !== 'pixel art';
         context.drawImage(atlas,sx,sy,sw,sh,x,y,size,size);
+      }
+      if (wantedThumbnails.has(tile.id) && tile.thumbnail) {
+        const img = detail(tile,true);
+        if(img) {context.imageSmoothingEnabled=tile.medium!=="pixel art";context.drawImage(img,x,y,size,size);}
       }
       if (wanted.has(tile.id)) {
         visible.add(tile.id);
@@ -192,12 +205,12 @@
     const rect=canvas.getBoundingClientRect(), oldW=width, oldH=height;
     width=rect.width; height=rect.height; dpr=Math.min(2,window.devicePixelRatio||1);
     canvas.width=Math.round(width*dpr); canvas.height=Math.round(height*dpr);
-    if (!oldW) fit();
+    if (!oldW) fit(true);
     else {camera.x+=(width-oldW)/2;camera.y+=(height-oldH)/2;if(data)limit();schedule();}
   }
   new ResizeObserver(resize).observe(canvas);
-  fetch('assets/wiki-pixel-grid/manifest.json?v=1').then(r=>{if(!r.ok)throw Error('Manifest unavailable');return r.json();}).then(manifest=>{
-    data=manifest; resize(); fit();
+  fetch('assets/wiki-pixel-grid/manifest.json?v=2').then(r=>{if(!r.ok)throw Error('Manifest unavailable');return r.json();}).then(manifest=>{
+    data=manifest; resize(); fit(true);
     const links=document.getElementById('article-links');
     for(const tile of data.tiles.filter(t=>t.image)) {
       const li=document.createElement('li'), link=document.createElement('a');
@@ -206,6 +219,6 @@
       li.append(link);links.append(li);
     }
     status.textContent=`${data.tiles.filter(t=>t.image).length} of ${data.tiles.length} artworks completed.`;
-    if(data.atlas){const img=new Image();img.onload=()=>{atlas=img;schedule();};img.src=data.atlas;}
+    if(data.atlas){const img=new Image();img.onload=()=>{atlas=img;schedule();};img.src=data.atlas+"?v="+encodeURIComponent(data.assetVersion||"1");}
   }).catch(()=>{status.textContent='The artwork could not load. Reload to try again.';});
 })();

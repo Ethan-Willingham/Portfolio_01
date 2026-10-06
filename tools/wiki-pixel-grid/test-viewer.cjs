@@ -10,7 +10,7 @@ const server=http.createServer((req,res)=>{
  if(!filename.startsWith(root+path.sep)){res.writeHead(403).end();return;}
  fs.readFile(filename,(err,bytes)=>{
   if(err){res.writeHead(404).end();return;}
-  if(filename.endsWith('wiki-pixel-grid.js'))bytes=Buffer.from(bytes.toString().replace("fetch('assets/wiki-pixel-grid/manifest.json?v=1')", "window.__gridQA={state:()=>({camera:{...camera},resident:images.size,width,height,ready:!!data}),fit}; fetch('assets/wiki-pixel-grid/manifest.json?v=1')"));
+  if(filename.endsWith('wiki-pixel-grid.js'))bytes=Buffer.from(bytes.toString().replace("fetch('assets/wiki-pixel-grid/manifest.json?v=2')", "window.__gridQA={state:()=>({camera:{...camera},resident:images.size,thumbnails:thumbnails.size,detailsReady:[...images.values()].filter(e=>e.ready).length,width,height,ready:!!data}),fit}; fetch('assets/wiki-pixel-grid/manifest.json?v=2')"));
   res.setHeader('Content-Type',types[path.extname(filename)]||'application/octet-stream');res.end(bytes);
  });
 });
@@ -58,9 +58,19 @@ const server=http.createServer((req,res)=>{
   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:60,y:400},{x:280,y:400}]});
   await page.waitForTimeout(100);after=await get();assert(after.camera.scale>before.camera.scale*1.8);
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  assert(after.resident<=12);
+  assert(after.resident<=12);assert(after.thumbnails<=64);
   assert.equal(await page.evaluate(()=>window.__opened.length),1,'Pinching must not open an article');
   assert.deepEqual(errors,[]);
+  await page.setViewportSize({width:844,height:390});await page.waitForTimeout(150);
+  after=await get();assert.equal(after.width,844);assert.equal(after.height,390);
+  await page.locator('#grid').focus();await page.keyboard.press('Home');
+  await page.screenshot({path:path.join(root,'research/wiki-pixel-grid/viewer-landscape.png')});
+  for(let i=0;i<9;i++)await page.keyboard.press('+');
+  await page.waitForTimeout(1200);after=await get();assert(after.detailsReady>0,'Zoom must load full-fidelity tiles');assert(after.resident<=12);assert(after.thumbnails<=64);
+  await page.screenshot({path:path.join(root,'research/wiki-pixel-grid/viewer-detail.png')});
+  await page.setViewportSize({width:1440,height:900});await page.keyboard.press('Home');await page.waitForTimeout(250);
+  await page.screenshot({path:path.join(root,'research/wiki-pixel-grid/viewer-desktop.png')});
+  await page.setViewportSize({width:390,height:844});
   const screenshot=path.join(root,'research/wiki-pixel-grid/viewer-mobile.png');await page.screenshot({path:screenshot});
   console.log('PASS: fullscreen, anchored wheel zoom, drag, Home, resize, mobile pinch, resident cap, clean boot');
  }finally{if(browser)await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -1,47 +1,79 @@
-# Wikipedia pixel grid
+# Wikipedia art grid
 
 An In Progress post at `wiki-pixel-grid.html`. The first review set is exactly
-250 equal square artworks. Each tile occupies 256 by 256 logical grid units. Do not expand beyond 250 until Ethan approves it.
+250 equal square artworks. Do not expand beyond 250 until Ethan approves it.
 
-## Source and artwork workflow
+## Creation policy
 
-Download a Wikimedia articles dump into `research/wiki-pixel-grid/`, which is
-local-only. Import with `python3 tools/wiki-pixel-grid/import-wikipedia.py DUMP`.
-The importer stores every nonredirect mainspace article in SQLite and samples
-250 articles without replacement with a recorded seed. Do not cherry-pick the
-pages. Read each selected article offline, select its most visually interesting
-explicitly mentioned subject, save its evidence and source revision, generate
-one artwork, then advance to the next article.
+Ethan's instruction: never use GPT-Image-2.5 for this project. Use the LLM and
+ordinary drawing and rendering tools, without any image-generation models.
+This applies to every future tile, revision, thumbnail and expansion.
 
-At tiles 1, 51, 101, 151 and 201, choose a new overall artistic approach.
-These are completely different media or visual approaches, including nonpixel
-art. All approaches use the same square footprint. Record choices at the boundary,
-so later choices can respond to the preceding artwork. Do not fabricate subjects
-or replace thin articles with more interesting pages.
+The current grid is drawn by `tools/wiki-pixel-grid/draw-art.py` with Pillow.
+Its shapes, scene compositions and surface treatments are written in code.
+`subjects.json` records each individual article selection and evidence.
+No image model or downloaded artwork is used by this renderer. Earlier
+image-model experiments are retired in the ignored local directory
+`research/wiki-pixel-grid/retired-model-art/`; they are not part of this grid.
 
-## Fidelity and navigation
+## Offline source
 
-Keep original generated PNG masters, each square. Pixel art targets a 256 by 256
-art-pixel grid, but generated masters are preserved at their returned resolution. Other media retain higher-resolution masters so zooming reveals
-detail. The 256 by 256 tile footprint is not a master-resolution limit. Ship
-lossless WebP copies for the detail tier and small previews for the overview.
-Do not downsample or recolor masters. The fullscreen viewer contains no visible
-header, captions or controls. Pointer drag, wheel and pinch navigate it. Clicking
-or tapping a tile opens its article in a new tab. Keyboard arrows pan, plus/minus zoom, Home fits the grid, and Enter opens the center tile. Empty slots
-remain empty until actual art exists. Sources and prompts live in the manifest.
-Each tile stores both the current article URL and the exact source revision URL.
-An accessible list exposes all completed tiles' article links to screen readers.
+The complete Simple English Wikipedia articles dump is stored locally in
+`research/wiki-pixel-grid/`, with its download URL, date and verified checksum
+in the public manifest. The SQLite collection has 285,478 nonredirect mainspace
+articles. The 250 articles were sampled uniformly without replacement with the
+recorded seed. Keep their sequence. Do not substitute more interesting pages.
 
-## Medium decisions
+Read the selected article offline, choose a subject explicitly mentioned there,
+record evidence and the exact revision, draw one tile, then advance. Short
+articles may get symbolic place compositions. Buildings and people in these
+interpretations do not claim documentary accuracy or exact likenesses.
+Sensitive historical articles use restrained subjects, without celebratory
+portraits of perpetrators or illustrations of violence.
 
-- Tiles 1 to 50: cinematic pixel-art scenes.
-- Tiles 51 to 100: tactile layered cut-paper relief sculpture.
-- Tiles 101 to 150: monochrome ink engraving with crosshatching.
+Each tile keeps its current Wikipedia page URL and exact source revision URL.
+The manifest attributes the source text under CC BY-SA 4.0. Clicking a tile
+opens its article. The accessible link list exposes every source to readers.
 
-## Verification
+## Five media
 
-Check the JavaScript syntax and boot in owned Chrome for Testing. Verify
-mouse drag, anchored wheel zoom, pinch, resize, keyboard navigation, bounded
-image residency and source/master dimensions. Keep at most 12 decoded full-resolution tiles in
-memory; use the overview for the remaining distant tiles. Browser tests close their exact
-owned browser in a finally block.
+- Tiles 1 to 50: actual 256 by 256 pixel-art scenes, with hard pixel clusters.
+- Tiles 51 to 100: paper collage, layered shapes, shadows and paper grain.
+- Tiles 101 to 150: ink engraving, monochrome hatching and fine outlines.
+- Tiles 151 to 200: stained glass, triangular panes and lead lines.
+- Tiles 201 to 250: woven tapestry, rows of individual threads and stitches.
+
+Every tile occupies the same 256 by 256 logical grid units. The four nonpixel
+sets have 1024 by 1024 masters. This preserves detail without forcing other
+media onto a 256-pixel raster. Code and recorded seeds remain editable and
+allow higher-resolution rendering later.
+
+## Rebuild and fidelity
+
+Use Python with Pillow:
+
+```
+python3 tools/wiki-pixel-grid/draw-art.py
+```
+
+Use `--tiles 1 51` to rebuild specific tiles. The public subject records let the drawings rebuild without another download.
+PNG masters are saved to `research/wiki-pixel-grid/code-masters/`. Public detail
+images are lossless WebP with the same decoded pixels. A SHA-256 of the RGB
+pixels is recorded per tile. Thumbnails and the small overview are separate
+navigation assets; neither replaces a master.
+
+## Navigation and checks
+
+The fullscreen viewer contains no visible header, captions or controls. Drag
+pans, wheel and pinch zoom, arrows pan, plus/minus zoom, and Home fits the grid.
+Click or tap opens the tile's Wikipedia page. Enter opens the center tile.
+
+Only visible previews and up to 12 full-detail tiles are decoded, with old
+buffers released before new ones are allocated. Drawing is event-driven;
+inertia respects reduced motion. Browser tests own and close their exact
+Chrome for Testing process. Never launch the owner's personal Chrome headlessly.
+
+Run `node --check js/wiki-pixel-grid.js` and
+`node tools/wiki-pixel-grid/test-viewer.cjs`. Validate all 250 source URLs,
+evidence, media boundaries, distinct decoded hashes and lossless master copies.
+Review contact sheets and browser screenshots before publishing.
