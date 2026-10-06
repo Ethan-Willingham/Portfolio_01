@@ -2,7 +2,7 @@
  'use strict';const O=root.OneShift;
  O.bindInput=function(app){const canvas=app.renderer.canvas,ui=app.ui,pointers=new Map();let drag=null,pinch=null,longPress=0;
   const point=e=>{const r=canvas.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};};
-  const cancel=()=>{ui.selected=[];ui.target=null;ui.build=null;ui.box=null;ui.selectionKey='';ui.update();};
+  const cancel=()=>{ui.selected=[];ui.target=null;ui.build=null;ui.box=null;ui.cursor=null;ui.selectionKey='';ui.update();};
   const click=(x,y,shift=false)=>{const hit=app.renderer.hit(x,y,ui.selected.length>0),pos=app.renderer.world(x,y),s=app.sim.s;if(ui.build){ui.issue({type:'build',kind:ui.build,x:Math.floor(pos.x),y:Math.floor(pos.y),zone:ui.zoneType});return;}
    if(ui.target?.kind==='parcel'&&hit?.kind==='truck'){ui.issue({type:'loadParcel',parcel:ui.target.id,truck:hit.id});ui.target=null;ui.update();return;}
    if(ui.selected.length){
@@ -15,7 +15,7 @@
     let moved=0;for(const id of ui.selected){const dest={...destination};if(ui.selected.length>1&&!dest.truck&&!dest.lane){const p=app.sim.p.get(id),spot=app.sim.spot(p);if(!spot)break;Object.assign(dest,spot);}if(ui.issue({type:'move',pallet:id,dest}).ok)moved++;}
     if(moved&&!shift){ui.selected=[];ui.target=null;ui.selectionKey='';}ui.update();return;
    }
-   if(hit)ui.select(hit);else{ui.cursor={x:Math.floor(pos.x),y:Math.floor(pos.y)};ui.issue({type:'walk',x:ui.cursor.x,y:ui.cursor.y});}
+   if(hit)ui.select(hit);
   };
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
   canvas.addEventListener('pointerdown',e=>{app.audio.unlock();if(app.rotated||app.hubPause||app.menuPause)return;canvas.focus({preventScroll:true});const p=point(e);pointers.set(e.pointerId,p);canvas.setPointerCapture(e.pointerId);clearTimeout(longPress);
@@ -36,7 +36,7 @@
    if(is('pause')){e.preventDefault();app.paused=!app.paused;ui.update();return;}if(is('cancel')){e.preventDefault();cancel();canvas.focus();return;}if(is('home')){app.renderer.home(app.sim.s);return;}if(is('build')&&app.sim.s.day>=4){ui.openHub('build');return;}
    const actions=[...document.querySelectorAll('#shift-selection [data-action]:not(.close):not(:disabled)')];if(is('panel')){e.preventDefault();actions[0]?.focus();return;}for(let i=1;i<=3;i++)if(is('action'+i)){e.preventDefault();actions[i-1]?.click();return;}
    if(is('nextObject')&&e.target===canvas){e.preventDefault();ui.cursor=null;const list=app.renderer.hits;if(!list.length)return;const index=list.findIndex(h=>h.id===ui.target?.id&&h.kind===ui.target?.kind&&h.side===ui.target?.side);ui.select(list[(index+(e.shiftKey?-1:1)+list.length)%list.length]);return;}
-   if(['cursorUp','cursorDown','cursorLeft','cursorRight'].some(is)){e.preventDefault();ui.cursor=ui.cursor||{x:17,y:20};ui.cursor.x+=is('cursorRight')?1:is('cursorLeft')?-1:0;ui.cursor.y+=is('cursorDown')?1:is('cursorUp')?-1:0;ui.cursor.x=Math.max(0,Math.min(app.sim.s.map.w-1,ui.cursor.x));ui.cursor.y=Math.max(0,Math.min(app.sim.s.map.h-1,ui.cursor.y));return;}
+   if(['cursorUp','cursorDown','cursorLeft','cursorRight'].some(is)){e.preventDefault();const b=app.sim.s.map.building;ui.cursor=ui.cursor||{x:b.x+Math.floor(b.w/2),y:b.y+Math.floor(b.h/2)};ui.cursor.x+=is('cursorRight')?1:is('cursorLeft')?-1:0;ui.cursor.y+=is('cursorDown')?1:is('cursorUp')?-1:0;ui.cursor.x=Math.max(0,Math.min(app.sim.s.map.w-1,ui.cursor.x));ui.cursor.y=Math.max(0,Math.min(app.sim.s.map.h-1,ui.cursor.y));return;}
    if(is('interact')){e.preventDefault();if(ui.cursor){const p=app.renderer.screen(ui.cursor.x+.5,ui.cursor.y+.5);click(p.x,p.y,e.shiftKey);}else actions[0]?.click();return;}
    for(const [k,dx,dy]of [['panUp',0,-1],['panDown',0,1],['panLeft',-1,0],['panRight',1,0]])if(is(k)){e.preventDefault();app.renderer.camera.x+=dx;app.renderer.camera.y+=dy;return;}
    if(is('zoomIn')||is('zoomOut')){e.preventDefault();app.renderer.camera.zoom=Math.max(9,Math.min(64,app.renderer.camera.zoom*(is('zoomIn')?1.3:1/1.3)));}

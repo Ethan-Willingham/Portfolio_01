@@ -1,6 +1,6 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.1.
+The public game at `one-shift.html` is an inventory business game, version 2.2.
 Start with six stocked pallets and $200. Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
 rack space, doors, and people. The first screen has one order and no tutorial dialog.
@@ -82,7 +82,10 @@ for existing physical regression fixtures; pass `business` to exercise this game
 The fixed 20 Hz simulation advances 1.37 game minutes per real second. A business
 shift starts at 8 AM and closes at 5 PM, roughly 6.6 minutes at 1x or 2.2 at 3x,
 plus any safe closing work. Tiles represent four feet. The starting building is
-100 by 80 feet, with east dock doors. Workers use cached A* paths. They still do
+64 by 64 feet, with one east dock door. The business starts with four rack bays
+and separate four-row staging areas. An expansion adds 32 feet of depth, enlarges
+staging, and opens room for more racks and doors. Older saves keep their dimensions.
+Workers use cached A* paths. They still do
 not yield to one another, and forklifts remain worker equipment rather than a
 scarce vehicle pool. Construction is immediate. These are current abstractions.
 
@@ -92,14 +95,19 @@ Steel blue, concrete gray, charcoal, white markings, and restrained safety orang
 Local Century Supra, Segoe UI, and Commit Mono fonts. Procedural Canvas art and
 crisp display-resolution labels. The stocked racks show their product and quantity.
 Orders, Stock, and Worker share the right board. Floor details open on the left.
-The ordinary beginning screen stays below 65 words on the board. Store is the
-only floor toolbar button. Daily totals appear automatically at closing. Later
+The ordinary beginning screen stays below 35 words on the board. Store is the
+only floor toolbar button, positioned below the floor. Store and Menu are centered
+with consistent buttons. Secondary settings and stock details stay collapsed. Daily totals appear automatically at closing. Later
 equipment and products stay gray until their order milestones; Team needs a
 forklift. There are no Results or Home buttons. Warehouse walls have a plain
 perimeter without roof stripes, detached pipes, vents, or parking outlines.
 
-Right or middle mouse drag pans. Wheel, + and - zoom. The camera frames the
-warehouse automatically at launch and when a fitted view resizes. Keyboard buttons work natively. Touch uses
+Right or middle mouse drag pans. Wheel, + and - zoom. The camera starts close
+enough to see stock and work at the dock, without fitting
+the entire road. It frames the warehouse automatically at launch and when a fitted
+view resizes or the building expands. Empty floor clicks and taps do nothing.
+Workers move for jobs and mandatory truck exits; manual walking is unavailable.
+Keyboard buttons work natively. Touch uses
 the same layout in landscape, with scrolling and 44px targets. Portrait touch
 freezes behind the rotate screen without changing a deliberate manual pause.
 Large-text landscape views keep the first Ship order button above the fold.

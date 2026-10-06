@@ -184,7 +184,7 @@
         const job={id:this.id(),service:service.id,units,sources,status:'queued'};s.serviceJobs.push(job);for(const q of sources)this.p.get(q.id).reservedBy=job.id;return this.enqueue(w,{kind:'service',job:job.id,serviceIndex:0,gatherProgress:0,start:this.approach(this.p.get(sources[0].id)),end:{x:station.x,y:station.y},duration:service.seconds*units/(s.owned.line?2:1)});
       }
       if(c.type==='cancelService'){const job=s.serviceJobs.find(q=>q.id===c.job&&q.status==='queued');if(!job)return fail('That work order has already closed.');for(const worker of s.workers){if(worker.task?.job===job.id){this.release(worker.task);worker.task=null;return {ok:true};}const index=worker.queue.findIndex(q=>q.job===job.id);if(index!==-1){this.release(worker.queue[index]);worker.queue.splice(index,1);return {ok:true};}}return fail('No worker has that work order.');}
-      if(c.type==='charge'){if(!O.has(s,'forklift'))return fail('No forklift to charge.');return this.enqueue(w,{kind:'charge',start:{x:7,y:21},end:{x:7,y:21},duration:s.owned.charger?3:8});}
+      if(c.type==='charge'){if(!O.has(s,'forklift'))return fail('No forklift to charge.');const b=s.map.building,at={x:b.x+2,y:b.y+b.h-3};return this.enqueue(w,{kind:'charge',start:at,end:at,duration:s.owned.charger?3:8});}
       if(c.type==='nextDay'){if(s.phase!=='evening')return fail('Finish the current shift first.');this.nextDay();return {ok:true};}
       return fail('Unknown command.');
     }

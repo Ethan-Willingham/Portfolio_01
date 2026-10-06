@@ -4,7 +4,7 @@
   // Missing orientation identifies the original south-dock saves and layouts.
   const side=s=>s.map.dockSide||'south';
   O.docks={side,entrance:(s,d)=>side(s)==='east'?{x:d.x+1,y:d.y}:{x:d.x,y:d.y+1},slot:(s,d,i)=>side(s)==='east'?{x:d.x+1+Math.floor(i/2),y:d.y+i%2}:{x:d.x+i%2,y:d.y+1+Math.floor(i/2)},
-    lane(s,kind){const b=s.map.building;return side(s)==='east'?{x:b.x+b.w-5,y:kind==='receiving'?b.y+4:b.y+b.h-7,w:4,h:6}:{x:kind==='receiving'?b.x+3:b.x+b.w-10,y:b.y+b.h-5,w:6,h:4};},
+    lane(s,kind){const b=s.map.building,compact=s.mode==='business'&&b.h<18;return side(s)==='east'?{x:b.x+b.w-5,y:kind==='receiving'?b.y+(compact?3:4):b.y+b.h-(compact?5:7),w:4,h:compact?4:6}:{x:kind==='receiving'?b.x+3:b.x+b.w-10,y:b.y+b.h-5,w:6,h:4};},
     stack(s){const b=s.map.building;return side(s)==='east'?{x:b.x+b.w-7,y:b.y+b.h-3}:{x:b.x+1,y:b.y+b.h-3};},
     spawn(s){const b=s.map.building;return side(s)==='east'?{x:b.x+b.w-3,y:b.y+Math.min(10,b.h-2)}:{x:b.x+Math.min(12,b.w-2),y:b.y+b.h-2};}
   };

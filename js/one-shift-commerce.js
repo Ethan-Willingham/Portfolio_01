@@ -57,7 +57,10 @@
     if(!s.commerce){
       s.cash=s.openingCash=20000;s.minute=480;s.shiftEnd=1020;s.reputation=75;
       s.commerce={version:1,orders:[],queue:[],history:[],purchases:[],completed:0,onTime:0,totalSales:0,totalCogs:0,serial:0,restocked:0,firstDecision:true,won:false};
-      s.map.racks[1].x=15;s.map.racks[2].x=21;Object.assign(s.map.racks[3],{x:9,y:14});s.map.revision++;
+      Object.assign(s.map.building,{w:16,h:16});
+      s.map.doors=[{id:1,x:21,y:12}];
+      s.map.racks=[{id:1,x:7,y:8,levels:1},{id:2,x:10,y:8,levels:1},{id:3,x:13,y:8,levels:1},{id:4,x:7,y:12,levels:1}];
+      Object.assign(s.workers[0],{x:18,y:12});s.map.revision++;
       const items=[['stove',24],['stove',16],['lantern',24],['lantern',16],['chair',16],['chair',8]];
       items.forEach(([item,cases],i)=>{const r=s.map.racks[Math.floor(i/2)];this.pallet(item,'trail',cases,null,{place:'storage',x:r.x+i%2,y:r.y,confirmed:true,scanned:true,unitCost:O.catalog[item].buy});s.goods.arrived+=cases;});
     }
@@ -105,6 +108,7 @@
     const s=this.s;if(!O.business(s))return legacy.command.call(this,c);
     if(!c||typeof c!=='object'||Array.isArray(c))return {ok:false,reason:'Choose an action.'};
     const fail=reason=>({ok:false,reason}),b=s.commerce,o=b.orders.find(o=>o.id===c.order);
+    if(c.type==='walk')return fail('Choose a task.');
     if(c.type==='sellSurplus'){
       if(s.phase!=='shift'||s.minute>s.shiftEnd-60||b.orders.length>=30||b.orders.some(o=>o.buyback&&active(o)))return fail('Finish the current supplier return.');
       const q=this.surplusQuote(c.item);if(!q)return fail('No unreserved surplus.');
