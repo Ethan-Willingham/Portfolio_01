@@ -28,10 +28,10 @@ window.__globeQuality={
   options=options||{};var v=math.geographicVector(lat,lon),r=4;
   targetTheta=theta=Math.PI/2+lon*DEG;targetPhi=phi=Math.PI/2-lat*DEG;targetRadius=radius=r;sunFraming=false;aimShift=0;autoSpin=false;
   camera.position.set(v.x*r,v.y*r,v.z*r);camera.lookAt(0,0,0);camera.updateMatrixWorld();
-  var items=[atmosphere,moon,sunBody,sunGlow,starField,pinMarker].concat(auroraMeshes),visible=items.map(function(m){return m.visible;});
+  var items=[atmosphere,moon,sunBody,sunGlow,starField,pinMarker].concat(auroraMeshes),visible=items.map(function(m){return m.visible;}),strengths=auroraMeshes.map(function(m){return m.material.uniforms.strength.value;});
   var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldDense=earthMaterial.uniforms.denseEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldSun=sunUniform.value.clone(),oldNight=earthMaterial.uniforms.nightMap.value,oldBase=earthMaterial.uniforms.baseMap.value,oldTarget=renderer.getRenderTarget();
   var w=container.clientWidth,h=container.clientHeight,rt=new THREE.WebGLRenderTarget(w,h),pixel=new Uint8Array(4);
-  try{items.forEach(function(m){m.visible=false;});if(options.aurora)auroraMeshes.forEach(function(m){m.visible=hasForecast();});
+  try{items.forEach(function(m){m.visible=false;});if(options.aurora)auroraMeshes.forEach(function(m){m.visible=hasForecast();});if(options.auroraStrength!==undefined)auroraMeshes.forEach(function(m){m.material.uniforms.strength.value=options.auroraStrength/auroraMeshes.length;});
    if(options.reference)earthMaterial.uniforms.photoEnabled.value=0;if(options.thermal)earthMaterial.uniforms.naturalEnabled.value=0;
    if(options.dense)earthMaterial.uniforms.denseEnabled.value=1;
    if(options.sourceNight)photoSunUniform.value.set(-v.x,-v.y,-v.z);
@@ -41,7 +41,7 @@ window.__globeQuality={
    if(options.terrain!==undefined)earthMaterial.uniforms.baseMap.value=solidTexture(options.terrain,options.terrain,options.terrain);
    if(options.lights!==undefined)earthMaterial.uniforms.nightMap.value=solidTexture(options.lights,options.lights,options.lights);
    renderer.setRenderTarget(rt);renderer.render(scene,camera);renderer.readRenderTargetPixels(rt,Math.floor(w/2),Math.floor(h/2),1,1,pixel);return Array.from(pixel);
-  }finally{items.forEach(function(m,i){m.visible=visible[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;earthMaterial.uniforms.denseEnabled.value=oldDense;photoSunUniform.value.copy(oldPhotoSun);sunUniform.value.copy(oldSun);if(earthMaterial.uniforms.nightMap.value!==oldNight)earthMaterial.uniforms.nightMap.value.dispose();earthMaterial.uniforms.nightMap.value=oldNight;if(earthMaterial.uniforms.baseMap.value!==oldBase)earthMaterial.uniforms.baseMap.value.dispose();earthMaterial.uniforms.baseMap.value=oldBase;renderer.setRenderTarget(oldTarget);rt.dispose();}
+  }finally{items.forEach(function(m,i){m.visible=visible[i];});auroraMeshes.forEach(function(m,i){m.material.uniforms.strength.value=strengths[i];});earthMaterial.uniforms.photoEnabled.value=oldPhoto;earthMaterial.uniforms.naturalEnabled.value=oldNatural;earthMaterial.uniforms.denseEnabled.value=oldDense;photoSunUniform.value.copy(oldPhotoSun);sunUniform.value.copy(oldSun);if(earthMaterial.uniforms.nightMap.value!==oldNight)earthMaterial.uniforms.nightMap.value.dispose();earthMaterial.uniforms.nightMap.value=oldNight;if(earthMaterial.uniforms.baseMap.value!==oldBase)earthMaterial.uniforms.baseMap.value.dispose();earthMaterial.uniforms.baseMap.value=oldBase;renderer.setRenderTarget(oldTarget);rt.dispose();}
  },
  nightForecastPoint:function(){if(!forecast)return null;var best=null;for(var lat=-80;lat<=80;lat++)for(var lon=0;lon<360;lon++){
   var p=forecast.grid[(lat+90)*360+lon],east=lon>180?lon-360:lon,elevation=math.solarElevation(instant,lat,east);
@@ -57,6 +57,7 @@ function image(width,kind,time){const key=width+'/'+kind+'/'+time;if(images.has(
  for(let y=0;y<height;y++){const lat=90-(y+.5)/height*180;for(let x=0;x<width;x++){const lon=-180+(x+.5)/width*360,at=y*stride+1+x*4;
   let c=kind==='infrared'?[100,100,100]:[110,110,110];
   if(kind==='natural'&&Math.abs(lat)<8){if(lon>=90&&lon<118)c=[20,180,190];else if(lon>=118&&lon<140)c=[35,170,45];else if(lon>=140&&lon<158)c=[175,120,60];}
+  if(kind==='natural'&&Math.abs(lat)<8&&lon>=160&&lon<172)c=[225,225,225];
   if(kind==='infrared'&&Math.abs(lat)<8&&lon>=90&&lon<118)c=[245,245,245];
   if(kind==='infrared'&&Math.abs(lat)<8&&lon>=118&&lon<140)c=[0,0,0];
   if(earlier)c=kind==='infrared'?[80,80,80]:[150,125,110];
@@ -102,6 +103,10 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  const denseGround=await page.evaluate(()=>__globeQuality.sample(0,130,{dense:true})),denseCloud=await page.evaluate(()=>__globeQuality.sample(0,108,{dense:true}));
  check('hourly visible products preserve the same terrain colours beneath darker surface pixels',denseGround.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{denseGround,reference:warmReference});
  check('hourly observed bright cloud remains bright and nearly neutral',denseCloud[0]>180&&Math.max(...denseCloud.slice(0,3))-Math.min(...denseCloud.slice(0,3))<25,denseCloud);
+ const observedDay=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceDay:true,day:true})),observedNight=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceNight:true,day:true}));
+ check('hourly visible cloud cannot disappear at a separate source-time sunlight boundary',observedDay[0]>180&&observedDay.every((v,i)=>Math.abs(v-observedNight[i])<=1),{observedDay,observedNight});
+ const nightObservedDay=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceDay:true,night:true,lights:160})),nightObservedNight=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceNight:true,night:true,lights:160}));
+ check('night clouds and light attenuation use the same coverage on either side of the old cutoff',nightObservedDay.every((v,i)=>Math.abs(v-nightObservedNight[i])<=1),{nightObservedDay,nightObservedNight});
  check('opaque black infrared stays valid while warm terrain retains its reference colours',blackIR[3]===255&&blackIR.slice(0,3).every(x=>x===0)&&thermal.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{texture:blackIR,pixel:thermal,reference:warmReference});
  const cold=await page.evaluate(()=>__globeQuality.sample(0,108,{thermal:true}));
  check('bright cold infrared features still render in neutral white',Math.max(...cold.slice(0,3))-Math.min(...cold.slice(0,3))<=3&&cold[0]>200,cold);
@@ -121,6 +126,8 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  const point=await page.evaluate(()=>__globeQuality.nightForecastPoint());assert(point&&point.probability>20,'Storm fixture has a dark forecast point');
  const base=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon),point),aurora=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon,{aurora:true}),point),gain=aurora[1]-base[1];
  check('strong dark aurora remains visible without washing cloud colors green',gain>0&&gain<=25,{point,base,aurora,gain});
+ const previousAurora=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon,{aurora:true,auroraStrength:.50}),point),previousGain=previousAurora[1]-base[1];
+ check('aurora exposure increases the visible forecast glow by about fifty percent',gain>=previousGain*1.35&&gain<=previousGain*1.7+1,{gain,previousGain});
  await page.evaluate(()=>__globeQuality.capForecast(28));const weak=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon,{aurora:true}),point),weakGain=weak[1]-base[1];
  check('a weak 28 percent forecast contributes visible green while remaining below the strong forecast',weakGain>=3&&weakGain<=gain,{weakGain,gain});
  await page.evaluate(()=>__globeQuality.capForecast(9));const below=await page.evaluate(p=>__globeQuality.sample(p.lat,p.lon,{aurora:true}),point);

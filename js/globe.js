@@ -244,12 +244,14 @@
   }
   var baseTexture = solidTexture(60,90,87), nightTexture = solidTexture(1,2,1), satelliteTexture = solidTexture(60,90,87), infraredTexture=solidTexture(0,0,0), moonTexture = solidTexture(130,128,117);
   var photoSunUniform={value:new THREE.Vector3(1,0,0)};
-  var replayUniforms={replayFrom:{value:infraredTexture},replayTo:{value:infraredTexture},replayFromSun:{value:new THREE.Vector3(1,0,0)},replayToSun:{value:new THREE.Vector3(1,0,0)},replayFromBaked:{value:0},replayBlend:{value:1},replayEnabled:{value:0}};
-  var replayLayer='vec2 replayLayer(vec4 c,vec3 observedSun,float baked,vec3 normal){float useVisible=smoothstep(.10,.25,dot(normal,observedSun))*c.g;return mix(vec2(mix(c.b,c.r,useVisible)*mix(c.a,c.g,useVisible),mix(c.b*c.a,c.r*c.g,useVisible)),c.rg,baked);}';
+  var replayUniforms={replayFrom:{value:infraredTexture},replayTo:{value:infraredTexture},replayFromBaked:{value:0},replayBlend:{value:1},replayEnabled:{value:0}};
+  // Retain observed cloud structure wherever either channel sees it. A second
+  // source-time sunlight gate would cut clouds off before the live terminator.
+  var replayLayer='vec2 replayLayer(vec4 c,float baked){float coverage=max(c.r*c.g,c.b*c.a);return mix(vec2(coverage),c.rg,baked);}';
   var vertex = 'varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld; void main(){ vUv=uv; vNormal=normalize((modelMatrix*vec4(normal,0.0)).xyz); vWorld=(modelMatrix*vec4(position,1.0)).xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
   var earthMaterial = new THREE.ShaderMaterial({uniforms:Object.assign({},replayUniforms,{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0},denseEnabled:{value:0}}),vertexShader:vertex,fragmentShader:[
     'uniform sampler2D baseMap, nightMap, photoMap,infraredMap; uniform vec3 sunDir,photoSunDir; uniform float photoMix,photoEnabled,thermalEnabled,naturalEnabled,denseEnabled; varying vec2 vUv; varying vec3 vNormal;',
-    'uniform sampler2D replayFrom,replayTo; uniform vec3 replayFromSun,replayToSun; uniform float replayFromBaked,replayBlend,replayEnabled;',replayLayer,
+    'uniform sampler2D replayFrom,replayTo; uniform float replayFromBaked,replayBlend,replayEnabled;',replayLayer,
     'void main(){ vec3 base=texture2D(baseMap,vUv).rgb; vec4 photo=texture2D(photoMap,vUv); vec4 infrared=texture2D(infraredMap,vUv);',
     // Natural RGB puts near infrared in red: ice clouds and snow become cyan.
     // Neutralize that bright cyan only, retaining observed structure and land.
@@ -268,14 +270,16 @@
     // white over reference terrain, not a grayscale replacement for Earth's
     // entire surface. This is a display curve, not measured cloud opacity.
     'vec4 thermal=vec4(mix(base,vec3(1.0),smoothstep(.35,.90,infrared.r)),infrared.a);',
+    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a; float denseCloud=max(visibleCloud*naturalEnabled,thermalCloud);',
     'vec4 shot=mix(photo,mix(thermal,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
-    'vec2 replayCover=vec2(0.0);if(replayEnabled>0.0){replayCover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromSun,replayFromBaked,normalize(vNormal)),replayLayer(texture2D(replayTo,vUv),replayToSun,0.0,normalize(vNormal)),replayBlend);} day=mix(day,mix(base,vec3(1.0),replayCover.x*photoMix*photoEnabled),replayEnabled);',
+    'day=mix(day,mix(base,vec3(1.0),denseCloud*photoMix*photoEnabled),denseEnabled*thermalEnabled);',
+    'vec2 replayCover=vec2(0.0);if(replayEnabled>0.0){replayCover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromBaked),replayLayer(texture2D(replayTo,vUv),0.0),replayBlend);} day=mix(day,mix(base,vec3(1.0),replayCover.x*photoMix*photoEnabled),replayEnabled);',
     'float light=dot(normalize(vNormal),sunDir); float daylight=smoothstep(-.10,.04,light);',
     'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
-    // Use the source-time visible/thermal cloud structure on both hemispheres.
+    // Use the same observed cloud structure on both hemispheres.
     // Night clouds dim the historical lights without completely hiding them.
-    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a;',
     'float cloudCover=mix(visibleCloud,mix(thermalCloud,visibleCloud,shotDay),thermalEnabled)*photoMix*photoEnabled;',
+    'cloudCover=mix(cloudCover,denseCloud*photoMix*photoEnabled,denseEnabled*thermalEnabled);',
     'cloudCover=mix(cloudCover,replayCover.y*photoMix*photoEnabled,replayEnabled);',
     'night=night*(1.0-cloudCover*.65)+vec3(.085,.10,.115)*cloudCover;',
     'gl_FragColor=vec4(mix(night,litDay,daylight),1.0); }'
@@ -283,7 +287,7 @@
   var replayBakeScene=new THREE.Scene(),replayBakeCamera=new THREE.Camera();
   var replayBakeMaterial=new THREE.ShaderMaterial({uniforms:replayUniforms,depthTest:false,depthWrite:false,
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}',
-    fragmentShader:'varying vec2 vUv;uniform sampler2D replayFrom,replayTo;uniform vec3 replayFromSun,replayToSun;uniform float replayFromBaked,replayBlend;'+replayLayer+'void main(){float lat=(vUv.y-.5)*3.14159265359,lon=vUv.x*6.28318530718;vec3 normal=vec3(-cos(lon)*cos(lat),sin(lat),sin(lon)*cos(lat));vec2 cover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromSun,replayFromBaked,normal),replayLayer(texture2D(replayTo,vUv),replayToSun,0.0,normal),replayBlend);gl_FragColor=vec4(cover,0.0,1.0);}'});
+    fragmentShader:'varying vec2 vUv;uniform sampler2D replayFrom,replayTo;uniform float replayFromBaked,replayBlend;'+replayLayer+'void main(){vec2 cover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromBaked),replayLayer(texture2D(replayTo,vUv),0.0),replayBlend);gl_FragColor=vec4(cover,0.0,1.0);}'});
   replayBakeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),replayBakeMaterial));
   var replayBakes=[0,1].map(function(){var target=new THREE.WebGLRenderTarget(replayWidth,replayWidth/2,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false,stencilBuffer:false});target.texture.wrapS=THREE.RepeatWrapping;return target;});
   var earth = new THREE.Mesh(new THREE.SphereGeometry(1,128,96),earthMaterial); scene.add(earth);
@@ -318,7 +322,7 @@
     auroraMeshes.forEach(function (mesh) {scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}); auroraMeshes=[];
     var layers = auroraStyle === 'shell' ? [1.018] : auroraStyle === 'halo' ? [1.025,1.04] : auroraStyle === 'curtain' ? [1.018] : [1.018,1.028];
     layers.forEach(function (height,index) {
-      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:.50/layers.length}},vertexShader:vertex,fragmentShader:[
+      var material = new THREE.ShaderMaterial({uniforms:{auroraMap:{value:auroraTexture},sunDir:sunUniform,tick:{value:0},layer:{value:index},style:{value:auroraStyle==='curtain'?1:0},strength:{value:.75/layers.length}},vertexShader:vertex,fragmentShader:[
         'uniform sampler2D auroraMap; uniform vec3 sunDir; uniform float tick,layer,style,strength; varying vec2 vUv; varying vec3 vNormal,vWorld;',
         'void main(){ vec2 gridUv=vec2((vUv.x*360.0+1.5)/362.0,(vUv.y*180.0+.5)/181.0); float probability=texture2D(auroraMap,gridUv).r; float night=1.0-smoothstep(-.20,-.035,dot(normalize(vNormal),sunDir));',
         'float angle=vUv.x*6.2831853; float fold=sin(angle*7.0+vUv.y*17.0+tick*.10)*.9+sin(angle*19.0-vUv.y*11.0)*.35;',
@@ -797,12 +801,12 @@
     if(photo&&photo.time===record.photo.time&&!replayUniforms.replayEnabled.value)return;
     if(replayTarget===record&&replayUniforms.replayEnabled.value){replayFadeStarted=0;replayUniforms.replayEnabled.value=1;return;}
     var time=performance.now(),old=replayTarget||photo&&replayMemo.get(photo.time),texture;
-    if(!replayUniforms.replayEnabled.value&&old){texture=replayTexture(old);var oldSun=math.solar(new Date(old.photo.time));replayUniforms.replayFrom.value=replayUniforms.replayTo.value=texture;replayUniforms.replayFromSun.value.set(oldSun.vector.x,oldSun.vector.y,oldSun.vector.z);replayUniforms.replayToSun.value.copy(replayUniforms.replayFromSun.value);replayUniforms.replayFromBaked.value=0;replayUniforms.replayBlend.value=1;}
+    if(!replayUniforms.replayEnabled.value&&old){texture=replayTexture(old);replayUniforms.replayFrom.value=replayUniforms.replayTo.value=texture;replayUniforms.replayFromBaked.value=0;replayUniforms.replayBlend.value=1;}
     if(old){
       advanceReplay(time);var target=replayBakes[replayBakeIndex++%2],prior=renderer.getRenderTarget();renderer.setRenderTarget(target);renderer.render(replayBakeScene,replayBakeCamera);renderer.setRenderTarget(prior);replayUniforms.replayFrom.value=target.texture;replayUniforms.replayFromBaked.value=1;
     }
-    texture=replayTexture(record);var sun=math.solar(new Date(record.photo.time));replayUniforms.replayTo.value=texture;replayUniforms.replayToSun.value.set(sun.vector.x,sun.vector.y,sun.vector.z);
-    if(!old){replayUniforms.replayFrom.value=texture;replayUniforms.replayFromSun.value.copy(replayUniforms.replayToSun.value);replayUniforms.replayFromBaked.value=0;}
+    texture=replayTexture(record);replayUniforms.replayTo.value=texture;
+    if(!old){replayUniforms.replayFrom.value=texture;replayUniforms.replayFromBaked.value=0;}
     replayBlendStarted=time;replayFadeStarted=0;replayUniforms.replayBlend.value=old?0:1;replayUniforms.replayEnabled.value=1;
     replayTarget=record;replayMemo.pin(record.photo.time);photo=record.photo;photoMix=1;replayPendingCloud=false;wrapper.dataset.photo='ready';
   }
