@@ -15,7 +15,7 @@ export async function serve(localLab, host='127.0.0.1') {
     try {
       const pathname=decodeURIComponent(new URL(req.url,'http://local').pathname);
       if(pathname.split('/').some(p=>p.startsWith('.'))){res.writeHead(403);res.end();return;}
-      if(pathname==='/spike.html') {res.setHeader('content-type','text/html');res.end('<!doctype html><title>Physics isolation</title><script src="/js/chain-reaction-physics.js?v=0.1.0"></script>');return;}
+      if(pathname==='/spike.html') {res.setHeader('content-type','text/html');res.end('<!doctype html><title>Physics isolation</title><script src="/js/chain-reaction-physics.js?v=0.1.1"></script><script src="/js/chain-reaction-mass.js?v=0.1.0"></script>');return;}
       let filename;
       if(localLab && pathname.startsWith('/local/')) filename=resolve(localLab,'.'+pathname.slice(6));
       else filename=resolve(ROOT,'.'+pathname);

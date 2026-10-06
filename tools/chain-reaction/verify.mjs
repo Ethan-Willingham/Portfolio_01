@@ -4,6 +4,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, hash, deadline, fixtures, isolation, validate, physics } from './core.mjs';
 import { verifyCausality } from './causality.mjs';
+import { verifyMaterials } from './materials.mjs';
+import { measureLimits } from './limits.mjs';
 const release=await toolLock();
 const clear=deadline(1800000);
 try {
@@ -23,6 +25,9 @@ try {
     if(fixture.causality){await verifyCausality(fixture);console.log('Contact causality and disconnected controls PASS: '+name);}
     count++;
   }
+  const materials=await verifyMaterials(),limits=await measureLimits();
+  console.log('Material recipes: '+materials.recipes.length+' PASS; '+materials.massModelsChecked+' dimensional mass checks; stored masses unchanged');
+  console.log('Limits: '+limits.railCornersPassed+' rail samples PASS; CCD, motion threshold and camera samples PASS; no stage robustness claimed');
   console.log('Isolation: '+count+' stored hashes and invariants PASS');
-  console.log('verify --full PASS 0/0 public stages; vendor hash PASS. Stage gates unavailable, Phase 0 only.');
+  console.log('verify --full PASS 0/0 public stages; vendor hash PASS. Stage gates unavailable; foundations only.');
 } finally {clear();await release();}

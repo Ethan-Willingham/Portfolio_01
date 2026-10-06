@@ -5,7 +5,7 @@ import { ROOT, fixtures, deadline } from './core.mjs';
 const release=await toolLock();
 const clear=deadline(300000),failures=[];
 try {
-  const paths=['js/chain-reaction-physics.js','docs/CHAIN_REACTION.md'];
+  const paths=['js/chain-reaction-physics.js','js/chain-reaction-causality.js','js/chain-reaction-mass.js','js/chain-reaction-materials.json','js/chain-reaction-thresholds.json','docs/CHAIN_REACTION.md'];
   for(const file of await readdir(resolve(ROOT,'tools/chain-reaction')))if(file.endsWith('.mjs'))paths.push('tools/chain-reaction/'+file);
   for(const file of await readdir(resolve(ROOT,'tools/chain-reaction/fixtures')))if(file.endsWith('.json'))paths.push('tools/chain-reaction/fixtures/'+file);
   for(const path of paths){const text=await readFile(resolve(ROOT,path),'utf8');if(/\u2014|\p{Extended_Pictographic}/u.test(text))failures.push(path+': forbidden content character');}

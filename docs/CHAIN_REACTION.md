@@ -1,6 +1,6 @@
 # Chain Reaction
 
-Chain Reaction is in Phase 0, with no public machine or shipped stages. Its brief is
+Chain Reaction is preparing its Phase 1 vertical slice, with no public machine or shipped stages. Its brief is
 `research/next/09-chain-reaction.md` in the main checkout. Private project state and the
 local look chooser live in `research/chain-reaction/`, a separate local Git repository.
 Read the brief and that folder's current state before continuing.
@@ -69,10 +69,12 @@ A desktop GPU at phone resolution remains a proxy, not an iPhone measurement. A 
 excludes other foundation tools, captures and browser runs during performance tests.
 A stale lock is reclaimed only after its recorded process has exited. Stress bodies are rendered and stepped together.
 
-Not implemented: baton envelopes, kits, stage schema, step-event verification,
+Not implemented: stage emission normalization, kits, stage schema, step-event verification,
 200-run stage robustness, recorder, stage manifests, camera planner, material/prop
 image lint, storyboard, sound, overview, first-load still, reveal flights and soak.
-No Phase 0 or later gate has been approved merely because the foundation tests pass.
+Gate 0 evidence is complete: cross-engine spike parity, the phone proxy budget, the
+private chooser, the owner direction request and the owner tin-toy choice. Final
+look and sound approval, Gate 1 and all stage gates remain open.
 
 ## Credits
 
@@ -162,4 +164,105 @@ assumed 2,400 kg/m3 bulk density, giving 5.027 g and spherical rotational inerti
 Paint, rolled seams and embossed details are approximations in this provisional
 model. Friction and restitution still need physical calibration. Steel density
 is within the range in [Ansys material property data, table A2](https://www.ansys.com/content/dam/amp/2021/august/webpage-requests/education-resources-dam-upload-batch-2/material-property-data-for-eng-materials-BOKENGEN21.pdf).
-These values do not complete the full kit material table or freeze any gate.
+The complete provisional material table follows. No threshold is frozen.
+
+## Material mass and contact recipes
+
+`js/chain-reaction-materials.json` is the versioned data source. Density determines
+mass through declared three-dimensional construction, even though the solver uses
+two-dimensional collision geometry. Friction and bounce are proposed simulation
+recipes. The sliding tests check the solver against the chosen Coulomb model;
+they do not measure real objects. A contact pair uses the arithmetic mean.
+Sound families are proposed tags; sound design and owner approval remain pending.
+
+| Material | Bulk density, kg/m3 | Friction | Restitution | Proposed sound |
+| --- | ---: | ---: | ---: | --- |
+| Sugar maple | 705.6 | 0.45 | 0.15 | wood |
+| Painted steel | 7,850 | 0.45 | 0.05 | tin |
+| Tinplate shell | 7,850 | 0.45 | 0.05 | tin |
+| Brass, CuZn30 | 8,530 | 0.30 | 0.08 | brass |
+| Laminated solid card | 670 | 0.60 | 0.02 | card |
+| Cork | 180 | 0.75 | 0.05 | cork |
+| F-13 felt | 181.11542588157602 | 0.75 | 0.01 | felt |
+| Ceramic and glazed ceramic | 2,400 | 0.22 | 0.15 | ceramic |
+| Natural rubber | 925 | 0.85 | 0.50 | rubber |
+| Twisted nylon cord | 855 | 0.15 | 0.01 | string |
+
+Maple uses the sugar-maple specific gravity of 0.63 at twelve percent moisture from
+the [USDA Wood Handbook](https://www.fpl.fs.usda.gov/documnts/fplgtr/fplgtr282/fpl_gtr282.pdf),
+converted using dry mass and moisture mass. Steel, card, cork and rubber use midpoints
+of the ranges in the Ansys table linked above. Card is solid laminated stock, so
+corrugated voids must be modeled separately. [Aurubis CuZn30 data](https://jobs.aurubis.com/aurubis-com/dam/jcr%3A0ab1c76f-1d24-429a-a36f-547fdafc104f/PNA%20226_CuZn30_C26000-E.N.pdf)
+gives brass density. [US Felt's F-13 specification](https://www.usfelt.com/sae_felt_specs.html)
+gives 8.48 pounds per square yard per inch of thickness, converted to bulk density.
+
+Ceramic remains an explicit 2,400 kg/m3 study assumption. The referenced
+[C110 porcelain](https://www.pofahermsdorf.de/wp-content/uploads/2017/11/WSU_Porzellan_C110_eng.pdf)
+is 2,340 kg/m3, so this is an approximation. Nylon cord uses the 1.14 fiber specific
+gravity in [Samson's fiber comparison](https://www.samsonrope.com/docs/default-source/default-document-library/warning-insert.pdf)
+with an assumed 75 percent packing fraction. Paint, glaze and seams are excluded
+from bulk mass in this first model; consequential additions need explicit mass.
+
+`js/chain-reaction-mass.js` computes sphere, solid disk, solid box and closed shell
+mass and rotational inertia using arithmetic and a stored pi constant. Units are
+kilograms and kilogram times world-unit squared. Stage authoring must store the exact
+results handed to the engine. Forty-four dimensional checks cover every recipe and
+construction; doubling dimensions scales mass by eight and inertia by thirty-two.
+All fifteen dynamic masses in the tin fixture match exactly. The stored physics
+baselines are unchanged.
+
+## Provisional spike limits
+
+`js/chain-reaction-thresholds.json` is the machine-readable source. These initial
+proposals freeze only with the owner's Gate 1 approval. Existing timing, jitter,
+200-run stage robustness and 199/200 success requirements in the brief remain fixed.
+
+| Limit | Proposal | Evidence or intended check |
+| --- | --- | --- |
+| Moving bodies | 32 per stage; two worlds during handoff | Two-world benchmark, contact observation and rendered zoom |
+| Frame budget | 16.7 ms p95 | Five runs per resolution, CPU 4x for phone proxy |
+| Linear velocity cap | 80 units/s, 160 inches/s | Ordinary spike peak 54.683 units/s; thin-wall CCD passes at 40, 80 and 120 |
+| Active-path minimum surface speed | 0.25 units/s, half an inch/s | Includes angular motion; no-ball tin rest speed is zero |
+| Camera translation jerk | 80 units/s cubed | Quintic pans of 4 units in 1.5 s and 16 in 2.3 s pass; 16 in 1.2 s rejected |
+| Camera log-zoom jerk | 15 per second cubed | Existing 9.3-to-14-unit reveal over 1.2 s measures 14.203 |
+| Handoff view | 8 units wide, at least 4 high, target y = 2 | Marble projects above 12 CSS pixels at both phone orientations and desktop |
+| Lens | 13.039 degrees vertical, 5 degrees elevation | Current private look study; final stage camera pending |
+| Hero marble | 5/8-inch sphere, 5.027488 g | Ceramic geometry and exact stored fixture mass |
+| Port rail | Top 2 inches above bench; 8 inches long | Two hundred straight-rail corner/interior samples, both orientations |
+| Nominal baton speed | 8 inches/s | Canonical rolling state passes rail in both orientations |
+| ACCEPT | Speed 6.4 to 9.6 inches/s, y 2.3045 to 2.3525 inches, vertical speed at most 0.6 inches/s, rolling spin residual at most 2 rad/s | Full range sampled by the rail experiment |
+| EMIT | Speed 7.84 to 8.16 inches/s, y 2.3125 inches plus or minus 0.008 inch, vertical speed at most 0.4 inches/s, rolling spin residual at most 0.5 rad/s | Canonical rail cases pass; out-of-range mutations rejected |
+
+Rolling spin residual means angular velocity minus the expected rolling angular
+velocity. A zero-spin marble sliding along the rail is not a rolling handoff.
+The nominal canonical state is x = 0, y = 1.15625, vx = 4, vy = 0, spin = -25.6.
+The reflected canonical state reverses horizontal speed and spin.
+
+The rail experiment measured vertical positions from 1.1531626 to 1.1542175 units
+and maximum vertical speed 0.1286403 units/s. Those measurements informed the initial
+contact tolerance. A flat rail settles bounce but does not normalize incoming speed.
+The two canonical runs pass the complete EMIT envelope; the other rail samples prove
+settling only. This is not the 200-run robustness gate for a stage. Each stage still
+needs a visible release/run-out mechanism and complete robustness checks.
+
+`capacity.mjs` steps two independent worlds, observes contacts each physics tick,
+renders all dynamic bodies in the existing near scene and zooms across ten plots.
+Median p95 for the CPU-4x 844x390 proxy is 10.1 ms at 32 bodies per world, 13.2 ms at 48
+and 16.2 ms at 64. Desktop at 32 is 3.1 ms; GPU p95 is 1.434 ms for the phone proxy
+and 2.065 ms for desktop. Every run has more than five percent of frames with all
+bodies awake, so sleeping alone cannot hide the busy interval. The conservative 32-body proposal leaves room for final
+film effects and sound. This is a desktop-GPU proxy, not a measured phone. Recheck
+with the finished slice before freezing the cap.
+
+```sh
+node tools/chain-reaction/materials.mjs
+node tools/chain-reaction/limits.mjs
+CHAIN_REACTION_PLAYWRIGHT=/tmp/chain-reaction-runtime/node_modules/playwright \
+CHAIN_REACTION_RESEARCH=/Users/ethan/Portfolio_01/research/chain-reaction \
+  node tools/chain-reaction/capacity.mjs
+```
+
+The full verifier also runs the material and limit checks. Parity retains the original
+forty-four fixture comparisons and adds four hundred rail snapshots plus eighty-eight
+mass-model comparisons across Chrome and WebKit. No stage schema, recorder, complete
+chain or final art is approved by these tests.
