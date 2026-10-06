@@ -40,6 +40,20 @@
   return new Blob([bytes],{type:'image/webp'});
  }
  async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v=2-'+clouds.PROCESSING+'-repair1-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
+ // Prepared history must never cap newer observations published by providers.
+ function frameAt(manifest,catalog,instant,now){
+  var clock=+new Date(now),time=+new Date(instant);if(time>clock+300000)return null;
+  var best=catalog&&clouds.frameAt(catalog,instant,now);
+  if(manifest&&manifest.processing>=clouds.PROCESSING)manifest.frames.forEach(function(f){if(f.time<=time&&time-f.time<5*3600000&&(!best||f.time>best))best=new Date(f.time);});
+  return best;
+ }
+ function replayFrames(manifest,published,bounds){
+  if(!manifest||manifest.processing<clouds.PROCESSING)return published;
+  var last=manifest.frames[manifest.frames.length-1].time,times=new Set();
+  manifest.frames.forEach(function(f){if(f.time>=Math.floor(+bounds.start/clouds.STEP)*clouds.STEP&&f.time<=bounds.end)times.add(+f.time);});
+  published.forEach(function(t){if(t>last)times.add(+t);});
+  return Array.from(times).sort(function(a,b){return a-b;}).map(function(t){return new Date(t);});
+ }
  async function fetchFrame(manifest,time,options){
   options=options||{};if(manifest.processing<clouds.PROCESSING)throw new Error('Cloud processing revision is outdated');var frame=manifest.frames.find(function(f){return +f.time===+time;});if(!frame)throw new Error('Cloud hour not archived');
   var cache=null;if(typeof caches!=='undefined')try{cache=await caches.open(CACHE);}catch(_){}
@@ -48,5 +62,5 @@
   if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-128)).map(function(k){return cache.delete(k);}));}catch(_){}
   return {time:new Date(time),width:manifest.width,dense:true,shared:true,natural:frame.natural,sourceTimes:frame.sourceTimes,blobs:blobs};
  }
- return {BASE:BASE,validate:validate,dimensions:dimensions,imageBlob:imageBlob,fetchManifest:fetchManifest,fetchFrame:fetchFrame};
+ return {BASE:BASE,validate:validate,dimensions:dimensions,imageBlob:imageBlob,fetchManifest:fetchManifest,fetchFrame:fetchFrame,frameAt:frameAt,replayFrames:replayFrames};
 }));

@@ -45,9 +45,8 @@
  function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/STEP)*STEP);t<end&&t<=catalog.end&&t<=clock;t+=STEP)if(published(catalog,t))out.push(new Date(t));return out;}
  async function fetchCatalog(options){
   var query='?service=WMS&version=1.3.0&request=GetCapabilities',fresh=query+'&fresh='+Math.floor(Date.now()/60000);
-  var xml=await Promise.allSettled([data.fetchText(NASA+query,options),data.fetchText(NASA+fresh,options),data.fetchText(EUM+fresh,options)]);
-  if(xml[2].status!=='fulfilled')throw xml[2].reason;
-  var catalogs=[];for(var i=0;i<2;i++)if(xml[i].status==='fulfilled')try{catalogs.push(parseCatalog(xml[i].value,xml[2].value));}catch(_){}
+  var xml=await Promise.allSettled([data.fetchText(NASA+query,options),data.fetchText(NASA+fresh,options),data.fetchText(EUM+query,options),data.fetchText(EUM+fresh,options)]);
+  var catalogs=[];for(var i=0;i<2;i++)for(var j=2;j<4;j++)if(xml[i].status==='fulfilled'&&xml[j].status==='fulfilled')try{catalogs.push(parseCatalog(xml[i].value,xml[j].value));}catch(_){}
   if(!catalogs.length)throw new Error('Satellite metadata unavailable');catalogs.sort(function(a,b){return b.end-a.end;});return catalogs[0];
  }
  // Infrared RGB is a temperature code. Lossy compression changes those codes

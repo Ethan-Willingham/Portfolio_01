@@ -35,7 +35,15 @@ async function renderFrame(time,options={}){
 }
 async function collect(previous,options={}){
  if(previous&&previous.manifest.processing>clouds.PROCESSING)throw new Error('Recorder processing revision is older than the shared snapshot');
- const now=new Date(options.now===undefined?Date.now():options.now);let catalog=options.catalog||await clouds.fetchCatalog({timeout:12000,fetch:options.fetch});
+ const now=new Date(options.now===undefined?Date.now():options.now);let catalog=options.catalog;
+ if(!catalog){
+  // A metadata outage must not discard the newer index already captured by
+  // the independent weather job. Its exact published clocks remain required.
+  const candidates=[];if(options.fallbackCatalog)try{candidates.push(clouds.validate(options.fallbackCatalog));}catch(_){}
+  if(previous)candidates.push(clouds.validate(previous.manifest.catalog));
+  try{candidates.push(await clouds.fetchCatalog({timeout:30000,fetch:options.fetch}));}catch(error){if(!candidates.length)throw error;}
+  candidates.sort((a,b)=>b.end-a.end);catalog=candidates[0];
+ }
  clouds.validate(catalog);
  // Provider metadata replicas can lag behind already verified observations.
  // Keep those clocks and assets rather than rolling the archive backwards.
@@ -111,10 +119,19 @@ function publish(snapshot,old){
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
 async function main(){
- const {old,previous}=readPrevious(),result=await collect(previous,{progress:value=>console.log(JSON.stringify(value))});
+ let fallbackCatalog;try{fallbackCatalog=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../assets/data/globe-hourly-catalog.json'),'utf8'));}catch(_){}
+ const {old,previous}=readPrevious(),progress=value=>console.log(JSON.stringify(value));
+ let result=await collect(previous,{fallbackCatalog,repairLimit:0,progress});
  result.errors.forEach(error=>console.error(JSON.stringify(error)));
- const commit=result.changed?publish(result,old):old;console.log(JSON.stringify({frames:result.manifest.frames.length,first:result.manifest.frames[0].time,last:result.manifest.frames.at(-1).time,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0),changed:result.changed,commit}));
- if(result.errors.length)process.exitCode=1;
+ let commit=result.changed?publish(result,old):old;
+ console.log(JSON.stringify({phase:'new weather',frames:result.manifest.frames.length,last:result.manifest.frames.at(-1).time,changed:result.changed,commit}));
+ const failed=result.errors.length;
+ // Publish fresh clouds before slower repairs to older colour companions.
+ result=await collect(result,{catalog:result.manifest.catalog,progress});
+ result.errors.forEach(error=>console.error(JSON.stringify(error)));
+ if(result.changed)commit=publish(result,commit);
+ console.log(JSON.stringify({phase:'colour repairs',frames:result.manifest.frames.length,last:result.manifest.frames.at(-1).time,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0),changed:result.changed,commit}));
+ if(failed||result.errors.length)process.exitCode=1;
 }
 module.exports={BRANCH,REF,usableSources,needsRepair,improvesSources,renderFrame,collect,readPrevious,pushSnapshot,publish};
 if(require.main===module)main().catch(error=>{console.error(error.message);process.exitCode=1;});

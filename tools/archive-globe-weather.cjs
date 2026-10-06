@@ -5,7 +5,7 @@ const data=require('../js/globe-data.js'),aurora=require('./archive-globe-aurora
 const clouds=require('../js/globe-clouds.js');
 async function captureHourlyCatalog(options={}){
  const file=options.file||path.resolve(__dirname,'../assets/data/globe-hourly-catalog.json');
- const catalog=await clouds.fetchCatalog({timeout:10000,fetch:options.fetch});
+ const catalog=await clouds.fetchCatalog({timeout:30000,fetch:options.fetch});
  catalog.checkedAt=new Date(options.now===undefined?Date.now():options.now).toISOString();clouds.validate(catalog);
  if(fs.existsSync(file)){const old=JSON.parse(fs.readFileSync(file,'utf8')),known=clouds.validate(old);if(known.end>catalog.end)return {changed:false,end:known.end.toISOString()};if(JSON.stringify(old.products)===JSON.stringify(catalog.products)&&old.step===catalog.step)return {changed:false,end:catalog.end.toISOString()};}
  fs.mkdirSync(path.dirname(file),{recursive:true});const temp=file+'.'+process.pid+'.tmp';

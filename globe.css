@@ -28,6 +28,8 @@
 .globe-button:hover, .globe-fs-btn:hover { border-color: var(--accent); background: var(--row-hover); }
 .globe-button:disabled { opacity: .5; cursor: default; }
 .globe-view-controls { position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); z-index: 5; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; pointer-events: none; }
+.globe-version { position: absolute; top: 0; left: 0; color: var(--text-dim); font: .6rem/1.4 var(--font-mono); }
+.globe-view-controls:has(.globe-version) { padding-top: 20px; }
 .globe-fs-btn, .globe-sun-btn, .globe-location-btn { position: static; flex: 0 0 auto; pointer-events: auto; background: color-mix(in srgb, var(--globe-space) 82%, transparent); }
 .globe-fs-btn { display: grid; place-content: center; width: 44px; height: 44px; padding: 0; }
 .globe-location-btn { margin-right: auto; }

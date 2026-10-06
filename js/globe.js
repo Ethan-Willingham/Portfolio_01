@@ -66,6 +66,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
+  text(byId('globe-version'),'v35');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -121,7 +122,7 @@
     if(photo&&!photo.time&&cloudFailure)parts.push('Daily fallback after '+cloudFailure+'.');
     text(dataLine,parts.join(' / '));
     byId('globe-gap-key').hidden=!photo||hypothetical;
-    text(byId('globe-gap-key'),photo&&photo.time?(photo.natural?'Visible imagery and infrared overlay; reference map where coverage ends.':'Infrared brightness over reference terrain; gaps show the reference map.'):'Reference map where daily photo coverage ends.');
+    text(byId('globe-gap-key'),photo&&photo.time?(photo.dense?'Infrared cloud structure; reference map where coverage ends.':photo.natural?'Visible imagery and infrared overlay; reference map where coverage ends.':'Infrared brightness over reference terrain; gaps show the reference map.'):'Reference map where daily photo coverage ends.');
     text(byId('globe-weather-basis'),(hourlyClouds()?'Cloud snapshots every 15 minutes, using published observations at or before each time. Infrared fills delayed colour channels. Short crossfades connect real observations. ':'Older cloud images every 3 hours. ')+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
     returnButton.setAttribute('aria-pressed',String(live));returnButton.title=live?'Following the current time':'Return to the current time';
     byId('globe-tilt-note').hidden=!hypothetical;
@@ -236,7 +237,7 @@
   });
   var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
   replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-33',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-35',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -245,9 +246,9 @@
   var baseTexture = solidTexture(60,90,87), nightTexture = solidTexture(1,2,1), satelliteTexture = solidTexture(60,90,87), infraredTexture=solidTexture(0,0,0), moonTexture = solidTexture(130,128,117);
   var photoSunUniform={value:new THREE.Vector3(1,0,0)};
   var replayUniforms={replayFrom:{value:infraredTexture},replayTo:{value:infraredTexture},replayFromBaked:{value:0},replayBlend:{value:1},replayEnabled:{value:0}};
-  // Retain observed cloud structure wherever either channel sees it. A second
-  // source-time sunlight gate would cut clouds off before the live terminator.
-  var replayLayer='vec2 replayLayer(vec4 c,float baked){float coverage=max(c.r*c.g,c.b*c.a);return mix(vec2(coverage),c.rg,baked);}';
+  // Infrared gives every region the same cloud brightness day and night.
+  // Visible coverage borders must not introduce a second cloud terminator.
+  var replayLayer='vec2 replayLayer(vec4 c,float baked){float coverage=c.b*c.a+c.r*c.g*(1.0-c.a);return mix(vec2(coverage),c.rg,baked);}';
   var vertex = 'varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld; void main(){ vUv=uv; vNormal=normalize((modelMatrix*vec4(normal,0.0)).xyz); vWorld=(modelMatrix*vec4(position,1.0)).xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
   var earthMaterial = new THREE.ShaderMaterial({uniforms:Object.assign({},replayUniforms,{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0},denseEnabled:{value:0}}),vertexShader:vertex,fragmentShader:[
     'uniform sampler2D baseMap, nightMap, photoMap,infraredMap; uniform vec3 sunDir,photoSunDir; uniform float photoMix,photoEnabled,thermalEnabled,naturalEnabled,denseEnabled; varying vec2 vUv; varying vec3 vNormal;',
@@ -270,7 +271,7 @@
     // white over reference terrain, not a grayscale replacement for Earth's
     // entire surface. This is a display curve, not measured cloud opacity.
     'vec4 thermal=vec4(mix(base,vec3(1.0),smoothstep(.35,.90,infrared.r)),infrared.a);',
-    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a; float denseCloud=max(visibleCloud*naturalEnabled,thermalCloud);',
+    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a; float denseCloud=smoothstep(.28,.75,infrared.r)*infrared.a+visibleCloud*naturalEnabled*(1.0-infrared.a);',
     'vec4 shot=mix(photo,mix(thermal,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
     'day=mix(day,mix(base,vec3(1.0),denseCloud*photoMix*photoEnabled),denseEnabled*thermalEnabled);',
     'vec2 replayCover=vec2(0.0);if(replayEnabled>0.0){replayCover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromBaked),replayLayer(texture2D(replayTo,vUv),0.0),replayBlend);} day=mix(day,mix(base,vec3(1.0),replayCover.x*photoMix*photoEnabled),replayEnabled);',
@@ -634,10 +635,19 @@
       if(!offline&&Date.now()-sharedChecked>5*60000){
         try{sharedManifest=await shared.fetchManifest({timeout:3500,signal:signal});try{localStorage.setItem('globe-shared-clouds',JSON.stringify(sharedManifest));}catch(_){} }catch(error){if(error.name==='AbortError')return;}sharedChecked=Date.now();
       }
-      if(sharedManifest&&sharedManifest.catalog.end<=Date.now()+300000&&sharedManifest.catalog.end>=Date.now()-5*3600000&&(!cloudCatalog||sharedManifest.catalog.end>=cloudCatalog.end)){cloudCatalog=sharedManifest.catalog;cloudCatalogChecked=Date.now();}
+      if(sharedManifest&&sharedManifest.catalog.end<=Date.now()+300000&&sharedManifest.catalog.end>=Date.now()-5*3600000&&(!cloudCatalog||sharedManifest.catalog.end>=cloudCatalog.end))cloudCatalog=sharedManifest.catalog;
       if(!cloudCatalog){try{var stored=JSON.parse(localStorage.getItem('globe-cloud-catalog'));if(stored)cloudCatalog=stored.dense?clouds.validate(stored):{start:new Date(stored.start),end:new Date(stored.end)};}catch(_){}}
-      if(!offline&&(!cloudCatalog||Date.now()-cloudCatalogChecked>10*60000)){
-        try{cloudCatalog=await clouds.fetchCatalog({timeout:6000,signal:signal});cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}}catch(error){
+      if(!offline&&(!cloudCatalog||Date.now()-cloudCatalogChecked>5*60000)){
+        try{
+          var currentCatalogs=await Promise.allSettled([
+            clouds.fetchCatalog({timeout:6000,signal:signal}),
+            data.fetchJSON('https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/main/assets/data/globe-hourly-catalog.json?v='+Math.floor(Date.now()/60000),{timeout:3500,signal:signal,allowText:true}).then(clouds.validate)
+          ]),validCatalogs=currentCatalogs.filter(function(r){return r.status==='fulfilled';}).map(function(r){return r.value;});
+          if(signal.aborted){var abort=new Error('Cloud check cancelled');abort.name='AbortError';throw abort;}
+          if(!validCatalogs.length)throw new Error('Current satellite metadata unavailable');
+          validCatalogs.forEach(function(current){if(!cloudCatalog||!cloudCatalog.dense||current.end>=cloudCatalog.end)cloudCatalog=current;});
+          cloudCatalogChecked=Date.now();try{localStorage.setItem('globe-cloud-catalog',JSON.stringify(cloudCatalog));}catch(_){}
+        }catch(error){
           if(error.name==='AbortError')return;
           try{
             var snapshots=await Promise.allSettled([
@@ -710,7 +720,7 @@
     finally{if(!installed)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
   }
   function hourlyClouds(){return !!(cloudCatalog&&cloudCatalog.dense&&instant>=cloudCatalog.start);}
-  function cloudStamp(){if(!cloudCatalog)return null;if(recentMode&&hourlyClouds()&&sharedManifest&&sharedManifest.processing>=clouds.PROCESSING&&instant<=Date.now()+300000){var available=sharedManifest.frames.filter(function(f){return f.time<=instant&&instant-f.time<5*3600000;});if(available.length)return new Date(available[available.length-1].time);}return hourlyClouds()?clouds.frameAt(cloudCatalog,instant,new Date()):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
+  function cloudStamp(){if(!cloudCatalog)return null;return hourlyClouds()?(recentMode?shared.frameAt(sharedManifest,cloudCatalog,instant,new Date()):clouds.frameAt(cloudCatalog,instant,new Date())):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
   async function requestCloudBytes(stamp,width,signal,timeout,offline,force){
     if(!cloudCatalog.dense||stamp<cloudCatalog.start)return data.fetchCloudFrame(stamp,width,{timeout:timeout,signal:signal,cacheOnly:offline});
     var key=stamp.toISOString()+'/'+width,cached=compressedClouds.get(key);if(cached&&(!force||cached.shared||cached.blobs.slice(0,5).every(Boolean)))return cached;
@@ -948,7 +958,7 @@
     var label=byId('globe-replay-status');if(!label)return;
     if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
     if(replayPendingCloud){text(label,'Loading clouds');return;}
-    if(recentMode&&photo&&photo.time&&instant-new Date(photo.time)>=clouds.STEP){text(label,'Clouds through '+timeFormatter.format(new Date(photo.time))+'.');return;}
+    if(recentMode&&photo&&photo.time&&instant-new Date(photo.time)>=clouds.STEP){text(label,live?'Clouds '+Math.round((instant-new Date(photo.time))/60000)+'m behind.':'Clouds through '+timeFormatter.format(new Date(photo.time))+'.');return;}
     if(!live&&instant>Date.now()+300000){text(label,'Future time: sunlight only.');return;}
     if(loading&&!replayBusy){text(label,'Preparing replay');return;}
     var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(cloudPrepared).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;
@@ -962,7 +972,7 @@
     if(replayController)replayController.abort();replayController=new AbortController();var controller=replayController,signal=controller.signal;
     replayKey=key;replayChecked=Date.now();replayBusy=true;replayFailed=new Set();
     replayClouds=recentMode?timeline.rangeFrames(cloudCatalog&&cloudCatalog.dense&&!hourlyClouds()?cloudCatalog.legacy:cloudCatalog,day,new Date(),hourlyClouds()?clouds.STEP:3*3600000,hourlyClouds()?clouds.published:null):hourlyClouds()?clouds.frames(cloudCatalog,instant,new Date()):timeline.cloudFrames(cloudCatalog&&cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());
-    if(recentMode&&sharedManifest&&sharedManifest.processing>=clouds.PROCESSING&&sharedManifest.frames[sharedManifest.frames.length-1].time>=Date.now()-5*3600000)replayClouds=sharedManifest.frames.filter(function(f){return f.time>=Math.floor(+day.start/clouds.STEP)*clouds.STEP&&f.time<=day.end;}).map(function(f){return new Date(f.time);});
+    if(recentMode&&hourlyClouds()&&sharedManifest&&sharedManifest.frames[sharedManifest.frames.length-1].time>=Date.now()-5*3600000)replayClouds=shared.replayFrames(sharedManifest,replayClouds,day);
     replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-90*60000&&entry.forecast<+day.end+90*60000&&entry.observation<=Date.now();});
     cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
     replayMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
@@ -984,7 +994,7 @@
     }
     Promise.allSettled(jobs.map(function(job){return job[1];})).then(function(){return warmDayTimeline();});
   }
-  window.addEventListener('online',function(){requestedDay='';weatherChecked=0;refreshData();});
+  window.addEventListener('online',function(){requestedDay='';weatherChecked=0;sharedChecked=0;cloudCatalogChecked=0;refreshData();});
   updateAstronomy();updateLabels();announce();resume();refreshData();
   setInterval(function(){if(live)instant=new Date();updateAstronomy();updateLabels();refreshData();},60000);
 }());

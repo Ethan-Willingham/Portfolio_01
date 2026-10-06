@@ -16,7 +16,7 @@
       var bright=Math.max(g,b);r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;
       out[i]=Math.round(smooth(.22,.85,Math.min(r,g,b))*255);
       out[i+1]=natural?visible[i+3]:0;
-      out[i+2]=Math.round(smooth(.35,.90,infrared[i]/255)*255);
+      out[i+2]=Math.round(smooth(.28,.75,infrared[i]/255)*255);
       out[i+3]=infrared[i+3];
     }return out;
   }
@@ -37,7 +37,7 @@
   async function prepare(blobs,width,natural,sourceWidth){
     var visible,infrared;
     if(blobs.length===10){
-      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-33');
+      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-35');
       var clouds=globalThis.GlobeClouds,data=globalThis.GlobeData,sources=[],nativeWidth=sourceWidth||width;
       // Decode the original temperature codes before resizing. Interpolating
       // palette RGB first invents colors with unrelated thermal meanings.

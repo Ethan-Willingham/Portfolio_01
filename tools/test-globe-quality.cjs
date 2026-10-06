@@ -27,7 +27,7 @@ window.__globeQuality={
  sample:function(lat,lon,options){
   options=options||{};var v=math.geographicVector(lat,lon),r=4;
   targetTheta=theta=Math.PI/2+lon*DEG;targetPhi=phi=Math.PI/2-lat*DEG;targetRadius=radius=r;sunFraming=false;aimShift=0;autoSpin=false;
-  camera.position.set(v.x*r,v.y*r,v.z*r);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+  camera.position.set(v.x*r,v.y*r,v.z*r);camera.up.set(-Math.sin(lat*DEG)*Math.sin(theta),Math.cos(lat*DEG),-Math.sin(lat*DEG)*Math.cos(theta));camera.lookAt(0,0,0);camera.updateMatrixWorld();
   var items=[atmosphere,moon,sunBody,sunGlow,starField,pinMarker].concat(auroraMeshes),visible=items.map(function(m){return m.visible;}),strengths=auroraMeshes.map(function(m){return m.material.uniforms.strength.value;});
   var oldPhoto=earthMaterial.uniforms.photoEnabled.value,oldNatural=earthMaterial.uniforms.naturalEnabled.value,oldDense=earthMaterial.uniforms.denseEnabled.value,oldPhotoSun=photoSunUniform.value.clone(),oldSun=sunUniform.value.clone(),oldNight=earthMaterial.uniforms.nightMap.value,oldBase=earthMaterial.uniforms.baseMap.value,oldTarget=renderer.getRenderTarget();
   var w=container.clientWidth,h=container.clientHeight,rt=new THREE.WebGLRenderTarget(w,h),pixel=new Uint8Array(4);
@@ -104,7 +104,9 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  check('hourly visible products preserve the same terrain colours beneath darker surface pixels',denseGround.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{denseGround,reference:warmReference});
  check('hourly observed bright cloud remains bright and nearly neutral',denseCloud[0]>180&&Math.max(...denseCloud.slice(0,3))-Math.min(...denseCloud.slice(0,3))<25,denseCloud);
  const observedDay=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceDay:true,day:true})),observedNight=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceNight:true,day:true}));
- check('hourly visible cloud cannot disappear at a separate source-time sunlight boundary',observedDay[0]>180&&observedDay.every((v,i)=>Math.abs(v-observedNight[i])<=1),{observedDay,observedNight});
+ check('hourly cloud brightness is independent of the separate source-time sunlight boundary',observedDay.every((v,i)=>Math.abs(v-observedNight[i])<=1),{observedDay,observedNight});
+ const infraredBasis=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,day:true,thermal:true}));
+ check('regional visible coverage cannot produce another cloud brightness edge',observedDay.every((v,i)=>Math.abs(v-infraredBasis[i])<=1),{observedDay,infraredBasis});
  const nightObservedDay=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceDay:true,night:true,lights:160})),nightObservedNight=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceNight:true,night:true,lights:160}));
  check('night clouds and light attenuation use the same coverage on either side of the old cutoff',nightObservedDay.every((v,i)=>Math.abs(v-nightObservedNight[i])<=1),{nightObservedDay,nightObservedNight});
  check('opaque black infrared stays valid while warm terrain retains its reference colours',blackIR[3]===255&&blackIR.slice(0,3).every(x=>x===0)&&thermal.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{texture:blackIR,pixel:thermal,reference:warmReference});

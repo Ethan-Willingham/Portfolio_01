@@ -44,6 +44,15 @@ check('a server error after accepting publication recovers without replacing ano
  const lagged=await runner.collect(snapshot,{now,catalog:laggedCatalog,render:()=>{throw new Error('Verified images must not be fetched again');}});
  check('a lagging metadata replica cannot remove already verified newer snapshots',()=>{assert.deepEqual(lagged.manifest.frames,snapshot.manifest.frames);assert.equal(lagged.manifest.catalog.end.toISOString(),'2026-10-05T18:00:00.000Z');assert(!lagged.changed);});
  const nextProducts=structuredClone(products);nextProducts.forEach(p=>p.periods[0].end='2026-10-05T19:00:00Z');const nextCatalog=C.validate({version:1,checkedAt:now,products:nextProducts});
+ check('new provider scans outrank a delayed shared archive for every visit',()=>{
+  const parsed=A.validate(snapshot.manifest),stamp=A.frameAt(parsed,nextCatalog,now,now);assert.equal(stamp.toISOString(),'2026-10-05T19:00:00.000Z');
+  assert.equal(A.frameAt(parsed,nextCatalog,'2026-10-05T17:32:00Z',now).toISOString(),'2026-10-05T17:30:00.000Z');
+  assert.equal(A.frameAt(parsed,nextCatalog,'2026-10-05T19:26:00Z',now),null);
+  const bounds={start:new Date('2026-10-05T07:20:00Z'),end:new Date(now)},published=[];for(let t=Date.parse('2026-10-05T07:15:00Z');t<=nextCatalog.end;t+=C.STEP)published.push(new Date(t));
+  const replay=A.replayFrames(parsed,published,bounds);assert.equal(replay.length,48);assert.equal(replay.at(-1).toISOString(),'2026-10-05T19:00:00.000Z');assert.equal(replay.filter(t=>t>parsed.frames.at(-1).time).length,4);
+ });
+ const recovered=await runner.collect(snapshot,{now,fallbackCatalog:nextCatalog,fetch:async()=>new Response('',{status:503}),render:time=>{const result=render(time);result.frame.sourceTimes=C.sourceTimes(nextCatalog,time).map(t=>t&&t.toISOString());return result;}});
+ check('metadata outages still capture newer scans from the independently validated index',()=>{assert.equal(recovered.manifest.frames.at(-1).time,'2026-10-05T19:00:00.000Z');assert.equal(recovered.errors.length,0);assert(A.validate(recovered.manifest));});
  const failed=await runner.collect(snapshot,{now,catalog:nextCatalog,render:()=>{throw new Error('Provider unavailable');}});
  check('an unavailable new hour preserves every previously valid image',()=>{assert.equal(failed.errors.length,4);assert.deepEqual(failed.manifest.frames,snapshot.manifest.frames);assert.equal(failed.files.size,snapshot.files.size);});
  const stalled=await runner.collect(snapshot,{now,catalog:nextCatalog,frameTimeout:5,render:()=>new Promise(()=>{})});check('a stalled new hour has a deadline and cannot block publication of valid history',()=>{assert.equal(stalled.errors.length,4);assert.match(stalled.errors[0].error,/timed out/);assert.deepEqual(stalled.manifest.frames,snapshot.manifest.frames);});
