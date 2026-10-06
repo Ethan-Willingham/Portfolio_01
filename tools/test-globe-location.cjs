@@ -91,22 +91,19 @@ function controls(page){return page.evaluate(()=>{const buttons=Array.from(docum
   await deliver(page,0,point.latitude,point.longitude);const current=await state(page);
   check('a new visit refreshes a remembered location after travel',centered(current,point),current);
   check('location requests use bounded low-power acquisition and a five-minute cache',await page.evaluate(()=>__geoCalls[0].settings.timeout===8000&&__geoCalls[0].settings.maximumAge===300000&&!__geoCalls[0].settings.enableHighAccuracy));await context.close();}
- for(const action of ['keyboard','drag','wheel','sun']){const {context,page}=await setup({deferred:true});
+ for(const action of ['keyboard','drag','wheel']){const {context,page}=await setup({deferred:true});
   if(action==='keyboard'){await page.locator('#globe-container').focus();await page.keyboard.press('ArrowRight');}
   if(action==='drag'){await page.waitForFunction(()=>!__locationAudit.state().loading,null,{timeout:30000});const r=await page.locator('#globe-container canvas').boundingBox();await page.mouse.move(r.x+r.width/2,r.y+r.height/2);await page.mouse.down();await page.mouse.move(r.x+r.width/2+40,r.y+r.height/2+10,{steps:4});await page.mouse.up();}
   if(action==='wheel')await page.locator('#globe-container canvas').dispatchEvent('wheel',{deltaY:100});
-  if(action==='sun')await page.locator('#globe-sun').click();
   const before=await state(page);await deliver(page,0,point.latitude,point.longitude);const after=await state(page);
   check('a late location response preserves the reader\'s '+action+' view',near(before.target.lat,after.target.lat)&&near(before.target.lon,after.target.lon)&&before.sunFraming===after.sunFraming,{before:before.target,after:after.target});
-  await page.locator('#globe-location').click();await deliver(page,1,point.latitude,point.longitude);
-  check('My location returns home after '+action,centered(await state(page),point));await context.close();}
+  await context.close();}
  {const {context,page}=await setup({deferred:true,saved:cached});await page.evaluate(()=>__geoCalls[0].error({code:1}));
   check('denied permission explains the missing location and clears its saved position',await page.evaluate(()=>__locationAudit.state().location==='blocked'&&!document.getElementById('globe-location-status').hidden&&!localStorage.getItem('daylight-globe-location')));
-  await page.locator('#globe-location').click();await deliver(page,1,point.latitude,point.longitude);await deliver(page,0,0,0);
-  check('an old request cannot overwrite a successful retry',centered(await state(page),point));await context.close();}
+  check('the removed camera and tilt controls are absent',await page.locator('#globe-location,#globe-sun,#globe-date,.tilt-btn').count()===0);await context.close();}
  for(const saved of [{...cached,savedAt:Date.parse(now)+1000},{...cached,savedAt:Date.parse(now)-31*86400000},{...cached,lat:100},{...cached,lon:'151.2'}]){const {context,page}=await setup({deferred:true,saved});
   check('invalid, future or expired remembered coordinates cannot control the opening',centered(await state(page),{latitude:20,longitude:0}),saved);await context.close();}
- {const {context,page}=await setup({badNight:true});check('a failed city-light texture is disclosed in Sources',await page.evaluate(()=>__locationAudit.state().night==='unavailable'&&document.getElementById('globe-data').textContent.includes('City-light map unavailable.')));await context.close();}
+ {const {context,page}=await setup({badNight:true});check('a failed city-light texture is disclosed in the accessible summary',await page.evaluate(()=>__locationAudit.state().night==='unavailable'&&document.getElementById('globe-data').textContent.includes('City-light map unavailable.')));await context.close();}
  check('location and local-file rendering cause no JavaScript errors',errors.length===0,errors);
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));fs.rmSync(temporary,{recursive:true,force:true});fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({engine:mobile?'WebKit':'Chrome',checks,evidence,errors},null,2));}
  const failed=checks.filter(c=>!c.pass);console.log(checks.length+' checks, '+failed.length+' failures. Evidence: '+dump);if(failed.length)process.exitCode=1;

@@ -7,9 +7,9 @@
   var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds, shared=window.GlobeArchive, replay=window.GlobeReplay, aurora=window.GlobeAurora;
   var byId = function (id) { return document.getElementById(id); };
   var wrapper = document.querySelector('.globe-wrapper');
-  var status = byId('globe-status'), clock = byId('globe-clock'), dataLine = byId('globe-data');
+  var cloudDescription = '', clock = byId('globe-clock'), dataLine = byId('globe-data');
   var explore = byId('globe-explore');
-  var dateInput = byId('globe-date'), hourInput = byId('globe-hour'), returnButton = byId('globe-return');
+  var hourInput = byId('globe-hour'), returnButton = byId('globe-return');
   var pinPanel = byId('globe-pin'), summary = byId('globe-summary');
   var DEG = Math.PI / 180, DAY = 86400000;
   // Progress counts completed work, including decoded clouds. It is not a
@@ -59,13 +59,13 @@
   var autoSpin = true, targetTheta = 0, targetPhi = 1.1, targetRadius = 4;
   var theta = 0, phi = 1.1, radius = 4;
   var sunFraming = true, aimShift = 0;
-  var locationButton=byId('globe-location'),locationStatus=byId('globe-location-status');
+  var locationStatus=byId('globe-location-status');
   var locationKey='daylight-globe-location',homeLocation=null,viewGeneration=0,locationGeneration=0;
   var auroraStyle = 'curtain';
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v36');
+  text(byId('globe-version'),'v37');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -80,35 +80,25 @@
   function coordinate(lat, lon) { return Math.abs(lat).toFixed(1) + '\u00b0' + (lat < 0 ? 'S' : 'N') + ', ' + Math.abs(lon).toFixed(1) + '\u00b0' + (lon < 0 ? 'W' : 'E'); }
   function solarDate(date, lon) { return new Date(date.getTime() + (lon * 4 + math.solar(date,tilt).equationOfTime) * 60000); }
   function announce() {
-    var message = status.textContent + ' ' + clock.textContent + '. ' + dataLine.textContent;
+    var message = cloudDescription + ' ' + clock.textContent + '. ' + dataLine.textContent;
     if (pin) message += ' Pinned at ' + coordinate(pin.lat, pin.lon) + '. ' + pinPanel.innerText;
     text(summary, message);
   }
   function syncInputs() {
-    var year = instant.getFullYear(), month = String(instant.getMonth()+1).padStart(2,'0'), day = String(instant.getDate()).padStart(2,'0');
-    dateInput.value = year + '-' + month + '-' + day;
-    if(live&&recentMode)recentEnd=timeline.recentBounds(instant).end;
-    hourInput.max=recentMode?'720':'1439';
-    hourInput.value = recentMode?Math.max(0,Math.min(720,720-Math.round((recentEnd-instant)/60000))):instant.getHours() * 60 + instant.getMinutes();
-    text(byId('globe-hour-title'),recentMode?'Last 12 hours':'Time');
-    byId('globe-range-ends').hidden=!recentMode;
+    if(live)recentEnd=timeline.recentBounds(instant).end;
+    hourInput.value = Math.max(0,Math.min(720,720-Math.round((recentEnd-instant)/60000)));
     text(byId('globe-hour-label'),timeFormatter.format(instant)+' '+zoneFormatter.formatToParts(instant).find(function(part){return part.type==='timeZoneName';}).value);
     hourInput.setAttribute('aria-valuetext',timeFormatter.format(instant) + ' in ' + zone);
   }
-  text(byId('globe-zone'),zone.replace(/_/g,' '));
   text(byId('globe-time-basis'), 'Time in ' + zone.replace(/_/g,' ') + ', with daylight saving handled automatically.');
   function updateLabels() {
     var hypothetical=tilt!==undefined,fresh=hasForecast();
     var shot=photo&&(photo.time?new Date(photo.time):new Date(photo.date+'T12:00:00Z'));
     var sameDay=shot&&shot.toDateString()===instant.toDateString();
     var shortShot=shot?(photo.time?(sameDay?timeFormatter.format(shot):forecastFormatter.format(shot)):dateFormatter.format(shot)):'';
-    text(status,hypothetical?'Reference map':photo?'Clouds '+shortShot+(photo.time?(photo.natural?'':' (infrared)'):' (daily)'):fetchingPhoto||replayPendingCloud?'Loading clouds':'Clouds unavailable');
-    status.title=photo?(photo.time?'Satellite image '+forecastFormatter.format(shot):'Daily satellite composite '+formatDay(photo.date)):'Reference map; no satellite image for this time.';
+    cloudDescription=hypothetical?'Reference map':photo?'Clouds '+shortShot+(photo.time?(photo.natural?'':' (infrared)'):' (daily)'):fetchingPhoto||replayPendingCloud?'Loading clouds':'Clouds unavailable';
     text(clock,new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(instant));
     clock.dateTime=instant.toISOString();clock.title=clockFormatter.format(instant);
-    var auroraShort=fresh?'Aurora '+(forecast.forecast.toDateString()===instant.toDateString()?timeFormatter.format(forecast.forecast):forecastFormatter.format(forecast.forecast))+(live?'':' (saved)'):hypothetical?'Aurora hidden':replayPendingAurora||archiveBusy&&!live||fetchingWeather&&!weatherChecked?'Loading aurora':'Aurora unavailable';
-    text(byId('globe-aurora-status'),auroraShort);
-    byId('globe-aurora-status').title=fresh?'Forecast '+forecastFormatter.format(forecast.forecast)+'; measurements '+forecastFormatter.format(forecast.observation):hypothetical?'Weather is hidden for a hypothetical tilt.':'No fresh or saved forecast near this time.';
     var parts=[photo?(photo.time?'Satellite clouds '+forecastFormatter.format(shot):'Daily satellite photo '+formatDay(photo.date)):'Satellite clouds unavailable.'];
     if(photo&&photo.sourceTimes){var observations=photo.sourceTimes.filter(Boolean).map(Date.parse),first=Math.min.apply(null,observations),last=Math.max.apply(null,observations);if(first!==last)parts.push('Observed '+forecastFormatter.format(new Date(first))+' to '+timeFormatter.format(new Date(last)));}
     if(fresh){parts.push((live?'Aurora forecast ':'Archived aurora forecast ')+forecastFormatter.format(forecast.forecast));parts.push('measurements from '+forecastFormatter.format(forecast.observation));}
@@ -120,11 +110,7 @@
     if(nightState==='unavailable')parts.push('City-light map unavailable.');
     if(photo&&!photo.time&&cloudFailure)parts.push('Daily fallback after '+cloudFailure+'.');
     text(dataLine,parts.join(' / '));
-    byId('globe-gap-key').hidden=!photo||hypothetical;
-    text(byId('globe-gap-key'),photo&&photo.time?(photo.dense?'Infrared cloud structure; reference map where coverage ends.':photo.natural?'Visible imagery and infrared overlay; reference map where coverage ends.':'Infrared brightness over reference terrain; gaps show the reference map.'):'Reference map where daily photo coverage ends.');
-    text(byId('globe-weather-basis'),(hourlyClouds()?'Cloud snapshots every 15 minutes, using published observations at or before each time. Infrared fills delayed colour channels. Short crossfades connect real observations. ':'Older cloud images every 3 hours. ')+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
     returnButton.setAttribute('aria-pressed',String(live));returnButton.title=live?'Following the current time':'Return to the current time';
-    byId('globe-tilt-note').hidden=!hypothetical;
     wrapper.dataset.mode=live?'live':'explore';
     updateReplayLabel();
     if(live)syncInputs();
@@ -160,9 +146,8 @@
     text(byId('globe-pin-aurora'), aurora);
   }
   function editTime() {
-    if (!dateInput.value || !dateInput.validity.valid) return;
-    var fields = dateInput.value.split('-').map(Number), minutes = Number(hourInput.value);
-    var chosen = recentMode?new Date(+recentEnd-(720-minutes)*60000):new Date(fields[0],fields[1]-1,fields[2],Math.floor(minutes/60),minutes%60);
+    var minutes = Number(hourInput.value);
+    var chosen = new Date(+recentEnd-(720-minutes)*60000);
     if (!Number.isFinite(chosen.getTime())) return;
     instant = chosen; live = false; syncInputs();
     scheduleTimeData();
@@ -177,31 +162,19 @@
     if(scrubFrame===null)scrubFrame=requestAnimationFrame(function(){scrubFrame=null;applyCachedTime();updateAstronomy();updateLabels();announce();});
     timeEditTimer=setTimeout(function(){timeEditTimer=null;refreshData();},350);
   }
-  dateInput.addEventListener('change',function(){recentMode=false;hourInput.max='1439';hourInput.value=instant.getHours()*60+instant.getMinutes();editTime();}); hourInput.addEventListener('input',editTime);
-  document.querySelectorAll('.tilt-btn').forEach(function (button) {
-    button.addEventListener('click',function () {
-      tilt = button.dataset.tilt === 'current' ? undefined : Number(button.dataset.tilt);
-      live = false;
-      document.querySelectorAll('.tilt-btn').forEach(function (b) { b.setAttribute('aria-pressed',String(b === button)); });
-      text(byId('globe-tilt-note'), tilt === undefined ? '' : tilt === 45 ? 'What if: 45°. Moon hidden.' : 'What if: '+tilt+'°.');
-      updateAstronomy(); updateLabels(); announce();
-      scheduleTimeData();
-    });
-  });
+  hourInput.addEventListener('input',editTime);
   returnButton.addEventListener('click',function () {
     if(scrubFrame!==null){cancelAnimationFrame(scrubFrame);scrubFrame=null;}scrubUntil=0;
     clearTimeout(timeEditTimer);timeEditTimer=null;if(cloudController)cloudController.abort();if(detailController){detailController.abort();detailController=null;}if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
     live = true; instant = new Date();recentMode=true;recentEnd=timeline.recentBounds(instant).end; tilt = undefined; pinDayKey = '';expireLivePhoto();if(liveForecast)setForecast(liveForecast);else forecast=null;
-    document.querySelectorAll('.tilt-btn').forEach(function (b) {b.setAttribute('aria-pressed',String(b.dataset.tilt === 'current'));});
-    text(byId('globe-tilt-note'),'Current tilt. The Moon follows its real orbit.');
     applyCachedTime();updateAstronomy(); updateLabels(); announce(); refreshData();
   });
   byId('globe-pin-close').addEventListener('click',function () { setPin(null); container.focus({preventScroll:true}); });
   function unavailable(message) {
-    text(status,message); text(dataLine,'You can still follow the source links below.');
+    cloudDescription=message; text(dataLine,'You can still follow the source links below.');
     text(loadingLabel,'Interactive globe unavailable');
-    explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;byId('globe-sun').hidden=true;locationButton.hidden=true;container.setAttribute('aria-busy','false');loadingProgress.hidden=true;
+    explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;container.setAttribute('aria-busy','false');loadingProgress.hidden=true;
     byId('globe-fullscreen').hidden = true; byId('globe-fullscreen').disabled = true;
     container.removeAttribute('tabindex');container.setAttribute('aria-label','Earth globe unavailable');
     container.removeAttribute('aria-describedby');container.querySelector('.globe-info').remove();
@@ -411,7 +384,6 @@
     var observer=direction.clone().applyAxisAngle(axis,145*DEG);
     targetTheta=nearestOrbitAngle(Math.atan2(observer.x,observer.z),theta);targetPhi=nearestOrbitAngle(Math.acos(observer.y),phi);targetRadius=4;sunFraming=true;autoSpin=false;
   }
-  byId('globe-sun').addEventListener('click',frameSun);
   function validLocation(point) {
     return point&&Number.isFinite(point.lat)&&Math.abs(point.lat)<=90&&Number.isFinite(point.lon)&&Math.abs(point.lon)<=180;
   }
@@ -424,15 +396,13 @@
   }
   function locationMessage(message,state) {
     wrapper.dataset.location=state;locationStatus.hidden=!message;text(locationStatus,message);
-    locationButton.setAttribute('aria-busy',String(state==='loading'));
-    locationButton.title=state==='ready'?'Center on your current location':state==='loading'?'Finding your location':state==='blocked'?'Location blocked. Allow location access in your browser, then retry.':message||'Center on your location';
   }
   function requestLocation() {
     var generation=++locationGeneration,view=viewGeneration,timer;
     function failed(error) {
       if(generation!==locationGeneration)return;clearTimeout(timer);
       if(error&&error.code===1){homeLocation=null;try{localStorage.removeItem(locationKey);}catch(ignore){} }
-      locationMessage(error&&error.code===1?'Allow location to start here.':'Location unavailable. Try My location.',error&&error.code===1?'blocked':'unavailable');
+      locationMessage(error&&error.code===1?'Allow location to start here.':'Location unavailable.',error&&error.code===1?'blocked':'unavailable');
     }
     if(!navigator.geolocation){failed();return;}
     locationMessage('', 'loading');
@@ -458,7 +428,6 @@
     var savedLocation=JSON.parse(localStorage.getItem(locationKey));
     if(validLocation(savedLocation)&&Number.isFinite(savedLocation.savedAt)&&Date.now()-savedLocation.savedAt>=0&&Date.now()-savedLocation.savedAt<30*DAY){homeLocation=savedLocation;centerLocation(homeLocation,true);}
   }catch(ignore){}
-  locationButton.addEventListener('click',function(){viewGeneration++;if(homeLocation)centerLocation(homeLocation,false);requestLocation();});
   requestLocation();
   function updateAstronomy() {
     expireLivePhoto();
