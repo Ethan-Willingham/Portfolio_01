@@ -110,12 +110,18 @@ It never drives a body. Contact time is the handoff time; a separate travel thre
 confirms the recipient's motion. Comparing those threshold completion times would
 misorder two correctly timed contacts. The observer still rejects motion before
 contact, a blocked release and a marble released before clearance.
+Release checks respect each collider's collision groups. A part in another depth
+plane may overlap in projection without blocking the mechanism. The regression
+fixture rejects the old false blockage, still rejects actual same-plane contact,
+and confirms that sampling leaves every world snapshot unchanged. Both fixtures
+also run through Node, Chrome and WebKit parity.
 
 `kit.mjs` checks the sliding latch, supported hanging cup and wheel knocker in both
 orientations, including exact masses, initial geometry, depth groups, transfer order,
-snapshot-preserving observation and disconnected-source controls. Five negative
+snapshot-preserving observation and disconnected-source controls. Seven negative
 controls cover early motion, overlap, filtered visible collision, an unknown profile
-and reversed transfers. These are isolated kit tests, not approved public stages.
+and reversed transfers, plus release depth and a reused entry marble omitted from
+interruption checks. These are isolated kit tests, not approved public stages.
 
 ## Credits
 

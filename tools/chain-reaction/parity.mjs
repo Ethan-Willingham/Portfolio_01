@@ -3,8 +3,9 @@ import { fixtures, run, physics, hash } from './core.mjs';
 import { serve, browserRun } from './browser.mjs';
 import { massCases } from './materials.mjs';
 import { measureLimits, railDefinition } from './limits.mjs';
+import { observerDefinitions } from './observer.mjs';
 const release=await toolLock();
-const definitions=(await fixtures()).flatMap(f=>[f,{...physics.mirror(f),name:f.name+' mirrored'}]), expected=await Promise.all(definitions.map(f=>run(f))), report=[];
+const definitions=[...(await fixtures()).flatMap(f=>[f,{...physics.mirror(f),name:f.name+' mirrored'}]),...observerDefinitions()], expected=await Promise.all(definitions.map(f=>run(f))), report=[];
 const limits=await measureLimits();
 const server=await serve();
 try {

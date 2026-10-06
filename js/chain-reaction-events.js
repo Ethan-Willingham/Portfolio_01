@@ -2,7 +2,7 @@
 (function(global){
   'use strict';
   const CR=global.ChainReaction=global.ChainReaction||{};
-  CR.events={VERSION:'0.1.0',watch(sim,definition){
+  CR.events={VERSION:'0.1.1',watch(sim,definition){
     const starts=new Map(definition.parts.map(p=>[p.id,p]));
     const events=definition.steps.map(s=>({...s,contactTick:null,motionTick:null,impulse:0}));
     const failures=[];
@@ -30,7 +30,12 @@
         if(s.kind==='contact'&&s.contactTick===null)failures.push({type:'motion-before-contact',step:s.id,tick:sim.tick});
         if(s.kind==='unblock'){
           const a=sim.bodies.get(s.from);let touching=false;
-          for(let i=0;i<a.numColliders();i++)for(let j=0;j<body.numColliders();j++)if(a.collider(i).contactCollider(body.collider(j),0))touching=true;
+          for(let i=0;i<a.numColliders();i++)for(let j=0;j<body.numColliders();j++){
+            const source=a.collider(i),recipient=body.collider(j),sourceGroups=source.collisionGroups(),recipientGroups=recipient.collisionGroups();
+            // Geometric queries ignore collision groups. Check each cell's actual
+            // groups so parts in separate depth planes cannot block a release.
+            if(((sourceGroups>>>16)&recipientGroups&65535)&&((recipientGroups>>>16)&sourceGroups&65535)&&source.contactCollider(recipient,0))touching=true;
+          }
           if(touching)failures.push({type:'blocked-release',step:s.id,tick:sim.tick});
         }
         if(s.kind==='rollout'){

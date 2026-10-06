@@ -17,7 +17,7 @@ export async function robustness(stage,seed=229780501){
  return rows;
 }
 export async function interruptionControls(stage){const rows=[];
- for(const mirrored of [false,true])for(const id of stage.path.filter(id=>id!==stage.exitId)){
+ for(const mirrored of [false,true])for(const id of stage.path.filter(id=>id!==stage.exitId||id===stage.entryId)){
   let d=structuredClone(stage),p=d.parts.find(p=>p.id===id);if(p.fixed)continue;p.fixed=true;p.mount='verification clamp';p.vx=p.vy=p.spin=0;d.joints=d.joints.filter(j=>j.a!==id&&j.b!==id);if(mirrored)d=physics.mirror(d);const s=await physics.create(d,moduleURL);let exited=false;
   try{for(let n=0;n<6000;n++){s.step();const q=s.bodies.get(d.exitId).translation();if(mirrored?q.x<=0:q.x>=16){exited=true;break;}}rows.push({mirrored,clamped:id,pass:!exited});}finally{s.dispose();}
  }

@@ -4,6 +4,8 @@ import {initialGeometry,depthLayers} from './geometry.mjs';
 import {mass,materialData} from './materials.mjs';
 import '../../js/chain-reaction-events.js';
 import {pathToFileURL} from 'node:url';
+import {verifyObserver} from './observer.mjs';
+import {interruptionControls} from './robust.mjs';
 export async function verifyKit(){
  const report=[],names=['sliding-latch','supported-cup','wheel-knocker'];
  for(const original of (await fixtures()).filter(f=>names.includes(f.name)))for(const mirrored of [false,true]){
@@ -34,6 +36,8 @@ export async function verifyKit(){
  const cached=structuredClone((await fixtures()).find(f=>f.name==='sliding-latch'));delete cached.contactProfile;
  const stale=await physics.create(cached,moduleURL);let reproduced;
  try{stale.step(cached.ticks);reproduced={gateY:stale.bodies.get('gate').translation().y,latchX:stale.bodies.get('latch').translation().x};assert(reproduced.gateY>.9&&reproduced.latchX>14.9,'Cached-contact reproduction changed');}finally{stale.dispose();}
- return {pass:true,report,disconnectedControls:report.length,mutationsRejected:5,cachedSupportReproduced:reproduced};
+ const reusedMarble={name:'reused-marble-clamp',entryId:'recipient',exitId:'recipient',path:['recipient'],joints:[],parts:[{id:'recipient',shape:'ball',radius:.15625,x:0,y:1.15625,vx:4,spin:-25.6,material:'glazed-ceramic',...mass.properties(materialData.materials['glazed-ceramic'],{construction:'sphere',radius:.15625})}]};
+ const reusedMarbleControls=await interruptionControls(reusedMarble);assert.equal(reusedMarbleControls.length,2,'Reused entry marble escaped the interruption controls');
+ return {pass:true,report,observer:await verifyObserver(),reusedMarbleControls,disconnectedControls:report.length,mutationsRejected:7,cachedSupportReproduced:reproduced};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const release=await toolLock();try{console.log(JSON.stringify(await verifyKit(),null,2));}finally{await release();}}
