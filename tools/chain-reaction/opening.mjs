@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile,copyFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {ROOT,toolLock} from './core.mjs';
 import {serve,browserRun} from './browser.mjs';
@@ -10,7 +10,7 @@ const first=JSON.parse(await readFile(resolve(ROOT,'assets/chain-reaction/stages
 const contact=first.verified.steps.filter(s=>s.kind==='contact').reduce((n,s)=>Math.min(n,s.contactTick),Infinity);
 try{
  for(const engine of ['chromium','webkit'])await browserRun(engine,async browser=>{
-  const context=await browser.newContext({viewport:{width:844,height:390}}),page=await context.newPage(),errors=[];
+  const record=process.env.CHAIN_REACTION_VIDEO&&engine==='chromium',context=await browser.newContext({viewport:record?{width:859,height:767}:{width:844,height:390},...(record?{deviceScaleFactor:2,recordVideo:{dir:resolve(folder,'video'),size:{width:859,height:767}}}:{})}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(server.url+'/chain-reaction.html');
   await page.waitForFunction(()=>window.ChainReactionPage?.ready);
@@ -30,7 +30,7 @@ try{
   await page.reload();await page.waitForFunction(()=>window.ChainReactionPage?.ready);
   assert.equal((await page.evaluate(()=>ChainReactionPage.state())).stage,3);
   rows.push({engine,pass:true,firstContactTime:contact/240,reveal:{width:reveal.camera.width,time:reveal.tick/240},returned:{width:returned.camera.width,time:returned.tick/240},cup:{width:cup.camera.width,time:cup.tick/240},checks:['first visit pullback during slow arm fall','return before first contact','close cup setup','continuous chain','resume saved stage','zero browser errors']});
-  await context.close();
+  const video=page.video();await context.close();if(record&&video)await copyFile(await video.path(),resolve(folder,'playback.webm'));
  });
  console.log(JSON.stringify(rows,null,2));await writeFile(resolve(folder,'opening.json'),JSON.stringify(rows,null,2)+'\n');
 }finally{await server.close();await release();}

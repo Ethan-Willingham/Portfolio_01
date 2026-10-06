@@ -363,6 +363,11 @@ an approximation of a 180-degree shutter at 60 fps. They change display poses on
 Physics stays at 240 Hz. Film grain stops when playback pauses. The renderer warms
 both scene and film shaders before motion. Both shutter targets have depth buffers.
 The row light and its shadow volume stay anchored to the set during camera travel.
+Depth textures use 24-bit storage in both shutter targets. Camera clip limits track
+lens distance (near is half the distance, far is 1.5 times it plus 8 units), and the
+focus shader reconstructs depth from those actual limits. The former 16-bit buffer
+with fixed 0.1-to-800 limits lost inches of depth at overview distance. Gold mounting
+feet could then tie with the farther bench in depth and be overwritten by it.
 A missing depth buffer formerly let rear objects overwrite front objects in one
 shutter sample, changing brightness by up to 82 RGB levels on the frozen scene.
 
@@ -374,8 +379,14 @@ and saved-stage resume in both browsers. Its return-before-contact assertion pre
 future opening edits from hiding the first transfer. `temporal.mjs` freezes bodies
 and grain, compares both shutter passes at three zooms and three screen shapes in
 both browsers, and checks a 121-frame pullback-and-return sequence. All 24 comparisons
-are now pixel-identical. These checks isolate occlusion and return stability; they
-do not substitute for watching the moving scene.
+are pixel-identical for frozen bodies. These checks isolate shutter occlusion and
+return stability; they missed depth precision failures during camera travel.
+`depth.mjs` now reads GPU depth at known bench-plane points throughout 121 camera
+frames, including the owner's viewport and high-density displays in Chrome/WebKit.
+It also uses the real bearing-foot geometry in a color-ID scene with the production
+paint-before-maple order. The old renderer lost that foot in 330 of 414 visible
+samples; the correction loses none. Maximum bench depth error fell from 2.657 units
+to 0.000589. The color-ID view is test-only. It never alters public materials.
 
 `storyboard.mjs` steps each canonical stage in Node, checks its stored state hash,
 then renders exact requested ticks in the browser without rAF. It writes twelve
@@ -387,8 +398,18 @@ All images and traces stay private. Set `CHAIN_REACTION_SHARP` to the scratch Sh
 package, and optionally set `CHAIN_REACTION_EVIDENCE` to a cycle directory. Otherwise
 new capture tools use `research/chain-reaction/evidence/latest`.
 
-The browser harness owns each test process
-and closes it in a finally block.
+Static stock, mounts and dressing cache their local transforms. Moving part groups,
+dashpots and their rods still update; parent motion reaches every attached mesh.
+Both color exposures share one shadow map from the latest shutter sample. This is
+a display approximation that avoids rendering the same shadow map twice per frame.
+Physics and color exposure times stay unchanged. Paused and hidden views stop
+painting until their scene or camera changes. Follow restores the paused camera,
+and at the end it follows the final marble. Metrics reset never changes the rendered
+stage. `idle.mjs` checks those behaviors in both browsers.
+
+`film.mjs` now includes the owner's high-density viewport and a CPU-4x high-density
+phone profile, with the existing 16.7 ms limit. The browser harness owns each test
+process and closes it in a finally block.
 
 ## Sound for owner review
 
