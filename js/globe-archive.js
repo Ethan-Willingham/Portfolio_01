@@ -38,7 +38,7 @@
   var hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(function(v){return v.toString(16).padStart(2,'0');}).join('');if(hash!==asset.sha256)throw new Error('Cloud checksum mismatch');
   return new Blob([bytes],{type:'image/webp'});
  }
- async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v='+clouds.PROCESSING+'-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
+ async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v=2-'+clouds.PROCESSING+'-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
  async function fetchFrame(manifest,time,options){
   options=options||{};if(manifest.processing<clouds.PROCESSING)throw new Error('Cloud processing revision is outdated');var frame=manifest.frames.find(function(f){return +f.time===+time;});if(!frame)throw new Error('Cloud hour not archived');
   var cache=null;if(typeof caches!=='undefined')try{cache=await caches.open(CACHE);}catch(_){}
