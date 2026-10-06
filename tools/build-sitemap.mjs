@@ -21,6 +21,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = 'https://ethanwillingham.com';
 
 const SKIP = [
+  /^chain-reaction\.html$/, // unlinked vertical slice, pending owner look review
   /-lab\.html$/,        // throwaway choosers
   /^sfx-/,              // sfx prompt/publish/test tools
   /^(edit|blog-edit|post-builder)\.html$/, // editors and builders

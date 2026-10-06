@@ -306,3 +306,80 @@ The full verifier also runs the material and limit checks. Parity retains the or
 forty-four fixture comparisons and adds four hundred rail snapshots plus eighty-eight
 mass-model comparisons across Chrome and WebKit. No stage schema, recorder, complete
 chain or final art is approved by these tests.
+
+## Three-stage review slice
+
+The unlinked `chain-reaction.html` contains three mechanisms and sixteen physical
+transfers, lasting 24.43 seconds. A damped gravity arm tips a ruler; a hanging tin
+cup pushes a weighted mallet; a crossed-spoke wheel pushes a second knocker.
+Every mechanism ends by sliding a latch, dropping a gate and releasing a ceramic
+marble down the same measured run-out. This is a review slice. Its look, sound and
+proposed anchors remain unapproved.
+
+The three recorded stages pass 200 variations per orientation, 1,200 runs in total.
+Sampling includes all sixteen entry-envelope corners, position variation of
+0.02 units, angle variation of 0.5 degrees and ten percent friction/bounce variation.
+All thirty-two independently clamped-predecessor controls keep the output marble
+inside the plot. Twenty-two doubled-recipient-mass runs also complete. This is a
+load-reserve stress test, rather than a calibrated measurement of delivered energy.
+Materials and mass stay unchanged when finishes change.
+
+`schema.mjs` validates data-only stages, named recipes, exact mass and inertia, kit
+versions, mounts, canonical entries and recorded results. `stage.mjs` observes
+contacts and recipient motion, output state, plot bounds, surface speed, dead time
+and rope stretch. `verify --record` is the only writer of verified blocks and accepts
+changed files only. It reuses a variation report only when the complete source hash,
+physics version and both canonical state hashes match. `verify --full` is read-only
+and replays every canonical orientation, retaining all foundation gates.
+
+```sh
+node tools/chain-reaction/verify.mjs --record assets/chain-reaction/stages/00001.json
+node tools/chain-reaction/manifest.mjs
+node tools/chain-reaction/verify.mjs --full
+node tools/chain-reaction/lint.mjs
+```
+
+Public records retain poses, events, camera paths and summary evidence. Full traces
+stay in the private research repository. Compact stage serialization avoids copying
+verbose diagnostic data into every future stage. The manifest keeps content hashes,
+titles, durations and step counts.
+
+Camera paths use quintic easing and logarithmic zoom. Actual contact points are
+projected at 1440x900, 844x390 and 390x844 for both follow and reveal paths. The first
+pullback uses 2.3-second flights and a 1.5-second hold to keep the existing jerk caps.
+The cup's early contacts occur during this wider shot; it does not yet have the
+brief's four-second entry breather. The same width, height and target position join
+stages. The renderer carries the marble's painted rotation into the next entry and
+hides each future canonical entry until its predecessor arrives.
+
+The scene uses real-depth meshes, shared procedural finishes, world-space light,
+beveled edges, visible bearings, stops, guide slots, stands and dashpots. Depth blur
+uses the depth buffer and distance to the focus plane. Two exposure samples provide
+an approximation of a 180-degree shutter at 60 fps. They change display poses only.
+Physics stays at 240 Hz. Film grain stops when playback pauses. The renderer warms
+both scene and film shaders before motion.
+
+`slice.mjs` compares six full-stage snapshots and semantic reports in Chrome and
+WebKit, then checks controls, layouts, deep links and reduced motion. `film.mjs`
+measures five busy and overview runs per profile, captures sixteen splice frames,
+and checks continuous playback. `opening.mjs` checks the automatic reveal, return
+and saved-stage resume in both browsers. The browser harness owns each test process
+and closes it in a finally block.
+
+## Sound for owner review
+
+The public sound button stays hidden. A private comparison pairs modal voices with
+CC0 [wood knocks by ominouswhoosh](https://freesound.org/people/ominouswhoosh/sounds/679772/)
+and a [thin metal impact by Allan Legemaate](https://freesound.org/people/alegemaate/sounds/364706/).
+Preview audio is decoded in memory for spectral and decay comparisons and is never
+shipped. Resonant modes follow material and size, with provisional frequencies rather
+than measured object calibration. The approach follows the authors' description of
+[FoleyAutomatic](https://www.persianney.com/kvdoelcsubc/pubs.html).
+
+A rolling noise voice follows marble speed near the rail. Verified contacts schedule
+modal impacts with 100 ms lookahead, a 60 ms pair cooldown and at most eight voices.
+Off-screen voices become quieter and duller. A deterministic room impulse combines
+three early reflections with a decaying tail. Its absolute impulse sum is bounded,
+so the voice cap, rolling gain and room response permit a conservative clipping
+check. One world provides no cross-world loudness comparison yet. Approval by ear
+belongs to the owner.

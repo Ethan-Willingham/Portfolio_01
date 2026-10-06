@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "world": "Woodshop",
+  "lookApproved": false,
+  "soundApproved": false,
+  "stages": [
+    {
+      "file": "00001.json",
+      "hash": "707813e45e5a6794340b9a867055b2dea414f16f02f599fdf4ba0c14cd30ac9d",
+      "number": 1,
+      "title": "The Long Arm",
+      "duration": 9.470833333333333,
+      "steps": 4
+    },
+    {
+      "file": "00002.json",
+      "hash": "e79f0be5a6c729ccba579513ce414e2345ef473cf6fd4ae331487d7f77d14fbe",
+      "number": 2,
+      "title": "A Small Weight",
+      "duration": 7.279166666666667,
+      "steps": 6
+    },
+    {
+      "file": "00003.json",
+      "hash": "235159c7d813cdd03feaaf9f3ece3f684cbb15c3dbc335e7563f5c0c1b8f30b7",
+      "number": 3,
+      "title": "One More Turn",
+      "duration": 7.683333333333334,
+      "steps": 6
+    }
+  ]
+}
