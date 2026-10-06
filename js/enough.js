@@ -8,13 +8,13 @@ const curves=new Map(data.curves.map(c=>[c.id,c])),states=new Map();
 const params=new URLSearchParams(location.search),walkingCurves=new Map(data.stepComparisons.map(c=>[c.id,c])),walkingDoses=new Map(data.stepComparisons.map(c=>[c.id,c.defaultDose])),walkingViews=[];
 let walkingAge=params.get('steps-age')==='older'?'steps-older':'steps-younger';
 const groups=[
- ['move','Move','The first steps count.',['steps','exercise']],
- ['lift','Lift','Protein and training volume.',['protein','sets']],
- ['rest','Rest','A low point, with room for your own needs.',['sleep']],
- ['eat','Eat','More plants. More fiber.',['fruit-veg','fiber']],
- ['money','Money','Income and savings answer different questions.',['income','savings']],
- ['work','Work','Hours and output part ways.',['work']],
- ['harm','Where enough is zero','A little can carry a lot of risk.',['alcohol','smoking']]
+ ['move','Move',['steps','exercise']],
+ ['lift','Lift',['protein','sets']],
+ ['rest','Rest',['sleep']],
+ ['eat','Eat',['fruit-veg','fiber']],
+ ['money','Money',['income','savings']],
+ ['work','Work',['work']],
+ ['harm','Alcohol and smoking',['alcohol','smoking']]
 ];
 const xLabels={'steps-younger':'Steps/day','steps-older':'Steps/day',steps:'Steps/day',exercise:'Exercise, minutes/week',protein:'Protein, g/lb/day',sets:'Sets/muscle/week',sleep:'Sleep, hours/night','fruit-veg':'Fruit and veg, servings/day',fiber:'Fiber, grams/day',income:'Household income, $/year',savings:'Take-home pay saved, %',work:'Work, hours/week',alcohol:'US drinks/week (groups)',smoking:'Cigarettes/day'};
 const outcomeScales={
@@ -27,7 +27,6 @@ const outcomeScales={
  work:{max:4500,ticks:[0,1500,3000,4500],label:'Output added vs 24 h, units'}
 };
 const modelKey=c=>`<p class="enough-model-key"><span aria-hidden="true"></span>${esc(c.view.modelLabel||'Study model')}</p>`;
-const shape=c=>c.view.shape||({benefit:'Most arrives early',sweet:'A sweet spot',harm:'Less is better',model:'Uncertain ceiling'}[c.view.mode]);
 function amount(c,d){
  if(c.kind==='categories')return c.points[Math.round(d)].label;
  if(c.id==='protein')return fmt(d,2)+' grams per pound';
@@ -180,12 +179,12 @@ function bindWalking(plot,output,baseline,card=null){
  interactive(plot,{min:c.view.range[0],max:c.view.range[1],step:100,name:(preview?'Opening chart: ':'')+'How much walking?',description:baseline.id,get:()=>walkingDoses.get(walkingAge),set,bounds:()=>walkingCurves.get(walkingAge).view.range,fromPointer:e=>doseFromPointer(walkingCurves.get(walkingAge),plot,e)});
  const state={update};walkingViews.push(state);return state;
 }
-for(const [area,title,dek,ids]of groups){
+for(const [area,title,ids]of groups){
  const section=document.createElement('section');section.className='enough-group';section.style.setProperty('--area',`var(--en-${area})`);section.setAttribute('aria-labelledby','area-'+area);
- section.innerHTML=`<div class="area-heading"><h2 id="area-${area}">${esc(title)}</h2><p>${esc(dek)}</p></div><div class="${ids.length>1?'enough-grid':'enough-feature'}"></div>`;
+ section.innerHTML=`<div class="area-heading"><h2 id="area-${area}">${esc(title)}</h2></div><div class="${ids.length>1?'enough-grid':'enough-feature'}"></div>`;
  for(const id of ids){
   const c=curves.get(id),card=document.createElement('article');card.id=id;card.className='enough-card'+(ids.length===1?' feature':'');
-  card.innerHTML=`<div class="card-copy"><span class="shape">${esc(shape(c))}</span><h3>${esc(c.question)}</h3><p class="enough-answer">${esc(c.view.answer)}</p><p class="enough-fact">${esc(c.fact)}</p></div><div class="card-plot"><div class="enough-chart"></div><p class="enough-readout" id="readout-${id}"></p><p class="enough-range-note" id="range-note-${id}">${esc(c.view.rangeLabel)}.</p></div>${detail(c)}`;
+  card.innerHTML=`<div class="card-copy"><h3>${esc(c.question)}</h3><p class="enough-answer">${esc(c.view.answer)}</p><p class="enough-fact">${esc(c.fact)}</p></div><div class="card-plot"><div class="enough-chart"></div><p class="enough-readout" id="readout-${id}"></p><p class="enough-range-note" id="range-note-${id}">${esc(c.view.rangeLabel)}.</p></div>${detail(c)}`;
   section.lastElementChild.append(card);const plot=card.querySelector('.enough-chart'),output=card.querySelector('.enough-readout');
   if(id==='steps'){
    card.querySelector('.enough-answer').insertAdjacentHTML('beforebegin','<div class="overview-choices walking-age-choices" role="group" aria-label="Choose the walking study age group"><button type="button" data-steps-age="steps-younger">Under 60</button><button type="button" data-steps-age="steps-older">60+</button></div>');

@@ -5,8 +5,7 @@
 .enough-footer-inner{max-width:1160px;margin:0 auto;}
 .enough-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0;}
 .enough-hero{display:grid;grid-template-columns:1fr .95fr;gap:3rem;align-items:center;margin:12px 0 28px;}
-.hero-title{font-family:var(--font-heading);font-weight:700;font-size:clamp(3rem,8vw,5rem);line-height:.94;letter-spacing:-.035em;color:var(--text-bright);margin:0 0 20px;text-wrap:balance;}
-.enough-title p{font:400 1.22rem/1.45 var(--font-body);margin:0;}
+.hero-title{font-family:var(--font-heading);font-weight:700;font-size:clamp(3rem,8vw,5rem);line-height:.94;letter-spacing:-.035em;color:var(--text-bright);margin:0;text-wrap:balance;}
 .enough-hero picture{display:block;}
 .enough-hero img{display:block;width:100%;height:auto;object-fit:contain;}
 .enough-overview{border-block:1px solid var(--rule-strong);padding:16px 0;margin-bottom:48px;}
@@ -46,13 +45,11 @@
 .enough-detail p{margin:.65rem 0;max-width:75ch;}
 .enough-detail a{overflow-wrap:anywhere;}
 .enough-group{margin-bottom:64px;scroll-margin-top:20px;}
-.area-heading{display:flex;gap:24px;align-items:baseline;border-bottom:1px solid var(--area);padding:0 0 14px;margin:0 0 26px;}
+.area-heading{border-bottom:1px solid var(--area);padding:0 0 14px;margin:0 0 26px;}
 .area-heading h2{font:700 2.8rem/1 var(--font-heading);color:var(--text-bright);margin:0;}
-.area-heading p{font-size:1rem;color:var(--text-dim);margin:0;}
 .enough-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto auto;grid-auto-flow:column;column-gap:40px;row-gap:16px;}
 .enough-grid>.enough-card{display:grid;grid-template-rows:subgrid;grid-row:span 3;}
 .enough-card{min-width:0;scroll-margin-top:20px;}
-.enough-card .shape{font:.72rem var(--font-mono);color:var(--area);margin:0 0 12px;display:block;}
 .enough-card h3{font:700 1.3rem/1.25 var(--font-heading);margin:0 0 12px;}
 .enough-answer{font:400 clamp(2rem,3.8vw,3.05rem)/1.05 var(--font-heading);color:var(--area);margin:0 0 14px;max-width:16ch;}
 .enough-fact{font-size:1rem;line-height:1.5;margin:0 0 14px;}
@@ -70,16 +67,13 @@
 @media(max-width:699px){
  .enough-hero{display:flex;flex-direction:column;gap:18px;align-items:stretch;margin:6px 0 20px;}
  .enough-hero picture{order:-1;}
- .hero-title{margin-bottom:14px;}
- .enough-title p{font-size:1rem;line-height:1.35;}
  .enough-overview{padding:12px 0;margin-bottom:36px;}
  .overview-choices{gap:24px;margin-bottom:6px;}
  .overview-reading{display:block;margin-top:12px;}
  .overview-reading span,.overview-reading strong{display:block;}
  .overview-reading strong{font-size:1.6rem;margin-top:4px;}
- .area-heading{display:block;margin-bottom:24px;}
- .area-heading h2{font-size:2.5rem;margin:0 0 8px;}
- .area-heading p{font-size:.9rem;}
+ .area-heading{margin-bottom:24px;}
+ .area-heading h2{font-size:2.5rem;}
  .enough-grid,.enough-grid>.enough-card{display:block;}
  .enough-card{margin-bottom:36px;}
  .enough-card+.enough-card{border-top:1px solid var(--rule);padding-top:26px;}
