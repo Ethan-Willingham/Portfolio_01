@@ -394,6 +394,13 @@ paint-before-maple order. The old renderer lost that foot in 330 of 414 visible
 samples; the correction loses none. Maximum bench depth error fell from 2.657 units
 to 0.000589. The color-ID view is test-only. It never alters public materials.
 
+`alignment.mjs` compares the actual rendered collider meshes with their physical
+positions and thicknesses. It covers armed and spent poses, both directions and
+both browsers. Simple parts formerly applied their depth offset twice; compound
+parts applied it once. The correction leaves no mismatches in 288 mesh probes per
+browser, compared with 192 before. This check keeps visible contact surfaces aligned
+with the physics, including mechanisms that mix simple and compound parts.
+
 `storyboard.mjs` steps each canonical stage in Node, checks its stored state hash,
 then renders exact requested ticks in the browser without rAF. It writes twelve
 event frames, half-second timelines, sixteen frames at 30 fps around the payoff
