@@ -356,16 +356,16 @@
 
   // Fade only inside an observed footprint. RGB and missing pixels stay intact;
   // longitude padding makes the transition continuous across the map seam.
-  function featherCoverage(pixels, width) {
+  function* featherCoverageSteps(pixels, width) {
     if (!Number.isInteger(width) || width < 2 || !pixels || !pixels.length || pixels.length % (width * 4)) throw new Error('Invalid image pixels');
     var height = pixels.length / (width * 4), feather = Math.max(1, width / 120);
     var padding = Math.ceil(feather), stride = width + padding * 2, limit = Math.ceil(feather * 3);
     var distance = new Uint16Array(stride * height), result = new Uint8ClampedArray(pixels);
-    for (var y = 0; y < height; y++) for (var x = 0; x < stride; x++) {
+    for (var y = 0; y < height; y++) { if(y%4===0)yield; for (var x = 0; x < stride; x++) {
       var longitude = (x - padding + width) % width;
       distance[y * stride + x] = pixels[(y * width + longitude) * 4 + 3] ? limit : 0;
-    }
-    for (var row = 0; row < height; row++) for (var column = 0; column < stride; column++) {
+    }}
+    for (var row = 0; row < height; row++) { if(row%4===0)yield; for (var column = 0; column < stride; column++) {
       var index = row * stride + column, d = distance[index];
       if (column) d = Math.min(d, distance[index - 1] + 3);
       if (row) {
@@ -374,8 +374,8 @@
         if (column + 1 < stride) d = Math.min(d, distance[index - stride + 1] + 4);
       }
       distance[index] = d;
-    }
-    for (var rowBack = height - 1; rowBack >= 0; rowBack--) for (var columnBack = stride - 1; columnBack >= 0; columnBack--) {
+    }}
+    for (var rowBack = height - 1; rowBack >= 0; rowBack--) { if(rowBack%4===0)yield; for (var columnBack = stride - 1; columnBack >= 0; columnBack--) {
       var back = rowBack * stride + columnBack, value = distance[back];
       if (columnBack + 1 < stride) value = Math.min(value, distance[back + 1] + 3);
       if (rowBack + 1 < height) {
@@ -384,14 +384,15 @@
         if (columnBack + 1 < stride) value = Math.min(value, distance[back + stride + 1] + 4);
       }
       distance[back] = value;
-    }
-    for (var ry = 0; ry < height; ry++) for (var rx = 0; rx < width; rx++) {
+    }}
+    for (var ry = 0; ry < height; ry++) { if(ry%4===0)yield; for (var rx = 0; rx < width; rx++) {
       var alpha = (ry * width + rx) * 4 + 3;
       var t = Math.min(1, distance[ry * stride + rx + padding] / (3 * feather));
       result[alpha] = Math.round(pixels[alpha] * t * t * (3 - 2 * t));
-    }
+    }}
     return result;
   }
+  function featherCoverage(pixels,width){var steps=featherCoverageSteps(pixels,width),part;do{part=steps.next();}while(!part.done);return part.value;}
 
   function parseAurora(data) {
     if (!data || !Array.isArray(data.coordinates) || data.coordinates.length !== GRID_WIDTH * GRID_HEIGHT) {
@@ -573,7 +574,7 @@
     request:request,imageBlob:imageBlob,fetchText:function(url,options){return request(url,options,function(r){return r.text();});},
     fetchJSON: fetchJSON, photoURL: photoURL, fetchPhotoDay: fetchPhotoDay, latestPhoto: latestPhoto,
     cachedPhotoDay: cachedPhotoDay, discardPhotoDay: discardPhotoDay, evictPhoto: evictPhoto,
-    utcDate:utcDate, previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA, featherCoverage:featherCoverage,
+    utcDate:utcDate, previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA, featherCoverage:featherCoverage, featherCoverageSteps:featherCoverageSteps,
     parseAurora: parseAurora, auroraFreshness: auroraFreshness, auroraAt: auroraAt,
     parseAuroraArchive:parseAuroraArchive,parseAuroraManifest:parseAuroraManifest,auroraFrameAt:auroraFrameAt,fetchAuroraArchive:fetchAuroraArchive,
     auroraVisibility: auroraVisibility, greatCircleMiles: greatCircleMiles, parseKp: parseKp

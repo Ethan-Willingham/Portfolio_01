@@ -12,6 +12,10 @@ fs.mkdirSync(dump,{recursive:true});
 const fixedNow='2026-10-05T03:10:00Z',checks=[],evidence=[],errors=[];
 function check(name,pass,detail){checks.push({name,pass:!!pass,...(detail===undefined?{}:{detail})});console.log((pass?'PASS ':'FAIL ')+name);}
 const hooks=`
+var qualityPrepareFull=detailPreparing.prepareFull;
+detailPreparing.prepareFull=async function(blobs,width,natural,shared,priority,key){var gate=window.__qualityGate;
+ if(gate&&width===gate.width&&(!gate.onlyTime||photo&&photo.time===gate.onlyTime)){window.__qualityDecodePending=width;await window.__qualityDecodeWait();}
+ return qualityPrepareFull(blobs,width,natural,shared,priority,key);};
 window.__globeQuality={
  state:function(){return {loading:loading,photo:photo,photoMix:photoMix,instant:instant.toISOString(),live:live,generation:photoGeneration,
   detailBusy:!!detailController,clear:renderer.getClearColor().getHexString(),radius:radius,textureWidth:textureWidth,
@@ -103,7 +107,7 @@ async function setup(browser,options={}){const context=await browser.newContext(
 async function open(page){await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html');await page.waitForFunction(()=>window.__globeQuality&&!__globeQuality.state().loading,null,{timeout:30000});}
 async function state(page){return page.evaluate(()=>__globeQuality.state());}
 async function decodeGate(page,width,onlyTime){const g=gate();let calls=0;await page.exposeFunction('__qualityDecodeWait',async()=>{calls++;await g.promise;});
- await page.addInitScript(({width,onlyTime})=>{const create=window.createImageBitmap.bind(window);window.createImageBitmap=async function(blob,...args){if(blob.type==='image/png'){const h=new DataView(await blob.slice(0,24).arrayBuffer());if(h.byteLength===24&&h.getUint32(16)===width&&(!onlyTime||window.__globeQuality?.state().photo?.time===onlyTime)){window.__qualityDecodePending=width;await window.__qualityDecodeWait();}}return create(blob,...args);};},{width,onlyTime});return {release:g.release,get calls(){return calls;}};}
+ await page.addInitScript(({width,onlyTime})=>{window.__qualityGate={width,onlyTime};},{width,onlyTime});return {release:g.release,get calls(){return calls;}};}
 async function gpuChecks(browser){const {context,page,requests}=await setup(browser);try{await open(page);const initial=await state(page);check('renderer clears the sky to black',initial.clear==='000000',initial.clear);
  const cyan=await page.evaluate(()=>__globeQuality.sample(0,108)),vegetation=await page.evaluate(()=>__globeQuality.sample(0,130)),land=await page.evaluate(()=>__globeQuality.sample(0,149));
  check('GPU renders cyan ice-cloud fixture with neutral channels',Math.max(...cyan.slice(0,3))-Math.min(...cyan.slice(0,3))<=8&&cyan[0]>100,cyan);
@@ -177,7 +181,7 @@ async function missingNaturalChecks(browser){const download=gate(),sharper=gate(
  check('ready color companion replaces infrared-only display without changing time or resolution',recovered.photo.width===2048&&recovered.photo.time===pending.photo.time&&recovered.textures.natural[0]===2048&&recovered.textures.infrared[0]===2048&&recovered.photoMix===1&&!recovered.loading,recovered);
  await page.evaluate(()=>__globeQuality.zoom(2.5));let kept;
  if(safariMobile){await page.waitForTimeout(300);kept=await state(page);check('mobile zoom retains the 2048 colour frame within its texture budget',kept.textureWidth===2048&&kept.photo.width===2048&&kept.photo.natural&&!requests.some(r=>r.width===4096),{kept,requests});
-  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,status:document.getElementById('globe-status').textContent}));check('Safari mobile keeps the controls within the viewport',layout.scroll<=layout.width,layout);
+  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));check('Safari mobile keeps the controls within the viewport',layout.scroll<=layout.width,layout);
   await page.evaluate(()=>__globeQuality.sample(0,164));await page.locator('.globe-wrapper').screenshot({path:path.join(dump,'safari-mobile-colour-recovered.png')});
  }else{await sharper.entered;sharper.release();await page.waitForFunction(()=>!__globeQuality.state().detailBusy);kept=await state(page);
   check('sharper infrared-only result cannot replace installed natural color',kept.photo.natural&&kept.photo.width===2048&&kept.photo.time===pending.photo.time&&kept.textures.natural[0]===2048&&kept.textures.infrared[0]===2048&&requests.some(r=>r.width===4096&&r.kind==='infrared'&&r.time===pending.photo.time),{kept,requests});}
@@ -186,7 +190,7 @@ async function missingNaturalChecks(browser){const download=gate(),sharper=gate(
 async function staleUpgradeCheck(browser){const {context,page,requests}=await setup(browser);let decode;
  try{decode=await decodeGate(page,4096,'2026-10-05T03:00:00.000Z');await open(page);await page.evaluate(()=>__globeQuality.zoom(2.5));await page.waitForFunction(()=>window.__qualityDecodePending===4096);const old=await state(page);
  check('old sharper decode begins while its prior frame remains installed',old.photo.width===2048&&old.detailBusy&&old.photo.time==='2026-10-05T03:00:00.000Z',old);
- await page.evaluate(()=>__globeQuality.zoom(4));await page.locator('#globe-date').dispatchEvent('change');await page.locator('#globe-hour').fill('1150');await page.locator('#globe-hour').dispatchEvent('input');
+ await page.evaluate(()=>__globeQuality.zoom(4));await page.locator('#globe-hour').fill('540');await page.locator('#globe-hour').dispatchEvent('input');
  await page.waitForFunction(()=>__globeQuality.state().photo?.time==='2026-10-05T00:00:00.000Z');const chosen=await state(page);decode.release();await page.waitForTimeout(300);const after=await state(page);
  check('time edit defeats a late sharper image from the previous timestamp',after.photo.time===chosen.photo.time&&after.photo.time==='2026-10-05T00:00:00.000Z'&&after.photo.width>=chosen.photo.width&&after.photo.width<=2048&&after.textures.natural[0]===after.photo.width&&after.generation>old.generation,{old,chosen,after});
  evidence.push({stale:{old,chosen,after},requests});

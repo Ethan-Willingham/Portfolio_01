@@ -48,6 +48,7 @@
   var detailController=null,detailKey='',detailChecked=0;
   var cloudMemo=null,installedCloud=null,cloudPending=new Map(),archivePending=new Map();
   var compressedClouds=null,preparedClouds=new Set(),decodingReplay=false,startupReplay=null;
+  var interactionUntil=0,deferredCloud=null,detailPreparing=null;
   var scrubFrame=null,scrubUntil=0,replayMemo=null,replayPending=new Map(),replayPreparing=null,replayTextures=new Map(),replayTarget=null,replayBlendStarted=0,replayFadeStarted=0,replayBakeIndex=0;
   var replayController=null,replayKey='',replayBusy=false,replayChecked=0,replayClouds=[],replayAurora=[],replayFailed=new Set(),sessionFrames=[];
   var replayPendingCloud=false,replayPendingAurora=false;
@@ -65,7 +66,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v37');
+  text(byId('globe-version'),'v38');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -145,7 +146,9 @@
     }
     text(byId('globe-pin-aurora'), aurora);
   }
+  function interacting(){interactionUntil=performance.now()+350;}
   function editTime() {
+    interacting();
     var minutes = Number(hourInput.value);
     var chosen = new Date(+recentEnd-(720-minutes)*60000);
     if (!Number.isFinite(chosen.getTime())) return;
@@ -209,7 +212,8 @@
   });
   var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
   replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-36',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-38',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-38',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -324,10 +328,6 @@
     var image=texture.image,powerOfTwo=image&&image.width&&(image.width&(image.width-1))===0&&(image.height&(image.height-1))===0;
     texture.wrapS=THREE.RepeatWrapping;texture.minFilter=powerOfTwo?THREE.LinearMipmapLinearFilter:THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;
     texture.generateMipmaps=!!powerOfTwo;texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;return texture;
-  }
-  function softenImageCoverage(canvas) {
-    var context=canvas.getContext('2d'),image=context.getImageData(0,0,canvas.width,canvas.height);
-    image.data.set(data.featherCoverage(image.data,canvas.width));context.putImageData(image,0,0);
   }
   async function decodeBlob(blob,width,signal) {
     var bitmap;
@@ -452,13 +452,14 @@
   }
   var pointers=new Map(), dragTotal=0, pinchDistance=0, gesturePin=null;
   renderer.domElement.addEventListener('pointerdown',function (event) {
-    event.preventDefault();container.focus({preventScroll:true});viewGeneration++;autoSpin=false;dragTotal=pointers.size?999:0;
+    interacting();event.preventDefault();container.focus({preventScroll:true});viewGeneration++;autoSpin=false;dragTotal=pointers.size?999:0;
     pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});renderer.domElement.setPointerCapture(event.pointerId);
     gesturePin=hitAt(event.clientX,event.clientY);pinchDistance=0;
   });
   renderer.domElement.addEventListener('pointermove',function (event) {
     var previous=pointers.get(event.pointerId);
     if(!previous)return;
+    interacting();
     var dx=event.clientX-previous.x,dy=event.clientY-previous.y;
     pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
     if(pointers.size>1){var list=Array.from(pointers.values());var distance=Math.hypot(list[0].x-list[1].x,list[0].y-list[1].y);sunFraming=false;if(pinchDistance)targetRadius=Math.max(1.5,Math.min(10,targetRadius+(pinchDistance-distance)*.012));pinchDistance=distance;dragTotal=999;return;}
@@ -473,12 +474,12 @@
   }
   renderer.domElement.addEventListener('pointerup',endPointer);renderer.domElement.addEventListener('pointercancel',endPointer);renderer.domElement.addEventListener('lostpointercapture',function (event) {pointers.delete(event.pointerId);});
   window.addEventListener('blur',function () {pointers.clear();pinchDistance=0;});
-  renderer.domElement.addEventListener('wheel',function (event) {event.preventDefault();viewGeneration++;autoSpin=false;sunFraming=false;targetRadius=Math.max(1.5,Math.min(10,targetRadius+event.deltaY*.002));},{passive:false});
+  renderer.domElement.addEventListener('wheel',function (event) {interacting();event.preventDefault();viewGeneration++;autoSpin=false;sunFraming=false;targetRadius=Math.max(1.5,Math.min(10,targetRadius+event.deltaY*.002));},{passive:false});
   container.addEventListener('keydown',function (event) {
     if(event.target!==container)return;
     if(event.key==='Escape'&&wrapper.classList.contains('is-fullscreen'))return;
     if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','Enter','Escape'].indexOf(event.key)<0)return;
-    event.preventDefault();viewGeneration++;autoSpin=false;if(event.key!=='Enter'&&event.key!=='Escape')sunFraming=false;
+    interacting();event.preventDefault();viewGeneration++;autoSpin=false;if(event.key!=='Enter'&&event.key!=='Escape')sunFraming=false;
     var horizontalDirection=Math.sin(phi)<0?-1:1;
     if(event.key==='ArrowLeft')targetTheta-=.14*horizontalDirection;if(event.key==='ArrowRight')targetTheta+=.14*horizontalDirection;
     if(event.key==='ArrowUp')targetPhi-=.14;if(event.key==='ArrowDown')targetPhi+=.14;
@@ -497,6 +498,7 @@
   new ResizeObserver(resize).observe(container);resize();
   function frame(time) {
     frameRequest=null;if(!renderingVisible())return;
+    if(deferredCloud&&time>=interactionUntil&&time>=scrubUntil&&!pointers.size){var pending=deferredCloud;deferredCloud=null;installCloudRecord(pending.record,pending.generation,pending.signal,pending.upgrade);}
     var dt=Math.min(.1,lastFrame?(time-lastFrame)/1000:1/60);lastFrame=time;
     if(live)instant=new Date();
     if(autoSpin)targetTheta-=dt*.022;
@@ -684,21 +686,8 @@
   async function decodeCloudRecord(result,stamp,signal) {
     if(result.shared)return decodeSharedCloudRecord(result,stamp,signal);
     if(result.dense)return decodeDenseCloudRecord(result,stamp,signal);
-    var canvases=[],installed=false;
-    try {
-      var infrared=await decodeBlob(result.infrared,result.width,signal);canvases.push(infrared);
-      var pixels=infrared.getContext('2d').getImageData(0,0,infrared.width,infrared.height).data,valid=0;
-      for(var i=3;i<pixels.length;i+=4)if(pixels[i]===255)valid++;
-      if(valid/(pixels.length/4)<.15)throw new Error('Cloud image has no useful coverage');
-      var natural=result.natural?await decodeBlob(result.natural,result.width,signal):infrared;
-      if(natural!==infrared)canvases.push(natural);
-      if(signal.aborted){var aborted=new Error('Cloud decode aborted');aborted.name='AbortError';throw aborted;}
-      softenImageCoverage(infrared);if(natural!==infrared)softenImageCoverage(natural);
-      var record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),coverage:valid/(pixels.length/4),width:infrared.width,source:'EUMETSAT',natural:!!result.natural},canvases:canvases,natural:natural,infrared:infrared,memoized:true};
-      var bytes=canvases.reduce(function(total,canvas){return total+canvas.width*canvas.height*4;},0);
-      installed=true;return cloudMemo.put(stamp.toISOString(),record,bytes);
-    }catch(error){if(error.name!=='AbortError')await data.discardCloudFrame(stamp,result.width);throw error;}
-    finally{if(!installed)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
+    try{return await preparedCloudRecord({width:result.width,natural:!!result.natural,blobs:[result.natural||result.infrared,result.infrared]},stamp,signal);}
+    catch(error){if(error.name!=='AbortError')await data.discardCloudFrame(stamp,result.width);throw error;}
   }
   function hourlyClouds(){return !!(cloudCatalog&&cloudCatalog.dense&&instant>=cloudCatalog.start);}
   function cloudStamp(){if(!cloudCatalog)return null;return hourlyClouds()?(recentMode?shared.frameAt(sharedManifest,cloudCatalog,instant,new Date()):clouds.frameAt(cloudCatalog,instant,new Date())):data.cloudFrameAt(cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());}
@@ -718,40 +707,29 @@
     }
     return timeline.waitFor(cloudPending.get(pendingKey).promise,signal);
   }
-  async function decodeSharedCloudRecord(result,stamp,signal){
-    var canvases=[],memoized=false;
+  async function preparedCloudRecord(result,stamp,signal){
+    var outputs=[],memoized=false,prepared;
     try{
-      for(var i=0;i<2;i++){canvases.push(await decodeBlob(result.blobs[i],result.width,signal));if(signal.aborted){var e=new Error('Cloud decode aborted');e.name='AbortError';throw e;}}
-      var pixels=canvases[1].getContext('2d').getImageData(0,0,result.width,result.width/2).data,valid=0;for(var p=3;p<pixels.length;p+=4)if(pixels[p]>200)valid++;
-      if(valid/(pixels.length/4)<.15)throw new Error('Archived image has no useful coverage');
-      var record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),sourceTimes:result.sourceTimes,width:result.width,coverage:valid/(pixels.length/4),source:'NASA / EUMETSAT',natural:result.natural,dense:true,shared:true},canvases:canvases,natural:canvases[0],infrared:canvases[1],memoized:true};
+      var natural=result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural;
+      prepared=await detailPreparing.prepareFull(result.blobs,result.width,natural,!!result.shared,100,stamp.toISOString()+'/'+result.width);
+      if(signal.aborted){var aborted=new Error('Cloud decode aborted');aborted.name='AbortError';throw aborted;}
+      for(var i=0;i<2;i++){
+        var image=prepared.images[i],canvas;
+        if(image.getContext)canvas=image;
+        else{canvas=document.createElement('canvas');canvas.width=result.width;canvas.height=result.width/2;canvas.getContext('2d').drawImage(image,0,0);image.close();}
+        outputs.push(canvas);prepared.images[i]=null;
+      }
+      var record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),sourceTimes:result.sourceTimes,width:result.width,coverage:prepared.coverage,source:result.dense||result.shared?'NASA / EUMETSAT':'EUMETSAT',natural:natural,dense:!!(result.dense||result.shared),shared:!!result.shared},canvases:outputs,natural:outputs[0],infrared:outputs[1],memoized:true};
       memoized=true;return cloudMemo.put(stamp.toISOString(),record,result.width*result.width*4);
-    }finally{if(!memoized)canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
+    }finally{
+      if(prepared)prepared.images.forEach(function(image){if(!image)return;if(image.close)image.close();else image.width=image.height=1;});
+      if(!memoized)outputs.forEach(function(canvas){canvas.width=canvas.height=1;});
+    }
   }
+  function decodeSharedCloudRecord(result,stamp,signal){return preparedCloudRecord(result,stamp,signal);}
   async function decodeDenseCloudRecord(result,stamp,signal){
-    var sourcePixels=[],outputs=[],memoized=false;
-    try{
-      for(var index=0;index<clouds.GROUPS.length;index++){
-        if(!result.blobs[index]){sourcePixels.push(null);continue;}
-        var canvas=await decodeBlob(result.blobs[index],result.width,signal);
-        var context=canvas.getContext('2d'),pixels=context.getImageData(0,0,canvas.width,canvas.height);
-        canvas.width=canvas.height=1;
-        if(result.blobs[index].type==='image/jpeg')for(var blank=0;blank<pixels.data.length;blank+=4)if(Math.max(pixels.data[blank],pixels.data[blank+1],pixels.data[blank+2])<8)pixels.data[blank+3]=0;
-        sourcePixels.push(pixels.data);
-        if(signal.aborted){var e=new Error('Hourly decode aborted');e.name='AbortError';throw e;}
-      }
-      clouds.maskScanArtifacts(sourcePixels,result.width);
-      for(var source=0;source<sourcePixels.length;source++)if(sourcePixels[source]){if(clouds.GROUPS[source].source===clouds.NASA&&clouds.GROUPS[source].kind==='infrared')clouds.normalizeThermal(sourcePixels[source],result.width);sourcePixels[source]=data.featherCoverage(sourcePixels[source],result.width);}
-      for(var group=0;group<2;group++){
-        var output=document.createElement('canvas');output.width=result.width;output.height=result.width/2;outputs.push(output);
-        var ctx=output.getContext('2d'),image=ctx.createImageData(result.width,result.width/2);image.data.set(clouds.composite(sourcePixels,result.width,group?'infrared':'visible'));ctx.putImageData(image,0,0);
-      }
-      var raw=outputs[1].getContext('2d').getImageData(0,0,result.width,result.width/2).data,valid=0;for(var i=3;i<raw.length;i+=4)if(raw[i]>200)valid++;
-      if(valid/(raw.length/4)<.15)throw new Error('Hourly satellite image has no useful coverage');
-      var natural=result.blobs.slice(0,5).some(Boolean),record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),sourceTimes:result.sourceTimes,width:result.width,coverage:valid/(raw.length/4),source:'NASA / EUMETSAT',natural:natural,dense:true},canvases:outputs,natural:outputs[0],infrared:outputs[1],memoized:true};
-      memoized=true;return cloudMemo.put(stamp.toISOString(),record,result.width*result.width*4);
-    }catch(error){if(error.name!=='AbortError'){await clouds.discard(stamp,result.width,cloudCatalog);compressedClouds.delete(stamp.toISOString()+'/'+result.width);preparedClouds.delete(stamp.toISOString()+'/'+result.width);}throw error;}
-    finally{sourcePixels.length=0;if(!memoized)outputs.forEach(function(c){c.width=c.height=1;});}
+    try{return await preparedCloudRecord(result,stamp,signal);}
+    catch(error){if(error.name!=='AbortError'){await clouds.discard(stamp,result.width,cloudCatalog);compressedClouds.delete(stamp.toISOString()+'/'+result.width);preparedClouds.delete(stamp.toISOString()+'/'+result.width);}throw error;}
   }
   function decodeCachedSelection(){
     if(decodingReplay||!hourlyClouds())return;
@@ -808,6 +786,7 @@
   function installCloudRecord(record,generation,signal,upgrade) {
     if(!record||generation!==photoGeneration||signal&&signal.aborted||upgrade&&(!photo||photo.time!==record.photo.time||photo.width>record.photo.width||photo.width===record.photo.width&&(photo.natural||!record.photo.natural)||photo.natural&&!record.photo.natural))return;
     if(installedCloud===record&&photo===record.photo)return;
+    if(!loading&&(performance.now()<interactionUntil||pointers.size)){deferredCloud={record:record,generation:generation,signal:signal,upgrade:upgrade};cloudMemo.pin(record.photo.time);return;}
     if(!loading&&performance.now()<scrubUntil&&hourlyClouds())return;
     var previous=installedCloud,oldCanvas=satelliteTexture.image;
     satelliteTexture.dispose();infraredTexture.dispose();installedCloud=record;
@@ -834,7 +813,7 @@
     return timeline.waitFor(cloudPending.get(key).promise,signal);
   }
   async function upgradePhotoDetail() {
-    if(loading||performance.now()<scrubUntil||replayUniforms.replayEnabled.value>0||timeEditTimer!==null||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
+    if(loading||performance.now()<interactionUntil||pointers.size||performance.now()<scrubUntil||replayUniforms.replayEnabled.value>0||timeEditTimer!==null||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
     var desired=Math.max(photo.width,Math.min(textureWidth,radius<2.8?4096:2048));
     if(photo.width>=desired&&photo.natural)return;
     var key=photo.time+'/'+desired+'/'+photoGeneration;
