@@ -170,3 +170,71 @@
 .shift-intro-copy {min-height:0;overflow:auto;overscroll-behavior:contain}
 .shift-intro-top,#shift-intro > button {flex-shrink:0}
 @media(max-height:550px) {.shift-intro-clock {display:none}.shift-intro-top {min-height:44px}.shift-intro-top .shift-kicker {font-size:.5625rem}#shift-intro h2 {margin-top:3px}}
+
+/* A compact business board keeps decisions beside the working warehouse. */
+.shift-business .shift-toolbar {top:102px;max-width:220px}
+.shift-business .shift-panel {top:154px;width:260px;max-height:420px}
+.shift-business-rail {width:304px;top:104px;bottom:80px;max-height:none}
+.shift-business-rail > button {padding:9px 12px;min-height:44px}
+.shift-business-rail #shift-queue-body {padding:12px}
+.shift-business-goal {display:grid;grid-template-columns:1fr auto;gap:5px;font-size:.75rem;margin-bottom:10px}
+.shift-business-goal > span {color:var(--text-faint);font-family:var(--font-mono)}
+.shift-business-goal progress {grid-column:1/-1;width:100%;height:4px;accent-color:var(--warn)}
+.shift-business-tabs {display:flex;gap:4px;margin-bottom:12px}
+.shift-business-tabs button {flex:1;padding:5px;font-size:.75rem}
+.shift-first-tip {margin:0 0 12px;color:var(--text-dim);font-size:.8125rem;line-height:1.4}
+.shift-order-card {border:1px solid var(--rule-strong);border-radius:4px;background:var(--shift-button);padding:12px;margin:0 0 10px}
+.shift-order-card.rush {border-left:3px solid var(--warn)}
+.shift-order-card header {display:flex;justify-content:space-between;gap:8px;font-size:.8125rem;margin-bottom:5px}
+.shift-order-card header span {font-family:var(--font-mono);color:var(--accent);white-space:nowrap}
+.shift-order-card > small {font:.625rem var(--font-mono);color:var(--text-faint)}
+.shift-order-lines {display:flex;flex-wrap:wrap;gap:4px 12px;margin:12px 0;font-size:.8125rem}
+.shift-order-card > button,.shift-stock-card > button {width:100%}
+.shift-order-progress {display:grid;gap:6px;font-size:.75rem;margin-bottom:8px}
+.shift-order-progress progress {width:100%;height:4px;accent-color:var(--accent)}
+.shift-order-actions {display:flex;gap:4px}
+.shift-order-actions button {flex:1;padding:4px;font-size:.6875rem}
+.shift-stock-top {display:flex;align-items:center;gap:6px;justify-content:space-between;font-size:.6875rem;margin-bottom:10px}
+.shift-stock-top button {padding:6px;font-size:.6875rem}
+.shift-stock-sizes {display:flex;gap:4px;margin-bottom:12px}
+.shift-stock-sizes button {flex:1;padding:4px;font-size:.6875rem}
+.shift-stock-card {display:grid;gap:8px;border-bottom:1px solid var(--rule);padding:0 0 12px;margin-bottom:12px}
+.shift-stock-card > div {display:grid;gap:3px;font-size:.8125rem}
+.shift-stock-card span,.shift-stock-card small,.shift-credit,.shift-rail-note {font-size:.6875rem;line-height:1.4;color:var(--text-faint)}
+.shift-stock-card .shift-credit {color:var(--warn)}
+.shift-orders-idle {padding:12px 0;font-size:.8125rem}
+.shift-orders-idle p,.shift-business-job p {font-size:.75rem;color:var(--text-faint)}
+.shift-business-rail .shift-sold-summary {font:.6875rem var(--font-mono);color:var(--accent);border-top:1px solid var(--rule);padding-top:12px}
+.shift-business-stock-hub {max-width:740px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.shift-business-stock-hub .shift-stock-top,.shift-business-stock-hub .shift-stock-sizes {grid-column:1/-1}
+.shift-business-results {display:flex;gap:48px;flex-wrap:wrap;margin:36px 0}
+.shift-business-results div {display:grid;gap:8px}
+.shift-business-results span {font:.6875rem var(--font-mono);color:var(--text-faint)}
+.shift-business-results strong {font:2rem var(--font-mono)}
+.shift-business-next {display:flex;gap:24px;flex-wrap:wrap;margin:20px 0;color:var(--text-dim)}
+.shift-ledger {display:grid;grid-template-columns:1fr auto;max-width:440px;gap:8px;font-size:.8125rem}
+.shift-ledger dd {margin:0;font-family:var(--font-mono)}
+@media (max-height:550px) {
+ .shift-business-rail {top:84px;bottom:58px;width:260px}
+ .shift-business-rail #shift-queue-body {padding:8px}
+ .shift-business .shift-toolbar {top:82px;left:12px}
+ .shift-business .shift-panel {top:132px;bottom:58px;width:238px;padding:12px}
+ .shift-business-goal {margin-bottom:6px;font-size:.6875rem}
+ .shift-business-tabs {margin-bottom:8px}
+ .shift-order-card {padding:8px}
+ .shift-business-results {gap:24px;margin:18px 0}
+}
+@media (max-width:700px) {
+ .shift-business-rail {width:250px;right:12px}
+ .shift-business .shift-hud {left:12px;right:12px;gap:10px}
+}
+
+@media (max-height:550px) {
+ .shift-business-goal,.shift-first-tip {display:none}
+ .shift-business-rail.is-first > button {display:none}
+}
+
+@media (max-height:550px) {
+ .shift-business-rail.is-first .shift-order-card > small {display:none}
+ .shift-business-tabs button {white-space:nowrap}
+}

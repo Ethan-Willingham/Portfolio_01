@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-function load(){const context=vm.createContext({console,performance});for(const file of ['data','labels','pathing','economy','content','sim','fulfillment','rules','saves']){const f=path.join(__dirname,'../js/one-shift-'+file+'.js');if(fs.existsSync(f))vm.runInContext(fs.readFileSync(f,'utf8'),context,{filename:f});}return context.OneShift;}
+function load(){const context=vm.createContext({console,performance});for(const file of ['data','labels','pathing','economy','content','sim','fulfillment','rules','saves','commerce']){const f=path.join(__dirname,'../js/one-shift-'+file+'.js');if(fs.existsSync(f))vm.runInContext(fs.readFileSync(f,'utf8'),context,{filename:f});}return context.OneShift;}
 // This policy uses the same validated commands as a player. It does not edit stock or money.
 function act(sim,O,style='average'){
  const s=sim.s,w=s.workers[0];if(s.phase!=='shift'||w.task||w.queue.length)return;

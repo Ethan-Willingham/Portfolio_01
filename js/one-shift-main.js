@@ -2,7 +2,7 @@
  'use strict';const O=root.OneShift,canvas=document.getElementById('shift-canvas');
  const art=new URLSearchParams(location.search).get('art');const treatments={warm:'none',mist:'saturate(.7) brightness(.96)',honey:'sepia(.18) saturate(1.08)',blueprint:'saturate(.7) hue-rotate(20deg)'};if(art)canvas.style.filter=treatments[art]||'none';
  // For now, browser visits start fresh. Saved slots are loaded explicitly in Menu.
- const initial=new O.Sim(1);if(location.hash.startsWith('#layout=')){try{const text=decodeURIComponent(escape(atob(location.hash.slice(8).replace(/-/g,'+').replace(/_/g,'/'))));initial.restore(O.saves.decodeLayout(text));}catch(error){console.warn('Layout could not be loaded: '+error.message);}}
+ const initial=new O.Sim(1,'business');if(location.hash.startsWith('#layout=')){try{const text=decodeURIComponent(escape(atob(location.hash.slice(8).replace(/-/g,'+').replace(/_/g,'/'))));initial.restore(O.saves.decodeLayout(text));}catch(error){console.warn('Layout could not be loaded: '+error.message);}}
  const app={sim:initial,renderer:new O.Renderer(canvas),audio:new O.Audio(),speed:1,paused:false,hubPause:false,menuPause:false,rotated:false,hidden:false,preview:!!art,raf:0};O.app=app;app.ui=new O.UI(app);app.audio.setVolume(app.ui.settings.volume);app.renderer.resize();app.renderer.home(app.sim.s);document.documentElement.style.fontSize=(app.ui.settings.scale*16)+'px';app.input=O.bindInput(app);
  let last=performance.now(),accumulator=0,lastUI=0;
  function orientation(){const before=app.rotated;app.rotated=matchMedia('(pointer:coarse)').matches&&innerHeight>innerWidth;document.getElementById('shift-rotate').hidden=!app.rotated;if(app.rotated&&!before)app.input.suspend();}

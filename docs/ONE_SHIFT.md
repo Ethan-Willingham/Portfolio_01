@@ -1,256 +1,141 @@
 # One Shift
 
-One Shift is a standalone overhead warehouse game at `one-shift.html`. Its
-editable sources are classic scripts under `js/one-shift-*.js`, with one global
-`OneShift` namespace and no bundle step. Keep the post in In Progress on
-`archive.html`. Bump every game CSS and script query version together.
+The public game at `one-shift.html` is an inventory business game, version 2.0.
+Start with six stocked pallets and $200. Customer orders arrive through the day.
+Queue shipments, buy replenishment stock, and reinvest in handling equipment,
+rack space, doors, and people. The first screen has one order and no tutorial dialog.
 
-Version 1.3 adds a playable, self-paced introduction. It is not the finished commercial
-quality game described in the kickoff brief. Research, raw evidence and the
-remaining work are kept locally in `research/one-shift/PROGRESS.md`.
+The owner explicitly replaced the service warehouse direction on October 5, 2026.
+The new business owns its inventory. Former client contracts, receipt paperwork,
+unit packing, kitting, and service fees are retained for old saves and regression
+fixtures, rather than offered in the public business interface.
 
-## Model and boundaries
+Read [the design rationale](ONE_SHIFT_DESIGN.md) for the research, intended
+experience, choices, pacing, and limits of automated playtesting.
 
-The fixed 20 Hz simulation uses seeded randomness and plain JSON state. A tile
-represents four feet; the initial building is 100 by 80 feet. The normal clock advances
-1.37 game minutes per real second, independently of worker movement. A normal
-6:55 AM to 4:30 PM shift lasts about seven minutes. In guided shifts, worker and
-truck ticks continue while the game clock waits. Next appointment and Finish
-shift advance the normal simulation to the selected time. Manual pause, menus
-and the portrait gate still freeze both work and time.
+## Source
 
-New warehouses have their dock doors on the east wall. Trucks back in from
-the right, and the first delivery is already approaching when a new game opens.
-The Home view frames the warehouse and active trucks. Receiving and shipping
-lanes sit beside the dock; expansions extend the building along that wall.
-Saves and layout links without a dock orientation retain the original south
-doors. Imported layouts start the player on reachable floor inside the building.
+Classic scripts under `js/one-shift-*.js` share `OneShift`. No bundle step.
+`one-shift-commerce.js` extends the DOM-free physical simulation with customer
+orders, stock purchasing, ownership costs, cash accounting, milestones, and
+validated saves. `one-shift-business-ui.js` supplies the compact public interface.
+The data, pathing, physical work, truck safety, renderer, sound, and input remain
+shared with the legacy model. Always bump every game CSS/script query together.
+Keep the post in In Progress on `archive.html`.
 
-The first three shifts introduce receiving, manual putaway, full-pallet
-shipping, a visible 39-versus-40 shortage, case picking and wrapping. A live
-guide derives its next action from actual stock, trucks and queued jobs. It
-marks the physical object and the matching native control, offers a working
-next-step button, and shows stored-pallet or completed-truck progress. After
-the first staging and putaway cycle, checked pallets can go straight from the
-trailer into an empty rack. The worker still follows the real route, and each
-receipt earns its fee once. Removing a planned job returns the guide to the
-unfinished action.
+`new OneShift.Sim(seed, 'business')` creates the public model. The default boot
+uses business mode. Explicit `normal`, `sandbox`, and other former modes retain
+compatibility. The debug API's `newGame()` default deliberately remains normal
+for existing physical regression fixtures; pass `business` to exercise this game.
 
-Shop, contracts and building open after the first shift. The first report
-offers an extra rack or a faster electric walkie. Another accepted client
-replaces the scripted appointments with the regular schedule the next morning,
-and ends the guide. Skip guide restores normal clock movement immediately.
-New-game and browser-load starts restore guidance. Sandbox and peak runs have
-no guide. Manual saves retain their existing format; the tutorial needs no
-extra persisted checklist. Clients and purchases are optional. Forklift training precedes operation and
-hiring. A small credit facility covers purchases and operating shortfalls.
+## Business rules
 
-Eight fictional clients include full-pallet, retail case, food, electronics,
-parcel, kit, slow-storage and cross-dock work. Goods retain client ownership,
-item, lot, received date and best-by date. Holds, task reservations, FIFO and
-FEFO restrict availability. A loading scan catches wrong items and ownership;
-a deliberate bypass can earn a chargeback. Food past the contractual best-by
-cutoff is held. This cutoff is a game contract, not a claim that every best-by
-date is a legal safety deadline.
+- Initial inventory: 40 stove cases, 40 lantern cases, 24 chair cases. The stock
+  has actual rack positions, costs, lots, dates, labels, and physical pallet IDs.
+  Initial stock and racks are starting capital, not free recurring income.
+- Customer requests arrive individually. Five requests teach the first day.
+  Later demand rotates among available products, includes mixed orders and rush
+  requests, and grows to twelve requests as completed orders increase.
+  The stock board shows remaining demand, ready cases, incoming cases, and space.
+- Ship order reserves specific source quantities. Several orders can reserve
+  different cases in one source pallet. Reserved cases cannot be sold twice.
+  Workers collect all lots for an item into one shipment pallet, preserving
+  actual case counts and cost basis. They walk from source to source, then stage,
+  wrap, and load. Truck arrival begins after the shipment is ready, keeping the
+  dock available to suppliers during picking. There is no teleport fulfillment.
+- Orders stay on a real high-level queue. Up and Down change which order is
+  planned next. Current work finishes safely. Cancel returns unshipped collected
+  cases to available stock and releases every source claim. Loaded orders finish
+  rather than being refunded. Expired commitments can earn a discounted partial
+  sale; unfilled requests do not create cash or chargeback fines.
+- The first decision holds the clock while animation ticks continue. After
+  queuing it, time runs. The first day's deadlines are longer. Pause is always
+  available for planning. Next order and Finish shift advance real simulation
+  ticks, including outstanding work and truck clearance.
+- Purchases come in 8, 16, or 32 cases. Small shipments are quicker but cost more
+  per case. Bulk stock has a discount and a longer lead time. Every delivery costs
+  $6 and reserves enough rack positions before charging. A small credit line can
+  cover stock purchases; its use is shown in the quote. Equipment and hiring need
+  cash. Paid late deliveries carry to the next shift, rather than disappearing.
+- Receiving puts paid stock directly into actual racks. Workers with a hand jack
+  use lower positions; the player and drivers can use upper stock after forklift
+  ownership and training. Full racks block new purchasing until stock ships or
+  capacity grows. Receiving and Shipping are staging areas. Bare floor is never
+  a storage destination.
+- Surplus can be sold back to a supplier at 70% of cost. The worker picks and loads
+  it like other freight. Buybacks release space and return some cash, while losing
+  money on that stock. They do not unlock products or count as customer orders.
+- Sales pay when the loaded truck releases, once. Receiving, storage, and old
+  handling fees never pay for owned inventory. Reports distinguish cash flow from
+  operating profit: stock purchasing reduces cash immediately, while cost of sold
+  stock reduces profit at sale. Freight, packaging, rent, wages, interest, and
+  forklift power are expenses. Equipment is a capital purchase. Evening purchases
+  update the report's closing cash without treating inventory as an immediate loss.
+- Eight fulfilled orders unlock radios; twenty unlock notebooks. Service quality
+  modestly affects later quotes. Fifty fulfilled orders and $3,000 net worth mark
+  an established warehouse; the same business continues afterward. The shop offers
+  only implemented capacity and handling upgrades. Faster movement, faster picking,
+  wrapping, a second door, upper racks, expansion, and staff change actual work.
 
-Single-unit fulfillment opens a case using its real case pack. Units travel
-with a packing task, become individually identified parcels and load against
-a specific order at the carrier cutoff. Cancelled or overnight packing returns
-unpacked units safely. Kitting and assembly collect floor-level component cases
-from partial pallets, carry them to the bench and build against outbound
-demand. Collected cases remain inventory until the work finishes. The services
-panel shows the worker and collection progress, and can return components
-from an unfinished job. Overnight cleanup and holds also return those cases. Packing and
-service recipes enforce client ownership. Ready parcels and queued carrier
-loads reserve the order balance, including orders packed in several parts.
+The fixed 20 Hz simulation advances 1.37 game minutes per real second. A business
+shift starts at 8 AM and closes at 5 PM, roughly 6.6 minutes at 1x or 2.2 at 3x,
+plus any safe closing work. Tiles represent four feet. The starting building is
+100 by 80 feet, with east dock doors. Workers use cached A* paths. They still do
+not yield to one another, and forklifts remain worker equipment rather than a
+scarce vehicle pool. Construction is immediate. These are current abstractions.
 
-The right-side Work queue shows the selected worker's active job, its current
-stage, and numbered waiting jobs with their goods and destinations. Pause to
-plan stops shift time while pallet and destination commands remain available.
-Run queue resumes the shift. Up and Down reorder waiting jobs; Remove releases
-that job's goods and destination; Clear planned retains the active job. Required
-trailer exits remain first and cannot be removed or reassigned. Hired people
-appear in the worker selector, and new floor commands go to the selected person.
-The simulation queue is the single source for both this panel and saved games.
-Desktop Home framing leaves room for the rail and visible trucks. Short or narrow
-screens start with its header collapsed; the same controls remain available when
-opened, with scrollable content and 44px touch targets.
+## Presentation and persistence
 
-Drivers can replenish configured ground pick faces from upper reserve. Loaders
-can stage released waves before the truck arrives. A task can be reassigned
-from one worker's queue to another person while retaining its reservation.
-Idle staff can be dismissed, with final shift wages charged once. Evening
-dismissal safely returns stock from unfinished work. Empty pick pallets can be
-reused or returned to the stack. Shipping sends the wooden pallet away with its
-goods; replacement pallets cost packaging money. Evening purchases update the
-closing report, and consumables count against operating profit. Case picking takes an empty
-pallet from the stack to its source and visibly transfers cases.
-Storage is restricted to rack positions. Bare floor cannot be a storage destination.
-Receiving and Shipping markings remain temporary staging areas. Full racks require
-more rack capacity or shipping stock out. Painted zones group racks. Cold and
-secure storage validate client requirements. Layouts can be shared by URL into a separate sandbox.
+Steel blue, concrete gray, charcoal, white markings, and restrained safety orange.
+Local Century Supra, Segoe UI, and Commit Mono fonts. Procedural Canvas art and
+crisp display-resolution labels. The stocked racks show their product and quantity.
+Orders, Stock, and Worker share the right board. Floor details open on the left.
+The ordinary beginning screen stays below 65 words on the board.
 
-Purchases have 39 available catalog entries. Unfinished gifts, displays,
-returns, refurbishing, conveyors, sortation, kanban, inspection fixtures, robot
-arms, ASRS, a second building and yard tractors are hidden. Several available
-systems are still simplified: the line speeds a work order rather than moving
-it through separate stations; carts and carton flow shorten picking time;
-yard and recycling income settle as ledger abstractions. They do not establish
-finished physical versions of those systems.
+Right or middle mouse drag pans. Wheel, + and - zoom; Home frames the warehouse
+and visible trucks beside the board. Keyboard buttons work natively. Touch uses
+the same layout in landscape, with scrolling and 44px targets. Portrait touch
+freezes behind the rotate screen without changing a deliberate manual pause.
+Large-text landscape views keep the first Ship order button above the fold.
 
-Workers route independently using cached A*. They do not yet yield to each
-other, and vehicles are worker equipment rather than a scarce vehicle pool.
-Construction places racks immediately. Rack and dock-door purchases check
-space before charging. Rack clearance enforces a working
-aisle, but routes do not model separate vehicle turning envelopes. Fatigue is
-recorded but does not yet cause accuracy errors. The active situation deck has
-10 events; the optional notebook has 160 definitions. These counts do not
-establish the requested 90 working situations or 150 taught terms.
+Trucks ease in, park, and leave along the right road. Before moving out, each
+truck waits for the worker to clear its rear opening, closes its doors, and then
+accelerates. Required exit walks cannot be removed or reassigned. Rendering
+interpolates motion without changing simulation or saved state.
 
-## Interface and assets
+Every browser load starts fresh, including history returns. Manual Menu save/load,
+three slots, import/export, and evening autosave remain available. Preferences
+survive. Old saves retain their model and geometry. Business imports additionally
+validate order lines, quantities, source claims, grouped work, ownership costs,
+receipts, the order queue, and demand data. All physical cases and cash must reconcile.
 
-The warehouse uses a separate palette: concrete gray, blue steel,
-charcoal panels, off-white markings and restrained safety orange. Active and
-primary buttons are blue. The selection clipboard opens on the left so trucks
-remain visible on the right. A received pallet offers Put away / choose storage.
-Hovering a rack highlights its left or right lower position. Clicking that half
-queues the selected pallet directly, with its destination and progress kept in the
-clipboard. Occupied and reserved positions show the reason they are blocked.
-The chooser lists named positions and supplies access to upper rack levels.
-Occupied positions, reserved moves, required storage areas and forklift access are checked before offering a destination. The selected pallet
-shows its destination while the worker moves it, then its named storage position.
-A stored pallet offers the next accessible delivery pallet. Selecting freight
-behind an occupied trailer row explains which pallet to unload first and offers
-a direct button. Counting becomes available when that row clears.
+## Checks
 
-Mouse, keyboard and landscape touch control the same view. Drag with the right
-or middle mouse button to pan. A stationary right-click or Escape clears the
-selection; left-drag selects pallets. Object selection,
-a floor cursor and panel focus support keyboard play. The menu remaps controls,
-changes text scale, volume, reduced motion and redundant color marks. Buttons
-are at least 44 by 44 CSS pixels. Portrait on a touch device freezes the shift
-without changing manual pause. An idle floor offers a jump to the next truck
-through normal simulation ticks.
+Use Node. Browser checks require Playwright in `NODE_PATH`.
 
-Every browser load starts a fresh day-one warehouse for now, including a
-return through browser history. Existing autosaves are not resumed automatically.
-Three manual save slots, end-of-day autosave, import/export and a version-zero
-migration remain supported. Continuing a saved game requires Menu > Load or
-Import save. Preferences and existing save slots survive a fresh browser load.
-Import rejects malformed nested state, orphaned reservations,
-bad label data, future label counters, floor wear, station identifiers,
-goods imbalance and ledger imbalance. Purchases cannot exceed the
-128-person team or 512-tile site limits, and workstations stay in the building. Imported names, lots
-and seals display as literal text. An art preview cannot
-replace the live autosave. Standalone recall and power-outage challenges are
-hidden until their starting states are developed. `one-shift-lab.html` offers four playable color
-studies and five title proposals. They are provisional studies, not an owner
-art approval or four independently designed sprite systems.
+- `node tools/test-one-shift-business.cjs`: real shipments, receipts, lead times,
+  cash and profit, reservations, grouped picks, cancellation, surplus, full space,
+  overnight supply, saves, invalid imports, and multi-day reinvestment.
+- `node tools/test-one-shift-business-balance.cjs`: 20 seeds, 24 days, two ordinary
+  buying policies, 960 shifts. Validates every shift and compares reinvestment
+  against reactive restocking. Writes a source-hashed result.
+- `node tools/test-one-shift-business-browser.cjs`: native mouse and keyboard
+  actions, first sale, replenishment, mixed orders, reload, explicit save loading,
+  reports, upgrades, right-drag camera, landscape touch, enlarged type, and portrait
+  freeze. `SHIFT_URL` targets a deployed build; `SHIFT_DUMP` chooses screenshots.
+- `node tools/test-one-shift.cjs`: shared physical simulation, conservation,
+  label checksums, recipes, ownership, routes, reservations, cancellations,
+  forklift prerequisites, rack-only destinations, layouts, and legacy migrations.
+- `node tools/test-one-shift-browser.cjs`, `test-one-shift-queue.cjs`,
+  `test-one-shift-motion.cjs`, and `test-one-shift-intro.cjs`: explicit legacy
+  fixtures preserve manual floor work, native controls, readable labels, truck
+  safety, responsive behavior, and older beginner/save compatibility.
+- `node tools/test-one-shift-pathing.cjs`: randomized racks and route checks.
+- `node tools/test-one-shift-economy.cjs`: former client-service economy, not the
+  business game's balance. Retained as a shared-model regression.
 
-Sprites are procedural and cached at 192 by 192 pixels. World labels are drawn
-at display resolution so zooming does not enlarge cached text. The facility sign
-sits below the roof cap; truck labels fit the visible trailer and avoid the
-camera controls. Static floor chunks and light layers are cached; only the top
-stored pallet at a position is drawn in the world, with other levels available in the rack inset. Quiet Web Audio cues
-accompany important actions. Low air noise fades during
-pause, menus and hidden tabs. Equipment tones stop during an outage. Stations have distinct bench, packing,
-wrapping and recycling drawings; forklift operators sit within the vehicle.
-Opened cartons show loose units, and bench workers push a component cart.
-Dock shutters ease open, pallets settle when set down, and a brief label flash
-confirms scanning. Night work has fixed light pools and forklift lamps; an
-outage removes powered lights. Reduced motion removes settle and idle sway.
-Truck positions advance between simulation ticks, with four-second eased backing
-and smooth transitions between yard positions and the dock. A release waits until
-workers and carried pallets clear the rear opening. Idle workers inside receive
-an exit walk. The rear doors then swing shut before the truck accelerates forward
-and follows a broad turn onto the yard road. Cutoffs cancel unfinished loading
-and return its stock and reservations. A shift settles after pending departures
-clear. Departing trucks continue out of view after their simulation release.
-Pause and menus freeze truck motion.
-Suspension details from the art bible remain unfinished.
-
-## Checks and reproduction
-
-- `node tools/test-one-shift-intro.cjs`: native beginner buttons complete all
-  three guided shifts, including direct receiving, shortage, pick, wrap, rack
-  capacity, first-evening upgrades, job cancellation, keyboard skip, fresh
-  reload, manual pause and landscape touch with enlarged text. Simulation
-  ticks accelerate real work without issuing hidden gameplay commands.
-- `node tools/test-one-shift.cjs`: ramp, deterministic state, goods and ledger,
-  recipes, physical component collection, interrupted bench work, ownership,
-  reservations, cancellation, worker clearance and rear-door sequencing, rack-only
-  destinations, pick faces, waves, task
-  handoff, layouts, migration and corrupt saves.
-- `node tools/test-one-shift-economy.cjs`: nine command-driven policies, each
-  running 200 seeds for 60 shifts. Every shift reconciles goods and its ledger;
-  saves validate every ten shifts. The first three shifts have no missed truck
-  and positive operating profit. Results include full profit and cash curves,
-  acquisition days, missed trucks and simulation timing. Policies buy enough rack
-  capacity before optional equipment or additional clients. Service policies bring
-  upper component reserve to floor level and finish partial work orders. The
-  fulfillment policy disposes of unresolved held stock through the scrap control
-  so those goods cannot suppress replenishment indefinitely.
-  `SHIFT_STYLES` selects policies for a targeted rerun; `summarize` verifies
-  recorded results against the current core hash and checks profitability.
-  Set `SHIFT_EVIDENCE`
-  to choose the output directory. Policies cannot edit cash or inventory.
-- `node tools/test-one-shift-pathing.cjs`: 1,000 randomized rack-layout shifts,
-  accepted and rejected placements, route checks, task-progress monitoring and
-  inventory reconciliation. This fixture supplies starting cash and hires to
-  exercise routing; it is not an economy playthrough.
-- `node tools/test-one-shift-browser.cjs`: real browser clicks, native buttons,
-  right-side arrivals and opening camera bounds, direct rack halves, occupied
-  and reserved positions, rejected floor storage, bench collection and component
-  returns, opened-case unit counts, keyboard
-  receiving, remapping, autosave, viewport checks, landscape touch,
-  portrait freeze, 1.3 text scale, phone panels and preview save isolation.
-  Playwright and Sharp must be available in `NODE_PATH`. `ASSETS=1` refreshes
-  the card and sharing images from actual gameplay.
-- `node tools/test-one-shift-queue.cjs`: native planning pause and resume, exact
-  execution order, keyboard reorder, reservation release, active-job retention,
-  staff assignment, camera framing and phone controls with enlarged text.
-- `node tools/test-one-shift-motion.cjs`: frame-by-frame truck movement at all
-  three speeds, pause, menu freeze, queued docking, departure, hit positions and
-  presentation-state isolation, native refused-load exit, closing doors and road turns.
-- `node tools/test-one-shift-barcode.cjs <desktop-label.png> <phone-label.png>`:
-  independent ZXing decoding of the published GS1 vector, generated labels and
-  actual CSS-sized browser labels. Set `ZXING_PATH` to `@zxing/library` installed
-  as a local test dependency. It is not shipped with the game.
-- `node tools/capture-one-shift.cjs`: five real gameplay captures, their source
-  states and automated ramp measurements. This does not measure human confusion.
-
-Browser harnesses own Google Chrome for Testing and close that exact process
-in `finally`. Never use the owner's personal Chrome binary for headless tests.
-
-On the Apple M1 Pro with 32 GB, the synthetic large fixture contains 8,000 stored
-pallets plus 30 inbound pallets, 60 workers, 20 rendered forklifts and 30 trucks.
-The latest browser check measured 13.9 ms 95th-percentile draw work at
-1440 by 900 in daylight and 13.7 ms at night with work lights and forklift lamps.
-The previous release measured 425 to 526 ms for five complete simulation shifts.
-This is a synthetic load on one host, not a claim of performance on every phone
-or of 20 independently allocated vehicle entities. Headless frame-rate caps
-were disabled for the cadence check.
-
-The strategy test's positive-profit and less-than-threefold median-spread gates
-are useful regressions. They do not prove equal strategy strength, human fun,
-cold-player clarity or absence of a dominant strategy. No human playtest panel,
-independent art-director review or ten qualifying polish rounds has occurred.
-
-## Sources
-
-The label carries AI 00 and an 18-digit SSCC in real GS1-128: Code 128 C, FNC1,
-mod-10 data check digit, symbol checksum and quiet zones. It uses GS1's
-example prefix 0614141; `106141412345678908` is a published regression vector.
-
-- [GS1 logistic label guideline](https://ref.gs1.org/guidelines/logistic-label/)
-  and [tag data standard](https://ref.gs1.org/standards/tds/1.12.0/).
-- [OSHA powered industrial trucks](https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.178)
-  and [warehousing hazards](https://www.osha.gov/warehousing/hazards-solutions).
-- [Red Stag warehouse services](https://redstagfulfillment.com/warehouse-services/).
-- [MET CO published rates](https://metcorpusa.com/pricing).
-- [FMCSA detention research](https://www.fmcsa.dot.gov/research-and-analysis/impact-driver-detention-time-safety-and-operations).
-- [FDA traceability lot codes](https://www.fda.gov/food/food-safety-modernization-act-fsma/traceability-lot-code).
-- [CHEP North American pallet](https://www.chep.com/us/en/product/pooled-wood-block-pallet-north-america-48-x-40-inches).
-
-Fees, equipment prices, wages, frequencies and service times are scaled game
-balance values. They are not quotations, operating instructions or training.
+Harnesses own `/Users/ethan/.local/bin/agent-chrome-for-testing` and close their
+exact browser in `finally`. Never launch the owner's personal Chrome headlessly.
+Automated policies establish reproducible behavior and solvency, not human enjoyment.
+The browser scenarios prove that native controls work, not that every new player
+will understand or enjoy the game. Human feedback should drive further tuning.

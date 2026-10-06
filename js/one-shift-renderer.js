@@ -18,7 +18,7 @@
    if(z>=16)for(const q of s.map.stations)this.worldText(q.id.toUpperCase(),q.x+1,q.y+1.32,8,'#34526b','center',9);
    for(const [i,d]of s.map.doors.entries())this.worldText(String(i+1),d.x+(east?-.55:1),d.y+(east?1.2:-.5),15,'#34526b');
    const stack=O.docks.stack(s);if(z>=16)this.worldText('EMPTIES',stack.x+.5,stack.y+1.25,7,'#405568','center',9);
-   const center=this.screen(b.x+b.w/2,b.y-.3),roof=this.screen(b.x,b.y-.6),size=Math.max(10,Math.min(20,z*11/32));g.font=size+'px "Commit Mono",monospace';let title='FERN TRAIL / '+b.w*4+' x '+b.h*4+' FT';if(g.measureText(title).width+16>b.w*z)title='FERN TRAIL';const width=g.measureText(title).width+16,height=size+8,y=Math.max(center.y,roof.y+height/2+2);g.fillStyle='#243443';g.fillRect(center.x-width/2,y-height/2,width,height);this.text(g,title,center.x,y,size,'#edf2f6','center','middle');
+   const center=this.screen(b.x+b.w/2,b.y-.3),roof=this.screen(b.x,b.y-.6),size=Math.max(10,Math.min(20,z*11/32));g.font=size+'px "Commit Mono",monospace';let title=(s.mode==='business'?'YOUR WAREHOUSE':'FERN TRAIL')+' / '+b.w*4+' x '+b.h*4+' FT';if(g.measureText(title).width+16>b.w*z)title=s.mode==='business'?'YOUR WAREHOUSE':'FERN TRAIL';const width=g.measureText(title).width+16,height=size+8,y=Math.max(center.y,roof.y+height/2+2);g.fillStyle='#243443';g.fillRect(center.x-width/2,y-height/2,width,height);this.text(g,title,center.x,y,size,'#edf2f6','center','middle');
   }
   truckLabel(s,t,r,controls){const g=this.g,z=this.camera.zoom,a=this.screen(r.x,r.y),b=this.screen(r.x+r.w,r.y+r.h),left=Math.max(8,a.x),right=Math.min(this.w-8,b.x);
    if(right-left<24||b.y<8||a.y>this.h-8)return;

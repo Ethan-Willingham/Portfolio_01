@@ -113,7 +113,7 @@
           if(!line&&!c.skipScan)return fail('Wrong item. The loading scan caught it.');
           if(line&&p.cases>this.remaining(out,line)&&!c.skipScan)return fail('The order needs fewer cases. Build a pick pallet.');
           const open=out.order.filter(l=>!l.parcel&&l.item===p.item).reduce((a,l)=>a+this.remaining(out,l),0)-this.pending(out,p.item);if(p.cases>open&&!c.skipScan)return fail('That order already has its stock assigned.');
-          const first=this.available(p.item,p.client).filter(q=>q.id!==p.id)[0];if(line&&first&&(O.client(p.client).rule==='FEFO'?first.bestBy<p.bestBy:first.receivedDay<p.receivedDay)&&!c.skipScan)return fail('Use the oldest available stock first.');
+          const first=this.available(p.item,p.client).filter(q=>q.id!==p.id)[0];if(line&&first&&!this.businessPlanning&&(O.client(p.client).rule==='FEFO'?first.bestBy<p.bestBy:first.receivedDay<p.receivedDay)&&!c.skipScan)return fail('Use the oldest available stock first.');
           dest={truck:out.id,...O.docks.entrance(s,s.map.doors.find(d=>d.id===out.door)),place:'shipped',skipScan:!!c.skipScan};
         }else{
           if(dest.lane)dest=this.lane(dest.lane,p);
@@ -209,7 +209,7 @@
       event(s,missing?'Releasing truck '+missing+' cases short.':'Order complete. Preparing the truck for departure.','release');
     }
     dock(){const s=this.s;for(const t of s.trucks){
-      if(t.status==='scheduled'&&s.minute>=t.arrival){t.status='arriving';t.animation=0;event(s,(t.direction==='in'?'Inbound':'Outbound')+' truck is arriving.','truck');}
+      if(t.status==='scheduled'&&s.minute>=t.arrival&&(!t.deliveryDay||t.deliveryDay<=s.day)){t.status='arriving';t.animation=0;event(s,(t.direction==='in'?'Inbound':'Outbound')+' truck is arriving.','truck');}
       if(t.status==='arriving'){t.animation+=DT;if(t.animation>=4)t.status='yard';}
       if(t.status==='yard'&&!t.departureRequested){const door=s.map.doors.find(d=>!s.trucks.some(q=>q.door===d.id&&['docked','leaving'].includes(q.status)));if(door){t.door=door.id;t.status='docked';t.animation=0;for(const id of t.manifest){const p=this.p.get(id);Object.assign(p,O.docks.slot(s,door,p.index));}event(s,'Door '+(s.map.doors.indexOf(door)+1)+': '+(t.direction==='in'?'check the seal.':'order ready.'),'dock');}}
       if(t.status==='leaving'){t.animation+=DT;if(t.animation>=6)t.status='gone';}
@@ -230,7 +230,8 @@
       }
     }this.assignPool=null;}
     finish(w,task){this.occTick=-1;const s=this.s,p=this.p.get(task.pallet);
-      if(task.kind==='pick'){const out=this.p.get(task.output);const n=Math.min(task.count,p.cases);p.cases-=n;p.bookCases=Math.max(0,p.bookCases-n);out.cases+=n;out.bookCases+=n;out.x=Math.round(w.x);out.y=Math.round(w.y);out.place='lane';out.level=0;if(!p.cases&&!p.openUnits){p.place='empty';s.emptyPallets++;}}
+      if(task.kind==='salePick'){const out=this.p.get(task.output);Object.assign(out,task.dest);out.wrapped=false;out.labelled=false;}
+      else if(task.kind==='pick'){const out=this.p.get(task.output);const n=Math.min(task.count,p.cases);p.cases-=n;p.bookCases=Math.max(0,p.bookCases-n);out.cases+=n;out.bookCases+=n;out.x=Math.round(w.x);out.y=Math.round(w.y);out.place='lane';out.level=0;if(!p.cases&&!p.openUnits){p.place='empty';s.emptyPallets++;}}
       else if(task.kind==='wrap'){p.wrapped=true;p.labelled=true;O.post(s,'Wrap and labels',2.5,'Wrapped pick pallet');event(s,'Wrapped and labelled. Ready to load.','wrap');}
       else if(task.kind==='count'){p.bookCases=p.cases;p.confirmed=true;event(s,'Count corrected: '+p.cases+' cases.');}
       else if(task.kind==='charge'){w.battery=100;event(s,'Battery charged.');}
@@ -266,10 +267,11 @@
       if(t.path?.length){const next=t.path[0],dx=next.x-w.x,dy=next.y-w.y,dist=Math.hypot(dx,dy),move=speed*DT*(lift&&w.battery>2?1:.65);w.angle=Math.atan2(dy,dx);if(dist<=move){w.x=next.x;w.y=next.y;t.path.shift();}else{w.x+=dx/dist*move;w.y+=dy/dist*move;}
         const key=Math.round(w.y)*s.map.w+Math.round(w.x);if(s.tick%10===0)s.map.wear[key]=(s.map.wear[key]||0)+1;
         if(t.phase==='dest'&&t.parcel){const q=s.parcels.find(q=>q.id===t.parcel);q.x=w.x;q.y=w.y;}
-        if(t.phase==='dest'&&t.output&&t.kind==='pick'){const q=this.p.get(t.output);q.x=w.x;q.y=w.y;}
-        if(t.phase==='dest'&&t.pallet&&!['parcelPack','pick'].includes(t.kind)){const p=this.p.get(t.pallet);p.x=w.x;p.y=w.y;}
+        if(t.output&&(t.phase==='dest'&&['pick','salePick'].includes(t.kind)||t.kind==='salePick'&&t.sourceIndex>0)){const q=this.p.get(t.output);q.x=w.x;q.y=w.y;}
+        if(t.phase==='dest'&&t.pallet&&!['parcelPack','pick','salePick'].includes(t.kind)){const p=this.p.get(t.pallet);p.x=w.x;p.y=w.y;}
         if(lift)w.battery=Math.max(0,w.battery-DT*.025);return;
       }
+      if(t.phase==='source'&&t.kind==='salePick'){this.collectSale(w,t);return;}
       if(t.phase==='source'&&t.kind==='pick'){const q=this.p.get(t.output);q.place='transit';q.level=0;q.x=w.x;q.y=w.y;this.occTick=-1;t.phase='dest';t.path=O.pathing.path(s,w,t.end,lift);if(!t.path){this.clearWork(w);event(s,'Route blocked. Pick pallet staged safely.');}return;}
       if(t.phase==='source'&&t.kind==='parcelPack'){const p=this.p.get(t.pallet),pack=O.items[p.item].pack,total=p.cases*pack+(p.openUnits||0)-t.units;p.cases=Math.floor(total/pack);p.openUnits=total%pack;p.bookCases=p.cases;t.heldUnits=t.units;t.phase='dest';t.path=O.pathing.path(s,w,t.end);return;}
       if(t.phase==='source'&&t.kind==='parcelLoad'){const q=s.parcels.find(q=>q.id===t.parcel);q.place='transit';t.phase='dest';t.path=O.pathing.path(s,w,t.end);return;}
@@ -281,7 +283,7 @@
     }
     tick(advanceClock=true){const s=this.s;if(s.phase!=='shift')return;s.tick++;if(advanceClock)s.minute+=DT*CLOCK;this.dock();if(s.tick%10===0)this.assign();for(const w of s.workers)this.work(w);if(s.machineDown>0)s.machineDown-=DT;
       if(s.owned.conveyor&&s.tick%40===0){const t=s.trucks.find(t=>t.direction==='out'&&t.status==='docked');if(t){const p=s.pallets.find(p=>p.place==='lane'&&p.lane==='shipping'&&!p.reservedBy&&t.order.some(l=>l.item===p.item&&this.remaining(t,l)>=p.cases));if(p)this.command({type:'move',pallet:p.id,dest:{truck:t.id},worker:s.workers.find(w=>w.role==='robot')?.id||1});}}
-      if(s.minute>=s.shiftEnd){for(const t of s.trucks)if(t.direction==='out'&&['docked','yard'].includes(t.status))this.depart(t);if(!s.trucks.some(t=>t.departureRequested&&['docked','yard','leaving'].includes(t.status)))O.settle(s);}
+      if(s.minute>=s.shiftEnd){for(const t of s.trucks)if(t.direction==='out'&&['docked','yard'].includes(t.status))this.depart(t);if(!s.trucks.some(t=>t.departureRequested&&['docked','yard','leaving'].includes(t.status))&&(s.mode!=='business'||!s.workers.some(w=>w.task||w.queue.length)))O.settle(s);}
     }
     step(n=1){for(let i=0;i<n;i++)this.tick();return this.s;}
     nextDay(){const s=this.s;
