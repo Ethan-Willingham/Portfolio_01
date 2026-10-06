@@ -99,7 +99,7 @@
     el('next-truck').hidden=true;this.selection();el('hint').hidden=true;
     if(this.build){el('hint').textContent='Click to place a rack.';el('hint').hidden=false;}
     if(performance.now()>this.toastUntil)el('toast').hidden=true;
-    const recent=s.events.findLast(e=>['sale','purchase','restock','milestone'].includes(e.kind));if(recent&&recent!==this.businessNotice)this.toast(recent.text);this.businessNotice=recent;
+    const recent=s.events.findLast(e=>['sale','purchase','restock','milestone'].includes(e.kind));if(recent&&recent!==this.businessNotice&&!(recent.kind==='milestone'&&s.commerce.completed===1))this.toast(recent.text);this.businessNotice=recent;
     if(s.phase==='evening'&&this.lastPhase!=='evening'){this.target=null;this.selected=[];this.openHub('reports');if(!app.preview)O.saves.save(s);}this.lastPhase=s.phase;
     this.renderQueue();
   };
@@ -149,7 +149,7 @@
     for(const r of s.map.racks){
       const ps=s.pallets.filter(p=>p.place==='storage'&&p.cases>0&&p.y===r.y&&p.x>=r.x&&p.x<r.x+2),quantities={};
       for(const p of ps)quantities[p.item]=(quantities[p.item]||0)+p.cases;
-      const compact=z<18,at=renderer.screen(r.x+1,compact?r.y+2.6:r.y-1.05);
+      const compact=z<26,at=renderer.screen(r.x+1,compact?r.y+2.6:r.y-1.05);
       if(at.x<0||at.x>renderer.w-20||at.y<84||at.y>renderer.h-50)continue;
       Object.entries(quantities).forEach(([item,count],i)=>{
         const name=compact?({stove:'Stove',lantern:'Lantern',chair:'Chair',radio:'Radio',notebook:'Notebook'}[item]||O.catalog[item]?.name):O.catalog[item]?.name;

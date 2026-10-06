@@ -7,7 +7,7 @@ const http = require('node:http');
 const {chromium} = require('playwright');
 
 const root = path.resolve(__dirname, '..');
-const dump = process.env.SHIFT_DUMP || '/Users/ethan/Portfolio_01/research/one-shift/evidence-opening';
+const dump = process.env.SHIFT_DUMP || '/Users/ethan/Portfolio_01/research/one-shift/evidence-closer/opening';
 fs.mkdirSync(dump, {recursive:true});
 const checks = [], errors = [], layouts = [], stages = [];
 const check = (name, result) => {
@@ -48,21 +48,33 @@ async function openingLayout(page, label) {
     };
     const r = OneShift.app.renderer, s = OneShift.app.sim.s, b = s.map.building;
     const floorA = r.screen(b.x - .24, b.y - .24), floorB = r.screen(b.x + b.w + .24, b.y + b.h + .24);
-    const door = s.map.doors[0], dockA = r.screen(door.x, door.y), dockB = r.screen(door.x + 7.5, door.y + 2);
+    const door = s.map.doors[0], dockA = r.screen(door.x, door.y), dockB = r.screen(door.x + 1.5, door.y + 2);
+    const stock=s.map.racks.filter(q=>s.pallets.some(p=>p.place==='storage'&&p.cases>0&&p.y===q.y&&p.x>=q.x&&p.x<q.x+2)).map(q=>({a:r.screen(q.x-.1,q.y-.1),b:r.screen(q.x+2.1,q.y+1.1)}));
+    const lanes=['receiving','shipping'].map(kind=>{const q=OneShift.docks.lane(s,kind);return {kind,a:r.screen(q.x,q.y),b:r.screen(q.x+q.w,q.y+q.h)};});
+    const worker=s.workers[0],workerA=r.screen(worker.x,worker.y),workerB=r.screen(worker.x+1,worker.y+1),view=rect('#shift-view');
+    const texts=[],g=r.g,fill=g.fillText;
+    g.fillText=function(text,x,y,...rest){texts.push({text,x,y,width:this.measureText(text).width});return fill.call(this,text,x,y,...rest);};
+    try{__oneShift.draw();}finally{g.fillText=fill;}
+    const stockLabels=texts.filter(q=>/^(Stoves?\b|Lanterns?\b|Chairs?\b)/i.test(q.text));
     return {
       viewport:{width:innerWidth, height:innerHeight}, brand:rect('.shift-brand h1'), hud:rect('.shift-hud'),
-      view:rect('#shift-view'), board:rect('#shift-queue'), card:rect('.shift-opening-card'),
+      view, board:rect('#shift-queue'), card:rect('.shift-opening-card'),
       action:rect('.shift-opening-card [data-action="business-fulfill"]'), floorA, floorB, dockA, dockB,
+      stock,lanes,workerA,workerB,stockLabels,roadLeft:r.screen(b.x+b.w+14,b.y).x,
+      formerWideZoom:Math.min(64,view.width/(b.w+9),view.height/(b.h+1.2)),
       zoom:r.camera.zoom, words:document.querySelector('#shift-queue').innerText.trim().split(/\s+/).length,
       pointer:getComputedStyle(document.querySelector('#shift-view')).pointerEvents,
       pageOverflow:document.documentElement.scrollWidth > innerWidth || document.documentElement.scrollHeight > innerHeight
     };
   });
   layouts.push({label, ...layout});
-  const {viewport:v, brand, hud, view, board, action, floorA:a, floorB:z, dockA:da, dockB:dz} = layout;
+  const {viewport:v, brand, hud, view, board, action, dockA:da, dockB:dz} = layout;
+  const inside=(a,z)=>a.x>=view.left-1&&a.y>=view.top-1&&z.x<=view.right+1&&z.y<=view.bottom+1;
   check(label + ': title belongs to the visible top game header', brand.height >= 20 && brand.top >= 0 && brand.bottom <= hud.bottom && brand.top < v.height / 3);
   check(label + ': scene bounds and order card do not overlap', view.right <= board.left && view.top >= hud.bottom && view.bottom <= v.height && !layout.pageOverflow && layout.pointer === 'none');
-  check(label + ': warehouse and dock fit the measured play area', a.x >= view.left - 1 && a.y >= view.top - 1 && z.x <= view.right + 1 && z.y <= view.bottom + 1 && da.x >= view.left && dz.x <= view.right + 1 && da.y >= view.top && dz.y <= view.bottom);
+  check(label + ': close framing shows stocked racks, the worker and both working lanes',layout.stock.length===3&&layout.stock.every(q=>inside(q.a,q.b))&&layout.lanes.every(q=>inside(q.a,q.b))&&inside(layout.workerA,layout.workerB));
+  check(label + ': the rear dock stays visible while the road is outside the play area',inside(da,dz)&&layout.roadLeft>view.right);
+  check(label + ': stock has larger detail than the former whole-warehouse view',layout.zoom>=layout.formerWideZoom*1.2&&layout.stockLabels.length===3&&layout.stockLabels.every(q=>q.x-q.width/2>=view.left&&q.x+q.width/2<=view.right&&q.y>=view.top+7&&q.y<=view.bottom-7));
   check(label + ': one clear first action is visible without scrolling', action.width >= 44 && action.height >= 44 && action.left >= board.left && action.right <= board.right && action.top >= board.top && action.bottom <= Math.min(board.bottom, v.height) && layout.words <= 35);
   check(label + ': Store and planning tabs wait until the first paid sale', await page.locator('#shift-store').isHidden() && await page.locator('.shift-business-tabs').isHidden() && await page.locator('[data-action="queue-toggle"]').isHidden() && await page.locator('[data-action="business-fulfill"]').count() === 1 && await page.locator('body.shift-opening').count() === 1);
   await page.screenshot({path:path.join(dump, label + '.png')});
@@ -82,7 +94,12 @@ async function advanceSale(page) {
       const key = [task?.kind || 'gap', task?.phase || '', truck?.status || '', status, steps.map(s=>s.state).join('/'),progress?.value??''].join('|');
       if (!seen.has(key)) {
         seen.add(key);
-        samples.push({tick:sim.s.tick, task:task?.kind || null, phase:task?.phase || null, truck:truck?.status || null, loaded:truck?.loaded.reduce((n,l)=>n+l.cases,0) || 0, departure:!!truck?.departureRequested, status, steps, progress});
+        const r=app.renderer,g=r.g,fill=g.fillText,truckLabels=[];
+        g.fillText=function(text,x,y,...rest){if(/^(INBOUND|OUTBOUND|\d+ MIN)$/.test(text)){const m=this.measureText(text);truckLabels.push({text,left:x-m.actualBoundingBoxLeft,right:x+m.actualBoundingBoxRight,top:y-m.actualBoundingBoxAscent,bottom:y+m.actualBoundingBoxDescent});}return fill.call(this,text,x,y,...rest);};
+        try{__oneShift.draw();}finally{g.fillText=fill;}
+        const v=document.getElementById('shift-view').getBoundingClientRect(),pose=truck&&r.truckGeometry(sim.s,truck),a=pose&&r.screen(pose.x,pose.y),b=pose&&r.screen(pose.x+1,pose.y+2),rearVisible=!!a&&a.x>=v.left&&a.y>=v.top&&b.x<=v.right&&b.y<=v.bottom;
+        const labelsInside=truckLabels.every(q=>q.left>=v.left-1&&q.right<=v.right+1&&q.top>=v.top-1&&q.bottom<=v.bottom+1);
+        samples.push({tick:sim.s.tick, task:task?.kind || null, phase:task?.phase || null, truck:truck?.status || null, loaded:truck?.loaded.reduce((n,l)=>n+l.cases,0) || 0, departure:!!truck?.departureRequested, status, steps, progress,rearVisible,truckLabels,labelsInside});
       }
     }
     OneShift.saves.validate(sim.s);
@@ -117,7 +134,20 @@ async function advanceSale(page) {
       }
       await openingLayout(page,label);
       if (label === 'opening-laptop') desktop = page;
-      else if (!mobile) await page.close();
+      else if (!mobile) {
+        await page.locator('[data-action="business-fulfill"]').click();
+        const sale=await advanceSale(page);
+        check(label+': the closer view completes a real sale with the loading rear visible',sale.completed===1&&sale.samples.some(s=>s.task==='load')&&sale.samples.filter(s=>s.truck==='docked').every(s=>s.rearVisible));
+        await page.locator('[data-action="business-need-stock"]').click();
+        await page.locator('#shift-queue [data-action="business-restock"][data-item="lantern"][data-count="16"]').click();
+        await page.evaluate(()=>{const sim=OneShift.app.sim;for(let n=0;n<8000&&!sim.s.commerce.restocked;n++)sim.tick();OneShift.saves.validate(sim.s);OneShift.app.ui.update();__oneShift.draw();});
+        check(label+': replenishment still lands in an actual rack',await page.evaluate(()=>OneShift.app.sim.s.commerce.restocked===1&&OneShift.app.sim.s.commerce.purchases[0].pallets.every(id=>OneShift.app.sim.p.get(id).place==='storage')));
+        const before=await page.evaluate(()=>({...OneShift.app.renderer.camera})),at=await page.evaluate(()=>{const v=document.getElementById('shift-view').getBoundingClientRect();return {x:v.left+v.width/2,y:v.top+v.height/2};});
+        await page.mouse.move(at.x,at.y);await page.mouse.down({button:'right'});await page.mouse.move(at.x+45,at.y+20,{steps:8});await page.mouse.up({button:'right'});
+        check(label+': right-drag still pans from the closer crop',await page.evaluate(before=>OneShift.app.renderer.camera.x!==before.x&&OneShift.app.renderer.camera.zoom===before.zoom,before));
+        await page.keyboard.press('h');await page.screenshot({path:path.join(dump,label+'-restocked.png')});
+        await page.close();
+      }
     }
     check('The first card names the item, reward and worker action in a short opening', await desktop.locator('.shift-opening-card h2').innerText().then(t => /8\s*lanterns/i.test(t)) && await desktop.locator('.shift-opening-card').innerText().then(t=>t.includes('$36') && /worker/i.test(t)));
     const minute = await desktop.evaluate(() => OneShift.app.sim.s.minute);
@@ -125,6 +155,19 @@ async function advanceSale(page) {
     await desktop.waitForTimeout(350);
     await desktop.evaluate(() => __oneShift.stop());
     check('Opening animation runs while the first decision holds the clock', await desktop.evaluate(before=>OneShift.app.sim.s.minute === before && OneShift.app.sim.s.tick > 0,minute));
+    const outside=await desktop.evaluate(()=>{
+      const r=OneShift.app.renderer,s=OneShift.app.sim.s,p=s.pallets.find(p=>p.place==='storage'&&p.item==='stove'),v=document.getElementById('shift-view').getBoundingClientRect(),at=r.screen(p.x+.5,p.y+.5);
+      return {id:p.id,at,targetX:v.left/2};
+    });
+    const panStart=await desktop.evaluate(()=>__oneShift.screen(12.5,13.5));
+    await desktop.mouse.move(panStart.x,panStart.y);await desktop.mouse.down({button:'right'});
+    await desktop.mouse.move(panStart.x+outside.targetX-outside.at.x,panStart.y,{steps:8});await desktop.mouse.up({button:'right'});
+    const margin=await desktop.evaluate(id=>{__oneShift.draw();const p=OneShift.app.sim.p.get(id);return __oneShift.screen(p.x+.5,p.y+.5);},outside.id);
+    await desktop.mouse.click(margin.x,margin.y);
+    check('A cropped stock pallet cannot be selected through the slate margin',await desktop.evaluate(id=>!OneShift.app.ui.target&&OneShift.app.ui.selected.length===0&&!OneShift.app.renderer.hits.some(h=>h.kind==='pallet'&&h.id===id),outside.id));
+    await desktop.locator('#shift-canvas').focus();await desktop.keyboard.press('Tab');
+    check('Keyboard object cycling selects only visible scene objects',await desktop.evaluate(()=>{const hit=OneShift.app.ui.target,r=OneShift.app.renderer,v=document.getElementById('shift-view').getBoundingClientRect(),q=r.hits.find(q=>q.kind===hit?.kind&&q.id===hit?.id),a=q&&r.screen(q.x,q.y),b=q&&r.screen(q.x+q.w,q.y+q.h);return !!q&&b.x>v.left&&a.x<v.right&&b.y>v.top&&a.y<v.bottom;}));
+    await desktop.keyboard.press('Escape');await desktop.keyboard.press('h');
     const idle = await desktop.evaluate(() => JSON.stringify(OneShift.app.sim.s.workers));
     const floor = await desktop.evaluate(() => __oneShift.screen(12.5,13.5));
     await desktop.mouse.click(floor.x,floor.y);
@@ -155,9 +198,11 @@ async function advanceSale(page) {
     check('Shipment stages show one current step and never move backward', runningStages.every((s,i)=>s.steps.length===3 && s.steps.filter(step=>step.state==='active').length===1 && s.steps.every(step=>['waiting','active','done'].includes(step.state)) && (!i || s.steps.filter(step=>step.state==='done').length>=runningStages[i-1].steps.filter(step=>step.state==='done').length)));
     check('Arrival and worker gaps retain a meaningful shipping status', sale.samples.filter(s=>!s.task && s.truck && !s.departure).every(s=>s.status.length>0 && !/^queued$/i.test(s.status) && s.steps.some(step=>step.state==='active' && step.stage.includes('ship'))));
     check('First sale actually pays once and conserves its cases', sale.completed === 1 && sale.cash === 23550 && sale.balance.expected === sale.balance.accounted);
+    check('The laptop loading rear remains visible without the truck front or road',sale.samples.some(s=>s.task==='load')&&sale.samples.filter(s=>s.truck==='docked').every(s=>s.rearVisible));
     check('Unlocking the full header after payment preserves a manually positioned camera',await desktop.evaluate(before=>['x','y','zoom'].every(k=>OneShift.app.renderer.camera[k]===before[k]),manualCamera));
     await desktop.keyboard.press('h');
     check('The receipt explains the earned reward and reveals normal planning', await desktop.locator('.shift-first-receipt').isVisible() && await desktop.locator('.shift-first-receipt').innerText().then(t=>t.includes('$36')) && await desktop.locator('[data-action="business-need-stock"]').isVisible() && await desktop.locator('#shift-store').isVisible() && await desktop.locator('.shift-business-tabs').isVisible() && await desktop.locator('body.shift-opening').count() === 0);
+    check('First payment uses the receipt without a duplicate toast over the floor',await desktop.locator('#shift-toast').isHidden());
     await desktop.screenshot({path:path.join(dump,'opening-first-sale.png')});
     await desktop.locator('[data-action="business-need-stock"]').click();
     check('Buy stock names the visible board Stock',await desktop.locator('[data-action="queue-toggle"] strong').innerText().then(t=>t==='Stock'));
@@ -253,6 +298,8 @@ async function advanceSale(page) {
     await phone.locator('[data-action="business-fulfill"]').tap();
     const phoneSale=await advanceSale(phone);
     check('The enlarged-text phone can complete its visible first action', phoneSale.completed===1 && await phone.locator('.shift-first-receipt').isVisible());
+    check('The phone loading rear stays visible in the closer scene',phoneSale.samples.some(s=>s.task==='load')&&phoneSale.samples.filter(s=>s.truck==='docked').every(s=>s.rearVisible));
+    check('Truck text is fully inside the closer scene whenever it can fit',stages.some(s=>s.truckLabels.length>0)&&stages.every(s=>s.labelsInside));
     await phone.screenshot({path:path.join(dump,'opening-phone-receipt.png')});
     check('Phone receipt and Buy stock stay inside the card without scrolling', await phone.locator('.shift-first-receipt [data-action="business-need-stock"]').evaluate(el=>{const r=el.getBoundingClientRect();return r.height>=44 && r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;}));
     check('Enlarged-text phone header keeps every unlocked control separate and on screen',await phone.locator('.shift-hud').evaluate(hud=>{const nodes=[...hud.querySelectorAll('.shift-brand,.shift-clock,.shift-cash,button')].filter(n=>n.getBoundingClientRect().width>0),rs=nodes.map(n=>n.getBoundingClientRect());return rs.every(r=>r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight) && rs.every((r,i)=>rs.slice(i+1).every(q=>r.right<=q.left+.5||q.right<=r.left+.5||r.bottom<=q.top+.5||q.bottom<=r.top+.5));}));
@@ -262,6 +309,16 @@ async function advanceSale(page) {
     await touchBuy.tap();
     check('Enlarged-text phone Buy stock can purchase real replenishment through the board',await phone.evaluate(()=>OneShift.app.sim.s.commerce.purchases.length===1&&OneShift.app.sim.businessStock('lantern').incoming===16));
     await phone.screenshot({path:path.join(dump,'opening-phone-stock.png')});
+    await phone.evaluate(()=>{const sim=OneShift.app.sim;for(let n=0;n<8000&&!sim.s.commerce.restocked;n++)sim.tick();OneShift.saves.validate(sim.s);OneShift.app.ui.update();__oneShift.draw();});
+    check('The closer phone view receives paid stock into an actual rack',await phone.evaluate(()=>OneShift.app.sim.s.commerce.restocked===1&&OneShift.app.sim.s.commerce.purchases[0].pallets.every(id=>OneShift.app.sim.p.get(id).place==='storage')));
+    const phoneCamera=await phone.evaluate(()=>({...OneShift.app.renderer.camera}));
+    const phonePan=await phone.evaluate(()=>{const v=document.getElementById('shift-view').getBoundingClientRect();return {x:v.left+v.width/2,y:v.top+v.height/2};}),touch=await phone.context().newCDPSession(phone);
+    try{
+      await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...phonePan,id:1}]});
+      for(let n=1;n<=6;n++)await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:phonePan.x+n*5,y:phonePan.y+n*2.5,id:1}]});
+      await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    }finally{await touch.detach();}
+    check('The closer phone scene retains native touch-drag camera control',await phone.evaluate(before=>OneShift.app.renderer.camera.x!==before.x&&OneShift.app.renderer.camera.zoom===before.zoom,phoneCamera));
     await phone.setViewportSize({width:375,height:667});
     await phone.waitForTimeout(100);
     check('Portrait phone still freezes behind the rotate screen', await phone.locator('#shift-rotate').isVisible() && await phone.evaluate(()=>OneShift.app.rotated));

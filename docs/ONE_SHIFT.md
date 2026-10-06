@@ -1,6 +1,6 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.3.
+The public game at `one-shift.html` is an inventory business game, version 2.4.
 Start with six stocked pallets and $200. Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
 rack space, doors, and people. The first screen has one order and no tutorial dialog.
@@ -118,9 +118,10 @@ a forklift. There are no Results or Home buttons. Warehouse walls have a plain
 perimeter without roof stripes, detached pipes, vents, or parking outlines.
 
 Right or middle mouse drag pans. Wheel, + and - zoom. The camera starts close
-enough to see stock and work at the dock, without fitting
-the entire road. It frames the warehouse automatically at launch and when a fitted
-view resizes or the building expands. Empty floor clicks and taps do nothing.
+to the stock, worker, and staging areas. It crops empty warehouse margins and shows the rear of docked trucks; fitting the road,
+parking area, or cab does not reduce that zoom. The world is clipped to the play
+area, keeping yard scenery out of the header and board background. It frames
+the warehouse automatically at launch and when a fitted view resizes or the building expands. Empty floor clicks and taps do nothing.
 Workers move for jobs and mandatory truck exits; manual walking is unavailable.
 Keyboard buttons work natively. Touch uses
 the same layout in landscape, with scrolling and 44px targets. Portrait touch
