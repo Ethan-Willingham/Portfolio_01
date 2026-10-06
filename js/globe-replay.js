@@ -4,7 +4,7 @@
   var api=factory();
   if(typeof module==='object'&&module.exports)module.exports=api;
   else if(typeof document==='undefined'){
-    root.onmessage=async function(event){var job=event.data;try{var result=await api.prepare(job.blobs,job.width,job.natural);root.postMessage({id:job.id,result:result},[result.pixels.buffer]);}catch(error){root.postMessage({id:job.id,error:error.message});}};
+    root.onmessage=async function(event){var job=event.data;try{var result=await api.prepare(job.blobs,job.width,job.natural,job.sourceWidth);root.postMessage({id:job.id,result:result},[result.pixels.buffer]);}catch(error){root.postMessage({id:job.id,error:error.message});}};
   }else root.GlobeReplay=api;
 }(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
@@ -26,14 +26,24 @@
       var ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,width/2);return ctx.getImageData(0,0,width,width/2).data;
     }finally{bitmap.close();if(canvas)canvas.width=canvas.height=1;}
   }
-  async function prepare(blobs,width,natural){
+  function reduce(pixels,from,to){
+    if(from===to)return pixels;
+    var original=typeof document==='undefined'?new OffscreenCanvas(from,from/2):document.createElement('canvas'),small=typeof document==='undefined'?new OffscreenCanvas(to,to/2):document.createElement('canvas');
+    try{original.width=from;original.height=from/2;small.width=to;small.height=to/2;
+      var ctx=original.getContext('2d'),image=ctx.createImageData(from,from/2);image.data.set(pixels);ctx.putImageData(image,0,0);
+      var output=small.getContext('2d',{willReadFrequently:true});output.imageSmoothingQuality='high';output.drawImage(original,0,0,to,to/2);return output.getImageData(0,0,to,to/2).data;
+    }finally{original.width=original.height=small.width=small.height=1;}
+  }
+  async function prepare(blobs,width,natural,sourceWidth){
     var visible,infrared;
     if(blobs.length===10){
-      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-32');
-      var clouds=globalThis.GlobeClouds,data=globalThis.GlobeData,sources=[];
-      for(var index=0;index<10;index++){var source=blobs[index]?await read(blobs[index],width):null;if(source&&blobs[index].type==='image/jpeg')for(var blank=0;blank<source.length;blank+=4)if(Math.max(source[blank],source[blank+1],source[blank+2])<8)source[blank+3]=0;sources.push(source);}
-      clouds.maskScanArtifacts(sources,width);
-      for(var group=0;group<10;group++)if(sources[group]){if(clouds.GROUPS[group].source===clouds.NASA&&clouds.GROUPS[group].kind==='infrared')clouds.normalizeThermal(sources[group]);sources[group]=data.featherCoverage(sources[group],width);if(typeof document!=='undefined')await new Promise(function(resolve){setTimeout(resolve,0);});}
+      if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261005-18','globe-clouds.js?v=20261005-33');
+      var clouds=globalThis.GlobeClouds,data=globalThis.GlobeData,sources=[],nativeWidth=sourceWidth||width;
+      // Decode the original temperature codes before resizing. Interpolating
+      // palette RGB first invents colors with unrelated thermal meanings.
+      for(var index=0;index<10;index++){var source=blobs[index]?await read(blobs[index],nativeWidth):null;if(source&&blobs[index].type==='image/jpeg')for(var blank=0;blank<source.length;blank+=4)if(Math.max(source[blank],source[blank+1],source[blank+2])<8)source[blank+3]=0;sources.push(source);}
+      clouds.maskScanArtifacts(sources,nativeWidth);
+      for(var group=0;group<10;group++)if(sources[group]){if(clouds.GROUPS[group].source===clouds.NASA&&clouds.GROUPS[group].kind==='infrared')clouds.normalizeThermal(sources[group]);sources[group]=reduce(sources[group],nativeWidth,width);sources[group]=data.featherCoverage(sources[group],width);if(typeof document!=='undefined')await new Promise(function(resolve){setTimeout(resolve,0);});}
       visible=clouds.composite(sources,width,'visible');infrared=clouds.composite(sources,width,'infrared');
     }else{visible=await read(blobs[0],width);infrared=await read(blobs[1],width);}
     var pixels=new Uint8Array(visible.length),valid=0;
@@ -44,14 +54,14 @@
   }
   function preparer(url){
     var worker=null,failed=false,closed=false,queue=[],active=null,serial=0,counts={worker:0,fallback:0};
-    function fallback(){var job=active;prepare(job.blobs,job.width,job.natural).then(function(result){if(active!==job)return;counts.fallback++;finish(null,result);},function(error){if(active===job)finish(error);});}
+    function fallback(){var job=active;prepare(job.blobs,job.width,job.natural,job.sourceWidth).then(function(result){if(active!==job)return;counts.fallback++;finish(null,result);},function(error){if(active===job)finish(error);});}
     function finish(error,result){var job=active;active=null;if(error)job.reject(error);else job.resolve(result);pump();}
     function breakWorker(){if(worker)worker.terminate();worker=null;failed=true;if(active)fallback();}
     function pump(){if(active||!queue.length)return;queue.sort(function(a,b){return b.priority-a.priority||(a.priority?b.order-a.order:a.id-b.id);});active=queue.shift();
       if(!worker&&!failed)try{worker=new Worker(url);worker.onmessage=function(event){if(!active||event.data.id!==active.id)return;if(event.data.error){breakWorker();return;}counts.worker++;finish(null,event.data.result);};worker.onerror=breakWorker;}catch(_){failed=true;}
-      if(worker)try{worker.postMessage({id:active.id,blobs:active.blobs,width:active.width,natural:active.natural});}catch(_){breakWorker();}else fallback();
+      if(worker)try{worker.postMessage({id:active.id,blobs:active.blobs,width:active.width,natural:active.natural,sourceWidth:active.sourceWidth});}catch(_){breakWorker();}else fallback();
     }
-    return {prepare:function(blobs,width,natural,priority,key){if(closed)return Promise.reject(new Error('Replay preparation closed'));return new Promise(function(resolve,reject){queue.push({id:++serial,order:serial,key:key,blobs:blobs,width:width,natural:natural,priority:priority||0,resolve:resolve,reject:reject});pump();});},boost:function(key,priority){queue.forEach(function(job){if(job.key===key){job.priority=Math.max(job.priority,priority);job.order=++serial;}});},stats:function(){return {worker:counts.worker,fallback:counts.fallback,queued:queue.length,active:!!active};},close:function(){closed=true;failed=true;if(worker)worker.terminate();worker=null;var error=new Error('Replay preparation closed');queue.splice(0).forEach(function(job){job.reject(error);});if(active){active.reject(error);active=null;}}};
+    return {prepare:function(blobs,width,natural,priority,key,sourceWidth){if(closed)return Promise.reject(new Error('Replay preparation closed'));return new Promise(function(resolve,reject){queue.push({id:++serial,order:serial,key:key,blobs:blobs,width:width,natural:natural,sourceWidth:sourceWidth,priority:priority||0,resolve:resolve,reject:reject});pump();});},boost:function(key,priority){queue.forEach(function(job){if(job.key===key){job.priority=Math.max(job.priority,priority);job.order=++serial;}});},stats:function(){return {worker:counts.worker,fallback:counts.fallback,queued:queue.length,active:!!active};},close:function(){closed=true;failed=true;if(worker)worker.terminate();worker=null;var error=new Error('Replay preparation closed');queue.splice(0).forEach(function(job){job.reject(error);});if(active){active.reject(error);active=null;}}};
   }
   return {pack:pack,prepare:prepare,preparer:preparer};
 }));

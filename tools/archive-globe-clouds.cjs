@@ -17,7 +17,7 @@ async function renderFrame(time,options={}){
  for(let i=0;i<result.blobs.length;i++){
   if(!result.blobs[i]){pixels.push(null);continue;}
   const raw=await sharp(Buffer.from(await result.blobs[i].arrayBuffer())).timeout({seconds:10}).ensureAlpha().raw().toBuffer();
-  for(let p=0;p<raw.length;p+=4)if(Math.max(raw[p],raw[p+1],raw[p+2])<8)raw[p+3]=0;
+  if(result.blobs[i].type==='image/jpeg')for(let p=0;p<raw.length;p+=4)if(Math.max(raw[p],raw[p+1],raw[p+2])<8)raw[p+3]=0;
   pixels.push(raw);
  }
  clouds.maskScanArtifacts(pixels,WIDTH);
@@ -34,6 +34,7 @@ async function renderFrame(time,options={}){
  return {frame,files};
 }
 async function collect(previous,options={}){
+ if(previous&&previous.manifest.processing>clouds.PROCESSING)throw new Error('Recorder processing revision is older than the shared snapshot');
  const now=new Date(options.now===undefined?Date.now():options.now);let catalog=options.catalog||await clouds.fetchCatalog({timeout:12000,fetch:options.fetch});
  clouds.validate(catalog);
  // Provider metadata replicas can lag behind already verified observations.

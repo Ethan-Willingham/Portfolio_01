@@ -236,7 +236,7 @@
   });
   var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
   replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-32',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-33',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -769,7 +769,7 @@
     if(!replayPending.has(key)){
       var controller=new AbortController(),task=(async function(){
         var result=await requestCloudBytes(stamp,cloudWidth,controller.signal,14000,navigator.onLine===false),packed;
-        packed=await replayPreparing.prepare(result.blobs,replayWidth,result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,task.priority,key);
+        packed=await replayPreparing.prepare(result.blobs,replayWidth,result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,task.priority,key,result.width);
         var record={photo:{date:data.utcDate(stamp),time:key,sourceTimes:result.sourceTimes,width:result.width,coverage:packed.coverage,source:'NASA / EUMETSAT',natural:result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,dense:true,shared:!!result.shared},width:packed.width,pixels:packed.pixels};
         return replayMemo.put(key,record,packed.pixels.byteLength);
       }());task.priority=priority||0;replayPending.set(key,task);task.finally(function(){if(replayPending.get(key)===task)replayPending.delete(key);}).catch(function(){});

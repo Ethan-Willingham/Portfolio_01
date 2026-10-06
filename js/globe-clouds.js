@@ -50,7 +50,9 @@
   var catalogs=[];for(var i=0;i<2;i++)if(xml[i].status==='fulfilled')try{catalogs.push(parseCatalog(xml[i].value,xml[2].value));}catch(_){}
   if(!catalogs.length)throw new Error('Satellite metadata unavailable');catalogs.sort(function(a,b){return b.end-a.end;});return catalogs[0];
  }
- function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
+ // Infrared RGB is a temperature code. Lossy compression changes those codes
+ // and can turn warm pixels into isolated bright clouds during inversion.
+ function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:g.source===NASA&&g.kind==='infrared'?'image/png':'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
  async function imageBlob(response,width){
   var mime=(response.headers.get('content-type')||'').split(';')[0].trim();if(mime==='image/png')return data.imageBlob(response,width);if(mime!=='image/jpeg')throw new Error('Invalid hourly image type');
   var blob=await response.blob(),bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());if(bytes.length<12||bytes[0]!==255||bytes[1]!==216)throw new Error('Invalid satellite JPEG');
@@ -110,5 +112,5 @@
    if(total){var edge=Math.max(0,Math.min(1,(bestView-.15)/.15));out[at]=r/total;out[at+1]=g/total;out[at+2]=b/total;out[at+3]=255*alpha*edge*edge*(3-2*edge);}
   }}return out;
  }
- return {STEP:STEP,PROCESSING:3,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,maskScanArtifacts:maskScanArtifacts,composite:composite};
+ return {STEP:STEP,PROCESSING:4,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,maskScanArtifacts:maskScanArtifacts,composite:composite};
 }));

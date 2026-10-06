@@ -25,6 +25,7 @@ check('a server error after accepting publication recovers without replacing ano
  assert.equal((await A.imageBlob(new Response(bytes),asset,2048)).type,'image/webp');await assert.rejects(A.imageBlob(new Response(bytes),{...asset,sha256:'0'.repeat(64)},2048),/checksum/);await assert.rejects(A.imageBlob(new Response(bytes),asset,1024),/dimensions/);checks++;console.log('PASS archived downloads require the exact size, dimensions and SHA-256');
  const unchanged=await runner.collect(snapshot,{now,catalog,render:()=>{throw new Error('Cached frames must not be fetched again');}});
  check('repeat captures preserve the same assets without redownloading them',()=>{assert(!unchanged.changed);assert.equal(unchanged.errors.length,0);});
+ const newer={manifest:{...snapshot.manifest,processing:C.PROCESSING+1},files:snapshot.files};await assert.rejects(runner.collect(newer,{now,catalog,render:()=>assert.fail('Older code must not downgrade prepared clouds')}),/older than/);checks++;console.log('PASS an older recorder cannot replace a newer processing revision');
  const partial={manifest:structuredClone(snapshot.manifest),files:new Map(snapshot.files)},last=partial.manifest.frames.at(-1);
  last.sourceTimes[2]=null;const repairs=[];
  const repaired=await runner.collect(partial,{now,catalog,render:time=>{repairs.push(time.toISOString());return render(time);}});
