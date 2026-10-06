@@ -34,6 +34,9 @@ Always read these before writing a word:
   color). Posts use the field-guide idiom of the existing pages.
 - If the topic has a research dossier under `research/`, read it for facts and sources. The
   owner's posts are heavily sourced; never invent a number.
+- If the post states the owner's own belief or theory, read `research/<slug>/INTERVIEW.md`
+  and the kickoff prompt's "My own words" block, and follow VOICE.md section 11. Draft
+  from his phrases, not from the claims file.
 
 ## Step 1: Pin down the post before drafting
 

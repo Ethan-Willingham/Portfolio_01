@@ -235,3 +235,34 @@ All plain, fact-dense, and respected by the exact skeptical crowd the owner worr
 - **Morgan Housel:** one idea per post, carried by a concrete story and a turn.
 - **Matt Levine:** a dry subject made gripping by a plain voice and a running joke.
 - **Julian Shapiro:** ruthless compression; every word earns its place.
+
+---
+
+## 11. Posts that state the owner's own belief
+
+The Other Side, The Same Chance and What You Get Used To state the owner's own ideas.
+These are the posts where AI drafts go wrong in a predictable way: the AI quietly
+rewrites a belief he holds with confidence into a cautious review of that belief. The
+Same Chance and What You Get Used To both shipped like that in October 2026 and had to
+be rewritten.
+
+- **Build from his words.** Each of these posts has an interview at
+  `research/<slug>/INTERVIEW.md`, plus a "My own words" block in its kickoff prompt.
+  Write every paragraph from those phrases, kept close to verbatim ("kind of innocent
+  for a while," "drugs end up feeling like decaf"). If a sentence states his view and
+  contains none of his words, check it against the interview.
+- **State the belief the way he holds it.** Say "I think" or "I believe," then commit.
+  Don't follow each belief with a sentence about what he can't prove. Collect the real
+  limits in one place, usually near the end.
+- **One plain answer per objection.** Name the strongest objection, give the fact and
+  his answer in a sentence or two, and move on. One short caveat per study at most. A
+  concrete number from the source beats a paragraph about method.
+- **Research notes are not prose.** Rules in a claims file or word kit (what a term
+  excludes, what not to imply) are instructions to the writer. Never paste them into
+  the post as sentences.
+- **Contractions, and few closing zingers.** A belief post with no contractions reads
+  as machine-written at once. Most paragraphs should end on a fact, not on a line
+  written to sound wise.
+- **Two fresh readers before it ships.** One hunts for lines that sound
+  machine-written. The other checks every first-person line against the interview
+  and every number against its source.
