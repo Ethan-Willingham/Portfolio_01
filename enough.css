@@ -37,7 +37,7 @@
 .overview-reading{display:flex;align-items:baseline;gap:24px;margin:14px 0 4px;}
 .overview-reading span{font:1rem var(--font-body);}
 .overview-reading strong{font:400 clamp(1.5rem,3vw,2rem)/1.2 var(--font-heading);color:var(--area);}
-.overview-baseline,.overview-context{font-size:.82rem;line-height:1.45;color:var(--text-dim);margin:6px 0;}
+.overview-baseline{font-size:.82rem;line-height:1.45;color:var(--text-dim);margin:6px 0;}
 .enough-detail{font-size:.92rem;line-height:1.6;}
 .enough-detail summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--text-dim);gap:8px;list-style:none;}
 .enough-detail summary::before{content:'+';font:1rem var(--font-mono);}

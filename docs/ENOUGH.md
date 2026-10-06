@@ -22,7 +22,7 @@ All card graphs share a 240-pixel canvas, labeled axes and a movable circle. Fru
 
 No live chart displays an exact 90% enough marker or treats a shown endpoint as 100% of possible benefit. Historical bounded calculations remain reproducible in the data and math module. They are not medical, financial or work recommendations. Card starting markers come from explicit `view.default` values rather than a calculated 90% crossing.
 
-The owner removed the opening “What does enough mean?” disclosure. Each topic evidence drawer has two brief paragraphs, primary links and a source-data download. Full study counts, units, subgroup estimates, extraction methods and exclusions remain in the data and audit. Study populations and overlapping reviews must not be added into a grand evidence total.
+The owner removed the opening “What does enough mean?” disclosure and the three topic context lines with their detail links. Opening charts keep the selected result and reference or uncertainty caption. Each topic evidence drawer has two brief paragraphs, primary links and a source-data download. Full study counts, units, subgroup estimates, extraction methods and exclusions remain in the data and audit. Study populations and overlapping reviews must not be added into a grand evidence total.
 
 ## Interaction and checks
 

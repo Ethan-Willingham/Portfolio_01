@@ -173,7 +173,6 @@ function bindWalking(plot,output,baseline,card=null){
   }else{
    if(!output.firstElementChild)output.innerHTML='<span></span><strong></strong>';
    textIfChanged(output.firstElementChild,`${fmt(dose)} steps/day`);const risk=walkingRisk(c,dose);textIfChanged(output.lastElementChild,risk[0].toUpperCase()+risk.slice(1));
-   const context=plot.parentElement.querySelector('.overview-context');if(context.dataset.age!==walkingAge){context.innerHTML=`Flatter around ${fmt(c.authorPlateauRange[0])} to ${fmt(c.authorPlateauRange[1])} steps/day. <a href="#steps">Walking details</a>`;context.dataset.age=walkingAge;}
   }
  };
  const set=value=>{const c=walkingCurves.get(walkingAge);walkingDoses.set(walkingAge,M.clamp(Math.round(value/100)*100,...c.view.range));for(const view of walkingViews)view.update();};
@@ -208,12 +207,12 @@ const overviewIds=['steps','exercise','protein'];
 const overviewBox=$('overview-chart'),overviewStates=new Map();
 const openingCopy={
  steps:{name:'Walking'},
- exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:exerciseRisk,baseline:'Shading: 95% confidence interval.',context:'The source continues beyond 600 minutes/week.'},
- protein:{name:'Protein',default:.8,amount:d=>fmt(d,2)+' g/lb/day',result:v=>'About '+fmt(v,1)+' lb modeled lean-mass change',baseline:'Across lifting-trial groups. Lean mass includes water.',context:'Daily intake guidance: about 0.65 to 0.9 g/lb. No exact growth cutoff is established.'}
+ exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:exerciseRisk,baseline:'Shading: 95% confidence interval.'},
+ protein:{name:'Protein',default:.8,amount:d=>fmt(d,2)+' g/lb/day',result:v=>'About '+fmt(v,1)+' lb modeled lean-mass change',baseline:'Across lifting-trial groups. Lean mass includes water.'}
 };
 for(const id of overviewIds){
  const c=curves.get(id),copy=openingCopy[id],panel=document.createElement('div');panel.className='overview-panel';panel.id='overview-'+id;panel.style.setProperty('--area',`var(--en-${c.view.area})`);
- panel.innerHTML=`<div class="overview-plot"></div><p class="overview-reading" id="overview-readout-${id}"></p><p class="overview-baseline" id="overview-baseline-${id}">${esc(copy.baseline||'')}</p><p class="overview-context">${esc(copy.context||'')} <a href="#${id}">${copy.name} details</a></p>`;
+ panel.innerHTML=`<div class="overview-plot"></div><p class="overview-reading" id="overview-readout-${id}"></p><p class="overview-baseline" id="overview-baseline-${id}">${esc(copy.baseline||'')}</p>`;
  overviewBox.append(panel);const plot=panel.querySelector('.overview-plot'),output=panel.querySelector('.overview-reading'),[min,max]=c.view.range,step=id==='steps'?100:id==='protein'?.01:1;let dose=copy.default;
  if(id==='steps'){overviewStates.set(id,{panel,...bindWalking(plot,output,panel.querySelector('.overview-baseline'))});continue;}
  const update=()=>{plot.innerHTML=chart(c,plot.clientWidth,dose,true);output.innerHTML=`<span>${esc(copy.amount(dose))}</span><strong>${esc(copy.result(M.outcome(c,dose),dose))}</strong>`;plot.setAttribute('aria-valuenow',dose);plot.setAttribute('aria-valuetext',readout(c,dose));};
