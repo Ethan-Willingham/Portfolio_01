@@ -75,14 +75,6 @@ and its tools beside the firebox on every active device.
 
 ## What lives here
 
-**Wikipedia Art Grid** lives in `wiki-pixel-grid.html`, `js/wiki-pixel-grid.js`,
-and `assets/wiki-pixel-grid/`. Read `docs/WIKI_PIXEL_GRID.md` before changing it.
-The first review set contains 250 tiles, with a new medium every 50. Do not
-expand until the owner approves. **Never use GPT-Image-2.5 or any other
-image-generation model for this project.** Artwork must come from LLM-written
-drawing code and ordinary rendering tools. Keep Wikipedia page links, exact
-source revisions, editable drawing code and lossless artwork copies.
-
 **All Four Wheels**, a separate shopping-cart game in progress, lives in
 `four-wheels.html`, `four-wheels.css`, and `js/four-wheels*.js`. Its editable sources
 are ordinary scripts, with no bundle step and no Sluice dependencies. Read

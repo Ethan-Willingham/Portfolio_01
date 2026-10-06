@@ -1505,19 +1505,19 @@
       }
     },
     "2026-10-06": {
-      "totalTokens": 149099776,
-      "cost": 34.00427540000011,
+      "totalTokens": 154622049,
+      "cost": 36.275797800000106,
       "models": {
         "claude-opus-5-5": {
-          "input": 62,
-          "cacheWrite": 128406,
-          "cacheWrite1h": 128406,
-          "cacheRead": 3603959,
-          "output": 32336,
-          "totalTokens": 3764763,
-          "cost": 2.3950077999999997,
+          "input": 76,
+          "cacheWrite": 168332,
+          "cacheWrite1h": 168332,
+          "cacheRead": 4944245,
+          "output": 71252,
+          "totalTokens": 5183905,
+          "cost": 3.760849,
           "pricing": "deduplicated native responses, standard API rates",
-          "requests": 31,
+          "requests": 38,
           "longContext": {
             "input": 0,
             "cacheWrite": 0,
@@ -1526,15 +1526,15 @@
           }
         },
         "gpt-6.1-sol": {
-          "input": 5059707,
+          "input": 5148537,
           "cacheWrite": 0,
           "cacheWrite1h": 0,
-          "cacheRead": 139521536,
-          "output": 753770,
-          "totalTokens": 145335013,
-          "cost": 31.60926760000006,
+          "cacheRead": 143502848,
+          "output": 786759,
+          "totalTokens": 149438144,
+          "cost": 32.51494880000008,
           "pricing": "deduplicated native responses, standard API rates",
-          "requests": 1061,
+          "requests": 1095,
           "longContext": {
             "input": 0,
             "cacheWrite": 0,
@@ -1627,10 +1627,10 @@
   },
   "collection": {
     "ledgerId": "ad869c9bf7907245d6181fffd3ced9f98185a7070464096b52a5cfc52de46b2e",
-    "cutoff": "2026-10-06T15:06:11.827Z",
+    "cutoff": "2026-10-06T15:09:41.240Z",
     "timezone": "America/Chicago",
     "files": 542,
-    "claudeMessages": 5299,
+    "claudeMessages": 5306,
     "codexSessions": 468,
     "cacheDurationInconsistencies": 1,
     "imports": {
