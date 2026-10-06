@@ -1,9 +1,11 @@
+import { networkInterfaces } from 'node:os';
 import { serve } from './browser.mjs';
 const local=process.env.CHAIN_REACTION_RESEARCH;
 if(!local)throw Error('Set CHAIN_REACTION_RESEARCH');
-const server=await serve(local);
+const lan=process.argv.includes('--lan'),server=await serve(local,lan?'0.0.0.0':'127.0.0.1');
 console.log(server.url+'/local/chain-reaction-lab.html');
+if(lan)for(const entries of Object.values(networkInterfaces()))for(const entry of entries||[])if(entry.family==='IPv4'&&!entry.internal&&/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(entry.address))console.log(server.url.replace('127.0.0.1',entry.address)+'/local/chain-reaction-lab.html');
 let closing=false;
 const close=async()=>{if(closing)return;closing=true;await server.close();process.exit(0);};
 process.on('SIGINT',close);process.on('SIGTERM',close);
-setTimeout(close,3600000);
+setTimeout(close,lan?21600000:3600000);

@@ -9,22 +9,24 @@ export function playwright() {
   if(!location) throw Error('Set CHAIN_REACTION_PLAYWRIGHT to a scratch-installed Playwright package outside the repository');
   return require(location);
 }
-export async function serve(localLab) {
-  const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.jpg':'image/jpeg','.png':'image/png'};
+export async function serve(localLab, host='127.0.0.1') {
+  const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.woff':'font/woff','.woff2':'font/woff2','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.ico':'image/vnd.microsoft.icon','.svg':'image/svg+xml','.gif':'image/gif'};
   const server=createServer(async(req,res)=>{
     try {
       const pathname=decodeURIComponent(new URL(req.url,'http://local').pathname);
+      if(pathname.split('/').some(p=>p.startsWith('.'))){res.writeHead(403);res.end();return;}
       if(pathname==='/spike.html') {res.setHeader('content-type','text/html');res.end('<!doctype html><title>Physics isolation</title><script src="/js/chain-reaction-physics.js?v=0.1.0"></script>');return;}
       let filename;
       if(localLab && pathname.startsWith('/local/')) filename=resolve(localLab,'.'+pathname.slice(6));
       else filename=resolve(ROOT,'.'+pathname);
       const boundary=pathname.startsWith('/local/')&&localLab?localLab:ROOT;
       if(!filename.startsWith(boundary+sep)) {res.writeHead(403);res.end();return;}
-      res.setHeader('content-type',mime[extname(filename)]||'application/octet-stream');
+      if(!mime[extname(filename).toLowerCase()]){res.writeHead(403);res.end();return;}
+      res.setHeader('content-type',mime[extname(filename).toLowerCase()]||'application/octet-stream');
       res.end(await readFile(filename));
     } catch(error) {res.writeHead(error.code==='ENOENT'?404:500);res.end();}
   });
-  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  await new Promise(resolve=>server.listen(0,host,resolve));
   return {url:'http://127.0.0.1:'+server.address().port,close:()=>new Promise(resolve=>server.close(resolve))};
 }
 export async function browserRun(engine,work) {

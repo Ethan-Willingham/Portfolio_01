@@ -9,7 +9,7 @@ try {
   for(const engine of ['chromium','webkit'])await browserRun(engine,async browser=>{
     const context=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
     const page=await context.newPage(),errors=[];
-    page.on('pageerror',e=>errors.push(e.message));
+    page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});
     page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
     await page.goto(server.url+'/local/chain-reaction-lab.html');
     await page.waitForFunction(()=>window.ChainReactionLab?.ready,null,{timeout:30000});
@@ -19,11 +19,18 @@ try {
     assert.equal(await page.evaluate(()=>ChainReactionLab.settings.look),'paper');
     await page.getByRole('button',{name:'Material board',exact:true}).click();
     assert.equal(await page.evaluate(()=>ChainReactionLab.settings.board),true);
+    await page.getByLabel('Material',{exact:true}).selectOption('hero');
+    await page.getByLabel('Zoom',{exact:true}).selectOption('2');
+    await page.waitForFunction(()=>document.getElementById('reference-photo').naturalWidth>0);
+    const width=await page.evaluate(()=>ChainReactionLab.metrics().heroWidthCSS);
+    assert(width>=294&&width<=306,'Hero close-up must be 300 CSS pixels within 2 percent, got '+width);
+    const controls=await page.locator('#sample-controls button,#sample-controls select,#sample-controls input').evaluateAll(nodes=>nodes.map(n=>({id:n.id,height:n.getBoundingClientRect().height,display:getComputedStyle(n).display,minHeight:getComputedStyle(n).minHeight})));
+    assert(controls.every(c=>c.height>=44),JSON.stringify({engine,controls}));
     await page.getByRole('button',{name:'Material board',exact:true}).click();
     await page.getByRole('button',{name:'Reveal view',exact:true}).click();
     await page.setViewportSize({width:844,height:390});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-    const targets=await page.locator('button').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height));
+    const targets=await page.locator('button,select,input[type=range]').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect()).filter(r=>r.width>0&&r.height>0).map(r=>r.height));
     assert(targets.every(h=>h>=44));
     await page.getByRole('button',{name:'Play',exact:true}).click();
     await page.waitForFunction(()=>ChainReactionLab.metrics().time>.25);

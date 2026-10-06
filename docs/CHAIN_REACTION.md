@@ -85,3 +85,39 @@ No Phase 0 or later gate has been approved merely because the foundation tests p
   images, material scans or third-party photographs are shipped.
 - [Rapier determinism guidance](https://rapier.rs/docs/user_guides/javascript/determinism/)
   explains snapshot parity and deterministic initialization.
+
+## Phase 0 material study
+
+The private chooser now shows each material on a beveled plank and block, a lathed
+disc and round rod, at three zooms and five measured rotation angles. String is
+constructed as three twisted strands. Maple uses separate longitudinal and end-grain
+projection; color, normal and roughness textures come from growth fields. The brass
+sample reflects procedural studio softboxes. Light positions remain fixed while
+samples rotate. The hero marble can be inspected at 12, 80 and 300 CSS pixels.
+
+The material board and photographs live in the ignored research folder. Eight
+original object photographs come from Commons, with exact file/page fingerprints and
+licenses; felt uses a photograph-derived ambientCG albedo surface. These are private
+references and are never shipped as textures or stage art. Camera, materials, film
+effects and physics mass assumptions remain provisional. No look approval is claimed.
+
+The lab uses a 13.039-degree vertical field, approximately a 105 mm lens with a
+24 mm sensor height, and a five-degree elevation. Its reveal demonstration eases
+camera distance in log space; reduced motion cuts directly. The finished stage camera,
+first-visit reveal, depth of field, motion blur, grain and bake/live matching are pending.
+
+`rotation.mjs` creates exact 0, 45, 90, 135 and 180-degree captures at all three zooms,
+plus sheets beside the private source photographs. Set `CHAIN_REACTION_SHARP` to the
+bundled Sharp package. `--only hero` can recapture one sample. These are material tests,
+not stage rotation sheets or a professional-quality gate.
+
+`smoke.mjs` checks both Chrome and WebKit, including reference image loading, the
+300-pixel marble view, visible 44-pixel controls and reduced motion. Native WebKit
+select controls ignored the intended height; the chooser now uses explicit 44-pixel
+select styling. Hidden controls are excluded from tap-target measurements, and all
+visible material controls are checked separately.
+
+`preview.mjs --lan` serves the local chooser for six hours, so an iPhone on the same
+network can inspect it. The default loopback preview lasts one hour. The server serves
+only supported web file types and rejects hidden path components. Stop the owned
+server with SIGINT. No public machine page is created by this preview.
