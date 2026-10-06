@@ -382,6 +382,9 @@
   }
   explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;
   loadLocal('assets/images/earth.jpg','base');loadLocal('assets/images/earth-night-2016.jpg','night');loadLocal('assets/images/moon.jpg','moon');loadStars();
+  function nearestOrbitAngle(angle,current) {
+    return current+Math.atan2(Math.sin(angle-current),Math.cos(angle-current));
+  }
   function frameSun() {
     viewGeneration++;
     var sun=math.solar(instant,tilt),up=new THREE.Vector3(0,1,0),direction=new THREE.Vector3(sun.vector.x,sun.vector.y,sun.vector.z);
@@ -389,7 +392,7 @@
     // The resulting 35-degree separation fits a dusk Earth and the real Sun.
     var axis=up.clone().addScaledVector(direction,-up.dot(direction)).normalize();
     var observer=direction.clone().applyAxisAngle(axis,145*DEG);
-    targetTheta=Math.atan2(observer.x,observer.z);targetPhi=Math.acos(observer.y);targetRadius=4;sunFraming=true;autoSpin=false;
+    targetTheta=nearestOrbitAngle(Math.atan2(observer.x,observer.z),theta);targetPhi=nearestOrbitAngle(Math.acos(observer.y),phi);targetRadius=4;sunFraming=true;autoSpin=false;
   }
   byId('globe-sun').addEventListener('click',frameSun);
   function validLocation(point) {
@@ -397,8 +400,8 @@
   }
   function centerLocation(point,immediate) {
     var desired=Math.PI/2+point.lon*DEG;
-    targetTheta=theta+Math.atan2(Math.sin(desired-theta),Math.cos(desired-theta));
-    targetPhi=Math.max(.001,Math.min(Math.PI-.001,Math.PI/2-point.lat*DEG));targetRadius=4;
+    targetTheta=nearestOrbitAngle(desired,theta);
+    targetPhi=nearestOrbitAngle(Math.PI/2-point.lat*DEG,phi);targetRadius=4;
     sunFraming=false;autoSpin=false;
     if(immediate){theta=targetTheta;phi=targetPhi;radius=targetRadius;aimShift=0;}
   }
@@ -475,7 +478,7 @@
     if(pointers.size>1){var list=Array.from(pointers.values());var distance=Math.hypot(list[0].x-list[1].x,list[0].y-list[1].y);sunFraming=false;if(pinchDistance)targetRadius=Math.max(1.5,Math.min(10,targetRadius+(pinchDistance-distance)*.012));pinchDistance=distance;dragTotal=999;return;}
     dragTotal+=Math.abs(dx)+Math.abs(dy);if(dragTotal>7)sunFraming=false;
     var factor=2*Math.max(radius-1,.1)*Math.tan(camera.fov*DEG/2)/renderer.domElement.clientHeight;
-    targetTheta-=dx*factor;targetPhi=Math.max(.08,Math.min(Math.PI-.08,targetPhi-dy*factor));
+    targetTheta-=dx*factor*(Math.sin(phi)<0?-1:1);targetPhi-=dy*factor;
   });
   function endPointer(event) {
     if(!pointers.has(event.pointerId))return;
@@ -490,8 +493,9 @@
     if(event.key==='Escape'&&wrapper.classList.contains('is-fullscreen'))return;
     if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','Enter','Escape'].indexOf(event.key)<0)return;
     event.preventDefault();viewGeneration++;autoSpin=false;if(event.key!=='Enter'&&event.key!=='Escape')sunFraming=false;
-    if(event.key==='ArrowLeft')targetTheta-=.14;if(event.key==='ArrowRight')targetTheta+=.14;
-    if(event.key==='ArrowUp')targetPhi=Math.max(.08,targetPhi-.14);if(event.key==='ArrowDown')targetPhi=Math.min(Math.PI-.08,targetPhi+.14);
+    var horizontalDirection=Math.sin(phi)<0?-1:1;
+    if(event.key==='ArrowLeft')targetTheta-=.14*horizontalDirection;if(event.key==='ArrowRight')targetTheta+=.14*horizontalDirection;
+    if(event.key==='ArrowUp')targetPhi-=.14;if(event.key==='ArrowDown')targetPhi+=.14;
     if(event.key==='+'||event.key==='=')targetRadius=Math.max(1.5,targetRadius-.25);if(event.key==='-')targetRadius=Math.min(10,targetRadius+.25);
     if(event.key==='Enter'){var rect=renderer.domElement.getBoundingClientRect();setPin(hitAt(rect.left+rect.width/2,rect.top+rect.height/2));}
     if(event.key==='Escape')setPin(null);
@@ -512,6 +516,9 @@
     if(autoSpin)targetTheta-=dt*.022;
     var ease=1-Math.exp(-dt*10);theta+=(targetTheta-theta)*ease;phi+=(targetPhi-phi)*ease;radius+=(targetRadius-radius)*ease;
     camera.position.set(radius*Math.sin(phi)*Math.sin(theta),radius*Math.cos(phi),radius*Math.sin(phi)*Math.cos(theta));
+    // Carry the tangent up vector through both poles instead of asking lookAt
+    // to use world north, which becomes singular there and flips the view.
+    camera.up.set(-Math.cos(phi)*Math.sin(theta),Math.sin(phi),-Math.cos(phi)*Math.cos(theta));
     if(time-lastLabels>1000)updateAstronomy();
     var earthDirection=camera.position.clone().negate().normalize();
     var separation=optics.angleBetween(earthDirection,sunUniform.value);

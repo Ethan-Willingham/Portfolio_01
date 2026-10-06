@@ -66,7 +66,7 @@ Opening the page directly as a local file uses the public raw-GitHub copies of t
 
 Live is the default and keeps advancing. Date, time and tilt controls are always visible, beside the scene on desktop and below it on phones. Date, time or tilt changes leave Live; Live restores the current instant, rolling 12-hour window and actual tilt. Rolling hours use elapsed time through daylight-saving changes; historical dates keep their civil-day controls. Short cloud and aurora labels retain their actual source times. Full timestamps, missing-data explanations, Kp and credits live in the optional Sources section, which stays reachable in fullscreen. The visible time output includes its civil-zone abbreviation. Dragging, zooming, pinning and fullscreen preserve the astronomical state. The pin has four semantic facts: solar time, daylight, sunrise/sunset and aurora. Its text summary updates after mode, source or pin changes rather than every animation frame.
 
-With the globe focused, arrows rotate, plus/minus zoom, Enter pins the centre and Escape leaves fullscreen before clearing a pin. Controls have explicit labels and 44-pixel targets. Native fullscreen has a CSS fallback. Its focus cycle includes source summaries and links. Enlarged text can scroll the rail/dock to reveal each full control without horizontal clipping. Rendering stops in hidden or offscreen tabs and resumes on return. Animation remains enabled for every reader by owner instruction.
+Dragging and arrows can orbit continuously through either pole. The camera's tangent up vector follows the orbit without a pole flip; horizontal input follows the visible orientation when inverted. My location and Sun return to the nearest upright equivalent angles after any number of revolutions. With the globe focused, arrows rotate, plus/minus zoom, Enter pins the centre and Escape leaves fullscreen before clearing a pin. Controls have explicit labels and 44-pixel targets. Native fullscreen has a CSS fallback. Its focus cycle includes source summaries and links. Enlarged text can scroll the rail/dock to reveal each full control without horizontal clipping. Rendering stops in hidden or offscreen tabs and resumes on return. Animation remains enabled for every reader by owner instruction.
 
 The loading screen covers the scene until local Earth, city lights, Moon and star assets are decoded, cloud imagery has settled into a source or labeled fallback, NOAA and archive checks have settled, the compact rolling replay has finished or reached its startup deadline, and the installed cloud texture has fully blended into a rendered frame. Its bar counts weighted completed work (clouds carry five of fourteen units, replay three); it is not a download-byte percentage. Initial time controls are visible and become active when loading finishes. Fullscreen remains usable during loading. Request failures settle instead of leaving the reader waiting for a source that is unavailable.
 
@@ -80,6 +80,8 @@ node --check js/globe-data.js
 node --check js/globe-timeline.js
 NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-location.cjs
 NODE_PATH=/path/to/playwright/node_modules SAFARI_MOBILE=1 node tools/test-globe-location.cjs
+NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-orbit.cjs
+NODE_PATH=/path/to/playwright/node_modules SAFARI_MOBILE=1 node tools/test-globe-orbit.cjs
 node tools/test-globe-clouds.cjs
 node tools/test-globe-replay.cjs
 node tools/test-globe-scrub-queue.cjs
