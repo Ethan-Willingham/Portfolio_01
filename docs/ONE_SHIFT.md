@@ -1,6 +1,6 @@
 # One Shift
 
-The public game at `one-shift.html` is an inventory business game, version 2.0.
+The public game at `one-shift.html` is an inventory business game, version 2.1.
 Start with six stocked pallets and $200. Customer orders arrive through the day.
 Queue shipments, buy replenishment stock, and reinvest in handling equipment,
 rack space, doors, and people. The first screen has one order and no tutorial dialog.
@@ -74,7 +74,9 @@ for existing physical regression fixtures; pass `business` to exercise this game
 - Eight fulfilled orders unlock radios; twenty unlock notebooks. Service quality
   modestly affects later quotes. Fifty fulfilled orders and $3,000 net worth mark
   an established warehouse; the same business continues afterward. The shop offers
-  only implemented capacity and handling upgrades. Faster movement, faster picking,
+  only implemented capacity and handling upgrades. Racks are available at the
+  start. Cart and wrap stand unlock at three orders, walkie and training at five,
+  forklift, upper racks and another door at eight, wrapper and expansion at twelve. Faster movement, faster picking,
   wrapping, a second door, upper racks, expansion, and staff change actual work.
 
 The fixed 20 Hz simulation advances 1.37 game minutes per real second. A business
@@ -90,10 +92,14 @@ Steel blue, concrete gray, charcoal, white markings, and restrained safety orang
 Local Century Supra, Segoe UI, and Commit Mono fonts. Procedural Canvas art and
 crisp display-resolution labels. The stocked racks show their product and quantity.
 Orders, Stock, and Worker share the right board. Floor details open on the left.
-The ordinary beginning screen stays below 65 words on the board.
+The ordinary beginning screen stays below 65 words on the board. Store is the
+only floor toolbar button. Daily totals appear automatically at closing. Later
+equipment and products stay gray until their order milestones; Team needs a
+forklift. There are no Results or Home buttons. Warehouse walls have a plain
+perimeter without roof stripes, detached pipes, vents, or parking outlines.
 
-Right or middle mouse drag pans. Wheel, + and - zoom; Home frames the warehouse
-and visible trucks beside the board. Keyboard buttons work natively. Touch uses
+Right or middle mouse drag pans. Wheel, + and - zoom. The camera frames the
+warehouse automatically at launch and when a fitted view resizes. Keyboard buttons work natively. Touch uses
 the same layout in landscape, with scrolling and 44px targets. Portrait touch
 freezes behind the rotate screen without changing a deliberate manual pause.
 Large-text landscape views keep the first Ship order button above the fold.

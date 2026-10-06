@@ -17,6 +17,7 @@
     notebook:{name:'Notebooks',buy:100,sell:260,unlock:20}
   };
   O.businessUpgrades = ['rack','walkie','cart','wrapStand','wrapper','training','usedLift','upper','door','expansion'];
+  O.businessUpgradeUnlocks = Object.freeze({rack:0,cart:3,wrapStand:3,walkie:5,training:5,usedLift:8,upper:8,door:8,wrapper:12,expansion:12});
   O.business = s => s.mode === 'business' && !!s.commerce;
   O.unlockedGoods = s => Object.keys(O.catalog).filter(id=>s.commerce.completed >= O.catalog[id].unlock);
   O.businessAssets = s => s.cash-s.credit+s.pallets.filter(p=>!['empty','shipped','returned','scrap'].includes(p.place)).reduce((n,p)=>n+(p.costBasis??p.cases*(p.unitCost||0)),0)+Object.entries(s.owned).reduce((n,[id,count])=>n+(O.equipment.find(e=>e.id===id)?.cost||0)*100*count*.7,0);
@@ -149,6 +150,14 @@
     if(c.type==='hire'&&s.cash<7500)return fail('Need $75 cash.');
     if(c.type==='move'&&(c.dest?.level||this.p.get(c.pallet)?.level)){const w=s.workers.find(w=>w.id===(c.worker||1));if(w&&!['player','driver','robot'].includes(w.role))return fail('Choose a forklift operator for upper stock.');}
     if(c.type==='buy'&&!O.businessUpgrades.includes(c.id))return fail('Choose a warehouse upgrade.');
+    if(c.type==='build'&&c.kind==='rack'){
+      const reason=O.purchaseReason(s,'rack');if(reason)return fail(reason);
+      const x=Math.round(c.x),y=Math.round(c.y),placement=this.rackReason(x,y);if(placement)return fail(placement);
+      const cost=O.equipment.find(e=>e.id==='rack').cost;
+      if(!O.spend(s,'Purchases',cost,'Placed rack'))return fail('Need '+O.money(cost));
+      s.map.racks.push({id:this.id(),x,y,levels:s.owned.upper?4:1});s.owned.rack=(s.owned.rack||0)+1;s.map.revision++;
+      return {ok:true};
+    }
     if(c.type==='reject'&&this.t.get(c.truck)?.supplier)return fail('Paid stock stays until you can receive it.');
     return legacy.command.call(this,c);
   };
@@ -252,7 +261,15 @@
   const post=O.post;
   O.post=function(s,category,amount,reason){if(O.business(s)&&['Receiving','Shipping','Storage','Parcel','Cross-dock','Chargebacks'].includes(category))return;if(O.business(s)&&category==='Wrap and labels'){category='Packaging';amount=-.5;reason='Shipping materials';}post(s,category,amount,reason);};
   const purchaseReason=O.purchaseReason;
-  O.purchaseReason=function(s,id){if(!O.business(s))return purchaseReason(s,id);const e=O.equipment.find(e=>e.id===id);if(!e||!O.businessUpgrades.includes(id))return 'Unavailable';if(s.cash<e.cost*100)return 'Need '+O.money(e.cost);return purchaseReason({...s,day:Math.max(s.day,2)},id);};
+  O.purchaseReason=function(s,id){
+    if(!O.business(s))return purchaseReason(s,id);
+    const e=O.equipment.find(e=>e.id===id);if(!e||!O.businessUpgrades.includes(id))return 'Unavailable';
+    const unlock=O.businessUpgradeUnlocks[id];if(!s.owned[id]&&s.commerce.completed<unlock)return unlock+' orders to unlock';
+    // Business stock already has picking racks. Keep the other equipment dependencies intact.
+    const owned=id==='cart'&&s.map.racks.length?{...s.owned,shelves:1}:s.owned;
+    const reason=purchaseReason({...s,day:Math.max(s.day,2),owned,cash:Math.max(s.cash,e.cost*100)},id);
+    if(reason)return reason;if(s.cash<e.cost*100)return 'Need '+O.money(e.cost);return '';
+  };
   const tick=P.tick;
   P.tick=function(advanceClock=true){if(O.business(this.s)&&this.s.minute>=this.s.shiftEnd-.1){for(const o of this.s.commerce.orders.filter(o=>['future','offered','queued'].includes(o.status)))this.cancelBusinessOrder(o,'missed');}tick.call(this,advanceClock);};
   const settle=O.settle;
