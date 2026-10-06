@@ -2,9 +2,9 @@
    explicitly published time. See docs/DAYLIGHT_GLOBE.md for display limits. */
 (function(root,factory){
  'use strict';
- if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'));
- else root.GlobeClouds=factory(root.GlobeData);
-}(typeof globalThis!=='undefined'?globalThis:this,function(data){
+ if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'),require('./globe-math.js'));
+ else root.GlobeClouds=factory(root.GlobeData,root.GlobeMath);
+}(typeof globalThis!=='undefined'?globalThis:this,function(data,math){
  'use strict';
  var HOUR=3600000, NASA='https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', EUM=data.CLOUD_SERVICE, CACHE='daylight-globe-hourly-v1';
  var GROUPS=[
@@ -34,11 +34,11 @@
   if(!value||value.version!==1||!Array.isArray(value.products)||value.products.length!==10)throw new Error('Invalid hourly catalog');
   var checked=timestamp(value.checkedAt),expected=[];GROUPS.forEach(function(g){g.layers.forEach(function(l){expected.push([g.source,l]);});});
   var starts=[],ends=[],products=value.products.map(function(p,i){if(!p||p.source!==expected[i][0]||p.layer!==expected[i][1]||!Array.isArray(p.periods)||!p.periods.length||p.periods.length>4000)throw new Error('Invalid hourly product');
-   var intervals=p.periods.map(function(v){var a=timestamp(v.start),b=timestamp(v.end);if(![600000,900000].includes(v.step)||b<a||(+b-a)%v.step||b-checked>300000)throw new Error('Invalid hourly publication');return {start:a.toISOString(),end:b.toISOString(),step:v.step};});intervals.sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});starts.push(Date.parse(intervals[0].start));ends.push(Date.parse(intervals[intervals.length-1].end));return {source:p.source,layer:p.layer,periods:intervals};});
+   var intervals=p.periods.map(function(v){var a=timestamp(v.start),b=timestamp(v.end);if(![600000,900000].includes(v.step)||b<a||(+b-a)%v.step||b-checked>300000)throw new Error('Invalid hourly publication');return {start:a.toISOString(),end:b.toISOString(),step:v.step};});intervals.sort(function(a,b){return Date.parse(a.start)-Date.parse(b.start);});starts.push(Date.parse(intervals[0].start));if(GROUPS[i].kind==='infrared')ends.push(Date.parse(intervals[intervals.length-1].end));return {source:p.source,layer:p.layer,periods:intervals};});
   var start=new Date(Math.ceil(Math.max.apply(null,starts)/HOUR)*HOUR),end=new Date(Math.floor(Math.min.apply(null,ends)/HOUR)*HOUR);
   if(end<start)throw new Error('No common hourly coverage');var catalog={version:1,products:products,checkedAt:checked.toISOString(),start:start,end:end,step:HOUR,dense:true};if(value.legacy)catalog.legacy=data.parseCloudSnapshot({version:1,source:EUM,layers:data.CLOUD_LAYERS,start:value.legacy.start,end:value.legacy.end,step:value.legacy.step,checkedAt:checked.toISOString()});return catalog;
  }
- function published(catalog,time){return catalog.products.every(function(p){return p.periods.some(function(v){var start=Date.parse(v.start);return time>=start&&time<=Date.parse(v.end)&&(time-start)%v.step===0;});});}
+ function published(catalog,time){return catalog.products.every(function(p,i){return p.periods.some(function(v){var start=Date.parse(v.start);return time>=start&&time<=Date.parse(v.end)&&(time-start)%v.step===0;})||GROUPS[i].kind==='visible'&&math.solarElevation(new Date(time),0,GROUPS[i].longitudes[0])<-60;});}
  function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;var limit=Math.floor(Math.min(t,+catalog.end)/HOUR)*HOUR;for(var k=0;k<6&&limit>=catalog.start;k++,limit-=HOUR)if(published(catalog,limit))return new Date(limit);return null;}
  function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/HOUR)*HOUR);t<end&&t<=catalog.end&&t<=clock;t+=HOUR)if(published(catalog,t))out.push(new Date(t));return out;}
  async function fetchCatalog(options){var xml=await Promise.all([data.fetchText(NASA+'?service=WMS&version=1.3.0&request=GetCapabilities',options),data.fetchText(EUM+'?service=WMS&version=1.3.0&request=GetCapabilities',options)]);return parseCatalog(xml[0],xml[1]);}

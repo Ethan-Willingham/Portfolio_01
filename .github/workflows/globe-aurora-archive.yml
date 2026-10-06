@@ -59,6 +59,7 @@ jobs:
               if [ "$attempt" -eq 3 ]; then
                 break
               fi
+              if [ "$attempt" -eq 1 ]; then sleep 5; else sleep 15; fi
               git fetch origin main
               if ! git rebase origin/main; then
                 git rebase --abort

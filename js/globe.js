@@ -851,6 +851,7 @@
   function updateReplayLabel(){
     var label=byId('globe-replay-status');if(!label)return;
     if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
+    if(recentMode&&photo&&photo.time&&instant-new Date(photo.time)>=3600000){text(label,'Clouds through '+timeFormatter.format(new Date(photo.time))+'.');return;}
     if(!live&&instant>Date.now()+300000){text(label,'Future time: sunlight only.');return;}
     if(loading&&!replayBusy){text(label,'Preparing replay');return;}
     var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(cloudPrepared).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;

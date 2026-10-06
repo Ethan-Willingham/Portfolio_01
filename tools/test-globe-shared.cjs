@@ -5,6 +5,12 @@ let checks=0;function check(name,fn){fn();checks++;console.log('PASS '+name);}
 const now='2026-10-05T19:20:00.000Z',products=C.GROUPS.map(g=>({source:g.source,layer:g.layers[0],periods:[{start:'2026-10-04T00:00:00Z',end:'2026-10-05T18:00:00Z',step:600000}]}));
 const catalog=C.validate({version:1,checkedAt:now,products});
 check('a missing visible feed is allowed only in deep night, while every infrared feed is required',()=>{const blobs=C.GROUPS.map(()=>true);blobs[4]=null;assert(runner.usableSources(blobs,new Date('2026-10-05T00:00:00Z')));assert(!runner.usableSources(blobs,new Date('2026-10-05T12:00:00Z')));blobs[9]=null;assert(!runner.usableSources(blobs,new Date('2026-10-05T00:00:00Z')));});
+check('transient publication errors retry with delays and the same exact branch lease',()=>{const old='a'.repeat(40),next='b'.repeat(40),delays=[],pushes=[];let failures=2;
+ const result=runner.pushSnapshot(next,old,{wait:ms=>delays.push(ms),git:args=>{if(args[0]==='ls-remote')return Buffer.from(old+'\t'+runner.REF);pushes.push(args);if(failures-->0)throw new Error('Internal Server Error');return Buffer.alloc(0);}});
+ assert.equal(result,next);assert.deepEqual(delays,[5000,15000]);assert.equal(pushes.length,3);assert(pushes.every(p=>p[1]==='--force-with-lease='+runner.REF+':'+old));});
+check('a server error after accepting publication recovers without replacing another snapshot',()=>{const old='a'.repeat(40),next='b'.repeat(40);let pushes=0;const invoke=current=>args=>{if(args[0]==='ls-remote')return Buffer.from(current+'\t'+runner.REF);pushes++;throw new Error('Internal Server Error');};
+ assert.equal(runner.pushSnapshot(next,old,{git:invoke(next),wait:()=>assert.fail('Already published')}),next);assert.equal(pushes,1);
+ assert.throws(()=>runner.pushSnapshot(next,old,{git:invoke('c'.repeat(40)),wait:()=>assert.fail('Concurrent snapshot')}),/Server/);assert.equal(pushes,2);});
 (async()=>{
  const bytes=await sharp({create:{width:2048,height:1024,channels:4,background:{r:180,g:180,b:180,alpha:.8}}}).webp({quality:90,alphaQuality:100}).toBuffer(),hash=crypto.createHash('sha256').update(bytes).digest('hex');
  function render(time){const frame={time:time.toISOString(),natural:true},files=new Map();for(const kind of ['visible','infrared']){const file=frame.time.replace(/[-:]/g,'').slice(0,13)+'-'+kind+'-'+hash.slice(0,16)+'.webp';frame[kind]={file,sha256:hash,bytes:bytes.length};files.set(file,bytes);}return {frame,files};}

@@ -4,7 +4,14 @@ let count=0;function check(name,fn){fn();count++;console.log('PASS '+name);}
 const checked='2026-10-05T18:00:00Z';
 function xml(source){return C.GROUPS.filter(g=>g.source===source).map(g=>g.layers.map(l=>'<Layer><Name>'+l+'</Name><Dimension name="time">2026-10-03T00:00:00Z/2026-10-05T17:00:00Z/PT10M</Dimension></Layer>').join('')).join('');}
 const nasa=xml(C.NASA),eum=xml(C.GROUPS[3].source),catalog=C.parseCatalog(nasa,eum);catalog.checkedAt=checked;
-check('hourly replay intersects ten published products and retains their actual cadence',()=>{assert.equal(catalog.products.length,10);assert.equal(catalog.step,3600000);assert.equal(catalog.end.toISOString(),'2026-10-05T17:00:00.000Z');assert.equal(catalog.products[0].periods[0].step,600000);});
+check('hourly replay validates ten products, uses infrared bounds and retains actual cadence',()=>{assert.equal(catalog.products.length,10);assert.equal(catalog.step,3600000);assert.equal(catalog.end.toISOString(),'2026-10-05T17:00:00.000Z');assert.equal(catalog.products[0].periods[0].step,600000);});
+check('a missing European night-colour hour cannot freeze published infrared clouds',()=>{
+ const products=structuredClone(catalog.products);products.forEach(p=>p.periods[0].end='2026-10-05T23:00:00Z');products[4].periods[0].end='2026-10-05T21:50:00Z';
+ const night=C.validate({version:1,products,checkedAt:'2026-10-06T00:00:00Z'});
+ assert.equal(night.end.toISOString(),'2026-10-05T23:00:00.000Z');assert(C.published(night,Date.parse('2026-10-05T22:00:00Z')));assert.equal(C.frameAt(night,'2026-10-05T22:55:00Z','2026-10-06T00:00:00Z').toISOString(),'2026-10-05T22:00:00.000Z');
+ products[4].periods[0].end='2026-10-05T10:00:00Z';const missingDay=C.validate({version:1,products,checkedAt:'2026-10-06T00:00:00Z'});assert(!C.published(missingDay,Date.parse('2026-10-05T12:00:00Z')));
+ night.products[5].periods=[{start:'2026-10-03T00:00:00Z',end:'2026-10-05T21:50:00Z',step:600000}];assert(!C.published(night,Date.parse('2026-10-05T22:00:00Z')));
+});
 check('missing layers cannot borrow time metadata from the following layer',()=>{assert.throws(()=>C.parseCatalog(nasa.replace(/<Dimension[^>]+>[^<]+<\/Dimension>/,''),eum),/times/);});
 check('unsupported cadence, invented products and future publications are rejected',()=>{assert.throws(()=>C.parseCatalog(nasa.replace('PT10M','PT3H'),eum));assert.throws(()=>C.validate({...catalog,products:catalog.products.slice(1)}));assert.throws(()=>C.validate({...catalog,checkedAt:'2026-10-04T00:00:00Z'}));});
 check('source gaps are preserved instead of filling them with another hour',()=>{const g=structuredClone(catalog);g.products[0].periods=[{start:'2026-10-03T00:00:00Z',end:'2026-10-05T15:00:00Z',step:600000},{start:'2026-10-05T17:00:00Z',end:'2026-10-05T17:00:00Z',step:600000}];assert.equal(C.published(g,Date.parse('2026-10-05T16:00:00Z')),false);assert.equal(C.frameAt(g,'2026-10-05T16:55:00Z',checked).toISOString(),'2026-10-05T15:00:00.000Z');assert.equal(C.frames(g,'2026-10-05T16:55:00Z',checked).some(d=>d.getUTCHours()===16),false);});

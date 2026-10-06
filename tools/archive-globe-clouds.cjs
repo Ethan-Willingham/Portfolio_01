@@ -57,6 +57,16 @@ function readPrevious(){
  for(const f of parsed.frames)for(const kind of ['visible','infrared'])files.set(f[kind].file,git(['show',old+':'+f[kind].file]));
  return {old,previous:{manifest,files}};
 }
+function pushSnapshot(commit,old,options={}){
+ const invoke=options.git||git,wait=options.wait||(ms=>Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,ms));
+ for(let attempt=0;attempt<3;attempt++)try{invoke(['push','--force-with-lease='+REF+':'+old,'origin',commit+':'+REF]);return commit;}catch(error){
+  // A server error can arrive after accepting the push. Recover that outcome
+  // before retrying, and never replace a concurrent writer's new snapshot.
+  const current=invoke(['ls-remote','origin',REF]).toString().trim().split(/\s/)[0];
+  if(current===commit)return commit;if(current!==old||attempt===2)throw error;
+  wait(attempt===0?5000:15000);
+ }
+}
 function publish(snapshot,old){
   archive.validate(snapshot.manifest);
   for(const frame of snapshot.manifest.frames)for(const kind of ['visible','infrared']){const asset=frame[kind],bytes=snapshot.files.get(asset.file);if(!bytes||bytes.length!==asset.bytes||digest(bytes)!==asset.sha256||archive.dimensions(bytes).join('/')!==WIDTH+'/'+WIDTH/2)throw new Error('Invalid cloud publication asset');}
@@ -72,7 +82,7 @@ function publish(snapshot,old){
   git(['update-index','--index-info'],{env,input:entries.join('')});const tree=git(['write-tree'],{env}).toString().trim();
   const author={...env,GIT_AUTHOR_NAME:'globe-weather',GIT_AUTHOR_EMAIL:'globe-weather@users.noreply.github.com',GIT_COMMITTER_NAME:'globe-weather',GIT_COMMITTER_EMAIL:'globe-weather@users.noreply.github.com'};
   const commit=git(['commit-tree',tree],{env:author,input:'Refresh rolling cloud snapshot\n'}).toString().trim();
-  git(['push','--force-with-lease='+REF+':'+old,'origin',commit+':'+REF]);return commit;
+  return pushSnapshot(commit,old);
  }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
 async function main(){
@@ -81,5 +91,5 @@ async function main(){
  const commit=result.changed?publish(result,old):old;console.log(JSON.stringify({frames:result.manifest.frames.length,first:result.manifest.frames[0].time,last:result.manifest.frames.at(-1).time,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0),changed:result.changed,commit}));
  if(result.errors.length)process.exitCode=1;
 }
-module.exports={BRANCH,REF,usableSources,renderFrame,collect,readPrevious,publish};
+module.exports={BRANCH,REF,usableSources,renderFrame,collect,readPrevious,pushSnapshot,publish};
 if(require.main===module)main().catch(error=>{console.error(error.message);process.exitCode=1;});
