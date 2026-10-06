@@ -4,7 +4,7 @@
   'use strict';
   var container = document.getElementById('globe-container');
   if (!container) return;
-  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds, shared=window.GlobeArchive;
+  var THREE = window.THREE, math = window.GlobeMath, data = window.GlobeData, stars = window.GlobeStars, optics = window.GlobeOptics, timeline=window.GlobeTimeline, clouds=window.GlobeClouds, shared=window.GlobeArchive, replay=window.GlobeReplay;
   var byId = function (id) { return document.getElementById(id); };
   var wrapper = document.querySelector('.globe-wrapper');
   var status = byId('globe-status'), clock = byId('globe-clock'), dataLine = byId('globe-data');
@@ -19,10 +19,15 @@
   var loadingLabel = byId('globe-loading-label'), loadingProgress = byId('globe-loading-progress');
   function settleLoad(kind) {
     loaded[kind]=true;
+    updateLoadingProgress();
+    text(loadingLabel,!loaded.clouds?'Loading clouds':!loaded.stars?'Loading stars':!loaded.replay?'Preparing replay':'Preparing the view');
+  }
+  function updateLoadingProgress(){
+    if(!loading)return;
     var value=Object.keys(loaded).reduce(function(total,key){return total+loadWeights[key];},0);
+    if(!loaded.replay&&replayClouds&&replayClouds.length)value+=loadWeights.replay*replayClouds.filter(cloudPrepared).length/replayClouds.length;
     loadingProgress.value=value;
     loadingProgress.setAttribute('aria-valuetext',Math.round(value/14*100)+'% of preparation complete');
-    text(loadingLabel,!loaded.clouds?'Loading clouds':!loaded.stars?'Loading stars':!loaded.replay?'Preparing replay':'Preparing the view');
   }
   function finishLoading() {
     if(!loading||fetchingPhoto||replayBusy||Object.keys(loadWeights).some(function(key){return !loaded[key];})||photo&&photoMix<1)return;
@@ -43,6 +48,7 @@
   var detailController=null,detailKey='',detailChecked=0;
   var cloudMemo=null,installedCloud=null,cloudPending=new Map(),archivePending=new Map();
   var compressedClouds=null,preparedClouds=new Set(),decodingReplay=false,startupReplay=null;
+  var scrubFrame=null,scrubUntil=0,replayMemo=null,replayPending=new Map(),replayPreparing=null,replayTextures=new Map(),replayTarget=null,replayBlendStarted=0,replayFadeStarted=0,replayBakeIndex=0;
   var replayController=null,replayKey='',replayBusy=false,replayChecked=0,replayClouds=[],replayAurora=[],replayFailed=new Set(),sessionFrames=[];
   var replayPendingCloud=false,replayPendingAurora=false;
   var archiveFrames=[],archiveChecked=0,archiveBusy=false,archiveController=null,archiveGeneration=0,archiveCache=new Map();
@@ -116,7 +122,7 @@
     text(dataLine,parts.join(' / '));
     byId('globe-gap-key').hidden=!photo||hypothetical;
     text(byId('globe-gap-key'),photo&&photo.time?(photo.natural?'Visible imagery and infrared overlay; reference map where coverage ends.':'Infrared brightness over reference terrain; gaps show the reference map.'):'Reference map where daily photo coverage ends.');
-    text(byId('globe-weather-basis'),(hourlyClouds()?'Cloud snapshots every 15 minutes, using published observations at or before each time. Infrared fills delayed colour channels. ':'Older cloud images every 3 hours. ')+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
+    text(byId('globe-weather-basis'),(hourlyClouds()?'Cloud snapshots every 15 minutes, using published observations at or before each time. Infrared fills delayed colour channels. Short crossfades connect real observations. ':'Older cloud images every 3 hours. ')+(archiveFrames.length?'Saved aurora from '+forecastFormatter.format(archiveFrames[0].forecast)+'.':'Aurora history covers saved forecasts only.')+' Missing dates stay unavailable.');
     returnButton.setAttribute('aria-pressed',String(live));returnButton.title=live?'Following the current time':'Return to the current time';
     byId('globe-tilt-note').hidden=!hypothetical;
     wrapper.dataset.mode=live?'live':'explore';
@@ -158,7 +164,7 @@
     var fields = dateInput.value.split('-').map(Number), minutes = Number(hourInput.value);
     var chosen = recentMode?new Date(+recentEnd-(720-minutes)*60000):new Date(fields[0],fields[1]-1,fields[2],Math.floor(minutes/60),minutes%60);
     if (!Number.isFinite(chosen.getTime())) return;
-    instant = chosen; live = false; syncInputs(); updateAstronomy(); updateLabels(); announce();
+    instant = chosen; live = false; syncInputs();
     scheduleTimeData();
   }
   function scheduleTimeData() {
@@ -167,9 +173,9 @@
     if(detailController){detailController.abort();detailController=null;}
     if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
-    applyCachedTime();
-    updateAstronomy();updateLabels();
-    timeEditTimer=setTimeout(function(){timeEditTimer=null;refreshData();},250);
+    scrubUntil=performance.now()+350;
+    if(scrubFrame===null)scrubFrame=requestAnimationFrame(function(){scrubFrame=null;applyCachedTime();updateAstronomy();updateLabels();announce();});
+    timeEditTimer=setTimeout(function(){timeEditTimer=null;refreshData();},350);
   }
   dateInput.addEventListener('change',function(){recentMode=false;hourInput.max='1439';hourInput.value=instant.getHours()*60+instant.getMinutes();editTime();}); hourInput.addEventListener('input',editTime);
   document.querySelectorAll('.tilt-btn').forEach(function (button) {
@@ -183,6 +189,7 @@
     });
   });
   returnButton.addEventListener('click',function () {
+    if(scrubFrame!==null){cancelAnimationFrame(scrubFrame);scrubFrame=null;}scrubUntil=0;
     clearTimeout(timeEditTimer);timeEditTimer=null;if(cloudController)cloudController.abort();if(detailController){detailController.abort();detailController=null;}if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
     live = true; instant = new Date();recentMode=true;recentEnd=timeline.recentBounds(instant).end; tilt = undefined; pinDayKey = '';expireLivePhoto();if(liveForecast)setForecast(liveForecast);else forecast=null;
@@ -201,7 +208,7 @@
     text(byId('globe-keyboard'),'The interactive globe is unavailable. Source links are below.');
     text(summary,message+' '+dataLine.textContent);
   }
-  if (!THREE || !math || !data || !stars || !optics || !timeline || !clouds) {
+  if (!THREE || !math || !data || !stars || !optics || !timeline || !clouds || !replay) {
     unavailable('The interactive globe could not load.'); return;
   }
   var renderer;
@@ -223,10 +230,13 @@
   textureWidth = Math.pow(2,Math.floor(Math.log2(textureWidth)));
   var cloudWidth=Math.min(textureWidth,2048);
   compressedClouds=timeline.memoryCache((mobile?48:96)*1024*1024,{prefer:function(next,old){return next.width>=old.width;}});
-  cloudMemo=timeline.memoryCache((mobile?64:96)*1024*1024,{
+  cloudMemo=timeline.memoryCache((mobile?32:80)*1024*1024,{
     prefer:function(next,old){return next.photo.width>=old.photo.width&&(!old.photo.natural||next.photo.natural);},
     dispose:function(record){record.memoized=false;if(record!==installedCloud)record.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
   });
+  var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
+  replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-30',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -234,9 +244,12 @@
   }
   var baseTexture = solidTexture(60,90,87), nightTexture = solidTexture(1,2,1), satelliteTexture = solidTexture(60,90,87), infraredTexture=solidTexture(0,0,0), moonTexture = solidTexture(130,128,117);
   var photoSunUniform={value:new THREE.Vector3(1,0,0)};
+  var replayUniforms={replayFrom:{value:infraredTexture},replayTo:{value:infraredTexture},replayFromSun:{value:new THREE.Vector3(1,0,0)},replayToSun:{value:new THREE.Vector3(1,0,0)},replayFromBaked:{value:0},replayBlend:{value:1},replayEnabled:{value:0}};
+  var replayLayer='vec2 replayLayer(vec4 c,vec3 observedSun,float baked,vec3 normal){float useVisible=smoothstep(.10,.25,dot(normal,observedSun))*c.g;return mix(vec2(mix(c.b,c.r,useVisible)*mix(c.a,c.g,useVisible),mix(c.b*c.a,c.r*c.g,useVisible)),c.rg,baked);}';
   var vertex = 'varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld; void main(){ vUv=uv; vNormal=normalize((modelMatrix*vec4(normal,0.0)).xyz); vWorld=(modelMatrix*vec4(position,1.0)).xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
-  var earthMaterial = new THREE.ShaderMaterial({uniforms:{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0},denseEnabled:{value:0}},vertexShader:vertex,fragmentShader:[
+  var earthMaterial = new THREE.ShaderMaterial({uniforms:Object.assign({},replayUniforms,{baseMap:{value:baseTexture},nightMap:{value:nightTexture},photoMap:{value:satelliteTexture},infraredMap:{value:infraredTexture},sunDir:sunUniform,photoSunDir:photoSunUniform,photoMix:{value:0},photoEnabled:{value:0},thermalEnabled:{value:0},naturalEnabled:{value:0},denseEnabled:{value:0}}),vertexShader:vertex,fragmentShader:[
     'uniform sampler2D baseMap, nightMap, photoMap,infraredMap; uniform vec3 sunDir,photoSunDir; uniform float photoMix,photoEnabled,thermalEnabled,naturalEnabled,denseEnabled; varying vec2 vUv; varying vec3 vNormal;',
+    'uniform sampler2D replayFrom,replayTo; uniform vec3 replayFromSun,replayToSun; uniform float replayFromBaked,replayBlend,replayEnabled;',replayLayer,
     'void main(){ vec3 base=texture2D(baseMap,vUv).rgb; vec4 photo=texture2D(photoMap,vUv); vec4 infrared=texture2D(infraredMap,vUv);',
     // Natural RGB puts near infrared in red: ice clouds and snow become cyan.
     // Neutralize that bright cyan only, retaining observed structure and land.
@@ -256,15 +269,23 @@
     // entire surface. This is a display curve, not measured cloud opacity.
     'vec4 thermal=vec4(mix(base,vec3(1.0),smoothstep(.35,.90,infrared.r)),infrared.a);',
     'vec4 shot=mix(photo,mix(thermal,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
+    'vec2 replayCover=vec2(0.0);if(replayEnabled>0.0){replayCover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromSun,replayFromBaked,normalize(vNormal)),replayLayer(texture2D(replayTo,vUv),replayToSun,0.0,normalize(vNormal)),replayBlend);} day=mix(day,mix(base,vec3(1.0),replayCover.x*photoMix*photoEnabled),replayEnabled);',
     'float light=dot(normalize(vNormal),sunDir); float daylight=smoothstep(-.10,.04,light);',
     'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
     // Use the source-time visible/thermal cloud structure on both hemispheres.
     // Night clouds dim the historical lights without completely hiding them.
     'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a;',
     'float cloudCover=mix(visibleCloud,mix(thermalCloud,visibleCloud,shotDay),thermalEnabled)*photoMix*photoEnabled;',
+    'cloudCover=mix(cloudCover,replayCover.y*photoMix*photoEnabled,replayEnabled);',
     'night=night*(1.0-cloudCover*.65)+vec3(.085,.10,.115)*cloudCover;',
     'gl_FragColor=vec4(mix(night,litDay,daylight),1.0); }'
   ].join('\n')});
+  var replayBakeScene=new THREE.Scene(),replayBakeCamera=new THREE.Camera();
+  var replayBakeMaterial=new THREE.ShaderMaterial({uniforms:replayUniforms,depthTest:false,depthWrite:false,
+    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}',
+    fragmentShader:'varying vec2 vUv;uniform sampler2D replayFrom,replayTo;uniform vec3 replayFromSun,replayToSun;uniform float replayFromBaked,replayBlend;'+replayLayer+'void main(){float lat=(vUv.y-.5)*3.14159265359,lon=vUv.x*6.28318530718;vec3 normal=vec3(-cos(lon)*cos(lat),sin(lat),sin(lon)*cos(lat));vec2 cover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromSun,replayFromBaked,normal),replayLayer(texture2D(replayTo,vUv),replayToSun,0.0,normal),replayBlend);gl_FragColor=vec4(cover,0.0,1.0);}'});
+  replayBakeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),replayBakeMaterial));
+  var replayBakes=[0,1].map(function(){var target=new THREE.WebGLRenderTarget(replayWidth,replayWidth/2,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false,stencilBuffer:false});target.texture.wrapS=THREE.RepeatWrapping;return target;});
   var earth = new THREE.Mesh(new THREE.SphereGeometry(1,128,96),earthMaterial); scene.add(earth);
   var moonMaterial = new THREE.ShaderMaterial({side:THREE.DoubleSide,uniforms:{moonMap:{value:moonTexture},sunDir:moonSunUniform},vertexShader:vertex,fragmentShader:'uniform sampler2D moonMap; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vNormal; void main(){ float light=max(0.0,dot(normalize(vNormal),sunDir)); gl_FragColor=vec4(texture2D(moonMap,vUv).rgb*(.025+light*.98),1.0); }'});
   var moon = new THREE.Mesh(new THREE.SphereGeometry(.273,64,48),moonMaterial); scene.add(moon);
@@ -318,10 +339,12 @@
     var context=canvas.getContext('2d'),image=context.getImageData(0,0,canvas.width,canvas.height);
     image.data.set(data.featherCoverage(image.data,canvas.width));context.putImageData(image,0,0);
   }
-  async function decodeBlob(blob,width) {
+  async function decodeBlob(blob,width,signal) {
     var bitmap;
     try {
+      if(signal&&signal.aborted){var before=new Error('Image decode aborted');before.name='AbortError';throw before;}
       bitmap = await createImageBitmap(blob);
+      if(signal&&signal.aborted){var after=new Error('Image decode aborted');after.name='AbortError';throw after;}
       var canvas=document.createElement('canvas');
       var ratio=Math.min(1,width/bitmap.width,textureWidth/bitmap.height);
       canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));
@@ -514,7 +537,7 @@
     if(lunarState){var moonLight=math.moonDisplayLight(lunarState,camera.position,moonDisplayDistance);moonSunUniform.value.set(moonLight.x,moonLight.y,moonLight.z);}
     photoMix=Math.min(1,photoMix+dt*.7);earthMaterial.uniforms.photoMix.value=photo?photoMix:0;
     auroraMeshes.forEach(function (mesh) {mesh.material.uniforms.tick.value=time/1000;});
-    renderer.render(scene,camera);finishLoading();frameRequest=requestAnimationFrame(frame);
+    advanceReplay(time);renderer.render(scene,camera);finishLoading();frameRequest=requestAnimationFrame(frame);
     upgradePhotoDetail();
   }
   function renderingVisible() {return !document.hidden&&(inView||wrapper.classList.contains('is-fullscreen'));}
@@ -575,7 +598,7 @@
           if(generation!==photoGeneration){canvases.forEach(function(canvas){canvas.width=canvas.height=1;});return;}
           var texture=configureTexture(new THREE.CanvasTexture(primary));satelliteTexture.dispose();satelliteTexture=texture;earthMaterial.uniforms.photoMap.value=texture;
           earthMaterial.uniforms.thermalEnabled.value=0;
-          installedCloud=null;photo={date:day,coverage:composite.coverage,width:primary.width};photoMix=loading?0:1;wrapper.dataset.photo='ready';
+          installedCloud=null;replayUniforms.replayEnabled.value=0;replayTarget=null;photo={date:day,coverage:composite.coverage,width:primary.width};photoMix=loading?0:1;wrapper.dataset.photo='ready';
           canvases.slice(1).forEach(function(canvas){canvas.width=canvas.height=1;});updateLabels();announce();break;
         } catch(error) {
           if(error.name==='AbortError')return;
@@ -622,7 +645,7 @@
       var stamp=cloudStamp();
       if(!stamp||live&&new Date()-stamp>5*3600000)throw new Error('Dated cloud imagery unavailable');
       if(loading&&!startupReplay&&hourlyClouds())startupReplay=warmDayTimeline(true);
-      if(photo&&photo.time===stamp.toISOString())return;
+      if(photo&&photo.time===stamp.toISOString()&&!replayUniforms.replayEnabled.value)return;
       var cached=cloudMemo.get(stamp.toISOString());
       if(cached){installCloudRecord(cached,generation,signal,false);return;}
       if(hourlyClouds()){var dense=await requestCloudRecord(stamp,cloudWidth,signal,14000,offline);installCloudRecord(dense,generation,signal,false);return;}
@@ -644,7 +667,7 @@
         high.then(function(sharper){installCloudRecord(sharper,generation,signal,true);}).catch(function(){}).finally(function(){if(detailController===promotion)detailController=null;});
       }
     }catch(error){
-      if(error.name!=='AbortError'&&generation===photoGeneration){cloudFailure=error.message||'primary imagery unavailable';await refreshDailyPhoto(generation,signal);}
+      if(error.name!=='AbortError'&&generation===photoGeneration){cloudFailure=error.message||'primary imagery unavailable';var retained=cloudStamp();if(!(replayUniforms.replayEnabled.value&&photo&&retained&&photo.time===retained.toISOString()))await refreshDailyPhoto(generation,signal);}
     }finally{
       clearTimeout(deadline);
       if(generation===photoGeneration){
@@ -661,11 +684,11 @@
     if(result.dense)return decodeDenseCloudRecord(result,stamp,signal);
     var canvases=[],installed=false;
     try {
-      var infrared=await decodeBlob(result.infrared,result.width);canvases.push(infrared);
+      var infrared=await decodeBlob(result.infrared,result.width,signal);canvases.push(infrared);
       var pixels=infrared.getContext('2d').getImageData(0,0,infrared.width,infrared.height).data,valid=0;
       for(var i=3;i<pixels.length;i+=4)if(pixels[i]===255)valid++;
       if(valid/(pixels.length/4)<.15)throw new Error('Cloud image has no useful coverage');
-      var natural=result.natural?await decodeBlob(result.natural,result.width):infrared;
+      var natural=result.natural?await decodeBlob(result.natural,result.width,signal):infrared;
       if(natural!==infrared)canvases.push(natural);
       if(signal.aborted){var aborted=new Error('Cloud decode aborted');aborted.name='AbortError';throw aborted;}
       softenImageCoverage(infrared);if(natural!==infrared)softenImageCoverage(natural);
@@ -696,7 +719,7 @@
   async function decodeSharedCloudRecord(result,stamp,signal){
     var canvases=[],memoized=false;
     try{
-      for(var i=0;i<2;i++){canvases.push(await decodeBlob(result.blobs[i],result.width));if(signal.aborted){var e=new Error('Cloud decode aborted');e.name='AbortError';throw e;}}
+      for(var i=0;i<2;i++){canvases.push(await decodeBlob(result.blobs[i],result.width,signal));if(signal.aborted){var e=new Error('Cloud decode aborted');e.name='AbortError';throw e;}}
       var pixels=canvases[1].getContext('2d').getImageData(0,0,result.width,result.width/2).data,valid=0;for(var p=3;p<pixels.length;p+=4)if(pixels[p]>200)valid++;
       if(valid/(pixels.length/4)<.15)throw new Error('Archived image has no useful coverage');
       var record={photo:{date:data.utcDate(stamp),time:stamp.toISOString(),sourceTimes:result.sourceTimes,width:result.width,coverage:valid/(pixels.length/4),source:'NASA / EUMETSAT',natural:result.natural,dense:true,shared:true},canvases:canvases,natural:canvases[0],infrared:canvases[1],memoized:true};
@@ -708,7 +731,7 @@
     try{
       for(var index=0;index<clouds.GROUPS.length;index++){
         if(!result.blobs[index]){sourcePixels.push(null);continue;}
-        var canvas=await decodeBlob(result.blobs[index],result.width);
+        var canvas=await decodeBlob(result.blobs[index],result.width,signal);
         var context=canvas.getContext('2d'),pixels=context.getImageData(0,0,canvas.width,canvas.height);
         canvas.width=canvas.height=1;
         if(result.blobs[index].type==='image/jpeg')for(var blank=0;blank<pixels.data.length;blank+=4)if(Math.max(pixels.data[blank],pixels.data[blank+1],pixels.data[blank+2])<8)pixels.data[blank+3]=0;
@@ -734,9 +757,56 @@
     decodingReplay=true;var controller=new AbortController();
     decodeCloudRecord(record,stamp,controller.signal).then(function(value){var current=cloudStamp();if(tilt===undefined&&current&&+current===+stamp)installCloudRecord(value,photoGeneration,null,false);}).catch(function(){}).finally(function(){decodingReplay=false;var current=cloudStamp();if(current&&+current!==+stamp)decodeCachedSelection();});
   }
+  async function prepareReplayRecord(stamp,priority){
+    var key=stamp.toISOString(),cached=replayMemo.get(key);if(cached)return cached;
+    if(!replayPending.has(key)){
+      var controller=new AbortController(),task=(async function(){
+        var result=await requestCloudBytes(stamp,cloudWidth,controller.signal,14000,navigator.onLine===false),packed;
+        packed=await replayPreparing.prepare(result.blobs,replayWidth,result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,task.priority,key);
+        var record={photo:{date:data.utcDate(stamp),time:key,sourceTimes:result.sourceTimes,width:result.width,coverage:packed.coverage,source:'NASA / EUMETSAT',natural:result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,dense:true,shared:!!result.shared},width:packed.width,pixels:packed.pixels};
+        return replayMemo.put(key,record,packed.pixels.byteLength);
+      }());task.priority=priority||0;replayPending.set(key,task);task.finally(function(){if(replayPending.get(key)===task)replayPending.delete(key);}).catch(function(){});
+    }
+    if(priority){replayPending.get(key).priority=Math.max(replayPending.get(key).priority,priority);replayPreparing.boost(key,priority);}
+    return replayPending.get(key);
+  }
+  function replayTexture(record){
+    var key=record.photo.time,texture=replayTextures.get(key);
+    if(texture)replayTextures.delete(key);
+    else{texture=new THREE.DataTexture(record.pixels,record.width,record.width/2,THREE.RGBAFormat);texture.flipY=true;texture.generateMipmaps=renderer.capabilities.isWebGL2||!(record.width&(record.width-1));texture.wrapS=texture.generateMipmaps?THREE.RepeatWrapping:THREE.ClampToEdgeWrapping;texture.minFilter=texture.generateMipmaps?THREE.LinearMipmapLinearFilter:THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;renderer.initTexture(texture);}
+    replayTextures.set(key,texture);
+    for(var entry of replayTextures){if(replayTextures.size<=6)break;if(entry[1]!==replayUniforms.replayFrom.value&&entry[1]!==replayUniforms.replayTo.value&&entry[1]!==texture){entry[1].dispose();replayTextures.delete(entry[0]);}}
+    return texture;
+  }
+  function advanceReplay(time){
+    if(!replayUniforms.replayEnabled.value)return;
+    var t=Math.max(0,Math.min(1,(time-replayBlendStarted)/120));replayUniforms.replayBlend.value=t*t*(3-2*t);
+    if(replayFadeStarted&&time>=scrubUntil){var fade=Math.min(1,(time-replayFadeStarted)/220);replayUniforms.replayEnabled.value=1-fade;}
+  }
+  function installReplayRecord(record){
+    if(!record||tilt!==undefined||!hourlyClouds())return;
+    var stamp=cloudStamp();if(!stamp||record.photo.time!==stamp.toISOString())return;
+    if(performance.now()>=scrubUntil&&installedCloud&&installedCloud.photo.time===record.photo.time)return;
+    if(photo&&photo.time===record.photo.time&&!replayUniforms.replayEnabled.value)return;
+    if(replayTarget===record&&replayUniforms.replayEnabled.value){replayFadeStarted=0;replayUniforms.replayEnabled.value=1;return;}
+    var time=performance.now(),old=replayTarget||photo&&replayMemo.get(photo.time),texture;
+    if(!replayUniforms.replayEnabled.value&&old){texture=replayTexture(old);var oldSun=math.solar(new Date(old.photo.time));replayUniforms.replayFrom.value=replayUniforms.replayTo.value=texture;replayUniforms.replayFromSun.value.set(oldSun.vector.x,oldSun.vector.y,oldSun.vector.z);replayUniforms.replayToSun.value.copy(replayUniforms.replayFromSun.value);replayUniforms.replayFromBaked.value=0;replayUniforms.replayBlend.value=1;}
+    if(old){
+      advanceReplay(time);var target=replayBakes[replayBakeIndex++%2],prior=renderer.getRenderTarget();renderer.setRenderTarget(target);renderer.render(replayBakeScene,replayBakeCamera);renderer.setRenderTarget(prior);replayUniforms.replayFrom.value=target.texture;replayUniforms.replayFromBaked.value=1;
+    }
+    texture=replayTexture(record);var sun=math.solar(new Date(record.photo.time));replayUniforms.replayTo.value=texture;replayUniforms.replayToSun.value.set(sun.vector.x,sun.vector.y,sun.vector.z);
+    if(!old){replayUniforms.replayFrom.value=texture;replayUniforms.replayFromSun.value.copy(replayUniforms.replayToSun.value);replayUniforms.replayFromBaked.value=0;}
+    replayBlendStarted=time;replayFadeStarted=0;replayUniforms.replayBlend.value=old?0:1;replayUniforms.replayEnabled.value=1;
+    replayTarget=record;replayMemo.pin(record.photo.time);photo=record.photo;photoMix=1;replayPendingCloud=false;wrapper.dataset.photo='ready';
+  }
+  function selectReplayRecord(stamp){
+    var record=replayMemo.get(stamp.toISOString());if(record){installReplayRecord(record);return;}
+    replayPendingCloud=true;prepareReplayRecord(stamp,100).then(function(value){var selected=cloudStamp();if(selected&&+selected===+stamp&&!live){installReplayRecord(value);updateAstronomy();updateLabels();}}).catch(function(){});
+  }
   function installCloudRecord(record,generation,signal,upgrade) {
     if(!record||generation!==photoGeneration||signal&&signal.aborted||upgrade&&(!photo||photo.time!==record.photo.time||photo.width>record.photo.width||photo.width===record.photo.width&&(photo.natural||!record.photo.natural)||photo.natural&&!record.photo.natural))return;
     if(installedCloud===record&&photo===record.photo)return;
+    if(!loading&&performance.now()<scrubUntil&&hourlyClouds())return;
     var previous=installedCloud,oldCanvas=satelliteTexture.image;
     satelliteTexture.dispose();infraredTexture.dispose();installedCloud=record;
     satelliteTexture=configureTexture(new THREE.CanvasTexture(record.natural));infraredTexture=configureTexture(new THREE.CanvasTexture(record.infrared));
@@ -745,6 +815,8 @@
     earthMaterial.uniforms.denseEnabled.value=record.photo.dense?1:0;
     var sourceSun=math.solar(new Date(record.photo.time));photoSunUniform.value.set(sourceSun.vector.x,sourceSun.vector.y,sourceSun.vector.z);
     photo=record.photo;cloudMemo.pin(photo.time);compressedClouds.pin(photo.time+'/'+cloudWidth);photoMix=loading&&!upgrade?0:1;cloudFailure='';replayPendingCloud=false;wrapper.dataset.photo='ready';
+    if(replayUniforms.replayEnabled.value){if(renderingVisible())replayFadeStarted=performance.now();else replayUniforms.replayEnabled.value=0;}
+    if(record.photo.dense&&!replayMemo.has(photo.time))prepareReplayRecord(new Date(photo.time),100).catch(function(){});
     if(previous&&!previous.memoized)previous.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});
     else if(!previous&&oldCanvas&&oldCanvas.getContext)oldCanvas.width=oldCanvas.height=1;
     updateAstronomy();updateLabels();announce();
@@ -760,7 +832,7 @@
     return timeline.waitFor(cloudPending.get(key).promise,signal);
   }
   async function upgradePhotoDetail() {
-    if(loading||timeEditTimer!==null||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
+    if(loading||performance.now()<scrubUntil||replayUniforms.replayEnabled.value>0||timeEditTimer!==null||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
     var desired=Math.max(photo.width,Math.min(textureWidth,radius<2.8?4096:2048));
     if(photo.width>=desired&&photo.natural)return;
     var key=photo.time+'/'+desired+'/'+photoGeneration;
@@ -843,12 +915,13 @@
   }
   function applyCachedTime(){
     replayPendingCloud=replayPendingAurora=false;
-    if(tilt!==undefined||!live&&instant>Date.now()+300000){photo=null;forecast=null;return;}
+    if(tilt!==undefined||!live&&instant>Date.now()+300000){photo=null;forecast=null;replayUniforms.replayEnabled.value=0;replayTarget=null;return;}
     var stamp=cloudStamp();
     if(live&&stamp&&Date.now()-stamp>5*3600000)stamp=null;
     var record=stamp&&cloudMemo&&cloudMemo.get(stamp.toISOString());
-    if(record)installCloudRecord(record,photoGeneration,null,false);
-    else if(!stamp)photo=null;
+    if(stamp&&!live&&hourlyClouds()&&(performance.now()<scrubUntil||replayUniforms.replayEnabled.value))selectReplayRecord(stamp);
+    else if(record)installCloudRecord(record,photoGeneration,null,false);
+    else if(!stamp){photo=null;replayUniforms.replayEnabled.value=0;replayTarget=null;}
     else if(!photo||photo.time!==stamp.toISOString()){
       // Keep the installed, pinned textures until both replacement maps are
       // decoded. Their labels retain the actual source time during the wait.
@@ -860,6 +933,7 @@
     if(value)setForecast(value);else{forecast=null;replayPendingAurora=!!entry;}
   }
   function updateReplayLabel(){
+    updateLoadingProgress();
     var label=byId('globe-replay-status');if(!label)return;
     if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
     if(replayPendingCloud){text(label,'Loading clouds');return;}
@@ -869,7 +943,7 @@
     var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(cloudPrepared).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;
     text(label,replayBusy&&ready<total?'Preparing replay '+ready+'/'+total:!replayClouds.length&&!replayAurora.length?'Weather history unavailable.':replayFailed.size?'Replay ready, with data gaps.':(hourlyClouds()?'Clouds every 15m. ':'Clouds every 3h. ')+'Recorded aurora.');
   }
-  function cloudPrepared(t){return cloudMemo&&cloudMemo.has(t.toISOString())||compressedClouds&&compressedClouds.has(t.toISOString()+'/'+cloudWidth);}
+  function cloudPrepared(t){return hourlyClouds()?replayMemo&&replayMemo.has(t.toISOString()):cloudMemo&&cloudMemo.has(t.toISOString())||compressedClouds&&compressedClouds.has(t.toISOString()+'/'+cloudWidth);}
   function warmDayTimeline(initial){
     if(loading&&!initial||tilt!==undefined||navigator.onLine===false)return;
     var day=recentMode?timeline.recentBounds(recentEnd):timeline.dayBounds(instant),frames=allAuroraFrames(),key=(initial?'opening/':'full/')+(recentMode?'recent/':'day/')+Math.floor(+day.start/3600000)+'/'+(cloudCatalog&&+cloudCatalog.end)+'/'+frames.length+'/'+(frames.length&&frames[frames.length-1].file);
@@ -877,16 +951,16 @@
     if(replayController)replayController.abort();replayController=new AbortController();var controller=replayController,signal=controller.signal;
     replayKey=key;replayChecked=Date.now();replayBusy=true;replayFailed=new Set();
     replayClouds=recentMode?timeline.rangeFrames(cloudCatalog&&cloudCatalog.dense&&!hourlyClouds()?cloudCatalog.legacy:cloudCatalog,day,new Date(),hourlyClouds()?clouds.STEP:3*3600000,hourlyClouds()?clouds.published:null):hourlyClouds()?clouds.frames(cloudCatalog,instant,new Date()):timeline.cloudFrames(cloudCatalog&&cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());
-    if(recentMode&&sharedManifest&&sharedManifest.processing>=clouds.PROCESSING&&sharedManifest.frames[sharedManifest.frames.length-1].time>=Date.now()-5*3600000)replayClouds=sharedManifest.frames.filter(function(f){return f.time>=Math.floor(+day.start/3600000)*3600000&&f.time<=day.end;}).map(function(f){return new Date(f.time);});
+    if(recentMode&&sharedManifest&&sharedManifest.processing>=clouds.PROCESSING&&sharedManifest.frames[sharedManifest.frames.length-1].time>=Date.now()-5*3600000)replayClouds=sharedManifest.frames.filter(function(f){return f.time>=Math.floor(+day.start/clouds.STEP)*clouds.STEP&&f.time<=day.end;}).map(function(f){return new Date(f.time);});
     replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-90*60000&&entry.forecast<+day.end+90*60000&&entry.observation<=Date.now();});
     cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
+    replayMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
     var keepPrepared=new Set(replayClouds.map(function(t){return t.toISOString()+'/'+cloudWidth;}));preparedClouds=new Set(Array.from(preparedClouds).filter(function(k){return keepPrepared.has(k);}));
     compressedClouds.retain(replayClouds.map(function(t){return t.toISOString()+'/'+cloudWidth;}));
-    var activeStamp=cloudStamp(),openingClouds=initial&&hourlyClouds()?replayClouds.filter(function(t){return +t%3600000===0||activeStamp&&Math.abs(t-activeStamp)<=clouds.STEP;}):replayClouds;
-    var cloudQueue=timeline.order(openingClouds,instant).filter(function(t){return !cloudPrepared(t);}),auroraQueue=replayAurora.filter(function(e){return !archiveCache.has(e.file);});
-    // Preload compressed hourly maps at one resolution. Decoded frames remain
-    // bounded in memory; only the active pair uses GPU textures.
-    async function cloudWorker(){while(cloudQueue.length&&!signal.aborted){cloudQueue=timeline.order(cloudQueue,instant);var stamp=cloudQueue.shift();try{if(hourlyClouds())await requestCloudBytes(stamp,cloudWidth,signal,12000,false);else await requestCloudRecord(stamp,Math.min(1024,cloudWidth),signal,10000,false);}catch(error){if(error.name==='AbortError')return;replayFailed.add(stamp.toISOString());}if(replayController===controller)updateReplayLabel();}}
+    var cloudQueue=timeline.order(replayClouds,instant).filter(function(t){return !cloudPrepared(t);}),auroraQueue=replayAurora.filter(function(e){return !archiveCache.has(e.file);});
+    // Prepare compact display maps off the input thread. Full observations are
+    // retained for the stopped view; dragging only changes small GPU buffers.
+    async function cloudWorker(){while(cloudQueue.length&&!signal.aborted){cloudQueue=timeline.order(cloudQueue,instant);var stamp=cloudQueue.shift();try{if(hourlyClouds())await timeline.waitFor(prepareReplayRecord(stamp,0),signal);else await requestCloudRecord(stamp,Math.min(1024,cloudWidth),signal,10000,false);}catch(error){if(error.name==='AbortError')return;replayFailed.add(stamp.toISOString());}if(replayController===controller)updateReplayLabel();}}
     async function auroras(){while(auroraQueue.length&&!signal.aborted){var entry=auroraQueue.shift();try{await requestArchive(entry,signal);}catch(error){if(error.name==='AbortError')return;replayFailed.add(entry.file);}if(replayController===controller)updateReplayLabel();}}
     var deadline=initial?setTimeout(function(){controller.abort();},Math.max(1,26000-(performance.now()-loadingStarted))):null;
     updateReplayLabel();return Promise.allSettled([cloudWorker(),cloudWorker(),cloudWorker(),cloudWorker(),cloudWorker(),cloudWorker(),auroras(),auroras()]).finally(function(){clearTimeout(deadline);if(replayController===controller){replayBusy=false;if(signal.aborted)replayKey='';updateReplayLabel();}});
