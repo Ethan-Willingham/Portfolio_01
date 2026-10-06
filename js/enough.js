@@ -84,12 +84,9 @@ function chart(c,width,d,overview=false){
  const yLabel=riskChange?scale.label:overview?openingAxes[c.id]:scale?scale.label:mode==='model'?'Model difference vs no training, %':mode==='sweet'?'Extra risk of dying, %':c.id==='smoking'?'Extra heart disease risk, %':'Extra risk of dying, %';
  const riskTick=v=>v===0?'Same risk':`${fmt(Math.abs(v))}% ${v>0?'higher':'lower'}`;
  const stroke=c.view.uncertainUntil?`<path class="en-curve en-model en-low-tail" d="${path(ps.filter(v=>v<=c.view.uncertainUntil))}"/><path class="en-curve" d="${path(ps.filter(v=>v>=c.view.uncertainUntil))}"/>`:`<path class="${curveClass}" d="${line}"/>`;
- const diamond=(cx,cy,cls)=>`<path class="${cls}" d="M${cx},${cy-5}l5,5 -5,5 -5,-5 Z"/>`;
- const reference=riskChange?`<line class="en-reference-guide" x1="${x(c.referenceDose)}" x2="${x(c.referenceDose)}" y1="${T}" y2="${T+ph}"/>`:'';
- const referencePoint=riskChange?diamond(x(c.referenceDose),baseY,'en-reference-point'):'';
  // Joins organize published groups visually; selection still snaps to source groups.
  const groupLine=c.kind==='categories'?`<path class="en-curve en-model en-group-join" d="${line}"/>`:'';
- return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${riskChange?`${diamond(L-14,25,'en-reference-key')}<text class="en-comparison-label" x="${L}" y="29">Compare: ${fmt(c.referenceDose)} steps/day</text>`:''}${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${riskChange?riskTick(v):v}</text>`).join('')}${gap}${sparse}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${c.id==='income'?y(minY):baseY}" y2="${c.id==='income'?y(minY):baseY}"/>${c.kind==='categories'?groupLine:stroke}${dots}${reference}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/>${Number.isFinite(point)?`<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>`:''}${referencePoint}${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${c.kind==='categories'?'<p class="enough-model-key"><span aria-hidden="true"></span>Dots: study groups. Dashed joins guide the eye.</p>':modelLine?modelKey(c):''}`;
+ return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><text class="en-y-label" x="${L}" y="15">${yLabel}</text>${yticks.map(v=>`<line class="en-grid" x1="${L}" x2="${w-R}" y1="${y(v)}" y2="${y(v)}"/><text class="en-y-tick" x="${L-8}" y="${y(v)+4}" text-anchor="end">${riskChange?riskTick(v):v}</text>`).join('')}${gap}${sparse}${band}<line class="en-axis" x1="${L}" x2="${w-R}" y1="${c.id==='income'?y(minY):baseY}" y2="${c.id==='income'?y(minY):baseY}"/>${c.kind==='categories'?groupLine:stroke}${dots}<line class="en-selection" x1="${x(selected)}" x2="${x(selected)}" y1="${T}" y2="${T+ph}"/>${Number.isFinite(point)?`<circle class="en-dot" cx="${x(selected)}" cy="${y(point)}" r="6"/>`:''}${ticks}<text class="en-x-label" x="${L+pw/2}" y="${h-5}" text-anchor="middle">${xLabels[c.id]}</text></svg>${c.kind==='categories'?'<p class="enough-model-key"><span aria-hidden="true"></span>Dots: study groups. Dashed joins guide the eye.</p>':modelLine?modelKey(c):''}`;
 }
 // Keep the on-page evidence brief. Full extraction, tables and caveats remain in the data file.
 const evidence={
@@ -154,7 +151,7 @@ function doseFromPointer(c,box,e){
 }
 // One walking study and age selection drive both the opening preview and its card.
 const textIfChanged=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
-function walkingBaseline(c){return `${c.title}. Diamond: ${fmt(c.referenceDose)} steps/day. 100% higher = double the risk; 50% lower = half. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
+function walkingBaseline(c){return `${c.title}. Risk changes are relative to the study’s ${fmt(c.referenceDose)}-step group. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
 function bindWalking(plot,output,baseline,card=null){
  const preview=!card;
  const update=()=>{
