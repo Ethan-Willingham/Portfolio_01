@@ -166,8 +166,6 @@
     if(detailController){detailController.abort();detailController=null;}
     if(archiveController)archiveController.abort();
     photoGeneration++;archiveGeneration++;fetchingPhoto=false;archiveBusy=false;requestedDay='';
-    if(photo&&photo.time&&(instant-new Date(photo.time)<0||instant-new Date(photo.time)>=3*3600000))photo=null;
-    if(photo&&!photo.time&&!live)photo=null;
     applyCachedTime();
     updateAstronomy();updateLabels();
     timeEditTimer=setTimeout(function(){timeEditTimer=null;refreshData();},250);
@@ -648,7 +646,13 @@
       if(error.name!=='AbortError'&&generation===photoGeneration){cloudFailure=error.message||'primary imagery unavailable';await refreshDailyPhoto(generation,signal);}
     }finally{
       clearTimeout(deadline);
-      if(generation===photoGeneration){fetchingPhoto=false;replayPendingCloud=false;photoChecked=Date.now();updateAstronomy();updateLabels();announce();}
+      if(generation===photoGeneration){
+        // Holding the last frame avoids a blank layer while decoding. Once a
+        // request settles, failed selections must still become a real gap.
+        var selected=cloudStamp();
+        if(photo&&photo.time&&(!selected||photo.time!==selected.toISOString()))photo=null;
+        fetchingPhoto=false;replayPendingCloud=false;photoChecked=Date.now();updateAstronomy();updateLabels();announce();
+      }
     }
   }
   async function decodeCloudRecord(result,stamp,signal) {
@@ -843,7 +847,13 @@
     if(live&&stamp&&Date.now()-stamp>5*3600000)stamp=null;
     var record=stamp&&cloudMemo&&cloudMemo.get(stamp.toISOString());
     if(record)installCloudRecord(record,photoGeneration,null,false);
-    else if(!stamp||!photo||photo.time!==stamp.toISOString()){photo=null;replayPendingCloud=instant<=Date.now()&&!!stamp;decodeCachedSelection();}
+    else if(!stamp)photo=null;
+    else if(!photo||photo.time!==stamp.toISOString()){
+      // Keep the installed, pinned textures until both replacement maps are
+      // decoded. Their labels retain the actual source time during the wait.
+      if(photo&&!photo.time)photo=null;
+      replayPendingCloud=instant<=Date.now();decodeCachedSelection();
+    }
     if(live){forecast=liveForecast;return;}
     var entry=data.auroraFrameAt(allAuroraFrames(),instant),value=entry&&archiveCache.get(entry.file);
     if(value)setForecast(value);else{forecast=null;replayPendingAurora=!!entry;}
@@ -851,6 +861,7 @@
   function updateReplayLabel(){
     var label=byId('globe-replay-status');if(!label)return;
     if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
+    if(replayPendingCloud){text(label,'Loading clouds');return;}
     if(recentMode&&photo&&photo.time&&instant-new Date(photo.time)>=3600000){text(label,'Clouds through '+timeFormatter.format(new Date(photo.time))+'.');return;}
     if(!live&&instant>Date.now()+300000){text(label,'Future time: sunlight only.');return;}
     if(loading&&!replayBusy){text(label,'Preparing replay');return;}
