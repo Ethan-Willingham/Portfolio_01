@@ -65,7 +65,13 @@
     const e=estimate(c,d,key);
     if(e===null)return null;
     if(c.id==='income')return e;
-    if(c.view.mode==='comparison')return 100*(1-e);
+    if(c.view.mode==='comparison'){
+      if(c.view.comparisonDose===undefined)return 100*(1-e);
+      // Re-referencing point estimates is valid; contrast limits require unavailable covariance.
+      if(key!=='effect')return null;
+      const reference=estimate(c,c.view.comparisonDose);
+      return reference>0?100*(1-e/reference):null;
+    }
     if(c.view.mode==='benefit'){
       if(c.effectKind==='risk')return 100*(1-e/estimate(c,c.view.range[0],key));
       return e;

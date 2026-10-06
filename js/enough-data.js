@@ -40,23 +40,27 @@ window.EnoughData = {
         ],
         "yScale": {
           "min": -75,
-          "max": 250,
+          "max": 400,
           "ticks": [
-            200,
+            300,
             100,
             0,
             -50
           ],
-          "label": "Change in risk of dying"
+          "label": "Risk change (log scale)",
+          "transform": "log-risk"
         },
         "area": "move",
         "shape": "Flatter region",
         "answer": "8,000 to 10,000 steps/day",
-        "rangeLabel": "0 to 16,000 steps a day",
+        "rangeLabel": "U.S. adult average: about 6,500 steps/day, NHANES 2005-06",
         "showEnough": false,
         "noExtrapolation": true,
         "uncertainUntil": 3000,
-        "plotMetric": "risk-change"
+        "plotMetric": "risk-change",
+        "comparisonDose": 6500,
+        "comparisonSource": "us-steps-average",
+        "displayInterval": false
       },
       "points": [
         {
@@ -632,12 +636,23 @@ window.EnoughData = {
           "url": "https://doi.org/10.1016/S2468-2667(25)00164-1",
           "citation": "Ding et al. 2025. Daily steps and health outcomes in adults: a systematic review and dose-response meta-analysis",
           "location": "Table 2, all-cause mortality column, e676"
+        },
+        {
+          "id": "us-steps-average",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/19516163/",
+          "doi": "10.1249/MSS.0b013e318199885c",
+          "citation": "Tudor-Locke, Johnson and Katzmarzyk. 2009. Accelerometer-determined steps per day in US adults. Medicine and Science in Sports and Exercise 41:1384-1391.",
+          "location": "Abstract, Methods and Results: NHANES 2005-2006, 3744 US adults aged 20 or older, nationally representative mean 6540 censored steps/day (SE 106).",
+          "extraction": "Primary abstract. ActiGraph AM-7164; at least one valid day of 10 hours. Steps in minutes below 500 activity counts were censored to reduce low-intensity overcounting; uncensored mean 9676. A dated population benchmark, not a current national estimate or a mortality reference group."
         }
       ],
       "caveats": [
         "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
-        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+.",
-        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there."
+        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there.",
+        "The displayed comparison is about 6,500 steps/day, rounded from the measured mean of 6,540 in NHANES 2005-2006 (Tudor-Locke 2009). This dated, device-specific survey mean is not the current US average or average national mortality risk.",
+        "Displayed risk reduction is 100 times (1 minus source hazard ratio at the selected dose divided by source hazard ratio at 6,500). The source referenceDose and all raw points retain the original 5,000 or 3,000-step reference.",
+        "The covariance needed for confidence intervals against 6,500 is unavailable from the published figure. Do not divide the original bounds by an estimated reference and call that a 95% interval for the new comparison. No band is displayed; raw source limits remain downloadable.",
+        "The risk axis uses a logarithmic risk-ratio scale with signed percent-change labels. Equal vertical distances represent equal ratios, not equal percentage-point differences."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -669,6 +684,15 @@ window.EnoughData = {
         "sourceRepository": "https://discovery.ucl.ac.uk/id/eprint/10170017/",
         "zeroEstimate": null,
         "unchangedFromDose": 5000
+      },
+      "comparisonAudit": {
+        "date": "2026-10-05",
+        "benchmark": 6500,
+        "source": "us-steps-average",
+        "sourceValuesUnchanged": true,
+        "displayInterval": false,
+        "method": "Primary-agent reference change. The central curve is divided by its estimate at the rounded survey mean. No new mortality data, model fit, extrapolation or confidence limits are added.",
+        "measuredSurveyMean": 6540
       }
     },
     {
@@ -12839,7 +12863,8 @@ window.EnoughData = {
         "Lean body mass includes water and other non-fat tissue, not only muscle. Varied ages, study durations and energy balance prevent personal forecasts.",
         "Adjusting for weight change conditions on a potential mediator. Other source panels give different magnitudes and shapes; this is one study model, not a pooled consensus curve.",
         "Pointwise confidence limits do not include all confounding or model-selection uncertainty. Nunes pooled supplementation effects answer a different question.",
-        "ISSN guidance is a recommendation, not a fitted optimum. Bagheri found no significant higher-dose advantage in one small trial; that does not prove equivalence."
+        "ISSN guidance is a recommendation, not a fitted optimum. Bagheri found no significant higher-dose advantage in one small trial; that does not prove equivalence.",
+        "Antonio 2014 tested about 2 versus 0.82 g/lb/day for eight weeks in 30 completers, with no significant fat-free-mass difference. Unchanged habitual training and the small sample limit conclusions; this does not extend the published spline or establish a ceiling."
       ],
       "extraction": "Approximate native-resolution figure readings. Centerline traced in each pixel column; confidence-outline dash gaps linearly interpolated. Readings rounded to .01 kg before conversion. No refitting, normalization, forced plateau or extrapolation. Source: Tagawa 2021 Figure 2(h), resistance-training arms, multivariate-adjusted model 2. X uses total g/kg/day divided by 2.20462262185; Y uses lean-body-mass change in kg multiplied by the same factor. Values are absolute adjusted within-arm changes, not differences from a protein baseline.",
       "sources": [
@@ -12854,6 +12879,14 @@ window.EnoughData = {
           "citation": "Tagawa et al., 2021. Protein intake and lean body mass.",
           "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7727026/",
           "location": "Figure 2(h), resistance-training arms in multivariate-adjusted model 2; methods, dose-response results and limitations."
+        },
+        {
+          "id": "antonio2014",
+          "citation": "Antonio et al. 2014. The effects of consuming a high protein diet (4.4 g/kg/d) on body composition in resistance-trained individuals. Journal of the International Society of Sports Nutrition 11:19.",
+          "url": "https://link.springer.com/article/10.1186/1550-2783-11-19",
+          "doi": "10.1186/1550-2783-11-19",
+          "location": "Methods, Results and Table 2: eight weeks, 30 completers, 4.4 versus 1.8 g/kg/day, no significant between-group fat-free-mass change.",
+          "extraction": "Primary full text. Supporting direct-dose trial only; not spliced into the published Tagawa spline."
         },
         {
           "id": "li",
@@ -15138,6 +15171,24 @@ window.EnoughData = {
           ],
           "result": "No significant between-group lean-mass advantage from 3.2 versus 1.6 g/kg/day was reported. Small trial of trained young men; this is not an equivalence finding."
         },
+        "antonio2014": {
+          "source": "antonio2014",
+          "initiallyRecruited": 40,
+          "completed": 30,
+          "weeks": 8,
+          "achievedIntakesKg": [
+            1.8,
+            4.4
+          ],
+          "achievedIntakesLb": [
+            0.8164662659995466,
+            1.9958064279988919
+          ],
+          "outcome": "Fat-free mass measured using air-displacement plethysmography (Bod Pod)",
+          "result": "No significant fat-free-mass changes over time or between groups were reported.",
+          "limitations": "Small trial, self-reported dietary intake and unchanged habitual training. Lack of statistical significance does not establish equivalence or a universal protein ceiling.",
+          "curveUse": "Separate supporting evidence. No coordinates added to Tagawa Figure 2(h)."
+        },
         "li2026": {
           "source": "li",
           "trials": 36,
@@ -15206,7 +15257,8 @@ window.EnoughData = {
         "After weekly volume was accounted for, twice-weekly training had no clear growth advantage over once weekly. This does not establish equivalence or apply to strength.",
         "High=30, Low=10 is a 4.06% difference in modeled post/pre muscle-size ratios (95% credible interval 2.42 to 5.64), not a claim that an individual doubles their hypertrophy. The zero-set contrasts are 4.18% at 10 and 8.41% at 30. Ratios of these contrasts cannot establish a personal growth multiplier.",
         "Pelland section 4.4 warns that few studies explored about 25 or more fractional sets. The high-volume uncertainty is compatible with a functional plateau or an inverted U. The chosen square-root model does not settle the ceiling.",
-        "Steele et al. 2026 is a preprint, not a peer-reviewed replacement meta-analysis. Its 12-week trained-adult trial compared 9 and 36 fractional sets; equivalence was supported within a prespecified plus or minus 0.1 standardized-effect margin. Muscle area was estimated by circumference and skinfolds, post-testing had dropouts, and the preregistered analysis and significance threshold were revised. Very small differences are not excluded."
+        "Steele et al. 2026 is a preprint, not a peer-reviewed replacement meta-analysis. Its 12-week trained-adult trial compared 9 and 36 fractional sets; equivalence was supported within a prespecified plus or minus 0.1 standardized-effect margin. Muscle area was estimated by circumference and skinfolds, post-testing had dropouts, and the preregistered analysis and significance threshold were revised. Very small differences are not excluded.",
+        "The percentage denominator is muscle size, not zero growth. For example, if the no-training post/pre size ratio is 1 (100 units stay 100), the model contrast at 10 weekly sets is 4.18%, corresponding to 104.18 units. Zero on the chart is no difference from no training, not zero muscle size. Trials have different follow-up durations; this is not weekly growth."
       ],
       "extraction": "Exact author-deposited High=x, Low=0 muscle-size model contrasts. Zero-training controls and observed maximum 45 verified against data.hyp.RData.",
       "uncertainty": "95% credible interval (not frequentist confidence interval) around the modeled group comparison. A reference interval equal to its estimate is fixed by construction.",
@@ -15779,7 +15831,7 @@ window.EnoughData = {
           0,
           45
         ],
-        "rangeLabel": "Compared with no training, with starting muscle size accounted for",
+        "rangeLabel": "If a muscle stays at 100 units without training, 4.2% means about 104.2 with training. This is over the studies, not per week",
         "default": 10,
         "ticks": [
           0,
@@ -24471,22 +24523,26 @@ window.EnoughData = {
         ],
         "yScale": {
           "min": -75,
-          "max": 250,
+          "max": 400,
           "ticks": [
-            200,
+            300,
             100,
             0,
             -50
           ],
-          "label": "Change in risk of dying"
+          "label": "Risk change (log scale)",
+          "transform": "log-risk"
         },
         "area": "move",
         "shape": "Flatter region",
         "answer": "8,000 to 10,000 steps/day",
-        "rangeLabel": "0 to 16,000 steps a day",
+        "rangeLabel": "U.S. adult average: about 6,500 steps/day, NHANES 2005-06",
         "noExtrapolation": true,
         "uncertainUntil": 3000,
-        "plotMetric": "risk-change"
+        "plotMetric": "risk-change",
+        "comparisonDose": 6500,
+        "comparisonSource": "us-steps-average",
+        "displayInterval": false
       },
       "points": [
         {
@@ -25056,12 +25112,23 @@ window.EnoughData = {
           "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
           "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
           "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
+        },
+        {
+          "id": "us-steps-average",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/19516163/",
+          "doi": "10.1249/MSS.0b013e318199885c",
+          "citation": "Tudor-Locke, Johnson and Katzmarzyk. 2009. Accelerometer-determined steps per day in US adults. Medicine and Science in Sports and Exercise 41:1384-1391.",
+          "location": "Abstract, Methods and Results: NHANES 2005-2006, 3744 US adults aged 20 or older, nationally representative mean 6540 censored steps/day (SE 106).",
+          "extraction": "Primary abstract. ActiGraph AM-7164; at least one valid day of 10 hours. Steps in minutes below 500 activity counts were censored to reduce low-intensity overcounting; uncensored mean 9676. A dated population benchmark, not a current national estimate or a mortality reference group."
         }
       ],
       "caveats": [
         "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
-        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+.",
-        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there."
+        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there.",
+        "The displayed comparison is about 6,500 steps/day, rounded from the measured mean of 6,540 in NHANES 2005-2006 (Tudor-Locke 2009). This dated, device-specific survey mean is not the current US average or average national mortality risk.",
+        "Displayed risk reduction is 100 times (1 minus source hazard ratio at the selected dose divided by source hazard ratio at 6,500). The source referenceDose and all raw points retain the original 5,000 or 3,000-step reference.",
+        "The covariance needed for confidence intervals against 6,500 is unavailable from the published figure. Do not divide the original bounds by an estimated reference and call that a 95% interval for the new comparison. No band is displayed; raw source limits remain downloadable.",
+        "The risk axis uses a logarithmic risk-ratio scale with signed percent-change labels. Equal vertical distances represent equal ratios, not equal percentage-point differences."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -25087,6 +25154,15 @@ window.EnoughData = {
         "sourceRepository": "https://discovery.ucl.ac.uk/id/eprint/10170017/",
         "zeroEstimate": null,
         "unchangedFromDose": 5000
+      },
+      "comparisonAudit": {
+        "date": "2026-10-05",
+        "benchmark": 6500,
+        "source": "us-steps-average",
+        "sourceValuesUnchanged": true,
+        "displayInterval": false,
+        "method": "Primary-agent reference change. The central curve is divided by its estimate at the rounded survey mean. No new mortality data, model fit, extrapolation or confidence limits are added.",
+        "measuredSurveyMean": 6540
       }
     },
     {
@@ -25120,22 +25196,26 @@ window.EnoughData = {
         ],
         "yScale": {
           "min": -75,
-          "max": 250,
+          "max": 400,
           "ticks": [
-            200,
+            300,
             100,
             0,
             -50
           ],
-          "label": "Change in risk of dying"
+          "label": "Risk change (log scale)",
+          "transform": "log-risk"
         },
         "area": "move",
         "shape": "Flatter region",
         "answer": "6,000 to 8,000 steps/day",
-        "rangeLabel": "0 to 16,000 steps a day",
+        "rangeLabel": "U.S. adult average: about 6,500 steps/day, NHANES 2005-06",
         "noExtrapolation": true,
         "uncertainUntil": 500,
-        "plotMetric": "risk-change"
+        "plotMetric": "risk-change",
+        "comparisonDose": 6500,
+        "comparisonSource": "us-steps-average",
+        "displayInterval": false
       },
       "points": [
         {
@@ -25697,12 +25777,23 @@ window.EnoughData = {
           "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines/top-10-things-know",
           "citation": "US Department of Health and Human Services. Physical Activity Guidelines for Americans, second edition.",
           "location": "Key adult guidelines, item 4; current page checked October 5, 2026."
+        },
+        {
+          "id": "us-steps-average",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/19516163/",
+          "doi": "10.1249/MSS.0b013e318199885c",
+          "citation": "Tudor-Locke, Johnson and Katzmarzyk. 2009. Accelerometer-determined steps per day in US adults. Medicine and Science in Sports and Exercise 41:1384-1391.",
+          "location": "Abstract, Methods and Results: NHANES 2005-2006, 3744 US adults aged 20 or older, nationally representative mean 6540 censored steps/day (SE 106).",
+          "extraction": "Primary abstract. ActiGraph AM-7164; at least one valid day of 10 hours. Steps in minutes below 500 activity counts were censored to reduce low-intensity overcounting; uncensored mean 9676. A dated population benchmark, not a current national estimate or a mortality reference group."
         }
       ],
       "caveats": [
         "Approximate readings of an observational study figure, not a personal forecast or an exact stopping point.",
-        "The age groups use different references: 5,000 steps for under 60 and 3,000 for 60+.",
-        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there."
+        "Zero is an axis origin, not an observed comparison group. The near-zero model tail is uncertain and source confidence limits are clipped there.",
+        "The displayed comparison is about 6,500 steps/day, rounded from the measured mean of 6,540 in NHANES 2005-2006 (Tudor-Locke 2009). This dated, device-specific survey mean is not the current US average or average national mortality risk.",
+        "Displayed risk reduction is 100 times (1 minus source hazard ratio at the selected dose divided by source hazard ratio at 6,500). The source referenceDose and all raw points retain the original 5,000 or 3,000-step reference.",
+        "The covariance needed for confidence intervals against 6,500 is unavailable from the published figure. Do not divide the original bounds by an estimated reference and call that a 95% interval for the new comparison. No band is displayed; raw source limits remain downloadable.",
+        "The risk axis uses a logarithmic risk-ratio scale with signed percent-change labels. Equal vertical distances represent equal ratios, not equal percentage-point differences."
       ],
       "followupAudit": {
         "date": "2026-10-05",
@@ -25728,6 +25819,15 @@ window.EnoughData = {
         "sourceRepository": "https://discovery.ucl.ac.uk/id/eprint/10170017/",
         "zeroEstimate": null,
         "unchangedFromDose": 3000
+      },
+      "comparisonAudit": {
+        "date": "2026-10-05",
+        "benchmark": 6500,
+        "source": "us-steps-average",
+        "sourceValuesUnchanged": true,
+        "displayInterval": false,
+        "method": "Primary-agent reference change. The central curve is divided by its estimate at the rounded survey mean. No new mortality data, model fit, extrapolation or confidence limits are added.",
+        "measuredSurveyMean": 6540
       }
     }
   ],
@@ -27488,5 +27588,29 @@ window.EnoughData = {
       "effectKind": "risk"
     }
   },
-  "audited": "2026-10-05"
+  "audited": "2026-10-05",
+  "walkingBenchmark": {
+    "dose": 6500,
+    "unit": "steps/day",
+    "population": "US adults aged 20 or older",
+    "survey": "NHANES",
+    "surveyYears": [
+      2005,
+      2006
+    ],
+    "participants": 3744,
+    "standardError": 106,
+    "source": {
+      "id": "us-steps-average",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/19516163/",
+      "doi": "10.1249/MSS.0b013e318199885c",
+      "citation": "Tudor-Locke, Johnson and Katzmarzyk. 2009. Accelerometer-determined steps per day in US adults. Medicine and Science in Sports and Exercise 41:1384-1391.",
+      "location": "Abstract, Methods and Results: NHANES 2005-2006, 3744 US adults aged 20 or older, nationally representative mean 6540 censored steps/day (SE 106).",
+      "extraction": "Primary abstract. ActiGraph AM-7164; at least one valid day of 10 hours. Steps in minutes below 500 activity counts were censored to reduce low-intensity overcounting; uncensored mean 9676. A dated population benchmark, not a current national estimate or a mortality reference group."
+    },
+    "method": "Nationally representative, censored ActiGraph AM-7164 steps. The device and filtering definition affect the average.",
+    "use": "Compare each age-specific curve at the same national average step count. This is not the average American mortality risk. No confidence interval for the re-referenced curve is available from Figure 3; the original limits remain in the source data.",
+    "measuredMean": 6540,
+    "rounding": "Measured mean 6540, rounded to about 6500 steps/day for the visible comparison."
+  }
 };

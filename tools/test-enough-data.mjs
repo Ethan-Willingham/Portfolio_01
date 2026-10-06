@@ -57,13 +57,13 @@ for(const p of by('income').points)near(p.high-p.effect,1.96*p.standardError);
 near(M.extraRisk(by('smoking'),1)/M.extraRisk(by('smoking'),3),.48/1.04);
 // Source-outcome presentation must never turn a chosen endpoint into 100% benefit.
 near(M.outcome(ding,7000),47);near(M.outcome(ding,12000),55);near(M.outcome(ding,M.enough(ding)),49.5);
-near(M.outcome(by('steps'),8200),44.618);near(M.outcome(by('steps'),10000),46.22);assert.ok(M.outcome(by('steps'),10000)-M.outcome(by('steps'),8200)<2);
+near(M.outcome(by('steps'),8200),22.139744130465356);near(M.outcome(by('steps'),10000),24.391958386053712);near(M.estimate(by('steps'),8200),.55382);near(M.estimate(by('steps'),10000),.5378);
 near(M.outcome(by('exercise'),600),38.44373343584258);near(M.outcome(oldProtein,1),2.7778245035310007);
 near(M.outcome(by('fruit-veg'),3),13);near(M.outcome(by('fruit-veg'),4),11);
 near(M.outcome(by('fiber'),35),100*(1-.9**2.8));near(M.outcome(by('income'),13),by('income').points[13].effect);for(const p of by('income').points){near(M.outcome(by('income'),p.dose,'low'),p.low);near(M.outcome(by('income'),p.dose,'high'),p.high);}assert.equal(by('income').view.yScale.min,55);
 near(M.outcome(by('savings'),50),16.620772445041133);near(M.outcome(by('work'),M.basis(by('work')).best.dose),4029.041452735495);
 assert.equal(by('sets').outcome,'modeled post/pre muscle-size ratio');assert.equal(by('work').outcome,'additional factory output index');assert.equal(by('alcohol').outcome,'all-cause mortality risk');
-// The longer figure keeps each age group's reference and published extent separate.
+// Raw source references stay separate from the common dated US-average comparison.
 const comparisons=ctx.window.EnoughData.stepComparisons;
 assert.equal(comparisons.length,2);
 for(const c of comparisons){
@@ -72,24 +72,24 @@ for(const c of comparisons){
  assert.equal(M.estimate(c,0),null,'No invented zero-step estimate');assert.equal(M.outcome(c,0),null);
  assert.equal(M.estimate(c,c.domain[0]-1),null,'No endpoint clamping outside the published stroke');assert.equal(M.series(c)[0].dose,c.domain[0]);
  assert.ok(M.outcome(c,1000)<0,'Lower counts can have higher risk than the source reference');
- near(M.outcome(c,c.referenceDose),0);assert.ok(c.extraction.includes('figure readings'));
+ near(M.estimate(c,c.referenceDose),1);assert.equal(c.view.comparisonDose,6500);near(M.outcome(c,6500),0);assert.equal(c.view.displayInterval,false);assert.equal(c.view.yScale.transform,'log-risk');assert.ok(c.extraction.includes('figure readings'));
  assert.match(c.sourcePDFSHA256,/^[a-f0-9]{64}$/);assert.ok(c.centerlineCheckMaxRiskDifference<.01);
  for(let i=0;i<c.points.length;i++){
   const p=c.points[i];assert.ok(Number.isFinite(p.effect));assert.equal(p.source,'paluch2022');assert.match(p.location,/Figure 3/);
   if(i>1)assert.equal(p.dose-c.points[i-1].dose,250);
   if(p.dose<c.view.uncertainUntil){assert.equal(p.low,null,'Clipped source intervals must not be reconstructed');assert.equal(p.high,null);}
   else assert.ok(p.low<=p.effect&&p.effect<=p.high,'Complete interval contains estimate');
-  for(const k of ['effect','low','high']){const outcome=M.outcome(c,p.dose,k);if(outcome!==null)assert.ok(-outcome>=c.view.yScale.min&&-outcome<=c.view.yScale.max,'Unclipped published interval in percent-difference units');}
+  const outcome=M.outcome(c,p.dose);near(outcome,100*(1-p.effect/M.estimate(c,6500)));assert.ok(-outcome>=c.view.yScale.min&&-outcome<=c.view.yScale.max,'Whole central curve fits the new reference scale');for(const k of ['low','high'])assert.equal(M.outcome(c,p.dose,k),null,'No fabricated contrast interval without model covariance');
  }
  assert.ok(!/[\u2014\p{Extended_Pictographic}]/u.test(JSON.stringify(c)));
 }
 const younger=comparisons[0],older=comparisons[1];
 assert.equal(younger.referenceDose,5000);assert.equal(older.referenceDose,3000);
-near(M.outcome(younger,16000),38.96);near(M.outcome(older,16000),63.53);
+near(M.outcome(younger,16000),14.185294531140169);near(M.outcome(older,16000),28.16623990545598);const benchmark=ctx.window.EnoughData.walkingBenchmark;assert.equal(benchmark.dose,6500);assert.equal(benchmark.measuredMean,6540);assert.equal(benchmark.surveyYears.join('-'),'2005-2006');assert.equal(benchmark.participants,3744);
 assert.ok(M.outcome(younger,16000)<M.outcome(younger,10000),'Preserve younger tail bend');
 assert.ok(M.outcome(older,16000)>M.outcome(older,10000),'Preserve slowly improving older tail');
-assert.ok(M.outcome(younger,16000,'high')<0,'Younger uncertainty includes higher risk');
+assert.equal(M.outcome(younger,16000,'high'),null,'Original source limits do not identify new contrast limits');assert.ok(M.estimate(younger,16000,'high')>1,'Preserve original source uncertainty');
 near(M.outcome(ding,12000,'low'),61);near(M.outcome(ding,12000,'high'),47);
 assert.equal(younger.defaultDose,8000);assert.equal(older.defaultDose,6000);assert.equal(JSON.stringify(by('steps').points),JSON.stringify(younger.points));
-console.log('PASS longer age curves, source baselines, figure uncertainty, 16,000 endpoints and no imposed cutoff');
+console.log('PASS age curves, preserved source references, dated US average, no invented contrast limits, 16,000 endpoints and no imposed cutoff');
 console.log('PASS 12 topics, published protein figure and limits, separate guidance, pooled trial summaries, updated fiber slope, raw income intervals, historical models, dose groups and signed risk');

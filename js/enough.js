@@ -51,14 +51,16 @@ function readout(c,d){
  if(c.id==='savings')return `${a}: ${fmt(Math.ceil(value))} year-end contributions to reach the target, under these assumptions.`;
  if(c.id==='work')return value===null?`${a}: no estimate below 24 hours.`:`${a}: ${fmt(value)} added output-index units above a 24-hour week in this factory model.`;
  if(c.id==='income')return `${a}: average feeling score ${fmt(value,1)} out of 100.`;
- const baseline={steps:'2,000 steps a day',exercise:'no exercise','fruit-veg':'2.1 servings a day',fiber:'7 grams a day'}[c.id];
+ if(c.id==='exercise')return `${a}: ${exerciseRisk(value)}, in these studies.`;
+ const baseline={steps:'2,000 steps a day','fruit-veg':'2.1 servings a day',fiber:'7 grams a day'}[c.id];
  const dose=c.id==='fruit-veg'?`About ${fmt(c.points[d].sourceDose,1)} servings a day`:a;
  return `${dose}: ${fmt(value,1)}% lower risk of dying compared with ${baseline}, in ${c.id==='fiber'?'this model':'these studies'}.`;
 }
 function walkingRisk(c,d){
- const value=M.outcome(c,d),reference=`${fmt(c.referenceDose)} steps/day`;
+ const value=M.outcome(c,d),reference=`the U.S. average step count (about ${fmt(c.view.comparisonDose)} steps/day)`;
  return value===null?'No estimate at this amount':Math.abs(value)<.5?`About the same risk of dying as at ${reference}`:`about ${fmt(Math.abs(value))}% ${value<0?'higher':'lower'} risk of dying than at ${reference}`;
 }
+function exerciseRisk(value){return `${fmt(value,1)}% lower risk of dying than with no exercise`;}
 function physical(c,d){return c.kind==='categories'&&c.id!=='alcohol'?c.points[Math.round(d)].sourceDose:d;}
 function geometry(width,overview=false,longer=false){
  const w=Math.max(180,width),h=overview?(w<500?220:260):240,L=longer?96:42,R=12,T=42,B=56;
@@ -69,7 +71,7 @@ function chart(c,width,d,overview=false){
  const pMin=physical(c,min),pMax=physical(c,max),x=v=>L+(physical(c,v)-pMin)/(pMax-pMin)*pw;
  const mode=c.view.mode,modelLine=c.view.lineStyle==='dashed',curveClass='en-curve'+(modelLine?' en-model':''),scale=c.view.yScale||outcomeScales[c.id],minY=scale?.min??(mode==='harm'&&c.id==='alcohol'?-20:0);
  const maxY=scale?scale.max:mode==='harm'?(c.id==='smoking'?130:50):mode==='sweet'?60:16;
- const y=v=>T+(maxY-v)/(maxY-minY)*ph;
+ const y=v=>T+(scale?.transform==='log-risk'?Math.log((100+maxY)/(100+v))/Math.log((100+maxY)/(100+minY)):(maxY-v)/(maxY-minY))*ph;
  const riskChange=c.view.plotMetric==='risk-change',value=(v,key='effect')=>{const outcome=M.outcome(c,v,key);return riskChange&&outcome!==null?-outcome:outcome;};
  const ps=c.kind==='categories'?c.points.map(p=>p.dose):M.series(c).map(p=>p.dose);
  const path=(values,key='effect')=>values.map((v,i)=>`${i?'L':'M'}${x(v).toFixed(2)},${y(value(v,key)).toFixed(2)}`).join(' ');
@@ -79,7 +81,7 @@ function chart(c,width,d,overview=false){
  const ticks=tickValues.map(v=>{const label=c.kind==='categories'?c.points[v].shortLabel:c.id==='protein'?fmt(v,2):fmt(v,1);return `<text class="en-x-tick" x="${x(v)}" y="${h-B+21}" text-anchor="${v===min?'start':v===max?'end':'middle'}">${esc(label)}</text>`;}).join('');
  const yticks=scale?scale.ticks:mode==='sweet'?[0,30,60]:mode==='model'?[0,5,10,15]:c.id==='alcohol'?[-10,0,20,40]:[0,50,100];
  const intervalPoints=ps.filter(v=>Number.isFinite(M.estimate(c,v,'low'))&&Number.isFinite(M.estimate(c,v,'high'))),hasInterval=intervalPoints.length===ps.length,scenario=c.id==='savings',bandPoints=scenario?ps:intervalPoints;
- const band=c.kind!=='categories'&&bandPoints.length>1?`<path class="en-uncertainty${scenario?' en-scenario':''}" d="${path(bandPoints,scenario?'scenarioLow':'low')} ${path([...bandPoints].reverse(),scenario?'scenarioHigh':'high').replace(/^M/,'L')} Z"/>`:'';
+ const band=c.view.displayInterval!==false&&c.kind!=='categories'&&bandPoints.length>1?`<path class="en-uncertainty${scenario?' en-scenario':''}" d="${path(bandPoints,scenario?'scenarioLow':'low')} ${path([...bandPoints].reverse(),scenario?'scenarioHigh':'high').replace(/^M/,'L')} Z"/>`:'';
  const dots=c.kind==='categories'?ps.map(v=>`${hasInterval?`<path class="en-whisker" d="M${x(v)},${y(value(v,'low'))}V${y(value(v,'high'))} M${x(v)-4},${y(value(v,'low'))}h8 M${x(v)-4},${y(value(v,'high'))}h8"/>`:''}<circle cx="${x(v)}" cy="${y(value(v))}" r="3" fill="var(--area)"/>`).join(''):'';
  const sparse=c.view.sparseFrom?`<rect class="en-sparse" x="${x(c.view.sparseFrom)}" y="${T}" width="${x(max)-x(c.view.sparseFrom)}" height="${ph}"/>`:'';
  const gap=c.view.noExtrapolation&&min<c.domain[0]?`<rect class="en-unobserved" x="${L}" y="${T}" width="${x(c.domain[0])-L}" height="${ph}"/>${c.id==='work'?`<text class="en-gap-label" x="${(L+x(c.domain[0]))/2}" y="${T+ph/2}" text-anchor="middle">No data</text>`:''}`:'';
@@ -93,10 +95,10 @@ function chart(c,width,d,overview=false){
 }
 // Keep the on-page evidence brief. Full extraction, tables and caveats remain in the data file.
 const evidence={
- steps:[['paluch2022','Paluch 2022'],['Age-group curves from observed habits. Shading: 95% confidence intervals. The near-zero model tail is uncertain and dashed; its full interval is unavailable. Higher counts are sparse. Neither end establishes an exact cutoff.','A newer review also found large gains at modest counts. US guidelines don’t require 10,000 steps; they use activity minutes and strength training. Studies use different baselines, so their percentages cannot be combined.'],['steps-new-review','Ding 2025'],[['guidelines','US guidelines']]],
+ steps:[['paluch2022','Paluch 2022'],['Age-group curves compare observed habits against about 6,500 steps/day, the U.S. adult average in NHANES 2005–06. Counts vary by device and year. The risk axis is logarithmic. Confidence limits for this new comparison are unavailable, so no shading is shown.','Dashed near zero: uncertain. Later counts are sparse; neither end establishes a cutoff. A newer review also found large gains at modest counts. US guidelines don’t require 10,000 steps; they use activity minutes and strength training.'],['steps-new-review','Ding 2025'],[['us-steps-average','U.S. average source'],['guidelines','US guidelines']]],
  exercise:[['activity-0','Garcia 2023'],['This large review follows observed activity and mortality, with 95% confidence bands. It cannot prove that adding a given number of minutes causes the plotted benefit.','The headline is US guidance, not an optimum calculated from the chart endpoint. Minutes mean moderate exercise; count a vigorous minute as two. The source continues beyond the displayed 600 minutes.'],['guidelines','US guidelines']],
- protein:[['tagawa','Tagawa 2021'],['Dashed curve: a published model across lifting-trial groups, adjusted for age, sex, duration and weight change. Shading: 95% confidence interval. Lean mass includes water. These comparisons cannot isolate how much extra muscle a higher intake causes.','The headline is intake guidance, not a cutoff calculated from the curve. A 62-trial review found small extra gains from added protein. One small trial found no clear advantage from doubling 0.73 to 1.45 g/lb/day. No exact ceiling follows.'],['issn2017','ISSN guide'],[['nunes2022','Nunes 2022'],['bagheri2023','Dose trial']]],
- sets:[['sets-0','Pelland 2026'],['Dashed line: modeled muscle size compared with no training, accounting for starting size. Shading shows a 95% credible band. Indirect work counts as half a set. The gray tail has few studies above 25 sets; it cannot show that 45 sets doubles your growth.','A broader 2026 review supports higher volume, with diminishing returns, but no exact optimum. A newer 9-versus-36-set trial found similar outcomes; it remains a preprint with measurement and dropout limits.'],['acsm2026','ACSM 2026'],[['steele2026','Trial preprint']]],
+ protein:[['tagawa','Tagawa 2021'],['Dashed curve: a published model across lifting-trial groups, adjusted for age, sex, duration and weight change. Shading: 95% confidence interval. Lean mass includes water. These comparisons cannot isolate how much extra muscle a higher intake causes.','The published curve ends near 1.4 g/lb/day. A small eight-week trial found no clear lean-mass advantage at 2 versus 0.82 g/lb/day. Neither it nor the trial at 1.45 g/lb/day establishes a ceiling. The headline is intake guidance; a 62-trial review found small added-protein gains.'],['issn2017','ISSN guide'],[['nunes2022','Nunes 2022'],['bagheri2023','Bagheri 2023'],['antonio2014','Antonio 2014']]],
+ sets:[['sets-0','Pelland 2026'],['Dashed line: modeled muscle-size change compared with no training, accounting for starting size. Zero means no extra growth from training. Shading: 95% credible band. Indirect work counts as half a set. The gray tail has few studies above 25 sets; it cannot show that 45 sets doubles your growth.','A broader 2026 review supports higher volume, with diminishing returns, but no exact optimum. A newer 9-versus-36-set trial found similar outcomes; it remains a preprint with measurement and dropout limits.'],['acsm2026','ACSM 2026'],[['steele2026','Trial preprint']]],
  sleep:[['yin2017','Yin 2017'],['Shown: an older self-report mortality curve and its 95% confidence band. Illness can affect both sleep and risk. Its lowest point is not a personal sleep prescription.','Newer device-based research gives different minima. Adult sleep guidance supports seven or more hours, commonly seven to nine; the former six-hour highlighted range was a plotting choice and has been removed.'],['chaput2026','Chaput 2026'],[['aasm2015','Sleep guidance']]],
  'fruit-veg':[['wang2021','Wang 2021'],['The headline uses a 26-study review; plotted dots show one US women’s cohort, with 95% confidence intervals. These are food-specific servings and observed habits, not assigned doses.','Other reviews find further associations at higher intakes. Five is a useful broad guide, not a universal ceiling. The plotted groups cannot establish an exact threshold between their median intakes.'],['aune2017fruit','Aune 2017']],
  fiber:[['yao2023','Yao 2023'],['Updated linear summary: 14 studies, 1.37 million people, 10% lower mortality risk per extra 10 grams. Shading shows slope uncertainty. The separate curved fit flattens more; we do not invent its coordinates.','Studies differ substantially, and observed diets do not prove causation. The displayed 7 to 35 gram window cannot establish an optimum. The earlier review also found benefits from higher fiber intake.'],['reynolds2019','Reynolds 2019']],
@@ -154,7 +156,7 @@ function doseFromPointer(c,box,e){
 }
 // One walking study and age selection drive both the opening preview and its card.
 const textIfChanged=(el,value)=>{if(el.textContent!==value)el.textContent=value;};
-function walkingBaseline(c){return `${c.title}. Shading: 95% confidence interval. Dashed near zero: uncertain.`;}
+function walkingBaseline(c){return `${c.title}. Average from NHANES 2005–06. Dashed near zero: uncertain.`;}
 function bindWalking(plot,output,baseline,card=null){
  const preview=!card;
  const update=()=>{
@@ -204,7 +206,7 @@ const overviewIds=['steps','exercise','protein'];
 const overviewBox=$('overview-chart'),overviewStates=new Map();
 const openingCopy={
  steps:{name:'Walking'},
- exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:v=>fmt(v,1)+'% lower risk of dying',baseline:'Compared with no exercise in these studies.',context:'At 600 minutes: 38.4% lower risk. The source continues beyond this range.'},
+ exercise:{name:'Exercise',default:150,amount:d=>fmt(d)+' minutes/week',result:exerciseRisk,baseline:'Shading: 95% confidence interval.',context:'The source continues beyond 600 minutes/week.'},
  protein:{name:'Protein',default:.8,amount:d=>fmt(d,2)+' g/lb/day',result:v=>'About '+fmt(v,1)+' lb modeled lean-mass change',baseline:'Across lifting-trial groups. Lean mass includes water.',context:'Daily intake guidance: about 0.65 to 0.9 g/lb. No exact growth cutoff is established.'}
 };
 for(const id of overviewIds){
