@@ -3,6 +3,7 @@ import { toolLock } from './core.mjs';
 import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ROOT, hash, deadline, fixtures, isolation, validate, physics } from './core.mjs';
+import { verifyCausality } from './causality.mjs';
 const release=await toolLock();
 const clear=deadline(1800000);
 try {
@@ -19,6 +20,7 @@ try {
     const fixture=mirrored?physics.mirror(original):original, result=await isolation(fixture), name=fixture.name+(mirrored?' mirrored':'');
     if(result.hash!==stored[name])throw Error('Isolation hash changed: '+name);
     if(validate(fixture,result).length)throw Error('Isolation invariants failed: '+name);
+    if(fixture.causality){await verifyCausality(fixture);console.log('Contact causality and disconnected controls PASS: '+name);}
     count++;
   }
   console.log('Isolation: '+count+' stored hashes and invariants PASS');

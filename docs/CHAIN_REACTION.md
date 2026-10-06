@@ -35,7 +35,7 @@ node tools/chain-reaction/verify.mjs --full
 node tools/chain-reaction/lint.mjs
 ```
 
-The full verifier is read-only. It checks the vendored engine fingerprint and twenty
+The full verifier is read-only. It checks the vendored engine fingerprint and twenty-two
 stored isolation hashes, reruns their numerical checks, and rejects any public stage
 until stage recording, robustness, step events and chain checks are implemented.
 A zero-stage result never proves a chain, a baton handoff or a robustness gate.
@@ -121,3 +121,45 @@ visible material controls are checked separately.
 network can inspect it. The default loopback preview lasts one hour. The server serves
 only supported web file types and rejects hidden path components. Stop the owned
 server with SIGINT. No public machine page is created by this preview.
+
+## Contact causality and the tin preview
+
+The owner selected the tin-toy direction. The local chooser now defaults to painted
+tin dominoes, with rolled seams and brass details. Independent moving wheel and
+pendulum specimens are removed from the chain preview.
+
+The original `dominoes.json` is an isolation test deliberately started by a tilted
+first domino. Reusing it in the ball preview was a bug. The ramp also intersected
+the first domino. The new `marble-dominoes.json` starts all fourteen dominoes upright
+and clears the ramp. Both orientations pass the same contact contract.
+
+`js/chain-reaction-causality.js` observes actual solver contact impulses. Every
+domino must receive contact from its declared predecessor before leaving its armed
+pose, and every domino must ultimately fall. It observes each 1/240-second tick,
+including contact-force events from collision substeps. Manifold readings alone
+missed one early impact because the cached contact data lagged the CCD response.
+The observer never adds forces, releases bodies or scripts motion.
+
+`verify --full` also runs fourteen counterfactuals per orientation: removing the ball,
+and separately clamping each predecessor that has downstream dominoes. Downstream
+bodies must stay upright for ten seconds. It deliberately reintroduces both known
+bugs and requires the gate to reject them. Removing a single domino is not the same
+as breaking causality: a projectile or sliding domino can bridge the empty gap.
+Clamping a link tests interruption while preserving the physical barrier.
+
+Chrome and WebKit smoke runs check the armed pose at 0.3 seconds, all fourteen
+contact-before-motion records, completed falls, and the no-ball control. The lab
+loads the exact verified fixture. Future contact-chain candidates need their own
+causal contract and tests before shipping; this is not a general stage verifier.
+The original twenty snapshot baselines are unchanged; two new mirrored baselines
+cover this fixture.
+
+Explicit mass and angular inertia can now be supplied to the physics module. Tin
+dominoes approximate closed 0.2 mm steel shells at 7,850 kg/m3: 4.888 g each, with
+outer dimensions 8.128 by 66.04 by 14.224 mm. Their moment of inertia subtracts
+the inner cuboid from the outer cuboid. The 15.875 mm solid ceramic marble uses an
+assumed 2,400 kg/m3 bulk density, giving 5.027 g and spherical rotational inertia.
+Paint, rolled seams and embossed details are approximations in this provisional
+model. Friction and restitution still need physical calibration. Steel density
+is within the range in [Ansys material property data, table A2](https://www.ansys.com/content/dam/amp/2021/august/webpage-requests/education-resources-dam-upload-batch-2/material-property-data-for-eng-materials-BOKENGEN21.pdf).
+These values do not complete the full kit material table or freeze any gate.

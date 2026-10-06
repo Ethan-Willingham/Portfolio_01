@@ -18,14 +18,14 @@ try {
       await page.evaluate(()=>{ChainReactionLab.settings.paused=true;});
       for(const direction of ['tabletop','paper','tin']) {
         await page.evaluate(look=>ChainReactionLab.direction(look),direction);
-        for(const time of [0,.5,1.5,3]) {
+        for(const time of [0,.3,81/240,82/240,.5,1,1.5,3]) {
           await page.evaluate(t=>ChainReactionLab.seek(t),time);
           await page.locator('canvas').screenshot({path:resolve(output,`${direction}-${viewport.width}-${time}.png`)});
         }
       }
       await page.evaluate(()=>{ChainReactionLab.board(true);});
       await page.locator('canvas').screenshot({path:resolve(output,`materials-${viewport.width}.png`)});
-      report.push({viewport,errors,metrics:await page.evaluate(()=>ChainReactionLab.metrics())});
+      report.push({viewport,errors,metrics:await page.evaluate(()=>ChainReactionLab.metrics()),causality:await page.evaluate(()=>ChainReactionLab.causality())});
       if(errors.length)throw Error(errors.join('\n'));
       await page.close();
     }

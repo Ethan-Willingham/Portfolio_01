@@ -14,6 +14,19 @@ try {
     await page.goto(server.url+'/local/chain-reaction-lab.html');
     await page.waitForFunction(()=>window.ChainReactionLab?.ready,null,{timeout:30000});
     assert.equal(await page.evaluate(()=>ChainReactionLab.settings.paused),true);
+    assert.equal(await page.evaluate(()=>ChainReactionLab.settings.look),'tin');
+    const causal=await page.evaluate(async()=>{
+      await ChainReactionLab.seek(.3);const armed=ChainReactionLab.causality();
+      await ChainReactionLab.seek(3);const completed=ChainReactionLab.causality();
+      const definition=ChainReactionLab.definition();definition.parts=definition.parts.filter(p=>p.id!=='marble');
+      const sim=await ChainReaction.physics.create(definition);let maxAngle=0;
+      try{for(let n=0;n<2400;n++){sim.step();for(const p of sim.state())if(p.id.startsWith('domino'))maxAngle=Math.max(maxAngle,Math.abs(p.angle));}}
+      finally{sim.dispose();}
+      return {armed,completed,maxAngle};
+    });
+    assert(causal.armed.pass&&causal.armed.events.every(e=>e.motionTick===null),'Row moved before the ball arrived');
+    assert(causal.completed.pass&&causal.completed.events.every(e=>e.contactTick!==null&&e.motionTick>=e.contactTick&&e.fallenTick!==null),'Missing physical predecessor contact');
+    assert(causal.maxAngle<.02,'Row fell with the ball removed');
     assert.equal(await page.getByRole('button',{name:'Play',exact:true}).count(),1);
     await page.getByRole('button',{name:'Paper and card',exact:true}).click();
     assert.equal(await page.evaluate(()=>ChainReactionLab.settings.look),'paper');
@@ -39,7 +52,7 @@ try {
     await page.waitForTimeout(100);
     assert.equal(await page.evaluate(()=>ChainReactionLab.metrics().time),time);
     assert.deepEqual(errors,[]);
-    report.push({engine,version:browser.version(),pass:true,checks:['WebGL2/WASM boot','reduced motion paused','look choice','material board','reveal framing','orientation','44px targets','no horizontal overflow','play/pause','zero console errors']});
+    report.push({engine,version:browser.version(),pass:true,causal,checks:['WebGL2/WASM boot','tin default','contact before motion','ball removed stays armed','reduced motion paused','look choice','material board','300px hero','reference image loads','reveal framing','orientation','44px targets','no horizontal overflow','play/pause','zero console and HTTP errors']});
     await context.close();
   });
   console.log(JSON.stringify(report,null,2));
