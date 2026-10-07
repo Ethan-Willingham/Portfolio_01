@@ -135,8 +135,9 @@
         <p><time datetime="2026-10-07">Updated October 7, 2026.</time> The greedy cup still doesn’t drain reliably in the development version. The current work is on pressure and water motion inside the pipes.</p>
         <ul>
           <li><strong>Passed in isolated tests:</strong> water at rest balances gravity. Moving water and its surface pass energy, packing and volume checks across three starting layouts. Halving the timestep changes kinetic energy by about 0.14% in that small test.</li>
-          <li><strong>First GPU test passed:</strong> the pressure step matches an independent calculation across three starting layouts and updates the existing water particles. A separate L-shaped pipe test passes its wall and energy checks with the particle positions held fixed.</li>
-          <li><strong>Working now:</strong> water motion around pipe corners and trapped-air compression measured from the moving water surface.</li>
+          <li><strong>GPU reference check passed:</strong> the pressure step matches an independent calculation across three starting layouts over 216 continuous steps with the existing water particles. A separate L-shaped pipe test passes its wall and energy checks with the particle positions held fixed.</li>
+          <li><strong>Latest failures:</strong> the trapped-air pocket shrinks, but local water compression reaches 5.02%, above the 5% limit. Moving water in the corner test loses too much motion on its coarse grid. Halving the timestep changes kinetic energy by about 6.35% in a short GPU test.</li>
+          <li><strong>Working now:</strong> finer pressure cells for the trapped-air test, more grid cells across the pipe, and GPU motion accuracy.</li>
           <li><strong>Larger cup:</strong> a layout with more water is prepared. Its flow and the effect of dropping a slime still need testing.</li>
           <li><strong>Still unfinished:</strong> reliable priming and drainage, trapped-air coupling, and the fountain. These isolated checks haven’t established a working machine.</li>
         </ul>
@@ -166,7 +167,7 @@
   <script src="/js/liquid-wgpu.js?v=v28.171"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.8"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.9"></script>
   <script src="/js/water-smoke-slime-ui.js?v=5.0"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
