@@ -40,6 +40,6 @@ await writeFile(resolve(root, 'chain-reaction/workbench-manifest.json'), JSON.st
 // available as a separate catalogue of construction studies.
 const viewer = await readFile(resolve(root, 'chain-reaction/connected-slice.html'), 'utf8');
 const canonical = viewer.replace('<meta name="robots" content="noindex,nofollow">', '<link rel="canonical" href="https://ethanwillingham.com/chain-reaction.html">')
-  .replace('</head>', '<meta property="og:title" content="Chain Reaction"><meta property="og:type" content="website"><meta property="og:url" content="https://ethanwillingham.com/chain-reaction.html"><meta property="og:image" content="https://ethanwillingham.com/assets/chain-reaction/workbench.jpg?v=0.2.0"></head>');
+  .replace('</head>', '<meta property="og:title" content="Chain Reaction"><meta property="og:type" content="website"><meta property="og:url" content="https://ethanwillingham.com/chain-reaction.html"><meta property="og:image" content="https://ethanwillingham.com/assets/chain-reaction/workbench.jpg?v=0.3.0"></head>');
 await writeFile(resolve(root, 'chain-reaction.html'), canonical);
 console.log(`Exported ${files.length} browser files and the immersive portfolio post.`);

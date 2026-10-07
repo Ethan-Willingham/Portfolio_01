@@ -97,22 +97,18 @@
     function painted(parent, w, h, d, x, y, z, m, name) {
       const o = box(parent, w, h, d, x, y, z, m); o.name = name; return o;
     }
-    function instances(parent, g, m, positions, name) {
+    function instances(parent, g, m, positions, name, scales) {
       const o = new T.InstancedMesh(g, m, positions.length); const matrix = new T.Matrix4();
-      positions.forEach((p, i) => { matrix.makeTranslation(...p); o.setMatrixAt(i, matrix); });
+      positions.forEach((p, i) => { matrix.makeTranslation(...p); if (scales) matrix.scale(new T.Vector3(...scales[i])); o.setMatrixAt(i, matrix); });
       o.name = name; o.castShadow = o.receiveShadow = true; parent.add(o); return o;
     }
     const brass = original.brass, steel = material('blue-black steel', '#525b60', .32, .65);
     const cream = material('warm porcelain glaze', '#dfd2b4', .19);
     const copper = material('aged copper', '#a46744', .36, .65);
-    const ink = material('dark recesses', '#262724', .85);
     const palePaper = material('cut paper edges', '#d8c9a5', .82);
     const toyBlue = material('worn blue enamel', '#598a9c', .35);
     const toyRose = material('worn vermilion enamel', '#a75646', .4);
     const toyGold = material('ochre toy paint', '#c6a04f', .44);
-    const bottleBlue = material('cobalt bottle glaze', '#3b718b', .14, .08);
-    const bottleGreen = material('green bottle glaze', '#557b68', .13, .08);
-    const bottleAmber = material('amber bottle glaze', '#b7843e', .16, .08);
     const maple = wood('honey maple', '#b28b5c', '#5b381a', 61);
     const walnut = wood('walnut', '#503323', '#241b16', 79);
     const cherry = wood('cherry', '#793b2e', '#432620', 103);
@@ -144,16 +140,6 @@
       mesh(parent, g, steel, 0, 0, 0, name + '-cast-brackets');
       return { y, z: safeFront - .49 };
     }
-    function book(parent, x, y, z, width, height, cover, lean = 0) {
-      const g = new T.Group(); g.position.set(x, y, z); g.rotation.z = lean; g.name = 'cloth-bound-book'; parent.add(g);
-      painted(g, width * .88, height - .07, .40, 0, height / 2, 0, palePaper, 'cut-page-block');
-      const covers = [[-width / 2, height / 2, 0], [width / 2, height / 2, 0]];
-      instances(g, geometry('book-cover:' + height, () => new T.BoxGeometry(.035, height, .45)), cover, covers, 'paired-book-covers');
-      painted(g, width, height, .045, 0, height / 2, .225, cover, 'cloth-spine');
-      const bands = [[0, height * .17, .255], [0, height * .81, .255]];
-      instances(g, geometry('book-bands:' + width, () => new T.BoxGeometry(width * .76, .023, .008)), brass, bands, 'gilded-spine-bands');
-      return g;
-    }
     function spool(parent, x, y, z, radius, height, thread) {
       cylinder(parent, radius * .76, height * .72, x, y + height / 2, z, thread, 'wound-thread');
       const flanges = [[x, y + .045, z], [x, y + height - .045, z]];
@@ -161,19 +147,12 @@
       instances(parent, flangeGeometry, cream, flanges, 'turned-spool-flanges');
       cylinder(parent, .055, height + .045, x, y + height / 2, z, maple[1], 'spool-core');
     }
-    function bottle(parent, x, y, z, color, scale = 1) {
-      const o = lathe(parent, 'apothecary-bottle', [[0, 0], [.20, 0], [.22, .04], [.22, .58], [.20, .65], [.08, .78], [.08, .94], [.105, .94], [.105, .985], [.065, .985], [.065, .95]], x, y, z, color);
-      o.scale.setScalar(scale);
-      cylinder(parent, .085 * scale, .11 * scale, x, y + 1.015 * scale, z, original.cork || walnut[1], 'bottle-cork');
-    }
     function theme(index, id, title, pair, wallMaterial, description) {
       const group = new T.Group(); group.position.x = index * 16; group.name = 'set-' + id;
       group.userData = { nonPhysical: true, theme: id, xStart: index * 16, xEnd: (index + 1) * 16 };
       bench.add(group);
       stock(group, 16, .44, fullDepth, 8, -.22, (benchRear + benchFront) / 2, pair, id + '-worktop');
       painted(group, 16, 9, .14, 8, 4.5, wallFront - .07, wallMaterial, id + '-back-wall');
-      stock(group, 16, .15, .24, 8, 8.99, wallFront + .06, pair, id + '-wall-cap');
-      stock(group, 16, .14, .19, 8, .07, wallFront + .055, pair, id + '-rear-skirting');
       themes.push({ id, title, xStart: index * 16, xEnd: (index + 1) * 16, wood: pair[0].name, wall: wallMaterial.name, description, nonPhysical: true });
       return group;
     }
@@ -189,19 +168,14 @@
     }, 512, true);
     pegMap.repeat.set(1.4, .8);
     const pegboard = material('drilled amber fiberboard', '#f1e8d1', .85, 0, pegMap);
-    const workshop = theme(0, 'workshop', 'The pegboard workshop', maple, pegboard, 'Maple, drilled fiberboard, worn drawers and hand tools.');
+    const workshop = theme(0, 'workshop', 'The pegboard workshop', maple, pegboard, 'Maple, drilled fiberboard, one fitted toolcase and two dark hand tools.');
     // A cabinet with inset drawers and cast cup pulls.
-    stock(workshop, 3.6, 2.15, .57, 2.25, 6.25, wallFront + .355, walnut, 'tool-cabinet-case');
-    for (let row = 0; row < 3; row++) {
-      const y = 5.58 + row * .66;
-      stock(workshop, 3.29, .55, .07, 2.25, y, wallFront + .675, maple, 'fitted-tool-drawer');
+    stock(workshop, 3.6, 1.95, .57, 2.25, 6.25, wallFront + .355, walnut, 'tool-cabinet-case');
+    for (let row = 0; row < 2; row++) {
+      const y = 5.75 + row;
+      stock(workshop, 3.29, .82, .07, 2.25, y, wallFront + .675, maple, 'fitted-tool-drawer');
       const pull = torus(workshop, .12, .027, 2.25, y, wallFront + .735, steel, 'cast-drawer-pull'); pull.scale.y = .55;
     }
-    const toolShelf = shelf(workshop, 11.6, 5.9, 5, maple, 'workshop-stock');
-    spool(workshop, 10.15, toolShelf.y, toolShelf.z, .26, .68, original.string || cream);
-    bottle(workshop, 11.12, toolShelf.y, toolShelf.z, bottleAmber, .7);
-    book(workshop, 12.18, toolShelf.y, toolShelf.z, .37, 1.04, toyRose);
-    book(workshop, 12.65, toolShelf.y, toolShelf.z, .32, .88, toyBlue, -.06);
     const squareShape = new T.Shape(); squareShape.moveTo(0, 0); squareShape.lineTo(1.55, 0); squareShape.lineTo(0, 1.55); squareShape.closePath();
     const squareHole = new T.Path(); squareHole.moveTo(.2, .2); squareHole.lineTo(.2, 1.03); squareHole.lineTo(1.03, .2); squareHole.closePath(); squareShape.holes.push(squareHole);
     mesh(workshop, geometry('carpenters-square', () => new T.ExtrudeGeometry(squareShape, { depth: .045, bevelEnabled: false })), brass, 6.0, 6.05, wallFront + .17, 'open-carpenters-square');
@@ -223,15 +197,12 @@
     weave.repeat.set(2.5, 1);
     const woven = material('cream and blue woven ticking', '#f2e9d7', .9, 0, weave);
     const linenWall = material('sewing alcove plaster', '#aaa994', .95);
-    const sewing = theme(1, 'sewing-alcove', 'The sewing alcove', walnut, linenWall, 'Walnut, woven ticking, copper scissors, thread and mother-of-pearl buttons.');
+    const sewing = theme(1, 'sewing-alcove', 'The sewing alcove', walnut, linenWall, 'Walnut, pinned woven ticking, copper scissors, one thread spool and three mismatched shell buttons.');
     painted(sewing, 13.6, 2.7, .10, 8, 6.65, wallFront + .08, woven, 'stretched-striped-linen');
-    stock(sewing, 14, .12, .19, 8, 8.05, wallFront + .16, walnut, 'fabric-top-rail');
-    stock(sewing, 14, .12, .19, 8, 5.24, wallFront + .16, walnut, 'fabric-bottom-rail');
-    const blueThread = material('indigo thread', '#657f9a', .88), roseThread = material('rose thread', '#b17773', .9), ochreThread = material('ochre thread', '#b89d59', .87);
-    const sewingShelf = shelf(sewing, 3.6, 5.68, 4.7, walnut, 'sewing-notions');
-    spool(sewing, 2.25, sewingShelf.y, sewingShelf.z, .27, 1.0, blueThread);
-    spool(sewing, 3.22, sewingShelf.y, sewingShelf.z, .30, .72, roseThread);
-    spool(sewing, 4.25, sewingShelf.y, sewingShelf.z, .23, .87, ochreThread);
+    instances(sewing, geometry('linen-tacks', () => { const g = new T.CylinderGeometry(.042, .042, .025, 16); g.rotateX(Math.PI / 2); return g; }), brass, [[1.34, 5.43, wallFront + .145], [14.66, 5.43, wallFront + .145], [1.34, 7.87, wallFront + .145], [14.66, 7.87, wallFront + .145]], 'four-linen-tacks');
+    const blueThread = material('indigo thread', '#657f9a', .88);
+    const sewingShelf = shelf(sewing, 3.0, 5.68, 1.65, walnut, 'sewing-notions');
+    spool(sewing, 3.0, sewingShelf.y, sewingShelf.z, .27, 1.0, blueThread);
     const card = painted(sewing, 2.0, 2.2, .06, 12.2, 6.76, wallFront + .21, palePaper, 'button-display-card');
     const buttonMap = texture((ctx, s) => {
       ctx.fillStyle = '#e5d6b7'; ctx.fillRect(0, 0, s, s);
@@ -241,7 +212,7 @@
     }, 256);
     const pearl = material('iridescent button shell', '#f3ebd9', .22, .08, buttonMap);
     const buttonGeometry = geometry('shell-button', () => { const g = new T.CylinderGeometry(.18, .18, .045, 28); g.rotateX(Math.PI / 2); return g; });
-    instances(sewing, buttonGeometry, pearl, [[11.72, 7.37, wallFront + .27], [12.68, 7.37, wallFront + .27], [11.72, 6.70, wallFront + .27], [12.68, 6.70, wallFront + .27], [11.72, 6.05, wallFront + .27], [12.68, 6.05, wallFront + .27]], 'six-sewn-shell-buttons');
+    instances(sewing, buttonGeometry, pearl, [[11.72, 7.29, wallFront + .27], [12.57, 6.82, wallFront + .27], [11.88, 6.12, wallFront + .27]], 'three-mismatched-shell-buttons', [[.78, .78, 1], [1.16, 1.16, 1], [.94, .94, 1]]);
     const cardPin = disk(sewing, .043, .035, card.position.x, 7.78, wallFront + .30, brass); cardPin.name = 'button-card-pin';
     // Scissors are hanging from a peg, with two full rings and overlapping blades.
     const bladeShape = new T.Shape(); bladeShape.moveTo(-.07, .74); bladeShape.lineTo(.06, .74); bladeShape.lineTo(.022, -.59); bladeShape.lineTo(-.012, -.74); bladeShape.closePath();
@@ -259,7 +230,7 @@
     }, 512, true);
     const plush = material('plum velvet', '#e9d8d6', .96, 0, plumMap);
     const theatreWall = material('theatre aubergine paint', '#564a51', .82);
-    const theatre = theme(2, 'toy-theatre', 'The toy theatre', cherry, theatreWall, 'Cherry, pleated plum velvet, a gilt proscenium and painted wooden miniatures.');
+    const theatre = theme(2, 'toy-theatre', 'The toy theatre', cherry, theatreWall, 'Cherry, pleated plum velvet, a gilt proscenium and one miniature train.');
     function curtain(x, width, height, y, name) {
       const shape = new T.Shape(), folds = 32, zCenter = wallFront + .35;
       for (let n = 0; n <= folds; n++) {
@@ -278,7 +249,7 @@
     const arch = new T.Shape(); arch.moveTo(-4.7, 0); arch.lineTo(4.7, 0); arch.lineTo(4.7, 3.2); arch.lineTo(-4.7, 3.2); arch.closePath();
     const opening = new T.Path(); opening.moveTo(-4.28, .12); opening.lineTo(-4.28, 1.93); opening.quadraticCurveTo(0, 3.68, 4.28, 1.93); opening.lineTo(4.28, .12); opening.closePath(); arch.holes.push(opening);
     mesh(theatre, geometry('toy-theatre-proscenium', () => new T.ExtrudeGeometry(arch, { depth: .14, bevelEnabled: true, bevelSize: .025, bevelThickness: .025, bevelSegments: 2 })), toyGold, 8, 5.23, wallFront + .16, 'arched-gilt-proscenium');
-    const toyShelf = shelf(theatre, 8, 5.30, 10.4, cherry, 'miniature-stage');
+    const toyShelf = shelf(theatre, 6.7, 5.30, 6.2, cherry, 'miniature-stage');
     // A small train, including metal axles and four turned wheels.
     painted(theatre, 1.43, .22, .52, 6.7, toyShelf.y + .29, toyShelf.z, toyRose, 'toy-train-chassis');
     cylinder(theatre, .25, .70, 6.48, toyShelf.y + .65, toyShelf.z, toyBlue, 'toy-engine-boiler').rotation.z = Math.PI / 2;
@@ -286,29 +257,13 @@
     cylinder(theatre, .08, .20, 6.28, toyShelf.y + .98, toyShelf.z, brass, 'engine-chimney');
     const wheelG = geometry('toy-train-wheels', () => { const g = new T.CylinderGeometry(.15, .15, .065, 28); g.rotateX(Math.PI / 2); return g; });
     instances(theatre, wheelG, brass, [[6.2, toyShelf.y + .17, toyShelf.z + .29], [7.18, toyShelf.y + .17, toyShelf.z + .29], [6.2, toyShelf.y + .17, toyShelf.z - .29], [7.18, toyShelf.y + .17, toyShelf.z - .29]], 'four-brass-train-wheels');
-    painted(theatre, .60, .60, .55, 9.0, toyShelf.y + .30, toyShelf.z, toyBlue, 'blue-toy-cube');
-    painted(theatre, .46, .46, .46, 9.04, toyShelf.y + .83, toyShelf.z, toyRose, 'red-stacked-cube').rotation.y = .16;
-    const roofShape = new T.Shape(); roofShape.moveTo(-.34, 0); roofShape.lineTo(.34, 0); roofShape.lineTo(0, .47); roofShape.closePath();
-    mesh(theatre, geometry('toy-triangle', () => new T.ExtrudeGeometry(roofShape, { depth: .50, bevelEnabled: true, bevelSize: .015, bevelThickness: .015, bevelSegments: 1 })), toyGold, 9.04, toyShelf.y + 1.06, toyShelf.z - .25, 'ochre-triangle-block');
-    book(theatre, 10.56, toyShelf.y, toyShelf.z, .44, 1.27, toyGold, -.04);
-    // Gilt studs catch light at the arch crown without a flat illustration.
-    const studs = []; for (let n = 0; n < 15; n++) { const x = -3.5 + n * .5; studs.push([8 + x, 8.32 - .10 * Math.abs(x), wallFront + .325]); }
-    instances(theatre, geometry('gilt-studs', () => new T.SphereGeometry(.038, 10, 8)), brass, studs, 'fifteen-gilt-studs');
 
     const slate = material('slate blue cabinet backing', '#536c76', .87);
-    const cabinet = theme(3, 'curiosity-cabinet', 'The curiosity cabinet', oak, slate, 'Smoked oak, slate blue compartments, glazed bottles, porcelain and gilt book spines.');
+    const cabinet = theme(3, 'curiosity-cabinet', 'The curiosity cabinet', oak, slate, 'Smoked oak and slate blue, with a globe and porcelain urn at the ends of an open display case.');
     stock(cabinet, .19, 3.3, .83, 3.0, 6.48, safeFront - .555, oak, 'cabinet-left-stile');
     stock(cabinet, .19, 3.3, .83, 14.9, 6.48, safeFront - .555, oak, 'cabinet-right-stile');
     stock(cabinet, 12.1, .18, .86, 8.95, 8.12, safeFront - .555, oak, 'cabinet-cornice');
     const lower = shelf(cabinet, 8.95, 4.91, 12.1, oak, 'cabinet-lower');
-    const upper = shelf(cabinet, 8.95, 6.65, 12.1, oak, 'cabinet-upper');
-    for (const x of [7.04, 11.05]) stock(cabinet, .13, 3.16, .78, x, 6.48, safeFront - .555, oak, 'cabinet-divider');
-    book(cabinet, 3.9, lower.y, lower.z, .44, 1.28, toyRose);
-    book(cabinet, 4.45, lower.y, lower.z, .37, 1.11, toyGold);
-    book(cabinet, 4.93, lower.y, lower.z, .40, 1.35, toyBlue, -.05);
-    bottle(cabinet, 8.0, lower.y, lower.z, bottleBlue, 1.12);
-    bottle(cabinet, 8.93, lower.y, lower.z, bottleGreen, .84);
-    bottle(cabinet, 9.78, lower.y, lower.z, bottleAmber, .96);
     lathe(cabinet, 'porcelain-urn', [[0, 0], [.20, 0], [.23, .05], [.12, .16], [.27, .35], [.35, .60], [.28, .86], [.16, .97], [.16, 1.06], [.20, 1.09], [.20, 1.13], [.13, 1.13], [.13, 1.07]], 12.14, lower.y, lower.z, cream);
     torus(cabinet, .28, .03, 13.36, lower.y + .53, lower.z + .03, brass, 'reading-magnifier-rim');
     rod(cabinet, [13.16, lower.y + .34, lower.z + .03], [12.82, lower.y + .02, lower.z + .03], .043, oak[0], 'magnifier-handle');
@@ -323,14 +278,10 @@
       for (let i = 0; i <= s; i += 64) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(s, i); ctx.stroke(); }
     }, 512);
     const globeSurface = material('painted miniature globe', '#e3d8ba', .4, 0, globeMap);
-    mesh(cabinet, geometry('globe-ball', () => new T.SphereGeometry(.43, 32, 20)), globeSurface, 4.98, upper.y + .69, upper.z, 'hand-painted-miniature-globe');
-    torus(cabinet, .48, .025, 4.98, upper.y + .69, upper.z, brass, 'globe-meridian').rotation.z = -.25;
-    cylinder(cabinet, .25, .095, 4.98, upper.y + .05, upper.z, brass, 'globe-base');
-    rod(cabinet, [4.98, upper.y + .08, upper.z], [4.98, upper.y + .25, upper.z], .035, brass, 'globe-stem');
-    bottle(cabinet, 8.35, upper.y, upper.z, bottleAmber, .85);
-    lathe(cabinet, 'small-porcelain-vessel', [[0, 0], [.21, 0], [.27, .12], [.30, .35], [.24, .64], [.18, .68], [.18, .72], [.15, .72], [.15, .67]], 9.50, upper.y, upper.z, cream);
-    book(cabinet, 12.17, upper.y, upper.z, .46, 1.02, toyBlue);
-    book(cabinet, 12.72, upper.y, upper.z, .35, 1.15, toyRose);
+    mesh(cabinet, geometry('globe-ball', () => new T.SphereGeometry(.43, 32, 20)), globeSurface, 4.98, lower.y + .69, lower.z, 'hand-painted-miniature-globe');
+    torus(cabinet, .48, .025, 4.98, lower.y + .69, lower.z, brass, 'globe-meridian').rotation.z = -.25;
+    cylinder(cabinet, .25, .095, 4.98, lower.y + .05, lower.z, brass, 'globe-base');
+    rod(cabinet, [4.98, lower.y + .08, lower.z], [4.98, lower.y + .25, lower.z], .035, brass, 'globe-stem');
 
     // The moving chain is framed close to the bench. Put the collections in
     // that same view rather than relegating the scenery to the upper wall.

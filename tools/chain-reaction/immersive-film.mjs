@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
-import {writeFile, mkdir} from 'node:fs/promises';
+import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {toolLock} from './core.mjs';
+import {ROOT, hash, toolLock} from './core.mjs';
 import {serve, browserRun} from './browser.mjs';
 
 const unlock = await toolLock();
 let server;
 const rows = [], output = process.env.CHAIN_REACTION_OUTPUT || '/tmp/chain-reaction-immersive';
+const paths=['chain-reaction.html','chain-reaction/connected-renderer.js','chain-reaction/connected-slice.js','chain-reaction/world-dressing.js','chain-reaction/stages/viewer/index.json',...['00001','00002','00003','00004'].map(n=>'chain-reaction/stages/viewer/'+n+'.json')];
+const sources=await Promise.all(paths.map(async path=>({path,hash:hash(await readFile(resolve(ROOT,path)))})));
 try {
   await mkdir(output, {recursive: true});
   server = await serve();
@@ -17,11 +19,12 @@ try {
       await cdp.send('Emulation.setCPUThrottlingRate',{rate:profile.cpu});
       await page.goto(server.url + '/chain-reaction.html?paused=1#stage=4');
       await page.waitForFunction(() => window.ChainReactionPage?.ready);
-      for (const mode of ['busy','overview']) {
+      for (const mode of ['busy-catch','busy-drawer','overview']) {
         const runs = [];
         for (let n=0;n<5;n++) {
-          await page.evaluate(async mode => {await ChainReactionPage.seek(4,0);if(mode==='overview')ChainReactionPage.overview();ChainReactionPage.resetMetrics();ChainReactionPage.play();},mode);
-          if (mode==='busy') await page.waitForFunction(() => ChainReactionPage.state().ended,{}, {timeout:20000});
+          await page.evaluate(async mode => {await ChainReactionPage.seek(mode==='busy-catch'?2:4,0);if(mode==='overview')ChainReactionPage.overview();ChainReactionPage.resetMetrics();ChainReactionPage.play();},mode);
+          if (mode==='busy-catch') await page.waitForFunction(() => ChainReactionPage.state().stage===3,{}, {timeout:15000});
+          else if (mode==='busy-drawer') await page.waitForFunction(() => ChainReactionPage.state().ended,{}, {timeout:20000});
           else await page.waitForFunction(() => ChainReactionPage.metrics().frames.length >= 360,{}, {timeout:15000});
           await page.evaluate(() => ChainReactionPage.pause());
           const metrics = await page.evaluate(() => ChainReactionPage.metrics()), sorted = [...metrics.frames].sort((a,b)=>a-b);
@@ -36,8 +39,9 @@ try {
       await cdp.detach();await page.close();
     }
   });
-  await writeFile(resolve(output,'film.json'),JSON.stringify({scope:'Five actual DPR2 fourth-stage playback runs and five animated overview runs per Chromium owner and CPU4 landscape-phone proxy. No physical phone measurement.',pass:rows.every(r=>r.pass),rows},null,2)+'\n');
+  for(const source of sources)assert.equal(hash(await readFile(resolve(ROOT,source.path))),source.hash,'Performance input changed during measurement: '+source.path);
+  await writeFile(resolve(output,'film.json'),JSON.stringify({scope:'Five actual DPR2 catch playback, drawer playback and animated overview runs per Chromium owner and CPU4 landscape-phone proxy. No physical phone measurement.',pass:rows.every(r=>r.pass),sources,rows},null,2)+'\n');
   assert.ok(rows.every(r=>r.pass),'Immersive scene exceeds the established 16.7 ms frame budget.');
 } catch(error) {
-  await mkdir(output,{recursive:true});await writeFile(resolve(output,'film-failed.json'),JSON.stringify({error:String(error),rows},null,2)+'\n');throw error;
+  await mkdir(output,{recursive:true});await writeFile(resolve(output,'film-failed.json'),JSON.stringify({error:String(error),sources,rows},null,2)+'\n');throw error;
 } finally {await server?.close();await unlock();}

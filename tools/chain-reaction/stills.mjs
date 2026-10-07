@@ -22,7 +22,7 @@ try {
   const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:2});
   try {
    await page.goto(server.url+'/chain-reaction.html?paused=1#stage=1');await page.waitForFunction(()=>window.ChainReactionPage?.ready);
-   for(const [stage,time] of [[1,0],[1,8.6],[2,1.56],[3,1.12],[4,2]]) {
+   for(const [stage,time] of [[1,0],[1,8.6],[2,3.6],[3,1.12],[4,2]]) {
     await page.evaluate(([s,t])=>ChainReactionPage.seek(s,t),[stage,time]);
     await page.evaluate(()=>document.fonts.ready);
     await page.screenshot({path:evidence+'/review-'+stage+'-'+time+'.png'});

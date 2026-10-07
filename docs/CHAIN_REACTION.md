@@ -13,12 +13,23 @@ Read the brief and that folder's current state before continuing.
 ## In Progress workbench
 
 The current draft viewer also lives at `chain-reaction/connected-slice.html`. It contains
-24 transfers across four stages, lasting 34.620833 seconds. Stage four is the
+24 transfers across four stages, lasting 34.275 seconds. Stage two now uses the
+existing sealed catch v14 mechanism instead of repeating the cup, mallet and ruler
+suffix. Stage four is the
 drawer outlet. Its viewer adapter stays under `chain-reaction/stages/viewer/`,
 separate from the three standard stage records in `assets/chain-reaction/stages/`.
+Those three standard records and the earlier three-stage comparison remain unchanged.
 The draft still needs delivered-work margins, an energy audit across variations,
 independent visual review and a decision on cord slack display and routing. The
 rocker outlet is available as an isolated study; it has not become stage five.
+
+The sealed v14 spring adapter belongs to the preview/draft viewer. It does not
+relax the general stage schema or approve the catch as a standard public stage.
+Its 400 existing variation results are reused only after proving the exact physical
+definition, solver profile and both canonical worlds match the sealed source.
+Two fresh canonical replays, interruption controls and energy checks pass; the
+energy model includes the spring's stored energy. This evidence supports the
+viewer replacement, while delivered-work and independent stage review remain open.
 
 Build the curated browser package from the independent research repository:
 
@@ -40,8 +51,9 @@ Chrome and WebKit, compares all four snapshot hashes and contact reports, compar
 six standalone mechanism worlds with Node, exercises all ten prop poses, and
 checks the project page at desktop and both phone orientations. It also checks
 the 20-pixel phone gutter and rejects missing same-origin assets or page errors.
-The local checks preserve all four chronological physical hashes after the
-fullscreen and environment changes.
+Cycle 25 local checks preserved all four chronological physical hashes after the
+fullscreen and environment changes. The current stage-two replacement has its own
+sealed catch hashes; the other three viewer stages retain their physical records.
 Set `CHAIN_REACTION_URL` to verify the deployed site with the same checks. Screenshots
 and the report go to `CHAIN_REACTION_OUTPUT`, or `/tmp/chain-reaction-workbench`.
 
@@ -55,37 +67,75 @@ and changing rooms, woods, materials and backgrounds inspired by I Spy books.
 The opening four environments are authored in `chain-reaction/world-dressing.js`:
 an amber pegboard workshop with honey maple, a walnut sewing alcove with a woven
 wall, a cherry and plum toy theatre, and a slate and smoked-oak curiosity cabinet.
-The set dressing adds 131 meshes around the existing mechanisms. Its authored
+The current set dressing adds 58 drawable scenery meshes around the mechanisms,
+reduced from 131 in cycle 25. Repeated book and bottle rows, extra spools, toy blocks,
+the cabinet grid and long border rails are removed. Each room keeps a small group of
+distinct objects: workshop tools, sewing scissors and a spool, a toy train, and a
+globe and porcelain urn at opposite ends of an open cabinet. Its authored
 geometry keeps at least 0.12 units of front clearance from the moving construction.
 An instance-aware Node geometry audit verifies those bounds against the actual
-renderer inputs. Scenery does not enter the solver; existing mechanical geometry,
-material recipes and timing stay unchanged.
+renderer inputs. Scenery does not enter the solver. The stage-two catch replacement
+is a separate physical change, with the sealed evidence described above.
+
+Fixed supports now use quiet stained finishes. Shared mounts replace separate
+arrival and run-out stands, and a rear-wall bracket supports the damper. Moving
+pieces use coral, blue and gold enamel while retaining their real shapes and
+dimensions. Finishes do not alter mass or contact recipes. The renderer's fixed
+scaffold drawable counts fall from 43 to 23 in stage one, 62 to 33 in stage three,
+and 48 to 23 in stage four. These are visual support counts, not collider counts. The final outlet stand is
+inset from the bench end; actual mount bounds are checked against the worktop.
 
 `immersive.mjs` checks both entry routes in Chrome and WebKit at four sizes. It
 verifies fullscreen layout, Home as the only navigation link, 44-pixel controls,
 Replay/Pause/Follow, four distinct theme records, all eight drawer transfer frames,
 and exact frozen and paused zoom-return image pairs. `workbench.mjs` retains the
-full chronological physics comparison.
+full chronological physics comparison. The revised drawer camera gently orbits
+ten degrees to expose the rear latch tab, returning to the frontal handoff view.
+Its copied display nodes preserve the recorded pan and zoom path; the sealed
+physical record is unchanged. Angular jerk is recorded as a display diagnostic,
+since the existing camera contract defines no angular jerk limit.
+
+`readability.mjs` checks actual collider surfaces against all visible scene meshes,
+including the participating cells when a contact manifold remains in the solver.
+The before/after comparison covers 2,384 physical cell probes, 488 event phases and
+25,200 surface rays across both browsers and two DPR2 viewport sizes. The revised
+renderer has zero surface-visibility failures in its 61 phases per browser/view.
+The original reproduces the hidden rear latch tab in all four browser/view pairs.
+All 276 compared physical snapshots match; maximum mesh error is 0.000000458 units.
+A separate check projects the incoming sphere silhouette at every tick through
+609 across four viewport shapes. All 2,440 frames stay inside the view. This is a
+construction and visibility check, rather than a numerical art score.
 
 `batching.mjs` compares all four rooms and the overview with their original and
-batched scenery. Forty material batches preserve all 131 authored objects and
-21,184 triangles. Geometry/UV/material/shadow checks and both-browser pixel
-comparisons preserve the scene; the largest mean channel difference is 0.000518
-on a 0-to-255 scale, confined to raster rounding. Physical snapshots match exactly.
+batched scenery. The current geometry audit verifies 33 material batches preserving
+all 58 authored objects and 10,700 triangles. Geometry, UV, material and shadow
+checks pass, including instance matrices, batch toggles and the environment
+extension guard. Cycle 25 used 40 batches, 131 objects and 21,184 triangles; its
+both-browser pixel comparisons measured a largest mean channel difference of
+0.000518 on a 0-to-255 scale, confined to raster rounding, with exact physical
+snapshots. Those pixel results apply to the preceding scene. Final cycle 26
+comparisons also pass in both browsers: largest mean channel difference is
+0.001807 and largest changed fraction is 0.0000138, with exact physical snapshots.
 
-`immersive-film.mjs` measures five actual DPR2 runs of fourth-stage playback and
-five animated full-overview runs per profile. Median p95 intervals are 4.8/4.0 ms
+`immersive-film.mjs` measures five actual DPR2 runs each of catch playback, drawer
+playback and animated full overview per profile. Before the cycle 26 simplification,
+cycle 25 median p95 intervals were 4.8/4.0 ms
 for the owner's 859x767 viewport and 10.4/12.6 ms for an 844x390 CPU4 landscape
-phone proxy. Both meet the unchanged 16.7 ms budget. These are desktop GPU proxy
+phone proxy. Both met the unchanged 16.7 ms budget. These are desktop GPU proxy
 measurements, not physical phone results. The retained first unbatched overview
-failed at 20.1 ms; no objects, antialiasing or texture detail were removed to pass.
+failed at 20.1 ms. Cycle 25 passed by batching rather than removing objects or
+optical quality; cycle 26 removes decorative repetition to improve readability.
+Final cycle 26 five-run median p95 intervals for catch/drawer/overview are
+4.9/4.6/4.2 ms in the owner viewport and 7.9/9.4/10.2 ms in the CPU4 landscape
+phone proxy. All six cases meet the same budget. The report pins rendering input
+hashes and rejects files changing during measurement.
 
 The renderer retains four-sample scene MSAA, DPR up to two, zero focus/motion/grain
 blur, lens-relative 24-bit depth and 4096 PCF shadow maps. Static batching changes
 render overhead, not the physics, scenery palette or optical quality.
 
 Future chapters must change architecture, dominant surfaces, prop vocabulary,
-composition and light together, with genuinely new material mechanisms verified
+composition and light together, with new material mechanisms verified
 before inclusion. A palette change alone does not satisfy this direction. Room
 transitions must carry the marble through a visible physical handoff; camera travel
 cannot substitute for one. Keep background details crisp and active impacts and
@@ -246,8 +296,10 @@ effects and physics mass assumptions remain provisional. No look approval is cla
 
 The lab uses a 13.039-degree vertical field, approximately a 105 mm lens with a
 24 mm sensor height, and a five-degree elevation. Its reveal demonstration eases
-camera distance in log space; reduced motion cuts directly. The public slice now has a baked stage camera, first-visit reveal, depth of field,
-motion blur and grain. Fallback stills use the live renderer; exact compression
+camera distance in log space; reduced motion cuts directly. The first public slice
+used a baked stage camera, first-visit reveal, depth of field, motion blur and grain.
+The current renderer retains the camera and removes those blur and grain effects.
+Fallback stills use the live renderer; exact compression
 matching remains limited by WebP quantization.
 
 `rotation.mjs` creates exact 0, 45, 90, 135 and 180-degree captures at all three zooms,
@@ -368,7 +420,7 @@ proposals freeze only with the owner's Gate 1 approval. Existing timing, jitter,
 | Camera translation jerk | 80 units/s cubed | Quintic pans of 4 units in 1.5 s and 16 in 2.3 s pass; 16 in 1.2 s rejected |
 | Camera log-zoom jerk | 15 per second cubed | Existing 9.3-to-14-unit reveal over 1.2 s measures 14.203 |
 | Handoff view | 8 units wide, at least 4 high, target y = 2 | Marble projects above 12 CSS pixels at both phone orientations and desktop |
-| Lens | 13.039 degrees vertical, 5 degrees elevation | Current private look study; final stage camera pending |
+| Lens | 13.039 degrees vertical, 5 degrees elevation | Drawer display adds a smooth 10-degree orbit; original physical camera record retained |
 | Hero marble | 5/8-inch sphere, 5.027488 g | Ceramic geometry and exact stored fixture mass |
 | Port rail | Top 2 inches above bench; 8 inches long | Two hundred straight-rail corner/interior samples, both orientations |
 | Nominal baton speed | 8 inches/s | Canonical rolling state passes rail in both orientations |
