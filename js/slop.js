@@ -496,11 +496,8 @@
     $('slop-work-description').textContent = style?.description || '';
     $('slop-work-description').hidden = !style?.description;
     const facts = [
-      fact('Made with', generation.provider || 'Not reported'),
-      fact('Model', generation.model || 'Not reported'),
       fact('Attempts', count(generation.attempts)),
-      fact('Image tokens', count(imageTokens(generation.usage))),
-      fact('Image cost', knownNumber(generation.costUsd) ? price.format(generation.costUsd) : 'Not reported')
+      fact('Generated with', generation.model ? `OpenAI ${generation.model}` : 'OpenAI · model not reported')
     ];
     $('slop-work-facts').replaceChildren(...facts);
     $('slop-work-prompt').textContent = work.prompt || 'The generation prompt was not recorded.';

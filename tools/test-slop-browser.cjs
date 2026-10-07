@@ -283,8 +283,11 @@ async function dialogChecks(page, label, works) {
   await page.locator('#slop-work').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#slop-work-title').textContent(), target.title);
   await page.waitForFunction(() => document.querySelector('#slop-work-image img')?.naturalWidth > 100);
-  const unknown = await page.locator('#slop-work-facts > div').evaluateAll(rows => rows.filter(row => ['Model', 'Image tokens', 'Image cost'].includes(row.querySelector('dt').textContent)).map(row => row.querySelector('dd').textContent));
-  assert.ok(unknown.every(value => value === 'Not reported'), 'An unknown work value was presented as a measured number.');
+  const facts = await page.locator('#slop-work-facts > div').evaluateAll(rows => rows.map(row => ({ label: row.querySelector('dt').textContent, value: row.querySelector('dd').textContent })));
+  assert.deepEqual(facts.map(fact => fact.label), ['Attempts', 'Generated with'], 'Artwork metadata must contain only the attempt count and combined provider/model line.');
+  const attempts = target.generation?.attempts;
+  assert.equal(facts[0].value, typeof attempts === 'number' && Number.isFinite(attempts) && attempts >= 0 ? new Intl.NumberFormat('en-US').format(attempts) : 'Not reported');
+  assert.equal(facts[1].value, target.generation?.model ? `OpenAI ${target.generation.model}` : 'OpenAI · model not reported', 'The image model must come from its generation record.');
   await capture(page, `${label}-artwork-open.png`);
   await page.locator('.slop-prompt summary').click();
   assert.equal(await page.locator('#slop-work-prompt').textContent(), target.prompt, 'Displayed prompt differs from the stored generation prompt.');

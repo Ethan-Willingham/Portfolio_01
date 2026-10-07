@@ -522,6 +522,50 @@ window.SLOP_DATA = {
     {
       "id": "p130",
       "text": "Now with fewer people"
+    },
+    {
+      "id": "p131",
+      "text": "Photographer: none"
+    },
+    {
+      "id": "p132",
+      "text": "By continuing, you agree"
+    },
+    {
+      "id": "p133",
+      "text": "Even the copies had painters"
+    },
+    {
+      "id": "p134",
+      "text": "Restored into a stranger"
+    },
+    {
+      "id": "p135",
+      "text": "Underdrawing: noise"
+    },
+    {
+      "id": "p136",
+      "text": "Something for everyone."
+    },
+    {
+      "id": "p137",
+      "text": "Only one of these happened"
+    },
+    {
+      "id": "p138",
+      "text": "Open edition"
+    },
+    {
+      "id": "p139",
+      "text": "Illustrated by"
+    },
+    {
+      "id": "p140",
+      "text": "Image for illustration purposes only"
+    },
+    {
+      "id": "p141",
+      "text": "Our signature dish."
     }
   ],
   "styles": [
@@ -812,6 +856,72 @@ window.SLOP_DATA = {
       "name": "Low-poly digital sculpture",
       "family": "Digital",
       "description": "A small number of visible polygon faces builds an object whose geometry stays plainly apparent."
+    },
+    {
+      "id": "archive-record",
+      "name": "Archive record",
+      "family": "Photography",
+      "description": "A photograph mounted on an archival card with its catalog fields."
+    },
+    {
+      "id": "canvas-verso",
+      "name": "Canvas verso",
+      "family": "Painting",
+      "description": "The back of a stretched canvas: linen, stretcher bars, wedges and the maker's stamp."
+    },
+    {
+      "id": "workshop-painting",
+      "name": "Workshop genre painting",
+      "family": "Painting",
+      "description": "A working room painted plainly, with the worker's attention taken seriously."
+    },
+    {
+      "id": "snapshot",
+      "name": "Vernacular snapshot",
+      "family": "Photography",
+      "description": "A family print with scalloped edges, creases and the wear of being kept."
+    },
+    {
+      "id": "technical-imaging",
+      "name": "Technical imaging",
+      "family": "Photography",
+      "description": "Conservation scans that show what lies beneath a painting's surface."
+    },
+    {
+      "id": "notice-board",
+      "name": "Notice-board photograph",
+      "family": "Photography",
+      "description": "A public board of pinned flyers, photographed straight on."
+    },
+    {
+      "id": "activity-book",
+      "name": "Activity-book page",
+      "family": "Print",
+      "description": "A cheerful printed puzzle page for children."
+    },
+    {
+      "id": "etching-edition",
+      "name": "Etching edition",
+      "family": "Print",
+      "description": "Impressions pulled from one plate and numbered in pencil."
+    },
+    {
+      "id": "picture-book",
+      "name": "Picture-book cover",
+      "family": "Illustration",
+      "description": "The illustrated front of a children's book."
+    },
+    {
+      "id": "street-photo",
+      "name": "Street photograph",
+      "family": "Photography",
+      "description": "Everyday public space caught as it is."
+    },
+    {
+      "id": "food-court",
+      "name": "Food-court menu photograph",
+      "family": "Photography",
+      "description": "Adjacent food stalls and their illuminated menu photographs, seen together."
     }
   ],
   "works": [
@@ -1630,18 +1740,1008 @@ window.SLOP_DATA = {
         "sourceSha256": "f992ed6267ad7ea619dc428fe970c3fdb13d6941db7e8342f0ca0c45f9714fec",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
       }
+    },
+    {
+      "id": "035",
+      "phraseId": "p131",
+      "title": "Photographer: none",
+      "styleId": "archive-record",
+      "alt": "A sepia parade photograph on an archival card, with unknown crossed out and NONE penciled above the Photographer field.",
+      "image": "assets/slop/035.webp",
+      "fallback": "assets/slop/035.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in dark, clear pencil capitals; this corrected \"Photographer: none\" field occupies the full lower third of the card, with bold lettering at least one twentieth of the entire image height so it is immediately readable at 336 pixels. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in clear pencil capitals, so the corrected line reads \"Photographer: none\", large and perfectly readable. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 2,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in clear pencil capitals, so the corrected line reads \"Photographer: none\", large and perfectly readable. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/035-01.webp",
+            "fallback": "assets/slop/attempts/035-01.jpg",
+            "sourceSha256": "811a6c29d6b92d0b8a843346be1e05712ea46365cab69d43b0e423ee08b9df1a",
+            "recordedAt": "2026-10-07T15:16:30.124Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": false,
+                  "note": "Exact correction is present, but pencil NONE and the field are too small and faint at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The archive's provenance field is materially corrected; the wording is part of the record, as permitted by the text-as-object exception."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Paper corners, card fibers, sepia print and green archival box read as a photographed archive record."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "Quiet institutional correction, with no slogan or caricature."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No identifiable people, brand or watermark; other catalog fields are deliberately illegible as requested."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Archival photography and green box add a distinct material and palette beside 025 to 034."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:21:38.185Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square photograph of a museum archive record lying on a dark green archival box. A sepia photograph of a 1920s street parade, with crowds in hats, bunting and a brass band, is mounted on a gray archival card with paper photo corners. Beneath it, the typed catalog fields are small and illegible except one field typed on a large label strip: \"Photographer: unknown\". An archivist has struck through the word \"unknown\" with one neat pencil line and written \"none\" above it in dark, clear pencil capitals; this corrected \"Photographer: none\" field occupies the full lower third of the card, with bold lettering at least one twentieth of the entire image height so it is immediately readable at 336 pixels. A pencil and a magnifier rest beside the card. Soft north light, paper fibers, a faint accession stamp. No other readable words.",
+            "change": "Words failed: enlarged and darkened only the corrected photographer field for legibility at 336 pixels. Replaced the correction sentence; all other prompt sentences unchanged.",
+            "image": "assets/slop/attempts/035-02.webp",
+            "fallback": "assets/slop/attempts/035-02.jpg",
+            "sourceSha256": "0080ee9f1f75df65e3965a7e0170079a5eca9d50eba048d04ba36bdd9593c007",
+            "recordedAt": "2026-10-07T15:22:35.730Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The corrected Photographer: NONE field now reads at 336 pixels, with the original unknown visibly struck through."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The provenance correction is part of the archival object; the text-as-object exception applies."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Sepia print, photo corners, archive card and pencil correction retain convincing material detail."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The quiet correction carries the claim without an added slogan."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No identifiable person, brand or watermark; minor catalog marks are deliberately illegible."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The green archival box and documentary format remain distinct beside the second group."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:22:59.110Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "0080ee9f1f75df65e3965a7e0170079a5eca9d50eba048d04ba36bdd9593c007",
+        "recordedAt": "2026-10-07T15:22:35.730Z",
+        "selectedAttempt": 2
+      }
+    },
+    {
+      "id": "036",
+      "phraseId": "p132",
+      "title": "By continuing, you agree",
+      "styleId": "canvas-verso",
+      "alt": "A linen canvas back on an oxblood studio wall, stenciled BY CONTINUING, YOU AGREE beneath its maker's markings.",
+      "image": "assets/slop/036.webp",
+      "fallback": "assets/slop/036.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same blue ink and slightly uneven spray, are the exact words \"By continuing, you agree\" in very large BLOCK CAPITALS, arranged on three lines BY / CONTINUING, / YOU AGREE within the upper left canvas panel, with each letter at least one twentieth of the entire image height and perfectly readable at 336 pixels. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same ink, the same block capitals and the same slightly uneven spray, are the exact words \"By continuing, you agree\", large and perfectly readable. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 2,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same ink, the same block capitals and the same slightly uneven spray, are the exact words \"By continuing, you agree\", large and perfectly readable. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/036-01.webp",
+            "fallback": "assets/slop/attempts/036-01.jpg",
+            "sourceSha256": "ef2a3bdd0da0eef138b7f433282446f47d5859b09a4d739a510a8113600de86c",
+            "recordedAt": "2026-10-07T15:23:40.464Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": false,
+                  "note": "The phrase is correctly spelled but too small at 336 pixels; it also uses mixed case rather than the requested stencil capitals."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The license wording is part of the canvas maker's marks, using the brief's text-as-object exception."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Linen weave, staples, pine braces and wooden wedges convincingly show a canvas verso."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The found maker's marking carries the point quietly."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No brands, names or watermark. The size and batch markings are permitted by the prompt."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The oxblood wall, spare geometric structure and raw linen differ from the archive card and detailed second group."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:24:18.595Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square photograph of the back of a large stretched canvas leaning against a deep oxblood-red studio wall, filling most of the frame. Raw linen stretched over pale pine stretcher bars with a cross brace, wooden wedges tapped into the corners, a neat row of staples along the edge. Near the top bar, an invented maker's stencil in faded blue ink gives only a size, a weave number and a batch code. Directly below it, stenciled in the same blue ink and slightly uneven spray, are the exact words \"By continuing, you agree\" in very large BLOCK CAPITALS, arranged on three lines BY / CONTINUING, / YOU AGREE within the upper left canvas panel, with each letter at least one twentieth of the entire image height and perfectly readable at 336 pixels. Warm raking studio light shows the linen weave and the shadows of the bars. No brand names, logos or other readable words.",
+            "change": "Words failed: enlarged only the phrase stencil and explicitly set three lines of block capitals. All other sentences remain verbatim.",
+            "image": "assets/slop/attempts/036-02.webp",
+            "fallback": "assets/slop/attempts/036-02.jpg",
+            "sourceSha256": "f89c9ec08f661b282629b6e3ebb4f162cfb2a3dccb990e00136fa12bc93a5a5e",
+            "recordedAt": "2026-10-07T15:25:28.662Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact phrase and comma are clear in blue stencil capitals at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The terms wording is printed into the maker's marks on the canvas itself."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Raw linen, staples, stretchers and corner wedges remain clear and plausible."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The plain industrial stencil supplies the intrusion without an added explanation."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "Only the requested phrase and invented size, weave and batch markings appear."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Large quiet geometry and oxblood framing provide relief from the dense older pieces."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:25:48.186Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "f89c9ec08f661b282629b6e3ebb4f162cfb2a3dccb990e00136fa12bc93a5a5e",
+        "recordedAt": "2026-10-07T15:25:28.662Z",
+        "selectedAttempt": 2
+      }
+    },
+    {
+      "id": "037",
+      "phraseId": "p133",
+      "title": "Even the copies had painters",
+      "styleId": "workshop-painting",
+      "alt": "An oil-painted workshop with a person making another sunset among rows of copies, beneath a cardboard sign reading Even the copies had painters.",
+      "image": "assets/slop/037.webp",
+      "fallback": "assets/slop/037.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop; the entire scene, including the painter's skin, clothing, room, floor and furniture, must be visibly built from distinct loaded-bristle strokes, opaque paint and broken painted edges, legible as oil paint even at 336 pixels. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 2,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/037-01.webp",
+            "fallback": "assets/slop/attempts/037-01.jpg",
+            "sourceSha256": "b11086110183768cdf0082e7acd79d14b005aedeab963779988ac76712559213",
+            "recordedAt": "2026-10-07T15:27:05.229Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Exact words are readable on the cardboard at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The repeated sunsets and painter at work remain clear when the sign is hidden."
+                },
+                "medium": {
+                  "pass": false,
+                  "note": "The room and painter look photographic; brush texture appears mainly inside the sunset pictures, so it fails the requested oil-painting medium."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The worker is shown concentrating without caricature, misery or contempt."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No recognizable likeness, brand, watermark or stray readable lettering."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The room's depth, human activity and orange repeated paintings add a distinct composition; the medium repair will also reduce the new group's photographic sameness."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:27:34.901Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square realist oil painting, warm and direct, of a narrow copy-painting workshop; the entire scene, including the painter's skin, clothing, room, floor and furniture, must be visibly built from distinct loaded-bristle strokes, opaque paint and broken painted edges, legible as oil paint even at 336 pixels. A painter in a paint-stained T-shirt and plastic sandals works on the fourteenth of twenty identical sunset paintings, the same orange sun over the same sea, leaning in a row along the wall. Finished copies dry on a line overhead. A printed reference of the sunset is taped to the easel; a fan turns; a mug and a small radio sit on a stool. Taped to the wall above the easel, a strip of cardboard carries the exact words \"Even the copies had painters\" in thick black marker, large and perfectly readable. Visible brushwork, plain daylight from an open doorway, the painter's concentration taken seriously. No brand names or other readable words.",
+            "change": "Medium failed: changed only the opening medium sentence so the whole workshop is visibly oil-painted, not a photograph containing paintings.",
+            "image": "assets/slop/attempts/037-02.webp",
+            "fallback": "assets/slop/attempts/037-02.jpg",
+            "sourceSha256": "bb89f72d1780db3f26089f10b9c60c0f569c4a07ed8f1f367b657e48bc201d60",
+            "recordedAt": "2026-10-07T15:28:51.916Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact phrase is readable on the cardboard sign at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "Rows of repeated sunsets and the person painting another remain clear with the sign hidden."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Visible loaded strokes now build the wall, clothes, floor and furniture as well as the paintings."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The painter's ordinary concentration remains respectful; the sign does not add a second gag."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No recognizable person, brand or watermark. The small 14/20 progress notation is coherent rather than garbled lettering."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "A deep working room, human subject and repeated orange suns differ from the new group's flat objects."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:29:53.747Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "bb89f72d1780db3f26089f10b9c60c0f569c4a07ed8f1f367b657e48bc201d60",
+        "recordedAt": "2026-10-07T15:28:51.916Z",
+        "selectedAttempt": 2
+      }
+    },
+    {
+      "id": "038",
+      "phraseId": "p134",
+      "title": "Restored into a stranger",
+      "styleId": "snapshot",
+      "alt": "An old porch snapshot split down a woman's face, with the glossy color restoration replacing her features with a younger stranger, and a yellow Restored into a stranger sticker.",
+      "image": "assets/slop/038.webp",
+      "fallback": "assets/slop/038.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square close photograph of an old black-and-white snapshot lying on a wooden table, with scalloped white edges, a crease across one corner and a water stain. It shows a woman in a 1950s dress standing on a porch step, squinting into the sun. The right half of the snapshot has been run through an automatic restoration: sharp, glossy, full color, and on that side her face has become a different woman's face, younger and smoother, with perfect teeth and different eyes. The seam between the halves runs straight down her face. A bright yellow sticker with no company name sits across the bottom border, carrying the exact words \"Restored into a stranger\" in bold black type, large and perfectly readable. Warm lamp light. No other readable words or logos.",
+      "originalPrompt": "Use case: stylized-concept. Create a square close photograph of an old black-and-white snapshot lying on a wooden table, with scalloped white edges, a crease across one corner and a water stain. It shows a woman in a 1950s dress standing on a porch step, squinting into the sun. The right half of the snapshot has been run through an automatic restoration: sharp, glossy, full color, and on that side her face has become a different woman's face, younger and smoother, with perfect teeth and different eyes. The seam between the halves runs straight down her face. A bright yellow sticker with no company name sits across the bottom border, carrying the exact words \"Restored into a stranger\" in bold black type, large and perfectly readable. Warm lamp light. No other readable words or logos.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square close photograph of an old black-and-white snapshot lying on a wooden table, with scalloped white edges, a crease across one corner and a water stain. It shows a woman in a 1950s dress standing on a porch step, squinting into the sun. The right half of the snapshot has been run through an automatic restoration: sharp, glossy, full color, and on that side her face has become a different woman's face, younger and smoother, with perfect teeth and different eyes. The seam between the halves runs straight down her face. A bright yellow sticker with no company name sits across the bottom border, carrying the exact words \"Restored into a stranger\" in bold black type, large and perfectly readable. Warm lamp light. No other readable words or logos.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/038-01.webp",
+            "fallback": "assets/slop/attempts/038-01.jpg",
+            "sourceSha256": "52c09bb2b4bca93446c8005a7bcd793da1e8462928107046dd9021d2dcaf8821",
+            "recordedAt": "2026-10-07T15:31:02.637Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact phrase is clear on the yellow sticker at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The seam visibly replaces a squinting older face with a younger smooth face and different smile, even with the sticker hidden."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Scalloped paper edge, crease, stain and glossy restored half read as a handled snapshot."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The change is shown directly without comic distortion or a second explanation."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "The woman is an invented likeness; no brand, watermark or other lettering appears."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The split portrait and bright yellow sticker introduce a different focal structure and stronger color contrast."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:31:44.131Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "52c09bb2b4bca93446c8005a7bcd793da1e8462928107046dd9021d2dcaf8821",
+        "recordedAt": "2026-10-07T15:31:02.637Z",
+        "selectedAttempt": 1
+      }
+    },
+    {
+      "id": "039",
+      "phraseId": "p135",
+      "title": "Underdrawing: noise",
+      "styleId": "technical-imaging",
+      "alt": "A museum portrait displayed beside its infrared counterpart, which shows gray static, under a label reading Underdrawing: noise.",
+      "image": "assets/slop/039.webp",
+      "fallback": "assets/slop/039.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square photograph of a museum conservation display in a dark gallery. Two framed panels hang side by side under spotlights. On the left, a glossy, warmly colored portrait of a young woman, smooth and flawless. On the right, its infrared scan, the grayscale image conservators use to see the drawing beneath a painting. Where a real painting would show sketched lines and changes of mind, this scan shows only fine, even gray static, like television snow, with the portrait faintly emerging from it. Small captions under the panels read \"Visible light\" and \"Infrared\". Beneath both, a wide wall label carries the exact words \"Underdrawing: noise\" in large black type, perfectly readable. No other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square photograph of a museum conservation display in a dark gallery. Two framed panels hang side by side under spotlights. On the left, a glossy, warmly colored portrait of a young woman, smooth and flawless. On the right, its infrared scan, the grayscale image conservators use to see the drawing beneath a painting. Where a real painting would show sketched lines and changes of mind, this scan shows only fine, even gray static, like television snow, with the portrait faintly emerging from it. Small captions under the panels read \"Visible light\" and \"Infrared\". Beneath both, a wide wall label carries the exact words \"Underdrawing: noise\" in large black type, perfectly readable. No other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square photograph of a museum conservation display in a dark gallery. Two framed panels hang side by side under spotlights. On the left, a glossy, warmly colored portrait of a young woman, smooth and flawless. On the right, its infrared scan, the grayscale image conservators use to see the drawing beneath a painting. Where a real painting would show sketched lines and changes of mind, this scan shows only fine, even gray static, like television snow, with the portrait faintly emerging from it. Small captions under the panels read \"Visible light\" and \"Infrared\". Beneath both, a wide wall label carries the exact words \"Underdrawing: noise\" in large black type, perfectly readable. No other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/039-01.webp",
+            "fallback": "assets/slop/attempts/039-01.jpg",
+            "sourceSha256": "768a727f20696a2bd30b1f3660d79184ce75c8fe2ec5139f23b1aa19ba572d8c",
+            "recordedAt": "2026-10-07T15:32:41.932Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Underdrawing: noise and its colon are clear at 336 pixels; both smaller panel labels are correctly spelled."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The right panel visibly replaces an underdrawing with uniform static and a faint portrait, without relying on the main label."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Spotlights, paired technical display panels and the gray scan make the conservation presentation legible."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "A sober display comparison carries the premise without cartoons or a punchline."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "The portrait is an invented sitter with no identifying text, brand or watermark."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The dark paired display adds a distinct tonal block and paired composition to the new row."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:34:34.993Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "768a727f20696a2bd30b1f3660d79184ce75c8fe2ec5139f23b1aa19ba572d8c",
+        "recordedAt": "2026-10-07T15:32:41.932Z",
+        "selectedAttempt": 1
+      }
+    },
+    {
+      "id": "040",
+      "phraseId": "p136",
+      "title": "Something for everyone.",
+      "styleId": "notice-board",
+      "alt": "A layered community notice board: glossy cinematic flyers cover older hand-drawn and photocopied sheets, and the newest flyer reads Something for everyone.",
+      "image": "assets/slop/040.webp",
+      "fallback": "assets/slop/040.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square straight-on photograph of a cork notice board in a community hall under ordinary fluorescent light, filling the frame. The board has accumulated layers of local flyers: underneath, sun-faded and curling sheets remain plainly visible around all sides, each different, with a hand-drawn bird, an awkward photocopied guitar, a small lino-cut flower, uneven marker lettering and odd handmade layouts. The newest layer consists of glossy flyers for different community activities, but every new picture has the identical smooth cinematic generated finish, luminous teal shadows, amber rim light, floating particles and immaculate surfaces. These fresh flyers partly cover the older ones without erasing them. The top flyer is an actual community-program flyer, its main headline reading exactly \"Something for everyone.\" in large plain white type over its glossy image, with letter height at least one twentieth of the whole square and a clearly visible final period. Its image shows a glowing generic arrangement of a cupcake, a guitar and flowers in that same generated finish. All other flyer lettering is tiny and illegible. Pins, overlapping paper edges and reflections distinguish the glossy new stock from the matte faded old sheets. No separate caption card, logos, brand names, recognizable people or watermarks.",
+      "originalPrompt": "Use case: stylized-concept. Create a square straight-on photograph of a cork notice board in a community hall under ordinary fluorescent light, filling the frame. The board has accumulated layers of local flyers: underneath, sun-faded and curling sheets remain plainly visible around all sides, each different, with a hand-drawn bird, an awkward photocopied guitar, a small lino-cut flower, uneven marker lettering and odd handmade layouts. The newest layer consists of glossy flyers for different community activities, but every new picture has the identical smooth cinematic generated finish, luminous teal shadows, amber rim light, floating particles and immaculate surfaces. These fresh flyers partly cover the older ones without erasing them. The top flyer is an actual community-program flyer, its main headline reading exactly \"Something for everyone.\" in large plain white type over its glossy image, with letter height at least one twentieth of the whole square and a clearly visible final period. Its image shows a glowing generic arrangement of a cupcake, a guitar and flowers in that same generated finish. All other flyer lettering is tiny and illegible. Pins, overlapping paper edges and reflections distinguish the glossy new stock from the matte faded old sheets. No separate caption card, logos, brand names, recognizable people or watermarks.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square straight-on photograph of a cork notice board in a community hall under ordinary fluorescent light, filling the frame. The board has accumulated layers of local flyers: underneath, sun-faded and curling sheets remain plainly visible around all sides, each different, with a hand-drawn bird, an awkward photocopied guitar, a small lino-cut flower, uneven marker lettering and odd handmade layouts. The newest layer consists of glossy flyers for different community activities, but every new picture has the identical smooth cinematic generated finish, luminous teal shadows, amber rim light, floating particles and immaculate surfaces. These fresh flyers partly cover the older ones without erasing them. The top flyer is an actual community-program flyer, its main headline reading exactly \"Something for everyone.\" in large plain white type over its glossy image, with letter height at least one twentieth of the whole square and a clearly visible final period. Its image shows a glowing generic arrangement of a cupcake, a guitar and flowers in that same generated finish. All other flyer lettering is tiny and illegible. Pins, overlapping paper edges and reflections distinguish the glossy new stock from the matte faded old sheets. No separate caption card, logos, brand names, recognizable people or watermarks.",
+            "change": "First attempt of the owner's replacement concept. Replaces the bake-sale caption with the headline of an actual flyer.",
+            "image": "assets/slop/attempts/040-01.webp",
+            "fallback": "assets/slop/attempts/040-01.jpg",
+            "sourceSha256": "afd21c7676a3ac76c36a1c4781eb2e33917ca249a5267edf8a9d72a7fa40f70d",
+            "recordedAt": "2026-10-07T15:36:13.122Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Something for everyone. is exact, including the final period, and reads clearly at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The top glossy sheets share teal-and-amber cinematic effects while the old bird, guitar and flower sheets visibly use different handmade processes."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Pins, overlapping paper, cork and glare establish a photographed notice board."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The headline belongs to the community flyer itself. No detached caption card or mockery of the people using the board."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No real names, logos, identifiable people or watermarks. Some secondary generic flyer words are larger than requested but coherent; the very small illegible copy was explicitly permitted."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The dense layered board and teal light contrast with the archive record, canvas, workshop and paired conservation display."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:36:53.536Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "afd21c7676a3ac76c36a1c4781eb2e33917ca249a5267edf8a9d72a7fa40f70d",
+        "recordedAt": "2026-10-07T15:36:13.122Z",
+        "selectedAttempt": 1
+      }
+    },
+    {
+      "id": "041",
+      "phraseId": "p137",
+      "title": "Only one of these happened",
+      "styleId": "activity-book",
+      "alt": "An activity-book page headed Only one of these happened, with duplicate photographs of a family, dog, red bucket and kite at the seaside.",
+      "image": "assets/slop/041.webp",
+      "fallback": "assets/slop/041.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two frames contain two exact copies of ONE photograph, duplicated without any variation: every face, hair strand, dog's paw and tail, wave, splash, bucket position, kite string and crop must match exactly, as though the identical photo file was placed twice on the page. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two photographs are identical in every detail. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 2,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two photographs are identical in every detail. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/041-01.webp",
+            "fallback": "assets/slop/attempts/041-01.jpg",
+            "sourceSha256": "c4bad8376f06d88915e75c014784b965c84aa138132fe6f10c9e5ca9528b32f3",
+            "recordedAt": "2026-10-07T15:38:49.565Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact heading is large and clear at 336 pixels."
+                },
+                "evidence": {
+                  "pass": false,
+                  "note": "The photographs nearly match, but the dog, hair, water and framing vary slightly; the prompt requires the same photograph duplicated, with no difference to find."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Primary-colored printed borders, cheap paper and show-through establish an activity-book page."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The ordinary puzzle layout stays earnest; the smiling sun is explicitly part of the brief."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "Invented family with no identifiable real people, brand or watermark; show-through is faint and unreadable."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Bright primary colors and an open printed-page layout add a needed change of palette."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:39:17.867Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square scan of a page from a children's activity book. The friendly header, in bold rounded letters, reads the exact words \"Only one of these happened\", large and perfectly readable. Below it, two photographs sit side by side in rounded frames: a family of four laughing at the edge of the sea on a windy day, a red bucket, a dog, a kite. The two frames contain two exact copies of ONE photograph, duplicated without any variation: every face, hair strand, dog's paw and tail, wave, splash, bucket position, kite string and crop must match exactly, as though the identical photo file was placed twice on the page. Bright primary-colored borders, stars and a small cartoon sun decorate the page, with an empty answer box in one corner. Cheap paper, slight show-through from the next page. No other readable words.",
+            "change": "Evidence failed: changed only the identical-photographs sentence to require one photograph placed twice, including exact matching crop and small details.",
+            "image": "assets/slop/attempts/041-02.webp",
+            "fallback": "assets/slop/attempts/041-02.jpg",
+            "sourceSha256": "527f8460ae6b69848afd8262f73bcf97f64eee86f626d458099c7a915f409748",
+            "recordedAt": "2026-10-07T15:40:50.158Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact heading reads clearly at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "Both images read as the same photograph at 336 pixels. Independent full-size review found matching poses, hair, dog, kite and bucket, with only print-scale offsets. This is a visual review, not a pixel-identity claim."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Paper show-through, printed borders, stars and answer box read as a children's activity page."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The cheerful page presents a plausible exercise without a satirical extra detail."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No recognizable real people, brands or watermark; show-through remains unreadable."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The bright primary-colored page provides a distinct change from the dark museum display and layered notice board."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:44:08.444Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "527f8460ae6b69848afd8262f73bcf97f64eee86f626d458099c7a915f409748",
+        "recordedAt": "2026-10-07T15:40:50.158Z",
+        "selectedAttempt": 2
+      }
+    },
+    {
+      "id": "042",
+      "phraseId": "p138",
+      "title": "Open edition",
+      "styleId": "etching-edition",
+      "alt": "An etching edition with a penciled Open edition title and numbers continuing from 30/32 through 34/32, beside its reversed copper plate.",
+      "image": "assets/slop/042.webp",
+      "fallback": "assets/slop/042.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\" in very large dark graphite letters; this title and all five edition numbers must each have letter or digit height at least one twentieth of the entire image, on fully exposed generous lower margins, immediately readable at 336 pixels. An inked copper plate, a burnisher and tarlatan rags lie nearby; the image etched into the copper plate is the exact left-right mirror of the paper impression, with the mill on the RIGHT and the bridge on the LEFT, because printing reverses an intaglio plate. No other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\", large and perfectly readable. An inked copper plate, a burnisher and tarlatan rags lie nearby. No other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 3,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\", large and perfectly readable. An inked copper plate, a burnisher and tarlatan rags lie nearby. No other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/042-01.webp",
+            "fallback": "assets/slop/attempts/042-01.jpg",
+            "sourceSha256": "d56b6547fbdc9d87762e10e78cd77bcc7be1c6cc42469d3c79cd1c6f1cf96cf2",
+            "recordedAt": "2026-10-07T15:45:31.045Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": false,
+                  "note": "The title is correctly spelled but too small and pale at 336 pixels."
+                },
+                "evidence": {
+                  "pass": false,
+                  "note": "The edition sequence is correct at full size, including 33/32 and 34/32, but too small to carry the mechanism at 336 pixels."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Deep plate marks, intaglio lines, copper plate, press felt and tarlatan establish an etching edition."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The overrun is recorded through print numbering, with no extra explanation or comic symbol."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No name, signature, brand or watermark. All visible numbers are coherent."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The fan of sheets and cool blue felt differ in geometry from the adjacent activity page and notice board."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:46:16.690Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\" in very large dark graphite letters; this title and all five edition numbers must each have letter or digit height at least one twentieth of the entire image, on fully exposed generous lower margins, immediately readable at 336 pixels. An inked copper plate, a burnisher and tarlatan rags lie nearby. No other readable words.",
+            "change": "Words and evidence failed at 336 pixels: changed only the title/lettering sentence to enlarge and darken both the pencil title and the already-correct edition numbers.",
+            "image": "assets/slop/attempts/042-02.webp",
+            "fallback": "assets/slop/attempts/042-02.jpg",
+            "sourceSha256": "ca5e45f7341dc63fde0b8463f036c227fc64f2d67095025b5f65616c65c3fa73",
+            "recordedAt": "2026-10-07T15:47:47.794Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Open edition is large and clear at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "All five edition numbers now read, including the overrun 33/32 and 34/32."
+                },
+                "medium": {
+                  "pass": false,
+                  "note": "Plate marks and materials read well, but the copper plate now repeats the print in the same orientation; an intaglio plate should reverse the impression."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The numbering carries the premise without a second explanation."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No name, brand, signature, watermark or garbled text."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The stepped cream margins, blue felt and copper plate keep a distinct overhead geometry."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:48:48.251Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 3,
+            "prompt": "Use case: stylized-concept. Create a square overhead photograph of a fan of etchings on a dark slate print-shop table beside a blue felt press blanket: the same small etched landscape of a mill by a river, printed on cream paper with deep plate marks. In the lower margins, in pencil, the edition numbers read 30/32, 31/32, 32/32, then 33/32 and 34/32, the last two in a hand that is almost the artist's but slightly too even. On the top sheet, penciled where the title goes, are the exact words \"Open edition\" in very large dark graphite letters; this title and all five edition numbers must each have letter or digit height at least one twentieth of the entire image, on fully exposed generous lower margins, immediately readable at 336 pixels. An inked copper plate, a burnisher and tarlatan rags lie nearby; the image etched into the copper plate is the exact left-right mirror of the paper impression, with the mill on the RIGHT and the bridge on the LEFT, because printing reverses an intaglio plate. No other readable words.",
+            "change": "Medium failed: changed only the copper-plate sentence to reverse its scene relative to the printed impression. Built-in edit uses attempt 2 as reference, preserving the corrected lettering and layout.",
+            "image": "assets/slop/attempts/042-03.webp",
+            "fallback": "assets/slop/attempts/042-03.jpg",
+            "sourceSha256": "024e5c3a3f05064d4a89f3e62e742847a6fb931ce272388aa6358515d71058cc",
+            "recordedAt": "2026-10-07T15:50:15.257Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Open edition is exact and clear at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "30/32, 31/32, 32/32, 33/32 and 34/32 are all legible; the edition visibly exceeds its stated limit."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Plate impressions, etched marks and workshop materials read as printmaking. The copper plate now reverses the mill and bridge relative to the paper."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The edition numbers carry the point without an additional caption or caricature."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No artist name, brand, signature, watermark or garbled text."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The diagonal stack, blue felt and copper plate remain distinct in the contact sheet."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:50:50.090Z"
+            },
+            "decision": "accepted",
+            "referenceAttempt": 2
+          }
+        ],
+        "sourceSha256": "024e5c3a3f05064d4a89f3e62e742847a6fb931ce272388aa6358515d71058cc",
+        "recordedAt": "2026-10-07T15:50:15.257Z",
+        "selectedAttempt": 3
+      }
+    },
+    {
+      "id": "043",
+      "phraseId": "p139",
+      "title": "Illustrated by",
+      "styleId": "picture-book",
+      "alt": "A glossy library picture book titled The Fox Who Found Home, credited to a writer, with Illustrated by left without a name.",
+      "image": "assets/slop/043.webp",
+      "fallback": "assets/slop/043.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square photograph of a children's picture book lying on a library table. Its glossy cover shows a smiling fox in a glowing autumn forest, rendered in the smooth, cinematic, flawless finish of generated imagery. Across the top, the title \"The Fox Who Found Home\" in friendly lettering. Beneath it, two credit lines: \"Written by M. Ellery\" and, under that, the exact words \"Illustrated by\" followed by empty space where a name should be. Both credit lines are large and perfectly readable. A library barcode sticker, a laminated cover reflecting the overhead light. No other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square photograph of a children's picture book lying on a library table. Its glossy cover shows a smiling fox in a glowing autumn forest, rendered in the smooth, cinematic, flawless finish of generated imagery. Across the top, the title \"The Fox Who Found Home\" in friendly lettering. Beneath it, two credit lines: \"Written by M. Ellery\" and, under that, the exact words \"Illustrated by\" followed by empty space where a name should be. Both credit lines are large and perfectly readable. A library barcode sticker, a laminated cover reflecting the overhead light. No other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square photograph of a children's picture book lying on a library table. Its glossy cover shows a smiling fox in a glowing autumn forest, rendered in the smooth, cinematic, flawless finish of generated imagery. Across the top, the title \"The Fox Who Found Home\" in friendly lettering. Beneath it, two credit lines: \"Written by M. Ellery\" and, under that, the exact words \"Illustrated by\" followed by empty space where a name should be. Both credit lines are large and perfectly readable. A library barcode sticker, a laminated cover reflecting the overhead light. No other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/043-01.webp",
+            "fallback": "assets/slop/attempts/043-01.jpg",
+            "sourceSha256": "d3de73ab147a0eda4f26d0cdce708937b54a114223e2243da94317b4dfbfeeaa",
+            "recordedAt": "2026-10-07T15:51:47.989Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Illustrated by and Written by M. Ellery are correctly spelled and readable at 336 pixels; the book title is also correct."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The illustrator credit visibly ends without a name beneath the filled author credit. The wording is the object itself, as allowed by the brief."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Laminated reflections, book thickness, barcode and library table convincingly establish a picture-book cover."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The missing credit is unadorned; the fox remains an ordinary appealing cover image."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "The author credit is the invented name specified by the prompt; no real brand, publisher mark or identifiable person appears."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Saturated autumn color and a book seen in perspective differ from the adjacent etching and activity sheet, while its synthetic polish is intentional."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:52:27.047Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "d3de73ab147a0eda4f26d0cdce708937b54a114223e2243da94317b4dfbfeeaa",
+        "recordedAt": "2026-10-07T15:51:47.989Z",
+        "selectedAttempt": 1
+      }
+    },
+    {
+      "id": "044",
+      "phraseId": "p140",
+      "title": "Image for illustration purposes only",
+      "styleId": "street-photo",
+      "alt": "A lost-cat poster on a staple-covered pole shows a glossy golden-hour cat above the large disclaimer Image for illustration purposes only.",
+      "image": "assets/slop/044.webp",
+      "fallback": "assets/slop/044.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square street photograph of a lost-cat poster stapled to a wooden telephone pole among old staples and torn paper. The poster is printed on an office printer: a big headline LOST CAT, the line \"Answers to Biscuit\", and a photo of a cat that is plainly generated: glossy, perfect, golden-hour lit, jewel-bright eyes, any cat and no cat. Directly under the photo, in very large bold black type, are the exact words \"Image for illustration purposes only\", arranged on three lines Image for / illustration / purposes only, each letter at least one twentieth of the full image height, immediately readable at 336 pixels. Tear-off tabs along the bottom carry tiny illegible phone numbers, two already taken. Overcast daylight, a blurred suburban street behind. No other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square street photograph of a lost-cat poster stapled to a wooden telephone pole among old staples and torn paper. The poster is printed on an office printer: a big headline LOST CAT, the line \"Answers to Biscuit\", and a photo of a cat that is plainly generated: glossy, perfect, golden-hour lit, jewel-bright eyes, any cat and no cat. Directly under the photo, in bold type, are the exact words \"Image for illustration purposes only\", large and perfectly readable. Tear-off tabs along the bottom carry tiny illegible phone numbers, two already taken. Overcast daylight, a blurred suburban street behind. No other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 2,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square street photograph of a lost-cat poster stapled to a wooden telephone pole among old staples and torn paper. The poster is printed on an office printer: a big headline LOST CAT, the line \"Answers to Biscuit\", and a photo of a cat that is plainly generated: glossy, perfect, golden-hour lit, jewel-bright eyes, any cat and no cat. Directly under the photo, in bold type, are the exact words \"Image for illustration purposes only\", large and perfectly readable. Tear-off tabs along the bottom carry tiny illegible phone numbers, two already taken. Overcast daylight, a blurred suburban street behind. No other readable words.",
+            "change": "First attempt, prompt used verbatim.",
+            "image": "assets/slop/attempts/044-01.webp",
+            "fallback": "assets/slop/attempts/044-01.jpg",
+            "sourceSha256": "1a375d456de88431be25f2a62f259fa82a1c041ae47f0f847e5aa5ace204237b",
+            "recordedAt": "2026-10-07T15:54:04.656Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": false,
+                  "note": "The phrase is exact but compressed into a small single line at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The disclaimer is part of the actual lost-cat notice; its generic glossy cat image visibly clashes with the practical identification task."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Staples, rough pole, torn paper and an overcast street read as everyday street photography."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The notice uses plain found wording without adding a gag or mocking the missing pet's owner."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No brand or watermark; phone strips are deliberately illegible as requested, with no usable contact data."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Outdoor cool daylight and vertical telephone-pole framing add a fresh setting to the group."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:54:56.942Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square street photograph of a lost-cat poster stapled to a wooden telephone pole among old staples and torn paper. The poster is printed on an office printer: a big headline LOST CAT, the line \"Answers to Biscuit\", and a photo of a cat that is plainly generated: glossy, perfect, golden-hour lit, jewel-bright eyes, any cat and no cat. Directly under the photo, in very large bold black type, are the exact words \"Image for illustration purposes only\", arranged on three lines Image for / illustration / purposes only, each letter at least one twentieth of the full image height, immediately readable at 336 pixels. Tear-off tabs along the bottom carry tiny illegible phone numbers, two already taken. Overcast daylight, a blurred suburban street behind. No other readable words.",
+            "change": "Words failed: changed only the disclaimer sentence to three larger lines. Built-in edit references attempt 1 to preserve the poster, cat and street.",
+            "image": "assets/slop/attempts/044-02.webp",
+            "fallback": "assets/slop/attempts/044-02.jpg",
+            "sourceSha256": "7c72b139293eda8d3b60219fa8819e6ae2405adcd0057b81628b56ebfe939372",
+            "recordedAt": "2026-10-07T15:56:24.388Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact disclaimer is now bold and immediately readable on three lines at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The generic golden-hour cat and illustration-only disclaimer sit inside a practical lost-cat notice, with two tear-off tabs already gone."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Rough wood, many old staples, curled printer paper and blurred overcast street remain convincing."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The found notice carries the contradiction without an extra explanatory label or insult."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No real names, company marks or watermarks; the intentionally unreadable phone strips contain no usable contact details."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The cool outdoor scene and bold black printer type break up the nearby warm book cover and print-shop image."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:56:55.130Z"
+            },
+            "decision": "accepted",
+            "referenceAttempt": 1
+          }
+        ],
+        "sourceSha256": "7c72b139293eda8d3b60219fa8819e6ae2405adcd0057b81628b56ebfe939372",
+        "recordedAt": "2026-10-07T15:56:24.388Z",
+        "selectedAttempt": 2
+      }
+    },
+    {
+      "id": "045",
+      "phraseId": "p141",
+      "title": "Our signature dish.",
+      "styleId": "food-court",
+      "alt": "Five food-court stalls advertise noodles, tacos, curry, pizza and burgers with identical slate, steam and floating basil leaves; each board says Our signature dish. in a different typeface.",
+      "image": "assets/slop/045.webp",
+      "fallback": "assets/slop/045.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square documentary photograph looking straight at five adjacent food-court stalls, noodles, tacos, curry, pizza and burgers, each with its own illuminated menu board and a different plain counter below. Crop tightly so the five tall menu boards fill most of the image, with just enough counter and stall division to establish five separate businesses. Each board shows its own food, clearly distinguishable, yet all five food photographs have exactly the same generated advertising look: centered on dark slate, identical dramatic light, the same plume of steam and a single basil leaf frozen in midair at the same angle and position above the dish. On every board, the exact line \"Our signature dish.\" appears in large clear white letters, including the period, broken across three lines if needed; each stall uses a different typeface, respectively a condensed sans serif, a slab serif, a plain rounded sans serif, a restrained italic serif and a bold geometric sans serif. Make those words legible when the entire square is reduced to 336 pixels. No other readable words, prices, real names, logos, people or watermarks. Ordinary cool food-court fluorescent light and utilitarian tile outside the impossibly polished menu photographs. The repetition should be evident without an added caption.",
+      "originalPrompt": "Use case: stylized-concept. Create a square documentary photograph looking straight at five adjacent food-court stalls, noodles, tacos, curry, pizza and burgers, each with its own illuminated menu board and a different plain counter below. Crop tightly so the five tall menu boards fill most of the image, with just enough counter and stall division to establish five separate businesses. Each board shows its own food, clearly distinguishable, yet all five food photographs have exactly the same generated advertising look: centered on dark slate, identical dramatic light, the same plume of steam and a single basil leaf frozen in midair at the same angle and position above the dish. On every board, the exact line \"Our signature dish.\" appears in large clear white letters, including the period, broken across three lines if needed; each stall uses a different typeface, respectively a condensed sans serif, a slab serif, a plain rounded sans serif, a restrained italic serif and a bold geometric sans serif. Make those words legible when the entire square is reduced to 336 pixels. No other readable words, prices, real names, logos, people or watermarks. Ordinary cool food-court fluorescent light and utilitarian tile outside the impossibly polished menu photographs. The repetition should be evident without an added caption.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square documentary photograph looking straight at five adjacent food-court stalls, noodles, tacos, curry, pizza and burgers, each with its own illuminated menu board and a different plain counter below. Crop tightly so the five tall menu boards fill most of the image, with just enough counter and stall division to establish five separate businesses. Each board shows its own food, clearly distinguishable, yet all five food photographs have exactly the same generated advertising look: centered on dark slate, identical dramatic light, the same plume of steam and a single basil leaf frozen in midair at the same angle and position above the dish. On every board, the exact line \"Our signature dish.\" appears in large clear white letters, including the period, broken across three lines if needed; each stall uses a different typeface, respectively a condensed sans serif, a slab serif, a plain rounded sans serif, a restrained italic serif and a bold geometric sans serif. Make those words legible when the entire square is reduced to 336 pixels. No other readable words, prices, real names, logos, people or watermarks. Ordinary cool food-court fluorescent light and utilitarian tile outside the impossibly polished menu photographs. The repetition should be evident without an added caption.",
+            "change": "First attempt of the owner's added five-stall food-court concept, using the recorded prompt verbatim.",
+            "image": "assets/slop/attempts/045-01.webp",
+            "fallback": "assets/slop/attempts/045-01.jpg",
+            "sourceSha256": "aed0b13eff33151ef2132b8be117c34d1609a2335fe62899038fcbc1b9b6f1fb",
+            "recordedAt": "2026-10-07T15:59:00.612Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "All five boards carry Our signature dish. with the final period, in distinct typefaces readable at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "Noodles, tacos, curry, pizza and a burger are different, but the slate, steam and suspended basil leaf repeat across all five pictures."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Illuminated menu panels, stall divisions, counters and utilitarian surfaces read as a photographed food court."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "Ordinary advertising copy belongs to each menu; the repeated visual treatment carries the criticism without a separate caption."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No business names, logos, brands, people, prices or watermarks."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Five vertical black menu panels above varied counter fronts add a contemporary architectural rhythm and setting to the complete group."
+                }
+              },
+              "reviewedAt": "2026-10-07T15:59:39.229Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "aed0b13eff33151ef2132b8be117c34d1609a2335fe62899038fcbc1b9b6f1fb",
+        "recordedAt": "2026-10-07T15:59:00.612Z",
+        "selectedAttempt": 1
+      }
     }
   ],
   "production": {
     "startedAt": "2026-10-07T03:54:30.572Z",
-    "asOf": "2026-10-07T12:31:46.013Z",
-    "measuredThrough": "2026-10-07T12:31:45.224Z",
-    "inputTokens": 36579986,
-    "cachedInputTokens": 35387264,
+    "asOf": "2026-10-07T17:28:41.953Z",
+    "measuredThrough": "2026-10-07T17:28:41.914Z",
+    "inputTokens": 60959200,
+    "cachedInputTokens": 58980352,
     "cacheWriteInputTokens": 0,
-    "outputTokens": 163938,
-    "reasoningOutputTokens": 50444,
-    "projectTokens": 36743924,
+    "outputTokens": 249788,
+    "reasoningOutputTokens": 81530,
+    "projectTokens": 61208988,
     "complete": false,
     "actualModels": [
       "gpt-6-astra"
@@ -1654,31 +2754,31 @@ window.SLOP_DATA = {
       {
         "model": "gpt-6-astra",
         "effort": "max",
-        "responses": 143,
-        "inputTokens": 17197961,
-        "cachedInputTokens": 16494080,
+        "responses": 198,
+        "inputTokens": 24607098,
+        "cachedInputTokens": 23348480,
         "cacheWriteInputTokens": 0,
-        "outputTokens": 119941,
-        "reasoningOutputTokens": 35246,
-        "projectTokens": 17317902
+        "outputTokens": 160337,
+        "reasoningOutputTokens": 54067,
+        "projectTokens": 24767435
       },
       {
         "model": "gpt-6-astra",
         "effort": "ultra",
-        "responses": 136,
-        "inputTokens": 19382025,
-        "cachedInputTokens": 18893184,
+        "responses": 252,
+        "inputTokens": 36352102,
+        "cachedInputTokens": 35631872,
         "cacheWriteInputTokens": 0,
-        "outputTokens": 43997,
-        "reasoningOutputTokens": 15198,
-        "projectTokens": 19426022
+        "outputTokens": 89451,
+        "reasoningOutputTokens": 27463,
+        "projectTokens": 36441553
       }
     ],
     "coverage": {
       "rootThreads": 1,
       "childThreads": 3,
       "threadsWithRecordedUsage": 4,
-      "responses": 279
+      "responses": 450
     },
     "imageInference": {
       "inputTokens": null,
@@ -1689,20 +2789,20 @@ window.SLOP_DATA = {
     "imageCostUsd": null,
     "usageNote": "Recorded planning and coding tokens through this snapshot, including stopped attempts and child agents. Input includes cached context; output includes reasoning. Image inference is unreported, so this is not the complete production total. Unfinished responses appear in a later snapshot.",
     "accountUsage": {
-      "label": "10 more works",
+      "label": "Third group, 11 works",
       "before": {
-        "usedPercent": 49,
+        "usedPercent": 70,
         "windowDurationMins": 10080,
         "resetsAt": 1791950199,
-        "observedAt": "2026-10-07T12:13:32.315Z"
+        "observedAt": "2026-10-07T15:13:00.913Z"
       },
       "after": {
-        "usedPercent": 53,
+        "usedPercent": 78,
         "windowDurationMins": 10080,
         "resetsAt": 1791950199,
-        "observedAt": "2026-10-07T12:31:45.821Z"
+        "observedAt": "2026-10-07T15:59:03.972Z"
       },
-      "deltaPercentagePoints": 4,
+      "deltaPercentagePoints": 8,
       "note": "Account-wide meter; includes other chats. Not a token counter.",
       "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
     },
@@ -1722,6 +2822,24 @@ window.SLOP_DATA = {
           "observedAt": "2026-10-07T04:25:00.000Z"
         },
         "deltaPercentagePoints": 12,
+        "note": "Account-wide meter; includes other chats. Not a token counter.",
+        "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
+      },
+      {
+        "label": "10 more works",
+        "before": {
+          "usedPercent": 49,
+          "windowDurationMins": 10080,
+          "resetsAt": 1791950199,
+          "observedAt": "2026-10-07T12:13:32.315Z"
+        },
+        "after": {
+          "usedPercent": 53,
+          "windowDurationMins": 10080,
+          "resetsAt": 1791950199,
+          "observedAt": "2026-10-07T12:31:45.821Z"
+        },
+        "deltaPercentagePoints": 4,
         "note": "Account-wide meter; includes other chats. Not a token counter.",
         "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
       }
