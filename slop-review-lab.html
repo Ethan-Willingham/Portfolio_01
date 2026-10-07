@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#303931">
+  <title>Review Slop</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="slop-review.css?v=1">
+  <script defer src="js/slop-data.js?v=3"></script>
+  <script defer src="js/slop-review.js?v=1"></script>
+</head>
+<body class="slop-review">
+  <main>
+    <header class="review-header">
+      <a href="slop.html?v=3">Back to the gallery</a>
+      <h1>Which ones need work?</h1>
+      <p>Click the images you want changed, then copy your selection and paste it into our chat.</p>
+      <p class="review-save-note" id="save-note">Your selection stays saved in this browser.</p>
+    </header>
+
+    <div class="review-toolbar" aria-label="Review controls">
+      <span id="review-count" role="status">Loading artwork...</span>
+      <button type="button" id="copy-selection" disabled>Copy selection</button>
+      <label class="review-filter"><input type="checkbox" id="selected-only"> Selected only</label>
+      <span id="copy-status" role="status"></span>
+    </div>
+
+    <details class="review-export" id="review-export">
+      <summary>View the list or copy it manually</summary>
+      <label for="selection-text">Selected works</label>
+      <textarea id="selection-text" readonly spellcheck="false" rows="6" placeholder="Click an image to start your list."></textarea>
+    </details>
+
+    <p id="review-empty" hidden>No works selected yet. Turn off “Selected only” to see the gallery.</p>
+    <div class="review-grid" id="review-grid" aria-label="Choose artwork to update"></div>
+    <noscript><p>Enable JavaScript to load the artwork and make a selection.</p></noscript>
+  </main>
+</body>
+</html>
