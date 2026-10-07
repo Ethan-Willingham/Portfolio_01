@@ -1,9 +1,48 @@
 # Chain Reaction
 
-Chain Reaction has an unlinked three-stage review slice at `chain-reaction.html`. Its look and sound remain unapproved. The brief is
+Chain Reaction is listed on In Progress at `archive.html`. Its project page,
+`chain-reaction-workbench.html`, links the current four-stage mechanical draft,
+seven separate mechanism and construction studies, the sound comparison lab and
+the earlier three-stage review slice. Sound remains off by default. The brief is
 `research/next/09-chain-reaction.md` in the main checkout. Private project state and the
 local look chooser live in `research/chain-reaction/`, a separate local Git repository.
 Read the brief and that folder's current state before continuing.
+
+## In Progress workbench
+
+The current draft viewer lives at `chain-reaction/connected-slice.html`. It contains
+24 transfers across four stages, lasting 34.620833 seconds. Stage four is the
+drawer outlet. Its viewer adapter stays under `chain-reaction/stages/viewer/`,
+separate from the three standard stage records in `assets/chain-reaction/stages/`.
+The draft still needs delivered-work margins, an energy audit across variations,
+independent visual review and a decision on cord slack display and routing. The
+rocker outlet is available as an isolated study; it has not become stage five.
+
+Build the curated browser package from the independent research repository:
+
+```sh
+CHAIN_REACTION_RESEARCH=/absolute/path/to/research/chain-reaction \
+  node tools/chain-reaction/build-workbench.mjs
+```
+
+The exporter copies an explicit list of current browser files, rewrites local
+preview paths to permanent site paths, pins the latest catch and drawer kits,
+and records source and published hashes in `chain-reaction/workbench-manifest.json`.
+It does not copy research notes, evidence or failed candidates. The workbench is
+searchable and included in the sitemap; its draft viewers retain `noindex,nofollow`.
+The four-stage runtime retains its read-only contact, cord and pacing observers,
+and refuses a handoff when the combined transfer report fails.
+
+`workbench.mjs` checks every exported file hash, completes all four stages in both
+Chrome and WebKit, compares all four snapshot hashes and contact reports, compares
+six standalone mechanism worlds with Node, exercises all ten prop poses, and
+checks the project page at desktop and both phone orientations. It also checks
+the 20-pixel phone gutter and rejects missing same-origin assets or page errors.
+Set `CHAIN_REACTION_URL` to verify the deployed site with the same checks. Screenshots
+and the report go to `CHAIN_REACTION_OUTPUT`, or `/tmp/chain-reaction-workbench`.
+
+`workbench-still.mjs` renders stage four at two seconds for the index and project
+page preview image. It requires the browser environment and `CHAIN_REACTION_SHARP`.
 
 The editable physics module is `js/chain-reaction-physics.js`. It loads the pinned
 Rapier module by dynamic import and uses one classic-script namespace, `ChainReaction`.

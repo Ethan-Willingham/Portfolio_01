@@ -1,0 +1,17 @@
+(async function(){'use strict';
+ const {watchConstraints}=await import('/chain-reaction/candidates/constraint-observer.mjs'),{rockerConstraints}=await import('/chain-reaction/candidates/rocker-constraint-declaration.mjs'),{watchPacing}=await import('/chain-reaction/candidates/pacing-observer.mjs');
+ const CR=window.ChainReaction,canvas=document.getElementById('machine'),status=document.getElementById('status'),pause=document.getElementById('pause'),detail=document.getElementById('detail');
+ const definition=await fetch('/chain-reaction/kits/rocker-outlet-v5.json').then(r=>{if(!r.ok)throw Error('Rocker definition unavailable');return r.json();});
+ let sim,view,contacts,cords,pacing,paused=true,finished=false,resetting=false,close=false,last=performance.now(),accumulator=0;
+ function observers(){contacts=CR.events.watch(sim,definition);cords=watchConstraints(sim,definition,contacts,rockerConstraints());pacing=watchPacing(sim,definition,contacts);}
+ function buttons(){pause.disabled=finished;pause.textContent=finished?'Finished':paused?'Play':'Pause';pause.setAttribute('aria-pressed',String(paused));}
+ function camera(){view.setCamera(close?{x:10,y:2.25,width:10,minHeight:6}:{x:8,y:2.5,width:16.4,minHeight:6.3});detail.textContent=close?'Whole mechanism':'View detail';detail.setAttribute('aria-pressed',String(close));}
+ function caption(){status.textContent=finished?'The rocker has released the next marble.':cords.report(false).rows[0].motionTick!==null?'The cord withdraws the marble support.':contacts.report(false).events[0].motionTick!==null?'The maple tray lowers the marble and pulls the cord.':'The marble rolls toward the weighted tray.';}
+ async function reset(){if(resetting)return;resetting=true;try{const next=await CR.physics.create(definition);sim?.dispose();sim=next;observers();paused=true;finished=false;accumulator=0;last=performance.now();buttons();view?.apply(0,sim.state());caption();}finally{resetting=false;}}
+ await reset();view=CR.makeView(canvas,[definition]);camera();view.draw();
+ pause.onclick=()=>{paused=!paused;last=performance.now();buttons();};document.getElementById('reset').onclick=reset;detail.onclick=()=>{close=!close;camera();};
+ addEventListener('resize',()=>view.resize());document.addEventListener('visibilitychange',()=>{last=performance.now();accumulator=0;});
+ function step(){sim.step();contacts.sample();cords.sample();pacing.sample();if(sim.bodies.get(definition.exitId).translation().x>=16||sim.tick>=6000){finished=true;paused=true;buttons();}}
+ function frame(now){const dt=Math.min(.1,(now-last)/1000);last=now;if(!paused&&!finished&&!resetting&&!document.hidden){accumulator+=dt;while(accumulator>=CR.physics.DT&&!finished){step();accumulator-=CR.physics.DT;}view.apply(0,sim.state());caption();}if(view.needsDraw())view.draw(now,false,sim.tick/240,false);requestAnimationFrame(frame);}
+ window.ChainReactionRockerOutlet={ready:true,definition,quality:()=>view.quality(),inspect:()=>view.inspect(),state:()=>({tick:sim.tick,paused,finished,close,poses:sim.state(),events:contacts.report(false),cords:cords.report(),pacing:pacing.report()}),snapshot:()=>Array.from(sim.snapshot()),async seek(tick){if(resetting)return;resetting=true;paused=true;try{const next=await CR.physics.create(definition);sim.dispose();sim=next;observers();finished=false;for(let n=0;n<Math.min(tick,6000)&&!finished;n++)step();accumulator=0;last=performance.now();buttons();view.apply(0,sim.state());view.draw();caption();}finally{resetting=false;}}};requestAnimationFrame(frame);
+})();

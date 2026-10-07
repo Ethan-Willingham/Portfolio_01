@@ -1,0 +1,1093 @@
+{
+  "name": "rocker-outlet-v5",
+  "scope": "Private rocker-operated normalized outlet with a passive horizontal dashpot. Complete stage duration, schema and work margins remain open.",
+  "parts": [
+    {
+      "id": "floor",
+      "shape": "box",
+      "x": 8,
+      "y": -0.2,
+      "width": 16,
+      "height": 0.4,
+      "depth": 2.8,
+      "material": "maple",
+      "mass": 0.9472173964001279,
+      "inertia": 20.2199340218214,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.4,
+      "layer": 391
+    },
+    {
+      "id": "arrival-rail",
+      "shape": "box",
+      "x": 2.24,
+      "y": 0.98,
+      "width": 4.48,
+      "height": 0.04,
+      "depth": 0.3,
+      "material": "maple",
+      "mass": 0.004972891331100672,
+      "inertia": 0.008317989566487724,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "entry-post-0",
+      "shape": "box",
+      "x": 0.4,
+      "y": 0.48,
+      "width": 0.05,
+      "height": 0.96,
+      "depth": 0.16,
+      "material": "maple",
+      "mass": 0.0007104130473000958,
+      "inertia": 0.00005470772475083487,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "entry-foot-0",
+      "shape": "box",
+      "x": 0.4,
+      "y": 0.03,
+      "width": 0.32,
+      "height": 0.06,
+      "depth": 0.35,
+      "material": "maple",
+      "mass": 0.0006216114163875839,
+      "inertia": 0.000005490900844756992,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "entry-post-1",
+      "shape": "box",
+      "x": 4,
+      "y": 0.48,
+      "width": 0.05,
+      "height": 0.96,
+      "depth": 0.16,
+      "material": "maple",
+      "mass": 0.0007104130473000958,
+      "inertia": 0.00005470772475083487,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "entry-foot-1",
+      "shape": "box",
+      "x": 4,
+      "y": 0.03,
+      "width": 0.32,
+      "height": 0.06,
+      "depth": 0.35,
+      "material": "maple",
+      "mass": 0.0006216114163875839,
+      "inertia": 0.000005490900844756992,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "rocker",
+      "shape": "compound",
+      "x": 4.5,
+      "y": 0.98,
+      "colliders": [
+        {
+          "shape": "box",
+          "width": 3.2,
+          "height": 0.04,
+          "depth": 0.3,
+          "x": 1.6,
+          "y": 0,
+          "z": 1.1,
+          "layer": 2
+        },
+        {
+          "shape": "box",
+          "width": 1.4,
+          "height": 0.04,
+          "depth": 0.3,
+          "x": -0.7,
+          "y": 0,
+          "z": 0.44999999999999996,
+          "layer": 4
+        },
+        {
+          "shape": "box",
+          "width": 0.7,
+          "height": 0.5,
+          "depth": 0.3,
+          "x": -1.1,
+          "y": 0.29,
+          "z": 0.44999999999999996,
+          "layer": 4
+        },
+        {
+          "shape": "box",
+          "width": 0.04,
+          "height": 0.04,
+          "depth": 0.95,
+          "x": 0,
+          "y": 0,
+          "z": 0.7749999999999999,
+          "layer": 6
+        },
+        {
+          "shape": "box",
+          "width": 0.04,
+          "height": 0.04,
+          "depth": 1.15,
+          "x": 3.1,
+          "y": 0,
+          "z": 0.55,
+          "layer": 135
+        },
+        {
+          "shape": "box",
+          "width": 0.012,
+          "height": 0.04,
+          "depth": 0.08,
+          "x": 3.1,
+          "y": 0.04,
+          "z": 0,
+          "layer": 128
+        },
+        {
+          "shape": "ball",
+          "radius": 0.018,
+          "depth": 0.08,
+          "x": 3.1,
+          "y": 0.06,
+          "z": 0,
+          "layer": 128
+        }
+      ],
+      "depth": 0.3,
+      "material": "maple",
+      "mass": 0.015140662352840872,
+      "inertia": 0.025509352126330306,
+      "centerOfMass": {
+        "x": -0.3650084846576451,
+        "y": 0.18607315140610062
+      },
+      "friction": 0.45,
+      "restitution": 0.15,
+      "z": -0.95,
+      "layer": 6
+    },
+    {
+      "id": "bearing",
+      "shape": "compound",
+      "x": 4.5,
+      "y": 0.98,
+      "colliders": [
+        {
+          "shape": "ball",
+          "radius": 0.018,
+          "depth": 0.95,
+          "x": 0,
+          "y": 0,
+          "z": -0.325,
+          "layer": 6
+        },
+        {
+          "shape": "box",
+          "width": 0.06,
+          "height": 0.92,
+          "depth": 0.12,
+          "x": 0,
+          "y": -0.48,
+          "z": -0.65,
+          "layer": 4
+        }
+      ],
+      "depth": 0.12,
+      "material": "brass",
+      "mass": 0.00848864051679709,
+      "inertia": 0.0007422615720154783,
+      "centerOfMass": {
+        "x": 0,
+        "y": -0.4188548870706119
+      },
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 6
+    },
+    {
+      "id": "bearing-foot",
+      "shape": "box",
+      "x": 4.5,
+      "y": 0.06,
+      "width": 0.4,
+      "height": 0.12,
+      "depth": 0.5,
+      "material": "maple",
+      "mass": 0.0022200407728127994,
+      "inertia": 0.000032264592564879355,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.5,
+      "layer": 5
+    },
+    {
+      "id": "armed-stop",
+      "shape": "box",
+      "x": 3.32,
+      "y": 0.94,
+      "width": 0.28,
+      "height": 0.04,
+      "depth": 0.3,
+      "material": "brass",
+      "mass": 0.0037573309111295994,
+      "inertia": 0.000025048872740864,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.5,
+      "layer": 4
+    },
+    {
+      "id": "armed-stop-post",
+      "shape": "box",
+      "x": 3.32,
+      "y": 0.48,
+      "width": 0.06,
+      "height": 0.96,
+      "depth": 0.16,
+      "material": "maple",
+      "mass": 0.0008524956567601151,
+      "inertia": 0.00006572741513620487,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.8,
+      "layer": 1
+    },
+    {
+      "id": "armed-stop-standoff",
+      "shape": "box",
+      "x": 3.32,
+      "y": 0.93,
+      "width": 0.06,
+      "height": 0.02,
+      "depth": 0.4,
+      "material": "brass",
+      "mass": 0.0010735231174655998,
+      "inertia": 4.6519335090175993e-7,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.7,
+      "layer": 5
+    },
+    {
+      "id": "tilt-stop",
+      "shape": "box",
+      "x": 7.61,
+      "y": 0.285,
+      "width": 0.08,
+      "height": 0.08,
+      "depth": 0.3,
+      "material": "brass",
+      "mass": 0.0021470462349311996,
+      "inertia": 0.0000022901826505932797,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "tilt-stop-post",
+      "shape": "box",
+      "x": 7.61,
+      "y": 0.125,
+      "width": 0.06,
+      "height": 0.25,
+      "depth": 0.3,
+      "material": "maple",
+      "mass": 0.00041625764490239994,
+      "inertia": 0.0000022928858606707197,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "hurdle",
+      "shape": "box",
+      "x": 7.76,
+      "y": 1.075,
+      "width": 0.06,
+      "height": 0.75,
+      "depth": 0.3,
+      "material": "brass",
+      "mass": 0.015096418839359995,
+      "inertia": 0.0007121735587468078,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "hurdle-post",
+      "shape": "box",
+      "x": 7.76,
+      "y": 0.67,
+      "width": 0.04,
+      "height": 1.34,
+      "depth": 0.12,
+      "material": "maple",
+      "mass": 0.0005949709271138304,
+      "inertia": 0.00008910681251741468,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.5,
+      "layer": 4
+    },
+    {
+      "id": "hurdle-standoff",
+      "shape": "box",
+      "x": 7.76,
+      "y": 1.35,
+      "width": 0.04,
+      "height": 0.04,
+      "depth": 0.8,
+      "material": "brass",
+      "mass": 0.0014313641566207997,
+      "inertia": 3.816971084322133e-7,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.175,
+      "layer": 6
+    },
+    {
+      "id": "catch-base",
+      "shape": "box",
+      "x": 8.91,
+      "y": 0.08,
+      "width": 2.3,
+      "height": 0.16,
+      "depth": 0.4,
+      "material": "maple",
+      "mass": 0.013616250073251839,
+      "inertia": 0.006031544907448121,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "catch-floor",
+      "shape": "box",
+      "x": 8.91,
+      "y": 0.2,
+      "width": 2.3,
+      "height": 0.08,
+      "depth": 0.4,
+      "material": "felt",
+      "mass": 0.0017475290043417286,
+      "inertia": 0.0007713010515496276,
+      "friction": 0.75,
+      "restitution": 0.01,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "catch-end",
+      "shape": "box",
+      "x": 10.1,
+      "y": 0.79,
+      "width": 0.08,
+      "height": 1.1,
+      "depth": 0.4,
+      "material": "felt",
+      "mass": 0.0008357747412069136,
+      "inertia": 0.00008471969960034083,
+      "friction": 0.75,
+      "restitution": 0.01,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "damper-seat",
+      "shape": "box",
+      "x": 3.6,
+      "y": 2,
+      "width": 0.06,
+      "height": 0.06,
+      "depth": 0.08,
+      "material": "brass",
+      "mass": 0.0003220569352396799,
+      "inertia": 1.9323416114380793e-7,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.5,
+      "layer": 4
+    },
+    {
+      "id": "damper-post",
+      "shape": "box",
+      "x": 3.6,
+      "y": 0.98,
+      "width": 0.05,
+      "height": 1.96,
+      "depth": 0.1,
+      "material": "maple",
+      "mass": 0.0009065166488985599,
+      "inertia": 0.0002903950541692461,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.85,
+      "layer": 1
+    },
+    {
+      "id": "damper-standoff",
+      "shape": "box",
+      "x": 3.6,
+      "y": 2,
+      "width": 0.05,
+      "height": 0.04,
+      "depth": 0.44,
+      "material": "brass",
+      "mass": 0.0009840628576768,
+      "inertia": 3.362214763729067e-7,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "rocker study frame",
+      "z": -0.68,
+      "layer": 5
+    },
+    {
+      "id": "marble-in",
+      "shape": "ball",
+      "radius": 0.15625,
+      "x": 0,
+      "y": 1.15625,
+      "material": "glazed-ceramic",
+      "mass": 0.005027488269170486,
+      "inertia": 0.000049096565128618034,
+      "friction": 0.22,
+      "restitution": 0.15,
+      "vx": 4,
+      "spin": -25.6,
+      "z": 0.15,
+      "layer": 2
+    },
+    {
+      "id": "exit-rail",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 16,
+      "y": 0.95,
+      "width": 1.04,
+      "height": 0.1,
+      "depth": 0.2,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "runout-left",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 14.0214158819539,
+      "y": 1.0602365472710786,
+      "width": 0.6459496886012744,
+      "height": 0.04,
+      "depth": 0.2,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "angle": -0.05423248281719458,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "runout-right",
+      "shape": "box",
+      "fixed": true,
+      "mount": "bench frame",
+      "x": 14.976415881953898,
+      "y": 1.0083936901282218,
+      "width": 1.046538642772605,
+      "height": 0.04,
+      "depth": 0.2,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "angle": -0.05423248281719458,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "gate-guide",
+      "shape": "ball",
+      "fixed": true,
+      "mount": "gate guide frame",
+      "radius": 0.015,
+      "depth": 0.9,
+      "x": 14.4,
+      "y": 1.025,
+      "layer": 7,
+      "z": -0.03
+    },
+    {
+      "id": "peg-guide",
+      "shape": "ball",
+      "fixed": true,
+      "mount": "latch guide frame",
+      "radius": 0.015,
+      "depth": 0.08,
+      "x": 14.6,
+      "y": 0.62,
+      "layer": 128,
+      "z": -0.95
+    },
+    {
+      "id": "gate",
+      "shape": "box",
+      "x": 14.4,
+      "y": 1.025,
+      "width": 0.07,
+      "height": 0.75,
+      "depth": 0.9,
+      "material": "tinplate-shell",
+      "mass": 0.006296345332800005,
+      "inertia": 0.00034282567599470395,
+      "friction": 0.45,
+      "restitution": 0.05,
+      "construction": "shell",
+      "thickness": 0.003937007874015748,
+      "layer": 7,
+      "z": -0.03
+    },
+    {
+      "id": "outlet-latch",
+      "shape": "compound",
+      "x": 14.6,
+      "y": 0.62,
+      "colliders": [
+        {
+          "shape": "box",
+          "width": 0.2,
+          "height": 0.04,
+          "depth": 0.9,
+          "x": -0.2,
+          "y": 0,
+          "z": 0.92,
+          "layer": 7
+        },
+        {
+          "shape": "box",
+          "width": 0.025,
+          "height": 4.4,
+          "depth": 0.08,
+          "x": 0.2875,
+          "y": 2.2,
+          "z": 0,
+          "layer": 128
+        },
+        {
+          "shape": "box",
+          "width": 0.525,
+          "height": 0.04,
+          "depth": 0.08,
+          "x": 0.0375,
+          "y": 0,
+          "z": 0,
+          "layer": 128
+        },
+        {
+          "shape": "box",
+          "width": 0.04,
+          "height": 0.04,
+          "depth": 1,
+          "x": -0.2,
+          "y": 0,
+          "z": 0.46,
+          "layer": 135
+        }
+      ],
+      "depth": 0.08,
+      "material": "painted-steel",
+      "mass": 0.019841194898176002,
+      "inertia": 0.03957886701359782,
+      "centerOfMass": {
+        "x": 0.04320539419087137,
+        "y": 1.0041493775933612
+      },
+      "friction": 0.45,
+      "restitution": 0.05,
+      "layer": 135,
+      "z": -0.95
+    },
+    {
+      "id": "marble-out",
+      "shape": "ball",
+      "radius": 0.15625,
+      "x": 14.1,
+      "y": 1.23271,
+      "material": "glazed-ceramic",
+      "mass": 0.005027488269170486,
+      "inertia": 0.000049096565128618034,
+      "friction": 0.22,
+      "restitution": 0.15,
+      "layer": 2,
+      "z": 0.15
+    },
+    {
+      "id": "outlet-mast-frame",
+      "shape": "box",
+      "x": 14.8875,
+      "y": 2.43,
+      "width": 0.045,
+      "height": 4.86,
+      "depth": 0.04,
+      "material": "maple",
+      "mass": 0.0016067545093232636,
+      "inertia": 0.0019952710970828564,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "outlet study frame",
+      "layer": 256,
+      "z": -1.05
+    },
+    {
+      "id": "outlet-mast-foot",
+      "shape": "box",
+      "x": 14.8875,
+      "y": 0.06,
+      "width": 0.35,
+      "height": 0.12,
+      "depth": 0.2,
+      "material": "maple",
+      "mass": 0.0015540285409689596,
+      "inertia": 0.000017728875604887546,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "outlet study frame",
+      "layer": 384,
+      "z": -1.07
+    },
+    {
+      "id": "outlet-dashpot-seat",
+      "shape": "box",
+      "x": 15.3,
+      "y": 0.62,
+      "width": 0.04,
+      "height": 0.04,
+      "depth": 0.08,
+      "material": "brass",
+      "mass": 0.00014313641566207998,
+      "inertia": 3.816971084322133e-8,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "outlet dashpot stand",
+      "z": -0.95,
+      "layer": 128
+    },
+    {
+      "id": "outlet-dashpot-post",
+      "shape": "box",
+      "x": 15.3,
+      "y": 0.3,
+      "width": 0.04,
+      "height": 0.6,
+      "depth": 0.04,
+      "material": "maple",
+      "mass": 0.00008880163091251199,
+      "inertia": 0.0000026758891448303613,
+      "friction": 0.45,
+      "restitution": 0.15,
+      "fixed": true,
+      "mount": "outlet dashpot stand",
+      "z": -1.05,
+      "layer": 256
+    },
+    {
+      "id": "outlet-dashpot-bracket",
+      "shape": "box",
+      "x": 15.3,
+      "y": 0.61,
+      "width": 0.04,
+      "height": 0.04,
+      "depth": 0.18,
+      "material": "brass",
+      "mass": 0.00032205693523967995,
+      "inertia": 8.588184939724799e-8,
+      "friction": 0.3,
+      "restitution": 0.08,
+      "fixed": true,
+      "mount": "outlet dashpot stand",
+      "z": -1,
+      "layer": 384
+    }
+  ],
+  "joints": [
+    {
+      "type": "revolute",
+      "a": "bearing",
+      "b": "rocker",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": 0
+      },
+      "limits": [
+        -0.25,
+        0
+      ]
+    },
+    {
+      "type": "spring",
+      "a": "damper-seat",
+      "b": "rocker",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": -0.9,
+        "y": 0
+      },
+      "length": 1.02,
+      "stiffness": 0,
+      "damping": 0.18
+    },
+    {
+      "type": "prismatic",
+      "a": "gate-guide",
+      "b": "gate",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": 0
+      },
+      "axis": {
+        "x": 0,
+        "y": 1
+      },
+      "limits": [
+        -0.62,
+        0
+      ]
+    },
+    {
+      "type": "prismatic",
+      "a": "peg-guide",
+      "b": "outlet-latch",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": 0
+      },
+      "axis": {
+        "x": -1,
+        "y": 0
+      },
+      "limits": [
+        0,
+        0.33
+      ]
+    },
+    {
+      "type": "rope",
+      "a": "rocker",
+      "b": "outlet-latch",
+      "anchorA": {
+        "x": 3.1,
+        "y": 0.06
+      },
+      "anchorB": {
+        "x": 0.2875,
+        "y": 4.4
+      },
+      "length": 8.423496627927296
+    },
+    {
+      "type": "spring",
+      "a": "outlet-dashpot-seat",
+      "b": "outlet-latch",
+      "anchorA": {
+        "x": 0,
+        "y": 0
+      },
+      "anchorB": {
+        "x": 0,
+        "y": 0
+      },
+      "length": 0.7,
+      "stiffness": 0,
+      "damping": 3
+    }
+  ],
+  "devices": [],
+  "dressing": [],
+  "contactProfile": "fresh-v1",
+  "noSleep": true,
+  "entryId": "marble-in",
+  "exitId": "marble-out",
+  "ticks": 6000,
+  "steps": [
+    {
+      "id": "marble-tilt",
+      "kind": "contact",
+      "from": "marble-in",
+      "to": "rocker",
+      "motion": {
+        "axis": "angle",
+        "sign": -1,
+        "travel": 0.02
+      }
+    },
+    {
+      "id": "outlet-opening",
+      "kind": "unblock",
+      "from": "outlet-latch",
+      "to": "gate",
+      "motion": {
+        "axis": "y",
+        "sign": -1,
+        "travel": 0.08
+      }
+    },
+    {
+      "id": "outlet-roll",
+      "kind": "rollout",
+      "from": "gate",
+      "to": "marble-out",
+      "motion": {
+        "axis": "x",
+        "sign": 1,
+        "travel": 0.2
+      }
+    }
+  ],
+  "path": [
+    "marble-in",
+    "rocker",
+    "outlet-latch",
+    "gate",
+    "marble-out"
+  ],
+  "skins": [
+    {
+      "part": "floor",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "arrival-rail",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "entry-post-0",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "entry-foot-0",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "entry-post-1",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "entry-foot-1",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "rocker",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "bearing",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "bearing-foot",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "armed-stop",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "armed-stop-post",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "armed-stop-standoff",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "tilt-stop",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "tilt-stop-post",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "hurdle",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "hurdle-post",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "hurdle-standoff",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "catch-base",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "catch-floor",
+      "finish": "felt"
+    },
+    {
+      "part": "catch-end",
+      "finish": "felt"
+    },
+    {
+      "part": "damper-seat",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "damper-post",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "damper-standoff",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "marble-in",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "exit-rail",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "runout-left",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "runout-right",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "gate-guide",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "peg-guide",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "gate",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "outlet-latch",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "marble-out",
+      "finish": "worn-gold-paint"
+    },
+    {
+      "part": "outlet-mast-frame",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "outlet-mast-foot",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "outlet-dashpot-seat",
+      "finish": "brushed-brass"
+    },
+    {
+      "part": "outlet-dashpot-post",
+      "finish": "oiled-maple"
+    },
+    {
+      "part": "outlet-dashpot-bracket",
+      "finish": "brushed-brass"
+    }
+  ],
+  "durationWindow": [
+    2,
+    25
+  ]
+}
