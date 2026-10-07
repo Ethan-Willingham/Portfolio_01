@@ -180,19 +180,29 @@ function accountPoint(point) {
     resetsAt: point.resetsAt, observedAt: timestamp(point.observedAt, 'account observation') };
 }
 
-function accountUsage(previous) {
-  const before = accountPoint(previous?.before || ACCOUNT_BEFORE);
+function accountUsage(previous, fallbackBefore = ACCOUNT_BEFORE) {
+  const before = accountPoint(previous?.before || fallbackBefore);
   const after = accountPoint(previous?.after);
-  const sameWindow = after && before.resetsAt === after.resetsAt
+  const sameWindow = before && after && before.resetsAt === after.resetsAt
     && before.windowDurationMins === after.windowDurationMins
     && after.observedAt >= before.observedAt;
+  const label = typeof previous?.label === 'string' ? previous.label.replace(/\s+/g, ' ').trim().slice(0, 160) : '';
   return {
+    ...(label ? { label } : {}),
     before,
     after,
     deltaPercentagePoints: sameWindow ? Number((after.usedPercent - before.usedPercent).toFixed(6)) : null,
     note: 'Account-wide meter; includes other chats. Not a token counter.',
     windowNote: 'The first snapshot was taken before image generation, after some planning. A delta requires the same quota window.',
   };
+}
+
+function accountUsageHistory(history) {
+  if (!Array.isArray(history) || history.some(interval => !interval || typeof interval !== 'object' || Array.isArray(interval))) {
+    throw new Error('Account usage history must be an array of recorded intervals.');
+  }
+  // Apply the same field allowlist to history, without inventing a baseline.
+  return history.map(interval => accountUsage(interval, null));
 }
 
 export async function buildProductionSnapshot({
@@ -249,6 +259,9 @@ export async function buildProductionSnapshot({
     imageCostUsd: null,
     usageNote: 'Recorded planning and coding tokens through this snapshot, including stopped attempts and child agents. Input includes cached context; output includes reasoning. Image inference is unreported, so this is not the complete production total. Unfinished responses appear in a later snapshot.',
     accountUsage: accountUsage(previousProduction.accountUsage),
+    ...(previousProduction.accountUsageHistory === undefined ? {} : {
+      accountUsageHistory: accountUsageHistory(previousProduction.accountUsageHistory),
+    }),
   };
 }
 

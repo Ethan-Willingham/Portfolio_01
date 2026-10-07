@@ -15,7 +15,9 @@ palette; each artwork has its own colors and material.
 work plans and production record. It is a strict JSON object assigned to
 `window.SLOP_DATA`, so browser code and production tools can read the same data.
 
-The initial catalogue has 120 phrases, 48 art directions and 24 work plans.
+The catalogue began with 120 phrases, 48 art directions and 24 work plans.
+The second group adds ten phrases and ten work plans, bringing the totals to
+130 phrases and 34 works. It uses ten previously unused art directions.
 The phrase bank includes the owner's four starting lines: "Slop", "A step below
 average", "Uncanny" and "Looks right, but wrong". The remaining lines range from
 short complaints to descriptions of familiar generated-image errors. They
@@ -67,6 +69,26 @@ image; a sculpture can include the surface, light and shadow needed to show its
 form. Every prompt includes the chosen phrase verbatim and describes how its
 letters are made. The first 24 prompts range from 132 to 143 words.
 
+## The second group
+
+The next ten pieces target confident errors, outsourced judgment, unpaid work,
+quantity without value, automated empathy and invented expertise. Each joke has
+a visible mechanism: defective cups multiply, tears become coins, a citation
+returns to itself, or an empty worker silhouette remains in pulped paperwork.
+
+| Work | Phrase | Direction |
+|---|---|---|
+| 025 | Now wrong in bulk | Screenprint |
+| 026 | Your work. Our breakthrough. | Decollage |
+| 027 | Your grief improves our product | Embroidery |
+| 028 | Doctor of plausible bullshit | Lithography |
+| 029 | Human in the billing loop | Found-object assemblage |
+| 030 | A million copies of who cares | Concrete poetry |
+| 031 | Peer reviewed by itself | Drypoint |
+| 032 | I agree with your last opinion | Low-poly digital sculpture |
+| 033 | Permission not found. Proceeding. | Scanography |
+| 034 | Now with fewer people | Paper pulp relief |
+
 ## Generation and records
 
 The owner chose the OpenAI built-in image tool. Generate one work at a time,
@@ -99,6 +121,10 @@ the two observed percentages, their times and the meter's window length. Report
 their difference in percentage points. The meter covers the account, including
 other chats that run during the interval, so it cannot identify this gallery's
 image cost or image token count.
+
+Later production runs get their own before-and-after interval in
+`production.accountUsage`. Keep earlier intervals in `accountUsageHistory` so
+account activity between runs does not inflate a run's reported change.
 
 Local session records can provide a separate count of recorded planning and
 coding tokens. Keep the time range, included sessions, model labels and any

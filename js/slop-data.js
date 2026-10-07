@@ -482,6 +482,46 @@ window.SLOP_DATA = {
     {
       "id": "p120",
       "text": "Enough, apparently"
+    },
+    {
+      "id": "p121",
+      "text": "Now wrong in bulk"
+    },
+    {
+      "id": "p122",
+      "text": "Your work. Our breakthrough."
+    },
+    {
+      "id": "p123",
+      "text": "Your grief improves our product"
+    },
+    {
+      "id": "p124",
+      "text": "Doctor of plausible bullshit"
+    },
+    {
+      "id": "p125",
+      "text": "Human in the billing loop"
+    },
+    {
+      "id": "p126",
+      "text": "A million copies of who cares"
+    },
+    {
+      "id": "p127",
+      "text": "Peer reviewed by itself"
+    },
+    {
+      "id": "p128",
+      "text": "I agree with your last opinion"
+    },
+    {
+      "id": "p129",
+      "text": "Permission not found. Proceeding."
+    },
+    {
+      "id": "p130",
+      "text": "Now with fewer people"
     }
   ],
   "styles": [
@@ -1350,18 +1390,258 @@ window.SLOP_DATA = {
         "sourceSha256": "51b50e4c75317f9076bbec83a34602d85b091a206e189235407a2a7bd3193bee",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
       }
+    },
+    {
+      "id": "025",
+      "title": "Now wrong in bulk",
+      "phraseId": "p121",
+      "styleId": "screenprint",
+      "image": "assets/slop/025.webp",
+      "fallback": "assets/slop/025.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "A screenprinted conveyor produces identical cups with handles inside their bowls beneath a large stamp reading Now wrong in bulk.",
+      "prompt": "Use case: stylized-concept. Create a square screenprint artwork filling the frame. A factory conveyor becomes a severe geometric composition: rows of immaculate white ceramic cups, every single one with the same handle inexplicably attached inside its bowl, roll from a small machine into a mountainous heap. Crisp black outlines, flat vermilion, acid yellow and dirty ivory inks, rough paper grain and visibly misregistered layers. A huge red industrial rubber-stamp impression runs diagonally across the entire print with the exact words \"Now wrong in bulk\". Make those four words bold, clean and unmistakably readable. The repeated defect and the escalating quantity are the joke. Satirical, confrontational, beautifully composed. No extra words, logos, frame or wall mockup.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:24:37.156Z",
+        "sourceSha256": "807f2a49873948ec2f5c3e696e1cce1935fc1459a8fb9b5b52bcdba50872536a",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "026",
+      "title": "Your work. Our breakthrough.",
+      "phraseId": "p122",
+      "styleId": "decollage",
+      "image": "assets/slop/026.webp",
+      "fallback": "assets/slop/026.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "Torn advertising layers expose drawn hands supporting a gold medal beneath the claim Your work. Our breakthrough.",
+      "prompt": "Use case: stylized-concept. Make one square decollage artwork from torn layers of imaginary advertising posters and discarded drawings. The glossy top layer shows an enormous gold medal against a pale mint field. Beneath it, ragged vertical tears expose dozens of differently drawn hands in charcoal, colored pencil and ink, all reaching upward to support the medal. Several hands disappear abruptly under the newer paper. Across an intact strip of the glossy layer, print the exact phrase \"Your work. Our breakthrough.\" in assertive black lettering. Keep the period after each sentence. Use peeled fibers, dried paste, sun fading and curled paper edges to make the history of removal visible. Photograph the actual collage flat and close, with its material filling the image.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:25:16.447Z",
+        "sourceSha256": "5da657105c8c208f16cea2e7e0ede332ddf718040574d4f5f283d6ce7c04a83e",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "027",
+      "title": "Your grief improves our product",
+      "phraseId": "p123",
+      "styleId": "embroidery",
+      "image": "assets/slop/027.webp",
+      "fallback": "assets/slop/027.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "On worn linen, an embroidered figure's blue tears become gold coins in a machine above the words Your grief improves our product.",
+      "prompt": "Use case: stylized-concept. Create a square embroidery artwork on worn ivory linen. At the left, a small seated figure covers their face; a trail of oversized blue stitched tears enters an elaborate contraption that dominates the right side. From its opposite end, the same shapes emerge as gleaming gold coins. Depict the mechanism entirely through thread, tiny sewn wheels and densely knotted channels, with a tender domestic craft appearance. Stitch the exact phrase \"Your grief improves our product\" across the lower third in neat dark red lettering that puckers the cloth slightly. Show individual stitches, loose thread ends and uneven fabric tension. Soft side light reveals the actual embroidery surface, filling the square.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:26:06.910Z",
+        "sourceSha256": "2e85b4ab23796ca8661a619b31a15f7f5fc41fadcfaa24c18247d1e4fc67a775",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "028",
+      "title": "Doctor of plausible bullshit",
+      "phraseId": "p124",
+      "styleId": "lithography",
+      "image": "assets/slop/028.webp",
+      "fallback": "assets/slop/028.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "A lithographic parrot in academic robes displays a diploma reading Doctor of plausible bullshit above hollow books.",
+      "prompt": "Use case: stylized-concept. Create a square lithograph resembling a solemn academic portrait that has made a serious hiring mistake. A large parrot in an elaborate doctoral gown and square cap stands behind a lectern, its beak open with great authority. Its claws hold a curling diploma bearing the exact phrase \"Doctor of plausible bullshit\" in dignified, clearly readable lettering over three lines. At its feet, leather book covers stand upright like scholarly volumes, but their open ends reveal that every book is hollow. Use rich greasy black drawing, smoky lithographic washes, ivory paper and a small dull crimson academic hood. Present the print itself, edge to edge, with convincing crayon grain.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:26:35.305Z",
+        "sourceSha256": "d4b5464a969cbcbbcdfedc7d61093c4dfd3ff1e7e64c6e04359672bcf7c14846",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "029",
+      "title": "Human in the billing loop",
+      "phraseId": "p125",
+      "styleId": "found-object",
+      "image": "assets/slop/029.webp",
+      "fallback": "assets/slop/029.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "A mannequin hand holds a payment card inside a closed receipt loop with Human in the billing loop stamped on its base.",
+      "prompt": "Use case: stylized-concept. Generate a square close photograph of a found-object assemblage. A detached display mannequin hand emerging from a frayed shirt cuff holds a blank payment card against a generic card reader. Around it, a large circular track of clear tubing carries a continuous paper receipt back into the same reader; the payment system has no outlet. Stamp the exact phrase \"Human in the billing loop\" into a dull aluminum strip fixed across the base of the circle. The letters should be physically indented and readable. Use worn cream plastic, tarnished copper fittings, yellowed receipt paper and one cheerful red indicator light. A dark teal backing surface and hard side light make the closed circuit immediately clear.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:27:07.416Z",
+        "sourceSha256": "06ff8dc3e772134f0d7e385250c45e90b8c94b6f15f9965e713f58e71ffdbe53",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "030",
+      "title": "A million copies of who cares",
+      "phraseId": "p126",
+      "styleId": "concrete-poetry",
+      "image": "assets/slop/030.webp",
+      "fallback": "assets/slop/030.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "Repeated tiny instances of content form a typographic landfill cut through by A million copies of who cares.",
+      "prompt": "Use case: stylized-concept. Make a square concrete poem constructed entirely from printed letterforms on warm paper. Thousands of tiny repetitions of the word \"content\" accumulate into an enormous landfill shape occupying most of the page. The words are orderly at the top, then become crowded, tilted and crushed toward the bottom. A narrow road made from repetitions of \"more\" disappears into the heap. Across its dense middle, the exact phrase \"A million copies of who cares\" appears as large clean gaps in the mass, with paper showing through the letter shapes. Keep this complete phrase immediately readable across three lines. Use only black ink, subtle letterpress pressure and small variations in ink density.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:27:59.285Z",
+        "sourceSha256": "161790e5e78bdab9857b9c562428e55733f50f89f15972181b36d15456df572a",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "031",
+      "title": "Peer reviewed by itself",
+      "phraseId": "p127",
+      "styleId": "drypoint",
+      "image": "assets/slop/031.webp",
+      "fallback": "assets/slop/031.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "A drypoint paper ribbon curls into a closed citation loop and carries the phrase Peer reviewed by itself.",
+      "prompt": "Use case: stylized-concept. Create a square drypoint print of an impossible scholarly document. A long paper ribbon curls into an almost perfect upright ring, and the arrow from its final footnote pierces the beginning of its own first page. Dense tiny citation lines travel around the loop and repeatedly point inward, referring only to the same document. Along the broad lower section facing the viewer, engrave the exact phrase \"Peer reviewed by itself\" as part of the ribbon's text. Use fine scratched lines, velvety black burrs, uneven plate tone and warm heavy paper. The empty center should occupy a third of the composition, surrounded by extravagant documentary detail. Present only the square printed image, intimate and severe.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:28:48.233Z",
+        "sourceSha256": "6e5faa20464e98d433680a72adcf1d6a70b0bc523d6d7587843f645aa791731b",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "032",
+      "title": "I agree with your last opinion",
+      "phraseId": "p128",
+      "styleId": "low-poly",
+      "image": "assets/slop/032.webp",
+      "fallback": "assets/slop/032.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "A faceted two-faced bust sits on a weather vane above the words I agree with your last opinion.",
+      "prompt": "Use case: stylized-concept. Create a square image of a low-poly digital sculpture with openly visible polygon faces. A toy-like bust has two identical smiling faces pointing in opposite directions and sits on a weather-vane arrow. Each face has its own small mechanical arm giving an eager thumbs-up. Both sides look equally certain. Carve the exact phrase \"I agree with your last opinion\" into the broad front of the rotating hexagonal base, legible over three short lines. Use candy-pink faces, a cobalt arrow, pale yellow arms and a dull lavender base, with hard faceted shading and one crisp shadow on an apricot plane. The sculpture should seem extremely agreeable and structurally incapable of holding a position.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:29:15.005Z",
+        "sourceSha256": "8bc3ad6a6a219ef436bb5781e7c602873a021e521564edd710d638aa50a0b064",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "033",
+      "title": "Permission not found. Proceeding.",
+      "phraseId": "p129",
+      "styleId": "scanography",
+      "image": "assets/slop/033.webp",
+      "fallback": "assets/slop/033.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "A scanner-like composition passes a luminous bar over a red refusal card and handwritten art beneath Permission not found. Proceeding.",
+      "prompt": "Use case: stylized-concept. Make a square scanography artwork: paper and drawing materials pressed directly against scanner glass, sharply detailed where they touch and falling into blackness where they lift away. A large red card marked \"NO\" lies across a stack of intimate pencil studies, brush tests and handwritten notes. A brilliant horizontal scanning bar passes straight through the refusal card, leaving ghost copies of the drawings below it. On a narrow cream strip trapped under the glass, print the exact phrase \"Permission not found. Proceeding.\" in small, cold office lettering, clearly readable across two lines. Show flattened paper fibers, graphite dust, fingerprints, a compressed flower and a bent staple. The whole image is the scan itself, with no visible computer interface.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:29:42.208Z",
+        "sourceSha256": "595e6ecd05e782e698050b63486c521b15ef5048e9fcb67553d1d59a7797b030",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
+    },
+    {
+      "id": "034",
+      "title": "Now with fewer people",
+      "phraseId": "p130",
+      "styleId": "paper-pulp",
+      "image": "assets/slop/034.webp",
+      "fallback": "assets/slop/034.jpg",
+      "width": 1254,
+      "height": 1254,
+      "alt": "Human-shaped holes interrupt a factory relief made from pulped paperwork, above the pressed words Now with fewer people.",
+      "prompt": "Use case: stylized-concept. Create a square paper pulp relief photographed straight on with strong raking light. Shredded forms, office notes and typed pages have been pressed into a dense pale slab depicting a simplified factory assembly line. At regular intervals, human figures have been removed completely, leaving deep empty silhouettes among the raised rollers and gears. Small crushed human-shaped offcuts collect along the lower edge like manufacturing waste. Press the exact phrase \"Now with fewer people\" deeply into the slab beneath the line, with the recessed letters darkened only by their shadows. Use coarse cream fibers, gray paper fragments and occasional faded blue flecks. The machinery should be intact and carefully finished; the absent workers carry the image. Fill the frame with the relief.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "createdAt": null,
+        "recordedAt": "2026-10-07T12:30:19.734Z",
+        "sourceSha256": "f992ed6267ad7ea619dc428fe970c3fdb13d6941db7e8342f0ca0c45f9714fec",
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      }
     }
   ],
   "production": {
     "startedAt": "2026-10-07T03:54:30.572Z",
-    "asOf": "2026-10-07T04:29:37.723Z",
-    "measuredThrough": "2026-10-07T04:29:37.626Z",
-    "inputTokens": 27291238,
-    "cachedInputTokens": 26592512,
+    "asOf": "2026-10-07T12:31:46.013Z",
+    "measuredThrough": "2026-10-07T12:31:45.224Z",
+    "inputTokens": 36579986,
+    "cachedInputTokens": 35387264,
     "cacheWriteInputTokens": 0,
-    "outputTokens": 131869,
-    "reasoningOutputTokens": 36354,
-    "projectTokens": 27423107,
+    "outputTokens": 163938,
+    "reasoningOutputTokens": 50444,
+    "projectTokens": 36743924,
     "complete": false,
     "actualModels": [
       "gpt-6-astra"
@@ -1374,31 +1654,31 @@ window.SLOP_DATA = {
       {
         "model": "gpt-6-astra",
         "effort": "max",
-        "responses": 124,
-        "inputTokens": 14143247,
-        "cachedInputTokens": 13776256,
+        "responses": 143,
+        "inputTokens": 17197961,
+        "cachedInputTokens": 16494080,
         "cacheWriteInputTokens": 0,
-        "outputTokens": 100433,
-        "reasoningOutputTokens": 27941,
-        "projectTokens": 14243680
+        "outputTokens": 119941,
+        "reasoningOutputTokens": 35246,
+        "projectTokens": 17317902
       },
       {
         "model": "gpt-6-astra",
         "effort": "ultra",
-        "responses": 92,
-        "inputTokens": 13147991,
-        "cachedInputTokens": 12816256,
+        "responses": 136,
+        "inputTokens": 19382025,
+        "cachedInputTokens": 18893184,
         "cacheWriteInputTokens": 0,
-        "outputTokens": 31436,
-        "reasoningOutputTokens": 8413,
-        "projectTokens": 13179427
+        "outputTokens": 43997,
+        "reasoningOutputTokens": 15198,
+        "projectTokens": 19426022
       }
     ],
     "coverage": {
       "rootThreads": 1,
       "childThreads": 3,
       "threadsWithRecordedUsage": 4,
-      "responses": 216
+      "responses": 279
     },
     "imageInference": {
       "inputTokens": null,
@@ -1409,21 +1689,42 @@ window.SLOP_DATA = {
     "imageCostUsd": null,
     "usageNote": "Recorded planning and coding tokens through this snapshot, including stopped attempts and child agents. Input includes cached context; output includes reasoning. Image inference is unreported, so this is not the complete production total. Unfinished responses appear in a later snapshot.",
     "accountUsage": {
+      "label": "10 more works",
       "before": {
-        "usedPercent": 2,
+        "usedPercent": 49,
         "windowDurationMins": 10080,
         "resetsAt": 1791950199,
-        "observedAt": "2026-10-07T04:00:03.000Z"
+        "observedAt": "2026-10-07T12:13:32.315Z"
       },
       "after": {
-        "usedPercent": 14,
+        "usedPercent": 53,
         "windowDurationMins": 10080,
         "resetsAt": 1791950199,
-        "observedAt": "2026-10-07T04:25:00.000Z"
+        "observedAt": "2026-10-07T12:31:45.821Z"
       },
-      "deltaPercentagePoints": 12,
+      "deltaPercentagePoints": 4,
       "note": "Account-wide meter; includes other chats. Not a token counter.",
       "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
-    }
+    },
+    "accountUsageHistory": [
+      {
+        "label": "First 24 works",
+        "before": {
+          "usedPercent": 2,
+          "windowDurationMins": 10080,
+          "resetsAt": 1791950199,
+          "observedAt": "2026-10-07T04:00:03.000Z"
+        },
+        "after": {
+          "usedPercent": 14,
+          "windowDurationMins": 10080,
+          "resetsAt": 1791950199,
+          "observedAt": "2026-10-07T04:25:00.000Z"
+        },
+        "deltaPercentagePoints": 12,
+        "note": "Account-wide meter; includes other chats. Not a token counter.",
+        "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
+      }
+    ]
   }
 };

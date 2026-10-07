@@ -602,18 +602,24 @@
 
   function buildAccountMeter() {
     const account = production.accountUsage;
+    const history = Array.isArray(production.accountUsageHistory) ? production.accountUsageHistory.filter((interval) => interval && typeof interval === 'object') : [];
     const target = $('slop-account-meter');
-    if (!account) { target.hidden = true; return; }
-    const before = account.before?.usedPercent;
-    const after = account.after?.usedPercent;
-    const change = account.deltaPercentagePoints;
-    const beforeText = knownNumber(before) ? `${number.format(before)}% used before images` : 'before reading not recorded';
-    const afterText = knownNumber(after) ? `${number.format(after)}% after` : 'after reading not recorded';
-    const changeText = typeof change === 'number' && Number.isFinite(change) ? `${number.format(change)} percentage points` : 'not reported';
-    const first = textElement('p', `Account meter: ${beforeText}, ${afterText}. Change: ${changeText}.`);
-    let note = account.note || 'Account-wide meter; includes other chats. Not a token counter.';
-    if (change === 0) note += ' The meter reports a change of 0; this does not mean zero consumption.';
-    target.replaceChildren(first, textElement('p', note));
+    if (!account && !history.length) { target.hidden = true; return; }
+    const intervalText = (interval, heading) => {
+      const label = typeof interval.label === 'string' && interval.label.trim() ? ` (${interval.label.trim()})` : '';
+      const before = knownNumber(interval.before?.usedPercent) ? `${number.format(interval.before.usedPercent)}%` : 'not recorded';
+      const after = knownNumber(interval.after?.usedPercent) ? `${number.format(interval.after.usedPercent)}%` : 'not recorded';
+      const change = interval.deltaPercentagePoints;
+      const delta = typeof change === 'number' && Number.isFinite(change) ? `${change > 0 ? '+' : ''}${number.format(change)} percentage points` : 'not reported';
+      return heading === 'Prior run'
+        ? `${heading}${label}: ${before} to ${after} used; ${delta}.`
+        : `${heading}${label}: ${before} used before images, ${after} after. Change: ${delta}.`;
+    };
+    const rows = account ? [textElement('p', intervalText(account, 'Current run'))] : [];
+    history.forEach((interval) => rows.push(textElement('p', intervalText(interval, 'Prior run'))));
+    let note = account?.note || 'Account-wide meter; includes other chats. Not a token counter.';
+    if ([account, ...history].some((interval) => interval?.deltaPercentagePoints === 0)) note += ' A recorded change of 0 does not mean zero consumption.';
+    target.replaceChildren(...rows, textElement('p', note));
     target.hidden = false;
   }
 
