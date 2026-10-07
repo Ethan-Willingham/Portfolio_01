@@ -1,16 +1,18 @@
 # Chain Reaction
 
-Chain Reaction is listed on In Progress at `archive.html`. Its project page,
-`chain-reaction-workbench.html`, links the current four-stage mechanical draft,
-seven separate mechanism and construction studies, the sound comparison lab and
-the earlier three-stage review slice. Sound remains off by default. The brief is
+Chain Reaction is listed on In Progress at `archive.html`. The canonical entry,
+`chain-reaction.html`, opens a direct fullscreen four-stage demo with Home,
+Pause, Replay and Follow controls. `chain-reaction-workbench.html` is the secondary
+index for seven separate mechanism and construction studies, the sound comparison
+lab and the earlier three-stage review slice at `chain-reaction/earlier-slice.html`.
+Sound remains off by default. The brief is
 `research/next/09-chain-reaction.md` in the main checkout. Private project state and the
 local look chooser live in `research/chain-reaction/`, a separate local Git repository.
 Read the brief and that folder's current state before continuing.
 
 ## In Progress workbench
 
-The current draft viewer lives at `chain-reaction/connected-slice.html`. It contains
+The current draft viewer also lives at `chain-reaction/connected-slice.html`. It contains
 24 transfers across four stages, lasting 34.620833 seconds. Stage four is the
 drawer outlet. Its viewer adapter stays under `chain-reaction/stages/viewer/`,
 separate from the three standard stage records in `assets/chain-reaction/stages/`.
@@ -28,8 +30,8 @@ CHAIN_REACTION_RESEARCH=/absolute/path/to/research/chain-reaction \
 The exporter copies an explicit list of current browser files, rewrites local
 preview paths to permanent site paths, pins the latest catch and drawer kits,
 and records source and published hashes in `chain-reaction/workbench-manifest.json`.
-It does not copy research notes, evidence or failed candidates. The workbench is
-searchable and included in the sitemap; its draft viewers retain `noindex,nofollow`.
+It does not copy research notes, evidence or failed candidates. The canonical demo is searchable and included in the sitemap; its draft viewers
+retain `noindex,nofollow`. The workbench remains reachable from In Progress.
 The four-stage runtime retains its read-only contact, cord and pacing observers,
 and refuses a handoff when the combined transfer report fails.
 
@@ -38,11 +40,64 @@ Chrome and WebKit, compares all four snapshot hashes and contact reports, compar
 six standalone mechanism worlds with Node, exercises all ten prop poses, and
 checks the project page at desktop and both phone orientations. It also checks
 the 20-pixel phone gutter and rejects missing same-origin assets or page errors.
+The local checks preserve all four chronological physical hashes after the
+fullscreen and environment changes.
 Set `CHAIN_REACTION_URL` to verify the deployed site with the same checks. Screenshots
 and the report go to `CHAIN_REACTION_OUTPUT`, or `/tmp/chain-reaction-workbench`.
 
 `workbench-still.mjs` renders stage four at two seconds for the index and project
 page preview image. It requires the browser environment and `CHAIN_REACTION_SHARP`.
+
+## Evolving miniature worlds
+
+The owner requested an immersive demo with Home as its only navigation control,
+and changing rooms, woods, materials and backgrounds inspired by I Spy books.
+The opening four environments are authored in `chain-reaction/world-dressing.js`:
+an amber pegboard workshop with honey maple, a walnut sewing alcove with a woven
+wall, a cherry and plum toy theatre, and a slate and smoked-oak curiosity cabinet.
+The set dressing adds 131 meshes around the existing mechanisms. Its authored
+geometry keeps at least 0.12 units of front clearance from the moving construction.
+An instance-aware Node geometry audit verifies those bounds against the actual
+renderer inputs. Scenery does not enter the solver; existing mechanical geometry,
+material recipes and timing stay unchanged.
+
+`immersive.mjs` checks both entry routes in Chrome and WebKit at four sizes. It
+verifies fullscreen layout, Home as the only navigation link, 44-pixel controls,
+Replay/Pause/Follow, four distinct theme records, all eight drawer transfer frames,
+and exact frozen and paused zoom-return image pairs. `workbench.mjs` retains the
+full chronological physics comparison.
+
+`batching.mjs` compares all four rooms and the overview with their original and
+batched scenery. Forty material batches preserve all 131 authored objects and
+21,184 triangles. Geometry/UV/material/shadow checks and both-browser pixel
+comparisons preserve the scene; the largest mean channel difference is 0.000518
+on a 0-to-255 scale, confined to raster rounding. Physical snapshots match exactly.
+
+`immersive-film.mjs` measures five actual DPR2 runs of fourth-stage playback and
+five animated full-overview runs per profile. Median p95 intervals are 4.8/4.0 ms
+for the owner's 859x767 viewport and 10.4/12.6 ms for an 844x390 CPU4 landscape
+phone proxy. Both meet the unchanged 16.7 ms budget. These are desktop GPU proxy
+measurements, not physical phone results. The retained first unbatched overview
+failed at 20.1 ms; no objects, antialiasing or texture detail were removed to pass.
+
+The renderer retains four-sample scene MSAA, DPR up to two, zero focus/motion/grain
+blur, lens-relative 24-bit depth and 4096 PCF shadow maps. Static batching changes
+render overhead, not the physics, scenery palette or optical quality.
+
+Future chapters must change architecture, dominant surfaces, prop vocabulary,
+composition and light together, with genuinely new material mechanisms verified
+before inclusion. A palette change alone does not satisfy this direction. Room
+transitions must carry the marble through a visible physical handoff; camera travel
+cannot substitute for one. Keep background details crisp and active impacts and
+cords legible. The set builder rejects extra stages until their scenery is authored;
+it does not silently repeat the opening room. The planned broader vocabulary includes sewing, theatre, collected
+curiosities, seaside miniatures and a glass conservatory beyond the opening workshop.
+
+Primary references are Walter Wick's [miniature world-building and Chain Reaction
+discussion](https://www.walterwick.com/blog/2015/10/13/floor-games),
+[deep-focus composition](https://www.walterwick.com/blog/2015/11/16/photo-illusions-in-the-digital-age)
+and [I Spy set construction](https://www.walterwick.com/behind-the-scenes/i-spy).
+These inform original environments; no book images or exact scenes are reused.
 
 The editable physics module is `js/chain-reaction-physics.js`. It loads the pinned
 Rapier module by dynamic import and uses one classic-script namespace, `ChainReaction`.
@@ -356,7 +411,7 @@ chain or final art is approved by these tests.
 
 ## Three-stage review slice
 
-The unlinked `chain-reaction.html` contains three mechanisms and sixteen physical
+The earlier review at `chain-reaction/earlier-slice.html` contains three mechanisms and sixteen physical
 transfers, lasting 24.43 seconds. A damped gravity arm tips a ruler; a hanging tin
 cup pushes a weighted mallet; a crossed-spoke wheel pushes a second knocker.
 Every mechanism ends by sliding a latch, dropping a gate and releasing a ceramic

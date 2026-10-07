@@ -25,8 +25,14 @@ try {
       await page.goto(origin + '/archive.html');
       await page.evaluate(() => document.fonts.ready);
       await page.screenshot({path: resolve(output, `${engine}-in-progress.png`)});
+      assert.equal(await page.locator('#chain-reaction .chain-studies a').getAttribute('href'),'chain-reaction-workbench.html');
       await page.locator('#chain-reaction a.article-item').click();
-      await page.waitForURL('**/chain-reaction-workbench.html');
+      await page.waitForURL('**/chain-reaction.html');
+      await page.waitForFunction(() => window.ChainReactionPage?.ready);
+      assert.equal(await page.locator('body.cr-immersive').count(), 1);
+      assert.equal(await page.locator('a:visible').count(), 1);
+      assert.equal(await page.locator('a:visible').getAttribute('href'), '/index.html');
+      await page.goto(origin + '/chain-reaction-workbench.html');
       assert.equal(await page.locator('.workbench-studies a').count(), 9);
       const hrefs = await page.locator('main a').evaluateAll(links => links.map(a => a.href));
       for (const href of new Set(hrefs)) assert.equal((await context.request.get(href)).status(), 200, href);
@@ -39,7 +45,7 @@ try {
         await page.screenshot({path: resolve(output, `${engine}-hub-${viewport.width}.png`), fullPage: true});
       }
       await page.setViewportSize({width: 1440, height: 900});
-      await page.goto(origin + '/chain-reaction/connected-slice.html?paused=1#stage=1');
+      await page.goto(origin + '/chain-reaction.html?paused=1#stage=1');
       await page.waitForFunction(() => window.ChainReactionPage?.ready && ChainReactionPage.state().maxWorlds === 2);
       assert.equal(await page.locator('#sound').isVisible(), false);
       for (let i = 0; i < 80; i++) {

@@ -1,19 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
+<base href="/">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#303931">
+<link rel="canonical" href="https://ethanwillingham.com/chain-reaction.html"><meta name="theme-color" content="#303931">
 <title>Chain Reaction | Ethan Willingham</title>
-<meta name="description" content="A chain of maple, tin and small mechanical accidents.">
-<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="chain-reaction.css?v=0.1.0">
-<script defer src="js/vendor/three-r128.min.js"></script>
-<script defer src="js/chain-reaction-physics.js?v=0.2.0"></script><script defer src="js/chain-reaction-events.js?v=0.1.1"></script>
-<script defer src="js/chain-reaction-materials.js?v=0.1.0"></script><script defer src="js/chain-reaction-renderer.js?v=0.1.4"></script>
-<script defer src="js/chain-reaction-sound.js?v=0.1.0"></script><script defer src="js/chain-reaction.js?v=0.1.2"></script>
-</head>
-<body>
-<header class="cr-bar"><a href="chain-reaction-workbench.html" class="cr-home">All studies</a><span class="cr-caption" id="caption">Chain Reaction</span><button id="about-toggle" aria-expanded="false" aria-controls="about">About</button></header>
-<main class="cr-stage"><canvas id="machine" aria-label="A chain reaction built from maple arms, a hanging tin cup and a wooden wheel." tabindex="0"></canvas><picture class="cr-still" id="still"><source media="(orientation:portrait)" srcset="assets/chain-reaction/stills/portrait.webp?v=0.1.4"><source media="(max-height:600px)" srcset="assets/chain-reaction/stills/landscape.webp?v=0.1.4"><img src="assets/chain-reaction/stills/desktop.webp?v=0.1.4" alt="The armed maple and tin machine on its workbench." loading="eager"></picture><p class="cr-title" id="stage-title">The Long Arm</p><p class="cr-status" id="status" role="status">Preparing the bench.</p><div class="cr-controls"><button id="follow" hidden>Follow</button><button id="pause" aria-pressed="false">Pause</button><button id="sound" aria-pressed="false" hidden>Sound off</button></div><div class="cr-frontier" id="frontier" hidden><p>Three stages built so far.</p><a href="#stage=1" id="restart">Back to the beginning</a></div></main>
-<aside id="about" class="cr-about" hidden><p>A small machine on a long workbench. Each stage uses rigid bodies at real gravity, with its own rails, bearings and latches. Before a stage joins the chain, it runs 200 variations in each direction, plus tests with its triggers held still. Drag to look around, scroll or pinch to pull back, and tap a stage in the wide view to start there.</p><p><a id="share" href="#stage=1">Link to this stage</a><span>Three stages added October 6, 2026.</span></p></aside>
+<meta name="description" content="A marble sets off a chain through four miniature rooms, from a workshop to a cabinet of small discoveries.">
+<link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/chain-reaction.css?v=0.1.1">
+<script defer src="/js/vendor/three-r128.min.js"></script>
+<script defer src="/js/chain-reaction-physics.js?v=0.2.0"></script><script defer src="/js/chain-reaction-events.js?v=0.1.1"></script>
+<script defer src="/js/chain-reaction-materials.js?v=0.1.0"></script><script defer src="/chain-reaction/world-dressing.js?v=1"></script><script defer src="/chain-reaction/connected-renderer.js?v=2"></script>
+<script defer src="/js/chain-reaction-sound.js?v=0.1.0"></script><script defer src="/chain-reaction/connected-slice.js?v=3"></script>
+<meta property="og:title" content="Chain Reaction"><meta property="og:type" content="website"><meta property="og:url" content="https://ethanwillingham.com/chain-reaction.html"><meta property="og:image" content="https://ethanwillingham.com/assets/chain-reaction/workbench.jpg?v=0.2.0"></head>
+<body class="cr-immersive">
+<a href="/index.html" class="cr-home">Home</a>
+<main class="cr-stage"><canvas id="machine" aria-label="A chain reaction built from maple arms, a hanging tin cup, a wooden wheel and a rose-painted drawer." tabindex="0"></canvas><picture class="cr-still" id="still"><source media="(orientation:portrait)" srcset="assets/chain-reaction/stills/portrait.webp?v=0.2.0"><source media="(max-height:600px)" srcset="assets/chain-reaction/stills/landscape.webp?v=0.2.0"><img src="assets/chain-reaction/stills/desktop.webp?v=0.2.0" alt="A marble waits above the miniature workshop." loading="eager"></picture><p class="cr-title" id="stage-title">The Long Arm</p><p class="cr-status" id="status" role="status">Preparing the scene.</p><div class="cr-controls"><button id="follow" hidden>Follow</button><button id="pause" aria-pressed="false">Pause</button><button id="restart">Replay</button><button id="sound" aria-pressed="false" hidden>Sound off</button></div><div class="cr-frontier" id="frontier" role="status" hidden><p>The chain is complete.</p></div></main>
+
 <noscript><style>.cr-controls{display:none}</style><p class="cr-noscript">The moving machine needs JavaScript.</p></noscript>
 </body></html>

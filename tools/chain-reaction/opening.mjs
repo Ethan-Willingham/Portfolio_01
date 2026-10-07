@@ -6,7 +6,9 @@ import {serve,browserRun} from './browser.mjs';
 const folder=resolve(process.env.CHAIN_REACTION_EVIDENCE||process.env.CHAIN_REACTION_RESEARCH+'/evidence/latest');
 await mkdir(folder,{recursive:true});
 const release=await toolLock(),server=await serve(),rows=[];
-const first=JSON.parse(await readFile(resolve(ROOT,'assets/chain-reaction/stages/00001.json')));
+const manifest=JSON.parse(await readFile(resolve(ROOT,'chain-reaction/stages/viewer/index.json'))),stageCount=manifest.stages.length;
+assert.equal(stageCount,4,'The canonical entry needs four connected stages');
+const first=JSON.parse(await readFile(resolve(ROOT,'chain-reaction/stages/viewer',manifest.stages[0].file)));
 const contact=first.verified.steps.filter(s=>s.kind==='contact').reduce((n,s)=>Math.min(n,s.contactTick),Infinity);
 try{
  for(const engine of ['chromium','webkit'])await browserRun(engine,async browser=>{
@@ -14,6 +16,7 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(server.url+'/chain-reaction.html');
   await page.waitForFunction(()=>window.ChainReactionPage?.ready);
+  assert.equal(await page.evaluate(()=>ChainReactionPage.inspect().partMaps.length),stageCount);
   await page.waitForFunction(()=>ChainReactionPage.state().stage===1&&ChainReactionPage.state().tick>=720,null,{timeout:15000});
   const reveal=await page.evaluate(()=>ChainReactionPage.state());
   assert(reveal.camera.width>50,'First visit reveal absent');assert(reveal.tick<contact,'Reveal hides the first transfer');
@@ -25,11 +28,12 @@ try{
   await page.waitForFunction(()=>ChainReactionPage.state().stage===2&&ChainReactionPage.state().tick>=300);
   const cup=await page.evaluate(()=>ChainReactionPage.state());
   assert(cup.camera.width<12,'Cup setup hidden by an overview');
-  await page.waitForFunction(()=>ChainReactionPage.state().ended,null,{timeout:20000});
+  await page.waitForFunction(()=>ChainReactionPage.state().ended,null,{timeout:30000});
+  assert.equal((await page.evaluate(()=>ChainReactionPage.state())).stage,stageCount);
   assert.deepEqual(errors,[]);
   await page.reload();await page.waitForFunction(()=>window.ChainReactionPage?.ready);
-  assert.equal((await page.evaluate(()=>ChainReactionPage.state())).stage,3);
-  rows.push({engine,pass:true,firstContactTime:contact/240,reveal:{width:reveal.camera.width,time:reveal.tick/240},returned:{width:returned.camera.width,time:returned.tick/240},cup:{width:cup.camera.width,time:cup.tick/240},checks:['first visit pullback during slow arm fall','return before first contact','close cup setup','continuous chain','resume saved stage','zero browser errors']});
+  assert.equal((await page.evaluate(()=>ChainReactionPage.state())).stage,stageCount);
+  rows.push({engine,pass:true,stages:stageCount,firstContactTime:contact/240,reveal:{width:reveal.camera.width,time:reveal.tick/240},returned:{width:returned.camera.width,time:returned.tick/240},cup:{width:cup.camera.width,time:cup.tick/240},checks:['first visit pullback during slow arm fall','return before first contact','close cup setup','continuous chain','resume saved stage','zero browser errors']});
   const video=page.video();await context.close();if(record&&video)await copyFile(await video.path(),resolve(folder,'playback.webm'));
  });
  console.log(JSON.stringify(rows,null,2));await writeFile(resolve(folder,'opening.json'),JSON.stringify(rows,null,2)+'\n');

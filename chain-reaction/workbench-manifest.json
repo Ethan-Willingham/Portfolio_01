@@ -4,8 +4,13 @@
   "files": [
     {
       "file": "connected-slice.html",
-      "sourceHash": "3e92e8996015d5b6fbdf1fbe194f3ab81f57598437708366d1aa3ae0a54f8670",
-      "publishedHash": "21ac7f8a05f241541bf1679d56db55e515129d3acf674c01a761862017a216af"
+      "sourceHash": "f23522d8fed46520b2d3d7d75c509772920d818400163a1f6892ffa3673b724c",
+      "publishedHash": "2b83a2f77959c7ff4838db958300126934efd27573fbdda81335e65d3389b117"
+    },
+    {
+      "file": "earlier-slice.html",
+      "sourceHash": "773784688aaa7260590d49ffeaaf7dcc453d79e55c4d28629e06c5980ce476e1",
+      "publishedHash": "773784688aaa7260590d49ffeaaf7dcc453d79e55c4d28629e06c5980ce476e1"
     },
     {
       "file": "guided.html",
@@ -43,14 +48,19 @@
       "publishedHash": "f85be7d835cc4fff3251404fb1677c4fb6868e6b015a13c87ff0918bc084fcb1"
     },
     {
+      "file": "world-dressing.js",
+      "sourceHash": "7abc72a99e11f8c2ed2318a46c50be6f8cdfb61f7d912e89c6755fd6d17c7f70",
+      "publishedHash": "7abc72a99e11f8c2ed2318a46c50be6f8cdfb61f7d912e89c6755fd6d17c7f70"
+    },
+    {
       "file": "connected-slice.js",
-      "sourceHash": "9770ce9442a1be8895269e7ec0b2ffb7918abeb8af0a84d1455e2295e9f8b81e",
-      "publishedHash": "30b0965b5524294c134b3181c79a6c4eae15c6449ad6829dc67c370b6a62e9b0"
+      "sourceHash": "9d48f33827ed0495d2a0858131590ba44824c67bea0957c08f2b01d4ad4a6f4e",
+      "publishedHash": "9dc7146d8582bf66a1c28092a8ac87a865803b702b09f033ef9ee2183143f68f"
     },
     {
       "file": "connected-renderer.js",
-      "sourceHash": "2083bae5152ff438d5bf0ca53534dc3518320ba269b5ba91896ca5435628b097",
-      "publishedHash": "2083bae5152ff438d5bf0ca53534dc3518320ba269b5ba91896ca5435628b097"
+      "sourceHash": "6ef08f838cccf8565cd9bbc5b9665269adb574f09e6c3b8b84209d606e21a23b",
+      "publishedHash": "6ef08f838cccf8565cd9bbc5b9665269adb574f09e6c3b8b84209d606e21a23b"
     },
     {
       "file": "guided-preview.js",

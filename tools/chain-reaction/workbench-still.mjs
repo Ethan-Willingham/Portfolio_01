@@ -14,7 +14,7 @@ try {
     await page.goto(server.url + '/chain-reaction/connected-slice.html?paused=1#stage=4');
     await page.waitForFunction(() => window.ChainReactionPage?.ready);
     await page.evaluate(() => ChainReactionPage.seek(4, 2));
-    await page.addStyleTag({content: '.cr-title,.cr-controls,.cr-status{display:none!important}'});
+    await page.addStyleTag({content: '.cr-home,.cr-title,.cr-controls,.cr-status,.cr-frontier{display:none!important}'});
     const bytes = await page.locator('#machine').screenshot();
     const target = resolve(ROOT, 'assets/chain-reaction/workbench');
     await sharp(bytes).resize(1200, 750, {fit: 'cover'}).jpeg({quality: 90}).toFile(target + '.jpg');

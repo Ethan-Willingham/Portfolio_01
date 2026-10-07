@@ -56,6 +56,8 @@
     /* ---- Article cards, matched to the homepage: thumbnail floats RIGHT so every
        title shares the same left spine; the description sits roman, not italic. ---- */
     .article-list { gap: 0; }
+    .chain-studies { margin: -.7rem 0 1.3rem; font-size: .83rem; }
+    .chain-studies a { color: var(--accent); display: inline-flex; align-items: center; min-height: 44px; }
     .article-item { padding: 1.65rem 1rem; }
     .article-item-title {
       font-family: var(--font-heading); font-weight: 400; font-size: 1.65rem;
@@ -112,15 +114,16 @@
 
     <main>
       <ul class="article-list">
-        <li class="article-list-item fade-in" id="chain-reaction" data-keywords="chain reaction rube goldberg tin toy marble maple physics drawer rocker counterweight cup wheel catch mechanism workbench prototype">
-          <a class="article-item" href="chain-reaction-workbench.html">
+        <li class="article-list-item fade-in" id="chain-reaction" data-keywords="chain reaction rube goldberg tin toy marble maple physics drawer rocker counterweight cup wheel catch mechanism workbench prototype miniature sewing theatre cabinet diorama i spy">
+          <a class="article-item" href="chain-reaction.html">
             <span class="article-item-thumb">
-              <picture><source type="image/webp" srcset="assets/chain-reaction/workbench.webp"><img src="assets/chain-reaction/workbench.jpg" width="1200" height="750" loading="eager" decoding="async" alt="A rose-painted drawer linked by cords to a falling tin weight and the next marble."></picture>
+              <picture><source type="image/webp" srcset="assets/chain-reaction/workbench.webp?v=0.2.0"><img src="assets/chain-reaction/workbench.jpg?v=0.2.0" width="1200" height="750" loading="eager" decoding="async" alt="A rose-painted drawer linked by cords to a falling tin weight and the next marble."></picture>
             </span>
             <time class="article-item-date" datetime="2026-10-07">7 Oct 2026</time>
             <h2 class="article-item-title">Chain Reaction</h2>
-            <p class="article-item-description">A marble sets off a chain of maple arms, tin cups and falling weights. Watch the four stages built so far, then try the separate drawer and rocker studies.</p>
+            <p class="article-item-description">A marble sets off a chain of arms, cups and falling weights. Follow it through a miniature workshop, sewing alcove, toy theatre and cabinet of small discoveries.</p>
           </a>
+          <p class="chain-studies"><a href="chain-reaction-workbench.html" aria-label="Chain Reaction construction studies">Construction studies</a></p>
         </li>
 
         <li class="article-list-item fade-in" data-keywords="same chance contentment happiness spirituality karma comfort conscience truth pain unselfish action nature nurture equality">

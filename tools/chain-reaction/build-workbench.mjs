@@ -8,8 +8,8 @@ import {createHash} from 'node:crypto';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const source = process.env.CHAIN_REACTION_RESEARCH;
 if (!source) throw Error('Set CHAIN_REACTION_RESEARCH to the local research repository.');
-const pages = ['connected-slice', 'guided', 'props', 'drawer', 'drawer-port', 'drawer-outlet', 'rocker-landing', 'rocker-outlet'];
-const scripts = ['connected-slice', 'connected-renderer', 'guided-preview', 'guided-renderer', 'props-preview', 'props-renderer', 'drawer-preview', 'drawer-renderer', 'drawer-port', 'drawer-release-renderer', 'drawer-outlet', 'drawer-outlet-renderer', 'rocker-landing', 'rocker-outlet', 'rocker-outlet-renderer', 'rope-centerline'];
+const pages = ['connected-slice', 'earlier-slice', 'guided', 'props', 'drawer', 'drawer-port', 'drawer-outlet', 'rocker-landing', 'rocker-outlet'];
+const scripts = ['world-dressing', 'connected-slice', 'connected-renderer', 'guided-preview', 'guided-renderer', 'props-preview', 'props-renderer', 'drawer-preview', 'drawer-renderer', 'drawer-port', 'drawer-release-renderer', 'drawer-outlet', 'drawer-outlet-renderer', 'rocker-landing', 'rocker-outlet', 'rocker-outlet-renderer', 'rope-centerline'];
 const modules = ['connected-stage-observer', 'constraint-observer', 'pacing-observer', 'transfer-ledger', 'joint-coordinate', 'drawer-constraint-declarations', 'drawer-suspense-declaration', 'rocker-constraint-declaration'];
 const kits = ['guided-catch-v14', 'drawer-bearing-v1', 'drawer-latch-v12', 'drawer-outlet-v16', 'stopped-rocker-v3', 'rocker-outlet-v5'];
 const props = JSON.parse(await readFile(resolve(source, 'props/manifest.json'), 'utf8'));
@@ -36,4 +36,10 @@ for (const file of files) {
   records.push({file, sourceHash: hash(original), publishedHash: hash(content)});
 }
 await writeFile(resolve(root, 'chain-reaction/workbench-manifest.json'), JSON.stringify({format: 'chain-reaction-workbench@1', scope: 'Current drafts and construction studies, under development.', files: records}, null, 2) + '\n');
-console.log(`Exported ${files.length} current preview files.`);
+// The portfolio entry opens the full-screen current chain. The workbench remains
+// available as a separate catalogue of construction studies.
+const viewer = await readFile(resolve(root, 'chain-reaction/connected-slice.html'), 'utf8');
+const canonical = viewer.replace('<meta name="robots" content="noindex,nofollow">', '<link rel="canonical" href="https://ethanwillingham.com/chain-reaction.html">')
+  .replace('</head>', '<meta property="og:title" content="Chain Reaction"><meta property="og:type" content="website"><meta property="og:url" content="https://ethanwillingham.com/chain-reaction.html"><meta property="og:image" content="https://ethanwillingham.com/assets/chain-reaction/workbench.jpg?v=0.2.0"></head>');
+await writeFile(resolve(root, 'chain-reaction.html'), canonical);
+console.log(`Exported ${files.length} browser files and the immersive portfolio post.`);
