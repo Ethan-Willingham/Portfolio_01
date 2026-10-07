@@ -61,6 +61,17 @@ function attr(block, re) { const m = block.match(re); return m ? decode(m[1]).tr
 // extract a post's text, broken into sections by heading (with anchor ids)
 function buildSections(post, file) {
   if (!existsSync(file)) return;
+  // Slop's actual collection is populated from data, outside the empty wall markup.
+  if (post.url === 'slop.html') {
+    const context = { window: {} };
+    runInNewContext(readFileSync(join(ROOT, 'js/slop-data.js'), 'utf8'), context, { timeout: 1000 });
+    const data = context.window.SLOP_DATA;
+    for (const work of data.works.filter(work => work.generation?.status === 'complete')) {
+      const style = data.styles.find(style => style.id === work.styleId);
+      post.sections.push({ head: work.title, id: `work=${work.id}`, text: [style?.name, work.alt].filter(Boolean).join('. ') });
+    }
+    return;
+  }
   let html = readFileSync(file, 'utf8');
   // The collection uses short card labels; search displays the revised article title.
   if (post.hub === 'inner-life' || post.url === 'plato.html') {

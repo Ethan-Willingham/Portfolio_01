@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#303931">
+  <title>Slop</title>
+  <meta name="description" content="AI art about AI art. Made by AI. A wall of generated modern and contemporary art, with every prompt and the production ledger attached.">
+  <link rel="canonical" href="https://ethanwillingham.com/slop.html">
+  <meta property="og:title" content="Slop">
+  <meta property="og:description" content="AI art about AI art. Made by AI. Wander through the gallery, then check the receipts.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/slop.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/slop/share.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Slop">
+  <meta name="twitter:description" content="AI art about AI art. Made by AI.">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/slop/share.jpg">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="slop.css?v=1">
+  <script defer src="js/slop-data.js?v=1"></script>
+  <script defer src="js/slop.js?v=1"></script>
+</head>
+<body class="slop-page">
+  <a class="slop-skip" href="#slop-index-button">Browse the artwork index</a>
+
+  <main class="slop-stage" id="slop-stage" tabindex="0" aria-label="Slop art wall" aria-describedby="slop-instructions" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight + - Home Enter">
+    <div class="slop-wall" id="slop-wall"></div>
+    <div class="slop-empty" id="slop-empty" hidden>
+      <p class="slop-eyebrow">The gallery</p>
+      <h2>The wall is waiting for its art.</h2>
+      <p>The artwork could not be loaded. You can still read about the project and look through its ledger.</p>
+      <button class="slop-text-button" type="button" data-dialog="slop-about">About Slop</button>
+    </div>
+  </main>
+
+  <header class="slop-header">
+    <div class="slop-brand slop-glass">
+      <h1><button id="slop-brand" type="button" aria-label="Slop. Recenter the wall">Slop</button></h1>
+      <span class="slop-brand-note">Entirely<br>artificial.</span>
+    </div>
+    <p class="slop-top-note">AI art about AI art.</p>
+    <nav class="slop-nav slop-glass" aria-label="Gallery">
+      <button type="button" data-dialog="slop-about">About</button>
+      <button type="button" data-dialog="slop-index" id="slop-index-button">Index<span class="slop-nav-count" id="slop-nav-count"></span></button>
+      <button type="button" data-dialog="slop-ledger">Ledger</button>
+    </nav>
+  </header>
+
+  <div class="slop-bottom">
+    <div class="slop-caption slop-glass" aria-hidden="true">
+      <span class="slop-caption-number" id="slop-near-number">THE GALLERY</span>
+      <span class="slop-caption-title" id="slop-near-title">Made by AI.</span>
+    </div>
+    <nav class="slop-dock slop-glass" aria-label="Move around the gallery">
+      <button class="slop-icon-button" id="slop-zoom-out" type="button" aria-label="Zoom out" title="Zoom out (-)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+      </button>
+      <button class="slop-zoom-value" id="slop-zoom-reset" type="button" aria-label="Reset zoom" title="Reset zoom">100%</button>
+      <button class="slop-icon-button" id="slop-zoom-in" type="button" aria-label="Zoom in" title="Zoom in (+)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+      </button>
+      <span class="slop-dock-divider" aria-hidden="true"></span>
+      <button class="slop-dock-action" id="slop-home" type="button" title="Recenter the wall (Home)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="slop-dock-action" id="slop-shuffle" type="button" title="Rearrange the artwork">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h2c5 0 7 12 12 12h2m-4-4 4 4-4 4M4 18h2c2 0 3.5-2 5-5m2-3c1.5-2.5 3-4 5-4h2m-4-4 4 4-4 4"/></svg>
+        <span>Shuffle</span>
+      </button>
+    </nav>
+    <button class="slop-help slop-glass" type="button" data-dialog="slop-about" aria-label="Gallery controls and information">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
+      <span>Drag to wander.<br><span class="slop-help-secondary">Pinch to look closer.</span></span>
+    </button>
+  </div>
+
+  <p class="slop-sr-only" id="slop-instructions">Drag or scroll in any direction to move. Pinch or hold Control while scrolling to zoom. Arrow keys move between artworks. Press Enter to open the centered artwork, plus or minus to zoom, and Home to recenter. The Index lists every unique work.</p>
+  <p class="slop-sr-only" id="slop-announcement" role="status" aria-live="polite"></p>
+
+  <dialog class="slop-dialog slop-about-dialog" id="slop-about" aria-labelledby="slop-about-title">
+    <div class="slop-dialog-top">
+      <p class="slop-eyebrow">About the gallery</p>
+      <button class="slop-close" type="button" data-close aria-label="Close about" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="slop-dialog-scroll slop-about-body">
+      <h2 id="slop-about-title">AI art about AI art.<br><em>Made by AI.</em></h2>
+      <p>Each square carries a short complaint about AI art. The pictures, prompts and gallery code were generated by AI from a human brief.</p>
+      <p id="slop-repeat-note">The wall repeats a finite collection. It does not generate new images while you browse.</p>
+      <p>Open a work for its exact prompt. The Ledger keeps the production record, including the numbers the tools did not report.</p>
+      <div class="slop-about-links">
+        <button class="slop-text-button" type="button" data-dialog="slop-index">Browse every work <span aria-hidden="true">/</span></button>
+        <button class="slop-text-button" type="button" data-dialog="slop-ledger">Check the ledger <span aria-hidden="true">/</span></button>
+      </div>
+      <section class="slop-controls" aria-labelledby="slop-controls-title">
+        <h3 id="slop-controls-title">Take a look around.</h3>
+        <dl>
+          <div><dt>Drag or scroll</dt><dd>Move in any direction.</dd></div>
+          <div><dt>Pinch / Ctrl + scroll</dt><dd>Zoom where you point.</dd></div>
+          <div><dt>Click a work</dt><dd>Open the image and its prompt.</dd></div>
+          <div><dt>Arrow keys</dt><dd>Move between works.</dd></div>
+          <div><dt>Enter / + / -</dt><dd>Open the centered work / zoom.</dd></div>
+          <div><dt>Home / Escape</dt><dd>Recenter / close a window.</dd></div>
+        </dl>
+      </section>
+      <footer class="slop-about-footer"><a href="index.html">Ethan Willingham</a><span>Wall inspired by <a href="https://public.work/" target="_blank" rel="noopener noreferrer">Public Work by Cosmos</a>.</span></footer>
+    </div>
+  </dialog>
+
+  <dialog class="slop-dialog slop-index-dialog" id="slop-index" aria-labelledby="slop-index-title">
+    <div class="slop-dialog-top">
+      <div><p class="slop-eyebrow">The collection</p><h2 id="slop-index-title">Every work.</h2></div>
+      <button class="slop-close" type="button" data-close aria-label="Close index" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="slop-index-tools">
+      <p>Choose a work to find it on the wall.</p>
+      <label class="slop-search"><span class="slop-sr-only">Search artworks</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="slop-search" type="search" placeholder="Find a phrase or style" autocomplete="off"></label>
+    </div>
+    <div class="slop-dialog-scroll slop-index-scroll">
+      <p class="slop-result-count" id="slop-index-count" role="status"></p>
+      <div class="slop-index-grid" id="slop-index-grid"></div>
+    </div>
+  </dialog>
+
+  <dialog class="slop-dialog slop-ledger-dialog" id="slop-ledger" aria-labelledby="slop-ledger-title">
+    <div class="slop-dialog-top">
+      <div><p class="slop-eyebrow">The receipts</p><h2 id="slop-ledger-title">Production ledger.</h2></div>
+      <button class="slop-close" type="button" data-close aria-label="Close ledger" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="slop-tabs" role="tablist" aria-label="Ledger sections">
+      <button id="slop-tab-production" type="button" role="tab" aria-selected="true" aria-controls="slop-panel-production" tabindex="0">Production</button>
+      <button id="slop-tab-phrases" type="button" role="tab" aria-selected="false" aria-controls="slop-panel-phrases" tabindex="-1">Phrases <span id="slop-phrase-count"></span></button>
+      <button id="slop-tab-styles" type="button" role="tab" aria-selected="false" aria-controls="slop-panel-styles" tabindex="-1">Styles <span id="slop-style-count"></span></button>
+    </div>
+    <div class="slop-dialog-scroll slop-ledger-scroll">
+      <section id="slop-panel-production" role="tabpanel" aria-labelledby="slop-tab-production" tabindex="0">
+        <div class="slop-stats" id="slop-stats"></div>
+        <p class="slop-ledger-note" id="slop-usage-note"></p>
+        <div class="slop-account-meter" id="slop-account-meter" hidden></div>
+        <div class="slop-table-wrap"><table class="slop-table"><caption>Recorded generation details for each work</caption><thead><tr><th scope="col">Work</th><th scope="col">Model</th><th scope="col">Attempts</th><th scope="col">Image tokens</th><th scope="col">Status</th></tr></thead><tbody id="slop-ledger-rows"></tbody></table></div>
+        <p class="slop-ledger-footnote" id="slop-ledger-asof"></p>
+      </section>
+      <section id="slop-panel-phrases" role="tabpanel" aria-labelledby="slop-tab-phrases" tabindex="0" hidden>
+        <p class="slop-ledger-note">The phrase library. A phrase can appear in more than one work; some have not been used yet.</p>
+        <ol class="slop-phrase-list" id="slop-phrases"></ol>
+      </section>
+      <section id="slop-panel-styles" role="tabpanel" aria-labelledby="slop-tab-styles" tabindex="0" hidden>
+        <p class="slop-ledger-note">Directions for the image prompts. These describe the requested treatment, not a claim about the result.</p>
+        <div class="slop-style-list" id="slop-styles"></div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="slop-dialog slop-work-dialog" id="slop-work" aria-labelledby="slop-work-title">
+    <button class="slop-close slop-work-close" type="button" data-close aria-label="Close artwork" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <div class="slop-work-scroll">
+      <div class="slop-work-image" id="slop-work-image"></div>
+      <div class="slop-work-info">
+        <p class="slop-eyebrow" id="slop-work-number"></p>
+        <h2 id="slop-work-title"></h2>
+        <p class="slop-work-style" id="slop-work-style"></p>
+        <p class="slop-work-description" id="slop-work-description"></p>
+        <dl class="slop-work-facts" id="slop-work-facts"></dl>
+        <details class="slop-prompt"><summary>The exact prompt</summary><p id="slop-work-prompt"></p></details>
+        <a class="slop-original" id="slop-work-original" target="_blank" rel="noopener">Open full image <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5H5v14h14v-3M12 4h8v8M20 4 9 15"/></svg></a>
+        <div class="slop-work-pagination"><button type="button" id="slop-work-previous">Previous</button><span id="slop-work-position"></span><button type="button" id="slop-work-next">Next</button></div>
+      </div>
+    </div>
+  </dialog>
+
+  <noscript><div class="slop-noscript"><h2>Slop needs JavaScript to hang the art.</h2><p>This is a gallery of AI art about AI art. Enable JavaScript to move around the wall and read the prompts.</p><a href="index.html">Back to Ethan Willingham</a></div></noscript>
+</body>
+</html>
