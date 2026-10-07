@@ -30,7 +30,7 @@
   <div class="site-wrapper toy-page">
     <header class="toy-header">
       <div><p class="toy-kicker">A physics sandbox from Sluice</p><h1>Water, Smoke, and Slime</h1></div>
-      <nav aria-label="Site"><a href="/">Home</a><a href="#how-it-works">How it works</a><a href="/grand-motherload.html">Play Sluice</a></nav>
+      <nav aria-label="Site"><a href="/">Home</a><a href="#how-it-works">How it works</a><a href="#water-machines-progress">Progress</a><a href="/grand-motherload.html">Play Sluice</a></nav>
     </header>
     <p class="toy-intro">Grab a slime and stretch it. Drop it into the water, stir the smoke, or draw a dam.</p>
 
@@ -130,6 +130,16 @@
     <p class="toy-nowater" id="toy-nowater" role="status" hidden>Water isn’t available in this browser. You can still play with smoke and slime.</p>
 
     <main class="post-body toy-prose" id="how-it-works">
+      <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
+        <h2 id="water-machines-progress-title">Water machines: progress</h2>
+        <p><time datetime="2026-10-07">Updated October 7, 2026.</time> The greedy cup still doesn’t drain reliably in the development version. The current work is on pressure and water motion inside the pipes.</p>
+        <ul>
+          <li><strong>Passed in isolated tests:</strong> water at rest balances gravity, and moving particles in an enclosed tank pass energy and packing checks across different starting layouts. The finer grid behaves much better than the coarse one.</li>
+          <li><strong>Working now:</strong> a moving water surface and the GPU version of the new pressure step, using the existing water particles.</li>
+          <li><strong>Larger cup:</strong> a layout with more water is prepared. Its flow and the effect of dropping a slime still need testing.</li>
+          <li><strong>Still unfinished:</strong> reliable priming and drainage, trapped-air coupling, and the fountain. These isolated checks haven’t established a working machine.</li>
+        </ul>
+      </section>
       <div class="toy-experiments" aria-label="Things to try">
         <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>
         <button data-try="water"><span>Break a dam</span>Open the cascade, choose Erase, and cut through a basin.</button>
@@ -155,7 +165,7 @@
   <script src="/js/liquid-wgpu.js?v=v28.171"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.5"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.6"></script>
   <script src="/js/water-smoke-slime-ui.js?v=5.0"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
