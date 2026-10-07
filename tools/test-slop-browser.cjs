@@ -253,6 +253,12 @@ async function wallKeyboardChecks(page) {
 }
 
 async function dialogChecks(page, label, works) {
+  const allWorks = await page.evaluate(() => window.SLOP_DATA.works);
+  const activeIds = works.map(work => work.id);
+  const retired = allWorks.filter(work => work.generation?.status === 'retired');
+  const tileIds = await page.locator('.slop-card').evaluateAll(tiles => tiles.map(tile => tile.dataset.workId));
+  assert.ok(tileIds.length > 0 && tileIds.every(id => activeIds.includes(id)), 'The wall includes an inactive work.');
+  assert.equal(await page.locator('#slop-nav-count').textContent(), String(works.length), 'The gallery count includes retired works.');
   for (const name of ['about', 'index', 'ledger']) {
     const opener = page.locator(`.slop-nav [data-dialog="slop-${name}"]`);
     await opener.click();
@@ -262,9 +268,14 @@ async function dialogChecks(page, label, works) {
     await page.locator(`#slop-${name}`).waitFor({ state: 'hidden' });
     await page.waitForFunction(selector => document.querySelector(selector) === document.activeElement, `.slop-nav [data-dialog="slop-${name}"]`);
   }
-  const target = works[Math.min(1, works.length - 1)];
+  const revised = works.filter(work => work.generation?.revisions?.length).sort((a, b) => b.generation.attempts - a.generation.attempts);
+  const target = revised[0] || works[Math.min(1, works.length - 1)];
   await page.locator('#slop-index-button').click();
   const input = page.locator('#slop-search');
+  await input.fill('');
+  const indexEntries = await page.locator('.slop-index-item').evaluateAll(items => items.map(item => ({ id: item.dataset.workId, caption: item.querySelector('.slop-index-style').textContent })));
+  assert.deepEqual(indexEntries.map(item => item.id), activeIds, 'The Index must contain each active work once, with no retired works.');
+  assert.ok(indexEntries.every(item => item.caption.startsWith(`${String(item.id).padStart(3, '0')} / `)), 'Index labels renumbered the retained works.');
   await input.fill(target.title);
   assert.ok(await page.locator('.slop-index-item').count() >= 1, 'Phrase search found no artwork.');
   assert.ok((await page.locator('#slop-index-grid').innerText()).includes(target.title));
@@ -278,10 +289,13 @@ async function dialogChecks(page, label, works) {
   await settle(page);
   await visibleImagesDecoded(page);
   assert.equal(await page.locator('#slop-near-title').textContent(), target.title, 'Index jump centered the wrong work.');
+  assert.equal(await page.locator('#slop-near-number').textContent(), `WORK ${String(target.id).padStart(3, '0')} / ${works.length} ON VIEW`);
   assert.equal(await page.locator('.slop-card:focus').getAttribute('data-title'), target.title, 'Index jump did not focus the centered artwork.');
+  assert.equal(await page.locator('.slop-card:focus').getAttribute('data-work-id'), target.id, 'The focused artwork lost its stable work id.');
   await page.keyboard.press('Enter');
   await page.locator('#slop-work').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#slop-work-title').textContent(), target.title);
+  assert.equal(await page.locator('#slop-work-number').textContent(), `WORK ${String(target.id).padStart(3, '0')}`, 'The popup renumbered the retained work.');
   await page.waitForFunction(() => document.querySelector('#slop-work-image img')?.naturalWidth > 100);
   const facts = await page.locator('#slop-work-facts > div').evaluateAll(rows => rows.map(row => ({ label: row.querySelector('dt').textContent, value: row.querySelector('dd').textContent })));
   assert.deepEqual(facts.map(fact => fact.label), ['Attempts', 'Generated with'], 'Artwork metadata must contain only the attempt count and combined provider/model line.');
@@ -307,13 +321,36 @@ async function dialogChecks(page, label, works) {
   }
   const imageStat = page.locator('.slop-stat').filter({ has: page.locator('.slop-stat-label', { hasText: 'Image inference tokens' }) });
   assert.equal(await imageStat.locator('.slop-stat-value').textContent(), 'Not reported');
+  const generatedStat = page.locator('.slop-stat').filter({ has: page.locator('.slop-stat-label', { hasText: 'Unique generated works' }) });
+  const generatedCount = allWorks.filter(work => work.image && Number.isFinite(work.generation?.attempts) && work.generation.attempts > 0).length;
+  assert.equal(await generatedStat.locator('.slop-stat-value').textContent(), new Intl.NumberFormat('en-US').format(generatedCount), 'The production total lost retired images.');
+  const attemptsStat = page.locator('.slop-stat').filter({ has: page.locator('.slop-stat-label', { hasText: 'Lifetime image attempts' }) });
+  const attemptsKnown = allWorks.every(work => typeof work.generation?.attempts === 'number' && Number.isFinite(work.generation.attempts) && work.generation.attempts >= 0);
+  const expectedAttempts = attemptsKnown ? new Intl.NumberFormat('en-US').format(allWorks.reduce((sum, work) => sum + work.generation.attempts, 0)) : 'Not reported';
+  assert.equal(await attemptsStat.locator('.slop-stat-value').textContent(), expectedAttempts, 'The production total lost historical image attempts.');
+  const ledgerRows = await page.locator('#slop-ledger-rows tr').evaluateAll(rows => rows.map(row => ({ id: row.dataset.workId, clickable: !!row.querySelector('button'), cells: [...row.cells].map(cell => cell.textContent), retirementReason: row.cells[4]?.title })));
+  assert.deepEqual(ledgerRows.map(row => row.id), allWorks.map(work => work.id), 'The Ledger must retain all historical work records.');
+  for (let index = 0; index < allWorks.length; index++) {
+    const work = allWorks[index];
+    const row = ledgerRows[index];
+    assert.equal(row.clickable, activeIds.includes(work.id), `${work.id}: only active Ledger records may open an artwork.`);
+    assert.equal(row.cells[4], work.generation?.status || 'Not recorded', `${work.id}: incorrect Ledger status.`);
+    const attempts = work.generation?.attempts;
+    assert.equal(row.cells[2], typeof attempts === 'number' && Number.isFinite(attempts) && attempts >= 0 ? new Intl.NumberFormat('en-US').format(attempts) : 'Not reported', `${work.id}: incorrect lifetime attempt count.`);
+    if (work.generation?.status === 'retired') assert.equal(row.retirementReason, work.retirement?.reason, `${work.id}: the Ledger lost its retirement reason.`);
+  }
+  if (retired.length) {
+    const note = await page.locator('#slop-usage-note').textContent();
+    assert.ok(note.includes(`${works.length} works on view.`) && note.includes(`${retired.length} retired `) && note.includes('Totals include their images and attempts.'), 'The Ledger does not explain retired production totals.');
+  }
   const imageUsageCells = await page.locator('#slop-ledger-rows tr td:nth-child(4)').allTextContents();
-  assert.ok(imageUsageCells.length >= works.length && imageUsageCells.every(value => value === 'Not reported'), 'Unknown per-image tokens were changed to zero.');
+  assert.ok(imageUsageCells.length === allWorks.length && imageUsageCells.every(value => value === 'Not reported'), 'Unknown per-image tokens were changed to zero.');
   await checkLayout(page, `${label} ledger`);
   await capture(page, `${label}-ledger.png`);
   await page.keyboard.press('Escape');
   await page.locator('#slop-ledger').waitFor({ state: 'hidden' });
   pass(`${label}: native dialogs, focus return, phrase/style index jump, prompts and keyboard ledger tabs`);
+  pass(`${label}: stable work ids, ${works.length} active works and ${retired.length} retired records, lifetime production totals`);
 }
 
 async function historyChecks(page, context, label, url) {
@@ -342,7 +379,15 @@ async function historyChecks(page, context, label, url) {
     assert.equal(await direct.locator('#slop-work-title').textContent(), title);
     await direct.keyboard.press('Escape');
     await direct.locator('#slop-work').waitFor({ state: 'hidden' });
+    // Native dialog close events are queued after the open attribute disappears.
+    await direct.waitForURL(current => current.toString() !== linked);
     assert.notEqual(direct.url(), linked, 'Closing a direct link left the work URL active.');
+    const retiredId = await page.evaluate(() => window.SLOP_DATA.works.find(work => work.generation?.status === 'retired')?.id);
+    if (retiredId) {
+      await ready(direct, `${url}#work=${encodeURIComponent(retiredId)}`);
+      await noDialog(direct);
+      assert.equal(await direct.locator(`.slop-card[data-work-id="${retiredId}"]`).count(), 0, 'A retired direct link returned an image to the wall.');
+    }
   } finally { await direct.close(); }
   pass(`${label}: direct artwork URLs, browser Back/Forward and close state`);
 }

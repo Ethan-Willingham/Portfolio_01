@@ -21,7 +21,9 @@ runInNewContext(readFileSync(file, 'utf8'), context, { timeout: 1000 });
 const data = context.window.SLOP_DATA;
 let work = data.works.find(w => w.id === id);
 if (args.includes('--source')) {
-  const plan = JSON.parse(readFileSync(join(root, 'research/slop/third-group-plan.json'))).plan.find(w => w.id === id);
+  const revisionId = opt('--revision');
+  if (revisionId && !work?.generation.revisions?.some(revision => revision.id === revisionId)) throw Error('Register the owner-requested revision before importing it.');
+  const plan = revisionId ? work : JSON.parse(readFileSync(join(root, 'research/slop/third-group-plan.json'))).plan.find(w => w.id === id);
   if (!plan) throw Error('Work is not in the approved plan.');
   const request = JSON.parse(readFileSync(resolve(opt('--request'))));
   if (!work) {
@@ -33,8 +35,10 @@ if (args.includes('--source')) {
     data.works.push(work);
   }
   const number = work.generation.attempts + 1;
-  if (number > 3) throw Error('Three-attempt limit reached.');
-  if (number > 1 && !work.generation.attemptLog.at(-1)?.review) throw Error('Review the previous attempt before regenerating.');
+  const runAttempts = work.generation.attemptLog.filter(attempt => (attempt.revisionId || null) === (revisionId || null));
+  if (runAttempts.length >= 3) throw Error('Three-attempt limit reached for this production run.');
+  const previous = work.generation.attemptLog.at(-1);
+  if (number > 1 && !previous?.review && !previous?.legacy) throw Error('Review the previous attempt before regenerating.');
   if (number === 1 && request.prompt !== plan.prompt) throw Error('First prompt must be verbatim.');
   const source = resolve(opt('--source'));
   const stamp = `${id}-${String(number).padStart(2, '0')}`;
@@ -49,15 +53,18 @@ if (args.includes('--source')) {
   execFileSync('cwebp', ['-quiet', '-q', '86', source, '-o', join(root, image)]);
   const attempt = { number, prompt: request.prompt, change: request.change || 'First attempt, prompt used verbatim.', image, fallback,
     sourceSha256: createHash('sha256').update(readFileSync(source)).digest('hex'), recordedAt: new Date().toISOString(), review: null, decision: 'pending' };
+  if (revisionId) attempt.revisionId = revisionId;
   if (request.referenceAttempt !== undefined) {
     if (!Number.isInteger(request.referenceAttempt) || request.referenceAttempt < 1 || request.referenceAttempt >= number) throw Error('Reference must identify an earlier attempt.');
     attempt.referenceAttempt = request.referenceAttempt;
   }
   work.generation.attemptLog.push(attempt);
   Object.assign(work.generation, { attempts: number, status: 'reviewing', sourceSha256: attempt.sourceSha256, recordedAt: attempt.recordedAt, selectedAttempt: number });
-  Object.assign(work, { width, height, prompt: request.prompt, image: `assets/slop/${id}.webp`, fallback: `assets/slop/${id}.jpg` });
-  copyFileSync(join(root, image), join(root, work.image));
-  copyFileSync(join(root, fallback), join(root, work.fallback));
+  Object.assign(work, { width, height, prompt: request.prompt, image: revisionId ? image : `assets/slop/${id}.webp`, fallback: revisionId ? fallback : `assets/slop/${id}.jpg` });
+  if (!revisionId) {
+    copyFileSync(join(root, image), join(root, work.image));
+    copyFileSync(join(root, fallback), join(root, work.fallback));
+  }
 } else if (args.includes('--review')) {
   if (!work) throw Error('Import the attempt first.');
   const review = JSON.parse(readFileSync(resolve(opt('--review'))));

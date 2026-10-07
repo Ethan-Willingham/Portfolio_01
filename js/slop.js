@@ -129,6 +129,7 @@
     button.tabIndex = -1;
     button.style.transform = `translate3d(${column * PITCH}px, ${row * PITCH + columnOffset(column)}px, 0)`;
     button.dataset.index = String(index);
+    button.dataset.workId = String(work.id);
     button.dataset.title = titleOf(work);
     button.setAttribute('aria-label', `${titleOf(work)}. ${styleOf(work)}. Open artwork.`);
     const eager = !state.highPriorityLoaded && column === 0 && row === 0;
@@ -136,7 +137,7 @@
     button.append(pictureFor(work, { eager, decorative: true }));
     const caption = textElement('span', '', 'slop-card-caption');
     caption.setAttribute('aria-hidden', 'true');
-    caption.append(textElement('span', titleOf(work)), textElement('span', pad(index + 1)));
+    caption.append(textElement('span', titleOf(work)), textElement('span', pad(work.id)));
     button.append(caption);
     return button;
   }
@@ -204,7 +205,7 @@
       if (tile) tile.tabIndex = 0;
       state.nearestKey = key;
       const index = indexAt(nearest.column, nearest.row);
-      $('slop-near-number').textContent = `${pad(index + 1)} / ${pad(works.length)} UNIQUE WORKS`;
+      $('slop-near-number').textContent = `WORK ${pad(works[index].id)} / ${works.length} ON VIEW`;
       $('slop-near-title').textContent = titleOf(works[index]);
     }
   }
@@ -490,7 +491,7 @@
     const generation = work.generation || {};
     const style = styleById.get(work.styleId);
     $('slop-work-image').replaceChildren(pictureFor(work, { eager: true }));
-    $('slop-work-number').textContent = `WORK ${pad(index + 1)} / ${pad(works.length)}`;
+    $('slop-work-number').textContent = `WORK ${pad(work.id)}`;
     $('slop-work-title').textContent = titleOf(work);
     $('slop-work-style').textContent = styleOf(work);
     $('slop-work-description').textContent = style?.description || '';
@@ -580,8 +581,9 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'slop-index-item';
+      button.dataset.workId = String(work.id);
       button.setAttribute('aria-label', `Find ${titleOf(work)} on the wall. ${styleOf(work)}.`);
-      button.append(pictureFor(work, { decorative: true }), textElement('span', titleOf(work), 'slop-index-title'), textElement('span', `${pad(index + 1)} / ${styleOf(work)}`, 'slop-index-style'));
+      button.append(pictureFor(work, { decorative: true }), textElement('span', titleOf(work), 'slop-index-title'), textElement('span', `${pad(work.id)} / ${styleOf(work)}`, 'slop-index-style'));
       button.addEventListener('click', () => jumpToWork(index));
       fragment.append(button);
     });
@@ -621,22 +623,26 @@
   }
 
   function buildLedger() {
+    const generated = allWorks.filter((work) => work.image && knownNumber(work.generation?.attempts) && work.generation.attempts > 0);
+    const retired = allWorks.filter((work) => work.generation?.status === 'retired');
     const attemptsKnown = allWorks.length > 0 && allWorks.every((work) => knownNumber(work.generation?.attempts));
     const attempts = attemptsKnown ? allWorks.reduce((total, work) => total + work.generation.attempts, 0) : null;
     $('slop-stats').replaceChildren(
-      stat(count(works.length), 'Unique completed works'),
+      stat(count(generated.length), 'Unique generated works'),
       stat(count(production.projectTokens), 'Tracked planning / code tokens'),
       stat(count(production.imageTokens), 'Image inference tokens'),
-      stat(count(attempts), 'Recorded image attempts'),
+      stat(count(attempts), 'Lifetime image attempts'),
       stat(knownNumber(production.imageCostUsd) ? price.format(production.imageCostUsd) : 'Not reported', 'Image generation cost'),
       stat(count(phrases.length), 'Phrases in the library')
     );
     const defaultNote = 'Planning and code tokens exclude image inference. The image tool did not report image token usage or cost. Unknown values are not zero.';
-    $('slop-usage-note').textContent = production.usageNote || defaultNote;
+    const retirementNote = retired.length ? `${count(works.length)} works on view. ${count(retired.length)} retired ${retired.length === 1 ? 'work remains' : 'works remain'} in this production record. Totals include their images and attempts. ` : '';
+    $('slop-usage-note').textContent = retirementNote + (production.usageNote || defaultNote);
     buildAccountMeter();
     const rows = document.createDocumentFragment();
     allWorks.forEach((work) => {
       const row = document.createElement('tr');
+      row.dataset.workId = String(work.id);
       const name = document.createElement('td');
       const index = works.findIndex((candidate) => candidate.id === work.id);
       if (index >= 0) {
@@ -646,7 +652,12 @@
         name.append(button);
       } else name.textContent = titleOf(work);
       const generation = work.generation || {};
-      row.append(name, textElement('td', generation.model || 'Not reported'), textElement('td', count(generation.attempts)), textElement('td', count(imageTokens(generation.usage))), textElement('td', generation.status || 'Not recorded'));
+      const status = textElement('td', generation.status || 'Not recorded');
+      if (generation.status === 'retired' && work.retirement?.reason) {
+        status.title = work.retirement.reason;
+        status.setAttribute('aria-label', `Retired. ${work.retirement.reason}`);
+      }
+      row.append(name, textElement('td', generation.model || 'Not reported'), textElement('td', count(generation.attempts)), textElement('td', count(imageTokens(generation.usage))), status);
       rows.append(row);
     });
     if (!allWorks.length) {

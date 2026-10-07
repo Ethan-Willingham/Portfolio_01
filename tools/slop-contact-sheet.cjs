@@ -14,6 +14,7 @@ const COLUMNS = 5;
 const GAP = 20;
 const PADDING = 32;
 const pad = value => String(value).padStart(3, '0');
+const catalogueImages = new Map();
 const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
 function usage() {
@@ -27,6 +28,7 @@ Options:
   --start N       First work on a contact sheet (default 025).
   --end N         Last work on a contact sheet (default 044; at most 50 works).
   --single N      Save an image-only 336 x 336 preview, plus labelled HTML.
+  --ids N,N      Specific works in the supplied order, including nonconsecutive IDs.
   --prompts PATH  Prompt pack used for titles not yet in slop-data.js.
   --title TEXT    Explicit title for --single when no title is recorded yet.
   --help         Show this help.
@@ -43,7 +45,7 @@ function parseArgs() {
   for (let index = 2; index < process.argv.length; index += 1) {
     const flag = process.argv[index];
     if (flag === '--help' || flag === '-h') { usage(); return null; }
-    if (!['--start', '--end', '--single', '--prompts', '--title'].includes(flag)) throw new Error(`Unknown option: ${flag}`);
+    if (!['--start', '--end', '--single', '--ids', '--prompts', '--title'].includes(flag)) throw new Error(`Unknown option: ${flag}`);
     const value = process.argv[++index];
     if (value === undefined || value.startsWith('--')) throw new Error(`${flag} requires a value.`);
     const key = flag.slice(2);
@@ -51,9 +53,14 @@ function parseArgs() {
     if (['start', 'end', 'single'].includes(key)) {
       if (!/^\d{1,3}$/.test(value) || Number(value) < 1) throw new Error(`${flag} requires a work number from 001 to 999.`);
       options[key] = Number(value);
+    } else if (key === 'ids') {
+      if (!/^\d{1,3}(,\d{1,3})*$/.test(value)) throw new Error('--ids needs comma-separated work numbers.');
+      options.ids = value.split(',').map(Number);
+      if (options.ids.length > 50 || options.ids.some(id => id < 1) || new Set(options.ids).size !== options.ids.length) throw new Error('--ids needs 1 to 50 unique work numbers.');
     } else options[key] = value;
   }
   if (options.single !== null && (supplied.has('start') || supplied.has('end'))) throw new Error('Use either --single or --start/--end.');
+  if (options.ids && (supplied.has('start') || supplied.has('end') || supplied.has('single'))) throw new Error('Use --ids without a range or --single.');
   if (options.title && options.single === null) throw new Error('--title applies only to --single.');
   if (options.single === null && (options.end < options.start || options.end - options.start >= 50)) throw new Error('A contact sheet must request 1 to 50 consecutive works.');
   return options;
@@ -78,6 +85,7 @@ function readTitles(options) {
   const catalogue = JSON.parse(assignment[1]);
   const phrases = new Map((catalogue.phrases || []).map(phrase => [phrase.id, phrase.text]));
   for (const work of catalogue.works || []) {
+    if (work.image) catalogueImages.set(work.id, work.image);
     const title = work.title || phrases.get(work.phraseId);
     if (title) titles.set(String(work.id).padStart(3, '0'), title);
   }
@@ -90,9 +98,9 @@ function selectWorks(options, titles) {
   const end = options.single ?? options.end;
   const works = [];
   const missing = [];
-  for (let number = start; number <= end; number += 1) {
+  for (const number of options.ids || Array.from({ length: end - start + 1 }, (_, index) => start + index)) {
     const id = pad(number);
-    const image = ['jpg', 'webp', 'png'].map(extension => `assets/slop/${id}.${extension}`).find(relative => fs.existsSync(path.join(root, relative)));
+    const image = [catalogueImages.get(id), ...['jpg', 'webp', 'png'].map(extension => `assets/slop/${id}.${extension}`)].find(relative => relative && fs.existsSync(path.join(root, relative)));
     if (!image) { missing.push(id); continue; }
     const title = titles.get(id);
     if (!title) throw new Error(`No title is recorded for ${id}. Add --prompts PATH, or use --single ${id} --title TEXT.`);
@@ -100,12 +108,12 @@ function selectWorks(options, titles) {
   }
   if (!works.length) throw new Error(`No artwork files exist for the requested range ${pad(start)} to ${pad(end)}.`);
   if (options.single !== null && missing.length) throw new Error(`Artwork ${pad(options.single)} does not exist yet.`);
-  return { works, missing, start, end };
+  return { works, missing, start, end, custom: Boolean(options.ids) };
 }
 
 function makeHtml(selection, single) {
   const { works, missing, start, end } = selection;
-  const title = single ? `Slop / work ${pad(start)}` : `Slop / works ${pad(start)} to ${pad(end)}`;
+  const title = single ? `Slop / work ${pad(start)}` : selection.custom ? 'Slop / selected works' : `Slop / works ${pad(start)} to ${pad(end)}`;
   const columns = single ? 1 : COLUMNS;
   const width = columns * SIDE + (columns - 1) * GAP + PADDING * 2;
   const cards = works.map(work => `<figure class="review-card" data-work="${work.id}">
@@ -215,7 +223,7 @@ async function render(options, selection, outputFile, width) {
   const { width, html } = makeHtml(selection, options.single !== null);
   const outputDirectory = path.join(root, 'research/slop/review');
   fs.mkdirSync(outputDirectory, { recursive: true });
-  const baseName = options.single !== null ? `work-${pad(options.single)}-at-336` : `contact-sheet-${pad(selection.start)}-${pad(selection.end)}`;
+  const baseName = options.single !== null ? `work-${pad(options.single)}-at-336` : options.ids ? `contact-sheet-${options.ids.map(pad).join('-')}` : `contact-sheet-${pad(selection.start)}-${pad(selection.end)}`;
   const htmlFile = path.join(outputDirectory, `${baseName}.html`);
   fs.writeFileSync(htmlFile, html);
   await render(options, selection, htmlFile, width);

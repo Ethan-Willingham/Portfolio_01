@@ -21,6 +21,8 @@ The second group adds ten phrases and ten work plans, bringing the totals to
 The revised third group adds eleven more phrases, works and art directions:
 141 phrases, 45 generated works and 59 directions. All eleven new works passed
 the six checks, and the owner approved publication on October 7, 2026.
+The owner's later curation keeps 25 works on view and retires 20. The catalogue
+retains all 45 lifetime generated work IDs and 55 generation attempts.
 The phrase bank includes the owner's four starting lines: "Slop", "A step below
 average", "Uncanny" and "Looks right, but wrong". The remaining lines range from
 short complaints to descriptions of familiar generated-image errors. They
@@ -70,7 +72,7 @@ process. Their placement should change with that process.
 The prompts request independent square images. Paintings and prints fill the
 image; a sculpture can include the surface, light and shadow needed to show its
 form. Every prompt includes the chosen phrase verbatim and describes how its
-letters are made. The first 24 prompts range from 132 to 143 words.
+letters are made. The original first 24 prompts range from 132 to 143 words.
 
 ## The second group
 
@@ -101,7 +103,7 @@ becomes "Something for everyone." on a layered notice board, and work 045 adds
 "Our signature dish." in a food court with five stalls. The other nine retain
 their original order. This production run contains eleven new works.
 
-| Work | Phrase | Direction | Attempts |
+| Work | Phrase | Direction | Original run attempts |
 |---|---|---|---|
 | 035 | Photographer: none | Archive record | 2 |
 | 036 | By continuing, you agree | Canvas verso | 2 |
@@ -118,6 +120,8 @@ their original order. This production run contains eleven new works.
 New phrases take p131 through p141 in work order. Add each new direction when
 its work is recorded. The work records hold the actual attempts and decisions;
 passing these checks does not constitute the owner's approval to publish.
+The table records the original third-group run. Later revisions add to each
+work's lifetime attempt count without changing this historical record.
 
 The run used 18 attempts. Works 035, 036, 042 and 044 needed larger or darker
 lettering. Work 037 needed visible oil brushwork throughout the scene, and 041
@@ -164,29 +168,76 @@ attempt's `generation.attemptLog` entry.
    the group becomes visually uniform.
 
 On failure, change only the sentence responsible for the failed check. Record
-what changed and why, then regenerate. Stop at three attempts per work and
-record a remaining failure honestly. Retain every attempt's prompt, image,
-source hash, timestamp, six-check review and decision, including rejected
-attempts. Keep `originalPrompt` and identify the chosen `selectedAttempt`.
+what changed and why, then regenerate. Stop at three attempts per work within
+a production run or registered revision, and record a remaining failure
+honestly. Retain every attempt's prompt, source hash, timestamp, six-check review
+and decision, including rejected attempts. Retain its images unless the owner
+requests their deletion, then preserve the metadata and record the deletion.
+Keep `originalPrompt` and identify the chosen `selectedAttempt`.
 The work's current `prompt` must match its selected image.
 
-### Owner review before publication
+### Original publication approval
 
 The owner reviewed the contact sheet and approved publication of all 45 works
 on October 7, 2026, together with the homepage thumbnail size fix. Passing the
 six checks alone did not authorize publication. Final attempt counts and
 individual review notes are recorded in the work records.
 
-The owner requested a contact sheet of 025 to 044. Produce that exact range,
-then also show 025 to 045 so the added food-court work is included in the
-approval view. Use the actual image files, with 336-pixel squares and labels
-outside the art. `tools/slop-contact-sheet.cjs --end 044` and `--end 045` make
+The reviewed contact sheets covered 025 to 044 and 025 to 045, including the
+added food-court work. They used the actual image files, with 336-pixel squares
+and labels outside the art. `tools/slop-contact-sheet.cjs --end 044` and `--end 045` make
 the sheets; `--single 035` makes a 336-pixel word-check preview. While a title
 has not entered the catalogue, supply `--prompts` with the prompt pack path
 or `--title` for a single work.
 
 The owner's explicit yes was received before committing, changing the `?v=`
 values or pushing changes from this run.
+
+## Owner curation, October 7, 2026
+
+The picker review first removed 17 works from view and requested replacement
+images for 006, 011 and 037. The owner then rejected all three remakes and
+directed deletion of those images and retirement of those three works too.
+The final 20 retired IDs are **002, 006, 007, 008, 010, 011, 014, 015, 018,
+021, 023, 027, 028, 029, 031, 033, 036, 037, 039 and 042**.
+
+This leaves **25 works on view**, **45 lifetime generated work IDs** and
+**55 lifetime attempts**: the earlier 52 plus three new attempts. Retired works
+keep their catalogue entries and production history, with
+`generation.status: "retired"` and a retirement record. Keep the surviving IDs
+unchanged.
+
+Revision **`owner-review-2026-10-07`** generated one replacement for each of
+these works. All three passed the recorded six checks and were subsequently
+rejected by the owner. The revision is finished, with no further retries.
+The contact-sheet approval above applied to the original third group; the
+owner's latest direct request authorizes these deletions and retirements.
+
+| Work | Phrase | Attempts before revision | Final lifetime attempts |
+|---|---|---|---|
+| 006 | Almost a hand | 1 | 2 |
+| 011 | Uncanny | 1 | 2 |
+| 037 | Even the copies had painters | 2 | 3 |
+
+The three rejected replacement records retain their prompts, source hashes,
+timestamps and six-check reviews. Their `image` and `fallback` fields are null,
+with `deletedAt`, `deletionReason` and `ownerDecision: "rejected"` recording the
+owner's decision. The replacement image files are deleted and excluded from
+publication. Work-level selections for 006, 011 and 037 point back to their
+historical originals, while all three works remain retired. Earlier assets and
+attempt records stay intact.
+
+`tools/slop-record-attempt.mjs` imports a replacement under a registered
+`generation.revisions` entry when passed `--revision` alongside `--id`,
+`--source` and `--request`. Each new attempt records its `revisionId`. The limit
+is three new attempts per work per revision, with a review before each further
+attempt. Attempt numbers and `generation.attempts` remain cumulative across
+the work's lifetime. This completed revision used one new attempt per work.
+
+The original attempts for 006 and 011 predate the six-check records. Their
+preserved entries use `legacy: true`, `review: null` and a note explaining that
+history. Leave those missing reviews unknown. The rejected remakes retain the
+full six-check reviews recorded when they were generated.
 
 ## Generation and records
 
@@ -244,6 +295,15 @@ the reading was **78% used** at **2026-10-07T15:59:03.972Z**. The change was
 **8 percentage points** within the same 10,080-minute account window. This
 includes any other account activity during the interval and cannot be assigned
 to individual images or converted into image tokens.
+
+The owner-review revision starts from **98% used**, observed at
+**2026-10-07T18:18:53.000Z**, before the first replacement image. After the three
+new attempts, the reading was **2% used** at **2026-10-07T18:27:40.000Z**. Both
+readings have a 10,080-minute window, but the meter reported a new quota window
+during the run: `resetsAt` changed from `1791950199` to `1792001978`. Record both
+observations and leave `deltaPercentagePoints` null. Percentages from different
+quota windows cannot be subtracted to measure this run. Retain the third-group
+interval in `accountUsageHistory`.
 
 Local session records can provide a separate count of recorded planning and
 coding tokens. Keep the time range, included sessions, model labels and any

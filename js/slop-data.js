@@ -963,7 +963,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -971,6 +971,10 @@ window.SLOP_DATA = {
         "sourceSha256": "e9de0e675cb1f72bcbfb3dd794590465308b59a09579cd0e95bd87a834716fbc",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool.",
         "recordedAt": "2026-10-07T04:11:32.614Z"
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.131Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1059,14 +1063,85 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
-        "attempts": 1,
+        "status": "retired",
+        "attempts": 2,
         "usage": null,
         "costUsd": null,
         "createdAt": null,
         "sourceSha256": "fed7464dcd954060f01360b63050db8f627117d8b47d138065c0067c22df6b82",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool.",
-        "recordedAt": "2026-10-07T04:11:33.997Z"
+        "recordedAt": "2026-10-07T04:11:33.997Z",
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Generate a square, close studio photograph of a strange handmade ceramic object. It is a heavy upright hand modeled from pale pink stoneware, with five fingers that bend, divide and fuse in subtly impossible ways. The form should be graceful at first glance and harder to explain the longer it is studied. Across the broad palm, the exact phrase \"Almost a hand\" has been scratched into wet clay with a blunt tool before firing, leaving dark glaze pooled in the letters. A satin apricot glaze gathers into glossy pools around the knuckles and exposes dry clay along several cracks. Set the sculpture on a flat deep blue surface against a matching seamless background, with a hard side light and one short shadow. Fill most of the square with the object; keep every mark materially plausible.",
+            "change": "Original image, generated before per-attempt six-check records.",
+            "image": "assets/slop/006.webp",
+            "fallback": "assets/slop/006.jpg",
+            "sourceSha256": "fed7464dcd954060f01360b63050db8f627117d8b47d138065c0067c22df6b82",
+            "recordedAt": "2026-10-07T04:11:33.997Z",
+            "legacy": true,
+            "review": null,
+            "decision": "superseded",
+            "note": "Published before per-attempt six-check records. The owner rejected this image in the picker review on October 7, 2026."
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square close photograph of a ceramic relief filling most of the frame. A thick, irregular slab of warm ivory stoneware contains the deep negative impression of one ordinary relaxed right hand, with five naturally proportioned fingers, palm creases and a wrist. The cavity is completely empty: the hand exists only as the space it left. A thin cobalt glaze pools in its deepest recesses while the surrounding clay remains dry and chalky. Incise the exact words \"Almost a hand\" into the broad lower edge in simple letters large enough to read at 336 pixels. Hard light from the upper left makes the recess briefly seem raised. Set it against matte dark plum, with a short shadow, visible firing cracks and no other lettering.",
+            "change": "Owner-requested replacement: replace branching fingers with a five-finger hand impression in cobalt-glazed stoneware. The absence of the hand carries the idea; retain the phrase as an incision in the clay.",
+            "image": null,
+            "fallback": null,
+            "sourceSha256": "ea2f833fb2cb19378b9c6a0c91456f60c3db3e8e15c1a927872fc7d8b75c1d45",
+            "recordedAt": "2026-10-07T18:24:21.270Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "Almost a hand is spelled exactly and readable in the 336-pixel preview; the letters are cut into the clay."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The empty palm and finger cavities remain legible without the inscription; the object records a hand without containing it."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Dry stoneware, firing cracks, recessed incision and pooled cobalt glaze are visible at gallery size."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "Ordinary five-finger anatomy replaces the rejected branching-finger gag. No extra explanatory object or joke."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No likeness, signature, brand, watermark or stray lettering."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Viewed beside 025 to 034 on a 336-pixel contact sheet. The plum ground, single cobalt impression and material relief are distinct from their mechanisms and layouts."
+                }
+              },
+              "reviewedAt": "2026-10-07T18:25:04.408Z"
+            },
+            "decision": "accepted",
+            "revisionId": "owner-review-2026-10-07",
+            "deletedAt": "2026-10-07T18:30:29.661Z",
+            "deletionReason": "Owner rejected the remake and requested deletion.",
+            "ownerDecision": "rejected"
+          }
+        ],
+        "revisions": [
+          {
+            "id": "owner-review-2026-10-07",
+            "requestedAt": "2026-10-07T18:21:37.826Z",
+            "reason": "Owner rejected the previous image and requested a retry."
+          }
+        ],
+        "selectedAttempt": 1
+      },
+      "originalPrompt": "Use case: stylized-concept. Generate a square, close studio photograph of a strange handmade ceramic object. It is a heavy upright hand modeled from pale pink stoneware, with five fingers that bend, divide and fuse in subtly impossible ways. The form should be graceful at first glance and harder to explain the longer it is studied. Across the broad palm, the exact phrase \"Almost a hand\" has been scratched into wet clay with a blunt tool before firing, leaving dark glaze pooled in the letters. A satin apricot glaze gathers into glossy pools around the knuckles and exposes dry clay along several cracks. Set the sculpture on a flat deep blue surface against a matching seamless background, with a hard side light and one short shadow. Fill most of the square with the object; keep every mark materially plausible.",
+      "retirement": {
+        "retiredAt": "2026-10-07T18:30:29.662Z",
+        "reason": "Owner rejected the original and its remake, and requested removal without further retries."
       }
     },
     {
@@ -1083,7 +1158,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1091,6 +1166,10 @@ window.SLOP_DATA = {
         "sourceSha256": "aefb548030254213b5187ada1b1f7113583a3c7e777ed5c36a69f97ec56f1b60",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool.",
         "recordedAt": "2026-10-07T04:13:13.140Z"
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1107,7 +1186,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1115,6 +1194,10 @@ window.SLOP_DATA = {
         "sourceSha256": "756cb974906c4b55f5468e1b15e1baea4301023e4baf99cd530cdd7a64ad399d",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool.",
         "recordedAt": "2026-10-07T04:13:44.758Z"
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1155,7 +1238,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1163,6 +1246,10 @@ window.SLOP_DATA = {
         "sourceSha256": "e490714893cab28ffa30d32b14331b1323891e50a22c30881a556f300c96424b",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool.",
         "recordedAt": "2026-10-07T04:14:41.413Z"
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1179,14 +1266,85 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
-        "attempts": 1,
+        "status": "retired",
+        "attempts": 2,
         "usage": null,
         "costUsd": null,
         "createdAt": null,
         "recordedAt": "2026-10-07T04:15:22.052Z",
         "sourceSha256": "03e336ff38bb67e40a75215172d52391f207d46c1f870e6f129d0093e2a629b5",
-        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+        "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool.",
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create one square op art painting built from very fine alternating black and warm cream lines. The lines form a shallow set of concentric waves that pull toward a point slightly left of center. Make the exact word \"Uncanny\" large enough to occupy the middle third of the square. Its letterforms are not placed over the pattern: the lines bend, compress and reverse phase to create each letter as an apparent bulge or depression in the painted plane. An almost invisible shift of one stripe makes part of the word seem to face in the wrong direction. Preserve the exact capitalization and keep all seven letters readable. Tight, controlled geometry should create a physical looking instability without gradients or simulated chrome. The whole composition continues to the edges as a single meticulously painted surface.",
+            "change": "Original image, generated before per-attempt six-check records.",
+            "image": "assets/slop/011.webp",
+            "fallback": "assets/slop/011.jpg",
+            "sourceSha256": "03e336ff38bb67e40a75215172d52391f207d46c1f870e6f129d0093e2a629b5",
+            "recordedAt": "2026-10-07T04:15:22.052Z",
+            "legacy": true,
+            "review": null,
+            "decision": "superseded",
+            "note": "Published before per-attempt six-check records. The owner rejected this image in the picker review on October 7, 2026."
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square op-art painting in flat deep ultramarine and warm ivory. Broad repeating chevrons form what appears to be a folded screen, but alternate folds resolve into incompatible depths, so the same surface seems to project and recede. Keep the geometry sharp, controlled and large enough to survive reduction to 336 pixels. Across the central third, integrate the exact word \"Uncanny\" in simple upright letterforms made solely by reversing the two colors inside the continuing chevron pattern. The pattern passes through every letter without outlines or a separate text layer. All seven letters must remain immediately readable. Slight paint buildup at the crisp edges establishes a physical painted surface. Fill the square edge to edge, with no other words, faces or surrounding scene.",
+            "change": "Owner-requested replacement: replace concentric black-and-cream waves with broad ultramarine-and-ivory folds, with the word formed by reversing the same continuing pattern.",
+            "image": null,
+            "fallback": null,
+            "sourceSha256": "bdc9337e3c0e6dc99d6aeed84de11dc6545776eada2ed1dde0dd17a1ab6f81be",
+            "recordedAt": "2026-10-07T18:25:49.888Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "All seven letters, including the capital U, read correctly at 336 pixels."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The chevrons suggest ridges and recesses even away from the word; color reversal makes the lettering shift between those planes."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Flat painted geometry and slight brush texture establish op-art painting without chrome, gradients or digital glow."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "One optical device and one word; no added mascot, slogan or explanatory gag."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No signature, recognizable likeness, brand, watermark or other lettering."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Compared beside 025 to 034 and the new 006 at 336 pixels. Broad blue geometry adds a distinct rhythm; despite some blue in 006, the material, silhouette and composition differ strongly."
+                }
+              },
+              "reviewedAt": "2026-10-07T18:26:31.617Z"
+            },
+            "decision": "accepted",
+            "revisionId": "owner-review-2026-10-07",
+            "deletedAt": "2026-10-07T18:30:29.662Z",
+            "deletionReason": "Owner rejected the remake and requested deletion.",
+            "ownerDecision": "rejected"
+          }
+        ],
+        "revisions": [
+          {
+            "id": "owner-review-2026-10-07",
+            "requestedAt": "2026-10-07T18:21:37.827Z",
+            "reason": "Owner rejected the previous image and requested a retry."
+          }
+        ],
+        "selectedAttempt": 1
+      },
+      "originalPrompt": "Use case: stylized-concept. Create one square op art painting built from very fine alternating black and warm cream lines. The lines form a shallow set of concentric waves that pull toward a point slightly left of center. Make the exact word \"Uncanny\" large enough to occupy the middle third of the square. Its letterforms are not placed over the pattern: the lines bend, compress and reverse phase to create each letter as an apparent bulge or depression in the painted plane. An almost invisible shift of one stripe makes part of the word seem to face in the wrong direction. Preserve the exact capitalization and keep all seven letters readable. Tight, controlled geometry should create a physical looking instability without gradients or simulated chrome. The whole composition continues to the edges as a single meticulously painted surface.",
+      "retirement": {
+        "retiredAt": "2026-10-07T18:30:29.662Z",
+        "reason": "Owner rejected the original and its remake, and requested removal without further retries."
       }
     },
     {
@@ -1251,7 +1409,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1259,6 +1417,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T04:19:27.539Z",
         "sourceSha256": "0a0e6cb21996d3b4d1ada090887f774c06a3b867c1b3a0484d8c55bb2d825bab",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1275,7 +1437,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1283,6 +1445,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T04:19:47.868Z",
         "sourceSha256": "85f04632553cffbd44d4313e13423280e380f4d9229827cc0c484013e62a4427",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1347,7 +1513,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1355,6 +1521,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T04:21:08.080Z",
         "sourceSha256": "df7fe766b77eb73ae6c451333374e69f037803ea5e8eebcd6fe02d910511148b",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1419,7 +1589,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1427,6 +1597,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T04:22:24.931Z",
         "sourceSha256": "1f82d2f6d757074084e3120a8fb10d2a976510505065885f14f20bca1e356f11",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1467,7 +1641,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1475,6 +1649,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T04:23:21.909Z",
         "sourceSha256": "962346d62aea1860527c1b77c5d670e389dceb85746905f2c429dc03983ddaa1",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1563,7 +1741,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1571,6 +1749,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T12:26:06.910Z",
         "sourceSha256": "2e85b4ab23796ca8661a619b31a15f7f5fc41fadcfaa24c18247d1e4fc67a775",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1587,7 +1769,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1595,6 +1777,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T12:26:35.305Z",
         "sourceSha256": "d4b5464a969cbcbbcdfedc7d61093c4dfd3ff1e7e64c6e04359672bcf7c14846",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1611,7 +1797,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1619,6 +1805,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T12:27:07.416Z",
         "sourceSha256": "06ff8dc3e772134f0d7e385250c45e90b8c94b6f15f9965e713f58e71ffdbe53",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1659,7 +1849,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1667,6 +1857,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T12:28:48.233Z",
         "sourceSha256": "6e5faa20464e98d433680a72adcf1d6a70b0bc523d6d7587843f645aa791731b",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1707,7 +1901,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -1715,6 +1909,10 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T12:29:42.208Z",
         "sourceSha256": "595e6ecd05e782e698050b63486c521b15ef5048e9fcb67553d1d59a7797b030",
         "note": "Generated separately from the saved prompt. Model name, inference tokens and price are not reported by the tool."
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1860,7 +2058,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 2,
         "usage": null,
         "costUsd": null,
@@ -1947,6 +2145,10 @@ window.SLOP_DATA = {
         "sourceSha256": "f89c9ec08f661b282629b6e3ebb4f162cfb2a3dccb990e00136fa12bc93a5a5e",
         "recordedAt": "2026-10-07T15:25:28.662Z",
         "selectedAttempt": 2
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -1964,8 +2166,8 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
-        "attempts": 2,
+        "status": "retired",
+        "attempts": 3,
         "usage": null,
         "costUsd": null,
         "attemptLog": [
@@ -2046,11 +2248,65 @@ window.SLOP_DATA = {
               "reviewedAt": "2026-10-07T15:29:53.747Z"
             },
             "decision": "accepted"
+          },
+          {
+            "number": 3,
+            "prompt": "Use case: stylized-concept. Create a square oil painting of an ordinary copy-painting workshop using large interlocking color planes and economical, clearly visible brushstrokes. Frame a working painter from the side, close enough to see the brush touching a horizon. Six small seascapes line the long table in different stages of completion; their matching orange suns, blue seas and repeated horizon make the copying clear. Cool daylight falls across pale plaster, a blue workbench and ochre wood. Faces, clothes and objects are built from paint, with simplified edges and no photographic texture. Paint the exact words \"Even the copies had painters\" directly into the dark foreground in two broad, legible lines as the artwork's own title inscription, using the same visible brushwork. The letters should be readable at 336 pixels. No sign within the depicted room, brands or other readable words.",
+            "change": "Owner-requested replacement: simplify the workshop into broad painted shapes, show six seascapes at different stages, and replace the implausible cardboard slogan with a brush-painted title inscription in the artwork's foreground.",
+            "image": null,
+            "fallback": null,
+            "sourceSha256": "211a118667c2eec0137ea5045138ef7900a046c47f8cf4f7a10182f56bc38b84",
+            "recordedAt": "2026-10-07T18:27:41.138Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact phrase reads clearly across two painted lines in the 336-pixel preview."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "With the lower inscription covered, the brush, matching seascapes and their different completion stages still show people making copies."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Broad broken strokes build the painter, room, paintings and title; the scene reads as oil paint at gallery size."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The earlier implausible cardboard slogan is gone. The phrase is an explicit painted title; workers are shown in ordinary concentration without mockery or martyr staging."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No recognizable person, signature, brand, watermark or stray lettering. The small plaster study is a generic classical head."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Viewed at 336 pixels beside 025 to 034 and both new replacements. The populated room and repeated orange suns differ from the flat geometry of 011 and single clay object of006, despite shared cool blues."
+                }
+              },
+              "reviewedAt": "2026-10-07T18:28:41.808Z"
+            },
+            "decision": "accepted",
+            "revisionId": "owner-review-2026-10-07",
+            "deletedAt": "2026-10-07T18:30:29.662Z",
+            "deletionReason": "Owner rejected the remake and requested deletion.",
+            "ownerDecision": "rejected"
           }
         ],
         "sourceSha256": "bb89f72d1780db3f26089f10b9c60c0f569c4a07ed8f1f367b657e48bc201d60",
         "recordedAt": "2026-10-07T15:28:51.916Z",
-        "selectedAttempt": 2
+        "selectedAttempt": 2,
+        "revisions": [
+          {
+            "id": "owner-review-2026-10-07",
+            "requestedAt": "2026-10-07T18:21:37.827Z",
+            "reason": "Owner rejected the previous image and requested a retry."
+          }
+        ]
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:30:29.662Z",
+        "reason": "Owner rejected the original and its remake, and requested removal without further retries."
       }
     },
     {
@@ -2133,7 +2389,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -2181,6 +2437,10 @@ window.SLOP_DATA = {
         "sourceSha256": "768a727f20696a2bd30b1f3660d79184ce75c8fe2ec5139f23b1aa19ba572d8c",
         "recordedAt": "2026-10-07T15:32:41.932Z",
         "selectedAttempt": 1
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -2367,7 +2627,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 3,
         "usage": null,
         "costUsd": null,
@@ -2494,6 +2754,10 @@ window.SLOP_DATA = {
         "sourceSha256": "024e5c3a3f05064d4a89f3e62e742847a6fb931ce272388aa6358515d71058cc",
         "recordedAt": "2026-10-07T15:50:15.257Z",
         "selectedAttempt": 3
+      },
+      "retirement": {
+        "retiredAt": "2026-10-07T18:19:13.132Z",
+        "reason": "Removed at the owner's request after reviewing the image picker."
       }
     },
     {
@@ -2789,22 +3053,22 @@ window.SLOP_DATA = {
     "imageCostUsd": null,
     "usageNote": "Recorded planning and coding tokens through this snapshot, including stopped attempts and child agents. Input includes cached context; output includes reasoning. Image inference is unreported, so this is not the complete production total. Unfinished responses appear in a later snapshot.",
     "accountUsage": {
-      "label": "Third group, 11 works",
+      "label": "Owner review, retries of 006, 011 and 037",
       "before": {
-        "usedPercent": 70,
+        "usedPercent": 98,
         "windowDurationMins": 10080,
         "resetsAt": 1791950199,
-        "observedAt": "2026-10-07T15:13:00.913Z"
+        "observedAt": "2026-10-07T18:18:53.000Z"
       },
       "after": {
-        "usedPercent": 78,
+        "usedPercent": 2,
         "windowDurationMins": 10080,
-        "resetsAt": 1791950199,
-        "observedAt": "2026-10-07T15:59:03.972Z"
+        "resetsAt": 1792001978,
+        "observedAt": "2026-10-07T18:27:40.000Z"
       },
-      "deltaPercentagePoints": 8,
-      "note": "Account-wide meter; includes other chats. Not a token counter.",
-      "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
+      "deltaPercentagePoints": null,
+      "note": "Account-wide meter; includes other chats. The quota window reset during this run, so no usage delta can be calculated. Not a token counter.",
+      "windowNote": "The account quota window reset between the 98% baseline and the 2% final reading. The reset timestamps differ, so no usage delta can be calculated for this run."
     },
     "accountUsageHistory": [
       {
@@ -2840,6 +3104,24 @@ window.SLOP_DATA = {
           "observedAt": "2026-10-07T12:31:45.821Z"
         },
         "deltaPercentagePoints": 4,
+        "note": "Account-wide meter; includes other chats. Not a token counter.",
+        "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
+      },
+      {
+        "label": "Third group, 11 works",
+        "before": {
+          "usedPercent": 70,
+          "windowDurationMins": 10080,
+          "resetsAt": 1791950199,
+          "observedAt": "2026-10-07T15:13:00.913Z"
+        },
+        "after": {
+          "usedPercent": 78,
+          "windowDurationMins": 10080,
+          "resetsAt": 1791950199,
+          "observedAt": "2026-10-07T15:59:03.972Z"
+        },
+        "deltaPercentagePoints": 8,
         "note": "Account-wide meter; includes other chats. Not a token counter.",
         "windowNote": "The first snapshot was taken before image generation, after some planning. A delta requires the same quota window."
       }
