@@ -363,15 +363,15 @@ stages. The renderer carries the marble's painted rotation into the next entry a
 hides each future canonical entry until its predecessor arrives.
 
 The scene uses real-depth meshes, shared procedural finishes, world-space light,
-beveled edges, visible bearings, stops, guide slots, stands and dashpots. Depth blur
-uses the depth buffer and distance to the focus plane. Two exposure samples provide
-an approximation of a 180-degree shutter at 60 fps. They change display poses only.
-Physics stays at 240 Hz. Film grain stops when playback pauses. The renderer warms
-both scene and film shaders before motion. Both shutter targets have depth buffers.
+beveled edges, visible bearings, stops, guide slots, stands and dashpots. The owner requested sharper background objects and shadows on October 6, 2026.
+The current renderer copies the scene color without focus blur, shutter blur or
+film grain. Physics stays at 240 Hz. Earlier versions used depth-buffer focus blur
+and two display-only shutter samples; their evidence remains in the private records. The renderer warms
+both scene and film shaders before motion. The scene target retains a 24-bit depth texture.
 The row light and its shadow volume stay anchored to the set during camera travel.
-Depth textures use 24-bit storage in both shutter targets. Camera clip limits track
+The current multisample scene pass resolves both color and 24-bit depth. Camera clip limits track
 lens distance (near is half the distance, far is 1.5 times it plus 8 units), and the
-focus shader reconstructs depth from those actual limits. The former 16-bit buffer
+GPU depth probes reconstruct distance from those actual limits. The former 16-bit buffer
 with fixed 0.1-to-800 limits lost inches of depth at overview distance. Gold mounting
 feet could then tie with the farther bench in depth and be overwritten by it.
 A missing depth buffer formerly let rear objects overwrite front objects in one
@@ -441,3 +441,36 @@ three early reflections with a decaying tail. Its absolute impulse sum is bounde
 so the voice cap, rolling gain and room response permit a conservative clipping
 check. One world provides no cross-world loudness comparison yet. Approval by ear
 belongs to the owner.
+
+
+## Sharpness and antialiasing
+
+Renderer 0.1.4 antialiases the offscreen scene, rather than relying only on the
+canvas context. Supported WebGL2 uses four-sample multisampling, clamped to the
+GPU's sample limit. Other contexts use a larger scene texture with linear
+downsampling, bounded to eight million pixels and the GPU texture limit. Screen
+DPR is capped at two. Final color has no focus blur, shutter blending or grain,
+so rear surfaces and moving edges retain their rendered detail. The fixed key
+light uses a 4096 shadow map with narrower PCF filtering, clamped to the GPU limit.
+
+The clarity fixture measures actual GPU multisample allocations and fractional
+coverage on a diagonal edge. A rear checkerboard and raw scene-buffer comparison
+prove that the final pass preserves detail. The former single-sample scene buffer
+has no fractional edge coverage in the fixture; its focus pass changes values by
+up to 107 levels. The revised final pass matches the scene buffer exactly in both
+browsers, while actual multisampling supplies edge coverage. Rendering checks
+retain zoom stability and physical mesh alignment. Private prototypes share these
+quality settings, with separate tests of actual WebGL2 and forced WebGL1 pages.
+
+The depth check compares a resolved sample with the exact bench-plane depth range
+inside its pixel, retaining the 0.002-unit allowance outside that range. This
+accounts for the covered subpixel selected by MSAA depth resolve. The revised
+renderer loses none of 414 mounting-foot frames; the old 16-bit renderer loses
+330 of 414 and fails all six profiles with errors up to 2.47 units outside the
+pixel footprint. No simulation setting or physical gate changes.
+
+The CPU-4x landscape phone proxy stays within the 16.7 ms frame budget: median
+busy/overview p95 intervals are 10.0/11.0 ms at DPR one and 10.8/11.3 ms at DPR
+two, across five runs per view. Desktop is 5.7/5.6 ms; the owner-sized high-density
+view is 7.8/6.3 ms. Continuous three-stage playback and all sixteen handoff frames
+pass. These are local proxy measurements, not measurements on the owner's phone.

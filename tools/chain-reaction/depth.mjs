@@ -31,19 +31,24 @@ try{
     const probeScene=new T.Scene(),probeCamera=new T.OrthographicCamera(-1,1,1,-1,0,1);probeScene.add(new T.Mesh(new T.PlaneGeometry(2,2),material));
     window.probe=c=>{
      view.setCamera(c);view.draw(0,false,0,false);filmCamera.updateMatrixWorld();
-     const size=filmRenderer.getDrawingBufferSize(new T.Vector2()),expected=[],selected=[],colors=[],gl=filmRenderer.getContext();
+     const size=filmRenderer.getDrawingBufferSize(new T.Vector2()),expected=[],footprints=[],selected=[],colors=[],gl=filmRenderer.getContext();
      for(let n=0;n<16;n++){
       const x=c.x+(n/15-.5)*Math.min((c.sampleWidth??c.width)*.68,36),point=new T.Vector3(x,0,.60),ndc=point.clone().project(filmCamera);
       const px=Math.floor((ndc.x+1)*size.x/2),py=Math.floor((ndc.y+1)*size.y/2),u=(px+.5)/size.x,v=(py+.5)/size.y;
       coords.set([u,v,0,1],n*4);
       const near=new T.Vector3(u*2-1,v*2-1,-1).unproject(filmCamera),far=new T.Vector3(u*2-1,v*2-1,1).unproject(filmCamera),ray=far.sub(near),p=near.clone().addScaledVector(ray,-near.y/ray.y),z=-p.clone().applyMatrix4(filmCamera.matrixWorldInverse).z;
-      expected.push(z);selected.push(px>=0&&px<size.x&&py>=0&&py<size.y&&p.x>-2&&p.x<50&&p.z>-.9&&p.z<1.0);
+      expected.push(z);
+      // A multisample depth resolve can select any covered subpixel in this pixel.
+      // Bound that pixel's exact plane depths, then keep the original .002
+      // quantization allowance outside the physical footprint.
+      const zs=[];for(const dx of [0,1])for(const dy of [0,1]){const u0=(px+dx)/size.x,v0=(py+dy)/size.y,n0=new T.Vector3(u0*2-1,v0*2-1,-1).unproject(filmCamera),f0=new T.Vector3(u0*2-1,v0*2-1,1).unproject(filmCamera),r0=f0.sub(n0),p0=n0.clone().addScaledVector(r0,-n0.y/r0.y);zs.push(-p0.applyMatrix4(filmCamera.matrixWorldInverse).z);}footprints.push({minimum:Math.min(...zs),maximum:Math.max(...zs)});
+      selected.push(px>=0&&px<size.x&&py>=0&&py<size.y&&p.x>-2&&p.x<50&&p.z>-.9&&p.z<1.0);
       const cx=(ndc.x+1)*size.x/2-.5,cy=(ndc.y+1)*size.y/2-.5,ix=Math.floor(cx),iy=Math.floor(cy),fx=cx-ix,fy=cy-iy,rgba=new Uint8Array(16);
       if(ix>=0&&iy>=0&&ix+1<size.x&&iy+1<size.y)gl.readPixels(ix,iy,2,2,gl.RGBA,gl.UNSIGNED_BYTE,rgba);
       colors.push([0,1,2].map(k=>rgba[k]*(1-fx)*(1-fy)+rgba[4+k]*fx*(1-fy)+rgba[8+k]*(1-fx)*fy+rgba[12+k]*fx*fy));
      }
      uvMap.needsUpdate=true;material.uniforms.range.value.set(filmCamera.near,filmCamera.far);filmRenderer.setRenderTarget(target);filmRenderer.render(probeScene,probeCamera);const pixels=new Float32Array(16*4);filmRenderer.readRenderTargetPixels(target,0,0,16,1,pixels);filmRenderer.setRenderTarget(null);
-     return {camera:{...c,near:filmCamera.near,far:filmCamera.far},samples:expected.map((z,n)=>({expected:z,measured:pixels[n*4],error:Math.abs(z-pixels[n*4]),selected:selected[n]})).filter(p=>p.selected),colors};
+     return {camera:{...c,near:filmCamera.near,far:filmCamera.far},samples:expected.map((z,n)=>({expected:z,measured:pixels[n*4],centerError:Math.abs(z-pixels[n*4]),footprint:footprints[n],error:Math.max(0,footprints[n].minimum-pixels[n*4],pixels[n*4]-footprints[n].maximum),selected:selected[n]})).filter(p=>p.selected),colors};
     };
     window.disposeProbe=()=>{uvMap.dispose();target.dispose();material.dispose();probeScene.children[0].geometry.dispose();view.dispose();};
     window.prepareFootProbe=()=>{
