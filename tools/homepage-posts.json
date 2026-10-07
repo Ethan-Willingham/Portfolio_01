@@ -12,6 +12,18 @@
     "desc": "Move the markers to compare amounts of walking, protein, sleep and more. Twelve charts show the outcomes, with research sources and calculation details for each."
   },
   {
+    "href": "slop.html",
+    "date": "2026-10-06",
+    "dateDisplay": "6 Oct 2026",
+    "createdCommit": "39d4f32c14469a01b059ff0718f460917f3001c8",
+    "createdAt": "2026-10-06T23:28:17-05:00",
+    "title": "Slop",
+    "image": "assets/slop/001.jpg",
+    "alt": "The word Slop scraped through thick orange, peach and lilac paint.",
+    "keywords": "slop ai art generated modern contemporary gallery infinite canvas satire tokens",
+    "desc": "AI art complaining about AI art, made by AI. Wander a wall of paintings, sculptures and phrases, then open any work to inspect its prompt and production record."
+  },
+  {
     "href": "customer-success.html",
     "thumb": "customer-success.jpg",
     "date": "2026-07-09",

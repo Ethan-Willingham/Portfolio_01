@@ -1354,14 +1354,14 @@ window.SLOP_DATA = {
   ],
   "production": {
     "startedAt": "2026-10-07T03:54:30.572Z",
-    "asOf": "2026-10-07T04:25:40.318Z",
-    "measuredThrough": "2026-10-07T04:25:39.617Z",
-    "inputTokens": 24842700,
-    "cachedInputTokens": 24160128,
+    "asOf": "2026-10-07T04:29:37.723Z",
+    "measuredThrough": "2026-10-07T04:29:37.626Z",
+    "inputTokens": 27291238,
+    "cachedInputTokens": 26592512,
     "cacheWriteInputTokens": 0,
-    "outputTokens": 125513,
-    "reasoningOutputTokens": 34143,
-    "projectTokens": 24968213,
+    "outputTokens": 131869,
+    "reasoningOutputTokens": 36354,
+    "projectTokens": 27423107,
     "complete": false,
     "actualModels": [
       "gpt-6-astra"
@@ -1374,31 +1374,31 @@ window.SLOP_DATA = {
       {
         "model": "gpt-6-astra",
         "effort": "max",
-        "responses": 117,
-        "inputTokens": 12722329,
-        "cachedInputTokens": 12363008,
+        "responses": 124,
+        "inputTokens": 14143247,
+        "cachedInputTokens": 13776256,
         "cacheWriteInputTokens": 0,
-        "outputTokens": 97309,
-        "reasoningOutputTokens": 26725,
-        "projectTokens": 12819638
+        "outputTokens": 100433,
+        "reasoningOutputTokens": 27941,
+        "projectTokens": 14243680
       },
       {
         "model": "gpt-6-astra",
         "effort": "ultra",
-        "responses": 83,
-        "inputTokens": 12120371,
-        "cachedInputTokens": 11797120,
+        "responses": 92,
+        "inputTokens": 13147991,
+        "cachedInputTokens": 12816256,
         "cacheWriteInputTokens": 0,
-        "outputTokens": 28204,
-        "reasoningOutputTokens": 7418,
-        "projectTokens": 12148575
+        "outputTokens": 31436,
+        "reasoningOutputTokens": 8413,
+        "projectTokens": 13179427
       }
     ],
     "coverage": {
       "rootThreads": 1,
       "childThreads": 3,
       "threadsWithRecordedUsage": 4,
-      "responses": 200
+      "responses": 216
     },
     "imageInference": {
       "inputTokens": null,
