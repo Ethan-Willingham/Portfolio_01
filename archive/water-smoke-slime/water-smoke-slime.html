@@ -136,8 +136,9 @@
         <ul>
           <li><strong>Passed in isolated tests:</strong> water at rest balances gravity. Moving water and its surface pass energy, packing and volume checks across three starting layouts. Halving the timestep changes kinetic energy by about 0.14% in that small test.</li>
           <li><strong>GPU reference check passed:</strong> the pressure step matches an independent calculation across three starting layouts over 216 continuous steps with the existing water particles. A separate L-shaped pipe test passes its wall and energy checks with the particle positions held fixed.</li>
-          <li><strong>Latest failures:</strong> the trapped-air pocket shrinks, but water parcels near its submerged corner expand by 5.02%, above the 5% limit. A finer pipe grid also reaches 5.33% local volume change. Halving the timestep changes kinetic energy by about 6.35% in a short GPU test.</li>
-          <li><strong>Working now:</strong> smaller pressure cells around the submerged passage and pipe corner, and GPU motion accuracy.</li>
+          <li><strong>Pipe progress:</strong> smaller pressure cells keep the first moving pipe test below the deformation limit for a full second. Halving the timestep produces an energy difference equal to 2.49% of the starting energy, and its particle positions differ too much.</li>
+          <li><strong>Latest failures:</strong> water near the trapped-air passage still expands by 5.01%, above the 5% limit. A finer particle grid reaches 5.61% beside a pipe wall. The first GPU precision change also fails to preserve small movements.</li>
+          <li><strong>Working now:</strong> pressure constraints that detect variation inside a cell, and a separate GPU pass to preserve small particle movements. The earlier GPU motion test still misses its energy-accuracy limit.</li>
           <li><strong>Larger cup:</strong> a layout with more water is prepared. Its flow and the effect of dropping a slime still need testing.</li>
           <li><strong>Still unfinished:</strong> reliable priming and drainage, trapped-air coupling, and the fountain. These isolated checks haven’t established a working machine.</li>
         </ul>
@@ -167,7 +168,7 @@
   <script src="/js/liquid-wgpu.js?v=v28.171"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.10"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.11"></script>
   <script src="/js/water-smoke-slime-ui.js?v=5.0"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
