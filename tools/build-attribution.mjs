@@ -6,7 +6,7 @@
    Run from the repo root:
      node tools/build-attribution.mjs                 # validate + preview only
      node tools/build-attribution.mjs --write         # write the new dataset
-     node tools/build-attribution.mjs --exclude-session=<uuid>   # drop a session
+     node tools/build-attribution.mjs --exclude-session=<uuid>   # skip new credit from a session
      node tools/build-attribution.mjs random-galaxy machine-to-atom   # spot-check keys
 
    WHY THIS EXISTS: the original generator kept being written to /tmp and lost, so
@@ -46,7 +46,8 @@ import { isPost, postSlug, reconcilePost } from './about-post-history.mjs';
 import { jsonlLines } from './about-jsonl.mjs';
 
 const REPO = process.cwd();
-const CODEX_TX = join(homedir(), '.codex/sessions');
+const TRANSCRIPT_ROOT = process.env.ABOUT_ATTRIBUTION_TRANSCRIPT_ROOT || homedir();
+const CODEX_TX = join(TRANSCRIPT_ROOT, '.codex/sessions');
 const LEDGER_FILE = join(REPO, 'tools/about-attribution-ledger.json');
 const OLD_CODEX_LEDGER = join(REPO, 'tools/about-codex-attribution.json');
 const MODEL_REGISTRY = JSON.parse(readFileSync(join(REPO, 'tools/about-models.json'), 'utf8'));
@@ -326,11 +327,8 @@ if (existsSync(LEDGER_FILE)) {
   }
 }
 if (ledger.version !== 2) throw new Error('unsupported attribution ledger version');
-if (excludeSession) {
-  const hash = createHash('sha256').update(excludeSession).digest('hex').slice(0, 16);
-  delete ledger.sessions['claude:' + hash];
-  delete ledger.sessions['codex:' + hash];
-}
+// Exclude only fresh transcript snapshots. A refresh can run in a task that
+// already contributed published credit; its durable snapshot must survive.
 
 function mergeSession(id, fresh) {
   const prior = ledger.sessions[id];
@@ -353,7 +351,7 @@ function mergeSession(id, fresh) {
 }
 
 let claudeScanned = 0;
-const claudeProjects = join(homedir(), '.claude/projects');
+const claudeProjects = join(TRANSCRIPT_ROOT, '.claude/projects');
 const claudeDirs = existsSync(claudeProjects) ? readdirSync(claudeProjects).filter(n => n.includes('Portfolio-01') || n.endsWith('sluice-alpha')).map(n => join(claudeProjects, n)) : [];
 for (const file of claudeDirs.flatMap(jsonlFiles)) {
   const found = await claudeSession(file);
@@ -362,7 +360,7 @@ for (const file of claudeDirs.flatMap(jsonlFiles)) {
   claudeScanned++;
 }
 let codexScanned = 0;
-for (const file of [...jsonlFiles(CODEX_TX), ...jsonlFiles(join(homedir(), '.codex/archived_sessions'))]) {
+for (const file of [...jsonlFiles(CODEX_TX), ...jsonlFiles(join(TRANSCRIPT_ROOT, '.codex/archived_sessions'))]) {
   const found = await codexSession(file);
   if (!found) continue;
   mergeSession(found[0], found[1]);

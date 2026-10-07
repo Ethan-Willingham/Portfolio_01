@@ -3365,19 +3365,6 @@
         }
       }
     },
-    "codex:8449149fdbc32a9f": {
-      "provider": "codex",
-      "models": {
-        "gpt-6.1-sol": {
-          "chain-reaction": {
-            "edits": 19,
-            "tokens": 33759,
-            "first": "2026-10-06",
-            "last": "2026-10-07"
-          }
-        }
-      }
-    },
     "codex:376c499fa5d21458": {
       "provider": "codex",
       "models": {
@@ -3412,6 +3399,19 @@
             "edits": 11,
             "tokens": 32274,
             "first": "2026-10-07",
+            "last": "2026-10-07"
+          }
+        }
+      }
+    },
+    "codex:8449149fdbc32a9f": {
+      "provider": "codex",
+      "models": {
+        "gpt-6.1-sol": {
+          "chain-reaction": {
+            "edits": 19,
+            "tokens": 33759,
+            "first": "2026-10-06",
             "last": "2026-10-07"
           }
         }

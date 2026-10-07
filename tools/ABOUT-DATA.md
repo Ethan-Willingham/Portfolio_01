@@ -129,7 +129,9 @@ word counts and the existing prompt archive.
 
 Claude Edit/Write operations and successful Codex file-change records supply the edit
 counts. The durable hashed edit ledger preserves older credit after transcripts disappear.
-Shell rewrites without file-change records can be absent. These counts describe recorded
+A refresh skips new credit from its own session while retaining any previously
+published credit from that session. Shell rewrites without file-change records
+can be absent. These counts describe recorded
 activity, not a complete measure of effort or authorship.
 
 Full token consumption cannot be reliably reconstructed for most individual pages, so

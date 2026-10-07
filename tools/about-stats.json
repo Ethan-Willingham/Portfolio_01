@@ -1562,8 +1562,8 @@
       }
     },
     "2026-10-07": {
-      "totalTokens": 632734372,
-      "cost": 212.39319280000015,
+      "totalTokens": 656703859,
+      "cost": 219.59477480000032,
       "models": {
         "claude-opus-5-5": {
           "input": 166,
@@ -1583,15 +1583,15 @@
           }
         },
         "gpt-6.1-sol": {
-          "input": 17904361,
+          "input": 18588543,
           "cacheWrite": 0,
           "cacheWrite1h": 0,
-          "cacheRead": 562274304,
-          "output": 3405462,
-          "totalTokens": 583584127,
-          "cost": 126.09077240000008,
+          "cacheRead": 583067904,
+          "output": 3500987,
+          "totalTokens": 605157434,
+          "cost": 130.49374640000016,
           "pricing": "deduplicated native responses, standard API rates",
-          "requests": 4358,
+          "requests": 4533,
           "longContext": {
             "input": 0,
             "cacheWrite": 0,
@@ -1600,15 +1600,15 @@
           }
         },
         "gpt-6-astra": {
-          "input": 1282444,
+          "input": 1301259,
           "cacheWrite": 0,
           "cacheWrite1h": 0,
-          "cacheRead": 31130624,
-          "output": 110111,
-          "totalTokens": 32523179,
-          "cost": 49.460613999999985,
+          "cacheRead": 33503232,
+          "output": 114868,
+          "totalTokens": 34919359,
+          "cost": 52.259221999999994,
           "pricing": "deduplicated native responses, standard API rates",
-          "requests": 224,
+          "requests": 237,
           "longContext": {
             "input": 0,
             "cacheWrite": 0,
@@ -1701,11 +1701,11 @@
   },
   "collection": {
     "ledgerId": "ad869c9bf7907245d6181fffd3ced9f98185a7070464096b52a5cfc52de46b2e",
-    "cutoff": "2026-10-07T17:30:14.997Z",
+    "cutoff": "2026-10-07T17:35:09.126Z",
     "timezone": "America/Chicago",
     "files": 559,
     "claudeMessages": 5376,
-    "codexSessions": 484,
+    "codexSessions": 485,
     "cacheDurationInconsistencies": 1,
     "imports": {
       "54cfd7f2b3e7303d79443844fc26726befa2948eabdb49ac2ca48e7c24b6605d": {
