@@ -1,13 +1,20 @@
 # Slop
 
-Slop is a gallery of AI-made pictures about AI making crap. The owner supplied
-the premise and asked AI to write the phrases, choose the art directions,
-generate the images and build the site. The awkwardness is part of the work.
+Slop is a modern art collection against AI, made entirely by AI. The works
+criticize the technology's borrowed creativity, polished mistakes and empty
+promises. The owner set the brief and chose what stayed. AI wrote the phrases,
+chose the art directions, generated the images and built the site.
 
 The gallery is a full-screen field of square images that the visitor can pan
 through and inspect. A piece should reward looking at the image before reading
 its production record. The surrounding interface uses the site's fonts and
 palette; each artwork has its own colors and material.
+
+Only the top-left title panel and top-right About, Index and Ledger panel sit
+over the wall. The central top label and all three bottom panels were removed
+at the owner's request. Dragging, scroll and pinch zoom, keyboard navigation
+and recentering through the title button remain available. Control instructions
+live in About and the accessible description.
 
 ## The catalogue
 
@@ -598,14 +605,19 @@ The owner chose the OpenAI built-in image tool. Generate one work at a time,
 save the returned image and record the result before starting the next one.
 The tool does not expose a model selector or report its underlying image model.
 Keep `generation.model` null unless the returned metadata actually names it.
-General product documentation, including references to GPT Image 2, does not
+General product documentation, including references to GPT Image 2.5, does not
 identify the model used for a particular call. Do not turn that documentation
 into a per-image attribution.
 
 Artwork popups show two production facts: **Attempts** and **Generated with**.
-When the model is unreported, the latter identifies OpenAI and says "model not
-reported". Keep token measurements, cost limits and the detailed production
-record in the Ledger.
+The owner supplied the model-family credit **GPT Image 2.5** on October 7,
+2026. Store this separately in `production.imageModelCredit`, with
+`source: "owner"`, `toolVerified: false` and no claimed variant. The popup and
+Ledger label it "GPT Image 2.5 (owner credit)"; the Ledger explains that the
+tool did not identify the model. A model reported by a future generation takes
+precedence for that work. Existing `generation.model` values remain null.
+Keep token measurements, cost limits and the detailed production record in
+the Ledger.
 
 Every work starts with `generation.status: "planned"`, zero attempts and null
 image paths. A successful result gets a local image path, a recorded attempt,

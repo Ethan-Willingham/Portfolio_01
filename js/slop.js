@@ -29,7 +29,6 @@
   const pointers = new Map();
   const returnFocus = new WeakMap();
   const dialogs = [...document.querySelectorAll('.slop-dialog')];
-  const order = works.map((_, index) => index);
   const number = new Intl.NumberFormat('en-US');
   const price = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 4 });
   const state = {
@@ -46,6 +45,7 @@
   const pad = (value) => String(value).padStart(3, '0');
   const titleOf = (work) => work.title || phraseById.get(work.phraseId)?.text || 'Untitled';
   const styleOf = (work) => styleById.get(work.styleId)?.name || 'Style not recorded';
+  const modelOf = (generation) => generation.model || (production.imageModelCredit?.model ? `${production.imageModelCredit.model} (owner credit)` : null);
   const columnOffset = (column) => mod(column, 2) * PITCH / 2;
   const cellKey = (column, row) => `${column}:${row}`;
   const anyDialogOpen = () => dialogs.some((dialog) => dialog.open);
@@ -63,7 +63,7 @@
     return stride;
   }
   const stride = coprimeStride(works.length || 1);
-  const indexAt = (column, row) => order[mod(column + row * stride, order.length)];
+  const indexAt = (column, row) => mod(column + row * stride, works.length);
   const centerOf = (column, row) => ({ x: column * PITCH + TILE / 2, y: row * PITCH + columnOffset(column) + TILE / 2 });
 
   function imageTokens(usage) {
@@ -163,9 +163,6 @@
 
   function render() {
     wall.style.transform = `translate3d(${state.width / 2 - state.x * state.zoom}px, ${state.height / 2 - state.y * state.zoom}px, 0) scale(${state.zoom})`;
-    $('slop-zoom-reset').textContent = `${Math.round(state.zoom * 100)}%`;
-    $('slop-zoom-out').disabled = !works.length || state.zoom <= state.minZoom + 0.001;
-    $('slop-zoom-in').disabled = !works.length || state.zoom >= MAX_ZOOM - 0.001;
     if (!works.length) return;
 
     const halfWidth = state.width / (2 * state.zoom);
@@ -204,9 +201,6 @@
       const tile = tiles.get(key);
       if (tile) tile.tabIndex = 0;
       state.nearestKey = key;
-      const index = indexAt(nearest.column, nearest.row);
-      $('slop-near-number').textContent = `WORK ${pad(works[index].id)} / ${works.length} ON VIEW`;
-      $('slop-near-title').textContent = titleOf(works[index]);
     }
   }
 
@@ -500,7 +494,7 @@
     $('slop-work-description').hidden = !style?.description;
     const facts = [
       fact('Attempts', count(generation.attempts)),
-      fact('Generated with', generation.model ? `OpenAI ${generation.model}` : 'OpenAI · model not reported')
+      fact('Generated with', modelOf(generation) ? `OpenAI ${modelOf(generation)}` : 'OpenAI · model not reported')
     ];
     $('slop-work-facts').replaceChildren(...facts);
     $('slop-work-prompt').textContent = work.prompt || 'The generation prompt was not recorded.';
@@ -545,13 +539,12 @@
   }
 
   function nearestOccurrence(index) {
-    const slot = order.indexOf(index);
     const approximateColumn = (state.x - TILE / 2) / PITCH;
     const approximateRow = Math.round((state.y - TILE / 2) / PITCH);
     const span = Math.max(3, Math.ceil(Math.sqrt(works.length)));
     let best = null;
     for (let row = approximateRow - span; row <= approximateRow + span; row += 1) {
-      const baseColumn = mod(slot - row * stride, works.length);
+      const baseColumn = mod(index - row * stride, works.length);
       const nearestPeriod = Math.round((approximateColumn - baseColumn) / works.length);
       for (let period = nearestPeriod - 1; period <= nearestPeriod + 1; period += 1) {
         const column = baseColumn + period * works.length;
@@ -640,6 +633,10 @@
     const defaultNote = 'Planning and code tokens exclude image inference. The image tool did not report image token usage or cost. Unknown values are not zero.';
     const retirementNote = retired.length ? `${count(works.length)} works on view. ${count(retired.length)} retired ${retired.length === 1 ? 'work remains' : 'works remain'} in this production record. Totals include their images and attempts. ` : '';
     $('slop-usage-note').textContent = retirementNote + (production.usageNote || defaultNote);
+    $('slop-model-note').hidden = !production.imageModelCredit?.model;
+    $('slop-model-note').textContent = production.imageModelCredit?.model
+      ? `Image model credit: ${production.imageModelCredit.model}, supplied by the owner. The generation tool did not identify the model or variant in its results.`
+      : '';
     buildAccountMeter();
     const rows = document.createDocumentFragment();
     allWorks.forEach((work) => {
@@ -659,7 +656,7 @@
         status.title = work.retirement.reason;
         status.setAttribute('aria-label', `Retired. ${work.retirement.reason}`);
       }
-      row.append(name, textElement('td', generation.model || 'Not reported'), textElement('td', count(generation.attempts)), textElement('td', count(imageTokens(generation.usage))), status);
+      row.append(name, textElement('td', modelOf(generation) || 'Not reported'), textElement('td', count(generation.attempts)), textElement('td', count(imageTokens(generation.usage))), status);
       rows.append(row);
     });
     if (!allWorks.length) {
@@ -716,28 +713,7 @@
   $('slop-work-previous').addEventListener('click', () => openWork(state.currentWork - 1));
   $('slop-work-next').addEventListener('click', () => openWork(state.currentWork + 1));
   $('slop-search').addEventListener('input', buildIndex);
-  $('slop-home').addEventListener('click', home);
   $('slop-brand').addEventListener('click', home);
-  $('slop-zoom-out').addEventListener('click', () => zoomBy(1 / 1.25));
-  $('slop-zoom-in').addEventListener('click', () => zoomBy(1.25));
-  $('slop-zoom-reset').addEventListener('click', () => {
-    if (works.length) zoomAt(state.defaultZoom, state.width / 2, state.height / 2, true);
-  });
-  $('slop-shuffle').addEventListener('click', () => {
-    if (works.length < 2) return;
-    stopMotion();
-    const previousOrder = order.join(',');
-    for (let index = order.length - 1; index > 0; index -= 1) {
-      const other = Math.floor(Math.random() * (index + 1));
-      [order[index], order[other]] = [order[other], order[index]];
-    }
-    if (previousOrder === order.join(',')) order.push(order.shift());
-    wall.replaceChildren();
-    tiles.clear();
-    state.nearestKey = '';
-    requestRender();
-    announce('The artwork has been rearranged.');
-  });
 
   document.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.target.matches('input, textarea, select, [contenteditable="true"]')) return;
@@ -787,8 +763,7 @@
   $('slop-style-count').textContent = String(styles.length);
   $('slop-repeat-note').textContent = `There ${works.length === 1 ? 'is' : 'are'} ${number.format(works.length)} unique ${works.length === 1 ? 'work' : 'works'} here. The wall repeats ${works.length === 1 ? 'it' : 'them'} as you move; it does not generate new images while you browse.`;
   $('slop-empty').hidden = works.length > 0;
-  for (const id of ['slop-zoom-reset', 'slop-home', 'slop-brand']) $(id).disabled = !works.length;
-  $('slop-shuffle').disabled = works.length < 2;
+  $('slop-brand').disabled = !works.length;
   resize();
   syncWorkRoute();
 })();

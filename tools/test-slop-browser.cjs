@@ -311,6 +311,7 @@ async function wallKeyboardChecks(page) {
 
 async function dialogChecks(page, label, works) {
   const allWorks = await page.evaluate(() => window.SLOP_DATA.works);
+  const modelCredit = await page.evaluate(() => window.SLOP_DATA.production.imageModelCredit);
   const activeIds = works.map(work => work.id);
   const retired = allWorks.filter(work => work.generation?.status === 'retired');
   const tileIds = await page.locator('.slop-card').evaluateAll(tiles => tiles.map(tile => tile.dataset.workId));
@@ -345,10 +346,11 @@ async function dialogChecks(page, label, works) {
   await page.locator('#slop-index').waitFor({ state: 'hidden' });
   await settle(page);
   await visibleImagesDecoded(page);
-  assert.equal(await page.locator('#slop-near-title').textContent(), target.title, 'Index jump centered the wrong work.');
-  assert.equal(await page.locator('#slop-near-number').textContent(), `WORK ${String(target.id).padStart(3, '0')} / ${works.length} ON VIEW`);
   assert.equal(await page.locator('.slop-card:focus').getAttribute('data-title'), target.title, 'Index jump did not focus the centered artwork.');
   assert.equal(await page.locator('.slop-card:focus').getAttribute('data-work-id'), target.id, 'The focused artwork lost its stable work id.');
+  const focusedBox = await page.locator('.slop-card:focus').boundingBox();
+  const viewport = page.viewportSize();
+  assert.ok(Math.hypot(focusedBox.x + focusedBox.width / 2 - viewport.width / 2, focusedBox.y + focusedBox.height / 2 - viewport.height / 2) < 2, 'Index jump did not center the selected artwork.');
   await page.keyboard.press('Enter');
   await page.locator('#slop-work').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#slop-work-title').textContent(), target.title);
@@ -358,7 +360,8 @@ async function dialogChecks(page, label, works) {
   assert.deepEqual(facts.map(fact => fact.label), ['Attempts', 'Generated with'], 'Artwork metadata must contain only the attempt count and combined provider/model line.');
   const attempts = target.generation?.attempts;
   assert.equal(facts[0].value, typeof attempts === 'number' && Number.isFinite(attempts) && attempts >= 0 ? new Intl.NumberFormat('en-US').format(attempts) : 'Not reported');
-  assert.equal(facts[1].value, target.generation?.model ? `OpenAI ${target.generation.model}` : 'OpenAI · model not reported', 'The image model must come from its generation record.');
+  const expectedModel = target.generation?.model || (modelCredit?.model ? `${modelCredit.model} (owner credit)` : null);
+  assert.equal(facts[1].value, expectedModel ? `OpenAI ${expectedModel}` : 'OpenAI · model not reported', 'The image credit must distinguish owner attribution from reported model metadata.');
   await capture(page, `${label}-artwork-open.png`);
   await page.locator('.slop-prompt summary').click();
   assert.equal(await page.locator('#slop-work-prompt').textContent(), target.prompt, 'Displayed prompt differs from the stored generation prompt.');
@@ -402,6 +405,11 @@ async function dialogChecks(page, label, works) {
   }
   const imageUsageCells = await page.locator('#slop-ledger-rows tr td:nth-child(4)').allTextContents();
   assert.ok(imageUsageCells.length === allWorks.length && imageUsageCells.every(value => value === 'Not reported'), 'Unknown per-image tokens were changed to zero.');
+  if (modelCredit?.model) {
+    assert.equal(modelCredit.toolVerified, false);
+    assert.ok((await page.locator('#slop-model-note').innerText()).includes('supplied by the owner'));
+    assert.ok((await page.locator('#slop-model-note').innerText()).includes('did not identify the model'));
+  }
   await checkLayout(page, `${label} ledger`);
   await capture(page, `${label}-ledger.png`);
   await page.keyboard.press('Escape');
@@ -493,13 +501,13 @@ async function touchChecks(page, context, label) {
   } finally { await cdp.detach(); }
 }
 
-async function shuffleCheck(page, label) {
-  await page.locator('#slop-shuffle').click();
+async function recenterCheck(page, label) {
+  await page.locator('#slop-brand').click();
   await settle(page);
   await noDialog(page);
   const decodedVisibleImages = await visibleImagesDecoded(page);
-  await capture(page, `${label}-shuffled.png`);
-  pass(`${label}: every viewport-intersecting DOM image loads and decodes after shuffle`, { decodedVisibleImages });
+  await capture(page, `${label}-recentered.png`);
+  pass(`${label}: title recenters the wall and visible images decode`, { decodedVisibleImages });
 }
 
 async function reducedMotionCheck(url) {
@@ -542,12 +550,14 @@ async function reducedMotionCheck(url) {
         report.viewports.push({ label, width, height, completedWorks: works.length });
         await imageChecks(page, label, works);
         await checkLayout(page, label);
+        assert.equal(await page.locator('.slop-header > *').count(), 2, 'Only the two corner panels should remain.');
+        assert.equal(await page.locator('.slop-top-note, .slop-bottom, #slop-shuffle, #slop-zoom-reset').count(), 0, 'Removed wall controls are still present.');
         await capture(page, `${label}-wall.png`);
         if (!touch) { await wallKeyboardChecks(page); await mouseChecks(page); }
         await dialogChecks(page, label, works);
         await historyChecks(page, context, label, url);
         if (touch) await touchChecks(page, context, label);
-        await shuffleCheck(page, label);
+        await recenterCheck(page, label);
         await checkLayout(page, `${label} final`);
         await pickerChecks(context, url, label, works);
       } catch (error) {

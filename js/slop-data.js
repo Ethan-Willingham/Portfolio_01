@@ -11729,6 +11729,15 @@ window.SLOP_DATA = {
         "note": "Account-wide meter; includes other chats. Not a token counter.",
         "windowNote": "Production pauses if the observed weekly usage increase exceeds 30 percentage points within this quota window."
       }
-    ]
+    ],
+    "imageModelCredit": {
+      "model": "GPT Image 2.5",
+      "provider": "OpenAI",
+      "source": "owner",
+      "recordedAt": "2026-10-08T04:00:07.000Z",
+      "toolVerified": false,
+      "variant": null,
+      "note": "The owner requested this model-family credit. The generation tool did not identify the underlying model or variant; generation.model remains null."
+    }
   }
 };
