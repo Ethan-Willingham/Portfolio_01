@@ -1,0 +1,17 @@
+{
+  "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-East_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=4096&height=2048&transparent=true&time=2026-10-07T23%3A30%3A00Z",
+  "observation": "2026-10-07T23:30:00.000Z",
+  "sourceDimensions": [
+    4096,
+    2048
+  ],
+  "crop": {
+    "left": 0,
+    "top": 760,
+    "width": 4096,
+    "height": 192
+  },
+  "sourceSha256": "055c971435b5b39b66baa4f324dcc012f9a31757dea84cf36991325f5b8bb3f9",
+  "fixtureSha256": "c62e9285a5934f7e65b8b991b95dee9daf8af3ecc81f682687fd5622c2cae1ec",
+  "note": "Lossless crop at the original sampling resolution. Reproduces the connected cold-grey storm cores south of Mexico shown in the reported v39 artifacts."
+}
