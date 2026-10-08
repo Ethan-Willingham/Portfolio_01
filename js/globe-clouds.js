@@ -160,7 +160,7 @@
  // Combine those observations per satellite before the footprint blend. Doing
  // this after compositing would expose the edge of the visible mosaic.
  function smoothCloud(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
- function geoColorCloud(r,g,b,mu,observed){
+ function geoColorCloud(r,g,b,mu,observed,thermal){
   // GeoColor already blends its day and night layers at source time, well
   // before the geometric horizon. Decode its grey daytime and blue low-cloud
   // signals before applying the globe's separate selected-time lighting.
@@ -169,13 +169,21 @@
   var blue=Math.max(0,Math.min((g-r)/.20,(b-g)/.23));
   var rr=r-.55*blue,gg=g-.75*blue,bb=b-.98*blue,bright=Math.max(rr,gg,bb);
   var neutral=1-smoothCloud(.10,.35,(bright-Math.min(rr,gg,bb))/Math.max(.05,bright));
+  // Grey nighttime clouds already contain a neutral infrared signal. Give it
+  // a bounded exposure throughout the blend, rather than dividing it by a
+  // disappearing daytime weight and then cutting off the saturated result.
+  var cold=thermal===undefined?1:smoothCloud(.18,.30,thermal);
+  var greyCloud=smoothCloud(.22,.85,(Math.min(rr,gg,bb)-.06*night)/(day+.5*night))*neutral*cold;
   var daylight=(Math.min(rr,gg,bb)-.06*night)/Math.max(.05,day);
   // A bounded inversion avoids amplifying near-black pixels when the daytime
   // signal has ended. Neutrality and blue brightness checks limit contributions
   // from coloured terrain, dim ocean backgrounds and embedded city lights.
-  var dayCloud=smoothCloud(.22,.85,daylight)*neutral*smoothCloud(.025,.075,day);
+  // Only warm low clouds need the stronger daytime recovery. Colder grey
+  // clouds use the continuous exposure above on both sides of source twilight.
+  var warm=1-cold;
+  var dayCloud=smoothCloud(.22,.85,daylight)*neutral*smoothCloud(.025,.075,day)*warm;
   var lowCloud=smoothCloud(.06,.20,blue/Math.max(.05,night))*smoothCloud(.22,.36,b/Math.max(.05,night))*smoothCloud(.5,.8,night);
-  return Math.max(observed,dayCloud,lowCloud);
+  return Math.max(observed,greyCloud,dayCloud,lowCloud);
  }
  var solarWidth=0,solarCos=[],solarSin=[];
  function* retainVisibleCloudsSteps(sources,width,sourceTimes){
@@ -194,7 +202,7 @@
     var value=.28+.72*Math.max(0,Math.min(1,(observed-.22)/.63)),ia=infrared[at+3]/255,va=visible[at+3]/255,alpha=Math.max(ia,va);
     var visibleOpacity=smoothCloud(.22,.85,observed);
     if(sun){var index=at/4,row=Math.floor(index/width),x=index%width;if(row!==lastRow){lastRow=row;var lat=(90-(row+.5)*360/width)*Math.PI/180;sinLat=Math.sin(lat);cosLat=Math.cos(lat);}var mu=cosLat*(sun.x*lonCos[x]-sun.z*lonSin[x])+sun.y*sinLat;
-     var corrected=geoColorCloud(rawR,rawG,rawB,mu,visibleOpacity);
+     var corrected=geoColorCloud(rawR,rawG,rawB,mu,visibleOpacity,ia?infrared[at]/255:undefined);
      if(corrected>visibleOpacity){visibleOpacity=corrected;value=.28+.72*(.5-Math.sin(Math.asin(1-2*corrected)/3));}
     }
     var irCloud=smoothCloud(.28,1,infrared[at]/255)*ia,visCloud=visibleOpacity*va,cover=Math.max(irCloud,visCloud);
@@ -221,5 +229,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:10,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:11,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
 }));
