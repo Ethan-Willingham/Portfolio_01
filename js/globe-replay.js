@@ -22,7 +22,7 @@
       var bright=Math.max(g,b);r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;
       out[i]=Math.round(smooth(.22,.85,Math.min(r,g,b))*255);
       out[i+1]=natural?visible[i+3]:0;
-      out[i+2]=Math.round(smooth(.28,.75,infrared[i]/255)*255);
+      out[i+2]=Math.round(smooth(.28,1,infrared[i]/255)*255);
       out[i+3]=infrared[i+3];
     }return out;
   }

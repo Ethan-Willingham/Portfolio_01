@@ -66,7 +66,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v38');
+  text(byId('globe-version'),'v39');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -210,10 +210,10 @@
     prefer:function(next,old){return next.photo.width>=old.photo.width&&(!old.photo.natural||next.photo.natural);},
     dispose:function(record){record.memoized=false;if(record!==installedCloud)record.canvases.forEach(function(canvas){canvas.width=canvas.height=1;});}
   });
-  var replayWidth=mobile?(renderer.capabilities.isWebGL2?768:512):1024;
-  replayMemo=timeline.memoryCache((mobile?64:112)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-38',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261005-38',document.baseURI).href);
+  var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
+  replayMemo=timeline.memoryCache((mobile?104:224)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261007-39',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261007-39',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -247,7 +247,9 @@
     // white over reference terrain, not a grayscale replacement for Earth's
     // entire surface. This is a display curve, not measured cloud opacity.
     'vec4 thermal=vec4(mix(base,vec3(1.0),smoothstep(.35,.90,infrared.r)),infrared.a);',
-    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a; float denseCloud=smoothstep(.28,.75,infrared.r)*infrared.a+visibleCloud*naturalEnabled*(1.0-infrared.a);',
+    // Keep the cold-cloud range instead of clipping every bright storm core
+    // to the same white. Replay packs the identical observed brightness curve.
+    'float thermalCloud=smoothstep(.35,.90,infrared.r)*infrared.a; float denseCloud=smoothstep(.28,1.0,infrared.r)*infrared.a+visibleCloud*naturalEnabled*(1.0-infrared.a);',
     'vec4 shot=mix(photo,mix(thermal,photo,shotDay),thermalEnabled); vec3 liveColor=mix(base,shot.rgb,shot.a); vec3 day=mix(base,liveColor,photoMix*photoEnabled);',
     'day=mix(day,mix(base,vec3(1.0),denseCloud*photoMix*photoEnabled),denseEnabled*thermalEnabled);',
     'vec2 replayCover=vec2(0.0);if(replayEnabled>0.0){replayCover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromBaked),replayLayer(texture2D(replayTo,vUv),0.0),replayBlend);} day=mix(day,mix(base,vec3(1.0),replayCover.x*photoMix*photoEnabled),replayEnabled);',
@@ -814,7 +816,9 @@
   }
   async function upgradePhotoDetail() {
     if(loading||performance.now()<interactionUntil||pointers.size||performance.now()<scrubUntil||replayUniforms.replayEnabled.value>0||timeEditTimer!==null||fetchingPhoto||detailController||!photo||!photo.time||tilt!==undefined||navigator.onLine===false)return;
-    var desired=Math.max(photo.width,Math.min(textureWidth,radius<2.8?4096:2048));
+    // Promote before close zoom magnifies the base map. Tall fullscreen and
+    // high-density canvases need the same detail even at the opening distance.
+    var desired=Math.max(photo.width,Math.min(textureWidth,radius<3.5||container.clientHeight*renderer.getPixelRatio()>900?4096:2048));
     if(photo.width>=desired&&photo.natural)return;
     var key=photo.time+'/'+desired+'/'+photoGeneration;
     if(key===detailKey&&Date.now()-detailChecked<60000)return;

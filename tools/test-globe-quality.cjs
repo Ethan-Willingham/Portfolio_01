@@ -6,7 +6,7 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const zlib=require('node:zlib'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {chromium,webkit}=require('playwright');
-const safariMobile=process.env.SAFARI_MOBILE==='1';
+const safariMobile=process.env.SAFARI_MOBILE==='1',mobile=safariMobile||process.env.MOBILE==='1';
 const root=path.resolve(__dirname,'..'),dump=process.env.DUMP||'/tmp/daylight-globe-quality';
 fs.mkdirSync(dump,{recursive:true});
 const fixedNow='2026-10-05T03:10:00Z',checks=[],evidence=[],errors=[];
@@ -65,7 +65,7 @@ window.__globeQuality={
   if(elevation< -15&&(!best||p>best.probability))best={lat:lat,lon:east,probability:p,elevation:elevation};}return best;}
 };`;
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.bin':'application/octet-stream','.json':'application/json','.gz':'application/gzip','.woff2':'font/woff2','.svg':'image/svg+xml'};
-const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(req.url.split('?')[0]));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();try{let body=fs.readFileSync(file);if(file.endsWith('/js/globe.js')){const s=body.toString(),i=s.lastIndexOf('}());');assert(i>=0,'Renderer closure exists');body=Buffer.from(s.slice(0,i)+hooks+s.slice(i));}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(body);}catch{res.writeHead(404).end();}});
+const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+decodeURIComponent(req.url.split('?')[0]));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();try{let body=fs.readFileSync(file);if(file===path.join(root,'js','globe.js')){const s=body.toString(),i=s.lastIndexOf('}());');assert(i>=0,'Renderer closure exists');body=Buffer.from(s.slice(0,i)+hooks+s.slice(i));}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(body);}catch{res.writeHead(404).end();}});
 function crc32(bytes){let c=0xffffffff;for(const byte of bytes){c^=byte;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return(c^0xffffffff)>>>0;}
 function chunk(type,body){const tag=Buffer.from(type),size=Buffer.alloc(4),crc=Buffer.alloc(4);size.writeUInt32BE(body.length);crc.writeUInt32BE(crc32(Buffer.concat([tag,body])));return Buffer.concat([size,tag,body,crc]);}
 const images=new Map();
@@ -77,6 +77,9 @@ function image(width,kind,time){const key=width+'/'+kind+'/'+time;if(images.has(
   if(kind==='natural'&&Math.abs(lat)<8&&lon>=160&&lon<172)c=[225,225,225];
   if(kind==='infrared'&&Math.abs(lat)<8&&lon>=90&&lon<118)c=[245,245,245];
   if(kind==='infrared'&&Math.abs(lat)<8&&lon>=118&&lon<140)c=[0,0,0];
+  if(kind==='infrared'&&Math.abs(lat)<8&&lon>=-100&&lon<-80)c=[200,200,200];
+  if(kind==='infrared'&&Math.abs(lat)<8&&lon>=-80&&lon<-60)c=[225,225,225];
+  if(kind==='infrared'&&Math.abs(lat)<8&&lon>=-60&&lon<-40)c=[245,245,245];
   if(earlier)c=kind==='infrared'?[80,80,80]:[150,125,110];
   pixels[at]=c[0];pixels[at+1]=c[1];pixels[at+2]=c[2];pixels[at+3]=Math.abs(lat)<75+3*Math.cos(lon*Math.PI/36)?255:0;
  }}
@@ -101,7 +104,7 @@ async function routeSources(context,options={}){
  await context.route('https://gibs.earthdata.nasa.gov/**',route=>route.fulfill({status:503,contentType:'text/plain',body:'Daily fallback must not be needed'}));
  return requests;
 }
-async function setup(browser,options={}){const context=await browser.newContext({viewport:safariMobile?{width:375,height:812}:{width:1440,height:900},deviceScaleFactor:safariMobile?2:1,isMobile:safariMobile,hasTouch:safariMobile,timezoneId:'America/Chicago'}),requests=await routeSources(context,options),page=await context.newPage();
+async function setup(browser,options={}){const context=await browser.newContext({viewport:mobile?{width:375,height:812}:{width:1440,height:900},deviceScaleFactor:mobile?2:1,isMobile:mobile,hasTouch:mobile,timezoneId:'America/Chicago'}),requests=await routeSources(context,options),page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource'))errors.push(m.text());});
  await page.clock.setFixedTime(new Date(fixedNow));return {context,page,requests};}
 async function open(page){await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html');await page.waitForFunction(()=>window.__globeQuality&&!__globeQuality.state().loading,null,{timeout:30000});}
@@ -120,6 +123,10 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  const denseGround=await page.evaluate(()=>__globeQuality.sample(0,130,{dense:true})),denseCloud=await page.evaluate(()=>__globeQuality.sample(0,108,{dense:true}));
  check('hourly visible products preserve the same terrain colours beneath darker surface pixels',denseGround.slice(0,3).every((x,i)=>Math.abs(x-warmReference[i])<=1),{denseGround,reference:warmReference});
  check('hourly observed bright cloud remains bright and nearly neutral',denseCloud[0]>180&&Math.max(...denseCloud.slice(0,3))-Math.min(...denseCloud.slice(0,3))<25,denseCloud);
+ const cores=[];for(const lon of [-90,-70,-50])cores.push(await page.evaluate(lon=>__globeQuality.sample(0,lon,{dense:true,day:true,terrain:40}),lon));
+ check('cold storm cores retain observed brightness differences instead of clipping to solid white',cores[1][0]>cores[0][0]+12&&cores[2][0]>cores[1][0]+4,cores);
+ const packedCores=await page.evaluate(()=>{var visible=new Uint8Array(12),infrared=new Uint8Array([200,200,200,255,225,225,225,255,245,245,245,255]);return Array.from(GlobeReplay.pack(visible,infrared,false,new Uint8Array(12)));});
+ check('compact replay uses the same cold-core brightness as the full-detail GPU shader',cores.every((pixel,i)=>Math.abs(pixel[0]-Math.min(255,Math.round((40+215*packedCores[i*4+2]/255)*1.04)))<=2),{cores,packedCores});
  const observedDay=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceDay:true,day:true})),observedNight=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,sourceNight:true,day:true}));
  check('hourly cloud brightness is independent of the separate source-time sunlight boundary',observedDay.every((v,i)=>Math.abs(v-observedNight[i])<=1),{observedDay,observedNight});
  const infraredBasis=await page.evaluate(()=>__globeQuality.sample(0,164,{dense:true,day:true,thermal:true}));
@@ -165,7 +172,7 @@ async function retainedUpgradeChecks(browser){const download=gate(),{context,pag
  check('decode-pending upgrade retains both prior installed textures',decoding.photo.width===1024&&decoding.textures.natural[0]===1024&&decoding.textures.infrared[0]===1024&&decoding.photoMix===1&&!decoding.loading,decoding);
  decode.release();await page.waitForFunction(()=>__globeQuality.state().photo?.width===2048);const sharper=await state(page);
  check('ready sharper image replaces the frame without changing time or fading it out',sharper.photo.time===pending.photo.time&&sharper.photo.width===2048&&sharper.textures.natural[0]===2048&&sharper.textures.infrared[0]===2048&&sharper.photoMix===1&&!sharper.loading,sharper);
- await page.evaluate(()=>__globeQuality.zoom(2.5));await page.waitForFunction(()=>__globeQuality.state().photo?.width===4096,null,{timeout:30000});const zoomed=await state(page);
+ await page.evaluate(()=>__globeQuality.zoom(3.3));await page.waitForFunction(()=>__globeQuality.state().photo?.width===4096,null,{timeout:30000});const zoomed=await state(page);
  check('modest desktop zoom installs actual 4096 textures at the same source time',zoomed.photo.time===pending.photo.time&&zoomed.textures.natural[0]===4096&&zoomed.textures.infrared[0]===4096&&requests.filter(r=>r.width===4096&&r.time===pending.photo.time).length===2,zoomed);
  evidence.push({retained:{pending,decoding,sharper,zoomed},requests});
  }finally{download.release();if(decode)decode.release();await context.close();}}
@@ -179,21 +186,26 @@ async function missingNaturalChecks(browser){const download=gate(),sharper=gate(
  check('same-resolution color decode retains the infrared frame until ready',!decoding.photo.natural&&decoding.photo.time===pending.photo.time&&decoding.photoMix===1&&!decoding.loading,decoding);
  decode.release();await page.waitForFunction(()=>__globeQuality.state().photo?.natural===true);const recovered=await state(page);
  check('ready color companion replaces infrared-only display without changing time or resolution',recovered.photo.width===2048&&recovered.photo.time===pending.photo.time&&recovered.textures.natural[0]===2048&&recovered.textures.infrared[0]===2048&&recovered.photoMix===1&&!recovered.loading,recovered);
- await page.evaluate(()=>__globeQuality.zoom(2.5));let kept;
- if(safariMobile){await page.waitForTimeout(300);kept=await state(page);check('mobile zoom retains the 2048 colour frame within its texture budget',kept.textureWidth===2048&&kept.photo.width===2048&&kept.photo.natural&&!requests.some(r=>r.width===4096),{kept,requests});
-  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));check('Safari mobile keeps the controls within the viewport',layout.scroll<=layout.width,layout);
+ await page.evaluate(()=>__globeQuality.zoom(3.3));let kept;
+ if(mobile){await page.waitForTimeout(300);kept=await state(page);check('mobile zoom retains the 2048 colour frame within its texture budget',kept.textureWidth===2048&&kept.photo.width===2048&&kept.photo.natural&&!requests.some(r=>r.width===4096),{kept,requests});
+  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));check('mobile keeps the controls within the viewport',layout.scroll<=layout.width,layout);
   await page.evaluate(()=>__globeQuality.sample(0,164));await page.locator('.globe-wrapper').screenshot({path:path.join(dump,'safari-mobile-colour-recovered.png')});
  }else{await sharper.entered;sharper.release();await page.waitForFunction(()=>!__globeQuality.state().detailBusy);kept=await state(page);
   check('sharper infrared-only result cannot replace installed natural color',kept.photo.natural&&kept.photo.width===2048&&kept.photo.time===pending.photo.time&&kept.textures.natural[0]===2048&&kept.textures.infrared[0]===2048&&requests.some(r=>r.width===4096&&r.kind==='infrared'&&r.time===pending.photo.time),{kept,requests});}
  evidence.push({missingNatural:{pending,decoding,recovered,kept,fallbackOcean,fallbackCold},requests});
  }finally{download.release();sharper.release();if(decode)decode.release();await context.close();}}
 async function staleUpgradeCheck(browser){const {context,page,requests}=await setup(browser);let decode;
- try{decode=await decodeGate(page,4096,'2026-10-05T03:00:00.000Z');await open(page);await page.evaluate(()=>__globeQuality.zoom(2.5));await page.waitForFunction(()=>window.__qualityDecodePending===4096);const old=await state(page);
+ try{decode=await decodeGate(page,4096,'2026-10-05T03:00:00.000Z');await open(page);await page.evaluate(()=>__globeQuality.zoom(3.3));await page.waitForFunction(()=>window.__qualityDecodePending===4096);const old=await state(page);
  check('old sharper decode begins while its prior frame remains installed',old.photo.width===2048&&old.detailBusy&&old.photo.time==='2026-10-05T03:00:00.000Z',old);
  await page.evaluate(()=>__globeQuality.zoom(4));await page.locator('#globe-hour').fill('540');await page.locator('#globe-hour').dispatchEvent('input');
  await page.waitForFunction(()=>__globeQuality.state().photo?.time==='2026-10-05T00:00:00.000Z');const chosen=await state(page);decode.release();await page.waitForTimeout(300);const after=await state(page);
  check('time edit defeats a late sharper image from the previous timestamp',after.photo.time===chosen.photo.time&&after.photo.time==='2026-10-05T00:00:00.000Z'&&after.photo.width>=chosen.photo.width&&after.photo.width<=2048&&after.textures.natural[0]===after.photo.width&&after.generation>old.generation,{old,chosen,after});
  evidence.push({stale:{old,chosen,after},requests});
  }finally{if(decode)decode.release();await context.close();}}
+async function tallCanvasCheck(browser){const {context,page,requests}=await setup(browser);try{await open(page);const before=await state(page);
+ await page.locator('#globe-container').evaluate(el=>{el.style.height='1000px';el.style.maxHeight='none';});
+ await page.waitForFunction(()=>__globeQuality.state().photo?.width===4096,null,{timeout:30000});const after=await state(page);
+ check('a tall canvas promotes real clouds to 4096 without requiring close zoom',before.photo.width===2048&&after.radius>=3.5&&after.photo.time===before.photo.time&&after.textures.infrared[0]===4096&&requests.some(r=>r.width===4096),{before,after});
+ }finally{await context.close();}}
 let browser;
-(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const startHash=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'js/globe.js'))).digest('hex');try{browser=safariMobile?await webkit.launch({headless:true}):await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:true,args:['--disable-gpu-vsync','--disable-frame-rate-limit']});await gpuChecks(browser);if(!safariMobile)await retainedUpgradeChecks(browser);await missingNaturalChecks(browser);if(!safariMobile)await staleUpgradeCheck(browser);check('quality run has no JavaScript, shader or texture errors',errors.length===0,errors);}finally{fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({fixedNow,startHash,safariMobile,checks,evidence,errors},null,2));if(browser)await browser.close();await new Promise(r=>server.close(r));}const failed=checks.filter(c=>!c.pass);assert.equal(failed.length,0,failed.map(c=>c.name).join('; '));console.log(checks.length+' quality checks passed');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const startHash=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'js/globe.js'))).digest('hex');try{browser=safariMobile?await webkit.launch({headless:true}):await chromium.launch({executablePath:process.env.CHROME_PATH||(process.platform==='darwin'?'/Users/ethan/.local/bin/agent-chrome-for-testing':chromium.executablePath()),headless:true,args:['--disable-gpu-vsync','--disable-frame-rate-limit']});await gpuChecks(browser);if(!mobile)await retainedUpgradeChecks(browser);await missingNaturalChecks(browser);if(!mobile){await staleUpgradeCheck(browser);await tallCanvasCheck(browser);}check('quality run has no JavaScript, shader or texture errors',errors.length===0,errors);}finally{fs.writeFileSync(path.join(dump,'results.json'),JSON.stringify({fixedNow,startHash,safariMobile,mobile,checks,evidence,errors},null,2));if(browser)await browser.close();await new Promise(r=>server.close(r));}const failed=checks.filter(c=>!c.pass);assert.equal(failed.length,0,failed.map(c=>c.name).join('; '));console.log(checks.length+' quality checks passed');})().catch(e=>{console.error(e);process.exitCode=1;});
