@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.172';
+  var GAME_VERSION = 'v28.173';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -5474,9 +5474,9 @@
     var nextScale = terrainDesiredChunkRenderScale();
     if (Math.abs(nextScale - TERRAIN_CHUNK_RENDER_SCALE) < 0.01) return;
     TERRAIN_CHUNK_RENDER_SCALE = nextScale;
-    terrainChunkCache = {};
-    terrainChunkCount = 0;
-    terrainChunkUseTick = 0;
+    // Keep the previous bitmaps visible until each chunk is refreshed at the
+    // new scale. Clearing the whole view made zoom/resize rebuild dozens of
+    // chunks synchronously during play.
     if (introPhase !== 'done') terrainWarmupFrames = Math.max(terrainWarmupFrames || 0, 2);
     else terrainChunkRebuildBoostFrames = Math.max(terrainChunkRebuildBoostFrames || 0, 3);
   }
@@ -6896,6 +6896,31 @@
   // ---- World grid <-> RLE bytes ----
   // Palette: solid cells key by tile.type; empty cells key by
   // 'air:<clearedKind>' ('air:' = never-solid / worldgen cave).
+  // Snapshot which rows can have cleared-air labels. Include inherited and
+  // non-enumerable properties, just like the original dictionary lookup.
+  function saveClearedRowFlags() {
+    var flags = Object.create(null), object = terrainClearedKinds;
+    if (!object || (typeof object !== 'object' && typeof object !== 'function')) return null;
+    while (object) {
+      var names = Object.getOwnPropertyNames(object);
+      for (var i = 0; i < names.length; i++) {
+        var key = names[i], colon = key.indexOf(':');
+        if (colon < 1) continue;
+        var r = +key.slice(0, colon), c = +key.slice(colon + 1);
+        if (r < 0 || r >= TOTAL_ROWS || c < 0 || c >= WORLD_COLS ||
+            r % 1 !== 0 || c % 1 !== 0 || r + ':' + c !== key) continue;
+        var descriptor = Object.getOwnPropertyDescriptor(object, key);
+        // Getters or coercible objects could change another label mid-save.
+        // Keep the original per-cell lookup order for those unusual maps.
+        if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+            (descriptor.value !== null && (typeof descriptor.value === 'object' || typeof descriptor.value === 'function'))) return null;
+        flags[r] = true;
+      }
+      object = Object.getPrototypeOf(object);
+    }
+    return flags;
+  }
+
   function saveSerializeWorld() {
     var pal = [];
     var palMap = {};
@@ -6916,15 +6941,21 @@
       bytes.push(n);
       runLen = 0;
     }
+    var clearedRows = saveClearedRowFlags(), emptyAirIdx;
     var flat = 0;
     for (var r = 0; r < TOTAL_ROWS; r++) {
       var row = world[r];
+      var clearedRow = !clearedRows || clearedRows[r];
       for (var c = 0; c < WORLD_COLS; c++, flat++) {
         var cell = row ? row[c] : null;
         var idx;
         if (!cell) {
-          var kind = terrainClearedKinds[r + ':' + c];
-          idx = palIdx(kind ? ('air:' + kind) : 'air:');
+          var kind = clearedRow ? terrainClearedKinds[r + ':' + c] : null;
+          if (kind) idx = palIdx('air:' + kind);
+          else {
+            if (emptyAirIdx === undefined) emptyAirIdx = palIdx('air:');
+            idx = emptyAirIdx;
+          }
         } else {
           // Typed jello rides the palette as 'jello#<jellyType>' (v24.154) so a
           // patch's colour survives save/load; plain 'jello' = legacy slime.
@@ -34201,11 +34232,7 @@
   function getTerrainChunk(chunkR, chunkC) {
     var key = terrainChunkKey(chunkR, chunkC);
     var chunk = terrainChunkCache[key];
-    if (chunk && Math.abs((chunk.scale || 1) - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) {
-      delete terrainChunkCache[key];
-      terrainChunkCount--;
-      chunk = null;
-    }
+    var needsScale = chunk && Math.abs((chunk.scale || 1) - TERRAIN_CHUNK_RENDER_SCALE) > 0.01;
     if (!chunk) {
       var c = document.createElement('canvas');
       var logicalSize = TERRAIN_CHUNK_PX + TERRAIN_CHUNK_PAD * 2;
@@ -34222,8 +34249,16 @@
       terrainChunkCount++;
     }
     chunk.lastUsed = ++terrainChunkUseTick;
-    var rebuildsLimit = (terrainWarmupFrames > 0 || terrainChunkRebuildBoostFrames > 0) ? 80 : TERRAIN_CHUNK_REBUILDS_PER_FRAME;
-    if (chunk.dirty && terrainChunkRebuildsThisFrame < rebuildsLimit) {
+    // Loading can prepare a complete view under its cover. Live zoom, resize,
+    // mining and slime activation keep the ordinary bounded rebuild rate.
+    var rebuildsLimit = introPhase !== 'done' && terrainWarmupFrames > 0 ? 80 : TERRAIN_CHUNK_REBUILDS_PER_FRAME;
+    if ((chunk.dirty || needsScale) && terrainChunkRebuildsThisFrame < rebuildsLimit) {
+      if (needsScale) {
+        var logicalSize = TERRAIN_CHUNK_PX + TERRAIN_CHUNK_PAD * 2;
+        chunk.canvas.width = Math.ceil(logicalSize * TERRAIN_CHUNK_RENDER_SCALE);
+        chunk.canvas.height = Math.ceil(logicalSize * TERRAIN_CHUNK_RENDER_SCALE);
+        chunk.scale = TERRAIN_CHUNK_RENDER_SCALE;
+      }
       renderTerrainChunk(chunkR, chunkC, chunk);
       terrainChunkRebuildsThisFrame++;
     }
@@ -34350,7 +34385,7 @@
           drawTerrainRun(cr, runStart, runCount); runCount = 0;
         }
         var chunk = getTerrainChunk(cr, cc);
-        if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
+        if (!chunk.ready || chunk.dirty || Math.abs((chunk.scale || 1) - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) terrainChunkPendingThisFrame++;
         if (!chunk.ready) {
           drawTerrainRun(cr, runStart, runCount); runCount = 0;
           continue;
@@ -34364,6 +34399,9 @@
           continue;
         }
         if (!runCount) runStart = cc;
+        if (runCount && terrainBatchRun[0].scale !== chunk.scale) {
+          drawTerrainRun(cr, runStart, runCount); runCount = 0; runStart = cc;
+        }
         terrainBatchRun[runCount++] = chunk;
       }
       drawTerrainRun(cr, runStart, runCount);
@@ -46778,15 +46816,35 @@
     // Compare actual coverage, including the backing of empty edge cells.
     // This catches mining, bombs, save loads and direct dev edits without
     // relying on every terrain writer calling a particular invalidation hook.
+    // Read a one-cell halo once. Empty sky used to inspect all eight
+    // neighbours through dominantVoidBackingKind on every camera frame.
+    // The mask needs only whether any neighbour is dirt or stone, so these
+    // classifications preserve that coverage without repeating tile reads.
+    // Keep the scan live: mining, save loads and direct edits still apply
+    // immediately, including changes just outside the cached rectangle.
+    var stride = cols + 2, haloSize = stride * (rows + 2);
+    if (!m.kinds || m.kinds.length !== haloSize) m.kinds = new Uint8Array(haloSize);
+    var kinds = m.kinds, at = 0;
+    for (var r = r0 - 1; r <= r1 + 1; r++) {
+      for (var c = c0 - 1; c <= c1 + 1; c++) {
+        var t = tileAt(r, c);
+        kinds[at++] = t === null ? 1 : t != null && t !== 'wall' ?
+          (t.type === 'dirt' || t.type === 'stone' ? 3 : 2) : 0;
+      }
+    }
     var i = 0, hasVoids = false;
     for (var r = r0; r <= r1; r++) {
+      var at = (r - r0 + 1) * stride + 1;
       for (var c = c0; c <= c1; c++) {
-        var t = tileAt(r, c);
-        var filled = t != null && t !== 'wall' ? 1 :
-          t === null && dominantVoidBackingKind(r, c) ? 2 : 0;
+        var kind = kinds[at];
+        var filled = kind >= 2 ? 1 : kind === 1 &&
+          (kinds[at - stride - 1] === 3 || kinds[at - stride] === 3 ||
+           kinds[at - stride + 1] === 3 || kinds[at - 1] === 3 ||
+           kinds[at + 1] === 3 || kinds[at + stride - 1] === 3 ||
+           kinds[at + stride] === 3 || kinds[at + stride + 1] === 3) ? 2 : 0;
         if (filled === 2) hasVoids = true;
         if (m.cells[i] !== filled) { m.cells[i] = filled; changed = true; }
-        i++;
+        i++; at++;
       }
     }
     var x = c0 * TILE, y = r0 * TILE;
@@ -78093,20 +78151,13 @@
           function (v) { SMOKE_RENDER_SCALE_MOBILE = v; resize(); },
           0.4, 1.0, undefined);
       }
-      // TERRAIN_RES_FACTOR also needs the terrain chunk cache cleared so the
-      // block bitmaps re-bake at the new fraction (terrainChunkCache is a
-      // plain var object — reassigning to {} clears it).
+      // resize synchronizes the terrain bitmap scale. Existing bitmaps stay
+      // visible while the bounded chunk refresh prepares the sharper view.
       if (typeof TERRAIN_RES_FACTOR !== 'undefined') {
         gmRegisterLever('res.TERRAIN_RES_FACTOR', 'res', 'TERRAIN_RES_FACTOR',
           function () { return TERRAIN_RES_FACTOR; },
           function (v) {
             TERRAIN_RES_FACTOR = v; resize();
-            // FULL terrain-cache invalidation — mirrors syncTerrainChunkRenderScale.
-            // A bare `terrainChunkCache = {}` leaves terrainChunkCount /
-            // terrainChunkUseTick stale, desyncing the LRU bookkeeping so the
-            // dirt can stop re-caching (looks like it "deleted the terrain").
-            terrainChunkCache = {}; terrainChunkCount = 0; terrainChunkUseTick = 0;
-            terrainChunkRebuildBoostFrames = Math.max(terrainChunkRebuildBoostFrames || 0, 3);
           },
           0.5, 1.0, undefined);
       }

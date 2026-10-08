@@ -42,15 +42,35 @@
     // Compare actual coverage, including the backing of empty edge cells.
     // This catches mining, bombs, save loads and direct dev edits without
     // relying on every terrain writer calling a particular invalidation hook.
+    // Read a one-cell halo once. Empty sky used to inspect all eight
+    // neighbours through dominantVoidBackingKind on every camera frame.
+    // The mask needs only whether any neighbour is dirt or stone, so these
+    // classifications preserve that coverage without repeating tile reads.
+    // Keep the scan live: mining, save loads and direct edits still apply
+    // immediately, including changes just outside the cached rectangle.
+    var stride = cols + 2, haloSize = stride * (rows + 2);
+    if (!m.kinds || m.kinds.length !== haloSize) m.kinds = new Uint8Array(haloSize);
+    var kinds = m.kinds, at = 0;
+    for (var r = r0 - 1; r <= r1 + 1; r++) {
+      for (var c = c0 - 1; c <= c1 + 1; c++) {
+        var t = tileAt(r, c);
+        kinds[at++] = t === null ? 1 : t != null && t !== 'wall' ?
+          (t.type === 'dirt' || t.type === 'stone' ? 3 : 2) : 0;
+      }
+    }
     var i = 0, hasVoids = false;
     for (var r = r0; r <= r1; r++) {
+      var at = (r - r0 + 1) * stride + 1;
       for (var c = c0; c <= c1; c++) {
-        var t = tileAt(r, c);
-        var filled = t != null && t !== 'wall' ? 1 :
-          t === null && dominantVoidBackingKind(r, c) ? 2 : 0;
+        var kind = kinds[at];
+        var filled = kind >= 2 ? 1 : kind === 1 &&
+          (kinds[at - stride - 1] === 3 || kinds[at - stride] === 3 ||
+           kinds[at - stride + 1] === 3 || kinds[at - 1] === 3 ||
+           kinds[at + 1] === 3 || kinds[at + stride - 1] === 3 ||
+           kinds[at + stride] === 3 || kinds[at + stride + 1] === 3) ? 2 : 0;
         if (filled === 2) hasVoids = true;
         if (m.cells[i] !== filled) { m.cells[i] = filled; changed = true; }
-        i++;
+        i++; at++;
       }
     }
     var x = c0 * TILE, y = r0 * TILE;

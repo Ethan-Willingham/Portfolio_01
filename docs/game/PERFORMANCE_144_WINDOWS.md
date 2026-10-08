@@ -1,5 +1,8 @@
 # 144 Hz Windows performance investigation
 
+The full-resolution v28.173 town follow-up is documented in
+[Town flight hitch investigation](PERFORMANCE_TOWN_V28_173.md).
+
 Delivered in v28.172. On the owner's computer, the matched eight-resident route
 improved from 86.8 to 121.1 callbacks per second, with average game CPU time
 falling from 10.13 to 5.28 ms. The sustained 144 Hz target remains unmet. The

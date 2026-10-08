@@ -1,6 +1,7 @@
 // Uneven control gestures through the real keyboard handler. No pose, velocity,
 // camera, fuel, collision, or world writes during the route.
 export async function humanInputRoute(send,seconds,kind='surface'){
+  if(kind==='town')return townFlightRoute(send,seconds);
   if(kind==='flyover')return flyoverRoute(send,seconds);
   const gestures=kind==='slimes'?[
     [.8,['ArrowRight']],[.12,['ArrowRight','ArrowUp']],[.55,['ArrowRight']],
@@ -47,6 +48,30 @@ export async function humanInputRoute(send,seconds,kind='surface'){
       }
       await set(next);log.push({atMs:performance.now()-started,keys:[...next]});
       await new Promise(r=>setTimeout(r,Math.max(0,Math.min(duration*1000,seconds*1000-(performance.now()-started)))));
+    }
+  }finally{await set(new Set());}
+  return log;
+}
+
+// Follow a low flight corridor with real keys. Abort if fuel or hull runs out
+// so a death screen or stranded rig cannot inflate the measured callback rate.
+async function townFlightRoute(send,seconds){
+  const virtual={ArrowLeft:37,ArrowRight:39,ArrowUp:38};
+  const started=performance.now(),log=[];let held=new Set(),heading='ArrowRight';
+  async function set(next){
+    for(const key of held)if(!next.has(key))await send('Input.dispatchKeyEvent',{type:'keyUp',key,code:key,windowsVirtualKeyCode:virtual[key]});
+    for(const key of next)if(!held.has(key))await send('Input.dispatchKeyEvent',{type:'rawKeyDown',key,code:key,windowsVirtualKeyCode:virtual[key]});
+    held=next;
+  }
+  try{
+    while(performance.now()-started<seconds*1000){
+      const s=(await send('Runtime.evaluate',{expression:'__audit.flyState()',returnByValue:true})).result.value;
+      if(!(s.hull>0&&s.fuel>0))throw Error('Town flight stopped: hull or fuel exhausted');
+      if(s.x>s.right)heading='ArrowLeft';else if(s.x<s.left)heading='ArrowRight';
+      const keys=[heading];if(s.altitude-s.vy*.3<95)keys.push('ArrowUp');
+      await set(new Set(keys));
+      log.push({atMs:performance.now()-started,keys,x:s.x,altitude:s.altitude});
+      await new Promise(r=>setTimeout(r,Math.max(0,Math.min(80,seconds*1000-(performance.now()-started)))));
     }
   }finally{await set(new Set());}
   return log;

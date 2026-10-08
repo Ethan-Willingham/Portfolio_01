@@ -485,20 +485,13 @@
           function (v) { SMOKE_RENDER_SCALE_MOBILE = v; resize(); },
           0.4, 1.0, undefined);
       }
-      // TERRAIN_RES_FACTOR also needs the terrain chunk cache cleared so the
-      // block bitmaps re-bake at the new fraction (terrainChunkCache is a
-      // plain var object — reassigning to {} clears it).
+      // resize synchronizes the terrain bitmap scale. Existing bitmaps stay
+      // visible while the bounded chunk refresh prepares the sharper view.
       if (typeof TERRAIN_RES_FACTOR !== 'undefined') {
         gmRegisterLever('res.TERRAIN_RES_FACTOR', 'res', 'TERRAIN_RES_FACTOR',
           function () { return TERRAIN_RES_FACTOR; },
           function (v) {
             TERRAIN_RES_FACTOR = v; resize();
-            // FULL terrain-cache invalidation — mirrors syncTerrainChunkRenderScale.
-            // A bare `terrainChunkCache = {}` leaves terrainChunkCount /
-            // terrainChunkUseTick stale, desyncing the LRU bookkeeping so the
-            // dirt can stop re-caching (looks like it "deleted the terrain").
-            terrainChunkCache = {}; terrainChunkCount = 0; terrainChunkUseTick = 0;
-            terrainChunkRebuildBoostFrames = Math.max(terrainChunkRebuildBoostFrames || 0, 3);
           },
           0.5, 1.0, undefined);
       }

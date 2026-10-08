@@ -71,6 +71,31 @@
   // ---- World grid <-> RLE bytes ----
   // Palette: solid cells key by tile.type; empty cells key by
   // 'air:<clearedKind>' ('air:' = never-solid / worldgen cave).
+  // Snapshot which rows can have cleared-air labels. Include inherited and
+  // non-enumerable properties, just like the original dictionary lookup.
+  function saveClearedRowFlags() {
+    var flags = Object.create(null), object = terrainClearedKinds;
+    if (!object || (typeof object !== 'object' && typeof object !== 'function')) return null;
+    while (object) {
+      var names = Object.getOwnPropertyNames(object);
+      for (var i = 0; i < names.length; i++) {
+        var key = names[i], colon = key.indexOf(':');
+        if (colon < 1) continue;
+        var r = +key.slice(0, colon), c = +key.slice(colon + 1);
+        if (r < 0 || r >= TOTAL_ROWS || c < 0 || c >= WORLD_COLS ||
+            r % 1 !== 0 || c % 1 !== 0 || r + ':' + c !== key) continue;
+        var descriptor = Object.getOwnPropertyDescriptor(object, key);
+        // Getters or coercible objects could change another label mid-save.
+        // Keep the original per-cell lookup order for those unusual maps.
+        if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+            (descriptor.value !== null && (typeof descriptor.value === 'object' || typeof descriptor.value === 'function'))) return null;
+        flags[r] = true;
+      }
+      object = Object.getPrototypeOf(object);
+    }
+    return flags;
+  }
+
   function saveSerializeWorld() {
     var pal = [];
     var palMap = {};
@@ -91,15 +116,21 @@
       bytes.push(n);
       runLen = 0;
     }
+    var clearedRows = saveClearedRowFlags(), emptyAirIdx;
     var flat = 0;
     for (var r = 0; r < TOTAL_ROWS; r++) {
       var row = world[r];
+      var clearedRow = !clearedRows || clearedRows[r];
       for (var c = 0; c < WORLD_COLS; c++, flat++) {
         var cell = row ? row[c] : null;
         var idx;
         if (!cell) {
-          var kind = terrainClearedKinds[r + ':' + c];
-          idx = palIdx(kind ? ('air:' + kind) : 'air:');
+          var kind = clearedRow ? terrainClearedKinds[r + ':' + c] : null;
+          if (kind) idx = palIdx('air:' + kind);
+          else {
+            if (emptyAirIdx === undefined) emptyAirIdx = palIdx('air:');
+            idx = emptyAirIdx;
+          }
         } else {
           // Typed jello rides the palette as 'jello#<jellyType>' (v24.154) so a
           // patch's colour survives save/load; plain 'jello' = legacy slime.

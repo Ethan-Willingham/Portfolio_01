@@ -742,11 +742,7 @@
   function getTerrainChunk(chunkR, chunkC) {
     var key = terrainChunkKey(chunkR, chunkC);
     var chunk = terrainChunkCache[key];
-    if (chunk && Math.abs((chunk.scale || 1) - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) {
-      delete terrainChunkCache[key];
-      terrainChunkCount--;
-      chunk = null;
-    }
+    var needsScale = chunk && Math.abs((chunk.scale || 1) - TERRAIN_CHUNK_RENDER_SCALE) > 0.01;
     if (!chunk) {
       var c = document.createElement('canvas');
       var logicalSize = TERRAIN_CHUNK_PX + TERRAIN_CHUNK_PAD * 2;
@@ -763,8 +759,16 @@
       terrainChunkCount++;
     }
     chunk.lastUsed = ++terrainChunkUseTick;
-    var rebuildsLimit = (terrainWarmupFrames > 0 || terrainChunkRebuildBoostFrames > 0) ? 80 : TERRAIN_CHUNK_REBUILDS_PER_FRAME;
-    if (chunk.dirty && terrainChunkRebuildsThisFrame < rebuildsLimit) {
+    // Loading can prepare a complete view under its cover. Live zoom, resize,
+    // mining and slime activation keep the ordinary bounded rebuild rate.
+    var rebuildsLimit = introPhase !== 'done' && terrainWarmupFrames > 0 ? 80 : TERRAIN_CHUNK_REBUILDS_PER_FRAME;
+    if ((chunk.dirty || needsScale) && terrainChunkRebuildsThisFrame < rebuildsLimit) {
+      if (needsScale) {
+        var logicalSize = TERRAIN_CHUNK_PX + TERRAIN_CHUNK_PAD * 2;
+        chunk.canvas.width = Math.ceil(logicalSize * TERRAIN_CHUNK_RENDER_SCALE);
+        chunk.canvas.height = Math.ceil(logicalSize * TERRAIN_CHUNK_RENDER_SCALE);
+        chunk.scale = TERRAIN_CHUNK_RENDER_SCALE;
+      }
       renderTerrainChunk(chunkR, chunkC, chunk);
       terrainChunkRebuildsThisFrame++;
     }
@@ -891,7 +895,7 @@
           drawTerrainRun(cr, runStart, runCount); runCount = 0;
         }
         var chunk = getTerrainChunk(cr, cc);
-        if (!chunk.ready || chunk.dirty) terrainChunkPendingThisFrame++;
+        if (!chunk.ready || chunk.dirty || Math.abs((chunk.scale || 1) - TERRAIN_CHUNK_RENDER_SCALE) > 0.01) terrainChunkPendingThisFrame++;
         if (!chunk.ready) {
           drawTerrainRun(cr, runStart, runCount); runCount = 0;
           continue;
@@ -905,6 +909,9 @@
           continue;
         }
         if (!runCount) runStart = cc;
+        if (runCount && terrainBatchRun[0].scale !== chunk.scale) {
+          drawTerrainRun(cr, runStart, runCount); runCount = 0; runStart = cc;
+        }
         terrainBatchRun[runCount++] = chunk;
       }
       drawTerrainRun(cr, runStart, runCount);

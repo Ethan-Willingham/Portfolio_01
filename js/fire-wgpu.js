@@ -357,7 +357,7 @@ fn light(g:Gas)->vec3f {
       return chamberProfile[chamberProfile.length-1][0];
     }
     var h = Math.round(w * height / worldWidth), n = w * h;
-    var chamber = null, chamberCells = new Uint8Array(n);
+    var chamber = null, chamberCells = new Uint8Array(n), chamberMask = null;
     var chamberRows = new Float64Array(h);
     for (var chamberRow=0;chamberRow<h;chamberRow++) chamberRows[chamberRow]=chamberInset(top+(chamberRow+.5)*height/h);
     var sim = { available: false, failed: false, width: w, height: h, bufferBytes: n*148+(w+h)*32+64+CAP*564+2048, steps: 0, submissions: 0,
@@ -394,7 +394,7 @@ fn light(g:Gas)->vec3f {
     sim.bounds = {x:left,y:top,w:worldWidth,h:height};
     sim.setChamber = function(points) {
       if(!points || points===chamber)return;
-      chamber=points;signature='';chamberCells.fill(1);
+      chamber=points;signature='';chamberMask=null;chamberCells.fill(1);
       // Scan-line intervals support the concave copper ceiling: high rows
       // have two open side pockets with solid copper between them.
       for(var y=0;y<h;y++){
@@ -494,12 +494,18 @@ fn light(g:Gas)->vec3f {
         radiationViews[b]+=view;radiationViews[other]+=view;
         if(!separates(a.vertices,c.vertices)&&!separates(c.vertices,a.vertices)){contacts[b*2+Math.floor(other/24)]|=1<<(other%24);contacts[other*2+Math.floor(b/24)]|=1<<(b%24);}
       }
-      for(var i=0;i<n;i++){
-        var x=i%w,y=(i/w)|0,px=left+(x+.5)*worldWidth/w,inset=chamberRows[y];
-        var outside=chamber ? chamberCells[i]!==0 : px<inset||px>worldWidth-inset;
-        masks[i*2]=(outside||((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(left+x*worldWidth/w)%18<7)) ? -2 : -1;
-        masks[i*2+1]=-1;
+      // Chamber walls and vents only change through setChamber. Fuel still
+      // rasterizes from its live hull on every changed geometry signature.
+      if(!chamberMask){
+        chamberMask=new Int32Array(n*2);
+        for(var i=0;i<n;i++){
+          var x=i%w,y=(i/w)|0,px=left+(x+.5)*worldWidth/w,inset=chamberRows[y];
+          var outside=chamber ? chamberCells[i]!==0 : px<inset||px>worldWidth-inset;
+          chamberMask[i*2]=(outside||((x===0||x===w-1)&&(top+y*height/h<105||top+y*height/h>134.4))||(y===0&&(x<w*0.35||x>w*0.75))||(y===h-1&&(left+x*worldWidth/w)%18<7)) ? -2 : -1;
+          chamberMask[i*2+1]=-1;
+        }
       }
+      masks.set(chamberMask);
       edgeData.fill(0);
       for(var b=0;b<CAP;b++) {
         var body=slots[b];if(!body||body.held||!body.vertices)continue;var hull=body.vertices;
@@ -520,11 +526,15 @@ fn light(g:Gas)->vec3f {
       // A multi-source breadth-first search maps covered cells to their
       // nearest fluid cell in O(grid size), even after a fast drag or teleport.
       // The GPU gathers linked donor lists without floating point atomics.
-      var head=0,tail=0;owners.fill(-1);remapData.fill(0);remapLinks.fill(0);
-      for(var i=0;i<n;i++)if(masks[i*2]===-1){
-        owners[i]=i;frontier[tail++]=i;remapData[i*2+1]=geometryFresh || previousMasks[i*2]===-1 ? 1 : 0;
+      var head=0,tail=0,displaced=false;owners.fill(-1);remapData.fill(0);remapLinks.fill(0);
+      for(var i=0;i<n;i++){
+        if(masks[i*2]===-1){
+          owners[i]=i;frontier[tail++]=i;remapData[i*2+1]=geometryFresh || previousMasks[i*2]===-1 ? 1 : 0;
+        }else if(previousMasks[i*2]===-1)displaced=true;
       }
-      if(!geometryFresh){
+      // With no newly covered fluid cells there are no displaced gas donors.
+      // The same identity/uncover remap is uploaded without a grid-wide BFS.
+      if(!geometryFresh&&displaced){
         while(head<tail){
           var i=frontier[head++],x=i%w;
           var a=x>0?i-1:-1,b=x<w-1?i+1:-1,c=i>=w?i-w:-1,d=i<n-w?i+w:-1;
@@ -542,8 +552,10 @@ fn light(g:Gas)->vec3f {
       var per=Array.from({length:CAP},function(){return [];});
       for(var y=1;y<h-1;y++)for(var x=1;x<w-1;x++){
         var i=y*w+x;if(masks[i*2]!==-1)continue;
-        var owner=-1,adj=[i-w,i-1,i+1,i+w];
-        for(var j=0;j<4;j++){var b=masks[adj[j]*2];if(b>=0){owner=b;break;}}
+        var owner=masks[(i-w)*2];
+        if(owner<0)owner=masks[(i-1)*2];
+        if(owner<0)owner=masks[(i+1)*2];
+        if(owner<0)owner=masks[(i+w)*2];
         if(owner>=0){masks[i*2+1]=owner;per[owner].push(i);}
       }
       var cursor=0;for(var b=0;b<CAP;b++){surfaceStart[b]=cursor;surfaceCount[b]=per[b].length;lists.set(per[b],cursor);cursor+=per[b].length;}

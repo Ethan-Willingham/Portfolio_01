@@ -654,9 +654,9 @@
     var nextScale = terrainDesiredChunkRenderScale();
     if (Math.abs(nextScale - TERRAIN_CHUNK_RENDER_SCALE) < 0.01) return;
     TERRAIN_CHUNK_RENDER_SCALE = nextScale;
-    terrainChunkCache = {};
-    terrainChunkCount = 0;
-    terrainChunkUseTick = 0;
+    // Keep the previous bitmaps visible until each chunk is refreshed at the
+    // new scale. Clearing the whole view made zoom/resize rebuild dozens of
+    // chunks synchronously during play.
     if (introPhase !== 'done') terrainWarmupFrames = Math.max(terrainWarmupFrames || 0, 2);
     else terrainChunkRebuildBoostFrames = Math.max(terrainChunkRebuildBoostFrames || 0, 3);
   }

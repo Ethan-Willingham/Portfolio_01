@@ -8,6 +8,8 @@
 // callback interval is that frame's cost; GANESH=1 forces Chrome's Ganesh raster
 // backend, the one in the Windows traces. TRACE_CATEGORIES overrides TRACE=1's.
 // PROFILE=0 omits CPU sampling when measuring normal frame delivery.
+// BOOT_SECONDS=90 permits the game's 60-second GPU startup gates; failure saves state.
+// FLIGHT_ROUTE=town uses the fuel/hull-checked corridor with town-flight-fixture.js.
 // QUERY=snow=1 EXHAUST=copperhead SCENES=town measures a normal snow world
 // with the chosen exhaust; the default query retains the dev-mode fixtures.
 // ROOT can point at a second checkout; DUMP must stay outside the checkout.
@@ -16,7 +18,7 @@
 // LIQUID_REF also selects the matching GPU engine for a coherent historical comparison.
 // LIQUID_SOURCE=/absolute/path serves a private GPU variant without modifying the checkout.
 // LIQUID_SOURCE and LIQUID_REF are mutually exclusive; captures record exact source hashes.
-// SMOKE_SOURCE and SMOKE_REF provide the same controls for the smoke GPU engine.
+// SMOKE_SOURCE/SMOKE_REF and FIRE_SOURCE/FIRE_REF select the other GPU engines.
 // CAPTURE=0 skips screenshots on a locked host; MIN_FPS=1 permits profiling severe slowdowns.
 // SCENES=soft-new,soft-reference,soft-prior compares the playground with SOFT_CASE=pile.
 // SIM_HZ fixes simulation dt for CPU workload comparisons, never a display-FPS measurement.
@@ -57,11 +59,19 @@ assert(!process.env.SMOKE_SOURCE||path.isAbsolute(process.env.SMOKE_SOURCE),'SMO
 const smokeSourcePath=smokeRef?null:process.env.SMOKE_SOURCE||path.join(root,'js/smoke-wgpu.js');
 const smokeSource=smokeRef?execFileSync('git',['show',smokeRef+':js/smoke-wgpu.js'],{cwd:root,maxBuffer:4*1024*1024}):fs.readFileSync(smokeSourcePath);
 const smokeSHA256=createHash('sha256').update(smokeSource).digest('hex');
+const fireRef=process.env.FIRE_REF||null;
+assert(!(fireRef&&process.env.FIRE_SOURCE),'FIRE_REF and FIRE_SOURCE are mutually exclusive');
+assert(!process.env.FIRE_SOURCE||path.isAbsolute(process.env.FIRE_SOURCE),'FIRE_SOURCE must be an absolute path');
+const fireSourcePath=fireRef?null:process.env.FIRE_SOURCE||path.join(root,'js/fire-wgpu.js');
+const fireSource=fireRef?execFileSync('git',['show',fireRef+':js/fire-wgpu.js'],{cwd:root,maxBuffer:4*1024*1024}):fs.readFileSync(fireSourcePath);
+const fireSHA256=createHash('sha256').update(fireSource).digest('hex');
 const bundleSource=bundleRef?execFileSync('git',['show',bundleRef+':js/sluice.js'],{cwd:root,maxBuffer:16*1024*1024}):fs.readFileSync(bundleSourcePath);
 const out=process.env.DUMP || fs.mkdtempSync(path.join(os.tmpdir(),'sluice-audit-'));
 assert(!path.resolve(out).startsWith(root+path.sep)); fs.mkdirSync(out,{recursive:true});
 const port=Number(process.env.PORT || 8840), debugPort=port+1000;
 const seconds=Number(process.env.SECONDS || 8), gpu=process.env.GPU==='1';
+const bootSeconds=Number(process.env.BOOT_SECONDS||90);
+assert(Number.isFinite(bootSeconds)&&bootSeconds>0,'BOOT_SECONDS must be positive');
 const residentCount=Number(process.env.RESIDENTS||8);
 assert(Number.isInteger(residentCount)&&residentCount>=1&&residentCount<=32,'RESIDENTS must be 1 to 32');
 const timeline=process.env.TIMELINE==='1', recovery=Number(process.env.RECOVERY||0);
@@ -258,7 +268,7 @@ addEventListener('DOMContentLoaded',()=>{document.body.classList.add('gm-fs');do
 })();
 `;
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.m4a':'audio/mp4','.svg':'image/svg+xml'};
-const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}let data=fs.readFileSync(file);if(pathname==='/js/sluice.js'){let src=bundleSource.toString(),end=src.lastIndexOf('})();');data=Buffer.from(src.slice(0,end)+probe+src.slice(end));}if(pathname==='/js/liquid-wgpu.js'&&liquidSource)data=liquidSource;if(pathname==='/js/smoke-wgpu.js')data=smokeSource;if(pathname==='/js/audio.js')data=Buffer.from(data.toString().replace('  // ===== public API',audioProbe+'\n  // ===== public API'));res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch(e){res.writeHead(500);res.end(String(e));}});
+const server=http.createServer((req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}let data=fs.readFileSync(file);if(pathname==='/js/sluice.js'){let src=bundleSource.toString(),end=src.lastIndexOf('})();');data=Buffer.from(src.slice(0,end)+probe+src.slice(end));}if(pathname==='/js/liquid-wgpu.js'&&liquidSource)data=liquidSource;if(pathname==='/js/smoke-wgpu.js')data=smokeSource;if(pathname==='/js/fire-wgpu.js')data=fireSource;if(pathname==='/js/audio.js')data=Buffer.from(data.toString().replace('  // ===== public API',audioProbe+'\n  // ===== public API'));res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);}catch(e){res.writeHead(500);res.end(String(e));}});
 let chrome,ws,seq=0;const pending=new Map(),errors=[];
 let traceStream=null,timelineArtifact=null;
 async function browserCall(method,params={}){const endpoint=await(await fetch('http://127.0.0.1:'+debugPort+'/json/version')).json();return new Promise((resolve,reject)=>{const socket=new WebSocket(endpoint.webSocketDebuggerUrl);socket.onopen=()=>socket.send(JSON.stringify({id:1,method,params}));socket.onerror=reject;socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id===1){socket.close();m.error?reject(Error(JSON.stringify(m.error))):resolve(m.result);}};});}
@@ -348,7 +358,7 @@ try{
     windowInfo=await browserCall('Browser.getWindowBounds',{windowId});
   }
   fs.writeFileSync(path.join(out,'display.json'),JSON.stringify({windowInfo,requestedRefreshHz:process.env.REFRESH_HZ ? Number(process.env.REFRESH_HZ) : null,screen:await ev('({x:screenX,y:screenY,width:screen.width,height:screen.height,availLeft:screen.availLeft,availTop:screen.availTop,dpr:devicePixelRatio})')},null,2));
-  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,bundleSourcePath,liquidRef,liquidSourcePath,liquidSHA256,smokeRef,smokeSourcePath,smokeSHA256,simulationHz:Number(process.env.SIM_HZ)||null,softCase:process.env.SOFT_CASE||'pile',query:process.env.QUERY??null,runs,timeModes:runs.map(r=>({scene:r.id,timeMode:r.timeMode,scheduler:r.scheduler})),exhaust:process.env.EXHAUST||null,seconds,timeline,recoverySeconds:recovery,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',residentCount,savedGraphics:process.env.SAVED||null,warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling,novsync:process.env.NOVSYNC==='1',ganesh:process.env.GANESH==='1'},null,2));
+  fs.writeFileSync(path.join(out,'environment.json'),JSON.stringify({browser:await send('Browser.getVersion'),cpu:os.cpus()[0].model,logicalCores:os.cpus().length,platform:os.platform(),root,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),bundleRef,bundleSourcePath,liquidRef,liquidSourcePath,liquidSHA256,smokeRef,smokeSourcePath,smokeSHA256,fireRef,fireSourcePath,fireSHA256,simulationHz:Number(process.env.SIM_HZ)||null,softCase:process.env.SOFT_CASE||'pile',flightRoute:process.env.FLIGHT_ROUTE||'flyover',query:process.env.QUERY??null,bootSeconds,runs,timeModes:runs.map(r=>({scene:r.id,timeMode:r.timeMode,scheduler:r.scheduler})),exhaust:process.env.EXHAUST||null,seconds,timeline,recoverySeconds:recovery,scenes,viewport,headed,electron,canvasOptions,clockRunning:process.env.CLOCK==='1',initialTimeOfDay:process.env.TOD?Number(process.env.TOD):null,overlay:process.env.OVERLAY==='1',residentCount,savedGraphics:process.env.SAVED||null,warmupSeconds:Number(process.env.WARMUP||3),experiment:process.env.EXPERIMENT||null,isolate:process.env.ISOLATE||null,preset:process.env.PRESET||'default',disabled:process.env.DISABLE||null,audio:process.env.AUDIO==='1',gpuTiming:gpu,cpuSampling,novsync:process.env.NOVSYNC==='1',ganesh:process.env.GANESH==='1'},null,2));
   await send('Emulation.setDeviceMetricsOverride',viewport);
   await send('Page.addScriptToEvaluateOnNewDocument',{source:prelude+'window.__auditTimeline='+timeline+';window.__auditExhaust='+JSON.stringify(process.env.EXHAUST||'')+';window.__runningClock='+(process.env.CLOCK==='1')+';window.__keepOverlay='+(process.env.OVERLAY==='1')+';window.__initialTOD='+JSON.stringify(process.env.TOD?Number(process.env.TOD):null)+';window.__isolateStage='+JSON.stringify(process.env.ISOLATE||'')+';window.__auditGPU='+gpu+';'+(canvasOptions?`{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,this.id==='game-canvas'&&type==='2d'?${JSON.stringify(canvasOptions)}:options);};}`:'')+(gpu?'('+installGPUAudit.toString()+')();':'')+(process.env.SAVED?`localStorage.setItem('sluice.opt.gfx',${JSON.stringify(process.env.SAVED)});`:'')});
   await send('Page.addScriptToEvaluateOnNewDocument',{source:'window.__auditResidentCount='+residentCount+';window.__auditSoftCase='+JSON.stringify(process.env.SOFT_CASE||'pile')+';window.__auditSimHz='+JSON.stringify(Number(process.env.SIM_HZ)||0)+';'});
@@ -358,7 +368,9 @@ try{
     if(timeline)fs.writeFileSync(path.join(out,artifact+'.timeline-bins.jsonl'),'');
     if(headed)await send('Page.bringToFront');
     await send('Page.navigate',{url:'http://127.0.0.1:'+port+'/grand-motherload.html?'+run.query+'&nosave=1&nopause=1&tod=.5'+(process.env.PRESET?'&gmpreset='+encodeURIComponent(process.env.PRESET):'')});
-    let ready=false;for(let i=0;i<500;i++){if(await ev('!!window.__audit&&__audit.ready()')){ready=true;break;}await sleep(100);}assert(ready,'Scene load '+JSON.stringify(errors));
+    let ready=false;for(let i=0;i<bootSeconds*10;i++){if(await ev('!!window.__audit&&__audit.ready()')){ready=true;break;}await sleep(100);}
+    if(!ready)fs.writeFileSync(path.join(out,artifact+'.failed-boot.json'),JSON.stringify(await ev('window.__audit&&__audit.state()'),null,2));
+    assert(ready,'Scene load '+JSON.stringify(errors));
     if(headed)await send('Page.bringToFront');
     const boot=await ev('__audit.state()');
     if(process.env.AUDIO==='1'){
@@ -369,6 +381,7 @@ try{
     const adapter=await ev('(async()=>{let a=await navigator.gpu?.requestAdapter();return a?{vendor:a.info.vendor,architecture:a.info.architecture,features:[...a.features]}:null})()');
     const start=await ev('__audit.start('+JSON.stringify(scene)+','+JSON.stringify(process.env.DISABLE||'')+')');
     await sleep(Number(process.env.WARMUP||3)*1000);
+    if(headed){await send('Page.bringToFront');await sleep(250);}
     const warmed=await ev('__audit.state()');
     fs.writeFileSync(path.join(out,artifact+'.warmup.json'),JSON.stringify({start:start.loopHealth,end:warmed.loopHealth},null,2));
     assert(warmed.loopHealth.calls>start.loopHealth.calls+10,'Live animation loop before capture: '+JSON.stringify(warmed.loopHealth));
@@ -380,7 +393,7 @@ try{
     await sleep(150);await ev('__audit.clear()');
     let inputEvents;
     if(scene==='slime-snow')inputEvents=await combinedInputRoute(send,ev,seconds,process.env.ACTIONS||'mixed');
-    else if(scene.startsWith('human'))inputEvents=await humanInputRoute(send,seconds,scene==='human-slimes'?'slimes':scene==='human-flyover'?'flyover':'surface');else await sleep(seconds*1000);
+    else if(scene.startsWith('human'))inputEvents=await humanInputRoute(send,seconds,scene==='human-slimes'?'slimes':scene==='human-flyover'?(process.env.FLIGHT_ROUTE||'flyover'):'surface');else await sleep(seconds*1000);
     if(recovery>0){await ev('__audit.pauseCapture();__audit.timelineStage("recovery")');await sleep(recovery*1000);}
     // Uncapped captures can hold tens of thousands of rows; fetch them in slices
     // so one oversized protocol message cannot drop the debugging connection.
@@ -391,7 +404,7 @@ try{
     result.windowEnd=await browserCall('Browser.getWindowForTarget',{targetId:target.id});
     if(inputEvents)result.inputEvents=inputEvents;
     result.bundleSHA256=createHash('sha256').update(bundleSource).digest('hex');
-    result.smokeRef=smokeRef; result.smokeSourcePath=smokeSourcePath; result.smokeSHA256=smokeSHA256; result.bundleSourcePath=bundleSourcePath; result.bundleRef=bundleRef; result.liquidRef=liquidRef; result.liquidSourcePath=liquidSourcePath; result.liquidSHA256=liquidSHA256; result.simulationHz=Number(process.env.SIM_HZ)||null; result.timerDriven=run.scheduler==='timer'; result.timeMode=run.timeMode; result.scheduler=run.scheduler; result.variant=run.variant; result.query=run.query; result.warmed=warmed; result.captureSeconds=seconds;
+    result.smokeRef=smokeRef; result.smokeSourcePath=smokeSourcePath; result.smokeSHA256=smokeSHA256;result.fireRef=fireRef;result.fireSourcePath=fireSourcePath;result.fireSHA256=fireSHA256; result.bundleSourcePath=bundleSourcePath; result.bundleRef=bundleRef; result.liquidRef=liquidRef; result.liquidSourcePath=liquidSourcePath; result.liquidSHA256=liquidSHA256; result.simulationHz=Number(process.env.SIM_HZ)||null; result.timerDriven=run.scheduler==='timer'; result.timeMode=run.timeMode; result.scheduler=run.scheduler; result.variant=run.variant; result.query=run.query; result.warmed=warmed; result.captureSeconds=seconds; result.flightRoute=process.env.FLIGHT_ROUTE||'flyover';
     if(presentation&&presentation.exitCode===null)await new Promise(resolve=>{presentation.once('exit',resolve);setTimeout(()=>{if(presentation.exitCode===null)presentation.kill();resolve();},5000);});
     let profile;if(cpuSampling){profile=(await send('Profiler.stop')).profile;fs.writeFileSync(path.join(out,artifact+'.cpuprofile'),JSON.stringify(profile));}
     result.boot=boot;result.start=start;result.adapter=adapter;result.errors=errors.slice();result.gpuSummary=summarizeGPU(result.webgpu);result.audio=await ev('window.__audioAudit&&__audioAudit()');
@@ -412,7 +425,7 @@ try{
     const keys=new Set(result.rows.flatMap(r=>Object.keys(r.buckets)));
     const buckets=[...keys].map(k=>[k,stats(result.rows.map(r=>r.buckets[k]||0))]).sort((a,b)=>b[1].avg-a[1].avg);
     const hits=new Map();if(profile){const byId=new Map(profile.nodes.map(n=>[n.id,n]));for(let i=0;i<profile.samples.length;i++){const n=byId.get(profile.samples[i]),key=n.callFrame.functionName+' '+n.callFrame.url.split('/').at(-1)+':'+(n.callFrame.lineNumber+1);hits.set(key,(hits.get(key)||0)+profile.timeDeltas[i]/1000);}}
-    const summary={scene:artifact,sceneName:scene,variant:run.variant,liquidRef,liquidSourcePath,liquidSHA256,smokeRef,smokeSourcePath,smokeSHA256,query:run.query,timeMode:run.timeMode,scheduler:run.scheduler,simulationHz:Number(process.env.SIM_HZ)||null,callbackFps:result.rows.length?1000/stats(result.rows.map(r=>r.dt)).avg:null,fpsNote:run.timeMode==='nativeRAF'?'Native rAF callback rate; display presentation requires separate telemetry':'Workload timing only, not native display FPS',fixture:{start:start.fixture,warmed:warmed.fixture,end:result.state.fixture},webgpu:result.gpuSummary,version:boot.version,adapter,canvas:start.canvas,bootMs:boot.bootMs,frame:stats(result.rows.map(r=>r.dt)),cpu:stats(result.rows.map(r=>r.cpu)),over8ms:result.rows.filter(r=>r.dt>8).length,buckets,gpu:[...new Set(result.gpu.map(r=>r.name))].map(k=>[k,stats(result.gpu.filter(r=>r.name===k).map(r=>r.ms))]),profile:[...hits].sort((a,b)=>b[1]-a[1]).slice(0,25),errors:result.errors};
+    const summary={scene:artifact,sceneName:scene,variant:run.variant,liquidRef,liquidSourcePath,liquidSHA256,smokeRef,smokeSourcePath,smokeSHA256,fireRef,fireSourcePath,fireSHA256,query:run.query,flightRoute:process.env.FLIGHT_ROUTE||'flyover',timeMode:run.timeMode,scheduler:run.scheduler,simulationHz:Number(process.env.SIM_HZ)||null,callbackFps:result.rows.length?1000/stats(result.rows.map(r=>r.dt)).avg:null,fpsNote:run.timeMode==='nativeRAF'?'Native rAF callback rate; display presentation requires separate telemetry':'Workload timing only, not native display FPS',fixture:{start:start.fixture,warmed:warmed.fixture,end:result.state.fixture},webgpu:result.gpuSummary,version:boot.version,adapter,canvas:start.canvas,bootMs:boot.bootMs,frame:stats(result.rows.map(r=>r.dt)),cpu:stats(result.rows.map(r=>r.cpu)),over8ms:result.rows.filter(r=>r.dt>8).length,buckets,gpu:[...new Set(result.gpu.map(r=>r.name))].map(k=>[k,stats(result.gpu.filter(r=>r.name===k).map(r=>r.ms))]),profile:[...hits].sort((a,b)=>b[1]-a[1]).slice(0,25),errors:result.errors};
     summaries.push(summary);fs.writeFileSync(path.join(out,'summary.json'),JSON.stringify(summaries,null,2));
     console.log(JSON.stringify({...summary,buckets:buckets.slice(0,14)}));assert.equal(errors.length,0,'No game errors');assert(result.rows.length>seconds*Number(process.env.MIN_FPS||(fixtureScene(scene)?1:25)),'Enough live frames');
     if(fixtureScene(scene)&&headed){

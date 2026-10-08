@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+// Actual GPU proof for parallel homogeneous mutations, including later mixed edits.
+// All live pos/affine/aux/flags and readback journals must match bit for bit.
+// Reports bounded timestamp trials; requires Chrome with WebGPU.
+// AFTER, BEFORE, DUMP, CHROME and PORT can override the defaults.
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import os from 'node:os';import assert from 'node:assert/strict';import{spawn,execFileSync}from'node:child_process';import{fileURLToPath}from'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),dir=process.env.DUMP||path.join(os.tmpdir(),'sluice-ops-gpu'),out=path.join(dir,'result.json'),port=Number(process.env.PORT||8897),debug=port+1000;
+fs.mkdirSync(dir,{recursive:true});
+const reference=process.env.BEFORE?fs.readFileSync(process.env.BEFORE,'utf8'):execFileSync('git',['show','b6dc539759097cdf386ea535692516c37ae81ea6:js/liquid-wgpu.js'],{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024});
+const production=fs.readFileSync(process.env.AFTER||path.join(root,'js/liquid-wgpu.js'),'utf8');
+const marker='  window.LiquidWGPU = { create: create, stage: STAGE, last: null };';
+const labels=['reference','candidate'];const sources=labels.map(label=>{let s=label==='reference'?reference:production;assert.equal(s.split(marker).length,2);return s.replace(marker,marker+`\nwindow.opsAPIs[${JSON.stringify(label)}]={buildOpsPipeline,applyParticleOps};`);});
+async function check(){
+ const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('No WebGPU');
+ const timing=adapter.features.has('timestamp-query'),device=await adapter.requestDevice({requiredFeatures:timing?['timestamp-query']:[]}),errors=[];device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+ const capacity=40000,apis=window.opsAPIs,labels=Object.keys(apis),instances={},query=timing?device.createQuerySet({type:'timestamp',count:2}):null;
+ function buffer(size,usage){return device.createBuffer({size,usage});}
+ const queryOut=timing?buffer(16,GPUBufferUsage.QUERY_RESOLVE|GPUBufferUsage.COPY_SRC):null;
+ const read=buffer(capacity*52+256,GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ);
+ let measured=false,dispatch=null,activeLabel;
+ const proxy=new Proxy(device,{get(t,k){if(k==='createCommandEncoder')return d=>{const enc=t.createCommandEncoder(d),begin=enc.beginComputePass.bind(enc);enc.beginComputePass=o=>{const desc={...o};if(timing){desc.timestampWrites={querySet:query,beginningOfPassWriteIndex:0,endOfPassWriteIndex:1};measured=true;}const pass=begin(desc),work=pass.dispatchWorkgroups.bind(pass);pass.dispatchWorkgroups=(x,...rest)=>{dispatch={label:d.label,groups:x};return work(x,...rest)};return pass;};return enc;};const v=Reflect.get(t,k,t);return typeof v==='function'?v.bind(t):v;}});
+ for(const label of labels){const buf={};for(const key of ['pos','affine','aux','flag'])buf[key]=buffer(capacity*(key==='flag'?4:16),GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST|GPUBufferUsage.COPY_SRC);
+  const i={device:proxy,queue:device.queue,buffersReady:true,buf,maxParticles:capacity,uploadedCount:0,ops:[],count:0,seq:0,readbackPending:true,readbackOpsInvalid:false,readbackOps:[],readbackOpsSeq:0,liquid:{}};
+  i.liquid.takeOps=()=>i.ops;i.liquid.getCount=()=>i.count;i.liquid.getMutationSeq=()=>i.seq;
+  device.pushErrorScope('validation');apis[label].buildOpsPipeline(i);if(i.opsParallelReady)await i.opsParallelReady;const error=await device.popErrorScope();if(error)throw Error(label+error.message);if(label==='candidate'&&!i.opsParallel)throw Error('Optional pipelines unavailable '+i.opsParallelError);instances[label]=i;
+ }
+ let random=27381;function rand(n){random=(Math.imul(random,1664525)+1013904223)>>>0;return random%n;}
+ function data(){const result={};for(const key of ['pos','affine','aux']){const a=result[key]=new Float32Array(capacity*4);for(let k=0;k<a.length;k++)a[k]=(rand(100000)-50000)/37;}const f=result.flag=new Uint32Array(capacity);for(let k=0;k<f.length;k++)f[k]=rand(65536);return result;}
+ const input=data();
+ function appends(count){const ops=[];for(let k=0;k<count;k++)ops.push(1,rand(1000)/7,rand(1000)/9,(rand(1000)-500)/11,(rand(1000)-500)/13,rand(6),rand(4));return ops;}
+ function removes(start,count,mode){let n=start;const ops=[];for(let k=0;k<count;k++){ops.push(2,mode==='tail'?n-1:mode==='head'?0:mode==='nearTail'?Math.max(0,n-2):rand(n));n--;}return ops;}
+ async function run(label,start,ops,target,reset=true){const i=instances[label];if(reset){for(const key in input)device.queue.writeBuffer(i.buf[key],0,input[key]);i.uploadedCount=start;i.readbackOps=[];i.readbackOpsInvalid=false;i.readbackOpsSeq=0;i.seq=0;}i.ops=ops.slice();i.count=target;i.seq++;measured=false;dispatch=null;const began=performance.now();const count=apis[label].applyParticleOps(i);const cpu=performance.now()-began;if(count!==target)throw Error('Wrong count');const enc=device.createCommandEncoder();let offset=0;for(const key of ['pos','affine','aux','flag']){const size=target*(key==='flag'?4:16);if(size)enc.copyBufferToBuffer(i.buf[key],0,read,offset,size);offset+=size;}const aligned=Math.ceil(offset/256)*256;if(measured){enc.resolveQuerySet(query,0,2,queryOut,0);enc.copyBufferToBuffer(queryOut,0,read,aligned,16);}device.queue.submit([enc.finish()]);await read.mapAsync(GPUMapMode.READ);const mapped=read.getMappedRange(),bytes=new Uint32Array(mapped,0,offset/4).slice();let ms=0;if(measured){const timestamps=new BigUint64Array(mapped,aligned,2);ms=Number(timestamps[1]-timestamps[0])/1e6;}read.unmap();return{bytes,ms,cpu,dispatch,readbackOps:i.readbackOps.slice(),invalid:i.readbackOpsInvalid};}
+ function equal(a,b,name){if(a.length!==b.length)throw Error(name+' length');for(let k=0;k<a.length;k++)if(a[k]!==b[k])throw Error(name+' word'+k+' '+a[k]+' '+b[k]);}
+ const fixtures=[];for(const n of [1,63,64,65,255,256,257,800,3600,11790])fixtures.push({name:'append-'+n,start:300,ops:appends(n),target:300+n});
+ for(const [start,n,mode]of [[100,63,'head'],[100,64,'head'],[300,65,'random'],[1000,257,'nearTail'],[16190,7777,'random'],[16190,7777,'head'],[40000,11790,'random'],[40000,40000,'random'],[8000,8000,'tail'],[16190,2520,'random']])fixtures.push({name:'remove-'+start+'-'+n+'-'+mode,start,ops:removes(start,n,mode),target:start-n});
+ fixtures.push({name:'mixed-poke-wake-add-remove',start:4000,ops:[...removes(4000,1888,'random'),...appends(8),3,0,2,3,4,5,1,4,1,0,1],target:2120});
+ fixtures.push({name:'fractional-index-fallback',start:300,ops:Array.from({length:64},()=>[2,.75]).flat(),target:236});
+ const reports=[];
+ try{for(const f of fixtures){const a=await run('reference',f.start,f.ops,f.target),b=await run('candidate',f.start,f.ops,f.target);equal(a.bytes,b.bytes,f.name);equal(a.readbackOps,b.readbackOps,f.name+'/journal');if(a.invalid!==b.invalid)throw Error('Journal invalidation');reports.push({name:f.name,words:a.bytes.length,ms:{reference:a.ms,candidate:b.ms},cpuMs:{reference:a.cpu,candidate:b.cpu},dispatches:{reference:a.dispatch,candidate:b.dispatch}});
+  // A subsequent mixed stream must read the same survivor state and can reuse
+  // old tail slots only through explicit authored appends.
+  if(f.target>0){const ops=[2,0,...appends(2),3,0,1,2,3,0,1,4,0,0,1],target=f.target+1;const aa=await run('reference',f.target,ops,target,false),bb=await run('candidate',f.target,ops,target,false);equal(aa.bytes,bb.bytes,f.name+'/next-mixed');}
+ }
+ const timings=[];for(const f of fixtures.filter(x=>/11790|7777|2520/.test(x.name))){const samples={reference:[],candidate:[]};for(let rep=0;rep<9;rep++)for(const label of labels){const r=await run(label,f.start,f.ops,f.target);if(rep>0)samples[label].push(r.ms);}timings.push({name:f.name,samples});}
+ await device.queue.onSubmittedWorkDone();if(errors.length)throw Error(errors.join('\n'));return{passed:true,adapter:{vendor:adapter.info.vendor,architecture:adapter.info.architecture},timing,reports,timings,fastStats:window.__sluiceOpsFastStats,errors};
+ }finally{device.destroy();}
+}
+const page='<script>window.opsAPIs={}</script>'+labels.map((_,i)=>`<script src="/${i}.js"></script>`).join('')+'<script>window.runOps='+check.toString()+'</script>';
+const server=http.createServer((req,res)=>{const m=req.url.match(/^\/(\d)\.js$/);res.setHeader('Content-Type',m?'text/javascript':'text/html');res.end(m?sources[+m[1]]:page);});await new Promise(r=>server.listen(port,'127.0.0.1',r));
+const profile=fs.mkdtempSync(path.join(os.tmpdir(),'sluice-ops-profile-'));const browser=spawn(process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':path.join(os.homedir(),'.local/bin/agent-chrome-for-testing')),['--headless=new','--enable-unsafe-webgpu','--use-angle='+(process.platform==='win32'?'d3d11':process.platform==='darwin'?'metal':'vulkan'),'--no-first-run',`--user-data-dir=${profile}`,`--remote-debugging-port=${debug}`,'about:blank'],{stdio:'ignore',windowsHide:true});
+let socket,seq=0;const pending=new Map(),sleep=ms=>new Promise(r=>setTimeout(r,ms));const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}));});const ev=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));return r.result?.value;};
+const watchdog=setTimeout(()=>{browser.kill();server.close();process.exit(1)},180000);
+try{let endpoint;for(let n=0;n<100&&!endpoint;n++){try{endpoint=(await(await fetch(`http://127.0.0.1:${debug}/json/list`)).json()).find(t=>t.type==='page')?.webSocketDebuggerUrl;}catch{}if(!endpoint)await sleep(100);}socket=new WebSocket(endpoint);await new Promise(r=>socket.addEventListener('open',r));socket.addEventListener('message',e=>{const r=JSON.parse(e.data),p=pending.get(r.id);if(p){pending.delete(r.id);r.error?p.reject(r.error):p.resolve(r.result);}});await send('Runtime.enable');await send('Page.enable');await send('Page.navigate',{url:`http://127.0.0.1:${port}`});for(let n=0;n<100;n++){if(await ev('typeof window.runOps === "function"'))break;await sleep(100);if(n===99)throw Error('Page initialization');}const result=await ev('runOps()');fs.writeFileSync(out,JSON.stringify(result,null,2));console.log(JSON.stringify({passed:result.passed,fixtures:result.reports.length,adapter:result.adapter,timing:result.timing,timings:result.timings,fastStats:result.fastStats,errors:result.errors,out}));}finally{clearTimeout(watchdog);socket?.close();browser.kill();server.close();}

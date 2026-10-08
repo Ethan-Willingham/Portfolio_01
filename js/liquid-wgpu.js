@@ -10827,9 +10827,10 @@ struct P2GParams {
    * pond streaming edges).
    *
    * Now the game logs every mutation as a compact op stream (liquidOps in
-   * sluice.js 020-state, slot layouts documented there) and a single-thread
-   * compute kernel replays it against the resident buffers in exact CPU
-   * order: ADDs append CPU-authored rows, REMOVEs replicate the CPU's
+   * sluice.js 020-state, slot layouts documented there). Mixed edits use a
+   * single-thread replay in exact CPU order; large homogeneous batches use
+   * equivalent parallel appends or survivor copies against the live buffers.
+   * The mutation contract stays unchanged: ADDs append CPU-authored rows, REMOVEs replicate the CPU's
    * swap-remove by moving the GPU's OWN live tail row (never mirror data),
    * POKEs/WAKEs write only the lanes the game actually changed. Live rows
    * are never regressed to mirror state, and the slot layout stays
@@ -10902,6 +10903,65 @@ fn main() {
 }
 `;
 
+  // Batched appends have distinct destinations and consume only authored rows.
+  // For pure swap-removals, surviving changed rows always come from the old
+  // tail at or above finalCount. That source range is disjoint from every
+  // destination, so all live GPU rows can be copied in parallel without a
+  // stale CPU mirror, temporary particle buffers, or order-dependent races.
+  var WGSL_OPS_PARALLEL = WGSL_OPS_REPLAY + /* wgsl */ `
+@compute @workgroup_size(256)
+fn appendRows(@builtin(global_invocation_id) id:vec3u) {
+  let k=id.x*7u;
+  if(k>=op.opsLen){return;}
+  let cnt=op.startCount+id.x;
+  pos[cnt]=vec4f(ops[k+1u],ops[k+2u],ops[k+3u],ops[k+4u]);
+  affine[cnt]=vec4f(0.);
+  aux[cnt]=vec4f(${LIQUID_DENSITY.toFixed(1)},0.,0.,0.);
+  flag[cnt]=(u32(ops[k+5u])&3u)|((u32(ops[k+5u])&4u)<<4u)|((u32(ops[k+6u])&3u)<<2u);
+}
+@compute @workgroup_size(256)
+fn removeRows(@builtin(global_invocation_id) id:vec3u) {
+  let i=id.x;
+  if(i>=op._pad0){return;}
+  let source=u32(ops[i]);
+  if(source==i){return;}
+  pos[i]=pos[source];
+  affine[i]=affine[source];
+  aux[i]=aux[source];
+  flag[i]=flag[source];
+}
+`;
+  function buildParallelOps(instance,bgl) {
+    var dev=instance.device,token={},scopeOpen=false,append,remove;
+    instance.opsParallelRequest=token;instance.opsParallel=null;
+    instance.opsParallelError=null;instance.opsParallelReady=Promise.resolve(false);
+    function failed(error){
+      if(instance.opsParallelRequest===token)instance.opsParallelError=String(error&&error.message||error).slice(0,240);
+      return false;
+    }
+    try {
+      dev.pushErrorScope('validation');scopeOpen=true;
+      var module=dev.createShaderModule({code:WGSL_OPS_PARALLEL});
+      var layout=dev.createPipelineLayout({bindGroupLayouts:[bgl]});
+      function compile(entry,label){
+        var descriptor={label:label,layout:layout,compute:{module:module,entryPoint:entry}};
+        return dev.createComputePipelineAsync?dev.createComputePipelineAsync(descriptor):Promise.resolve(dev.createComputePipeline(descriptor));
+      }
+      append=compile('appendRows','liquid.opsAppend');remove=compile('removeRows','liquid.opsRemove');
+      var validation=dev.popErrorScope();scopeOpen=false;
+      instance.opsParallelReady=Promise.all([append,remove,validation]).then(function(results){
+        if(results[2])return failed(results[2]);
+        if(instance.opsParallelRequest!==token||instance.device!==dev)return false;
+        instance.opsParallel={append:results[0],remove:results[1]};return true;
+      }).catch(failed);
+    }catch(error){
+      if(append&&append.catch)append.catch(function(){});
+      if(remove&&remove.catch)remove.catch(function(){});
+      if(scopeOpen)dev.popErrorScope().catch(function(){});
+      failed(error);
+    }
+  }
+
   function buildOpsPipeline(instance) {
     if (!instance.buffersReady) return;
     var dev = instance.device;
@@ -10949,6 +11009,7 @@ fn main() {
       ]
     });
     instance.opsReady = true;
+    buildParallelOps(instance,bgl);
   }
 
   // Drop any pending op stream without applying it. Used right after a
@@ -10980,14 +11041,16 @@ fn main() {
     // overflow, corruption), so fall back to the full re-seed.
     var cnt = instance.uploadedCount | 0;
     var n = ops.length | 0;
-    var k = 0, ok = (n <= OPS_CAPACITY);
+    var k = 0, ok = (n <= OPS_CAPACITY), homogeneous = n ? ops[0] : 0;
     while (ok && k < n) {
       var tag = ops[k];
+      if(tag!==homogeneous)homogeneous=0;
       if (tag === 1) {
         if (cnt >= instance.maxParticles) { ok = false; break; }
         cnt++; k += 7;
       } else if (tag === 2) {
         if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
+        if(Math.floor(ops[k+1])!==ops[k+1])homogeneous=0;
         cnt--; k += 2;
       } else if (tag === 3) {
         if (!(ops[k + 1] >= 0 && ops[k + 1] < cnt)) { ok = false; break; }
@@ -11008,20 +11071,31 @@ fn main() {
       instance.readbackOpsSeq=L.getMutationSeq();
     }
     if (n > 0) {
-      instance.opsHost.set(ops);
-      instance.queue.writeBuffer(instance.opsBuf, 0, instance.opsHost, 0, n);
-      var u = instance.opsParamsHost;
-      u[0] = n >>> 0;
-      u[1] = instance.uploadedCount >>> 0;
-      u[2] = 0; u[3] = 0;
-      instance.queue.writeBuffer(instance.opsParamsBuf, 0, u);
-      var enc = instance.device.createCommandEncoder({ label: 'liquid.opsReplay' });
-      var pass = enc.beginComputePass({ label: 'liquid.opsReplay' });
-      pass.setPipeline(instance.opsPipe);
-      pass.setBindGroup(0, instance.opsBG);
-      pass.dispatchWorkgroups(1);
-      pass.end();
-      instance.queue.submit([enc.finish()]);
+      var pipe=instance.opsPipe,label='liquid.opsReplay',groups=1,words=n;
+      var parallel=instance.opsParallel;
+      if(parallel&&homogeneous===1&&n>=64*7){
+        pipe=parallel.append;label='liquid.opsAppend';groups=Math.ceil((n/7)/256);
+        instance.opsHost.set(ops);
+      }else if(parallel&&homogeneous===2&&n>=64*2&&instance.uploadedCount<=OPS_CAPACITY){
+        // Exact CPU identity remap, with no CPU position/velocity uploads.
+        var mapping=instance.opsHost,remaining=instance.uploadedCount;
+        for(var mi=0;mi<remaining;mi++)mapping[mi]=mi;
+        for(var oi=0;oi<n;oi+=2)mapping[ops[oi+1]]=mapping[--remaining];
+        var changed=false;
+        for(var di=0;di<target;di++)if(mapping[di]!==di){changed=true;break;}
+        pipe=parallel.remove;label='liquid.opsRemove';words=target;
+        groups=changed?Math.ceil(target/256):0;
+      }else instance.opsHost.set(ops);
+      if(groups){
+        instance.queue.writeBuffer(instance.opsBuf,0,instance.opsHost,0,words);
+        var u=instance.opsParamsHost;
+        u[0]=n>>>0;u[1]=instance.uploadedCount>>>0;u[2]=target>>>0;u[3]=0;
+        instance.queue.writeBuffer(instance.opsParamsBuf,0,u);
+        var enc=instance.device.createCommandEncoder({label:label});
+        var pass=enc.beginComputePass({label:label});
+        pass.setPipeline(pipe);pass.setBindGroup(0,instance.opsBG);pass.dispatchWorkgroups(groups);pass.end();
+        instance.queue.submit([enc.finish()]);
+      }
     }
     ops.length = 0;
     instance.uploadedCount = target;
@@ -12634,6 +12708,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             }
           } catch (_) {}
         }
+        instance.opsParallelRequest=null;instance.opsParallel=null;
         if (instance.device) { try { instance.device.destroy(); } catch (_) {} }
         instance.available = false;
         instance.simActive = false;
