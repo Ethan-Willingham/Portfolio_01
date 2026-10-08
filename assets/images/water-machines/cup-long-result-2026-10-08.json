@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-08",
+  "status": "Partial drain. The 95 percent delivery target and three-seed acceptance remain unmet.",
+  "developmentVersion": "v5.31",
+  "engineVersion": "v28.179",
+  "inventory": {
+    "run": "cup-v531-long-seed-17",
+    "seed": 17,
+    "simulationSeconds": 1000.041666666244,
+    "initialTotalParticles": 66687,
+    "initialBulkParticles": 62457,
+    "intakeRoofWorldY": 368,
+    "initialDrainableBulkParticles": 52573,
+    "deliveredThroughCrestAndOutlet": 48733,
+    "deliveryPercent": 92.69587050387081,
+    "finalOriginalBulkInventory": {
+      "cup": 10180,
+      "pipe": 3538,
+      "receiver": 48739,
+      "other": 0,
+      "cupAboveIntakeRoof": 970
+    },
+    "holdBulkOutsideCupAndPipe": 0,
+    "holdLossPercent": 0.0,
+    "countConserved": true,
+    "allResidentFinite": true,
+    "rimSpills": 0,
+    "maximumParticleMove": 11.56323528289795,
+    "meetsDeliveryTarget": false,
+    "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance."
+  },
+  "physicalWalls": {
+    "particleCount": 66687,
+    "insidePhysicalWallCount": 0,
+    "insidePhysicalWalls": []
+  },
+  "density": {
+    "case": "cup-v531-long-seed-17",
+    "count": 66687,
+    "densityRatioQuantiles": {
+      "0.01": 0.5622892567531587,
+      "0.5": 1.0403132228008694,
+      "0.95": 1.1975223958948078,
+      "0.99": 1.409259930314139,
+      "1": 2.2919304352615875
+    },
+    "overdenseParticleFraction": 0.005038463268703046,
+    "rmsSpeed": 14.194879462305414,
+    "maximumSpeed": 160.02834080168594,
+    "method": "Independent Float64 quadratic B-spline P2G mass and density gather from final native particle positions; no renderer or stored aux density used."
+  },
+  "pressureDiagnostics": {
+    "maximumWaterPressureError": 7.024910595998894,
+    "maximumGasPressureError": 0.5009299501610749,
+    "maximumUnresolvedVoidVolume": 234.46875,
+    "maximumUnassignedGasAmount": 39.84765625,
+    "maximumNonpositiveGasVolumes": 2,
+    "cavitationResolvedInEveryReading": false,
+    "phaseResolvedInEveryReading": false
+  },
+  "contact": {
+    "evidence": "cup-focus-corner-flat-final",
+    "focusedGPUCases": 10,
+    "checks": 70,
+    "allFocusedChecksPass": true,
+    "longRunMaximumMove": 11.56323528289795,
+    "earlier700SecondMaximumMove": 25.899938583374023,
+    "unit": "world pixels",
+    "largestMove": {
+      "id": 32375,
+      "distance": 11.563235999537442,
+      "from": [
+        479.90966796875,
+        351.9986877441406
+      ],
+      "to": [
+        468.84600830078125,
+        355.3608093261719
+      ],
+      "fromVelocity": [
+        0.10970304906368256,
+        -5.163970947265625
+      ],
+      "toVelocity": [
+        -14.112997055053711,
+        60.83804702758789
+      ],
+      "simulationSeconds": 222.31666564941406,
+      "updateSeconds": 0.03333333507180214
+    },
+    "limitation": "Short shifts still occur beside shelf contacts. This is not three-seed motion acceptance."
+  },
+  "ordinaryEngine": {
+    "evidence": "cup-focus-v531-feature-off",
+    "nativeBufferCaptures": 18,
+    "renderedPixelComparisons": 6,
+    "allExact": true,
+    "ordinaryToyAndGameBoot": true,
+    "airResourcesWhenDisabled": 0,
+    "fullToyBrowserRegression": true
+  },
+  "bootDiagnostic": "The integrated harness logged one ordinary collision self-test particle inside a solid before the cup was constructed. The separate ordinary toy/game regression passed; all final cup particles are outside physical walls.",
+  "limitations": [
+    "Pressure and air-volume diagnostics fail during the run.",
+    "Air remains in the crest and the outlet is dry in the final snapshot. Late occasional discharge is not a proven settled endpoint.",
+    "No complete-drain acceptance on three seeds."
+  ],
+  "earlierMeasurements": "/assets/images/water-machines/cup-endpoint-2026-10-08.json",
+  "sourceSHA256": {
+    "water-machines-native-passage.mjs": "2dd45ae7ff0e8bc6d2e1f5971774aebb1d6bdcd52d577c67cdfa50d8e3675c6b",
+    "water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+    "liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e",
+    "water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+    "liquid-air-wgpu.js": "420f76f90943d858b239e97c8677cee2de907091ef09d3c5a4a6ac3449da9b61",
+    "test-water-machines.mjs": "0903cb211ecc20aafbc287b31169d17b815dd07d5ffd56f8342547c977ed4713",
+    "water-smoke-slime.html": "b0730ad90f72fb8df9596ad71a4ba278e97aa78e54687e5b44e5232db062984d",
+    "liquid-wgpu.js": "648bb998e5ad3dbc090eb14c999518a60582ed6e5222d389803a833db213cc42",
+    "water-machines-scenes.js": "937cfe97aa179704de834853ff2b591c25f773b1de1d68041b3842d7d21b74e8",
+    "water-smoke-slime-ui.js": "de179c231d91caf516a425a0e282a2a9377947bd8aab15431fca83e2d9c91c71",
+    "water-smoke-slime.js": "b80782260df5a38029dd4d7fe9e291aa1190c9c249b26696a76d990d54f27090",
+    "water-smoke-slime.css": "bd57015e985761fafb0ed237ef75b2da78614799b24463689d002d7460f6103c",
+    "water-machines-instruments.js": "891e4c7714090aff8e2f7ab8d4b6b2adcce609a0b87dc1cf09093c28e06fe93e",
+    "liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+    "water-machines-paired-observer.mjs": "f34b045729b117dd2b69ef8f89f841e1a121afac47e0accc6d35295bac138fe4"
+  },
+  "screenshotSHA256": "5ec5fbc55e9fcad32bf1b1e7e6f59cb7a7ed5065727dce0002838273e201f02f"
+}
