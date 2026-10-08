@@ -132,14 +132,25 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> One slime now starts a partial drain in the development cup. The latest completed test moved 77.5% of the drainable source water through the tube into the lower tank. The target is at least 95%, and the flow slows before it gets there. <a href="/assets/images/water-machines/cup-drain-2026-10-08.json">Test measurements.</a></p>
-        <p>The cup is larger, with about 69,000 water particles and room for a bigger slime. Restoring a skipped density calculation reduced the tangled strands. Correcting the slime’s time step removed its excess buoyancy. Empty regions had also been retaining water pressure; correcting that closes the large hole beneath the slime, though smaller gaps and crowded particles remain.</p>
-        <p>A dry bend at the outlet fills with water and helps the siphon start. A perforated shelf keeps the settled slime from blocking the intake. Both are physical parts of the container.</p>
+        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> The old water drawing turned small density gaps into thin strands. Giving equal water particles the same interior size removes most of those streaks in a frozen comparison. Their positions and velocities stay identical. <a href="/assets/images/water-machines/cup-contact-2026-10-08.json">Test measurements.</a></p>
+        <p>There was also a collision fault: water pinched between a slime and a wall could be pushed to a distant edge of the slime. Searching nearby edges first reduces that jump in focused tests. Larger corrections still occur when the slime settles on the shelf, so contact remains unfinished.</p>
         <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-drain-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-drain-2026-10-08.png" width="911" height="540" loading="lazy" alt="A slime rests on a perforated shelf in the partly drained cup. Water remains above the intake, while the lower tank holds the water that passed through the tube."></picture>
-          <figcaption class="u-figure-cap">After one slime drop. The cup holds before the drop and drains below the fill line, but stops short of the intake. <a href="/assets/images/water-machines/cup-before-2026-10-07.png">Earlier cup and water.</a></figcaption>
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-stem-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-stem-2026-10-08.png" width="911" height="540" loading="lazy" alt="One large slime floats in the cup as water flows through a narrow straight stem into the lower tank. The surface has fallen below the fill line."></picture>
+          <figcaption class="u-figure-cap">The current straight-stem trial, after one slime drop and 210 simulation seconds. Water is still draining below the fill line; all 66,687 particles are conserved.</figcaption>
         </figure>
-        <p>The next check is a wider tube with the cup floor kept sealed. Every result must show the original water crossing the bend and outlet; collecting water in the lower tank alone does not prove the siphon works. The public toy is unchanged while these development tests continue. The other machines remain parked.</p>
+        <p>The earlier outlet bend helped the siphon start, but retained a substantial amount of water. A narrow straight stem now starts without that bend and is undergoing a longer drainage test. The cup has not passed its complete-drain test on three seeds.</p>
+        <details class="toy-method"><summary>See the water drawing comparison</summary>
+          <p>These two frames use the same frozen particles from the earlier outlet-bend trial. The remaining large gaps are real empty space; changing the drawing does not move water into them.</p>
+          <figure class="u-figure">
+            <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-surface-before-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-surface-before-2026-10-08.png" width="911" height="540" loading="lazy" alt="The previous drawing shows many thin black streaks through water in the receiving tank."></picture>
+            <figcaption class="u-figure-cap">Previous drawing: slightly dilute particles shrink sharply.</figcaption>
+          </figure>
+          <figure class="u-figure">
+            <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-surface-after-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-surface-after-2026-10-08.png" width="911" height="540" loading="lazy" alt="The revised drawing shows the same receiving-tank water as a more continuous body, while retaining the actual gaps in the pipe and cup."></picture>
+            <figcaption class="u-figure-cap">Revised drawing: equal interior size, with isolated drops still drawn small.</figcaption>
+          </figure>
+        </details>
+        <p>The playable public toy is unchanged while these development tests continue. The greedy cup is the only active machine; the others remain parked. <a href="/assets/images/water-machines/cup-drain-2026-10-08.json">Earlier partial-drain measurements.</a></p>
       </section>
       <div class="toy-experiments" aria-label="Things to try">
         <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>

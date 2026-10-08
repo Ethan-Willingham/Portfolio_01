@@ -1,0 +1,80 @@
+{
+  "status": "Partial repair; cup acceptance incomplete.",
+  "particles": 66687,
+  "invalid": 0,
+  "rendering": {
+    "description": "Explicit redraw of the same frozen native buffers. Equal interior splat size retains the existing actual-neighbor gate for isolated droplets.",
+    "particleBuffersIdentical": true,
+    "bufferSHA256": {
+      "pos": "5718cabd96f2926cd1986d470cdd913b9fa6c9866d3d71574d57f457eb675a9d",
+      "affine": "d752a1576efc384f431f3de7e6491649a3e143413887ac4099895617317d7e34",
+      "aux": "508c8e91f0b255c4f7c6e3382b9c0bec3a3aa1a7981acdb7056169ca81d8e2f3",
+      "flag": "d9d32ab66588cf7091cbb1e0dd561919285ce2e33c7b215b9f6f5788f10c7a04"
+    }
+  },
+  "contactRegression": {
+    "evidence": "cup-focus-contact-local-only",
+    "pass": true,
+    "cases": 4,
+    "beforeCorrectionPixels": [
+      32.51406499989276,
+      48.2
+    ],
+    "afterCorrectionPixels": [
+      0.3001007080078182,
+      3.546771239611074
+    ]
+  },
+  "integrated": {
+    "definition": "Read-only GPU tracking after every native update. Initial pipe primer is excluded. Final receiver excludes the exact pipe interior.",
+    "updates": 6972,
+    "maximumUpdateSeconds": 0.041666666666671404,
+    "maximumBulkDisplacementBetweenObservations": 40.565818786621094,
+    "initialBulk": 62457,
+    "crossedCrest": 48907,
+    "exitedAfterCrest": 45438,
+    "everReceivedAfterPassage": 45438,
+    "finalBulkInReceiver": 44750,
+    "finalBulkInReceiverAfterPassage": 44748,
+    "spilledOverRim": 0,
+    "finalSpilledInReceiver": 0
+  },
+  "inventory": {
+    "originalBulkInPool": 10707,
+    "originalBulkInTube": 7000,
+    "originalBulkInReceiver": 44750,
+    "bulkAboveIntakeRoof": 1135,
+    "limitation": "A frozen endpoint inventory. Original bulk identity excludes initial tube primer. Two receiver particles did not satisfy the passive crest and outlet passage flags."
+  },
+  "limitations": [
+    "The same-pose control still has a 40.57-pixel contact move at the shelf.",
+    "The upturned outlet retains water and stops short of receiver delivery target.",
+    "A straight narrow-stem control is under evaluation."
+  ],
+  "date": "2026-10-08",
+  "straightStem": {
+    "seconds": 210.0916666666683,
+    "particles": 66687,
+    "invalid": 0,
+    "nativePassage": {
+      "definition": "Read-only GPU tracking after every native update. Initial pipe primer is excluded. Final receiver excludes the exact pipe interior.",
+      "updates": 6849,
+      "maximumUpdateSeconds": 0.041666666666671404,
+      "maximumBulkDisplacementBetweenObservations": 20.237939834594727,
+      "initialBulk": 62457,
+      "crossedCrest": 21848,
+      "exitedAfterCrest": 16962,
+      "everReceivedAfterPassage": 16962,
+      "finalBulkInReceiver": 16963,
+      "finalBulkInReceiverAfterPassage": 16960,
+      "spilledOverRim": 0,
+      "finalSpilledInReceiver": 0
+    },
+    "status": "Still draining at the endpoint. A longer run is required."
+  },
+  "images": {
+    "cup-stem-2026-10-08.png": "5f75889ecadc5fe40ba304a6f23157c47bbf55edf78a4860ecda83e0b7e5eae1",
+    "cup-surface-before-2026-10-08.png": "be26d82012b52e269ddbbc55755958e01be962f2a1ae56190ba94ad5cdbf3d06",
+    "cup-surface-after-2026-10-08.png": "aec07152b983633ff1c5cd1e02901ffcbec50fdf49a09c41fc85f45d62d91bd5"
+  }
+}
