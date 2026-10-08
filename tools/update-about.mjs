@@ -394,9 +394,6 @@ const replaceStat = (html, key, value) => {
 about = replaceStat(about, 'tokens', tokStr);
 about = replaceStat(about, 'peak', peakStr);
 about = replaceStat(about, 'cost', costStr);
-about = replaceStat(about, 'commits', commits.length.toLocaleString('en-US'));
-about = replaceStat(about, 'posts', a2.obj.posts.length.toLocaleString('en-US'));
-about = replaceStat(about, 'removed', a2.obj.posts.filter(p => p.kind === 'removed').length.toLocaleString('en-US'));
 about = about.replace(/<p data-about-token-total>[\s\S]*?<\/p>/, `<p data-about-token-total>${dispTok.toLocaleString('en-US')} tokens in total: input, cache reads, cache writes, and output.</p>`);
 about = about.replace(/(<script src="js\/(?:git-history(?:-data)?|git-attribution(?:-data)?)\.js)(?:\?v=[^"]+)?("><\/script>)/g, '$1?v=' + hist.obj.generated + '$2');
 const stamp = new Date(today() + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

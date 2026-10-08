@@ -84,10 +84,7 @@ const displayPeak = Math.max(stats.legacy.peakTokens, ...dayRows.map(d => d.tota
 const expectedStats = {
   tokens: (displayTokens / 1e9).toFixed(1) + 'B',
   peak: (displayPeak / 1e9).toFixed(2) + 'B',
-  cost: '~$' + (Math.round(displayCost / 100) * 100).toLocaleString('en-US'),
-  commits: hist.commits.length.toLocaleString('en-US'),
-  posts: attr.posts.length.toLocaleString('en-US'),
-  removed: attr.posts.filter(p => p.kind === 'removed').length.toLocaleString('en-US')
+  cost: '~$' + (Math.round(displayCost / 100) * 100).toLocaleString('en-US')
 };
 for (const [key, value] of Object.entries(expectedStats)) {
   const matches = [...about.matchAll(new RegExp(`<span class="n" data-about-stat="${key}">([^<]*)</span>`, 'g'))];
