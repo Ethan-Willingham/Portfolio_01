@@ -245,107 +245,300 @@
   }
 })();
 
-/* ---------------------------------------------------------------------------
-   Resonant hairline. A hairline is rendered on a <canvas> as a plucked string:
-   a 1-D damped wave equation. Click or tap it to strum it at that point; the
-   masthead search also plucks at the caret as you type. The loop runs only
-   while there is energy (free at rest) and is skipped under prefers-reduced-
-   motion, where the static CSS line stays. Mounted on the search underline and
-   on the footer's top rule.
---------------------------------------------------------------------------- */
+/* Resonant hairlines: catch, stretch, and release the search and footer rules.
+   The held shape follows the hand; release feeds that shape and its current
+   velocity into a damped string. Returning slowly removes stored energy.
+   SVG overflow gives the string room without putting a big hitbox over links. */
 (function () {
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var docCss = getComputedStyle(document.documentElement);
-  function toRgb(name, fallback) {
-    var v = (docCss.getPropertyValue(name) || fallback).trim().replace('#', '');
-    if (v.length === 3) v = v.replace(/./g, '$&$&');
-    return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+  'use strict';
+  var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var fine = window.matchMedia('(any-pointer: fine)');
+  var ns = 'http://www.w3.org/2000/svg';
+  var waves = [], gesture = null, active = null, suppressClick = false;
+  var css = document.createElement('style');
+  css.textContent =
+    '.home-search.wave-on{border-bottom-color:transparent;}' +
+    '.home-search.wave-on::before,.home-search.wave-on::after{display:none;}' +
+    '.site-footer-inner.wave-on{border-top-color:transparent;}' +
+    '.hairline-string{position:absolute;left:0;bottom:0;width:100%;height:1px;overflow:visible;pointer-events:none;z-index:2;}' +
+    '.site-footer-inner>.hairline-string{top:-1px;bottom:auto;}' +
+    '.hairline-ink{fill:none;stroke-width:1;stroke-linejoin:round;pointer-events:none;}' +
+    '.hairline-hit{fill:none;stroke:transparent;stroke-width:20;pointer-events:stroke;touch-action:pan-y;}' +
+    '@media(hover:hover) and (pointer:fine){.hairline-hit{cursor:grab;}}' +
+    '.hairline-dragging,.hairline-dragging *{cursor:grabbing!important;user-select:none!important;}' +
+    '@media print{.hairline-string{display:none;}}';
+  document.head.appendChild(css);
+
+  var palette = getComputedStyle(document.documentElement);
+  function rgb(token) {
+    var hex = palette.getPropertyValue(token).trim().replace('#', '');
+    if (hex.length === 3) hex = hex.replace(/./g, '$&$&');
+    return [0, 2, 4].map(function (i) { return parseInt(hex.slice(i, i + 2), 16); });
   }
-  var RULE = toRgb('--rule', '#4A544B'), ACC = toRgb('--accent', '#D4C4A0');
-  var DPR = Math.min(2, window.devicePixelRatio || 1);
+  var rule = rgb('--rule'), accent = rgb('--accent');
+  function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
-  function mountWave(host, opts) {
-    var input = opts.input || null;
-    var cv = document.createElement('canvas');
-    cv.className = opts.cls;
-    cv.setAttribute('aria-hidden', 'true');
-    host.classList.add('wave-on');
-    host.appendChild(cv);
-    var ctx = cv.getContext('2d');
-    var meas = input ? document.createElement('canvas').getContext('2d') : null;
+  function mount(host, input) {
+    var svg = document.createElementNS(ns, 'svg');
+    svg.classList.add('hairline-string');
+    svg.setAttribute('aria-hidden', 'true');
+    var ink = document.createElementNS(ns, 'path');
+    var hit = document.createElementNS(ns, 'path');
+    ink.classList.add('hairline-ink');
+    hit.classList.add('hairline-hit');
+    svg.appendChild(ink); svg.appendChild(hit); host.appendChild(svg);
 
-    var N = 200, u = new Float32Array(N), vel = new Float32Array(N);
-    var W = 0, H = 0, base = 0, focused = false, raf = null, warm = 0;
-    var STIFF = 0.28, VDAMP = 0.992, AMP = 4.5, WARM_FADE = 0.007;
+    var count = 97, u = new Float64Array(count), velocity = new Float64Array(count);
+    var width = 0, warmth = 0, frame = 0, lastTime = 0, remainder = 0;
+    var held = null, focused = false;
+    // Fixed physics steps keep a 144 Hz screen and a 60 Hz screen in tune.
+    var dt = 1 / 480, tension = Math.pow((count - 1) * 3.2, 2);
+    var damping = Math.exp(-4.2 * dt);
+    var wave = { svg: svg, host: host, draw: draw, reset: reset, pluck: pluck,
+      point: point, grab: grab, move: move, release: release };
+    waves.push(wave);
 
-    function size() {
-      var r = cv.getBoundingClientRect();
-      W = r.width; H = r.height;
-      cv.width = Math.max(1, Math.round(W * DPR));
-      cv.height = Math.max(1, Math.round(H * DPR));
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      base = H / 2;
-      draw();
-    }
-    function caretX() {
-      var s = getComputedStyle(input);
-      meas.font = s.fontStyle + ' ' + s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily;
-      var w = meas.measureText(input.value).width;
-      var left = input.getBoundingClientRect().left - cv.getBoundingClientRect().left;
-      return Math.max(2, Math.min(W - 2, left + w));
-    }
-    function pluck(x, amp) {
-      var c = Math.max(1, Math.min(N - 2, Math.round(x / W * (N - 1))));
-      for (var k = -7; k <= 7; k++) { var j = c + k; if (j < 1 || j > N - 2) continue; u[j] += amp * Math.exp(-(k * k) / 10); }
-      warm = 1;
-      run();
-    }
-    function energy() { var e = 0; for (var i = 0; i < N; i++) e += u[i] * u[i] + vel[i] * vel[i]; return e; }
-    function step() {
-      var i, a;
-      for (i = 1; i < N - 1; i++) { a = STIFF * (u[i - 1] + u[i + 1] - 2 * u[i]); vel[i] = (vel[i] + a) * VDAMP; }
-      u[0] = u[N - 1] = 0; vel[0] = vel[N - 1] = 0;
-      for (i = 1; i < N - 1; i++) u[i] += vel[i];
-      warm = Math.max(0, warm - WARM_FADE);
-      draw();
-      if (energy() > 0.02 || warm > 0.01) { raf = requestAnimationFrame(step); }
-      else { warm = 0; raf = null; draw(); }
-    }
-    function run() { if (!raf) raf = requestAnimationFrame(step); }
     function draw() {
-      if (!W) return;
-      ctx.clearRect(0, 0, W, H);
-      var t = Math.max(focused ? 0.22 : 0, warm);
-      var cr = Math.round(RULE[0] + (ACC[0] - RULE[0]) * t), cg = Math.round(RULE[1] + (ACC[1] - RULE[1]) * t), cb = Math.round(RULE[2] + (ACC[2] - RULE[2]) * t);
-      // One uniform color across, matching the static hairline. The accent warmth
-      // snaps to full on a pluck and fades back at a steady linear rate (WARM_FADE
-      // per frame), decoupled from the noisier ring energy, so it lingers a beat
-      // and dissolves smoothly instead of flickering or staircasing.
-      ctx.strokeStyle = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
-      ctx.lineWidth = 1; ctx.lineJoin = 'round';
-      ctx.beginPath();
-      for (var i = 0; i < N; i++) { var x = i / (N - 1) * W, y = base + u[i]; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-      ctx.stroke();
+      var path = '';
+      for (var i = 0; i < count; i++) {
+        path += (i ? 'L' : 'M') + (i / (count - 1) * width).toFixed(2) + ',' + (0.5 + u[i]).toFixed(2);
+      }
+      ink.setAttribute('d', path); hit.setAttribute('d', path);
+      var heat = Math.max(focused ? 0.22 : 0, warmth);
+      ink.setAttribute('stroke', 'rgb(' + rule.map(function (c, i) {
+        return Math.round(c + (accent[i] - c) * heat);
+      }).join(',') + ')');
     }
-
+    function size() {
+      var next = host.clientWidth;
+      if (next === width) return;
+      if (active === wave) cancel();
+      width = next; reset();
+    }
+    function reset() {
+      cancelAnimationFrame(frame); frame = 0; remainder = 0; held = null;
+      u.fill(0); velocity.fill(0); warmth = 0; draw();
+    }
+    function point(x, y) {
+      var rect = svg.getBoundingClientRect();
+      var localX = x - rect.left;
+      var index = clamp(localX / width * (count - 1), 0, count - 1);
+      var low = Math.floor(index), high = Math.min(count - 1, low + 1);
+      return { x: localX, y: y - rect.top - 0.5, width: width,
+        offset: u[low] + (u[high] - u[low]) * (index - low) };
+    }
+    function profile(i, x) {
+      var t = i / (count - 1), p = clamp(x / width, 0.015, 0.985);
+      var side = t < p ? t / p : (1 - t) / (1 - p);
+      // Nearly straight arms with a small rounded bend under the fingertip.
+      var corner = 0.025;
+      return 1 - (Math.sqrt(Math.pow(1 - side, 2) + corner * corner) - corner) /
+        (Math.sqrt(1 + corner * corner) - corner);
+    }
+    function pose(speed) {
+      for (var i = 0; i < count; i++) {
+        var shape = profile(i, held.x);
+        u[i] = shape * held.offset; velocity[i] = shape * speed;
+      }
+      draw();
+    }
+    function grab(x, y, crossed) {
+      var p = point(x, y);
+      held = { x: p.x, gap: p.y - p.offset, offset: p.offset,
+        moved: crossed, speed: 0, time: performance.now() };
+    }
+    function move(x, y) {
+      if (!held) return false;
+      var p = point(x, y), now = performance.now();
+      var pull = p.y - held.gap;
+      var limit = clamp(width * 0.22, 90, 170);
+      // Resistance builds before the band slips out of the hand.
+      var offset = pull / (1 + Math.abs(pull) / (limit * 2.5));
+      held.speed = clamp((offset - held.offset) / Math.max(0.008, (now - held.time) / 1000), -900, 900);
+      held.time = now; held.x = clamp(p.x, width * 0.015, width * 0.985);
+      held.offset = offset; held.moved = true;
+      warmth = clamp(Math.abs(pull) / limit, 0.12, 1);
+      pose(0);
+      if (Math.abs(pull) >= limit || p.x < -36 || p.x > width + 36) {
+        release(true); return true;
+      }
+      return false;
+    }
+    function release(slip) {
+      if (!held) return;
+      if (held.moved) {
+        // A pause in the hand kills throw velocity. A slow return to the rest
+        // line can therefore finish almost silently, with no mandatory pluck.
+        var speed = held.speed * Math.exp(-(performance.now() - held.time) / 65) * 0.28;
+        if (slip) speed = -held.offset * 5;
+        pose(speed);
+        if (Math.abs(held.offset) < 0.65 && Math.abs(speed) < 9) {
+          u.fill(0); velocity.fill(0); warmth = 0;
+        }
+      } else {
+        pluck(held.x, 8);
+      }
+      held = null; run();
+    }
+    function pluck(x, amplitude) {
+      if (motion.matches || !width) return;
+      var center = clamp(x / width * (count - 1), 1, count - 2);
+      for (var i = 1; i < count - 1; i++) u[i] += amplitude * Math.exp(-Math.pow((i - center) / 3, 2));
+      warmth = 1; run();
+    }
+    function run() {
+      if (!frame && !motion.matches) { lastTime = performance.now(); frame = requestAnimationFrame(tick); }
+    }
+    function tick(now) {
+      frame = 0;
+      if (held && held.moved) { remainder = 0; return; }
+      var elapsed = Math.min(0.04, (now - lastTime) / 1000);
+      lastTime = now; remainder += elapsed;
+      while (remainder >= dt) {
+        for (var i = 1; i < count - 1; i++) {
+          velocity[i] = (velocity[i] + tension * (u[i - 1] + u[i + 1] - 2 * u[i]) * dt) * damping;
+        }
+        for (var j = 1; j < count - 1; j++) u[j] += velocity[j] * dt;
+        remainder -= dt;
+      }
+      warmth = Math.max(0, warmth - elapsed * 0.65);
+      var energy = 0;
+      for (var k = 1; k < count - 1; k++) energy = Math.max(energy, Math.abs(u[k]), Math.abs(velocity[k]) / 25);
+      if (energy < 0.06 && warmth === 0) { reset(); return; }
+      draw(); frame = requestAnimationFrame(tick);
+    }
     if (input) {
+      var measure = document.createElement('canvas').getContext('2d');
       input.addEventListener('focus', function () { focused = true; draw(); });
       input.addEventListener('blur', function () { focused = false; draw(); });
-      input.addEventListener('input', function () { pluck(caretX(), AMP); });
-      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') pluck(W * 0.5, AMP * 1.5); });
+      input.addEventListener('input', function () {
+        if (!measure) return;
+        var style = getComputedStyle(input);
+        measure.font = style.fontSize + ' ' + style.fontFamily;
+        var end = input.selectionStart === null ? input.value.length : input.selectionStart;
+        var x = input.getBoundingClientRect().left - svg.getBoundingClientRect().left +
+          measure.measureText(input.value.slice(0, end)).width - input.scrollLeft;
+        pluck(clamp(x, 2, width - 2), 4.5);
+      });
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') pluck(width * 0.5, 6); });
     }
-    // Click or tap the line to strum it right there. preventDefault keeps focus
-    // where it is (no keyboard popup on touch, an open results panel stays open).
-    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); pluck(e.clientX - cv.getBoundingClientRect().left, AMP * 1.6); });
-    cv.addEventListener('mousedown', function (e) { e.preventDefault(); });
-
-    if (window.ResizeObserver) new ResizeObserver(size).observe(cv); else window.addEventListener('resize', size);
+    if (window.ResizeObserver) new ResizeObserver(size).observe(host);
+    else window.addEventListener('resize', size);
     size();
   }
 
+  function capture(wave, e, x, y, crossed) {
+    active = wave; gesture.caught = true;
+    gesture.startX = x; gesture.startY = y;
+    wave.grab(x, y, crossed);
+    if (crossed) window.getSelection().removeAllRanges();
+    document.documentElement.classList.add('hairline-dragging');
+    wave.svg.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+  function ungrab() {
+    var previous = active; active = null;
+    document.documentElement.classList.remove('hairline-dragging');
+    if (previous && gesture && previous.svg.hasPointerCapture(gesture.id)) previous.svg.releasePointerCapture(gesture.id);
+  }
+  function cancel() {
+    if (active) active.reset();
+    ungrab(); gesture = null;
+  }
+  var interactive = 'a,button,input,textarea,select,summary,canvas,video,[contenteditable]:not([contenteditable="false"]),[role="button"],[role="slider"]';
+  function startsOnText(e) {
+    var caret, node, offset;
+    if (document.caretPositionFromPoint) {
+      caret = document.caretPositionFromPoint(e.clientX, e.clientY);
+      node = caret && caret.offsetNode; offset = caret && caret.offset;
+    } else if (document.caretRangeFromPoint) {
+      caret = document.caretRangeFromPoint(e.clientX, e.clientY);
+      node = caret && caret.startContainer; offset = caret && caret.startOffset;
+    }
+    if (!node || node.nodeType !== 3) return false;
+    var range = document.createRange();
+    range.setStart(node, Math.max(0, offset - 1));
+    range.setEnd(node, Math.min(node.length, offset + 1));
+    return Array.from(range.getClientRects()).some(function (r) {
+      return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    });
+  }
+  window.addEventListener('pointerdown', function (e) {
+    if (motion.matches || gesture || !e.isPrimary || e.button !== 0) return;
+    var direct = waves.find(function (wave) { return wave.svg.contains(e.target); });
+    if (!direct && (e.target.closest(interactive) || window.getSelection().toString() || startsOnText(e))) return;
+    if (!direct && (!fine.matches || e.pointerType === 'touch')) return;
+    gesture = { id: e.pointerId, x: e.clientX, y: e.clientY,
+      startX: e.clientX, startY: e.clientY, caught: false, touch: e.pointerType === 'touch', tap: direct };
+    if (direct && !gesture.touch) capture(direct, e, e.clientX, e.clientY, false);
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!gesture || e.pointerId !== gesture.id) return;
+    if (!(e.buttons & 1)) { cancel(); return; }
+    if (gesture.touch) {
+      if (Math.hypot(e.clientX - gesture.startX, e.clientY - gesture.startY) > 8) gesture.tap = null;
+      return;
+    }
+    if (active) {
+      e.preventDefault();
+      if (Math.hypot(e.clientX - gesture.startX, e.clientY - gesture.startY) > 3 || gesture.moved) {
+        gesture.moved = true;
+        if (active.move(e.clientX, e.clientY)) ungrab();
+      }
+    } else if (gesture.caught) {
+      e.preventDefault(); // A slipped band cannot be caught again until mouseup.
+    } else if (!e.target.closest(interactive)) {
+      for (var i = 0; i < waves.length; i++) {
+        var wave = waves[i];
+        var a = wave.point(gesture.x, gesture.y), b = wave.point(e.clientX, e.clientY);
+        var from = a.y - a.offset, to = b.y - b.offset;
+        if (from * to > 0 || from === to) continue;
+        var fraction = from / (from - to);
+        var x = gesture.x + (e.clientX - gesture.x) * fraction;
+        var y = gesture.y + (e.clientY - gesture.y) * fraction;
+        var p = wave.point(x, y);
+        var under = document.elementFromPoint(x, y);
+        if (p.x < 0 || p.x > p.width || !under || !wave.host.contains(under)) continue;
+        capture(wave, e, x, y, true); gesture.moved = true;
+        if (wave.move(e.clientX, e.clientY)) ungrab();
+        break;
+      }
+    }
+    gesture.x = e.clientX; gesture.y = e.clientY;
+  }, { passive: false });
+  window.addEventListener('pointerup', function (e) {
+    if (!gesture || e.pointerId !== gesture.id) return;
+    if (gesture.touch && gesture.tap) {
+      gesture.tap.pluck(gesture.tap.point(e.clientX, e.clientY).x, 8);
+      gesture.caught = true;
+    }
+    if (active) active.release(false);
+    suppressClick = gesture.caught;
+    setTimeout(function () { suppressClick = false; }, 0);
+    ungrab(); gesture = null;
+  });
+  window.addEventListener('click', function (e) {
+    if (suppressClick) { e.preventDefault(); e.stopPropagation(); suppressClick = false; }
+  }, true);
+  window.addEventListener('pointercancel', function (e) { if (gesture && e.pointerId === gesture.id) cancel(); });
+  window.addEventListener('lostpointercapture', function (e) { if (active && gesture && e.pointerId === gesture.id) cancel(); });
+  window.addEventListener('blur', cancel);
+  window.addEventListener('resize', cancel, { passive: true });
+  window.addEventListener('scroll', function () { if (gesture) cancel(); }, { passive: true });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { cancel(); waves.forEach(function (wave) { wave.reset(); }); }
+  });
+  function syncMotion() {
+    cancel();
+    waves.forEach(function (wave) {
+      wave.reset(); wave.svg.style.display = motion.matches ? 'none' : '';
+      wave.host.classList.toggle('wave-on', !motion.matches);
+    });
+  }
   var search = document.querySelector('.home-search');
-  if (search && search.querySelector('.hs-input')) mountWave(search, { cls: 'hs-wave', input: search.querySelector('.hs-input') });
-
+  if (search) mount(search, search.querySelector('.hs-input'));
   var footer = document.querySelector('.site-footer-inner');
-  if (footer) mountWave(footer, { cls: 'foot-wave' });
+  if (footer) mount(footer, null);
+  motion.addEventListener('change', syncMotion);
+  syncMotion();
 })();
