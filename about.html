@@ -124,7 +124,8 @@
   @media (max-width: 520px){ .co-face { grid-template-columns: 1fr; } .co-face-aa { grid-row: auto; } }
 
   /* ============ the commit river + tokens (from git-history.html) ============ */
-  .gh-wrap { margin: 1.6rem 0 2rem; }
+  .post-body .gh-title { margin: 0; font-weight: 400; }
+  .gh-wrap { margin: 0.9rem 0 2rem; }
   .gh-stage {
     position: relative; width: 100%; height: clamp(380px, 64vh, 660px);
     border-radius: 10px; overflow: hidden; border: 1px solid var(--rule);
@@ -386,13 +387,10 @@
         <div class="post-body fade-in" style="animation-delay: 0.1s;">
 
           <!-- ===== HOW IT'S MADE (from Every Push and Every Token) ===== -->
-          <aside class="u-callout" aria-labelledby="gh-intro-title">
-            <p class="u-callout-k" id="gh-intro-title">The site's edit history</p>
-            <p class="u-callout-body" id="gh-intro">Each dot is a Git commit, a saved set of changes to this site. Dates run left to right; height shows lines added plus lines deleted on a logarithmic scale. Colors group commits by page or project. The orange line shows daily AI token use across all my projects, on a separate scale. Hover or tap a dot to read its commit message.</p>
-          </aside>
+          <h2 class="gh-title">Build history</h2>
 
           <div class="gh-wrap">
-            <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website" aria-describedby="gh-intro">
+            <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website">
               <canvas id="gh-canvas"></canvas>
               <div class="gh-readout" id="gh-readout"></div>
               <div class="gh-topright">
