@@ -13,7 +13,7 @@
   // The same numeric operations run in both paths. Browsers without worker
   // image decoding get short time slices instead of one multi-second task.
   async function run(steps){var part,started=performance.now();do{part=steps.next();if(onMain&&!part.done&&performance.now()-started>=6){await pause();started=performance.now();}}while(!part.done);return part.value;}
-  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261007-41','globe-clouds.js?v=20261007-41');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
+  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261007-41','globe-clouds.js?v=20261008-43');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
   function smooth(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
   function pack(visible,infrared,natural,out,start,end){
     for(var i=start||0,last=end===undefined?visible.length:end;i<last;i+=4){
@@ -48,6 +48,7 @@
       if(clouds.GROUPS[group].source===clouds.NASA&&clouds.GROUPS[group].kind==='infrared')await run(clouds.normalizeThermalSteps(images[group],nativeWidth));
       images[group]=reduce(images[group],nativeWidth,width);images[group]=await run(data.featherCoverageSteps(images[group],width));
     }
+    await run(clouds.retainVisibleCloudsSteps(images,width));
     var visible=await run(clouds.compositeSteps(images,width,'visible')),infrared=await run(clouds.compositeSteps(images,width,'infrared'));
     return [visible,infrared];
   }

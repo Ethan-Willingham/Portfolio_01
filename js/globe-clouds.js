@@ -38,8 +38,10 @@
   var start=new Date(Math.ceil(Math.max.apply(null,starts)/STEP)*STEP),end=new Date(Math.floor(Math.min.apply(null,ends)/STEP)*STEP);
   if(end<start)throw new Error('No common satellite coverage');var catalog={version:1,products:products,checkedAt:checked.toISOString(),start:start,end:end,step:STEP,dense:true};if(value.legacy)catalog.legacy=data.parseCloudSnapshot({version:1,source:EUM,layers:data.CLOUD_LAYERS,start:value.legacy.start,end:value.legacy.end,step:value.legacy.step,checkedAt:checked.toISOString()});return catalog;
  }
- function productTime(product,time){var best=null;product.periods.forEach(function(v){var start=Date.parse(v.start),end=Date.parse(v.end),candidate=start+Math.floor((Math.min(time,end)-start)/v.step)*v.step;if(candidate>=start&&candidate<=time&&time-candidate<v.step&&(!best||candidate>+best))best=new Date(candidate);});return best;}
- function sourceTimes(catalog,time){return catalog.products.map(function(p){return productTime(p,+timestamp(time));});}
+ function productTime(product,time,maxAge){var best=null;product.periods.forEach(function(v){var start=Date.parse(v.start),end=Date.parse(v.end),candidate=start+Math.floor((Math.min(time,end)-start)/v.step)*v.step;if(candidate>=start&&candidate<=time&&time-candidate<(maxAge||v.step)&&(!best||candidate>+best))best=new Date(candidate);});return best;}
+ // Visible publication can trail infrared by one or two scans. Keep its real
+ // clock, with a bounded 30-minute age; infrared still requires native cadence.
+ function sourceTimes(catalog,time){return catalog.products.map(function(p,i){return productTime(p,+timestamp(time),GROUPS[i].kind==='visible'?1800000:undefined);});}
  function published(catalog,time){return catalog.products.every(function(p,i){return GROUPS[i].kind==='visible'||!!productTime(p,time);});}
  function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;var limit=Math.floor(Math.min(t,+catalog.end)/STEP)*STEP;for(var k=0;k<24&&limit>=catalog.start;k++,limit-=STEP)if(published(catalog,limit))return new Date(limit);return null;}
  function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/STEP)*STEP);t<end&&t<=catalog.end&&t<=clock;t+=STEP)if(published(catalog,t))out.push(new Date(t));return out;}
@@ -51,7 +53,9 @@
  }
  // Infrared RGB is a temperature code. Lossy compression changes those codes
  // and can turn warm pixels into isolated bright clouds during inversion.
- function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:g.source===NASA&&g.kind==='infrared'?'image/png':'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
+ // Himawari red-visible also needs PNG alpha: black ocean is valid observation,
+ // so a JPEG black-fill mask would erase small clouds during edge feathering.
+ function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:g.source===NASA&&(g.kind==='infrared'||i===2)?'image/png':'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
  async function imageBlob(response,width){
   var mime=(response.headers.get('content-type')||'').split(';')[0].trim();if(mime==='image/png')return data.imageBlob(response,width);if(mime!=='image/jpeg')throw new Error('Invalid hourly image type');
   var blob=await response.blob(),bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());if(bytes.length<12||bytes[0]!==255||bytes[1]!==216)throw new Error('Invalid satellite JPEG');
@@ -146,6 +150,25 @@
   }return sources;
  }
  function maskScanArtifacts(sources,width){return drain(maskScanArtifactsSteps(sources,width));}
+ // Warm low clouds can be bright in visible imagery and dark in infrared.
+ // Combine those observations per satellite before the footprint blend. Doing
+ // this after compositing would expose the edge of the visible mosaic.
+ function smoothCloud(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
+ function* retainVisibleCloudsSteps(sources,width){
+  for(var pair=0;pair<5;pair++){var visible=sources[pair],infrared=sources[pair+5];if(!visible||!infrared)continue;
+   for(var at=0;at<infrared.length;at+=4){if(at%(width*16)===0)yield;if(!infrared[at+3]||!visible[at+3])continue;
+    var r=visible[at]/255,g=visible[at+1]/255,b=visible[at+2]/255;
+    var ice=smoothCloud(.04,.16,Math.min(g,b)-r)*smoothCloud(.18,.36,Math.min(g,b))*(1-smoothCloud(.12,.32,Math.abs(g-b))),bright=Math.max(g,b);
+    r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;var observed=Math.min(r,g,b);if(observed<=.22)continue;
+    // Both display curves use smoothstep. Mapping their input ranges retains
+    // the visible opacity in the shared thermal field without clipping cores.
+    var value=255*(.28+.72*Math.min(1,(observed-.22)/.63));
+    value=infrared[at]+Math.max(0,value-infrared[at])*visible[at+3]/255;
+    infrared[at]=infrared[at+1]=infrared[at+2]=Math.round(value);
+   }
+  }return sources;
+ }
+ function retainVisibleClouds(sources,width){return drain(retainVisibleCloudsSteps(sources,width));}
  // Prefer the satellite looking more directly down on a location. Separate
  // Meteosat requests avoid its server mosaic's abrupt, stretched limb borders.
  // This is a display blend of observed pixels, not a meteorological retrieval.
@@ -160,5 +183,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:7,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:8,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
 }));

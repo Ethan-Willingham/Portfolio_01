@@ -1,0 +1,27 @@
+{
+  "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi",
+  "request": {
+    "version": "1.3.0",
+    "crs": "EPSG:4326",
+    "bbox": "-90,-180,90,180",
+    "width": 2048,
+    "height": 1024,
+    "format": "image/png",
+    "transparent": true
+  },
+  "visible": {
+    "layer": "Himawari_AHI_Band3_Red_Visible_1km",
+    "time": "2026-10-08T03:20:00Z"
+  },
+  "infrared": {
+    "layer": "Himawari_AHI_Band13_Clean_Infrared",
+    "time": "2026-10-08T03:30:00Z"
+  },
+  "crop": {
+    "left": 1630,
+    "top": 300,
+    "width": 256,
+    "height": 128
+  },
+  "note": "Unmodified lossless source crops near Japan and the western Pacific, reproducing bright visible clouds erased by the infrared-only display and by JPEG black-fill feathering."
+}

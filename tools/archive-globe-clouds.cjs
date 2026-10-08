@@ -5,7 +5,7 @@ const data=require('../js/globe-data.js'),clouds=require('../js/globe-clouds.js'
 const BRANCH='globe-clouds',REF='refs/heads/'+BRANCH,WIDTH=2048,HOUR=3600000,STEP=clouds.STEP;
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function usableSources(blobs){return blobs.length===clouds.GROUPS.length&&blobs.every((blob,i)=>blob||clouds.GROUPS[i].kind==='visible');}
-function needsRepair(frame,catalog){return frame.sourceTimes.slice(0,5).some((t,i)=>!t&&clouds.productTime(catalog.products[i],Date.parse(frame.time)));}
+function needsRepair(frame,catalog){const times=clouds.sourceTimes(catalog,frame.time);return frame.sourceTimes.slice(0,5).some((t,i)=>!t&&times[i]);}
 function improvesSources(next,old){return next.sourceTimes.every((t,i)=>!old.sourceTimes[i]||t)&&next.sourceTimes.filter(Boolean).length>old.sourceTimes.filter(Boolean).length;}
 function git(args,options={}){return execFileSync('git',args,{maxBuffer:32000000,...options});}
 async function renderFrame(time,options={}){
@@ -22,6 +22,7 @@ async function renderFrame(time,options={}){
  }
  clouds.maskScanArtifacts(pixels,WIDTH);
  for(let i=0;i<pixels.length;i++)if(pixels[i]){if(clouds.GROUPS[i].source===clouds.NASA&&clouds.GROUPS[i].kind==='infrared')clouds.normalizeThermal(pixels[i],WIDTH);pixels[i]=data.featherCoverage(pixels[i],WIDTH);}
+ clouds.retainVisibleClouds(pixels,WIDTH);
  const frame={time:time.toISOString(),natural:result.blobs.slice(0,5).some(Boolean),sources:result.blobs.map(Boolean),sourceTimes:result.sourceTimes},files=new Map();
  for(const kind of ['visible','infrared']){
   const rgba=clouds.composite(pixels,WIDTH,kind);let covered=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i]>200)covered++;
