@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.176';
+  var GAME_VERSION = 'v28.177';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -14370,10 +14370,15 @@
   // newly discovered air, hiding sealed pockets until a tunnel reaches them.
   var liquidTerrainRender = null;
   function liquidTerrainRenderMask() {
-    var c0 = Math.floor(cam.x / TILE) - 2;
-    var c1 = Math.ceil((cam.x + viewW / worldScale) / TILE) + 2;
-    var r0 = Math.floor(cam.y / TILE) - 2;
-    var r1 = Math.ceil((cam.y + viewH / worldScale) / TILE) + 2;
+    // Keep the texture size fixed while panning. Independent floor/ceil
+    // bounds resized it at fractional tile crossings, recreating the GPU
+    // texture and uploading the whole mask. A four-tile window retains the
+    // existing two-tile halo, including at its farthest camera position.
+    var step = 4;
+    var c0 = Math.floor(cam.x / (TILE * step)) * step - 2;
+    var c1 = c0 + Math.ceil(viewW / worldScale / TILE) + step + 4;
+    var r0 = Math.floor(cam.y / (TILE * step)) * step - 2;
+    var r1 = r0 + Math.ceil(viewH / worldScale / TILE) + step + 4;
     // The off-map bath is lit by its own room scene, outside mine discovery.
     // Applying the mine fog here masks every bath particle despite real water.
     var path = buildVoidContourPath(Math.max(SKY_ROWS, r0), r1, c0, c1, !!(lightTune.enabled && lightArr && !bathMode));
