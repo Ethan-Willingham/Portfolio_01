@@ -35,7 +35,7 @@
       const picked = selected.has(id);
       button.setAttribute('aria-pressed', String(picked));
       mark.textContent = picked ? 'Selected for removal' : 'Click to select';
-      card.hidden = (filter.checked && !picked) || (newOnly.checked && (Number(id) < 46 || Number(id) > 109));
+      card.hidden = (filter.checked && !picked) || (newOnly.checked && (Number(id) < 46 || Number(id) > 112));
     }
     empty.hidden = [...cards.values()].some(({ card }) => !card.hidden);
   }

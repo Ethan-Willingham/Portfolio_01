@@ -23,9 +23,10 @@ The revised third group adds eleven more phrases, works and art directions:
 the six checks, and the owner approved publication on October 7, 2026.
 The owner's later curation left 25 works on view and retired 20. That completed
 production history contains 45 generated work IDs and 55 generation attempts.
-Groups four to ten added works 046 to 109. After the second picker curation,
-the catalogue has 205 phrases, 120 directions, 109 generated work IDs and
-190 lifetime image calls. There are 34 active works and 75 retired works.
+Groups four to ten added works 046 to 109. The eleventh group adds three works
+about formulaic AI language. The catalogue now has 208 phrases, 123 directions,
+112 generated work IDs and 194 lifetime image calls. There are 37 active works
+and 75 retired works.
 The phrase bank includes the owner's four starting lines: "Slop", "A step below
 average", "Uncanny" and "Looks right, but wrong". The remaining lines range from
 short complaints to descriptions of familiar generated-image errors. They
@@ -553,6 +554,39 @@ columns and rows, the caption, `sourceRunNumbers: [1,2,3,4,5,6,7,8,9]`, and
 the composition's source PNG, hash and timestamp. Preserve every source alongside the composite.
 A planned grid has zero calls, an empty `sourceRuns` array and null work image
 paths. The nine-source rule does not relax review or record keeping.
+
+## Eleventh group, AI language
+
+The owner requested a few works about conspicuously formulaic AI wording,
+including emails, and directly authorized publication. These three pieces use
+an email collage, a deli wrapper and a finished greeting card. The wording is
+part of each object. It is satire about familiar language habits, not a claim
+that these phrases identify a particular model or prove AI authorship.
+
+| Work | Phrase | Direction | Attempts |
+|---|---|---|---|
+| 110 | I hope this email finds you well. | Inbox paste-up | 1 |
+| 111 | It's not just a sandwich. It's an experience. | Sandwich-wrapper still life | 1 |
+| 112 | Here's a more human version: | Greeting-card proof | 2 |
+
+Phrases p206 to p208 and three new styles follow the existing catalogue without
+renumbering or restoring retired work. The first two images passed all six
+checks on the first attempt. Work 112's first instruction was too small at
+336 pixels. Only the sentence specifying that instruction changed for its
+second attempt, asking for larger type on four short lines. Both attempts,
+their prompts and the failed word check remain in the production record.
+
+The batch comparisons use retained works 001, 005, 025, 040, 045, 050, 065, 083,
+103 and 109, alongside the new pieces. The final contact sheet covers 110 to
+112. The three selected images passed their recorded six checks.
+
+This run used four built-in image calls. The weekly account meter was 39% used
+at 2026-10-08T00:57:15.000Z before generation, and 40% used at
+2026-10-08T01:06:00.000Z after the last image and review. Both readings belong
+to the same 10,080-minute window, a change of one percentage point. This is
+account activity, including other chats, and cannot be converted into image
+tokens or a per-image cost. The preceding production interval is preserved in
+`production.accountUsageHistory`.
 
 ## Generation and records
 

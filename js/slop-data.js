@@ -822,6 +822,18 @@ window.SLOP_DATA = {
     {
       "id": "p205",
       "text": "Everything in its place"
+    },
+    {
+      "id": "p206",
+      "text": "I hope this email finds you well."
+    },
+    {
+      "id": "p207",
+      "text": "It's not just a sandwich. It's an experience."
+    },
+    {
+      "id": "p208",
+      "text": "Here's a more human version:"
     }
   ],
   "styles": [
@@ -1544,6 +1556,24 @@ window.SLOP_DATA = {
       "name": "Catalog page",
       "family": "Print",
       "description": "A glossy home-furnishing catalog spread."
+    },
+    {
+      "id": "inbox-pasteup",
+      "name": "Inbox paste-up",
+      "family": "Collage",
+      "description": "Torn printed correspondence layered as a physical editorial collage, with repeated email openings."
+    },
+    {
+      "id": "sandwich-wrapper",
+      "name": "Sandwich-wrapper still life",
+      "family": "Photography",
+      "description": "A plain sandwich on printed greaseproof wrapping, photographed as a restrained commercial still life."
+    },
+    {
+      "id": "greeting-card-proof",
+      "name": "Greeting-card proof",
+      "family": "Paper craft",
+      "description": "An open commercial greeting card with embossed flowers and an accidentally retained drafting instruction."
     }
   ],
   "works": [
@@ -11280,6 +11310,243 @@ window.SLOP_DATA = {
         "selectedAttempt": 1
       },
       "group": 10
+    },
+    {
+      "id": "110",
+      "phraseId": "p206",
+      "title": "I hope this email finds you well.",
+      "styleId": "inbox-pasteup",
+      "alt": "Torn email printouts repeatedly say 'I hope this email finds you well.' over older handwritten letters, each opening underlined in coral.",
+      "image": "assets/slop/110.webp",
+      "fallback": "assets/slop/110.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square physical collage of printed emails, photographed straight on with visible paper fibers, paste ridges and torn edges. The collage fills the frame. A dense jumble of very different old correspondence surrounds the center: pale blue graph paper, pink memo paper, yellow legal paper, irregular handwritten lines and uneven typewriter paragraphs, all small and illegible. Across these different messages, fresh white email printouts have been pasted in a rigid repeated pattern, each with exactly the same opening, the exact words \"I hope this email finds you well.\" in the same black sans-serif type. The largest white printout sits in the foreground and fills the central two thirds, its opening set on four short lines in heavy black lettering, every letter at least one twentieth of the image height and perfectly readable at 336 pixels. Beneath that opening is a tiny dense gray email paragraph, deliberately illegible. The other printouts are partly hidden so only repeated fragments of that same opening are visible. A fluorescent coral proofreader's pencil has underlined each matching opening; the different older voices remain visible only at the outer torn edges. Rich black, paper white, electric coral and the faded paper colors. Restrained, tactile editorial collage with strong composition. The repeated text belongs to the emails themselves. No added caption, no screen, no icons, no robots, no brand marks, no names, no signatures, no emojis, no em dashes, and no other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square physical collage of printed emails, photographed straight on with visible paper fibers, paste ridges and torn edges. The collage fills the frame. A dense jumble of very different old correspondence surrounds the center: pale blue graph paper, pink memo paper, yellow legal paper, irregular handwritten lines and uneven typewriter paragraphs, all small and illegible. Across these different messages, fresh white email printouts have been pasted in a rigid repeated pattern, each with exactly the same opening, the exact words \"I hope this email finds you well.\" in the same black sans-serif type. The largest white printout sits in the foreground and fills the central two thirds, its opening set on four short lines in heavy black lettering, every letter at least one twentieth of the image height and perfectly readable at 336 pixels. Beneath that opening is a tiny dense gray email paragraph, deliberately illegible. The other printouts are partly hidden so only repeated fragments of that same opening are visible. A fluorescent coral proofreader's pencil has underlined each matching opening; the different older voices remain visible only at the outer torn edges. Rich black, paper white, electric coral and the faded paper colors. Restrained, tactile editorial collage with strong composition. The repeated text belongs to the emails themselves. No added caption, no screen, no icons, no robots, no brand marks, no names, no signatures, no emojis, no em dashes, and no other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square physical collage of printed emails, photographed straight on with visible paper fibers, paste ridges and torn edges. The collage fills the frame. A dense jumble of very different old correspondence surrounds the center: pale blue graph paper, pink memo paper, yellow legal paper, irregular handwritten lines and uneven typewriter paragraphs, all small and illegible. Across these different messages, fresh white email printouts have been pasted in a rigid repeated pattern, each with exactly the same opening, the exact words \"I hope this email finds you well.\" in the same black sans-serif type. The largest white printout sits in the foreground and fills the central two thirds, its opening set on four short lines in heavy black lettering, every letter at least one twentieth of the image height and perfectly readable at 336 pixels. Beneath that opening is a tiny dense gray email paragraph, deliberately illegible. The other printouts are partly hidden so only repeated fragments of that same opening are visible. A fluorescent coral proofreader's pencil has underlined each matching opening; the different older voices remain visible only at the outer torn edges. Rich black, paper white, electric coral and the faded paper colors. Restrained, tactile editorial collage with strong composition. The repeated text belongs to the emails themselves. No added caption, no screen, no icons, no robots, no brand marks, no names, no signatures, no emojis, no em dashes, and no other readable words.",
+            "change": "First attempt, saved production prompt used verbatim.",
+            "image": "assets/slop/attempts/110-01.webp",
+            "fallback": "assets/slop/attempts/110-01.jpg",
+            "sourceSha256": "d0e81b4a5b98f24ade6c4d51624490f5891444577f2f1584f0b1506d09bab47f",
+            "recordedAt": "2026-10-08T01:02:05.612Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "At 336 pixels the central opening reads exactly 'I hope this email finds you well.' with its period; the large main lettering remains comfortably above the minimum size."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "Identical black email openings cover varied older handwritten and typed correspondence. The words are the repeated email material itself, with the loss of variety visible at the edges."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Raised torn fibers, pasted overlaps and uneven paper shadows make the physical collage visible at gallery size."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "No robot, caricature or explanatory caption. The repeated bland greeting supplies the criticism without addressing or mocking a person."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No names, brand marks, signatures or logos. Background handwriting and the small email paragraphs are indistinct as requested."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Compared with ten retained works, this introduces stark repeated black type and coral marks. It shares torn paper with 005, but has a rigid repeated opening rather than a single mixed-letter title."
+                }
+              },
+              "reviewedAt": "2026-10-08T01:02:19.190Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "d0e81b4a5b98f24ade6c4d51624490f5891444577f2f1584f0b1506d09bab47f",
+        "recordedAt": "2026-10-08T01:02:05.612Z",
+        "selectedAttempt": 1
+      },
+      "group": 11
+    },
+    {
+      "id": "111",
+      "phraseId": "p207",
+      "title": "It's not just a sandwich. It's an experience.",
+      "styleId": "sandwich-wrapper",
+      "alt": "A plain bitten cheese sandwich lies on a greasy wrapper printed with 'It's not just a sandwich. It's an experience.'",
+      "image": "assets/slop/111.webp",
+      "fallback": "assets/slop/111.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square close overhead still-life photograph of an ordinary cheese sandwich on its unfolded printed deli wrapper. Two soft square slices of cheap white bread with one flat slice of orange processed cheese between them, one corner bitten, a few crumbs, a translucent grease mark. No fillings, no garnish, no luxury food styling. The sandwich occupies only the lower-right quarter. The off-white greaseproof paper fills the rest of the frame on a scratched red laminate lunch counter. Printed directly into the wrapper in oversized confident black advertising type are the exact words \"It's not just a sandwich. It's an experience.\" across four or five bold lines, perfectly spelled with both periods and both apostrophes, each letter at least one twentieth of the image height and clearly readable at 336 pixels. The printed claim dominates the frame; the very plain half-eaten sandwich contradicts it. Small red geometric registration squares and faint ink variation make this real flexographic food wrapping rather than a caption or a digital graphic. Flat midday diner light, real paper creases, softened bread edges, tactile crumbs, disciplined red, black, cream and cheese-orange palette. No people, faces, brand names, logos, signatures, emoji, em dashes or other readable words.",
+      "originalPrompt": "Use case: stylized-concept. Create a square close overhead still-life photograph of an ordinary cheese sandwich on its unfolded printed deli wrapper. Two soft square slices of cheap white bread with one flat slice of orange processed cheese between them, one corner bitten, a few crumbs, a translucent grease mark. No fillings, no garnish, no luxury food styling. The sandwich occupies only the lower-right quarter. The off-white greaseproof paper fills the rest of the frame on a scratched red laminate lunch counter. Printed directly into the wrapper in oversized confident black advertising type are the exact words \"It's not just a sandwich. It's an experience.\" across four or five bold lines, perfectly spelled with both periods and both apostrophes, each letter at least one twentieth of the image height and clearly readable at 336 pixels. The printed claim dominates the frame; the very plain half-eaten sandwich contradicts it. Small red geometric registration squares and faint ink variation make this real flexographic food wrapping rather than a caption or a digital graphic. Flat midday diner light, real paper creases, softened bread edges, tactile crumbs, disciplined red, black, cream and cheese-orange palette. No people, faces, brand names, logos, signatures, emoji, em dashes or other readable words.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 1,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square close overhead still-life photograph of an ordinary cheese sandwich on its unfolded printed deli wrapper. Two soft square slices of cheap white bread with one flat slice of orange processed cheese between them, one corner bitten, a few crumbs, a translucent grease mark. No fillings, no garnish, no luxury food styling. The sandwich occupies only the lower-right quarter. The off-white greaseproof paper fills the rest of the frame on a scratched red laminate lunch counter. Printed directly into the wrapper in oversized confident black advertising type are the exact words \"It's not just a sandwich. It's an experience.\" across four or five bold lines, perfectly spelled with both periods and both apostrophes, each letter at least one twentieth of the image height and clearly readable at 336 pixels. The printed claim dominates the frame; the very plain half-eaten sandwich contradicts it. Small red geometric registration squares and faint ink variation make this real flexographic food wrapping rather than a caption or a digital graphic. Flat midday diner light, real paper creases, softened bread edges, tactile crumbs, disciplined red, black, cream and cheese-orange palette. No people, faces, brand names, logos, signatures, emoji, em dashes or other readable words.",
+            "change": "First attempt, saved production prompt used verbatim.",
+            "image": "assets/slop/attempts/111-01.webp",
+            "fallback": "assets/slop/attempts/111-01.jpg",
+            "sourceSha256": "4df6102715e32faf698406ecf46ae83e2905c919e6e5ad8b91fe08a4c9d65409",
+            "recordedAt": "2026-10-08T01:03:10.101Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "At 336 pixels all words are readable: 'It's not just a sandwich. It's an experience.' Both apostrophes and periods are present, with main type well above the minimum height."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The inflated sales claim is printed into a greasy wrapper beside a plain bitten cheese sandwich. The ordinary food visibly contradicts its advertising."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Creased translucent wrapping, grease patches, rough ink and a scratched red counter read as a photographed deli still life."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "No added punchline, pointing character or sneer at the eater. The familiar advertising formula and meager sandwich carry the piece."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "Only the requested sentence is readable; registration squares are abstract, with no logos, people or marks identifying a real business."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Against retained works and 110, the sparse overhead composition differs from the layered email collage and the existing food-court scene. Black-on-paper connects this language group, while scratched red and the isolated sandwich vary its composition."
+                }
+              },
+              "reviewedAt": "2026-10-08T01:03:26.949Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "4df6102715e32faf698406ecf46ae83e2905c919e6e5ad8b91fe08a4c9d65409",
+        "recordedAt": "2026-10-08T01:03:10.101Z",
+        "selectedAttempt": 1
+      },
+      "group": 11
+    },
+    {
+      "id": "112",
+      "phraseId": "p208",
+      "title": "Here's a more human version:",
+      "styleId": "greeting-card-proof",
+      "alt": "A cream embossed greeting card says 'Here's a more human version:' in large plum letters above the smaller message 'Thinking of you.'",
+      "image": "assets/slop/112.webp",
+      "fallback": "assets/slop/112.jpg",
+      "width": 1254,
+      "height": 1254,
+      "prompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in dark plum ink, the printer has accidentally included the exact words \"Here's a more human version:\" in large, heavy serif lettering on exactly four short lines: \"Here's\" / \"a more\" / \"human\" / \"version:\", with each main letter at least one twelfth of the entire image height, filling most of the right page so the drafting instruction remains prominent at 336 pixels. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
+      "originalPrompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in the same dark plum ink used for the personal message, the printer has accidentally included the exact words \"Here's a more human version:\" on three large clear lines. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
+      "generation": {
+        "provider": "OpenAI built-in image tool",
+        "model": null,
+        "status": "complete",
+        "attempts": 2,
+        "usage": null,
+        "costUsd": null,
+        "attemptLog": [
+          {
+            "number": 1,
+            "prompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in the same dark plum ink used for the personal message, the printer has accidentally included the exact words \"Here's a more human version:\" on three large clear lines. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
+            "change": "First attempt, saved production prompt used verbatim.",
+            "image": "assets/slop/attempts/112-01.webp",
+            "fallback": "assets/slop/attempts/112-01.jpg",
+            "sourceSha256": "eda0ae70b70bad950cb10b3dc66a77b72a0145302d553eba0bffde9ddbc42f5b",
+            "recordedAt": "2026-10-08T01:04:11.149Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": false,
+                  "note": "Both phrases and their punctuation are correct, but the drafting instruction is too small at 336 pixels: its lowercase letters are about 11 to 14 pixels high, below the one-twentieth target. Enlarge that instruction and split it over four short lines."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The drafting instruction is printed on the finished personal card, in the same plum ink as the message. The wording belongs to the object itself."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "Cotton paper grain, central fold, raised floral embossing and separate cut-paper petals are clearly visible."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The misplaced instruction creates the failure quietly. No explanatory caption, robot or caricature was added."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "Only the two requested phrases appear, with no names, brands, signatures or incidental garbled lettering."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "The lilac, plum and embossed floral paper differ from 110's dense collage and 111's red-counter still life, and add a quiet open composition among the retained works."
+                }
+              },
+              "reviewedAt": "2026-10-08T01:04:36.360Z"
+            },
+            "decision": "rejected"
+          },
+          {
+            "number": 2,
+            "prompt": "Use case: stylized-concept. Create a square carefully composed studio photograph of an open, professionally printed personal greeting card lying on a dusty lilac tabletop, with a matching cream envelope tucked underneath. Thick warm-white cotton card, a deep central fold, delicate blind-embossed flowers and a few small die-cut coral paper petals around the inside margins, beautiful side light revealing the embossing. The inside right page is unusually large and faces the viewer almost straight on. At its top, in dark plum ink, the printer has accidentally included the exact words \"Here's a more human version:\" in large, heavy serif lettering on exactly four short lines: \"Here's\" / \"a more\" / \"human\" / \"version:\", with each main letter at least one twelfth of the entire image height, filling most of the right page so the drafting instruction remains prominent at 336 pixels. Below a generous gap, the exact words \"Thinking of you.\" appear in graceful, restrained lettering. Both phrases are perfectly spelled and readable at 336 pixels, with every main letter at least one twentieth of the image height. The drafting instruction must look fully printed into the finished card, not a sticky note, editor markup, floating caption or computer interface. The surrounding paper craft is delicate and sincere, with slight physical imperfections; the unremoved instruction ruins the personal message by being part of the actual card. The left inside page is blank except for blind embossing. No people, brands, logos, signatures, invented names, robots, emojis, em dashes or any additional readable text.",
+            "change": "Words failed: the instruction was too small at 336 pixels. Changed only the sentence setting that instruction, specifying four shorter lines in larger heavy serif type.",
+            "image": "assets/slop/attempts/112-02.webp",
+            "fallback": "assets/slop/attempts/112-02.jpg",
+            "sourceSha256": "4966cdb2c2f7c9c78f70e64e9c2d48fc6921238100888e5125ed5c49e0367a12",
+            "recordedAt": "2026-10-08T01:05:23.314Z",
+            "review": {
+              "checks": {
+                "words": {
+                  "pass": true,
+                  "note": "The exact instruction now reads on four large lines at 336 pixels, including the apostrophe and colon. Main letter bodies are about 20 pixels high or more. The smaller 'Thinking of you.' remains legible with its final period."
+                },
+                "evidence": {
+                  "pass": true,
+                  "note": "The instruction and personal message are both printed onto the finished card. The visible failure is the retained drafting language inside an otherwise carefully made object."
+                },
+                "medium": {
+                  "pass": true,
+                  "note": "The enlarged type follows the paper surface; the fold, embossed floral stems, paper grain and coral cut-outs preserve the greeting-card construction."
+                },
+                "cringe": {
+                  "pass": true,
+                  "note": "The accidental instruction supplies the criticism without an added punchline, cartoon or judgment of the recipient."
+                },
+                "guardrails": {
+                  "pass": true,
+                  "note": "No identities, brands, logos, signatures or additional readable words. The two requested phrases are correctly spelled."
+                },
+                "batch": {
+                  "pass": true,
+                  "note": "Compared with retained works and 110 to 111, the plum serif type, lilac tabletop and empty left page provide a different palette and quieter composition. The three language works use collage, food wrapping and a finished greeting card."
+                }
+              },
+              "reviewedAt": "2026-10-08T01:05:43.599Z"
+            },
+            "decision": "accepted"
+          }
+        ],
+        "sourceSha256": "4966cdb2c2f7c9c78f70e64e9c2d48fc6921238100888e5125ed5c49e0367a12",
+        "recordedAt": "2026-10-08T01:05:23.314Z",
+        "selectedAttempt": 2
+      },
+      "group": 11
     }
   ],
   "production": {
@@ -11339,22 +11606,22 @@ window.SLOP_DATA = {
     "imageCostUsd": null,
     "usageNote": "Recorded planning and coding tokens through this snapshot, including stopped attempts and child agents. Input includes cached context; output includes reasoning. Image inference is unreported, so this is not the complete production total. Unfinished responses appear in a later snapshot.",
     "accountUsage": {
-      "label": "Groups four through ten, works 046 to 109",
+      "label": "AI language, works 110 to 112",
       "before": {
-        "usedPercent": 8,
+        "usedPercent": 39,
         "windowDurationMins": 10080,
         "resetsAt": 1792001978,
-        "observedAt": "2026-10-07T18:52:46.000Z"
+        "observedAt": "2026-10-08T00:57:15.000Z"
       },
       "after": {
-        "usedPercent": 36,
+        "usedPercent": 40,
         "windowDurationMins": 10080,
         "resetsAt": 1792001978,
-        "observedAt": "2026-10-08T00:22:43.000Z"
+        "observedAt": "2026-10-08T01:06:00.000Z"
       },
-      "deltaPercentagePoints": 28,
+      "deltaPercentagePoints": 1,
       "note": "Account-wide meter; includes other chats. Not a token counter.",
-      "windowNote": "Production pauses if the observed weekly usage increase exceeds 30 percentage points within this quota window."
+      "windowNote": "A separate interval for three new language pieces, after publication of the curated earlier groups."
     },
     "accountUsageHistory": [
       {
@@ -11428,6 +11695,24 @@ window.SLOP_DATA = {
         "deltaPercentagePoints": null,
         "note": "Account-wide meter; includes other chats. The quota window reset during this run, so no usage delta can be calculated. Not a token counter.",
         "windowNote": "The account quota window reset between the 98% baseline and the 2% final reading. The reset timestamps differ, so no usage delta can be calculated for this run."
+      },
+      {
+        "label": "Groups four through ten, works 046 to 109",
+        "before": {
+          "usedPercent": 8,
+          "windowDurationMins": 10080,
+          "resetsAt": 1792001978,
+          "observedAt": "2026-10-07T18:52:46.000Z"
+        },
+        "after": {
+          "usedPercent": 36,
+          "windowDurationMins": 10080,
+          "resetsAt": 1792001978,
+          "observedAt": "2026-10-08T00:22:43.000Z"
+        },
+        "deltaPercentagePoints": 28,
+        "note": "Account-wide meter; includes other chats. Not a token counter.",
+        "windowNote": "Production pauses if the observed weekly usage increase exceeds 30 percentage points within this quota window."
       }
     ]
   }

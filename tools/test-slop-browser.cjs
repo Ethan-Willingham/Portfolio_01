@@ -266,7 +266,7 @@ async function pickerChecks(context, url, label, works) {
     await page.waitForSelector('.review-card');
     assert.equal(await page.locator('#selection-text').inputValue(), expected, 'Removal choices did not persist across reload.');
     await page.locator('#new-only').check();
-    const fresh = works.filter(work => Number(work.id) >= 46 && Number(work.id) <= 109);
+    const fresh = works.filter(work => Number(work.id) >= 46 && Number(work.id) <= 112);
     assert.equal(await page.locator('.review-card:visible').count(), fresh.length);
     await page.locator('#selected-only').check();
     const selectedNew = [first, last].filter(work => fresh.some(item => item.id === work.id));
