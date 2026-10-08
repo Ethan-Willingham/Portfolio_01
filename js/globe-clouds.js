@@ -2,9 +2,9 @@
    explicitly published time. See docs/DAYLIGHT_GLOBE.md for display limits. */
 (function(root,factory){
  'use strict';
- if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'));
- else root.GlobeClouds=factory(root.GlobeData);
-}(typeof globalThis!=='undefined'?globalThis:this,function(data){
+ if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'),require('./globe-math.js'));
+ else root.GlobeClouds=factory(root.GlobeData,root.GlobeMath);
+}(typeof globalThis!=='undefined'?globalThis:this,function(data,math){
  'use strict';
  var STEP=900000, NASA='https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', EUM=data.CLOUD_SERVICE, CACHE='daylight-globe-hourly-v1';
  var GROUPS=[
@@ -160,16 +160,44 @@
  // Combine those observations per satellite before the footprint blend. Doing
  // this after compositing would expose the edge of the visible mosaic.
  function smoothCloud(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
- function* retainVisibleCloudsSteps(sources,width){
+ function geoColorCloud(r,g,b,mu,observed){
+  // GeoColor already blends its day and night layers at source time, well
+  // before the geometric horizon. Decode its grey daytime and blue low-cloud
+  // signals before applying the globe's separate selected-time lighting.
+  // CIRA's published display model: Miller et al. (2020), Eqs. 5, 12 and 13.
+  var day=Math.pow(Math.max(0,Math.min(1,(mu-.1)/.2)),1.5),night=1-day;
+  var blue=Math.max(0,Math.min((g-r)/.20,(b-g)/.23));
+  var rr=r-.55*blue,gg=g-.75*blue,bb=b-.98*blue,bright=Math.max(rr,gg,bb);
+  var neutral=1-smoothCloud(.10,.35,(bright-Math.min(rr,gg,bb))/Math.max(.05,bright));
+  var daylight=(Math.min(rr,gg,bb)-.06*night)/Math.max(.05,day);
+  // A bounded inversion avoids amplifying near-black pixels when the daytime
+  // signal has ended. Neutrality and blue brightness checks limit contributions
+  // from coloured terrain, dim ocean backgrounds and embedded city lights.
+  var dayCloud=smoothCloud(.22,.85,daylight)*neutral*smoothCloud(.025,.075,day);
+  var lowCloud=smoothCloud(.06,.20,blue/Math.max(.05,night))*smoothCloud(.22,.36,b/Math.max(.05,night))*smoothCloud(.5,.8,night);
+  return Math.max(observed,dayCloud,lowCloud);
+ }
+ var solarWidth=0,solarCos=[],solarSin=[];
+ function* retainVisibleCloudsSteps(sources,width,sourceTimes){
+  if(sourceTimes&&solarWidth!==width){solarWidth=width;solarCos=new Float32Array(width);solarSin=new Float32Array(width);for(var x=0;x<width;x++){var lon=((x+.5)*360/width-180)*Math.PI/180;solarCos[x]=Math.cos(lon);solarSin[x]=Math.sin(lon);}}
+  // A yielding full decode and compact fallback can run at different widths.
+  // Keep each iterator's own references when the shared cache changes width.
+  var lonCos=solarCos,lonSin=solarSin;
   for(var pair=0;pair<5;pair++){var visible=sources[pair],infrared=sources[pair+5];if(!visible||!infrared)continue;
+   var sun=pair<2&&sourceTimes&&sourceTimes[pair]&&math?math.solar(new Date(sourceTimes[pair])).vector:null,lastRow=-1,sinLat=0,cosLat=0;
    for(var at=0;at<infrared.length;at+=4){if(at%(width*16)===0)yield;if(!visible[at+3])continue;
-    var r=visible[at]/255,g=visible[at+1]/255,b=visible[at+2]/255;
+    var r=visible[at]/255,g=visible[at+1]/255,b=visible[at+2]/255,rawR=r,rawG=g,rawB=b;
     var ice=smoothCloud(.04,.16,Math.min(g,b)-r)*smoothCloud(.18,.36,Math.min(g,b))*(1-smoothCloud(.12,.32,Math.abs(g-b))),bright=Math.max(g,b);
     r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;var observed=Math.min(r,g,b);
     // Both display curves use smoothstep. Mapping their input ranges retains
     // the visible opacity in the shared thermal field without clipping cores.
     var value=.28+.72*Math.max(0,Math.min(1,(observed-.22)/.63)),ia=infrared[at+3]/255,va=visible[at+3]/255,alpha=Math.max(ia,va);
-    var irCloud=smoothCloud(.28,1,infrared[at]/255)*ia,visCloud=smoothCloud(.22,.85,observed)*va,cover=Math.max(irCloud,visCloud);
+    var visibleOpacity=smoothCloud(.22,.85,observed);
+    if(sun){var index=at/4,row=Math.floor(index/width),x=index%width;if(row!==lastRow){lastRow=row;var lat=(90-(row+.5)*360/width)*Math.PI/180;sinLat=Math.sin(lat);cosLat=Math.cos(lat);}var mu=cosLat*(sun.x*lonCos[x]-sun.z*lonSin[x])+sun.y*sinLat;
+     var corrected=geoColorCloud(rawR,rawG,rawB,mu,visibleOpacity);
+     if(corrected>visibleOpacity){visibleOpacity=corrected;value=.28+.72*(.5-Math.sin(Math.asin(1-2*corrected)/3));}
+    }
+    var irCloud=smoothCloud(.28,1,infrared[at]/255)*ia,visCloud=visibleOpacity*va,cover=Math.max(irCloud,visCloud);
     if(!cover)value=ia?infrared[at]:0;
     else if(!ia||visCloud>=irCloud&&alpha===va)value*=255;
     else if(alpha===ia&&irCloud>=visCloud)value=infrared[at];
@@ -178,7 +206,7 @@
    }
   }return sources;
  }
- function retainVisibleClouds(sources,width){return drain(retainVisibleCloudsSteps(sources,width));}
+ function retainVisibleClouds(sources,width,sourceTimes){return drain(retainVisibleCloudsSteps(sources,width,sourceTimes));}
  // Prefer the satellite looking more directly down on a location. Separate
  // Meteosat requests avoid its server mosaic's abrupt, stretched limb borders.
  // This is a display blend of observed pixels, not a meteorological retrieval.
@@ -193,5 +221,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:9,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:10,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
 }));

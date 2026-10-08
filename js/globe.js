@@ -77,7 +77,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v45');
+  text(byId('globe-version'),'v46');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -225,8 +225,8 @@
   });
   var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
   replayMemo=timeline.memoryCache((mobile?104:224)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-44',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-44',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-46',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-46',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -732,7 +732,7 @@
     var outputs=[],memoized=false,prepared;
     try{
       var natural=result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural;
-      prepared=await detailPreparing.prepareFull(result.blobs,result.width,natural,!!result.shared,100,stamp.toISOString()+'/'+result.width);
+      prepared=await detailPreparing.prepareFull(result.blobs,result.width,natural,!!result.shared,100,stamp.toISOString()+'/'+result.width,result.sourceTimes);
       if(signal.aborted){var aborted=new Error('Cloud decode aborted');aborted.name='AbortError';throw aborted;}
       for(var i=0;i<2;i++){
         var image=prepared.images[i],canvas;
@@ -763,7 +763,7 @@
     if(!replayPending.has(key)){
       var controller=new AbortController(),task=(async function(){
         var result=await requestCloudBytes(stamp,cloudWidth,controller.signal,14000,navigator.onLine===false),packed;
-        packed=await replayPreparing.prepare(result.blobs,replayWidth,result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,task.priority,key,result.width);
+        packed=await replayPreparing.prepare(result.blobs,replayWidth,result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,task.priority,key,result.width,result.sourceTimes);
         var record={photo:{date:data.utcDate(stamp),time:key,sourceTimes:result.sourceTimes,width:result.width,coverage:packed.coverage,source:'NASA / EUMETSAT',natural:result.natural===undefined?result.blobs.slice(0,5).some(Boolean):result.natural,dense:true,shared:!!result.shared},width:packed.width,pixels:packed.pixels};
         return replayMemo.put(key,record,packed.pixels.byteLength);
       }());task.priority=priority||0;replayPending.set(key,task);task.finally(function(){if(replayPending.get(key)===task)replayPending.delete(key);}).catch(function(){});

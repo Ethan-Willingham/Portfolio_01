@@ -1,0 +1,165 @@
+{
+  "note": "Lossless crops of decoded NASA GOES-West observations. The original visible JPEG was decoded once; infrared is native PNG. Pixel values, source clocks, global positions and resolution are retained.",
+  "frames": [
+    {
+      "time": "2026-10-08T00:30:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0030-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T00%3A30%3A00Z"
+        },
+        "infrared": {
+          "file": "0030-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T00%3A30%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T00:40:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0040-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T00%3A40%3A00Z"
+        },
+        "infrared": {
+          "file": "0040-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T00%3A40%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T00:50:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0050-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T00%3A50%3A00Z"
+        },
+        "infrared": {
+          "file": "0050-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T00%3A50%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T01:00:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0100-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A00%3A00Z"
+        },
+        "infrared": {
+          "file": "0100-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A00%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T01:10:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0110-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A10%3A00Z"
+        },
+        "infrared": {
+          "file": "0110-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A10%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T01:20:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0120-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A20%3A00Z"
+        },
+        "infrared": {
+          "file": "0120-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A20%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T01:30:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0130-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A30%3A00Z"
+        },
+        "infrared": {
+          "file": "0130-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T01%3A30%3A00Z"
+        }
+      }
+    },
+    {
+      "time": "2026-10-08T02:30:00.000Z",
+      "crop": {
+        "left": 260,
+        "top": 235,
+        "width": 165,
+        "height": 150
+      },
+      "sourceWidth": 2048,
+      "assets": {
+        "visible": {
+          "file": "0230-visible.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T02%3A30%3A00Z"
+        },
+        "infrared": {
+          "file": "0230-infrared.png",
+          "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T02%3A30%3A00Z"
+        }
+      }
+    }
+  ]
+}
