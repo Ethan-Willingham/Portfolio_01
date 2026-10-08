@@ -38,7 +38,7 @@ In v28.175, the left dev controls can clear every slime, add six soft residents
 and two rocky visitors together (both kinds have eyes), clear all snow and
 liquid (including stored material), toggle snowfall and smoke, and switch
 between noon and midnight.
-Hold WATER to spray continuously from the miner in its facing direction.
+Hold WATER to spray continuously downward from the bottom of the miner.
 Release, pause, changing scenes, rotating to portrait, or losing focus stops
 the spray. Clearing fluids leaves existing pond pits dry for this session;
 new snow and poured water still use them. The controls hide during menus and

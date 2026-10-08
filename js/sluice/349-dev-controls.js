@@ -64,7 +64,7 @@
     gmDevButton('gmClearFluidsBtn', 'CLEAR SNOW / LIQUID', devClearFluids);
     gmDevButton('gmSnowBtn', 'SNOW OFF', devToggleSnow);
     var water = gmDevButton('gmWaterBtn', 'HOLD WATER');
-    water.title = 'Hold to spray water from the miner. Release to stop.';
+    water.title = 'Hold to spray water downward from beneath the miner. Release to stop.';
     water.setAttribute('aria-pressed', 'false'); water.style.touchAction = 'none';
     water.addEventListener('pointerdown', function (e) {
       e.preventDefault(); e.stopPropagation();
@@ -264,12 +264,12 @@
     devWaterCredit += Math.min(0.05, Math.max(0, dt)) * 7200;
     var due = Math.floor(devWaterCredit); devWaterCredit -= due;
     var count = Math.min(due, LIQUID_MAX_PARTICLES - liquidCount);
-    var dir = player.dir < 0 ? -1 : 1, step = LIQUID_CELL * LIQUID_PDELTA;
-    var x0 = player.x + PLAYER_W * 0.5 + dir * (PLAYER_W * 0.5 + 8);
-    var y0 = player.y + PLAYER_H * 0.42;
+    var step = LIQUID_CELL * LIQUID_PDELTA;
+    var x0 = player.x + PLAYER_W * 0.5;
+    var y0 = player.y + PLAYER_H + 2;
     for (var i = 0; i < count; i++) {
-      var x = x0 + dir * Math.floor(i / 12) * step, y = y0 + (i % 12 - 5.5) * step;
+      var x = x0 + (i % 12 - 5.5) * step, y = y0 + Math.floor(i / 12) * step;
       if (x < 2 || x > COLS * TILE - 2 || liquidWorldSolidAt(x, y)) break;
-      addLiquidParticle(0, x, y, dir * 620 + player.vx, -140 + player.vy, 0);
+      addLiquidParticle(0, x, y, player.vx, 620 + player.vy, 0);
     }
   }
