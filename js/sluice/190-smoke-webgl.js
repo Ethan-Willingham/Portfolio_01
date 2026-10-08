@@ -2731,6 +2731,7 @@
   }
 
   function updateSmoke(dt) {
+    if (!devSmokeEnabled) return;
     // v12.9 — per-subsystem gating so each part can be A/B tested alone.
     var _us1 = performance.now();
     if (!PERF_DISABLE_ROCKET) updateRocketPlume(dt);
@@ -2839,6 +2840,7 @@
   }
 
   function drawSmoke() {
+    if (!devSmokeEnabled) return;
     if (PERF_DISABLE_SMOKE_FLUID) return;   // v12.9 — fluid sim toggle
     rigExhaustDraw();
     if (smokeFluidActive) {
@@ -2931,6 +2933,7 @@
   }
 
   function drawExhaustPipeSmokeBridge() {
+    if (!devSmokeEnabled) return;
     if (rigExhaustIsCustom()) return;
     if (PERF_DISABLE_EXHAUST_BRIDGE) return;   // v12.9 — exhaust-bridge toggle
     if (!smokeTune || !smokeTune.enabled || !smokeTune.diesel_enabled) return;

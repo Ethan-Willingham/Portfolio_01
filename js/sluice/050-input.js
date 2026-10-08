@@ -66,6 +66,8 @@
     // input state any time we lose focus or visibility — also drop any
     // touch-d-pad state for the same reason.
     function clearAllInput() {
+      devWaterStop();
+      gmTuningButtonSync();
       for (var k in keys) keys[k] = false;
       dpad.left = dpad.right = dpad.up = dpad.down = false;
       touch.active = false;
@@ -132,6 +134,7 @@
     // forever. The loop is re-kicked (exactly once) by resumeGame.
     function pauseGame(reason) {
       surfaceSlimeGrabEnd(undefined, true);
+      devWaterStop();
       if (PAUSE_DISABLED) return;   // ?nopause=1 harness lever (020)
       if (introPhase !== 'done') { gameLoadingPauseReason = reason || 'Paused'; clearAllInput(); return; }
       if (gamePaused) return;
@@ -149,6 +152,7 @@
     function resumeGame() {
       if (!gamePaused) return;
       gamePaused = false;
+      gmTuningButtonSync();
       playPerfPause(mobileLandscapeBlocked, mobileLandscapeBlocked ? 'rotate to landscape' : undefined);
       if (typeof SluiceAudio !== 'undefined' && SluiceAudio.setPaused) SluiceAudio.setPaused(mobileLandscapeBlocked);
       var ov = document.getElementById('game-pause');

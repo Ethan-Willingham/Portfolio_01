@@ -1,6 +1,7 @@
   /* ---- Init ---- */
 
   function init() {
+    devWaterStop();
     if (introPhase === 'done') beginSceneLoading('Preparing your mine');
     mineralLiquidReset();
     bathServiceReset();

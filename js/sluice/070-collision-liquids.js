@@ -341,6 +341,7 @@
   // settling when I roll up"). Spawning at rest density removes the
   // transient entirely; the settled level is unchanged.
   function fillSurfacePond(pond) {
+    if (pond.devEmpty) return true; // Developer clear keeps this pit dry until the next world/load.
     // Finite rain lakes stream their saved particles in rainScan, never refill.
     if (pond.rainFed) return true;
     var need = surfacePondNeed(pond);
@@ -2356,8 +2357,8 @@
 
   function syncDomEffectLayerVisibility() {
     var hidden = uiCoversDomEffectLayers();
-    setDomEffectLayerHidden(smokeFluidCanvas, hidden);
-    setDomEffectLayerHidden(rigExhaustCanvas, hidden);
+    setDomEffectLayerHidden(smokeFluidCanvas, hidden || !devSmokeEnabled);
+    setDomEffectLayerHidden(rigExhaustCanvas, hidden || !devSmokeEnabled);
     setDomEffectLayerHidden(liquidGLCanvas, hidden);
     if (liquidWGPU && liquidWGPU.renderCanvas) {
       setDomEffectLayerHidden(liquidWGPU.renderCanvas, hidden);

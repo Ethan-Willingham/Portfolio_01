@@ -697,6 +697,7 @@
     // Fluid and drawing use this frame's same interpolated outer skin.
     _ts = performance.now(); surfaceSlimeBuildFluidGuests(); perfMark('update.fluidSkin', _ts);
     _ts = performance.now(); updateParticleRain(dt);       perfMark('update.rain', _ts);
+    if (devMode || devWaterHeld) devControlsTick(dt);
     _ts = performance.now(); updateLiquids(dt);            perfMark('update.liquids', _ts);
     _ts = performance.now(); slimeAudioUpdate(dt); perfMark('update.slimeAudio', _ts);
     var _t4 = performance.now();
