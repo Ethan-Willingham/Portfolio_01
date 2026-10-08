@@ -163,9 +163,9 @@
     var issues = perfLiveIssueList(), selected = perfLiveGetSelectedIssue();
     var paused = gamePaused || mobileLandscapeBlocked, inactive = paused || document.hidden || snapshot.view;
     perfPanelText(perfPanel.fps, paused ? 'Paused' : stats.fps ? Math.round(stats.fps) + ' FPS' : 'Waiting');
-    perfPanel.fps.classList.toggle('perf-over-budget', !inactive && !!stats.frames && stats.fps < 114);
+    perfPanel.fps.classList.toggle('perf-over-budget', !inactive && !!stats.frames && stats.fps < perfLiveTargetFPS * 0.95);
     perfPanel.fps.classList.toggle('perf-critical', !inactive && !!stats.frames && stats.fps < 60);
-    perfPanelText(perfPanel.budget, (selected ? 'Saved issue' : paused ? 'Capture paused' : document.hidden ? 'Hidden tab' : snapshot.view ? 'Menu / loading' : 'Target 120 FPS') + (playPerfActive ? ' · recording' : ''));
+    perfPanelText(perfPanel.budget, (selected ? 'Saved issue' : paused ? 'Capture paused' : document.hidden ? 'Hidden tab' : snapshot.view ? 'Menu / loading' : 'Target ' + perfLiveTargetFPS + ' FPS') + (playPerfActive ? ' · recording' : ''));
     var explanation = perfLiveLiveDiagnosis(stats);
     if (inactive) explanation = { title: paused ? 'Capture paused' : document.hidden ? 'Tab hidden' : 'Waiting for gameplay',
       summary: 'Saved issues remain available. Live measurements continue when you return to play.', certainty: 'Not measuring play', evidence: [] };
@@ -208,7 +208,7 @@
   }
   function perfPanelPaintDetails(snapshot, stats, workload, event, selected) {
     var rows = [];
-    rows.push('Build ' + GAME_VERSION + ' · callback target 120 FPS');
+    rows.push('Build ' + GAME_VERSION + ' · callback target ' + perfLiveTargetFPS + ' FPS');
     rows.push('Panel observer ' + perfLive.observerMs.toFixed(3) + ' ms/frame; last paint ' + perfLive.paintMs.toFixed(2) + ' ms (5 Hz). GPU timestamp overhead is separate.');
     rows.push('Visible residents ' + snapshot.visibleResidents + '; outer ticks ' + snapshot.outerTicks + '; terrain rebuilds ' + snapshot.terrainRebuilds);
     rows.push('Snow ' + snapshot.snowAirborne + ' airborne / ' + snapshot.snowParked + ' parked; shared liquid storage ' + snapshot.liquids);

@@ -55,6 +55,16 @@
   }
   function rainCell(x, y) { return Math.floor(y / 6) * (Math.ceil(COLS * TILE / 6) + 1) + Math.floor(x / 6); }
 
+  var rainContactBounds = { cells: null, min: Infinity, max: -Infinity };
+  function rainContactCount(key) {
+    // Falling weather usually sits above every occupied liquid cell. The
+    // bounds belong to this exact completed scan; a reset or replacement
+    // table takes the ordinary lookup until the next scan publishes bounds.
+    var cells = rain.cells, bounds = rainContactBounds;
+    if (bounds.cells === cells && (key < bounds.min || key > bounds.max)) return 0;
+    return cells[key] || 0;
+  }
+
   function rainUpdatePlow() {
     if (!player || !player.onGround || gameOver || gameWon || Math.abs(player.vx) < 12) return;
     var p = rain.plow, right = player.vx > 0, feet = player.y + PLAYER_H;
@@ -111,6 +121,7 @@
   function rainScan(dt) {
     liquidToolSync();
     var cells = {}, waterCells = {}, count = 0, held = 0, margin = 220;
+    var minCell = Infinity, maxCell = -Infinity;
     // Exponential removal gives the same drainage per second at any frame
     // rate. Individual subpixel particles disappear over several scans, so
     // a puddle subsides instead of an entire tile's water blinking away.
@@ -162,6 +173,7 @@
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
         var key = rainCell(x, y);
         cells[key] = (cells[key] || 0) + 1;
+        minCell = Math.min(minCell, key); maxCell = Math.max(maxCell, key);
         if (liquidType[i] === 0) waterCells[key] = (waterCells[key] || 0) + 1;
       }
     }
@@ -185,6 +197,7 @@
       rain.parked.length -= 2; budget--; count++;
     }
     rain.cells = cells; rain.waterCells = waterCells; rain.waterCount = count;
+    rainContactBounds.cells = cells; rainContactBounds.min = minCell; rainContactBounds.max = maxCell;
   }
 
   function rainRecycle(count) {
@@ -277,7 +290,7 @@
       for (var k = 0; k < steps; k++) {
         var nx = p.x + dx, ny = p.y + dy;
         var solid = liquidWorldSolidAt(nx, ny + 1.5);
-        var wet = (rain.cells[rainCell(nx, ny)] || 0) >= 4;
+        var wet = rainContactCount(rainCell(nx, ny)) >= 4;
         var rig = player && liquidPointInMiner(nx, ny);
         var snowContact = worldSnowEnabled && snowBedContact(nx, ny);
         if (solid || wet || rig || snowContact) {

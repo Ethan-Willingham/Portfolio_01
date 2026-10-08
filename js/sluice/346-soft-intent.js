@@ -105,29 +105,54 @@
     var tx = c * intent.tx + s * intent.ty, ty = -s * intent.tx + c * intent.ty;
     var nx = c * intent.nx + s * intent.ny, ny = -s * intent.nx + c * intent.ny;
     var invRadius = 1 / Math.max(1, m.radius), wavelength = 2.5;
-    for (var p = 0; p < b.n; p++) {
-      var u = (b.qx[p] * tx + b.qy[p] * ty) * invRadius;
-      m.waveCos[p] = Math.cos(intent.phase + u * wavelength);
+    var qx = b.qx, qy = b.qy, sA = b.sA, sB = b.sB, springN = b.springN;
+    var muscleRest = b.muscleRest, springRest = b.sRest, waveCos = m.waveCos;
+    var effort = intent.effort, intentPhase = intent.phase, pointN = b.n;
+    for (var p = 0; p < pointN; p++) {
+      var u = (qx[p] * tx + qy[p] * ty) * invRadius;
+      waveCos[p] = Math.cos(intentPhase + u * wavelength);
     }
-    for (var spring = 0; spring < b.springN; spring++) {
-      var a = b.sA[spring], z = b.sB[spring], rest = b.muscleRest[spring];
-      var dx = b.qx[z] - b.qx[a], dy = b.qy[z] - b.qy[a];
-      var length2 = dx * dx + dy * dy;
-      var along = dx * tx + dy * ty;
-      var across = dx * nx + dy * ny;
-      var u = ((b.qx[a] + b.qx[z]) * tx + (b.qy[a] + b.qy[z]) * ty) * invRadius * 0.5;
-      var phase = intent.phase + u * wavelength;
+    // Intent and the material frame are sampled once per outer update. Their
+    // rest-mesh projections stay identical through its material microsteps.
+    var projection = m.springProjection;
+    if (!projection || projection.n !== springN) {
+      projection = m.springProjection = { n: springN, along: new Float64Array(springN),
+        across: new Float64Array(springN), length2: new Float64Array(springN),
+        phase: new Float64Array(springN) };
+    }
+    var projectedAlong = projection.along, projectedAcross = projection.across;
+    var projectedLength2 = projection.length2, projectedPhase = projection.phase;
+    if (projection.tx !== tx || projection.ty !== ty || projection.nx !== nx || projection.ny !== ny ||
+        projection.invRadius !== invRadius || projection.version !== b._contactRestVersion ||
+        projection.qx !== qx || projection.qy !== qy || projection.sA !== sA || projection.sB !== sB) {
+      projection.tx = tx; projection.ty = ty; projection.nx = nx; projection.ny = ny;
+      projection.invRadius = invRadius; projection.version = b._contactRestVersion;
+      projection.qx = qx; projection.qy = qy; projection.sA = sA; projection.sB = sB;
+      for (var si = 0; si < springN; si++) {
+        var qa = sA[si], qz = sB[si];
+        var qdx = qx[qz] - qx[qa], qdy = qy[qz] - qy[qa];
+        projectedLength2[si] = qdx * qdx + qdy * qdy;
+        projectedAlong[si] = qdx * tx + qdy * ty;
+        projectedAcross[si] = qdx * nx + qdy * ny;
+        var qu = ((qx[qa] + qx[qz]) * tx + (qy[qa] + qy[qz]) * ty) * invRadius * 0.5;
+        projectedPhase[si] = qu * wavelength;
+      }
+    }
+    for (var spring = 0; spring < springN; spring++) {
+      var rest = muscleRest[spring], length2 = projectedLength2[spring];
+      var along = projectedAlong[spring], across = projectedAcross[spring];
+      var phase = intentPhase + projectedPhase[spring];
       // A local, area-preserving strain metric combines longitudinal
       // shortening with shear. Its travelling shear lifts the advancing
       // skin while the contracting patch supplies terrain traction.
-      var axial = 0.12 * intent.effort * Math.cos(phase);
-      var shear = -0.30 * intent.effort * Math.sin(phase);
+      var axial = 0.12 * effort * Math.cos(phase);
+      var shear = -0.30 * effort * Math.sin(phase);
       var stretch = 1 + axial;
       var localX = along * stretch, localY = across / stretch + along * shear;
       var ratio = length2 > 1e-9 ? Math.sqrt((localX * localX + localY * localY) / length2) : 1;
       var target = rest * skySlimeClamp(ratio, 1 - SOFT_INTENT_STRAIN, 1 + SOFT_INTENT_STRAIN);
       var cap = rest * SOFT_INTENT_REST_RATE * dt;
-      b.sRest[spring] += skySlimeClamp(target - b.sRest[spring], -cap, cap);
+      springRest[spring] += skySlimeClamp(target - springRest[spring], -cap, cap);
     }
   }
 

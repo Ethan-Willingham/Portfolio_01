@@ -15,8 +15,10 @@
   var bathNotice = '', bathNoticeT = 0;
   var bathSupplies = [0, 0, 0, 0, 0]; // liquid recovered when retiring old garden lots
   var bathIntroSeen = false;
+  var bathWaterlineCache = null;
 
   function bathServiceReset() {
+    bathWaterlineCache = null;
     if (typeof bathArrivalReset === 'function') bathArrivalReset();
     bathToolReset();
     bathThermalReset(); bathSiloReset();
@@ -67,6 +69,10 @@
     // Invert the same curved cavity that now collides with the water.
     // This also gives parked/offscreen guests the same buoyancy level.
     var visibleWater = typeof bathArrivalVisibleWater === 'function' ? bathArrivalVisibleWater(bathWater) : bathWater;
+    var cached = bathWaterlineCache;
+    if (cached && cached.water === visibleWater && cached.x0 === curve.x0 &&
+        cached.x1 === curve.x1 && cached.y0 === curve.y0 && cached.depth === curve.D &&
+        cached.tightness === BATH_CAT_C) return cached.line;
     var low = curve.y0, high = curve.y0 + curve.D;
     for (var n = 0; n < 10; n++) {
       var line = (low + high) * 0.5, volume = 0;
@@ -76,7 +82,10 @@
       }
       if (volume > visibleWater) low = line; else high = line;
     }
-    return (low + high) * 0.5;
+    var result = (low + high) * 0.5;
+    bathWaterlineCache = { water: visibleWater, x0: curve.x0, x1: curve.x1,
+      y0: curve.y0, depth: curve.D, tightness: BATH_CAT_C, line: result };
+    return result;
   }
   function bathLightStove() {
     if (!bathMode || bathFading || gamePaused) return false;
@@ -241,16 +250,52 @@
     bathBeginHop(g, bathGuestQueueX(g.slot), BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
     saveNow('bath-payment');
   }
+  function bathResidentExitClear(x, y, s) {
+    // Enclose the newborn's mildly irregular rest skin. Existing residents
+    // are tested against their live contour, including sleeping/offscreen ones.
+    var radius = typeof s.r === 'number' && isFinite(s.r) ? skySlimeClamp(s.r, 22, 27) : 27;
+    radius = radius * 1.01 + 0.1;
+    var radius2 = radius * radius;
+    for (var row = Math.floor((y - radius) / TILE); row <= Math.floor((y + radius) / TILE); row++) {
+      for (var col = Math.floor((x - radius) / TILE); col <= Math.floor((x + radius) / TILE); col++) {
+        if (!tileAt(row, col)) continue;
+        var tx = skySlimeClamp(x, col * TILE, (col + 1) * TILE);
+        var ty = skySlimeClamp(y, row * TILE, (row + 1) * TILE);
+        if ((tx - x) * (tx - x) + (ty - y) * (ty - y) < radius2) return false;
+      }
+    }
+    if (player) {
+      var rx = skySlimeClamp(x, player.x, player.x + PLAYER_W);
+      var ry = skySlimeClamp(y, player.y, player.y + PLAYER_H);
+      if ((rx - x) * (rx - x) + (ry - y) * (ry - y) < radius2) return false;
+    }
+    for (var i = 0; i < skySlimes.length; i++) {
+      var rock = skySlimes[i];
+      if (Math.hypot(rock.x - x, rock.y - y) < radius + rock.r) return false;
+    }
+    for (var bi = 0; bi < jelloBodies.length; bi++) {
+      var b = jelloBodies[bi];
+      if (b.ringN < 3 || x + radius < b.bboxL || x - radius > b.bboxR ||
+          y + radius < b.bboxT || y - radius > b.bboxB) continue;
+      if (jelloPointInRing(b, x, y)) return false;
+      var q = jelloNearestOnRing(b, x, y);
+      if ((q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < radius2) return false;
+    }
+    return true;
+  }
   function bathReleaseGuest(g) {
     if (!bathPickSite()) return false;
     var s = g.s;
     if (ENABLE_JELLO && s.bathed) {
-      // A full solver keeps the paid guest indoors until there is room.
+      var exitX = (banyaDoorX0 + banyaDoorX1) / 2, exitY = SKY_ROWS * TILE - 38;
+      if (!bathResidentExitClear(exitX, exitY, s)) return false;
+      // A full solver or occupied door keeps the paid guest indoors until there is room.
       // Retrying cannot duplicate the payment or discard their identity.
-      var resident = surfaceSlimeBuild((banyaDoorX0 + banyaDoorX1) / 2,
-        SKY_ROWS * TILE - 38, s);
+      var resident = surfaceSlimeBuild(exitX, exitY, s);
       if (!resident) return false;
-      jelloLaunchBody(resident, 65, -110, { h: jelloStepH || JELLO_H });
+      // The first resident can leave before the solver has ever ticked.
+      // Encode launch history with the upcoming substep, not its stale boot value.
+      jelloLaunchBody(resident, 65, -110, { h: JELLO_H * jelloImpulseScale() });
       return true;
     }
     if (skySlimes.length >= SKY_SLIME_MAX) return false;

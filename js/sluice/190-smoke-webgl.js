@@ -9,6 +9,45 @@
     var gl = null;
     var ext = null;
     var ready = false;
+
+    // Uniform state belongs to the linked program and survives program switches.
+    // Each location is unique to that program; fresh init/material programs get
+    // fresh keys. No other code writes these uniforms through this context.
+    var uniformValues = new WeakMap();
+    function sameUniform(a, b) { return a === b && (a !== 0 || 1 / a === 1 / b); }
+    function uniform1i(location, x) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 0 && old.x === x) return;
+      gl.uniform1i(location, x);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 0; old.x = x;
+    }
+    function uniform1f(location, x) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 1 && sameUniform(old.x, x)) return;
+      gl.uniform1f(location, x);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 1; old.x = x;
+    }
+    function uniform2f(location, x, y) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 2 && sameUniform(old.x, x) && sameUniform(old.y, y)) return;
+      gl.uniform2f(location, x, y);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 2; old.x = x; old.y = y;
+    }
+    function uniform3f(location, x, y, z) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 3 && sameUniform(old.x, x) && sameUniform(old.y, y) && sameUniform(old.z, z)) return;
+      gl.uniform3f(location, x, y, z);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 3; old.x = x; old.y = y; old.z = z;
+    }
+
   
     var config = {
       SIM_RESOLUTION: 256,
@@ -940,9 +979,9 @@
     }
 
     function bindLiquidField (uniforms) {
-      gl.uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
-      gl.uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
-      gl.uniform1i(uniforms.uLiquid, 4);
+      uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
+      uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
+      uniform1i(uniforms.uLiquid, 4);
       gl.activeTexture(gl.TEXTURE4);
       if (!liquidTexture) ensureObstacleTexture();
       gl.bindTexture(gl.TEXTURE_2D, liquidTexture || obstacleTexture);
@@ -1041,16 +1080,16 @@
       // Force-zero all fields by running the clear shader with value 0.
       gl.disable(gl.BLEND);
       clearProgram.bind();
-      gl.uniform1f(clearProgram.uniforms.value, 0.0);
-      gl.uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
+      uniform1f(clearProgram.uniforms.value, 0.0);
+      uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
       blit(dye.write); dye.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
       blit(dye.write); dye.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
       blit(velocity.write); velocity.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
       blit(velocity.write); velocity.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
       blit(pressure.write); pressure.swap();
     }
   
@@ -1070,42 +1109,42 @@
       gl.disable(gl.BLEND);
   
       curlProgram.bind();
-      gl.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(curl);
   
       vorticityProgram.bind();
       bindLiquidField(vorticityProgram.uniforms);
-      gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
-      gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
-      gl.uniform1f(vorticityProgram.uniforms.useMoving, movingActive ? 1 : 0);
-      gl.uniform1i(vorticityProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
-      gl.uniform1i(vorticityProgram.uniforms.uDye, dye.read.attach(3));
-      gl.uniform3f(vorticityProgram.uniforms.materialForces, physics.BUOYANCY, physics.WEIGHT, physics.EDGE_SPIN);
-      gl.uniform1f(vorticityProgram.uniforms.viscosity, physics.VISCOSITY);
-      gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
-      gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+      uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+      uniform1f(vorticityProgram.uniforms.useMoving, movingActive ? 1 : 0);
+      uniform1i(vorticityProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
+      uniform1i(vorticityProgram.uniforms.uDye, dye.read.attach(3));
+      uniform3f(vorticityProgram.uniforms.materialForces, physics.BUOYANCY, physics.WEIGHT, physics.EDGE_SPIN);
+      uniform1f(vorticityProgram.uniforms.viscosity, physics.VISCOSITY);
+      uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+      uniform1f(vorticityProgram.uniforms.dt, dt);
       blit(velocity.write);
       velocity.swap();
   
       divergenceProgram.bind();
-      gl.uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(divergence);
   
       clearProgram.bind();
-      gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
-      gl.uniform1f(clearProgram.uniforms.value, pressureDecay);
+      uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+      uniform1f(clearProgram.uniforms.value, pressureDecay);
       blit(pressure.write);
       pressure.swap();
   
       pressureProgram.bind();
-      gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+      uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
       // The Jacobi passes share one sampler unit and viewport. Only the
       // ping-pong textures/framebuffers change between iterations.
-      gl.uniform1i(pressureProgram.uniforms.uPressure, 1);
+      uniform1i(pressureProgram.uniforms.uPressure, 1);
       gl.activeTexture(gl.TEXTURE1);
       gl.viewport(0, 0, pressure.width, pressure.height);
       for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
@@ -1116,48 +1155,48 @@
       }
   
       gradientSubtractProgram.bind();
-      gl.uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
-      gl.uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
-      gl.uniform1i(gradientSubtractProgram.uniforms.uObstacle, attachObstacle(2));
-      gl.uniform1f(gradientSubtractProgram.uniforms.useObstacle, useObstacle);
+      uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
+      uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
+      uniform1i(gradientSubtractProgram.uniforms.uObstacle, attachObstacle(2));
+      uniform1f(gradientSubtractProgram.uniforms.useObstacle, useObstacle);
       blit(velocity.write);
       velocity.swap();
   
       advectionProgram.bind();
       bindLiquidField(advectionProgram.uniforms);
-      gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       if (!ext.supportLinearFiltering)
-        gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
       var velId = velocity.read.attach(0);
-      gl.uniform1i(advectionProgram.uniforms.uVelocity, velId);
-      gl.uniform1i(advectionProgram.uniforms.uSource, velId);
-      gl.uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
-      gl.uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
-      gl.uniform1f(advectionProgram.uniforms.useMoving, movingActive ? 1 : 0);
-      gl.uniform1i(advectionProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(3) : attachObstacle(3));
-      gl.uniform1f(advectionProgram.uniforms.velocityPass, 1);
-      gl.uniform1f(advectionProgram.uniforms.dt, dt);
-      gl.uniform1f(advectionProgram.uniforms.cooling, physics.COOLING);
-      gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+      uniform1i(advectionProgram.uniforms.uVelocity, velId);
+      uniform1i(advectionProgram.uniforms.uSource, velId);
+      uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
+      uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
+      uniform1f(advectionProgram.uniforms.useMoving, movingActive ? 1 : 0);
+      uniform1i(advectionProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(3) : attachObstacle(3));
+      uniform1f(advectionProgram.uniforms.velocityPass, 1);
+      uniform1f(advectionProgram.uniforms.dt, dt);
+      uniform1f(advectionProgram.uniforms.cooling, physics.COOLING);
+      uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
       // No wind on velocity pass — keeps the pressure solve clean.
-      gl.uniform1f(advectionProgram.uniforms.u_wind_x, 0.0);
-      gl.uniform1f(advectionProgram.uniforms.u_wind_above_y, 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_x, 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_above_y, 0.0);
       blit(velocity.write);
       velocity.swap();
 
       if (!ext.supportLinearFiltering)
-        gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
-      gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
-      gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
-      gl.uniform1f(advectionProgram.uniforms.velocityPass, 0);
+        uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+      uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+      uniform1f(advectionProgram.uniforms.velocityPass, 0);
       // The obstacle stays bound on unit 2 from the velocity pass.
-      gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+      uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
       // Wind drifts dye above the surface only. u_wind_x is in UV/sec units.
       // u_wind_above_y is the UV Y threshold (uvY = 1 - syN, so above-surface
       // = large uvY values near 1.0). Passed in from the game each step() call.
-      gl.uniform1f(advectionProgram.uniforms.u_wind_x, config.wind_x || 0.0);
-      gl.uniform1f(advectionProgram.uniforms.u_wind_above_y, config.wind_above_y != null ? config.wind_above_y : 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_x, config.wind_x || 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_above_y, config.wind_above_y != null ? config.wind_above_y : 0.0);
       blit(dye.write);
       dye.swap();
     }
@@ -1170,12 +1209,12 @@
       var aspect = canvas.width / canvas.height;
       var radius = correctRadius(rad / 100.0, aspect);
       splatProgram.bind();
-      gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
-      gl.uniform1f(splatProgram.uniforms.aspectRatio, aspect);
-      gl.uniform2f(splatProgram.uniforms.point, uvX, uvY);
-      gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
-      gl.uniform1f(splatProgram.uniforms.heat, 0);
-      gl.uniform1f(splatProgram.uniforms.radius, radius);
+      uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+      uniform1f(splatProgram.uniforms.aspectRatio, aspect);
+      uniform2f(splatProgram.uniforms.point, uvX, uvY);
+      uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+      uniform1f(splatProgram.uniforms.heat, 0);
+      uniform1f(splatProgram.uniforms.radius, radius);
       blit(velocity.write);
       velocity.swap();
     }
@@ -1186,9 +1225,9 @@
       splatVelocity(uvX, uvY, dx, dy, splatRadius);
       // Buoyancy adds velocity only. A zero-colour dye pass copies the field.
       if (color.r === 0 && color.g === 0 && color.b === 0) return;
-      gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
-      gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
-      gl.uniform1f(splatProgram.uniforms.heat, physics.HEAT * Math.max(color.r, color.g, color.b));
+      uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
+      uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+      uniform1f(splatProgram.uniforms.heat, physics.HEAT * Math.max(color.r, color.g, color.b));
       blit(dye.write);
       dye.swap();
     }
@@ -1236,11 +1275,11 @@
       var oy = -dyCamFrac;
       gl.disable(gl.BLEND);
       scrollProgram.bind();
-      gl.uniform2f(scrollProgram.uniforms.offset, ox, oy);
-      gl.uniform1i(scrollProgram.uniforms.uTexture, dye.read.attach(0));
+      uniform2f(scrollProgram.uniforms.offset, ox, oy);
+      uniform1i(scrollProgram.uniforms.uTexture, dye.read.attach(0));
       blit(dye.write);
       dye.swap();
-      gl.uniform1i(scrollProgram.uniforms.uTexture, velocity.read.attach(0));
+      uniform1i(scrollProgram.uniforms.uTexture, velocity.read.attach(0));
       blit(velocity.write);
       velocity.swap();
     }
@@ -1258,21 +1297,21 @@
       // Blending against the cleared target adds no colour or alpha.
       gl.disable(gl.BLEND);
       displayMaterial.bind();
-      gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
-      gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
-      gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
-      gl.uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
+      uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
+      uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
+      uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
+      uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
-        gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
-      gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
-      gl.uniform1i(displayMaterial.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
-      gl.uniform1f(displayMaterial.uniforms.useMoving, movingActive ? 1 : 0);
-      gl.uniform2f(displayMaterial.uniforms.movingTexelSize,
+        uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
+      uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
+      uniform1i(displayMaterial.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
+      uniform1f(displayMaterial.uniforms.useMoving, movingActive ? 1 : 0);
+      uniform2f(displayMaterial.uniforms.movingTexelSize,
         movingActive ? movingBoundary.texelSizeX : 1, movingActive ? movingBoundary.texelSizeY : 1);
       if (displayMaterial.uniforms.uObstacle != null) {
-        gl.uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
-        gl.uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
+        uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
+        uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
       }
       blit(null);
     }
@@ -1400,6 +1439,7 @@
   var smokeObstWaterCanvas = null, smokeObstWaterCtx = null, smokeObstWaterImage = null;
   var smokeObstWaterCache = null;
   var smokeObstWaterPrefix = null;
+  var smokeObstWaterDirtyLeft = null, smokeObstWaterDirtyRight = null;
   function smokeObstWaterRememberPrefix(prior, start, xWords, yWords, vyWords, count) {
     // This metadata is optional. An allocation failure must not turn a
     // completed ordinary paint/cache assignment into a new paint failure.
@@ -2329,12 +2369,35 @@
           smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
         }
         var bins = smokeObstWaterBins;
+        if (prefixStart) {
+          if (!smokeObstWaterDirtyLeft || smokeObstWaterDirtyLeft.length < binsH) {
+            smokeObstWaterDirtyLeft = new Int32Array(binsH);
+            smokeObstWaterDirtyRight = new Int32Array(binsH);
+          }
+          smokeObstWaterDirtyLeft.fill(binsW, 0, binsH);
+          smokeObstWaterDirtyRight.fill(0, 0, binsH);
+        }
         if (!prefixStart) {
           bins.fill(0, 0, nBins);
           smokeObstWaterVY.fill(0, 0, nBins);
         }
         var domR = originX + (binsW - 1.5) * BIN;
         var domB = originY + (binsH - 1.5) * BIN;
+        if (prefixStart) {
+          // Inspect only the small suffix here so ordinary full deposits keep
+          // their original branch-free nine-sample accumulation loop.
+          for (var dirtyPoint = prefixStart; dirtyPoint < liquidCount; dirtyPoint++) {
+            if (liquidFrozen[dirtyPoint]) continue;
+            var dirtyX = liquidX[dirtyPoint], dirtyY = liquidY[dirtyPoint];
+            if (dirtyX < originX + BIN || dirtyX >= domR || dirtyY < originY + BIN || dirtyY >= domB) continue;
+            var dirtyCol = Math.floor((dirtyX - originX) / BIN - 0.5);
+            var dirtyTop = Math.floor((dirtyY - originY) / BIN - 0.5);
+            for (var dirtyRow = dirtyTop; dirtyRow < dirtyTop + 3; dirtyRow++) {
+              if (dirtyCol < smokeObstWaterDirtyLeft[dirtyRow]) smokeObstWaterDirtyLeft[dirtyRow] = dirtyCol;
+              if (dirtyCol + 3 > smokeObstWaterDirtyRight[dirtyRow]) smokeObstWaterDirtyRight[dirtyRow] = dirtyCol + 3;
+            }
+          }
+        }
         for (var wi = prefixStart; wi < liquidCount; wi++) {
           if (liquidFrozen[wi]) continue;
           var wx = liquidX[wi], wy = liquidY[wi];
@@ -2370,15 +2433,24 @@
         // Same density range as the old 10..24 particles per 8x8 bin, scaled
         // by area. Pools remain solid; the rim changes continuously. Floating
         // counts also avoid the old 255-count saturation under compression.
-        for (var bi = 0; bi < nBins; bi++) {
-          var bn = bins[bi];
-          if (bn === 0) { rgba[bi * 4 + 3] = 0; continue; }
-          var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
-          coverage *= coverage * (3 - 2 * coverage);
-          var falling = bn > 0 ? Math.max(0, Math.min(1,
-            (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
-          falling *= falling * (3 - 2 * falling);
-          rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+        // A certified prefix leaves every previous density/velocity sample
+        // unchanged. Only the appended particles' nine-sample footprints can
+        // change alpha; retain all other pixels, including their exact bytes.
+        // Full rebuilds still visit every bin to clear old coverage.
+        var alphaRows = prefixStart ? binsH : 1;
+        for (var alphaRow = 0; alphaRow < alphaRows; alphaRow++) {
+          var alphaStart = prefixStart ? alphaRow * binsW + smokeObstWaterDirtyLeft[alphaRow] : 0;
+          var alphaEnd = prefixStart ? alphaRow * binsW + smokeObstWaterDirtyRight[alphaRow] : nBins;
+          for (var bi = alphaStart; bi < alphaEnd; bi++) {
+            var bn = bins[bi];
+            if (bn === 0) { rgba[bi * 4 + 3] = 0; continue; }
+            var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
+            coverage *= coverage * (3 - 2 * coverage);
+            var falling = bn > 0 ? Math.max(0, Math.min(1,
+              (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
+            falling *= falling * (3 - 2 * falling);
+            rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+          }
         }
         smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
         if (canCache) {

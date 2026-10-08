@@ -3,7 +3,7 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { field: particleWeatherState(), time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    bed: new Map(), bedKey: null, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+    bed: snowEmptyBed(), bedKey: null, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
   var snowSupportJob = null;
 
   function snowNewWorldEnabled() {
@@ -18,7 +18,7 @@
     snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset(); snow.field = particleWeatherState();
-    snow.bed = new Map(); snow.bedKey = null; snowSupportJob = null;
+    snow.bed = snowEmptyBed(); snow.bedKey = null; snowSupportJob = null;
     snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return SNOW_ACTIVE_CAP; }
@@ -114,6 +114,17 @@
   var snowSupportCoordinates = new Float64Array(0);
   var snowSupportDirectHeads = new Int32Array(0), snowSupportDirectStamps = new Uint32Array(0);
   var snowSupportDirectEpoch = 0;
+  function snowEmptyBed() {
+    var bed = new Map();
+    bed.snowMinY = Infinity; bed.snowMaxY = -Infinity;
+    return bed;
+  }
+  function snowBedInclude(bed, y) {
+    // A tracked bed is append-only until the next complete reconstruction.
+    // Untracked Maps (including diagnostic fixtures) retain the full query.
+    if (y < bed.snowMinY) bed.snowMinY = y;
+    if (y > bed.snowMaxY) bed.snowMaxY = y;
+  }
   function snowBuildSupport() {
     // A chain of touching grains rooted in terrain carries contact,
     // including while it slides or compacts. Velocity cannot make a pile
@@ -131,7 +142,7 @@
       snowSupportNext = new Int32Array(capacity);
       snowSupportQueue = new Int32Array(capacity);
     }
-    var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
+    var heads = new Map(), bed = snowEmptyBed(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
     var pointCount = 0, queueCount = 0;
     // Only bounded, canonical bucket coordinates admit a cell-range proof.
     // Any unsupported snow point retains the complete original traversal.
@@ -212,6 +223,7 @@
       var bucket = bed.get(key);
       if (!bucket) { bucket = []; bed.set(key, bucket); }
       bucket.push(x, y);
+      snowBedInclude(bed, y);
       var rMin = -1, rMax = 1, cMin = -1, cMax = 1;
       if (pruneCells && col > 0 && col < width - 1) {
         // 64 Number epsilons cover contact and endpoint rounding. Divide
@@ -293,7 +305,7 @@
     }
     snowSupportJob = { key: key, count: n, cell: cell, width: width, reach: reach, reach2: reach * reach,
       groundReach: snowContactRadius() + 0.3, pruneCells: pruneCells, direct: direct, epoch: snowJobEpoch,
-      baseCol: baseCol, baseRow: baseRow, span: span, heads: direct ? null : new Map(), bed: new Map(),
+      baseCol: baseCol, baseRow: baseRow, span: span, heads: direct ? null : new Map(), bed: snowEmptyBed(),
       phase: 0, cursor: 0, q: 0, queued: 0, inserted: [] };
   }
   function snowSupportJobStep(budgetMs) {
@@ -322,6 +334,7 @@
       var bucket = job.bed.get(cellKey);
       if (!bucket) { bucket = []; job.bed.set(cellKey, bucket); }
       bucket.push(px, py);
+      snowBedInclude(job.bed, py);
       var rMin = -1, rMax = 1, cMin = -1, cMax = 1;
       if (job.pruneCells && col > 0 && col < width - 1) {
         var pad = 1.4210854715202004e-14 * (px + Math.abs(py) + cell + reach + 1);
@@ -361,8 +374,16 @@
     var key = Math.floor(y / cell) * width + Math.floor(x / cell), bucket = bed.get(key);
     if (!bucket) { bucket = []; bed.set(key, bucket); }
     bucket.push(x, y);
+    snowBedInclude(bed, y);
   }
   function snowTouchesBed(x, y, bed, reach) {
+    if (!bed.size) return false;
+    // Most weather flakes are still far above the deposited powder. A
+    // conservative vertical bound rejects those nine empty bucket probes.
+    // Pad outward for the same floating-point distance test used below.
+    var extent = Math.abs(reach);
+    var pad = 1.4210854715202004e-14 * (Math.abs(y) + extent + 1);
+    if (y + extent + pad < bed.snowMinY || y - extent - pad > bed.snowMaxY) return false;
     var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
     var col = Math.floor(x / cell), row = Math.floor(y / cell), reach2 = reach * reach;
     for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
@@ -497,6 +518,9 @@
     // becomes a contact for the grains above it; arbitrary storage order
     // could otherwise grow the bed through an unprocessed lower grain.
     snow.grains.sort(function (a, b) { return a.y - b.y; });
+    // The rig cannot move during this flake pass. Resolve its animated hull
+    // once, instead of reevaluating its suspension/scale for every tiny step.
+    var minerHull = player && !gameWon ? rigContactHull() : null;
     for (var i = snow.grains.length - 1; i >= 0; i--) {
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
@@ -517,7 +541,7 @@
         var radius = snowContactRadius();
         var floor = liquidWorldSolidAt(nx, ny + radius);
         var bed = p.vy >= 0 && snowBedContact(nx, ny);
-        var contact = floor || bed || liquidPointInMiner(nx, ny) || (rain.cells[key] || 0) > 1;
+        var contact = floor || bed || (minerHull && rigHullContains(minerHull, nx, ny, 0)) || rainContactCount(key) > 1;
         if (contact) {
           if (floor || bed) {
             // Resolve the first touch, rather than parking at the start of

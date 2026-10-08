@@ -12,7 +12,7 @@ function repositoryRoot(){
 }
 const file=path.resolve(process.argv[2]||process.env.SMOKE_SOURCE||path.join(repositoryRoot(),'js/sluice/190-smoke-webgl.js'));
 const fixturePath=path.join(__dirname,'fixtures/smoke-painter-v28.134-original.js');
-const source=fs.readFileSync(fixturePath,'utf8'),candidate=fs.readFileSync(file,'utf8'),out=file;
+const source=fs.readFileSync(fixturePath,'utf8').replace(/\r\n/g,'\n'),candidate=fs.readFileSync(file,'utf8'),out=file;
 assert.equal(sha(source),'7d832a92496fe505a76785c39aee5c96cb0280dcd7482ce656d34499f4c6a62a','Frozen baseline fixture provenance changed');
 new vm.Script(source);new vm.Script(candidate);
 function extract(s){const a=s.indexOf('  function smokeFluidPaintObstacle() {'),b=s.indexOf('  // Hand the strongest downward water motion',a);assert(a>=0&&b>a);return s.slice(a,b);}
@@ -62,6 +62,11 @@ pair([[20,20,0,1]],[{}, {},{change:'mutation'},{change:'pan'},{change:'flow'},{c
 for(const fault of['createElement','getContext','createImageData','putImageData','drawImage','upload'])pair(points,[{fault},{},{change:'readback',fault},{},{}]);
 for(let i=0;i<10;i++)pair([[i*7-10,i*5-20,i%3?NaN:Infinity],[60,40,-0]],[{},{change:'mutation'},{change:'freeze'},{change:'wake'}]);
 const suffix=[[40,40,20],[41,41,NaN],[42,42,-0]];
+// Appended footprints can be empty, share just a row, or occupy disjoint rows.
+// Preserve unrelated alpha, including the pool covered by the initial image.
+pair(points,[{}, {append:[[100,10,0],[105,85,120]]}, {append:[[10,10,NaN],[115,10,0]]},
+ {append:[[1e5,1e5,0],[30,30,0,1]]}, {append:[[20,20,-0],[20,20,Infinity]]},
+ {append:[[NaN,20,0],[20,NaN,0]]}, {change:'window',append:suffix}, {append:suffix}]);
 pair([[20,20,0],[21,21,NaN],[22,22,-0]],[{}, {append:suffix},{append:suffix},{change:'generation',append:suffix},{},{change:'mutation',append:suffix},{change:'freeze',append:suffix},{change:'wake',append:suffix},{change:'window',append:suffix},{change:'flow',append:suffix},{change:'identity',append:suffix},{change:'accumulator',append:suffix},{change:'vyaccumulator',append:suffix},{change:'swap',append:suffix},{change:'shrink'},{append:suffix}]);
 pair([[-0,20,NaN],[21,21,Infinity]],[{}, {change:'signedzero',append:suffix},{change:'nanword',append:suffix},{append:suffix}]);
 for(const fault of ['putImageData','drawImage','upload'])pair(points,[{}, {append:suffix,fault},{},{append:suffix},{}]);

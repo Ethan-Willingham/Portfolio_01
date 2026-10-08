@@ -8,7 +8,8 @@
     activeMs: 0, issueReadyAt: null };
   var perfLiveFields = playPerfFields.slice(0, 30).concat(['frameId', 'visibleResidents', 'observerMs', 'active']);
   var perfLiveStride = perfLiveFields.length + playPerfBucketLimit;
-  var perfLiveBudget = 1000 / 120;
+  var perfLiveTargetFPS = 144;
+  var perfLiveBudget = 1000 / perfLiveTargetFPS;
   var perfLivePhaseNames = ['update.main', 'update.aux', 'update.wind', 'update.grassWind',
     'update.trees', 'update.boulders', 'update.weather', 'update.smoke', 'update.audio',
     'update.drillAnim', 'update.explosions', 'update.mineFx', 'update.clearOverlays',
@@ -26,6 +27,14 @@
         var snowMs = raw['snow.cpu'] || 0;
         if (snowMs > 0) { result.push({ name: 'snow.cpu', ms: snowMs }); total += snowMs; }
         ms = Math.max(0, ms - snowMs);
+      }
+      if (name === 'update.bathhouse') {
+        var bathParts = ['bath.syncReadback', 'bath.streaming', 'bath.scoop', 'bath.visitors', 'bath.guests', 'bath.audio'];
+        for (var p = 0; p < bathParts.length; p++) {
+          var partMs = raw[bathParts[p]] || 0;
+          if (partMs > 0) { result.push({ name: bathParts[p], ms: partMs }); total += partMs; ms -= partMs; }
+        }
+        ms = Math.max(0, ms);
       }
       if (ms > 0) { result.push({ name: name, ms: ms }); total += ms; }
     }
@@ -186,6 +195,16 @@
       perfLive.workload.forEach(function (r) { perfLiveAttach(event, r, true); });
       if (newWorst) perfLive.worst = event;
       if (severity >= 25) perfLiveRememberIssue(event);
+      if (kind === 'gap' && cpu >= 25) {
+        // The callback after a long arrival can also contain an independent
+        // CPU stall. Retain both measurements instead of losing the smaller.
+        var cpuEvent = { frameId: perfLive.frameId, at: time, severity: cpu, kind: 'cpu',
+          gapMs: row[offset + 33] ? interval : null, reference: perfLiveReference(time),
+          current: event.current, previous: event.previous };
+        perfLive.gpu.forEach(function (r) { perfLiveAttach(cpuEvent, r, false); });
+        perfLive.workload.forEach(function (r) { perfLiveAttach(cpuEvent, r, true); });
+        perfLiveRememberIssue(cpuEvent);
+      }
     }
     perfLive.previous = active ? perfLive.write : null; perfLive.interrupted = !active;
     perfLive.write = (perfLive.write + 1) % perfLive.capacity;
@@ -250,7 +269,7 @@
     var gpu = perfLive.gpu.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return Object.assign({}, r, { atMs: r.at - started }); });
     var capture = { schema: 'sluice-performance-1', version: GAME_VERSION,
       startedUTC: new Date(performance.timeOrigin + started).toISOString(), durationMs: ended - started,
-      reason: 'Last 30 seconds', metadata: { rolling: true, targetFPS: 120,
+      reason: 'Last 30 seconds', metadata: { rolling: true, targetFPS: perfLiveTargetFPS,
         url: location.href, userAgent: navigator.userAgent,
         options: window.SluiceOptions || null, lastState: playPerfState(),
         notes: ['Callback intervals describe arrival gaps, not displayed frames.',

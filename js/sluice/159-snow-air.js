@@ -40,6 +40,35 @@
   }
   function snowAirProject() {
     var a = snowAir, w = a.w, h = a.h, p = a.pressure, s = a.solid, d = a.divergence;
+    // The wall stencil is fixed throughout all 28 red/black iterations.
+    // Assemble each parity once, including a branch-free four-neighbor list.
+    // Same-parity cells never read each other, so the two lists can run in
+    // sequence without changing Gauss-Seidel's dependency or addition order.
+    var stencil = a.projectStencil;
+    if (!stencil || stencil.size !== w * h) {
+      stencil = a.projectStencil = { size: w * h, open: [], edge: [], mask: [], count: [] };
+      for (var side = 0; side < 2; side++) {
+        stencil.open[side] = new Int32Array(w * h);
+        stencil.edge[side] = new Int32Array(w * h);
+        stencil.mask[side] = new Uint8Array(w * h);
+        stencil.count[side] = new Uint8Array(w * h);
+      }
+    }
+    var open0 = 0, open1 = 0, edge0 = 0, edge1 = 0;
+    for (var sy = 1; sy < h - 1; sy++) for (var sx = 1; sx < w - 1; sx++) {
+      var si = sy * w + sx;
+      if (s[si]) continue;
+      var parity = (sx + sy + 1) & 1;
+      var mask = (!s[si - 1] ? 1 : 0) | (!s[si + 1] ? 2 : 0) |
+        (!s[si - w] ? 4 : 0) | (!s[si + w] ? 8 : 0);
+      if (mask === 15) stencil.open[parity][parity ? open1++ : open0++] = si;
+      else if (mask) {
+        var at = parity ? edge1++ : edge0++;
+        stencil.edge[parity][at] = si; stencil.mask[parity][at] = mask;
+        stencil.count[parity][at] = (mask & 1) + ((mask >> 1) & 1) +
+          ((mask >> 2) & 1) + ((mask >> 3) & 1);
+      }
+    }
     p.fill(0); var before = 0, after = 0, count = 0;
     snowAirWalls();
     for (var y = 1; y < h - 1; y++) for (var x = 1; x < w - 1; x++) {
@@ -51,15 +80,20 @@
     // Red/black Gauss-Seidel, zero-pressure open border and zero normal
     // flow on solid faces. The Poisson stencil matches the MAC divergence.
     for (var iteration = 0; iteration < 28; iteration++) for (var parity = 0; parity < 2; parity++) {
-      for (var ry = 1; ry < h - 1; ry++) for (var rx = 1 + ((ry + parity) & 1); rx < w - 1; rx += 2) {
-        var j = ry * w + rx;
-        if (s[j]) continue;
-        var sum = 0, n = 0;
-        if (!s[j - 1]) { sum += p[j - 1]; n++; }
-        if (!s[j + 1]) { sum += p[j + 1]; n++; }
-        if (!s[j - w]) { sum += p[j - w]; n++; }
-        if (!s[j + w]) { sum += p[j + w]; n++; }
-        p[j] = n ? (sum - d[j]) / n : 0;
+      var open = stencil.open[parity], edges = stencil.edge[parity];
+      var masks = stencil.mask[parity], counts = stencil.count[parity];
+      var openN = parity ? open1 : open0, edgeN = parity ? edge1 : edge0;
+      for (var k = 0; k < openN; k++) {
+        var j = open[k];
+        p[j] = (0 + p[j - 1] + p[j + 1] + p[j - w] + p[j + w] - d[j]) / 4;
+      }
+      for (var k = 0; k < edgeN; k++) {
+        var j = edges[k], mask = masks[k], sum = 0;
+        if (mask & 1) sum += p[j - 1];
+        if (mask & 2) sum += p[j + 1];
+        if (mask & 4) sum += p[j - w];
+        if (mask & 8) sum += p[j + w];
+        p[j] = (sum - d[j]) / counts[k];
       }
     }
     for (var fy = 1; fy < h; fy++) for (var fx = 1; fx < w; fx++) {
@@ -90,9 +124,10 @@
     if (!a.active) { a.x = ox; a.y = oy; a.u.fill(0); a.v.fill(0); }
     else snowAirShift(ox, oy);
     a.active = true; a.time += dt;
+    var minerHull = player && !gameWon ? rigContactHull() : null;
     for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
       var wx = ox + (x + 0.5) * cell, wy = oy + (y + 0.5) * cell;
-      a.solid[y * w + x] = liquidWorldSolidAt(wx, wy) || liquidPointInMiner(wx, wy) ? 1 : 0;
+      a.solid[y * w + x] = liquidWorldSolidAt(wx, wy) || (minerHull && rigHullContains(minerHull, wx, wy, 0)) ? 1 : 0;
     }
     var nozzles = firing ? rocketNozzles() : [], dir = rocketExhaustDir();
     // Read the same bank as the visible jets. In horizontal flight, powder
@@ -144,8 +179,18 @@
       var keep = Math.exp(-0.75 * step), travel = step / cell;
       for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
         var i = r * w + c;
-        var crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
-        var crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
+        var crossV, crossU;
+        if (c > 0 && c < w - 1 && r > 0 && r < h - 1) {
+          // These staggered samples always lie at exact half-cell offsets.
+          // Retain the bilinear arithmetic order, without clamping/flooring.
+          crossV = (a.v[i - 1] * 0.5 + a.v[i] * 0.5) * 0.5 +
+            (a.v[i + w - 1] * 0.5 + a.v[i + w] * 0.5) * 0.5;
+          crossU = (a.u[i - w] * 0.5 + a.u[i - w + 1] * 0.5) * 0.5 +
+            (a.u[i] * 0.5 + a.u[i + 1] * 0.5) * 0.5;
+        } else {
+          crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
+          crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
+        }
         a.tu[i] = snowAirBilerp(a.u, c - a.u[i] * travel, r - crossV * travel) * keep;
         a.tv[i] = snowAirBilerp(a.v, c - crossU * travel, r - a.v[i] * travel) * keep;
       }
@@ -165,6 +210,13 @@
     a.peak = 0;
     for (var by = 0; by < h; by++) for (var bx = 0; bx < w; bx++) {
       var bi = by * w + bx, f = bi * 4;
+      if (a.solid[bi]) {
+        // Solid cells export zero in every channel. Avoid evaluating the
+        // wake's fade and gust functions for underground cells and the rig.
+        a.grainField[f] = a.grainField[f + 1] = a.grainField[f + 2] = a.grainField[f + 3] = 0;
+        a.field[f] = a.field[f + 1] = a.field[f + 2] = a.field[f + 3] = 0;
+        continue;
+      }
       var ux = a.solid[bi] ? 0 : (a.u[bi] + a.u[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
       var vy = a.solid[bi] ? 0 : (a.v[bi] + a.v[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
       // Fade the outer wake in world space before the finite grid ends.
@@ -197,10 +249,15 @@
       }
       // Uneven gusts break up the smooth wall jet into overlapping puffs.
       // World-space phases keep them independent of the rig and camera.
-      var wx = ox + (bx + 0.5) * cell, wy = oy + (by + 0.5) * cell;
-      var gust = 0.72 + 0.28 * Math.sin(wx * 0.17 + wy * 0.11 + a.time * 9.7)
-        * Math.sin(wx * 0.071 - wy * 0.13 - a.time * 6.3);
-      var lift = Math.min(460, Math.max(0, Math.abs(ux) - 12) * 4.8) * surface * gust * edge;
+      var lift = Math.min(460, Math.max(0, Math.abs(ux) - 12) * 4.8) * surface;
+      if (lift !== 0) {
+        // Zero scouring or no nearby floor makes the gust immaterial.
+        // Preserve the original multiplication order whenever lift exists.
+        var wx = ox + (bx + 0.5) * cell, wy = oy + (by + 0.5) * cell;
+        var gust = 0.72 + 0.28 * Math.sin(wx * 0.17 + wy * 0.11 + a.time * 9.7)
+          * Math.sin(wx * 0.071 - wy * 0.13 - a.time * 6.3);
+        lift = lift * gust * edge;
+      }
       a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = lift;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }

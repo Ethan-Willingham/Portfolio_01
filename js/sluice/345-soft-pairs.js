@@ -76,10 +76,17 @@
   // Stretched skins can cross between vertices while every vertex remains
   // outside the other ring. Resolve the two intersecting material patches.
   function softPairsEdges(A, B, h) {
+    var bLeft = Infinity, bRight = -Infinity, bTop = Infinity, bBottom = -Infinity;
+    for (var bounds = 0; bounds < B.ringN; bounds++) {
+      var boundNode = B.ring[bounds], boundX = B.px[boundNode], boundY = B.py[boundNode];
+      bLeft = Math.min(bLeft, boundX); bRight = Math.max(bRight, boundX);
+      bTop = Math.min(bTop, boundY); bBottom = Math.max(bBottom, boundY);
+    }
     for (var i = 0; i < A.ringN; i++) {
       var p = A.ring[i], q = A.ring[(i + 1) % A.ringN];
       var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
       var right = Math.max(px,qx), left = Math.min(px,qx), bottom = Math.max(py,qy), top = Math.min(py,qy);
+      if (right <= bLeft || left >= bRight || bottom <= bTop || top >= bBottom) continue;
       var ex = qx - px, ey = qy - py;
       for (var j = 0; j < B.ringN; j++) {
         var a = B.ring[j], c = B.ring[(j + 1) % B.ringN];
@@ -103,6 +110,10 @@
         px = A.px[p]; py = A.py[p]; qx = A.px[q]; qy = A.py[q];
         right = Math.max(px,qx); left = Math.min(px,qx); bottom = Math.max(py,qy); top = Math.min(py,qy);
         ex = qx - px; ey = qy - py;
+        // Only B's two patch nodes can move. Expand its conservative bounds
+        // immediately before rejecting any later A edge.
+        bLeft = Math.min(bLeft, B.px[a], B.px[c]); bRight = Math.max(bRight, B.px[a], B.px[c]);
+        bTop = Math.min(bTop, B.py[a], B.py[c]); bBottom = Math.max(bBottom, B.py[a], B.py[c]);
       }
     }
   }

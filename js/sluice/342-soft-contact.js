@@ -89,6 +89,41 @@
   // it. Remember only a proven clear pose, comparing the actual coordinates
   // so every solver, grab and terrain correction invalidates it automatically.
   // Previous-position history cannot create a crossing in an unchanged ring.
+  function softContactRadialClear(b) {
+    var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
+    if (n < 3) return false;
+    var cx = b.cx, cy = b.cy;
+    if (!isFinite(cx + cy)) {
+      var originX = px[ring[0]], originY = py[ring[0]], sumX = 0, sumY = 0;
+      for (var point = 0; point < n; point++) { sumX += px[ring[point]] - originX; sumY += py[ring[point]] - originY; }
+      cx = originX + sumX / n; cy = originY + sumY / n;
+    }
+    var previous = ring[n - 1], ax = px[previous] - cx, ay = py[previous] - cy;
+    var direction = 0, winding = 0, minCross = Infinity, maxRadius2 = 0, maxCoordinate = 0;
+    for (var k = 0; k < n; k++) {
+      var p = ring[k], bx = px[p] - cx, by = py[p] - cy;
+      var cross = ax * by - ay * bx;
+      var tolerance = (Math.abs(ax * by) + Math.abs(ay * bx)) * 1e-12 + 1e-10;
+      if (!isFinite(cross) || Math.abs(cross) <= tolerance) return false;
+      minCross = Math.min(minCross, Math.abs(cross));
+      maxRadius2 = Math.max(maxRadius2, bx * bx + by * by);
+      maxCoordinate = Math.max(maxCoordinate, Math.abs(px[p]), Math.abs(py[p]), Math.abs(cx), Math.abs(cy));
+      if (!direction) direction = cross > 0 ? 1 : -1;
+      else if (cross * direction <= tolerance) return false;
+      if (ay <= 0 && by > 0 && cross > 0) winding++;
+      else if (ay > 0 && by <= 0 && cross < 0) winding--;
+      ax = bx; ay = by;
+    }
+    // Strict angular order through exactly one revolution puts every edge
+    // in a disjoint radial sector. Multiple-winding stars, folds, coincident
+    // rays and near-collinear ambiguity retain the full pairwise crossing test.
+    // Intent also treats edges less than 1e-7 apart as overlapping. Every
+    // edge is at least C/(2R) from the center, and adjacent rays have sine
+    // at least C/R^2. Nonadjacent sectors therefore stay at least C^2/(2R^3)
+    // apart. Use half that bound with ample tolerance and rounding margin.
+    var separation = minCross / Math.sqrt(maxRadius2) * (minCross / maxRadius2) * 0.25;
+    return winding === direction && isFinite(separation) && separation > 1e-5 + maxCoordinate * 1e-12;
+  }
   function softContactSkinCrossed(b) {
     var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
     var clearX = b._softClearX, clearY = b._softClearY;
@@ -101,7 +136,8 @@
       }
       if (same) return false;
     }
-    for (var a = 0; a < n; a++) {
+    var radialClear = softContactRadialClear(b);
+    for (var a = 0; !radialClear && a < n; a++) {
       var p0 = ring[a], p1 = ring[(a + 1) % n];
       var left = Math.min(px[p0], px[p1]), right = Math.max(px[p0], px[p1]);
       var top = Math.min(py[p0], py[p1]), bottom = Math.max(py[p0], py[p1]);

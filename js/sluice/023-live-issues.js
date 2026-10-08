@@ -1,10 +1,15 @@
   /* Plain explanations and bounded session warnings. Counts never infer causes. */
   function perfLiveCPUName(name) {
+    var bathNames = { 'bath.syncReadback': 'Liquid readback', 'bath.streaming': 'Liquid streaming', 'bath.scoop': 'Liquid scoop' };
+    if (bathNames[name]) return { key: 'cpu-water', name: bathNames[name] };
+    if (name === 'bath.visitors') return { key: 'cpu-slimes', name: 'Rocky visitor physics' };
+    if (name === 'bath.guests') return { key: 'cpu-bath', name: 'Bathhouse simulation' };
+    if (name === 'bath.audio') return { key: 'cpu-other', name: 'Scoop audio' };
     if (name === 'snow.cpu') return { key: 'cpu-snow', name: 'Snow processing' };
     if (/^update\.(jello|fluidSkin|residents|slimeNpc|slimeAudio)$/.test(name)) return { key: 'cpu-slimes', name: 'Slime physics' };
     if (name === 'update.liquids') return { key: 'cpu-water', name: 'Water and snow submission' };
     if (/^render\./.test(name)) return { key: 'cpu-drawing', name: 'Drawing the game' };
-    if (name === 'update.bathhouse') return { key: 'cpu-bath', name: 'Bathhouse simulation' };
+    if (name === 'update.bathhouse') return { key: 'cpu-bath', name: 'Bathhouse and liquid work' };
     if (name === 'update.main') return { key: 'cpu-rig', name: 'Rig physics' };
     if (name === 'update.smoke') return { key: 'cpu-smoke', name: 'Smoke processing' };
     var names = { 'update.aux': 'Camera and controls', 'update.wind': 'Wind', 'update.grassWind': 'Grass wind',
@@ -30,7 +35,7 @@
     var leading = best && best.ms >= row.ms * 0.35;
     var label = perfLiveGPUName(leading ? best.name : row.name);
     return { key: label.key, title: label.name + (/collisions$/.test(label.name) ? ' are expensive' : ' is expensive'), certainty: 'GPU sampled',
-      summary: (leading ? label.name + ' took ' + best.ms.toFixed(1) : 'Sampled GPU passes took ' + row.ms.toFixed(1)) + ' ms. The 120 FPS budget is 8.3 ms.',
+      summary: (leading ? label.name + ' took ' + best.ms.toFixed(1) : 'Sampled GPU passes took ' + row.ms.toFixed(1)) + ' ms. The ' + perfLiveTargetFPS + ' FPS budget is ' + perfLiveBudget.toFixed(2) + ' ms.',
       evidence: ['Sampled GPU passes: ' + row.ms.toFixed(2) + ' ms.',
         'Sampled frame #' + row.frameId + (best ? '; largest pass ' + best.name + ': ' + best.ms.toFixed(2) + ' ms.' : '.'),
         'GPU samples omit browser drawing and can miss a short stall. CPU and GPU work overlap.'] };
@@ -42,7 +47,7 @@
     if (cpu > perfLiveBudget) {
       var leading = top && top.ms >= cpu * 0.35, label = perfLiveCPUName(leading ? top.name : 'other game work');
       return { key: label.key, title: leading ? label.name + ' is expensive' : 'Too much game work', certainty: 'CPU measured',
-        summary: (leading ? label.name + ' took ' + top.ms.toFixed(1) + ' ms of ' : 'Game work took ') + cpu.toFixed(1) + ' ms. The 120 FPS budget is 8.3 ms.',
+        summary: (leading ? label.name + ' took ' + top.ms.toFixed(1) + ' ms of ' : 'Game work took ') + cpu.toFixed(1) + ' ms. The ' + perfLiveTargetFPS + ' FPS budget is ' + perfLiveBudget.toFixed(2) + ' ms.',
         evidence: ['Measured game work: ' + cpu.toFixed(2) + ' ms.', top ? 'Largest measured cost: ' + perfLiveCPUName(top.name).name + ', ' + top.ms.toFixed(2) + ' ms.' : 'No individual cost was measured.',
           'These CPU phases do not overlap. CPU time excludes panel work and does not measure GPU execution.'] };
     }
@@ -60,7 +65,7 @@
         'No complete, expensive GPU sample matches this frame. Browser scheduling and drawing are not measured here.',
         'Snow and slime counts provide context, not a measured cause.'] };
     return { key: 'healthy', title: 'Game work is within budget', certainty: 'Within budget',
-      summary: 'Measured game work took ' + cpu.toFixed(1) + ' ms. The 120 FPS budget is 8.3 ms.', evidence: [] };
+      summary: 'Measured game work took ' + cpu.toFixed(1) + ' ms. The ' + perfLiveTargetFPS + ' FPS budget is ' + perfLiveBudget.toFixed(2) + ' ms.', evidence: [] };
   }
   function perfLiveLiveDiagnosis(stats) {
     if (!stats.frames) return perfLiveExplainFrame(null, []);
@@ -87,6 +92,17 @@
   }
   function perfLiveExplainIssue(event) {
     var frame = perfLiveIssueFrame(event);
+    if (event.kind === 'gap' && !(frame.cpuMs >= 25 && event.gapMs <= frame.cpuMs + perfLiveBudget)) {
+      // A slightly over-budget CPU frame cannot account for an arbitrarily
+      // longer callback gap. Keep its measured phases as context, without
+      // promoting the largest phase to the cause of unmeasured time.
+      var top = frame.phases && frame.phases[0];
+      return { key: 'unexplained', title: 'Frame pacing is slow', certainty: 'Cause unknown',
+        summary: 'Arrival gap was ' + event.gapMs.toFixed(1) + ' ms. Preceding game work took ' + frame.cpuMs.toFixed(1) + ' ms; the rest is unmeasured.',
+        evidence: ['Arrival gap: ' + event.gapMs.toFixed(2) + ' ms; preceding game work: ' + frame.cpuMs.toFixed(2) + ' ms.',
+          top ? 'Largest preceding CPU cost: ' + perfLiveCPUName(top.name).name + ', ' + top.ms.toFixed(2) + ' ms.' : 'No individual preceding CPU cost was measured.',
+          'GPU samples are recorded separately and can overlap CPU work. Browser scheduling and drawing are not measured here.'] };
+    }
     if (event.kind === 'gpu') {
       var source = (event.gpu || []).filter(function (row) { return row.frameId === frame.frameId && (!event.sourceGPU || row.name === event.sourceGPU); })[0];
       var measured = perfLiveGPUExplanation(source);
@@ -97,6 +113,13 @@
   function perfLiveRememberIssue(event) {
     if (event.severity < 25 || perfLive.saving) return;
     var explanation = perfLiveExplainIssue(event);
+    if (event.kind === 'gap' && explanation.certainty === 'CPU measured') {
+      // A following arrival can corroborate a CPU stall, but its delay must
+      // not inflate the measured CPU severity or count that frame twice.
+      var preceding = perfLiveIssueFrame(event);
+      event = Object.assign({}, event, { kind: 'cpu', frameId: preceding.frameId,
+        at: preceding.atMs, severity: preceding.cpuMs, current: preceding, previous: null });
+    }
     var id = explanation.key;
     if (id === 'healthy' || id === 'waiting') id = 'unexplained';
     var issue = null;

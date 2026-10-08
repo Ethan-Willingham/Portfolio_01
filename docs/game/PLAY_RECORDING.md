@@ -19,6 +19,15 @@ Back to live restores the current explanation. Late GPU evidence may augment
 the same stored frame. For an arrival gap, the preceding CPU frame is retained;
 CPU work after the gap is separate. The prior-second mean provides context,
 not proof of causation.
+CPU warning severity stays equal to measured CPU work. A following gap within
+one target frame of a major CPU stall can corroborate that same warning without
+counting it twice. Longer arrivals stay in the unknown pacing group and retain
+the preceding CPU phases as evidence. An expensive callback after a long arrival
+is recorded separately, so neither measurement hides the other.
+The old `update.bathhouse` bucket also contains liquid readback, streaming, the
+scoop and rocky visitors. New captures time those separately from bath guests
+and the boiler. The exclusive diagnosis replaces the parent with those children;
+older undivided captures keep the broader label.
 
 Save 30s downloads the retained local history without starting a recording.
 The file reports its actual duration, including shorter captures after startup.

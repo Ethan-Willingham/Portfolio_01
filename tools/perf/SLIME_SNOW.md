@@ -4,8 +4,8 @@ Run each command sequentially on the same otherwise idle host. The harness owns
 its Chrome for Testing process and closes that process on exit. It never uses
 the owner's personal Chrome application on macOS.
 
-The normal scene retains the five ordinary starting residents. The combined
-scene starts eight ordinary resident bodies in an overlapping 4 by 2 arrangement
+The normal scene retains the build's ordinary starting population. The combined
+scene defaults to eight ordinary resident bodies in an overlapping 4 by 2 arrangement
 on an existing dry town apron. Both boot the normal generated world with snow,
 ponds, liquids, smoke, weather and rendering active. The combined scene then
 uses actual keyboard and pointer events to hold, walk and jet. It does not
@@ -13,6 +13,10 @@ manually step physics, replenish fuel during capture, force sleeping, clear
 liquids, change terrain, or pin the rig during measurement. Native liquid
 population streams with the camera region, so town centre and the dry apron
 are separate workloads. Compare each scene against its own matching baseline.
+`RESIDENTS=2` through `RESIDENTS=32` selects a different combined population;
+the capture records the requested and surviving counts. The default remains eight.
+On Windows the harness uses installed Chrome in a disposable test profile.
+Run `node tools/build-sluice.mjs` to rebuild without requiring a Unix shell.
 
 ```sh
 SCENES=town-normal,slime-snow HEADED=1 PROFILE=0 GPU=0 \

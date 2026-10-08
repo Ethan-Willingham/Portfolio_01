@@ -53,6 +53,7 @@
       }) });
   }
   function bathSkinFlakeTick(dt) {
+    if (!bathSkinFlakes.length) return;
     var c = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]), line = bathWaterline();
     for (var i = bathSkinFlakes.length - 1; i >= 0; i--) {
       var f = bathSkinFlakes[i]; f.life -= dt;

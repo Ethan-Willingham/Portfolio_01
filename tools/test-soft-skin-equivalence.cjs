@@ -27,7 +27,7 @@ function runtime(old, solid) {
   const context = { Math, Float64Array, jelloWorldSolidAt: solid, softContactReport: { selfContacts: 0 } };
   vm.createContext(context);
   const names = ['softContactSkin', 'softContactEdgesCross'];
-  if (!old) names.push('softContactSkinCrossed');
+  if (!old) names.push('softContactRadialClear', 'softContactSkinCrossed');
   vm.runInContext(names.map(name => declaration(contact, name)).join('\n') + '\n' +
     declaration(old ? oldTerrain : newTerrain, 'softTerrainSkinCrossed'), context);
   return context;

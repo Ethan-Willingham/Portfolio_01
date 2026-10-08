@@ -94,19 +94,31 @@
       var overlap = inside ? s.r + d : s.r - d;
       var separation = Math.min(overlap, 320 * h);
       s.x += nx * separation; s.y += ny * separation;
-      var rel = (s.vx - b.vx * JELLO_TIMESCALE) * nx + (s.vy - b.vy * JELLO_TIMESCALE) * ny;
-      if (rel >= 0) continue;
-      var rockMass = SKY_SLIME_MASS * s.r * s.r / 625, gelMass = b.n * 0.09;
-      var impulse = Math.min(450, -rel) * 1.3 / (1 / rockMass + 1 / gelMass);
-      s.vx += nx * impulse / rockMass; s.vy += ny * impulse / rockMass;
-      var weights = [], sum = 0;
+      var weights = b._rockContactWeights;
+      if (!weights || weights.length !== b.n) weights = b._rockContactWeights = new Float64Array(b.n);
+      var sum = 0, sum2 = 0, gelVX = 0, gelVY = 0;
+      var step = JELLO_H * jelloImpulseScale() / JELLO_TIMESCALE;
       for (var p = 0; p < b.n; p++) {
         var w = Math.max(0, 1 - Math.hypot(b.px[p] - qx, b.py[p] - qy) / (s.r * 1.6));
-        weights.push(w); sum += w;
+        weights[p] = w; sum += w; sum2 += w * w;
+        gelVX += w * (b.px[p] - b.ox[p]); gelVY += w * (b.py[p] - b.oy[p]);
       }
-      var step = (jelloStepH || JELLO_H) / JELLO_TIMESCALE;
-      for (p = 0; p < b.n && sum > 0; p++) {
-        var dv = impulse / gelMass * b.n * weights[p] / sum;
+      if (!(sum > 0)) continue;
+      // Read the moving contact patch, including any impulse from an earlier
+      // rocky substep. The cached body velocity is a frame old and can keep
+      // applying the same collision after this patch is already separating.
+      gelVX /= sum * step; gelVY /= sum * step;
+      var rel = (s.vx - gelVX) * nx + (s.vy - gelVY) * ny;
+      if (rel >= 0) continue;
+      var rockMass = SKY_SLIME_MASS * s.r * s.r / 625;
+      var pointMass = SOFT_CONTACT_POINT_MASS;
+      // The response mass must match the same nonuniform weights used below.
+      // Using the whole body's mass for a small patch overdrives its nodes.
+      var invGel = sum2 / (sum * sum * pointMass);
+      var impulse = Math.min(450, -rel) * 1.3 / (1 / rockMass + invGel);
+      s.vx += nx * impulse / rockMass; s.vy += ny * impulse / rockMass;
+      for (p = 0; p < b.n; p++) {
+        var dv = impulse * weights[p] / (pointMass * sum);
         b.ox[p] += nx * dv * step; b.oy[p] += ny * dv * step;
       }
       surfaceSlimeDetach(b, 0.9);

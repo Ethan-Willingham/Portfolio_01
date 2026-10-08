@@ -54,6 +54,8 @@
   function setup(name) {
     if (typeof softPlayEnabled !== 'undefined' && softPlayEnabled) throw Error('Combined audit requires normal boot, without softplay=1');
     var combined = name === 'slime-snow', col = DECK_CENTER_COL, floor = SKY_ROWS * TILE;
+    var residentCount = window.__auditResidentCount === undefined ? 8 : window.__auditResidentCount;
+    if (!Number.isInteger(residentCount) || residentCount < 1 || residentCount > 32) throw Error('Resident fixture count must be 1 to 32');
     if (combined) {
       // Find an existing dry apron. Keep the generated town and pond terrain.
       var found = false;
@@ -73,10 +75,11 @@
       // native liquids, snow, weather, terrain, and every solver stay live.
       for (var i = jelloBodies.length - 1; i >= 0; i--) if (jelloBodies[i].surfaceSlime) jelloBodies.splice(i, 1);
       jelloCount = jelloTotalPoints(); surfaceSlimesSeeded = true;
-      for (var n = 0; n < 8; n++) {
-        var x = center + (n % 4 - 1.5) * 40, y = floor - 27 - Math.floor(n / 4) * 39;
+      var columns = Math.min(4, residentCount);
+      for (var n = 0; n < residentCount; n++) {
+        var x = center + (n % columns - (columns - 1) * 0.5) * 40, y = floor - 27 - Math.floor(n / columns) * 39;
         if (!surfaceSlimeBuild(x, y, { id: 9300 + n, seed: 0.08 + n * 0.115,
-          hue: surfaceSlimeHues[n % surfaceSlimeHues.length], r: 25 })) throw Error('Could not create all eight audit residents');
+          hue: surfaceSlimeHues[n % surfaceSlimeHues.length], r: 25 })) throw Error('Could not create every requested audit resident');
       }
     }
     for (var key in keys) keys[key] = false;
@@ -85,8 +88,8 @@
     player.vx = player.vy = 0; player.thrusting = false; player.onGround = true;
     cam.snap = true; updateCamera(); canvas.focus({ preventScroll: true });
     fixture = { scene: name, center: center, floor: floor, left: center - 220, right: center + 220,
-      expectedResidents: ENABLE_JELLO ? (combined ? 8 : SURFACE_SLIME_STARTERS) : 0,
-      layout: combined ? 'Eight ordinary radius-25 residents, 40px column and 39px row spacing' : 'Five untouched normal starting residents',
+      expectedResidents: ENABLE_JELLO ? (combined ? residentCount : SURFACE_SLIME_STARTERS) : 0,
+      layout: combined ? residentCount + ' ordinary radius-25 residents, 40px column and 39px row spacing' : SURFACE_SLIME_STARTERS + ' untouched normal starting residents',
       world: 'Normal seeded game; native terrain, ponds, snow and weather retained; liquid population streams with camera region',
       query: location.search, initial: null };
     fixture.initial = frame();

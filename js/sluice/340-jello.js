@@ -1011,6 +1011,7 @@
   // (Re)compute a body's rest-shape data: rest centroid, rest offsets q,
   // and invAqq = inverse of sum(q q^T). Called at build + after plastic flow.
   function jelloComputeRest(b) {
+    b._contactRestVersion = (b._contactRestVersion || 0) + 1;
     var n = b.n, rx = b.rx, ry = b.ry;
     var cx = 0, cy = 0;
     for (var i = 0; i < n; i++) { cx += rx[i]; cy += ry[i]; }
@@ -4365,26 +4366,46 @@
   // reflected triangle is otherwise a perfectly valid equilibrium. Corrections
   // co-move Verlet history, making the repair velocity-free: it removes broken
   // geometry without turning recovery into a launch impulse.
+  function jelloOrientationClear(b, minimum) {
+    var clear = b._orientClear;
+    if (!clear || !clear.valid || clear.min < minimum || clear.n !== b.n || clear.triN !== b.triN ||
+        clear.a !== b.triA || clear.b !== b.triB || clear.c !== b.triC || clear.dm !== b.triDmInv) return false;
+    var px = b.px, py = b.py, clearX = clear.x, clearY = clear.y, n = b.n;
+    for (var i = 0; i < n; i++) if (px[i] !== clearX[i] || py[i] !== clearY[i]) return false;
+    return true;
+  }
+  function jelloOrientationDeterminants(b) {
+    var cache = b._orientDet, dm = b.triDmInv;
+    if (cache && cache.dm === dm && cache.n === b.triN) return cache.values;
+    var values = new Float64Array(b.triN);
+    for (var t = 0; t < b.triN; t++)
+      values[t] = dm[t * 4] * dm[t * 4 + 3] - dm[t * 4 + 1] * dm[t * 4 + 2];
+    b._orientDet = { dm: dm, n: b.triN, values: values };
+    return values;
+  }
   function jelloLimitOrientation(b) {
     if (!b.triHealthOnly || !(b.triN > 0)) return 0;
+    var resident = b.surfaceSlime, triN = b.triN, pointN = b.n;
+    var orientMin = resident ? 0.08 : JELLO_ORIENT_MIN;
+    if (jelloOrientationClear(b, orientMin)) { b._orientFixes = 0; return 0; }
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
-    var TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    var TA = b.triA, TB = b.triB, TC = b.triC, determinants = jelloOrientationDeterminants(b);
     var maxMove = (b.spacing || (TILE / JELLO_NPT)) * JELLO_ORIENT_MOVE;
-    var fixed = 0;
-    for (var t = 0; t < b.triN; t++) {
+    var orientTarget = resident ? 0.12 : JELLO_ORIENT_TARGET;
+    var fixed = 0, clean = true;
+    for (var t = 0; t < triN; t++) {
       var i0 = TA[t], i1 = TB[t], i2 = TC[t];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var detInv = determinants[t];
       var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      var orientMin = b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
-      var orientTarget = b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
       if (!(ratio < orientMin)) continue;
+      clean = false;
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
       var g2x = (py[i0] - py[i1]) * detInv, g2y = (px[i1] - px[i0]) * detInv;
       var unconstrainedDen = g0x * g0x + g0y * g0y + g1x * g1x + g1y * g1y + g2x * g2x + g2y * g2y;
-      if (b.surfaceSlime) {
+      if (resident) {
         // A foot already on the floor cannot contribute motion INTO it.
         // Without this contact-aware gradient the area constraint moved feet
         // through terrain, collision flattened them again, and the frame-level
@@ -4424,6 +4445,16 @@
       fixed++;
     }
     b._orientFixes = fixed;
+    var clear = b._orientClear;
+    if (!clean) { if (clear) clear.valid = false; }
+    else {
+      if (!clear || clear.n !== pointN) clear = b._orientClear = {
+        n: pointN, x: new Float64Array(pointN), y: new Float64Array(pointN) };
+      clear.valid = true; clear.min = orientMin; clear.triN = triN;
+      clear.a = TA; clear.b = TB; clear.c = TC; clear.dm = b.triDmInv;
+      var clearX = clear.x, clearY = clear.y;
+      for (var point = 0; point < pointN; point++) { clearX[point] = px[point]; clearY[point] = py[point]; }
+    }
     return fixed;
   }
 
@@ -4604,12 +4635,14 @@
 
   function jelloHasOrientationFold(b) {
     if (!b.triHealthOnly || !(b.triN > 0)) return false;
-    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    if (jelloOrientationClear(b, JELLO_ORIENT_MIN)) return false;
+    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC;
+    var determinants = jelloOrientationDeterminants(b);
     for (var t = 0; t < b.triN; t++) {
       var i0 = TA[t], i1 = TB[t], i2 = TC[t];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var detInv = determinants[t];
       if ((e1x * e2y - e1y * e2x) * detInv < JELLO_ORIENT_MIN) return true;
     }
     return false;
@@ -5309,6 +5342,9 @@
   var jelloHashStart = null, jelloHashCursor = null, jelloHashOrder = null;
   var jelloHashUsed = null;               // occupied buckets, rebuilt for each contact solve
   var jelloNeighborX = null, jelloNeighborY = null, jelloNeighborHash = null;
+  var jelloBucketVersion = null, jelloContactCandidates = [], jelloContactMapping = [];
+  var jelloContactSelfAllowed = [], jelloContactPointCounts = [];
+  var jelloContactEpoch = 0, jelloContactSelfMode = -1, jelloContactGatherN = 0;
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
@@ -5329,6 +5365,7 @@
     jelloNeighborX = new Float64Array(MP); jelloNeighborX.fill(NaN);
     jelloNeighborY = new Float64Array(MP); jelloNeighborY.fill(NaN);
     jelloNeighborHash = new Int32Array(MP * 9);
+    jelloBucketVersion = new Float64Array(JELLO_HASH_N);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
     jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
@@ -5363,6 +5400,21 @@
     var h = ((ix * 73856093) ^ (iy * 19349663)) % JELLO_HASH_N;
     return h < 0 ? h + JELLO_HASH_N : h;
   }
+  function jelloContactRestPairs(b) {
+    if (b._restDirty) { b._contactRestPairs = null; return null; }
+    if (!b.rx || b.n > 256) { b._contactRestPairs = null; return null; }
+    var cache = b._contactRestPairs;
+    if (cache && cache.version === b._contactRestVersion && cache.rx === b.rx && cache.ry === b.ry &&
+        cache.n === b.n && cache.min2 === b.selfMin2) return cache.allowed;
+    var n = b.n, allowed = new Uint8Array(n * n), rx = b.rx, ry = b.ry;
+    for (var i = 0; i < n; i++) for (var j = i + 1; j < n; j++) {
+      var dx = rx[i] - rx[j], dy = ry[i] - ry[j];
+      allowed[i * n + j] = allowed[j * n + i] = dx * dx + dy * dy < b.selfMin2 ? 0 : 1;
+    }
+    b._contactRestPairs = { version: b._contactRestVersion, rx: rx, ry: ry,
+      n: n, min2: b.selfMin2, allowed: allowed };
+    return allowed;
+  }
   // Solve per-particle contact for ONE substep across all active bodies. Gathers points, builds
   // the hash, then a serial Gauss-Seidel sweep: different-body point pairs within 2r are pushed
   // apart to exactly 2r (UNILATERAL -> only separates, never pulls -> never merges; equal-mass
@@ -5371,6 +5423,9 @@
   // an awake blob collides with a settled pile, and are woken on contact. Returns #corrections.
   function jelloContactSolve(active, nActive, cellSize) {
     jelloContactAlloc();
+    var NBX = jelloNeighborX, NBY = jelloNeighborY, NBH = jelloNeighborHash;
+    var BV = jelloBucketVersion, CAND = jelloContactCandidates, MAP = jelloContactMapping;
+    var SELF = jelloContactSelfAllowed, COUNTS = jelloContactPointCounts;
     var invCell = 1 / cellSize;   // hash cell = the largest 2r among active bodies (covers any rA+rB)
     var GPX = jelloGPX, GPY = jelloGPY, GOX = jelloGOX, GOY = jelloGOY, GR = jelloGR;
     var GB = jelloGBody, GL = jelloGLocal, GH = jelloGHash;
@@ -5384,15 +5439,31 @@
     var citers = (JELLO_CONTACT_ITERS | 0); if (citers < 1) citers = 1;
     var selfOn = JELLO_CONTACT_SELF;   // self-contact rest gate is per-body (b.selfMin2)
     var N = 0, ai, b, i, j, h, n, px, py, ox, oy;
+    var mappingChanged = MAP.length !== nActive || jelloContactSelfMode !== selfOn;
+    var cacheCandidates = true;
     // 1. gather active points into flat buffers
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai]; n = b.n; px = b.px; py = b.py; ox = b.ox; oy = b.oy;
+      SELF[ai] = selfOn ? jelloContactRestPairs(b) : null; COUNTS[ai] = n;
+      var mapping = MAP[ai];
+      if (!mapping || mapping.body !== b || mapping.n !== n || mapping.rx !== b.rx || mapping.ry !== b.ry ||
+          mapping.version !== b._contactRestVersion || mapping.min2 !== b.selfMin2) {
+        MAP[ai] = { body: b, n: n, rx: b.rx, ry: b.ry,
+          version: b._contactRestVersion, min2: b.selfMin2 };
+        mappingChanged = true;
+      }
+      // Plastic flow can change rest distances several times before the
+      // frame-end recompute. Such bodies keep the uncached rest-distance gate.
+      if (b._restDirty) { cacheCandidates = false; mappingChanged = true; }
       var bcr = b.cr;
       for (i = 0; i < n; i++) {
         if (N >= MP) break;
         GPX[N] = px[i]; GPY[N] = py[i]; GOX[N] = ox[i]; GOY[N] = oy[i]; GR[N] = bcr; GB[N] = ai; GL[N] = i; N++;
       }
     }
+    MAP.length = nActive; jelloContactSelfMode = selfOn;
+    if (mappingChanged || jelloContactGatherN !== N) jelloContactEpoch++;
+    jelloContactGatherN = N;
     if (N < 2) return 0;
     // 2. Count-sort occupied buckets for small scenes. Each bucket still stores
     // points in ascending gather-index order, so the contact sweep sees exactly
@@ -5404,6 +5475,7 @@
       CURSOR.fill(0);
       for (i = 0; i < N; i++) {
         h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        if (GH[i] !== h) { BV[GH[i]]++; BV[h]++; }
         GH[i] = h;
         if (CURSOR[h] === 0) USED[usedN++] = h;
         CURSOR[h]++;
@@ -5417,6 +5489,7 @@
     } else {
       for (i = 0; i < N; i++) {
         h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        if (GH[i] !== h) { BV[GH[i]]++; BV[h]++; }
         GH[i] = h; START[h + 1]++;
       }
       for (j = 0; j < JELLO_HASH_N; j++) START[j + 1] += START[j];
@@ -5441,24 +5514,68 @@
     for (si = 0; si < N; si++) {
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
+      var bodyI = active[bi], selfAllowed = SELF[bi], selfRow = GL[i] * COUNTS[bi];
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
       // The nine neighbouring hash buckets depend only on this integer cell,
       // not on the point, body or substep. Most points stay in the same cell
       // across many solves. Reuse the exact bucket sequence until it changes.
       var neighborBase = i * 9;
-      if (jelloNeighborX[i] !== cx || jelloNeighborY[i] !== cy) {
-        jelloNeighborX[i] = cx; jelloNeighborY[i] = cy;
+      if (NBX[i] !== cx || NBY[i] !== cy) {
+        NBX[i] = cx; NBY[i] = cy;
         var ni = neighborBase;
         for (gx = cx - 1; gx <= cx + 1; gx++) {
-          for (gy = cy - 1; gy <= cy + 1; gy++) jelloNeighborHash[ni++] = jelloHashCell(gx, gy);
+          for (gy = cy - 1; gy <= cy + 1; gy++) NBH[ni++] = jelloHashCell(gx, gy);
         }
       }
-      for (var neighbor = 0; neighbor < 9; neighbor++) {
-          h = jelloNeighborHash[neighborBase + neighbor];
-          cend = END[h + endOffset];
-          for (kk = START[h]; kk < cend; kk++) {
-            j = ORDER[kk];
-            if (j <= i) continue;            // each unordered pair once (gather-index order)
+      var candidates = null;
+      if (cacheCandidates) {
+        var cached = CAND[i];
+        var valid = cached && cached.epoch === jelloContactEpoch && cached.cx === cx && cached.cy === cy;
+        // The first pass visits every point. Bucket memberships stay fixed
+        // for this solve; later passes only need the epoch/cell checks above.
+        if (valid && cit === 0) for (var check = 0; check < 9; check++) {
+          if (cached.versions[check] !== BV[NBH[neighborBase + check]]) { valid = false; break; }
+        }
+        if (!valid) {
+          if (!cached) cached = CAND[i] = { list: [], versions: new Float64Array(9) };
+          cached.epoch = jelloContactEpoch; cached.cx = cx; cached.cy = cy;
+          cached.list.length = 0; cached.overflow = false;
+          // Preserve the exact nine-bucket sequence and ascending gather
+          // indices. Only pairs forbidden by unchanged rest geometry vanish.
+          for (var bucket = 0; bucket < 9; bucket++) {
+            h = NBH[neighborBase + bucket];
+            cached.versions[bucket] = BV[h];
+            for (var at = START[h], stop = END[h + endOffset]; at < stop; at++) {
+              var candidate = ORDER[at];
+              if (candidate <= i) continue;
+              if (GB[candidate] === bi && (!selfOn || !bodyI.rx ||
+                  (selfAllowed && !selfAllowed[selfRow + GL[candidate]]))) continue;
+              if (cached.list.length >= 128) { cached.overflow = true; break; }
+              cached.list.push(candidate);
+            }
+            if (cached.overflow) break;
+          }
+          if (cached.overflow) {
+            // A collapsed pile must not retain a quadratic candidate buffer.
+            // Remember that this membership needs the ordinary bucket sweep.
+            cached.list.length = 0;
+            for (var stamp = 0; stamp < 9; stamp++)
+              cached.versions[stamp] = BV[NBH[neighborBase + stamp]];
+          }
+        }
+        candidates = cached.overflow ? null : cached.list;
+      }
+      for (var neighbor = 0; neighbor < (candidates ? 1 : 9); neighbor++) {
+          h = NBH[neighborBase + neighbor];
+          cend = candidates ? candidates.length : END[h + endOffset];
+          for (kk = candidates ? 0 : START[h]; kk < cend; kk++) {
+            j = candidates ? candidates[kk] : ORDER[kk];
+            // A cached list already contains only forward and eligible
+            // pairs; unchanged mapping/rest and bucket stamps validate it.
+            if (!candidates) {
+              if (j <= i) continue;
+              if (GB[j] === bi && (!selfOn || (selfAllowed && !selfAllowed[selfRow + GL[j]]))) continue;
+            }
             // Reject separated points before reading rest geometry or body
             // relationships. Hash neighbours (including bucket collisions)
             // are only candidates. Keep the exact distance gate and pair order.
@@ -5467,10 +5584,11 @@
             var rr = GR[i] + GR[j];
             if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             if (GB[j] === bi) {              // same body: self-collide ONLY points far apart in the rest
-              if (!selfOn) continue;         // lattice (a genuine fold), never near-neighbours / squish
-              var bb = active[bi]; if (!bb.rx) continue;
-              var rdx = bb.rx[GL[i]] - bb.rx[GL[j]], rdy = bb.ry[GL[i]] - bb.ry[GL[j]];
-              if (rdx * rdx + rdy * rdy < bb.selfMin2) continue;
+              if (!bodyI.rx) continue;       // lattice (a genuine fold), never near-neighbours / squish
+              if (!selfAllowed) {
+                var rdx = bodyI.rx[GL[i]] - bodyI.rx[GL[j]], rdy = bodyI.ry[GL[i]] - bodyI.ry[GL[j]];
+                if (rdx * rdx + rdy * rdy < bodyI.selfMin2) continue;
+              }
             }
             else if (active[bi]._phaseMate === active[GB[j]]) continue;   // phasing pair (jelloUnmergeBodies):
                                                                           // mutual contact suspended while they slide apart
@@ -5540,7 +5658,14 @@
                                  // means the remaining passes are no-ops (settled / fully separated)
     }   // end citers iteration loop
     // 4. write the corrected positions AND prev-positions back (ox carries the velocity damping)
-    for (i = 0; i < N; i++) { b = active[GB[i]]; var li = GL[i]; b.px[li] = GPX[i]; b.py[li] = GPY[i]; b.ox[li] = GOX[i]; b.oy[li] = GOY[i]; }
+    var write = 0;
+    for (ai = 0; ai < nActive && write < N; ai++) {
+      b = active[ai]; px = b.px; py = b.py; ox = b.ox; oy = b.oy;
+      n = Math.min(MAP[ai].n, N - write);
+      for (i = 0; i < n; i++, write++) {
+        px[i] = GPX[write]; py[i] = GPY[write]; ox[i] = GOX[write]; oy[i] = GOY[write];
+      }
+    }
     return contacts;
   }
 

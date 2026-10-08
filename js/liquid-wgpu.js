@@ -1172,7 +1172,7 @@
    * If the hook is absent or returns nothing, the uniform is zeroed —
    * every kernel's game-coupled path then no-ops (active flags are 0).
    * -------------------------------------------------------------------- */
-  function writeGameParams(instance, subSteps) {
+  function writeGameParams(instance, subSteps, activeSlotsOnly) {
     var allGh = instance.gameParamsHost;
     var bufs = instance.gameParamsBufs;
     if (!allGh || !bufs) return;
@@ -1181,7 +1181,9 @@
     if (slots > GS_FRAME_SLOTS) slots = GS_FRAME_SLOTS;
     var hook = instance.liquid && instance.liquid.getGameState;
     var gs = (typeof hook === 'function') ? hook() : null;
-    for (var slot = 0; slot < GS_FRAME_SLOTS; slot++) {
+    // Every live reader uses slot zero or a substep below slots. Prepare each
+    // used slot before its commands; standalone fixtures still populate all five.
+    for (var slot = 0; slot < (activeSlotsOnly ? slots : GS_FRAME_SLOTS); slot++) {
       var gh = allGh.subarray(slot * GS_PARAM_LANES, (slot + 1) * GS_PARAM_LANES);
       gh.fill(0);
       // The host supplies the latest ring pose plus world-px/s face
@@ -1488,6 +1490,95 @@
     if (enc !== instance.frameEncoder) instance.queue.submit([enc.finish()]);
   }
 
+  // Optional sparse kernels keep the original dispatch sequence while they
+  // compile, and on devices or drivers that cannot validate the fused layouts.
+  function buildSparseGridFusion(instance) {
+    if(instance.sparseGridFusionStarted || !instance.sparseCapable || !instance.gridReady || !instance.grid2Ready)return;
+    instance.sparseGridFusionStarted=true;
+    var dev=instance.device,token={},scopeOpen=false,resetPipeline,clearPipeline;
+    instance.sparseGridFusionRequest=token;instance.sparseGridFusionError=null;
+    instance.snowIndexResetFusion=null;instance.sparseClearFusion=null;
+    instance.sparseGridFusionReady=Promise.resolve(false);
+    function failed(error){
+      if(instance.sparseGridFusionRequest===token)
+        instance.sparseGridFusionError=String(error&&error.message||error).slice(0,240);
+      return false;
+    }
+    function compile(descriptor){
+      return dev.createComputePipelineAsync?dev.createComputePipelineAsync(descriptor):Promise.resolve(dev.createComputePipeline(descriptor));
+    }
+    try {
+      dev.pushErrorScope('validation');scopeOpen=true;
+    var resetCode=`
+@group(0) @binding(0) var<storage,read_write> bitmap:array<atomic<u32>>;
+@group(0) @binding(1) var<storage,read_write> blockMeta:array<atomic<u32>>;
+@group(0) @binding(2) var<storage,read_write> snow:array<atomic<u32>>;
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) id:vec3u){
+  if(id.x<${BLOCK_BITMAP_WORDS}u){atomicStore(&bitmap[id.x],0u);}
+  if(id.x==0u){
+    atomicStore(&blockMeta[0],0u);atomicStore(&blockMeta[1],1u);atomicStore(&blockMeta[2],1u);atomicStore(&blockMeta[3],0u);
+    atomicStore(&snow[0],0u);atomicStore(&snow[1],1u);atomicStore(&snow[2],1u);atomicStore(&snow[3],0u);
+  }
+}`;
+      var resetEntries=[0,1,2].map(function(binding){return {binding:binding,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}};});
+      var resetBGL=dev.createBindGroupLayout({entries:resetEntries});
+      var resetGroup=dev.createBindGroup({layout:resetBGL,entries:[instance.buf.blockBitmap,instance.buf.blockMeta,instance.buf.snowGrainDispatch].map(function(buffer,binding){return {binding:binding,resource:{buffer:buffer}};})});
+      resetPipeline=compile({label:'snow.resetIndexAndBitmap',layout:dev.createPipelineLayout({bindGroupLayouts:[resetBGL]}),compute:{module:dev.createShaderModule({code:resetCode}),entryPoint:'main'}});
+      var clearGroup=null;
+      clearPipeline=Promise.resolve(null);
+      // Twelve storage bindings cover count, the ten field buffers (oil also
+      // contains snow mass), and the active-block list. Lower limits retain
+      // the separate field clears and can still share the index reset.
+      if(dev.limits.maxStorageBuffersPerShaderStage>=12 && instance.grid2Pipe.heatClearSparse){
+    var code=`
+struct Grid {head:vec4u,tail:vec4u};
+@group(0) @binding(0) var<uniform> gp:Grid;
+@group(0) @binding(1) var<storage,read> blocks:array<u32>;
+@group(0) @binding(2) var<storage,read_write> count:array<atomic<u32>>;
+@group(0) @binding(3) var<storage,read_write> mass:array<atomic<i32>>;
+@group(0) @binding(4) var<storage,read_write> oil:array<atomic<i32>>;
+@group(0) @binding(5) var<storage,read_write> aeration:array<atomic<i32>>;
+@group(0) @binding(6) var<storage,read_write> vx:array<atomic<i32>>;
+@group(0) @binding(7) var<storage,read_write> vy:array<atomic<i32>>;
+@group(0) @binding(8) var<storage,read_write> dvx:array<atomic<i32>>;
+@group(0) @binding(9) var<storage,read_write> dvy:array<atomic<i32>>;
+@group(0) @binding(10) var<storage,read_write> velx:array<f32>;
+@group(0) @binding(11) var<storage,read_write> vely:array<f32>;
+@group(0) @binding(12) var<storage,read_write> heat:array<atomic<i32>>;
+@compute @workgroup_size(256)
+fn main(@builtin(local_invocation_id) lid:vec3u,@builtin(workgroup_id) wid:vec3u){
+  let blk=blocks[wid.x];let bw=gp.head.y>>4u;
+  let i=((blk/bw)*16u+(lid.x>>4u))*gp.head.y+(blk%bw)*16u+(lid.x&15u);
+  atomicStore(&count[i],0u);
+  if(i>=gp.tail.y){return;}
+  atomicStore(&mass[i],0);atomicStore(&oil[i],0);atomicStore(&oil[i+${GRID_MAX_CELLS}u],0);
+  atomicStore(&aeration[i],0);atomicStore(&vx[i],0);atomicStore(&vy[i],0);
+  atomicStore(&dvx[i],0);atomicStore(&dvy[i],0);velx[i]=0.;vely[i]=0.;atomicStore(&heat[i],0);
+}`;
+        var entries=[{binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}];
+        for(var b=1;b<=12;b++)entries.push({binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:b===1?'read-only-storage':'storage'}});
+        var bgl=dev.createBindGroupLayout({entries:entries});
+        var buffers=[instance.paramsBuf,instance.buf.blockList,instance.buf.cellCount,instance.buf.cellMass,instance.buf.cellOilMass,instance.buf.cellAeration,instance.buf.cellVX,instance.buf.cellVY,instance.buf.cellDVX,instance.buf.cellDVY,instance.buf.cellVelX,instance.buf.cellVelY,instance.buf.cellHeat];
+        clearGroup=dev.createBindGroup({layout:bgl,entries:buffers.map(function(buffer,binding){return {binding:binding,resource:{buffer:buffer}};})});
+        clearPipeline=compile({label:'liquid.clearAllSparse',layout:dev.createPipelineLayout({bindGroupLayouts:[bgl]}),compute:{module:dev.createShaderModule({code:code}),entryPoint:'main'}});
+      }
+      var validation=dev.popErrorScope();scopeOpen=false;
+      instance.sparseGridFusionReady=Promise.all([resetPipeline,clearPipeline,validation]).then(function(results){
+        if(results[2])return failed(results[2]);
+        if(instance.sparseGridFusionRequest!==token || instance.device!==dev)return false;
+        instance.snowIndexResetFusion={pipeline:results[0],group:resetGroup};
+        if(results[1])instance.sparseClearFusion={pipeline:results[1],group:clearGroup};
+        return true;
+      }).catch(failed);
+    }catch(error){
+      if(resetPipeline&&resetPipeline.catch)resetPipeline.catch(function(){});
+      if(clearPipeline&&clearPipeline.catch)clearPipeline.catch(function(){});
+      if(scopeOpen)dev.popErrorScope().catch(function(){});
+      failed(error);
+    }
+  }
+
   function buildGrid(instance, clearPrev, snowOnly) {
     if (!instance.gridReady) return;
     var g = instance.grid;
@@ -1501,8 +1592,8 @@
      *   A: [deferred clear of the PREVIOUS sub-step's active blocks] ->
      *      bitmapReset(1 wg) -> countCells+mark(particles) ->
      *      blockCompact(1 wg, writes the args blockMeta)
-     *   copy blockMeta -> blockDispatch (transfer scope; Dawn forbids one
-     *      buffer being writable storage AND the indirect source in a pass)
+     *   copy blockMeta -> blockDispatch (the grid bind group exposes blockMeta
+     *      as writable storage, so the indirect source uses a separate buffer)
      *   B: scanLocal/scanBlocks/scanAdd over the ACTIVE blocks only
      *      (indirect; scanAdd also seeds cellCursor, retiring the dense
      *      cellStart->cellCursor copy) -> scatter(particles).
@@ -1514,28 +1605,42 @@
      * change. denseClearAll covers seeds/handoffs/harness runs.
      * ------------------------------------------------------------------ */
     if (useSparse(instance)) {
+      buildSparseGridFusion(instance);
       var encS = liquidEncoder(instance, 'liquid.buildGridSparse');
       var partGroupsS = Math.max(1, Math.ceil(count / WG));
       // Pass A — [deferred prev clear] + mark + compact.
       var cpA = encS.beginComputePass({ label: 'liquid.gridSparseMark' });
-      if (clearPrev) {
+      if(clearPrev && instance.sparseClearFusion && (!instance.frameEncoder || !instance.frameSparseFieldsClear)) {
+        cpA.setPipeline(instance.sparseClearFusion.pipeline);cpA.setBindGroup(0,instance.sparseClearFusion.group);
+        cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch,0);
+        if(instance.frameEncoder)instance.frameSparseFieldsClear=true;
+      }else if (clearPrev) {
         cpA.setPipeline(P.clearCountSparse);
         cpA.setBindGroup(0, instance.bg.grid);
         cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
-        cpA.setPipeline(instance.p2gPipe.clearSparse);
-        cpA.setBindGroup(0, instance.p2gBG);
-        cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
-        cpA.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
-        cpA.setBindGroup(0, instance.gridUpdateBG);
-        cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
-        // v25.56 BATH B1: pressure-layout share (cellHeat).
-        if (instance.grid2Pipe.heatClearSparse) {
-          cpA.setPipeline(instance.grid2Pipe.heatClearSparse);
-          cpA.setBindGroup(0, instance.pressureBG);
+        // Snow index/contact passes leave liquid fields untouched. Only a
+        // later P2G/grid2 write invalidates their earlier zeroing.
+        if (!instance.frameEncoder || !instance.frameSparseFieldsClear) {
+          cpA.setPipeline(instance.p2gPipe.clearSparse);
+          cpA.setBindGroup(0, instance.p2gBG);
           cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+          cpA.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
+          cpA.setBindGroup(0, instance.gridUpdateBG);
+          cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+          // v25.56 BATH B1: pressure-layout share (cellHeat).
+          if (instance.grid2Pipe.heatClearSparse) {
+            cpA.setPipeline(instance.grid2Pipe.heatClearSparse);
+            cpA.setBindGroup(0, instance.pressureBG);
+            cpA.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+          }
+          if (instance.frameEncoder) instance.frameSparseFieldsClear = true;
         }
       }
       cpA.setBindGroup(0, instance.bg.grid);
+      if(snowOnly && instance.snowIndexResetFusion) {
+        cpA.setPipeline(instance.snowIndexResetFusion.pipeline);cpA.setBindGroup(0,instance.snowIndexResetFusion.group);cpA.dispatchWorkgroups(1);
+        cpA.setBindGroup(0,instance.bg.grid);
+      }else {
       if (snowOnly) {
         cpA.setPipeline(P.resetSnowDispatch);
         cpA.setBindGroup(0, instance.bg.snowCount);
@@ -1544,6 +1649,7 @@
       }
       cpA.setPipeline(P.bitmapReset);
       cpA.dispatchWorkgroups(1);
+      }
       if (count > 0) {
         cpA.setPipeline(snowOnly ? P.countSnowMark : P.countCellsMark);
         cpA.setBindGroup(0, snowOnly ? instance.bg.snowCount : instance.bg.grid);
@@ -1553,9 +1659,9 @@
       cpA.setPipeline(P.blockCompact);
       cpA.dispatchWorkgroups(1);
       cpA.end();
-      // Publish the GPU-written args to the INDIRECT-only buffer (transfer
-      // scope — Dawn validates buffer usage per compute pass, so the
-      // storage-written blockMeta cannot itself be the indirect source).
+      // Publish arguments to a separate INDIRECT buffer. Compute usage is
+      // scoped per dispatch; this grid bind group still exposes blockMeta as
+      // writable storage while the indirect dispatch consumes these arguments.
       encS.copyBufferToBuffer(instance.buf.blockMeta, 0,
                               instance.buf.blockDispatch, 0, 16);
       // Pass B — the sparse count-sort scan + scatter, sized by the GPU.
@@ -9238,6 +9344,7 @@ struct P2GParams {
       try { console.log('LiquidWGPU v26.67: cell-state pipeline failed (' + ((eCs && eCs.message) || eCs) + '), calm field off.'); } catch (_) {}
     }
     instance.grid2Ready = true;
+    buildSparseGridFusion(instance);
   }
 
   // v15.0 — is the sparse block path driving this chain? All three sparse
@@ -9279,6 +9386,7 @@ struct P2GParams {
     var partGroups = Math.max(1, Math.ceil(count / WG));
     var sparse = useSparse(instance);
     var enc = liquidEncoder(instance, 'liquid.runGrid2');
+    if (instance.frameEncoder) instance.frameSparseFieldsClear = false;
     var cp = enc.beginComputePass({ label: 'liquid.grid2' });
 
     // 1. clearDV — zero the pressure-impulse accumulators over [0, cells).
@@ -9355,23 +9463,32 @@ struct P2GParams {
     var g = instance.grid;
     if (!g || g.cells <= 0) return;
     var dev = instance.device;
+    buildSparseGridFusion(instance);
     var enc = liquidEncoder(instance, 'liquid.sparseEndClear');
     var cp = enc.beginComputePass({ label: 'liquid.sparseEndClear' });
+    if(instance.sparseClearFusion && (!instance.frameEncoder || !instance.frameSparseFieldsClear)) {
+      cp.setPipeline(instance.sparseClearFusion.pipeline);cp.setBindGroup(0,instance.sparseClearFusion.group);cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch,0);
+      if(instance.frameEncoder)instance.frameSparseFieldsClear=true;
+    }else {
     cp.setPipeline(instance.pipe.clearCountSparse);
     cp.setBindGroup(0, instance.bg.grid);
     cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
-    cp.setPipeline(instance.p2gPipe.clearSparse);
-    cp.setBindGroup(0, instance.p2gBG);
-    cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
-    cp.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
-    cp.setBindGroup(0, instance.gridUpdateBG);
-    cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
-    // v25.56 BATH B1: pressure-layout share (cellHeat). Always cleared
-    // when the pipe exists so a bath toggled off leaves no stale field.
-    if (instance.grid2Pipe.heatClearSparse) {
-      cp.setPipeline(instance.grid2Pipe.heatClearSparse);
-      cp.setBindGroup(0, instance.pressureBG);
+    if (!instance.frameEncoder || !instance.frameSparseFieldsClear) {
+      cp.setPipeline(instance.p2gPipe.clearSparse);
+      cp.setBindGroup(0, instance.p2gBG);
       cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+      cp.setPipeline(instance.grid2Pipe.clearGrid2Sparse);
+      cp.setBindGroup(0, instance.gridUpdateBG);
+      cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+      // v25.56 BATH B1: pressure-layout share (cellHeat). Always cleared
+      // when the pipe exists so a bath toggled off leaves no stale field.
+      if (instance.grid2Pipe.heatClearSparse) {
+        cp.setPipeline(instance.grid2Pipe.heatClearSparse);
+        cp.setBindGroup(0, instance.pressureBG);
+        cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0);
+      }
+      if (instance.frameEncoder) instance.frameSparseFieldsClear = true;
+    }
     }
     cp.end();
     liquidSubmit(instance, enc);
@@ -9805,8 +9922,11 @@ struct P2GParams {
     var cp = grainPass || enc.beginComputePass({ label: 'liquid.collide' });
     var collideBG = instance.collideBGs && instance.collideBGs[substepSlot | 0];
     cp.setBindGroup(0, snowOnly ? instance.snowPrimaryBGs[substepSlot | 0] : instance.liquidPrimaryBGs[substepSlot | 0] || instance.liquidPrimaryBGs[0]);
-    cp.setPipeline(snowOnly ? instance.collidePipe.snowResetFallback : instance.collidePipe.liquidResetFallback);
-    cp.dispatchWorkgroups(1);
+    // Terrain-only snow has no queue reads or writes. The next queue batch resets.
+    if (!snowOnly || !terrainOnly) {
+      cp.setPipeline(snowOnly ? instance.collidePipe.snowResetFallback : instance.collidePipe.liquidResetFallback);
+      cp.dispatchWorkgroups(1);
+    }
     cp.setPipeline(snowOnly ? (terrainOnly ? instance.collidePipe.snowTerrain : instance.collidePipe.snow) : instance.collidePipe.collide);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     if (snowOnly && terrainOnly) {
@@ -9822,17 +9942,17 @@ struct P2GParams {
     }
     cp.end();
     if (snowOnly) {
-      // Arguments are written by the primary dispatch. This pass binds them
-      // only as indirect input, with no writable argument buffer in its group.
+      // Each particle can enter the guest queue once, then the fallback once.
+      // Both queues fit count; their shaders reject unused lanes before access.
       cp = enc.beginComputePass({label:'snow.guestPrimary'});
       cp.setPipeline(instance.collidePipe.snowGuestPrimary);
       cp.setBindGroup(0,instance.snowGuestBGs[substepSlot | 0]);
-      cp.dispatchWorkgroupsIndirect(instance.buf.snowGuestDispatch,0);
+      cp.dispatchWorkgroups(Math.ceil(count / 32));
       cp.end();
       cp = enc.beginComputePass({label:'snow.fallback'});
       cp.setPipeline(instance.collidePipe.snowFallback);
       cp.setBindGroup(0, instance.snowFallbackBGs[substepSlot | 0] || instance.snowFallbackBGs[0]);
-      cp.dispatchWorkgroupsIndirect(instance.buf.snowFallbackDispatch, 0);
+      cp.dispatchWorkgroups(Math.ceil(count / 32));
       if(grainPass&&instance.snowTrackContactMotion){
         cp.setPipeline(instance.snowGrainPipe.trackMotion);cp.setBindGroup(0,instance.snowGrainBG);
         cp.dispatchWorkgroups(Math.ceil(count/256));
@@ -9842,10 +9962,11 @@ struct P2GParams {
     if (!snowOnly) {
       // Finish every queued liquid before snow or the next G2P stage can
       // reuse the queue and terrain-resolved particle state.
+      // One possible entry per particle bounds this guarded dispatch by count.
       cp = enc.beginComputePass({label:'liquid.fallback'});
       cp.setPipeline(instance.collidePipe.liquidFallback);
       cp.setBindGroup(0,instance.liquidFallbackBGs[substepSlot | 0] || instance.liquidFallbackBGs[0]);
-      cp.dispatchWorkgroupsIndirect(instance.buf.snowFallbackDispatch,0);
+      cp.dispatchWorkgroups(Math.ceil(count / 32));
       cp.end();
     }
     if (instance.diagnosticsFrame) captureLiquidDiagnosticsBatch(instance, enc, !!snowOnly, false);
@@ -11213,6 +11334,62 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
   textureStore(outlet,c,vec4f(velocity,empty,lift));
 }
 `;
+  // One cooperative workgroup performs every Jacobi iteration, preserving both
+  // ping-pong buffers. Cached coefficients depend only on the fixed field.
+  function snowPressureFusedShader(lanes) {
+    var cellsPerLane=4096/lanes;
+    return /* wgsl */ `
+@group(0) @binding(4) var<storage,read> field:array<vec4f>;
+@group(0) @binding(5) var<storage,read_write> pressureA:array<f32>;
+@group(0) @binding(6) var<storage,read_write> pressureB:array<f32>;
+var<workgroup> jacobiA:array<f32,4096>;
+var<workgroup> jacobiB:array<f32,4096>;
+
+@compute @workgroup_size(${lanes})
+fn pressureFused(@builtin(local_invocation_id) lid:vec3u) {
+  var coefficients:array<vec4f,${cellsPerLane}>;
+  var sums:array<f32,${cellsPerLane}>;
+  var divergences:array<f32,${cellsPerLane}>;
+  var interior:array<bool,${cellsPerLane}>;
+  for(var tile=0u;tile<${cellsPerLane}u;tile++) {
+    let i=lid.x+tile*${lanes}u;
+    jacobiA[i]=pressureA[i];jacobiB[i]=pressureB[i];
+    let c=vec2i(i32(i%64u),i32(i/64u));
+    interior[tile]=all(c>vec2i(0))&&all(c<vec2i(63));
+    if(interior[tile]) {
+      let empty=1.-field[i].w;
+      let weights=empty*(vec4f(1.)-vec4f(field[i-1u].w,field[i+1u].w,field[i-64u].w,field[i+64u].w));
+      coefficients[tile]=weights;
+      sums[tile]=dot(weights,vec4f(1.));
+      divergences[tile]=field[i].z;
+    }
+  }
+  workgroupBarrier();
+  for(var iteration=0u;iteration<60u;iteration++) {
+    for(var tile=0u;tile<${cellsPerLane}u;tile++) {
+      let i=lid.x+tile*${lanes}u;
+      var value=0.;
+      if(interior[tile]) {
+        var neighbors:vec4f;
+        if((iteration&1u)==0u) {
+          neighbors=vec4f(jacobiA[i-1u],jacobiA[i+1u],jacobiA[i-64u],jacobiA[i+64u]);
+        } else {
+          neighbors=vec4f(jacobiB[i-1u],jacobiB[i+1u],jacobiB[i-64u],jacobiB[i+64u]);
+        }
+        value=select(0.,(dot(coefficients[tile],neighbors)-divergences[tile])/max(sums[tile],.000001),sums[tile]>.000001);
+      }
+      if((iteration&1u)==0u) {jacobiB[i]=value;} else {jacobiA[i]=value;}
+    }
+    workgroupBarrier();
+  }
+  for(var tile=0u;tile<${cellsPerLane}u;tile++) {
+    let i=lid.x+tile*${lanes}u;
+    pressureA[i]=jacobiA[i];pressureB[i]=jacobiB[i];
+  }
+}
+`;
+  }
+
   function buildSnowBoundary(instance) {
     var dev=instance.device;
     instance.snowProjectedAir=dev.createTexture({label:'snow.surfaceAir',size:[64,64],format:'rgba32float',
@@ -11239,6 +11416,56 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
       return dev.createBindGroup({layout:bgl,entries:binds});
     });
   }
+  // Publish this optional pipeline only after asynchronous validation succeeds.
+  // The ordinary 60-dispatch solve remains available during compilation and on
+  // devices with less than 32 KiB of workgroup storage.
+  function buildSnowBoundaryFused(instance) {
+    var dev=instance.device, token={};
+    instance.snowBoundaryFusedRequest=token;
+    instance.snowBoundaryFused=null;
+    instance.snowBoundaryFusedError=null;
+    instance.snowBoundaryFusedReady=Promise.resolve(false);
+    if(!(dev.limits.maxComputeWorkgroupStorageSize>=32768))return;
+    var limit=Math.min(dev.limits.maxComputeInvocationsPerWorkgroup||256,
+      dev.limits.maxComputeWorkgroupSizeX||256);
+    var lanes=limit>=1024?1024:limit>=512?512:256;
+    var scopeOpen=false;
+    function failed(error){
+      if(instance.snowBoundaryFusedRequest===token)
+        instance.snowBoundaryFusedError=String(error&&error.message||error).slice(0,240);
+      return false;
+    }
+    try {
+      dev.pushErrorScope('validation');scopeOpen=true;
+      var bgl=dev.createBindGroupLayout({entries:[
+        {binding:4,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}},
+        {binding:5,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}},
+        {binding:6,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}}]});
+      var descriptor={label:'snow.air.pressureFused',
+        layout:dev.createPipelineLayout({bindGroupLayouts:[bgl]}),
+        compute:{module:dev.createShaderModule({code:snowPressureFusedShader(lanes)}),entryPoint:'pressureFused'}};
+      var pipeline=dev.createComputePipelineAsync
+        ?dev.createComputePipelineAsync(descriptor):Promise.resolve(dev.createComputePipeline(descriptor));
+      var group=dev.createBindGroup({layout:bgl,entries:[
+        {binding:4,resource:{buffer:instance.buf.snowAirField}},
+        {binding:5,resource:{buffer:instance.buf.snowAirPressure0}},
+        {binding:6,resource:{buffer:instance.buf.snowAirPressure1}}]});
+      // Pop synchronously: unrelated frame work must not enter this scope while
+      // pipeline compilation is pending.
+      var validation=dev.popErrorScope();scopeOpen=false;
+      instance.snowBoundaryFusedReady=Promise.all([pipeline,validation]).then(function(results){
+        if(results[1])return failed(results[1]);
+        if(instance.snowBoundaryFusedRequest!==token || instance.device!==dev)return false;
+        instance.snowBoundaryFused={pipeline:results[0],group:group,lanes:lanes};
+        return true;
+      }).catch(failed);
+    } catch(error) {
+      if(pipeline&&pipeline.catch)pipeline.catch(function(){});
+      if(scopeOpen)dev.popErrorScope().catch(function(){});
+      failed(error);
+    }
+  }
+
   function runSnowBoundary(instance) {
     if(!instance.snowGrainHost[7])return;
     var pass=instance.frameEncoder.beginComputePass({label:'snow.surfaceAir'});
@@ -11247,7 +11474,10 @@ fn finish(@builtin(global_invocation_id) id:vec3u){
       pass.dispatchWorkgroups(Math.ceil(count/256));
     }
     dispatch('clear',0,4096);dispatch('splat',0,instance.uploadedCount);dispatch('prepare',1,4096);
-    for(var iteration=0;iteration<60;iteration++)dispatch('pressure',iteration%2,4096);
+    if(instance.snowBoundaryFused){
+      pass.setPipeline(instance.snowBoundaryFused.pipeline);
+      pass.setBindGroup(0,instance.snowBoundaryFused.group);pass.dispatchWorkgroups(1);
+    }else for(var iteration=0;iteration<60;iteration++)dispatch('pressure',iteration%2,4096);
     dispatch('finish',0,4096);pass.end();
   }
 
@@ -11271,6 +11501,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     instance.snowGrainHost=new Float32Array(16);
     instance.snowAirTexture=dev.createTexture({label:'snow.air',size:[64,64],format:'rgba32float',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST});
     buildSnowBoundary(instance);
+    buildSnowBoundaryFused(instance);
     var entries=[{binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
       {binding:1,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}}];
     for(var b=2;b<=9;b++)entries.push({binding:b,visibility:GPUShaderStage.COMPUTE,buffer:{type:[3,7,8,9].indexOf(b)>=0?'read-only-storage':'storage'}});
@@ -11325,14 +11556,16 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     instance.snowTrackContactMotion=kind!=='predict';
     if(initMotion)enc.clearBuffer(instance.buf.cellCursor,0,instance.grid.cells*4);
     var pass=enc.beginComputePass({label:'snow.'+kind});
+    // The snow count cannot exceed uploadedCount. These spatial kernels return
+    // before accessing any particle beyond that count, so the direct upper bound
+    // avoids indirect-argument validation without changing active invocations.
     if(spatialSnapshot){pass.setPipeline(instance.snowGatherPipe);pass.setBindGroup(0,instance.snowGatherBG);
-      pass.dispatchWorkgroupsIndirect(instance.buf.snowGrainDispatch,0);}
+      pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));}
     pass.setBindGroup(0,instance.snowGrainBG);
     if(initMotion){pass.setPipeline(instance.snowGrainPipe.initMotion);pass.setBindGroup(0,instance.snowInitMotionBG);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));pass.setBindGroup(0,instance.snowGrainBG);pass.setPipeline(instance.snowGrainPipe.trackMotion);pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));}
     var spatial = instance.snowGridOnly && (kind === 'contacts' || kind === 'shield');
     pass.setPipeline(instance.snowGrainPipe[spatial ? kind+'Spatial' : kind]);
-    if (spatial) pass.dispatchWorkgroupsIndirect(instance.buf.snowGrainDispatch,0);
-    else pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));
+    pass.dispatchWorkgroups(Math.ceil(instance.uploadedCount/256));
     if (substepSlot === undefined) pass.end();
     else runCollide(instance, substepSlot, true, pass, terrainOnly);
   }
@@ -11420,7 +11653,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       return;
     }
     // 4. Live game state for the wake kernels + the collide miner test.
-    writeGameParams(instance, subSteps);
+    writeGameParams(instance, subSteps, true);
     // v14.31 — pull the live camera active-region box from the game's
     // getView hook. computeGridBounds + the kernels' per-particle guard
     // cull water outside it. A missing/degenerate box falls back to the
@@ -11475,6 +11708,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     if (hasSnow) prepareSnowGrains(instance, instance.stepDt / LIQUID_TIMESCALE / grainSteps);
     var frameEncoder = instance.device.createCommandEncoder({ label: 'liquid.frame' });
     instance.frameEncoder = frameEncoder;
+    // Never carry the zero-field certificate across encoders or grid mappings.
+    instance.frameSparseFieldsClear = false;
     var diagnosticsSample = instance.diagnosticsActive ? beginLiquidDiagnostics(instance) : null;
     try {
       if (hasSnow) runSnowBoundary(instance);
@@ -11511,6 +11746,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       // A failed encode must not leave subsequent standalone calls holding
       // an unfinished encoder or suppress their physics-uniform refresh.
       instance.frameEncoder = null;
+      instance.frameSparseFieldsClear = false;
       instance.diagnosticsFrame = null;
     }
     // 7. The mirror supports tools, persistence and water-contact melting.
@@ -11586,6 +11822,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     var cellGroups = Math.ceil(g.cells / WG);
     var partGroups = Math.max(1, Math.ceil(count / WG));
     var enc = liquidEncoder(instance, 'liquid.runP2G');
+    if (instance.frameEncoder) instance.frameSparseFieldsClear = false;
     var cp = enc.beginComputePass({ label: 'liquid.p2g' });
     var sparse = useSparse(instance);
 
@@ -11659,6 +11896,16 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             adapter.limits.maxStorageBuffersPerShaderStage;
         }
         instance.adapter = adapter;
+        // A single workgroup can retain both full 64x64 pressure fields.
+        // Request only advertised limits; smaller devices keep the old solve.
+        if(adapter.limits.maxComputeWorkgroupStorageSize>=32768){
+          requiredLimits.maxComputeWorkgroupStorageSize=32768;
+          var airLimit=Math.min(adapter.limits.maxComputeInvocationsPerWorkgroup,
+            adapter.limits.maxComputeWorkgroupSizeX);
+          var airLanes=airLimit>=1024?1024:airLimit>=512?512:256;
+          requiredLimits.maxComputeInvocationsPerWorkgroup=airLanes;
+          requiredLimits.maxComputeWorkgroupSizeX=airLanes;
+        }
         return adapter.requestDevice({ requiredLimits: requiredLimits });
       })
       .then(function (device) {
@@ -11951,6 +12198,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       opsBG: null,           // v24.109 — replay bind group
       opsReady: false,       // v24.109 — ops-replay path available (else full re-upload)
       frameEncoder: null,   // shared only during the synchronous live frame
+      frameSparseFieldsClear: false, // known-zero liquid fields in the current encoder
       diagnosticsActive: false,
       diagnosticsBuffer: null,
       diagnosticsFrame: null,
@@ -12341,6 +12589,8 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         return n;
       },
       dispose: function () {
+        instance.sparseGridFusionRequest=null;instance.sparseClearFusion=null;instance.snowIndexResetFusion=null;
+        instance.snowBoundaryFusedRequest=null;instance.snowBoundaryFused=null;
         instance.diagnosticsActive = false;
         stopLiquidDiagnostics(instance);
         if (instance.buf) {

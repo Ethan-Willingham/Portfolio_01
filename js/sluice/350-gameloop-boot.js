@@ -681,11 +681,14 @@
     _ts = performance.now(); updateLiveBombs(dt);          perfMark('update.liveBombs', _ts);
     if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     _ts = performance.now();
-    liquidToolSync();
-    mineralLiquidTick(dt);
-    siphonTick(dt);
-    if (!gameOver && !gameWon) { skySlimeTick(dt); bathGuestTick(dt); }
-    siphonAudioTick(dt);
+    var _bathPart = performance.now(); liquidToolSync(); perfMark('bath.syncReadback', _bathPart);
+    _bathPart = performance.now(); mineralLiquidTick(dt); perfMark('bath.streaming', _bathPart);
+    _bathPart = performance.now(); siphonTick(dt); perfMark('bath.scoop', _bathPart);
+    if (!gameOver && !gameWon) {
+      _bathPart = performance.now(); skySlimeTick(dt); perfMark('bath.visitors', _bathPart);
+      _bathPart = performance.now(); bathGuestTick(dt); perfMark('bath.guests', _bathPart);
+    }
+    _bathPart = performance.now(); siphonAudioTick(dt); perfMark('bath.audio', _bathPart);
     perfMark('update.bathhouse', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);

@@ -13,7 +13,7 @@ const arrays = ['liquidX', 'liquidY', 'liquidVX', 'liquidVY', 'liquidType', 'liq
   'liquidOrigin', 'liquidSleeping', 'liquidRestFrames',
   'liquidG00', 'liquidG01', 'liquidG10', 'liquidG11'];
 const s = {
-  Math: math, window: { location: { search: '' } },
+  Math: math, window: { location: { search: '' } }, perfLive: {enabled:false}, playPerfActive:false,
   cam: { x: 1900, y: -180 }, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
   SNOW_RATE: 0, SNOW_FLAKE_CAP: 5400, SNOW_MASS_CAP: 120000,
@@ -23,7 +23,8 @@ const s = {
   RAIN_STORAGE_CAP: 40000, RAIN_ORIGIN: 3,
   liquidCount: 0, liquidWGPU: null, liquidOps: [], LIQUID_OPS_MAX: 10000, liquidMutationSeq: 0,
   rain: { intensity: 0, cells: {}, waterCells: {}, parked: [], waterCount: 0 },
-  surfaceWind: { current: 0 }, player: { x: 2700, y: 90 },
+  surfaceWind: { current: 0 }, player: { x: 2700, y: 90 }, gameWon: false,
+  rigContactHull: () => null, rigHullContains: () => false,
   snowAir: { active: false }, snowAirReset: noop, updateSnowAir: noop,
   snowAirAt: () => [0, 0, 0], liquidToolSync: noop, rainCatchLakes: noop,
   tileAt: () => null, liquidWorldSolidAt: (x, y) => y >= 128,
@@ -31,6 +32,7 @@ const s = {
   rainCell: (x, y) => Math.floor(y / 6) * (Math.ceil(320 * 32 / 6) + 1) + Math.floor(x / 6)
 };
 for (const key of arrays) s[key] = [];
+s.rainContactCount = key => s.rain.cells[key] || 0;
 s.addLiquidParticle = (type, x, y, vx, vy, origin = 3) => {
   const i = s.liquidCount++;
   [s.liquidType[i], s.liquidX[i], s.liquidY[i], s.liquidVX[i], s.liquidVY[i]] = [type, x, y, vx, vy];

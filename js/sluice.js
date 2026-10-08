@@ -74,7 +74,7 @@
   //   stage = current movement design stage (Stage 3 = corner correction)
   //   iter  = sequential iteration number within that stage
   // See archive/MOVEMENT_DESIGN.md for what each stage covers.
-  var GAME_VERSION = 'v28.171';
+  var GAME_VERSION = 'v28.172';
   // Water-removal comparison for performance recording. Require a fresh
   // no-save run so the diagnostic cannot alter a stored world. Snow keeps
   // its ordinary emission, contacts, slime boundaries and rendering.
@@ -3355,7 +3355,8 @@
     activeMs: 0, issueReadyAt: null };
   var perfLiveFields = playPerfFields.slice(0, 30).concat(['frameId', 'visibleResidents', 'observerMs', 'active']);
   var perfLiveStride = perfLiveFields.length + playPerfBucketLimit;
-  var perfLiveBudget = 1000 / 120;
+  var perfLiveTargetFPS = 144;
+  var perfLiveBudget = 1000 / perfLiveTargetFPS;
   var perfLivePhaseNames = ['update.main', 'update.aux', 'update.wind', 'update.grassWind',
     'update.trees', 'update.boulders', 'update.weather', 'update.smoke', 'update.audio',
     'update.drillAnim', 'update.explosions', 'update.mineFx', 'update.clearOverlays',
@@ -3373,6 +3374,14 @@
         var snowMs = raw['snow.cpu'] || 0;
         if (snowMs > 0) { result.push({ name: 'snow.cpu', ms: snowMs }); total += snowMs; }
         ms = Math.max(0, ms - snowMs);
+      }
+      if (name === 'update.bathhouse') {
+        var bathParts = ['bath.syncReadback', 'bath.streaming', 'bath.scoop', 'bath.visitors', 'bath.guests', 'bath.audio'];
+        for (var p = 0; p < bathParts.length; p++) {
+          var partMs = raw[bathParts[p]] || 0;
+          if (partMs > 0) { result.push({ name: bathParts[p], ms: partMs }); total += partMs; ms -= partMs; }
+        }
+        ms = Math.max(0, ms);
       }
       if (ms > 0) { result.push({ name: name, ms: ms }); total += ms; }
     }
@@ -3533,6 +3542,16 @@
       perfLive.workload.forEach(function (r) { perfLiveAttach(event, r, true); });
       if (newWorst) perfLive.worst = event;
       if (severity >= 25) perfLiveRememberIssue(event);
+      if (kind === 'gap' && cpu >= 25) {
+        // The callback after a long arrival can also contain an independent
+        // CPU stall. Retain both measurements instead of losing the smaller.
+        var cpuEvent = { frameId: perfLive.frameId, at: time, severity: cpu, kind: 'cpu',
+          gapMs: row[offset + 33] ? interval : null, reference: perfLiveReference(time),
+          current: event.current, previous: event.previous };
+        perfLive.gpu.forEach(function (r) { perfLiveAttach(cpuEvent, r, false); });
+        perfLive.workload.forEach(function (r) { perfLiveAttach(cpuEvent, r, true); });
+        perfLiveRememberIssue(cpuEvent);
+      }
     }
     perfLive.previous = active ? perfLive.write : null; perfLive.interrupted = !active;
     perfLive.write = (perfLive.write + 1) % perfLive.capacity;
@@ -3597,7 +3616,7 @@
     var gpu = perfLive.gpu.filter(function (r) { return r.at >= started && r.at <= ended; }).map(function (r) { return Object.assign({}, r, { atMs: r.at - started }); });
     var capture = { schema: 'sluice-performance-1', version: GAME_VERSION,
       startedUTC: new Date(performance.timeOrigin + started).toISOString(), durationMs: ended - started,
-      reason: 'Last 30 seconds', metadata: { rolling: true, targetFPS: 120,
+      reason: 'Last 30 seconds', metadata: { rolling: true, targetFPS: perfLiveTargetFPS,
         url: location.href, userAgent: navigator.userAgent,
         options: window.SluiceOptions || null, lastState: playPerfState(),
         notes: ['Callback intervals describe arrival gaps, not displayed frames.',
@@ -3653,11 +3672,16 @@
     rollingCapture: perfLiveCapture, pin: perfLivePin, clearPin: perfLiveClearPin, saveRecent: perfLiveDownload });
   /* Plain explanations and bounded session warnings. Counts never infer causes. */
   function perfLiveCPUName(name) {
+    var bathNames = { 'bath.syncReadback': 'Liquid readback', 'bath.streaming': 'Liquid streaming', 'bath.scoop': 'Liquid scoop' };
+    if (bathNames[name]) return { key: 'cpu-water', name: bathNames[name] };
+    if (name === 'bath.visitors') return { key: 'cpu-slimes', name: 'Rocky visitor physics' };
+    if (name === 'bath.guests') return { key: 'cpu-bath', name: 'Bathhouse simulation' };
+    if (name === 'bath.audio') return { key: 'cpu-other', name: 'Scoop audio' };
     if (name === 'snow.cpu') return { key: 'cpu-snow', name: 'Snow processing' };
     if (/^update\.(jello|fluidSkin|residents|slimeNpc|slimeAudio)$/.test(name)) return { key: 'cpu-slimes', name: 'Slime physics' };
     if (name === 'update.liquids') return { key: 'cpu-water', name: 'Water and snow submission' };
     if (/^render\./.test(name)) return { key: 'cpu-drawing', name: 'Drawing the game' };
-    if (name === 'update.bathhouse') return { key: 'cpu-bath', name: 'Bathhouse simulation' };
+    if (name === 'update.bathhouse') return { key: 'cpu-bath', name: 'Bathhouse and liquid work' };
     if (name === 'update.main') return { key: 'cpu-rig', name: 'Rig physics' };
     if (name === 'update.smoke') return { key: 'cpu-smoke', name: 'Smoke processing' };
     var names = { 'update.aux': 'Camera and controls', 'update.wind': 'Wind', 'update.grassWind': 'Grass wind',
@@ -3683,7 +3707,7 @@
     var leading = best && best.ms >= row.ms * 0.35;
     var label = perfLiveGPUName(leading ? best.name : row.name);
     return { key: label.key, title: label.name + (/collisions$/.test(label.name) ? ' are expensive' : ' is expensive'), certainty: 'GPU sampled',
-      summary: (leading ? label.name + ' took ' + best.ms.toFixed(1) : 'Sampled GPU passes took ' + row.ms.toFixed(1)) + ' ms. The 120 FPS budget is 8.3 ms.',
+      summary: (leading ? label.name + ' took ' + best.ms.toFixed(1) : 'Sampled GPU passes took ' + row.ms.toFixed(1)) + ' ms. The ' + perfLiveTargetFPS + ' FPS budget is ' + perfLiveBudget.toFixed(2) + ' ms.',
       evidence: ['Sampled GPU passes: ' + row.ms.toFixed(2) + ' ms.',
         'Sampled frame #' + row.frameId + (best ? '; largest pass ' + best.name + ': ' + best.ms.toFixed(2) + ' ms.' : '.'),
         'GPU samples omit browser drawing and can miss a short stall. CPU and GPU work overlap.'] };
@@ -3695,7 +3719,7 @@
     if (cpu > perfLiveBudget) {
       var leading = top && top.ms >= cpu * 0.35, label = perfLiveCPUName(leading ? top.name : 'other game work');
       return { key: label.key, title: leading ? label.name + ' is expensive' : 'Too much game work', certainty: 'CPU measured',
-        summary: (leading ? label.name + ' took ' + top.ms.toFixed(1) + ' ms of ' : 'Game work took ') + cpu.toFixed(1) + ' ms. The 120 FPS budget is 8.3 ms.',
+        summary: (leading ? label.name + ' took ' + top.ms.toFixed(1) + ' ms of ' : 'Game work took ') + cpu.toFixed(1) + ' ms. The ' + perfLiveTargetFPS + ' FPS budget is ' + perfLiveBudget.toFixed(2) + ' ms.',
         evidence: ['Measured game work: ' + cpu.toFixed(2) + ' ms.', top ? 'Largest measured cost: ' + perfLiveCPUName(top.name).name + ', ' + top.ms.toFixed(2) + ' ms.' : 'No individual cost was measured.',
           'These CPU phases do not overlap. CPU time excludes panel work and does not measure GPU execution.'] };
     }
@@ -3713,7 +3737,7 @@
         'No complete, expensive GPU sample matches this frame. Browser scheduling and drawing are not measured here.',
         'Snow and slime counts provide context, not a measured cause.'] };
     return { key: 'healthy', title: 'Game work is within budget', certainty: 'Within budget',
-      summary: 'Measured game work took ' + cpu.toFixed(1) + ' ms. The 120 FPS budget is 8.3 ms.', evidence: [] };
+      summary: 'Measured game work took ' + cpu.toFixed(1) + ' ms. The ' + perfLiveTargetFPS + ' FPS budget is ' + perfLiveBudget.toFixed(2) + ' ms.', evidence: [] };
   }
   function perfLiveLiveDiagnosis(stats) {
     if (!stats.frames) return perfLiveExplainFrame(null, []);
@@ -3740,6 +3764,17 @@
   }
   function perfLiveExplainIssue(event) {
     var frame = perfLiveIssueFrame(event);
+    if (event.kind === 'gap' && !(frame.cpuMs >= 25 && event.gapMs <= frame.cpuMs + perfLiveBudget)) {
+      // A slightly over-budget CPU frame cannot account for an arbitrarily
+      // longer callback gap. Keep its measured phases as context, without
+      // promoting the largest phase to the cause of unmeasured time.
+      var top = frame.phases && frame.phases[0];
+      return { key: 'unexplained', title: 'Frame pacing is slow', certainty: 'Cause unknown',
+        summary: 'Arrival gap was ' + event.gapMs.toFixed(1) + ' ms. Preceding game work took ' + frame.cpuMs.toFixed(1) + ' ms; the rest is unmeasured.',
+        evidence: ['Arrival gap: ' + event.gapMs.toFixed(2) + ' ms; preceding game work: ' + frame.cpuMs.toFixed(2) + ' ms.',
+          top ? 'Largest preceding CPU cost: ' + perfLiveCPUName(top.name).name + ', ' + top.ms.toFixed(2) + ' ms.' : 'No individual preceding CPU cost was measured.',
+          'GPU samples are recorded separately and can overlap CPU work. Browser scheduling and drawing are not measured here.'] };
+    }
     if (event.kind === 'gpu') {
       var source = (event.gpu || []).filter(function (row) { return row.frameId === frame.frameId && (!event.sourceGPU || row.name === event.sourceGPU); })[0];
       var measured = perfLiveGPUExplanation(source);
@@ -3750,6 +3785,13 @@
   function perfLiveRememberIssue(event) {
     if (event.severity < 25 || perfLive.saving) return;
     var explanation = perfLiveExplainIssue(event);
+    if (event.kind === 'gap' && explanation.certainty === 'CPU measured') {
+      // A following arrival can corroborate a CPU stall, but its delay must
+      // not inflate the measured CPU severity or count that frame twice.
+      var preceding = perfLiveIssueFrame(event);
+      event = Object.assign({}, event, { kind: 'cpu', frameId: preceding.frameId,
+        at: preceding.atMs, severity: preceding.cpuMs, current: preceding, previous: null });
+    }
     var id = explanation.key;
     if (id === 'healthy' || id === 'waiting') id = 'unexplained';
     var issue = null;
@@ -16583,8 +16625,10 @@
   var bathNotice = '', bathNoticeT = 0;
   var bathSupplies = [0, 0, 0, 0, 0]; // liquid recovered when retiring old garden lots
   var bathIntroSeen = false;
+  var bathWaterlineCache = null;
 
   function bathServiceReset() {
+    bathWaterlineCache = null;
     if (typeof bathArrivalReset === 'function') bathArrivalReset();
     bathToolReset();
     bathThermalReset(); bathSiloReset();
@@ -16635,6 +16679,10 @@
     // Invert the same curved cavity that now collides with the water.
     // This also gives parked/offscreen guests the same buoyancy level.
     var visibleWater = typeof bathArrivalVisibleWater === 'function' ? bathArrivalVisibleWater(bathWater) : bathWater;
+    var cached = bathWaterlineCache;
+    if (cached && cached.water === visibleWater && cached.x0 === curve.x0 &&
+        cached.x1 === curve.x1 && cached.y0 === curve.y0 && cached.depth === curve.D &&
+        cached.tightness === BATH_CAT_C) return cached.line;
     var low = curve.y0, high = curve.y0 + curve.D;
     for (var n = 0; n < 10; n++) {
       var line = (low + high) * 0.5, volume = 0;
@@ -16644,7 +16692,10 @@
       }
       if (volume > visibleWater) low = line; else high = line;
     }
-    return (low + high) * 0.5;
+    var result = (low + high) * 0.5;
+    bathWaterlineCache = { water: visibleWater, x0: curve.x0, x1: curve.x1,
+      y0: curve.y0, depth: curve.D, tightness: BATH_CAT_C, line: result };
+    return result;
   }
   function bathLightStove() {
     if (!bathMode || bathFading || gamePaused) return false;
@@ -16809,16 +16860,52 @@
     bathBeginHop(g, bathGuestQueueX(g.slot), BATH_FLOORS[0].fr * TILE - g.s.r, 1.1, 112, 'leave');
     saveNow('bath-payment');
   }
+  function bathResidentExitClear(x, y, s) {
+    // Enclose the newborn's mildly irregular rest skin. Existing residents
+    // are tested against their live contour, including sleeping/offscreen ones.
+    var radius = typeof s.r === 'number' && isFinite(s.r) ? skySlimeClamp(s.r, 22, 27) : 27;
+    radius = radius * 1.01 + 0.1;
+    var radius2 = radius * radius;
+    for (var row = Math.floor((y - radius) / TILE); row <= Math.floor((y + radius) / TILE); row++) {
+      for (var col = Math.floor((x - radius) / TILE); col <= Math.floor((x + radius) / TILE); col++) {
+        if (!tileAt(row, col)) continue;
+        var tx = skySlimeClamp(x, col * TILE, (col + 1) * TILE);
+        var ty = skySlimeClamp(y, row * TILE, (row + 1) * TILE);
+        if ((tx - x) * (tx - x) + (ty - y) * (ty - y) < radius2) return false;
+      }
+    }
+    if (player) {
+      var rx = skySlimeClamp(x, player.x, player.x + PLAYER_W);
+      var ry = skySlimeClamp(y, player.y, player.y + PLAYER_H);
+      if ((rx - x) * (rx - x) + (ry - y) * (ry - y) < radius2) return false;
+    }
+    for (var i = 0; i < skySlimes.length; i++) {
+      var rock = skySlimes[i];
+      if (Math.hypot(rock.x - x, rock.y - y) < radius + rock.r) return false;
+    }
+    for (var bi = 0; bi < jelloBodies.length; bi++) {
+      var b = jelloBodies[bi];
+      if (b.ringN < 3 || x + radius < b.bboxL || x - radius > b.bboxR ||
+          y + radius < b.bboxT || y - radius > b.bboxB) continue;
+      if (jelloPointInRing(b, x, y)) return false;
+      var q = jelloNearestOnRing(b, x, y);
+      if ((q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < radius2) return false;
+    }
+    return true;
+  }
   function bathReleaseGuest(g) {
     if (!bathPickSite()) return false;
     var s = g.s;
     if (ENABLE_JELLO && s.bathed) {
-      // A full solver keeps the paid guest indoors until there is room.
+      var exitX = (banyaDoorX0 + banyaDoorX1) / 2, exitY = SKY_ROWS * TILE - 38;
+      if (!bathResidentExitClear(exitX, exitY, s)) return false;
+      // A full solver or occupied door keeps the paid guest indoors until there is room.
       // Retrying cannot duplicate the payment or discard their identity.
-      var resident = surfaceSlimeBuild((banyaDoorX0 + banyaDoorX1) / 2,
-        SKY_ROWS * TILE - 38, s);
+      var resident = surfaceSlimeBuild(exitX, exitY, s);
       if (!resident) return false;
-      jelloLaunchBody(resident, 65, -110, { h: jelloStepH || JELLO_H });
+      // The first resident can leave before the solver has ever ticked.
+      // Encode launch history with the upcoming substep, not its stale boot value.
+      jelloLaunchBody(resident, 65, -110, { h: JELLO_H * jelloImpulseScale() });
       return true;
     }
     if (skySlimes.length >= SKY_SLIME_MAX) return false;
@@ -17485,6 +17572,7 @@
       }) });
   }
   function bathSkinFlakeTick(dt) {
+    if (!bathSkinFlakes.length) return;
     var c = bathTubCurve(BATH_FLOORS[0], BATH_FLOORS[0].tubs[0]), line = bathWaterline();
     for (var i = bathSkinFlakes.length - 1; i >= 0; i--) {
       var f = bathSkinFlakes[i]; f.life -= dt;
@@ -19469,11 +19557,12 @@
       }
       for (var wall = 0; wall < walls.length; wall++) {
         var nx = walls[wall].nx, ny = walls[wall].ny;
-        var limit = walls[wall].limit, points = [];
+        var limit = walls[wall].limit;
         // Reject only fully separated hull bounds. The sampled curve adds
         // many planes, but a coal usually touches only one short arc of it.
         if (nx*(nx < 0 ? minX : maxX)+ny*(ny < 0 ? minY : maxY) < limit-margin) continue;
         if (walls[wall].minX != null && (maxX < walls[wall].minX-margin || minX > walls[wall].maxX+margin)) continue;
+        var points = [];
         var wallVertices=hearthWallHull(walls[wall],b.vertices);
         for (j = 0; j < wallVertices.length; j++) {
           var p = wallVertices[j], depth = p[0] * nx + p[1] * ny - limit;
@@ -38964,6 +39053,16 @@
   }
   function rainCell(x, y) { return Math.floor(y / 6) * (Math.ceil(COLS * TILE / 6) + 1) + Math.floor(x / 6); }
 
+  var rainContactBounds = { cells: null, min: Infinity, max: -Infinity };
+  function rainContactCount(key) {
+    // Falling weather usually sits above every occupied liquid cell. The
+    // bounds belong to this exact completed scan; a reset or replacement
+    // table takes the ordinary lookup until the next scan publishes bounds.
+    var cells = rain.cells, bounds = rainContactBounds;
+    if (bounds.cells === cells && (key < bounds.min || key > bounds.max)) return 0;
+    return cells[key] || 0;
+  }
+
   function rainUpdatePlow() {
     if (!player || !player.onGround || gameOver || gameWon || Math.abs(player.vx) < 12) return;
     var p = rain.plow, right = player.vx > 0, feet = player.y + PLAYER_H;
@@ -39020,6 +39119,7 @@
   function rainScan(dt) {
     liquidToolSync();
     var cells = {}, waterCells = {}, count = 0, held = 0, margin = 220;
+    var minCell = Infinity, maxCell = -Infinity;
     // Exponential removal gives the same drainage per second at any frame
     // rate. Individual subpixel particles disappear over several scans, so
     // a puddle subsides instead of an entire tile's water blinking away.
@@ -39071,6 +39171,7 @@
       if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
         var key = rainCell(x, y);
         cells[key] = (cells[key] || 0) + 1;
+        minCell = Math.min(minCell, key); maxCell = Math.max(maxCell, key);
         if (liquidType[i] === 0) waterCells[key] = (waterCells[key] || 0) + 1;
       }
     }
@@ -39094,6 +39195,7 @@
       rain.parked.length -= 2; budget--; count++;
     }
     rain.cells = cells; rain.waterCells = waterCells; rain.waterCount = count;
+    rainContactBounds.cells = cells; rainContactBounds.min = minCell; rainContactBounds.max = maxCell;
   }
 
   function rainRecycle(count) {
@@ -39186,7 +39288,7 @@
       for (var k = 0; k < steps; k++) {
         var nx = p.x + dx, ny = p.y + dy;
         var solid = liquidWorldSolidAt(nx, ny + 1.5);
-        var wet = (rain.cells[rainCell(nx, ny)] || 0) >= 4;
+        var wet = rainContactCount(rainCell(nx, ny)) >= 4;
         var rig = player && liquidPointInMiner(nx, ny);
         var snowContact = worldSnowEnabled && snowBedContact(nx, ny);
         if (solid || wet || rig || snowContact) {
@@ -39768,6 +39870,35 @@
   }
   function snowAirProject() {
     var a = snowAir, w = a.w, h = a.h, p = a.pressure, s = a.solid, d = a.divergence;
+    // The wall stencil is fixed throughout all 28 red/black iterations.
+    // Assemble each parity once, including a branch-free four-neighbor list.
+    // Same-parity cells never read each other, so the two lists can run in
+    // sequence without changing Gauss-Seidel's dependency or addition order.
+    var stencil = a.projectStencil;
+    if (!stencil || stencil.size !== w * h) {
+      stencil = a.projectStencil = { size: w * h, open: [], edge: [], mask: [], count: [] };
+      for (var side = 0; side < 2; side++) {
+        stencil.open[side] = new Int32Array(w * h);
+        stencil.edge[side] = new Int32Array(w * h);
+        stencil.mask[side] = new Uint8Array(w * h);
+        stencil.count[side] = new Uint8Array(w * h);
+      }
+    }
+    var open0 = 0, open1 = 0, edge0 = 0, edge1 = 0;
+    for (var sy = 1; sy < h - 1; sy++) for (var sx = 1; sx < w - 1; sx++) {
+      var si = sy * w + sx;
+      if (s[si]) continue;
+      var parity = (sx + sy + 1) & 1;
+      var mask = (!s[si - 1] ? 1 : 0) | (!s[si + 1] ? 2 : 0) |
+        (!s[si - w] ? 4 : 0) | (!s[si + w] ? 8 : 0);
+      if (mask === 15) stencil.open[parity][parity ? open1++ : open0++] = si;
+      else if (mask) {
+        var at = parity ? edge1++ : edge0++;
+        stencil.edge[parity][at] = si; stencil.mask[parity][at] = mask;
+        stencil.count[parity][at] = (mask & 1) + ((mask >> 1) & 1) +
+          ((mask >> 2) & 1) + ((mask >> 3) & 1);
+      }
+    }
     p.fill(0); var before = 0, after = 0, count = 0;
     snowAirWalls();
     for (var y = 1; y < h - 1; y++) for (var x = 1; x < w - 1; x++) {
@@ -39779,15 +39910,20 @@
     // Red/black Gauss-Seidel, zero-pressure open border and zero normal
     // flow on solid faces. The Poisson stencil matches the MAC divergence.
     for (var iteration = 0; iteration < 28; iteration++) for (var parity = 0; parity < 2; parity++) {
-      for (var ry = 1; ry < h - 1; ry++) for (var rx = 1 + ((ry + parity) & 1); rx < w - 1; rx += 2) {
-        var j = ry * w + rx;
-        if (s[j]) continue;
-        var sum = 0, n = 0;
-        if (!s[j - 1]) { sum += p[j - 1]; n++; }
-        if (!s[j + 1]) { sum += p[j + 1]; n++; }
-        if (!s[j - w]) { sum += p[j - w]; n++; }
-        if (!s[j + w]) { sum += p[j + w]; n++; }
-        p[j] = n ? (sum - d[j]) / n : 0;
+      var open = stencil.open[parity], edges = stencil.edge[parity];
+      var masks = stencil.mask[parity], counts = stencil.count[parity];
+      var openN = parity ? open1 : open0, edgeN = parity ? edge1 : edge0;
+      for (var k = 0; k < openN; k++) {
+        var j = open[k];
+        p[j] = (0 + p[j - 1] + p[j + 1] + p[j - w] + p[j + w] - d[j]) / 4;
+      }
+      for (var k = 0; k < edgeN; k++) {
+        var j = edges[k], mask = masks[k], sum = 0;
+        if (mask & 1) sum += p[j - 1];
+        if (mask & 2) sum += p[j + 1];
+        if (mask & 4) sum += p[j - w];
+        if (mask & 8) sum += p[j + w];
+        p[j] = (sum - d[j]) / counts[k];
       }
     }
     for (var fy = 1; fy < h; fy++) for (var fx = 1; fx < w; fx++) {
@@ -39818,9 +39954,10 @@
     if (!a.active) { a.x = ox; a.y = oy; a.u.fill(0); a.v.fill(0); }
     else snowAirShift(ox, oy);
     a.active = true; a.time += dt;
+    var minerHull = player && !gameWon ? rigContactHull() : null;
     for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
       var wx = ox + (x + 0.5) * cell, wy = oy + (y + 0.5) * cell;
-      a.solid[y * w + x] = liquidWorldSolidAt(wx, wy) || liquidPointInMiner(wx, wy) ? 1 : 0;
+      a.solid[y * w + x] = liquidWorldSolidAt(wx, wy) || (minerHull && rigHullContains(minerHull, wx, wy, 0)) ? 1 : 0;
     }
     var nozzles = firing ? rocketNozzles() : [], dir = rocketExhaustDir();
     // Read the same bank as the visible jets. In horizontal flight, powder
@@ -39872,8 +40009,18 @@
       var keep = Math.exp(-0.75 * step), travel = step / cell;
       for (var r = 0; r < h; r++) for (var c = 0; c < w; c++) {
         var i = r * w + c;
-        var crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
-        var crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
+        var crossV, crossU;
+        if (c > 0 && c < w - 1 && r > 0 && r < h - 1) {
+          // These staggered samples always lie at exact half-cell offsets.
+          // Retain the bilinear arithmetic order, without clamping/flooring.
+          crossV = (a.v[i - 1] * 0.5 + a.v[i] * 0.5) * 0.5 +
+            (a.v[i + w - 1] * 0.5 + a.v[i + w] * 0.5) * 0.5;
+          crossU = (a.u[i - w] * 0.5 + a.u[i - w + 1] * 0.5) * 0.5 +
+            (a.u[i] * 0.5 + a.u[i + 1] * 0.5) * 0.5;
+        } else {
+          crossV = snowAirBilerp(a.v, c - 0.5, r + 0.5);
+          crossU = snowAirBilerp(a.u, c + 0.5, r - 0.5);
+        }
         a.tu[i] = snowAirBilerp(a.u, c - a.u[i] * travel, r - crossV * travel) * keep;
         a.tv[i] = snowAirBilerp(a.v, c - crossU * travel, r - a.v[i] * travel) * keep;
       }
@@ -39893,6 +40040,13 @@
     a.peak = 0;
     for (var by = 0; by < h; by++) for (var bx = 0; bx < w; bx++) {
       var bi = by * w + bx, f = bi * 4;
+      if (a.solid[bi]) {
+        // Solid cells export zero in every channel. Avoid evaluating the
+        // wake's fade and gust functions for underground cells and the rig.
+        a.grainField[f] = a.grainField[f + 1] = a.grainField[f + 2] = a.grainField[f + 3] = 0;
+        a.field[f] = a.field[f + 1] = a.field[f + 2] = a.field[f + 3] = 0;
+        continue;
+      }
       var ux = a.solid[bi] ? 0 : (a.u[bi] + a.u[by * w + Math.min(w - 1, bx + 1)]) * 0.5;
       var vy = a.solid[bi] ? 0 : (a.v[bi] + a.v[Math.min(h - 1, by + 1) * w + bx]) * 0.5;
       // Fade the outer wake in world space before the finite grid ends.
@@ -39925,10 +40079,15 @@
       }
       // Uneven gusts break up the smooth wall jet into overlapping puffs.
       // World-space phases keep them independent of the rig and camera.
-      var wx = ox + (bx + 0.5) * cell, wy = oy + (by + 0.5) * cell;
-      var gust = 0.72 + 0.28 * Math.sin(wx * 0.17 + wy * 0.11 + a.time * 9.7)
-        * Math.sin(wx * 0.071 - wy * 0.13 - a.time * 6.3);
-      var lift = Math.min(460, Math.max(0, Math.abs(ux) - 12) * 4.8) * surface * gust * edge;
+      var lift = Math.min(460, Math.max(0, Math.abs(ux) - 12) * 4.8) * surface;
+      if (lift !== 0) {
+        // Zero scouring or no nearby floor makes the gust immaterial.
+        // Preserve the original multiplication order whenever lift exists.
+        var wx = ox + (bx + 0.5) * cell, wy = oy + (by + 0.5) * cell;
+        var gust = 0.72 + 0.28 * Math.sin(wx * 0.17 + wy * 0.11 + a.time * 9.7)
+          * Math.sin(wx * 0.071 - wy * 0.13 - a.time * 6.3);
+        lift = lift * gust * edge;
+      }
       a.field[f] = ux; a.field[f + 1] = vy; a.field[f + 2] = a.solid[bi] ? 0 : 1; a.field[f + 3] = lift;
       a.peak = Math.max(a.peak, Math.sqrt(ux * ux + vy * vy));
     }
@@ -39953,7 +40112,7 @@
   // plow wedges, terrain replacement or separate rig support simulation.
   var worldSnowEnabled = false;
   var snow = { field: particleWeatherState(), time: 0, tick: 0, credit: 0, primed: false, grains: [], parked: [],
-    bed: new Map(), bedKey: null, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
+    bed: snowEmptyBed(), bedKey: null, airParked: {}, airCount: 0, coverage: null, sideCredit: 0, readbackGen: 0, active: 0, mass: 0, emitted: 0, recycled: 0, melted: 0, collected: 0, temperature: -4 };
   var snowSupportJob = null;
 
   function snowNewWorldEnabled() {
@@ -39968,7 +40127,7 @@
     snow.emitted = snow.recycled = snow.melted = snow.collected = 0;
     snow.grains.length = snow.parked.length = 0;
     snowAirReset(); snow.field = particleWeatherState();
-    snow.bed = new Map(); snow.bedKey = null; snowSupportJob = null;
+    snow.bed = snowEmptyBed(); snow.bedKey = null; snowSupportJob = null;
     snow.airParked = {}; snow.airCount = snow.sideCredit = snow.readbackGen = 0; snow.coverage = null; snow.primed = false; snow.temperature = -4;
   }
   function snowActiveCap() { return SNOW_ACTIVE_CAP; }
@@ -40064,6 +40223,17 @@
   var snowSupportCoordinates = new Float64Array(0);
   var snowSupportDirectHeads = new Int32Array(0), snowSupportDirectStamps = new Uint32Array(0);
   var snowSupportDirectEpoch = 0;
+  function snowEmptyBed() {
+    var bed = new Map();
+    bed.snowMinY = Infinity; bed.snowMaxY = -Infinity;
+    return bed;
+  }
+  function snowBedInclude(bed, y) {
+    // A tracked bed is append-only until the next complete reconstruction.
+    // Untracked Maps (including diagnostic fixtures) retain the full query.
+    if (y < bed.snowMinY) bed.snowMinY = y;
+    if (y > bed.snowMaxY) bed.snowMaxY = y;
+  }
   function snowBuildSupport() {
     // A chain of touching grains rooted in terrain carries contact,
     // including while it slides or compacts. Velocity cannot make a pile
@@ -40081,7 +40251,7 @@
       snowSupportNext = new Int32Array(capacity);
       snowSupportQueue = new Int32Array(capacity);
     }
-    var heads = new Map(), bed = new Map(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
+    var heads = new Map(), bed = snowEmptyBed(), points = snowSupportPoints, next = snowSupportNext, queue = snowSupportQueue;
     var pointCount = 0, queueCount = 0;
     // Only bounded, canonical bucket coordinates admit a cell-range proof.
     // Any unsupported snow point retains the complete original traversal.
@@ -40162,6 +40332,7 @@
       var bucket = bed.get(key);
       if (!bucket) { bucket = []; bed.set(key, bucket); }
       bucket.push(x, y);
+      snowBedInclude(bed, y);
       var rMin = -1, rMax = 1, cMin = -1, cMax = 1;
       if (pruneCells && col > 0 && col < width - 1) {
         // 64 Number epsilons cover contact and endpoint rounding. Divide
@@ -40243,7 +40414,7 @@
     }
     snowSupportJob = { key: key, count: n, cell: cell, width: width, reach: reach, reach2: reach * reach,
       groundReach: snowContactRadius() + 0.3, pruneCells: pruneCells, direct: direct, epoch: snowJobEpoch,
-      baseCol: baseCol, baseRow: baseRow, span: span, heads: direct ? null : new Map(), bed: new Map(),
+      baseCol: baseCol, baseRow: baseRow, span: span, heads: direct ? null : new Map(), bed: snowEmptyBed(),
       phase: 0, cursor: 0, q: 0, queued: 0, inserted: [] };
   }
   function snowSupportJobStep(budgetMs) {
@@ -40272,6 +40443,7 @@
       var bucket = job.bed.get(cellKey);
       if (!bucket) { bucket = []; job.bed.set(cellKey, bucket); }
       bucket.push(px, py);
+      snowBedInclude(job.bed, py);
       var rMin = -1, rMax = 1, cMin = -1, cMax = 1;
       if (job.pruneCells && col > 0 && col < width - 1) {
         var pad = 1.4210854715202004e-14 * (px + Math.abs(py) + cell + reach + 1);
@@ -40311,8 +40483,16 @@
     var key = Math.floor(y / cell) * width + Math.floor(x / cell), bucket = bed.get(key);
     if (!bucket) { bucket = []; bed.set(key, bucket); }
     bucket.push(x, y);
+    snowBedInclude(bed, y);
   }
   function snowTouchesBed(x, y, bed, reach) {
+    if (!bed.size) return false;
+    // Most weather flakes are still far above the deposited powder. A
+    // conservative vertical bound rejects those nine empty bucket probes.
+    // Pad outward for the same floating-point distance test used below.
+    var extent = Math.abs(reach);
+    var pad = 1.4210854715202004e-14 * (Math.abs(y) + extent + 1);
+    if (y + extent + pad < bed.snowMinY || y - extent - pad > bed.snowMaxY) return false;
     var cell = Math.max(LIQUID_CELL, snowSupportDistance()), width = Math.ceil(COLS * TILE / cell) + 1;
     var col = Math.floor(x / cell), row = Math.floor(y / cell), reach2 = reach * reach;
     for (var r = -1; r <= 1; r++) for (var c = -1; c <= 1; c++) {
@@ -40447,6 +40627,9 @@
     // becomes a contact for the grains above it; arbitrary storage order
     // could otherwise grow the bed through an unprocessed lower grain.
     snow.grains.sort(function (a, b) { return a.y - b.y; });
+    // The rig cannot move during this flake pass. Resolve its animated hull
+    // once, instead of reevaluating its suspension/scale for every tiny step.
+    var minerHull = player && !gameWon ? rigContactHull() : null;
     for (var i = snow.grains.length - 1; i >= 0; i--) {
       var p = snow.grains[i], wind = surfaceWind.current * 35 + 12 * Math.sin(snow.time * 0.43 + p.y * 0.006);
       if (p.y > surf) wind *= 0.18;
@@ -40467,7 +40650,7 @@
         var radius = snowContactRadius();
         var floor = liquidWorldSolidAt(nx, ny + radius);
         var bed = p.vy >= 0 && snowBedContact(nx, ny);
-        var contact = floor || bed || liquidPointInMiner(nx, ny) || (rain.cells[key] || 0) > 1;
+        var contact = floor || bed || (minerHull && rigHullContains(minerHull, nx, ny, 0)) || rainContactCount(key) > 1;
         if (contact) {
           if (floor || bed) {
             // Resolve the first touch, rather than parking at the start of
@@ -46654,6 +46837,45 @@
     var gl = null;
     var ext = null;
     var ready = false;
+
+    // Uniform state belongs to the linked program and survives program switches.
+    // Each location is unique to that program; fresh init/material programs get
+    // fresh keys. No other code writes these uniforms through this context.
+    var uniformValues = new WeakMap();
+    function sameUniform(a, b) { return a === b && (a !== 0 || 1 / a === 1 / b); }
+    function uniform1i(location, x) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 0 && old.x === x) return;
+      gl.uniform1i(location, x);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 0; old.x = x;
+    }
+    function uniform1f(location, x) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 1 && sameUniform(old.x, x)) return;
+      gl.uniform1f(location, x);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 1; old.x = x;
+    }
+    function uniform2f(location, x, y) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 2 && sameUniform(old.x, x) && sameUniform(old.y, y)) return;
+      gl.uniform2f(location, x, y);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 2; old.x = x; old.y = y;
+    }
+    function uniform3f(location, x, y, z) {
+      if (location == null) return;
+      var old = uniformValues.get(location);
+      if (old && old.kind === 3 && sameUniform(old.x, x) && sameUniform(old.y, y) && sameUniform(old.z, z)) return;
+      gl.uniform3f(location, x, y, z);
+      if (!old) { old = {}; uniformValues.set(location, old); }
+      old.kind = 3; old.x = x; old.y = y; old.z = z;
+    }
+
   
     var config = {
       SIM_RESOLUTION: 256,
@@ -47585,9 +47807,9 @@
     }
 
     function bindLiquidField (uniforms) {
-      gl.uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
-      gl.uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
-      gl.uniform1i(uniforms.uLiquid, 4);
+      uniform1f(uniforms.useLiquid, liquidActive ? 1 : 0);
+      uniform2f(uniforms.liquidVelocityScale, liquidScaleX, liquidScaleY);
+      uniform1i(uniforms.uLiquid, 4);
       gl.activeTexture(gl.TEXTURE4);
       if (!liquidTexture) ensureObstacleTexture();
       gl.bindTexture(gl.TEXTURE_2D, liquidTexture || obstacleTexture);
@@ -47686,16 +47908,16 @@
       // Force-zero all fields by running the clear shader with value 0.
       gl.disable(gl.BLEND);
       clearProgram.bind();
-      gl.uniform1f(clearProgram.uniforms.value, 0.0);
-      gl.uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
+      uniform1f(clearProgram.uniforms.value, 0.0);
+      uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
       blit(dye.write); dye.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, dye.read.attach(0));
       blit(dye.write); dye.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
       blit(velocity.write); velocity.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, velocity.read.attach(0));
       blit(velocity.write); velocity.swap();
-      gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+      uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
       blit(pressure.write); pressure.swap();
     }
   
@@ -47715,42 +47937,42 @@
       gl.disable(gl.BLEND);
   
       curlProgram.bind();
-      gl.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(curl);
   
       vorticityProgram.bind();
       bindLiquidField(vorticityProgram.uniforms);
-      gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
-      gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
-      gl.uniform1f(vorticityProgram.uniforms.useMoving, movingActive ? 1 : 0);
-      gl.uniform1i(vorticityProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
-      gl.uniform1i(vorticityProgram.uniforms.uDye, dye.read.attach(3));
-      gl.uniform3f(vorticityProgram.uniforms.materialForces, physics.BUOYANCY, physics.WEIGHT, physics.EDGE_SPIN);
-      gl.uniform1f(vorticityProgram.uniforms.viscosity, physics.VISCOSITY);
-      gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
-      gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+      uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+      uniform1f(vorticityProgram.uniforms.useMoving, movingActive ? 1 : 0);
+      uniform1i(vorticityProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
+      uniform1i(vorticityProgram.uniforms.uDye, dye.read.attach(3));
+      uniform3f(vorticityProgram.uniforms.materialForces, physics.BUOYANCY, physics.WEIGHT, physics.EDGE_SPIN);
+      uniform1f(vorticityProgram.uniforms.viscosity, physics.VISCOSITY);
+      uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+      uniform1f(vorticityProgram.uniforms.dt, dt);
       blit(velocity.write);
       velocity.swap();
   
       divergenceProgram.bind();
-      gl.uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
       blit(divergence);
   
       clearProgram.bind();
-      gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
-      gl.uniform1f(clearProgram.uniforms.value, pressureDecay);
+      uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+      uniform1f(clearProgram.uniforms.value, pressureDecay);
       blit(pressure.write);
       pressure.swap();
   
       pressureProgram.bind();
-      gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+      uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
       // The Jacobi passes share one sampler unit and viewport. Only the
       // ping-pong textures/framebuffers change between iterations.
-      gl.uniform1i(pressureProgram.uniforms.uPressure, 1);
+      uniform1i(pressureProgram.uniforms.uPressure, 1);
       gl.activeTexture(gl.TEXTURE1);
       gl.viewport(0, 0, pressure.width, pressure.height);
       for (var i = 0; i < config.PRESSURE_ITERATIONS; i++) {
@@ -47761,48 +47983,48 @@
       }
   
       gradientSubtractProgram.bind();
-      gl.uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
-      gl.uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
-      gl.uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
-      gl.uniform1i(gradientSubtractProgram.uniforms.uObstacle, attachObstacle(2));
-      gl.uniform1f(gradientSubtractProgram.uniforms.useObstacle, useObstacle);
+      uniform2f(gradientSubtractProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform1i(gradientSubtractProgram.uniforms.uPressure, pressure.read.attach(0));
+      uniform1i(gradientSubtractProgram.uniforms.uVelocity, velocity.read.attach(1));
+      uniform1i(gradientSubtractProgram.uniforms.uObstacle, attachObstacle(2));
+      uniform1f(gradientSubtractProgram.uniforms.useObstacle, useObstacle);
       blit(velocity.write);
       velocity.swap();
   
       advectionProgram.bind();
       bindLiquidField(advectionProgram.uniforms);
-      gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+      uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
       if (!ext.supportLinearFiltering)
-        gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+        uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
       var velId = velocity.read.attach(0);
-      gl.uniform1i(advectionProgram.uniforms.uVelocity, velId);
-      gl.uniform1i(advectionProgram.uniforms.uSource, velId);
-      gl.uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
-      gl.uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
-      gl.uniform1f(advectionProgram.uniforms.useMoving, movingActive ? 1 : 0);
-      gl.uniform1i(advectionProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(3) : attachObstacle(3));
-      gl.uniform1f(advectionProgram.uniforms.velocityPass, 1);
-      gl.uniform1f(advectionProgram.uniforms.dt, dt);
-      gl.uniform1f(advectionProgram.uniforms.cooling, physics.COOLING);
-      gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+      uniform1i(advectionProgram.uniforms.uVelocity, velId);
+      uniform1i(advectionProgram.uniforms.uSource, velId);
+      uniform1i(advectionProgram.uniforms.uObstacle, attachObstacle(2));
+      uniform1f(advectionProgram.uniforms.useObstacle, useObstacle);
+      uniform1f(advectionProgram.uniforms.useMoving, movingActive ? 1 : 0);
+      uniform1i(advectionProgram.uniforms.uMoving, movingActive ? movingBoundary.attach(3) : attachObstacle(3));
+      uniform1f(advectionProgram.uniforms.velocityPass, 1);
+      uniform1f(advectionProgram.uniforms.dt, dt);
+      uniform1f(advectionProgram.uniforms.cooling, physics.COOLING);
+      uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
       // No wind on velocity pass — keeps the pressure solve clean.
-      gl.uniform1f(advectionProgram.uniforms.u_wind_x, 0.0);
-      gl.uniform1f(advectionProgram.uniforms.u_wind_above_y, 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_x, 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_above_y, 0.0);
       blit(velocity.write);
       velocity.swap();
 
       if (!ext.supportLinearFiltering)
-        gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
-      gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
-      gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
-      gl.uniform1f(advectionProgram.uniforms.velocityPass, 0);
+        uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+      uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+      uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+      uniform1f(advectionProgram.uniforms.velocityPass, 0);
       // The obstacle stays bound on unit 2 from the velocity pass.
-      gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+      uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
       // Wind drifts dye above the surface only. u_wind_x is in UV/sec units.
       // u_wind_above_y is the UV Y threshold (uvY = 1 - syN, so above-surface
       // = large uvY values near 1.0). Passed in from the game each step() call.
-      gl.uniform1f(advectionProgram.uniforms.u_wind_x, config.wind_x || 0.0);
-      gl.uniform1f(advectionProgram.uniforms.u_wind_above_y, config.wind_above_y != null ? config.wind_above_y : 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_x, config.wind_x || 0.0);
+      uniform1f(advectionProgram.uniforms.u_wind_above_y, config.wind_above_y != null ? config.wind_above_y : 0.0);
       blit(dye.write);
       dye.swap();
     }
@@ -47815,12 +48037,12 @@
       var aspect = canvas.width / canvas.height;
       var radius = correctRadius(rad / 100.0, aspect);
       splatProgram.bind();
-      gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
-      gl.uniform1f(splatProgram.uniforms.aspectRatio, aspect);
-      gl.uniform2f(splatProgram.uniforms.point, uvX, uvY);
-      gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
-      gl.uniform1f(splatProgram.uniforms.heat, 0);
-      gl.uniform1f(splatProgram.uniforms.radius, radius);
+      uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+      uniform1f(splatProgram.uniforms.aspectRatio, aspect);
+      uniform2f(splatProgram.uniforms.point, uvX, uvY);
+      uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+      uniform1f(splatProgram.uniforms.heat, 0);
+      uniform1f(splatProgram.uniforms.radius, radius);
       blit(velocity.write);
       velocity.swap();
     }
@@ -47831,9 +48053,9 @@
       splatVelocity(uvX, uvY, dx, dy, splatRadius);
       // Buoyancy adds velocity only. A zero-colour dye pass copies the field.
       if (color.r === 0 && color.g === 0 && color.b === 0) return;
-      gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
-      gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
-      gl.uniform1f(splatProgram.uniforms.heat, physics.HEAT * Math.max(color.r, color.g, color.b));
+      uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
+      uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+      uniform1f(splatProgram.uniforms.heat, physics.HEAT * Math.max(color.r, color.g, color.b));
       blit(dye.write);
       dye.swap();
     }
@@ -47881,11 +48103,11 @@
       var oy = -dyCamFrac;
       gl.disable(gl.BLEND);
       scrollProgram.bind();
-      gl.uniform2f(scrollProgram.uniforms.offset, ox, oy);
-      gl.uniform1i(scrollProgram.uniforms.uTexture, dye.read.attach(0));
+      uniform2f(scrollProgram.uniforms.offset, ox, oy);
+      uniform1i(scrollProgram.uniforms.uTexture, dye.read.attach(0));
       blit(dye.write);
       dye.swap();
-      gl.uniform1i(scrollProgram.uniforms.uTexture, velocity.read.attach(0));
+      uniform1i(scrollProgram.uniforms.uTexture, velocity.read.attach(0));
       blit(velocity.write);
       velocity.swap();
     }
@@ -47903,21 +48125,21 @@
       // Blending against the cleared target adds no colour or alpha.
       gl.disable(gl.BLEND);
       displayMaterial.bind();
-      gl.uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
-      gl.uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
-      gl.uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
-      gl.uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
+      uniform1f(displayMaterial.uniforms.opticalDensity, config.OPTICAL_DENSITY);
+      uniform1f(displayMaterial.uniforms.opticalBrightness, config.OPTICAL_BRIGHTNESS);
+      uniform1f(displayMaterial.uniforms.opticalAbsorption, config.OPTICAL_ABSORPTION);
+      uniform1f(displayMaterial.uniforms.edgeSharpness, config.EDGE_SHARPNESS);
       bindLiquidField(displayMaterial.uniforms);
       if (displayMaterial.uniforms.texelSize)
-        gl.uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
-      gl.uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
-      gl.uniform1i(displayMaterial.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
-      gl.uniform1f(displayMaterial.uniforms.useMoving, movingActive ? 1 : 0);
-      gl.uniform2f(displayMaterial.uniforms.movingTexelSize,
+        uniform2f(displayMaterial.uniforms.texelSize, dye.texelSizeX, dye.texelSizeY);
+      uniform1i(displayMaterial.uniforms.uTexture, dye.read.attach(0));
+      uniform1i(displayMaterial.uniforms.uMoving, movingActive ? movingBoundary.attach(2) : attachObstacle(2));
+      uniform1f(displayMaterial.uniforms.useMoving, movingActive ? 1 : 0);
+      uniform2f(displayMaterial.uniforms.movingTexelSize,
         movingActive ? movingBoundary.texelSizeX : 1, movingActive ? movingBoundary.texelSizeY : 1);
       if (displayMaterial.uniforms.uObstacle != null) {
-        gl.uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
-        gl.uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
+        uniform1i(displayMaterial.uniforms.uObstacle, attachObstacle(1));
+        uniform1f(displayMaterial.uniforms.useObstacle, obstacleSrcCanvas ? 1.0 : 0.0);
       }
       blit(null);
     }
@@ -48045,6 +48267,7 @@
   var smokeObstWaterCanvas = null, smokeObstWaterCtx = null, smokeObstWaterImage = null;
   var smokeObstWaterCache = null;
   var smokeObstWaterPrefix = null;
+  var smokeObstWaterDirtyLeft = null, smokeObstWaterDirtyRight = null;
   function smokeObstWaterRememberPrefix(prior, start, xWords, yWords, vyWords, count) {
     // This metadata is optional. An allocation failure must not turn a
     // completed ordinary paint/cache assignment into a new paint failure.
@@ -48974,12 +49197,35 @@
           smokeObstWaterVY = new Float32Array(smokeObstWaterBins.length);
         }
         var bins = smokeObstWaterBins;
+        if (prefixStart) {
+          if (!smokeObstWaterDirtyLeft || smokeObstWaterDirtyLeft.length < binsH) {
+            smokeObstWaterDirtyLeft = new Int32Array(binsH);
+            smokeObstWaterDirtyRight = new Int32Array(binsH);
+          }
+          smokeObstWaterDirtyLeft.fill(binsW, 0, binsH);
+          smokeObstWaterDirtyRight.fill(0, 0, binsH);
+        }
         if (!prefixStart) {
           bins.fill(0, 0, nBins);
           smokeObstWaterVY.fill(0, 0, nBins);
         }
         var domR = originX + (binsW - 1.5) * BIN;
         var domB = originY + (binsH - 1.5) * BIN;
+        if (prefixStart) {
+          // Inspect only the small suffix here so ordinary full deposits keep
+          // their original branch-free nine-sample accumulation loop.
+          for (var dirtyPoint = prefixStart; dirtyPoint < liquidCount; dirtyPoint++) {
+            if (liquidFrozen[dirtyPoint]) continue;
+            var dirtyX = liquidX[dirtyPoint], dirtyY = liquidY[dirtyPoint];
+            if (dirtyX < originX + BIN || dirtyX >= domR || dirtyY < originY + BIN || dirtyY >= domB) continue;
+            var dirtyCol = Math.floor((dirtyX - originX) / BIN - 0.5);
+            var dirtyTop = Math.floor((dirtyY - originY) / BIN - 0.5);
+            for (var dirtyRow = dirtyTop; dirtyRow < dirtyTop + 3; dirtyRow++) {
+              if (dirtyCol < smokeObstWaterDirtyLeft[dirtyRow]) smokeObstWaterDirtyLeft[dirtyRow] = dirtyCol;
+              if (dirtyCol + 3 > smokeObstWaterDirtyRight[dirtyRow]) smokeObstWaterDirtyRight[dirtyRow] = dirtyCol + 3;
+            }
+          }
+        }
         for (var wi = prefixStart; wi < liquidCount; wi++) {
           if (liquidFrozen[wi]) continue;
           var wx = liquidX[wi], wy = liquidY[wi];
@@ -49015,15 +49261,24 @@
         // Same density range as the old 10..24 particles per 8x8 bin, scaled
         // by area. Pools remain solid; the rim changes continuously. Floating
         // counts also avoid the old 255-count saturation under compression.
-        for (var bi = 0; bi < nBins; bi++) {
-          var bn = bins[bi];
-          if (bn === 0) { rgba[bi * 4 + 3] = 0; continue; }
-          var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
-          coverage *= coverage * (3 - 2 * coverage);
-          var falling = bn > 0 ? Math.max(0, Math.min(1,
-            (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
-          falling *= falling * (3 - 2 * falling);
-          rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+        // A certified prefix leaves every previous density/velocity sample
+        // unchanged. Only the appended particles' nine-sample footprints can
+        // change alpha; retain all other pixels, including their exact bytes.
+        // Full rebuilds still visit every bin to clear old coverage.
+        var alphaRows = prefixStart ? binsH : 1;
+        for (var alphaRow = 0; alphaRow < alphaRows; alphaRow++) {
+          var alphaStart = prefixStart ? alphaRow * binsW + smokeObstWaterDirtyLeft[alphaRow] : 0;
+          var alphaEnd = prefixStart ? alphaRow * binsW + smokeObstWaterDirtyRight[alphaRow] : nBins;
+          for (var bi = alphaStart; bi < alphaEnd; bi++) {
+            var bn = bins[bi];
+            if (bn === 0) { rgba[bi * 4 + 3] = 0; continue; }
+            var coverage = Math.max(0, Math.min(1, (bn - 2.5) / 3.5));
+            coverage *= coverage * (3 - 2 * coverage);
+            var falling = bn > 0 ? Math.max(0, Math.min(1,
+              (smokeObstWaterVY[bi] / bn - SMOKE_WATER_FLOW_MIN_VY) / 20)) : 0;
+            falling *= falling * (3 - 2 * falling);
+            rgba[bi * 4 + 3] = Math.round(255 * coverage * (1 - 0.6 * falling));
+          }
         }
         smokeObstWaterCtx.putImageData(smokeObstWaterImage, 0, 0);
         if (canCache) {
@@ -63786,9 +64041,9 @@
     var issues = perfLiveIssueList(), selected = perfLiveGetSelectedIssue();
     var paused = gamePaused || mobileLandscapeBlocked, inactive = paused || document.hidden || snapshot.view;
     perfPanelText(perfPanel.fps, paused ? 'Paused' : stats.fps ? Math.round(stats.fps) + ' FPS' : 'Waiting');
-    perfPanel.fps.classList.toggle('perf-over-budget', !inactive && !!stats.frames && stats.fps < 114);
+    perfPanel.fps.classList.toggle('perf-over-budget', !inactive && !!stats.frames && stats.fps < perfLiveTargetFPS * 0.95);
     perfPanel.fps.classList.toggle('perf-critical', !inactive && !!stats.frames && stats.fps < 60);
-    perfPanelText(perfPanel.budget, (selected ? 'Saved issue' : paused ? 'Capture paused' : document.hidden ? 'Hidden tab' : snapshot.view ? 'Menu / loading' : 'Target 120 FPS') + (playPerfActive ? ' · recording' : ''));
+    perfPanelText(perfPanel.budget, (selected ? 'Saved issue' : paused ? 'Capture paused' : document.hidden ? 'Hidden tab' : snapshot.view ? 'Menu / loading' : 'Target ' + perfLiveTargetFPS + ' FPS') + (playPerfActive ? ' · recording' : ''));
     var explanation = perfLiveLiveDiagnosis(stats);
     if (inactive) explanation = { title: paused ? 'Capture paused' : document.hidden ? 'Tab hidden' : 'Waiting for gameplay',
       summary: 'Saved issues remain available. Live measurements continue when you return to play.', certainty: 'Not measuring play', evidence: [] };
@@ -63831,7 +64086,7 @@
   }
   function perfPanelPaintDetails(snapshot, stats, workload, event, selected) {
     var rows = [];
-    rows.push('Build ' + GAME_VERSION + ' · callback target 120 FPS');
+    rows.push('Build ' + GAME_VERSION + ' · callback target ' + perfLiveTargetFPS + ' FPS');
     rows.push('Panel observer ' + perfLive.observerMs.toFixed(3) + ' ms/frame; last paint ' + perfLive.paintMs.toFixed(2) + ' ms (5 Hz). GPU timestamp overhead is separate.');
     rows.push('Visible residents ' + snapshot.visibleResidents + '; outer ticks ' + snapshot.outerTicks + '; terrain rebuilds ' + snapshot.terrainRebuilds);
     rows.push('Snow ' + snapshot.snowAirborne + ' airborne / ' + snapshot.snowParked + ' parked; shared liquid storage ' + snapshot.liquids);
@@ -65450,6 +65705,7 @@
   // (Re)compute a body's rest-shape data: rest centroid, rest offsets q,
   // and invAqq = inverse of sum(q q^T). Called at build + after plastic flow.
   function jelloComputeRest(b) {
+    b._contactRestVersion = (b._contactRestVersion || 0) + 1;
     var n = b.n, rx = b.rx, ry = b.ry;
     var cx = 0, cy = 0;
     for (var i = 0; i < n; i++) { cx += rx[i]; cy += ry[i]; }
@@ -68804,26 +69060,46 @@
   // reflected triangle is otherwise a perfectly valid equilibrium. Corrections
   // co-move Verlet history, making the repair velocity-free: it removes broken
   // geometry without turning recovery into a launch impulse.
+  function jelloOrientationClear(b, minimum) {
+    var clear = b._orientClear;
+    if (!clear || !clear.valid || clear.min < minimum || clear.n !== b.n || clear.triN !== b.triN ||
+        clear.a !== b.triA || clear.b !== b.triB || clear.c !== b.triC || clear.dm !== b.triDmInv) return false;
+    var px = b.px, py = b.py, clearX = clear.x, clearY = clear.y, n = b.n;
+    for (var i = 0; i < n; i++) if (px[i] !== clearX[i] || py[i] !== clearY[i]) return false;
+    return true;
+  }
+  function jelloOrientationDeterminants(b) {
+    var cache = b._orientDet, dm = b.triDmInv;
+    if (cache && cache.dm === dm && cache.n === b.triN) return cache.values;
+    var values = new Float64Array(b.triN);
+    for (var t = 0; t < b.triN; t++)
+      values[t] = dm[t * 4] * dm[t * 4 + 3] - dm[t * 4 + 1] * dm[t * 4 + 2];
+    b._orientDet = { dm: dm, n: b.triN, values: values };
+    return values;
+  }
   function jelloLimitOrientation(b) {
     if (!b.triHealthOnly || !(b.triN > 0)) return 0;
+    var resident = b.surfaceSlime, triN = b.triN, pointN = b.n;
+    var orientMin = resident ? 0.08 : JELLO_ORIENT_MIN;
+    if (jelloOrientationClear(b, orientMin)) { b._orientFixes = 0; return 0; }
     var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
-    var TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    var TA = b.triA, TB = b.triB, TC = b.triC, determinants = jelloOrientationDeterminants(b);
     var maxMove = (b.spacing || (TILE / JELLO_NPT)) * JELLO_ORIENT_MOVE;
-    var fixed = 0;
-    for (var t = 0; t < b.triN; t++) {
+    var orientTarget = resident ? 0.12 : JELLO_ORIENT_TARGET;
+    var fixed = 0, clean = true;
+    for (var t = 0; t < triN; t++) {
       var i0 = TA[t], i1 = TB[t], i2 = TC[t];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var detInv = determinants[t];
       var ratio = (e1x * e2y - e1y * e2x) * detInv;
-      var orientMin = b.surfaceSlime ? 0.08 : JELLO_ORIENT_MIN;
-      var orientTarget = b.surfaceSlime ? 0.12 : JELLO_ORIENT_TARGET;
       if (!(ratio < orientMin)) continue;
+      clean = false;
       var g0x = (py[i1] - py[i2]) * detInv, g0y = (px[i2] - px[i1]) * detInv;
       var g1x = (py[i2] - py[i0]) * detInv, g1y = (px[i0] - px[i2]) * detInv;
       var g2x = (py[i0] - py[i1]) * detInv, g2y = (px[i1] - px[i0]) * detInv;
       var unconstrainedDen = g0x * g0x + g0y * g0y + g1x * g1x + g1y * g1y + g2x * g2x + g2y * g2y;
-      if (b.surfaceSlime) {
+      if (resident) {
         // A foot already on the floor cannot contribute motion INTO it.
         // Without this contact-aware gradient the area constraint moved feet
         // through terrain, collision flattened them again, and the frame-level
@@ -68863,6 +69139,16 @@
       fixed++;
     }
     b._orientFixes = fixed;
+    var clear = b._orientClear;
+    if (!clean) { if (clear) clear.valid = false; }
+    else {
+      if (!clear || clear.n !== pointN) clear = b._orientClear = {
+        n: pointN, x: new Float64Array(pointN), y: new Float64Array(pointN) };
+      clear.valid = true; clear.min = orientMin; clear.triN = triN;
+      clear.a = TA; clear.b = TB; clear.c = TC; clear.dm = b.triDmInv;
+      var clearX = clear.x, clearY = clear.y;
+      for (var point = 0; point < pointN; point++) { clearX[point] = px[point]; clearY[point] = py[point]; }
+    }
     return fixed;
   }
 
@@ -69043,12 +69329,14 @@
 
   function jelloHasOrientationFold(b) {
     if (!b.triHealthOnly || !(b.triN > 0)) return false;
-    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC, Dm = b.triDmInv;
+    if (jelloOrientationClear(b, JELLO_ORIENT_MIN)) return false;
+    var px = b.px, py = b.py, TA = b.triA, TB = b.triB, TC = b.triC;
+    var determinants = jelloOrientationDeterminants(b);
     for (var t = 0; t < b.triN; t++) {
       var i0 = TA[t], i1 = TB[t], i2 = TC[t];
       var e1x = px[i1] - px[i0], e1y = py[i1] - py[i0];
       var e2x = px[i2] - px[i0], e2y = py[i2] - py[i0];
-      var detInv = Dm[t * 4] * Dm[t * 4 + 3] - Dm[t * 4 + 1] * Dm[t * 4 + 2];
+      var detInv = determinants[t];
       if ((e1x * e2y - e1y * e2x) * detInv < JELLO_ORIENT_MIN) return true;
     }
     return false;
@@ -69748,6 +70036,9 @@
   var jelloHashStart = null, jelloHashCursor = null, jelloHashOrder = null;
   var jelloHashUsed = null;               // occupied buckets, rebuilt for each contact solve
   var jelloNeighborX = null, jelloNeighborY = null, jelloNeighborHash = null;
+  var jelloBucketVersion = null, jelloContactCandidates = [], jelloContactMapping = [];
+  var jelloContactSelfAllowed = [], jelloContactPointCounts = [];
+  var jelloContactEpoch = 0, jelloContactSelfMode = -1, jelloContactGatherN = 0;
   var jelloSweepFlip = false;   // contact sweep direction, alternated per substep + per pass (anti-ratchet)
   var jelloVAccX = null, jelloVAccY = null, jelloVCnt = null;   // XSPH viscosity scratch (per-body)
   var jelloROX = null, jelloROY = null;                         // render: outset (gap-fill) ring scratch
@@ -69768,6 +70059,7 @@
     jelloNeighborX = new Float64Array(MP); jelloNeighborX.fill(NaN);
     jelloNeighborY = new Float64Array(MP); jelloNeighborY.fill(NaN);
     jelloNeighborHash = new Int32Array(MP * 9);
+    jelloBucketVersion = new Float64Array(JELLO_HASH_N);
     jelloVAccX = new Float64Array(MP); jelloVAccY = new Float64Array(MP); jelloVCnt = new Int32Array(MP);
     jelloROX = new Float64Array(MP); jelloROY = new Float64Array(MP);   // render: outset ring (gap-fill)
     jelloRSX = new Float64Array(MP); jelloRSY = new Float64Array(MP);   // render: chamfer scratch (v25.27)
@@ -69802,6 +70094,21 @@
     var h = ((ix * 73856093) ^ (iy * 19349663)) % JELLO_HASH_N;
     return h < 0 ? h + JELLO_HASH_N : h;
   }
+  function jelloContactRestPairs(b) {
+    if (b._restDirty) { b._contactRestPairs = null; return null; }
+    if (!b.rx || b.n > 256) { b._contactRestPairs = null; return null; }
+    var cache = b._contactRestPairs;
+    if (cache && cache.version === b._contactRestVersion && cache.rx === b.rx && cache.ry === b.ry &&
+        cache.n === b.n && cache.min2 === b.selfMin2) return cache.allowed;
+    var n = b.n, allowed = new Uint8Array(n * n), rx = b.rx, ry = b.ry;
+    for (var i = 0; i < n; i++) for (var j = i + 1; j < n; j++) {
+      var dx = rx[i] - rx[j], dy = ry[i] - ry[j];
+      allowed[i * n + j] = allowed[j * n + i] = dx * dx + dy * dy < b.selfMin2 ? 0 : 1;
+    }
+    b._contactRestPairs = { version: b._contactRestVersion, rx: rx, ry: ry,
+      n: n, min2: b.selfMin2, allowed: allowed };
+    return allowed;
+  }
   // Solve per-particle contact for ONE substep across all active bodies. Gathers points, builds
   // the hash, then a serial Gauss-Seidel sweep: different-body point pairs within 2r are pushed
   // apart to exactly 2r (UNILATERAL -> only separates, never pulls -> never merges; equal-mass
@@ -69810,6 +70117,9 @@
   // an awake blob collides with a settled pile, and are woken on contact. Returns #corrections.
   function jelloContactSolve(active, nActive, cellSize) {
     jelloContactAlloc();
+    var NBX = jelloNeighborX, NBY = jelloNeighborY, NBH = jelloNeighborHash;
+    var BV = jelloBucketVersion, CAND = jelloContactCandidates, MAP = jelloContactMapping;
+    var SELF = jelloContactSelfAllowed, COUNTS = jelloContactPointCounts;
     var invCell = 1 / cellSize;   // hash cell = the largest 2r among active bodies (covers any rA+rB)
     var GPX = jelloGPX, GPY = jelloGPY, GOX = jelloGOX, GOY = jelloGOY, GR = jelloGR;
     var GB = jelloGBody, GL = jelloGLocal, GH = jelloGHash;
@@ -69823,15 +70133,31 @@
     var citers = (JELLO_CONTACT_ITERS | 0); if (citers < 1) citers = 1;
     var selfOn = JELLO_CONTACT_SELF;   // self-contact rest gate is per-body (b.selfMin2)
     var N = 0, ai, b, i, j, h, n, px, py, ox, oy;
+    var mappingChanged = MAP.length !== nActive || jelloContactSelfMode !== selfOn;
+    var cacheCandidates = true;
     // 1. gather active points into flat buffers
     for (ai = 0; ai < nActive; ai++) {
       b = active[ai]; n = b.n; px = b.px; py = b.py; ox = b.ox; oy = b.oy;
+      SELF[ai] = selfOn ? jelloContactRestPairs(b) : null; COUNTS[ai] = n;
+      var mapping = MAP[ai];
+      if (!mapping || mapping.body !== b || mapping.n !== n || mapping.rx !== b.rx || mapping.ry !== b.ry ||
+          mapping.version !== b._contactRestVersion || mapping.min2 !== b.selfMin2) {
+        MAP[ai] = { body: b, n: n, rx: b.rx, ry: b.ry,
+          version: b._contactRestVersion, min2: b.selfMin2 };
+        mappingChanged = true;
+      }
+      // Plastic flow can change rest distances several times before the
+      // frame-end recompute. Such bodies keep the uncached rest-distance gate.
+      if (b._restDirty) { cacheCandidates = false; mappingChanged = true; }
       var bcr = b.cr;
       for (i = 0; i < n; i++) {
         if (N >= MP) break;
         GPX[N] = px[i]; GPY[N] = py[i]; GOX[N] = ox[i]; GOY[N] = oy[i]; GR[N] = bcr; GB[N] = ai; GL[N] = i; N++;
       }
     }
+    MAP.length = nActive; jelloContactSelfMode = selfOn;
+    if (mappingChanged || jelloContactGatherN !== N) jelloContactEpoch++;
+    jelloContactGatherN = N;
     if (N < 2) return 0;
     // 2. Count-sort occupied buckets for small scenes. Each bucket still stores
     // points in ascending gather-index order, so the contact sweep sees exactly
@@ -69843,6 +70169,7 @@
       CURSOR.fill(0);
       for (i = 0; i < N; i++) {
         h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        if (GH[i] !== h) { BV[GH[i]]++; BV[h]++; }
         GH[i] = h;
         if (CURSOR[h] === 0) USED[usedN++] = h;
         CURSOR[h]++;
@@ -69856,6 +70183,7 @@
     } else {
       for (i = 0; i < N; i++) {
         h = jelloHashCell(Math.floor(GPX[i] * invCell), Math.floor(GPY[i] * invCell));
+        if (GH[i] !== h) { BV[GH[i]]++; BV[h]++; }
         GH[i] = h; START[h + 1]++;
       }
       for (j = 0; j < JELLO_HASH_N; j++) START[j + 1] += START[j];
@@ -69880,24 +70208,68 @@
     for (si = 0; si < N; si++) {
       i = rev ? (N - 1 - si) : si;
       var bi = GB[i];
+      var bodyI = active[bi], selfAllowed = SELF[bi], selfRow = GL[i] * COUNTS[bi];
       cx = Math.floor(GPX[i] * invCell); cy = Math.floor(GPY[i] * invCell);
       // The nine neighbouring hash buckets depend only on this integer cell,
       // not on the point, body or substep. Most points stay in the same cell
       // across many solves. Reuse the exact bucket sequence until it changes.
       var neighborBase = i * 9;
-      if (jelloNeighborX[i] !== cx || jelloNeighborY[i] !== cy) {
-        jelloNeighborX[i] = cx; jelloNeighborY[i] = cy;
+      if (NBX[i] !== cx || NBY[i] !== cy) {
+        NBX[i] = cx; NBY[i] = cy;
         var ni = neighborBase;
         for (gx = cx - 1; gx <= cx + 1; gx++) {
-          for (gy = cy - 1; gy <= cy + 1; gy++) jelloNeighborHash[ni++] = jelloHashCell(gx, gy);
+          for (gy = cy - 1; gy <= cy + 1; gy++) NBH[ni++] = jelloHashCell(gx, gy);
         }
       }
-      for (var neighbor = 0; neighbor < 9; neighbor++) {
-          h = jelloNeighborHash[neighborBase + neighbor];
-          cend = END[h + endOffset];
-          for (kk = START[h]; kk < cend; kk++) {
-            j = ORDER[kk];
-            if (j <= i) continue;            // each unordered pair once (gather-index order)
+      var candidates = null;
+      if (cacheCandidates) {
+        var cached = CAND[i];
+        var valid = cached && cached.epoch === jelloContactEpoch && cached.cx === cx && cached.cy === cy;
+        // The first pass visits every point. Bucket memberships stay fixed
+        // for this solve; later passes only need the epoch/cell checks above.
+        if (valid && cit === 0) for (var check = 0; check < 9; check++) {
+          if (cached.versions[check] !== BV[NBH[neighborBase + check]]) { valid = false; break; }
+        }
+        if (!valid) {
+          if (!cached) cached = CAND[i] = { list: [], versions: new Float64Array(9) };
+          cached.epoch = jelloContactEpoch; cached.cx = cx; cached.cy = cy;
+          cached.list.length = 0; cached.overflow = false;
+          // Preserve the exact nine-bucket sequence and ascending gather
+          // indices. Only pairs forbidden by unchanged rest geometry vanish.
+          for (var bucket = 0; bucket < 9; bucket++) {
+            h = NBH[neighborBase + bucket];
+            cached.versions[bucket] = BV[h];
+            for (var at = START[h], stop = END[h + endOffset]; at < stop; at++) {
+              var candidate = ORDER[at];
+              if (candidate <= i) continue;
+              if (GB[candidate] === bi && (!selfOn || !bodyI.rx ||
+                  (selfAllowed && !selfAllowed[selfRow + GL[candidate]]))) continue;
+              if (cached.list.length >= 128) { cached.overflow = true; break; }
+              cached.list.push(candidate);
+            }
+            if (cached.overflow) break;
+          }
+          if (cached.overflow) {
+            // A collapsed pile must not retain a quadratic candidate buffer.
+            // Remember that this membership needs the ordinary bucket sweep.
+            cached.list.length = 0;
+            for (var stamp = 0; stamp < 9; stamp++)
+              cached.versions[stamp] = BV[NBH[neighborBase + stamp]];
+          }
+        }
+        candidates = cached.overflow ? null : cached.list;
+      }
+      for (var neighbor = 0; neighbor < (candidates ? 1 : 9); neighbor++) {
+          h = NBH[neighborBase + neighbor];
+          cend = candidates ? candidates.length : END[h + endOffset];
+          for (kk = candidates ? 0 : START[h]; kk < cend; kk++) {
+            j = candidates ? candidates[kk] : ORDER[kk];
+            // A cached list already contains only forward and eligible
+            // pairs; unchanged mapping/rest and bucket stamps validate it.
+            if (!candidates) {
+              if (j <= i) continue;
+              if (GB[j] === bi && (!selfOn || (selfAllowed && !selfAllowed[selfRow + GL[j]]))) continue;
+            }
             // Reject separated points before reading rest geometry or body
             // relationships. Hash neighbours (including bucket collisions)
             // are only candidates. Keep the exact distance gate and pair order.
@@ -69906,10 +70278,11 @@
             var rr = GR[i] + GR[j];
             if (!(d2 < rr * rr) || d2 < 1e-12) continue;
             if (GB[j] === bi) {              // same body: self-collide ONLY points far apart in the rest
-              if (!selfOn) continue;         // lattice (a genuine fold), never near-neighbours / squish
-              var bb = active[bi]; if (!bb.rx) continue;
-              var rdx = bb.rx[GL[i]] - bb.rx[GL[j]], rdy = bb.ry[GL[i]] - bb.ry[GL[j]];
-              if (rdx * rdx + rdy * rdy < bb.selfMin2) continue;
+              if (!bodyI.rx) continue;       // lattice (a genuine fold), never near-neighbours / squish
+              if (!selfAllowed) {
+                var rdx = bodyI.rx[GL[i]] - bodyI.rx[GL[j]], rdy = bodyI.ry[GL[i]] - bodyI.ry[GL[j]];
+                if (rdx * rdx + rdy * rdy < bodyI.selfMin2) continue;
+              }
             }
             else if (active[bi]._phaseMate === active[GB[j]]) continue;   // phasing pair (jelloUnmergeBodies):
                                                                           // mutual contact suspended while they slide apart
@@ -69979,7 +70352,14 @@
                                  // means the remaining passes are no-ops (settled / fully separated)
     }   // end citers iteration loop
     // 4. write the corrected positions AND prev-positions back (ox carries the velocity damping)
-    for (i = 0; i < N; i++) { b = active[GB[i]]; var li = GL[i]; b.px[li] = GPX[i]; b.py[li] = GPY[i]; b.ox[li] = GOX[i]; b.oy[li] = GOY[i]; }
+    var write = 0;
+    for (ai = 0; ai < nActive && write < N; ai++) {
+      b = active[ai]; px = b.px; py = b.py; ox = b.ox; oy = b.oy;
+      n = Math.min(MAP[ai].n, N - write);
+      for (i = 0; i < n; i++, write++) {
+        px[i] = GPX[write]; py[i] = GPY[write]; ox[i] = GOX[write]; oy[i] = GOY[write];
+      }
+    }
     return contacts;
   }
 
@@ -71660,6 +72040,41 @@
   // it. Remember only a proven clear pose, comparing the actual coordinates
   // so every solver, grab and terrain correction invalidates it automatically.
   // Previous-position history cannot create a crossing in an unchanged ring.
+  function softContactRadialClear(b) {
+    var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
+    if (n < 3) return false;
+    var cx = b.cx, cy = b.cy;
+    if (!isFinite(cx + cy)) {
+      var originX = px[ring[0]], originY = py[ring[0]], sumX = 0, sumY = 0;
+      for (var point = 0; point < n; point++) { sumX += px[ring[point]] - originX; sumY += py[ring[point]] - originY; }
+      cx = originX + sumX / n; cy = originY + sumY / n;
+    }
+    var previous = ring[n - 1], ax = px[previous] - cx, ay = py[previous] - cy;
+    var direction = 0, winding = 0, minCross = Infinity, maxRadius2 = 0, maxCoordinate = 0;
+    for (var k = 0; k < n; k++) {
+      var p = ring[k], bx = px[p] - cx, by = py[p] - cy;
+      var cross = ax * by - ay * bx;
+      var tolerance = (Math.abs(ax * by) + Math.abs(ay * bx)) * 1e-12 + 1e-10;
+      if (!isFinite(cross) || Math.abs(cross) <= tolerance) return false;
+      minCross = Math.min(minCross, Math.abs(cross));
+      maxRadius2 = Math.max(maxRadius2, bx * bx + by * by);
+      maxCoordinate = Math.max(maxCoordinate, Math.abs(px[p]), Math.abs(py[p]), Math.abs(cx), Math.abs(cy));
+      if (!direction) direction = cross > 0 ? 1 : -1;
+      else if (cross * direction <= tolerance) return false;
+      if (ay <= 0 && by > 0 && cross > 0) winding++;
+      else if (ay > 0 && by <= 0 && cross < 0) winding--;
+      ax = bx; ay = by;
+    }
+    // Strict angular order through exactly one revolution puts every edge
+    // in a disjoint radial sector. Multiple-winding stars, folds, coincident
+    // rays and near-collinear ambiguity retain the full pairwise crossing test.
+    // Intent also treats edges less than 1e-7 apart as overlapping. Every
+    // edge is at least C/(2R) from the center, and adjacent rays have sine
+    // at least C/R^2. Nonadjacent sectors therefore stay at least C^2/(2R^3)
+    // apart. Use half that bound with ample tolerance and rounding margin.
+    var separation = minCross / Math.sqrt(maxRadius2) * (minCross / maxRadius2) * 0.25;
+    return winding === direction && isFinite(separation) && separation > 1e-5 + maxCoordinate * 1e-12;
+  }
   function softContactSkinCrossed(b) {
     var ring = b.ring, n = b.ringN, px = b.px, py = b.py;
     var clearX = b._softClearX, clearY = b._softClearY;
@@ -71672,7 +72087,8 @@
       }
       if (same) return false;
     }
-    for (var a = 0; a < n; a++) {
+    var radialClear = softContactRadialClear(b);
+    for (var a = 0; !radialClear && a < n; a++) {
       var p0 = ring[a], p1 = ring[(a + 1) % n];
       var left = Math.min(px[p0], px[p1]), right = Math.max(px[p0], px[p1]);
       var top = Math.min(py[p0], py[p1]), bottom = Math.max(py[p0], py[p1]);
@@ -72325,10 +72741,12 @@
 
   function softMaterialSolve(b, h) {
     jelloResetLambdas(b);
+    var px = b.px, py = b.py, sA = b.sA, sB = b.sB;
+    var sRest = b.sRest, sLambda = b.sLambda, springN = b.springN;
     var alpha = SOFT_MATERIAL_COMPLIANCE / (h * h);
-    for (var s = 0; s < b.springN; s++) {
-      var a = b.sA[s], c = b.sB[s], rest = b.sRest[s];
-      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+    for (var s = 0; s < springN; s++) {
+      var a = sA[s], c = sB[s], rest = sRest[s];
+      var dx = px[c] - px[a], dy = py[c] - py[a];
       var length = Math.sqrt(dx * dx + dy * dy);
       if (!(length > 1e-9 && rest > 1e-9)) continue;
       var strain = (length - rest) / rest;
@@ -72338,11 +72756,11 @@
       var gradient = (1 + 2 * hard) / root;
       // C encodes quadratic plus quartic strain energy. Its derivative must
       // appear in both the effective mass and the applied correction.
-      var dl = (-C - alpha * b.sLambda[s]) / (2 * gradient * gradient + alpha);
-      b.sLambda[s] += dl;
+      var dl = (-C - alpha * sLambda[s]) / (2 * gradient * gradient + alpha);
+      sLambda[s] += dl;
       var move = dl * gradient / length, mx = dx * move, my = dy * move;
-      b.px[a] -= mx; b.py[a] -= my;
-      b.px[c] += mx; b.py[c] += my;
+      px[a] -= mx; py[a] -= my;
+      px[c] += mx; py[c] += my;
     }
     softMaterialVolume(b, h);
   }
@@ -72353,14 +72771,14 @@
     if (!b._materialGX || b._materialGX.length !== n) {
       b._materialGX = new Float64Array(n); b._materialGY = new Float64Array(n);
     }
-    var gx = b._materialGX, gy = b._materialGY;
-    var x0 = b.px[b.ring[0]], y0 = b.py[b.ring[0]], area = 0, den = 0;
+    var gx = b._materialGX, gy = b._materialGY, px = b.px, py = b.py, ring = b.ring;
+    var x0 = px[ring[0]], y0 = py[ring[0]], area = 0, den = 0;
     var sign = b.ringSign;
     for (var k = 0; k < n; k++) {
-      var a = b.ring[k], prev = b.ring[(k + n - 1) % n], next = b.ring[(k + 1) % n];
-      area += (b.px[a] - x0) * (b.py[next] - y0) - (b.py[a] - y0) * (b.px[next] - x0);
-      gx[k] = 0.5 * (b.py[next] - b.py[prev]) * sign;
-      gy[k] = 0.5 * (b.px[prev] - b.px[next]) * sign;
+      var a = ring[k], prev = ring[(k + n - 1) % n], next = ring[(k + 1) % n];
+      area += (px[a] - x0) * (py[next] - y0) - (py[a] - y0) * (px[next] - x0);
+      gx[k] = 0.5 * (py[next] - py[prev]) * sign;
+      gy[k] = 0.5 * (px[prev] - px[next]) * sign;
       den += gx[k] * gx[k] + gy[k] * gy[k];
     }
     if (!(den > 1e-9)) return;
@@ -72371,26 +72789,28 @@
     // Freeze every gradient before moving any node. Reading changed neighbors
     // during this pass would turn internal pressure into a net force and torque.
     for (k = 0; k < n; k++) {
-      var p = b.ring[k];
-      b.px[p] += dl * gx[k]; b.py[p] += dl * gy[k];
+      var p = ring[k];
+      px[p] += dl * gx[k]; py[p] += dl * gy[k];
     }
   }
 
   function softMaterialDamp(b, h) {
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var sA = b.sA, sB = b.sB, springN = b.springN;
     var fraction = 1 - Math.exp(-SOFT_MATERIAL_DAMP * h / JELLO_TIMESCALE);
-    for (var s = 0; s < b.springN; s++) {
-      var a = b.sA[s], c = b.sB[s];
-      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+    for (var s = 0; s < springN; s++) {
+      var a = sA[s], c = sB[s];
+      var dx = px[c] - px[a], dy = py[c] - py[a];
       var length = Math.sqrt(dx * dx + dy * dy);
       if (!(length > 1e-9)) continue;
       var nx = dx / length, ny = dy / length;
-      var vx = (b.px[c] - b.ox[c]) - (b.px[a] - b.ox[a]);
-      var vy = (b.py[c] - b.oy[c]) - (b.py[a] - b.oy[a]);
+      var vx = (px[c] - ox[c]) - (px[a] - ox[a]);
+      var vy = (py[c] - oy[c]) - (py[a] - oy[a]);
       var impulse = 0.5 * fraction * (vx * nx + vy * ny);
       // Equal/opposite central impulses dissipate edge strain rate while
       // preserving linear and angular momentum, including rigid spin.
-      b.ox[a] -= nx * impulse; b.oy[a] -= ny * impulse;
-      b.ox[c] += nx * impulse; b.oy[c] += ny * impulse;
+      ox[a] -= nx * impulse; oy[a] -= ny * impulse;
+      ox[c] += nx * impulse; oy[c] += ny * impulse;
     }
   }
 
@@ -72422,6 +72842,7 @@
     (softPlayEnabled && softPlayMaterialTrial);
   var SOFT_TERRAIN_SKIN = 0.02;
   var softTerrainReport = { points: 0, edges: 0, sweeps: 0, corners: 0 };
+  var softTerrainBottomProbe = new WeakMap();
 
   function softTerrainBody(b) { return SOFT_TERRAIN && !!b.surfaceSlime; }
 
@@ -72447,11 +72868,12 @@
   // nodes. Reconcile normal velocity at the contact and bound tangential
   // friction by the normal impulse. No whole-body velocity or pose target.
   function softTerrainProject(b, a, c, t, nx, ny, depth, h) {
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     if (!(depth > 0)) return;
     b._terrainStepHit = true;
     var wa = 1 - t, wc = t, den = wa * wa + wc * wc;
-    var vx = (b.px[a] - b.ox[a]) * wa + (b.px[c] - b.ox[c]) * wc;
-    var vy = (b.py[a] - b.oy[a]) * wa + (b.py[c] - b.oy[c]) * wc;
+    var vx = (px[a] - ox[a]) * wa + (px[c] - ox[c]) * wc;
+    var vy = (py[a] - oy[a]) * wa + (py[c] - oy[c]) * wc;
     var vn = vx * nx + vy * ny, normal = Math.max(0, -vn);
     var bounce = normal > JELLO_REST_VEL * h ? JELLO_BOUNCE : 0;
     var impulse = normal * (1 + bounce), tangent = -vx * ny + vy * nx;
@@ -72461,8 +72883,8 @@
       var i = k ? c : a, w = (k ? wc : wa) / den;
       if (!w) continue;
       var mx = nx * depth * w, my = ny * depth * w;
-      b.px[i] += mx; b.py[i] += my;
-      b.ox[i] += mx - dvx * w; b.oy[i] += my - dvy * w;
+      px[i] += mx; py[i] += my;
+      ox[i] += mx - dvx * w; oy[i] += my - dvy * w;
     }
     if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
       // normal/impulse are Verlet displacements per solver substep.
@@ -72473,26 +72895,41 @@
 
   function softTerrainFace(x, y, oldX, oldY, row, col) {
     var left = col * TILE, top = row * TILE, best = null, distance = Infinity;
-    var faces = [[-1, 0, x - left, oldX - left, row, col - 1],
-      [1, 0, left + TILE - x, left + TILE - oldX, row, col + 1],
-      [0, -1, y - top, oldY - top, row - 1, col],
-      [0, 1, top + TILE - y, top + TILE - oldY, row + 1, col]];
-    for (var i = 0; i < 4; i++) {
-      var f = faces[i];
-      if (tileAt(f[4], f[5]) !== null || f[3] > SOFT_TERRAIN_SKIN) continue;
-      if (f[2] < distance) { distance = f[2]; best = f; }
+    // Keep the original face order for equal-depth ties. Most probes have
+    // one exposed face; build only a selected candidate, not five arrays.
+    var depth = x - left, prior = oldX - left;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row, col - 1) === null) {
+      distance = depth; best = [-1, 0, depth, prior, row, col - 1];
     }
+    depth = left + TILE - x; prior = left + TILE - oldX;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row, col + 1) === null) {
+      distance = depth; best = [1, 0, depth, prior, row, col + 1];
+    }
+    depth = y - top; prior = oldY - top;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row - 1, col) === null) {
+      distance = depth; best = [0, -1, depth, prior, row - 1, col];
+    }
+    depth = top + TILE - y; prior = top + TILE - oldY;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row + 1, col) === null)
+      best = [0, 1, depth, prior, row + 1, col];
     return best;
   }
 
   function softTerrainPoint(b, i, h) {
-    var x = b.px[i], y = b.py[i];
-    if (!isFinite(x + y) || !b._guardPX) return false;
-    var sx = b._guardPX[i], sy = b._guardPY[i];
-    var r0 = Math.floor(Math.min(sy, y) / TILE), r1 = Math.floor(Math.max(sy, y) / TILE);
-    var c0 = Math.floor(Math.min(sx, x) / TILE), c1 = Math.floor(Math.max(sx, x) / TILE);
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY;
+    var x = px[i], y = py[i];
+    if (!isFinite(x + y) || !guardPX) return false;
+    var sx = guardPX[i], sy = guardPY[i];
+    var oldRow = Math.floor(sy / TILE), rowAt = Math.floor(y / TILE);
+    var oldCol = Math.floor(sx / TILE), colAt = Math.floor(x / TILE);
+    // A point staying in one tile cannot enter through a tile face. Air is
+    // done; a solid tile still needs the same resting penetration repair.
+    var sameTile = oldRow === rowAt && oldCol === colAt;
+    if (sameTile && tileAt(rowAt, colAt) === null) return true;
+    var r0 = Math.min(oldRow, rowAt), r1 = Math.max(oldRow, rowAt);
+    var c0 = Math.min(oldCol, colAt), c1 = Math.max(oldCol, colAt);
     var first = null, time = Infinity;
-    for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
+    for (var row = r0; !sameTile && row <= r1; row++) for (var col = c0; col <= c1; col++) {
       if (tileAt(row, col) === null) continue;
       var hit = softTerrainInterval(sx, sy, x, y, col * TILE, row * TILE);
       if (hit && hit.lo < time && (hit.nx || hit.ny)) { first = hit; time = hit.lo; }
@@ -72502,7 +72939,7 @@
       var depth = -((x - sx) * nx + (y - sy) * ny) * (1 - time) + SOFT_TERRAIN_SKIN;
       softTerrainProject(b, i, i, 0, nx, ny, depth, h);
       softTerrainReport.points++; softTerrainReport.sweeps++;
-    } else if (jelloWorldSolidAt(x, y)) {
+    } else if (sameTile || jelloWorldSolidAt(x, y)) {
       var face = softTerrainFace(x, y, sx, sy, Math.floor(y / TILE), Math.floor(x / TILE));
       if (!face) return false;
       softTerrainProject(b, i, i, 0, face[0], face[1], face[2] + SOFT_TERRAIN_SKIN, h);
@@ -72512,33 +72949,41 @@
   }
 
   function softTerrainEdges(b, h) {
-    if (!b._guardPX) return;
-    for (var k = 0; k < b.ringN; k++) {
-      var a = b.ring[k], c = b.ring[(k + 1) % b.ringN];
-      var ax = b.px[a], ay = b.py[a], bx = b.px[c], by = b.py[c];
-      var sax = b._guardPX[a], say = b._guardPY[a], sbx = b._guardPX[c], sby = b._guardPY[c];
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY, ring = b.ring, ringN = b.ringN;
+    if (!guardPX) return;
+    for (var k = 0; k < ringN; k++) {
+      var a = ring[k], c = ring[(k + 1) % ringN];
+      var ax = px[a], ay = py[a], bx = px[c], by = py[c];
+      var sax = guardPX[a], say = guardPY[a], sbx = guardPX[c], sby = guardPY[c];
       var r0 = Math.floor(Math.min(ay, by, say, sby) / TILE), r1 = Math.floor(Math.max(ay, by, say, sby) / TILE);
       var c0 = Math.floor(Math.min(ax, bx, sax, sbx) / TILE), c1 = Math.floor(Math.max(ax, bx, sax, sbx) / TILE);
       for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
         if (tileAt(row, col) === null) continue;
-        for (var corner = 0; corner < 4; corner++) {
-          var right = corner & 1, bottom = corner >> 1;
-          if (tileAt(row, col + (right ? 1 : -1)) !== null ||
-              tileAt(row + (bottom ? 1 : -1), col) !== null) continue;
-          softTerrainCorner(b, a, c, (col + right) * TILE, (row + bottom) * TILE, h);
+        // Corner eligibility depends only on this tile's four neighbors.
+        // Query each once while retaining the same corner correction order.
+        var leftOpen = tileAt(row, col - 1) === null, rightOpen = tileAt(row, col + 1) === null;
+        if (leftOpen || rightOpen) {
+          if (tileAt(row - 1, col) === null) {
+            if (leftOpen) softTerrainCorner(b, a, c, col * TILE, row * TILE, h);
+            if (rightOpen) softTerrainCorner(b, a, c, (col + 1) * TILE, row * TILE, h);
+          }
+          if (tileAt(row + 1, col) === null) {
+            if (leftOpen) softTerrainCorner(b, a, c, col * TILE, (row + 1) * TILE, h);
+            if (rightOpen) softTerrainCorner(b, a, c, (col + 1) * TILE, (row + 1) * TILE, h);
+          }
         }
-        ax = b.px[a]; ay = b.py[a]; bx = b.px[c]; by = b.py[c];
+        ax = px[a]; ay = py[a]; bx = px[c]; by = py[c];
         var hit = softTerrainInterval(ax, ay, bx, by, col * TILE, row * TILE);
         if (!hit) continue;
         var t = (hit.lo + hit.hi) * 0.5, wa = 1 - t;
         var x = ax * wa + bx * t, y = ay * wa + by * t;
-        var oldX = b._guardPX[a] * wa + b._guardPX[c] * t;
-        var oldY = b._guardPY[a] * wa + b._guardPY[c] * t;
+        var oldX = guardPX[a] * wa + guardPX[c] * t;
+        var oldY = guardPY[a] * wa + guardPY[c] * t;
         var face = softTerrainFace(x, y, oldX, oldY, row, col);
         if (!face) continue;
         softTerrainProject(b, a, c, t, face[0], face[1], face[2] + SOFT_TERRAIN_SKIN, h);
         softTerrainReport.edges++;
-        ax = b.px[a]; ay = b.py[a]; bx = b.px[c]; by = b.py[c];
+        ax = px[a]; ay = py[a]; bx = px[c]; by = py[c];
       }
     }
   }
@@ -72547,10 +72992,11 @@
   // stay in air. Its signed distance polynomial is quadratic in substep time.
   // Solve its zeroes, then require a hit on the finite edge, not its extension.
   function softTerrainCorner(b, a, c, x, y, h) {
-    var ax = b._guardPX[a], ay = b._guardPY[a];
-    var ex = b._guardPX[c] - ax, ey = b._guardPY[c] - ay;
-    var dax = b.px[a] - ax, day = b.py[a] - ay;
-    var dex = b.px[c] - b._guardPX[c] - dax, dey = b.py[c] - b._guardPY[c] - day;
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY;
+    var ax = guardPX[a], ay = guardPY[a];
+    var ex = guardPX[c] - ax, ey = guardPY[c] - ay;
+    var dax = px[a] - ax, day = py[a] - ay;
+    var dex = px[c] - guardPX[c] - dax, dey = py[c] - guardPY[c] - day;
     var cx = x - ax, cy = y - ay;
     var q0 = ex * cy - ey * cx;
     var q1 = dex * cy - dey * cx - ex * day + ey * dax;
@@ -72575,8 +73021,8 @@
       var nx = -vy / Math.sqrt(len2), ny = vx / Math.sqrt(len2);
       var oldX = ax + ex * t, oldY = ay + ey * t;
       if ((oldX - x) * nx + (oldY - y) * ny < 0) { nx = -nx; ny = -ny; }
-      var gap = (b.px[a] * (1 - t) + b.px[c] * t - x) * nx +
-        (b.py[a] * (1 - t) + b.py[c] * t - y) * ny;
+      var gap = (px[a] * (1 - t) + px[c] * t - x) * nx +
+        (py[a] * (1 - t) + py[c] * t - y) * ny;
       if (gap >= SOFT_TERRAIN_SKIN) continue;
       softTerrainProject(b, a, c, t, nx, ny, SOFT_TERRAIN_SKIN - gap, h);
       softTerrainReport.corners++; softTerrainReport.edges++;
@@ -72584,8 +73030,37 @@
     }
   }
 
+  function softTerrainSweepClear(b) {
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY, n = b.n;
+    if (!guardPX || b._terrainStepHit) return false;
+    // A previously lowest node often still touches the floor. Its live
+    // coordinates can disprove an open box before a full bounds scan.
+    var probe = softTerrainBottomProbe.get(b);
+    if (probe !== undefined && (jelloWorldSolidAt(px[probe], py[probe]) ||
+        jelloWorldSolidAt(guardPX[probe], guardPY[probe]))) return false;
+    var left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+    var bottomPoint = 0;
+    for (var i = 0; i < n; i++) {
+      var x = px[i], y = py[i], sx = guardPX[i], sy = guardPY[i];
+      if (!isFinite(x + y + sx + sy)) return false;
+      if (y > bottom || sy > bottom) bottomPoint = i;
+      left = Math.min(left, x, sx); right = Math.max(right, x, sx);
+      top = Math.min(top, y, sy); bottom = Math.max(bottom, y, sy);
+    }
+    softTerrainBottomProbe.set(b, bottomPoint);
+    var r0 = Math.floor(top / TILE), r1 = Math.floor(bottom / TILE);
+    var c0 = Math.floor(left / TILE), c1 = Math.floor(right / TILE);
+    for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
+      if (tileAt(row, col) !== null) return false;
+    }
+    return true;
+  }
+
   function softTerrainSolve(b, h) {
     if (!softTerrainBody(b) || b._guardRejectedStep) return;
+    // Every swept skin segment lies in this box. An all-air box needs no
+    // point/edge terrain queries; retain the independent self-contact test.
+    if (softTerrainSweepClear(b) && !(typeof softIntentBody === 'function' && softIntentBody(b) && softContactSkinCrossed(b))) return;
     for (var pass = 0; pass < 6; pass++) {
       var before = softTerrainReport.points + softTerrainReport.edges;
       var selfBefore = softContactReport.selfContacts;
@@ -73222,10 +73697,17 @@
   // Stretched skins can cross between vertices while every vertex remains
   // outside the other ring. Resolve the two intersecting material patches.
   function softPairsEdges(A, B, h) {
+    var bLeft = Infinity, bRight = -Infinity, bTop = Infinity, bBottom = -Infinity;
+    for (var bounds = 0; bounds < B.ringN; bounds++) {
+      var boundNode = B.ring[bounds], boundX = B.px[boundNode], boundY = B.py[boundNode];
+      bLeft = Math.min(bLeft, boundX); bRight = Math.max(bRight, boundX);
+      bTop = Math.min(bTop, boundY); bBottom = Math.max(bBottom, boundY);
+    }
     for (var i = 0; i < A.ringN; i++) {
       var p = A.ring[i], q = A.ring[(i + 1) % A.ringN];
       var px = A.px[p], py = A.py[p], qx = A.px[q], qy = A.py[q];
       var right = Math.max(px,qx), left = Math.min(px,qx), bottom = Math.max(py,qy), top = Math.min(py,qy);
+      if (right <= bLeft || left >= bRight || bottom <= bTop || top >= bBottom) continue;
       var ex = qx - px, ey = qy - py;
       for (var j = 0; j < B.ringN; j++) {
         var a = B.ring[j], c = B.ring[(j + 1) % B.ringN];
@@ -73249,6 +73731,10 @@
         px = A.px[p]; py = A.py[p]; qx = A.px[q]; qy = A.py[q];
         right = Math.max(px,qx); left = Math.min(px,qx); bottom = Math.max(py,qy); top = Math.min(py,qy);
         ex = qx - px; ey = qy - py;
+        // Only B's two patch nodes can move. Expand its conservative bounds
+        // immediately before rejecting any later A edge.
+        bLeft = Math.min(bLeft, B.px[a], B.px[c]); bRight = Math.max(bRight, B.px[a], B.px[c]);
+        bTop = Math.min(bTop, B.py[a], B.py[c]); bBottom = Math.max(bBottom, B.py[a], B.py[c]);
       }
     }
   }
@@ -73486,29 +73972,54 @@
     var tx = c * intent.tx + s * intent.ty, ty = -s * intent.tx + c * intent.ty;
     var nx = c * intent.nx + s * intent.ny, ny = -s * intent.nx + c * intent.ny;
     var invRadius = 1 / Math.max(1, m.radius), wavelength = 2.5;
-    for (var p = 0; p < b.n; p++) {
-      var u = (b.qx[p] * tx + b.qy[p] * ty) * invRadius;
-      m.waveCos[p] = Math.cos(intent.phase + u * wavelength);
+    var qx = b.qx, qy = b.qy, sA = b.sA, sB = b.sB, springN = b.springN;
+    var muscleRest = b.muscleRest, springRest = b.sRest, waveCos = m.waveCos;
+    var effort = intent.effort, intentPhase = intent.phase, pointN = b.n;
+    for (var p = 0; p < pointN; p++) {
+      var u = (qx[p] * tx + qy[p] * ty) * invRadius;
+      waveCos[p] = Math.cos(intentPhase + u * wavelength);
     }
-    for (var spring = 0; spring < b.springN; spring++) {
-      var a = b.sA[spring], z = b.sB[spring], rest = b.muscleRest[spring];
-      var dx = b.qx[z] - b.qx[a], dy = b.qy[z] - b.qy[a];
-      var length2 = dx * dx + dy * dy;
-      var along = dx * tx + dy * ty;
-      var across = dx * nx + dy * ny;
-      var u = ((b.qx[a] + b.qx[z]) * tx + (b.qy[a] + b.qy[z]) * ty) * invRadius * 0.5;
-      var phase = intent.phase + u * wavelength;
+    // Intent and the material frame are sampled once per outer update. Their
+    // rest-mesh projections stay identical through its material microsteps.
+    var projection = m.springProjection;
+    if (!projection || projection.n !== springN) {
+      projection = m.springProjection = { n: springN, along: new Float64Array(springN),
+        across: new Float64Array(springN), length2: new Float64Array(springN),
+        phase: new Float64Array(springN) };
+    }
+    var projectedAlong = projection.along, projectedAcross = projection.across;
+    var projectedLength2 = projection.length2, projectedPhase = projection.phase;
+    if (projection.tx !== tx || projection.ty !== ty || projection.nx !== nx || projection.ny !== ny ||
+        projection.invRadius !== invRadius || projection.version !== b._contactRestVersion ||
+        projection.qx !== qx || projection.qy !== qy || projection.sA !== sA || projection.sB !== sB) {
+      projection.tx = tx; projection.ty = ty; projection.nx = nx; projection.ny = ny;
+      projection.invRadius = invRadius; projection.version = b._contactRestVersion;
+      projection.qx = qx; projection.qy = qy; projection.sA = sA; projection.sB = sB;
+      for (var si = 0; si < springN; si++) {
+        var qa = sA[si], qz = sB[si];
+        var qdx = qx[qz] - qx[qa], qdy = qy[qz] - qy[qa];
+        projectedLength2[si] = qdx * qdx + qdy * qdy;
+        projectedAlong[si] = qdx * tx + qdy * ty;
+        projectedAcross[si] = qdx * nx + qdy * ny;
+        var qu = ((qx[qa] + qx[qz]) * tx + (qy[qa] + qy[qz]) * ty) * invRadius * 0.5;
+        projectedPhase[si] = qu * wavelength;
+      }
+    }
+    for (var spring = 0; spring < springN; spring++) {
+      var rest = muscleRest[spring], length2 = projectedLength2[spring];
+      var along = projectedAlong[spring], across = projectedAcross[spring];
+      var phase = intentPhase + projectedPhase[spring];
       // A local, area-preserving strain metric combines longitudinal
       // shortening with shear. Its travelling shear lifts the advancing
       // skin while the contracting patch supplies terrain traction.
-      var axial = 0.12 * intent.effort * Math.cos(phase);
-      var shear = -0.30 * intent.effort * Math.sin(phase);
+      var axial = 0.12 * effort * Math.cos(phase);
+      var shear = -0.30 * effort * Math.sin(phase);
       var stretch = 1 + axial;
       var localX = along * stretch, localY = across / stretch + along * shear;
       var ratio = length2 > 1e-9 ? Math.sqrt((localX * localX + localY * localY) / length2) : 1;
       var target = rest * skySlimeClamp(ratio, 1 - SOFT_INTENT_STRAIN, 1 + SOFT_INTENT_STRAIN);
       var cap = rest * SOFT_INTENT_REST_RATE * dt;
-      b.sRest[spring] += skySlimeClamp(target - b.sRest[spring], -cap, cap);
+      springRest[spring] += skySlimeClamp(target - springRest[spring], -cap, cap);
     }
   }
 
@@ -76276,19 +76787,31 @@
       var overlap = inside ? s.r + d : s.r - d;
       var separation = Math.min(overlap, 320 * h);
       s.x += nx * separation; s.y += ny * separation;
-      var rel = (s.vx - b.vx * JELLO_TIMESCALE) * nx + (s.vy - b.vy * JELLO_TIMESCALE) * ny;
-      if (rel >= 0) continue;
-      var rockMass = SKY_SLIME_MASS * s.r * s.r / 625, gelMass = b.n * 0.09;
-      var impulse = Math.min(450, -rel) * 1.3 / (1 / rockMass + 1 / gelMass);
-      s.vx += nx * impulse / rockMass; s.vy += ny * impulse / rockMass;
-      var weights = [], sum = 0;
+      var weights = b._rockContactWeights;
+      if (!weights || weights.length !== b.n) weights = b._rockContactWeights = new Float64Array(b.n);
+      var sum = 0, sum2 = 0, gelVX = 0, gelVY = 0;
+      var step = JELLO_H * jelloImpulseScale() / JELLO_TIMESCALE;
       for (var p = 0; p < b.n; p++) {
         var w = Math.max(0, 1 - Math.hypot(b.px[p] - qx, b.py[p] - qy) / (s.r * 1.6));
-        weights.push(w); sum += w;
+        weights[p] = w; sum += w; sum2 += w * w;
+        gelVX += w * (b.px[p] - b.ox[p]); gelVY += w * (b.py[p] - b.oy[p]);
       }
-      var step = (jelloStepH || JELLO_H) / JELLO_TIMESCALE;
-      for (p = 0; p < b.n && sum > 0; p++) {
-        var dv = impulse / gelMass * b.n * weights[p] / sum;
+      if (!(sum > 0)) continue;
+      // Read the moving contact patch, including any impulse from an earlier
+      // rocky substep. The cached body velocity is a frame old and can keep
+      // applying the same collision after this patch is already separating.
+      gelVX /= sum * step; gelVY /= sum * step;
+      var rel = (s.vx - gelVX) * nx + (s.vy - gelVY) * ny;
+      if (rel >= 0) continue;
+      var rockMass = SKY_SLIME_MASS * s.r * s.r / 625;
+      var pointMass = SOFT_CONTACT_POINT_MASS;
+      // The response mass must match the same nonuniform weights used below.
+      // Using the whole body's mass for a small patch overdrives its nodes.
+      var invGel = sum2 / (sum * sum * pointMass);
+      var impulse = Math.min(450, -rel) * 1.3 / (1 / rockMass + invGel);
+      s.vx += nx * impulse / rockMass; s.vy += ny * impulse / rockMass;
+      for (p = 0; p < b.n; p++) {
+        var dv = impulse * weights[p] / (pointMass * sum);
         b.ox[p] += nx * dv * step; b.oy[p] += ny * dv * step;
       }
       surfaceSlimeDetach(b, 0.9);
@@ -76982,11 +77505,14 @@
     _ts = performance.now(); updateLiveBombs(dt);          perfMark('update.liveBombs', _ts);
     if (UI_NEW && gameOver) { finishDeathFrame(time,frameIntervalMs,_playPerfCPU); return; }
     _ts = performance.now();
-    liquidToolSync();
-    mineralLiquidTick(dt);
-    siphonTick(dt);
-    if (!gameOver && !gameWon) { skySlimeTick(dt); bathGuestTick(dt); }
-    siphonAudioTick(dt);
+    var _bathPart = performance.now(); liquidToolSync(); perfMark('bath.syncReadback', _bathPart);
+    _bathPart = performance.now(); mineralLiquidTick(dt); perfMark('bath.streaming', _bathPart);
+    _bathPart = performance.now(); siphonTick(dt); perfMark('bath.scoop', _bathPart);
+    if (!gameOver && !gameWon) {
+      _bathPart = performance.now(); skySlimeTick(dt); perfMark('bath.visitors', _bathPart);
+      _bathPart = performance.now(); bathGuestTick(dt); perfMark('bath.guests', _bathPart);
+    }
+    _bathPart = performance.now(); siphonAudioTick(dt); perfMark('bath.audio', _bathPart);
     perfMark('update.bathhouse', _ts);
     _ts = performance.now(); try { updateSurfacePondStreaming(); } catch (e) {} perfMark('update.pondStream', _ts);
     _ts = performance.now(); try { if (ENABLE_JELLO && typeof slimeNpcTick === 'function') slimeNpcTick(dt); } catch (e) { if (!window.__slimeNpcErr) { window.__slimeNpcErr = String(e) + '\n' + (e.stack || ''); console.error('slimeNpcTick threw:', e); } } perfMark('update.slimeNpc', _ts);

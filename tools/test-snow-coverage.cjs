@@ -9,6 +9,8 @@ const math = Object.create(Math);
 math.random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 const noop = () => {};
 const s = { Math: math, performance: require('node:perf_hooks').performance, window: { location: { search: '' } },
+  perfLive: {enabled:false}, playPerfActive:false, perfMark:noop, gameWon:false,
+  rigContactHull: () => null, rigHullContains: () => false,
   cam: {x: 2000, y: -900}, screenW: 960, screenH: 600,
   TILE: 32, SKY_ROWS: 4, COLS: 320, TOTAL_ROWS: 500, PLAYER_W: 30, PLAYER_H: 24,
   GRAVITY: 600, LIQUID_SNOW_DENSITY: 3.2, LIQUID_SNOW_DIAMETER: 1.8, LIQUID_CELL: 2.5, LIQUID_PDELTA: .5,
@@ -23,6 +25,7 @@ const s = { Math: math, performance: require('node:perf_hooks').performance, win
   tileAt: () => null, liquidWorldSolidAt: () => false, liquidPointInMiner: () => false,
   liquidLineClear: () => true, rainCell: (x, y) => Math.floor(y / 6) * 2000 + Math.floor(x / 6)
 };
+s.rainContactCount = key => s.rain.cells[key] || 0;
 vm.createContext(s);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/156-particle-weather.js'), 'utf8'), s);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/sluice/159-snow-physics.js'), 'utf8'), s);

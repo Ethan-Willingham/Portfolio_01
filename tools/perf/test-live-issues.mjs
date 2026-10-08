@@ -33,12 +33,12 @@ export function createLiveIssueFixture() {
     assert(fs.existsSync(filename),'Diagnostic source is ready: '+filename);
     vm.runInContext(fs.readFileSync(filename,'utf8'),context,{filename:name});
   }
-  function step({cpu=1,interval=1000/120,raw={},view=0,...state}={}) {
+  function step({cpu=1,interval=1000/144,raw={},view=0,...state}={}) {
     now+=interval;Object.assign(context,state);context.perfBucketsRaw=raw;
     context.perfLiveBegin();context.perfLiveFrame(now,interval,cpu,view);
     return context.perfLiveSnapshot();
   }
-  function advance(seconds) {for(let i=0;i<Math.ceil(seconds*120);i++)step();}
+  function advance(seconds) {for(let i=0;i<Math.ceil(seconds*144);i++)step();}
   return {context,step,advance,now:()=>now,
     setNow:value=>{now=value;},
     gpu:rows=>{pendingGPU.push(...rows);},counter:value=>{counter=value;}};
@@ -61,6 +61,11 @@ export function runLiveIssueChecks() {
   const cpu=explain(cpuFrame);
   check('Leading CPU diagnosis comes from disjoint phase',cpu.certainty==='CPU measured'&&/slime/i.test(cpu.title+' '+cpu.summary));
   check('Plain explanation provides finite evidence',typeof cpu.key==='string'&&Array.isArray(cpu.evidence)&&cpu.evidence.every(line=>typeof line==='string'&&!/NaN|Infinity/.test(line)));
+  const bathCosts={'update.bathhouse':52,'bath.syncReadback':1,'bath.streaming':46,'bath.scoop':1,'bath.visitors':1,'bath.guests':2,'bath.audio':0.5};
+  const bathPhases=c.perfLivePhases(bathCosts,54),streaming=explain(frame(504,54,8,bathCosts));
+  check('Bath child timings replace the parent instead of double counting',Math.abs(bathPhases.reduce((sum,row)=>sum+row.ms,0)-54)<1e-9&&bathPhases.find(row=>row.name==='update.bathhouse').ms===0.5);
+  check('Liquid streaming cannot be mislabeled as bath simulation',streaming.key==='cpu-water'&&streaming.title==='Liquid streaming is expensive');
+  check('Older undivided bath captures retain the full grouped label',explain(frame(505,54,8,{'update.bathhouse':52})).title==='Bathhouse and liquid work is expensive');
   const lowCPU=frame(502,2,50,{'update.main':1,'render.terrain':1});
   check('Unmatched costly GPU cannot explain current gap',explain(lowCPU,[sample(501)]).certainty==='Cause unknown');
   fixture.setNow(80000);
@@ -70,7 +75,7 @@ export function runLiveIssueChecks() {
   check('Historic exact-frame sample remains valid for frozen event',explain(lowCPU,[sample(502,{at:1000})]).certainty==='GPU sampled');
   for(const [label,flags] of [['partial',{partial:true}],['invalid timestamp',{invalidTimestamp:true}],['invalid row',{invalid:true}],['non-finite total',{ms:Infinity}]])
     check('Reject '+label+' GPU diagnosis',explain(lowCPU,[sample(502,flags)]).certainty==='Cause unknown');
-  const healthy=explain(frame(503,2,1000/120,{'update.main':1,'render.terrain':1}));
+  const healthy=explain(frame(503,2,1000/144,{'update.main':1,'render.terrain':1}));
   check('Within-budget frame is not an issue',healthy.certainty==='Within budget');
   const crowded=Object.assign({},lowCPU,{snowActive:1000000,awakeResidents:200,microsteps:1000});
   check('Large particle counts do not invent a measured cause',explain(crowded).certainty==='Cause unknown');
@@ -105,9 +110,31 @@ export function runLiveIssueChecks() {
   pacing.step({cpu:1,interval:180,raw:{'update.main':0.5}});
   const gapIssue=p.perfLiveIssueList()[0],gapEvent=gapIssue.event;
   check('Gap journal preserves preceding measured CPU frame',gapEvent.kind==='gap'&&gapEvent.previous.frameId===expensive.frameId&&gapEvent.previous.cpuMs===60&&gapEvent.current.cpuMs===1);
-  check('Gap diagnosis attributes preceding slime work',gapIssue.id==='cpu-slimes'&&gapIssue.certainty==='CPU measured'&&gapIssue.summary.includes('60.0'));
-  check('CPU stall and its following gap count as one occurrence',gapIssue.occurrences===1&&gapIssue.severity===180);
+  check('Unmeasured part of long gap stays unexplained',gapIssue.id==='unexplained'&&gapIssue.certainty==='Cause unknown'&&gapIssue.severity===180&&gapIssue.summary.includes('60.0'));
+  const measuredCPU=p.perfLiveIssueList().find(issue=>issue.id==='cpu-slimes');
+  check('CPU stall keeps measured severity beside its longer following gap',measuredCPU?.occurrences===1&&measuredCPU.severity===60&&measuredCPU.kind==='cpu');
   check('Gap baseline excludes preceding expensive frame',gapEvent.reference.cpuMs===1);
+
+  const corroborated=createLiveIssueFixture(),co=corroborated.context;
+  corroborated.advance(3);co.perfLiveClearIssues();
+  corroborated.step({cpu:60,raw:{'update.jello':55}});
+  corroborated.step({cpu:1,interval:65});
+  const corroboratedCPU=co.perfLiveIssueList().find(issue=>issue.id==='cpu-slimes');
+  check('CPU stall and consistent following gap count as one measured occurrence',co.perfLiveIssueList().length===1&&corroboratedCPU?.occurrences===1&&corroboratedCPU.severity===60&&corroboratedCPU.kind==='cpu');
+
+  // v28.171 owner trace: 124.9 ms arrival, 10.6 ms preceding CPU, 4.8 ms slimes.
+  const ownerTrace=createLiveIssueFixture(),ot=ownerTrace.context;
+  ownerTrace.advance(3);ot.perfLiveClearIssues();
+  ownerTrace.step({cpu:10.6,raw:{'update.jello':4.8,'update.bathhouse':2.3}});
+  ownerTrace.step({cpu:7,interval:124.9,raw:{'update.jello':2.7,'update.bathhouse':1}});
+  const ownerIssue=ot.perfLiveIssueList()[0],ownerExplanation=ot.perfLiveExplainIssue(ownerIssue.event);
+  check('Owner trace cannot blame 124.9 ms arrival on 4.8 ms slime work',ot.perfLiveIssueList().length===1&&ownerIssue.id==='unexplained'&&ownerIssue.certainty==='Cause unknown'&&ownerIssue.severity===124.9);
+  check('Owner trace retains preceding measured slime evidence',ownerExplanation.evidence.some(line=>line.includes('Slime physics')&&line.includes('4.80'))&&ownerExplanation.summary.includes('10.6'));
+
+  const simultaneous=createLiveIssueFixture(),si=simultaneous.context;
+  simultaneous.advance(3);si.perfLiveClearIssues();
+  simultaneous.step({cpu:30,interval:125,raw:{'update.bathhouse':27}});
+  check('Long arrival and expensive following callback retain independent issues',si.perfLiveIssueList().some(issue=>issue.id==='unexplained'&&issue.severity===125)&&si.perfLiveIssueList().some(issue=>issue.id==='cpu-bath'&&issue.severity===30&&issue.kind==='cpu'));
 
   const gpuHistory=createLiveIssueFixture(),g=gpuHistory.context;
   gpuHistory.advance(75);g.perfLiveClearIssues();

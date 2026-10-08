@@ -1,6 +1,6 @@
 // Exact contact-solver regression and isolated CPU timing. No browser or dependencies.
 // Run from any directory: node tools/perf/slime-contact-equivalence.mjs
-// BASE_REF defaults to the release before v27. BENCH=0 skips timing.
+// BASE_REF defaults to v28.171 before the candidate cache. BENCH=0 skips timing.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -9,15 +9,19 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const FRAGMENT = 'js/sluice/340-jello.js';
-const BASE_REF = process.env.BASE_REF || '2ca9565';
+const BASE_REF = process.env.BASE_REF || '4219c6f6c5e2bf86316d5e14ac156720f0184598';
 const before = execFileSync('git', ['show', `${BASE_REF}:${FRAGMENT}`], { cwd: ROOT, encoding: 'utf8' });
 const after = fs.readFileSync(path.join(ROOT, FRAGMENT), 'utf8');
 
 function engine(source) {
   return new Function('window', 'TILE', 'GRAVITY', source + `
+    var originalPointLimit = JELLO_MAX_POINTS;
     return {
       solve: jelloContactSolve,
-      configure: function (self, iters) { JELLO_CONTACT_SELF = self; JELLO_CONTACT_ITERS = iters; }
+      configure: function (self, iters, limit) {
+        JELLO_CONTACT_SELF = self; JELLO_CONTACT_ITERS = iters;
+        JELLO_MAX_POINTS = limit === undefined ? originalPointLimit : limit;
+      }
     };
   `)({ location: { search: '' } }, 32, 600);
 }
@@ -62,6 +66,27 @@ for (let trial = 0; trial < 200; trial++) {
   baseline.configure(trial % 2, 1 + trial % 4);
   optimized.configure(trial % 2, 1 + trial % 4);
   for (let step = 0; step < 10; step++) {
+    // Change bucket membership and body order between calls. Rest geometry
+    // may change in-place during plastic flow before its frame-end rebuild.
+    if (step === 2) for (const bodies of [a, b]) {
+      for (let p = 0; p < bodies[0].n; p++) {
+        bodies[0].px[p] += 2.75; bodies[0].ox[p] += 2.75;
+      }
+    }
+    if (step === 3 || step === 4) for (const bodies of [a, b]) {
+      bodies[0]._restDirty = true;
+      bodies[0].rx[0] += 30; bodies[0].ry[1] -= 19;
+    }
+    if (step === 5) for (const bodies of [a, b]) {
+      bodies[0]._restDirty = false;
+      bodies[0]._contactRestVersion = (bodies[0]._contactRestVersion || 0) + 1;
+      bodies[0].selfMin2 *= 0.8;
+    }
+    if (step === 6) { a.reverse(); b.reverse(); }
+    if (step === 7) for (const bodies of [a, b]) {
+      bodies[0].rx = bodies[0].rx.slice(); bodies[0].ry = bodies[0].ry.slice();
+    }
+    if (step === 8) { a.pop(); b.pop(); }
     assert.equal(optimized.solve(b, b.length, cellSize), baseline.solve(a, a.length, cellSize),
       `contact count at trial ${trial}, step ${step}`);
     for (let k = 0; k < a.length; k++) {
@@ -75,7 +100,23 @@ for (let trial = 0; trial < 200; trial++) {
     solves++;
   }
 }
-console.log(`PASS: ${solves} solves across 200 scenes, byte-identical point/velocity buffers and contact state.`);
+// Scatter must stop at the same partially gathered body when the point cap
+// truncates a scene. Include empty bodies and changing order between solves.
+for (const limit of [1, 17, 53, 98]) {
+  const a = scene(5, 7, -10, 4); a.splice(1, 0, scene(1, 0, 0, 0)[0]);
+  const b = structuredClone(a);
+  baseline.configure(1, 3, limit); optimized.configure(1, 3, limit);
+  for (let step = 0; step < 3; step++) {
+    assert.equal(optimized.solve(b, b.length, 5), baseline.solve(a, a.length, 5), `cap ${limit}, step ${step}`);
+    for (let k = 0; k < a.length; k++) {
+      for (const key of ['px', 'py', 'ox', 'oy']) assert.deepEqual(new Uint8Array(b[k][key].buffer),
+        new Uint8Array(a[k][key].buffer), `cap ${limit}, step ${step}, body ${k}/${key}`);
+      for (const key of ['_cHits', 'sleeping', '_solve', '_plyMs']) assert.equal(b[k][key], a[k][key]);
+    }
+    a.reverse(); b.reverse(); solves++;
+  }
+}
+console.log(`PASS: ${solves} solves across 204 scenes, byte-identical point/velocity buffers and contact state.`);
 
 if (process.env.BENCH !== '0') {
   baseline.configure(1, 3); optimized.configure(1, 3);

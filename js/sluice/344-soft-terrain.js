@@ -3,6 +3,7 @@
     (softPlayEnabled && softPlayMaterialTrial);
   var SOFT_TERRAIN_SKIN = 0.02;
   var softTerrainReport = { points: 0, edges: 0, sweeps: 0, corners: 0 };
+  var softTerrainBottomProbe = new WeakMap();
 
   function softTerrainBody(b) { return SOFT_TERRAIN && !!b.surfaceSlime; }
 
@@ -28,11 +29,12 @@
   // nodes. Reconcile normal velocity at the contact and bound tangential
   // friction by the normal impulse. No whole-body velocity or pose target.
   function softTerrainProject(b, a, c, t, nx, ny, depth, h) {
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
     if (!(depth > 0)) return;
     b._terrainStepHit = true;
     var wa = 1 - t, wc = t, den = wa * wa + wc * wc;
-    var vx = (b.px[a] - b.ox[a]) * wa + (b.px[c] - b.ox[c]) * wc;
-    var vy = (b.py[a] - b.oy[a]) * wa + (b.py[c] - b.oy[c]) * wc;
+    var vx = (px[a] - ox[a]) * wa + (px[c] - ox[c]) * wc;
+    var vy = (py[a] - oy[a]) * wa + (py[c] - oy[c]) * wc;
     var vn = vx * nx + vy * ny, normal = Math.max(0, -vn);
     var bounce = normal > JELLO_REST_VEL * h ? JELLO_BOUNCE : 0;
     var impulse = normal * (1 + bounce), tangent = -vx * ny + vy * nx;
@@ -42,8 +44,8 @@
       var i = k ? c : a, w = (k ? wc : wa) / den;
       if (!w) continue;
       var mx = nx * depth * w, my = ny * depth * w;
-      b.px[i] += mx; b.py[i] += my;
-      b.ox[i] += mx - dvx * w; b.oy[i] += my - dvy * w;
+      px[i] += mx; py[i] += my;
+      ox[i] += mx - dvx * w; oy[i] += my - dvy * w;
     }
     if (typeof softPresentationBody === 'function' && softPresentationBody(b)) {
       // normal/impulse are Verlet displacements per solver substep.
@@ -54,26 +56,41 @@
 
   function softTerrainFace(x, y, oldX, oldY, row, col) {
     var left = col * TILE, top = row * TILE, best = null, distance = Infinity;
-    var faces = [[-1, 0, x - left, oldX - left, row, col - 1],
-      [1, 0, left + TILE - x, left + TILE - oldX, row, col + 1],
-      [0, -1, y - top, oldY - top, row - 1, col],
-      [0, 1, top + TILE - y, top + TILE - oldY, row + 1, col]];
-    for (var i = 0; i < 4; i++) {
-      var f = faces[i];
-      if (tileAt(f[4], f[5]) !== null || f[3] > SOFT_TERRAIN_SKIN) continue;
-      if (f[2] < distance) { distance = f[2]; best = f; }
+    // Keep the original face order for equal-depth ties. Most probes have
+    // one exposed face; build only a selected candidate, not five arrays.
+    var depth = x - left, prior = oldX - left;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row, col - 1) === null) {
+      distance = depth; best = [-1, 0, depth, prior, row, col - 1];
     }
+    depth = left + TILE - x; prior = left + TILE - oldX;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row, col + 1) === null) {
+      distance = depth; best = [1, 0, depth, prior, row, col + 1];
+    }
+    depth = y - top; prior = oldY - top;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row - 1, col) === null) {
+      distance = depth; best = [0, -1, depth, prior, row - 1, col];
+    }
+    depth = top + TILE - y; prior = top + TILE - oldY;
+    if (!(prior > SOFT_TERRAIN_SKIN) && depth < distance && tileAt(row + 1, col) === null)
+      best = [0, 1, depth, prior, row + 1, col];
     return best;
   }
 
   function softTerrainPoint(b, i, h) {
-    var x = b.px[i], y = b.py[i];
-    if (!isFinite(x + y) || !b._guardPX) return false;
-    var sx = b._guardPX[i], sy = b._guardPY[i];
-    var r0 = Math.floor(Math.min(sy, y) / TILE), r1 = Math.floor(Math.max(sy, y) / TILE);
-    var c0 = Math.floor(Math.min(sx, x) / TILE), c1 = Math.floor(Math.max(sx, x) / TILE);
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY;
+    var x = px[i], y = py[i];
+    if (!isFinite(x + y) || !guardPX) return false;
+    var sx = guardPX[i], sy = guardPY[i];
+    var oldRow = Math.floor(sy / TILE), rowAt = Math.floor(y / TILE);
+    var oldCol = Math.floor(sx / TILE), colAt = Math.floor(x / TILE);
+    // A point staying in one tile cannot enter through a tile face. Air is
+    // done; a solid tile still needs the same resting penetration repair.
+    var sameTile = oldRow === rowAt && oldCol === colAt;
+    if (sameTile && tileAt(rowAt, colAt) === null) return true;
+    var r0 = Math.min(oldRow, rowAt), r1 = Math.max(oldRow, rowAt);
+    var c0 = Math.min(oldCol, colAt), c1 = Math.max(oldCol, colAt);
     var first = null, time = Infinity;
-    for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
+    for (var row = r0; !sameTile && row <= r1; row++) for (var col = c0; col <= c1; col++) {
       if (tileAt(row, col) === null) continue;
       var hit = softTerrainInterval(sx, sy, x, y, col * TILE, row * TILE);
       if (hit && hit.lo < time && (hit.nx || hit.ny)) { first = hit; time = hit.lo; }
@@ -83,7 +100,7 @@
       var depth = -((x - sx) * nx + (y - sy) * ny) * (1 - time) + SOFT_TERRAIN_SKIN;
       softTerrainProject(b, i, i, 0, nx, ny, depth, h);
       softTerrainReport.points++; softTerrainReport.sweeps++;
-    } else if (jelloWorldSolidAt(x, y)) {
+    } else if (sameTile || jelloWorldSolidAt(x, y)) {
       var face = softTerrainFace(x, y, sx, sy, Math.floor(y / TILE), Math.floor(x / TILE));
       if (!face) return false;
       softTerrainProject(b, i, i, 0, face[0], face[1], face[2] + SOFT_TERRAIN_SKIN, h);
@@ -93,33 +110,41 @@
   }
 
   function softTerrainEdges(b, h) {
-    if (!b._guardPX) return;
-    for (var k = 0; k < b.ringN; k++) {
-      var a = b.ring[k], c = b.ring[(k + 1) % b.ringN];
-      var ax = b.px[a], ay = b.py[a], bx = b.px[c], by = b.py[c];
-      var sax = b._guardPX[a], say = b._guardPY[a], sbx = b._guardPX[c], sby = b._guardPY[c];
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY, ring = b.ring, ringN = b.ringN;
+    if (!guardPX) return;
+    for (var k = 0; k < ringN; k++) {
+      var a = ring[k], c = ring[(k + 1) % ringN];
+      var ax = px[a], ay = py[a], bx = px[c], by = py[c];
+      var sax = guardPX[a], say = guardPY[a], sbx = guardPX[c], sby = guardPY[c];
       var r0 = Math.floor(Math.min(ay, by, say, sby) / TILE), r1 = Math.floor(Math.max(ay, by, say, sby) / TILE);
       var c0 = Math.floor(Math.min(ax, bx, sax, sbx) / TILE), c1 = Math.floor(Math.max(ax, bx, sax, sbx) / TILE);
       for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
         if (tileAt(row, col) === null) continue;
-        for (var corner = 0; corner < 4; corner++) {
-          var right = corner & 1, bottom = corner >> 1;
-          if (tileAt(row, col + (right ? 1 : -1)) !== null ||
-              tileAt(row + (bottom ? 1 : -1), col) !== null) continue;
-          softTerrainCorner(b, a, c, (col + right) * TILE, (row + bottom) * TILE, h);
+        // Corner eligibility depends only on this tile's four neighbors.
+        // Query each once while retaining the same corner correction order.
+        var leftOpen = tileAt(row, col - 1) === null, rightOpen = tileAt(row, col + 1) === null;
+        if (leftOpen || rightOpen) {
+          if (tileAt(row - 1, col) === null) {
+            if (leftOpen) softTerrainCorner(b, a, c, col * TILE, row * TILE, h);
+            if (rightOpen) softTerrainCorner(b, a, c, (col + 1) * TILE, row * TILE, h);
+          }
+          if (tileAt(row + 1, col) === null) {
+            if (leftOpen) softTerrainCorner(b, a, c, col * TILE, (row + 1) * TILE, h);
+            if (rightOpen) softTerrainCorner(b, a, c, (col + 1) * TILE, (row + 1) * TILE, h);
+          }
         }
-        ax = b.px[a]; ay = b.py[a]; bx = b.px[c]; by = b.py[c];
+        ax = px[a]; ay = py[a]; bx = px[c]; by = py[c];
         var hit = softTerrainInterval(ax, ay, bx, by, col * TILE, row * TILE);
         if (!hit) continue;
         var t = (hit.lo + hit.hi) * 0.5, wa = 1 - t;
         var x = ax * wa + bx * t, y = ay * wa + by * t;
-        var oldX = b._guardPX[a] * wa + b._guardPX[c] * t;
-        var oldY = b._guardPY[a] * wa + b._guardPY[c] * t;
+        var oldX = guardPX[a] * wa + guardPX[c] * t;
+        var oldY = guardPY[a] * wa + guardPY[c] * t;
         var face = softTerrainFace(x, y, oldX, oldY, row, col);
         if (!face) continue;
         softTerrainProject(b, a, c, t, face[0], face[1], face[2] + SOFT_TERRAIN_SKIN, h);
         softTerrainReport.edges++;
-        ax = b.px[a]; ay = b.py[a]; bx = b.px[c]; by = b.py[c];
+        ax = px[a]; ay = py[a]; bx = px[c]; by = py[c];
       }
     }
   }
@@ -128,10 +153,11 @@
   // stay in air. Its signed distance polynomial is quadratic in substep time.
   // Solve its zeroes, then require a hit on the finite edge, not its extension.
   function softTerrainCorner(b, a, c, x, y, h) {
-    var ax = b._guardPX[a], ay = b._guardPY[a];
-    var ex = b._guardPX[c] - ax, ey = b._guardPY[c] - ay;
-    var dax = b.px[a] - ax, day = b.py[a] - ay;
-    var dex = b.px[c] - b._guardPX[c] - dax, dey = b.py[c] - b._guardPY[c] - day;
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY;
+    var ax = guardPX[a], ay = guardPY[a];
+    var ex = guardPX[c] - ax, ey = guardPY[c] - ay;
+    var dax = px[a] - ax, day = py[a] - ay;
+    var dex = px[c] - guardPX[c] - dax, dey = py[c] - guardPY[c] - day;
     var cx = x - ax, cy = y - ay;
     var q0 = ex * cy - ey * cx;
     var q1 = dex * cy - dey * cx - ex * day + ey * dax;
@@ -156,8 +182,8 @@
       var nx = -vy / Math.sqrt(len2), ny = vx / Math.sqrt(len2);
       var oldX = ax + ex * t, oldY = ay + ey * t;
       if ((oldX - x) * nx + (oldY - y) * ny < 0) { nx = -nx; ny = -ny; }
-      var gap = (b.px[a] * (1 - t) + b.px[c] * t - x) * nx +
-        (b.py[a] * (1 - t) + b.py[c] * t - y) * ny;
+      var gap = (px[a] * (1 - t) + px[c] * t - x) * nx +
+        (py[a] * (1 - t) + py[c] * t - y) * ny;
       if (gap >= SOFT_TERRAIN_SKIN) continue;
       softTerrainProject(b, a, c, t, nx, ny, SOFT_TERRAIN_SKIN - gap, h);
       softTerrainReport.corners++; softTerrainReport.edges++;
@@ -165,8 +191,37 @@
     }
   }
 
+  function softTerrainSweepClear(b) {
+    var px = b.px, py = b.py, guardPX = b._guardPX, guardPY = b._guardPY, n = b.n;
+    if (!guardPX || b._terrainStepHit) return false;
+    // A previously lowest node often still touches the floor. Its live
+    // coordinates can disprove an open box before a full bounds scan.
+    var probe = softTerrainBottomProbe.get(b);
+    if (probe !== undefined && (jelloWorldSolidAt(px[probe], py[probe]) ||
+        jelloWorldSolidAt(guardPX[probe], guardPY[probe]))) return false;
+    var left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+    var bottomPoint = 0;
+    for (var i = 0; i < n; i++) {
+      var x = px[i], y = py[i], sx = guardPX[i], sy = guardPY[i];
+      if (!isFinite(x + y + sx + sy)) return false;
+      if (y > bottom || sy > bottom) bottomPoint = i;
+      left = Math.min(left, x, sx); right = Math.max(right, x, sx);
+      top = Math.min(top, y, sy); bottom = Math.max(bottom, y, sy);
+    }
+    softTerrainBottomProbe.set(b, bottomPoint);
+    var r0 = Math.floor(top / TILE), r1 = Math.floor(bottom / TILE);
+    var c0 = Math.floor(left / TILE), c1 = Math.floor(right / TILE);
+    for (var row = r0; row <= r1; row++) for (var col = c0; col <= c1; col++) {
+      if (tileAt(row, col) !== null) return false;
+    }
+    return true;
+  }
+
   function softTerrainSolve(b, h) {
     if (!softTerrainBody(b) || b._guardRejectedStep) return;
+    // Every swept skin segment lies in this box. An all-air box needs no
+    // point/edge terrain queries; retain the independent self-contact test.
+    if (softTerrainSweepClear(b) && !(typeof softIntentBody === 'function' && softIntentBody(b) && softContactSkinCrossed(b))) return;
     for (var pass = 0; pass < 6; pass++) {
       var before = softTerrainReport.points + softTerrainReport.edges;
       var selfBefore = softContactReport.selfContacts;

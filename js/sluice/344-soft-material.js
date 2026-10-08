@@ -12,10 +12,12 @@
 
   function softMaterialSolve(b, h) {
     jelloResetLambdas(b);
+    var px = b.px, py = b.py, sA = b.sA, sB = b.sB;
+    var sRest = b.sRest, sLambda = b.sLambda, springN = b.springN;
     var alpha = SOFT_MATERIAL_COMPLIANCE / (h * h);
-    for (var s = 0; s < b.springN; s++) {
-      var a = b.sA[s], c = b.sB[s], rest = b.sRest[s];
-      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+    for (var s = 0; s < springN; s++) {
+      var a = sA[s], c = sB[s], rest = sRest[s];
+      var dx = px[c] - px[a], dy = py[c] - py[a];
       var length = Math.sqrt(dx * dx + dy * dy);
       if (!(length > 1e-9 && rest > 1e-9)) continue;
       var strain = (length - rest) / rest;
@@ -25,11 +27,11 @@
       var gradient = (1 + 2 * hard) / root;
       // C encodes quadratic plus quartic strain energy. Its derivative must
       // appear in both the effective mass and the applied correction.
-      var dl = (-C - alpha * b.sLambda[s]) / (2 * gradient * gradient + alpha);
-      b.sLambda[s] += dl;
+      var dl = (-C - alpha * sLambda[s]) / (2 * gradient * gradient + alpha);
+      sLambda[s] += dl;
       var move = dl * gradient / length, mx = dx * move, my = dy * move;
-      b.px[a] -= mx; b.py[a] -= my;
-      b.px[c] += mx; b.py[c] += my;
+      px[a] -= mx; py[a] -= my;
+      px[c] += mx; py[c] += my;
     }
     softMaterialVolume(b, h);
   }
@@ -40,14 +42,14 @@
     if (!b._materialGX || b._materialGX.length !== n) {
       b._materialGX = new Float64Array(n); b._materialGY = new Float64Array(n);
     }
-    var gx = b._materialGX, gy = b._materialGY;
-    var x0 = b.px[b.ring[0]], y0 = b.py[b.ring[0]], area = 0, den = 0;
+    var gx = b._materialGX, gy = b._materialGY, px = b.px, py = b.py, ring = b.ring;
+    var x0 = px[ring[0]], y0 = py[ring[0]], area = 0, den = 0;
     var sign = b.ringSign;
     for (var k = 0; k < n; k++) {
-      var a = b.ring[k], prev = b.ring[(k + n - 1) % n], next = b.ring[(k + 1) % n];
-      area += (b.px[a] - x0) * (b.py[next] - y0) - (b.py[a] - y0) * (b.px[next] - x0);
-      gx[k] = 0.5 * (b.py[next] - b.py[prev]) * sign;
-      gy[k] = 0.5 * (b.px[prev] - b.px[next]) * sign;
+      var a = ring[k], prev = ring[(k + n - 1) % n], next = ring[(k + 1) % n];
+      area += (px[a] - x0) * (py[next] - y0) - (py[a] - y0) * (px[next] - x0);
+      gx[k] = 0.5 * (py[next] - py[prev]) * sign;
+      gy[k] = 0.5 * (px[prev] - px[next]) * sign;
       den += gx[k] * gx[k] + gy[k] * gy[k];
     }
     if (!(den > 1e-9)) return;
@@ -58,26 +60,28 @@
     // Freeze every gradient before moving any node. Reading changed neighbors
     // during this pass would turn internal pressure into a net force and torque.
     for (k = 0; k < n; k++) {
-      var p = b.ring[k];
-      b.px[p] += dl * gx[k]; b.py[p] += dl * gy[k];
+      var p = ring[k];
+      px[p] += dl * gx[k]; py[p] += dl * gy[k];
     }
   }
 
   function softMaterialDamp(b, h) {
+    var px = b.px, py = b.py, ox = b.ox, oy = b.oy;
+    var sA = b.sA, sB = b.sB, springN = b.springN;
     var fraction = 1 - Math.exp(-SOFT_MATERIAL_DAMP * h / JELLO_TIMESCALE);
-    for (var s = 0; s < b.springN; s++) {
-      var a = b.sA[s], c = b.sB[s];
-      var dx = b.px[c] - b.px[a], dy = b.py[c] - b.py[a];
+    for (var s = 0; s < springN; s++) {
+      var a = sA[s], c = sB[s];
+      var dx = px[c] - px[a], dy = py[c] - py[a];
       var length = Math.sqrt(dx * dx + dy * dy);
       if (!(length > 1e-9)) continue;
       var nx = dx / length, ny = dy / length;
-      var vx = (b.px[c] - b.ox[c]) - (b.px[a] - b.ox[a]);
-      var vy = (b.py[c] - b.oy[c]) - (b.py[a] - b.oy[a]);
+      var vx = (px[c] - ox[c]) - (px[a] - ox[a]);
+      var vy = (py[c] - oy[c]) - (py[a] - oy[a]);
       var impulse = 0.5 * fraction * (vx * nx + vy * ny);
       // Equal/opposite central impulses dissipate edge strain rate while
       // preserving linear and angular momentum, including rigid spin.
-      b.ox[a] -= nx * impulse; b.oy[a] -= ny * impulse;
-      b.ox[c] += nx * impulse; b.oy[c] += ny * impulse;
+      ox[a] -= nx * impulse; oy[a] -= ny * impulse;
+      ox[c] += nx * impulse; oy[c] += ny * impulse;
     }
   }
 

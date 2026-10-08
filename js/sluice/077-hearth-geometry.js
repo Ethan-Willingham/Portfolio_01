@@ -277,11 +277,12 @@
       }
       for (var wall = 0; wall < walls.length; wall++) {
         var nx = walls[wall].nx, ny = walls[wall].ny;
-        var limit = walls[wall].limit, points = [];
+        var limit = walls[wall].limit;
         // Reject only fully separated hull bounds. The sampled curve adds
         // many planes, but a coal usually touches only one short arc of it.
         if (nx*(nx < 0 ? minX : maxX)+ny*(ny < 0 ? minY : maxY) < limit-margin) continue;
         if (walls[wall].minX != null && (maxX < walls[wall].minX-margin || minX > walls[wall].maxX+margin)) continue;
+        var points = [];
         var wallVertices=hearthWallHull(walls[wall],b.vertices);
         for (j = 0; j < wallVertices.length; j++) {
           var p = wallVertices[j], depth = p[0] * nx + p[1] * ny - limit;

@@ -16,29 +16,4 @@
 # js/sluice.js is current, then `rm -rf js/sluice build-sluice.sh`. js/sluice.js
 # is untouched by that removal and becomes your single source file again.
 set -euo pipefail
-cd "$(dirname "$0")"
-
-out="js/sluice.js"
-# Only NNN-*.js fragments (three leading digits) are part of the bundle, so any
-# stray file dropped in js/sluice/ is ignored. The zero-padded prefixes sort
-# numerically under the default glob.
-frags=( js/sluice/[0-9][0-9][0-9]-*.js )
-if [ ! -e "${frags[0]}" ]; then
-  echo "build-sluice: no fragments found in js/sluice/" >&2
-  exit 1
-fi
-
-cat "${frags[@]}" > "$out"
-echo "build-sluice: wrote $out from ${#frags[@]} fragments ($(wc -l < "$out") lines)"
-
-# Cache-bust the game page's script tags with the current GAME_VERSION so a
-# deployed fix is picked up on the next page load instead of whenever the
-# browser/CDN cache happens to expire (owner-reported: still playing v25.16
-# minutes after v25.17 shipped). Idempotent: rewrites any existing ?v= too.
-# Commit grand-motherload.html alongside the bundle when the stamp changes.
-ver="$(sed -nE "s/.*GAME_VERSION = '([^']+)'.*/\1/p" js/sluice/000-head.js | head -1)"
-if [ -n "$ver" ]; then
-  sed -i '' -E 's#src="js/(sluice|sluice-performance-gpu|liquid-wgpu|smoke-wgpu|fire-wgpu|jello-wgpu|audio|smoke-presets)\.js(\?v=[^"]*)?"#src="js/\1.js?v='"$ver"'"#g' grand-motherload.html
-  sed -i '' -E 's#href="sluice-menu\.css(\?v=[^"]*)?"#href="sluice-menu.css?v='"$ver"'"#g' grand-motherload.html
-  echo "build-sluice: stamped grand-motherload.html game assets with ?v=$ver"
-fi
+exec node "$(dirname "$0")/tools/build-sluice.mjs"
