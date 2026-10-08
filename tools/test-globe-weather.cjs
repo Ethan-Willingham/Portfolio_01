@@ -314,16 +314,16 @@ function fetchArchive(bytes, frame = compressed().frame, options = {}) {
       assert.throws(() => D.parseAuroraArchive(archived({ runs })), /archive/);
     }
   });
-  await check('historical aurora uses nearest forecast time with inclusive 90-minute distance and no arbitrary past fallback', () => {
+  await check('historical aurora carries the nearest recorded forecast through capture gaps', () => {
     const frames = D.parseAuroraManifest(manifest([{ ...compressed().frame, observation: '2026-10-05T00:00:00Z', forecast: '2026-10-05T00:50:00Z' },
       { ...compressed().frame, file: 'second.json.gz' }]));
     assert.equal(D.auroraFrameAt(frames, '2026-10-05T00:50:00Z'), frames[0]);
     assert.equal(D.auroraFrameAt(frames, '2026-10-05T02:35:00Z'), frames[1]);
     const longLead = { ...frames[0], forecast: new Date('2026-10-05T02:00:00Z') };
     assert.equal(D.auroraFrameAt([longLead], '2026-10-05T00:30:00Z'), longLead);
-    assert.equal(D.auroraFrameAt([longLead], '2026-10-05T00:29:59.999Z'), null);
+    assert.equal(D.auroraFrameAt([longLead], '2026-10-05T00:29:59.999Z'), longLead);
     assert.equal(D.auroraFrameAt([frames[1]], '2026-10-05T04:20:00Z'), frames[1]);
-    assert.equal(D.auroraFrameAt([frames[1]], '2026-10-05T04:20:00.001Z'), null);
+    assert.equal(D.auroraFrameAt([frames[1]], '2026-10-05T04:20:00.001Z'), frames[1]);
     assert.equal(D.auroraFrameAt([], '2026-10-05T00:50:00Z'), null);
   });
   await check('historical selection cannot use observations from after the chosen instant', () => {

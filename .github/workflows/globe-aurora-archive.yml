@@ -25,19 +25,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare cloud image encoder
-        run: npm install --prefix "$RUNNER_TEMP/globe-runtime" --no-save --package-lock=false sharp@0.35.4
       - name: Capture and publish the data subtree
-        env:
-          NODE_PATH: ${{ runner.temp }}/globe-runtime/node_modules
         shell: bash
         run: |
           set -euo pipefail
           successful=0
           for sample in {1..12}; do
-            if ! node tools/archive-globe-clouds.cjs; then
-              echo 'Cloud capture incomplete; retaining valid archived frames.'
-            fi
             if node tools/archive-globe-weather.cjs; then
               successful=$((successful + 1))
             else

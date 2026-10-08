@@ -467,7 +467,9 @@
       var delta=Math.abs(utcTimestamp(frame.forecast).getTime()-target);
       if(delta<distance){best=frame;distance=delta;}
     });
-    return distance<=90*MINUTE?best:null;
+    // Replay carries a recorded grid through missed captures. Its original
+    // observation and forecast clocks remain visible; live freshness is separate.
+    return best;
   }
 
   async function fetchAuroraArchive(frame, base, options) {

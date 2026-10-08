@@ -1,0 +1,17 @@
+{
+  "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-East_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=4096&height=2048&transparent=true&time=2026-10-07T17%3A10%3A00Z",
+  "observation": "2026-10-07T17:10:00.000Z",
+  "sourceDimensions": [
+    4096,
+    2048
+  ],
+  "crop": {
+    "left": 0,
+    "top": 680,
+    "width": 4096,
+    "height": 320
+  },
+  "sourceSha256": "8b357522b4dd7cf057324078e48b83a8e39b13dde8c0ac90e4905ebb9921bf35",
+  "fixtureSha256": "6511d45b84a04db3bba8a949b17034bd16bac92b18c3185dce4d66a17b734031",
+  "note": "Lossless native crop of the reported midday Pacific and Gulf storm cores. Covers both the former three-degree limit and cold dark-red boundary codes rejected by v40."
+}

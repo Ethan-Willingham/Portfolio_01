@@ -66,7 +66,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v40');
+  text(byId('globe-version'),'v41');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -76,7 +76,7 @@
     if(invalid){photo=null;photoMix=0;wrapper.dataset.photo='unavailable';}
   }
   function hasForecast() {
-    return !!(tilt===undefined&&forecast&&(live?data.auroraFreshness(forecast,new Date()).fresh:instant<=Date.now()+300000&&forecast.historical&&Math.abs(forecast.forecast-instant)<=90*60000));
+    return !!(tilt===undefined&&forecast&&(live?data.auroraFreshness(forecast,new Date()).fresh:instant<=Date.now()+300000&&forecast.historical&&forecast.observation<=instant));
   }
   function coordinate(lat, lon) { return Math.abs(lat).toFixed(1) + '\u00b0' + (lat < 0 ? 'S' : 'N') + ', ' + Math.abs(lon).toFixed(1) + '\u00b0' + (lon < 0 ? 'W' : 'E'); }
   function solarDate(date, lon) { return new Date(date.getTime() + (lon * 4 + math.solar(date,tilt).equationOfTime) * 60000); }
@@ -212,8 +212,8 @@
   });
   var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
   replayMemo=timeline.memoryCache((mobile?104:224)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261007-40',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261007-40',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261007-41',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261007-41',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -916,7 +916,11 @@
     }
     if(live){forecast=liveForecast;return;}
     var entry=data.auroraFrameAt(allAuroraFrames(),instant),value=entry&&archiveCache.get(entry.file);
-    if(value)setForecast(value);else{forecast=null;replayPendingAurora=!!entry;}
+    if(value)setForecast(value);else{
+      var cached=data.auroraFrameAt(allAuroraFrames().filter(function(frame){return archiveCache.has(frame.file);}),instant);
+      if(cached)setForecast(archiveCache.get(cached.file));else forecast=null;
+      replayPendingAurora=!!entry;
+    }
   }
   function updateReplayLabel(){
     updateLoadingProgress();
@@ -938,7 +942,11 @@
     replayKey=key;replayChecked=Date.now();replayBusy=true;replayFailed=new Set();
     replayClouds=recentMode?timeline.rangeFrames(cloudCatalog&&cloudCatalog.dense&&!hourlyClouds()?cloudCatalog.legacy:cloudCatalog,day,new Date(),hourlyClouds()?clouds.STEP:3*3600000,hourlyClouds()?clouds.published:null):hourlyClouds()?clouds.frames(cloudCatalog,instant,new Date()):timeline.cloudFrames(cloudCatalog&&cloudCatalog.dense?cloudCatalog.legacy:cloudCatalog,instant,new Date());
     if(recentMode&&hourlyClouds()&&sharedManifest&&sharedManifest.frames[sharedManifest.frames.length-1].time>=Date.now()-5*3600000)replayClouds=shared.replayFrames(sharedManifest,replayClouds,day);
-    replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-90*60000&&entry.forecast<+day.end+90*60000&&entry.observation<=Date.now();});
+    replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-120*60000&&entry.forecast<+day.end+120*60000&&entry.observation<=Date.now();});
+    var firstAurora=data.auroraFrameAt(frames,day.start);
+    if(firstAurora&&!replayAurora.some(function(entry){return entry.file===firstAurora.file;}))replayAurora.unshift(firstAurora);
+    var lastAurora=data.auroraFrameAt(frames,day.end);
+    if(lastAurora&&!replayAurora.some(function(entry){return entry.file===lastAurora.file;}))replayAurora.push(lastAurora);
     cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
     replayMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
     var keepPrepared=new Set(replayClouds.map(function(t){return t.toISOString()+'/'+cloudWidth;}));preparedClouds=new Set(Array.from(preparedClouds).filter(function(k){return keepPrepared.has(k);}));

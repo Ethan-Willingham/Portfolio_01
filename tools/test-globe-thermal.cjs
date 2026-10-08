@@ -17,15 +17,18 @@ const C=require('../js/globe-clouds.js'),runner=require('./archive-globe-clouds.
  for(const [x,y]of stormPoints){const at=(y*4096+x)*4;assert(wrong[at]<115,'The October 7 storm fixture reproduces a false dark core');assert(fixed[at]>230,'A bounded cold core takes the cold palette branch');assert.equal(fixed[at+3],storm[at+3]);}
  assert(new Set(stormPoints.map(([x,y])=>fixed[(y*4096+x)*4])).size>1,'The correction retains the observed grey-code variation');
  console.log('PASS actual larger storm cores retain cloud texture instead of becoming dark holes');
+ const wide=await sharp(path.join(fixture,'thermal-wide-core-codes.png')).ensureAlpha().raw().toBuffer(),wideWrong=Buffer.from(wide),wideFixed=Buffer.from(wide);C.normalizeThermal(wideWrong);C.normalizeThermal(wideFixed,4096);
+ for(const [x,y]of [[900,155],[913,155],[897,156],[900,156],[980,85],[981,85],[982,85],[983,85]]){const at=(y*4096+x)*4;assert(wideWrong[at]<115);assert(wideFixed[at]>230,'The reported Pacific and Gulf cores must resolve broad regions and dark-red cold boundaries');assert.equal(wideFixed[at+3],wide[at+3]);}
+ console.log('PASS the real midday Pacific and Gulf storms resolve broad cold cores and low-saturation cold boundaries');
  for(const mode of ['long','open','unsupported']){
   const w=128,h=64,pixels=Buffer.alloc(w*h*4);for(let at=0;at<pixels.length;at+=4)pixels.set([255,0,0,255],at);
   const end=mode==='long'?50:23;for(let y=20;y<23;y++)for(let x=20;x<end;x++)pixels.set([54,54,54,255],(y*w+x)*4);
-  if(mode==='open')pixels.set([0,0,0,0],(20*w+19)*4);
+  if(mode==='open'||mode==='long')pixels.set([0,0,0,0],(20*w+19)*4);
   if(mode==='unsupported')for(let y=19;y<24;y++)for(let x=19;x<24;x++)if(x<20||x>=23||y<20||y>=23)pixels.set([0,0,115,255],(y*w+x)*4);
-  C.normalizeThermal(pixels,w);assert(pixels[(21*w+21)*4]<115,'Long, uncovered and insufficiently cold patches retain their warm interpretation');
+  C.normalizeThermal(pixels,w);assert(pixels[(21*w+21)*4]<115,'Uncovered and insufficiently cold patches retain their warm interpretation');
   if(mode==='open')assert.equal(pixels[(20*w+19)*4+3],0,'Missing alpha remains missing');
  }
- console.log('PASS long bands, open coverage and unsupported grey regions are preserved');
+ console.log('PASS uncovered bands, open coverage and unsupported grey regions are preserved');
  const validBlack=await sharp({create:{width:2048,height:1024,channels:4,background:{r:0,g:0,b:0,alpha:1}}}).png().toBuffer(),render=await runner.renderFrame(new Date('2026-10-05T12:00:00Z'),{fetch:async()=>new Response(validBlack,{headers:{'content-type':'image/png'}})}),ir=await sharp(render.files.get(render.frame.infrared.file)).ensureAlpha().raw().toBuffer();assert(ir[(512*2048+1024)*4+3]>200,'Native valid PNG black remains covered');console.log('PASS recorder preserves lossless missing-data alpha without masking valid black codes');
  const pixels=Buffer.alloc(256*128*4);for(let i=0;i<pixels.length;i+=4)pixels.set((i/4)%256%2?[255,0,0,255]:[100,100,100,255],i);const checker=await sharp(pixels,{raw:{width:256,height:128,channels:4}}).png().toBuffer();
  const server=http.createServer((req,res)=>{const name=req.url.split('?')[0];if(name==='/')return res.writeHead(200,{'Content-Type':'text/html'}).end('<script src="/js/globe-data.js"></script><script src="/js/globe-clouds.js"></script><script src="/js/globe-replay.js"></script>');if(name==='/checker.png')return res.writeHead(200,{'Content-Type':'image/png'}).end(checker);try{res.writeHead(200,{'Content-Type':'text/javascript'}).end(fs.readFileSync(path.join(root,name)));}catch{res.writeHead(404).end();}});

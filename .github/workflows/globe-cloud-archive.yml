@@ -1,0 +1,45 @@
+name: Archive globe cloud images
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: globe-cloud-archive
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare cloud image encoder
+        run: npm install --prefix "$RUNNER_TEMP/globe-runtime" --no-save --package-lock=false sharp@0.35.4
+      - name: Capture cloud images independently of aurora
+        env:
+          NODE_PATH: ${{ runner.temp }}/globe-runtime/node_modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          successful=0
+          for sample in {1..12}; do
+            if node tools/archive-globe-clouds.cjs; then
+              successful=$((successful + 1))
+            else
+              echo 'Cloud capture incomplete; retaining valid archived frames.'
+            fi
+            if [ "$sample" -lt 12 ]; then sleep 300; fi
+          done
+          if [ "$successful" -eq 0 ]; then exit 1; fi

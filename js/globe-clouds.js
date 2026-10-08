@@ -87,7 +87,7 @@
    // Cold and warm sections of the published palette reuse grey codes. Decode
    // a whole connected patch once, rather than searching a tiny window around
    // each pixel. Only bounded patches enclosed by predominantly unambiguous
-   // cold codes take the cold branch. Warm terrain, long bands and coverage
+   // cold codes take the cold branch. Warm terrain and coverage
    // boundaries retain the warm branch. WMS resampling also mixes grey with
    // adjacent cold colors, so membership follows the decoded branch rather
    // than requiring exactly grey RGB. This is conservative display decoding.
@@ -95,10 +95,12 @@
    kind=new Uint8Array(count);
    for(var index=0;index<count;index++){
     if(index%(width*4)===0)yield;
-    var at=index*4,r=pixels[at],g=pixels[at+1],b=pixels[at+2],decoded=table[(r>>3)*1024+(g>>3)*32+(b>>3)],spread=Math.max(r,g,b)-Math.min(r,g,b);
-    if(pixels[at+3])kind[index]=decoded<115?1:decoded>185&&(spread>24||Math.min(r,g,b)>205)?2:3;
+    var at=index*4,r=pixels[at],g=pixels[at+1],b=pixels[at+2],decoded=table[(r>>3)*1024+(g>>3)*32+(b>>3)];
+    // The lookup already prefers warm values for repeated grey codes. Its cold
+    // branch includes dark red and pale grey codes, even at low saturation.
+    // Rejecting those valid boundary codes leaves holes in otherwise cold cores.
+    if(pixels[at+3])kind[index]=decoded<115?1:decoded>185?2:3;
    }
-   var maxSpan=Math.max(8,Math.ceil(width*3/360));
    for(var seed=0;seed<count;seed++){
     if(seed%(width*4)===0)yield;if(kind[seed]!==1)continue;
     var head=0,tail=1,left=width,right=-1,top=height,bottom=-1,cold=0,border=0,closed=true;
@@ -115,7 +117,7 @@
       if(code===2){cold++;coldLeft=Math.min(coldLeft,nx);coldRight=Math.max(coldRight,nx);coldTop=Math.min(coldTop,ny);coldBottom=Math.max(coldBottom,ny);}
      }
     }
-    if(!closed||right-left+1>maxSpan||bottom-top+1>maxSpan||cold<4||cold<border*.6||coldLeft>left||coldRight<right||coldTop>top||coldBottom<bottom)continue;
+    if(!closed||cold<4||cold<border*.6||coldLeft>left||coldRight<right||coldTop>top||coldBottom<bottom)continue;
     for(var member=0;member<tail;member++){
      var index=queue[member],at=index*4,grey=(pixels[at]+pixels[at+1]+pixels[at+2])/3,previous=PALETTE[12],temp=previous[3];
      for(var code=13;code<=21;code++){var next=PALETTE[code];if(grey>=next[0]){var fraction=Math.max(0,Math.min(1,(previous[0]-grey)/(previous[0]-next[0])));temp=previous[3]+(next[3]-previous[3])*fraction;break;}previous=next;temp=next[3];}
@@ -158,5 +160,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:6,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:7,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,composite:composite,compositeSteps:compositeSteps};
 }));
