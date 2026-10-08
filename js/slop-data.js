@@ -11326,7 +11326,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -11375,7 +11375,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-08T01:02:05.612Z",
         "selectedAttempt": 1
       },
-      "group": 11
+      "group": 11,
+      "retirement": {
+        "retiredAt": "2026-10-08T01:18:43.000Z",
+        "reason": "The owner rejected the entire AI-language batch and requested its removal. This covers all three published works and all four image attempts; no replacement requested.",
+        "reviewId": "owner-ai-language-rejection-2026-10-07"
+      }
     },
     {
       "id": "111",
@@ -11392,7 +11397,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -11441,7 +11446,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-08T01:03:10.101Z",
         "selectedAttempt": 1
       },
-      "group": 11
+      "group": 11,
+      "retirement": {
+        "retiredAt": "2026-10-08T01:18:43.000Z",
+        "reason": "The owner rejected the entire AI-language batch and requested its removal. This covers all three published works and all four image attempts; no replacement requested.",
+        "reviewId": "owner-ai-language-rejection-2026-10-07"
+      }
     },
     {
       "id": "112",
@@ -11458,7 +11468,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 2,
         "usage": null,
         "costUsd": null,
@@ -11546,7 +11556,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-08T01:05:23.314Z",
         "selectedAttempt": 2
       },
-      "group": 11
+      "group": 11,
+      "retirement": {
+        "retiredAt": "2026-10-08T01:18:43.000Z",
+        "reason": "The owner rejected the entire AI-language batch and requested its removal. This covers all three published works and all four image attempts; no replacement requested.",
+        "reviewId": "owner-ai-language-rejection-2026-10-07"
+      }
     }
   ],
   "production": {
