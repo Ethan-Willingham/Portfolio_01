@@ -1,0 +1,17 @@
+{
+  "snapshot": "2026-10-07T16:45:00Z",
+  "observed": "2026-10-07T16:40:00Z",
+  "width": 2048,
+  "height": 1024,
+  "visible": {
+    "file": "thermal-half-scan-visible.jpg",
+    "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-East_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-07T16%3A40%3A00Z",
+    "sha256": "97a8cb4ae7e1eadd9d8065ee883bf97e038c0acfe3e9c0de450c7754cfe9f85a"
+  },
+  "infrared": {
+    "file": "thermal-half-scan-infrared.png",
+    "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-East_ABI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-07T16%3A40%3A00Z",
+    "sha256": "1da74cb04d33907052db50b7dbcc01d0c6ec6cd9164839ad954a0c78ca3e893c"
+  },
+  "note": "Unmodified GOES-East maps for the October 7 11:59 AM CDT view. Infrared is saturated white north of about 6 degrees N; GeoColor has a separate cyan band south of about 9 degrees S."
+}

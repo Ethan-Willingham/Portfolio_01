@@ -77,7 +77,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v43');
+  text(byId('globe-version'),'v44');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -225,8 +225,8 @@
   });
   var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
   replayMemo=timeline.memoryCache((mobile?104:224)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-43',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-43',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-44',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261008-44',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -267,12 +267,15 @@
     'day=mix(day,mix(base,vec3(1.0),denseCloud*photoMix*photoEnabled),denseEnabled*thermalEnabled);',
     'vec2 replayCover=vec2(0.0);if(replayEnabled>0.0){replayCover=mix(replayLayer(texture2D(replayFrom,vUv),replayFromBaked),replayLayer(texture2D(replayTo,vUv),0.0),replayBlend);} day=mix(day,mix(base,vec3(1.0),replayCover.x*photoMix*photoEnabled),replayEnabled);',
     'float light=dot(normalize(vNormal),sunDir); float daylight=smoothstep(-.10,.04,light);',
-    'vec3 litDay=day*(.52+.52*max(0.0,light)); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
+    'float surfaceLight=.52+.52*max(0.0,light); vec3 night=texture2D(nightMap,vUv).rgb*1.35+base*.018;',
     // Use the same observed cloud structure on both hemispheres.
     // Night clouds dim the historical lights without completely hiding them.
     'float cloudCover=mix(visibleCloud,mix(thermalCloud,visibleCloud,shotDay),thermalEnabled)*photoMix*photoEnabled;',
     'cloudCover=mix(cloudCover,denseCloud*photoMix*photoEnabled,denseEnabled*thermalEnabled);',
     'cloudCover=mix(cloudCover,replayCover.y*photoMix*photoEnabled,replayEnabled);',
+    // Keep observed cloud whites bright until the same day/night fade as the
+    // surface. A second cosine dimming made them darken ahead of that edge.
+    'vec3 litDay=day*surfaceLight+vec3(1.0-surfaceLight)*cloudCover;',
     'night=night*(1.0-cloudCover*.65)+vec3(.085,.10,.115)*cloudCover;',
     'gl_FragColor=vec4(mix(night,litDay,daylight),1.0); }'
   ].join('\n')});
@@ -941,7 +944,7 @@
     var label=byId('globe-replay-status');if(!label)return;
     if(tilt!==undefined){text(label,'Sunlight only at this tilt.');return;}
     if(replayPendingCloud){text(label,'Loading clouds');return;}
-    if(recentMode&&photo&&photo.time&&instant-new Date(photo.time)>=clouds.STEP){text(label,live?'Clouds '+Math.round((instant-new Date(photo.time))/60000)+'m behind.':'Clouds through '+timeFormatter.format(new Date(photo.time))+'.');return;}
+    if(recentMode&&photo&&photo.time){var cloudTime=new Date(photo.time);text(label,'Clouds through '+timeFormatter.format(cloudTime)+(live?' ('+Math.max(0,Math.round((instant-cloudTime)/60000))+'m old).':'.'));return;}
     if(!live&&instant>Date.now()+300000){text(label,'Future time: sunlight only.');return;}
     if(loading&&!replayBusy){text(label,'Preparing replay');return;}
     var total=replayClouds.length+replayAurora.length,ready=replayClouds.filter(cloudPrepared).length+replayAurora.filter(function(entry){return archiveCache.has(entry.file);}).length;

@@ -133,20 +133,26 @@
  }
  function drain(steps){var part;do{part=steps.next();}while(!part.done);return part.value;}
  function normalizeThermal(pixels,width){return drain(normalizeThermalSteps(pixels,width));}
- // A saturated scan can be encoded as opaque white in the infrared palette
- // and cyan in GeoColor, including in the provider's PNG. Reject only broad
- // rows dominated by that exact saturation, below the polar region. This is
- // a conservative display check, not a replacement for instrument quality flags.
+ // Missing scans can be opaque white in infrared or saturated cyan in
+ // GeoColor. The two products can have different damaged rows. Reject each
+ // channel independently so valid colour still covers a missing thermal scan.
+ // A broad nonpolar band can extend into the polar rows; an isolated polar
+ // white row remains untouched. This display check is not a quality flag.
  function* maskScanArtifactsSteps(sources,width){
   var height=width/2;
-  for(var pair=0;pair<3;pair++){var visible=sources[pair],infrared=sources[pair+5];if(!infrared)continue;var badRows=new Uint8Array(height);
-   for(var y=0;y<height;y++){if(y%4===0)yield;var lat=90-(y+.5)*180/height;if(Math.abs(lat)>60)continue;var covered=0,saturated=0;
-    for(var x=0;x<width;x++){var at=(y*width+x)*4;if(infrared[at+3]<200)continue;covered++;if(Math.min(infrared[at],infrared[at+1],infrared[at+2])>=248)saturated++;}
-    if(saturated<width*.18||saturated<covered*.85)continue;
-    badRows[y]=1;
+  for(var pair=0;pair<3;pair++)for(var channel=0;channel<2;channel++){var pixels=sources[pair+(channel?5:0)];if(!pixels)continue;var badRows=new Uint8Array(height),candidates=new Uint8Array(height);
+   for(var y=0;y<height;y++){if(y%4===0)yield;var lat=90-(y+.5)*180/height,covered=0,saturated=0;
+    for(var x=0;x<width;x++){var at=(y*width+x)*4;if(pixels[at+3]<200)continue;covered++;
+     if(channel?Math.min(pixels[at],pixels[at+1],pixels[at+2])>=248:pixels[at+1]-pixels[at]>=60&&pixels[at+1]>=160&&pixels[at+2]>=220)saturated++;
+    }
+    if(covered<8||saturated<covered*(channel?.85:.5))continue;candidates[y]=1;
+    if(Math.abs(lat)<=60&&saturated>=width*.18)badRows[y]=1;
    }
-   var padding=Math.ceil(width/512);
-   for(var row=0;row<height;row++){if(row%4===0)yield;if(badRows[row])for(var ry=Math.max(0,row-padding);ry<=Math.min(height-1,row+padding);ry++)for(var col=0;col<width;col++){var p=(ry*width+col)*4;infrared[p+3]=0;if(visible)visible[p+3]=0;}}
+   for(var row=1;row<height;row++)if(badRows[row-1]&&candidates[row])badRows[row]=1;
+   for(var row=height-2;row>=0;row--)if(badRows[row+1]&&candidates[row])badRows[row]=1;
+   var padding=Math.ceil(width/512),padded=new Uint8Array(height);
+   for(var row=0;row<height;row++)if(badRows[row])padded.fill(1,Math.max(0,row-padding),Math.min(height,row+padding+1));
+   for(var row=0;row<height;row++){if(row%4===0)yield;if(padded[row])for(var col=0;col<width;col++)pixels[(row*width+col)*4+3]=0;}
   }return sources;
  }
  function maskScanArtifacts(sources,width){return drain(maskScanArtifactsSteps(sources,width));}
@@ -156,15 +162,19 @@
  function smoothCloud(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
  function* retainVisibleCloudsSteps(sources,width){
   for(var pair=0;pair<5;pair++){var visible=sources[pair],infrared=sources[pair+5];if(!visible||!infrared)continue;
-   for(var at=0;at<infrared.length;at+=4){if(at%(width*16)===0)yield;if(!infrared[at+3]||!visible[at+3])continue;
+   for(var at=0;at<infrared.length;at+=4){if(at%(width*16)===0)yield;if(!visible[at+3])continue;
     var r=visible[at]/255,g=visible[at+1]/255,b=visible[at+2]/255;
     var ice=smoothCloud(.04,.16,Math.min(g,b)-r)*smoothCloud(.18,.36,Math.min(g,b))*(1-smoothCloud(.12,.32,Math.abs(g-b))),bright=Math.max(g,b);
-    r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;var observed=Math.min(r,g,b);if(observed<=.22)continue;
+    r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;var observed=Math.min(r,g,b);
     // Both display curves use smoothstep. Mapping their input ranges retains
     // the visible opacity in the shared thermal field without clipping cores.
-    var value=255*(.28+.72*Math.min(1,(observed-.22)/.63));
-    value=infrared[at]+Math.max(0,value-infrared[at])*visible[at+3]/255;
-    infrared[at]=infrared[at+1]=infrared[at+2]=Math.round(value);
+    var value=.28+.72*Math.max(0,Math.min(1,(observed-.22)/.63)),ia=infrared[at+3]/255,va=visible[at+3]/255,alpha=Math.max(ia,va);
+    var irCloud=smoothCloud(.28,1,infrared[at]/255)*ia,visCloud=smoothCloud(.22,.85,observed)*va,cover=Math.max(irCloud,visCloud);
+    if(!cover)value=ia?infrared[at]:0;
+    else if(!ia||visCloud>=irCloud&&alpha===va)value*=255;
+    else if(alpha===ia&&irCloud>=visCloud)value=infrared[at];
+    else value=255*(.28+.72*(.5-Math.sin(Math.asin(1-2*cover/alpha)/3)));
+    infrared[at]=infrared[at+1]=infrared[at+2]=Math.round(value);infrared[at+3]=Math.round(alpha*255);
    }
   }return sources;
  }
@@ -183,5 +193,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:8,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:9,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
 }));

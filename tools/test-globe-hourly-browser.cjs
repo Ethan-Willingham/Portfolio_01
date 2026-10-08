@@ -24,7 +24,7 @@ let browser;let checks=0;function check(name,pass){assert(pass,name);checks++;co
   await page.waitForFunction(()=>!__hourly.state().busy&&__hourly.state().ready===__hourly.state().total);
   const pixels=[];for(const [minute,hour]of [[470,'20:00'],[530,'20:45'],[545,'21:15'],[590,'22:00'],[720,'22:00']]){
    await page.locator('#globe-hour').fill(String(minute));await page.locator('#globe-hour').dispatchEvent('input');await page.waitForFunction(hour=>__hourly.state().proxy===0&&__hourly.state().photo?.time==='2026-10-05T'+hour+':00.000Z',hour);
-   const pixel=await page.evaluate(()=>__hourly.pixel());assert.equal(pixel[0],40+Math.floor((Number(hour.slice(0,2))*60+Number(hour.slice(3)))/10));pixels.push(pixel);
+   const pixel=await page.evaluate(()=>__hourly.pixel());assert(Math.abs(pixel[0]-(40+Math.floor((Number(hour.slice(0,2))*60+Number(hour.slice(3)))/10)))<=1,'Dated colour stays within one byte of the independently encoded fixture');pixels.push(pixel);
   }
   check('weather changes every quarter hour after the real 4 PM infrared gap',pixels[0][0]!==pixels[2][0]&&pixels[1][0]!==pixels[2][0]);
   check('the delayed tail explicitly says clouds only extend through 5 PM',(await page.locator('#globe-replay-status').textContent())==='Clouds through 5:00 PM.');

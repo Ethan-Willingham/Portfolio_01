@@ -13,7 +13,7 @@
   // The same numeric operations run in both paths. Browsers without worker
   // image decoding get short time slices instead of one multi-second task.
   async function run(steps){var part,started=performance.now();do{part=steps.next();if(onMain&&!part.done&&performance.now()-started>=6){await pause();started=performance.now();}}while(!part.done);return part.value;}
-  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261007-41','globe-clouds.js?v=20261008-43');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
+  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261007-41','globe-clouds.js?v=20261008-44');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
   function smooth(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
   function pack(visible,infrared,natural,out,start,end){
     for(var i=start||0,last=end===undefined?visible.length:end;i<last;i+=4){
@@ -28,7 +28,7 @@
   }
   async function read(blob,width){
     var bitmap=await createImageBitmap(blob,{resizeWidth:width,resizeHeight:width/2,resizeQuality:'high'}),canvas;
-    try{canvas=typeof document==='undefined'?new OffscreenCanvas(width,width/2):document.createElement('canvas');canvas.width=width;canvas.height=width/2;
+    try{canvas=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(width,width/2):document.createElement('canvas');canvas.width=width;canvas.height=width/2;
       var ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,width/2);
       if(!onMain)return ctx.getImageData(0,0,width,width/2).data;
       var pixels=new Uint8ClampedArray(width*width*2),started=performance.now();
@@ -68,7 +68,9 @@
   }
   function reduce(pixels,from,to){
     if(from===to)return pixels;
-    var original=typeof document==='undefined'?new OffscreenCanvas(from,from/2):document.createElement('canvas'),small=typeof document==='undefined'?new OffscreenCanvas(to,to/2):document.createElement('canvas');
+    // Use the same canvas path in the worker and its yielding fallback.
+    // Chrome's DOM and offscreen high-quality reducers differ on real imagery.
+    var original=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(from,from/2):document.createElement('canvas'),small=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(to,to/2):document.createElement('canvas');
     try{original.width=from;original.height=from/2;small.width=to;small.height=to/2;
       var ctx=original.getContext('2d'),image=ctx.createImageData(from,from/2);image.data.set(pixels);ctx.putImageData(image,0,0);
       var output=small.getContext('2d',{willReadFrequently:true});output.imageSmoothingQuality='high';output.drawImage(original,0,0,to,to/2);return output.getImageData(0,0,to,to/2).data;
