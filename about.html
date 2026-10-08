@@ -42,16 +42,28 @@
 
   /* ---- masthead (from about.html) ---- */
   .site-wrapper { padding-top: clamp(1rem, 3vw, 2rem); }
-  .about-head { margin-bottom: 2rem; }
+  .about-head { margin-bottom: clamp(2.25rem, 4vw, 3rem); }
   .about-title {
     margin: 0; font-family: var(--font-heading); font-style: italic; font-weight: 400;
     font-size: clamp(2.9rem, 6.5vw, 4.2rem); line-height: 1.02; letter-spacing: -0.01em;
     color: var(--text-bright);
   }
   .about-lead {
-    margin: 1.15rem 0 0; max-width: 40ch; font-family: var(--font-body);
-    font-size: clamp(1.18rem, 2.2vw, 1.34rem); line-height: 1.56; color: var(--text); text-wrap: pretty;
+    margin: 1rem 0 0; max-width: 42ch; font-family: var(--font-body);
+    font-size: clamp(1.18rem, 2.2vw, 1.34rem); line-height: 1.56; color: var(--text); text-wrap: balance;
   }
+
+  /* One heading and spacing scale for every section. */
+  .about-body { display: grid; gap: clamp(2.5rem, 5vw, 3.5rem); }
+  .about-section { min-width: 0; }
+  .about-body .about-section-title {
+    margin: 0 0 1rem; padding: 0; font-family: var(--font-heading);
+    font-size: clamp(1.45rem, 3.2vw, 1.7rem); font-weight: 400;
+    line-height: 1.25; letter-spacing: -0.01em; color: var(--text-bright);
+  }
+  .about-body .about-section-note { margin: -0.4rem 0 1rem; font-size: 0.96rem; line-height: 1.5; color: var(--text-dim); }
+  .about-notes { display: grid; gap: 1rem; font-size: 1rem; line-height: 1.65; }
+  .about-body .about-notes p { margin: 0; }
 
   /* ---- top utility row: Home (left) + GitHub mark (right) ---- */
   .lab-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -61,12 +73,7 @@
   .lab-gh:focus-visible { outline: none; color: var(--text-bright); box-shadow: 0 0 0 2px rgba(212,196,160,0.5); border-radius: 6px; }
   .lab-gh svg { width: 22px; height: 22px; display: block; }
 
-  /* ---- one labeled spec on its stage (from colophon, no column wrapper) ---- */
-  .lab-spec { margin: 2.8rem 0 0; }
-  .co-spec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem 0.8rem; margin: 0 0 0.7rem; }
-  .co-spec-name { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-bright); }
-  .co-spec-note { flex: 1 1 100%; font-size: 0.96rem; color: var(--text-dim); line-height: 1.5; margin: 0; }
-  .co-spec-note b { color: var(--text); font-weight: 600; }
+  /* ---- specimens ---- */
   .co-stage { background: rgba(0,0,0,0.13); border: 1px solid var(--rule); border-radius: 14px; padding: clamp(18px, 3.2vw, 28px); }
   .co-stage > :first-child { margin-top: 0; }
   .co-stage > :last-child  { margin-bottom: 0; }
@@ -124,10 +131,9 @@
   @media (max-width: 520px){ .co-face { grid-template-columns: 1fr; } .co-face-aa { grid-row: auto; } }
 
   /* ============ the commit river + tokens (from git-history.html) ============ */
-  .post-body .gh-title { margin: 0; font-weight: 400; }
-  .gh-wrap { margin: 0.9rem 0 2rem; }
+  .gh-wrap { margin: 0; }
   .gh-stage {
-    position: relative; width: 100%; height: clamp(380px, 64vh, 660px);
+    position: relative; width: 100%; height: clamp(340px, 54vw, 520px);
     border-radius: 10px; overflow: hidden; border: 1px solid var(--rule);
     background:
       radial-gradient(120% 90% at 78% 108%, rgba(232,149,78,0.10), rgba(232,149,78,0) 55%),
@@ -186,14 +192,13 @@
   .gh-card-del { color: #e08a7a; }
   .gh-card-link { margin-left: auto; color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; pointer-events: auto; }
   .gh-card-link:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
-  .gh-fuel { display: flex; flex-wrap: wrap; gap: 1.5rem 2.6rem; margin: 2.2em 0; padding: 1.5rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
-  .gh-stat { display: flex; flex-direction: column; gap: 0.3rem; }
-  .gh-stat .n { font-family: var(--font-heading); font-weight: 400; font-size: 2.15rem; line-height: 1; letter-spacing: -0.015em; color: var(--accent); }
+  .gh-fuel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.75rem, 3vw, 2rem); margin: 0 0 1.25rem; padding: 1.25rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .gh-stat { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+  .gh-stat .n { font-family: var(--font-heading); font-weight: 400; font-size: clamp(1.2rem, 5.8vw, 2.15rem); line-height: 1.1; letter-spacing: -0.015em; color: var(--accent); }
   .gh-stat .l { font-family: var(--font-body); font-size: 0.8rem; line-height: 1.35; color: var(--text-dim); letter-spacing: 0.01em; max-width: 24ch; }
   @media (max-width: 560px) {
     .gh-readout { font-size: 0.62rem; }
     .gh-hint { font-size: 0.64rem; }
-    .gh-stat .n { font-size: 1.7rem; }
   }
 
   /* ============ "Which AI built which page" attribution viz (from git-history.html) ============ */
@@ -209,7 +214,7 @@
     --ma-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --ma-flip: cubic-bezier(0.22, 0.9, 0.24, 1.04); /* the reorder glide: smooth, a whisper of overshoot */
   }
-  #ma-root { margin: 1.5rem 0 0; }
+  #ma-root { margin: 0; }
   .ma-minds { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.6rem; }
   .ma-mind { display: inline-flex; align-items: baseline; gap: 0.5rem; padding: 0.5rem 0.85rem; background: var(--ma-card); border: 1px solid var(--ma-hair); border-radius: 999px; box-shadow: var(--ma-shadow); }
   .ma-mind.is-minor { opacity: 0.5; }
@@ -379,57 +384,63 @@
 
     <header class="about-head fade-in">
       <h1 class="about-title">About</h1>
-      <p class="about-lead">I build games and interactive demos for fun, and write the articles I want to read.</p>
+      <p class="about-lead">I build games and interactive demos for&nbsp;fun, and write the articles I want to read.</p>
     </header>
 
     <main>
       <article>
-        <div class="post-body fade-in" style="animation-delay: 0.1s;">
+        <div class="post-body about-body fade-in" style="animation-delay: 0.1s;">
 
           <!-- ===== HOW IT'S MADE (from Every Push and Every Token) ===== -->
-          <h2 class="gh-title">Build history</h2>
+          <section class="about-section" aria-labelledby="history-title">
+            <h2 class="about-section-title" id="history-title">Build history</h2>
 
-          <div class="gh-wrap">
-            <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website">
-              <canvas id="gh-canvas"></canvas>
-              <div class="gh-readout" id="gh-readout"></div>
-              <div class="gh-topright">
-                <button class="gh-btn" id="gh-reset" title="Reset view" aria-label="Reset view">
-                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>
-                </button>
-                <button class="gh-btn" id="gh-fs" title="Fullscreen" aria-label="Toggle fullscreen">
-                  <svg class="gh-ic gh-ic-expand" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 6 V2.5 H6 M10 2.5 H13.5 V6 M13.5 10 V13.5 H10 M6 13.5 H2.5 V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <svg class="gh-ic gh-ic-compress" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6 2.5 V6 H2.5 M13.5 6 H10 V2.5 M10 13.5 V10 H13.5 M2.5 10 H6 V13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </button>
+            <div class="gh-wrap">
+              <div class="gh-stage" id="gh-stage" tabindex="0" aria-label="Interactive timeline of every commit to this website">
+                <canvas id="gh-canvas"></canvas>
+                <div class="gh-readout" id="gh-readout"></div>
+                <div class="gh-topright">
+                  <button class="gh-btn" id="gh-reset" title="Reset view" aria-label="Reset view">
+                    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>
+                  </button>
+                  <button class="gh-btn" id="gh-fs" title="Fullscreen" aria-label="Toggle fullscreen">
+                    <svg class="gh-ic gh-ic-expand" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 6 V2.5 H6 M10 2.5 H13.5 V6 M13.5 10 V13.5 H10 M6 13.5 H2.5 V10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg class="gh-ic gh-ic-compress" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6 2.5 V6 H2.5 M13.5 6 H10 V2.5 M10 13.5 V10 H13.5 M2.5 10 H6 V13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+                <div class="gh-hint" id="gh-hint">scroll to zoom &middot; drag to move &middot; hover a dot to read it</div>
+                <div class="gh-card" id="gh-card" role="status" aria-live="polite"></div>
               </div>
-              <div class="gh-hint" id="gh-hint">scroll to zoom &middot; drag to move &middot; hover a dot to read it</div>
-              <div class="gh-card" id="gh-card" role="status" aria-live="polite"></div>
             </div>
-          </div>
+          </section>
 
-          <h2 class="u-h2">Tokens</h2>
+          <section class="about-section" aria-labelledby="tokens-title">
+            <h2 class="about-section-title" id="tokens-title">Tokens</h2>
 
-          <div class="gh-fuel">
-            <div class="gh-stat"><span class="n" data-about-stat="tokens">34.1B</span><span class="l">tokens in total</span></div>
-            <div class="gh-stat"><span class="n" data-about-stat="peak">1.54B</span><span class="l">the busiest single day</span></div>
-            <div class="gh-stat"><span class="n" data-about-stat="cost">~$30,400</span><span class="l">at list prices, to date</span></div>
-          </div>
+            <div class="gh-fuel">
+              <div class="gh-stat"><span class="n" data-about-stat="tokens">34.1B</span><span class="l">tokens in total</span></div>
+              <div class="gh-stat"><span class="n" data-about-stat="peak">1.54B</span><span class="l">the busiest single day</span></div>
+              <div class="gh-stat"><span class="n" data-about-stat="cost">~$30,400</span><span class="l">at list prices, to date</span></div>
+            </div>
 
-          <p data-about-token-total>34,089,942,265 tokens in total: input, cache reads, cache writes, and output.</p>
-          <p data-about-token-mix>Most tokens are cached text the AI reads again as we work, including files and earlier messages. Since July 23, cache reads account for 96% of logged tokens and new output for 0.5%.</p>
+            <div class="about-notes">
+              <p data-about-token-total>34,089,942,265 tokens in total: input, cache reads, cache writes, and output.</p>
+              <p data-about-token-mix>Most tokens are cached text the AI reads again as we work, including files and earlier messages. Since July 23, cache reads account for 96% of logged tokens and new output for 0.5%.</p>
 
-          <p data-about-freshness>Updated October 7, 2026 from my Mac logs, with some usage from my PC. These totals cover all my projects. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>
+              <p data-about-freshness>Updated October 7, 2026 from my Mac logs, with some usage from my PC. These totals cover all my projects. The dollar figure uses API list prices, not my bill. <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/tools/ABOUT-DATA.md">Sources and calculation.</a></p>
+            </div>
+          </section>
 
-          <h2 class="u-h2">Which AI built which page</h2>
+          <section class="about-section" aria-labelledby="attribution-title">
+            <h2 class="about-section-title" id="attribution-title">Which AI built which page</h2>
 
-          <div id="ma-root"></div>
+            <div id="ma-root"></div>
+          </section>
 
           <!-- ===== WHAT IT'S MADE OF (from Colophon) ===== -->
-          <div class="lab-spec">
-            <div class="co-spec-head">
-              <span class="co-spec-name">Colors</span>
-              <p class="co-spec-note">The site has a dark green background and muted accent colors. Click a swatch to copy its color values.</p>
-            </div>
+          <section class="about-section" aria-labelledby="colors-title">
+            <h2 class="about-section-title" id="colors-title">Colors</h2>
+            <p class="about-section-note">The site has a dark green background and muted accent colors. Click a swatch to copy its color values.</p>
             <div class="co-stage">
               <div class="pal-wrap">
                 <div class="pal-band" id="palBand">
@@ -451,12 +462,10 @@
                 <div class="pal-pop" id="palPop" role="dialog" aria-label="Color details" hidden></div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="lab-spec">
-            <div class="co-spec-head">
-              <span class="co-spec-name">Fonts</span>
-            </div>
+          <section class="about-section" aria-labelledby="fonts-title">
+            <h2 class="about-section-title" id="fonts-title">Fonts</h2>
             <div class="co-faces">
               <div class="co-face">
                 <div class="co-face-aa" style="font-family:var(--font-heading); font-weight:700;">Aa</div>
@@ -477,7 +486,7 @@
                 <div class="co-face-role">Data, labels, citations, and code.</div>
               </div>
             </div>
-          </div>
+          </section>
 
         </div>
       </article>
