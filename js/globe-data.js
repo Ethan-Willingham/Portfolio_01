@@ -472,6 +472,33 @@
     return best;
   }
 
+  function auroraBlendAt(frames, instant) {
+    // Causal display crossfade, over ten minutes of replay time. Integrating
+    // the held selections also keeps overlapping updates continuous. This
+    // changes display weights only, never a recorded grid or its timestamps.
+    var end=utcTimestamp(instant).getTime(),window=10*MINUTE,start=end-window,weights=new Map();
+    var ordered=frames.filter(function(frame){return +frame.observation<=end;}).slice().sort(function(a,b){return a.forecast-b.forecast;});
+    var knots=[start,end];
+    ordered.forEach(function(frame){var t=+frame.observation;if(t>start&&t<end)knots.push(t);});
+    knots=Array.from(new Set(knots)).sort(function(a,b){return a-b;});
+    function fade(t){var x=Math.max(0,Math.min(1,(end-t)/window));return x*x*(3-2*x);}
+    for(var k=0;k<knots.length-1;k++){
+      var left=knots[k],right=knots[k+1],eligible=ordered.filter(function(frame){return +frame.observation<=left;}),cuts=[left,right];
+      // Between arrivals, only adjacent eligible forecast targets can exchange
+      // nearest status. Missing captures do not require invented samples.
+      for(var j=1;j<eligible.length;j++){
+        var middle=(+eligible[j-1].forecast+ +eligible[j].forecast)/2;
+        if(middle>left&&middle<right)cuts.push(middle);
+      }
+      cuts=Array.from(new Set(cuts)).sort(function(a,b){return a-b;});
+      for(var i=0;i<cuts.length-1;i++){
+        var frame=auroraFrameAt(eligible,new Date((cuts[i]+cuts[i+1])/2));
+        if(frame)weights.set(frame,(weights.get(frame)||0)+fade(cuts[i])-fade(cuts[i+1]));
+      }
+    }
+    return Array.from(weights,function(pair){return {frame:pair[0],weight:pair[1]};}).filter(function(part){return part.weight>0;});
+  }
+
   async function fetchAuroraArchive(frame, base, options) {
     return request(base+frame.file,options,async function(response){
       var bytes=await response.arrayBuffer();
@@ -578,7 +605,7 @@
     cachedPhotoDay: cachedPhotoDay, discardPhotoDay: discardPhotoDay, evictPhoto: evictPhoto,
     utcDate:utcDate, previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA, featherCoverage:featherCoverage, featherCoverageSteps:featherCoverageSteps,
     parseAurora: parseAurora, auroraFreshness: auroraFreshness, auroraAt: auroraAt,
-    parseAuroraArchive:parseAuroraArchive,parseAuroraManifest:parseAuroraManifest,auroraFrameAt:auroraFrameAt,fetchAuroraArchive:fetchAuroraArchive,
+    parseAuroraArchive:parseAuroraArchive,parseAuroraManifest:parseAuroraManifest,auroraFrameAt:auroraFrameAt,auroraBlendAt:auroraBlendAt,fetchAuroraArchive:fetchAuroraArchive,
     auroraVisibility: auroraVisibility, greatCircleMiles: greatCircleMiles, parseKp: parseKp
   };
 }));

@@ -52,12 +52,13 @@
     }
     return groups;
   }
-  function select(groups,grid){
+  function select(groups,grid,threshold){
+    if(threshold===undefined)threshold=8;
     var total=0;
     groups.forEach(function(group){
       var used=0;
       group.cells.forEach(function(cell){
-        if(!cell.neighbors.some(function(index){return grid[index]>8;}))return;
+        if(!cell.neighbors.some(function(index){return grid[index]>threshold;}))return;
         for(var row=0;row<ROWS-1;row++){
           var a=cell.vertex+row,b=a+ROWS;
           group.indices[used++]=a;group.indices[used++]=b;group.indices[used++]=a+1;

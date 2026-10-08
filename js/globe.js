@@ -77,7 +77,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v44');
+  text(byId('globe-version'),'v45');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -312,11 +312,13 @@
   var sunView={visibleFraction:1,fluxFraction:1},sunProjected=new THREE.Vector3(),cameraAim=new THREE.Vector3();
   var pinMarker = new THREE.Mesh(new THREE.RingGeometry(.014,.021,24),new THREE.MeshBasicMaterial({color:cssColor('--accent-hover'),side:THREE.DoubleSide}));
   pinMarker.visible=false; scene.add(pinMarker);
-  var auroraTexture = solidTexture(0,0,0), auroraMeshes = [];
+  var auroraRGBA=new Uint8Array(362*181*4),auroraTexture=configureTexture(new THREE.DataTexture(auroraRGBA,362,181,THREE.RGBAFormat)),auroraMeshes=[];
+  auroraTexture.wrapS=THREE.ClampToEdgeWrapping;
+  var auroraDisplay=[],auroraEmission=new WeakMap(),auroraDisplayGrid=new Float32Array(360*181);
   var auroraScaffold = aurora.scaffold();
   function buildAurora() {
     // Thin double-sided curtains have real depth, rise above the limb and are
-    // occluded by Earth. Their geographic footpoints sample the untouched grid.
+    // occluded by Earth. Their geographic footpoints follow the NOAA grid.
     auroraScaffold.forEach(function(group){
       var geometry=new THREE.BufferGeometry();
       ['position','foot','pattern','uv'].forEach(function(name){geometry.setAttribute(name,new THREE.BufferAttribute(group[name],name==='position'||name==='foot'?3:2));});
@@ -330,7 +332,7 @@
         fragmentShader:[
           'uniform sampler2D auroraMap; uniform vec3 sunDir; uniform float tick,strength; varying vec3 vFoot; varying vec2 vPattern,vUv;',
           'void main(){vec3 n=normalize(vFoot);float lon=atan(-n.z,n.x);vec2 gridUv=vec2((lon/6.2831853*360.0+181.5)/362.0,(asin(clamp(n.y,-1.0,1.0))/3.14159265*180.0+90.5)/181.0);',
-          'float p=texture2D(auroraMap,gridUv).r;float night=1.0-smoothstep(-.20,-.035,dot(n,sunDir));float probability=p*smoothstep(.10,.22,p);if(probability*night<.0001)discard;',
+          'float probability=texture2D(auroraMap,gridUv).r;float night=1.0-smoothstep(-.20,-.035,dot(n,sunDir));if(probability*night<.0001)discard;',
           'float h=vUv.y,angle=vPattern.x,phase=vPattern.y;float folds=sin(angle*9.0+phase+tick*.13)*.6+sin(angle*23.0-phase)*.25;',
           'float ray=angle*311.0+folds*3.0;float fine=.5+.5*sin(ray);fine=mix(fine,.5,smoothstep(.7,2.5,fwidth(ray)));float threads=.30+.70*pow(fine,2.0);',
           'float bands=.70+.30*sin(angle*61.0+phase+tick*.27);float tips=.58+.24*sin(angle*17.0+phase)+.12*sin(angle*43.0-phase);float fade=1.0-smoothstep(tips-.15,min(1.0,tips+.24),h);',
@@ -848,17 +850,29 @@
     }catch(_){}
     finally{if(detailController===controller)detailController=null;}
   }
-  function setForecast(value) {
-    if(forecast===value)return;
-    forecast=value;var rgba=new Uint8Array(362*181*4);
+  function setForecast(value,appearance) {
+    forecast=value;appearance=appearance||[{value:value,weight:1}];
+    if(appearance.length===auroraDisplay.length&&appearance.every(function(part,i){return part.value===auroraDisplay[i].value&&part.weight===auroraDisplay[i].weight;}))return;
+    auroraDisplay=appearance;auroraDisplayGrid.fill(0);
+    appearance.forEach(function(part){
+      var emission=auroraEmission.get(part.value);
+      if(!emission){
+        // Cache only the display bytes; the original NOAA float grid remains
+        // available for pins. This adds at most one byte per cached cell.
+        emission=new Uint8Array(part.value.grid.length);
+        for(var i=0;i<emission.length;i++){var p=part.value.grid[i],x=Math.max(0,Math.min(1,(p-10)/12));emission[i]=Math.round(p*x*x*(3-2*x)*255/100);}
+        auroraEmission.set(part.value,emission);
+      }
+      for(var j=0;j<emission.length;j++)auroraDisplayGrid[j]+=emission[j]*part.weight;
+    });
     // Duplicate the seam's neighbors instead of repeating a non-power-of-two
     // texture, which WebGL1 cannot wrap correctly.
     for(var lat=-90;lat<=90;lat++)for(var column=0;column<362;column++){
       var lon=(column+539)%360;
-      var offset=((lat+90)*362+column)*4;rgba[offset]=Math.round(value.grid[(lat+90)*360+lon]/100*255);rgba[offset+3]=255;
+      var offset=((lat+90)*362+column)*4;auroraRGBA[offset]=Math.round(auroraDisplayGrid[(lat+90)*360+lon]);auroraRGBA[offset+3]=255;
     }
-    auroraTexture.dispose();auroraTexture=configureTexture(new THREE.DataTexture(rgba,362,181,THREE.RGBAFormat));auroraTexture.wrapS=THREE.ClampToEdgeWrapping;
-    aurora.select(auroraScaffold,value.grid);
+    auroraTexture.needsUpdate=true;
+    aurora.select(auroraScaffold,auroraDisplayGrid,0);
     auroraMeshes.forEach(function(mesh,i){mesh.material.uniforms.auroraMap.value=auroraTexture;var geometry=mesh.geometry;geometry.index.needsUpdate=true;geometry.index.updateRange.offset=0;geometry.index.updateRange.count=auroraScaffold[i].count;geometry.setDrawRange(0,auroraScaffold[i].count);});updateAstronomy();
   }
   async function refreshWeather() {
@@ -893,9 +907,10 @@
       if(!live){
         var entry=data.auroraFrameAt(allAuroraFrames(),instant);
         if(!entry){forecast=null;return;}
-        var value=archiveCache.get(entry.file);
-        if(!value)value=await requestArchive(entry,signal);
-        if(generation===archiveGeneration&&!signal.aborted&&!live)setForecast(value);
+        var needed=data.auroraBlendAt(allAuroraFrames(),instant).map(function(part){return part.frame;});
+        if(!needed.some(function(frame){return frame.file===entry.file;}))needed.push(entry);
+        await Promise.allSettled(needed.map(function(frame){return requestArchive(frame,signal);}));
+        if(generation===archiveGeneration&&!signal.aborted&&!live)applyAuroraTime();
       }
     }catch(_){}
     finally{if(generation===archiveGeneration){archiveBusy=false;replayPendingAurora=false;updateAstronomy();updateLabels();announce();}}
@@ -931,13 +946,14 @@
       if(photo&&!photo.time)photo=null;
       replayPendingCloud=instant<=Date.now();decodeCachedSelection();
     }
-    if(live){forecast=liveForecast;return;}
-    var entry=data.auroraFrameAt(allAuroraFrames(),instant),value=entry&&archiveCache.get(entry.file);
-    if(value)setForecast(value);else{
-      var cached=data.auroraFrameAt(allAuroraFrames().filter(function(frame){return archiveCache.has(frame.file);}),instant);
-      if(cached)setForecast(archiveCache.get(cached.file));else forecast=null;
-      replayPendingAurora=!!entry;
-    }
+    if(live){if(liveForecast)setForecast(liveForecast);else forecast=null;return;}
+    applyAuroraTime();
+  }
+  function applyAuroraTime(){
+    var frames=allAuroraFrames(),entry=data.auroraFrameAt(frames,instant),cached=frames.filter(function(frame){return archiveCache.has(frame.file);}),selected=data.auroraFrameAt(cached,instant);
+    if(selected)setForecast(archiveCache.get(selected.file),data.auroraBlendAt(cached,instant).map(function(part){return {value:archiveCache.get(part.frame.file),weight:part.weight};}));
+    else forecast=null;
+    replayPendingAurora=!!entry&&(!archiveCache.has(entry.file)||data.auroraBlendAt(frames,instant).some(function(part){return !archiveCache.has(part.frame.file);}));
   }
   function updateReplayLabel(){
     updateLoadingProgress();
@@ -962,6 +978,7 @@
     replayAurora=frames.filter(function(entry){return entry.forecast>=day.start-120*60000&&entry.forecast<+day.end+120*60000&&entry.observation<=Date.now();});
     var firstAurora=data.auroraFrameAt(frames,day.start);
     if(firstAurora&&!replayAurora.some(function(entry){return entry.file===firstAurora.file;}))replayAurora.unshift(firstAurora);
+    data.auroraBlendAt(frames,day.start).forEach(function(part){if(!replayAurora.some(function(entry){return entry.file===part.frame.file;}))replayAurora.unshift(part.frame);});
     var lastAurora=data.auroraFrameAt(frames,day.end);
     if(lastAurora&&!replayAurora.some(function(entry){return entry.file===lastAurora.file;}))replayAurora.push(lastAurora);
     cloudMemo.retain(replayClouds.map(function(t){return t.toISOString();}));
