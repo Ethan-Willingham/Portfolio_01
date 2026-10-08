@@ -25,8 +25,8 @@ The owner's later curation left 25 works on view and retired 20. That completed
 production history contains 45 generated work IDs and 55 generation attempts.
 Groups four to ten added works 046 to 109. The eleventh group adds three works
 about formulaic AI language. The catalogue now has 208 phrases, 123 directions,
-112 generated work IDs and 194 lifetime image calls. There are 37 active works
-and 75 retired works.
+112 generated work IDs and 194 lifetime image calls. There are 34 active works
+and 78 retired works.
 The phrase bank includes the owner's four starting lines: "Slop", "A step below
 average", "Uncanny" and "Looks right, but wrong". The remaining lines range from
 short complaints to descriptions of familiar generated-image errors. They
@@ -563,11 +563,11 @@ an email collage, a deli wrapper and a finished greeting card. The wording is
 part of each object. It is satire about familiar language habits, not a claim
 that these phrases identify a particular model or prove AI authorship.
 
-| Work | Phrase | Direction | Attempts |
-|---|---|---|---|
-| 110 | I hope this email finds you well. | Inbox paste-up | 1 |
-| 111 | It's not just a sandwich. It's an experience. | Sandwich-wrapper still life | 1 |
-| 112 | Here's a more human version: | Greeting-card proof | 2 |
+| Work | Phrase | Direction | Attempts | Status |
+|---|---|---|---|---|
+| 110 | I hope this email finds you well. | Inbox paste-up | 1 | Retired by owner |
+| 111 | It's not just a sandwich. It's an experience. | Sandwich-wrapper still life | 1 | Retired by owner |
+| 112 | Here's a more human version: | Greeting-card proof | 2 | Retired by owner |
 
 Phrases p206 to p208 and three new styles follow the existing catalogue without
 renumbering or restoring retired work. The first two images passed all six
@@ -578,7 +578,11 @@ their prompts and the failed word check remain in the production record.
 
 The batch comparisons use retained works 001, 005, 025, 040, 045, 050, 065, 083,
 103 and 109, alongside the new pieces. The final contact sheet covers 110 to
-112. The three selected images passed their recorded six checks.
+112. The three selected images passed their recorded six checks, but the owner
+subsequently rejected the entire batch on October 7, 2026. Works 110 to 112 are
+retired from both the gallery and the picker. All four attempts remain in the
+production history; none is approved for reuse or replacement. The curation
+leaves 34 active works and 78 retired works, without renumbering.
 
 This run used four built-in image calls. The weekly account meter was 39% used
 at 2026-10-08T00:57:15.000Z before generation, and 40% used at
