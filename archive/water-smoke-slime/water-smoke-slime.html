@@ -132,14 +132,14 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p><time datetime="2026-10-07">Updated October 7, 2026.</time> Work is now focused on the greedy cup. Its water is calmer in the development version, but dropping a slime still does not start a complete drain.</p>
-        <p>The cup was skipping the step that measures particle density and pushes crowded particles apart. Its pressure calculation also produced a flow that the particles did not fully follow. The development version restores that density response and transfers the solved flow to the water.</p>
-        <p>Three short slime-drop tests kept every water particle finite and accounted for. In a repeat of the first layout, the fastest water motion fell by about 82%. Some small gaps remain, and this improvement has not yet made the cup work.</p>
+        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> The greedy cup is the only machine under development. Its larger pool holds about 68,000 water particles, with room for a bigger slime. It holds its water before the drop, but the drop still does not start a reliable drain.</p>
+        <p>The water had been skipping the step that measures particle density and pushes crowded particles apart. Restoring that step reduced the tangled strands. The slime also received three times the intended buoyancy because its force used the wrong time step. That is corrected in the development version.</p>
+        <p>A closer look at the lingering hole beneath the slime found empty regions still carrying water pressure. A new test treats those empty regions as cavities, with no invented air. The large hole closes in that test. This change is still being checked with the pipe and the moving slime.</p>
         <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-after-2026-10-07.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-after-2026-10-07.png" width="911" height="540" loading="lazy" alt="The development cup after a slime drop, with a nearly flat water surface and an empty lower tank."></picture>
-          <figcaption class="u-figure-cap">Development version, roughly four simulation seconds after one slime drop. The lower tank is still empty. <a href="/assets/images/water-machines/cup-before-2026-10-07.png">See the earlier version in the same test.</a></figcaption>
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-cavity-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-cavity-2026-10-08.png" width="911" height="540" loading="lazy" alt="A larger cup holding a blue slime, with coherent water beneath it and only a little water in the lower tank."></picture>
+          <figcaption class="u-figure-cap">Latest cavity test, after one slime drop. The large hole beneath the slime has closed, but the lower tank shows that drainage still fails. <a href="/assets/images/water-machines/cup-before-2026-10-07.png">Earlier cup and water.</a></figcaption>
         </figure>
-        <p>A separate test starts with the tube already full. It pulls real water out of the cup, then breaks with water remaining. Keeping that water column intact, and getting the slime to prime it, are the next checks. The other machines will wait until this cup works.</p>
+        <p>With its tube already full, a separate control now drains to the intake and keeps every water particle accounted for. Starting that flow from the slime drop remains unfinished. The other machines are parked until the cup works.</p>
       </section>
       <div class="toy-experiments" aria-label="Things to try">
         <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>
