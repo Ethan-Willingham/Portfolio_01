@@ -132,16 +132,14 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p><time datetime="2026-10-07">Updated October 7, 2026.</time> The greedy cup still doesn’t drain reliably in the development version. The current work is on pressure and water motion inside the pipes.</p>
-        <ul>
-          <li><strong>Passed in isolated tests:</strong> water at rest balances gravity. Moving water and its surface pass energy, packing and volume checks across three starting layouts. Halving the timestep changes kinetic energy by about 0.14% in that small test.</li>
-          <li><strong>GPU reference check passed:</strong> the pressure step matches an independent calculation across three starting layouts over 216 continuous steps with the existing water particles. A separate L-shaped pipe test passes its wall and energy checks with the particle positions held fixed.</li>
-          <li><strong>Pipe progress:</strong> smaller pressure cells keep the first moving pipe test below the deformation limit for a full second. Halving the timestep produces an energy difference equal to 2.49% of the starting energy, and its particle positions differ too much.</li>
-          <li><strong>Latest failures:</strong> water near the trapped-air passage still expands by 5.01%, above the 5% limit. A finer particle grid reaches 5.61% beside a pipe wall. The first GPU precision change also fails to preserve small movements.</li>
-          <li><strong>Working now:</strong> pressure constraints that detect variation inside a cell, and a separate GPU pass to preserve small particle movements. The earlier GPU motion test still misses its energy-accuracy limit.</li>
-          <li><strong>Larger cup:</strong> a layout with more water is prepared. Its flow and the effect of dropping a slime still need testing.</li>
-          <li><strong>Still unfinished:</strong> reliable priming and drainage, trapped-air coupling, and the fountain. These isolated checks haven’t established a working machine.</li>
-        </ul>
+        <p><time datetime="2026-10-07">Updated October 7, 2026.</time> Work is now focused on the greedy cup. Its water is calmer in the development version, but dropping a slime still does not start a complete drain.</p>
+        <p>The cup was skipping the step that measures particle density and pushes crowded particles apart. Its pressure calculation also produced a flow that the particles did not fully follow. The development version restores that density response and transfers the solved flow to the water.</p>
+        <p>Three short slime-drop tests kept every water particle finite and accounted for. In a repeat of the first layout, the fastest water motion fell by about 82%. Some small gaps remain, and this improvement has not yet made the cup work.</p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-after-2026-10-07.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-after-2026-10-07.png" width="911" height="540" loading="lazy" alt="The development cup after a slime drop, with a nearly flat water surface and an empty lower tank."></picture>
+          <figcaption class="u-figure-cap">Development version, roughly four simulation seconds after one slime drop. The lower tank is still empty. <a href="/assets/images/water-machines/cup-before-2026-10-07.png">See the earlier version in the same test.</a></figcaption>
+        </figure>
+        <p>A separate test starts with the tube already full. It pulls real water out of the cup, then breaks with water remaining. Keeping that water column intact, and getting the slime to prime it, are the next checks. The other machines will wait until this cup works.</p>
       </section>
       <div class="toy-experiments" aria-label="Things to try">
         <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>
@@ -168,7 +166,7 @@
   <script src="/js/liquid-wgpu.js?v=v28.176"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.12"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.13"></script>
   <script src="/js/water-smoke-slime-ui.js?v=5.0"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
