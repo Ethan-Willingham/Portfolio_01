@@ -1,4 +1,4 @@
-# Daylight Globe
+# Earth Now
 
 The globe combines dated NASA and EUMETSAT satellite imagery, calculated sunlight, historical city lights and NOAA's short-term aurora forecasts. Each source keeps its own clock. The time controls select actual dated images and saved forecast grids where available. The site remains static, with locally vendored Three.js r128 and no new runtime library. The opening view centres on the device location with browser permission; its controls remain visible. The rolling time slider is the only time selection control.
 
@@ -79,6 +79,8 @@ Full-detail cloud decoding, thermal correction, footprint feathering and satelli
 
 The loading screen covers the scene until local Earth, city lights, Moon and star assets are decoded, cloud imagery has settled into a source or labeled fallback, NOAA and archive checks have settled, the compact rolling replay has finished or reached its startup deadline, and the installed cloud texture has fully blended into a rendered frame. Its bar counts weighted completed work (clouds carry five of fourteen units, replay three); it is not a download-byte percentage. Initial time controls are visible and become active when loading finishes. Fullscreen remains usable during loading. Request failures settle instead of leaving the reader waiting for a source that is unavailable.
 
+The loading screen shows one current step, a small rotating activity ring and elapsed seconds. During replay preparation, it reports the actual number of prepared cloud frames. A step with no progress for eight seconds says it is still working. Neither animation nor elapsed time advances the completion bar. Feedback stops when the globe is ready or WebGL is unavailable. The page, homepage card and sharing metadata use the name Earth Now; the existing `daylight-globe.html` URL stays stable. Public copy distinguishes satellite observations from calculated Sun and Moon positions and from current or saved NOAA forecasts.
+
 ## Verification
 
 The location harness checks HTTP and direct-file loading, actual terrain and city-light GPU pixels, browser-granted centering, travel updates, denied permission, rounded storage, expired coordinates and late responses after keyboard, drag and wheel actions. It also checks enlarged fullscreen controls at 375 pixels in WebKit. The real-source proof loaded the local file in Chrome in 2.8 seconds and mobile WebKit in 2.3 seconds, including 11 available cloud hours, with all four astronomy assets ready. It used a controlled Chicago device position and actual shared cloud frames, then replayed the same location at night. These are observed fresh-context runs, not physical iPhone tests or a network-speed guarantee.
@@ -119,6 +121,8 @@ NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-hourly-browser.
 NODE_PATH=/path/to/playwright/node_modules SAFARI_MOBILE=1 node tools/test-globe-hourly-browser.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-browser.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-presentation.cjs
+NODE_PATH=/path/to/playwright/node_modules LOADING_ONLY=1 node tools/test-globe-presentation.cjs
+NODE_PATH=/path/to/playwright/node_modules SAFARI_MOBILE=1 LOADING_ONLY=1 node tools/test-globe-presentation.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-quality.cjs
 NODE_PATH=/path/to/playwright/node_modules SAFARI_MOBILE=1 node tools/test-globe-quality.cjs
 NODE_PATH=/path/to/playwright/node_modules node tools/test-globe-sun.cjs

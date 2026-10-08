@@ -1,4 +1,4 @@
-/* Daylight Globe: visible controls beside the sky. */
+/* Earth Now: visible controls beside the sky. */
 .post-body.fade-in { animation: none; opacity: 1; transform: none; }
 .post-header { margin-bottom: 1.6rem; }
 .globe-wrapper {
@@ -17,10 +17,16 @@
 .globe-loading { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; color: var(--text-dim); font: .85rem var(--font-body); background: var(--globe-space); }
 .globe-loading-inner { width: min(240px, 65vw); text-align: center; }
 .globe-loading-inner p { margin: 0 0 .8rem !important; font-size: .85rem; }
+.globe-loading-heading { display: flex; align-items: center; justify-content: center; gap: .55rem; }
+.globe-loading-activity { flex: 0 0 auto; width: .8rem; height: .8rem; border: 1px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; animation: globe-loading-spin 1.2s linear infinite; }
+.globe-loading-detail { display: flex; justify-content: space-between; gap: .75rem; margin-top: .65rem; min-height: 1.5em; color: var(--text-faint); font: .7rem/1.5 var(--font-body); text-align: left; }
+#globe-loading-elapsed { margin-left: auto; white-space: nowrap; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+@keyframes globe-loading-spin { to { transform: rotate(360deg); } }
 .globe-loading progress { display: block; width: 100%; height: 5px; appearance: none; border: 0; border-radius: 0; background: var(--rule); color: var(--accent); }
 .globe-loading progress::-webkit-progress-bar { background: var(--rule); }
 .globe-loading progress::-webkit-progress-value { background: var(--accent); transition: width .2s; }
 .globe-loading progress::-moz-progress-bar { background: var(--accent); }
+.globe-loading [hidden] { display: none; }
 .is-ready .globe-loading { display: none; }
 .globe-info { position: absolute; top: auto; bottom: 12px; left: 16px; right: 16px; font-family: var(--font-body); font-size: .72rem; color: var(--text-dim); line-height: 1.45; pointer-events: none; }
 .globe-info span { background: color-mix(in srgb, var(--globe-space) 82%, transparent); padding: .15rem .35rem; border-radius: 2px; box-decoration-break: clone; }

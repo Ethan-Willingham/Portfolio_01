@@ -1,4 +1,4 @@
-# Daylight Globe astronomy
+# Earth Now astronomy
 
 `js/globe-math.js` provides rendering-independent functions in `window.GlobeMath` and CommonJS. It adds no runtime library, remote dependency or fixed DST table.
 

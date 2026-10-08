@@ -1,4 +1,4 @@
-/* Daylight Globe. Astronomy and data parsing have independent numeric tests.
+/* Earth Now. Astronomy and data parsing have independent numeric tests.
    See docs/DAYLIGHT_GLOBE.md for sources, bounds and the browser harness. */
 (function () {
   'use strict';
@@ -17,21 +17,32 @@
   var loading = true, loadingStarted=performance.now(), loadingJobsStarted = false, loaded = {}, loadWeights = {base:1,night:1,moon:1,stars:1,clouds:5,aurora:1,history:1,replay:3};
   var cloudFailure = '', starCatalog = null, starField = null, starDate = NaN;
   var loadingLabel = byId('globe-loading-label'), loadingProgress = byId('globe-loading-progress');
+  var loadingDetail = byId('globe-loading-detail'), loadingElapsed = byId('globe-loading-elapsed');
+  var loadingTimer = null, loadingLastValue = 0, loadingLastChange = loadingStarted;
   function settleLoad(kind) {
     loaded[kind]=true;
     updateLoadingProgress();
-    text(loadingLabel,!loaded.clouds?'Loading clouds':!loaded.stars?'Loading stars':!loaded.replay?'Preparing replay':'Preparing the view');
   }
   function updateLoadingProgress(){
     if(!loading)return;
+    var now=performance.now(),ready=replayClouds?replayClouds.filter(cloudPrepared).length:0;
     var value=Object.keys(loaded).reduce(function(total,key){return total+loadWeights[key];},0);
-    if(!loaded.replay&&replayClouds&&replayClouds.length)value+=loadWeights.replay*replayClouds.filter(cloudPrepared).length/replayClouds.length;
+    if(!loaded.replay&&replayClouds&&replayClouds.length)value+=loadWeights.replay*ready/replayClouds.length;
+    if(value!==loadingLastValue){loadingLastValue=value;loadingLastChange=now;}
     loadingProgress.value=value;
     loadingProgress.setAttribute('aria-valuetext',Math.round(value/14*100)+'% of preparation complete');
+    var label=!loaded.base||!loaded.night||!loaded.moon?'Loading Earth and Moon':!loaded.stars?'Loading stars':!loaded.clouds?'Loading satellite clouds':!loaded.aurora?'Checking aurora forecast':!loaded.history?'Checking weather history':!loaded.replay?'Preparing 12-hour replay':'Rendering the view';
+    text(loadingLabel,label);
+    text(loadingDetail,!loaded.replay&&replayClouds&&replayClouds.length?ready+' / '+replayClouds.length+' cloud frames':now-loadingLastChange>=8000?'Still working on this step':'');
+    text(loadingElapsed,Math.floor((now-loadingStarted)/1000)+'s');
+  }
+  function stopLoadingFeedback(){
+    clearInterval(loadingTimer);loadingTimer=null;
+    container.querySelector('.globe-loading-activity').hidden=true;
   }
   function finishLoading() {
     if(!loading||fetchingPhoto||replayBusy||Object.keys(loadWeights).some(function(key){return !loaded[key];})||photo&&photoMix<1)return;
-    loading=false;explore.querySelectorAll('input,button').forEach(function(control){control.disabled=false;});returnButton.disabled=false;container.classList.remove('is-loading');container.classList.add('is-ready');container.setAttribute('aria-busy','false');warmDayTimeline();
+    stopLoadingFeedback();loading=false;explore.querySelectorAll('input,button').forEach(function(control){control.disabled=false;});returnButton.disabled=false;container.classList.remove('is-loading');container.classList.add('is-ready');container.setAttribute('aria-busy','false');warmDayTimeline();
   }
   var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   var dateFormatter = new Intl.DateTimeFormat(undefined, {month:'short',day:'numeric',timeZone:'UTC'});
@@ -66,7 +77,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v41');
+  text(byId('globe-version'),'v42');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -175,8 +186,10 @@
   });
   byId('globe-pin-close').addEventListener('click',function () { setPin(null); container.focus({preventScroll:true}); });
   function unavailable(message) {
+    stopLoadingFeedback();
     cloudDescription=message; text(dataLine,'You can still follow the source links below.');
     text(loadingLabel,'Interactive globe unavailable');
+    text(loadingDetail,message);loadingElapsed.hidden=true;
     explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;container.setAttribute('aria-busy','false');loadingProgress.hidden=true;
     byId('globe-fullscreen').hidden = true; byId('globe-fullscreen').disabled = true;
     container.removeAttribute('tabindex');container.setAttribute('aria-label','Earth globe unavailable');
@@ -373,6 +386,7 @@
     finally{clearTimeout(timer);settleLoad('stars');}
   }
   explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;
+  updateLoadingProgress();loadingTimer=setInterval(updateLoadingProgress,1000);
   loadLocal('assets/images/earth.jpg','base');loadLocal('assets/images/earth-night-2016.jpg','night');loadLocal('assets/images/moon.jpg','moon');loadStars();
   function nearestOrbitAngle(angle,current) {
     return current+Math.atan2(Math.sin(angle-current),Math.cos(angle-current));

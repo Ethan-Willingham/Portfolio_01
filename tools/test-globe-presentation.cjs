@@ -5,17 +5,21 @@
    TARGETED=1 skips the full matrix for loading, cache and presentation regressions.
    NATIVE_ONLY=1 runs the real native-fullscreen Escape regression alone.
    MOBILE_ONLY=1 runs phone, short-landscape and enlarged-text panel checks.
+   LOADING_ONLY=1 runs delayed loading, warm caches and unavailable sources.
+   SAFARI_MOBILE=1 runs loading checks in touch-enabled mobile WebKit.
    DUMP=/absolute/folder writes evidence. All renderer hooks are private to the
    owned local server. Chrome for Testing and that server close in finally. */
 'use strict';
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const zlib = require('node:zlib'), crypto = require('node:crypto');
-const {chromium} = require('playwright');
+const {chromium,webkit} = require('playwright');
 const root = path.resolve(__dirname, '..');
 const dump = process.env.DUMP || '/Users/ethan/Portfolio_01/research/daylight-live/sun-polish/presentation-browser';
 const realOnly = process.env.REAL_ONLY === '1', real = realOnly || process.env.REAL_DATA === '1';
 const nativeOnly = process.env.NATIVE_ONLY === '1';
 const mobileOnly = process.env.MOBILE_ONLY === '1';
+const loadingOnly = process.env.LOADING_ONLY === '1';
+const safariMobile = process.env.SAFARI_MOBILE === '1';
 const fixedNow = '2026-10-05T03:10:00Z';
 const checks=[], evidence=[], errors=[], requests=[];
 fs.mkdirSync(dump,{recursive:true});
@@ -24,7 +28,7 @@ const hooks = `
 window.__globePresentation = {
  state:function(){
   var clip=sunBody.position.clone().project(camera),ray=sunBody.position.clone().sub(camera.position);
-  return {loading:loading,loaded:Object.assign({},loaded),progress:loadingProgress.value,progressMax:loadingProgress.max,
+  return {loading:loading,loaded:Object.assign({},loaded),progress:loadingProgress.value,progressMax:loadingProgress.max,feedbackActive:loadingTimer!==null,
    baseState:baseState,photo:photo,photoBusy:fetchingPhoto,photoMix:photoMix,cloudFailure:cloudFailure,
    naturalEnabled:earthMaterial.uniforms.naturalEnabled.value,thermalEnabled:earthMaterial.uniforms.thermalEnabled.value,
    forecast:forecast?{observation:forecast.observation.toISOString(),forecast:forecast.forecast.toISOString(),historical:!!forecast.historical}:null,
@@ -37,6 +41,7 @@ window.__globePresentation = {
    aurora:hasForecast()?'Aurora available':'Aurora unavailable',clock:clock.textContent};
  },
  frameSun:frameSun,
+ ageLoadingStep:function(){loadingLastChange=performance.now()-9000;updateLoadingProgress();},
  earthBounds:function(){
   var positions=earth.geometry.getAttribute('position'),point=new THREE.Vector3(),bounds={left:Infinity,right:-Infinity,top:Infinity,bottom:-Infinity};
   for(var i=0;i<positions.count;i++){point.fromBufferAttribute(positions,i).applyMatrix4(earth.matrixWorld).project(camera);bounds.left=Math.min(bounds.left,point.x);bounds.right=Math.max(bounds.right,point.x);bounds.top=Math.min(bounds.top,point.y);bounds.bottom=Math.max(bounds.bottom,point.y);}
@@ -71,6 +76,9 @@ const fixture=JSON.parse(fs.readFileSync(path.join(root,'tools/fixtures/daylight
 fixture['Observation Time']='2026-10-05T03:00:00Z';fixture['Forecast Time']='2026-10-05T03:40:00Z';
 async function routes(context,options={}){
  if(options.real)return;
+ await context.route('https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/globe-clouds/**',route=>route.fulfill({contentType:'application/json',body:'{}'}));
+ await context.route('**/assets/data/globe-hourly-catalog.json*',route=>route.fulfill({contentType:'application/json',body:'{}'}));
+ await context.route('**/assets/data/globe-cloud-catalog.json*',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({version:1,source:'https://view.eumetsat.int/geoserver/ows',layers:['mumi:wideareacoverage_rgb_natural','mumi:worldcloudmap_ir108'],start:'2026-10-04T21:00:00Z',end:'2026-10-05T03:00:00Z',step:10800000,checkedAt:fixedNow})}));
  await context.route('https://view.eumetsat.int/**',async route=>{
   const q=new URL(route.request().url()).searchParams;
   if(q.get('request')==='GetCapabilities')return route.fulfill({contentType:'text/xml',body:capabilities});
@@ -138,29 +146,49 @@ async function matrix(browser,isReal){
 }
 async function loadingChecks(browser){
  let releaseCloud;const cloudGate=new Promise(resolve=>{releaseCloud=resolve;});
- const context=await browser.newContext({viewport:{width:1440,height:900},timezoneId:'America/Chicago'});await routes(context,{cloudGate});
+ const context=await browser.newContext({viewport:safariMobile?{width:375,height:812}:{width:1440,height:900},isMobile:safariMobile,hasTouch:safariMobile,deviceScaleFactor:safariMobile?2:1,timezoneId:'America/Chicago'});await routes(context,{cloudGate});
  const page=await context.newPage();listen(page,'deferred-cloud');await page.clock.setFixedTime(new Date(fixedNow));
  let releaseDecode,decodeReleased=false;
  await page.exposeFunction('__cloudDecodeGate',()=>decodeReleased?Promise.resolve():new Promise(resolve=>{releaseDecode=resolve;}));
- await page.addInitScript(()=>{const create=window.createImageBitmap.bind(window);window.createImageBitmap=async function(blob,...args){if(blob.type==='image/png'&&!window.__decodeDelayed){window.__decodeDelayed=true;await window.__cloudDecodeGate();}return create(blob,...args);};});
+ await page.addInitScript(()=>{
+  const create=window.createImageBitmap.bind(window),OriginalWorker=window.Worker;
+  window.createImageBitmap=async function(blob,...args){if(blob.type==='image/png'&&!window.__decodeDelayed){window.__decodeDelayed=true;await window.__cloudDecodeGate();}return create(blob,...args);};
+  window.Worker=class extends OriginalWorker{set onmessage(handler){super.onmessage=async function(event){if(event.data.result?.images&&!window.__decodeDelayed){window.__decodeDelayed=true;await window.__cloudDecodeGate();}handler.call(this,event);};}};
+ });
  await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__globePresentation&&['base','night','moon','stars'].every(k=>__globePresentation.state().loaded[k]));
  const pending=await state(page),over=await page.locator('.globe-loading').evaluate(el=>{const r=el.getBoundingClientRect(),canvas=document.querySelector('#globe-container canvas').getBoundingClientRect();return {top:document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)?.closest('.globe-loading')===el,contains:r.left<=canvas.left&&r.top<=canvas.top&&r.right>=canvas.right&&r.bottom>=canvas.bottom};});
  check('local textures can be ready while decoded clouds are still pending',pending.baseState==='ready'&&!pending.photo&&pending.loading&&pending.progress<pending.progressMax,pending);
  check('pending-cloud progress overlay stays above the entire canvas',await page.locator('.globe-loading').isVisible()&&over.top&&over.contains,over);await capture(page,'loading-before-cloud-response');
+ await page.waitForFunction(()=>__globePresentation.state().loaded.aurora&&__globePresentation.state().loaded.history);
+ const held=await state(page),elapsedBefore=Number((await page.locator('#globe-loading-elapsed').textContent()).replace('s',''));
+ const spinBefore=await page.locator('.globe-loading-activity').evaluate(el=>getComputedStyle(el).transform);
+ await page.waitForTimeout(1350);
+ check('elapsed seconds advance while the completion bar waits for actual work',Number((await page.locator('#globe-loading-elapsed').textContent()).replace('s',''))>elapsedBefore&&(await state(page)).progress===held.progress);
+ check('small activity ring continues during a stalled cloud response',await page.locator('.globe-loading-activity').evaluate((el,before)=>getComputedStyle(el).animationPlayState==='running'&&getComputedStyle(el).transform!==before,spinBefore));
+ check('loading names the pending satellite step',await page.locator('#globe-loading-label').textContent()==='Loading satellite clouds');
+ await page.evaluate(()=>__globePresentation.ageLoadingStep());
+ check('a slow step gives an explanation without inventing progress',await page.locator('#globe-loading-detail').textContent()==='Still working on this step'&&(await state(page)).progress===held.progress);
+ check('page title and sharing titles agree',await page.evaluate(()=>[document.title,document.querySelector('meta[property="og:title"]').content,document.querySelector('meta[name="twitter:title"]').content].every(title=>title===document.querySelector('h1').textContent)));
  const fsHit=await page.locator('#globe-fullscreen').evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2));});
  check('fullscreen entry remains clickable while loading',fsHit);
  if(fsHit){await page.locator('#globe-fullscreen').click();await page.waitForTimeout(150);check('fullscreen loading preserves the pending-cloud barrier',(await state(page)).loading&&await page.locator('.globe-loading').isVisible());await capture(page,'loading-fullscreen-cloud-response');}
  releaseCloud();await page.waitForFunction(()=>window.__decodeDelayed);await page.waitForTimeout(100);const decoding=await state(page);
- check('successful PNG response does not end loading before decode',decoding.loading&&!decoding.photo&&await page.locator('.globe-loading').isVisible(),decoding);await capture(page,'loading-cloud-decode');
+ check('decoded worker output does not end loading before installation',decoding.loading&&!decoding.photo&&await page.locator('.globe-loading').isVisible(),decoding);await capture(page,'loading-cloud-decode');
  decodeReleased=true;if(releaseDecode)releaseDecode();await ready(page);const done=await state(page);
  check('loading ends only after cloud installation and blend',done.photo?.source==='EUMETSAT'&&done.photoMix===1&&done.progress===done.progressMax&&!await page.locator('.globe-loading').isVisible(),done);
+ check('loading feedback timer stops when the view is ready',!done.feedbackActive);
  const coldRequests=requests.filter(r=>r.kind==='cloud').length;await page.reload({waitUntil:'domcontentloaded'});await ready(page);const warm=await state(page),warmRequests=requests.filter(r=>r.kind==='cloud').length;
- check('warm reload reuses exact cached cloud bytes',warm.photo?.time===done.photo.time&&warmRequests===coldRequests,{coldRequests,warmRequests});
+ check('warm reload restores the same dated cloud view and finishes loading',warm.photo?.time===done.photo.time&&!warm.loading&&!warm.feedbackActive,{coldRequests,warmRequests});
+ if(!safariMobile)check('Chrome warm reload reuses exact cached cloud bytes',warmRequests===coldRequests,{coldRequests,warmRequests});
  evidence.push({loading:{pending,over,decoding,done,warm}});await context.close();
  const failed=await browser.newContext({viewport:{width:375,height:812},timezoneId:'America/Chicago'});await routes(failed,{failed:true});const failPage=await failed.newPage();listen(failPage,'failed-cloud');await failPage.clock.setFixedTime(new Date(fixedNow));const began=Date.now();await failPage.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(failPage);const failState=await state(failPage);
  check('empty cloud and daily sources settle to truthful unavailable text',!failState.photo&&failState.status==='Clouds unavailable'&&failState.aurora==='Aurora unavailable'&&!failState.loading&&Date.now()-began<20000,failState);await capture(failPage,'failed-cloud-reference');evidence.push({failedSource:failState});await failed.close();
  const noStars=await browser.newContext({viewport:{width:768,height:900},timezoneId:'America/Chicago'});await routes(noStars);await noStars.route('**/assets/data/stars-hyg-v41.bin',route=>route.fulfill({status:404,contentType:'text/plain',body:'Catalog unavailable'}));const noStarPage=await noStars.newPage();listen(noStarPage,'missing-catalog');await noStarPage.clock.setFixedTime(new Date(fixedNow));await noStarPage.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(noStarPage);const noStarState=await state(noStarPage),noStarPixels=await noStarPage.evaluate(()=>__globePresentation.pixelVisibility('stars'));check('missing catalog settles loading and reports its unavailable state',!noStarState.loading&&noStarState.data.includes('Star catalog unavailable'),noStarState);check('missing catalog does not replace measured stars with invented points',noStarState.starCount===0&&noStarState.pointCount===0&&noStarPixels.changed===0,noStarPixels);await noStarPage.locator('.globe-sources summary').click();await capture(noStarPage,'missing-catalog-sources');evidence.push({missingCatalog:noStarState,pixels:noStarPixels});await noStars.close();
+ const unsupported=await browser.newContext({viewport:{width:375,height:812}});await unsupported.route('**/js/vendor/three-r128.min.js',route=>route.fulfill({contentType:'text/javascript',body:''}));const unsupportedPage=await unsupported.newPage();listen(unsupportedPage,'unavailable-renderer');await unsupportedPage.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html');
+ check('unavailable renderer stops activity and explains the failure',await unsupportedPage.evaluate(()=>document.querySelector('.globe-loading-activity').hidden&&document.querySelector('#globe-loading-progress').hidden&&document.querySelector('#globe-loading-elapsed').hidden&&document.querySelector('#globe-loading-detail').textContent==='The interactive globe could not load.'&&document.querySelector('#globe-container').getAttribute('aria-busy')==='false'));
+ check('failure state removes the progress bar from the screen',!await unsupportedPage.locator('#globe-loading-progress').isVisible());
+ check('long title and failure message fit a phone viewport',await unsupportedPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await capture(unsupportedPage,'unavailable-renderer-phone');await unsupported.close();
 }
 async function reducedResolutionCheck(browser){
  const before=requests.length,context=await browser.newContext({viewport:{width:1440,height:900},timezoneId:'America/Chicago'});await routes(context,{highResolutionIRFails:true});const page=await context.newPage();listen(page,'reduced-cloud-detail');await page.clock.setFixedTime(new Date(fixedNow));await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);const s=await state(page),attempts=requests.slice(before);
@@ -233,8 +261,9 @@ let browser;
 (async()=>{
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const startSources=hashes();
  try{
-  browser=await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:process.env.HEADFUL!=='1'});
-  if(mobileOnly)await mobilePanelsCheck(browser);
+  browser=safariMobile?await webkit.launch({headless:true}):await chromium.launch({executablePath:'/Users/ethan/.local/bin/agent-chrome-for-testing',headless:process.env.HEADFUL!=='1'});
+  if(loadingOnly)await loadingChecks(browser);
+  else if(mobileOnly)await mobilePanelsCheck(browser);
   else if(nativeOnly)await nativeFullscreenCheck(browser);
   else{if(!realOnly){if(process.env.TARGETED!=='1'){await matrix(browser,false);await mobilePanelsCheck(browser);}await loadingChecks(browser);await reducedResolutionCheck(browser);await damagedRetryRecoveryCheck(browser);await infraredOnlyCheck(browser);await enlargedLandscapeCheck(browser);await nativeFullscreenCheck(browser);}if(real)await matrix(browser,true);}
   check('no JavaScript, shader or invalid-texture errors',errors.length===0,errors);

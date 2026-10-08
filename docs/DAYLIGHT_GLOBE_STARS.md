@@ -1,4 +1,4 @@
-# Daylight Globe: measured stars
+# Earth Now: measured stars
 
 The sky contains 5,070 actual catalog stars with apparent visual magnitude 6.0 or brighter. It has no added stars or simulated Milky Way band. The uneven distribution comes from the catalog, including real groupings along the Galactic plane. Points are drawn at a readable size; their disk sizes are display choices, not angular diameters.
 
