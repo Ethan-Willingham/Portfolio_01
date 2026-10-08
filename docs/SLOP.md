@@ -25,7 +25,7 @@ The owner's later curation left 25 works on view and retired 20. That completed
 production history contains 45 generated work IDs and 55 generation attempts.
 Groups four to ten added works 046 to 109. After the second picker curation,
 the catalogue has 205 phrases, 120 directions, 109 generated work IDs and
-190 lifetime image calls. There are 39 active works and 70 retired works.
+190 lifetime image calls. There are 34 active works and 75 retired works.
 The phrase bank includes the owner's four starting lines: "Slop", "A step below
 average", "Uncanny" and "Looks right, but wrong". The remaining lines range from
 short complaints to descriptions of familiar generated-image errors. They
@@ -306,7 +306,7 @@ the same window.
 | 068 | Shop local | Main-street photograph | Complete, 1 attempt |
 | 069 | Pickup for all restaurants | Delivery-kitchen door | Complete, 2 attempts |
 | 070 | Artist quality | Paint-set packaging | Retired by owner, 2 attempts |
-| 071 | Limited edition | Gig-poster wall | Complete, 2 attempts |
+| 071 | Limited edition | Gig-poster wall | Retired by owner, 2 attempts |
 | 072 | Negative prompt: ugly | Charcoal portrait | Retired by owner, 2 attempts |
 | 073 | The marble did not fight back | Marble sculpture | Retired by owner, 2 attempts |
 | 074 | Viewing by appointment | Gallery painting | Retired by owner, 2 attempts |
@@ -356,7 +356,7 @@ works used 64 image calls. The weekly meter read **25% used** at
 | 088 | Borrowed 48,213 times | Library due-date slip | Retired by owner, 2 attempts |
 | 089 | For my medical record only | Consent form | Retired by owner, 2 attempts |
 | 090 | Meet our farmers | Produce-aisle sign | Retired by owner, 1 attempt |
-| 091 | Today's special | Chalkboard menu | Complete, 1 attempt |
+| 091 | Today's special | Chalkboard menu | Retired by owner, 1 attempt |
 | 092 | Please submit each work separately | Carbon-copy form | Retired by owner, 3 attempts |
 | 093 | Painting survived the camera | Portrait miniature | Retired by owner, 1 attempt |
 | 094 | Smooth used to mean skill | Academic oil painting | Retired by owner, 2 attempts |
@@ -376,7 +376,7 @@ works used 82 image calls. The weekly meter read **28% used** at
 
 | Work | Phrase | Direction | Status |
 |---|---|---|---|
-| 096 | My grandmother | Demonstration grid | Complete, 9 unedited runs |
+| 096 | My grandmother | Demonstration grid | Retired by owner, 9 unedited runs |
 | 097 | A portrait of the artist | Demonstration grid | Retired by owner, 9 unedited runs |
 | 098 | The most beautiful painting in the world | Demonstration grid | Retired by owner, 9 unedited runs |
 | 099 | Something no one has ever seen | Demonstration grid | Retired by owner, 9 unedited runs |
@@ -407,9 +407,9 @@ works used 118 image calls. The weekly meter read **34% used** at
 | 102 | We count every tooth | Clinic window poster | Retired by owner, 1 attempt |
 | 103 | Full set | Salon wall photograph | Complete, 2 attempts |
 | 104 | Packed house | Show poster | Complete, 2 attempts |
-| 105 | Move-in ready | Builder's billboard | Complete, 2 attempts |
+| 105 | Move-in ready | Builder's billboard | Retired by owner, 2 attempts |
 | 106 | Test rides available | Shop-window poster | Retired by owner, 1 attempt |
-| 107 | Piano lessons, all ages | Window decal | Complete, 2 attempts |
+| 107 | Piano lessons, all ages | Window decal | Retired by owner, 2 attempts |
 | 108 | Design approved by client | Tattoo-station photograph | Retired by owner, 2 attempts |
 | 109 | Everything in its place | Catalog page | Complete, 1 attempt |
 
@@ -482,6 +482,15 @@ picker. The catalogue and gallery script cache versions advance to 5; the
 picker script advances to 2. The generated sources and production history
 remain recorded, including retired works. No new image calls were needed
 for curation or publication.
+
+### Further picker curation
+
+The owner then requested removal and publication of five more works: 071
+(Limited edition), 091 (Today's special), 096 (My grandmother), 105
+(Move-in ready) and 107 (Piano lessons, all ages). Their retirements were
+recorded at 2026-10-08T00:52:59Z. This leaves 34 active works and 75 retired
+works. All four demonstration grids are now retired; their nine-source
+records remain intact. The catalogue cache version advances to 6.
 
 ### Current production rules
 

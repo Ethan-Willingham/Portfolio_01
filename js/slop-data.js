@@ -5889,7 +5889,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 2,
         "usage": null,
         "costUsd": null,
@@ -5977,7 +5977,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T20:37:34.660Z",
         "selectedAttempt": 2
       },
-      "group": 6
+      "group": 6,
+      "retirement": {
+        "retiredAt": "2026-10-08T00:52:59.000Z",
+        "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
+        "reviewId": "owner-picker-2026-10-07-final-five"
+      }
     },
     {
       "id": "072",
@@ -7884,7 +7889,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 1,
         "usage": null,
         "costUsd": null,
@@ -7933,7 +7938,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-07T22:10:14.044Z",
         "selectedAttempt": 1
       },
-      "group": 8
+      "group": 8,
+      "retirement": {
+        "retiredAt": "2026-10-08T00:52:59.000Z",
+        "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
+        "reviewId": "owner-picker-2026-10-07-final-five"
+      }
     },
     {
       "id": "092",
@@ -8393,7 +8403,7 @@ window.SLOP_DATA = {
         "expectedRuns": 9,
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 9,
         "usage": null,
         "costUsd": null,
@@ -8850,6 +8860,11 @@ window.SLOP_DATA = {
           "note": "Code arranged all nine full source images in creation order, with contain scaling and a plain caption band. No source was cropped, retouched, replaced or rerolled."
         },
         "recordedAt": "2026-10-07T22:49:30.198Z"
+      },
+      "retirement": {
+        "retiredAt": "2026-10-08T00:52:59.000Z",
+        "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
+        "reviewId": "owner-picker-2026-10-07-final-five"
       }
     },
     {
@@ -10814,7 +10829,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 2,
         "usage": null,
         "costUsd": null,
@@ -10902,7 +10917,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-08T00:09:23.108Z",
         "selectedAttempt": 2
       },
-      "group": 10
+      "group": 10,
+      "retirement": {
+        "retiredAt": "2026-10-08T00:52:59.000Z",
+        "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
+        "reviewId": "owner-picker-2026-10-07-final-five"
+      }
     },
     {
       "id": "106",
@@ -10990,7 +11010,7 @@ window.SLOP_DATA = {
       "generation": {
         "provider": "OpenAI built-in image tool",
         "model": null,
-        "status": "complete",
+        "status": "retired",
         "attempts": 2,
         "usage": null,
         "costUsd": null,
@@ -11078,7 +11098,12 @@ window.SLOP_DATA = {
         "recordedAt": "2026-10-08T00:18:26.399Z",
         "selectedAttempt": 2
       },
-      "group": 10
+      "group": 10,
+      "retirement": {
+        "retiredAt": "2026-10-08T00:52:59.000Z",
+        "reason": "Removed at the owner's request in the follow-up picker review, with publication explicitly requested.",
+        "reviewId": "owner-picker-2026-10-07-final-five"
+      }
     },
     {
       "id": "108",
