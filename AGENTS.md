@@ -117,8 +117,8 @@ The portfolio pages and their assets (~50 live posts now; this lists the structu
 not every page):
 
 - `index.html` holds standalone homepage posts and site search, ordered newest
-  first by their display dates. Enough is first and Daylight Globe is second
-  from the bottom, with an owner-chosen display date for the globe. The former
+  first by their display dates. Daylight Globe has an owner-chosen display date
+  that places it second from the bottom. The former
   Career posts and `the-other-side.html` appear individually. Their original GitHub creation commits,
   timestamps and homepage display dates live in `tools/homepage-posts.json`.
 - `archive.html` (In Progress) also lists the reading collections:
