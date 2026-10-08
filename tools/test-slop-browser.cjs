@@ -195,16 +195,32 @@ async function mouseChecks(page) {
   const dragged = await camera(page);
   assert.ok(Math.hypot(dragged.x - before.x, dragged.y - before.y) > 80, 'Mouse drag did not pan.');
   await noDialog(page);
-  for (const [dx, dy, axis] of [[230, 0, 'x'], [0, 210, 'y']]) {
-    const prior = await camera(page);
-    await page.mouse.wheel(dx, dy);
-    await settle(page);
-    const after = await camera(page);
-    assert.ok(Math.abs(after[axis] - prior[axis]) > 100, `Wheel ${axis} did not pan.`);
-    await noDialog(page);
-  }
   const anchor = { x: viewport.width * 0.36, y: viewport.height * 0.43 };
   await page.mouse.move(anchor.x, anchor.y);
+  const beforeScroll = await camera(page);
+  await page.mouse.wheel(0, -100);
+  await settle(page);
+  const scrolledIn = await camera(page);
+  assert.ok(scrolledIn.zoom > beforeScroll.zoom * 1.2, 'Ordinary scroll up did not zoom in.');
+  const scrollAnchorError = Math.hypot((anchor.x - beforeScroll.x) / beforeScroll.zoom - (anchor.x - scrolledIn.x) / scrolledIn.zoom, (anchor.y - beforeScroll.y) / beforeScroll.zoom - (anchor.y - scrolledIn.y) / scrolledIn.zoom);
+  assert.ok(scrollAnchorError < 1, `Scroll zoom moved its world anchor by ${scrollAnchorError}px.`);
+  await page.mouse.wheel(0, 100);
+  await settle(page);
+  const scrolledOut = await camera(page);
+  assert.ok(scrolledOut.zoom < scrolledIn.zoom && Math.abs(scrolledOut.zoom - beforeScroll.zoom) < 0.001, 'Ordinary scroll down did not reverse zoom.');
+  await noDialog(page);
+  await page.keyboard.down('Shift');
+  try {
+    for (const [dx, dy, axis] of [[230, 0, 'x'], [1, 210, 'y']]) {
+      const prior = await camera(page);
+      await page.mouse.wheel(dx, dy);
+      await settle(page);
+      const after = await camera(page);
+      assert.ok(Math.abs(after[axis] - prior[axis]) > 100, `Shift-scroll ${axis} did not pan.`);
+      assert.equal(after.zoom, prior.zoom, 'Shift-scroll unexpectedly zoomed.');
+      await noDialog(page);
+    }
+  } finally { await page.keyboard.up('Shift'); }
   const prior = await camera(page);
   await page.keyboard.down('Control');
   try { await page.mouse.wheel(0, -100); } finally { await page.keyboard.up('Control'); }
@@ -216,18 +232,59 @@ async function mouseChecks(page) {
   await noDialog(page);
   const initialCount = zoomed.tiles;
   let maximumCount = initialCount;
-  for (let index = 0; index < 24; index++) {
-    await page.mouse.wheel(1300, index % 2 ? -850 : 700);
-    await frames(page, 2);
-    maximumCount = Math.max(maximumCount, (await camera(page)).tiles);
-  }
+  await page.keyboard.down('Shift');
+  try {
+    for (let index = 0; index < 24; index++) {
+      await page.mouse.wheel(1300, index % 2 ? -850 : 700);
+      await frames(page, 2);
+      maximumCount = Math.max(maximumCount, (await camera(page)).tiles);
+    }
+  } finally { await page.keyboard.up('Shift'); }
   await settle(page);
   const final = await camera(page);
   assert.ok(maximumCount <= initialCount + 40 && final.tiles <= initialCount + 16, 'Virtualized tile DOM grew during a long pan.');
   assert.ok(Math.abs(final.x - zoomed.x) > 10000, 'Long pan did not travel through the repeating wall.');
   await noDialog(page);
   await visibleImagesDecoded(page);
-  pass('Desktop: drag, both wheel axes, anchored Ctrl-wheel and bounded long-pan DOM', { anchorError, initialCount, maximumCount, finalCount: final.tiles });
+  pass('Desktop: drag, anchored ordinary scroll in/out, Shift-scroll pan, Ctrl-wheel and bounded long-pan DOM', { scrollAnchorError, anchorError, initialCount, maximumCount, finalCount: final.tiles });
+}
+
+async function pickerChecks(context, url, label, works) {
+  const page = await context.newPage();
+  observe(page, `${label} picker`);
+  try {
+    await page.goto(new URL('slop-review-lab.html', url).href);
+    await page.waitForSelector('.review-card');
+    const ids = await page.locator('.review-card').evaluateAll(cards => cards.map(card => card.dataset.workId));
+    assert.deepEqual(ids, works.map(work => work.id), 'Picker must show every active work once and exclude retirements.');
+    const first = works[0], last = works.at(-1);
+    for (const work of [first, last]) await page.locator(`[data-work-id="${work.id}"] .review-select`).click();
+    const expected = `Please remove these Slop works:\n\n${first.id} - ${first.title}\n${last.id} - ${last.title}`;
+    assert.equal(await page.locator('#selection-text').inputValue(), expected);
+    assert.equal(await page.locator('#copy-selection').isEnabled(), true);
+    await page.reload();
+    await page.waitForSelector('.review-card');
+    assert.equal(await page.locator('#selection-text').inputValue(), expected, 'Removal choices did not persist across reload.');
+    await page.locator('#new-only').check();
+    const fresh = works.filter(work => Number(work.id) >= 46 && Number(work.id) <= 109);
+    assert.equal(await page.locator('.review-card:visible').count(), fresh.length);
+    await page.locator('#selected-only').check();
+    const selectedNew = [first, last].filter(work => fresh.some(item => item.id === work.id));
+    assert.equal(await page.locator('.review-card:visible').count(), selectedNew.length);
+    assert.equal(await page.locator('#selection-text').inputValue(), expected, 'Filtering discarded a hidden selection.');
+    for (const work of selectedNew) await page.locator(`[data-work-id="${work.id}"] .review-select`).click();
+    assert.equal(await page.locator('#review-empty').isVisible(), true);
+    await page.locator('#new-only').uncheck();
+    await page.locator('#selected-only').uncheck();
+    // Let the restored grid lay out and load its visible lazy images normally.
+    // Asset checks already cover every original and fallback on the gallery.
+    await frames(page, 2);
+    await visibleImagesDecoded(page);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+    assert.equal(overflow, false, 'Picker overflows horizontally.');
+    await page.screenshot({ path: path.join(output, `${label}-picker.png`) });
+    pass(`${label}: removal picker, stable IDs, saved selection, new-batch filter and loaded images`);
+  } finally { await page.close(); }
 }
 
 async function wallKeyboardChecks(page) {
@@ -492,6 +549,7 @@ async function reducedMotionCheck(url) {
         if (touch) await touchChecks(page, context, label);
         await shuffleCheck(page, label);
         await checkLayout(page, `${label} final`);
+        await pickerChecks(context, url, label, works);
       } catch (error) {
         await page.screenshot({ path: path.join(output, `${label}-failure.png`) }).catch(() => {});
         throw error;

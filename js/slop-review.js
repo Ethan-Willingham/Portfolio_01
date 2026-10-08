@@ -9,6 +9,7 @@
   const copy = document.getElementById('copy-selection');
   const status = document.getElementById('copy-status');
   const filter = document.getElementById('selected-only');
+  const newOnly = document.getElementById('new-only');
   const output = document.getElementById('selection-text');
   const exportPanel = document.getElementById('review-export');
   const empty = document.getElementById('review-empty');
@@ -28,15 +29,15 @@
     count.textContent = `${chosen.length} of ${works.length} selected`;
     copy.disabled = !chosen.length;
     output.value = chosen.length
-      ? `Please update these Slop works:\n\n${chosen.map(work => `${work.id} - ${work.title}`).join('\n')}`
+      ? `Please remove these Slop works:\n\n${chosen.map(work => `${work.id} - ${work.title}`).join('\n')}`
       : '';
     for (const [id, { card, button, mark }] of cards) {
       const picked = selected.has(id);
       button.setAttribute('aria-pressed', String(picked));
-      mark.textContent = picked ? 'Selected for update' : 'Click to select';
-      card.hidden = filter.checked && !picked;
+      mark.textContent = picked ? 'Selected for removal' : 'Click to select';
+      card.hidden = (filter.checked && !picked) || (newOnly.checked && (Number(id) < 46 || Number(id) > 109));
     }
-    empty.hidden = !filter.checked || chosen.length > 0;
+    empty.hidden = [...cards.values()].some(({ card }) => !card.hidden);
   }
 
   works.forEach((work, index) => {
@@ -104,6 +105,7 @@
   });
 
   filter.addEventListener('change', renderSelection);
+  newOnly.addEventListener('change', renderSelection);
   copy.addEventListener('click', async () => {
     const text = output.value;
     if (!text) return;

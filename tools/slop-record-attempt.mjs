@@ -20,18 +20,23 @@ const context = { window: {} };
 runInNewContext(readFileSync(file, 'utf8'), context, { timeout: 1000 });
 const data = context.window.SLOP_DATA;
 let work = data.works.find(w => w.id === id);
+if (work?.generation.status === 'retired') throw Error('Retired works must remain retired.');
 if (args.includes('--source')) {
   const revisionId = opt('--revision');
   if (revisionId && !work?.generation.revisions?.some(revision => revision.id === revisionId)) throw Error('Register the owner-requested revision before importing it.');
-  const plan = revisionId ? work : JSON.parse(readFileSync(join(root, 'research/slop/third-group-plan.json'))).plan.find(w => w.id === id);
+  const planFile = resolve(opt('--plan') || join(root, 'research/slop/third-group-plan.json'));
+  const plan = revisionId ? work : JSON.parse(readFileSync(planFile, 'utf8')).plan.find(w => w.id === id);
   if (!plan) throw Error('Work is not in the approved plan.');
+  if (plan.kind === 'demonstration-grid' || work?.generation.kind === 'demonstration-grid') throw Error('Use slop-demonstration.mjs for the nine unedited demonstration runs.');
   const request = JSON.parse(readFileSync(resolve(opt('--request'))));
+  if (typeof request.prompt !== 'string' || !request.prompt.trim()) throw Error('Record the exact generation prompt.');
   if (!work) {
     if (!data.phrases.some(p => p.id === plan.phraseId)) data.phrases.push({ id: plan.phraseId, text: plan.title });
     if (!data.styles.some(s => s.id === plan.styleId)) data.styles.push(plan.style);
     work = { id, phraseId: plan.phraseId, title: plan.title, styleId: plan.styleId, alt: '', image: null, fallback: null,
       width: 1024, height: 1024, prompt: plan.prompt, originalPrompt: plan.prompt,
       generation: { provider: 'OpenAI built-in image tool', model: null, status: 'reviewing', attempts: 0, usage: null, costUsd: null, attemptLog: [] } };
+    if (Number.isInteger(plan.group)) work.group = plan.group;
     data.works.push(work);
   }
   const number = work.generation.attempts + 1;
@@ -40,6 +45,8 @@ if (args.includes('--source')) {
   const previous = work.generation.attemptLog.at(-1);
   if (number > 1 && !previous?.review && !previous?.legacy) throw Error('Review the previous attempt before regenerating.');
   if (number === 1 && request.prompt !== plan.prompt) throw Error('First prompt must be verbatim.');
+  if (number > 1 && (typeof request.change !== 'string' || !request.change.trim())) throw Error('Record what changed and why before regenerating.');
+  if (request.referenceAttempt !== undefined && (!Number.isInteger(request.referenceAttempt) || request.referenceAttempt < 1 || request.referenceAttempt >= number)) throw Error('Reference must identify an earlier attempt.');
   const source = resolve(opt('--source'));
   const stamp = `${id}-${String(number).padStart(2, '0')}`;
   const image = `assets/slop/attempts/${stamp}.webp`, fallback = `assets/slop/attempts/${stamp}.jpg`;
@@ -55,7 +62,6 @@ if (args.includes('--source')) {
     sourceSha256: createHash('sha256').update(readFileSync(source)).digest('hex'), recordedAt: new Date().toISOString(), review: null, decision: 'pending' };
   if (revisionId) attempt.revisionId = revisionId;
   if (request.referenceAttempt !== undefined) {
-    if (!Number.isInteger(request.referenceAttempt) || request.referenceAttempt < 1 || request.referenceAttempt >= number) throw Error('Reference must identify an earlier attempt.');
     attempt.referenceAttempt = request.referenceAttempt;
   }
   work.generation.attemptLog.push(attempt);
@@ -69,13 +75,15 @@ if (args.includes('--source')) {
   if (!work) throw Error('Import the attempt first.');
   const review = JSON.parse(readFileSync(resolve(opt('--review'))));
   const keys = ['words', 'evidence', 'medium', 'cringe', 'guardrails', 'batch'];
-  if (!keys.every(k => typeof review.checks?.[k]?.pass === 'boolean' && review.checks[k].note)) throw Error('Record all six checks.');
-  const attempt = work.generation.attemptLog.at(-1);
+  if (!keys.every(k => typeof review.checks?.[k]?.pass === 'boolean' && typeof review.checks[k].note === 'string' && review.checks[k].note.trim())) throw Error('Record all six checks with nonempty notes.');
+  const attempt = work.generation.attemptLog?.at(-1);
+  if (!attempt) throw Error('Import an ordinary image attempt before reviewing it.');
   if (attempt.review) throw Error('Attempt already reviewed.');
   attempt.review = { checks: review.checks, reviewedAt: new Date().toISOString() };
   attempt.decision = keys.every(k => review.checks[k].pass) ? 'accepted' : 'rejected';
-  work.generation.status = attempt.decision === 'accepted' ? 'complete' : 'needs-review';
-  work.alt = review.alt;
+  const runAttempts = work.generation.attemptLog.filter(entry => (entry.revisionId || null) === (attempt.revisionId || null));
+  work.generation.status = attempt.decision === 'accepted' ? 'complete' : runAttempts.length >= 3 ? 'failed' : 'needs-review';
+  if (typeof review.alt === 'string' && review.alt.trim()) work.alt = review.alt;
 } else throw Error('Supply --source and --request, or --review.');
 writeFileSync(file, '/* Slop: authored catalogue and recorded production data. */\nwindow.SLOP_DATA = ' + JSON.stringify(data, null, 2) + ';\n');
 console.log(JSON.stringify({ id, attempts: work.generation.attempts, status: work.generation.status }));

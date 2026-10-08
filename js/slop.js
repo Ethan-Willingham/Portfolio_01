@@ -408,8 +408,10 @@
     const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? state.height : 1;
     let dx = event.deltaX * multiplier;
     let dy = event.deltaY * multiplier;
-    if (event.ctrlKey) {
-      zoomAt(state.zoom * Math.exp(-dy * 0.007), event.clientX, event.clientY);
+    if (!event.shiftKey || event.ctrlKey) {
+      // Ordinary scroll zooms; trackpad pinch retains its stronger response.
+      const delta = dy || dx;
+      zoomAt(state.zoom * Math.exp(-delta * (event.ctrlKey ? 0.007 : 0.0025)), event.clientX, event.clientY);
       return;
     }
     if (event.shiftKey && !dx) { dx = dy; dy = 0; }

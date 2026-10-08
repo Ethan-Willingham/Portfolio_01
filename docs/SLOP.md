@@ -21,8 +21,11 @@ The second group adds ten phrases and ten work plans, bringing the totals to
 The revised third group adds eleven more phrases, works and art directions:
 141 phrases, 45 generated works and 59 directions. All eleven new works passed
 the six checks, and the owner approved publication on October 7, 2026.
-The owner's later curation keeps 25 works on view and retires 20. The catalogue
-retains all 45 lifetime generated work IDs and 55 generation attempts.
+The owner's later curation left 25 works on view and retired 20. That completed
+production history contains 45 generated work IDs and 55 generation attempts.
+Groups four to ten added works 046 to 109. After the second picker curation,
+the catalogue has 205 phrases, 120 directions, 109 generated work IDs and
+190 lifetime image calls. There are 39 active works and 70 retired works.
 The phrase bank includes the owner's four starting lines: "Slop", "A step below
 average", "Uncanny" and "Looks right, but wrong". The remaining lines range from
 short complaints to descriptions of familiar generated-image errors. They
@@ -139,9 +142,11 @@ that object. Get the depicted material and process right.
 
 Read "The bar", "Cut, and why" and "Judge every result before keeping it" in
 the prompt pack before generating. The cuts exclude puns, memes, sneers at
-users or clients, martyr staging, stock AI imagery, finger and anatomy gags,
-garbled-text gags, familiar-painting references used as a joke, and protest or
-rhyming slogans. Keep real names, brands, logos, recognizable people and living
+users or clients, martyr staging, stock AI imagery, familiar-painting references
+used as a joke, and protest or rhyming slogans. Finger, anatomy and garbled-text
+gags are excluded outside the specific "Giveaways, amplified" prompts, where a
+trade setting makes the visible error the point. Keep real names, brands,
+logos, recognizable people and living
 artists' signature looks out of the images. Maker's marks and other incidental
 identifiers must be invented or blank. Do not use generated braille or fake
 news imagery. Keep the criticism factually fair and acknowledge the human
@@ -201,7 +206,7 @@ directed deletion of those images and retirement of those three works too.
 The final 20 retired IDs are **002, 006, 007, 008, 010, 011, 014, 015, 018,
 021, 023, 027, 028, 029, 031, 033, 036, 037, 039 and 042**.
 
-This leaves **25 works on view**, **45 lifetime generated work IDs** and
+That curation left **25 works on view**, **45 lifetime generated work IDs** and
 **55 lifetime attempts**: the earlier 52 plus three new attempts. Retired works
 keep their catalogue entries and production history, with
 `generation.status: "retired"` and a retirement record. Keep the surviving IDs
@@ -239,6 +244,307 @@ preserved entries use `legacy: true`, `review: null` and a note explaining that
 history. Leave those missing reviews unknown. The rejected remakes retain the
 full six-check reviews recorded when they were generated.
 
+## Current production: groups four to ten
+
+The owner approved production of **046 to 109**, in group and work order from
+the updated local `research/slop/NEXT_PROMPTS.md`. The frozen local plan is
+`research/slop/groups-04-10-plan.json`. It contains 64 work plans: 60 ordinary
+pieces and four nine-image demonstration grids, requiring at least **96 image
+calls** before ordinary retries. New phrases take p142 to p205 in work order.
+
+Keep works 001 to 045 and their histories unchanged. The 20 retired IDs above
+stay retired, including 006, 011 and 037. Do not renumber any work. The tables
+start pending and are updated after each group; `js/slop-data.js` records each
+call and review. Publication was approved after the second picker curation,
+as recorded below.
+
+### Fourth group, 046 to 055
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 046 | Worth the drive | Windshield photograph | Retired by owner, 1 attempt |
+| 047 | Admission £35 | Event flash photograph | Retired by owner, 2 attempts |
+| 048 | Small batch | Retail shelf photograph | Retired by owner, 2 attempts |
+| 049 | Painted by hand | Hand-painted wall advertisement | Complete, 1 attempt |
+| 050 | Easy to grow | Seed packet | Complete, 1 attempt |
+| 051 | Virtually staged | Property listing photograph | Complete, 2 attempts |
+| 052 | Tour dates to be announced | Record sleeve | Retired by owner, 2 attempts |
+| 053 | Learn to paint | Bus-shelter advertisement | Retired by owner, 1 attempt |
+| 054 | Each sesame seed placed by hand | Food-styling set | Retired by owner, 1 attempt |
+| 055 | Apprentices painted the backgrounds | Tempera altarpiece | Retired by owner, 2 attempts |
+
+All ten works are complete after 15 attempts. The group contact sheet is saved
+locally at `research/slop/review/contact-sheet-046-055.png`.
+
+### Fifth group, 056 to 065
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 056 | New look, same tacos | Rótulo sign painting | Retired by owner, 1 attempt |
+| 057 | Meet the team | Headshot wall | Complete, 1 attempt |
+| 058 | You are here | Park map board | Complete, 2 attempts |
+| 059 | Stay inside the lines | Coloring-book page | Retired by owner, 1 attempt |
+| 060 | Can you make it look less AI? | Designer's markup | Retired by owner, 2 attempts |
+| 061 | Ask to see my sketchbook | Convention table photograph | Retired by owner, 2 attempts |
+| 062 | Rare | Trading card | Retired by owner, 1 attempt |
+| 063 | Behind the scenes | Magazine page | Retired by owner, 1 attempt |
+| 064 | Real, for what it's worth | Contact sheet | Retired by owner, 2 attempts |
+| 065 | This took seconds | Millefleurs tapestry | Complete, 2 attempts |
+
+All ten works are complete after 15 attempts. The group contact sheet is saved
+locally at `research/slop/review/contact-sheet-056-065.png`. Through group five,
+20 new works used 30 image calls. The weekly meter read **19% used** at
+**2026-10-07T20:00:09Z**, up **11 percentage points** from the 8% baseline in
+the same window.
+
+### Sixth group, 066 to 075
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 066 | Homemade | Lemonade stand | Complete, 1 attempt |
+| 067 | Beginner friendly | Craft pattern booklet | Retired by owner, 2 attempts |
+| 068 | Shop local | Main-street photograph | Complete, 1 attempt |
+| 069 | Pickup for all restaurants | Delivery-kitchen door | Complete, 2 attempts |
+| 070 | Artist quality | Paint-set packaging | Retired by owner, 2 attempts |
+| 071 | Limited edition | Gig-poster wall | Complete, 2 attempts |
+| 072 | Negative prompt: ugly | Charcoal portrait | Retired by owner, 2 attempts |
+| 073 | The marble did not fight back | Marble sculpture | Retired by owner, 2 attempts |
+| 074 | Viewing by appointment | Gallery painting | Retired by owner, 2 attempts |
+| 075 | It won't hold. | Tattoo flash | Retired by owner, 2 attempts |
+
+All ten works are complete after 18 attempts. Eight needed another attempt for
+lettering at 336 pixels. Work 070 also needed a clearer contrast between its
+smooth box image and watercolor sketch. Work 074 needed visible oil brushwork
+and every picture concealed, in addition to a readable notice.
+
+The group sheet was shown and saved locally at
+`research/slop/review/contact-sheet-066-075.png`. Through group six, 30 new
+works used 48 image calls. The weekly meter read **22% used** at
+**2026-10-07T20:50:50Z**, up **14 percentage points** from the 8% baseline in
+the same window.
+
+### Seventh group, 076 to 085
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 076 | It took photography 150 years | Archive photograph | Retired by owner, 2 attempts |
+| 077 | Distractions removed | Photo-service advertisement | Retired by owner, 1 attempt |
+| 078 | Likely AI-generated | Parchment document | Retired by owner, 1 attempt |
+| 079 | Disqualified for being real | Award certificate | Retired by owner, 2 attempts |
+| 080 | New work continues to appear | Retrospective wall | Retired by owner, 2 attempts |
+| 081 | The Luddites were weavers | Jacquard weaving | Retired by owner, 1 attempt |
+| 082 | Medium: up to one phone charge | Museum wall label | Retired by owner, 2 attempts |
+| 083 | Can you make this by Saturday? | Bakery counter photograph | Complete, 2 attempts |
+| 084 | Every line was put there by someone | Drawing automaton | Retired by owner, 2 attempts |
+| 085 | Everyone smiled | Holiday photo card | Retired by owner, 1 attempt |
+
+All ten works are complete after 16 attempts. Works 076, 079, 080, 082,
+083 and 084 needed larger lettering at 336 pixels. Work 080 also needed
+its eight year labels enlarged so the chronology remained readable.
+
+The group sheet was shown and saved locally at
+`research/slop/review/contact-sheet-076-085.png`. Through group seven, 40 new
+works used 64 image calls. The weekly meter read **25% used** at
+**2026-10-07T21:34:19Z**, up **17 percentage points** from the 8% baseline.
+
+### Eighth group, 086 to 095
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 086 | You have looked at this longer than it took to make | Bench plaque | Retired by owner, 2 attempts |
+| 087 | The phone added the craters | Experiment photograph | Retired by owner, 2 attempts |
+| 088 | Borrowed 48,213 times | Library due-date slip | Retired by owner, 2 attempts |
+| 089 | For my medical record only | Consent form | Retired by owner, 2 attempts |
+| 090 | Meet our farmers | Produce-aisle sign | Retired by owner, 1 attempt |
+| 091 | Today's special | Chalkboard menu | Complete, 1 attempt |
+| 092 | Please submit each work separately | Carbon-copy form | Retired by owner, 3 attempts |
+| 093 | Painting survived the camera | Portrait miniature | Retired by owner, 1 attempt |
+| 094 | Smooth used to mean skill | Academic oil painting | Retired by owner, 2 attempts |
+| 095 | Hand-embellished | Retail canvas print | Retired by owner, 2 attempts |
+
+All ten works are complete after 18 attempts. Seven needed larger lettering.
+Works 087 and 089 also needed extra readable text removed. Work 092 used its
+third attempt to make its handwritten description illegible as requested.
+No work exhausted its attempts with an unresolved failure.
+
+The group sheet was shown and saved locally at
+`research/slop/review/contact-sheet-086-095.png`. Through group eight, 50 new
+works used 82 image calls. The weekly meter read **28% used** at
+**2026-10-07T22:25:45.000Z**, up **20 percentage points** from the 8% baseline.
+
+### Ninth group, 096 to 099
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 096 | My grandmother | Demonstration grid | Complete, 9 unedited runs |
+| 097 | A portrait of the artist | Demonstration grid | Retired by owner, 9 unedited runs |
+| 098 | The most beautiful painting in the world | Demonstration grid | Retired by owner, 9 unedited runs |
+| 099 | Something no one has ever seen | Demonstration grid | Retired by owner, 9 unedited runs |
+
+All four grids are complete after 36 unchanged source calls. Every source is
+preserved, including failed observations. Work 096 repeats smiling elderly
+women in domestic rooms. Work 097 repeats a dark-haired painter at an easel,
+with unrequested motivational lettering in all nine runs. Work 098 varies
+between classical terraces and alpine lakes, always in golden light. Work
+099 varies the anatomy of translucent alien creatures but repeats watery
+fantasy landscapes. These are observations from sequential calls; the tool
+exposes no context-reset control, so the record does not claim independent
+sampling or universal model behavior.
+
+The grids and their captions were assembled with code from whole, uncropped
+sources in generation order. Each assembly record names its inputs and hashes.
+The group sheet was shown and saved locally at
+`research/slop/review/contact-sheet-096-099.png`. Through group nine, 54 new
+works used 118 image calls. The weekly meter read **34% used** at
+**2026-10-07T23:45:16.000Z**, up **26 percentage points** from baseline.
+
+### Tenth group, 100 to 109
+
+| Work | Phrase | Direction | Status |
+|---|---|---|---|
+| 100 | It is always ten past ten | Clock-shop photograph | Retired by owner, 2 attempts |
+| 101 | Fill it to the top | Restaurant photograph | Retired by owner, 2 attempts |
+| 102 | We count every tooth | Clinic window poster | Retired by owner, 1 attempt |
+| 103 | Full set | Salon wall photograph | Complete, 2 attempts |
+| 104 | Packed house | Show poster | Complete, 2 attempts |
+| 105 | Move-in ready | Builder's billboard | Complete, 2 attempts |
+| 106 | Test rides available | Shop-window poster | Retired by owner, 1 attempt |
+| 107 | Piano lessons, all ages | Window decal | Complete, 2 attempts |
+| 108 | Design approved by client | Tattoo-station photograph | Retired by owner, 2 attempts |
+| 109 | Everything in its place | Catalog page | Complete, 1 attempt |
+
+All ten works passed the six checks after 17 calls. Works 100, 101, 103, 107
+and 108 needed larger lettering. Work 101 also needed consistent half-filled
+glasses, and 103 needed unbranded bottles. Work 104 needed visible fused crowd
+anatomy instead of ordinary background blur; 105 needed stairs terminating at
+a blank wall and a garage without a paved approach. Every rejected attempt,
+its six checks and the limited prompt revision remain in the catalogue.
+
+The group sheet was shown and saved locally at
+`research/slop/review/contact-sheet-100-109.png`. All seven groups are complete:
+64 works from 135 image calls, including 36 unchanged demonstration sources.
+Before the second picker review, the existing 20 retirements remained retired
+and 89 works were ready for the wall, with their original numbers preserved.
+
+After the final image, the weekly meter read **36% used** at
+**2026-10-08T00:21:43.000Z**. The final review reading at
+**2026-10-08T00:22:43.000Z** was also **36%**. The increase from the 8% baseline
+was **28 percentage points** in the same quota window, below the owner's
+stop threshold. This measures account activity, not image tokens or cost.
+The completed batch was held for the owner's picker review and publication
+approval before any commit, cache version change or push.
+
+Final validation confirmed all 64 first prompts against the frozen pack,
+all 135 recorded calls and reviews, all 36 original demonstration sources,
+and unchanged records for works 001 to 045. The catalogue validator passed.
+Browser checks passed on desktop, portrait and landscape, including image
+loading, pan and zoom, stable IDs, retired-work exclusion, artwork metadata,
+Index navigation and the Ledger. No script, asset or overflow errors appeared.
+
+The owner then requested scroll zoom and another removal picker. Ordinary
+scroll now zooms around the pointer; dragging pans, Shift-scroll pans, and
+trackpad pinch remains available. The visible and accessible instructions
+describe those controls. `slop-review-lab.html` lists all active works,
+offers a filter for the new batch (046 to 109), saves selections under the
+existing browser key and exports a removal list with stable work numbers.
+Filtering never drops a selection. These changes were included in the local
+preview for the owner's review.
+
+### Second picker curation, October 7, 2026
+
+The owner requested removal of these 50 works after reviewing the local picker:
+**004, 012, 035, 041, 046, 047, 048, 052, 053, 054, 055, 056, 059, 060, 061,
+062, 063, 064, 067, 070, 072, 073, 074, 075, 076, 077, 078, 079, 080, 081,
+082, 084, 085, 086, 087, 088, 089, 090, 092, 093, 094, 095, 097, 098, 099,
+100, 101, 102, 106 and 108**.
+
+All 50 now have `generation.status: "retired"` and a dated retirement record.
+The wall, Index and removal picker exclude them. Their original numbers,
+images, prompts, attempts and six-check records remain in the production
+history. The three retired demonstration grids keep all nine source images
+each. No replacement images were requested or generated.
+
+This leaves **39 active works**: 21 from works 001 to 045 and 18 from the new
+batch. There are **70 retired works**, **109 lifetime generated work IDs** and
+**190 lifetime image calls**. The group tables below the production heading
+reflect these retirement decisions. Earlier generation checks remain recorded
+as performed; passing those checks did not override the owner's selections.
+The local preview has these removals. Catalogue and browser checks passed for
+39 active works on desktop, portrait and landscape, including the picker,
+Index, Ledger and scroll zoom.
+
+### Publication approval
+
+The owner explicitly requested "publish" at the end of this review, on
+October 7, 2026 (recorded at 2026-10-08T00:46:02Z). This approves the curated
+39-work gallery, the 50 new retirements, ordinary scroll zoom and the removal
+picker. The catalogue and gallery script cache versions advance to 5; the
+picker script advances to 2. The generated sources and production history
+remain recorded, including retired works. No new image calls were needed
+for curation or publication.
+
+### Current production rules
+
+Read "The bar", "What the owner's removals teach", "Cut, and why" and "Judge
+every result" before generating. The prompt pack discusses seven early
+removals as examples; both picker decisions above remain authoritative.
+
+Use each ordinary prompt verbatim on its first attempt. Record all six checks
+after every image, before another call. On failure, change only the responsible
+sentence and record why. Stop at three attempts per ordinary work. A remaining
+failure gets `generation.status: "failed"`, preserving its images and reviews
+while staying off the wall and Index. If **more than three works in one group**
+still fail after three attempts, stop on the fourth unresolved work and show
+the owner before continuing.
+
+The weekly baseline is **8% used**, observed at **2026-10-07T18:52:46Z**, with
+`resetsAt: 1792001978`. Monitor the meter during production and pause if it
+rises **more than 30 percentage points**, meaning a reading above **38%** in
+that same window. Record the final reading. This is account-wide activity,
+including other chats. If the quota window changes, keep both observations
+and leave their difference unknown rather than subtracting unrelated windows.
+
+After each group, make its contact sheet from the actual files, with 336-pixel
+artwork squares and labels outside them. Compare it beside works 025 to 034 for
+the batch check and keep each group sheet for final review. Continue unless a
+stopping rule applies. When all groups are done, show every contact sheet and
+wait for the owner's explicit yes before **committing, changing any `?v=`
+value or pushing**. Earlier publication approvals do not approve this run.
+
+### Nine unedited observations, works 096 to 099
+
+These four demonstrations override the usual retry rule. Run each bare prompt
+exactly nine times, adding nothing. Use a fresh context if the tool supports
+one; do not claim that an unavailable context-reset control was used. Keep all
+nine results in generation order, including unexpected variety. They are nine
+observations, not nine rerolls from which to choose a preferred picture.
+
+| Work | Exact prompt |
+|---|---|
+| 096 | `A photo of my grandmother.` |
+| 097 | `A portrait of an artist at work.` |
+| 098 | `The most beautiful painting in the world.` |
+| 099 | `Make an image of something no one has ever seen before.` |
+
+Record all six checks after each image as observations. Failures do not justify
+steering, replacing or discarding a source. Titles need not appear within these
+images. Code assembles the whole images, without cropping, in a 3 by 3 grid in
+reading order and adds a plain caption band containing the title.
+
+Use `generation.kind: "demonstration-grid"`, `expectedRuns: 9` and
+`sourceRuns`, with no ordinary `attemptLog` or `selectedAttempt`.
+`generation.attempts` counts actual source calls from zero through nine. Every
+source retains its number, exact prompt, original bytes, image paths, measured
+dimensions, hash, timestamp and six-check review. Reviewed sources use
+`decision: "recorded"` even when a check describes a failure.
+
+Only a grid with nine reviewed sources and a code assembly record can become
+complete. `generation.assembly` records `method: "code"`, `fit: "contain"`, three
+columns and rows, the caption, `sourceRunNumbers: [1,2,3,4,5,6,7,8,9]`, and
+the composition's source PNG, hash and timestamp. Preserve every source alongside the composite.
+A planned grid has zero calls, an empty `sourceRuns` array and null work image
+paths. The nine-source rule does not relax review or record keeping.
+
 ## Generation and records
 
 The owner chose the OpenAI built-in image tool. Generate one work at a time,
@@ -261,10 +567,13 @@ an import timestamp and its measured dimensions. The planned width and height ar
 file size in the finished work record. The current `works` array is the source
 of truth for what has been generated.
 
-For the third group, a returned image remains under review until its six checks
+For ordinary new work, a returned image remains under review until its six checks
 are recorded. Count every generation call, including rejected attempts. Keep
 the complete attempt history in `generation.attemptLog`; selecting a later
-image must not erase earlier prompts, images or review failures.
+image must not erase earlier prompts, images or review failures. Planned
+ordinary records have zero attempts, an empty log and null image paths. Failed
+records retain their last image and all reviews. Demonstrations use the
+separate source-run and assembly structure above.
 
 Keep the full prompt with its work. Review the result for legible wording,
 composition and the requested material. Update the alt text to describe what

@@ -23,8 +23,8 @@
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="slop.css?v=3">
-  <script defer src="js/slop-data.js?v=4"></script>
-  <script defer src="js/slop.js?v=4"></script>
+  <script defer src="js/slop-data.js?v=5"></script>
+  <script defer src="js/slop.js?v=5"></script>
 </head>
 <body class="slop-page">
   <a class="slop-skip" href="#slop-index-button">Browse the artwork index</a>
@@ -77,11 +77,11 @@
     </nav>
     <button class="slop-help slop-glass" type="button" data-dialog="slop-about" aria-label="Gallery controls and information">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
-      <span>Drag to wander.<br><span class="slop-help-secondary">Pinch to look closer.</span></span>
+      <span>Drag to wander.<br><span class="slop-help-secondary">Scroll to look closer.</span></span>
     </button>
   </div>
 
-  <p class="slop-sr-only" id="slop-instructions">Drag or scroll in any direction to move. Pinch or hold Control while scrolling to zoom. Arrow keys move between artworks. Press Enter to open the centered artwork, plus or minus to zoom, and Home to recenter. The Index lists every unique work.</p>
+  <p class="slop-sr-only" id="slop-instructions">Drag to move in any direction. Scroll up to zoom in and down to zoom out where you point. Pinch also zooms. Hold Shift while scrolling to pan. Arrow keys move between artworks. Press Enter to open the centered artwork, plus or minus to zoom, and Home to recenter. The Index lists every unique work.</p>
   <p class="slop-sr-only" id="slop-announcement" role="status" aria-live="polite"></p>
 
   <dialog class="slop-dialog slop-about-dialog" id="slop-about" aria-labelledby="slop-about-title">
@@ -101,8 +101,8 @@
       <section class="slop-controls" aria-labelledby="slop-controls-title">
         <h3 id="slop-controls-title">Take a look around.</h3>
         <dl>
-          <div><dt>Drag or scroll</dt><dd>Move in any direction.</dd></div>
-          <div><dt>Pinch / Ctrl + scroll</dt><dd>Zoom where you point.</dd></div>
+          <div><dt>Drag / Shift + scroll</dt><dd>Move around the wall.</dd></div>
+          <div><dt>Scroll / pinch</dt><dd>Zoom where you point.</dd></div>
           <div><dt>Click a work</dt><dd>Open the image and its prompt.</dd></div>
           <div><dt>Arrow keys</dt><dd>Move between works.</dd></div>
           <div><dt>Enter / + / -</dt><dd>Open the centered work / zoom.</dd></div>
