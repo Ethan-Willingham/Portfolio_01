@@ -58,9 +58,9 @@
       'display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;box-sizing:border-box;' +
       'z-index:100000;background:var(--d-bg);border:1px solid var(--d-rule);pointer-events:auto;';
     gmDevButton('gmTuneBtn', 'TUNE', gmTuningPanelToggle);
-    gmDevButton('gmSlimeBtn', '+ SLIME', devDropSlimeOverhead);
+    gmDevButton('gmSlimeBtn', '+ SOFT', devDropSlimeOverhead);
     gmDevButton('gmClearSlimesBtn', 'CLEAR SLIMES', devClearSlimes);
-    gmDevButton('gmSlimeGroupBtn', '6 SQUISHY + 2 SOFT', devSpawnSlimeGroup);
+    gmDevButton('gmSlimeGroupBtn', '6 SOFT + 2 ROCKY', devSpawnSlimeGroup);
     gmDevButton('gmClearFluidsBtn', 'CLEAR SNOW / LIQUID', devClearFluids);
     gmDevButton('gmSnowBtn', 'SNOW OFF', devToggleSnow);
     var water = gmDevButton('gmWaterBtn', 'HOLD WATER');
@@ -142,6 +142,11 @@
           var b = jelloBodies[bi];
           if (b.bboxR > l && b.bboxL < right && b.bboxB > t && b.bboxT < bottom) blocked = true;
         }
+        for (var ri = 0; ri < skySlimes.length && !blocked; ri++) {
+          var rock = skySlimes[ri];
+          if (rock.x + rock.r > l && rock.x - rock.r < right &&
+              rock.y + rock.r > t && rock.y - rock.r < bottom) blocked = true;
+        }
         for (var si = 0; si < reserved.length && !blocked; si++) {
           var s = reserved[si];
           if (s.right > l && s.l < right && s.bottom > t && s.t < bottom) blocked = true;
@@ -151,38 +156,39 @@
     }
     return null;
   }
-  function devBuildSquishy(spot) {
-    var b = jelloBuildBody([{ r: spot.r, c: spot.c }], 'slime');
-    if (b) { b.hue = Math.floor(Math.random() * 360); spawnJelloSplat(spot.x, spot.y, 5, 60, 0.8, null); }
-    return b;
-  }
   function devDropSlimeOverhead() {
     if (!devControlsAvailable() || !player || !ENABLE_JELLO) return;
-    if (jelloCount + (JELLO_NPT + 1) * (JELLO_NPT + 1) > JELLO_MAX_POINTS) { showMsg('Slime limit reached'); return; }
-    var spot = devSlimeDropSpot(TILE * 0.5, []);
+    if (jelloCount + 61 > JELLO_MAX_POINTS) { showMsg('Slime limit reached'); return; }
+    var spot = devSlimeDropSpot(27, []);
     if (!spot) { showMsg('No room for a slime here'); return; }
     JELLO_MAX_BODIES = Math.max(JELLO_MAX_BODIES, jelloBodies.length + 1);
-    var b = devBuildSquishy(spot);
-    showMsg(b ? 'Slime dropped (' + jelloBodies.length + ' live)' : 'Slime limit reached');
+    var b = surfaceSlimeBuild(spot.x, spot.y);
+    if (b) surfaceSlimesSeeded = surfaceSlimeDevSeeded = true;
+    showMsg(b ? 'Soft slime dropped (' + jelloBodies.length + ' live)' : 'Slime limit reached');
   }
   function devSpawnSlimeGroup() {
     if (!devControlsAvailable() || !player || !ENABLE_JELLO) return;
-    var need = 6 * (JELLO_NPT + 1) * (JELLO_NPT + 1) + 2 * 61;
+    var need = 6 * 61;
     if (jelloCount + need > JELLO_MAX_POINTS) { showMsg('No room in the slime budget for the group'); return; }
     var spots = [];
     for (var i = 0; i < 8; i++) {
-      var spot = devSlimeDropSpot(i < 6 ? TILE * 0.5 : 27, spots);
+      var spot = devSlimeDropSpot(27, spots);
       if (!spot) { showMsg('Need more open space for all eight slimes'); return; }
       spots.push(spot);
     }
-    JELLO_MAX_BODIES = Math.max(JELLO_MAX_BODIES, jelloBodies.length + 8);
+    JELLO_MAX_BODIES = Math.max(JELLO_MAX_BODIES, jelloBodies.length + 6);
     for (var n = 0; n < 8; n++) {
-      if (n < 6) devBuildSquishy(spots[n]);
-      else surfaceSlimeBuild(spots[n].x, spots[n].y);
+      if (n < 6) surfaceSlimeBuild(spots[n].x, spots[n].y);
+      else {
+        // Explicit dev fixtures may exceed the two automatic outdoor arrivals.
+        var rock = skySlimeFresh(spots[n].x, spots[n].y);
+        rock.vy = 125;
+        skySlimes.push(rock);
+      }
     }
     // Explicit spawning replaces the automatic dev starter seed.
     surfaceSlimesSeeded = surfaceSlimeDevSeeded = true;
-    showMsg('Spawned 6 squishies and 2 soft slimes');
+    showMsg('Spawned 6 soft and 2 rocky slimes, all with eyes');
   }
   function devClearSlimes() {
     if (!devControlsAvailable()) return;

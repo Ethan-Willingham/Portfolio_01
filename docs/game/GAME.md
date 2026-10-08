@@ -34,14 +34,16 @@ rocky visitor falls after 90 seconds of play, 30 seconds before sunset, even
 during a mining trip. Later arrivals keep their surface-only schedule.
 Dev mode starts with at least three soft residents on separate dry town spots,
 including when enabled during play or after loading an existing save.
-In v28.174, the left dev controls can clear every slime, add six squishy cubes
-and two soft residents together, clear all snow and liquid (including stored
-material), toggle snowfall and smoke, and switch between noon and midnight.
+In v28.175, the left dev controls can clear every slime, add six soft residents
+and two rocky visitors together (both kinds have eyes), clear all snow and
+liquid (including stored material), toggle snowfall and smoke, and switch
+between noon and midnight.
 Hold WATER to spray continuously from the miner in its facing direction.
 Release, pause, changing scenes, rotating to portrait, or losing focus stops
 the spray. Clearing fluids leaves existing pond pits dry for this session;
 new snow and poured water still use them. The controls hide during menus and
 appear only in dev mode. Short landscape viewports can scroll the controls.
+The single-slime button also drops a soft resident with an eye.
 Drag and toss softened residents, push them with the rig, or use the jets.
 Bounded muscle effort and local terrain
 grips move their soft bodies toward nearby destinations and up walls and ledges.
