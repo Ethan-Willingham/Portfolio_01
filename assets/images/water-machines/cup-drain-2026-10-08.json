@@ -1,0 +1,37 @@
+{
+  "updated": "2026-10-08",
+  "status": "Incomplete, one completed seed. The other machines are parked.",
+  "test": "One passive slime dropped after a 15-second hold; 650 simulation seconds observed. Existing native water particles, dry outlet elbow, perforated shelf, 16-pixel clear tube.",
+  "seed": 17,
+  "initialParticleCount": 69307,
+  "finalParticleCount": 69307,
+  "allResidentPositionsVelocitiesFinite": true,
+  "initialBulkSourceParticlesExcludingTube": 67272,
+  "initialDrainableBulkSourceParticles": 59629,
+  "originalBulkSourceParticlesDeliveredAfterCrestAndOutlet": 46231,
+  "fractionOfDrainableSourceDelivered": 0.7753106709822402,
+  "requiredFraction": 0.95,
+  "rimSpills": 0,
+  "method": "Read-only GPU tracking after every native update. Initial pipe primer is excluded. Final receiver excludes the exact pipe interior.",
+  "limits": [
+    "This is a partial drain, not machine acceptance.",
+    "The surface remains above the intake and the flow slows almost to rest.",
+    "Smaller holes and particle crowding remain visible.",
+    "Transient gas-volume errors remain in diagnostics.",
+    "Position corrections around the moving slime need further checking."
+  ],
+  "sourceSHA256": {
+    "archive/water-smoke-slime/water-smoke-slime.html": "b6ee0f5eee47c9a7b68d92c7694c24bf86e6e9c6dfba9577cb7ca8bbaa945edc",
+    "water-smoke-slime.css": "bd57015e985761fafb0ed237ef75b2da78614799b24463689d002d7460f6103c",
+    "js/water-smoke-slime.js": "c5b24ab867364673e8a6eca8e3312b941e025b12a2f65edeafb93257afc9b19e",
+    "js/water-smoke-slime-ui.js": "caa1f96d2a62f9a720399c2c8486e3d2135628a1615473d09cc0b15faf02cb36",
+    "js/liquid-wgpu.js": "aacb6df2ee5b4823fea412e283c2c9338fd71ad3004953058466928dad05e193",
+    "js/liquid-air-wgpu.js": "45ac0aca0a40121b6446af70e21f4e151883d2d5646648c4255f99229474ba1d",
+    "js/water-machines-scenes.js": "4e7365260cd1f2296b213574d869c8cefa3a6a2410093a7a486c7c90f62b046e",
+    "js/water-machines-instruments.js": "891e4c7714090aff8e2f7ab8d4b6b2adcce609a0b87dc1cf09093c28e06fe93e",
+    "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+    "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+    "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+    "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+  }
+}
