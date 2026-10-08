@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-08",
+  "status": "Partial drain. Full greedy-cup acceptance remains incomplete.",
+  "wideRisingTube700Seconds": {
+    "run": "cup-narrow-stem-endpoint-seed-17",
+    "seed": 17,
+    "simulationSeconds": 700.1333333331957,
+    "initialTotalParticles": 66687,
+    "initialBulkParticles": 62457,
+    "intakeRoofWorldY": 368,
+    "initialDrainableBulkParticles": 52573,
+    "deliveredThroughCrestAndOutlet": 46947,
+    "deliveryPercent": 89.29868944134822,
+    "finalOriginalBulkInventory": {
+      "cup": 10156,
+      "pipe": 5349,
+      "receiver": 46952,
+      "other": 0,
+      "cupAboveIntakeRoof": 1105
+    },
+    "holdBulkOutsideCupAndPipe": 0,
+    "holdLossPercent": 0.0,
+    "countConserved": true,
+    "allResidentFinite": true,
+    "rimSpills": 0,
+    "maximumParticleMove": 25.899938583374023,
+    "meetsDeliveryTarget": false,
+    "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance."
+  },
+  "pressureDiagnostics": {
+    "maximumWaterPressureError": 8.727713005392397,
+    "maximumGasPressureError": 0.34966474695287025,
+    "maximumUnresolvedVoidVolume": 424.82421875,
+    "cavitationResolvedInEveryReading": false,
+    "phaseResolvedInEveryReading": false
+  },
+  "narrowerRisingTube700Seconds": {
+    "run": "cup-narrow-rise-endpoint-seed-17",
+    "seed": 17,
+    "simulationSeconds": 700.0916666665105,
+    "initialTotalParticles": 69307,
+    "initialBulkParticles": 67272,
+    "intakeRoofWorldY": 376,
+    "initialDrainableBulkParticles": 59629,
+    "deliveredThroughCrestAndOutlet": 50166,
+    "deliveryPercent": 84.13020510154455,
+    "finalOriginalBulkInventory": {
+      "cup": 10372,
+      "pipe": 6695,
+      "receiver": 50177,
+      "other": 28,
+      "cupAboveIntakeRoof": 1727
+    },
+    "holdBulkOutsideCupAndPipe": 0,
+    "holdLossPercent": 0.0,
+    "countConserved": true,
+    "allResidentFinite": true,
+    "rimSpills": 4,
+    "maximumParticleMove": 41.29359436035156,
+    "meetsDeliveryTarget": false,
+    "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance."
+  },
+  "comparisonLimit": "The narrower tube is still flowing at 700 seconds. Its 84.13 percent delivery is a fixed-time result, not a settled endpoint. It has not replaced the development geometry.",
+  "ordinaryEngine": {
+    "evidence": "cup-focus-v530-feature-off-target",
+    "nativeBufferCaptures": 18,
+    "renderedPixelComparisons": 6,
+    "allExact": true,
+    "toyVersion": "v5.30",
+    "sharedVersion": "v28.178",
+    "ordinaryToyAndGameBoot": true,
+    "airResourcesWhenDisabled": 0
+  },
+  "limitations": [
+    "Shelf contacts still cause large corrections.",
+    "Pressure and air-volume diagnostics do not pass throughout these runs.",
+    "Neither geometry has passed complete drainage on three seeds."
+  ],
+  "sourceSHA256": {
+    "archive/water-smoke-slime/water-smoke-slime.html": "67435f1c00d4d56be9a5621480f9e54e2a2b78ba0f02ae587ef117314c2cc13e",
+    "water-smoke-slime.css": "bd57015e985761fafb0ed237ef75b2da78614799b24463689d002d7460f6103c",
+    "js/water-smoke-slime.js": "0a64aa67e680c0cd77410e2e972d4e166d5b91988bf57302fdfb90694b5389bd",
+    "js/water-smoke-slime-ui.js": "caa1f96d2a62f9a720399c2c8486e3d2135628a1615473d09cc0b15faf02cb36",
+    "js/liquid-wgpu.js": "32409dc530442e94060c37f77e560c4199d3cb2b1ca1c5b664bbb5d1a959f3ce",
+    "js/liquid-air-wgpu.js": "986f9bdc4dd3fc2242c244a209ee2083fa2e4e194f19accc69d520a8cd0e7011",
+    "js/water-machines-scenes.js": "937cfe97aa179704de834853ff2b591c25f773b1de1d68041b3842d7d21b74e8",
+    "js/water-machines-instruments.js": "891e4c7714090aff8e2f7ab8d4b6b2adcce609a0b87dc1cf09093c28e06fe93e",
+    "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+    "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+    "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+    "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+  },
+  "screenshotSHA256": "42ec304571cc52a6fd209847d99382c32976fcd511dce1ccd9c0b5328d8a68b9"
+}
