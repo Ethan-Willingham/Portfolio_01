@@ -293,11 +293,16 @@
     var held = null, focused = false;
     // Fixed physics steps keep a 144 Hz screen and a 60 Hz screen in tune.
     var dt = 1 / 480, tension = Math.pow((count - 1) * 3.2, 2);
-    var damping = Math.exp(-4.2 * dt);
-    var wave = { svg: svg, host: host, draw: draw, reset: reset, pluck: pluck,
+    var damping = Math.exp(-4.2 * dt), warmthFade = 0.65;
+    var wave = { svg: svg, host: host, draw: draw, reset: reset, ripple: ripple,
       point: point, grab: grab, move: move, release: release };
     waves.push(wave);
 
+    function feel(soft) {
+      tension = Math.pow((count - 1) * (soft ? 0.9 : 3.2), 2);
+      damping = Math.exp(-(soft ? 1.65 : 4.2) * dt);
+      warmthFade = soft ? 0.4 : 0.65;
+    }
     function draw() {
       var path = '';
       for (var i = 0; i < count; i++) {
@@ -317,7 +322,7 @@
     }
     function reset() {
       cancelAnimationFrame(frame); frame = 0; remainder = 0; held = null;
-      u.fill(0); velocity.fill(0); warmth = 0; draw();
+      u.fill(0); velocity.fill(0); warmth = 0; feel(false); draw();
     }
     function point(x, y) {
       var rect = svg.getBoundingClientRect();
@@ -349,6 +354,7 @@
     }
     function move(x, y) {
       if (!held) return false;
+      feel(false);
       var p = point(x, y), now = performance.now();
       var pull = p.y - held.gap;
       var limit = clamp(width * 0.22, 90, 170);
@@ -376,7 +382,7 @@
           u.fill(0); velocity.fill(0); warmth = 0;
         }
       } else {
-        pluck(held.x, 8);
+        ripple(held.x);
       }
       held = null; run();
     }
@@ -384,6 +390,21 @@
       if (motion.matches || !width) return;
       var center = clamp(x / width * (count - 1), 1, count - 2);
       for (var i = 1; i < count - 1; i++) u[i] += amplitude * Math.exp(-Math.pow((i - center) / 3, 2));
+      warmth = 1; run();
+    }
+    function ripple(x) {
+      if (motion.matches || !width) return;
+      feel(true);
+      var center = clamp(x / width * (count - 1), 1, count - 2);
+      for (var i = 1; i < count - 1; i++) {
+        var distance = (i - center) / 8;
+        // A rounded crest with two troughs rolls outward and reflects at the
+        // ends. Feed mostly velocity so it swells into view instead of jumping.
+        var pulse = (1 - 2 * distance * distance) * Math.exp(-distance * distance);
+        pulse *= Math.min(1, i / 4, (count - 1 - i) / 4);
+        u[i] = clamp(u[i] + 4 * pulse, -65, 65);
+        velocity[i] = clamp(velocity[i] + 1000 * pulse, -1400, 1400);
+      }
       warmth = 1; run();
     }
     function run() {
@@ -401,7 +422,7 @@
         for (var j = 1; j < count - 1; j++) u[j] += velocity[j] * dt;
         remainder -= dt;
       }
-      warmth = Math.max(0, warmth - elapsed * 0.65);
+      warmth = Math.max(0, warmth - elapsed * warmthFade);
       var energy = 0;
       for (var k = 1; k < count - 1; k++) energy = Math.max(energy, Math.abs(u[k]), Math.abs(velocity[k]) / 25);
       if (energy < 0.06 && warmth === 0) { reset(); return; }
@@ -509,7 +530,7 @@
   window.addEventListener('pointerup', function (e) {
     if (!gesture || e.pointerId !== gesture.id) return;
     if (gesture.touch && gesture.tap) {
-      gesture.tap.pluck(gesture.tap.point(e.clientX, e.clientY).x, 8);
+      gesture.tap.ripple(gesture.tap.point(e.clientX, e.clientY).x);
       gesture.caught = true;
     }
     if (active) active.release(false);

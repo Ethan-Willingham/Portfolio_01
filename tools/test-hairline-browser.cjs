@@ -70,13 +70,15 @@ const report = { engine: process.env.HAIRLINE_ENGINE || 'chromium', shell: 'work
     const check = (name, values) => { report.checks.push({ name, ...values }); console.log(name, values || 'passed'); };
 
     let p = await origin(); await page.mouse.click(p.x, p.y);
-    const tap = await peak(); assert(tap.max > 1); check('click still reverberates', tap);
+    const tap = await peak(top, 350); assert(tap.max > 18, JSON.stringify(tap));
+    const echo = await peak(top, 1000); assert(echo.max > 6 && echo.min < -4, JSON.stringify(echo));
+    check('click swells into a broad wave with lingering reflections', { tap, echo });
     await reset(); p = await grab();
     await page.mouse.move(p.x, p.y + 100, { steps: 18 });
     const held = await shape(); assert(held.max > 65 && held.max < 100); assert.equal(held.first[1], 0); assert.equal(held.last[1], 0);
     await page.waitForTimeout(180); assert(Math.abs((await shape()).max - held.max) < 0.1);
     await page.screenshot({ path: path.join(output, report.engine + '-' + report.shell + '-held.png') });
-    await page.mouse.up(); const ring = await peak(); assert(ring.min < -15); check('held tension rebounds across the rest line', ring);
+    await page.mouse.up(); const ring = await peak(); assert(ring.min < -15, JSON.stringify(ring)); check('held tension rebounds across the rest line', ring);
     await page.waitForTimeout(4500); assert.equal((await shape()).max, 0); check('released line settles completely');
 
     await reset(); p = await grab(); await page.mouse.move(p.x, p.y + 100, { steps: 12 });
