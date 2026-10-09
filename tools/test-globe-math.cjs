@@ -126,29 +126,7 @@ assert.equal(offset('2026-10-03T15:59:00Z', 'Australia/Sydney'), 'GMT+10:00');
 assert.equal(offset('2026-10-03T16:00:00Z', 'Australia/Sydney'), 'GMT+11:00');
 assert.equal(offset('2026-06-21T12:00:00Z', 'Asia/Kathmandu'), 'GMT+05:45');
 assert.equal(offset('2026-06-21T12:00:00Z', 'America/Phoenix'), 'GMT-07:00');
-// The visible distance is compressed. The display's light must preserve the
-// actual Moon-Sun-camera angle rather than invent a phase as the camera turns.
-function unit(vector) { const size=length(vector);return {x:vector.x/size,y:vector.y/size,z:vector.z/size}; }
-function dot(a,b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
-function scale(vector,value) { return {x:vector.x*value,y:vector.y*value,z:vector.z*value}; }
-function minus(a,b) { return {x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}; }
-for (const iso of ['2026-01-18T19:52:00Z','2026-10-18T16:12:00Z','2026-10-26T04:12:00Z','2026-11-01T20:28:00Z']) {
-  const lunar=math.moon(new Date(iso));
-  const physicalPosition=scale(lunar.vector,lunar.distance);
-  const displayDistance=5.5*lunar.distance/60.2666;
-  const displayPosition=scale(lunar.vector,displayDistance);
-  const physicalLight=unit(minus(scale(lunar.sunVector,lunar.sunDistanceEarthRadii),physicalPosition));
-  // Last camera sits between the two Moon distances, exercising the
-  // antiparallel direction branch of the minimal quaternion.
-  for (const camera of [{x:3,y:0,z:0},{x:0,y:3,z:0},{x:0,y:0,z:-3},{x:1,y:-2,z:5},scale(lunar.vector,10)]) {
-    const physicalView=unit(minus(camera,physicalPosition));
-    const displayView=unit(minus(camera,displayPosition));
-    const displayLight=math.moonDisplayLight(lunar,camera,displayDistance);
-    close(length(displayLight),1,1e-12,iso+' normalized display Moon light');
-    close(dot(displayView,displayLight),dot(physicalView,physicalLight),1e-10,iso+' compressed Moon phase preserves physical view angle');
-  }
-}
 console.log('Solar: ' + solarReference.cases.length + ' NOAA city/date cases; maximum sunrise/set error ' + maxSolarSeconds.toFixed(3) + ' seconds.');
 console.log('Moon phases: ' + phaseReference.cases.length + ' USNO new/full instants; maximum error ' + maxPhaseMinutes.toFixed(2) + ' minutes.');
 console.log('Moon position: ' + moonReference.cases.length + ' independent ephemeris samples; maximum angular error ' + maxMoonDegrees.toFixed(4) + ' degree, illumination fraction error ' + maxIllumination.toFixed(6) + '.');
-console.log('Polar transitions, date line, physical Sun vectors, hypothetical tilt, real obliquity, Intl DST and compressed Moon phase checks passed.');
+console.log('Polar transitions, date line, physical Sun vectors, hypothetical tilt, real obliquity, Intl DST checks passed.');

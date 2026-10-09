@@ -182,36 +182,9 @@
     var incidenceCos = (distance - sunDistance * dot) / Math.sqrt(sunDistance * sunDistance + distance * distance - 2 * sunDistance * distance * dot);
     return {vector: vector, distance: distance, illumination: (1 + clamp(incidenceCos)) / 2, phase: modulo(longitude - sun.eclipticLongitude, 360), elongation: Math.acos(dot) / DEG, longitude: earthLongitude, declination: dec, sunVector: sun.vector, sunDistanceEarthRadii: sunDistance};
   }
-  // The UI compresses Earth-Moon separation. Rotate the physical light through
-  // the same minimal view-frame rotation so that compression cannot change the
-  // Moon's phase or the bright limb's orientation for the actual globe camera.
-  function moonDisplayLight(lunar, camera, displayDistance) {
-    function normalize(vector, fallback) {
-      var length = Math.hypot(vector.x, vector.y, vector.z);
-      if (length < 1e-12) return fallback;
-      return {x: vector.x / length, y: vector.y / length, z: vector.z / length};
-    }
-    function cross(a, b) { return {x:a.y*b.z-a.z*b.y, y:a.z*b.x-a.x*b.z, z:a.x*b.y-a.y*b.x}; }
-    var direction = lunar.vector;
-    var earthward = {x:-direction.x,y:-direction.y,z:-direction.z};
-    var physicalView = normalize({x:camera.x-direction.x*lunar.distance,y:camera.y-direction.y*lunar.distance,z:camera.z-direction.z*lunar.distance},earthward);
-    var displayView = normalize({x:camera.x-direction.x*displayDistance,y:camera.y-direction.y*displayDistance,z:camera.z-direction.z*displayDistance},earthward);
-    var sunDistance = lunar.sunDistanceEarthRadii || AU_EARTH_RADII;
-    var physicalLight = normalize({x:lunar.sunVector.x*sunDistance-direction.x*lunar.distance,y:lunar.sunVector.y*sunDistance-direction.y*lunar.distance,z:lunar.sunVector.z*sunDistance-direction.z*lunar.distance},lunar.sunVector);
-    var axis = cross(physicalView,displayView);
-    var w = 1 + clamp(physicalView.x*displayView.x+physicalView.y*displayView.y+physicalView.z*displayView.z);
-    var qLength = Math.hypot(axis.x,axis.y,axis.z,w);
-    if (qLength < 1e-10) {
-      axis = normalize(cross(physicalView,Math.abs(physicalView.x)<.9?{x:1,y:0,z:0}:{x:0,y:1,z:0}),{x:0,y:0,z:1});
-      w = 0;
-    } else { axis.x/=qLength;axis.y/=qLength;axis.z/=qLength;w/=qLength; }
-    var firstCross = cross(axis,physicalLight);
-    var secondCross = cross(axis,firstCross);
-    return normalize({x:physicalLight.x+2*w*firstCross.x+2*secondCross.x,y:physicalLight.y+2*w*firstCross.y+2*secondCross.y,z:physicalLight.z+2*w*firstCross.z+2*secondCross.z},physicalLight);
-  }
   function apparentSolarMinutes(date, longitude, tilt) {
     var ms = epoch(date);
     return modulo(ms / 60000 + longitude * 4 + solar(ms,tilt).equationOfTime, 1440);
   }
-  return {solar: solar, solarElevation: solarElevation, daylight: daylight, moon: moon, moonDisplayLight: moonDisplayLight, apparentSolarMinutes: apparentSolarMinutes, geographicVector: geographicVector};
+  return {solar: solar, solarElevation: solarElevation, daylight: daylight, moon: moon, apparentSolarMinutes: apparentSolarMinutes, geographicVector: geographicVector};
 }));

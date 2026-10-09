@@ -245,7 +245,7 @@
   replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-53',document.baseURI).href);
   detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-53',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
-  var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
+  var lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
     var tex = new THREE.DataTexture(new Uint8Array([r,g,b,255]),1,1,THREE.RGBAFormat); tex.needsUpdate = true; return tex;
   }
@@ -307,7 +307,9 @@
   // lighting made thin crescents almost black precisely at their visible limb.
   // A normalized Lommel-Seeliger disk law preserves the unlit hemisphere while
   // keeping the illuminated limb discernible in this expanded display range.
-  var moonMaterial = new THREE.ShaderMaterial({side:THREE.DoubleSide,uniforms:{moonMap:{value:moonTexture},sunDir:moonSunUniform},vertexShader:vertex,fragmentShader:[
+  // Both bodies share the same world-space sunlight. Moving the observer
+  // changes the visible phase, never the direction of the illuminated surface.
+  var moonMaterial = new THREE.ShaderMaterial({side:THREE.DoubleSide,uniforms:{moonMap:{value:moonTexture},sunDir:sunUniform},vertexShader:vertex,fragmentShader:[
     'uniform sampler2D moonMap; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld;',
     'void main(){vec3 n=normalize(vNormal);float incidence=max(0.0,dot(n,sunDir));float emission=max(0.0,dot(n,normalize(cameraPosition-vWorld)));',
     'float light=min(1.0,2.0*incidence/max(.0001,incidence+emission));',
@@ -588,9 +590,6 @@
     sunGlow.visible=sunUniform.value.dot(aimDirection)>0&&Math.abs(sunProjected.x)<1.25&&Math.abs(sunProjected.y)<1.25&&sunView.fluxFraction>0;
     sunGlow.material.uniforms.flux.value=sunView.fluxFraction;starMaterial.uniforms.solarFlux.value=sunView.fluxFraction;
     if(time-lastLabels>1000){updateAstronomy();updateLabels();lastLabels=time;}
-    // Distance compression changes the viewing angle. Transport the actual
-    // solar light into the display frame so the Moon retains its physical phase.
-    if(lunarState){var moonLight=math.moonDisplayLight(lunarState,camera.position,moonDisplayDistance);moonSunUniform.value.set(moonLight.x,moonLight.y,moonLight.z);}
     photoMix=Math.min(1,photoMix+dt*.7);earthMaterial.uniforms.photoMix.value=photo?photoMix:0;
     auroraMeshes.forEach(function (mesh) {mesh.material.uniforms.tick.value=time/1000;});
     advanceReplay(time);renderer.render(scene,camera);finishLoading();frameRequest=requestAnimationFrame(frame);

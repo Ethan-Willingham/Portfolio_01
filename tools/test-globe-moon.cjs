@@ -4,16 +4,40 @@
    Owns the test browser and server and closes both in finally. */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
-const {chromium,webkit}=require('playwright');
+const {chromium,webkit}=require('playwright'),{execFileSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),mobile=process.env.SAFARI_MOBILE==='1';
 const dump=process.env.DUMP||'/tmp/globe-moon-'+(mobile?'webkit':'chrome');
 fs.mkdirSync(dump,{recursive:true});
 const hooks=`
 window.__moonAudit={
- state:()=>({loading,live,instant:instant.toISOString(),moon:moon.position.toArray(),camera:camera.position.toArray(),light:moonSunUniform.value.toArray(),projected:moon.position.clone().project(camera).toArray(),illumination:lunarState.illumination,textureWidth:moonTexture.image.width,radius,theta,phi,targetTheta,targetPhi,targetRadius}),
+ state:()=>({loading,live,instant:instant.toISOString(),moon:moon.position.toArray(),camera:camera.position.toArray(),light:moonMaterial.uniforms.sunDir.value.toArray(),sun:sunBody.position.clone().sub(camera.position).normalize().toArray(),projected:moon.position.clone().project(camera).toArray(),illumination:lunarState.illumination,textureWidth:moonTexture.image.width,radius,theta,phi,targetTheta,targetPhi,targetRadius}),
  freeze:iso=>{live=false;instant=new Date(iso);autoSpin=false;updateAstronomy();syncInputs();updateLabels();},
  orbit:(lat,lon,r)=>{targetTheta=theta=Math.PI/2+lon*DEG;targetPhi=phi=Math.PI/2-lat*DEG;targetRadius=radius=r;sunFraming=false;autoSpin=false;aimShift=0;},
  wide:on=>{wrapper.classList.toggle('is-fullscreen',on);resize();},
+ geocentric:legacy=>{
+   const position=camera.position.clone(),quaternion=camera.quaternion.clone(),up=camera.up.clone(),visible=scene.children.map(child=>child.visible);
+   try{scene.children.forEach(child=>{child.visible=child===moon;});camera.position.set(0,0,0);camera.up.set(0,1,0);camera.lookAt(moon.position);camera.updateMatrixWorld();return __moonAudit.measure(legacy);}
+   finally{camera.position.copy(position);camera.quaternion.copy(quaternion);camera.up.copy(up);scene.children.forEach((child,i)=>{child.visible=visible[i];});camera.updateMatrixWorld();renderer.render(scene,camera);}
+ },
+ lighting:aimMoon=>{
+   const quaternion=camera.quaternion.clone();if(aimMoon){camera.lookAt(moon.position);camera.updateMatrixWorld();}
+   const savedMap=moonMaterial.uniforms.moonMap.value,visible=scene.children.map(child=>child.visible),texture=solidTexture(180,180,180);
+   const gl=renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,bytes=new Uint8Array(w*h*4),solar=sunBody.position.clone().sub(camera.position).normalize(),ray=new THREE.Raycaster();
+   try{
+     moonMaterial.uniforms.moonMap.value=texture;scene.children.forEach(child=>{child.visible=child===moon;});renderer.render(scene,camera);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);
+     const projected=moon.position.clone().project(camera),cx=(projected.x+1)*w/2,cy=(projected.y+1)*h/2,span=Math.ceil(h*.273/(camera.position.distanceTo(moon.position)*Math.tan(camera.fov*DEG/2)))+3;
+     let checked=0,lit=0,dark=0,maxError=0;
+     for(let y=Math.max(0,Math.floor(cy-span));y<Math.min(h,cy+span);y+=2)for(let x=Math.max(0,Math.floor(cx-span));x<Math.min(w,cx+span);x+=2){
+       ray.setFromCamera(new THREE.Vector2((x+.5)/w*2-1,(y+.5)/h*2-1),camera);
+       // Analytic sphere intersections are independent of the material's normals.
+       const point=ray.ray.intersectSphere(new THREE.Sphere(moon.position,.273),new THREE.Vector3());if(!point)continue;
+       const n=point.clone().sub(moon.position).normalize(),incidence=n.dot(solar),emission=n.dot(camera.position.clone().sub(point).normalize());if((incidence>-.025&&incidence<.07)||emission<.4)continue;
+       const expected=180*Math.pow(.005+.995*Math.min(1,2*Math.max(0,incidence)/Math.max(.0001,Math.max(0,incidence)+emission)),1/2.2),actual=bytes[(y*w+x)*4];
+       checked++;if(incidence>0)lit++;else dark++;maxError=Math.max(maxError,Math.abs(expected-actual));
+     }
+     return {checked,lit,dark,maxError};
+   }finally{moonMaterial.uniforms.moonMap.value=savedMap;texture.dispose();camera.quaternion.copy(quaternion);camera.updateMatrixWorld();scene.children.forEach((child,i)=>{child.visible=visible[i];});renderer.render(scene,camera);}
+ },
  measure:legacy=>{
    const fragmentBefore=moonMaterial.fragmentShader;
    if(legacy){moonMaterial.fragmentShader='uniform sampler2D moonMap; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vNormal; void main(){float light=max(0.0,dot(normalize(vNormal),sunDir));gl_FragColor=vec4(texture2D(moonMap,vUv).rgb*(.025+light*.98),1.0);}';moonMaterial.needsUpdate=true;}
@@ -32,9 +56,10 @@ window.__moonAudit={
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.bin':'application/octet-stream','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{
  const file=path.resolve(root,'.'+decodeURIComponent(req.url.split('?')[0]));if(!file.startsWith(root+path.sep))return res.writeHead(403).end();
- try{let content=fs.readFileSync(file);if(file.endsWith('/js/globe.js')){const source=content.toString(),end=source.lastIndexOf('}());');assert(end>=0);content=Buffer.from(source.slice(0,end)+hooks+source.slice(end));}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(content);}catch(error){res.writeHead(404).end();}
+ try{let content=process.env.BASELINE_REF&&/\/js\/globe(?:-math)?\.js$/.test(file)?execFileSync('git',['show',process.env.BASELINE_REF+':'+path.relative(root,file)],{cwd:root}):fs.readFileSync(file);if(file.endsWith('/js/globe.js')){const source=content.toString(),end=source.lastIndexOf('}());');assert(end>=0);content=Buffer.from(source.slice(0,end)+hooks+source.slice(end));}res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(content);}catch(error){res.writeHead(404).end();}
 });
 const cases=[
+ {name:'reported-lighting',iso:'2026-10-09T16:50:00Z',phase:'thin'},
  {name:'reported-waning-crescent',iso:'2026-10-09T14:30:00Z',phase:'thin'},
  {name:'waxing-crescent',iso:'2026-10-12T15:50:00Z',phase:'thin'},
  {name:'new',iso:'2026-10-10T15:50:00Z',phase:'new'},
@@ -65,15 +90,25 @@ async function settled(page){await page.waitForFunction(()=>{const s=__moonAudit
     check(label+' keeps the selected time and calculated lunar position',state.instant===before.instant&&state.live===before.live&&state.moon.every((v,i)=>Math.abs(v-before.moon[i])<1e-12));
     check(label+' frames the whole Moon inside the actual canvas',Math.abs(state.projected[0])<.85&&Math.abs(state.projected[1])<.85&&state.projected[2]<1&&pixels.bounds.left>0&&pixels.bounds.right<pixels.buffer.w-1&&pixels.bounds.top>0&&pixels.bounds.bottom<pixels.buffer.h-1);
     check(label+' has a resolved lunar disk',pixels.disk>250);
+    const lighting=await page.evaluate(()=>__moonAudit.lighting());evidence.cases.at(-1).lighting=lighting;
+    check(label+' lights the actual Sun-facing surface',lighting.checked>30&&lighting.maxError<8);
+    check(label+' shares the displayed Sun bearing',state.light.every((v,i)=>Math.abs(v-state.sun[i])<1e-12));
+    const phasePixels=await page.evaluate(()=>__moonAudit.geocentric());evidence.cases.at(-1).phasePixels=phasePixels;
     if(fixture.phase==='thin'){
-     check(label+' has a discernible illuminated crescent',pixels.max>=65&&pixels.actualBright>=3);
-     check(label+' retains a mostly unlit disk',pixels.brightFraction>.001&&pixels.brightFraction<.12);
-     if(fixture.name==='reported-waning-crescent'&&!wide){const legacy=await page.evaluate(()=>__moonAudit.measure(true));evidence.legacy={state,pixels:legacy};check('Reported crescent is brighter than the old shader in the identical view',pixels.max>legacy.max*2&&pixels.actualBright>legacy.actualBright);}
-    }else if(fixture.phase==='new')check(label+' does not invent a bright full disk at new Moon',pixels.brightFraction<.04);
-    else if(fixture.phase==='quarter')check(label+' retains a half illuminated disk',pixels.brightFraction>.3&&pixels.brightFraction<.7&&pixels.actualBright>30);
-    else check(label+' retains an illuminated textured full Moon',pixels.brightFraction>.85&&pixels.max>150&&pixels.actualBright>100);
+     check(label+' has a discernible illuminated crescent',phasePixels.max>=65&&phasePixels.actualBright>=3);
+     check(label+' retains a mostly unlit disk',phasePixels.brightFraction>.001&&phasePixels.brightFraction<.12);
+     if(fixture.name==='reported-waning-crescent'&&!wide){const legacy=await page.evaluate(()=>__moonAudit.geocentric(true));evidence.legacy={state,pixels:legacy};check('Reported crescent is brighter than the old shader from the Earth-centered view',phasePixels.max>legacy.max*2&&phasePixels.actualBright>legacy.actualBright);}
+    }else if(fixture.phase==='new')check(label+' does not invent a bright full disk at new Moon',phasePixels.brightFraction<.04);
+    else if(fixture.phase==='quarter')check(label+' retains a half illuminated disk',phasePixels.brightFraction>.3&&phasePixels.brightFraction<.7&&phasePixels.actualBright>30);
+    else check(label+' retains an illuminated textured full Moon',phasePixels.brightFraction>.85&&phasePixels.max>150&&phasePixels.actualBright>100);
     if(fixture.phase==='thin'||fixture.phase==='full')await page.locator('#globe-container').screenshot({path:path.join(dump,label.replaceAll(' ','-')+'.png')});
    }
+  }
+  for(const pose of [[0,0,1.5],[65,-80,4],[-70,100,10],[20,160,6],[20,-100,10]]){
+   await page.evaluate(pose=>{__moonAudit.freeze('2026-10-09T16:50:00Z');__moonAudit.orbit(...pose);},pose);await settled(page);
+   const state=await page.evaluate(()=>__moonAudit.state()),lighting=await page.evaluate(()=>__moonAudit.lighting(true));
+   check('Orbit '+pose.join(',')+' preserves Sun-facing pixels',lighting.checked>30&&lighting.maxError<8);
+   check('Orbit '+pose.join(',')+' cannot rotate lunar light away from the Sun',state.light.every((v,i)=>Math.abs(v-state.sun[i])<1e-12));
   }
   await page.evaluate(()=>{__moonAudit.wide(false);__moonAudit.freeze('2026-10-09T14:30:00Z');__moonAudit.orbit(-70,-120,1.5);});
   await page.locator('#globe-moon').click();await settled(page);const before=await page.evaluate(()=>__moonAudit.state());
