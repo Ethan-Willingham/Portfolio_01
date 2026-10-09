@@ -1,9 +1,8 @@
 (function () {
   'use strict';
-  const SELECTION_KEY = 'spongebob-character-selection-v1';
   let catalogPromise;
   async function fetchJSON(path) {
-    const response = await fetch(path + '?v=4', { cache: 'no-cache' });
+    const response = await fetch(path + '?v=5', { cache: 'no-cache' });
     if (!response.ok) throw new Error('The character catalog could not be loaded.');
     return response.json();
   }
@@ -57,20 +56,6 @@
     wrapper.append(image);
     return wrapper;
   }
-  function readSelection(defaultIds, byId) {
-    try {
-      const raw = localStorage.getItem(SELECTION_KEY);
-      if (raw !== null) {
-        const value = JSON.parse(raw);
-        if (Array.isArray(value)) return cleanIds(value, byId);
-      }
-    } catch (_) { /* The page still works when storage is unavailable. */ }
-    return [...defaultIds];
-  }
-  function saveSelection(ids) {
-    try { localStorage.setItem(SELECTION_KEY, JSON.stringify(ids)); return true; }
-    catch (_) { return false; }
-  }
   function cleanMatchups(pairs, ids, byId) {
     if (!Array.isArray(pairs) || !pairs.length) return null;
     const allowed = new Set(cleanIds(ids, byId)), used = new Set();
@@ -104,5 +89,5 @@
     catch (_) { return []; }
   }
   function pairKey(pair) { return [...pair].sort().join('|'); }
-  window.SpongeBob = { load, cleanIds, cleanMatchups, picture, readSelection, saveSelection, fightURL, sharedRoster, sharedMatchups, pairKey };
+  window.SpongeBob = { load, cleanIds, cleanMatchups, picture, fightURL, sharedRoster, sharedMatchups, pairKey };
 })();

@@ -1,6 +1,6 @@
 # SpongeBob original-series character roster
 
-The matchup builder displays only the owner's selected cast. Its
+Bikini Bottom Showdown displays the owner's ten chosen matchups. Its
 underlying lookup retains 1,370 locally stored portraits from the original
 SpongeBob SquarePants TV series, researched on October 9, 2026. The discovery
 index was the [Characters category on Encyclopedia SpongeBobia](https://spongebob.fandom.com/wiki/Category:Characters),
@@ -50,21 +50,18 @@ fallback files were removed.
 The original 1,021 IDs are frozen in `assets/spongebob/first-catalog-ids.json`.
 `pickerCharacterIds` contains only current TV characters absent from that first
 set. These IDs preserve the previously shown new-character list in the data.
-The current page uses the selected cast instead of browsing this list. The full
-lookup remains available to saved selections, chosen matchups and shared fight
+The picker and matchup builder were removed at the owner's request after the
+round was finalized. The full lookup remains available to chosen matchups and shared fight
 links. Refreshing the import recomputes the new-character list against the same
 frozen baseline.
 
-The owner's selected cast and public fight round are maintained separately in
-`assets/spongebob/lineup.json`. The public `characterIds` contains the 20 participants
-in the ten ordered `matchups` chosen by the owner. `builderCharacterIds` preserves
-the prior 34-character selected cast as the fallback for browsers without a saved
-selection, so changing the public round does not discard private matchup drafts.
-Saved browser selections take precedence in the builder. Bare-Knuckles the Sea
+The owner's public fight round is maintained in `assets/spongebob/lineup.json`.
+Its `characterIds` contains the 20 participants in the ten ordered `matchups`
+chosen by the owner. Bare-Knuckles the Sea
 Bear remains available for the selected cast through `retainedCharacters` and
 `assets/spongebob/selected-cast/`. Bare-Knuckles is not included in this
 original-series catalog because its sourced appearance is in The Patrick Star
-Show. The remaining 33 builder characters and 19 public-round characters have
+Show. The remaining 19 public-round characters have
 original-series episode evidence in the catalog.
 
 ## Familiar names

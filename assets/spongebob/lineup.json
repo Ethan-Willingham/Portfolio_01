@@ -1,6 +1,6 @@
 {
-  "version": 6,
-  "title": "Chosen SpongeBob matchups",
+  "version": 7,
+  "title": "Bikini Bottom Showdown",
   "updatedAt": "2026-10-09",
   "characterIds": [
     "incidental-211",
@@ -77,41 +77,5 @@
       "bubble-buddy",
       "iron-eye"
     ]
-  ],
-  "builderCharacterIds": [
-    "incidental-211",
-    "incidental-152",
-    "bubble-buddy",
-    "incidental-22",
-    "incidental-24",
-    "incidental-222",
-    "incidental-42",
-    "incidental-104",
-    "incidental-49a",
-    "incidental-30",
-    "alaskan-bull-worm",
-    "man-ray",
-    "tattletale-strangler",
-    "herb-star",
-    "baby-prunes",
-    "billy-fishkin",
-    "bubbleman",
-    "conductor-1",
-    "customer",
-    "drifter",
-    "iron-eye",
-    "janet",
-    "larry-luciano",
-    "lemont",
-    "lou",
-    "mermaid-man-man-ray-timeline",
-    "nurse",
-    "officer-nancy",
-    "patar",
-    "spongegar",
-    "tom-prison-guard-1",
-    "bare-knuckles-the-sea-bear",
-    "karen",
-    "kevin-c-cucumber"
   ]
 }

@@ -73,7 +73,8 @@ Posts pick an accent (or per-section accents) from one shared, muted, chroma-equ
 - The SpongeBob fight comparer (`spongebob-fight.html`) is a standalone app with
   its own stylesheet and palette, by owner request on 2026-10-09. It does not use
   the blog shell. Its only portfolio branding is the linked copyright footer.
-  The character picker remains in the shared site style.
+  It is titled Bikini Bottom Showdown. The character picker and matchup builder
+  were removed after the owner finalized the round.
 - The Sluice live performance inspector uses a local steel, brass and warning
   palette (`--perf-*`), by owner request on 2026-10-03. Its fonts remain Segoe UI
   and Commit Mono; this exception applies only to the game inspector.

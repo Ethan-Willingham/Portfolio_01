@@ -1,6 +1,6 @@
 # SpongeBob shared votes
 
-The standalone fight comparer uses `js/spongebob-votes.js`. It calls a separate Sites Worker backed by persistent Cloudflare D1. GitHub Pages serves the picker, comparer and images.
+Bikini Bottom Showdown uses `js/spongebob-votes.js`. It calls a separate Sites Worker backed by persistent Cloudflare D1. GitHub Pages serves the comparer and images.
 
 Service URL: `https://spongebob-votes-ethan.snugbay4.chatgpt.site`.
 
@@ -40,9 +40,9 @@ Only registered character IDs are accepted. JSON request size is limited to 2 Ki
 
 When the researched character catalog or retained public cast changes, run `node services/spongebob-votes/scripts/sync-roster.mjs` from the portfolio root and publish a new backend version. It includes catalog IDs and `lineup.retainedCharacters`. The tracked `roster.json` contains only character IDs, so the Sites source repository can build independently of the portfolio's image files.
 
-The matchup builder displays only the selected cast, using the existing browser selection or `lineup.builderCharacterIds` when no selection has been saved. This preserves the owner's prior 34-character cast and private drafts while the public round contains only 20 participants. Click two portraits in left/right order, then confirm their matchup. The two characters leave the remaining grid. Removing a confirmed matchup returns both characters. Confirmed pairs survive reloads using the existing `spongebob-matchups-v1` storage key; confirming a pair does not remove characters from the saved cast. A single remaining character in an odd cast sits out.
+The picker and matchup builder were removed at the owner's request after the public round was finalized. Its 20 participants and ten ordered pairs live in `assets/spongebob/lineup.json`. The comparer shows only the title, character cards, vote results, Next matchup and the linked copyright footer. Phone layouts preserve readable portraits and names, large touch controls and spacing for safe-area insets.
 
-A shared fight link carries both the selected cast and its `matchups` JSON in the URL fragment; downloaded lineup files contain the same `matchups` array. The comparer preserves these pairs and their left/right order. The public round uses the owner's ten explicit pairs from `lineup.matchups`, with exactly 20 participants and no additional fights. Existing shared links keep their own configured pairs. Each character can appear only once in a round, and a skipped pair consumes both characters. A cast without configured matchups is shuffled into disjoint pairs, with one character sitting out when its size is odd.
+A shared fight link carries both the selected cast and its `matchups` JSON in the URL fragment; existing downloaded lineup files contain the same `matchups` array. The comparer preserves these pairs and their left/right order. The public round uses the owner's ten explicit pairs from `lineup.matchups`, with exactly 20 participants and no additional fights. Existing shared links keep their own configured pairs. Each character can appear only once in a round. A saved vote reveals percentages and the prominent Next matchup button; there is no Skip button. A cast without configured matchups is shuffled into disjoint pairs, with one character sitting out when its size is odd.
 
 Run from `services/spongebob-votes/`:
 

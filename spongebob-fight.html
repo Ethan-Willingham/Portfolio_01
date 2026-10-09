@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#62cfdb">
-  <title>Who would win in a fight? SpongeBob</title>
+  <title>Bikini Bottom Showdown</title>
   <meta name="description" content="Vote through ten chosen SpongeBob matchups, starting with Officer Nancy against Billy Fishkin, and see how everyone else voted on each pair.">
   <link rel="canonical" href="https://ethanwillingham.com/spongebob-fight.html">
-  <meta property="og:title" content="Who would win in a fight? SpongeBob">
+  <meta property="og:title" content="Bikini Bottom Showdown">
   <meta property="og:description" content="Ten chosen matchups. Pick who would win in Bikini Bottom and see the real votes for each pair.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Ethan Willingham">
@@ -20,27 +20,13 @@
   <meta name="twitter:image" content="https://ethanwillingham.com/assets/spongebob/characters/bubble-buddy.webp">
   <link rel="preload" href="assets/fonts/segoe_ui_bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="spongebob-fight.css?v=2">
+  <link rel="stylesheet" href="spongebob-fight.css?v=3">
 </head>
 <body>
   <div class="sb-app-shell">
-    <header class="sb-app-header">
-      <div class="sb-app-title"><p class="sb-app-kicker">Bikini Bottom showdown</p><h1>Who would win in a fight? SpongeBob</h1></div>
-      <details class="sb-app-menu">
-        <summary>Lineup &amp; info</summary>
-        <div class="sb-menu-panel">
-          <p class="sb-menu-label" id="sb-roster-label"></p>
-          <p class="sb-menu-note" id="sb-unpaired-note" hidden></p>
-          <details class="sb-roster-details" id="sb-roster-details" hidden><summary id="sb-roster-summary">Who's in this lineup?</summary><p id="sb-roster-names"></p></details>
-          <a class="sb-menu-link" href="spongebob-picker.html#sb-pairing">Choose matchups</a>
-          <p class="sb-menu-note">One vote per pair is saved for this browser. Results include your vote. Percentages are rounded.</p>
-          <p class="sb-menu-note">Pictures: <a href="https://spongebob.fandom.com/wiki/Category:Characters" target="_blank" rel="noopener noreferrer">Encyclopedia SpongeBobia</a>. Individual sources are in the <a href="spongebob-picker.html">picker</a>. Characters belong to their respective rights holders.</p>
-        </div>
-      </details>
-    </header>
+    <header class="sb-app-header"><div class="sb-app-title"><h1>Bikini Bottom Showdown</h1></div></header>
     <main class="sb-app-main">
       <section class="sb-fight" id="sb-fight" aria-label="SpongeBob fight vote" aria-busy="true">
-        <div class="sb-round-header" id="sb-round-header" hidden><p class="sb-kicker" id="sb-progress"></p><p class="sb-round-hint" id="sb-round-hint">Pick your winner.</p></div>
         <div class="sb-empty" id="sb-load-state" role="status"><p>Finding the first matchup...</p><button class="sb-button" id="sb-load-retry" type="button" hidden>Try again</button></div>
         <div class="sb-matchup" id="sb-matchup" hidden>
           <button class="sb-fighter sb-fighter-left" id="sb-fighter-left" type="button" disabled><span class="sb-fighter-image" id="sb-image-left"></span><span class="sb-fighter-name" id="sb-name-left"></span><span class="sb-fighter-prompt" id="sb-prompt-left">Choose winner</span><span class="sb-fighter-result" id="sb-result-left" hidden></span><span class="sb-fighter-count" id="sb-count-left" hidden></span><span class="sb-result-track" id="sb-track-left" hidden aria-hidden="true"><i></i></span></button>
@@ -48,15 +34,15 @@
           <button class="sb-fighter sb-fighter-right" id="sb-fighter-right" type="button" disabled><span class="sb-fighter-image" id="sb-image-right"></span><span class="sb-fighter-name" id="sb-name-right"></span><span class="sb-fighter-prompt" id="sb-prompt-right">Choose winner</span><span class="sb-fighter-result" id="sb-result-right" hidden></span><span class="sb-fighter-count" id="sb-count-right" hidden></span><span class="sb-result-track" id="sb-track-right" hidden aria-hidden="true"><i></i></span></button>
         </div>
         <div class="sb-vote-state" id="sb-vote-state" hidden><p id="sb-vote-status" role="status" aria-live="polite" aria-atomic="true"></p><p class="sb-note" id="sb-vote-total" hidden></p><button class="sb-button" id="sb-vote-retry" type="button" hidden>Try again</button></div>
-        <div class="sb-round-actions" id="sb-round-actions" hidden><button class="sb-button sb-skip" id="sb-skip" type="button">Skip this pair</button><button class="sb-button sb-primary" id="sb-next" type="button" hidden>Next matchup</button><button class="sb-text-button" id="sb-refresh" type="button" hidden>Refresh results</button></div>
-        <div class="sb-empty sb-complete" id="sb-complete" hidden><p class="sb-kicker">Round complete</p><h2>You've reached every matchup.</h2><p id="sb-round-summary"></p><div class="sb-export-actions"><button class="sb-button sb-primary" id="sb-restart" type="button">Play another round</button><a class="sb-button" href="spongebob-picker.html#sb-pairing">Choose new matchups</a></div></div>
+        <div class="sb-round-actions" id="sb-round-actions" hidden><button class="sb-button sb-primary" id="sb-next" type="button" hidden>Next matchup</button><button class="sb-text-button" id="sb-refresh" type="button" hidden>Refresh results</button></div>
+        <div class="sb-empty sb-complete" id="sb-complete" hidden><h2>Round complete</h2><button class="sb-button sb-primary" id="sb-restart" type="button">Play another round</button></div>
         <noscript><p class="sb-empty">Turn on JavaScript to show the characters and save your vote.</p></noscript>
       </section>
     </main>
     <footer class="sb-app-footer"><a href="/">&copy; 2026 Ethan Willingham</a></footer>
   </div>
-  <script src="js/spongebob-shared.js?v=6"></script>
+  <script src="js/spongebob-shared.js?v=7"></script>
   <script src="js/spongebob-votes.js?v=1"></script>
-  <script src="js/spongebob-fight.js?v=3"></script>
+  <script src="js/spongebob-fight.js?v=4"></script>
 </body>
 </html>
