@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.53, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.54, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -633,3 +633,40 @@ restriction is preserved explicitly; it neither causes nor removes the
 observed candidate pressure/velocity mismatch. The precise first divergent
 arithmetic instruction is unresolved without intermediate captures or compiler
 IR. A change in rounding context remains an inference, not a measured cause.
+
+
+The narrower private cacheWaterFaces candidate stores only clamped face openings;
+consumer timestep multiplication and density division remain unchanged. All 24
+isolated grid/direct/prescribed-MAC fixtures complete three original encodes,
+with byte-exact production/OFF/ON original allocations and prefixes. Both current
+water cache tails match the independent original faceOpen GPU probe, including
+the previous quantization case at dt 1/90. All six deliberately skipped-writer
+controls are detected. The independent raw audit verifies 6,859,920 bytes and
+17,632 face words. This gate prescribes fine-grid/MAC inputs; actual native
+particle gather/collision and full-window physical acceptance remain unproved.
+
+Two incomplete recorder attempts are preserved. The first reaches 48 matching
+positive checkpoints, then lacks COPY_SRC permission for MAC terrain copy-out.
+A symmetric fixture-only device wrapper repairs that readback permission. The
+second completes all 72 positives, then supplies a bind-group layout where its
+negative-control pipeline needs a pipeline layout. The final recorder constructs
+the matching pipeline layout explicitly. Candidate, numerical inputs, raw
+acceptance predicates and tolerances remain unchanged. Only the complete final
+recording admits timing, and every exact owned Testing child exits.
+
+The paired natural cup trial records four fresh Retina documents in OFF/ON/ON/OFF
+order, seed 17, with two seconds warm-up and six seconds sampling per row. All
+source and active-option checks pass, with no errors or timestamp drops. Pooled
+OFF costs 3.096600 ms across 185 air passes; ON costs 2.763670 ms across 185, a
+10.751% decrease. The adjacent ON/OFF ratios are 1.471120 and 0.537226. The fixed
+qualification floor requires pooled ratio <= .95 and both adjacent ratios <= .97;
+the latter fails. This establishes no reliable playback gain. No repeat, full
+physical suite or promotion follows, and RAF rate is not display FPS.
+
+The public stencil-face-cache-trial-2026-10-09.json artifact includes the raw-audit
+receipt, timing decision, source pins and lossless gzip/base64 archives of all
+four raw reports, including both recorder failures. Decompression reproduces the
+original byte lengths and SHA256. Toy v5.54 changes only progress evidence and
+the version label; the released air solver, overlay and shared native v28.179
+remain unchanged. Gas retention, quantitative flow and energy, sustained laptop
+and phone playback, and final polish and audit remain unfinished.
