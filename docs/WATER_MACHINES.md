@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.46, shared water engine v28.178. The greedy cup, standalone
+Release: toy v5.47, shared water engine v28.178. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -195,6 +195,47 @@ INVARIANCE_EXTENDED=1 and EXPECT_RETENTION=1 with the exact v3.1 AIR_SOURCE;
 MAC=1 requires its paired MAC_SOURCE. Do not also select PRESSURE or GUARDS,
 which exercise the preceding singleton experiment.
 
+The next CPU continuation rejects that common pressure row. A valid initial gas
+pressure pulse changes its stored gas volume by about 0.0874123 square pixels as
+dt approaches zero, while the predicted native material change approaches zero.
+Equilibrated affine flow also gives about 27% disagreement. The declared-plane
+GPU agreement therefore cannot establish physical particle continuation.
+
+A separate P1 pressure and mass-adjoint particle transfer passes 124 CPU checks:
+48 transfer states, nine Float32 storage controls, 24 repeated steps and five
+spatial scales. Its constructive case uses the existing native-format parcel
+state, a material-edge pressure knot, positive determinant J update and physical
+affine pullback. Its separate liquid/gas pressures use exact water and gas EOS.
+Material, geometric gas volume and pressure work close at double roundoff in
+that bounded calculation. This changes the interpolation; the existing quadratic
+scatter and MLS do not inherit its proof. The coarse pressure-pitch APIC covariance
+control is also distinct from native fine-grid APIC and physical parcel energy.
+Root independently reran a byte-exact copy with an identical report. Source SHA256
+is 8736960edaa556f2a7440dfea6ddca6b1b4a159f7b84a3429ea66a0a05e0d306;
+report SHA256 is ac7ece10d035ae78e8d41a3456a36c0ab7d004ba3c3e5357869b2ef2dafba2de.
+Actual GPU gather, collision and general interface/topology acceptance remain
+pending. Public evidence: continuation-progress-trial-2026-10-09.json.
+
+Sixteen private queue-pacing runs use exact v5.46 sources, seed 17, 1512 by 760
+Retina rendering, four seconds warmup and eight seconds sampling. They verify
+loaded source hashes and close every owned browser. At 1/60 host packets and two
+admitted machine frames in flight, siphon and Heron execute about 60 host frames
+per wall second. Median sampled native queue-prefix latency is 14.3 and 19.9 ms,
+compared with baseline medians of 1.3 to 2.3 seconds. The cup executes 51.6 frames
+per second with 25.1 ms median latency and growing host debt. No candidate native
+clamp or fixed-bank overflow is measured. Smaller 1/120 cup packets execute
+73.3 and 75.6 frames per second but advance the native clock more slowly than
+1/60 packets. Higher frame counts therefore do not establish faster water.
+
+These are uncapped scheduling measurements, not physical display FPS, sustained
+60 FPS, or machine acceptance. The scheduler remains private: quiet-water banks,
+deferred time across input/parameter changes, low-timescale remainder loss, and
+paused foreign draws block release. Whole-frame admission preserves the existing
+call order but does not prove matching displayed GPU water and CPU slime poses.
+The public trial JSON preserves clock frontiers, time accounting, raw prefix
+samples, source/report hashes and CPU pressure limits. Shared native v28.178 and
+the published simulation are unchanged by these trials.
+
 Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
 REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw
 files with tools/check-water-native-repeat.mjs /absolute/capture --expect-equal.
@@ -307,7 +348,8 @@ The full cup and its controls fit the available browser height, including
 1512 by 820 and 1512 by 700 MacBook viewports. The shorter desktop header leaves
 more room for the apparatus. Water renders at the fitted display resolution;
 the physical world and particle buffers keep their original size. The footer
-shows actual presentation FPS, including rates below 20, and zero when paused.
+counts executed host frames, including rates below 20, and shows zero when paused.
+Its FPS value does not measure the completion of queued GPU water frames.
 
 The primary slime always starts as a ball, independently of the ordinary spawn
 shape. Its 16-pixel point pitch uses 91 points and 264 springs instead of 397
