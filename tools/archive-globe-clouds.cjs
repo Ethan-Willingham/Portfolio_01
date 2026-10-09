@@ -9,7 +9,7 @@ function needsRepair(frame,catalog){const times=clouds.sourceTimes(catalog,frame
 function improvesSources(next,old){return next.sourceTimes.every((t,i)=>!old.sourceTimes[i]||t)&&next.sourceTimes.filter(Boolean).length>old.sourceTimes.filter(Boolean).length;}
 function git(args,options={}){return execFileSync('git',args,{maxBuffer:32000000,...options});}
 async function renderFrame(time,options={}){
- const sharp=options.sharp||require('sharp'),result=await clouds.fetchFrame(time,WIDTH,{timeout:25000,retries:2,cacheStorage:null,fetch:options.fetch,signal:options.signal,catalog:options.catalog});
+ const sharp=options.sharp||require('sharp'),result=await clouds.fetchFrame(time,WIDTH,{timeout:25000,retries:2,cacheStorage:null,fetch:options.fetch,signal:options.signal,catalog:options.catalog,inspectColour:async function(blob){var pixels=await sharp(Buffer.from(await blob.arrayBuffer())).resize(256,128).ensureAlpha().raw().toBuffer();return clouds.validColourImage(pixels,256);}});
  // Infrared clocks determine complete weather coverage. A slower visible
  // channel falls back to the same dated infrared over reference terrain.
  if(!usableSources(result.blobs,time))throw new Error('Incomplete satellite hour');

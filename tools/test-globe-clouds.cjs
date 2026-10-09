@@ -30,6 +30,16 @@ check('a grey cloud does not acquire another brightness edge in the GeoColor sou
  assert(Math.min(...values)>.98);assert(values.slice(1).every((value,i)=>Math.abs(value-values[i])<.01));
 });
 check('warm neutral night pixels do not receive the grey infrared cloud exposure boost',()=>{const grey=.48,x=(grey-.22)/.63,observed=x*x*(3-2*x);assert.equal(C.geoColorCloud(grey,grey,grey,0,observed,.1),observed);});
+check('a translucent grey cloud retains its foreground through a blue source background',()=>{
+ const values=[];for(let mu=.3;mu>=.08;mu-=.001){const day=Math.pow(Math.max(0,Math.min(1,(mu-.1)/.2)),1.5),night=1-day,r=day*.85+night*.48,g=r+night*.04,b=r+night*.08,x=Math.max(0,Math.min(1,(r-.22)/.63));values.push(C.geoColorCloud(r,g,b,mu,x*x*(3-2*x),.48));}
+ assert(Math.min(...values)>.98);assert(Math.max(...values)-Math.min(...values)<.02);
+ assert.equal(C.geoColorCloud(.06,.1,.15,.08,0,.48),0);
+});
+check('flat white partial disks are rejected without discarding normal highlights or infrared',()=>{
+ const w=360,h=180,s=C.GROUPS.map(()=>null);s[0]=new Uint8ClampedArray(w*h*4);s[5]=new Uint8ClampedArray(w*h*4);for(let at=0;at<s[0].length;at+=4){s[0].set([100,150,180,255],at);s[5].set([100,100,100,255],at);}for(let y=35;y<85;y++)for(let x=60;x<160;x++)s[0].set([255,255,255,255],(y*w+x)*4);
+ assert(!C.validColourImage(s[0],w));C.maskScanArtifacts(s,w);assert(s[0].filter((_,i)=>i%4===3).every(a=>a===0));assert(s[5].filter((_,i)=>i%4===3).every(a=>a===255));
+ for(let at=0;at<s[0].length;at+=4)s[0].set([100,150,180,255],at);for(let y=35;y<45;y++)for(let x=60;x<70;x++)s[0].set([255,255,255,255],(y*w+x)*4);assert(C.validColourImage(s[0],w));C.maskScanArtifacts(s,w);assert.equal(s[0][(40*w+65)*4+3],255);
+});
 check('interleaved compact and full twilight decoders retain their own longitude grids',()=>{
  const clocks=Array(10).fill(null);clocks[0]='2026-10-08T01:00:00Z';clocks[5]='2026-10-08T01:10:00Z';
  const make=width=>{const maps=Array(10).fill(null);for(const [i,pixel]of[[0,[67,72,78,255]],[5,[40,40,40,255]]]){maps[i]=new Uint8ClampedArray(width*width/2*4);for(let at=0;at<maps[i].length;at+=4)maps[i].set(pixel,at);}return maps;};
@@ -46,6 +56,11 @@ check('overlapping observations blend toward the more direct view without fillin
  check('a transient visible download is retried without changing the real source time',()=>{assert(recovered.blobs[2]);assert.equal(requests.length,11);assert.equal(recovered.sourceTimes[2],stamp.replace('Z','.000Z'));assert(requests.filter(u=>u.includes('&retry=')).every(u=>new URL(u).searchParams.get('time')===stamp));});
  let failedAttempts=0;const partial=await C.fetchFrame(stamp,width,{catalog,cacheStorage:null,retries:2,fetch:async url=>{if(new URL(url).searchParams.get('layers')===C.GROUPS[2].layers[0]){failedAttempts++;return new Response('',{status:503});}return image();}});
  check('persistent colour failures stop after three attempts and retain valid infrared',()=>{assert.equal(failedAttempts,3);assert.equal(partial.blobs[2],null);assert.equal(partial.sourceTimes[2],null);assert(partial.blobs.slice(5).every(Boolean));});
+ const damagedRequests=[],withTag=tag=>{const bytes=Buffer.from(png);bytes[32]=tag;return new Response(bytes,{headers:{'content-type':'image/png'}});},inspectColour=async blob=>new Uint8Array(await blob.arrayBuffer())[32]!==1;
+ const repaired=await C.fetchFrame('2026-10-05T15:30:00Z',width,{catalog,cacheStorage:null,inspectColour,fetch:async url=>{const p=new URL(url).searchParams,t=Date.parse(p.get('time'));damagedRequests.push({layer:p.get('layers'),time:new Date(t).toISOString()});return withTag(p.get('layers')===C.GROUPS[0].layers[0]&&t>Date.parse(stamp)?1:0);}});
+ check('damaged colour scans recover the nearest intact published observation within thirty minutes',()=>{assert.equal(repaired.sourceTimes[0],'2026-10-05T15:00:00.000Z');assert.equal(repaired.sourceTimes[5],'2026-10-05T15:30:00.000Z');assert.equal(damagedRequests.filter(r=>r.layer===C.GROUPS[0].layers[0]).length,4);});
+ const rejected=await C.fetchFrame('2026-10-05T15:30:00Z',width,{catalog,cacheStorage:null,inspectColour,fetch:async url=>withTag(new URL(url).searchParams.get('layers')===C.GROUPS[0].layers[0]?1:0)});
+ check('a colour scan with no intact bounded replacement cannot enter the cloud field',()=>{assert.equal(rejected.blobs[0],null);assert.equal(rejected.sourceTimes[0],null);assert(rejected.blobs.slice(5).every(Boolean));});
  const controller=new AbortController();let abortedAttempts=0;
  await assert.rejects(C.fetchFrame(stamp,width,{catalog,cacheStorage:null,signal:controller.signal,fetch:async()=>{abortedAttempts++;controller.abort();return new Response('',{status:503});}}),e=>e.name==='AbortError');
  check('cancelling a cloud frame never starts retry downloads',()=>assert.equal(abortedAttempts,1));

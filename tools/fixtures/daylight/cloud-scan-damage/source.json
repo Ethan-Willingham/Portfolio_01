@@ -1,0 +1,26 @@
+{
+  "note": "Unmodified native 2048 by 1024 NASA GOES-West GeoColor JPEG responses. The 21:10 and 21:20 scans contain flat white partial-disk damage; 21:00 is intact. The 21:30 archived slot used the 21:20 colour scan with the 21:30 infrared scan.",
+  "frames": [
+    {
+      "time": "2026-10-08T21:00:00.000Z",
+      "file": "2100-visible.jpg",
+      "sha256": "776a065deb770e9efb100d9afa93784423fbdc5e70cefbfd69dfcb3444823fa4",
+      "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T21%3A00%3A00Z",
+      "valid": true
+    },
+    {
+      "time": "2026-10-08T21:10:00.000Z",
+      "file": "2110-visible.jpg",
+      "sha256": "af16cb077c260a731b9604181114db79fe5be68bbafb6c4059e46cfe44880019",
+      "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T21%3A10%3A00Z",
+      "valid": false
+    },
+    {
+      "time": "2026-10-08T21:20:00.000Z",
+      "file": "2120-visible.jpg",
+      "sha256": "97daf19bf658d9f91600857cf1f5e0ee36e7dcebf13e973a8f14bc8ebb129f96",
+      "source": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=GOES-West_ABI_GeoColor&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-08T21%3A20%3A00Z",
+      "valid": false
+    }
+  ]
+}

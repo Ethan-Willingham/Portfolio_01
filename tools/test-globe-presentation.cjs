@@ -101,9 +101,9 @@ async function layout(page){return page.evaluate(()=>{
  const results=selectors.map(selector=>{const el=document.querySelector(selector),r=el.getBoundingClientRect();let clip={left:0,top:0,right:innerWidth,bottom:innerHeight};for(let p=el.parentElement;p;p=p.parentElement){const cs=getComputedStyle(p);if(/auto|scroll|hidden|clip/.test(cs.overflowX+' '+cs.overflowY)){const b=p.getBoundingClientRect();clip={left:Math.max(clip.left,b.left),top:Math.max(clip.top,b.top),right:Math.min(clip.right,b.right),bottom:Math.min(clip.bottom,b.bottom)};}}
  return {selector,rect:r.toJSON(),displayed:r.width>0&&r.height>0&&!el.closest('[hidden]')&&!el.disabled,inViewport:r.left>=clip.left-1&&r.right<=clip.right+1&&r.top>=clip.top-1&&r.bottom<=clip.bottom+1,horizontal:r.left>=0&&r.right<=innerWidth+1,clipped:el.scrollWidth>el.clientWidth+2};});
  const source=document.querySelector('.globe-sources');
- const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),pieces=[];
- while(walker.nextNode()){const n=walker.currentNode,p=n.parentElement;if(!n.textContent.trim()||p.closest('script,style,.globe-sr-only')||p.closest('details:not([open])')&&!p.closest('summary'))continue;const cs=getComputedStyle(p);if(!p.getClientRects().length||cs.display==='none'||cs.visibility==='hidden'||p.closest('[hidden]'))continue;pieces.push(n.textContent.trim());}
- return {controls:results,sourceClosed:!source.open,sourceInert:source.inert||!!source.closest('[inert]'),words:pieces.join(' ').split(/\s+/).length,text:pieces.join(' '),overflow:document.documentElement.scrollWidth>innerWidth+1};
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),pieces=[],panelPieces=[];
+ while(walker.nextNode()){const n=walker.currentNode,p=n.parentElement;if(!n.textContent.trim()||p.closest('script,style,.globe-sr-only')||p.closest('details:not([open])')&&!p.closest('summary'))continue;const cs=getComputedStyle(p);if(!p.getClientRects().length||cs.display==='none'||cs.visibility==='hidden'||p.closest('[hidden]'))continue;pieces.push(n.textContent.trim());if(p.closest('.globe-foot'))panelPieces.push(n.textContent.trim());}
+ return {controls:results,sourceClosed:!source.open,sourceInert:source.inert||!!source.closest('[inert]'),words:pieces.join(' ').split(/\s+/).length,panelWords:panelPieces.join(' ').split(/\s+/).length,text:pieces.join(' '),overflow:document.documentElement.scrollWidth>innerWidth+1};
  });}
 async function matrix(browser,isReal){
  for(const [width,height] of(isReal?[[375,812],[768,900],[1440,900]].filter(([width])=>!process.env.REAL_WIDTHS||process.env.REAL_WIDTHS.split(',').map(Number).includes(width)):[[375,812],[768,900],[1440,900],[667,375],[844,390]])){
@@ -112,7 +112,7 @@ async function matrix(browser,isReal){
   await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);
   const s=await state(page),initial=await layout(page);await capture(page,name+'-opening');
   check(name+' time slider, Live and fullscreen are present without disclosure',initial.controls.every(c=>c.displayed&&c.horizontal)&&!initial.overflow,initial);
-  check(name+' source detail stays closed and default words stay concise',initial.sourceClosed&&initial.words<=75,{words:initial.words,text:initial.text});
+  check(name+' source detail stays closed and default controls stay concise',initial.sourceClosed&&initial.panelWords<=35,{words:initial.panelWords,text:initial.text});
   check(name+' exactly 5070 catalog stars are installed',s.starCount===5070&&s.pointCount===5070);
   const stars=await page.evaluate(()=>__globePresentation.pixelVisibility('stars'));
   check(name+' opening centers Earth while location permission is unavailable',!s.sunFraming);
@@ -236,7 +236,7 @@ async function mobilePanelsCheck(browser){
    if(mode==='fullscreen'){await page.locator('#globe-fullscreen').click();await page.locator('.globe-foot').evaluate(el=>{el.scrollTop=0;});await page.waitForTimeout(250);const core=await layout(page);check(name+' ordinary fullscreen shows the slider and Live together',core.controls.every(c=>c.inViewport),core);await capture(page,name+'-fullscreen-controls');}
    if(mode==='fullscreen-200-text')await page.evaluate(()=>{document.documentElement.style.fontSize='32px';});
    if(mode==='page-200-text'){await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.fullscreenElement&&!document.querySelector('.globe-wrapper').classList.contains('is-fullscreen'));}
-   await page.evaluate(()=>__globePresentation.pin(69.6492,18.9553));await page.locator('.globe-sources').evaluate(el=>{el.open=true;});await page.waitForTimeout(250);
+   await page.evaluate(()=>__globePresentation.pin(69.6492,18.9553));await page.locator('.globe-sources').evaluate(el=>{el.open=true;});await page.evaluate(()=>{document.querySelector('.globe-wrapper').scrollTop=0;});await page.waitForTimeout(250);
    const fit=await page.evaluate(()=>{
     const foot=document.querySelector('.globe-foot'),fr=foot.getBoundingClientRect(),targets=Array.from(document.querySelectorAll('.globe-wrapper button,.globe-wrapper input,.globe-sources summary')).filter(el=>el.getClientRects().length&&!el.closest('[hidden]')).map(el=>{const r=el.getBoundingClientRect();return {id:el.id||el.className,width:r.width,height:r.height,clipped:el.scrollWidth>el.clientWidth+2,horizontal:r.left>=-1&&r.right<=innerWidth+1};});
     const text=Array.from(foot.querySelectorAll('p,output,h2,dt,dd')).filter(el=>el.getClientRects().length&&!el.closest('[hidden]')&&!el.classList.contains('globe-sr-only')).map(el=>({text:el.textContent.trim().slice(0,75),clipped:el.scrollWidth>el.clientWidth+2,horizontal:el.getBoundingClientRect().left>=fr.left-1&&el.getBoundingClientRect().right<=fr.right+1}));
@@ -245,6 +245,8 @@ async function mobilePanelsCheck(browser){
    check(name+' '+mode+' open Sources and pin panels fit horizontally',!fit.overflow&&fit.targets.every(t=>t.horizontal&&!t.clipped)&&fit.text.every(t=>t.horizontal&&!t.clipped),fit);
    check(name+' '+mode+' control touch targets stay at least 44 pixels',fit.targets.every(t=>t.width>=43.9&&t.height>=43.9),fit.targets);
    check(name+' '+mode+' scene fallback is physically black',fit.space==='rgb(0, 0, 0)',fit.space);
+   const panelScroll=await page.locator('.globe-foot').evaluate(el=>{el.scrollTop=100;return {top:el.scrollTop,height:el.clientHeight,content:el.scrollHeight,overflow:getComputedStyle(el).overflowY};});
+   check(name+' '+mode+' controls and open sources have no internal scrolling',panelScroll.top===0&&panelScroll.content<=panelScroll.height+1&&!/auto|scroll/.test(panelScroll.overflow),panelScroll);
    if(mode.startsWith('fullscreen'))check(name+' '+mode+' keeps the scene visible beside or above the panels',fit.canvas.height>=120&&fit.canvas.width>=120&&fit.canvas.left>=0&&fit.canvas.right<=width+1&&fit.canvas.top>=0&&fit.canvas.bottom<=height+1,fit.canvas);
    const reachable=[];for(const selector of['#globe-hour','#globe-return','#globe-pin-close','.globe-sources summary','.globe-sources a']){const el=page.locator(selector).last();await el.scrollIntoViewIfNeeded();reachable.push(await el.evaluate(el=>{const r=el.getBoundingClientRect();let good=r.top>=-1&&r.bottom<=innerHeight+1&&r.left>=-1&&r.right<=innerWidth+1;for(let p=el.parentElement;p;p=p.parentElement){if(/auto|scroll|hidden/.test(getComputedStyle(p).overflowY)){const b=p.getBoundingClientRect();good=good&&r.top>=b.top-1&&r.bottom<=b.bottom+1;}}return {text:el.textContent.trim().slice(0,40),good};}));if(selector==='#globe-pin-close')await capture(page,name+'-'+mode+'-pin');}
    check(name+' '+mode+' every main control, pin close and source link can be revealed',reachable.every(x=>x.good),reachable);await capture(page,name+'-'+mode+'-sources-pin');evidence.push({mobilePanels:{width,height,mode,fit,reachable}});
