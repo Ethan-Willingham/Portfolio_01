@@ -19,6 +19,21 @@ const newlySelectedIds = [
   'incidental-211', 'incidental-152', 'incidental-22', 'incidental-24', 'incidental-222', 'incidental-42',
   'incidental-104', 'incidental-49a', 'incidental-30', 'conductor-1', 'customer', 'mermaid-man-man-ray-timeline', 'nurse'
 ];
+const draftIds = [
+  'incidental-211', 'incidental-152', 'bubble-buddy', 'incidental-22', 'incidental-24', 'incidental-222',
+  'incidental-42', 'incidental-104', 'incidental-49a', 'incidental-30', 'alaskan-bull-worm', 'man-ray',
+  'tattletale-strangler', 'herb-star', 'baby-prunes', 'billy-fishkin', 'bubbleman', 'conductor-1', 'customer',
+  'drifter', 'iron-eye', 'janet', 'larry-luciano', 'lemont', 'lou', 'mermaid-man-man-ray-timeline', 'nurse',
+  'officer-nancy', 'patar', 'spongegar', 'tom-prison-guard-1', 'bare-knuckles-the-sea-bear', 'karen', 'kevin-c-cucumber'
+];
+const requestedPairs = [
+  ['officer-nancy', 'billy-fishkin'], ['customer', 'baby-prunes'], ['incidental-49a', 'incidental-22'],
+  ['mermaid-man-man-ray-timeline', 'incidental-30'], ['man-ray', 'alaskan-bull-worm'], ['nurse', 'janet'],
+  ['bare-knuckles-the-sea-bear', 'spongegar'], ['tattletale-strangler', 'incidental-222'],
+  ['herb-star', 'incidental-211'], ['bubble-buddy', 'iron-eye']
+];
+const publicPairs = publicLineup.matchups;
+const forwardedRosterIds = draftIds.slice(0, 32);
 const ids = catalog.characters.map(character => character.id);
 const byId = new Map(catalog.characters.map(character => [character.id, character]));
 const castById = new Map([...catalog.characters, ...(publicLineup.retainedCharacters || [])].map(character => [character.id, character]));
@@ -37,11 +52,16 @@ assert.ok(pickerIds.every(id => byId.has(id) && !firstCatalogSet.has(id)), 'the 
 assert.equal(catalog.scope, 'original-series', 'catalog is scoped to the original TV series');
 assert.ok(catalog.characters.every(character => character.seriesEpisode && character.seriesSource?.startsWith('https://spongebob.fandom.com/wiki/')), 'every character has TV-episode evidence');
 assert.equal(ids.includes('bare-knuckles-the-sea-bear'), false, 'spinoff-only characters are excluded');
-assert.equal(publicIds.length, 34, 'the public cast includes the screenshot selection, Karen, and Kevin');
-assert.equal(new Set(publicIds).size, 34, 'the public cast has no repeated IDs');
-assert.ok(originalSelectedIds.every(id => publicIds.includes(id)), 'all original 19 owner-selected characters are preserved');
-assert.ok([...newlySelectedIds, 'karen', 'kevin-c-cucumber'].every(id => publicIds.includes(id)), 'all 13 new screenshot selections plus Karen and Kevin are included');
-assert.ok(publicIds.every(id => voteIds.includes(id)), 'the public cast is available even outside the new picker scope');
+assert.equal(publicIds.length, 20, 'the public cast contains only the 20 requested participants');
+assert.equal(new Set(publicIds).size, 20, 'the public cast has no repeated IDs');
+assert.deepEqual(publicPairs, requestedPairs, 'the public matchups preserve the exact requested order and sides');
+assert.equal(new Set(publicPairs.flat()).size, 20, 'the ten requested matchups use each character once');
+assert.deepEqual(publicIds.slice().sort(), publicPairs.flat().sort(), 'there are no extra characters in the public round');
+assert.equal(draftIds.length, 34, 'the earlier private builder cast remains an explicit regression fixture');
+assert.ok(originalSelectedIds.every(id => draftIds.includes(id)), 'the private builder fixture preserves the original 19 selections');
+assert.ok([...newlySelectedIds, 'karen', 'kevin-c-cucumber'].every(id => draftIds.includes(id)), 'the private fixture preserves the later screenshot additions');
+assert.deepEqual(publicLineup.builderCharacterIds.slice().sort(), draftIds.slice().sort(), 'the builder fallback retains all earlier 34 selections');
+assert.ok([...publicIds, ...draftIds].every(id => voteIds.includes(id)), 'published and private participants remain available in the internal catalog');
 assert.equal(refreshedPortraitIds.length, 95, 'the portrait refresh includes all 95 sourced replacements');
 for (const id of refreshedPortraitIds) {
   const override = portraitOverrides[id], character = castById.get(id);
@@ -157,6 +177,34 @@ async function pickerScreenshot(page, file) {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await page.screenshot({ path: file, fullPage: false });
 }
+async function seedSavedBuilder(fixture, selection, pairs) {
+  await fixture.context.addInitScript(({ selection, pairs }) => {
+    if (!localStorage.getItem('spongebob-character-selection-v1')) {
+      localStorage.setItem('spongebob-character-selection-v1', JSON.stringify(selection));
+      localStorage.setItem('spongebob-matchups-v1', JSON.stringify(pairs));
+    }
+  }, { selection, pairs });
+}
+async function consumeConfiguredRound(page, pairs, sitOutCount = 0) {
+  const seen = new Set();
+  for (let index = 0; index < pairs.length; index++) {
+    await fightReady(page);
+    assert.equal(await page.locator('#sb-progress').textContent(), 'Matchup ' + (index + 1) + ' of ' + pairs.length, 'configured rounds keep the exact matchup count');
+    assert.deepEqual(await page.locator('.sb-fighter-name').allTextContents(), pairs[index].map(id => castById.get(id).name), 'the configured round keeps its requested order and sides');
+    for (const id of pairs[index]) {
+      assert.equal(seen.has(id), false, 'configured pairs never repeat a character'); seen.add(id);
+    }
+    assert.equal(await page.locator('#sb-unpaired-note').evaluate(note => note.hidden), sitOutCount === 0, 'only explicitly unused shared-roster characters sit out');
+    if (sitOutCount) {
+      assert.match(await page.locator('#sb-unpaired-note').textContent(), new RegExp('^' + sitOutCount + ' characters sit out'));
+      assert.equal(await page.locator('#sb-round-hint').textContent(), sitOutCount + ' sitting out');
+    } else assert.equal(await page.locator('#sb-round-hint').textContent(), 'Pick your winner.');
+    if (await page.locator('#sb-next').isVisible()) await page.locator('#sb-next').click();
+    else await page.locator('#sb-skip').click();
+  }
+  assert.equal(await page.locator('#sb-complete').isVisible(), true, 'the round ends after exactly its configured pairs');
+  assert.equal(seen.size, pairs.length * 2, 'only configured participants appear in the round');
+}
 async function finishPairing(page, remainingIds) {
   const pairs = [];
   for (let index = 0; index + 1 < remainingIds.length; index += 2) {
@@ -179,9 +227,45 @@ async function configuredRound(page, url, pairs) {
     worker = (await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))).default;
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); base = 'http://127.0.0.1:' + server.address().port;
     browser = await chromium.launch({ headless: true, executablePath: process.env.SPONGEBOB_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing' });
+    const defaultBuilder = await context();
+    await defaultBuilder.page.goto(base + '/spongebob-picker.html'); await pickerReady(defaultBuilder.page, 14);
+    assert.deepEqual(await defaultBuilder.page.evaluate(() => SpongeBobMatchups.getPairs()), publicPairs, 'a fresh builder starts with the ten published matchups');
+    assert.deepEqual((await defaultBuilder.page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), draftIds.filter(id => !publicIds.includes(id)).sort(), 'the earlier builder pool preserves the 14 unused characters for future editing');
+    await defaultBuilder.page.locator('.sb-pair-remove').first().click(); await pickerReady(defaultBuilder.page, 16);
+    assert.equal(await characterCard(defaultBuilder.page, publicPairs[0][0]).isVisible(), true);
+    assert.equal(await characterCard(defaultBuilder.page, publicPairs[0][1]).isVisible(), true, 'removing a public matchup returns exactly its two participants');
+    await confirmPair(defaultBuilder.page, publicPairs[0]); await pickerReady(defaultBuilder.page, 14);
+    const restoredPairs = [...publicPairs.slice(1), publicPairs[0]];
+    assert.deepEqual(await defaultBuilder.page.evaluate(() => SpongeBobMatchups.getPairs()), restoredPairs, 'reconfirming appends the restored pair without altering other matchups');
+    await defaultBuilder.page.reload(); await pickerReady(defaultBuilder.page, 14);
+    assert.deepEqual(await defaultBuilder.page.evaluate(() => SpongeBobMatchups.getPairs()), restoredPairs, 'the edited public-derived private round survives reload');
+    await defaultBuilder.page.evaluate(() => localStorage.removeItem('spongebob-matchups-v1'));
+    await defaultBuilder.page.reload(); await pickerReady(defaultBuilder.page, 14);
+    assert.deepEqual(await defaultBuilder.page.evaluate(() => SpongeBobMatchups.getPairs()), publicPairs, 'clearing the private pairs restores the exact published defaults');
+    await defaultBuilder.context.close();
+    const defaultCastDraft = await context();
+    const unpublishedPair = ['incidental-24', 'incidental-42'];
+    await defaultCastDraft.context.addInitScript(pair => {
+      if (!localStorage.getItem('spongebob-matchups-v1')) localStorage.setItem('spongebob-matchups-v1', JSON.stringify([pair]));
+    }, unpublishedPair);
+    await defaultCastDraft.page.goto(base + '/spongebob-picker.html'); await pickerReady(defaultCastDraft.page, 32);
+    assert.deepEqual(await defaultCastDraft.page.evaluate(() => SpongeBobMatchups.getPairs()), [unpublishedPair], 'a saved pair outside the narrowed public cast survives without a saved cast key');
+    assert.equal(await defaultCastDraft.page.evaluate(() => localStorage.getItem('spongebob-character-selection-v1')), null, 'this migration case uses the builder fallback rather than a stored cast');
+    await defaultCastDraft.page.reload(); await pickerReady(defaultCastDraft.page, 32);
+    assert.deepEqual(await defaultCastDraft.page.evaluate(() => SpongeBobMatchups.getPairs()), [unpublishedPair], 'the earlier default-cast-only draft remains intact after reload');
+    await defaultCastDraft.context.close();
+    const publicBuilder = await context();
+    await seedSavedBuilder(publicBuilder, publicIds, publicPairs);
+    await publicBuilder.page.goto(base + '/spongebob-picker.html'); await pickerReady(publicBuilder.page, 0);
+    assert.equal(await publicBuilder.page.locator('#sb-paired-list > li').count(), 10, 'a saved public20 cast is complete after its ten configured matchups');
+    assert.deepEqual(await publicBuilder.page.evaluate(() => SpongeBobMatchups.getPairs()), publicPairs);
+    await publicBuilder.page.evaluate(() => window.scrollTo({ top: document.getElementById('sb-pairing').getBoundingClientRect().top + scrollY, behavior: 'instant' }));
+    await pickerScreenshot(publicBuilder.page, '/tmp/spongebob-public-10-builder-complete.png');
+    await publicBuilder.context.close();
     const first = await context(); const page = first.page;
+    await seedSavedBuilder(first, draftIds, []);
     await page.goto(base + '/spongebob-picker.html'); await pickerReady(page, 34);
-    assert.deepEqual((await page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), publicIds.slice().sort(), 'the picker shows only the selected 34-character cast');
+    assert.deepEqual((await page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), draftIds.slice().sort(), 'the picker shows only the selected 34-character cast');
     assert.equal(await characterCard(page, 'bare-knuckles-the-sea-bear').isVisible(), true, 'the selected cast retains its saved spinoff character');
     assert.equal(await page.locator('#sb-pair-add').isDisabled(), true, 'confirmation starts disabled');
     assert.equal(await page.locator('#sb-preview-matchups').getAttribute('aria-disabled'), 'true', 'preview starts unavailable before a matchup is chosen');
@@ -239,18 +323,18 @@ async function configuredRound(page, url, pairs) {
     const downloadEvent = page.waitForEvent('download'); await page.locator('#sb-download-matchups').click();
     const download = await downloadEvent;
     const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
-    assert.deepEqual(exported.characterIds.slice().sort(), publicIds.slice().sort(), 'download retains the entire selected cast');
+    assert.deepEqual(exported.characterIds.slice().sort(), draftIds.slice().sort(), 'download retains the entire selected cast');
     assert.deepEqual(exported.matchups, chosenPairs, 'download preserves exact ordered matchups');
     assert.ok(exported.retainedCharacters?.some(character => character.id === 'bare-knuckles-the-sea-bear'), 'download includes the retained cast metadata');
     await page.locator('#sb-copy-matchups').click();
     const manualShare = await page.evaluate(() => navigator.clipboard.readText());
     const shareParams = new URLSearchParams(new URL(manualShare).hash.slice(1));
-    assert.deepEqual(shareParams.get('roster').split(',').sort(), publicIds.slice().sort(), 'the matchup link retains the selected cast');
+    assert.deepEqual(shareParams.get('roster').split(',').sort(), draftIds.slice().sort(), 'the matchup link retains the selected cast');
     assert.deepEqual(JSON.parse(shareParams.get('matchups')), chosenPairs, 'the matchup link carries exact pair order');
     assert.equal(await page.locator('#sb-preview-matchups').getAttribute('aria-disabled'), 'false', 'confirmed pairs enable the direct preview');
     assert.equal(new URL(await page.locator('#sb-preview-matchups').getAttribute('href'), base).href, manualShare, 'preview links directly to the same chosen round');
     const used = new Set(chosenPairs.flat());
-    const finalPairs = [...chosenPairs, ...await finishPairing(page, publicIds.filter(id => !used.has(id)))];
+    const finalPairs = [...chosenPairs, ...await finishPairing(page, draftIds.filter(id => !used.has(id)))];
     await pickerReady(page, 0);
     assert.equal(await page.locator('#sb-paired-list > li').count(), 17, 'the 34-character cast can be completely paired');
     assert.deepEqual(await page.evaluate(() => SpongeBobMatchups.getPairs()), finalPairs, 'the completed round keeps confirmation order');
@@ -311,21 +395,26 @@ async function configuredRound(page, url, pairs) {
     }
     assert.equal(await page.locator('#sb-complete').isVisible(), true);
     const fullPublicRound = await context();
-    await fullPublicRound.page.goto(base + '/spongebob-fight.html');
-    const publicSeen = new Set();
-    for (let index = 0; index < 17; index++) {
-      await fightReady(fullPublicRound.page);
-      assert.match(await fullPublicRound.page.locator('#sb-progress').textContent(), /of 17$/i, 'the 34-character public cast makes 17 matchups');
-      for (const name of await fullPublicRound.page.locator('.sb-fighter-name').allTextContents()) {
-        assert.equal(publicSeen.has(name), false, 'each public cast member appears only once in the default round');
-        publicSeen.add(name);
-      }
-      if (await fullPublicRound.page.locator('#sb-next').isVisible()) await fullPublicRound.page.locator('#sb-next').click();
-      else await fullPublicRound.page.locator('#sb-skip').click();
-    }
-    assert.deepEqual([...publicSeen].sort(), publicIds.map(id => castById.get(id).name).sort(), 'the default round reaches every public cast member exactly once');
-    assert.equal(await fullPublicRound.page.locator('#sb-complete').isVisible(), true, 'the default public round ends after 17 disjoint matchups');
+    await fullPublicRound.page.goto(base + '/spongebob-fight.html'); await fightReady(fullPublicRound.page);
+    assert.equal(await fullPublicRound.page.locator('#sb-roster-label').textContent(), '20 characters / Public lineup');
+    assert.deepEqual(await fullPublicRound.page.locator('.sb-fighter-name').allTextContents(), ['Officer Nancy', 'Billy Fishkin'], 'the first public matchup is the requested Officer Nancy versus Billy Fishkin');
+    await fullPublicRound.page.locator('.sb-fighter-image img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+    await noOverflow(fullPublicRound.page); await noMatchupOverlap(fullPublicRound.page);
+    await fullPublicRound.page.evaluate(() => document.fonts.ready);
+    await fullPublicRound.page.screenshot({ path: '/tmp/spongebob-public-10-first-matchup.png', fullPage: true });
+    await consumeConfiguredRound(fullPublicRound.page, publicPairs);
+    await fullPublicRound.page.screenshot({ path: '/tmp/spongebob-public-10-round-complete.png', fullPage: true });
+    await fullPublicRound.page.locator('#sb-restart').click();
+    await consumeConfiguredRound(fullPublicRound.page, publicPairs);
     await fullPublicRound.context.close();
+    const forwarded = await context();
+    const forwardedURL = base + '/spongebob-fight.html#' + new URLSearchParams({
+      roster: forwardedRosterIds.join(','), matchups: JSON.stringify(requestedPairs)
+    }).toString();
+    await forwarded.page.goto(forwardedURL); await fightReady(forwarded.page);
+    assert.equal(await forwarded.page.locator('#sb-roster-label').textContent(), '32 characters / Shared lineup', 'the original forwarded link retains its full shared roster');
+    await consumeConfiguredRound(forwarded.page, requestedPairs, 12);
+    await forwarded.context.close();
     await page.goto(base + '/spongebob-fight.html#roster=made-up'); await page.locator('#sb-load-retry').waitFor({ state: 'visible' });
     assert.match(await page.locator('#sb-load-state').textContent(), /at least two valid characters/);
     const missingAPI = await context();
@@ -358,7 +447,7 @@ async function configuredRound(page, url, pairs) {
       }, savedIds);
       await recovery.page.goto(base + '/spongebob-picker.html'); await pickerReady(recovery.page, savedIds.length);
       assert.equal(await recovery.page.locator('#sb-use-public-cast').isVisible(), true, 'an empty or one-character saved cast offers recovery');
-      await recovery.page.locator('#sb-use-public-cast').click(); await pickerReady(recovery.page, 34);
+      await recovery.page.locator('#sb-use-public-cast').click(); await pickerReady(recovery.page, 20);
       assert.deepEqual((await recovery.page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), publicIds.slice().sort(), 'recovery restores the complete public cast');
       await noOverflow(recovery.page); await recovery.context.close();
     }
@@ -366,9 +455,10 @@ async function configuredRound(page, url, pairs) {
     await noStorage.context.addInitScript(() => {
       Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('Storage unavailable', 'SecurityError'); } });
     });
-    await noStorage.page.goto(base + '/spongebob-picker.html'); await pickerReady(noStorage.page, 34);
-    await confirmPair(noStorage.page, manualIds.slice(0, 2)); await pickerReady(noStorage.page, 32);
-    assert.deepEqual(await noStorage.page.evaluate(() => SpongeBobMatchups.getPairs()), [manualIds.slice(0, 2)], 'pairing still works when browser storage is unavailable');
+    await noStorage.page.goto(base + '/spongebob-picker.html'); await pickerReady(noStorage.page, 14);
+    await noStorage.page.locator('.sb-pair-remove').first().click(); await pickerReady(noStorage.page, 16);
+    await confirmPair(noStorage.page, publicPairs[0]); await pickerReady(noStorage.page, 14);
+    assert.deepEqual(await noStorage.page.evaluate(() => SpongeBobMatchups.getPairs()), [...publicPairs.slice(1), publicPairs[0]], 'pairing still works when browser storage is unavailable');
     assert.equal(await noStorage.page.locator('#sb-preview-matchups').getAttribute('aria-disabled'), 'false', 'the unsaved chosen matchup still has a usable preview');
     await noStorage.context.close();
     const odd = await context();
@@ -376,6 +466,7 @@ async function configuredRound(page, url, pairs) {
     await odd.context.addInitScript(selection => {
       if (!localStorage.getItem('spongebob-character-selection-v1')) localStorage.setItem('spongebob-character-selection-v1', JSON.stringify(selection));
     }, oddIds);
+    await odd.context.addInitScript(() => { if (!localStorage.getItem('spongebob-matchups-v1')) localStorage.setItem('spongebob-matchups-v1', '[]'); });
     await odd.page.goto(base + '/spongebob-picker.html'); await pickerReady(odd.page, 5);
     assert.deepEqual((await odd.page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), oddIds.slice().sort(), 'a saved smaller cast is used instead of the public roster');
     const oddPairs = await finishPairing(odd.page, oddIds);
@@ -392,21 +483,23 @@ async function configuredRound(page, url, pairs) {
     await page.goto(invalidShare.href); await page.locator('#sb-load-retry').waitFor({ state: 'visible' });
     assert.match(await page.locator('#sb-load-state').textContent(), /Each character can appear only once/);
     const mobile = await context({ width: 375, height: 812 });
+    await seedSavedBuilder(mobile, draftIds, []);
     await mobile.page.goto(base + '/spongebob-picker.html'); await pickerReady(mobile.page, 34);
     await noOverflow(mobile.page);
     const mobilePairs = [];
-    const mobileFirstPair = [publicIds[0], publicIds.at(-1)];
+    const mobileFirstPair = [draftIds[0], draftIds.at(-1)];
     await characterCard(mobile.page, mobileFirstPair[0]).click(); await characterCard(mobile.page, mobileFirstPair[1]).click();
     await pairingControlsVisible(mobile.page);
     await pickerScreenshot(mobile.page, '/tmp/spongebob-selected-picker-mobile-two.png');
-    assert.ok(await characterCard(mobile.page, publicIds[0]).evaluate(card => card.getBoundingClientRect().width >= 44 && card.getBoundingClientRect().height >= 44), 'portrait choices are touch-sized');
+    assert.ok(await characterCard(mobile.page, draftIds[0]).evaluate(card => card.getBoundingClientRect().width >= 44 && card.getBoundingClientRect().height >= 44), 'portrait choices are touch-sized');
     await mobile.page.locator('#sb-pair-add').click(); mobilePairs.push(mobileFirstPair);
-    mobilePairs.push(...await finishPairing(mobile.page, publicIds.filter(id => !mobileFirstPair.includes(id))));
+    mobilePairs.push(...await finishPairing(mobile.page, draftIds.filter(id => !mobileFirstPair.includes(id))));
     await pickerReady(mobile.page, 0); await noOverflow(mobile.page);
     assert.deepEqual(await mobile.page.evaluate(() => SpongeBobMatchups.getPairs()), mobilePairs, 'mobile can finish all 17 matchups in order');
     await mobile.page.locator('#sb-pair-summary').scrollIntoViewIfNeeded();
     await pickerScreenshot(mobile.page, '/tmp/spongebob-selected-picker-mobile-complete.png');
     const narrowPicker = await context({ width: 320, height: 568 });
+    await seedSavedBuilder(narrowPicker, draftIds, []);
     await narrowPicker.page.goto(base + '/spongebob-picker.html'); await pickerReady(narrowPicker.page, 34);
     await noOverflow(narrowPicker.page);
     await characterCard(narrowPicker.page, 'mermaid-man-man-ray-timeline').click(); await characterCard(narrowPicker.page, 'tom-prison-guard-1').click();
@@ -436,7 +529,7 @@ async function configuredRound(page, url, pairs) {
       await compact.context.close();
     }
     assert.deepEqual(errors, [], 'no browser script errors');
-    console.log('PASS: selected 34-character portrait picker, two-choice keyboard/cancel/confirmation, removal and ordered persistence, exact pair sharing/export, 17 completed manual and default matchups without repeats, odd saved cast, 95 refreshed portraits, real isolated vote percentages, reversed duplicates, lost-response retry, standalone comparer, desktop/mobile/landscape layouts.');
+    console.log('PASS: exact requested public10 matchups with20 participants and stable restart, forwarded32-roster link with12 explicit sit-outs, preserved private34-character builder and17 manual pairs, keyboard/cancel/removal/persistence/export, odd and legacy saved casts,95 refreshed portraits, real isolated vote percentages, reversed duplicates, lost-response retry, standalone comparer, desktop/mobile/landscape layouts.');
   } finally {
     await browser?.close(); await new Promise(resolve => server.close(resolve)); sqlite.close();
   }

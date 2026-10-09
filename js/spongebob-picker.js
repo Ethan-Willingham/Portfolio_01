@@ -5,7 +5,8 @@
   let data;
 
   function showCast() {
-    const ids = shared.readSelection(data.defaultIds, data.byId);
+    const builderIds = shared.cleanIds(data.lineup.builderCharacterIds ?? data.defaultIds, data.byId);
+    const ids = shared.readSelection(builderIds, data.byId);
     window.dispatchEvent(new CustomEvent('spongebob-selection-change', { detail: { data, ids } }));
   }
 

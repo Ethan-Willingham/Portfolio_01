@@ -55,13 +55,17 @@ lookup remains available to saved selections, chosen matchups and shared fight
 links. Refreshing the import recomputes the new-character list against the same
 frozen baseline.
 
-The owner's selected fight lineup is maintained separately in
-`assets/spongebob/lineup.json`. Its saved Bare-Knuckles the Sea Bear entry remains
-available for that lineup through `retainedCharacters` and
+The owner's selected cast and public fight round are maintained separately in
+`assets/spongebob/lineup.json`. The public `characterIds` contains the 20 participants
+in the ten ordered `matchups` chosen by the owner. `builderCharacterIds` preserves
+the prior 34-character selected cast as the fallback for browsers without a saved
+selection, so changing the public round does not discard private matchup drafts.
+Saved browser selections take precedence in the builder. Bare-Knuckles the Sea
+Bear remains available for the selected cast through `retainedCharacters` and
 `assets/spongebob/selected-cast/`. Bare-Knuckles is not included in this
 original-series catalog because its sourced appearance is in The Patrick Star
-Show. The remaining 33 selected characters have original-series episode
-evidence in the catalog.
+Show. The remaining 33 builder characters and 19 public-round characters have
+original-series episode evidence in the catalog.
 
 ## Familiar names
 
