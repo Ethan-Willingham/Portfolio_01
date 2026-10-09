@@ -22,6 +22,7 @@
       inches:function(px){return px*length;},seconds:function(s){return s*time;},
       speed:function(pxPerS){return pxPerS*length/time;},
       psi:function(p){return p/(density*g)*length*WATER_WEIGHT;},
+      pressureFromPsi:function(psi){return finite(psi,'pressure')*density*g/(length*WATER_WEIGHT);},
       volume:function(area){return area*length*length;},
       flow:function(areaPerS){return areaPerS*length*length/time;},
       work:function(pTimesArea){return pTimesArea/(density*g)*length*WATER_WEIGHT*length*length/12;}};

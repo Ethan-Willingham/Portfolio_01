@@ -1,0 +1,3795 @@
+{
+  "toyVersion": "v5.41",
+  "date": "2026-10-09",
+  "behaviorChecksPassed": true,
+  "gasGeometryChecksPassed": false,
+  "fullPhysicalAcceptance": false,
+  "criteria": {
+    "minimumSourceEmissionFraction": 0.7,
+    "minimumBasinReturnFraction": 0.95,
+    "maximumLateToEarlyUniqueEmissionRatio": 0.05,
+    "ventStopGraceSimulationSeconds": 5,
+    "comparisonSimulationSeconds": 18,
+    "stockSimulationSeconds": 60
+  },
+  "scope": "Native source-water jet startup, lower-jar head response, physical vent and empty-source controls, water inventory, final wall containment and explicit modeled gas accounting on three seeds. The end of sustained flow is measured separately from late spurts. Absolute jet height, pressure, phase boundaries, energy closure and 60 FPS are not certified.",
+  "method": "Five cases on seeds 17, 42 and 913 in the fixed 1120 by 664 world. Observer-owned GPU buffers track initial bulk source IDs through an interior riser plane and the upward nozzle mouth after every native update. A second passive observer sums every native pressure-step gas ledger, including discarded gas. The recorder waits for owned GPU submissions before scheduling another animation callback; it changes no physics or simulation step. Final native particle buffers are independently checked against reconstructed physical walls. No particle additions occur.",
+  "roomPressure": {
+    "psi": 14.695948775513449,
+    "native": 3796635.468785624,
+    "widthInches": 30,
+    "widthWorldPixels": 1120,
+    "oldNative": 100000,
+    "oldPsi": 0.38707821428571426,
+    "source": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b8"
+  },
+  "limits": [
+    "Jet height is far below the lossless prediction; absolute flow and pressure are not calibrated.",
+    "Some source water remains below the intake. Sloshing can produce small later spurts; stationary water is not certified.",
+    "The gas ledger closes only when explicitly discarded gas is included. Small pockets can lose their stored gas, and capture/vent totals include transient exterior pockets. This does not prove physical gas conservation.",
+    "Pressure convergence, water/air boundaries and energy closure remain unresolved.",
+    "GPU-gated recording cadence measures behavior and does not certify presentation frame rate.",
+    "Four of the fifteen working/control recordings report one transient nonpositive gas volume. Gas geometry health checks fail separately from the behavior checks."
+  ],
+  "sourceSHA256": {
+    "archive/water-smoke-slime/water-smoke-slime.html": "726e886672502d087d807a0e1a7b882df37d69cb231b62480e33108ddc21c171",
+    "water-smoke-slime.css": "c1fb139ee0117fe5861062c6d521e27c25e5ba4d8159731a391eec3d4213eede",
+    "js/water-smoke-slime.js": "3d9accf4d2731de6d503a8486fe9af41e8d2d79b761dd34f652fb0c5bb9525a0",
+    "js/water-smoke-slime-ui.js": "56029aa5d504b69cdb27c74dc5ab4e78c47f1516d318ffb77ba137a4216698f1",
+    "js/liquid-wgpu.js": "bea4ae6ea15e94f74505be3dfab6d4eff3b89b94d8244d413348e911ea692502",
+    "js/liquid-air-wgpu.js": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003",
+    "js/water-machines-scenes.js": "b71bd3d66ae61dba2623f24f59054e2c56a6176243a7f51cf0744e4bd62c8e62",
+    "js/water-machines-instruments.js": "8227e4059b2c83bb28bb248f7f9c0a4233325fd83aedaae8390129ef4d1197c3",
+    "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+    "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+    "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+    "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+  },
+  "testSourceSHA256": {
+    "test-water-machines.mjs": "d86e5274fda317d188e39c421a70f2741f958ca92c5695c752767ec642aab405",
+    "water-machines-paired-observer.mjs": "f34b045729b117dd2b69ef8f89f841e1a121afac47e0accc6d35295bac138fe4",
+    "water-machines-native-passage.mjs": "7da55dbbeb3d68242122dd78a4f12146d025a7d960be46fc10a9ffa49b225a9a",
+    "water-machines-native-jet.mjs": "67bee75b2f1dac96b63d3f968e05bc221237d8572e5cfd19da9fd1814b240774",
+    "water-machines-native-gas-budget.mjs": "25a853b8fd68eadc3ae6d801c72734b1bed43a10cd37ec00c5597c62a66dbc3b"
+  },
+  "catalogSHA256": "34a7ab0e17dd16f5cd258f7a9354a5ad6ac0a60cfa3553ea999d67a3c3f4893f",
+  "checks": [
+    {
+      "name": "heron-sealed-seed-17 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92603,
+        "final": 92603,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-sealed-seed-17 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-sealed-seed-17 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-17 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 10436.375
+      }
+    },
+    {
+      "name": "heron-sealed-seed-17 source water crosses the actual upward nozzle",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-17 most emitted source water returns to basin",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-17 final unique emissions fall below five percent of early flow",
+      "pass": true,
+      "detail": {
+        "early10": 7540,
+        "last10": 78
+      }
+    },
+    {
+      "name": "heron-sealed-seed-42 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92592,
+        "final": 92592,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-sealed-seed-42 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-sealed-seed-42 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-42 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 10546.20703125
+      }
+    },
+    {
+      "name": "heron-sealed-seed-42 source water crosses the actual upward nozzle",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-42 most emitted source water returns to basin",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-42 final unique emissions fall below five percent of early flow",
+      "pass": true,
+      "detail": {
+        "early10": 7484,
+        "last10": 85
+      }
+    },
+    {
+      "name": "heron-sealed-seed-913 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92611,
+        "final": 92611,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-sealed-seed-913 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-sealed-seed-913 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-913 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 10918.984375
+      }
+    },
+    {
+      "name": "heron-sealed-seed-913 source water crosses the actual upward nozzle",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-913 most emitted source water returns to basin",
+      "pass": true
+    },
+    {
+      "name": "heron-sealed-seed-913 final unique emissions fall below five percent of early flow",
+      "pass": true,
+      "detail": {
+        "early10": 7438,
+        "last10": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-17 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92580,
+        "final": 92580,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-17 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-17 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-17 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 9245.53125
+      }
+    },
+    {
+      "name": "heron-raised-seed-17 source water crosses the actual upward nozzle",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-17 most emitted source water returns to basin",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-17 final unique emissions fall below five percent of early flow",
+      "pass": true,
+      "detail": {
+        "early10": 6262,
+        "last10": 5
+      }
+    },
+    {
+      "name": "heron-raised-seed-42 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92590,
+        "final": 92590,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-42 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-42 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-42 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 8459
+      }
+    },
+    {
+      "name": "heron-raised-seed-42 source water crosses the actual upward nozzle",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-42 most emitted source water returns to basin",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-42 final unique emissions fall below five percent of early flow",
+      "pass": true,
+      "detail": {
+        "early10": 6177,
+        "last10": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-913 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92599,
+        "final": 92599,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-913 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-raised-seed-913 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-913 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 8743.54296875
+      }
+    },
+    {
+      "name": "heron-raised-seed-913 source water crosses the actual upward nozzle",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-913 most emitted source water returns to basin",
+      "pass": true
+    },
+    {
+      "name": "heron-raised-seed-913 final unique emissions fall below five percent of early flow",
+      "pass": true,
+      "detail": {
+        "early10": 6177,
+        "last10": 54
+      }
+    },
+    {
+      "name": "heron-vented-seed-17 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92603,
+        "final": 92603,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-vented-seed-17 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-vented-seed-17 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-vented-seed-17 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 4411.68359375
+      }
+    },
+    {
+      "name": "heron-vented-seed-17 vented lid prevents source jet",
+      "pass": true
+    },
+    {
+      "name": "heron-vented-seed-42 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92592,
+        "final": 92592,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-vented-seed-42 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-vented-seed-42 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-vented-seed-42 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 4344.47265625
+      }
+    },
+    {
+      "name": "heron-vented-seed-42 vented lid prevents source jet",
+      "pass": true
+    },
+    {
+      "name": "heron-vented-seed-913 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92611,
+        "final": 92611,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-vented-seed-913 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-vented-seed-913 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-vented-seed-913 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 4574.8671875
+      }
+    },
+    {
+      "name": "heron-vented-seed-913 vented lid prevents source jet",
+      "pass": true
+    },
+    {
+      "name": "heron-empty-seed-17 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 72979,
+        "final": 72979,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-empty-seed-17 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-empty-seed-17 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-empty-seed-17 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 4654.1328125
+      }
+    },
+    {
+      "name": "heron-empty-seed-17 empty source prevents any nozzle emission",
+      "pass": true
+    },
+    {
+      "name": "heron-empty-seed-42 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 72988,
+        "final": 72988,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-empty-seed-42 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-empty-seed-42 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-empty-seed-42 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 4825.36328125
+      }
+    },
+    {
+      "name": "heron-empty-seed-42 empty source prevents any nozzle emission",
+      "pass": true
+    },
+    {
+      "name": "heron-empty-seed-913 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 72974,
+        "final": 72974,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-empty-seed-913 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-empty-seed-913 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-empty-seed-913 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 3981.4609375
+      }
+    },
+    {
+      "name": "heron-empty-seed-913 empty source prevents any nozzle emission",
+      "pass": true
+    },
+    {
+      "name": "heron-vent-during-jet-seed-17 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92603,
+        "final": 92603,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-17 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-17 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-vent-during-jet-seed-17 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 7184.2421875
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-17 actual lid opening stops an established jet",
+      "pass": true,
+      "detail": {
+        "emittedBeforeVent": 5769,
+        "newSourceEmissionsAfter23": 0,
+        "allWaterCrossingsAfter35": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-42 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92592,
+        "final": 92592,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-42 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-42 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-vent-during-jet-seed-42 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 8031.83984375
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-42 actual lid opening stops an established jet",
+      "pass": true,
+      "detail": {
+        "emittedBeforeVent": 5971,
+        "newSourceEmissionsAfter23": 0,
+        "allWaterCrossingsAfter35": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-913 exact water count and finite resident state",
+      "pass": true,
+      "detail": {
+        "initial": 92611,
+        "final": 92611,
+        "nonWater": 0,
+        "nonfinite": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-913 resident wall and world containment",
+      "pass": true,
+      "detail": {
+        "insideWalls": 0,
+        "outsideWorld": 0
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-913 held valve emits no water",
+      "pass": true
+    },
+    {
+      "name": "heron-vent-during-jet-seed-913 every native gas step is accounted for",
+      "pass": true,
+      "detail": {
+        "closureError": 0,
+        "discardedGas": 6850.6484375
+      }
+    },
+    {
+      "name": "heron-vent-during-jet-seed-913 actual lid opening stops an established jet",
+      "pass": true,
+      "detail": {
+        "emittedBeforeVent": 5887,
+        "newSourceEmissionsAfter23": 0,
+        "allWaterCrossingsAfter35": 0
+      }
+    },
+    {
+      "name": "seed17 raising receiving jar reduces early jet height",
+      "pass": true,
+      "detail": {
+        "sealed": 41.49946594238281,
+        "raised": 32.50048828125
+      }
+    },
+    {
+      "name": "seed42 raising receiving jar reduces early jet height",
+      "pass": true,
+      "detail": {
+        "sealed": 40.907493591308594,
+        "raised": 30.56116485595703
+      }
+    },
+    {
+      "name": "seed913 raising receiving jar reduces early jet height",
+      "pass": true,
+      "detail": {
+        "sealed": 38.23661804199219,
+        "raised": 31.22571563720703
+      }
+    }
+  ],
+  "diagnosticChecks": [
+    {
+      "name": "heron-sealed-seed-17 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-sealed-seed-42 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-sealed-seed-913 gas geometry health",
+      "pass": false,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 1
+    },
+    {
+      "name": "heron-raised-seed-17 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-raised-seed-42 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-raised-seed-913 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-vented-seed-17 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-vented-seed-42 gas geometry health",
+      "pass": false,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 1
+    },
+    {
+      "name": "heron-vented-seed-913 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-empty-seed-17 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-empty-seed-42 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-empty-seed-913 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    },
+    {
+      "name": "heron-vent-during-jet-seed-17 gas geometry health",
+      "pass": false,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 1
+    },
+    {
+      "name": "heron-vent-during-jet-seed-42 gas geometry health",
+      "pass": false,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 1
+    },
+    {
+      "name": "heron-vent-during-jet-seed-913 gas geometry health",
+      "pass": true,
+      "connectivityErrors": 0,
+      "overflowErrors": 0,
+      "nonpositiveVolumes": 0
+    }
+  ],
+  "headResponse": [
+    {
+      "seed": 17,
+      "receivingJarRiseWorldPixels": 48,
+      "sealedEarlyP95Rise": 41.49946594238281,
+      "raisedEarlyP95Rise": 32.50048828125,
+      "relativeHeightDecrease": 0.21684562576363864
+    },
+    {
+      "seed": 42,
+      "receivingJarRiseWorldPixels": 48,
+      "sealedEarlyP95Rise": 40.907493591308594,
+      "raisedEarlyP95Rise": 30.56116485595703,
+      "relativeHeightDecrease": 0.2529201333799095
+    },
+    {
+      "seed": 913,
+      "receivingJarRiseWorldPixels": 48,
+      "sealedEarlyP95Rise": 38.23661804199219,
+      "raisedEarlyP95Rise": 31.22571563720703,
+      "relativeHeightDecrease": 0.18335571407193096
+    }
+  ],
+  "rows": [
+    {
+      "run": "heron-sealed-seed-17",
+      "case": "sealed",
+      "seed": 17,
+      "simulationSeconds": 60.02499999999877,
+      "initialParticles": 92603,
+      "initialSourceBulk": 18285,
+      "emittedSource": 15025,
+      "emittedFraction": 0.8217117856166256,
+      "returnedToBasin": 14915,
+      "returnFraction": 0.9926788685524126,
+      "peakRiseWorldPixels": {
+        "p50": 26.8311767578125,
+        "p95": 42.49897766113281,
+        "maximum": 76.10743713378906
+      },
+      "peakRiseInches": {
+        "p50": 0.7186922345842633,
+        "p95": 1.1383654730660575
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 5860,
+        "peakRiseWorldPixels": {
+          "p50": 29.834487915039062,
+          "p95": 41.49946594238281,
+          "maximum": 48.882850646972656
+        }
+      },
+      "finalBulkInSource": 2432,
+      "lateUniqueEmissions": 78,
+      "earlyUniqueEmissions": 7540,
+      "forwardWaterCrossings": 16812,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 7203,
+        "volumeScale": 256,
+        "initialAmount": 278652.28125,
+        "finalAmount": 215658.7109375,
+        "capturedAmount": 4500994.27734375,
+        "ventedAmount": 4553551.47265625,
+        "unassignedAmount": 10436.375,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          7203,
+          1152254535,
+          0,
+          1165709177,
+          0,
+          2671712,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          71334984,
+          55208630,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 15.336429595947266,
+      "residentBufferSHA256": {
+        "pos": "1ab748242f24ecbaa16d52aab0ae458406bd1a15dc84352ab76b8276a9f04c63",
+        "affine": "d7c7f55f8e41e2fc0ff606f21712397d975783fd97784d1dd3b624592055f4e0",
+        "aux": "a7a4181120c13d5dd6f5287544efd01100df363f288928f5e0a2ac00c94b7dda",
+        "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821"
+      },
+      "runSHA256": "c4b0d32afcc99bc1f695ca3f8c5f954c4a2922dbd20667fa154a36979a8874e5"
+    },
+    {
+      "run": "heron-sealed-seed-42",
+      "case": "sealed",
+      "seed": 42,
+      "simulationSeconds": 60.02499999999877,
+      "initialParticles": 92592,
+      "initialSourceBulk": 18285,
+      "emittedSource": 15188,
+      "emittedFraction": 0.8306261963357944,
+      "returnedToBasin": 15003,
+      "returnFraction": 0.9878193310508296,
+      "peakRiseWorldPixels": {
+        "p50": 31.052902221679688,
+        "p95": 48.84590148925781,
+        "maximum": 65.42474365234375
+      },
+      "peakRiseInches": {
+        "p50": 0.8317741666521344,
+        "p95": 1.3083723613194056
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 5924,
+        "peakRiseWorldPixels": {
+          "p50": 28.155364990234375,
+          "p95": 40.907493591308594,
+          "maximum": 47.94342041015625
+        }
+      },
+      "finalBulkInSource": 2462,
+      "lateUniqueEmissions": 85,
+      "earlyUniqueEmissions": 7484,
+      "forwardWaterCrossings": 17549,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 7203,
+        "volumeScale": 256,
+        "initialAmount": 278651.84375,
+        "finalAmount": 105462.98046875,
+        "capturedAmount": 5266507.7734375,
+        "ventedAmount": 5429150.4296875,
+        "unassignedAmount": 10546.20703125,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          7203,
+          1348225990,
+          0,
+          1389862510,
+          0,
+          2699829,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          71334872,
+          26998523,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 14.834794044494629,
+      "residentBufferSHA256": {
+        "pos": "9bcfc582caa39a613d3bcb8f2575a1b5e032320e3247e46b1a9d6c7d3769fbc3",
+        "affine": "72dd1f5889b7502da53018626abad1bc127cd5bb477bfef6131da521ee12c516",
+        "aux": "d81315e090d8739a51fe9ea21d08dfbc7e03853e6ca6a260c8e577a83e014911",
+        "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724"
+      },
+      "runSHA256": "e78e48a2bb9172b67b6f798f5765b345a660d77b29104abb2853e544ffb67f89"
+    },
+    {
+      "run": "heron-sealed-seed-913",
+      "case": "sealed",
+      "seed": 913,
+      "simulationSeconds": 60.0583333333321,
+      "initialParticles": 92611,
+      "initialSourceBulk": 18285,
+      "emittedSource": 15024,
+      "emittedFraction": 0.8216570959803118,
+      "returnedToBasin": 14748,
+      "returnFraction": 0.981629392971246,
+      "peakRiseWorldPixels": {
+        "p50": 30.257598876953125,
+        "p95": 44.23463439941406,
+        "maximum": 62.79422378540039
+      },
+      "peakRiseInches": {
+        "p50": 0.8104713984898159,
+        "p95": 1.1848562785557337
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.0583333333333,
+        "emittedSource": 5812,
+        "peakRiseWorldPixels": {
+          "p50": 27.988693237304688,
+          "p95": 38.23661804199219,
+          "maximum": 44.00336456298828
+        }
+      },
+      "finalBulkInSource": 2753,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 7438,
+      "forwardWaterCrossings": 17099,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 7207,
+        "volumeScale": 256,
+        "initialAmount": 278653.484375,
+        "finalAmount": 216717.01953125,
+        "capturedAmount": 6847748.21484375,
+        "ventedAmount": 6898765.6953125,
+        "unassignedAmount": 10918.984375,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 1,
+        "rawWords": [
+          7207,
+          1753023543,
+          0,
+          1766084018,
+          0,
+          2795260,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          71335292,
+          55479557,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 16.250385284423828,
+      "residentBufferSHA256": {
+        "pos": "46865fd170385ebb14b928933e595d81db6467b928ea453ed2626cf8612daca0",
+        "affine": "c7b7e3687a2b373b3a7c2dcdcfa3eb9c8e5887fa7ccae227fcf7ee943a2ea163",
+        "aux": "0c6451223233fbb5d03e9ed44dbe94950153b2bec6d12d0c309fc71619aa0b4b",
+        "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1"
+      },
+      "runSHA256": "95378e0d1bf5d9e7f627a3e5dccc05f30dbe79ca4fa793f5d485551751ec86bf"
+    },
+    {
+      "run": "heron-raised-seed-17",
+      "case": "raised",
+      "seed": 17,
+      "simulationSeconds": 60.02499999999877,
+      "initialParticles": 92580,
+      "initialSourceBulk": 18285,
+      "emittedSource": 15021,
+      "emittedFraction": 0.82149302707137,
+      "returnedToBasin": 14952,
+      "returnFraction": 0.9954064309966048,
+      "peakRiseWorldPixels": {
+        "p50": 17.932098388671875,
+        "p95": 34.53327178955078,
+        "maximum": 68.74202728271484
+      },
+      "peakRiseInches": {
+        "p50": 0.4803240639822824,
+        "p95": 0.9249983515058245
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 4920,
+        "peakRiseWorldPixels": {
+          "p50": 21.448272705078125,
+          "p95": 32.50048828125,
+          "maximum": 37.4207763671875
+        }
+      },
+      "finalBulkInSource": 2324,
+      "lateUniqueEmissions": 5,
+      "earlyUniqueEmissions": 6262,
+      "forwardWaterCrossings": 17120,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 7203,
+        "volumeScale": 256,
+        "initialAmount": 232260.0625,
+        "finalAmount": 58570.15234375,
+        "capturedAmount": 2526825.8125,
+        "ventedAmount": 2691270.19140625,
+        "unassignedAmount": 9245.53125,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          7203,
+          646867408,
+          0,
+          688965169,
+          0,
+          2366856,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          59458576,
+          14993959,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 16.069292068481445,
+      "residentBufferSHA256": {
+        "pos": "1b0ad0c2777e7fa3bb7f15290cfc7455d27e199b9d4df1d24c6c8c1efca17669",
+        "affine": "7205fad3dc7dd23a976bba270ec70c7b37215bef9d6ffebbfe0da102e3eaa5d7",
+        "aux": "461eb33066579347dbe7f0d8b1531fa2bf4d60d2d40a5dbc3f9f2c89ef7e3fc9",
+        "flag": "7366ed76574cf658035a40626332bcb3bfae752d251b1736ecf94123792e8a29"
+      },
+      "runSHA256": "ad0654850df557698b91b5132f6b73c0d16ca3a7646c27e29d1e1526dbda82ca"
+    },
+    {
+      "run": "heron-raised-seed-42",
+      "case": "raised",
+      "seed": 42,
+      "simulationSeconds": 60.02499999999877,
+      "initialParticles": 92590,
+      "initialSourceBulk": 18285,
+      "emittedSource": 14738,
+      "emittedFraction": 0.8060158599945311,
+      "returnedToBasin": 14562,
+      "returnFraction": 0.9880580811507668,
+      "peakRiseWorldPixels": {
+        "p50": 18.365188598632812,
+        "p95": 32.354347229003906,
+        "maximum": 90.40430450439453
+      },
+      "peakRiseInches": {
+        "p50": 0.49192469460623606,
+        "p95": 0.8666343007768903
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 4780,
+        "peakRiseWorldPixels": {
+          "p50": 21.053382873535156,
+          "p95": 30.56116485595703,
+          "maximum": 35.093177795410156
+        }
+      },
+      "finalBulkInSource": 2432,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 6177,
+      "forwardWaterCrossings": 16685,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 7203,
+        "volumeScale": 256,
+        "initialAmount": 232259.546875,
+        "finalAmount": 58387.7109375,
+        "capturedAmount": 5778963.140625,
+        "ventedAmount": 5944375.9765625,
+        "unassignedAmount": 8459,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          7203,
+          1479414564,
+          0,
+          1521760250,
+          0,
+          2165504,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          59458444,
+          14947254,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 18.380998611450195,
+      "residentBufferSHA256": {
+        "pos": "ecec96b0fa634319da10dc56a23809629a36f9e40e2408cdb93044ad75692263",
+        "affine": "910fe0294bd5ec9270062990985cc7c4df61c1cb5b9a931d0ad7ef322d51447c",
+        "aux": "eae0cf3e349ffeb94fff3f2ae352ebe187ae43ebabe34c25f72ab67ee75e20ce",
+        "flag": "975f248405b7925542ca244178b362bb76464bbdabf42e1f6ab7b4f5b14f69bb"
+      },
+      "runSHA256": "8e438ce34084ea295e3b1a74c940cf6628501b5db8dd33d9a43443d9bdb0dc79"
+    },
+    {
+      "run": "heron-raised-seed-913",
+      "case": "raised",
+      "seed": 913,
+      "simulationSeconds": 60.02499999999877,
+      "initialParticles": 92599,
+      "initialSourceBulk": 18285,
+      "emittedSource": 14980,
+      "emittedFraction": 0.8192507519824993,
+      "returnedToBasin": 14909,
+      "returnFraction": 0.9952603471295061,
+      "peakRiseWorldPixels": {
+        "p50": 20.08472442626953,
+        "p95": 32.07698059082031,
+        "maximum": 79.84709167480469
+      },
+      "peakRiseInches": {
+        "p50": 0.5379836899893624,
+        "p95": 0.8592048372541156
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 4850,
+        "peakRiseWorldPixels": {
+          "p50": 23.750137329101562,
+          "p95": 31.22571563720703,
+          "maximum": 36.587852478027344
+        }
+      },
+      "finalBulkInSource": 2328,
+      "lateUniqueEmissions": 54,
+      "earlyUniqueEmissions": 6177,
+      "forwardWaterCrossings": 17095,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 7203,
+        "volumeScale": 256,
+        "initialAmount": 232260.703125,
+        "finalAmount": 58744.73046875,
+        "capturedAmount": 4092007.375,
+        "ventedAmount": 4256779.8046875,
+        "unassignedAmount": 8743.54296875,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          7203,
+          1047553888,
+          0,
+          1089735630,
+          0,
+          2238347,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          59458740,
+          15038651,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 15.394065856933594,
+      "residentBufferSHA256": {
+        "pos": "3d91b30043a117258971cf60fbe213e6fa7c610afa227229a22055882c228669",
+        "affine": "74c7ded97cb3bb26a7d19795efec8f8ab7cd787715cb6a880511371f1337ee7f",
+        "aux": "3b27073b040b077906cfce6eb6d06baf451e5de1596456cabd6aee212c4f2c60",
+        "flag": "d48e6a0a3229cf5636faa57eb192d9a203ac9b7e2fda16504d16767c4fa8d7fd"
+      },
+      "runSHA256": "04e2f9905c7fd385444413a86c8ff524cb30f881a26593a8d16eed06853b044f"
+    },
+    {
+      "run": "heron-vented-seed-17",
+      "case": "vented",
+      "seed": 17,
+      "simulationSeconds": 45.02499999999962,
+      "initialParticles": 92603,
+      "initialSourceBulk": 18285,
+      "emittedSource": 0,
+      "emittedFraction": 0,
+      "returnedToBasin": 0,
+      "returnFraction": null,
+      "peakRiseWorldPixels": {
+        "p50": null,
+        "p95": null,
+        "maximum": null
+      },
+      "peakRiseInches": {
+        "p50": null,
+        "p95": null
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 0,
+        "peakRiseWorldPixels": {
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        }
+      },
+      "finalBulkInSource": 18285,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 0,
+      "forwardWaterCrossings": 0,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5403,
+        "volumeScale": 256,
+        "initialAmount": 102848,
+        "finalAmount": 103197.6171875,
+        "capturedAmount": 84668.046875,
+        "ventedAmount": 79906.74609375,
+        "unassignedAmount": 4411.68359375,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          5403,
+          21675020,
+          0,
+          20456127,
+          0,
+          1129391,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          26329088,
+          26418590,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 0.29956427216529846,
+      "residentBufferSHA256": {
+        "pos": "051e1416ab14632c9c3b221d97c4c083869e517f623a867ce9dd36672822d72c",
+        "affine": "5eb9fd75f3a6d7d6b047a940f28bfcbd1daf24c420b585d68445ee3e5c0c894f",
+        "aux": "021ca94808479b0f9cf446d59851f30db7ea7a481715d13bcc16e6240be7dc24",
+        "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821"
+      },
+      "runSHA256": "a4b8436ea4f9b05737a86a5900fd5562ad71ce9bdcfd1639e54bac5db482d360"
+    },
+    {
+      "run": "heron-vented-seed-42",
+      "case": "vented",
+      "seed": 42,
+      "simulationSeconds": 45.05833333333295,
+      "initialParticles": 92592,
+      "initialSourceBulk": 18285,
+      "emittedSource": 0,
+      "emittedFraction": 0,
+      "returnedToBasin": 0,
+      "returnFraction": null,
+      "peakRiseWorldPixels": {
+        "p50": null,
+        "p95": null,
+        "maximum": null
+      },
+      "peakRiseInches": {
+        "p50": null,
+        "p95": null
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.0583333333333,
+        "emittedSource": 0,
+        "peakRiseWorldPixels": {
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        }
+      },
+      "finalBulkInSource": 18285,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 0,
+      "forwardWaterCrossings": 0,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5407,
+        "volumeScale": 256,
+        "initialAmount": 102848,
+        "finalAmount": 103301.453125,
+        "capturedAmount": 151969.1640625,
+        "ventedAmount": 147171.23828125,
+        "unassignedAmount": 4344.47265625,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 1,
+        "rawWords": [
+          5407,
+          38904106,
+          0,
+          37675837,
+          0,
+          1112185,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          26329088,
+          26445172,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 0.2975787818431854,
+      "residentBufferSHA256": {
+        "pos": "95bcd6a0dc6b46002fe794b8eb33de0ca9e5b8a9ead9ddd38377769b4a832e7e",
+        "affine": "7f2c5785da5654c454d1a3c3c0c3d12638212d44c9f85179f20ba9c9d8a08845",
+        "aux": "72a50c4ae8cc9c7d6b1bbc3622af590992a76fe22b52905e4ff03995a491c956",
+        "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724"
+      },
+      "runSHA256": "799475f17ca82cb24c4b00cf5f916ae85296b793e2b0773f3015a7b4d76dff16"
+    },
+    {
+      "run": "heron-vented-seed-913",
+      "case": "vented",
+      "seed": 913,
+      "simulationSeconds": 45.04999999999962,
+      "initialParticles": 92611,
+      "initialSourceBulk": 18285,
+      "emittedSource": 0,
+      "emittedFraction": 0,
+      "returnedToBasin": 0,
+      "returnFraction": null,
+      "peakRiseWorldPixels": {
+        "p50": null,
+        "p95": null,
+        "maximum": null
+      },
+      "peakRiseInches": {
+        "p50": null,
+        "p95": null
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.0083333333333,
+        "emittedSource": 0,
+        "peakRiseWorldPixels": {
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        }
+      },
+      "finalBulkInSource": 18285,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 0,
+      "forwardWaterCrossings": 0,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5406,
+        "volumeScale": 256,
+        "initialAmount": 102848,
+        "finalAmount": 102848,
+        "capturedAmount": 113726.4765625,
+        "ventedAmount": 109151.609375,
+        "unassignedAmount": 4574.8671875,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          5406,
+          29113978,
+          0,
+          27942812,
+          0,
+          1171166,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          26329088,
+          26329088,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 0.30116716027259827,
+      "residentBufferSHA256": {
+        "pos": "c7f4df682d2e21d49e86c4659af49d1a8db39532d2fc438766256c3de1ca8976",
+        "affine": "c5f34ee25cc03f48338659683d4706cabfa0fa342042d4614caec862b611cd57",
+        "aux": "268d0d3126dc3fbfbc25611390ba7fc3c1fbe90f01428517d53052b1e3a10107",
+        "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1"
+      },
+      "runSHA256": "8cd817f734aedfbe4130d39e5092bdcd8faf5e00038931648fe8d6a1f757e144"
+    },
+    {
+      "run": "heron-empty-seed-17",
+      "case": "empty",
+      "seed": 17,
+      "simulationSeconds": 45.08333333333295,
+      "initialParticles": 72979,
+      "initialSourceBulk": 0,
+      "emittedSource": 0,
+      "emittedFraction": null,
+      "returnedToBasin": 0,
+      "returnFraction": null,
+      "peakRiseWorldPixels": {
+        "p50": null,
+        "p95": null,
+        "maximum": null
+      },
+      "peakRiseInches": {
+        "p50": null,
+        "p95": null
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.041666666666632,
+        "emittedSource": 0,
+        "peakRiseWorldPixels": {
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        }
+      },
+      "finalBulkInSource": 0,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 0,
+      "forwardWaterCrossings": 0,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5410,
+        "volumeScale": 256,
+        "initialAmount": 102848,
+        "finalAmount": 102848,
+        "capturedAmount": 50093.8671875,
+        "ventedAmount": 45439.734375,
+        "unassignedAmount": 4654.1328125,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          5410,
+          12824030,
+          0,
+          11632572,
+          0,
+          1191458,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          26329088,
+          26329088,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 0,
+      "residentBufferSHA256": {
+        "pos": "3a36f5b3f57c4adb040e5be0180058a95e4091bea011c7a4f47bdb1b89a81c4a",
+        "affine": "58327f6a3b6bccad0824a49e7ba94fe261a864087a63a7a0e3307911f3e65395",
+        "aux": "8b6f67d7467957433ab9cd82a228c0ebf333efc0a06d10005f3e979e1f06a44a",
+        "flag": "9ebcf9e27078ae4cc16896477845422339df5748e7a39e97e62c47a5c527e8ae"
+      },
+      "runSHA256": "a68d235d8deb861d2448b68994c66df5e056f4c3d83a6c51b667c8d040037e23"
+    },
+    {
+      "run": "heron-empty-seed-42",
+      "case": "empty",
+      "seed": 42,
+      "simulationSeconds": 45.024999999999615,
+      "initialParticles": 72988,
+      "initialSourceBulk": 0,
+      "emittedSource": 0,
+      "emittedFraction": null,
+      "returnedToBasin": 0,
+      "returnFraction": null,
+      "peakRiseWorldPixels": {
+        "p50": null,
+        "p95": null,
+        "maximum": null
+      },
+      "peakRiseInches": {
+        "p50": null,
+        "p95": null
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.024999999999963,
+        "emittedSource": 0,
+        "peakRiseWorldPixels": {
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        }
+      },
+      "finalBulkInSource": 0,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 0,
+      "forwardWaterCrossings": 0,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5403,
+        "volumeScale": 256,
+        "initialAmount": 102848,
+        "finalAmount": 103474.3125,
+        "capturedAmount": 61912.83984375,
+        "ventedAmount": 56461.1640625,
+        "unassignedAmount": 4825.36328125,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          5403,
+          15849687,
+          0,
+          14454058,
+          0,
+          1235293,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          26329088,
+          26489424,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 0,
+      "residentBufferSHA256": {
+        "pos": "ec5a0ead454ca3f53f0c3532d559324ba1e960316dd92948feebf2c23d71d49c",
+        "affine": "7f517d30327e8e1d1743fb693f9ed77eeaf5043192aa70976db5b11f992b4c8f",
+        "aux": "fe777de2f161f2ba265d7d2af74fc0f1f1448fdea982e724d9f3e759add8b24f",
+        "flag": "ed576c0c8fc276713fa8eb8d8e6abd75cee4c88a3cf7fdcb61947418ec732594"
+      },
+      "runSHA256": "021f59ae218732d3e4408bb0125012b9b6af35b313d841536ed37639a06bb416"
+    },
+    {
+      "run": "heron-empty-seed-913",
+      "case": "empty",
+      "seed": 913,
+      "simulationSeconds": 45.03333333333295,
+      "initialParticles": 72974,
+      "initialSourceBulk": 0,
+      "emittedSource": 0,
+      "emittedFraction": null,
+      "returnedToBasin": 0,
+      "returnFraction": null,
+      "peakRiseWorldPixels": {
+        "p50": null,
+        "p95": null,
+        "maximum": null
+      },
+      "peakRiseInches": {
+        "p50": null,
+        "p95": null
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.074999999999964,
+        "emittedSource": 0,
+        "peakRiseWorldPixels": {
+          "p50": null,
+          "p95": null,
+          "maximum": null
+        }
+      },
+      "finalBulkInSource": 0,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 0,
+      "forwardWaterCrossings": 0,
+      "ventStop": null,
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5404,
+        "volumeScale": 256,
+        "initialAmount": 102848,
+        "finalAmount": 103292.34765625,
+        "capturedAmount": 108190.01953125,
+        "ventedAmount": 103764.2109375,
+        "unassignedAmount": 3981.4609375,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          5404,
+          27696645,
+          0,
+          26563638,
+          0,
+          1019254,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          26329088,
+          26442841,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 0,
+      "residentBufferSHA256": {
+        "pos": "6b0ce7fd1903abe61c3e53479ca33d6e96a628f4c2337ff40ca6ac4afdd9d830",
+        "affine": "9d1ef7f498d4dc9af01f040a04ff4fdf5065ec9b0976e5ef20b44b43247f3ac9",
+        "aux": "48fc3f58825269ad28d10ae6ac7677a4f691783cb3c33cbcd042d108efb4c765",
+        "flag": "920a7506acd49da52797b48cc3167fb025802a28ca6c625663e8a8a26d32b482"
+      },
+      "runSHA256": "283b8b79bd7dbb2caa6541574273b83a1b376c7ca80051b69401ea283099531b"
+    },
+    {
+      "run": "heron-vent-during-jet-seed-17",
+      "case": "vent-during-jet",
+      "seed": 17,
+      "simulationSeconds": 45.02499999999962,
+      "initialParticles": 92603,
+      "initialSourceBulk": 18285,
+      "emittedSource": 6014,
+      "emittedFraction": 0.32890347279190596,
+      "returnedToBasin": 5942,
+      "returnFraction": 0.9880279348187563,
+      "peakRiseWorldPixels": {
+        "p50": 27.793312072753906,
+        "p95": 39.31858825683594,
+        "maximum": 43.97838592529297
+      },
+      "peakRiseInches": {
+        "p50": 0.7444637162344796,
+        "p95": 1.0531764711652483
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.02499999999997,
+        "emittedSource": 5769,
+        "peakRiseWorldPixels": {
+          "p50": 27.296493530273438,
+          "p95": 38.8388671875,
+          "maximum": 43.918800354003906
+        }
+      },
+      "finalBulkInSource": 14311,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 6014,
+      "forwardWaterCrossings": 7339,
+      "ventStop": {
+        "emittedBeforeVent": 5769,
+        "newSourceEmissionsAfter23": 0,
+        "allWaterCrossingsAfter35": 0
+      },
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5403,
+        "volumeScale": 256,
+        "initialAmount": 278652.28125,
+        "finalAmount": 106761.48046875,
+        "capturedAmount": 69957.0078125,
+        "ventedAmount": 234663.56640625,
+        "unassignedAmount": 7184.2421875,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 1,
+        "rawWords": [
+          5403,
+          17908994,
+          0,
+          60073873,
+          0,
+          1839166,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          71334984,
+          27330939,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 12.761728286743164,
+      "residentBufferSHA256": {
+        "pos": "37bd7e2724081d1d54a711288e9d0683600a50087295c111376680c767a65b54",
+        "affine": "2f14aec7fae522894a60fe95f666c4544e72426c616cb537b6910c318734c7be",
+        "aux": "37cfe4894fd73cc827d0d5dd9a41dfa6221c335f8d5d8bef1230ad8bfd421aa7",
+        "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821"
+      },
+      "runSHA256": "bb80c01ed4c3be25850cf6db9cd7e1231bc24cbef5258da38ccb219df1dc4797"
+    },
+    {
+      "run": "heron-vent-during-jet-seed-42",
+      "case": "vent-during-jet",
+      "seed": 42,
+      "simulationSeconds": 45.02499999999962,
+      "initialParticles": 92592,
+      "initialSourceBulk": 18285,
+      "emittedSource": 6168,
+      "emittedFraction": 0.3373256767842494,
+      "returnedToBasin": 6061,
+      "returnFraction": 0.9826523994811932,
+      "peakRiseWorldPixels": {
+        "p50": 30.5186767578125,
+        "p95": 41.59111022949219,
+        "maximum": 45.93913269042969
+      },
+      "peakRiseInches": {
+        "p50": 0.8174645560128349,
+        "p95": 1.1140475954328264
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.066666666666638,
+        "emittedSource": 5971,
+        "peakRiseWorldPixels": {
+          "p50": 30.39813232421875,
+          "p95": 41.678070068359375,
+          "maximum": 45.93913269042969
+        }
+      },
+      "finalBulkInSource": 13596,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 6168,
+      "forwardWaterCrossings": 7513,
+      "ventStop": {
+        "emittedBeforeVent": 5971,
+        "newSourceEmissionsAfter23": 0,
+        "allWaterCrossingsAfter35": 0
+      },
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5403,
+        "volumeScale": 256,
+        "initialAmount": 278651.84375,
+        "finalAmount": 107062.203125,
+        "capturedAmount": 81131.58984375,
+        "ventedAmount": 244689.390625,
+        "unassignedAmount": 8031.83984375,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 1,
+        "rawWords": [
+          5403,
+          20769687,
+          0,
+          62640484,
+          0,
+          2056151,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          71334872,
+          27407924,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 12.979080200195312,
+      "residentBufferSHA256": {
+        "pos": "2401c9ad8d0510dd2d0281a75c39a31f307a8809efb90ca34f890cc346925938",
+        "affine": "8bf6f821da8b3547313629e38c0fa6381876e80575612bba15ea355a4742d4f7",
+        "aux": "24c9831d03c9365b9a100e28a59d0bf652865b77b16fcb8ad9253edd7714a4b1",
+        "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724"
+      },
+      "runSHA256": "2595a02bc5a46baba20793479547f4d4db75c988ec315c67c7371a6cc53bc623"
+    },
+    {
+      "run": "heron-vent-during-jet-seed-913",
+      "case": "vent-during-jet",
+      "seed": 913,
+      "simulationSeconds": 45.02499999999962,
+      "initialParticles": 92611,
+      "initialSourceBulk": 18285,
+      "emittedSource": 6117,
+      "emittedFraction": 0.33453650533223955,
+      "returnedToBasin": 6033,
+      "returnFraction": 0.9862677783227072,
+      "peakRiseWorldPixels": {
+        "p50": 30.06116485595703,
+        "p95": 40.659324645996094,
+        "maximum": 46.91246032714844
+      },
+      "peakRiseInches": {
+        "p50": 0.8052097729274205,
+        "p95": 1.0890890530177526
+      },
+      "checkpoint18": {
+        "simulationSeconds": 18.066666666666638,
+        "emittedSource": 5887,
+        "peakRiseWorldPixels": {
+          "p50": 29.82757568359375,
+          "p95": 40.32685852050781,
+          "maximum": 46.428001403808594
+        }
+      },
+      "finalBulkInSource": 13759,
+      "lateUniqueEmissions": 0,
+      "earlyUniqueEmissions": 6117,
+      "forwardWaterCrossings": 7481,
+      "ventStop": {
+        "emittedBeforeVent": 5887,
+        "newSourceEmissionsAfter23": 0,
+        "allWaterCrossingsAfter35": 0
+      },
+      "gas": {
+        "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+        "pressureSteps": 5403,
+        "volumeScale": 256,
+        "initialAmount": 278653.484375,
+        "finalAmount": 108214.5,
+        "capturedAmount": 90200.1796875,
+        "ventedAmount": 253788.515625,
+        "unassignedAmount": 6850.6484375,
+        "closureError": 0,
+        "maximumStepBalanceError": 0,
+        "maximumConnectivityErrors": 0,
+        "maximumOverflowErrors": 0,
+        "maximumNonpositiveVolumes": 0,
+        "rawWords": [
+          5403,
+          23091246,
+          0,
+          64969860,
+          0,
+          1753766,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          71335292,
+          27702912,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "countConserved": true,
+      "residentFinite": true,
+      "insideWalls": 0,
+      "outsideWorld": 0,
+      "maximumObservedParticleMove": 12.71583366394043,
+      "residentBufferSHA256": {
+        "pos": "34ae2d8d0fac01fc8571dc32340ab1253defecd6c087c92b786e2fbb23a756fe",
+        "affine": "24355a66d10ba4972ee5be230a2ec8b62598c26a8946e4d6763d5285d2bae6ef",
+        "aux": "df265268f3b3c6096ee4f1391a3a610c1edeef9fe55b49016a4a83418abf720f",
+        "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1"
+      },
+      "runSHA256": "a704f8fb23e4c1f78480818a9fe0fd2dfa2d7f22b9a67d2eb07bd26f03be6b92"
+    }
+  ],
+  "compressionProof": {
+    "world": {
+      "w": 832,
+      "h": 640,
+      "tile": 8
+    },
+    "simulationSeconds": 5,
+    "opensAtSimulationSecond": 1.5,
+    "method": "A separate open upper tank and sealed or open lower jar, with no jet branch. The exact apparatus definition is included. Sealed gas amount stays constant as its volume shrinks and pressure rises; the vented comparison receives more water. This checks the compression role, not phase accuracy or complete pressure convergence.",
+    "sealedDefinition": {
+      "name": "heron",
+      "vessels": [
+        {
+          "id": "source",
+          "rect": {
+            "x": 416,
+            "y": 96,
+            "width": 352,
+            "height": 232
+          },
+          "sealed": false
+        },
+        {
+          "id": "bottom",
+          "rect": {
+            "x": 64,
+            "y": 384,
+            "width": 224,
+            "height": 208
+          },
+          "sealed": true
+        }
+      ],
+      "pipes": [
+        {
+          "id": "supply",
+          "points": [
+            {
+              "x": 724,
+              "y": 300
+            },
+            {
+              "x": 84,
+              "y": 300
+            },
+            {
+              "x": 84,
+              "y": 564
+            },
+            {
+              "x": 116,
+              "y": 564
+            }
+          ],
+          "bore": 16,
+          "primed": true
+        }
+      ],
+      "initial": [
+        {
+          "kind": "pipe",
+          "points": [
+            {
+              "x": 724,
+              "y": 300
+            },
+            {
+              "x": 84,
+              "y": 300
+            },
+            {
+              "x": 84,
+              "y": 564
+            },
+            {
+              "x": 116,
+              "y": 564
+            }
+          ],
+          "bore": 16,
+          "tile": 8
+        },
+        {
+          "kind": "rect",
+          "vessel": "source",
+          "rect": {
+            "x": 424,
+            "y": 136,
+            "width": 336,
+            "height": 184
+          }
+        },
+        {
+          "kind": "rect",
+          "vessel": "bottom",
+          "rect": {
+            "x": 72,
+            "y": 504,
+            "width": 208,
+            "height": 80
+          }
+        }
+      ],
+      "slimes": [],
+      "meters": [
+        {
+          "id": "supply",
+          "a": {
+            "x": 80,
+            "y": 340
+          },
+          "b": {
+            "x": 96,
+            "y": 340
+          },
+          "axis": "y",
+          "positive": 1
+        }
+      ],
+      "marks": [],
+      "parts": [
+        {
+          "type": "valve",
+          "id": "supply",
+          "rect": {
+            "x": 104,
+            "y": 560,
+            "width": 8,
+            "height": 16
+          },
+          "direction": "right",
+          "open": false,
+          "buildId": "p4"
+        }
+      ],
+      "settings": {
+        "soundSpeed": 2500,
+        "atmospherePressure": 100000,
+        "minimumPressure": -80000,
+        "particlePressure": true,
+        "projectedVelocity": true,
+        "directGather": true,
+        "collapseEmptyCells": true,
+        "geometricGas": true,
+        "boundaryReconstruction": true,
+        "cellSize": 8,
+        "iterations": 32,
+        "redBlack": true
+      },
+      "seed": 17,
+      "title": "Sealed air compression test",
+      "action": "Open valve",
+      "caption": "A high open tank drains into the lower jar.",
+      "primary": {
+        "kind": "valve",
+        "id": "supply"
+      },
+      "measure": {
+        "source": {
+          "x": 416,
+          "y": 96,
+          "width": 352,
+          "height": 232
+        },
+        "basin": {
+          "x": 416,
+          "y": 96,
+          "width": 352,
+          "height": 232
+        },
+        "bottom": {
+          "x": 64,
+          "y": 384,
+          "width": 224,
+          "height": 208
+        },
+        "receiver": {
+          "x": 64,
+          "y": 384,
+          "width": 224,
+          "height": 208
+        },
+        "nozzle": {
+          "x": 116,
+          "y": 564
+        },
+        "outlet": {
+          "x": 116,
+          "y": 564
+        },
+        "bore": 16,
+        "sourceLevel": 136
+      }
+    },
+    "sourceSHA256": {
+      "archive/water-smoke-slime/water-smoke-slime.html": "45e257e68d744975384a0791b725ba6f228f54c2c619449e5bfa814ff760e15e",
+      "water-smoke-slime.css": "c1fb139ee0117fe5861062c6d521e27c25e5ba4d8159731a391eec3d4213eede",
+      "js/water-smoke-slime.js": "16c476dbe840761f4a3a43817079f4466a73beb55ef1efbd4b94ccea39538cdd",
+      "js/water-smoke-slime-ui.js": "fc23046a297c7c5d8b2b1521b97e9846d2105d73c65ef00f4d48214f17f184d9",
+      "js/liquid-wgpu.js": "bea4ae6ea15e94f74505be3dfab6d4eff3b89b94d8244d413348e911ea692502",
+      "js/liquid-air-wgpu.js": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003",
+      "js/water-machines-scenes.js": "2108fabcff85daa26523b8e66abdf0f53af05e4979caa8bdb4d8b9f73e2924c9",
+      "js/water-machines-instruments.js": "0633f2ebb47aeac97c658f71eb4d85e5af371d463e91cf408fa397eac9f4ac5f",
+      "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+      "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+      "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+      "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+    },
+    "rows": [
+      {
+        "case": "sealed-proof",
+        "seed": 17,
+        "simulationSeconds": 5.075000000000001,
+        "receiverWaterIncrease": 663,
+        "countConserved": true,
+        "residentFinite": true,
+        "gasBudget": {
+          "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+          "pressureSteps": 609,
+          "volumeScale": 256,
+          "initialAmount": 19775.90234375,
+          "finalAmount": 19775.90234375,
+          "capturedAmount": 0,
+          "ventedAmount": 0,
+          "unassignedAmount": 0,
+          "closureError": 0,
+          "maximumStepBalanceError": 0,
+          "maximumConnectivityErrors": 0,
+          "maximumOverflowErrors": 0,
+          "maximumNonpositiveVolumes": 0,
+          "rawWords": [
+            609,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5062631,
+            5062631,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "finalAirPockets": [
+          {
+            "root": 5109,
+            "pressure": 101955.3671875,
+            "amount": 19775.90234375,
+            "volume": 19085.95703125,
+            "geometryVolume": 19081.7734375,
+            "vapor": false,
+            "diagonal": 0.008611585653852671,
+            "eosError": 3.726573538642697e-07,
+            "residual": 0.001740574138239026
+          }
+        ],
+        "options": {
+          "compression": true,
+          "pressure": {
+            "atmospherePressure": 2820357.776383606
+          }
+        },
+        "effectiveSettings": {
+          "density": 1,
+          "soundSpeed": 2500,
+          "atmospherePressure": 2820357.75,
+          "minimumPressure": -80000,
+          "threshold": 0.44999998807907104,
+          "volumeScale": 256,
+          "diagonalScale": 68719476736,
+          "fluxScale": 16777216,
+          "neighborScale": 16777216,
+          "pressureTolerance": 0.10000000149011612,
+          "particlePressure": true,
+          "projectedVelocity": true,
+          "directGather": true,
+          "collapseEmptyCells": true,
+          "geometricGas": true,
+          "boundaryReconstruction": true
+        }
+      },
+      {
+        "case": "sealed-proof",
+        "seed": 42,
+        "simulationSeconds": 5.108333333333329,
+        "receiverWaterIncrease": 697,
+        "countConserved": true,
+        "residentFinite": true,
+        "gasBudget": {
+          "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+          "pressureSteps": 613,
+          "volumeScale": 256,
+          "initialAmount": 19774.890625,
+          "finalAmount": 19774.890625,
+          "capturedAmount": 0,
+          "ventedAmount": 0,
+          "unassignedAmount": 0,
+          "closureError": 0,
+          "maximumStepBalanceError": 0,
+          "maximumConnectivityErrors": 0,
+          "maximumOverflowErrors": 0,
+          "maximumNonpositiveVolumes": 0,
+          "rawWords": [
+            613,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5062372,
+            5062372,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "finalAirPockets": [
+          {
+            "root": 5109,
+            "pressure": 96905.671875,
+            "amount": 19774.890625,
+            "volume": 19118.0078125,
+            "geometryVolume": 19113.9921875,
+            "vapor": false,
+            "diagonal": 0.008633985824417323,
+            "eosError": -1.8636114873515908e-10,
+            "residual": 0.002049696398898959
+          }
+        ],
+        "options": {
+          "compression": true,
+          "pressure": {
+            "atmospherePressure": 2820357.776383606
+          }
+        },
+        "effectiveSettings": {
+          "density": 1,
+          "soundSpeed": 2500,
+          "atmospherePressure": 2820357.75,
+          "minimumPressure": -80000,
+          "threshold": 0.44999998807907104,
+          "volumeScale": 256,
+          "diagonalScale": 68719476736,
+          "fluxScale": 16777216,
+          "neighborScale": 16777216,
+          "pressureTolerance": 0.10000000149011612,
+          "particlePressure": true,
+          "projectedVelocity": true,
+          "directGather": true,
+          "collapseEmptyCells": true,
+          "geometricGas": true,
+          "boundaryReconstruction": true
+        }
+      },
+      {
+        "case": "sealed-proof",
+        "seed": 913,
+        "simulationSeconds": 5.05,
+        "receiverWaterIncrease": 696,
+        "countConserved": true,
+        "residentFinite": true,
+        "gasBudget": {
+          "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+          "pressureSteps": 606,
+          "volumeScale": 256,
+          "initialAmount": 19775.6640625,
+          "finalAmount": 19775.6640625,
+          "capturedAmount": 0,
+          "ventedAmount": 0,
+          "unassignedAmount": 0,
+          "closureError": 0,
+          "maximumStepBalanceError": 0,
+          "maximumConnectivityErrors": 0,
+          "maximumOverflowErrors": 0,
+          "maximumNonpositiveVolumes": 0,
+          "rawWords": [
+            606,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5062570,
+            5062570,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "finalAirPockets": [
+          {
+            "root": 5109,
+            "pressure": 106195.6953125,
+            "amount": 19775.6640625,
+            "volume": 19058.06640625,
+            "geometryVolume": 19054.33984375,
+            "vapor": false,
+            "diagonal": 0.00859290751395747,
+            "eosError": 5.5831684164786566e-08,
+            "residual": 0.0024259064812213182
+          }
+        ],
+        "options": {
+          "compression": true,
+          "pressure": {
+            "atmospherePressure": 2820357.776383606
+          }
+        },
+        "effectiveSettings": {
+          "density": 1,
+          "soundSpeed": 2500,
+          "atmospherePressure": 2820357.75,
+          "minimumPressure": -80000,
+          "threshold": 0.44999998807907104,
+          "volumeScale": 256,
+          "diagonalScale": 68719476736,
+          "fluxScale": 16777216,
+          "neighborScale": 16777216,
+          "pressureTolerance": 0.10000000149011612,
+          "particlePressure": true,
+          "projectedVelocity": true,
+          "directGather": true,
+          "collapseEmptyCells": true,
+          "geometricGas": true,
+          "boundaryReconstruction": true
+        }
+      },
+      {
+        "case": "vented-proof",
+        "seed": 17,
+        "simulationSeconds": 5.091666666666662,
+        "receiverWaterIncrease": 3227,
+        "countConserved": true,
+        "residentFinite": true,
+        "gasBudget": {
+          "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+          "pressureSteps": 611,
+          "volumeScale": 256,
+          "initialAmount": 0,
+          "finalAmount": 0,
+          "capturedAmount": 0,
+          "ventedAmount": 0,
+          "unassignedAmount": 0,
+          "closureError": 0,
+          "maximumStepBalanceError": 0,
+          "maximumConnectivityErrors": 0,
+          "maximumOverflowErrors": 0,
+          "maximumNonpositiveVolumes": 0,
+          "rawWords": [
+            611,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "finalAirPockets": [],
+        "options": {
+          "compression": true,
+          "vented": true,
+          "pressure": {
+            "atmospherePressure": 2820357.776383606
+          }
+        },
+        "effectiveSettings": {
+          "density": 1,
+          "soundSpeed": 2500,
+          "atmospherePressure": 2820357.75,
+          "minimumPressure": -80000,
+          "threshold": 0.44999998807907104,
+          "volumeScale": 256,
+          "diagonalScale": 68719476736,
+          "fluxScale": 16777216,
+          "neighborScale": 16777216,
+          "pressureTolerance": 0.10000000149011612,
+          "particlePressure": true,
+          "projectedVelocity": true,
+          "directGather": true,
+          "collapseEmptyCells": true,
+          "geometricGas": true,
+          "boundaryReconstruction": true
+        }
+      },
+      {
+        "case": "vented-proof",
+        "seed": 42,
+        "simulationSeconds": 5.033333333333331,
+        "receiverWaterIncrease": 3164,
+        "countConserved": true,
+        "residentFinite": true,
+        "gasBudget": {
+          "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+          "pressureSteps": 604,
+          "volumeScale": 256,
+          "initialAmount": 0,
+          "finalAmount": 0,
+          "capturedAmount": 35.140625,
+          "ventedAmount": 0,
+          "unassignedAmount": 35.140625,
+          "closureError": 0,
+          "maximumStepBalanceError": 0,
+          "maximumConnectivityErrors": 0,
+          "maximumOverflowErrors": 0,
+          "maximumNonpositiveVolumes": 0,
+          "rawWords": [
+            604,
+            8996,
+            0,
+            0,
+            0,
+            8996,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "finalAirPockets": [],
+        "options": {
+          "compression": true,
+          "vented": true,
+          "pressure": {
+            "atmospherePressure": 2820357.776383606
+          }
+        },
+        "effectiveSettings": {
+          "density": 1,
+          "soundSpeed": 2500,
+          "atmospherePressure": 2820357.75,
+          "minimumPressure": -80000,
+          "threshold": 0.44999998807907104,
+          "volumeScale": 256,
+          "diagonalScale": 68719476736,
+          "fluxScale": 16777216,
+          "neighborScale": 16777216,
+          "pressureTolerance": 0.10000000149011612,
+          "particlePressure": true,
+          "projectedVelocity": true,
+          "directGather": true,
+          "collapseEmptyCells": true,
+          "geometricGas": true,
+          "boundaryReconstruction": true
+        }
+      },
+      {
+        "case": "vented-proof",
+        "seed": 913,
+        "simulationSeconds": 5.066666666666664,
+        "receiverWaterIncrease": 3306,
+        "countConserved": true,
+        "residentFinite": true,
+        "gasBudget": {
+          "definition": "Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.",
+          "pressureSteps": 608,
+          "volumeScale": 256,
+          "initialAmount": 0,
+          "finalAmount": 0,
+          "capturedAmount": 72.94921875,
+          "ventedAmount": 0,
+          "unassignedAmount": 72.94921875,
+          "closureError": 0,
+          "maximumStepBalanceError": 0,
+          "maximumConnectivityErrors": 0,
+          "maximumOverflowErrors": 0,
+          "maximumNonpositiveVolumes": 0,
+          "rawWords": [
+            608,
+            18675,
+            0,
+            0,
+            0,
+            18675,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "finalAirPockets": [],
+        "options": {
+          "compression": true,
+          "vented": true,
+          "pressure": {
+            "atmospherePressure": 2820357.776383606
+          }
+        },
+        "effectiveSettings": {
+          "density": 1,
+          "soundSpeed": 2500,
+          "atmospherePressure": 2820357.75,
+          "minimumPressure": -80000,
+          "threshold": 0.44999998807907104,
+          "volumeScale": 256,
+          "diagonalScale": 68719476736,
+          "fluxScale": 16777216,
+          "neighborScale": 16777216,
+          "pressureTolerance": 0.10000000149011612,
+          "particlePressure": true,
+          "projectedVelocity": true,
+          "directGather": true,
+          "collapseEmptyCells": true,
+          "geometricGas": true,
+          "boundaryReconstruction": true
+        }
+      }
+    ]
+  },
+  "presentation": {
+    "viewportChecksPassed": true,
+    "viewports": [
+      {
+        "name": "desktop",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 912.1611328125,
+          "height": 540.78125
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 541
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "macbook",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 687.98193359375,
+          "height": 407.8749694824219
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 408
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "macbook-short",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 485.572265625,
+          "height": 287.875
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 288
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "short-desktop",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 485.572265625,
+          "height": 287.875
+        },
+        "viewport": {
+          "width": 914,
+          "height": 288
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "landscape",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 134.93975830078125,
+          "height": 80
+        },
+        "viewport": {
+          "width": 778,
+          "height": 80
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "scene-selection",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 485.572265625,
+          "height": 287.875
+        },
+        "viewport": {
+          "width": 914,
+          "height": 288
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "return-to-cup",
+        "scene": "cup",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 485.572265625,
+          "height": 287.875
+        },
+        "viewport": {
+          "width": 914,
+          "height": 288
+        },
+        "geometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+      },
+      {
+        "name": "siphon-macbook",
+        "scene": "siphon",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 687.98193359375,
+          "height": 407.8749694824219
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 408
+        },
+        "geometrySHA256": "7dc0240e82f014f0363f67032a8074743427d1a40331d2a207b38f3319aefbe6"
+      },
+      {
+        "name": "siphon-macbook-short",
+        "scene": "siphon",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 485.572265625,
+          "height": 287.875
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 288
+        },
+        "geometrySHA256": "7dc0240e82f014f0363f67032a8074743427d1a40331d2a207b38f3319aefbe6"
+      },
+      {
+        "name": "siphon-landscape",
+        "scene": "siphon",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 134.93975830078125,
+          "height": 80
+        },
+        "viewport": {
+          "width": 778,
+          "height": 80
+        },
+        "geometrySHA256": "7dc0240e82f014f0363f67032a8074743427d1a40331d2a207b38f3319aefbe6"
+      },
+      {
+        "name": "heron-macbook",
+        "scene": "heron",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 687.98193359375,
+          "height": 407.8749694824219
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 408
+        },
+        "geometrySHA256": "892f95dd347364c48263ef3da0b9c073044fa1a654e784b940bfd8d9d812423e"
+      },
+      {
+        "name": "heron-macbook-short",
+        "scene": "heron",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 485.572265625,
+          "height": 287.875
+        },
+        "viewport": {
+          "width": 1118,
+          "height": 288
+        },
+        "geometrySHA256": "892f95dd347364c48263ef3da0b9c073044fa1a654e784b940bfd8d9d812423e"
+      },
+      {
+        "name": "heron-landscape",
+        "scene": "heron",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "stage": {
+          "width": 134.93975830078125,
+          "height": 80
+        },
+        "viewport": {
+          "width": 778,
+          "height": 80
+        },
+        "geometrySHA256": "892f95dd347364c48263ef3da0b9c073044fa1a654e784b940bfd8d9d812423e"
+      }
+    ],
+    "fountainPlayback": {
+      "world": {
+        "w": 1120,
+        "h": 664,
+        "tile": 8,
+        "cols": 140,
+        "rows": 83
+      },
+      "count": 92603,
+      "levels": {
+        "source": 340,
+        "basin": 172,
+        "bottom": 556
+      },
+      "flow": 960.9374999999727,
+      "roomAbsolutePressurePsi": 14.695948896337498,
+      "sourcePipeTilesExcluded": 336
+    },
+    "fpsSamples": [
+      {
+        "clock": 2.25833333333333,
+        "fps": 60
+      },
+      {
+        "clock": 2.6499999999999955,
+        "fps": 60
+      },
+      {
+        "clock": 3.0583333333333274,
+        "fps": 59
+      },
+      {
+        "clock": 3.4499999999999926,
+        "fps": 60
+      },
+      {
+        "clock": 3.8333333333333246,
+        "fps": 60
+      },
+      {
+        "clock": 4.224999999999993,
+        "fps": 60
+      },
+      {
+        "clock": 4.641666666666665,
+        "fps": 60
+      },
+      {
+        "clock": 5.025000000000003,
+        "fps": 60
+      },
+      {
+        "clock": 5.416666666666674,
+        "fps": 60
+      },
+      {
+        "clock": 5.800000000000012,
+        "fps": 60
+      },
+      {
+        "clock": 6.1833333333333504,
+        "fps": 60
+      },
+      {
+        "clock": 6.5750000000000215,
+        "fps": 60
+      },
+      {
+        "clock": 6.991666666666693,
+        "fps": 60
+      },
+      {
+        "clock": 7.375000000000031,
+        "fps": 60
+      },
+      {
+        "clock": 7.766666666666702,
+        "fps": 60
+      },
+      {
+        "clock": 8.150000000000041,
+        "fps": 60
+      },
+      {
+        "clock": 8.541666666666712,
+        "fps": 60
+      },
+      {
+        "clock": 8.92500000000005,
+        "fps": 60
+      },
+      {
+        "clock": 9.341666666666722,
+        "fps": 60
+      },
+      {
+        "clock": 9.72500000000006,
+        "fps": 60
+      },
+      {
+        "clock": 10.116666666666731,
+        "fps": 60
+      },
+      {
+        "clock": 10.50000000000007,
+        "fps": 60
+      },
+      {
+        "clock": 10.900000000000073,
+        "fps": 59
+      },
+      {
+        "clock": 11.291666666666744,
+        "fps": 60
+      },
+      {
+        "clock": 11.675000000000082,
+        "fps": 60
+      },
+      {
+        "clock": 12.075000000000083,
+        "fps": 59
+      },
+      {
+        "clock": 12.450000000000081,
+        "fps": 53
+      },
+      {
+        "clock": 12.850000000000078,
+        "fps": 49
+      },
+      {
+        "clock": 13.233333333333407,
+        "fps": 46
+      },
+      {
+        "clock": 13.62500000000007,
+        "fps": 46
+      },
+      {
+        "clock": 14.04166666666673,
+        "fps": 41
+      },
+      {
+        "clock": 14.416666666666725,
+        "fps": 40
+      },
+      {
+        "clock": 14.79166666666672,
+        "fps": 39
+      },
+      {
+        "clock": 15.166666666666714,
+        "fps": 38
+      },
+      {
+        "clock": 15.541666666666709,
+        "fps": 37
+      },
+      {
+        "clock": 15.916666666666703,
+        "fps": 37
+      },
+      {
+        "clock": 16.29166666666671,
+        "fps": 37
+      },
+      {
+        "clock": 16.66666666666672,
+        "fps": 36
+      },
+      {
+        "clock": 17.041666666666732,
+        "fps": 37
+      },
+      {
+        "clock": 17.375000000000075,
+        "fps": 36
+      },
+      {
+        "clock": 17.750000000000085,
+        "fps": 36
+      },
+      {
+        "clock": 18.125000000000096,
+        "fps": 36
+      },
+      {
+        "clock": 18.500000000000107,
+        "fps": 36
+      },
+      {
+        "clock": 18.875000000000117,
+        "fps": 36
+      },
+      {
+        "clock": 19.250000000000128,
+        "fps": 35
+      },
+      {
+        "clock": 19.58333333333347,
+        "fps": 35
+      },
+      {
+        "clock": 19.95833333333348,
+        "fps": 36
+      }
+    ],
+    "performanceCertified": false,
+    "conditions": "One headless Chrome for Testing session using Metal, 1512 by 820 CSS pixels, device scale factor 2. Single-session footer FPS observations are not a cross-device benchmark.",
+    "fpsSummary": {
+      "median": 49,
+      "minimum": 35,
+      "maximum": 60,
+      "samples": 39,
+      "method": "Footer FPS samples at 250 ms intervals. The first eight samples, two wall seconds after resuming, are omitted."
+    }
+  },
+  "regressions": {
+    "ordinarySandboxPassed": true,
+    "cupAndSiphonDefinitionFixturesUnchanged": 18,
+    "engineSyncBlocksUnchanged": 10,
+    "sharedEngineVersion": "v28.178",
+    "viewportUIReportSHA256": "1fd6b23a287c6bac24c4e0c50b8d6ce530b8d1179927d59e99571c4a3f5c24ab"
+  },
+  "apparatusDefinition": {
+    "name": "heron",
+    "vessels": [
+      {
+        "id": "middle",
+        "rect": {
+          "x": 64,
+          "y": 96,
+          "width": 272,
+          "height": 272
+        },
+        "sealed": true
+      },
+      {
+        "id": "bottom",
+        "rect": {
+          "x": 64,
+          "y": 424,
+          "width": 960,
+          "height": 208
+        },
+        "sealed": true
+      },
+      {
+        "id": "basin",
+        "rect": {
+          "x": 384,
+          "y": 136,
+          "width": 560,
+          "height": 168
+        },
+        "sealed": false
+      }
+    ],
+    "pipes": [
+      {
+        "id": "basin-drain",
+        "points": [
+          {
+            "x": 924,
+            "y": 276
+          },
+          {
+            "x": 1004,
+            "y": 276
+          },
+          {
+            "x": 1004,
+            "y": 604
+          },
+          {
+            "x": 972,
+            "y": 604
+          }
+        ],
+        "bore": 16,
+        "primed": true
+      },
+      {
+        "id": "air-link",
+        "points": [
+          {
+            "x": 84,
+            "y": 444
+          },
+          {
+            "x": 36,
+            "y": 444
+          },
+          {
+            "x": 36,
+            "y": 116
+          },
+          {
+            "x": 84,
+            "y": 116
+          }
+        ],
+        "bore": 16,
+        "primed": false
+      },
+      {
+        "id": "nozzle",
+        "points": [
+          {
+            "x": 284,
+            "y": 340
+          },
+          {
+            "x": 316,
+            "y": 340
+          },
+          {
+            "x": 316,
+            "y": 156
+          },
+          {
+            "x": 516,
+            "y": 156
+          },
+          {
+            "x": 516,
+            "y": 124
+          }
+        ],
+        "bore": 16,
+        "primed": false
+      }
+    ],
+    "initial": [
+      {
+        "kind": "pipe",
+        "points": [
+          {
+            "x": 924,
+            "y": 276
+          },
+          {
+            "x": 1004,
+            "y": 276
+          },
+          {
+            "x": 1004,
+            "y": 604
+          },
+          {
+            "x": 972,
+            "y": 604
+          }
+        ],
+        "bore": 16,
+        "tile": 8
+      },
+      {
+        "kind": "rect",
+        "vessel": "middle",
+        "rect": {
+          "x": 72,
+          "y": 232,
+          "width": 256,
+          "height": 128
+        }
+      },
+      {
+        "kind": "rect",
+        "vessel": "bottom",
+        "rect": {
+          "x": 72,
+          "y": 584,
+          "width": 944,
+          "height": 40
+        }
+      },
+      {
+        "kind": "rect",
+        "vessel": "basin",
+        "rect": {
+          "x": 392,
+          "y": 152,
+          "width": 544,
+          "height": 144
+        },
+        "exclude": [
+          {
+            "kind": "pipe",
+            "points": [
+              {
+                "x": 284,
+                "y": 340
+              },
+              {
+                "x": 316,
+                "y": 340
+              },
+              {
+                "x": 316,
+                "y": 156
+              },
+              {
+                "x": 516,
+                "y": 156
+              },
+              {
+                "x": 516,
+                "y": 124
+              }
+            ],
+            "bore": 16,
+            "tile": 8
+          }
+        ]
+      }
+    ],
+    "slimes": [],
+    "meters": [
+      {
+        "id": "nozzle",
+        "a": {
+          "x": 512,
+          "y": 132
+        },
+        "b": {
+          "x": 528,
+          "y": 132
+        },
+        "axis": "y",
+        "positive": -1
+      }
+    ],
+    "marks": [],
+    "parts": [
+      {
+        "type": "valve",
+        "id": "basin-supply",
+        "rect": {
+          "x": 984,
+          "y": 600,
+          "width": 8,
+          "height": 16
+        },
+        "direction": "left",
+        "open": false,
+        "buildId": "p8"
+      }
+    ],
+    "settings": {
+      "soundSpeed": 2500,
+      "atmospherePressure": 100000,
+      "minimumPressure": -80000,
+      "particlePressure": true,
+      "projectedVelocity": true,
+      "directGather": true,
+      "collapseEmptyCells": true,
+      "geometricGas": true,
+      "boundaryReconstruction": true,
+      "cellSize": 8,
+      "iterations": 32,
+      "redBlack": true,
+      "roomPressurePsi": 14.695948775513449
+    },
+    "seed": 17,
+    "setup": "sealed",
+    "title": "Heron's fountain",
+    "action": "Open valve",
+    "caption": "The basin drains into the lower jar and compresses its air. Open the valve to lift water from the source jar.",
+    "solids": [
+      {
+        "x": 64,
+        "y": 136,
+        "width": 96,
+        "height": 8
+      }
+    ],
+    "vents": [],
+    "vent": {
+      "x": 184,
+      "y": 96,
+      "width": 32,
+      "height": 8
+    },
+    "primary": {
+      "kind": "valve",
+      "id": "basin-supply"
+    },
+    "measure": {
+      "source": {
+        "x": 64,
+        "y": 96,
+        "width": 272,
+        "height": 272
+      },
+      "basin": {
+        "x": 384,
+        "y": 136,
+        "width": 560,
+        "height": 168
+      },
+      "bottom": {
+        "x": 64,
+        "y": 424,
+        "width": 960,
+        "height": 208
+      },
+      "nozzle": {
+        "x": 516,
+        "y": 120
+      },
+      "intake": {
+        "x": 284,
+        "y": 340
+      },
+      "intakeFloor": 352,
+      "bore": 16,
+      "bottomHeight": 208
+    }
+  },
+  "initialSealedPrediction": {
+    "definition": "Lossless prediction for the sealed initial geometry: receiving surface minus basin surface, less the lift from source surface to nozzle. Actual free surfaces and losses evolve during flow.",
+    "headWorldPixels": 320,
+    "jetRiseInches": 8.571428571428571
+  }
+}

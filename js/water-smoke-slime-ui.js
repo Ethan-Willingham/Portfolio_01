@@ -48,7 +48,7 @@
       blank: 'Choose a material to add, or draw your own container.',
       siphon: 'Open the valve, then watch the two water levels.',
       cup: 'Drop the slime in, then watch the fill line.',
-      heron: 'Add water to the basin, then watch the sealed chambers.'
+      heron: 'Open the valve to start. Compare the jars in Instruments.'
     };
     var hints = {
       poke: 'Grab near a slime’s edge to stretch it. Drag empty space to stir.',
@@ -257,6 +257,13 @@
       catch(error){notice=error.message;}
       finally{this.disabled=false;updateMeasurements();}
     });
+    document.getElementById('toy-heron-setup').addEventListener('change', async function () {
+      var setup=this.value;
+      this.disabled=true;
+      try { await toy.machine('heron',{setup:setup}); }
+      catch(error){notice=error.message;}
+      finally{this.disabled=false;updateMeasurements();}
+    });
     document.getElementById('toy-pressure-toggle').addEventListener('click', function () {
       pressureColors = !pressureColors; toy.pressureView(pressureColors); pressed(this, pressureColors); updateMeasurements();
     });
@@ -333,6 +340,10 @@
       document.getElementById('toy-siphon-setup-note').hidden=!siphon;
       var setupSelect=document.getElementById('toy-siphon-setup');
       if(siphon && liveMachine && liveMachine.ready && !setupSelect.disabled)setupSelect.value=liveMachine.definition.setup;
+      var heron=state.scene==='heron',fountainSelect=document.getElementById('toy-heron-setup');
+      document.getElementById('toy-heron-options').hidden=!heron;
+      document.getElementById('toy-heron-setup-note').hidden=!heron;
+      if(heron && liveMachine && liveMachine.ready && !fountainSelect.disabled)fountainSelect.value=liveMachine.definition.setup || 'sealed';
       document.getElementById('toy-instruments-open').hidden = !contextual;
       if (!contextual && openPanel && openPanel.id === 'toy-panel-instruments') closePanel(false);
       if (machine) {
@@ -418,7 +429,7 @@
         lastScene = state.scene;
         notice = ''; document.getElementById('toy-share-wrap').hidden = true;
       }
-      text('toy-scene-label', (sceneNames[state.scene] || state.scene) + (state.scene==='heron' ? ' (in progress)' : ''));
+      text('toy-scene-label', sceneNames[state.scene] || state.scene);
       bar.querySelectorAll('[data-tool], [data-scene], [data-preset]').forEach(function (button) {
         button.setAttribute('aria-pressed', String(button.classList.contains('is-on')));
       });
@@ -454,6 +465,7 @@
       this.disabled=true;
       try {
         if(toy.stats().scene==='siphon')await toy.machine('siphon',{setup:document.getElementById('toy-siphon-setup').value});
+        else if(toy.stats().scene==='heron')await toy.machine('heron',{setup:document.getElementById('toy-heron-setup').value});
         else await toy.scene(toy.stats().scene);
         pause(false);
       } catch(error){notice=error.message;}

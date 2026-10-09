@@ -151,6 +151,41 @@
       result.primary={kind:'slime',index:0};
       result.measure={source:cup,receiver:catchment,crest:bend,trigger:line,intake:mouth,
         intakeFloor:mouth.y+positive,outlet:probe(stemRight-T*.5,cupOutlet.y+T*.5),bore:bore,sourceLevel:level};
+    }else if(name==='heron' && W>=1120 && H>=640){
+      var setup=options.setup || (options.vented ? 'vented' : options.empty ? 'empty' : 'sealed');
+      if(['sealed','vented','empty','raised'].indexOf(setup)<0)throw new Error('Unknown fountain setup.');
+      result.setup=setup;
+      Object.assign(result.settings,{particlePressure:true,projectedVelocity:true,directGather:true,
+        collapseEmptyCells:true,geometricGas:true,boundaryReconstruction:true,
+        cellSize:8,soundSpeed:2500,iterations:32,redBlack:true,roomPressurePsi:14.695948775513449});
+      result.title="Heron's fountain";result.action=options.open===true ? 'Close valve' : 'Open valve';
+      result.caption=setup==='vented' ? 'The hole in the source lid releases the compressed air. Open the valve and compare with Sealed jars in Instruments.' : setup==='empty' ? 'The source jar has no water to lift. Open the valve and compare with Sealed jars in Instruments.' : setup==='raised' ? 'The lower jar is raised, reducing the falling water’s head. Open the valve and compare with Sealed jars in Instruments.' : 'The basin drains into the lower jar and compresses its air. Open the valve to lift water from the source jar.';
+      var rise=snap(option('bottomRise',setup==='raised' ? 48 : 0));
+      var bottomHeight=snap(option('bottomHeight',208));
+      if(rise<0 || rise>48 || bottomHeight<160 || bottomHeight>208)throw new Error('Heron lower jar must fit below the source and leave its air port dry.');
+      var floor=424-rise+bottomHeight,drainY=floor-28;
+      var middle=vessel('middle',rect(64,96,272,272),true);
+      var bottom=vessel('bottom',rect(64,424-rise,960,bottomHeight),true);
+      var basin=vessel('basin',rect(384,136,560,168),false);
+      // The short shelf protects the source's dry gas port from the jet's
+      // returning splash. Gas passes around its right edge.
+      result.solids=[rect(64,136,96,8)];
+      result.vents=setup==='vented' ? [rect(184,96,32,8)] : [];
+      result.vent=rect(184,96,32,8);
+      pipe('basin-drain',[point(924,276),point(1004,276),point(1004,drainY),point(972,drainY)],16,true);
+      pipe('air-link',[point(84,444-rise),point(36,444-rise),point(36,116),point(84,116)],16,false);
+      var nozzle=point(512,124);
+      // Keep a straight upward mouth above the bend. A one-cell terminal
+      // clears the bend's side wall and ejects water sideways.
+      var nozzlePipe=pipe('nozzle',[point(284,340),point(316,340),point(316,156),point(512,156),nozzle],16,false);
+      if(setup!=='empty')fill('middle',middle,232);
+      fill('bottom',bottom,floor-48);fill('basin',basin,152);
+      result.initial[result.initial.length-1].exclude=[{kind:'pipe',points:nozzlePipe.points,bore:16,tile:T}];
+      result.meters.push({id:'nozzle',a:probe(nozzle.x-4,nozzle.y+8),b:probe(nozzle.x+12,nozzle.y+8),axis:'y',positive:-1});
+      result.parts.push({type:'valve',id:'basin-supply',rect:rect(984,drainY-4,8,16),direction:'left',open:options.open===true});
+      result.primary={kind:'valve',id:'basin-supply'};
+      result.measure={source:middle,basin:basin,bottom:bottom,nozzle:probe(nozzle.x,nozzle.y-4),
+        intake:point(284,340),intakeFloor:352,bore:16,bottomHeight:bottomHeight};
     }else if(name==='heron'){
       result.title="Heron's fountain";result.action='Pour into basin';
       result.caption='An open basin drains into a sealed receiving jar. Pour water into the basin to test whether the trapped air drives a jet from the source jar.';

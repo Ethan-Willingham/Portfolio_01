@@ -32,7 +32,7 @@
       <div><p class="toy-kicker">A physics sandbox from Sluice</p><h1>Water, Smoke, and Slime</h1></div>
       <nav aria-label="Site"><a href="/">Home</a><a href="#how-it-works">How it works</a><a href="#water-machines-progress">Progress</a><a href="/grand-motherload.html">Play Sluice</a></nav>
     </header>
-    <p class="toy-intro">Grab a slime and stretch it. Try the greedy cup or siphon, stir the smoke, or choose Build to draw a container.</p>
+    <p class="toy-intro">Grab a slime and stretch it. Try the greedy cup, siphon or fountain, stir the smoke, or choose Build to draw a container.</p>
 
     <section class="toy-shell" id="toy" aria-label="Physics playground">
       <div class="toy-bar" id="toy-bar">
@@ -43,6 +43,7 @@
               <p>Water machines</p>
               <button class="toy-chip" data-scene="cup" aria-pressed="false">Greedy cup</button>
               <button class="toy-chip" data-scene="siphon" aria-pressed="false">Siphon</button>
+              <button class="toy-chip" data-scene="heron" aria-pressed="false">Heron's fountain</button>
               <p>Original scenes</p>
               <button class="toy-chip is-on" data-scene="falls" aria-pressed="true">Cascade</button>
               <button class="toy-chip" data-scene="zerog" aria-pressed="false">Drift</button>
@@ -134,6 +135,10 @@
               <label>Siphon setup<select id="toy-siphon-setup"><option value="filled">Filled tube</option><option value="empty">Empty tube</option><option value="raised">Raised outlet</option></select></label>
             </div>
             <p class="toy-panel-note" id="toy-siphon-setup-note" hidden>Changing the setup resets both tanks. Restart scene repeats the selected setup.</p>
+            <div class="toy-build-options" id="toy-heron-options" hidden>
+              <label>Fountain setup<select id="toy-heron-setup"><option value="sealed">Sealed jars</option><option value="vented">Vented lid</option><option value="empty">Empty source jar</option><option value="raised">Raised receiving jar</option></select></label>
+            </div>
+            <p class="toy-panel-note" id="toy-heron-setup-note" hidden>Changing the setup refills the apparatus. Restart repeats the selected setup.</p>
             <p class="toy-panel-note" id="toy-numerical-status">Waiting for a pressure sample.</p>
             <dl class="toy-instrument-values">
               <div><dt>Pressure, gauge</dt><dd id="toy-i-pressure">Waiting</dd></div><div><dt>Measured speed</dt><dd id="toy-i-speed">Waiting</dd></div><div><dt>Ideal speed</dt><dd id="toy-i-ideal-speed">Waiting</dd></div><div><dt>Flow</dt><dd id="toy-i-flow">Waiting</dd></div><div><dt>Time</dt><dd id="toy-i-clock">Waiting</dd></div><div><dt>Jet rise</dt><dd id="toy-i-jet">Waiting</dd></div><div><dt>Ideal jet rise</dt><dd id="toy-i-ideal-jet">Waiting</dd></div><div><dt>Available air work</dt><dd id="toy-i-air-work">Waiting</dd></div><div><dt>Water potential</dt><dd id="toy-i-water-work">Waiting</dd></div><div><dt>Sample age</dt><dd id="toy-i-age">Waiting</dd></div>
@@ -199,7 +204,16 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p><time datetime="2026-10-09">Updated October 9, 2026.</time> The siphon now carries water from the higher tank, over the bend and into the lower tank. <a href="?scene=siphon#toy">Open the siphon</a> and choose Open valve. Closing the valve holds the water column; reopening it resumes the flow. Instruments lets you compare the filled tube with an empty tube or a raised outlet. Restart repeats the selected setup.</p>
+        <p><time datetime="2026-10-09">Updated October 9, 2026.</time> Heron's fountain now lifts water from its sealed source jar and throws it into the basin. <a href="?scene=heron#toy">Open the fountain</a> and choose Open valve. Instruments lets you compare sealed jars with a vented lid, an empty source or a raised receiving jar. Restart repeats the selected setup.</p>
+        <p>The basin drains into the lower jar and compresses its air. A dry tube connects that air to the source jar, pushing its water up the nozzle. Falling basin water supplies the energy, as in the <a href="https://www.jsme-fed.org/experiment-e/2014_4/005.html">physical fountain experiment</a>. The nozzle starts dry, and every drop stays in the particle solver.</p>
+        <p>Five behaviors were checked with three different starting particle positions. The fountain emits 82.2%, 83.1% and 82.2% of the original source water through its rising tube and nozzle within one simulation minute. Between 98.2% and 99.3% of that water returns to the basin. Raising the receiving jar lowers the early jet by 18% to 25%. An empty source and a vented lid emit no nozzle water. Opening a hole during a running jet stops later nozzle crossings after a short tail. All water particles are conserved. <a href="/assets/images/water-machines/heron-result-2026-10-09.json">Fountain measurements, controls and limits.</a></p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/heron-flow-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/heron-flow-2026-10-09.png" width="912" height="540" loading="lazy" alt="A jet rises from the nozzle above the basin and falls into it. The source jar on the left has drained toward its intake while water collects in the lower sealed jar."></picture>
+          <figcaption class="u-figure-cap">Twenty simulation seconds after construction, fifteen after opening the valve. The same source particles pass through the rising tube and nozzle.</figcaption>
+        </figure>
+        <p>The fountain's room pressure now corresponds to <a href="https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b8">one standard atmosphere</a>, about 14.7 psi, at the declared 30-inch scale. The earlier setting corresponded to about 0.39 psi and made the air too easy to compress. A separate sealed-jar test now preserves its gas amount as incoming water raises its pressure, on all three seeds.</p>
+        <p>Jet height remains far below the lossless prediction. Water below the intake stays in the source, and sloshing produces small later spurts after the main flow ends. Small air pockets can lose stored gas; four runs also report a transient pocket with nonpositive volume. The accounting includes those losses, but pressure, air boundaries and energy closure remain diagnostic. The fountain fits with its controls on a 14-inch MacBook screen. One Retina browser check shows a median of 49 FPS, ranging from 35 to 60; steady 60 FPS is unverified.</p>
+        <p>The siphon carries water from the higher tank, over the bend and into the lower tank. <a href="?scene=siphon#toy">Open the siphon</a> and choose Open valve. Closing the valve holds the water column; reopening it resumes the flow. Instruments lets you compare the filled tube with an empty tube or a raised outlet. Restart repeats the selected setup.</p>
         <p>Six behaviors were checked with three different starting particle positions. The filled siphon delivers 51.4%, 50.7% and 50.3% of the original source water within two simulation minutes. Higher positive head, the height difference driving the water, produces 36% to 40% more speed in the comparison. The ideal calculation predicts about 47% more. <a href="/assets/images/water-machines/siphon-result-2026-10-09.json">Siphon measurements, checks and limits.</a></p>
         <p>The two water levels approach the same height as the lower tank fills. Tests count the original source water only after it crosses both the bend and the outlet, excluding the water that starts inside the tube. An empty tube and an outlet above the source surface transfer no source water. Lowering the model's pressure capacity breaks the column; restoring it leaves the air gap in place. A fresh filled setup supplies the water needed to start again.</p>
         <figure class="u-figure">
@@ -231,7 +245,7 @@
             <figcaption class="u-figure-cap">Revised drawing: equal interior size, with isolated drops still drawn small.</figcaption>
           </figure>
         </details>
-        <p>The greedy cup and siphon are released. Heron's fountain remains parked. The cup's <a href="/assets/images/water-machines/cup-long-result-2026-10-08.json">previous long run</a> reached 92.7% after 1,000 simulation seconds.</p>
+        <p>The greedy cup, siphon and fountain are available in the scene picker. The cup's <a href="/assets/images/water-machines/cup-long-result-2026-10-08.json">previous long run</a> reached 92.7% after 1,000 simulation seconds.</p>
       </section>
       <div class="toy-experiments" aria-label="Things to try">
         <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>
@@ -270,10 +284,10 @@
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.37"></script>
   <script src="/js/liquid-air-wgpu.js?v=v5.39"></script>
   <script src="/js/water-machines-builder.js?v=v5.37"></script>
-  <script src="/js/water-machines-scenes.js?v=v5.40"></script>
-  <script src="/js/water-machines-instruments.js?v=v5.40"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.40"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.40"></script>
+  <script src="/js/water-machines-scenes.js?v=v5.41"></script>
+  <script src="/js/water-machines-instruments.js?v=v5.41"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.41"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.41"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

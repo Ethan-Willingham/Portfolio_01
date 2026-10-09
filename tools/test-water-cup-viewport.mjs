@@ -70,8 +70,8 @@ try{
   await evaluate('__toy.pause(true);document.getElementById("toy-scene-picker").open=true;document.querySelector("[data-scene=cup]").click()');
   await sleep(100);await ready(true);
   assert(await evaluate('__toy.stats().paused'),'Scene reload preserves manual pause');await inspect('scene-selection');
-  assert(await evaluate('!!document.querySelector("[data-scene=siphon]") && !document.querySelector("[data-scene=heron]")'),
-    'The public scene menu exposes the cup and siphon, with Heron still parked');
+  assert(await evaluate('!!document.querySelector("[data-scene=siphon]") && !!document.querySelector("[data-scene=heron]")'),
+    'The public scene menu exposes the cup and siphon, and Heron');
   await evaluate('document.getElementById("toy-scene-picker").open=true;document.querySelector("[data-scene=falls]").click();__toy.pause(true)');
   await ready(false);await evaluate('__toy.liquid().queue.onSubmittedWorkDone()');await sleep(200);
   const ordinaryReturn=await evaluate('({scene:__toy.stats().scene,water:__toy.stats().water,air:__toy.airStats(),model:!!__toy.liquid().pressureModel,volumeSplats:!!__toy.liquid().volumeSplats})');
@@ -114,8 +114,50 @@ try{
   assert(await evaluate('__toy.machineState().definition.action==="Close valve"'),'Primary opens the physical valve');
   await evaluate('document.getElementById("toy-machine-primary").click()');await sleep(250);
   assert(await evaluate('__toy.machineState().definition.action==="Open valve"'),'Primary closes the physical valve');
+  for(const [name,width,height,mobile]of [['heron-macbook',1512,820,false],['heron-macbook-short',1512,700,false],['heron-landscape',844,390,true]]){
+    await send('Emulation.setDeviceMetricsOverride',{width,height,mobile,deviceScaleFactor:1});
+    await send('Page.navigate',{url:url+'?scene=heron&paused=1'});await ready(false);
+    for(let i=0;i<300 && !await evaluate('!!__toy.machineState()?.ready');i++)await sleep(100);
+    assert.equal(await evaluate('__toy.stats().scene'),'heron');
+    if(!mobile){await evaluate('window.scrollTo(0,0);__toy.resize()');assert(await evaluate('document.getElementById("toy").getBoundingClientRect().bottom<=innerHeight'),'Fountain and controls fit without scrolling');}
+    await inspect(name);
+    assert(Math.abs(await evaluate('WaterMachinesInstruments.scale({width:__toy.world().w,density:__toy.airModel().settings.density}).psi(__toy.airModel().settings.atmospherePressure)')-14.695948775513449)<.001,'Atmosphere uses the 30-inch physical scale');
+  }
+  await evaluate('document.getElementById("toy-instruments-open").click()');
+  assert(await evaluate('!document.getElementById("toy-heron-options").hidden'));
+  const fountainSetups=[];
+  for(const setup of ['vented','empty','raised','sealed']){
+    await evaluate(`document.getElementById('toy-heron-setup').value=${JSON.stringify(setup)};document.getElementById('toy-heron-setup').dispatchEvent(new Event('change'))`);
+    for(let i=0;i<300;i++){if(await evaluate(`__toy.machineState()?.ready && __toy.machineState().definition.setup===${JSON.stringify(setup)} && !document.getElementById('toy-heron-setup').disabled`))break;await sleep(100);}
+    const state=await evaluate('({setup:__toy.machineState().definition.setup,paused:__toy.stats().paused,count:__toy.stats().water,caption:document.getElementById("toy-machine-caption").textContent})');
+    assert.equal(state.setup,setup);assert(state.paused,'Fountain comparison preserves pause');fountainSetups.push(state);
+    if(setup==='raised'){
+      await evaluate('document.getElementById("toy-restart").click()');
+      for(let i=0;i<300 && !await evaluate('!!__toy.machineState()?.ready');i++)await sleep(100);
+      await evaluate('__toy.pause(true)');assert.equal(await evaluate('__toy.machineState().definition.setup'),'raised','Fountain restart preserves selected setup');
+    }
+  }
+  await evaluate('document.getElementById("toy-machine-primary").click()');await sleep(250);
+  assert.equal(await evaluate('__toy.machineState().definition.action'),'Close valve');
+  await evaluate('document.getElementById("toy-machine-primary").click()');await sleep(250);
+  assert.equal(await evaluate('__toy.machineState().definition.action'),'Open valve');
+  await evaluate('__toy.pause(false)');await sleep(1000);
+  assert(await evaluate('parseFloat(document.getElementById("toy-fps").textContent)>0'),'Fountain FPS counter updates');await evaluate('__toy.pause(true)');
+  await evaluate('document.querySelector("#toy-panel-instruments [data-close]").click()');
+  await send('Emulation.setDeviceMetricsOverride',{width:1512,height:820,mobile:false,deviceScaleFactor:2});
+  await evaluate('window.scrollTo(0,0);__toy.resize();document.getElementById("toy-machine-primary").click();__toy.pause(false)');
+  const playbackStart=await evaluate('__toy.liquid().simulationClock'),fpsSamples=[];
+  for(let i=0;i<240;i++){
+    await sleep(250);const row=await evaluate('({clock:__toy.liquid().simulationClock,fps:parseFloat(document.getElementById("toy-fps").textContent)})');
+    fpsSamples.push(row);if(row.clock-playbackStart>=18)break;
+  }
+  await evaluate('__toy.pause(true);__toy.liquid().queue.onSubmittedWorkDone()');
+  const fountainPlayback=await evaluate('({world:__toy.world(),count:__toy.stats().water,levels:__toy.instruments().levels,flow:__toy.instruments().flow,roomAbsolutePressurePsi:__toy.instruments().roomAbsolutePressurePsi,sourcePipeTilesExcluded:__toy.machineState().pipeTiles.size})');
+  assert(fountainPlayback.sourcePipeTilesExcluded>0 && fountainPlayback.levels.source>250,'Rising pipe water does not masquerade as the source surface');
+  assert(fountainPlayback.flow>0,'The real viewport renders working fountain flow');
+  const playbackFrame=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(out,'heron-retina-flow.png'),Buffer.from(playbackFrame.data,'base64'));
   assert.equal(errors.length,0,JSON.stringify(errors));
-  const report={pass:true,rows,setups,ordinaryReturn,errors,hostSHA256:hash(fs.readFileSync(path.join(root,'js/water-smoke-slime.js')))};
+  const report={pass:true,rows,setups,fountainSetups,fountainPlayback,fpsSamples,performanceCertified:false,ordinaryReturn,errors,hostSHA256:hash(fs.readFileSync(path.join(root,'js/water-smoke-slime.js')))};
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }finally{
   for(const p of pending.values())clearTimeout(p.timer);socket?.close();server.close();

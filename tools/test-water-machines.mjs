@@ -18,6 +18,8 @@ import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
 import {installNativePairedObserver,serializePairedCapture} from './water-machines-paired-observer.mjs';
 import {installNativePassage} from './water-machines-native-passage.mjs';
+import {installNativeJet} from './water-machines-native-jet.mjs';
+import {installNativeGasBudget} from './water-machines-native-gas-budget.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const output=path.resolve(process.env.DUMP || '/tmp/water-machines-integrated');
@@ -28,13 +30,16 @@ const viewport={width:Number(process.env.WIDTH || 1440),height:Number(process.en
 const frameMode=process.env.FRAME_MODE || 'paced60';
 const pairedMode=process.env.PAIRED_CAPTURE==='1';
 const nativePassage=process.env.NATIVE_PASSAGE==='1';
+const nativeJet=process.env.NATIVE_JET==='1';
+const nativeGas=process.env.NATIVE_GAS==='1';
 const resume=process.env.RESUME==='1';
 const cases=process.env.CASES ? JSON.parse(process.env.CASES) : [{name:'open',machine:process.env.MACHINE || 'siphon',options:{open:true},seconds}];
 assert(seeds.length&&seeds.every(Number.isInteger),'Integer deterministic seeds');
 assert(cases.length&&cases.every(c=>typeof c.name==='string'&&['siphon','cup','heron'].includes(c.machine)),'Known named cases');
 assert(seconds>0&&sampleInterval>0&&maxWallSeconds>0,'Positive durations');
-assert(['native','paced60','paced120'].includes(frameMode),'Known scheduling mode');
+assert(['native','gpu','paced60','paced120'].includes(frameMode),'Known scheduling mode');
 if(pairedMode)assert(cases.every(c=>c.machine==='siphon'&&!(c.actions || []).length),'Paired mode is a static siphon without mid-run host actions');
+if(nativeJet)assert(!pairedMode&&!nativePassage&&cases.every(c=>c.machine==='heron'),'Native jet mode observes Heron alone');
 assert(!output.startsWith(root+path.sep),'Artifacts belong outside the tracked checkout');
 fs.mkdirSync(output,{recursive:true});
 const hash=data=>createHash('sha256').update(data).digest('hex');
@@ -52,7 +57,7 @@ for(const [file,data] of frozen){
   if(resume && fs.existsSync(saved))assert.equal(hash(fs.readFileSync(saved)),hash(data),'Resume uses the same runtime: '+file);
   else fs.writeFileSync(saved,data);
 }
-const testSources=new Map(['test-water-machines.mjs','water-machines-paired-observer.mjs','water-machines-native-passage.mjs'].map(file=>[file,fs.readFileSync(path.join(root,'tools',file))]));
+const testSources=new Map(['test-water-machines.mjs','water-machines-paired-observer.mjs','water-machines-native-passage.mjs','water-machines-native-jet.mjs','water-machines-native-gas-budget.mjs'].map(file=>[file,fs.readFileSync(path.join(root,'tools',file))]));
 const testSourceFolder=resume?'source-resume':'source';fs.mkdirSync(path.join(output,testSourceFolder),{recursive:true});
 for(const [file,data]of testSources)fs.writeFileSync(path.join(output,testSourceFolder,file),data);
 
@@ -71,6 +76,24 @@ function installCadence(hz){
     if(callbacks.size)native(pump);else{pumping=false;deadline=null;}
   }
   window.requestAnimationFrame=callback=>{const id=++serial;callbacks.set(id,callback);if(!pumping){pumping=true;native(pump);}return id;};
+  window.cancelAnimationFrame=id=>callbacks.delete(id);
+}
+
+// Bound the recorder's outstanding work without editing physics or time steps.
+// The next animation callback waits for this owned scene's GPU submissions.
+function installGPUCadence(){
+  const native=window.requestAnimationFrame.bind(window),callbacks=new Map();
+  let serial=0,pumping=false;
+  window.__machineCadence={mode:'gpu',presentationCertified:false,ticks:0};
+  function schedule(){if(!pumping && callbacks.size){pumping=true;native(pump);}}
+  async function pump(time){
+    window.__machineCadence.ticks++;
+    for(const [id,callback] of [...callbacks])if(callbacks.get(id)===callback){callbacks.delete(id);callback(time);}
+    const queue=window.__toy && window.__toy.liquid() && window.__toy.liquid().queue;
+    if(queue)await queue.onSubmittedWorkDone();
+    pumping=false;schedule();
+  }
+  window.requestAnimationFrame=callback=>{const id=++serial;callbacks.set(id,callback);schedule();return id;};
   window.cancelAnimationFrame=id=>callbacks.delete(id);
 }
 
@@ -438,7 +461,7 @@ async function evaluate(expression){const r=await send('Runtime.evaluate',{expre
 // Diagnostic arrays can exceed the protocol's nested-object serialization
 // limits. Serialize in the page and transfer bounded strings, like raw buffers.
 async function evaluateLarge(expression){
-  const length=await evaluate(`(()=>{window.__machineExportJSON=JSON.stringify(${expression});return __machineExportJSON.length;})()`);
+  const length=await evaluate(`(async()=>{window.__machineExportJSON=JSON.stringify(await (${expression}));return __machineExportJSON.length;})()`);
   assert(Number.isInteger(length)&&length>=0,'Serialized diagnostic length');
   const chunks=[];
   try{
@@ -521,7 +544,8 @@ try{
     else if(m.method==='Runtime.consoleAPICalled'){const text=m.params.args.map(a=>a.value||a.description).join(' ');logs.push(text);if(m.params.type==='error'||/LiquidWGPU.*FAIL/.test(text))errors.push(text);}});
   await send('Runtime.enable');await send('Page.enable');report.browser=await send('Browser.getVersion');
   await send('Emulation.setDeviceMetricsOverride',{width:viewport.width,height:viewport.height,deviceScaleFactor:1,mobile:viewport.mobile});
-  if(frameMode!=='native')await send('Page.addScriptToEvaluateOnNewDocument',{source:`(${installCadence.toString()})(${frameMode==='paced120'?120:60});`});
+  if(frameMode==='gpu')await send('Page.addScriptToEvaluateOnNewDocument',{source:`(${installGPUCadence.toString()})();`});
+  else if(frameMode!=='native')await send('Page.addScriptToEvaluateOnNewDocument',{source:`(${installCadence.toString()})(${frameMode==='paced120'?120:60});`});
   const base=`http://127.0.0.1:${server.address().port}`;
   let seedScript;
   for(const c of cases)for(const seed of seeds){
@@ -549,6 +573,8 @@ try{
     }
     report.runs.push(run);save();
     if(nativePassage&&!pairedMode)await evaluate(`(${installNativePassage.toString()})(${JSON.stringify({tailStart:duration-10})}).then(observer=>{window.__nativePassage=observer;return true;})`);
+    if(nativeJet)await evaluate(`(${installNativeJet.toString()})().then(observer=>{window.__nativeJet=observer;return true;})`);
+    if(nativeGas)await evaluate(`(${installNativeGasBudget.toString()})().then(observer=>{window.__nativeGas=observer;return true;})`);
     if(pairedMode){
       await evaluate(`window.__machineNativeObserver=(${installNativePairedObserver.toString()})();window.__machineNativePrevious=null;window.__machineNativeCurrent=null;`);
       const apparatusStartedAt=await evaluate('__toy.machineState().startedAt'),steps=[];let elapsed=0,failed=false;
@@ -613,6 +639,8 @@ try{
         const beforePressure=await evaluate(`(${pressureDiagnostics.toString()})()`),beforeResident=await evaluate(`(${residentSnapshot.toString()})()`);
         const actionRecord={action,at:elapsed,beforeParticles,beforePressure:{...beforePressure,buffers:{}},beforeResident:{...beforeResident,buffers:{}}};
         if(nativePassage)actionRecord.beforeNativePassage=await evaluate('__nativePassage.capture()');
+        if(nativeJet)actionRecord.beforeNativeJet=await evaluate('__nativeJet.capture()');
+        if(nativeGas)actionRecord.beforeNativeGas=await evaluate('__nativeGas.capture()');
         const actionFrame=id+'-action-'+nextAction+'-before.png';await screenshot(actionFrame);actionRecord.beforeScreenshot=actionFrame;run.frames.push({target:action.at,at:elapsed,file:actionFrame});
         if(beforePressure)for(const [key,bytes] of Object.entries(await pullRecords('__machineFinalPressure',beforePressure.recordLengths))){const file=id+'-action-'+nextAction+'-air-'+key+'.bin';fs.writeFileSync(path.join(output,file),bytes);actionRecord.beforePressure.buffers[key]={file,bytes:bytes.length,sha256:hash(bytes)};}
         for(const [key,bytes] of Object.entries(await pullRecords('__machineResidentResult',beforeResident.recordLengths))){const file=id+'-action-'+nextAction+'-'+key+'.bin';fs.writeFileSync(path.join(output,file),bytes);actionRecord.beforeResident.buffers[key]={file,bytes:bytes.length,sha256:hash(bytes)};}
@@ -623,6 +651,10 @@ try{
           assert(result,'The requested slime was created');
         }
         else if(action.type==='valve')result=await evaluate(`__toy.valve(${JSON.stringify(action.id)},${JSON.stringify(!!action.open)})`);
+        else if(action.type==='vent'){
+          assert(action.rect&&['x','y','width','height'].every(key=>Number.isFinite(action.rect[key]))&&action.rect.width>0&&action.rect.height>0,'Finite physical vent');
+          result=await evaluate(`!!__toy.builder().vent(${JSON.stringify(action.rect)},true)`);
+        }
         else if(action.type==='pressure-floor'){
           assert(Number.isFinite(action.value),'Finite pressure floor');
           result=await evaluate(`__toy.airMinimumPressure(${action.value})`);
@@ -664,6 +696,9 @@ try{
       run.nativePassage=await evaluate('__nativePassage.capture()');
       await evaluate('__nativePassage.close()');
     }
+    if(nativeJet){run.nativeJet=await evaluateLarge('__nativeJet.capture()');await evaluate('__nativeJet.close()');
+      assert.equal(run.nativeJet.initialBulk,run.initial.initialSourceCount,'Native jet tracks initial source bulk');}
+    if(nativeGas){run.nativeGasBudget=await evaluate('__nativeGas.capture()');await evaluate('__nativeGas.close()');}
     run.summary=summarize(run);
     if(run.nativePassage){
       assert.equal(run.nativePassage.initialBulk,run.initial.initialSourceCount,'Native passage tracks the initial bulk inventory');

@@ -24,6 +24,7 @@ function fixture(name, world, seed, options = {}) {
   definition.vessels.forEach(v => builder.vessel(v.rect, v.sealed));
   definition.pipes.forEach(p => builder.strokePipe(p.points, p.bore));
   (definition.solids || []).forEach(r => builder.vent(r, false));
+  (definition.vents || []).forEach(r => builder.vent(r, true));
   definition.parts.forEach(part => {
     const settings = { rect: part.rect, direction: part.direction, open: part.open };
     builder.addPart(part.type === 'valve' ? 'flap' : part.type, settings);

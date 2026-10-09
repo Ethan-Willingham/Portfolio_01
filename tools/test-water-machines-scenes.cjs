@@ -110,6 +110,23 @@ for(const setup of ['filled','empty','raised']){
   check(d.caption.split(/[.!?]+/).filter(s=>s.trim()).length===2,'Every setup has two caption sentences');
 }
 assert.throws(()=>Scenes.make('siphon',{w:1120,h:664},{setup:'unknown'}));checks++;
+for(const seed of seeds){
+  const canonical={w:1120,h:664},sealed=fixture('heron',canonical,seed),d=sealed.definition;
+  check(d.settings.roomPressurePsi>14.69 && d.settings.roomPressurePsi<14.70,'Fountain declares physical absolute room pressure');
+  check(d.primary.kind==='valve' && !d.parts[0].open,'Fountain starts held by the physical drain valve');
+  const nozzle=d.pipes.find(p=>p.id==='nozzle'),dry=pipeInterior(nozzle,canonical);
+  check(!nozzle.primed && !sealed.points.some(p=>p.y<232 && dry.has(sealed.index(p.x,p.y))), 'Upper nozzle is dry despite crossing the filled basin');
+  const vented=fixture('heron',canonical,seed,{setup:'vented'}),air=d.pipes.find(p=>p.id==='air-link');
+  const room=connected(vented.gasBlocked,vented.width,vented.height,vented.width+1);
+  check(room.has(vented.index(air.points[0].x,air.points[0].y)) && room.has(vented.index(air.points.at(-1).x,air.points.at(-1).y)), 'One actual lid opening vents both connected jars');
+  const empty=fixture('heron',canonical,seed,{setup:'empty'});
+  check(!empty.definition.initial.some(s=>s.vessel==='middle'),'Empty source changes physical water inventory');
+  const raised=fixture('heron',canonical,seed,{setup:'raised'}).definition;
+  check(raised.measure.bottom.y===d.measure.bottom.y-48 && raised.measure.bottom.height===d.measure.bottom.height, 'Raised jar changes falling head without changing capacity');
+  check(raised.initial.find(s=>s.vessel==='bottom').rect.y===d.initial.find(s=>s.vessel==='bottom').rect.y-48,'Raised jar lifts its initial receiving surface');
+  check(JSON.stringify(raised.pipes.find(p=>p.id==='nozzle'))===JSON.stringify(nozzle),'Head comparison leaves the water nozzle unchanged');
+}
+assert.throws(()=>Scenes.make('heron',{w:1120,h:664},{setup:'unknown'}));checks++;
 for(const world of worlds)for(const bore of [8,16,24,32]){
   const f=fixture('cup',world,17,{bore}),m=f.definition.measure;
   const start=f.index(m.source.x+12,m.sourceLevel+12),end=f.index(m.receiver.x+12,m.receiver.y+12);

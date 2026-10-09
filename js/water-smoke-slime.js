@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.40'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.41'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -112,7 +112,7 @@
   // The released machines have one physical size. Viewport changes belong to the
   // camera, so a short browser cannot silently shrink the apparatus.
   var machineWorld = {w:1120,h:664};
-  function fixedMachineScene(name){return name==='cup' || name==='siphon';}
+  function fixedMachineScene(name){return name==='cup' || name==='siphon' || name==='heron';}
   var fixedMachineRequested = fixedMachineScene(new URL(window.location.href).searchParams.get('scene'));
   var portrait = window.innerHeight > window.innerWidth * 1.15;
   var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : fixedMachineRequested ? machineWorld.w : Math.round(availW);
@@ -13264,18 +13264,37 @@
     var I=window.WaterMachinesInstruments;if(!I)return;
     var definition=state.definition,m=definition.measure;
     var units=I.scale({width:worldW,density:airModel.settings.density || 1});
-    var particles=particleInstrumentSample(),source=I.vessel(particles,m.source,{tile:TILE,floor:worldH});
+    var vesselOptions={tile:TILE,floor:worldH};
+    if(definition.name==='heron'){
+      if(!state.pipeTiles){
+        state.pipeTiles=new Set();
+        function addPipeTiles(c0,c1,r0,r1){for(var row=r0;row<=r1;row++)for(var col=c0;col<=c1;col++)state.pipeTiles.add(row*gridW+col);}
+        definition.pipes.forEach(function(pipe){
+          var cells=Math.ceil(pipe.bore/TILE),low=Math.floor((cells-1)*.5),high=cells-1-low;
+          var points=pipe.points.map(function(p){return {c:Math.floor(p.x/TILE),r:Math.floor(p.y/TILE)};});
+          for(var i=1;i<points.length;i++){
+            var a=points[i-1],b=points[i];
+            addPipeTiles(a.c===b.c ? a.c-low : Math.min(a.c,b.c),a.c===b.c ? a.c+high : Math.max(a.c,b.c),
+              a.r===b.r ? a.r-low : Math.min(a.r,b.r),a.r===b.r ? a.r+high : Math.max(a.r,b.r));
+          }
+          points.slice(1,-1).forEach(function(p){addPipeTiles(p.c-low,p.c+high,p.r-low,p.r+high);});
+        });
+      }
+      // Water rising inside the pipe is not the source jar's surface.
+      vesselOptions.exclude=function(x,y){return state.pipeTiles.has(Math.floor(y/TILE)*gridW+Math.floor(x/TILE));};
+    }
+    var particles=particleInstrumentSample(),source=I.vessel(particles,m.source,vesselOptions);
     var levels={source:source.level},water={source:source};
     ['receiver','basin','bottom'].forEach(function(key){
       if(m[key]){
-        var vesselOptions={tile:TILE,floor:worldH};
+        var reservoirOptions={tile:TILE,floor:worldH,exclude:vesselOptions.exclude};
         if(definition.name==='siphon' && key==='receiver'){
           var tube=definition.pipes[0],end=tube.points[tube.points.length-1],across=Math.ceil(tube.bore/TILE),
             left=(Math.floor(end.x/TILE)-Math.floor((across-1)*.5))*TILE;
           // Primer inside the descending pipe is not a receiving surface.
-          vesselOptions.exclude=function(x,y){return x>=left && x<left+across*TILE && y<=end.y+TILE*.5;};
+          reservoirOptions.exclude=function(x,y){return x>=left && x<left+across*TILE && y<=end.y+TILE*.5;};
         }
-        water[key]=I.vessel(particles,m[key],vesselOptions);levels[key]=water[key].level;
+        water[key]=I.vessel(particles,m[key],reservoirOptions);levels[key]=water[key].level;
       }
     });
     var meter=definition.meters[0],flow=I.section(snapshot,meter),particleFlow=I.particleSection(particles,meter,{thickness:snapshot.cellSize});
@@ -13352,6 +13371,7 @@
     definition.vessels.forEach(function(v){machineBuilder.vessel(v.rect,v.sealed);});
     definition.pipes.forEach(function(p){machineBuilder.strokePipe(p.points,p.bore);});
     (definition.solids || []).forEach(function(r){machineBuilder.vent(r,false);});
+    (definition.vents || []).forEach(function(r){machineBuilder.vent(r,true);});
     definition.parts.forEach(function(p){
       var settings={rect:p.rect};
       ['open','direction','mass','crackingPressure','hysteresis','bore','material'].forEach(function(key){if(p[key]!==undefined)settings[key]=p[key];});
@@ -13391,7 +13411,11 @@
     var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
       primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
     setSceneChip(name);setTool('poke');bakeWalls();updateReadout();
-    var model=await enableAirModel(Object.assign({},definition.settings,options.pressure || {},{resetMaterial:true}));
+    var pressureSettings=Object.assign({},definition.settings,options.pressure || {},{resetMaterial:true});
+    if(definition.settings.roomPressurePsi!==undefined && !(options.pressure && options.pressure.atmospherePressure!==undefined)){
+      pressureSettings.atmospherePressure=window.WaterMachinesInstruments.scale({width:worldW,density:pressureSettings.density || 1}).pressureFromPsi(definition.settings.roomPressurePsi);
+    }
+    var model=await enableAirModel(pressureSettings);
     if(!model || request!==machineRequest)return null;
     state.energyInitial=window.WaterMachinesInstruments.waterEnergy(particleInstrumentSample(),
       {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
@@ -13753,7 +13777,8 @@
       if(!part.open){c.beginPath();c.moveTo(x-4/fitScale,y-4/fitScale);c.lineTo(x+4/fitScale,y+4/fitScale);c.stroke();}
       c.font='11px "Commit Mono", monospace';
       c.scale(1/fitScale,1/fitScale);
-      var label=part.id+': '+(part.open ? 'Open' : 'Closed');
+      var stockFountainValve=machineState && machineState.definition.name==='heron' && machineState.definition.parts.some(function(p){return p.buildId===part.id;});
+      var label=(stockFountainValve ? 'Valve' : part.id)+': '+(part.open ? 'Open' : 'Closed');
       var labelWidth=c.measureText(label).width+8,labelHeight=18;
       // Keep a visible marker's identity inside the cropped view at any zoom.
       // Offscreen markers retain their geometry and await a view change.

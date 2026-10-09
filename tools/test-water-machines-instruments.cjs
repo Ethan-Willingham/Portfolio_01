@@ -7,6 +7,13 @@ const scale=I.scale({width:960});
 near(scale.inches(960),30);
 near(scale.speed(Math.sqrt(2*250*96)),Math.sqrt(2*386.0886*3));
 near(scale.psi(250*96),0.0361273*3);
+// One standard atmosphere at the declared 30-inch box scale. The old 100000
+// model units corresponded to less than half a psi, making the air too soft.
+const atmospherePSI=14.695948775513449;
+near(I.scale({width:1120}).pressureFromPsi(atmospherePSI),3796635.468785624);
+near(I.scale({width:832}).pressureFromPsi(atmospherePSI),2820357.7768121776);
+near(scale.pressureFromPsi(0.0361273*3),250*96);
+assert.throws(()=>scale.pressureFromPsi(NaN));
 near(scale.volume(960*32),30);
 const def={measure:{outlet:{y:240},nozzle:{y:60}},pipes:[{points:[{y:200}]}]};
 near(I.prediction('heron',{basin:60,bottom:260,source:160},def,250).head,100);
