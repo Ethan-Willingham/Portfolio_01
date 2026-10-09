@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.51, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.52, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -566,3 +566,39 @@ failed record is preserved and supplies no equivalence acceptance. The post
 uses "unproved" for the remaining initial-condition error bound, rather than
 suggesting a proof that error is infinite. The v5.51 host change is its version
 label only.
+
+
+Two further performance experiments are rejected. The private pressure-bound
+revision preserves 24 isolated grid/direct/prescribed-MAC fixtures through three
+GPU steps, but its paired cup air-pass mean rises from 1.696371 ms to 3.051694 ms
+(79.895% slower). All four documents complete with verified source bytes, zero
+errors or timestamp drops, and exact owned-browser closure. Fewer dispatches
+do not establish faster GPU execution. No repeat or full physical suite runs
+for this revision.
+
+The separate strict-default-off explicit-face packing experiment preserves
+packed geometry bytes, validation errors and counters, shader/resource/command
+records, and complete uploads in 120 bounded CPU geometry pairs. Its first
+paired cup trial has OFF 310 calls at 1.869355 ms and ON 308 at 1.679870 ms,
+a 10.136% decrease that narrowly clears the fixed 10% pooled and 5% adjacent
+thresholds. The unchanged repeat has OFF 310 calls at 1.615161 ms and ON 314
+at 1.862739 ms, a 15.328% increase. Both recordings complete with verified
+source bytes, zero errors/drops and owned-browser closure. Every observed CPU
+call is retained. The failed repeat ends promotion; no full physical suite is
+run for this candidate. Headless RAF rates and overlapping CPU spans are not
+display FPS or hydraulic acceptance.
+
+The revised native recorder completes the three canonical short-chain sets,
+but the next grid fixture uses pressure pitch 16 with native pitch 2.5, an
+unsupported fractional ratio. Overall recording remains incomplete and failed.
+A separate offline diagnosis verifies 216 compatible native count-sort
+contracts and exact captured buffers outside the legal within-cell sort order.
+Cup RNG metadata still differs, missing coarse-grid/MAC coverage stays explicit,
+and the strict gates remain inconclusive. These short observations establish
+neither full native equivalence nor future physical acceptance.
+
+The public pressure-performance-followup-trial-2026-10-09.json artifact retains
+the isolated checks, both CPU trials including raw primary call durations,
+source/report hashes, rejection decisions and recorder limits. Toy v5.52 changes
+only the runtime version label; shared native v28.179 and all rejected options
+remain unchanged. The quiet released air-pressure view remains available.
