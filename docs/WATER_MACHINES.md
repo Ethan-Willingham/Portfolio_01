@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.43, shared water engine v28.178. The greedy cup, standalone
+Release: toy v5.44, shared water engine v28.178. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -43,6 +43,44 @@ HOST_REFERENCE=/absolute/path/water-smoke-slime.js. HOST_BENCH=1 records real
 Retina playback and per-function CPU samples. EQUIVALENCE_GEOMETRY=1 with
 GEOMETRY_ONLY=1 and SCENES=cup checks prescribed immersed-guest geometry on
 three seeds without asserting full native-state equality.
+
+## Native overlap recovery investigation
+
+This experiment remains outside the released native engine. The existing overlap
+pass reads neighbor positions while writing positions in the same dispatch.
+Identical initial buffers and packed step inputs diverge by over 90 world pixels
+per second after three native substeps in a prescribed immersed-slime test.
+Skipping the pass gives exact short repeats, but the nine-case cup matrix delivers
+98.3582%, 98.5473% and 91.4620% of initially drainable water on the three canonical
+seeds. The last misses 95%, so disabling recovery is rejected. Hold, finite-state,
+particle-inventory and final containment controls pass.
+
+A private per-instance DECLUMP_JACOBI option instead snapshots positions before
+each overlap pass and canonicalizes that pass's neighbor IDs. Other native stages
+keep their original neighbor list. Snapshotting alone still permits different
+samples when buckets have more than 128 entries. The controlled first update
+contains four such buckets, with a maximum of 148 entries. With canonical ordering,
+all recorded native, pressure, gas, geometry and packed-input buffers repeat
+exactly on seeds 17, 42 and 913 over four updates (twelve native substeps).
+
+The isolated positional oracle passes 28 cases and 224 iterations, including
+compressed clouds, 1,024 exact coincidences, wall/floor/corner containment,
+below-density-gate controls, unchanged velocity/material/frozen/grain/tail state,
+reversed lists and copies preceding the pass inside a shared frame encoder.
+Default-off CPU command comparisons pass 96 frame pairs and 76 legacy shaders.
+The actual GPU differential passes eighteen captures, including native words,
+rendered pixels and resource/command comparisons. Default toy and game boots
+load the exact private candidate with no optional resources or runtime errors.
+The full cup matrix and presentation performance are the next gates. Pressure,
+phase/gas conservation and energy calibration remain open.
+
+Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
+REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw
+files with tools/check-water-native-repeat.mjs /absolute/capture --expect-equal.
+DECLUMP_ISOLATED=1 runs tools/water-declump-isolated.mjs through the same owned
+browser harness. The integrated machine recorder accepts per-case nativeParams
+and freezes private CURRENT_NATIVE source bytes before recording. The public
+experimental evidence is assets/images/water-machines/native-overlap-trial-2026-10-09.json.
 
 
 ## Standalone siphon

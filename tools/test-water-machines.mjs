@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Integrated machine measurements through the real toy and its particle solver.
 // DUMP=/absolute/output SEEDS=17 MACHINE=siphon SIM_SECONDS=10 node tools/test-water-machines.mjs
-// CASES may be a JSON array of {name,machine,options,seconds,actions}; actions are
+// CASES may be a JSON array of {name,machine,options,nativeParams,seconds,actions}; actions are
 // {at,type:'primary'}, {at,type:'slime',x,y,radius}, {at,type:'valve',id,open},
 // {at,type:'pressure-floor',value} for a physical column-separation control,
 // or {at,type:'observe'} for a passive native-buffer checkpoint.
@@ -51,6 +51,9 @@ const sourceDirectory=process.env.SOURCE_DIR ? path.resolve(process.env.SOURCE_D
 if(fs.existsSync(sourceDirectory ? path.join(sourceDirectory,'liquid-air-mac-wgpu.js') : path.join(root,'js/liquid-air-mac-wgpu.js')))
   frozenPaths.push('js/liquid-air-mac-wgpu.js');
 const frozen=new Map(frozenPaths.map(file=>[file,fs.readFileSync(sourceDirectory ? path.join(sourceDirectory,path.basename(file)) : path.join(root,file))]));
+// Private candidates are frozen and hashed exactly like released source.
+// They are never copied into the checkout by this recorder.
+if(process.env.CURRENT_NATIVE)frozen.set('js/liquid-wgpu.js',fs.readFileSync(process.env.CURRENT_NATIVE));
 fs.mkdirSync(path.join(output,'source'),{recursive:true});
 for(const [file,data] of frozen){
   const saved=path.join(output,'source',path.basename(file));
@@ -508,7 +511,7 @@ if(resume){
     runIds:previous.runs.filter(r=>r.completed).map(r=>r.id)};
   for(const entry of previous.runs.filter(r=>r.completed)){
     const run=JSON.parse(fs.readFileSync(path.join(output,entry.runFile)));
-    report.runs.push({id:run.id,machine:run.machine,case:run.case,seed:run.seed,options:run.options,
+    report.runs.push({id:run.id,machine:run.machine,case:run.case,seed:run.seed,options:run.options,nativeParams:run.nativeParams || null,
       summary:run.summary,finalPressure:{invalidCells:run.finalPressure?.invalidCells}});
     completed.add(run.id);
   }
@@ -516,7 +519,7 @@ if(resume){
 function save(){
   // The full per-run files preserve raw diagnostics. Referencing them keeps a
   // multi-seed catalog below V8's string limit without dropping measurements.
-  const runs=report.runs.map(run=>({id:run.id,machine:run.machine,case:run.case,seed:run.seed,options:run.options,
+  const runs=report.runs.map(run=>({id:run.id,machine:run.machine,case:run.case,seed:run.seed,options:run.options,nativeParams:run.nativeParams || null,
     runFile:run.id+'.json',completed:!!run.summary}));
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({...report,runs},null,2)+'\n');
 }
@@ -554,9 +557,13 @@ try{
     if(seedScript)await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:seedScript});
     seedScript=(await send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{let state=${seed>>>0};Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};})()`})).identifier;
     const declaredToken=c.world?declaredWorldToken(c.world):null;
-    await send('Page.navigate',{url:base+'/archive/water-smoke-slime/water-smoke-slime.html'+(declaredToken?'?build='+encodeURIComponent(declaredToken):'')});
-    let ready=false;for(let n=0;n<600;n++){ready=await evaluate('!!window.__toy && __toy.stats().waterState===\'on\'');if(ready)break;await sleep(100);}assert(ready,'Hardware water boots');
+    const priorOrigin=await evaluate('performance.timeOrigin');
+    await send('Page.navigate',{url:base+'/archive/water-smoke-slime/water-smoke-slime.html?ownedCapture='+id+(declaredToken?'&build='+encodeURIComponent(declaredToken):'')});
+    let ready=false;for(let n=0;n<600;n++){try{ready=await evaluate(`performance.timeOrigin!==${priorOrigin} && document.readyState==='complete' && !!window.__toy && __toy.stats().waterState==='on'`);}catch{}if(ready)break;await sleep(100);}assert(ready,'Fresh document and hardware water boot');
     await evaluate('__toy.pause(true)');
+    if(c.nativeParams)await evaluate(`Object.entries(${JSON.stringify(c.nativeParams)}).forEach(([key,value])=>__toy.liquid().setSimParam(key,value))`);
+    if(c.nativeParams?.DECLUMP_JACOBI!==undefined)
+      assert.equal(await evaluate('__toy.liquid().getSimParam("DECLUMP_JACOBI")'),c.nativeParams.DECLUMP_JACOBI,'Requested native snapshot mode is supported and active');
     await evaluate(`__toy.machine(${JSON.stringify(c.machine)},${JSON.stringify({...c.options,seed})})`);
     await evaluate('__toy.pause(true)');
     await sleep(50);
@@ -566,7 +573,7 @@ try{
     const initial=await evaluate(`(${installMeasurements.toString()})(${JSON.stringify(c.measurement || {})})`);
     const initialWords=await evaluate('(()=>{const L=__toy.liquid(),a=L.liquid.arrays,n=L.liquid.getCount(),b=new Float32Array(n*4);for(let i=0;i<n;i++){b[i*4]=a.x[i];b[i*4+1]=a.y[i];b[i*4+2]=a.vx[i];b[i*4+3]=a.vy[i];}return Array.from(new Uint32Array(b.buffer));})()');
     const initialBytes=Buffer.from(Uint32Array.from(initialWords).buffer);fs.writeFileSync(path.join(output,id+'-initial-pos.bin'),initialBytes);
-    const run={id,machine:c.machine,case:c.name,seed,options:c.options,declaredWorld:c.world || null,worldShareToken:declaredToken,measurement:c.measurement || null,initial,initialPositionSHA256:hash(initialBytes),rows:[],frames:[],actions:[]};
+    const run={id,machine:c.machine,case:c.name,seed,options:c.options,nativeParams:c.nativeParams || null,declaredWorld:c.world || null,worldShareToken:declaredToken,measurement:c.measurement || null,initial,initialPositionSHA256:hash(initialBytes),rows:[],frames:[],actions:[]};
     if(initial.settings.macTransfer){
       const initialized=await evaluate(`(${residentSnapshot.toString()})()`);run.initialResident={...initialized,buffers:{}};
       for(const [key,bytes]of Object.entries(await pullRecords('__machineResidentResult',initialized.recordLengths))){const file=id+'-initialized-'+key+'.bin';fs.writeFileSync(path.join(output,file),bytes);run.initialResident.buffers[key]={file,bytes:bytes.length,sha256:hash(bytes)};}

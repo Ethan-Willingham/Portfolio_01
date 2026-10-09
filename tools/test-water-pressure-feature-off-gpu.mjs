@@ -15,6 +15,7 @@ assert(process.env.BEFORE,'BEFORE identifies the saved engine');
 const output=path.resolve(process.env.DUMP || '/tmp/water-pressure-feature-off');
 const files={before:path.resolve(process.env.BEFORE),after:path.resolve(process.env.AFTER || path.join(root,'js/liquid-wgpu.js'))};
 const sources=Object.fromEntries(Object.entries(files).map(([label,file])=>[label,fs.readFileSync(file,'utf8')]));
+const defaultEngineSource=sources.after;
 const hashes=Object.fromEntries(Object.entries(sources).map(([label,source])=>[label,createHash('sha256').update(source).digest('hex')]));
 const marker='  window.LiquidWGPU = { create: create, stage: STAGE, last: null };';
 for(const label of Object.keys(sources)) {
@@ -181,6 +182,9 @@ const server=createServer((request,response)=>{
     }
     const file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)){response.writeHead(403).end();return;}
     let data=fs.readFileSync(file);
+    // Default boots must use the same candidate as the differential, including
+    // when AFTER points to a private file outside the checkout.
+    if(pathname==='/js/liquid-wgpu.js')data=Buffer.from(defaultEngineSource+'\nwindow.__offLoadedNativeSHA='+JSON.stringify(hashes.after)+';\n');
     if(pathname==='/js/sluice.js') {const text=data.toString(),end=text.lastIndexOf('})();');data=Buffer.from(text.slice(0,end)+'window.__offGame=function(source){return eval(source);};\n'+text.slice(end));}
     response.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'}).end(data);
   } catch {response.writeHead(404).end();}
@@ -237,11 +241,12 @@ try {
     let ready=false;
     for(let n=0;n<600;n++) {ready=await evaluate(kind==='toy'?'!!window.__toy && __toy.stats().waterState!=="booting"':'!!window.__offGame && __offGame("introPhase===\'done\'")');if(ready)break;await sleep(100);}
     assert(ready,kind+' boot settles');await sleep(2000);
-    const state=await evaluate(kind==='toy'?`({version:__toy.version,water:__toy.stats().waterState,air:__toy.airStats(),model:!!__toy.liquid().pressureModel})`:
-      `__offGame('({version:GAME_VERSION,water:liquidWGPU.simActive,model:!!liquidWGPU.pressureModel})')`);
-    const observation=await evaluate('({buffers:__offObservation.buffers.filter(r=>/liquid\\.air\\./.test(r.label)),passes:__offObservation.passes.filter(r=>/liquid\\.air\\.|afterAir/.test(r.label)),pipelines:__offObservation.pipelines.filter(r=>/liquid\\.air\\./.test(r.label))})');
+    const state=await evaluate(kind==='toy'?`({version:__toy.version,water:__toy.stats().waterState,air:__toy.airStats(),model:!!__toy.liquid().pressureModel,loadedNative:__offLoadedNativeSHA})`:
+      `__offGame('({version:GAME_VERSION,water:liquidWGPU.simActive,model:!!liquidWGPU.pressureModel,loadedNative:window.__offLoadedNativeSHA})')`);
+    assert.equal(state.loadedNative,hashes.after,kind+' boots the exact candidate native source');
+    const observation=await evaluate('({buffers:__offObservation.buffers.filter(r=>/liquid\\.air\\.|liquid\\.declumpJacobi|liquid\\.declumpCanonical/.test(r.label)),passes:__offObservation.passes.filter(r=>/liquid\\.air\\.|afterAir|liquid\\.declumpJacobi|liquid\\.declumpCanonical/.test(r.label)),pipelines:__offObservation.pipelines.filter(r=>/liquid\\.air\\.|liquid\\.declumpJacobi|liquid\\.declumpCanonical/.test(r.label))})');
     assert.equal(state.model,false,kind+' model omitted');assert(kind==='toy'?state.water==='on':state.water,kind+' hardware water active');
-    assert.equal(observation.buffers.length+observation.passes.length+observation.pipelines.length,0,kind+' creates/encodes no air resources');
+    assert.equal(observation.buffers.length+observation.passes.length+observation.pipelines.length,0,kind+' creates/encodes no air or snapshot resources');
     if(kind==='toy')assert.equal(state.air.enabled,false);
     report.defaultBoots.push({kind,state,airBuffers:0,airPasses:0,airPipelines:0});
   }
