@@ -115,8 +115,48 @@ Per-step balance error stays zero, so accounting alone does not certify physical
 retention. A mixed-cell pressure closure must preserve gas ownership independently
 of the water classification, include liquid and gas compliance, and apply the
 resulting pressure to the external water flux. Its isolated matrix oracle passes
-108 parameter combinations. GPU reproduction, topology continuation and coupled
-runtime acceptance remain pending.
+108 parameter combinations.
+
+The actual released GPU step chain reproduces the loss on nine threshold/open-area
+cases with native-grid mass, and another nine with prescribed MAC records and the
+actual transformed pressure shaders. Compression below threshold, a surviving
+neighbor air core and actual room vent controls pass. The recorder is
+tools/test-water-air-pocket-threshold.mjs. Its default mode reproduces the released
+defect and reports physicalRetentionPass=false even when the test itself passes.
+
+A private singleton prototype retains independent gas ownership while keeping
+LIQUID classification. Its gas row adds liquid compliance/history; each normal
+neighboring water row assembles the external face coupling, provisional flux and
+neighbor pressure once. Final gas volume includes liquid compression. Exact v2
+GPU checks pass nine retention cases and three controls in each transfer mode,
+plus 48 finite-neighbor pressure/volume/force cases per mode. The independent
+linear two-row matrix and nonlinear EOS bisection use the encoded gas base.
+Both face directions, positive/negative/zero provisional inflow, densities 1/2
+and sound speeds 250/1000 are exercised. Largest absolute pressure-oracle error
+is 0.0047 units without MAC and 0.0110 with prescribed MAC records. Pressure
+and volume tolerances account for float and fixed-point encoding, with no
+acceptance claim for natural particle motion.
+
+Three guards per mode pass: changed solid coverage and nonzero wall speed reject
+before GPU writes; adjacent mixed owners keep their inventories but report an
+unsupported interface and unresolved phase. Mixed roots are excluded from the
+ordinary liquid residual and cavitation-credit loops. Face openings and room
+masks can still change, and static tile-basis mutation is not guarded. The option
+is private and disabled in every released scene. Source SHA256 is
+f964270a9dbc0eff0436124c017ecd343347c88be935a5b7fbd61038904e3609;
+its MAC helper is 3fcf6d0fdd42dd09b93bb1c7aea73225f517829ccd60d51e366d80484b65fe05.
+
+This is a one-way resolved singleton prototype. Returning below the threshold
+still drops the liquid compliance contribution; subquantum/zero-volume positive
+gas, general advection/split/merge and moving boundaries remain unresolved. MAC
+scatter and particle gather are bypassed. The force oracle uses the measured MAC
+face density, so it checks the encoded operator rather than the physical accuracy
+of interface inertia. MAC support still includes the whole LIQUID mixed cell.
+Public evidence: assets/images/water-machines/single-air-pocket-trial-2026-10-09.json.
+Use AIR_SOURCE=/absolute/private/air.js, EXPECT_RETENTION=1, PRESSURE=1,
+PRESSURE_EXTENDED=1 and GUARDS=1 with the recorder. MAC=1 also requires the paired
+MAC_SOURCE. General topology continuation and coupled runtime acceptance remain
+pending.
 
 Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
 REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw
