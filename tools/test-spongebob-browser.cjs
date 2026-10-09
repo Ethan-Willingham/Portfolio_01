@@ -154,6 +154,7 @@ async function pickerScreenshot(page, file) {
   })));
   assert.equal(await page.locator('.sb-image-unavailable').count(), 0, 'all picker portraits remain available');
   await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await page.screenshot({ path: file, fullPage: false });
 }
 async function finishPairing(page, remainingIds) {
