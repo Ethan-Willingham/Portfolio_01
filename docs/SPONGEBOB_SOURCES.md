@@ -1,14 +1,14 @@
 # SpongeBob original-series character roster
 
-The picker displays only the 654 characters missed in the first catalog. Its
+The matchup builder displays only the owner's selected cast. Its
 underlying lookup retains 1,370 locally stored portraits from the original
 SpongeBob SquarePants TV series, researched on October 9, 2026. The discovery
 index was the [Characters category on Encyclopedia SpongeBobia](https://spongebob.fandom.com/wiki/Category:Characters),
 which listed 2,856 character pages at import time.
 
 Every catalog entry records a specific original-series episode, its episode
-article, the character article and the original image URL. The picker shows
-the episode and links to the character article. Images come from article
+article, the character article and the original image URL. These source links
+remain in the catalog data. Images come from article
 portraits or researched clean alternatives, including stock art, episode
 frames, game renders and live-action photographs. The portrait's format does not determine whether the
 character belongs to the TV series. Article prose is not reproduced. SpongeBob
@@ -49,8 +49,8 @@ fallback files were removed.
 
 The original 1,021 IDs are frozen in `assets/spongebob/first-catalog-ids.json`.
 `pickerCharacterIds` contains only current TV characters absent from that first
-set. The picker builds cards, search results and browsing groups from those IDs,
-so none of the previously shown characters can reappear in the grid. The full
+set. These IDs preserve the previously shown new-character list in the data.
+The current page uses the selected cast instead of browsing this list. The full
 lookup remains available to saved selections, chosen matchups and shared fight
 links. Refreshing the import recomputes the new-character list against the same
 frozen baseline.
@@ -63,11 +63,11 @@ original-series catalog because its sourced appearance is in The Patrick Star
 Show. The remaining 33 selected characters have original-series episode
 evidence in the catalog.
 
-## Familiar names and search
+## Familiar names
 
-[Fred](https://spongebob.fandom.com/wiki/Fred) is the "My leg!" fish. Search also
-accepts My leg, My leg guy and Fred the Fish. Tom can be found as Chocolate guy
-or Chocolate man. These aliases share one image and one selector entry.
+[Fred](https://spongebob.fandom.com/wiki/Fred) is the "My leg!" fish. His catalog
+aliases include My leg, My leg guy and Fred the Fish. Tom's aliases include
+Chocolate guy and Chocolate man. Each character keeps one stable ID and portrait.
 
 The expanded roster includes 47 additional named incidental fish, including
 Tina, Evelyn, Steven, Nurse Rechid and several distinct fish called Frank.
@@ -76,7 +76,7 @@ The Franks have descriptive names so they can be chosen separately. Frank
 Nat Peterson and Dr. Gill Gilliam retain their existing IDs and links to their
 numbered source articles.
 
-Some familiar names are wiki redirects. Suzy can also be found as Debbie Rechid
+Some familiar names are wiki redirects. Suzy is also known as Debbie Rechid
 or Nancy Suzy Fish, Judy as Shubie, and Officer Murphy as Officer John.
 
 ## Clean portraits
@@ -84,7 +84,7 @@ or Nancy Suzy Fish, Judy as Shubie, and Officer Murphy as Officer John.
 The full 1,370-character catalog and the retained Bare-Knuckles portrait were
 reviewed for production guide lines, arrows and model-sheet annotations. The
 95 identified portraits were replaced with clean sourced alternatives, covering
-60 entries in the new-character picker and 35 entries in the existing lookup.
+60 entries in the new-character list and 35 entries in the existing lookup.
 All replacement portraits were visually reviewed. The replacements use actual
 artwork or episode frames. No generated art, redrawing or removal of drawn
 guide lines was used.
@@ -127,7 +127,7 @@ and they total about 19 MiB. Each record names its fallback with `fallbackImage`
 The manifest contains `version` (3), `scope` (`original-series`), `scopeName`,
 `generatedAt`, `sourceName`, `sourceUrl`, `discoveredCharacterPages` and a
 `characters` array. `pickerScope` is `newly-found-original-series`, and
-`pickerCharacterIds` lists the 654 entries displayed in the picker. Each character has:
+`pickerCharacterIds` lists the 654 entries in the previous new-character picker. Each character has:
 
 - `id`: stable selector and voting identifier.
 - `name`: display name.
@@ -144,5 +144,5 @@ The manifest contains `version` (3), `scope` (`original-series`), `scopeName`,
 - `seriesEvidence`: the source method establishing the appearance.
 - `aliases`, when present: additional names accepted by search.
 
-The browsing groups contain 10 main characters, 84 recurring characters, 32
+The catalog groups contain 10 main characters, 84 recurring characters, 32
 villains, 61 family members and 1,183 minor characters.

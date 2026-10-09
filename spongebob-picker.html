@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
-  <title>SpongeBob character picker</title>
-  <meta name="description" content="Browse newly found SpongeBob TV-series characters missed in the first catalog. Add them to your saved cast and choose the fight matchups.">
+  <title>SpongeBob matchup builder</title>
+  <meta name="description" content="Choose two characters from your selected SpongeBob cast, confirm their matchup, and repeat until the round is ready.">
   <link rel="canonical" href="https://ethanwillingham.com/spongebob-picker.html">
-  <meta property="og:title" content="SpongeBob character picker">
-  <meta property="og:description" content="Choose the cast for a Bikini Bottom fight vote, from the regulars to the deep cuts.">
+  <meta property="og:title" content="SpongeBob matchup builder">
+  <meta property="og:description" content="Click two portraits, confirm their matchup, and choose the next two from your selected cast.">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Ethan Willingham">
   <meta property="og:url" content="https://ethanwillingham.com/spongebob-picker.html">
@@ -21,69 +21,58 @@
   <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="spongebob.css?v=3">
+  <link rel="stylesheet" href="spongebob.css?v=4">
 </head>
 <body class="sb-page">
   <div class="site-wrapper sb-wrapper">
     <nav class="sb-topnav" aria-label="Site navigation"><a href="archive.html">In progress</a><a href="spongebob-fight.html">Who would win?</a></nav>
     <header class="post-header u-hero sb-hero">
-      <p class="u-eyebrow">In progress / Cast the vote</p>
-      <h1 class="u-title">SpongeBob character picker</h1>
-      <p class="u-dek">Only the characters missed the first time.</p>
-      <p class="sb-intro">Browse 654 newly found TV-series characters. The first catalog's characters are removed from this list. The public cast includes the 32 you chose, plus Karen and Kevin C. Cucumber. Choose their matchups below.</p>
+      <p class="u-eyebrow">In progress / Set the round</p>
+      <h1 class="u-title">SpongeBob matchup builder</h1>
+      <p class="sb-intro">Click one character, then another. Confirm the matchup and choose the next two.</p>
     </header>
     <main class="post-body">
-      <section aria-label="Choose characters" class="sb-picker" id="sb-picker" aria-busy="true">
-        <div class="sb-selection-bar">
-          <div><p class="sb-kicker">Your lineup</p><p class="sb-count"><strong id="sb-selected-count">0</strong> selected <span class="sb-muted" id="sb-pair-count">/ choose at least 2</span></p></div>
-          <div class="sb-selection-actions"><a class="sb-review-link" href="#sb-lineup">Review lineup</a><a class="sb-button sb-primary" id="sb-play" href="spongebob-fight.html" aria-disabled="true">Try this lineup</a></div>
-        </div>
-        <div class="sb-filters" id="sb-filters" hidden>
-          <div class="sb-search"><label for="sb-search">Find a new character</label><input id="sb-search" type="search" placeholder="Frank, Tina, Dragon Jellyfish..." autocomplete="off"></div>
-          <div class="sb-group"><label for="sb-group">Browse</label><select id="sb-group"><option value="">All characters</option></select></div>
-          <label class="sb-selected-toggle"><input id="sb-only-selected" type="checkbox"><span>Selected new characters</span></label>
-        </div>
-        <div class="sb-list-tools" id="sb-list-tools" hidden><p id="sb-showing" role="status" aria-live="polite"></p><div><button class="sb-text-button" id="sb-select-visible" type="button">Select visible</button><button class="sb-text-button" id="sb-clear" type="button">Clear selection</button></div></div>
-        <div id="sb-load-state" class="sb-empty" role="status"><p>Gathering the cast...</p><button class="sb-button" id="sb-load-retry" type="button" hidden>Try again</button></div>
-        <div class="sb-character-grid" id="sb-character-grid"></div>
-        <div id="sb-no-results" class="sb-empty" hidden><p>No newly found characters match these filters.</p><button class="sb-button" id="sb-reset-filters" type="button">Show all new characters</button></div>
-        <section class="sb-lineup" id="sb-lineup" hidden aria-labelledby="sb-lineup-title">
-          <div class="sb-section-heading"><div><p class="sb-kicker">Keep this cast</p><h2 id="sb-lineup-title">Your chosen characters</h2></div><button class="sb-button" id="sb-defaults" type="button">Use public lineup</button></div>
-          <p class="sb-note" id="sb-storage-note">Your selection is saved in this browser.</p>
-          <ul class="sb-chosen-list" id="sb-chosen-list" aria-label="Selected characters"></ul>
-          <section class="sb-matchup-editor" id="sb-matchup-editor" hidden aria-labelledby="sb-matchup-title">
-            <div class="sb-section-heading" id="sb-pairing"><div><p class="sb-kicker">Set the round</p><h3 id="sb-matchup-title">Choose the matchups</h3></div></div>
-            <p class="sb-note">Each character appears once per round. Choose both sides of each matchup. Characters you leave unpaired sit out.</p>
-            <p class="sb-matchup-summary" id="sb-matchup-summary" role="status" aria-live="polite"></p>
-            <form class="sb-pair-form" id="sb-pair-form">
-              <div class="sb-pair-choices">
-                <div class="sb-pair-choice"><label for="sb-pair-left">First character</label><select id="sb-pair-left"><option value="">Choose a character</option></select><div class="sb-pair-preview" id="sb-pair-preview-left"></div></div>
-                <span class="sb-pair-versus" aria-hidden="true">vs.</span>
-                <div class="sb-pair-choice"><label for="sb-pair-right">Second character</label><select id="sb-pair-right"><option value="">Choose a character</option></select><div class="sb-pair-preview" id="sb-pair-preview-right"></div></div>
-              </div>
-              <button class="sb-button sb-primary" id="sb-pair-add" type="submit" disabled>Add matchup</button>
-            </form>
-            <ol class="sb-paired-list" id="sb-paired-list" aria-label="Chosen matchups in round order"></ol>
-            <p class="sb-note" id="sb-pairs-empty">No matchups chosen yet. With no custom matchups, the fight page pairs your cast at random.</p>
-            <details class="sb-unpaired-details" id="sb-unpaired-details"><summary id="sb-unpaired-summary">Unpaired characters</summary><p class="sb-note" id="sb-unpaired-names"></p></details>
-            <div class="sb-export-actions"><button class="sb-button" id="sb-copy-matchups" type="button" disabled>Copy chosen matchups link</button><button class="sb-button" id="sb-download-matchups" type="button" disabled>Download chosen matchups</button></div>
-            <p class="sb-feedback" id="sb-matchup-status" role="status" aria-live="polite"></p>
-            <div class="sb-copy-fallback" id="sb-matchup-copy-fallback" hidden><label for="sb-matchup-share-url">Copy this matchups link</label><input id="sb-matchup-share-url" readonly type="url"></div>
+      <section class="sb-picker" id="sb-picker" aria-label="Build matchups from your selected cast" aria-busy="true">
+        <div id="sb-load-state" class="sb-empty" role="status"><p>Loading your cast...</p><button class="sb-button" id="sb-load-retry" type="button" hidden>Try again</button></div>
+        <section id="sb-lineup" hidden>
+          <section id="sb-matchup-editor" aria-label="Your matchup round">
+            <div class="sb-pair-station" id="sb-pairing">
+              <div class="sb-station-heading"><p class="sb-kicker">Your selected cast</p><p class="sb-pair-summary" id="sb-pair-summary"></p><a class="sb-review-link" href="#sb-confirmed">Review matchups</a></div>
+              <form class="sb-pair-form" id="sb-pair-form" aria-label="Confirm the two picked characters">
+                <div class="sb-pair-choices">
+                  <div class="sb-pair-preview" id="sb-pair-preview-left" aria-label="First character"></div>
+                  <span class="sb-pair-versus" aria-hidden="true">vs.</span>
+                  <div class="sb-pair-preview" id="sb-pair-preview-right" aria-label="Second character"></div>
+                </div>
+                <div class="sb-pair-actions"><button class="sb-button sb-primary" id="sb-pair-add" type="submit" disabled>Confirm matchup</button><button class="sb-button" id="sb-pair-cancel" type="button" disabled>Cancel</button></div>
+              </form>
+              <p class="sb-feedback" id="sb-matchup-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="sb-grid-heading"><h2 id="sb-remaining-title">Remaining characters</h2><p class="sb-note" id="sb-pick-hint">Click a picked portrait to undo it. A third choice replaces the second.</p></div>
+            <div class="sb-complete" id="sb-complete" hidden><h2>Matchups complete</h2><p>Every selected character has a matchup. Your round is ready to try.</p></div>
+            <div class="sb-empty" id="sb-empty-cast" hidden><h2 id="sb-empty-cast-title">Your saved cast is empty</h2><p id="sb-empty-cast-note">Load the public cast to start choosing matchups.</p><button class="sb-button" id="sb-use-public-cast" type="button">Use public cast</button></div>
+            <p class="sb-odd-note" id="sb-odd-state" hidden></p>
+            <div class="sb-character-grid" id="sb-character-grid" aria-labelledby="sb-remaining-title"></div>
+            <section class="sb-confirmed" id="sb-confirmed" aria-labelledby="sb-confirmed-title">
+              <div class="sb-section-heading"><h2 id="sb-confirmed-title">Confirmed matchups</h2><span class="sb-note">In the order you chose them</span></div>
+              <div class="sb-export-actions"><a class="sb-button sb-primary" id="sb-preview-matchups" href="spongebob-fight.html" aria-disabled="true" tabindex="-1">Try these matchups</a><button class="sb-button" id="sb-copy-matchups" type="button" disabled>Copy link</button><button class="sb-button" id="sb-download-matchups" type="button" disabled>Download matchups</button></div>
+              <p class="sb-storage-note" id="sb-storage-note">Your matchups are saved in this browser.</p>
+              <div class="sb-copy-fallback" id="sb-matchup-copy-fallback" hidden><label for="sb-matchup-share-url">Copy this matchups link</label><input id="sb-matchup-share-url" readonly type="url"></div>
+              <p class="sb-note" id="sb-pairs-empty">Your confirmed pairs will appear here.</p>
+              <ol class="sb-paired-list" id="sb-paired-list" aria-label="Confirmed matchups in round order"></ol>
+            </section>
           </section>
-          <div class="sb-export-actions"><button class="sb-button" id="sb-copy-link" type="button" disabled>Copy fight link</button><button class="sb-button" id="sb-download" type="button" disabled>Download lineup</button></div>
-          <p class="sb-feedback" id="sb-export-status" role="status" aria-live="polite"></p>
-          <div class="sb-copy-fallback" id="sb-copy-fallback" hidden><label for="sb-share-url">Copy this link</label><input id="sb-share-url" readonly type="url"></div>
-          <details class="sb-details"><summary>How does this become the public lineup?</summary><p>The public fight post uses a saved lineup. Download your choices and give that file to the person updating the site. Your browser selection does not change the public cast. A fight link carries your chosen characters, so someone else can vote on the same set.</p></details>
         </section>
       </section>
-      <details class="sb-details sb-sources"><summary>Where the pictures came from</summary><p id="sb-source-note">This catalog includes characters with a documented appearance in the original SpongeBob SquarePants TV series. Movie, spinoff, game and book characters without a TV-series appearance are excluded. Names, episode references and pictures come from <a href="https://spongebob.fandom.com/wiki/Category:Characters" target="_blank" rel="noopener noreferrer">Encyclopedia SpongeBobia</a>. Each card links to its source page. SpongeBob SquarePants and its characters belong to their respective rights holders.</p></details>
-      <noscript><p>This picker needs JavaScript to load the character catalog and remember your choices.</p></noscript>
+      <details class="sb-details"><summary>Keep and share this round</summary><p>A copied link carries your exact matchups and their order. Download the matchups file to use them when the public round is updated. Characters left unpaired sit out.</p></details>
+      <details class="sb-details"><summary>Picture sources</summary><p>Character pictures and names come from <a href="https://spongebob.fandom.com/wiki/Category:Characters" target="_blank" rel="noopener noreferrer">Encyclopedia SpongeBobia</a>. SpongeBob SquarePants and its characters belong to their respective rights holders.</p></details>
+      <noscript><p>This builder needs JavaScript to show your cast and remember your matchups.</p></noscript>
     </main>
     <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><a href="archive.html">In progress</a></div></footer>
   </div>
   <script src="js/main.js"></script>
   <script src="js/spongebob-shared.js?v=5"></script>
-  <script src="js/spongebob-matchups.js?v=1"></script>
-  <script src="js/spongebob-picker.js?v=4"></script>
+  <script src="js/spongebob-matchups.js?v=2"></script>
+  <script src="js/spongebob-picker.js?v=5"></script>
 </body>
 </html>
