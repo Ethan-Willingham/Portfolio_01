@@ -100,8 +100,23 @@ guest motion. Exact-source default-off comparisons pass 96 CPU frame pairs,
 76 legacy shaders and eighteen real GPU captures, plus default toy/game boots.
 Four paired twelve-second Retina samples average 52.7, 45.4, 53.0 and 46.7 FPS
 for rank, merge, merge and rank. They establish no reliable speedup or sustained
-60 FPS. The full scalable-candidate cup matrix is running. Pressure, phase/gas
-conservation, energy calibration and final natural-slime handling remain open.
+60 FPS. The complete scalable-candidate cup matrix conserves every particle,
+passes both hold controls and records no rim spills, but canonical delivery is
+100.6507%, 99.6091% and 93.7088%. Seed 913 misses the 95% target. The scalable
+candidate is rejected for release; short trajectory equality does not establish
+long drainage acceptance. Pressure, phase/gas conservation, energy calibration
+and final natural-slime handling remain open.
+
+An isolated CPU topology/remapping counterexample reproduces positive gas
+inventory becoming unassigned when the last air-core cell crosses the phase
+threshold. On nine threshold/open-area combinations, geometric air remains,
+yet the following step retains neither that gas nor its unassigned diagnostic.
+Per-step balance error stays zero, so accounting alone does not certify physical
+retention. A mixed-cell pressure closure must preserve gas ownership independently
+of the water classification, include liquid and gas compliance, and apply the
+resulting pressure to the external water flux. Its isolated matrix oracle passes
+108 parameter combinations. GPU reproduction, topology continuation and coupled
+runtime acceptance remain pending.
 
 Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
 REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw
