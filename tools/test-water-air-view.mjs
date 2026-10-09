@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dump = process.env.DUMP || '/tmp/water-air-review';
 const port = Number(process.env.PORT || 8467), debug = port + 1000;
+const sha=data=>createHash('sha256').update(data).digest('hex');
 fs.mkdirSync(dump, { recursive: true });
 const profile = fs.mkdtempSync('/tmp/water-demo-browser-');
 const mime = { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png' };
@@ -17,8 +19,14 @@ const server = createServer((request, response) => {
     const file = path.resolve(root, '.' + new URL(request.url, 'http://localhost').pathname);
     if (!file.startsWith(root + '/')) { response.writeHead(403).end(); return; }
     let data = fs.readFileSync(file);
-    if(file===path.join(root,'js/liquid-air-wgpu.js') && globalThis.airReference) data=fs.readFileSync(process.env.REFERENCE);
+    if(file===path.join(root,'js/liquid-air-wgpu.js')){
+      if(globalThis.airReference)data=fs.readFileSync(process.env.REFERENCE);
+      data=Buffer.concat([data,Buffer.from('\nwindow.__ownedAirSHA='+JSON.stringify(sha(data))+';\n')]);
+    }
     if (file === path.join(root, 'js/water-smoke-slime.js')) {
+      if(process.env.CURRENT_HOST)data=fs.readFileSync(process.env.CURRENT_HOST);
+      if(globalThis.hostReference)data=fs.readFileSync(process.env.HOST_REFERENCE);
+      const hostSHA=sha(data);
       const source = data.toString(), end = source.lastIndexOf('})();');
       data = source.slice(0, end) + `
       function demoMinimumOrientation(b) {
@@ -32,7 +40,7 @@ const server = createServer((request, response) => {
         return minimum;
       }
       window.__demoTest = function(source) { return eval(source); };
-      ` + source.slice(end);
+      ` + source.slice(end)+'\nwindow.__ownedHostSHA='+JSON.stringify(hostSHA)+';\n';
     }
     response.writeHead(200, { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream' }); response.end(data);
   } catch { response.writeHead(404).end(); }
@@ -73,12 +81,20 @@ async function screenshot(name) {
 }
 async function navigate(width, height, query = '', mobile = false) {
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: Number(process.env.DPR || 2), mobile });
-  await send('Page.navigate', { url: `http://127.0.0.1:${port}/archive/water-smoke-slime/water-smoke-slime.html${query}` });
+  const priorOrigin=await evaluate('performance.timeOrigin');
+  const split=query.split('#'),freshQuery=split[0]+(split[0].includes('?')?'&':'?')+'ownedCapture='+sequence;
+  await send('Page.navigate', { url: `http://127.0.0.1:${port}/archive/water-smoke-slime/water-smoke-slime.html${freshQuery}${split[1]?'#'+split[1]:''}` });
+  let ready=false;
   for (let i = 0; i < 120; i++) {
-    if (await evaluate('!!window.__toy && __toy.stats().waterState !== "booting"')) break;
+    try{ready=await evaluate(`performance.timeOrigin!==${priorOrigin} && document.readyState==='complete' && !!window.__toy && __toy.stats().waterState!=='booting'`);}catch{}
+    if(ready)break;
     await sleep(100);
   }
+  assert(ready,'Fresh document and real backend finish loading');
   await sleep(1000);
+  const loaded=await evaluate('({host:window.__ownedHostSHA,air:window.__ownedAirSHA})');
+  assert.equal(loaded.host,sha(fs.readFileSync(globalThis.hostReference?process.env.HOST_REFERENCE:process.env.CURRENT_HOST || path.join(root,'js/water-smoke-slime.js'))),'Loaded selected host bytes');
+  assert.equal(loaded.air,sha(fs.readFileSync(globalThis.airReference?process.env.REFERENCE:path.join(root,'js/liquid-air-wgpu.js'))),'Loaded selected air module bytes');
   console.log('BOOT', width, height, JSON.stringify(await evaluate('__toy.stats()')));
 }
 try {
@@ -92,23 +108,50 @@ try {
   socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);clearTimeout(p?.timer);m.error?p?.reject(m.error):p?.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);});
   await send('Runtime.enable');await send('Page.enable');
   const rows=[];
-  if(process.env.EQUIVALENCE || process.env.BENCH_COMPARE)assert(process.env.REFERENCE,'REFERENCE requires the saved prior air module');
+  if(process.env.EQUIVALENCE || process.env.BENCH_COMPARE)assert(process.env.REFERENCE || process.env.HOST_REFERENCE,'Comparison requires a saved prior air module or host');
+  if(process.env.HOST_BENCH)assert(process.env.HOST_REFERENCE,'HOST_BENCH requires the saved prior host');
   async function nativeHashes(){return evaluate(`(async()=>{
     const L=__toy.liquid(),M=__toy.airModel(),D=L.device,n=L.uploadedCount,count=M.width*M.height;
     const sources=[['pos',L.buf.pos,n*16],['affine',L.buf.affine,n*16],['aux',L.buf.aux,n*16],['flag',L.buf.flag,n*4],
       ['cells',M.buffers.cells,count*32],['labels',M.buffers.labels,count*8],['history',M.buffers.history,count*32],['pressure',M.buffers.pressure,count*16],
-      ['gas',M.buffers.gas,(count+2)*64],['phase',M.buffers.gas,count*16,M.phaseOffset]];
+      ['gas',M.buffers.gas,(count+2)*64],['phase',M.buffers.gas,count*16,M.phaseOffset],['geometry',M.buffers.geometry,count*32]];
     const encoder=D.createCommandEncoder(),reads=sources.map(([name,source,size,offset=0])=>{
       const b=D.createBuffer({size,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});encoder.copyBufferToBuffer(source,offset,b,0,size);return {name,b};});
     L.queue.submit([encoder.finish()]);const hashes={};
     try{await Promise.all(reads.map(async({name,b})=>{await b.mapAsync(GPUMapMode.READ);const digest=await crypto.subtle.digest('SHA-256',b.getMappedRange());hashes[name]=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');}));return hashes;}
     finally{for(const {b}of reads){b.unmap();b.destroy();}}
   })()`);}
-  if(process.env.BENCH_COMPARE){
+  if(process.env.HOST_BENCH){
+    for(const updated of [false,true,true,false]){
+      globalThis.hostReference=!updated;
+      globalThis.airReference=!!process.env.REFERENCE && !updated;
+      await navigate(1512,820,'?scene=cup&paused=1#toy');
+      await evaluate('__toy.machine("cup",{seed:17}).then(()=>true)');
+      assert(await evaluate('__toy.machineState()?.ready && __toy.airModel()?.enabled'),'Real cup pressure model ready');
+      await evaluate('document.getElementById("toy").scrollIntoView();__toy.machinePrimary();__toy.pause(false)');
+      await sleep(4000);
+      await inside(`
+        window.__geometryProfile={};
+        function profileGeometry(name,fn){return function(){var start=performance.now();try{return fn.apply(this,arguments);}finally{var samples=__geometryProfile[name] || (__geometryProfile[name]=[]);samples.push(performance.now()-start);}};}
+        airGeometryTick=profileGeometry('airGeometryTick',airGeometryTick);
+        jelloWaterCoupleTick=profileGeometry('jelloWaterCoupleTick',jelloWaterCoupleTick);
+        updateJello=profileGeometry('updateJello',updateJello);
+        buildWaterCells=profileGeometry('buildWaterCells',buildWaterCells);
+        render=profileGeometry('render',render);
+      `);
+      const frames=await evaluate(`new Promise(resolve=>{const times=[],rates=[];let last=null;const start=performance.now();function tick(t){if(last!==null)times.push(t-last);last=t;rates.push(__toy.stats().fps);if(t-start<8000)requestAnimationFrame(tick);else resolve({times,rates,sim:__toy.instruments().simulationSeconds,profile:__geometryProfile});}requestAnimationFrame(tick);})`);
+      await evaluate('__toy.pause(true)');
+      const bodies=await inside('jelloBodies.map(b=>({points:b.n,ringPoints:b.ringN,center:{x:b.cx,y:b.cy}}))');
+      rows.push({scene:'cup',updated,bodies,frames,loaded:await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA})')});
+      const summary=Object.fromEntries(Object.entries(frames.profile).map(([name,samples])=>{const s=samples.slice().sort((a,b)=>a-b);return [name,{samples:s.length,medianMs:s[Math.floor(s.length*.5)],p95Ms:s[Math.floor(s.length*.95)]}];}));
+      console.log('CUP HOST PROFILE',updated,JSON.stringify(summary));
+    }
+  }else if(process.env.BENCH_COMPARE){
     for(const scene of ['heron','siphon','cup']){
       await navigate(1512,820,`?scene=${scene}&paused=1#toy`);
       for(const updated of [false,true,true,false]){
-        globalThis.airReference=!updated;
+        globalThis.airReference=!!process.env.REFERENCE && !updated;
+        globalThis.hostReference=!!process.env.HOST_REFERENCE && !updated;
         await navigate(1512,820,`?scene=${scene}&paused=1#toy`);
         await evaluate(`__toy.pause(true);__toy.machine('${scene}',{seed:17,pressure:{}}).then(()=>true)`);
         await evaluate('__toy.liquid().bench(20,1/60)');
@@ -117,22 +160,36 @@ try {
     }
     fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({rows,errors},null,2));assert.deepEqual(errors,[]);
   }else if(process.env.EQUIVALENCE){
-    for(const scene of ['heron','siphon','cup'])for(const seed of [17,42,913]){
+    for(const scene of (process.env.SCENES || 'heron,siphon,cup').split(','))for(const seed of [17,42,913]){
       const captures=[];
       for(const updated of [false,true]){
-        globalThis.airReference=!updated;
+        globalThis.airReference=!!process.env.REFERENCE && !updated;
+        globalThis.hostReference=!!process.env.HOST_REFERENCE && !updated;
         await navigate(1512,820,`?scene=${scene}&paused=1#toy`);
         await evaluate(`__toy.pause(true);__toy.machine('${scene}',{seed:${seed},pressure:{}}).then(()=>true)`);
         assert(await evaluate('__toy.airModel().enabled'),'Air model active');
+        if(process.env.EQUIVALENCE_GEOMETRY && scene==='cup'){
+          await evaluate('__toy.machinePrimary();__toy.pause(true)');
+          await inside('window.__geometryTestPose=jelloBodies.map(b=>({cx:b.cx,cy:b.cy,px:Array.from(b.px),py:Array.from(b.py)}));');
+        }
         const steps=[];
         for(let frame=1;frame<=20;frame++){
+          if(process.env.EQUIVALENCE_GEOMETRY && scene==='cup')await inside(`
+            jelloBodies.forEach(function(b,index){var pose=__geometryTestPose[index],dx=Math.sin(${frame}*.23)*9,dy=210-pose.cy+Math.cos(${frame}*.17)*7;
+              for(var point=0;point<b.n;point++){b.px[point]=pose.px[point]+dx;b.py[point]=pose.py[point]+dy;b.ox[point]=b.px[point];b.oy[point]=b.py[point];}
+              b.cx=pose.cx+dx;b.cy=pose.cy+dy;b.bboxL=Math.min.apply(null,b.px);b.bboxR=Math.max.apply(null,b.px);b.bboxT=Math.min.apply(null,b.py);b.bboxB=Math.max.apply(null,b.py);});
+            airGeometryTick();
+          `);
           await evaluate('__toy.liquid().update(1/60);__toy.liquid().queue.onSubmittedWorkDone()');
           if([1,5,20].includes(frame))steps.push({frame,hashes:await nativeHashes()});
         }
-        captures.push({updated,steps});
+        captures.push({updated,steps,loaded:await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA})')});
       }
-      assert.deepEqual(captures[1].steps,captures[0].steps,'Default particle, pressure and gas buffers match prior release: '+scene+' '+seed);
-      rows.push({scene,seed,captures});console.log('EQUIVALENT',scene,seed);
+      if(process.env.GEOMETRY_ONLY){
+        assert(process.env.EQUIVALENCE_GEOMETRY,'GEOMETRY_ONLY uses prescribed moving guest poses');
+        assert.deepEqual(captures[1].steps.map(s=>s.hashes.geometry),captures[0].steps.map(s=>s.hashes.geometry),'Moving guest geometry buffers match prior release: '+scene+' '+seed);
+      }else assert.deepEqual(captures[1].steps,captures[0].steps,'Default particle, pressure and gas buffers match prior release: '+scene+' '+seed);
+      rows.push({scene,seed,captures,scope:process.env.GEOMETRY_ONLY?'Prescribed moving guest geometry only. Full guest/water snapshots can differ in repeat controls with identical sources.':'Full native buffers without moving guest poses.'});console.log('EQUIVALENT',scene,seed);
     }
     fs.writeFileSync(path.join(dump,'report.json'),JSON.stringify({rows,errors},null,2));assert.deepEqual(errors,[]);
   }else

@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.42, shared water engine v28.178. The greedy cup, standalone
+Release: toy v5.43, shared water engine v28.178. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -23,8 +23,13 @@ The native gas boundary has opt-in nonlinearGas and vaporClosure experiments,
 both off in the released scenes. The first solves the isothermal gas equation in
 gauge pressure, avoiding room-pressure subtraction. The second allows an empty
 vapor cavity to close at zero volume and raises pressure when further closure
-would make its volume negative. They still require the complete integrated
-acceptance suite before activation. A captured transient negative volume in a
+would make its volume negative. The fifteen-case, three-seed Heron matrix passes
+all 90 behavior/accounting
+checks and all gas geometry health checks with these options. Physical gas
+conservation, pressure convergence, phase boundaries and energy remain unresolved,
+so both options remain off in public scenes. The trial report is
+assets/images/water-machines/heron-cavity-trial-2026-10-09.json. A captured transient
+negative volume in a
 fountain trial had zero stored gas and was a collapsing vapor cavity. The native
 observer now preserves the first event's amount, volume, flux and phase.
 
@@ -32,7 +37,12 @@ Checks: node tools/test-water-air-view.cjs, node tools/test-water-gas-boundary.c
 node tools/test-water-air-view.mjs, and the existing viewport/ordinary regression
 harnesses. For a GPU before/after comparison, save the prior air module outside
 the checkout and pass REFERENCE=/absolute/path/liquid-air-wgpu.js EQUIVALENCE=1
-when running the browser air-view harness.
+when running the browser air-view harness. Each capture now requires a new
+document and verifies the loaded script SHA256. For host comparisons also pass
+HOST_REFERENCE=/absolute/path/water-smoke-slime.js. HOST_BENCH=1 records real
+Retina playback and per-function CPU samples. EQUIVALENCE_GEOMETRY=1 with
+GEOMETRY_ONLY=1 and SCENES=cup checks prescribed immersed-guest geometry on
+three seeds without asserting full native-state equality.
 
 
 ## Standalone siphon
@@ -155,7 +165,13 @@ The legacy Jacobi solver remains the default outside this opt-in setting.
 Pressure maxima reduce inside each 128-thread workgroup before one global
 atomic update, preserving the exact bound. Moving slime geometry reuses sorted
 scanline crossings rather than repeating a full polygon traversal for every
-sample; its 8 by 8 sampling rule and shared face openings are unchanged.
+sample; its 8 by 8 sampling rule and shared face openings are unchanged. Further
+wall/face caching and sparse geometry uploads were tested and discarded: they
+reduced CPU geometry work but did not improve real presentation FPS in the paired
+Retina runs. These changes are not in the released host or air module.
+A moving-guest repeat control also did not reproduce full native hashes with
+identical sources; geometry-only comparisons are not treated as a full native
+simulation-equivalence certificate.
 
 These shared-engine hooks are opt-in. They allocate no air resources in ordinary
 Sluice or toy scenes. Integration preserves the newer production snow and water

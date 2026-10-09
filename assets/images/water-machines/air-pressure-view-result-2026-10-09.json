@@ -1,6 +1,6 @@
 {
   "date": "2026-10-09",
-  "toyVersion": "v5.42",
+  "toyVersion": "v5.43",
   "overlayChecksPassed": true,
   "viewportChecksPassed": true,
   "defaultNativeComparisonsPassed": true,
@@ -28,7 +28,7 @@
           "min": 59,
           "median": 60,
           "max": 60,
-          "samples": 360
+          "samples": 361
         },
         "rafIntervalP95Ms": 16.799999999999272,
         "labels": [
@@ -37,21 +37,21 @@
             "y": 492,
             "root": 1832,
             "area": 108480,
-            "text": "+0.28 psi"
+            "text": "+0.30 psi"
           },
           {
             "x": 188,
             "y": 228,
             "root": 1832,
             "area": 38976,
-            "text": "+0.28 psi"
+            "text": "+0.30 psi"
           }
         ]
       },
       {
         "scene": "siphon",
         "footerFPS": {
-          "min": 59,
+          "min": 60,
           "median": 60,
           "max": 60,
           "samples": 361
@@ -62,12 +62,12 @@
       {
         "scene": "cup",
         "footerFPS": {
-          "min": 41,
-          "median": 56,
+          "min": 35,
+          "median": 55.0,
           "max": 60,
-          "samples": 306
+          "samples": 276
         },
-        "rafIntervalP95Ms": 33.29999999999927,
+        "rafIntervalP95Ms": 33.399999999999636,
         "labels": []
       }
     ]
@@ -132,7 +132,11 @@
                   "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -182,7 +186,11 @@
                   "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -238,7 +246,11 @@
                   "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -288,7 +300,11 @@
                   "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -344,7 +360,11 @@
                   "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -394,7 +414,11 @@
                   "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -450,7 +474,11 @@
                   "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -500,7 +528,11 @@
                   "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -556,7 +588,11 @@
                   "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -606,7 +642,11 @@
                   "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -662,7 +702,11 @@
                   "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -712,7 +756,11 @@
                   "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -768,7 +816,11 @@
                   "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -818,7 +870,11 @@
                   "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -874,7 +930,11 @@
                   "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -924,7 +984,11 @@
                   "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       },
@@ -980,7 +1044,11 @@
                   "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+            }
           },
           {
             "updated": true,
@@ -1030,15 +1098,23 @@
                   "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
                 }
               }
-            ]
+            ],
+            "loaded": {
+              "host": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+              "air": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb"
+            }
           }
         ]
       }
     ],
-    "referenceAirSHA256": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+    "referenceAirSHA256": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003",
+    "navigation": "Each capture loads a unique URL, waits for a new performance.timeOrigin and a complete backend, and verifies host/air SHA256 markers inserted by the owned test server.",
+    "correction": "The original identical-URL comparison could retain the current document. It is replaced here by verified fresh-document captures; all nine native comparisons pass.",
+    "testedHostVersion": "v5.42",
+    "currentHostDifference": "v5.43 changes only the TOY_VERSION constant. The complete saved v5.42 host matches the current source after reverting that constant. The air module and pressure view are unchanged."
   },
   "sourceSHA256": {
-    "js/water-smoke-slime.js": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+    "js/water-smoke-slime.js": "e037b2d2ed5430dded0d7d58c24061dc7f5a1dcea4745a4b4d229c9508d69a0f",
     "js/water-smoke-slime-ui.js": "794ca8168b6cb8290ebe34855a05dccb26987ae6a6195b9a8525db55c56d11c1",
     "js/water-machines-pressure-view.js": "90e3d911f3ebabb6a8229abc113018ba89c997bde32c0a4fbc9281bb51664d59",
     "js/liquid-air-wgpu.js": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb",
