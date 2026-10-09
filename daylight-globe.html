@@ -23,7 +23,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="globe.css?v=20261009-54">
+  <link rel="stylesheet" href="globe.css?v=20261009-55">
 </head>
 <body>
   <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -79,12 +79,13 @@
                 <div><dt>Aurora forecast</dt><dd id="globe-pin-aurora"></dd></div>
               </dl>
             </section>
+            <p id="globe-scale-note" class="globe-replay-status">Earth-Moon distance is reduced 10x. Their relative sizes are to scale.</p>
             <details class="globe-sources">
               <summary>Sources &amp; accuracy</summary>
               <p>Clouds: <a href="https://registry.opendata.aws/noaa-goes/">NOAA GOES</a> and <a href="https://registry.opendata.aws/noaa-himawari/">JMA Himawari</a> infrared measurements, plus <a href="https://view.eumetsat.int/">EUMETSAT</a> infrared imagery. The recorder checks every two minutes and saves ten-minute snapshots. Each satellite updates independently; the times below show the observations in this view. Brightness illustrates temperature, not cloud fraction. Warm clouds can be faint, and cold ground can resemble clouds. There is no cloud data near the poles. The globe calculates one day/night boundary for the clouds, ground and city lights.</p>
               <p id="globe-cloud-times"></p>
               <p>Aurora: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA's forecast</a>, checked every minute. Replay uses saved forecasts. Missed captures leave gaps; the view holds an older forecast, then fades to the next over ten minutes. The time controls always show the aurora data status and flag these gaps. The glow's height and brightness are illustrated; clouds and daylight can hide a real aurora.</p>
-              <p>Stars: <a href="https://github.com/astronexus/HYG-Database">HYG</a>, David Nash (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>). City lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA, 2016</a>. Sun and Moon distances are compressed. Both use the same sunlight direction; the Moon's visible phase changes as you orbit. Moon brightness is illustrated.</p>
+              <p>Stars: <a href="https://github.com/astronexus/HYG-Database">HYG</a>, David Nash (<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>). City lights: <a href="https://www.nasa.gov/image-article/black-marble-our-planet-brilliant-darkness/">NASA, 2016</a>. The Sun's distance is compressed. Earth-Moon distance is shown at one-tenth scale, with their relative sizes preserved. Both use the same sunlight direction; the Moon's visible phase changes as you orbit. Moon brightness is illustrated.</p>
               <p>Modified EUMETSAT data, 2021 to 2026 (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>). <a href="https://github.com/Ethan-Willingham/Portfolio_01/blob/main/docs/DAYLIGHT_GLOBE.md">Full notes</a>.</p>
             </details>
           </div>
@@ -106,15 +107,15 @@
   <script src="js/main.js"></script>
   <script src="js/vendor/three-r128.min.js"></script>
   <script src="js/globe-math.js?v=20261004-9"></script>
-  <script src="js/globe-data.js?v=20261009-54"></script>
-  <script src="js/globe-clouds.js?v=20261009-54"></script>
-  <script src="js/globe-archive.js?v=20261009-54"></script>
+  <script src="js/globe-data.js?v=20261009-55"></script>
+  <script src="js/globe-clouds.js?v=20261009-55"></script>
+  <script src="js/globe-archive.js?v=20261009-55"></script>
   <script src="js/globe-timeline.js?v=20261005-22"></script>
-  <script src="js/globe-replay.js?v=20261009-54"></script>
+  <script src="js/globe-replay.js?v=20261009-55"></script>
   <script src="js/globe-stars.js?v=20261005-11"></script>
   <script src="js/globe-optics.js?v=20261005-11"></script>
   <script src="js/globe-aurora.js?v=20261008-45"></script>
-  <script src="js/globe.js?v=20261009-54"></script>
+  <script src="js/globe.js?v=20261009-55"></script>
   <script src="js/backtotop.js"></script>
 </body>
 </html>
