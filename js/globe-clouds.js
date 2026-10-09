@@ -236,6 +236,12 @@
   // Keep each iterator's own references when the shared cache changes width.
   var lonCos=solarCos,lonSin=solarSin;
   for(var pair=0;pair<5;pair++){var visible=sources[pair],infrared=sources[pair+5];if(!visible||!infrared)continue;
+   // MSG natural colour boosts the surface near sunrise. Its moving black
+   // daylight mask and bright land/ocean are not cloud measurements: adding
+   // them created an entire false cloud bank over India within one hour.
+   // Keep this satellite's continuous infrared field at every solar angle.
+   // A source-time sunlight mask would only introduce another moving edge.
+   if(pair===3)continue;
    var sun=pair<2&&sourceTimes&&sourceTimes[pair]&&math?math.solar(new Date(sourceTimes[pair])).vector:null,lastRow=-1,sinLat=0,cosLat=0;
    for(var at=0;at<infrared.length;at+=4){if(at%(width*16)===0)yield;if(!visible[at+3])continue;
     var r=visible[at]/255,g=visible[at+1]/255,b=visible[at+2]/255,rawR=r,rawG=g,rawB=b;
@@ -265,7 +271,9 @@
  var blendWidth=0,blendLongitude=[];
  function* compositeSteps(sources,width,kind){
   if(blendWidth!==width){blendWidth=width;blendLongitude=GROUPS.map(function(g){var v=new Float32Array(width);for(var x=0;x<width;x++){var lon=(x+.5)*360/width-180,best=-1;g.longitudes.forEach(function(s){best=Math.max(best,Math.cos((lon-s)*Math.PI/180));});v[x]=best;}return v;});}
-  var longitude=blendLongitude,height=width/2,out=new Uint8ClampedArray(width*height*4),indices=[];GROUPS.forEach(function(g,i){if(g.kind===kind&&sources[i])indices.push(i);});
+  // The visible fallback must obey the same MSG exclusion as the combined
+  // field, including where infrared coverage ends or is partially feathered.
+  var longitude=blendLongitude,height=width/2,out=new Uint8ClampedArray(width*height*4),indices=[];GROUPS.forEach(function(g,i){if(g.kind===kind&&sources[i]&&(kind!=='visible'||i!==3))indices.push(i);});
   for(var y=0;y<height;y++){if(y%4===0)yield;var latitude=Math.cos(((y+.5)*180/height-90)*Math.PI/180);for(var x=0;x<width;x++){
    var at=(y*width+x)*4,total=0,r=0,g=0,b=0,alpha=0,bestView=0;
    for(var j=0;j<indices.length;j++){var i=indices[j],p=sources[i],a=p[at+3]/255;if(!a)continue;var view=latitude*longitude[i][x],q=Math.max(0,view-.15);q*=q;var w=q*q*a;if(!w)continue;total+=w;r+=p[at]*w;g+=p[at+1]*w;b+=p[at+2]*w;alpha=Math.max(alpha,a);bestView=Math.max(bestView,view);}
@@ -273,5 +281,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:12,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,validColourImage:validColourImage,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:13,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,validColourImage:validColourImage,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
 }));

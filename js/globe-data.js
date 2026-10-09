@@ -499,6 +499,22 @@
     return Array.from(weights,function(pair){return {frame:pair[0],weight:pair[1]};}).filter(function(part){return part.weight>0;});
   }
 
+  function auroraReplayGap(frames, instant) {
+    var target=utcTimestamp(instant).getTime(),parts=auroraBlendAt(frames,instant),selected=auroraFrameAt(frames,instant);
+    if(!selected)return null;
+    var observations=Array.from(new Set(frames.map(function(frame){return +frame.observation;}))).sort(function(a,b){return a-b;});
+    var shown=parts.map(function(part){return +part.frame.observation;}).concat(+selected.observation),first=Math.min.apply(null,shown),last=Math.max.apply(null,shown);
+    // A glow crossfade can bridge a missed recording interval. Expose the
+    // actual consecutive measurement clocks, including recordings that the
+    // nearest-forecast selection skips when NOAA changes its forecast lead.
+    for(var i=1;i<observations.length;i++)if(observations[i-1]>=first&&observations[i]<=last&&observations[i]-observations[i-1]>60*MINUTE)return {from:new Date(observations[i-1]),to:new Date(observations[i])};
+    if(target- +selected.forecast<=30*MINUTE)return null;
+    var previous=null,next=null;
+    observations.forEach(function(observation){if(observation<=target)previous=observation;else if(next===null)next=observation;});
+    if((next===null?target:next)-previous<=60*MINUTE)return null;
+    return {from:new Date(previous),to:next===null?null:new Date(next)};
+  }
+
   async function fetchAuroraArchive(frame, base, options) {
     return request(base+frame.file,options,async function(response){
       var bytes=await response.arrayBuffer();
@@ -605,7 +621,7 @@
     cachedPhotoDay: cachedPhotoDay, discardPhotoDay: discardPhotoDay, evictPhoto: evictPhoto,
     utcDate:utcDate, previousCompletedDay: previousCompletedDay, compositeRGBA: compositeRGBA, featherCoverage:featherCoverage, featherCoverageSteps:featherCoverageSteps,
     parseAurora: parseAurora, auroraFreshness: auroraFreshness, auroraAt: auroraAt,
-    parseAuroraArchive:parseAuroraArchive,parseAuroraManifest:parseAuroraManifest,auroraFrameAt:auroraFrameAt,auroraBlendAt:auroraBlendAt,fetchAuroraArchive:fetchAuroraArchive,
+    parseAuroraArchive:parseAuroraArchive,parseAuroraManifest:parseAuroraManifest,auroraFrameAt:auroraFrameAt,auroraBlendAt:auroraBlendAt,auroraReplayGap:auroraReplayGap,fetchAuroraArchive:fetchAuroraArchive,
     auroraVisibility: auroraVisibility, greatCircleMiles: greatCircleMiles, parseKp: parseKp
   };
 }));

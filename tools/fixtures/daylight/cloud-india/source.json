@@ -1,0 +1,163 @@
+{
+  "description": "Unmodified native WMS images and lossless Himawari crops. India sunrise at the reported October 8 7:00 and 7:54 PM CDT selections. Only the original transparent fill is added when cropped images are placed back at their native map coordinates.",
+  "width": 2048,
+  "height": 1024,
+  "frames": [
+    {
+      "time": "2026-10-09T00:00:00.000Z",
+      "selected": "2026-10-09T00:00:00.000Z",
+      "sourceTimes": [
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z",
+        null,
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z",
+        "2026-10-09T00:00:00.000Z"
+      ],
+      "assets": [
+        {
+          "index": 2,
+          "file": "0000-himawari-visible.png",
+          "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=Himawari_AHI_Band3_Red_Visible_1km&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A00%3A00Z",
+          "sourceSha256": "d09103cac0179bc4ca440e7c7ee132159127b6029da9714764d8b6d360299b9b",
+          "sha256": "cb5468a02ee4327089f08474ff7a5ddc82df8644521b314e2f12004e3ceeb80d",
+          "crop": {
+            "left": 1365,
+            "top": 256,
+            "width": 341,
+            "height": 341
+          }
+        },
+        {
+          "index": 3,
+          "file": "0000-iodc-visible.jpg",
+          "url": "https://view.eumetsat.int/geoserver/ows?service=WMS&request=GetMap&version=1.3.0&layers=msg_iodc%3Argb_natural&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A00%3A00.000Z",
+          "sourceSha256": "fd6f289e184416bf209b8a6dc41bac5f5eae5f88e438101f5744885f065d0465",
+          "sha256": "fd6f289e184416bf209b8a6dc41bac5f5eae5f88e438101f5744885f065d0465"
+        },
+        {
+          "index": 7,
+          "file": "0000-himawari-infrared.png",
+          "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=Himawari_AHI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A00%3A00Z",
+          "sourceSha256": "35cee6bb818a04121f31cbae6aafa59f56a9f9cfc9feaf357badb320f4946977",
+          "sha256": "8fb830908982b6bcb18212a350406d1c72b1c93f5e03447510adf93f699f0f70",
+          "crop": {
+            "left": 1365,
+            "top": 256,
+            "width": 341,
+            "height": 341
+          }
+        },
+        {
+          "index": 8,
+          "file": "0000-iodc-infrared.jpg",
+          "url": "https://view.eumetsat.int/geoserver/ows?service=WMS&request=GetMap&version=1.3.0&layers=msg_iodc%3Air108&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A00%3A00.000Z",
+          "sourceSha256": "038ef0719e1d5bb258f8713b3feb892a765288d8e4794dcbb8bcf9df6e290a0a",
+          "sha256": "038ef0719e1d5bb258f8713b3feb892a765288d8e4794dcbb8bcf9df6e290a0a"
+        },
+        {
+          "index": 9,
+          "file": "0000-mtg-infrared.jpg",
+          "url": "https://view.eumetsat.int/geoserver/ows?service=WMS&request=GetMap&version=1.3.0&layers=mtg_fd%3Air105_hrfi&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A00%3A00.000Z",
+          "sourceSha256": "e4613aae234d520a616cf7b5167679f7d35189e91ca552d90e33af8f2513017a",
+          "sha256": "e4613aae234d520a616cf7b5167679f7d35189e91ca552d90e33af8f2513017a"
+        }
+      ],
+      "previous": {
+        "file": "0000-published-infrared.png",
+        "crop": {
+          "left": 1365,
+          "top": 256,
+          "width": 341,
+          "height": 341
+        },
+        "processing": 12,
+        "url": "https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/globe-clouds/20261009T0000-infrared-8ac1f3c144937a64.webp",
+        "sourceSha256": "8ac1f3c144937a64602ddfaa7aaaa1b7b5d31b423e903b413eed3e973aaf1282",
+        "sha256": "f8102486d7acf5f135b53363b1829e21599761e3d10f88cb289c855722b3baae"
+      }
+    },
+    {
+      "time": "2026-10-09T00:45:00.000Z",
+      "selected": "2026-10-09T00:54:00.000Z",
+      "sourceTimes": [
+        "2026-10-09T00:40:00.000Z",
+        "2026-10-09T00:40:00.000Z",
+        "2026-10-09T00:40:00.000Z",
+        "2026-10-09T00:45:00.000Z",
+        null,
+        "2026-10-09T00:40:00.000Z",
+        "2026-10-09T00:40:00.000Z",
+        "2026-10-09T00:40:00.000Z",
+        "2026-10-09T00:45:00.000Z",
+        "2026-10-09T00:40:00.000Z"
+      ],
+      "assets": [
+        {
+          "index": 2,
+          "file": "0045-himawari-visible.png",
+          "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=Himawari_AHI_Band3_Red_Visible_1km&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A40%3A00Z",
+          "sourceSha256": "83192398e7c7e182e2ea9a769dbbe42008027b4044bec14f249f8d9f7b9de927",
+          "sha256": "f938e50d1d308e06822a8b1216f000d55b10d10c30db038c57e51fe2a5f9c882",
+          "crop": {
+            "left": 1365,
+            "top": 256,
+            "width": 341,
+            "height": 341
+          }
+        },
+        {
+          "index": 3,
+          "file": "0045-iodc-visible.jpg",
+          "url": "https://view.eumetsat.int/geoserver/ows?service=WMS&request=GetMap&version=1.3.0&layers=msg_iodc%3Argb_natural&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A45%3A00.000Z",
+          "sourceSha256": "fd7bb87a2079ac3f402720b227498a421d5699fa5753d9fb811c321227642f7d",
+          "sha256": "fd7bb87a2079ac3f402720b227498a421d5699fa5753d9fb811c321227642f7d"
+        },
+        {
+          "index": 7,
+          "file": "0045-himawari-infrared.png",
+          "url": "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?service=WMS&request=GetMap&version=1.3.0&layers=Himawari_AHI_Band13_Clean_Infrared&styles=&format=image%2Fpng&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A40%3A00Z",
+          "sourceSha256": "15c9606909fe97c4abcbd971de09884c2ade0d7f5be9523bbfd4234d36d14abf",
+          "sha256": "c07544d01ed30ae696980fefb7e1f348239a769a1e7be644fffd86c3ab689934",
+          "crop": {
+            "left": 1365,
+            "top": 256,
+            "width": 341,
+            "height": 341
+          }
+        },
+        {
+          "index": 8,
+          "file": "0045-iodc-infrared.jpg",
+          "url": "https://view.eumetsat.int/geoserver/ows?service=WMS&request=GetMap&version=1.3.0&layers=msg_iodc%3Air108&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A45%3A00.000Z",
+          "sourceSha256": "3ee76bf1436078fbbe051c9ecc85bcc2568fdd7ab6bf7f6040f083bbb2288138",
+          "sha256": "3ee76bf1436078fbbe051c9ecc85bcc2568fdd7ab6bf7f6040f083bbb2288138"
+        },
+        {
+          "index": 9,
+          "file": "0045-mtg-infrared.jpg",
+          "url": "https://view.eumetsat.int/geoserver/ows?service=WMS&request=GetMap&version=1.3.0&layers=mtg_fd%3Air105_hrfi&styles=&format=image%2Fjpeg&bgcolor=0x000000&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T00%3A40%3A00.000Z",
+          "sourceSha256": "f26de0a3c8d10cf57251d8c520a6ce4cd0f3e49c9c123899033518bb192b9da1",
+          "sha256": "f26de0a3c8d10cf57251d8c520a6ce4cd0f3e49c9c123899033518bb192b9da1"
+        }
+      ],
+      "previous": {
+        "file": "0045-published-infrared.png",
+        "crop": {
+          "left": 1365,
+          "top": 256,
+          "width": 341,
+          "height": 341
+        },
+        "processing": 12,
+        "url": "https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/globe-clouds/20261009T0045-infrared-34fd87f635e4074a.webp",
+        "sourceSha256": "34fd87f635e4074a6f0fea088219ac9cc6087b2c2e1848c81d5e59e8226299b6",
+        "sha256": "e134cee0b061eac26bb063cef41cefee44c98053742c0483da44f5c27956d74f"
+      }
+    }
+  ]
+}
