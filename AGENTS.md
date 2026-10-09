@@ -9,8 +9,10 @@ This is the **public** portfolio site, served from GitHub Pages on every push to
 
 The 2D mining game **Sluice** is developed in THIS repo again (consolidated back on
 2026-06-19) and is **free forever, public, and playable on the site** at
-`grand-motherload.html`. The old "closed-source, frozen v15.2 demo, coming to Steam"
-plan is dead. The private `sluice-alpha` repo is archived (read-only pointer).
+`grand-motherload.html`. Keep its card on `archive.html` (In Progress), beside the
+other games, with its playable root URL intact. The old "closed-source, frozen
+v15.2 demo, coming to Steam" plan is dead. The private `sluice-alpha` repo is
+archived (read-only pointer).
 
 **Where the game lives (all at the repo root):**
 - `grand-motherload.html` - the post that hosts the playable game (URL kept for stability).
