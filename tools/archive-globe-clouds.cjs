@@ -79,7 +79,7 @@ async function collect(previous,options={}){
 function readPrevious(){
  const old=git(['ls-remote','origin',REF]).toString().trim().split(/\s/)[0];if(!old)return {old:'',previous:null};
  if(!/^[a-f0-9]{40}$/.test(old))throw new Error('Invalid archive branch identity');
- git(['fetch','--quiet','origin',old]);
+ git(['fetch','--quiet','origin','+'+old+':refs/remotes/origin/'+BRANCH]);
  const manifest=JSON.parse(git(['show',old+':manifest.json']).toString()),parsed=archive.validate(manifest),files=new Map();
  for(const f of parsed.frames)for(const kind of ['visible','infrared'])files.set(f[kind].file,git(['show',old+':'+f[kind].file]));
  return {old,previous:{manifest,files}};
