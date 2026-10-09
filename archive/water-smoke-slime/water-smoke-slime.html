@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.50">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.51">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -207,6 +207,7 @@
         <p><time datetime="2026-10-09">Updated October 9, 2026.</time> Air pressure now appears inside the sealed pockets. Gold means pressure above the room, rose means below; the small labels show the difference in psi. Room air and water stay clear. Use Air pressure beside the flow readout to hide or restore it. Water pressure remains available in Instruments.</p>
         <p>Slow motion now keeps the water moving. At low speeds, the engine was discarding the partial steps it needed to advance. The fix restores movement in all three machines and turns off when you return to an ordinary scene. Normal-speed particle and render comparisons match exactly across three speeds and three seeds; smoke also matches. <a href="/assets/images/water-machines/slow-motion-and-drag-trial-2026-10-09.json">Slow-motion checks and comparison records.</a></p>
         <p>The performance revision remains private. It shortens the GPU queue and keeps the simulation advancing while you drag a slime, but a full cup run drains 94.47% of its estimated drainable water, below the existing 95% target. It averages about 56 updates per second in that run. Better responsiveness alone does not pass the cup test, and steady 60 FPS and phone performance remain unproved.</p>
+        <p>Another private performance revision skips unused GPU lanes. All 24 small pressure comparisons match exactly through three steps, but a paired cup trial averages 1.69 ms per air pass before and 1.70 ms after. It did not get faster, so it stays out of the release. <a href="/assets/images/water-machines/compact-pressure-dispatch-trial-2026-10-09.json">Pressure comparisons and paired timing records.</a></p>
         <p>A private water-step revision passes all nine cup drainage and hold tests. On three seeds, it delivers 100.5%, 100.4% and 96.8% of the initially estimated drainable amount, with no rim spills and no lost particles. The first two also drain some water below that estimate. A version that reduces the work in crowded water matches the short tests, but its longer trials deliver 100.7%, 99.6% and 93.7%. The last misses the 95% target. Its two playback trials average 45.4 and 53 FPS. Both revisions remain experimental. The released timing fix changes slow motion; these particle revisions have not shipped. <a href="/assets/images/water-machines/native-overlap-scalability-trial-2026-10-09.json">Cup checks, ordering tests and frame measurements.</a></p>
         <p>One six-second Retina browser check records 59 to 60 FPS for the fountain and siphon, and 35 to 60 for the cup. These short runs do not establish steady 60 FPS or phone performance. The default particle and pressure buffer hashes match the prior release in three scenes, on three seeds, at three checkpoints. <a href="/assets/images/water-machines/air-pressure-view-result-2026-10-09.json">Air-view checks and native comparisons.</a></p>
         <p>The pressure image and apparatus labels are reused between measurement samples. Paused scenes get an initial sample, and pressure controls update the picture while paused. A further boundary cache reduced CPU work, but paired browser runs did not get faster, so that change stays out of the release.</p>
@@ -214,7 +215,7 @@
         <p>A private fix retains that gas in eighteen small-pocket tests. In 96 further checks, its pressure, water flow and gas volume agree with an independent calculation. These tests prescribe the water entering one pocket; they do not establish natural bubble motion. Larger pockets, the reverse classification change and the shape of the water/air boundary still need work, so the fix stays out of the published scenes. <a href="/assets/images/water-machines/single-air-pocket-trial-2026-10-09.json">Small-pocket checks and limits.</a></p>
         <p>A second test gives the same water and air volumes two different cell labels. The old rule changed the calculated water inertia with the label. A private revision uses the known shape of that water instead; all 96 paired GPU comparisons give identical pressure, motion and gas volume. The test still prescribes the water's shape. <a href="/assets/images/water-machines/declared-plane-pressure-trial-2026-10-09.json">Pressure comparisons, precision correction and limits.</a></p>
         <p>Following the particles in a CPU calculation exposes another fault: that proposed fix can change air volume even as the time step approaches zero. A different pressure and particle-transfer calculation passes 124 CPU checks for volume and energy. Its alternative interpolation remains experimental. <a href="/assets/images/water-machines/continuation-progress-trial-2026-10-09.json">Particle calculations and remaining limits.</a></p>
-        <p>Continuing the pressure solve clears the seven accuracy failures in its first native trial. All 36 small planar setups now pass the per-step pressure, volume and energy checks through eight GPU particle steps. All five unsupported-input checks still reject correctly. Error across the whole sequence remains unbounded in 31 cases, and general bubble motion is unproved, so the model stays private. <a href="/assets/images/water-machines/native-particle-newton-trial-2026-10-09.json">Longer solve, original failures and remaining limits.</a></p>
+        <p>Continuing the pressure solve clears the seven accuracy failures in its first native trial. All 36 small planar setups now pass the per-step pressure, volume and energy checks through eight GPU particle steps. All five unsupported-input checks still reject correctly. An error bound derived from the starting conditions remains unproved in 31 cases, and general bubble motion is unproved, so the model stays private. <a href="/assets/images/water-machines/native-particle-newton-trial-2026-10-09.json">Longer solve, original failures and remaining limits.</a></p>
         <p>Heron's fountain now lifts water from its sealed source jar and throws it into the basin. <a href="?scene=heron#toy">Open the fountain</a> and choose Open valve. Instruments lets you compare sealed jars with a vented lid, an empty source or a raised receiving jar. Restart repeats the selected setup.</p>
         <p>The basin drains into the lower jar and compresses its air. A dry tube connects that air to the source jar, pushing its water up the nozzle. Falling basin water supplies the energy, as in the <a href="https://www.jsme-fed.org/experiment-e/2014_4/005.html">physical fountain experiment</a>. The nozzle starts dry, and every drop stays in the particle solver.</p>
         <p>Five behaviors were checked with three different starting particle positions. The fountain emits 82.2%, 83.1% and 82.2% of the original source water through its rising tube and nozzle within one simulation minute. Between 98.2% and 99.3% of that water returns to the basin. Raising the receiving jar lowers the early jet by 18% to 25%. An empty source and a vented lid emit no nozzle water. Opening a hole during a running jet stops later nozzle crossings after a short tail. All water particles are conserved. <a href="/assets/images/water-machines/heron-result-2026-10-09.json">Fountain measurements, controls and limits.</a></p>
@@ -291,15 +292,15 @@
   <script src="/js/liquid-wgpu.js?v=v28.179"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/liquid-air-model.js?v=v5.50"></script>
+  <script src="/js/liquid-air-model.js?v=v5.51"></script>
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.37"></script>
-  <script src="/js/liquid-air-wgpu.js?v=v5.50"></script>
+  <script src="/js/liquid-air-wgpu.js?v=v5.51"></script>
   <script src="/js/water-machines-builder.js?v=v5.37"></script>
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
-  <script src="/js/water-machines-pressure-view.js?v=v5.50"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.50"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.50"></script>
+  <script src="/js/water-machines-pressure-view.js?v=v5.51"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.51"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.51"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

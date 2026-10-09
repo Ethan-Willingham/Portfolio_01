@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.50, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.51, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -549,3 +549,20 @@ The previous release evidence remains in
 `research/water-machines/cup-production-validation`; the post labels its
 screenshots as the previous version. Earlier numerical experiments and their
 many passing unit fixtures are not evidence of a finished pressure model.
+
+
+The compact pressure-dispatch trial remains private. Its default-off compiled
+shaders and commands match the current air model; 24 prescribed-input GPU
+fixtures match all compared buffers through three pressure steps. A separate
+cup off/on/on/off trial retains the original scheduler and native remainder
+fix, with two seconds warmup and six seconds sampling per fresh document.
+The air pass averages 1.691724 ms off (272 samples) and 1.702492 ms on
+(266 samples), with no timestamp drops or runtime errors. This demonstrates
+no speed gain, so the option is not activated or copied into public runtime.
+The public artifact preserves source hashes, raw air-pass samples, frame
+intervals, coverage and the bounded measurement limits. A new native-chain
+recorder initially failed on a missing COPY_SRC observation capability; that
+failed record is preserved and supplies no equivalence acceptance. The post
+uses "unproved" for the remaining initial-condition error bound, rather than
+suggesting a proof that error is infinite. The v5.51 host change is its version
+label only.
