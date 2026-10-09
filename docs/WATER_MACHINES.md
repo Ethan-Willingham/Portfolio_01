@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.48, shared water engine v28.179. The greedy cup, standalone
+Release: toy v5.49, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -213,8 +213,27 @@ control is also distinct from native fine-grid APIC and physical parcel energy.
 Root independently reran a byte-exact copy with an identical report. Source SHA256
 is 8736960edaa556f2a7440dfea6ddca6b1b4a159f7b84a3429ea66a0a05e0d306;
 report SHA256 is ac7ece10d035ae78e8d41a3456a36c0ab7d004ba3c3e5357869b2ef2dafba2de.
-Actual GPU gather, collision and general interface/topology acceptance remain
-pending. Public evidence: continuation-progress-trial-2026-10-09.json.
+The actual private native P1 continuation now runs eight native GPU updates in
+36 planar configurations, with sixty resident parcels and no runtime/shader/GPU
+errors. Density 1/2, sound speed 250/1000, equilibrium/pulse/affine initial state
+and dt 1/120, 1/240 and 1/480 are varied. Positions and material state are authored
+once before the sequence, never reseeded between steps. All 288 updates execute.
+Twenty-nine cases pass every independent per-step scatter, EOS, pressure, gas and
+material/position volume, physical kinetic energy, work and gather/collision check.
+Seven cases fail sixteen independent EOS residual arithmetic-only checks. The
+candidate's larger Newton stopping threshold does not override those failures.
+Five global Float32 sequence enclosures pass; 31 remain mathematically unresolved.
+Only three of 36 valid cases pass both sets of checks. All five unsupported count,
+nonplanar, material, topology and nonfinite-affine controls reject correctly.
+
+A separate display-validation correction equates JSON zero with decoded signed
+zero; the raw words and physical allowances remain unchanged. The original pilot
+preserves six negative-zero words and no nonfinite words. General interface and
+topology acceptance, full machine calibration and performance remain pending.
+Evidence: continuation-progress-trial-2026-10-09.json and
+native-particle-continuation-trial-2026-10-09.json. A further private candidate
+continues Newton iterations past the candidate-only early stop; it must pass the
+same unchanged independent hardware gates before any acceptance claim.
 
 Sixteen private queue-pacing runs use exact v5.46 sources, seed 17, 1512 by 760
 Retina rendering, four seconds warmup and eight seconds sampling. They verify
