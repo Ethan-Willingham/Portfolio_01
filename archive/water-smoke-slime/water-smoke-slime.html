@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.45">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.46">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -210,6 +210,7 @@
         <p>The pressure image and apparatus labels are reused between measurement samples. Paused scenes get an initial sample, and pressure controls update the picture while paused. A further boundary cache reduced CPU work, but paired browser runs did not get faster, so that change stays out of the release.</p>
         <p>A trial gas equation and vapor boundary pass 90 behavior and accounting checks across fifteen fountain runs, with no negative-volume events. Small pockets still lose stored gas, and pressure and air-boundary errors remain. A smaller GPU test now reproduces one cause: relabeling a cell as water can discard its gas while more than half its accessible space remains empty. <a href="/assets/images/water-machines/heron-cavity-trial-2026-10-09.json">Cavity trial and remaining limits.</a></p>
         <p>A private fix retains that gas in eighteen small-pocket tests. In 96 further checks, its pressure, water flow and gas volume agree with an independent calculation. These tests prescribe the water entering one pocket; they do not establish natural bubble motion. Larger pockets, the reverse classification change and the shape of the water/air boundary still need work, so the fix stays out of the published scenes. <a href="/assets/images/water-machines/single-air-pocket-trial-2026-10-09.json">Small-pocket checks and limits.</a></p>
+        <p>A second test gives the same water and air volumes two different cell labels. The old rule changed the calculated water inertia with the label. A private revision uses the known shape of that water instead; all 96 paired GPU comparisons give identical pressure, motion and gas volume. The test still prescribes the water's shape. The next step is to keep that agreement as the actual particles move. <a href="/assets/images/water-machines/declared-plane-pressure-trial-2026-10-09.json">Pressure comparisons, precision correction and limits.</a></p>
         <p>Heron's fountain now lifts water from its sealed source jar and throws it into the basin. <a href="?scene=heron#toy">Open the fountain</a> and choose Open valve. Instruments lets you compare sealed jars with a vented lid, an empty source or a raised receiving jar. Restart repeats the selected setup.</p>
         <p>The basin drains into the lower jar and compresses its air. A dry tube connects that air to the source jar, pushing its water up the nozzle. Falling basin water supplies the energy, as in the <a href="https://www.jsme-fed.org/experiment-e/2014_4/005.html">physical fountain experiment</a>. The nozzle starts dry, and every drop stays in the particle solver.</p>
         <p>Five behaviors were checked with three different starting particle positions. The fountain emits 82.2%, 83.1% and 82.2% of the original source water through its rising tube and nozzle within one simulation minute. Between 98.2% and 99.3% of that water returns to the basin. Raising the receiving jar lowers the early jet by 18% to 25%. An empty source and a vented lid emit no nozzle water. Opening a hole during a running jet stops later nozzle crossings after a short tail. All water particles are conserved. <a href="/assets/images/water-machines/heron-result-2026-10-09.json">Fountain measurements, controls and limits.</a></p>
@@ -286,15 +287,15 @@
   <script src="/js/liquid-wgpu.js?v=v28.178"></script>
   <script src="/js/smoke-presets.js?v=4"></script>
   <script src="/js/water-rainbow.js?v=1"></script>
-  <script src="/js/liquid-air-model.js?v=v5.45"></script>
+  <script src="/js/liquid-air-model.js?v=v5.46"></script>
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.37"></script>
-  <script src="/js/liquid-air-wgpu.js?v=v5.45"></script>
+  <script src="/js/liquid-air-wgpu.js?v=v5.46"></script>
   <script src="/js/water-machines-builder.js?v=v5.37"></script>
   <script src="/js/water-machines-scenes.js?v=v5.41"></script>
   <script src="/js/water-machines-instruments.js?v=v5.41"></script>
-  <script src="/js/water-machines-pressure-view.js?v=v5.45"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.45"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.45"></script>
+  <script src="/js/water-machines-pressure-view.js?v=v5.46"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.46"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.46"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

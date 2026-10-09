@@ -74,20 +74,45 @@ async function fixture(o){
     for(const name of ['pos','affine','aux','flag'])instance.buf[name]=buffer(16);
     // Prescribe MAC records to isolate the actual transformed pressure shaders.
     // Scatter and particle gather are outside this fixture's acceptance scope.
-    const original=LiquidAirMAC.create;
-    LiquidAirMAC.create=function(...args){const helper=original(...args);helper.before=function(){};return helper;};
-    instance.restoreMacFactory=()=>{LiquidAirMAC.create=original;};
+    if(!o.declared){
+      const original=LiquidAirMAC.create;
+      LiquidAirMAC.create=function(...args){const helper=original(...args);helper.before=function(){};return helper;};
+      instance.restoreMacFactory=()=>{LiquidAirMAC.create=original;};
+    }
   }
   let model;
   try{
     model=LiquidAirWGPU.create(instance,{width:width*dx,height:height*dx,cellSize:dx,iterations:o.flow!==undefined?128:16,
       atmospherePressure:o.atmosphere || 100000,density:o.rho || 1,soundSpeed:o.sound || 500,
       minimumPressure:-.8*(o.atmosphere || 100000),waterThreshold:o.threshold,geometricGas:true,
-      nonlinearGas:!!o.nonlinear,retainSingleMixedGas:!!o.retain,macTransfer:!!o.mac});
+      nonlinearGas:!!o.nonlinear,retainSingleMixedGas:!!o.retain,macTransfer:!!o.mac,
+      ...(o.declared?{declaredSingleMixed:{cell:center,waterNeighbor,alpha:o.fractions[0],
+        waterSide:o.side===1?'right':'left',gasAmount:(1-o.fractions[0])*dx*dx,
+        waterReferencePressure:0,pressureOnly:true}}:{})});
     await model.readyPromise;await model.initializeMaterial();model.setEnabled(true);
     const solid=Float32Array.from({length:count},()=>1-o.open),room=new Uint8Array(count),faces=new Float32Array(count*4);
+    if(o.declared)for(let c=0;c<count;c++)solid[c]=c===center || c===waterNeighbor?0:1;
     if(o.neighborCore){faces[center*4+1]=1;faces[(center+1)*4]=1;}
     model.geometry(solid,room,null,null,faces);
+    if(o.declared){
+      if(typeof model.initializeDeclaredGas!=='function')throw Error('Selected source does not implement declared mixed ownership');
+      await model.initializeDeclaredGas();
+    }
+    function kernel(z){const a=Math.abs(z);return a<=.5?.75-a*a:a<1.5?.5*(1.5-a)**2:0;}
+    function integrate(a,b){
+      const cuts=[a,...[-1.5,-.5,.5,1.5].filter(v=>v>a && v<b),b],nodes=[-Math.sqrt(3/5),0,Math.sqrt(3/5)],weights=[5/9,8/9,5/9];
+      let total=0;for(let k=1;k<cuts.length;k++){
+        const mid=(cuts[k]+cuts[k-1])/2,half=(cuts[k]-cuts[k-1])/2;
+        for(let j=0;j<3;j++)total+=half*weights[j]*kernel(mid+half*nodes[j]);
+      }return total;
+    }
+    function physicalBasis(px,py,fraction){
+      const rootX=center%width*dx,rootY=Math.floor(center/width)*dx;
+      const neighborX=waterNeighbor%width*dx;
+      const waterLo=o.side===1?rootX+(1-fraction)*dx:rootX,waterHi=o.side===1?rootX+dx:rootX+fraction*dx;
+      const y=integrate((rootY-py)/dx,(rootY+dx-py)/dx);
+      return dx*dx*y*(integrate((neighborX-px)/dx,(neighborX+dx-px)/dx)+integrate((waterLo-px)/dx,(waterHi-px)/dx));
+    }
     const snapshots=[];
     for(const fraction of o.fractions){
       const flowing=o.flow!==undefined && snapshots.length>0;
@@ -119,10 +144,19 @@ async function fixture(o){
         const bytes=new ArrayBuffer(records*64),mi=new Int32Array(bytes),mf=new Float32Array(bytes);
         for(let q=0;q<records-1;q++){
           const c=q-faceCount,alpha=c===center || o.neighborMixed && c===center+1?fraction:o.neighborCore && c===center+1?.2:1;
-          const volume=alpha*o.open*dx*dx;
+          let volume=alpha*o.open*dx*dx,basis=o.open*dx*dx;
+          if(o.declared){
+            const horizontal=q<(width+1)*height,vertical=!horizontal && q<faceCount;
+            const a=vertical?q-(width+1)*height:q;
+            const px=horizontal?a%(width+1)*dx:vertical?(a%width+.5)*dx:(c%width+.5)*dx;
+            const py=horizontal?(Math.floor(a/(width+1))+.5)*dx:vertical?Math.floor(a/width)*dx:(Math.floor(c/width)+.5)*dx;
+            volume=physicalBasis(px,py,fraction);
+            basis=physicalBasis(px,py,1);
+          }
           mi[q*16]=Math.round(volume*(o.rho || 1)*16384);mi[q*16+2]=Math.round(volume*16384);
+          if(o.declared)mi[q*16]=mi[q*16+2]*(o.rho || 1);
           mf[q*16+4]=q<(width+1)*height?velocity:0;
-          mf[q*16+5]=o.rho || 1;mf[q*16+6]=o.open*dx*dx;mf[q*16+7]=1;mf[q*16+10]=alpha;
+          mf[q*16+5]=o.rho || 1;mf[q*16+6]=basis;mf[q*16+7]=1;mf[q*16+10]=alpha;
         }
         queue.writeBuffer(model.buffers.mac,0,bytes);
       }
@@ -138,20 +172,24 @@ async function fixture(o){
           oldWaterPressure:0,oldNeighborPressure:s.cells[waterNeighbor*8+7],
           velocityCorrection:s.pressure[center*4+1],
           ...(o.mac?{neighborDensity:s.mac[(model.macFaceRecords+waterNeighbor)*16+5],
-            faceDensity:s.mac[sharedMacFace*16+5],projectedFace:s.mac[sharedMacFace*16+8]}:{})}:{}),
+            faceDensity:s.mac[sharedMacFace*16+5],faceBasis:s.mac[sharedMacFace*16+6],
+            ...(o.declared?{expectedPhysicalFaceBasis:physicalBasis((center%width+(o.side===1?1:0))*dx,(Math.floor(center/width)+.5)*dx,fraction)}:{}),
+            projectedFace:s.mac[sharedMacFace*16+8]}:{})}:{}),
         ledger:s.ledger,pockets:s.pockets,convergence:s.convergence});
     }
     await queue.onSubmittedWorkDone();
     if(gpuErrors.length)throw Error(gpuErrors.join('\n'));
-    return {config:o,snapshots,gpuErrors};
+    return {config:o,snapshots,gpuErrors,declaredSettings:model.settings.declaredSingleMixed || null};
   }finally{instance.restoreMacFactory?.();model?.destroy();for(const b of allocated)b.destroy();device.destroy();}
 }
 
 let report;
+const attemptedInvariance=[];
 try{
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
   child=spawn(path.join(os.homedir(),'.local/bin/agent-chrome-for-testing'),[
     '--headless=new','--enable-unsafe-webgpu','--use-angle=metal','--disable-gpu-sandbox','--no-first-run',
+    '--disable-gpu-vsync','--disable-frame-rate-limit',
     '--user-data-dir='+profile,'--remote-debugging-port='+debug,'about:blank'],{stdio:'ignore'});
   let endpoint;
   for(let i=0;i<150;i++){try{endpoint=(await(await fetch('http://127.0.0.1:'+debug+'/json/list')).json()).find(t=>t.type==='page')?.webSocketDebuggerUrl;}catch{}if(endpoint)break;await sleep(100);}
@@ -173,7 +211,7 @@ try{
   const rows=[];
   const run=o=>evaluate('('+fixture.toString()+')('+JSON.stringify(o)+')');
   const near=(a,b)=>assert(Math.abs(a-b)<.003,`${a} versus ${b}`);
-  for(const threshold of [.45,.5,.55])for(const open of [.5,.75,1]){
+  if(!process.env.INVARIANCE)for(const threshold of [.45,.5,.55])for(const open of [.5,.75,1]){
     const row=await run({threshold,open,mac:!!process.env.MAC,retain:!!process.env.EXPECT_RETENTION,fractions:[threshold-.01,threshold+.01,threshold+.01]});
     const [initial,moved,following]=row.snapshots,amount=initial.ledger.newAmount;
     assert(amount>0 && moved.geometricAirVolume>0);assert.equal(initial.kind,2);assert.equal(moved.kind,1);
@@ -188,7 +226,7 @@ try{
     row.physicalRetentionPass=!!process.env.EXPECT_RETENTION;rows.push(row);
   }
   const controls=[];
-  for(const config of [
+  if(!process.env.INVARIANCE)for(const config of [
     {threshold:.45,open:1,fractions:[.44,.445,.445]},
     {threshold:.45,open:1,neighborCore:true,fractions:[.44,.46,.46]},
     {threshold:.45,open:1,vented:true,fractions:[.44,.44,.44]}
@@ -255,11 +293,63 @@ try{
     assert.equal(row.snapshots[1].convergence.phaseResolved,false);
     guardRows.push(row);
   }
+  const invarianceRows=[];
+  if(process.env.INVARIANCE){
+    const close=(a,b,tolerance)=>assert(Math.abs(a-b)<=tolerance*Math.max(1,Math.abs(b)),`${a} versus ${b}`);
+    const extended=!!process.env.INVARIANCE_EXTENDED;
+    for(const nonlinear of [false,true])for(const rho of [1,2])for(const sound of [250,1000])
+      for(const flow of (extended?[-.16,0,1.28]:[1.28]))for(const side of (extended?[0,1]:[0])){
+      const config={open:1,mac:!!process.env.MAC,retain:true,declared:true,fractions:[.46,.46],flow,side,rho,sound,nonlinear,atmosphere:100000};
+      const pair=[];
+      for(const threshold of [.4,.5]){
+        const row=await run({...config,threshold}),s=row.snapshots[1],initial=row.snapshots[0];
+        attemptedInvariance.push(row);
+        assert.equal(s.kind,threshold===.4?1:2,'Native phase classification is preserved');
+        assert(row.declaredSettings,'Explicit mixed-volume mode reports its scope');
+        assert.equal(row.gpuErrors.length,0);
+        near(s.ledger.newAmount,initial.ledger.newAmount);near(s.ledger.unassignedAmount,0);near(s.ledger.ventedAmount,0);
+        assert.equal(s.pockets.length,1);
+        const dx=8,dt=1/120,amount=initial.ledger.newAmount,base=s.integratedGasBase;
+        const gasOld=(amount/base-1)*config.atmosphere;
+        // Continuum density is prescribed by the exact mass integral. Do not
+        // substitute the solver's inferred density into the physical oracle.
+        const cw=.46*64/(rho*sound*sound),cn=64/(rho*sound*sound),cg=base/(config.atmosphere+gasOld),k=dt*dt/rho;
+        const neighbor=p=>(-flow+k*p)/(cn+k);
+        let expected;
+        if(nonlinear){
+          const equation=p=>(config.atmosphere+p)*(base-flow+k*(p-neighbor(p))+cw*p)-config.atmosphere*amount;
+          let lo=-.8*config.atmosphere,hi=1e8;
+          assert(equation(lo)<0 && equation(hi)>0);
+          for(let j=0;j<100;j++){const mid=(lo+hi)/2;if(equation(mid)>0)hi=mid;else lo=mid;}
+          expected=(lo+hi)/2;
+        }else expected=(flow+cg*gasOld-k*flow/(cn+k))/(cg+cw+k-k*k/(cn+k));
+        const pn=neighbor(expected),gasAfter=base-flow+k*(expected-pn)+cw*expected;
+        const sign=side===1?-1:1,projected=sign*(flow/(dt*dx)-dt*(expected-pn)/(rho*dx));
+        close(s.pressure,expected,.00015);close(s.neighborPressure,pn,.00015);close(s.pockets[0].volume,gasAfter,.0001);
+        if(config.mac){
+          close(s.faceBasis,s.expectedPhysicalFaceBasis,.000002);
+          close(s.faceDensity,rho,.000008);close(s.macDensity,rho,.000015);close(s.neighborDensity,rho,.000015);
+          close(s.projectedFace,projected,.00015);
+        }else close(s.velocityCorrection,.5*(projected-2*sign*flow/(dt*dx)),.00015);
+        if(nonlinear)close((config.atmosphere+s.pressure)*s.pockets[0].volume,config.atmosphere*amount,.0001);
+        row.oracle={pressure:expected,neighborPressure:pn,gasVolume:gasAfter,projectedFace:projected,
+          waterCompliance:cw,neighborCompliance:cn,gasCompliance:cg,coupling:k,physicalDensity:rho};
+        pair.push(row);
+      }
+      const a=pair[0].snapshots[1],b=pair[1].snapshots[1];
+      for(const key of ['pressure','neighborPressure','velocityCorrection'])close(a[key],b[key],.000005);
+      near(a.pockets[0].volume,b.pockets[0].volume);near(a.ledger.newAmount,b.ledger.newAmount);
+      if(config.mac){close(a.faceBasis,b.faceBasis,.000001);close(a.faceDensity,b.faceDensity,.000001);close(a.projectedFace,b.projectedFace,.000005);}
+      invarianceRows.push({config,pair,thresholdInvariant:true});
+    }
+  }
   assert.equal(errors.length,0,errors.join('\n'));
   report={schema:'water-air-pocket-threshold-gpu-v1',testPass:true,physicalRetentionPass:!!process.env.EXPECT_RETENTION,
-    fullPhysicalAcceptance:false,sourceSHA256,macSHA256,mac:!!process.env.MAC,rows,controls,pressureRows,guardRows,errors,
-    scope:'Actual air module full GPU pressure step chain, with prescribed native mass or MAC records. MAC scatter is bypassed, and particle gather is absent. Sealed stationary cells isolate air-core threshold loss. No moving particles, exact constitutive geometry, broad topology or natural interface motion acceptance.'};
+    fullPhysicalAcceptance:false,sourceSHA256,macSHA256,mac:!!process.env.MAC,rows,controls,pressureRows,guardRows,invarianceRows,errors,
+    scope:process.env.INVARIANCE
+      ? 'Actual GPU pressure step chain with explicit single-pocket ownership and prescribed planar water geometry. Native phase kinds differ under thresholds .40/.50; independent continuum density, finite-neighbor pressure/volume/force and exact planar MAC basis are checked. MAC scatter and particle gather are absent. No natural interface, transport, energy, topology or full physical acceptance.'
+      : 'Actual air module full GPU pressure step chain, with prescribed native mass or MAC records. MAC scatter is bypassed, and particle gather is absent. Sealed stationary cells isolate air-core threshold loss. No moving particles, exact constitutive geometry, broad topology or natural interface motion acceptance.'};
   fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');
-  console.log(JSON.stringify({testPass:true,physicalRetentionPass:report.physicalRetentionPass,cases:rows.length,controls:controls.length,pressureCases:pressureRows.length,guards:guardRows.length,mac:report.mac,sourceSHA256}));
-}catch(error){fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({sourceSHA256,error:String(error),errors},null,2)+'\n');throw error;}
+  console.log(JSON.stringify({testPass:true,physicalRetentionPass:report.physicalRetentionPass,cases:rows.length,controls:controls.length,pressureCases:pressureRows.length,guards:guardRows.length,invariancePairs:invarianceRows.length,mac:report.mac,sourceSHA256}));
+}catch(error){fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({sourceSHA256,macSHA256,error:String(error),errors,attemptedInvariance},null,2)+'\n');throw error;}
 finally{await cleanup();}

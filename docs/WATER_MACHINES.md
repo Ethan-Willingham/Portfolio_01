@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.44, shared water engine v28.178. The greedy cup, standalone
+Release: toy v5.46, shared water engine v28.178. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -157,6 +157,43 @@ Use AIR_SOURCE=/absolute/private/air.js, EXPECT_RETENTION=1, PRESSURE=1,
 PRESSURE_EXTENDED=1 and GUARDS=1 with the recorder. MAC=1 also requires the paired
 MAC_SOURCE. General topology continuation and coupled runtime acceptance remain
 pending.
+
+The next private prototype declares one planar liquid strip and its sealed gas
+inventory independently of the native phase label. The same water fraction .46
+is tested under thresholds .40 and .50, preserving the resulting LIQUID and AIR
+kinds. Its mixed liquid compliance, pressure reference and force reconstruction
+participate in both classifications. The MAC face basis integrates the declared
+water rectangles rather than choosing whole cells by kind. Independent Gaussian
+quadrature gives a shared-face basis of 33.7801102 square pixels, where the old
+kind-based rule gave 20.4444444 or 40.8888889 for identical water.
+
+Exact v3.1 passes 48 paired GPU comparisons in each transfer mode, 192 individual
+fixtures in all. Both face directions, negative/zero/positive inflow, densities
+1/2, sound speeds 250/1000 and linear/nonlinear gas are covered. An independent
+finite-neighbor matrix or nonlinear EOS bisection uses continuum density, not
+measured MAC density. Pressure, neighboring pressure, gas volume and velocity
+correction have zero recorded differences between the two phase thresholds.
+Largest absolute pressure errors are 0.00360 without MAC and 0.00544 with MAC;
+neighbor pressure errors are 0.00229 and 0.01002. Volume error is below 0.000589
+square pixels. The known MAC face density differs from continuum by at most
+0.00000155. These are numerical fixture measurements, not natural-flow accuracy.
+
+The first extended v3 run fails its zero-flow case: gauge pressure is -0.001364
+instead of zero because it subtracts two large room-pressure values. V3.1 uses
+atmosphere*(amount-volume)/volume in declared mode. The same unchanged tolerance
+then passes. CPU mocks pass 86 checks, including exact v2 default shader,
+resource, write and command equality with the declaration absent. Both source
+and failure hashes appear in
+assets/images/water-machines/declared-plane-pressure-trial-2026-10-09.json.
+
+These checks still prescribe all liquid geometry and native-grid/MAC records.
+Scatter and native particle gather are absent; a declared plane is not a natural
+interface. Reconstructing volume from actual particles, pressure work and
+continuation across real compression/expansion remain the next gate. This is
+private, pressure-only evidence, not a release candidate. Run INVARIANCE=1,
+INVARIANCE_EXTENDED=1 and EXPECT_RETENTION=1 with the exact v3.1 AIR_SOURCE;
+MAC=1 requires its paired MAC_SOURCE. Do not also select PRESSURE or GUARDS,
+which exercise the preceding singleton experiment.
 
 Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
 REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw
