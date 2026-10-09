@@ -986,6 +986,16 @@
       maxX = Math.max(maxX, Math.floor(Math.min(right, rMaxX) * inv));
       maxY = Math.max(maxY, Math.floor(Math.min(bottom, rMaxY) * inv));
     }
+    // A machine declares a fixed simulation domain. GPU particles can travel
+    // beyond a delayed CPU mirror before its next readback arrives.
+    var pressureDomain = instance.pressureModel && instance.pressureModel.enabled
+      ? instance.pressureModel.nativeDomain : null;
+    if (pressureDomain) {
+      minX = Math.min(minX, Math.floor(pressureDomain.minX * inv));
+      minY = Math.min(minY, Math.floor(pressureDomain.minY * inv));
+      maxX = Math.max(maxX, Math.ceil(pressureDomain.maxX * inv));
+      maxY = Math.max(maxY, Math.ceil(pressureDomain.maxY * inv));
+    }
     // Pad the bbox by the stencil halo so edge particles' 3x3 splat
     // cells are all in-grid.
     minX -= GRID_MARGIN; minY -= GRID_MARGIN;
@@ -1082,6 +1092,15 @@
       if (tr > maxR) maxR = tr;
     }
     if (!isFinite(minC)) { minC = 0; maxC = 0; minR = 0; maxR = 0; }
+    // Keep all declared machine walls present between CPU mirror updates.
+    var pressureDomain = instance.pressureModel && instance.pressureModel.enabled
+      ? instance.pressureModel.nativeDomain : null;
+    if (pressureDomain) {
+      minC = Math.min(minC, Math.floor(pressureDomain.minX * invTile));
+      minR = Math.min(minR, Math.floor(pressureDomain.minY * invTile));
+      maxC = Math.max(maxC, Math.ceil(pressureDomain.maxX * invTile));
+      maxR = Math.max(maxR, Math.ceil(pressureDomain.maxY * invTile));
+    }
     // Pad by the probe halo — the collide probes reach +/-r (~1.06 px)
     // beyond a particle, which can cross into the neighbour tile.
     minC -= TERRAIN_HALO; minR -= TERRAIN_HALO;
@@ -1189,9 +1208,11 @@
       // The host supplies the latest ring pose plus world-px/s face
       // velocities. Rewind the early water substeps along those velocities
       // so a batched frame sees a moving boundary, not the final pose N
-      // times. Extra unused slots hold the final pose for harness calls.
+      // times. A pressure model with one geometry snapshot per host frame
+      // uses that same pose in collision. Extra slots hold the final pose.
       var liveSlot = slot < slots ? slot : slots - 1;
-      var backTime = (slots - 1 - liveSlot) * (instance.stepDt || LIQUID_SUBSTEP_DT);
+      var frameGeometry = instance.pressureModel && instance.pressureModel.enabled && instance.pressureModel.frameGeometry;
+      var backTime = frameGeometry ? 0 : (slots - 1 - liveSlot) * (instance.stepDt || LIQUID_SUBSTEP_DT);
       if (gs) {
       // player vec4 — lanes 0-3: (active, worldX, worldY, dir).
       var pl = gs.player;
@@ -8097,6 +8118,9 @@ fn vs(@builtin(vertex_index)   vid : u32,
   // shrinks toward a droplet within a frame instead of poking out fat.
   let dnc = clamp(dn, 0.0, 1.0);
   var d = select(1.5 * dnc * dnc * dnc, 1.5, dn >= 1.0);
+  // Opt-in volume rendering uses equal kernels for equal native parcels.
+  // The existing neighbour-count gate still keeps isolated drops small.
+  if (rp._pad > 0.5 && material == 0u) { d = 1.5; }
   let sleepBit = (fl >> 4u) & 1u;
   if (sleepBit != 0u) { d = min(d, 1.0); }
   let isOil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;
@@ -9385,6 +9409,10 @@ struct P2GParams {
     var cellGroups = Math.ceil(g.cells / WG);
     var partGroups = Math.max(1, Math.ceil(count / WG));
     var sparse = useSparse(instance);
+    // The toy may explicitly attach a pressure-gradient experiment after
+    // boot verification. An omitted model keeps the original passes intact.
+    var airModel = liveChain && instance.pressureModel && instance.pressureModel.enabled
+      ? instance.pressureModel : null;
     var enc = liquidEncoder(instance, 'liquid.runGrid2');
     if (instance.frameEncoder) instance.frameSparseFieldsClear = false;
     var cp = enc.beginComputePass({ label: 'liquid.grid2' });
@@ -9397,8 +9425,11 @@ struct P2GParams {
       cp.dispatchWorkgroups(cellGroups);
     }
 
-    if (count > 0) {
+    if (count > 0 && (!airModel || airModel.particlePressure === true)) {
       // 2. gridPressure — per awake particle: gather + scatter impulse.
+      // A coarse pressure model can retain this local density response.
+      // It also refreshes aux.x for particle separation and rendering.
+      // Models carrying material density in aux.x must leave this off.
       cp.setPipeline(P.pressure);
       cp.setBindGroup(0, instance.pressureBG);
       cp.dispatchWorkgroups(partGroups);
@@ -9434,13 +9465,21 @@ struct P2GParams {
     if (sparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
     else { cp.dispatchWorkgroups(cellGroups); }
 
+    if (airModel) {
+      cp.end();
+      airModel.encode(enc, instance, substepSlot | 0);
+      cp = enc.beginComputePass({ label: 'liquid.grid2.afterAir' });
+    }
+
     // 4. gridBoundary — per cell: tile-boundary reflection + floor/wall
     //    friction on the resolved velocity (v14.3 — the CPU
     //    liquidUpdateGrid boundary tail, finally ported).
-    cp.setPipeline(sparse ? P.gridBoundarySparse : P.gridBoundary);
-    cp.setBindGroup(0, instance.gridBoundaryBG);
-    if (sparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
-    else { cp.dispatchWorkgroups(cellGroups); }
+    if (!airModel || !airModel.handlesGridBoundary) {
+      cp.setPipeline(sparse ? P.gridBoundarySparse : P.gridBoundary);
+      cp.setBindGroup(0, instance.gridBoundaryBG);
+      if (sparse) { cp.dispatchWorkgroupsIndirect(instance.buf.blockDispatch, 0); }
+      else { cp.dispatchWorkgroups(cellGroups); }
+    }
 
     cp.end();
     liquidSubmit(instance, enc);
@@ -9564,6 +9603,99 @@ struct P2GParams {
         { binding: 9, resource: { buffer: instance.buf.calmCell } }   // v26.63 calm field
       ]
     });
+    // Machine pressure may supply a consistent staggered gather. Keep all
+    // nongather particle updates and collision rollback in the native kernel.
+    // This factory allocates nothing until the opt-in model calls it.
+    instance.createPressureGatherPipeline = function (options) {
+      if (!options || typeof options.gather !== 'string' || !options.gather.trim()) {
+        throw new Error('Machine velocity gather source is required.');
+      }
+      var extra = options.bindings || [];
+      if (!Array.isArray(extra)) throw new Error('Machine gather bindings must be an array.');
+      var storageCount = 8;
+      extra.forEach(function (entry) {
+        if (!entry || !entry.buffer || ['uniform', 'storage', 'read-only-storage'].indexOf(entry.type) < 0) {
+          throw new Error('Invalid machine gather binding.');
+        }
+        if (entry.type !== 'uniform') storageCount++;
+      });
+      if (storageCount > dev.limits.maxStorageBuffersPerShaderStage) {
+        throw new Error('Machine gather exceeds the storage-buffer limit.');
+      }
+      var types = ['uniform', 'storage', 'storage', 'storage', 'storage',
+        'read-only-storage', 'read-only-storage', 'uniform', 'storage', 'read-only-storage'];
+      var entries = types.map(function (type, binding) {
+        return {binding:binding, visibility:GPUShaderStage.COMPUTE, buffer:{type:type}};
+      });
+      extra.forEach(function (entry, i) {
+        entries.push({binding:10 + i, visibility:GPUShaderStage.COMPUTE, buffer:{type:entry.type}});
+      });
+      var customBgl = dev.createBindGroupLayout({label:'liquid.machineGatherBGL', entries:entries});
+      var customLayout = dev.createPipelineLayout({bindGroupLayouts:[customBgl]});
+      var start = WGSL_G2P_GATHER.indexOf('  // --- Awake gather');
+      var end = WGSL_G2P_GATHER.indexOf('  // v25.56 BATH B1: gather', start);
+      if (start < 0 || end <= start) throw new Error('Native velocity gather markers differ.');
+      var gatherSource = options.gather;
+      if (options.waterOnly === true) {
+        // Retain the native summation for every other material. Each branch
+        // exports only the six values used by the unchanged update below.
+        var exports = 'machineGatherValues = array<f32, 6>(vx, vy, gv00, gv01, gv10, gv11);';
+        gatherSource = '  let machineWaterGather = ((fl & 3u) | ((fl >> 4u) & 4u)) == 0u;\n' +
+          '  var machineGatherValues : array<f32, 6>;\n' +
+          '  if (machineWaterGather) {\n' + options.gather + '\n' + exports + '\n' +
+          '  } else {\n' + WGSL_G2P_GATHER.slice(start, end) + '\n' + exports + '\n' +
+          '  }\n' + ['vx', 'vy', 'gv00', 'gv01', 'gv10', 'gv11'].map(function (name, index) {
+            return '  var ' + name + ' : f32 = machineGatherValues[' + index + '];';
+          }).join('\n');
+      }
+      var customSource = WGSL_G2P_GATHER.slice(0, start) + gatherSource + '\n' + WGSL_G2P_GATHER.slice(end);
+      if (options.preserveGatherVelocity === true) {
+        if (options.waterOnly !== true) throw new Error('Physical gather transport requires the water-only factory.');
+        var transport = '  vx = npx - lx;\n  vy = npy - ly;';
+        if (customSource.split(transport).length !== 2) throw new Error('Native transport suffix marker differs.');
+        // Position rounding is not a physical impulse. Retain the gathered
+        // velocity on unclamped axes, while preserving the existing response
+        // for a real world-bound clamp and for all other materials.
+        customSource = customSource.replace(transport,
+          '  if (!machineWaterGather || lx + vx < minX || lx + vx > maxX ||\n' +
+          '      (lx <= minX && vx < 0.0) || (lx >= maxX && vx > 0.0)) { vx = npx - lx; }\n' +
+          '  if (!machineWaterGather || ly + vy < minY || ly + vy > maxY ||\n' +
+          '      (ly <= minY && vy < 0.0) || (ly >= maxY && vy > 0.0)) { vy = npy - ly; }');
+      }
+      if (options.preserveWorldPosition === true) {
+        if (options.waterOnly !== true || options.preserveGatherVelocity !== true)
+          throw new Error('World position transport requires the physical water-only gather.');
+        var positionWrite = '  pos[i] = vec4<f32>(npx * CELL, npy * CELL, newVX, newVY);';
+        if (customSource.split(positionWrite).length !== 2)
+          throw new Error('Native position transport marker differs.');
+        // An idle physical parcel must keep its world position. Avoid the
+        // cell-coordinate round trip, retaining the existing world bounds.
+        customSource = customSource.replace(positionWrite,
+          '  var machinePosition = vec2<f32>(npx * CELL, npy * CELL);\n' +
+          '  if (machineWaterGather) { machinePosition = clamp(pp.xy + vec2<f32>(vx, vy) * CELL,\n' +
+          '    vec2<f32>(minX, minY) * CELL, vec2<f32>(maxX, maxY) * CELL); }\n' +
+          '  pos[i] = vec4<f32>(machinePosition, newVX, newVY);');
+      }
+      if (options.afterAffine) {
+        var affineEnd = '  let oil = ((fl & 3u) | ((fl >> 4u) & 4u)) == 1u;';
+        if (customSource.indexOf(affineEnd) < 0) throw new Error('Native affine update marker differs.');
+        var afterAffine = options.waterOnly === true
+          ? '  if (machineWaterGather) {\n' + options.afterAffine + '\n  }'
+          : options.afterAffine;
+        customSource = customSource.replace(affineEnd, afterAffine + '\n' + affineEnd);
+      }
+      var module = dev.createShaderModule({label:'liquid.machineGather',
+        code:WGSL_G2P_PRELUDE + WGSL_SIM_PARAMS + simBind(7) + (options.declarations || '') + '\n' + customSource});
+      var bound = [instance.paramsBuf, instance.buf.pos, instance.buf.affine, instance.buf.aux,
+        instance.buf.flag, instance.buf.cellVelX, instance.buf.cellVelY, instance.simParamsBuf,
+        instance.buf.cellHeat, instance.buf.calmCell];
+      extra.forEach(function (entry) { bound.push(entry.buffer); });
+      return {module:module,
+        pipeline:dev.createComputePipeline({label:'liquid.machineGather', layout:customLayout,
+          compute:{module:module, entryPoint:'main'}}),
+        bindGroup:dev.createBindGroup({label:'liquid.machineGatherBG', layout:customBgl,
+          entries:bound.map(function (buffer, binding) { return {binding:binding, resource:{buffer:buffer}}; })})};
+    };
     instance.g2pReady = true;
   }
 
@@ -9620,6 +9752,120 @@ struct P2GParams {
           entryPoint: 'main'
         }
       })
+    };
+    // Machine mode may replace only the static terrain response. The factory
+    // allocates nothing until called; the default shaders and pipeline stay
+    // intact. Guest collision and its fallback use the existing source.
+    instance.createTerrainCollisionPipeline = function (terrainResponse, options) {
+      if (typeof terrainResponse !== 'string' || !terrainResponse.trim())
+        throw new Error('A terrain collision response is required.');
+      var start = WGSL_LIQUID_COLLIDE.indexOf('  var moveHit = false;');
+      var end = WGSL_LIQUID_COLLIDE.indexOf('  // Preserve the terrain-resolved state.', start);
+      if (start < 0 || end <= start) throw new Error('Terrain collision source boundaries are unavailable.');
+      var response = terrainResponse;
+      if (options && options.waterOnly === true) {
+        response = '  if (material == 0u) {\n' + terrainResponse + '\n  } else {\n' +
+          WGSL_LIQUID_COLLIDE.slice(start, end) + '\n  }';
+      }
+      var source = WGSL_LIQUID_COLLIDE.slice(0, start) + response + '\n' + WGSL_LIQUID_COLLIDE.slice(end);
+      var pointWater = options && options.pointWater === true;
+      if (pointWater) {
+        // The pressure domain uses mass points, including the narrow gap
+        // between a soft body and a wall. Match that footprint in both the
+        // primary collision and its compact fallback.
+        var radius = '  let r = COLLIDE_RADIUS;';
+        if (source.split(radius).length !== 3) throw new Error('Machine contact radius markers differ.');
+        source = source.replaceAll(radius, '  let r = select(COLLIDE_RADIUS, 0.0, ((fl & 3u) | ((fl >> 4u) & 4u)) == 0u);');
+        ['gnx', 'gny', 'ddx / dl', 'ddy / dl'].forEach(function (normal) {
+          source = source.replaceAll(normal + ' * 0.5', normal + ' * select(0.5, 0.0001, material == 0u)');
+        });
+      }
+      if (pointWater) {
+        var localSearch = `    if (!canProject && material == 0u) {
+      // A blocked closest point does not make the entire guest edge
+      // inaccessible. Search the nearby edge before a distant union exit.
+      var localD2=1e9;var localPoint=vec2<f32>(x,y);var localVelocity=vec2<f32>(vx,vy);
+      var localDestination=localPoint;var localNormal=vec2<f32>(0.0,-1.0);
+      for(var gi=0;gi<${GS_MAX_GUESTS};gi=gi+1){
+        if((guestInsideMask & (1u << u32(gi)))==0u){continue;}
+        let count=i32(gameP.guests[gi*2+1].y);let base=gi*${GS_RING};
+        for(var edge=0;edge<count;edge=edge+1){
+          let a=gameP.guestPts[base+edge];let b=gameP.guestPts[base+(edge+1)%count];
+          let subdivisions=max(1u,u32(ceil(length(b.xy-a.xy))));
+          let edgeVector=b.xy-a.xy;let edgeLength2=max(dot(edgeVector,edgeVector),1e-8);
+          let nearest=clamp(dot(vec2<f32>(x,y)-a.xy,edgeVector)/edgeLength2,0.0,1.0);
+          let first=i32(round(nearest*f32(subdivisions)));
+          let minimumDistance2=dot(mix(a.xy,b.xy,nearest)-vec2<f32>(x,y),mix(a.xy,b.xy,nearest)-vec2<f32>(x,y));
+          // Visit both sides of the closest sample in one ordered loop.
+          for(var ordinal=0u;ordinal<=subdivisions*2u;ordinal=ordinal+1u){
+            let offset=(ordinal+1u)/2u;
+            let along=max(0.0,f32(offset)-0.5)/f32(subdivisions);
+            if(minimumDistance2+along*along*edgeLength2>=localD2){break;}
+            let sample=first+select(-i32(offset),i32(offset),(ordinal&1u)==0u);
+            if(sample<0 || sample>i32(subdivisions)){continue;}
+              let t=f32(sample)/f32(subdivisions);let q=mix(a.xy,b.xy,t);let delta=q-vec2<f32>(x,y);
+              let d2=dot(delta,delta);if(d2<1e-6 || d2>=localD2){continue;}
+              // Offset along the edge normal, not a nearly tangent correction.
+              // Keep the clearance representable at the apparatus coordinates.
+              var normal=normalize(vec2<f32>(-edgeVector.y,edgeVector.x));
+              if(dot(normal,delta)<0.0){normal=-normal;}
+              let clearance=max(0.0001,max(abs(q.x),abs(q.y))*0.0000005);
+              let destination=q+normal*clearance;
+              if(solidRing(destination.x,destination.y,r) || guestAnyContainsPoint(destination.x,destination.y) ||
+                !machinePointExitClear(vec2<f32>(x,y),destination,r)){continue;}
+              localD2=d2;localPoint=q;localVelocity=mix(a.zw,b.zw,t);
+              localDestination=destination;localNormal=normal;
+          }
+        }
+      }
+      if(localD2<1e9){
+        gD2=localD2;gPX=localPoint.x;gPY=localPoint.y;gFVX=localVelocity.x;gFVY=localVelocity.y;
+        gdep=sqrt(gD2);gnx=localNormal.x;gny=localNormal.y;
+        gtx=localDestination.x;gty=localDestination.y;canProject=true;
+      }
+    }
+`;
+        var localMarker = "    if (!canProject) {\n      // The nearest face is either internal to the union or blocked by";
+        if (source.split(localMarker).length !== 2) throw new Error("Machine local contact marker differs.");
+        source = source.replace(localMarker, localSearch + localMarker);
+        source += `
+fn machinePointSegmentClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
+  let count=max(1u,u32(ceil(length(b-a))));
+  for(var step=1u;step<=count;step=step+1u){
+    let p=mix(a,b,f32(step)/f32(count));
+    if(solidRing(p.x,p.y,r)){return false;}
+  }
+  return true;
+}
+fn machinePointExitClear(a:vec2<f32>,b:vec2<f32>,r:f32)->bool {
+  if(machinePointSegmentClear(a,b,r)){return true;}
+  if(abs(b.x-a.x)+abs(b.y-a.y)>2.0*gp.worldTile){return false;}
+  // A short correction can follow two clear wall faces around a corner.
+  // Test each segment so the particle cannot cross the solid corner itself.
+  let horizontal=vec2<f32>(b.x,a.y);
+  if(machinePointSegmentClear(a,horizontal,r) && machinePointSegmentClear(horizontal,b,r)){return true;}
+  let vertical=vec2<f32>(a.x,b.y);
+  return machinePointSegmentClear(a,vertical,r) && machinePointSegmentClear(vertical,b,r);
+}
+`;
+
+      }
+      var customGuestSkin = options && options.guestSkinTolerance !== undefined;
+      if (customGuestSkin) {
+        var tolerance = options.guestSkinTolerance;
+        if (!Number.isFinite(tolerance) || tolerance < 0 || tolerance > 1.5) {
+          throw new Error('Machine guest skin tolerance must be between zero and 1.5 pixels.');
+        }
+        var condition = 'if (gdep > select(1.5, 0.0, guestSoft)) {';
+        if (source.split(condition).length !== 3) throw new Error('Native primary and fallback guest skin markers differ.');
+        source = source.replaceAll(condition, 'if (gdep > select(' + tolerance.toFixed(6) + ', 0.0, guestSoft)) {');
+      }
+      var module = dev.createShaderModule({label:'liquid.machineTerrain',code:WGSL_GAME_PARAMS+
+        WGSL_COLLIDE_PRELUDE+WGSL_GUEST_GEOMETRY+WGSL_SIM_PARAMS+simBind(6)+source});
+      return {module:module,pipeline:dev.createComputePipeline({label:'liquid.machineCollide',
+        layout:liquidLayout,compute:{module:module,entryPoint:'main'}}),
+        fallbackPipeline:customGuestSkin || pointWater ? dev.createComputePipeline({label:'liquid.machineFallback',
+          layout:liquidFallbackLayout,compute:{module:module,entryPoint:'liquidCompactFallback'}}) : null};
     };
     instance.collidePipe.liquidResetFallback = dev.createComputePipeline({label:'liquid.resetFallback',layout:liquidLayout,compute:{module:liquidModule,entryPoint:'resetLiquidFallback'}});
     instance.collidePipe.liquidFallback = dev.createComputePipeline({label:'liquid.fallback',layout:liquidFallbackLayout,compute:{module:liquidModule,entryPoint:'liquidCompactFallback'}});
@@ -9789,8 +10035,10 @@ struct P2GParams {
     writeSimParams(instance);
     var enc = liquidEncoder(instance, 'liquid.runG2P');
     var cp = enc.beginComputePass({ label: 'liquid.g2p' });
-    cp.setPipeline(instance.g2pPipe.gather);
-    cp.setBindGroup(0, instance.g2pBG);
+    var pressureGather = instance.pressureModel && instance.pressureModel.enabled &&
+      instance.pressureModel.gatherPipeline && instance.pressureModel.gatherBindGroup;
+    cp.setPipeline(pressureGather ? instance.pressureModel.gatherPipeline : instance.g2pPipe.gather);
+    cp.setBindGroup(0, pressureGather ? instance.pressureModel.gatherBindGroup : instance.g2pBG);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     cp.end();
     liquidSubmit(instance, enc);
@@ -9927,7 +10175,9 @@ struct P2GParams {
       cp.setPipeline(snowOnly ? instance.collidePipe.snowResetFallback : instance.collidePipe.liquidResetFallback);
       cp.dispatchWorkgroups(1);
     }
-    cp.setPipeline(snowOnly ? (terrainOnly ? instance.collidePipe.snowTerrain : instance.collidePipe.snow) : instance.collidePipe.collide);
+    var machineCollision = !snowOnly && instance.pressureModel && instance.pressureModel.enabled
+      ? instance.pressureModel.collisionPipeline : null;
+    cp.setPipeline(snowOnly ? (terrainOnly ? instance.collidePipe.snowTerrain : instance.collidePipe.snow) : machineCollision || instance.collidePipe.collide);
     cp.dispatchWorkgroups(Math.max(1, Math.ceil(count / WG)));
     if (snowOnly && terrainOnly) {
       // No resident queue or fallback pass; keep contact motion tracking.
@@ -9964,7 +10214,9 @@ struct P2GParams {
       // reuse the queue and terrain-resolved particle state.
       // One possible entry per particle bounds this guarded dispatch by count.
       cp = enc.beginComputePass({label:'liquid.fallback'});
-      cp.setPipeline(instance.collidePipe.liquidFallback);
+      var machineFallback = instance.pressureModel && instance.pressureModel.enabled
+        ? instance.pressureModel.collisionFallbackPipeline : null;
+      cp.setPipeline(machineFallback || instance.collidePipe.liquidFallback);
       cp.setBindGroup(0,instance.liquidFallbackBGs[substepSlot | 0] || instance.liquidFallbackBGs[0]);
       cp.dispatchWorkgroups(Math.ceil(count / 32));
       cp.end();
@@ -10488,7 +10740,7 @@ struct P2GParams {
     rh[4] = ch;
     rh[5] = sizeBase * LIQUID_WATER_PARTICLE_SIZE;
     rh[6] = sizeBase * LIQUID_OIL_PARTICLE_SIZE;
-    rh[7] = 0;
+    rh[7] = instance.volumeSplats ? 1 : 0;
     // v14.25 — live fluid colours. Lanes 8..19 mirror the WGSL vec4 fields
     // waterColor / waterFoam / oilColor; setRenderParam() mutates these
     // module vars so the next frame picks up the new colour, no recompile.
@@ -11026,11 +11278,88 @@ fn removeRows(@builtin(global_invocation_id) id:vec3u) {
   // Apply the game's pending mutation ops to the resident GPU buffers.
   // Returns the new live count. Falls back to a full uploadParticles when
   // the ops path is unavailable or the stream fails validation.
+  function applyMaterialParticleOps(instance, ops, target) {
+    // Carried material volume is resident state. Validate the complete log
+    // before writing any chunk, so a late corrupt op cannot partly apply.
+    if (!Array.isArray(ops) || !instance.opsReady || !Number.isInteger(target) || target < 0 || target > instance.maxParticles) {
+      throw new Error('Water material mutation log is unavailable.');
+    }
+    var count = instance.uploadedCount;
+    if (!Number.isInteger(count) || count < 0 || count > instance.maxParticles) {
+      throw new Error('Water resident particle count is invalid.');
+    }
+    var length = ops.length;
+    if (!Number.isSafeInteger(length) || length < 0 || (!length && instance.liquid.getMutationSeq() !== instance.lastUploadSeq)) {
+      throw new Error('Water material mutation log is incomplete.');
+    }
+    var chunks = [], start = 0, startCount = count, cursor = 0;
+    function integer(value, low, high) {
+      return Number.isInteger(value) && value >= low && value <= high;
+    }
+    while (cursor < length) {
+      var tag = ops[cursor];
+      var size = tag === 1 || tag === 3 ? 7 : tag === 2 ? 2 : tag === 4 ? 4 : 0;
+      if (!size || cursor + size > length) throw new Error('Water material mutation log is truncated or corrupt.');
+      for (var field = cursor; field < cursor + size; field++) {
+        if (!Number.isFinite(ops[field]) || !Number.isFinite(Math.fround(ops[field]))) {
+          throw new Error('Water material mutation contains a nonfinite value.');
+        }
+      }
+      if (cursor + size - start > OPS_CAPACITY) {
+        chunks.push({start:start, end:cursor, count:startCount});
+        start = cursor; startCount = count;
+      }
+      if (tag === 1) {
+        if (count >= instance.maxParticles || !integer(ops[cursor + 5], 0, 5) || !integer(ops[cursor + 6], 0, 3)) {
+          throw new Error('Water material add operation is invalid.');
+        }
+        count++;
+      } else {
+        if (!integer(ops[cursor + 1], 0, count - 1)) throw new Error('Water material particle index is invalid.');
+        if (tag === 2) count--;
+        else {
+          var typeOffset = tag === 3 ? 5 : 2;
+          if (!integer(ops[cursor + typeOffset], 0, 5) || !integer(ops[cursor + typeOffset + 1], 0, 3)) {
+            throw new Error('Water material edit flags are invalid.');
+          }
+        }
+      }
+      cursor += size;
+    }
+    if (count !== target) throw new Error('Water material mutation count differs from the host.');
+    if (cursor > start) chunks.push({start:start, end:cursor, count:startCount});
+    if (instance.readbackPending && !instance.readbackOpsInvalid) {
+      if (instance.readbackOps.length + length > OPS_CAPACITY) instance.readbackOpsInvalid = true;
+      else for (var row = 0; row < length; row++) instance.readbackOps.push(ops[row]);
+      instance.readbackOpsSeq = instance.liquid.getMutationSeq();
+    }
+    chunks.forEach(function (chunk) {
+      var size = chunk.end - chunk.start;
+      for (var i = 0; i < size; i++) instance.opsHost[i] = ops[chunk.start + i];
+      instance.queue.writeBuffer(instance.opsBuf, 0, instance.opsHost, 0, size);
+      var params = instance.opsParamsHost;
+      params[0] = size; params[1] = chunk.count; params[2] = 0; params[3] = 0;
+      instance.queue.writeBuffer(instance.opsParamsBuf, 0, params);
+      var encoder = instance.device.createCommandEncoder({label:'liquid.materialOpsReplay'});
+      var pass = encoder.beginComputePass({label:'liquid.materialOpsReplay'});
+      pass.setPipeline(instance.opsPipe); pass.setBindGroup(0, instance.opsBG);
+      pass.dispatchWorkgroups(1); pass.end();
+      // Submit before the next write to this shared buffer and uniform.
+      instance.queue.submit([encoder.finish()]);
+    });
+    ops.length = 0;
+    instance.uploadedCount = target;
+    return target;
+  }
+
   function applyParticleOps(instance) {
     var L = instance.liquid;
     var target = L.getCount() | 0;
     if (target > instance.maxParticles) target = instance.maxParticles;
     var ops = (typeof L.takeOps === 'function') ? L.takeOps() : null;
+    if (instance.pressureModel && instance.pressureModel.enabled && instance.pressureModel.preserveMaterialState) {
+      return applyMaterialParticleOps(instance, ops, L.getCount());
+    }
     if (!ops || !instance.opsReady) {
       if (ops) ops.length = 0;
       return uploadParticles(instance, true);
@@ -12309,6 +12638,13 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       getReadbackAge: function () {
         return Math.max(0, instance.simulationClock - instance.readbackAppliedTime);
       },
+      // Opt-in pressure companions decode the exact selected native uniform,
+      // rather than duplicating lane constants or interpolating another pose.
+      getGuestUniformLayout: function () {
+        return Object.freeze({lanes:GS_PARAM_LANES,slots:GS_FRAME_SLOTS,
+          maxGuests:GS_MAX_GUESTS,ringPoints:GS_RING,
+          metaBase:GS_META_BASE,ringBase:GS_RING_BASE});
+      },
       // Totals count queue visits across the whole sampled frame, not unique
       // particles. Peaks are the largest individual batch. Terrain-only snow
       // batches have no guest queues and are counted separately. Sampling
@@ -12335,11 +12671,47 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         result.error = instance.diagnosticsError;
         return result;
       },
+      setPressureModel: function (model) {
+        if (model && (typeof model.encode !== 'function' || typeof model.setEnabled !== 'function')) {
+          throw new Error('Invalid opt-in liquid pressure model.');
+        }
+        if (instance.pressureModel && instance.pressureModel !== model) instance.pressureModel.setEnabled(false);
+        instance.pressureModel = model || null;
+        instance.materialStateError = null;
+      },
+      prepareMaterialState: function (options) {
+        // Activation may follow a newly constructed apparatus or existing
+        // resident water. Apply authored deltas before resetting its EOS.
+        var liquid = instance.liquid;
+        var seq = liquid.getMutationSeq();
+        var count = liquid.getCount();
+        if (!Number.isInteger(count) || count < 0 || count > instance.maxParticles) {
+          throw new Error('Water material activation count is invalid.');
+        }
+        if (!instance.residentSeeded || options && options.reset === true) {
+          count = uploadParticles(instance, true);
+          discardPendingOps(instance);
+        } else if (seq !== instance.lastUploadSeq) {
+          count = applyMaterialParticleOps(instance, liquid.takeOps(), count);
+        }
+        instance.lastUploadSeq = seq;
+        instance.residentSeeded = count > 0;
+        // The initialization kernel reads Grid.count before the next grid
+        // build. Update that lane without disturbing its existing mapping.
+        instance.paramsHost[0] = count;
+        instance.queue.writeBuffer(instance.paramsBuf, 0, instance.paramsHost, 0, 1);
+        return count;
+      },
       update: function (dt) {
-        if (!instance.simActive) return;
+        if (!instance.simActive || instance.materialStateError) return;
         try {
           runFrame(instance, dt);
         } catch (e) {
+          if (instance.pressureModel && instance.pressureModel.enabled && instance.pressureModel.preserveMaterialState) {
+            instance.materialStateError = (e && e.message) || String(e);
+            instance.pressureModel.error = instance.materialStateError;
+            return;
+          }
           instance.diagnosticsActive = false;
           stopLiquidDiagnostics(instance);
           instance.simActive = false;
@@ -12407,6 +12779,7 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             case 'SURF_BRIDGE_R':        LIQUID_SURF_BRIDGE_R = v < 1 ? 1 : (v > 8 ? 8 : v); break;
             case 'SURFACE_SOFT':         LIQUID_SURFACE_SOFT = v; break;
             case 'SURFACE_RSCALE':       LIQUID_SURFACE_RSCALE = v; break;
+            case 'VOLUME_SPLATS':        instance.volumeSplats = v >= 0.5; break;
             case 'DROPLETS':             LIQUID_DROPLETS = v ? 1 : 0; break;   // v25.32 visible strays/spray
             // v25.57 BATH B1 heat tint (docs/game/BATHHOUSE_PLAN.md): dial
             // the hot-water look for the feel-check; STR 0 kills the tint.
@@ -12440,6 +12813,14 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         LIQUID_BATH_ON = 0; LIQUID_BATH_BUOY = 0; LIQUID_BATH_TINT_STR = 0;
         if (!instance.bathThermal) instance.bathThermal = new Float32Array(296);
         instance.bathThermal.set(data);
+      },
+      getSimParam: function (name) {
+        if(name==='GRAVITY')return LIQUID_MATS && LIQUID_MATS[0] ? LIQUID_MATS[0].gravity : LIQUID_GRAVITY;
+        if(name==='TIMESCALE')return LIQUID_TIMESCALE;
+        if(name==='MAX_VEL')return LIQUID_MAX_VEL;
+        if(name==='BURST_DAMP')return LIQUID_BURST_DAMP;
+        if(name==='AIR_DRAG')return LIQUID_AIR_DRAG;
+        return undefined;
       },
       setSimParam: function (name, value) {
         try {
@@ -12665,6 +13046,10 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       dispose: function () {
         instance.sparseGridFusionRequest=null;instance.sparseClearFusion=null;instance.snowIndexResetFusion=null;
         instance.snowBoundaryFusedRequest=null;instance.snowBoundaryFused=null;
+        if (instance.pressureModel && typeof instance.pressureModel.destroy === 'function') {
+          instance.pressureModel.destroy();
+          instance.pressureModel = null;
+        }
         instance.diagnosticsActive = false;
         stopLiquidDiagnostics(instance);
         if (instance.buf) {

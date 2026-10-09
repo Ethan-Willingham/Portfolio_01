@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.13'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.37'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -100,8 +100,21 @@
   // World px == stage CSS px. Physics, drawing and every engine speak
   // world px; resizes after boot only rescale the stage transform.
   var availW = Math.max(320, Math.min(viewport.clientWidth || 960, 1120));
+  var sharedBuildData=null,sharedBuildError=null;
+  var buildToken=new URL(window.location.href).searchParams.get('build');
+  if(buildToken && window.WaterMachinesBuilder){
+    try{
+      sharedBuildData=window.WaterMachinesBuilder.decode(buildToken);
+      if(sharedBuildData.tile!==8 || sharedBuildData.width*8>1600 || sharedBuildData.height*8>1800)
+        throw new Error('This build is larger than this playground supports.');
+    }catch(error){sharedBuildError=error.message;sharedBuildData=null;}
+  }
+  // The stock cup has one physical size. Viewport changes belong to the
+  // camera, so a short browser cannot silently shrink the water and slime.
+  var cupWorld = {w:1120,h:664};
+  var cupSceneRequested = new URL(window.location.href).searchParams.get('scene') === 'cup';
   var portrait = window.innerHeight > window.innerWidth * 1.15;
-  var worldW = Math.round(availW);
+  var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : cupSceneRequested ? cupWorld.w : Math.round(availW);
   function stageRoom() {
     var h = window.innerHeight - (viewport.getBoundingClientRect().top + window.scrollY) - 16;
     ['.toy-dock', '.toy-foot'].forEach(function (selector) {
@@ -109,10 +122,17 @@
     });
     return Math.max(320, h);
   }
+  function displayStageRoom(){
+    var h=window.innerHeight-Math.max(0,viewport.getBoundingClientRect().top)-16;
+    ['.toy-dock','.toy-foot'].forEach(function(selector){h-=document.querySelector(selector).getBoundingClientRect().height;});
+    return Math.max(80,h);
+  }
   var availableHeight = stageRoom();
   var worldH = portrait
     ? Math.round(Math.max(320, Math.min(availableHeight, window.innerHeight * 0.58, worldW * 1.30)))
     : Math.round(Math.max(320, Math.min(worldW * 0.60, availableHeight)));
+  if(sharedBuildData)worldH=sharedBuildData.height*sharedBuildData.tile;
+  else if(cupSceneRequested)worldH=cupWorld.h;
 
   stage.style.width = worldW + 'px';
   stage.style.height = worldH + 'px';
@@ -120,7 +140,9 @@
   canvas.height = Math.round(worldH * dpr);
   var ctx = canvas.getContext('2d');
 
-  var fitScale = 1;
+  var fitScale = 1,baseFitScale = 1,viewZoom = 1,viewPanX = 0,viewPanY = 0;
+  var cameraWidth = worldW,cameraHeight = worldH,cameraMaxPanX = 0,cameraMaxPanY = 0;
+  var buildViewProjection=null;
   function fitStage() {
     var w = viewport.clientWidth || worldW;
     var shell = document.getElementById('toy');
@@ -133,13 +155,57 @@
       });
       h = Math.max(1, h);
     }
-    fitScale = Math.min(w / worldW, (expanded ? h : stageRoom()) / worldH);
+    // Give the stock cup the available page width. The article may scroll;
+    // fitting it between the heading and tool dock made the model tiny.
+    // Expanded view still fits the complete apparatus inside the player.
+    baseFitScale = !expanded && currentScene==='cup' ? w / worldW
+      : Math.min(w / worldW, (expanded ? h : displayStageRoom()) / worldH);
+    cameraWidth=w;cameraHeight=expanded ? h : Math.round(worldH*baseFitScale);
+    fitScale=baseFitScale*viewZoom;
+    cameraMaxPanX=Math.max(0,(worldW*fitScale-cameraWidth)*.5);
+    cameraMaxPanY=Math.max(0,(worldH*fitScale-cameraHeight)*.5);
+    viewPanX=Math.max(-cameraMaxPanX,Math.min(cameraMaxPanX,viewPanX));
+    viewPanY=Math.max(-cameraMaxPanY,Math.min(cameraMaxPanY,viewPanY));
     stage.style.transform = fitScale === 1 ? 'none' : 'scale(' + fitScale + ')';
-    stage.style.left = (w - worldW * fitScale) / 2 + 'px';
-    stage.style.top = expanded ? (h - worldH * fitScale) / 2 + 'px' : '0';
-    viewport.style.height = (expanded ? h : Math.round(worldH * fitScale)) + 'px';
+    stage.style.left = (cameraWidth-worldW*fitScale)*.5+viewPanX+'px';
+    stage.style.top = (expanded || viewZoom!==1 ? (cameraHeight-worldH*fitScale)*.5 : 0)+viewPanY+'px';
+    viewport.style.height = cameraHeight+'px';
+    var bounds=stage.getBoundingClientRect(),projection=[bounds.left,bounds.top,bounds.width,bounds.height];
+    // A captured construction stroke uses screen-to-world coordinates. A
+    // toolbar-height, fullscreen or scroll change must not add a new bend.
+    if(buildViewProjection && buildGesture && projection.some(function(value,index){
+      return Math.abs(value-buildViewProjection[index])>.01;
+    }))cancelHeldInput();
+    buildViewProjection=projection;
+  }
+  function cameraState(){
+    return {zoom:viewZoom,panX:viewPanX,panY:viewPanY,scale:fitScale,baseScale:baseFitScale,
+      width:cameraWidth,height:cameraHeight,maxPanX:cameraMaxPanX,maxPanY:cameraMaxPanY};
+  }
+  function setCamera(options){
+    options=options || {};
+    ['zoom','panX','panY'].forEach(function(key){
+      if(options[key]!==undefined && !Number.isFinite(options[key]))throw new Error('View '+key+' must be a finite number.');
+    });
+    cancelHeldInput();
+    if(options.zoom!==undefined)viewZoom=Math.max(1,Math.min(4,options.zoom));
+    if(options.panX!==undefined)viewPanX=options.panX;
+    if(options.panY!==undefined)viewPanY=options.panY;
+    fitStage();
+    if(keyboardCursorVisible){
+      // Keep an idle construction cursor inside the explicitly selected view.
+      // The solver world and every particle remain at their original position.
+      var bounds=stage.getBoundingClientRect(),view=viewport.getBoundingClientRect();
+      var minX=Math.max(TILE,(view.left-bounds.left)/fitScale+TILE),maxX=Math.min(worldW-TILE,(view.right-bounds.left)/fitScale-TILE);
+      var minY=Math.max(TILE,(view.top-bounds.top)/fitScale+TILE),maxY=Math.min(worldH-TILE,(view.bottom-bounds.top)/fitScale-TILE);
+      positionKeyboardCursor(Math.max(minX,Math.min(maxX,keyboardX)),Math.max(minY,Math.min(maxY,keyboardY)));
+      px=keyboardX;py=keyboardY;
+    }
+    drawMachineOverlay();
+    return cameraState();
   }
   window.addEventListener('resize', fitStage);
+  window.addEventListener('scroll',fitStage,{passive:true});
 
   // ---- Game-compat globals -------------------------------------------
   // The engine copies below were written against the game's IIFE scope.
@@ -182,13 +248,14 @@
    * the box is a terrarium, nothing leaves it. ==== */
   var gridW = COLS, gridH = TOTAL_ROWS;
   var walls = new Uint8Array(gridW * gridH);
+  var valveSeats=null;
   var wallsVersion = 0;             // bumped on any edit (smoke + render caches key off it)
   var WALL_TILE = { type: 'stone', hp: 9 };
 
   function tileAt(r, c) {
     if (c < 0 || c >= gridW || r >= gridH) return WALL_TILE;   // sides + below: solid
     if (r < 0) return WALL_TILE;                               // above: solid (closed box)
-    return walls[r * gridW + c] ? WALL_TILE : null;
+    return (walls[r * gridW + c] || (valveSeats && valveSeats[r * gridW + c])) ? WALL_TILE : null;
   }
 
   function addBorder() {
@@ -262,6 +329,7 @@
   wallsCanvas.setAttribute('aria-hidden', 'true');
   stage.appendChild(wallsCanvas);
   var wallsCtx = wallsCanvas.getContext('2d');
+  var instrumentsCanvas=null,instrumentsCtx=null,instrumentsDirty=false;
   var wallsBakedVersion = -1;
 
   function simplifyWall(points, tolerance) {
@@ -283,7 +351,7 @@
 
   function wallOutline() {
     function solid(r, c) {
-      return r > 0 && c > 0 && r < gridH - 1 && c < gridW - 1 && walls[r * gridW + c];
+      return r > 0 && c > 0 && r < gridH - 1 && c < gridW - 1 && tileAt(r,c)!==null;
     }
     var edges = [], starts = new Map();
     function edge(x, y, ex, ey, dir) {
@@ -358,6 +426,25 @@
     wallsCtx.clearRect(0, 0, worldW, worldH);
     var path = wallOutline();
     var palette = getComputedStyle(document.documentElement);
+    if(glassWalls && airModel && airModel.enabled){
+      wallsCtx.fillStyle=palette.getPropertyValue('--accent').trim();
+      wallsCtx.globalAlpha=.12;
+      for(var row=1;row<gridH-1;row++)for(var col=1;col<gridW-1;col++)
+        if(tileAt(row,col)!==null)wallsCtx.fillRect(col*TILE,row*TILE,TILE,TILE);
+      wallsCtx.globalAlpha=1;wallsCtx.strokeStyle=palette.getPropertyValue('--accent').trim();
+      wallsCtx.lineWidth=1;wallsCtx.globalAlpha=.72;
+      for(row=1;row<gridH-1;row++)for(col=1;col<gridW-1;col++){
+        if(tileAt(row,col)===null)continue;
+        var x=col*TILE,y=row*TILE;
+        wallsCtx.beginPath();
+        if(tileAt(row-1,col)===null){wallsCtx.moveTo(x,y);wallsCtx.lineTo(x+TILE,y);}
+        if(tileAt(row+1,col)===null){wallsCtx.moveTo(x,y+TILE);wallsCtx.lineTo(x+TILE,y+TILE);}
+        if(tileAt(row,col-1)===null){wallsCtx.moveTo(x,y);wallsCtx.lineTo(x,y+TILE);}
+        if(tileAt(row,col+1)===null){wallsCtx.moveTo(x+TILE,y);wallsCtx.lineTo(x+TILE,y+TILE);}
+        wallsCtx.stroke();
+      }
+      wallsCtx.globalAlpha=1;return;
+    }
     var fill = wallsCtx.createLinearGradient(0, 0, worldW * 0.2, worldH);
     fill.addColorStop(0, palette.getPropertyValue('--bg').trim() || '#303931');
     fill.addColorStop(1, palette.getPropertyValue('--bg-raised').trim() || '#1e2420');
@@ -395,6 +482,7 @@
   var LIQUID_MAX_PARTICLES = isMobile ? 40000 : 100000;
   var LIQUID_DENSITY_REST = 4;              // mirrors the module's 1/PDELTA^2
   var LIQUID_OPS_MAX = 300000;
+  var LIQUID_MACHINE_OPS_MAX = 900000;
 
   var liquidType = new Uint8Array(LIQUID_MAX_PARTICLES);
   var liquidX = new Float32Array(LIQUID_MAX_PARTICLES);
@@ -420,6 +508,12 @@
   var liquidOps = [];
   var liquidOpsOverflow = false;
 
+  function canRecordLiquidOp(slots) {
+    return airModel && airModel.enabled && airModel.preserveMaterialState
+      ? liquidOps.length + slots <= LIQUID_MACHINE_OPS_MAX
+      : liquidOps.length < LIQUID_OPS_MAX;
+  }
+
   // Faithful port of addLiquidParticle from js/sluice/030-worldgen.js.
   function addLiquidParticle(type, x, y, vx, vy, origin) {
     if (liquidCount >= LIQUID_MAX_PARTICLES) return -1;
@@ -438,16 +532,22 @@
     liquidFrozen[id] = 0;
     liquidRestFrames[id] = 0;
     liquidOrphanDwell[id] = 0;
-    if (liquidOps.length < LIQUID_OPS_MAX) {
+    if (canRecordLiquidOp(7)) {
       liquidOps.push(1, x, y, vx || 0, vy || 0, liquidType[id], liquidOrigin[id]);
     } else liquidOpsOverflow = true;
+    if(machineState && machineState.energyInitial){
+      var density=airModel && airModel.settings.density || 1;
+      machineState.energyInput+=density*1.5625*(250*gravMul*presetGravScale*(worldH-y)+.5*((vx || 0)*(vx || 0)+(vy || 0)*(vy || 0)));
+      machineState.inputParticles++;
+    }
     return id;
   }
 
   function removeLiquidParticle(i) {
     var last = liquidCount - 1;
     if (i < 0 || i > last) return;
-    if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(2, i);
+    if(machineState && machineState.energyInitial)machineState.energyModified=true;
+    if (canRecordLiquidOp(2)) liquidOps.push(2, i);
     else liquidOpsOverflow = true;
     if (i !== last) {
       liquidType[i] = liquidType[last];
@@ -477,6 +577,7 @@
    * retires immediately; moving spray gets four seconds to land or rejoin.
    * Real streams and pools reset their dwell because they have ample support. */
   function retireLiquidOrphans() {
+    if (airModel && airModel.enabled) return;
     liquidOrphanTick++;
     if (liquidOrphanTick < 30 || !liquidCount) return;
     liquidOrphanTick = 0;
@@ -518,7 +619,7 @@
       var dx = liquidX[i] - wx, dy = liquidY[i] - wy;
       if (dx * dx + dy * dy > r2) continue;
       liquidSleeping[i] = 0; liquidFrozen[i] = 0; liquidRestFrames[i] = 0;
-      if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+      if (canRecordLiquidOp(4)) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
       else liquidOpsOverflow = true;
       n++;
     }
@@ -563,6 +664,7 @@
     // test window races the GPU dispatch against the CPU reference's
     // module-var reads and flakes Stage 5.
     if (!liquidWGPU || !liquidWGPU.setSimParam || !liquidWGPU.simActive) return;
+    if (airModel && airModel.enabled) return;
     var inputNow = (performance.now() - waterInputT) < 250;
     if (inputNow) waterInputHoldT += dt;
     else waterInputHoldT = 0;
@@ -671,6 +773,12 @@
   }
 
   function buildGuests() {
+    var materialGuests=!!(airModel && airModel.enabled && (airModel.preserveMaterialState || machineState && machineState.definition.name==='cup'));
+    var waterGuestTime=1;
+    if(materialGuests){
+      waterGuestTime=liquidWGPU.getSimParam('TIMESCALE');
+      if(!(Number.isFinite(waterGuestTime) && waterGuestTime>0))throw new Error('Moving water boundaries need a positive simulation clock.');
+    }
     // Slime silhouettes as moving fluid boundaries: the same registration
     // the game's bathhouse guests use (072-bath.js v26.05) — the ordered
     // boundary ring resampled to <= 20 verts, each carrying its Verlet
@@ -714,7 +822,20 @@
     var out = new Array(8);
     var any = false;
     for (var os = 0; os < out.length; os++) out[os] = { pts: null };
-    if (pokeSlot >= 0) { out[pokeSlot] = pokeGuest; any = true; }
+    if (pokeSlot >= 0) {
+      out[pokeSlot] = pokeGuest;
+      if(materialGuests){
+        var pointerPts=pokeGuest.pts.slice();
+        var pointerHW=0,pointerHH=0;
+        for(var pp=0;pp<pointerPts.length;pp+=4){
+          pointerPts[pp+2]/=waterGuestTime;pointerPts[pp+3]/=waterGuestTime;
+          pointerHW=Math.max(pointerHW,Math.abs(pointerPts[pp]-pokeGuest.x));
+          pointerHH=Math.max(pointerHH,Math.abs(pointerPts[pp+1]-pokeGuest.y));
+        }
+        out[pokeSlot]=Object.assign({},pokeGuest,{pts:pointerPts,hw:pointerHW+.01,hh:pointerHH+.01});
+      }
+      any = true;
+    }
     if (order.length) {
       // Real velocity = (p - o) * TIMESCALE / H (the same live conversion
       // jelloWaterCoupleTick uses). The first draft used 1/H flat, which
@@ -725,6 +846,9 @@
       var gts = (typeof JELLO_TIMESCALE === 'number' && JELLO_TIMESCALE >= 0.02) ? JELLO_TIMESCALE : 0.5;
       var gH = (typeof jelloStepH === 'number' && jelloStepH > 0) ? jelloStepH : (1 / 240);
       var ih = gts / gH;
+      // Machine boundaries and water both report distance per water simulation
+      // second. The ordinary toy retains its calibrated real-time conversion.
+      if(materialGuests)ih/=waterGuestTime;
       for (var i = 0; i < liquidGuestSlots.length; i++) {
         var b = liquidGuestSlots[i];
         if (!b || i === pokeSlot) continue;
@@ -741,7 +865,7 @@
           // repeats this centrally for every host, but keeping the toy's
           // source honest makes the dead-band below read the same velocity.
           var spd = Math.sqrt(pvx * pvx + pvy * pvy);
-          if (spd > 600) {
+          if (!materialGuests && spd > 600) {
             var psc = 600 / spd;
             pvx *= psc; pvy *= psc; spd = 600;
           }
@@ -761,7 +885,7 @@
         // fades in and sheds real ripples/crowns exactly as before.
         var vScale = (vMax - 25) / 50;
         if (vScale < 0) vScale = 0; else if (vScale > 1) vScale = 1;
-        if (vScale < 1) {
+        if (!materialGuests && vScale < 1) {
           for (var kz = 0; kz < take; kz++) {
             pts[kz * 4 + 2] *= vScale;
             pts[kz * 4 + 3] *= vScale;
@@ -775,8 +899,8 @@
         var ghh = (b.bboxB - b.bboxT) / 2 + 3;
         out[i] = {
           x: (b.bboxL + b.bboxR) / 2, y: (b.bboxT + b.bboxB) / 2,
-          hw: ghw < 8 ? 8 : (ghw > 64 ? 64 : ghw),
-          hh: ghh < 8 ? 8 : (ghh > 64 ? 64 : ghh),
+          hw: materialGuests ? ghw : ghw < 8 ? 8 : (ghw > 64 ? 64 : ghw),
+          hh: materialGuests ? ghh : ghh < 8 ? 8 : (ghh > 64 ? 64 : ghh),
           mvx: mvxSum / take, mvy: mvySum / take,   // v26.10 lateral-eviction lanes
           pts: pts
         };
@@ -811,6 +935,218 @@
   // ---- Module boot ------------------------------------------------------
   var liquidWGPU = null;
   var waterState = 'booting';   // 'booting' | 'on' | 'off'
+  var airModel = null;
+  var airRequest = 0;
+  var airGeometryVersion = -1;
+  var airStaticGeometry = null;
+  var airHadBodies = false;
+  var airState = { ready:false, error:null };
+
+  // Experimental pressure mode is attached only by an explicit test or
+  // machine request. Ordinary scenes do not allocate its GPU resources.
+  function airGeometryTick() {
+    if (!airModel || !airModel.enabled) return;
+    var materialGuests=!!(airModel.preserveMaterialState || machineState && machineState.definition.name==='cup');
+    var boundaryGuests=materialGuests ? buildGuests() : null;
+    var hasBodies=materialGuests ? !!(boundaryGuests && boundaryGuests.some(function(g){return g.pts && g.pts.length>=12;})) : !!jelloBodies.length;
+    if (airGeometryVersion === wallsVersion && !hasBodies && !airHadBodies) return;
+    var w=airModel.width,h=airModel.height,dx=airModel.cellSize;
+    var count=w*h,base=airStaticGeometry;
+    function wallAt(x,y){return tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null;}
+    // A pressure cell can straddle an eight-pixel wall. Preserve its actual
+    // accessible volume and face length rather than classifying its center.
+    function wallIntervals(vertical,fixed,start,end){
+      var intervals=[],epsilon=1e-5;
+      for(var k=Math.floor(start/TILE);k*TILE<end;k++){
+        var a=Math.max(start,k*TILE),z=Math.min(end,(k+1)*TILE),mid=(a+z)*.5;
+        if(vertical ? wallAt(fixed-epsilon,mid)||wallAt(fixed+epsilon,mid) : wallAt(mid,fixed-epsilon)||wallAt(mid,fixed+epsilon))intervals.push([a,z]);
+      }
+      return intervals;
+    }
+    function openLength(intervals,start,end){
+      intervals.sort(function(a,b){return a[0]-b[0];});
+      var covered=0,edge=start;
+      for(var k=0;k<intervals.length;k++){
+        var a=Math.max(start,intervals[k][0]),z=Math.min(end,intervals[k][1]);
+        if(z>a && z>edge){covered+=z-Math.max(edge,a);edge=z;}
+      }
+      return Math.max(0,Math.min(1,1-covered/(end-start)));
+    }
+    if(!base || base.model!==airModel || base.version!==wallsVersion){
+      if(airModel.preserveMaterialState && typeof airModel.geometryStaticTiles==='function'){
+        var staticTiles=walls;
+        if(valveSeats){
+          staticTiles=walls.slice();
+          for(var tile=0;tile<staticTiles.length;tile++)if(valveSeats[tile])staticTiles[tile]=1;
+        }
+        airModel.geometryStaticTiles(staticTiles,gridW,gridH,TILE);
+      }
+      base={model:airModel,version:wallsVersion,solid:new Float32Array(count),room:new Uint8Array(count),
+        u:new Float32Array((w+1)*h),v:new Float32Array(w*(h+1)),faces:new Float32Array(count*4),zero:new Float32Array(count)};
+      for(var row=0;row<h;row++)for(var col=0;col<w;col++){
+        var x0=col*dx,y0=row*dx,x1=x0+dx,y1=y0+dx,area=0;
+        for(var tr=Math.floor(y0/TILE);tr*TILE<y1;tr++)for(var tc=Math.floor(x0/TILE);tc*TILE<x1;tc++){
+          if(tileAt(tr,tc)!==null)area+=Math.max(0,Math.min(x1,(tc+1)*TILE)-Math.max(x0,tc*TILE))*Math.max(0,Math.min(y1,(tr+1)*TILE)-Math.max(y0,tr*TILE));
+        }
+        var i=row*w+col,y=(row+.5)*dx;base.solid[i]=Math.min(1,area/(dx*dx));
+        if(base.solid[i]<1 && y>=TILE && y<TILE+dx*2)base.room[i]=1;
+      }
+      for(row=0;row<h;row++)for(col=0;col<=w;col++)base.u[row*(w+1)+col]=openLength(wallIntervals(true,col*dx,row*dx,(row+1)*dx),row*dx,(row+1)*dx);
+      for(row=0;row<=h;row++)for(col=0;col<w;col++)base.v[row*w+col]=openLength(wallIntervals(false,row*dx,col*dx,(col+1)*dx),col*dx,(col+1)*dx);
+      for(row=0;row<h;row++)for(col=0;col<w;col++){
+        i=row*w+col;base.faces[i*4]=base.u[row*(w+1)+col];base.faces[i*4+1]=base.u[row*(w+1)+col+1];
+        base.faces[i*4+2]=base.v[row*w+col];base.faces[i*4+3]=base.v[(row+1)*w+col];
+      }
+      airStaticGeometry=base;
+    }
+    if(!hasBodies){airModel.geometry(base.solid,base.room,base.zero,base.zero,base.faces);airGeometryVersion=wallsVersion;airHadBodies=false;return;}
+    var solid=base.solid.slice(),room=base.room.slice(),vx=new Float32Array(count),vy=new Float32Array(count),
+      u=base.u.slice(),v=base.v.slice(),faces=base.faces.slice(),bodies=[],cells=new Set(),uf=new Set(),vf=new Set();
+    function inside(b,x,y){
+      if(x<b.bboxL || x>b.bboxR || y<b.bboxT || y>b.bboxB)return false;
+      var hit=false;
+      for(var p=0;p<b.ringN;p++){
+        var a=b.ring[p],z=b.ring[(p+b.ringN-1)%b.ringN];
+        if((b.py[a]>y)!==(b.py[z]>y) && x<(b.px[z]-b.px[a])*(y-b.py[a])/(b.py[z]-b.py[a])+b.px[a])hit=!hit;
+      }
+      return hit;
+    }
+    var geometryBodies=jelloBodies;
+    if(materialGuests){
+      // Use the same selected, resampled silhouettes as native collision.
+      // Unregistered slimes must not displace water only in the pressure solve.
+      geometryBodies=boundaryGuests.filter(function(g){return g.pts && g.pts.length>=12;}).map(function(g){
+        var n=g.pts.length/4,b={ring:[],ringN:n,px:[],py:[],ox:[],oy:[],
+          bboxL:Infinity,bboxR:-Infinity,bboxT:Infinity,bboxB:-Infinity,waterVX:0,waterVY:0};
+        for(var p=0;p<n;p++){
+          var x=g.pts[p*4],y=g.pts[p*4+1];b.ring.push(p);b.px.push(x);b.py.push(y);
+          b.bboxL=Math.min(b.bboxL,x);b.bboxR=Math.max(b.bboxR,x);b.bboxT=Math.min(b.bboxT,y);b.bboxB=Math.max(b.bboxB,y);
+          b.waterVX+=g.pts[p*4+2];b.waterVY+=g.pts[p*4+3];
+        }
+        b.waterVX/=n;b.waterVY/=n;return b;
+      });
+    }
+    for(var bi=0;bi<geometryBodies.length;bi++){
+      var b=geometryBodies[bi];if(!b.ring || b.ringN<3)continue;
+      var ux=0,uy=0;
+      if(materialGuests){ux=b.waterVX*b.ringN;uy=b.waterVY*b.ringN;}
+      else for(var pi=0;pi<b.ringN;pi++){var p=b.ring[pi];ux+=(b.px[p]-b.ox[p])*JELLO_TIMESCALE/JELLO_H;uy+=(b.py[p]-b.oy[p])*JELLO_TIMESCALE/JELLO_H;}
+      bodies.push({body:b,vx:ux/b.ringN,vy:uy/b.ringN});
+      var c0=Math.max(0,Math.floor(b.bboxL/dx)),c1=Math.min(w-1,Math.floor(b.bboxR/dx));
+      var r0=Math.max(0,Math.floor(b.bboxT/dx)),r1=Math.min(h-1,Math.floor(b.bboxB/dx));
+      for(row=r0;row<=r1;row++)for(col=c0;col<=c1;col++){
+        cells.add(row*w+col);uf.add(row*(w+1)+col);uf.add(row*(w+1)+col+1);vf.add(row*w+col);vf.add((row+1)*w+col);
+      }
+    }
+    // Sample the union in each cut cell, excluding static walls. Overlapping
+    // guest rings displace the same water only once.
+    cells.forEach(function(i){
+      var row=Math.floor(i/w),col=i%w,blocked=0,ux=0,uy=0;
+      for(var sy=0;sy<8;sy++)for(var sx=0;sx<8;sx++){
+        var x=(col+(sx+.5)/8)*dx,y=(row+(sy+.5)/8)*dx;
+        if(wallAt(x,y))continue;
+        for(var k=0;k<bodies.length;k++)if(inside(bodies[k].body,x,y)){blocked++;ux+=bodies[k].vx;uy+=bodies[k].vy;break;}
+      }
+      solid[i]=Math.min(1,base.solid[i]+blocked/64);if(solid[i]>=1)room[i]=0;
+      if(blocked){vx[i]=ux/blocked;vy[i]=uy/blocked;}
+    });
+    // Faces use exact polygon intersections, so narrow openings remain
+    // symmetric even when a moving guest barely touches a grid face.
+    function movingFace(vertical,fixed,start,end){
+      var intervals=wallIntervals(vertical,fixed,start,end);
+      bodies.forEach(function(meta){
+        var b=meta.body,cut=[];
+        for(var p=0;p<b.ringN;p++){
+          var a=b.ring[p],z=b.ring[(p+b.ringN-1)%b.ringN],aa=vertical ? b.px[a] : b.py[a],zz=vertical ? b.px[z] : b.py[z];
+          if((aa>fixed)!==(zz>fixed))cut.push((vertical ? b.py[a] : b.px[a])+(fixed-aa)/(zz-aa)*((vertical ? b.py[z] : b.px[z])-(vertical ? b.py[a] : b.px[a])));
+        }
+        cut.sort(function(a,b){return a-b;});for(var k=0;k+1<cut.length;k+=2)intervals.push([cut[k],cut[k+1]]);
+      });
+      return openLength(intervals,start,end);
+    }
+    uf.forEach(function(i){var row=Math.floor(i/(w+1)),col=i%(w+1);u[i]=movingFace(true,col*dx,row*dx,(row+1)*dx);
+      if(col<w)faces[(row*w+col)*4]=u[i];if(col>0)faces[(row*w+col-1)*4+1]=u[i];
+    });
+    vf.forEach(function(i){var row=Math.floor(i/w),col=i%w;v[i]=movingFace(false,row*dx,col*dx,(col+1)*dx);
+      if(row<h)faces[(row*w+col)*4+2]=v[i];if(row>0)faces[((row-1)*w+col)*4+3]=v[i];
+    });
+    airModel.geometry(solid,room,vx,vy,faces);airGeometryVersion=wallsVersion;airHadBodies=true;
+  }
+
+  function applyAirPhysics() {
+    presetGravScale=1;presetWaterTimeScale=1;
+    applyGravity();applyTimescale();
+    ['CALM','CALM_LOCAL','QUIET_VISC','QUIET_DRAG','GRID_VISC','TURB_VISC','FLOOR_REACH','REACH_VY'].forEach(function(key){liquidWGPU.setSimParam(key,0);});
+    liquidWGPU.setSimParam('DAMPING',1);liquidWGPU.setSimParam('WATER_MOTION_SCALE',1);
+    liquidWGPU.setSimParam('DBG_FLAGS',3);
+    // Keep the native transport safeguards in machine scenes too. Uniform
+    // flow has no pairwise shear to damp; disordered motion dissipates through
+    // the same local momentum exchange used by the original water scenes.
+    // The speed bound is a backstop, not evidence that the air solve is valid.
+    liquidWGPU.setSimParam('TURB_VISC',.12);liquidWGPU.setSimParam('TURB_REF',60);
+    liquidWGPU.setSimParam('BURST_DAMP',.985);liquidWGPU.setSimParam('MAX_VEL',600);liquidWGPU.setSimParam('AIR_DRAG',.996);
+  }
+
+  function enableAirModel(options) {
+    options=options || {};
+    var request=++airRequest;
+    if(options.enabled===false){
+      var retired=airModel;airModel=null;
+      airStaticGeometry=null;airHadBodies=false;
+      if(retired)retired.setEnabled(false);
+      wallsBakedVersion=-1;
+      airState.ready=false;
+      if(liquidWGPU){
+        liquidWGPU.setPressureModel(null);
+        liquidWGPU.setRenderParam('VOLUME_SPLATS',0);
+        delete liquidWGPU.liquid.peekOps;
+        if(retired){
+          liquidWGPU.setSimParam('DBG_FLAGS',0);
+          presetApplyWater(PRESET_ACTIVE.water);
+        }
+      }
+      if(retired)retired.destroy();
+      return Promise.resolve(null);
+    }
+    if(!liquidWGPU || !liquidWGPU.simActive || !window.LiquidAirWGPU)return Promise.reject(new Error('Water pressure experiment is unavailable.'));
+    if(airModel){airModel.setEnabled(false);liquidWGPU.setPressureModel(null);airModel.destroy();}
+    airState.ready=false;airState.error=null;
+    try{
+      airModel=window.LiquidAirWGPU.create(liquidWGPU,Object.assign({width:worldW,height:worldH},options));
+    }catch(error){airState.error=error.message;return Promise.reject(error);}
+    var requestedModel=airModel;
+    return requestedModel.readyPromise.then(async function(){
+      if(airModel!==requestedModel || request!==airRequest)return null;
+      if(typeof requestedModel.initializeMaterial==='function')
+        await requestedModel.initializeMaterial({reset:options.resetMaterial===true});
+      if(airModel!==requestedModel || request!==airRequest)return null;
+      airState.ready=true;requestedModel.setEnabled(true);airGeometryVersion=-1;airGeometryTick();
+      wallsBakedVersion=-1;
+      liquidWGPU.setPressureModel(requestedModel);
+      liquidWGPU.setRenderParam('VOLUME_SPLATS', requestedModel.settings.directGather ? 1 : 0);
+      // Replay unconsumed mutations into in-flight snapshots for this mode.
+      // Ordinary scenes retain their measured adapter behavior.
+      liquidWGPU.liquid.peekOps=function(){return liquidOpsOverflow ? null : liquidOps;};
+      applyAirPhysics();
+      return airModel;
+    }).catch(function(error){
+      requestedModel.setEnabled(false);
+      if(request===airRequest){airState.error=error.message;airState.ready=false;}
+      throw error;
+    });
+  }
+
+  function setAirMinimumPressure(value) {
+    if(!airModel || !airModel.enabled || !airState.ready || typeof airModel.setMinimumPressure!=='function')
+      throw new Error('Wait for an active air model before changing its pressure limit.');
+    var previous=airModel.settings.minimumPressure;
+    var stored=airModel.setMinimumPressure(value);
+    if(machineState && stored!==previous){
+      if(!machineState.pressureCapacityChanges)machineState.pressureCapacityChanges=[];
+      machineState.pressureCapacityChanges.push({simulationTime:liquidWGPU.simulationClock,previous:previous,value:stored});
+    }
+    return stored;
+  }
 
   function bootLiquid() {
     if (!(window.LiquidWGPU && navigator.gpu && window.isSecureContext)) {
@@ -866,7 +1202,7 @@
             var rowOff = gr * gridW;
             for (var c = 0; c < w; c++) {
               var gc = originCol + c;
-              out[k++] = (gc < 0 || gc >= gridW) ? 1 : walls[rowOff + gc];
+              out[k++] = (gc < 0 || gc >= gridW) ? 1 : (walls[rowOff + gc] || (valveSeats && valveSeats[rowOff+gc]) ? 1 : 0);
             }
           }
         },
@@ -941,6 +1277,11 @@
 
   function updateLiquidToy(dt) {
     if (!liquidWGPU) return;
+    if (airModel && airModel.enabled && liquidWGPU.materialStateError) {
+      airState.error=liquidWGPU.materialStateError;buildError=airState.error;
+      userPaused=true;releasePointer();cancelBuildGesture();syncRunning();
+      return;
+    }
     if (waterState === 'on' && (!liquidWGPU.simActive || !liquidWGPU.renderActive)) {
       waterState = 'off';
       clearLiquid();
@@ -970,6 +1311,7 @@
       if (stepDt > 0.05) stepDt = 0.05;
       liquidPendingDt = 0;
     }
+    airGeometryTick();
     liquidWGPU.update(stepDt);
   }
 
@@ -1021,12 +1363,21 @@
   }
 
   function clearLiquid() {
+    var previousCount=liquidCount;
+    var preserve=airModel && airModel.enabled && airModel.preserveMaterialState;
     liquidCount = 0;
     liquidOrphanDwell.fill(0);
     liquidOrphanTick = 0;
     liquidMutationSeq++;
-    liquidOps.length = 0;
-    liquidOpsOverflow = true;    // force one full GPU re-upload (of nothing)
+    if(preserve){
+      for(var i=previousCount-1;i>=0;i--){
+        if(canRecordLiquidOp(2))liquidOps.push(2,i);
+        else {liquidOpsOverflow=true;break;}
+      }
+    }else{
+      liquidOps.length = 0;
+      liquidOpsOverflow = true;    // force one full GPU re-upload (of nothing)
+    }
     toyWakes.length = 0;
   }
 
@@ -2496,9 +2847,9 @@
       var off = r * gridW;
       var c = 0;
       while (c < gridW) {
-        if (!walls[off + c]) { c++; continue; }
+        if (tileAt(r,c)===null) { c++; continue; }
         var c0 = c;
-        while (c < gridW && walls[off + c]) c++;
+        while (c < gridW && tileAt(r,c)!==null) c++;
         if (n + 12 > v.length) break;
         var u0 = (c0 * TILE) * invW * 2 - 1;
         var u1 = (c * TILE) * invW * 2 - 1;
@@ -9755,11 +10106,11 @@
   function softPresentationBody(b) { return !!b.surfaceSlime; }
   function softPresentationContact() {}
 
-  function spawnSlimeAt(wx, wy, rad) {
-    var b = spawnSlimeShapeAt(wx, wy, rad);
+  function spawnSlimeAt(wx, wy, rad, machineSize) {
+    var b = spawnSlimeShapeAt(wx, wy, rad, machineSize);
     if (!b) return null;
     var seed = (slimeHueCycle * 0.61803398875) % 1;
-    var r = Math.max(18, Math.min(46, rad));
+    var r = Math.max(18, Math.min(machineSize === true ? 96 : 46, rad));
     b._toyHue = b.hue;
     b.surfaceSlime = { radius: r, hue: b.hue, seed: seed, drive: false, motorBlend: 0 };
     // Match the game's passive rest material, including its small irregularities.
@@ -11431,8 +11782,8 @@
     heart: ['##..##', '######', '.####.', '..##..'],
     hoop:  ['.####.', '##..##', '##..##', '##.###']
   };
-  function spawnSlimeShapeAt(wx, wy, rad) {
-    var r = Math.max(18, Math.min(46, rad));
+  function spawnSlimeShapeAt(wx, wy, rad, machineSize) {
+    var r = Math.max(18, Math.min(machineSize === true ? 96 : 46, rad));
     wx = Math.max(r + TILE * 2, Math.min(worldW - r - TILE * 2, wx));
     wy = Math.max(r + TILE * 2, Math.min(worldH - r - TILE * 2, wy));
     if (tileAt(Math.floor(wy / TILE), Math.floor(wx / TILE)) !== null) return null;
@@ -11493,7 +11844,7 @@
       for (var k = 0; k < nB; k += 4) {
         if (x >= boxes[k] && x <= boxes[k + 2] && y >= boxes[k + 1] && y <= boxes[k + 3]) {
           liquidSleeping[i] = 0; liquidFrozen[i] = 0; liquidRestFrames[i] = 0;
-          if (liquidOps.length < LIQUID_OPS_MAX) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
+          if (canRecordLiquidOp(4)) liquidOps.push(4, i, liquidType[i], liquidOrigin[i]);
           else liquidOpsOverflow = true;
           woke++;
           break;
@@ -11584,8 +11935,13 @@
     // first draft used 1/H flat and every force arrived at half strength:
     // slimes sank to the pool floor and sat there.)
     var ts = (typeof JELLO_TIMESCALE === 'number' && JELLO_TIMESCALE >= 0.02) ? JELLO_TIMESCALE : 0.5;
-    var invV = ts / JELLO_H;
-    var applyK = JELLO_H / ts;
+    // Cup buoyancy uses the actual Verlet microstep. Applying an outer-step
+    // position impulse to XPBD multiplies lift by its substep count.
+    // Keep the established ordinary-scene coupling unchanged.
+    var couplingH = machineState && machineState.definition.name === 'cup'
+      ? JELLO_H * jelloImpulseScale() : JELLO_H;
+    var invV = ts / couplingH;
+    var applyK = couplingH / ts;
     for (var bi = 0; bi < jelloBodies.length; bi++) {
       var b = jelloBodies[bi];
       if (!b || b.frozen || !isFinite(b.bboxL + b.bboxR + b.bboxT + b.bboxB)) continue;
@@ -11814,17 +12170,20 @@
    * pointer handlers only track state. ==== */
   var tool = 'poke';
   var pointerDown = false, pointerIn = false;
+  var pointerControl = false;
   var pointerId = -1;
   var px = 0, py = 0;            // current world position
   var pvx = 0, pvy = 0;          // smoothed world velocity, px/s
   var lastPaintX = 0, lastPaintY = 0;
   var lastMoveT = 0;
   var slimeGhost = null;         // {x, y} while placing
+  var keyboardCursorVisible=false,keyboardCursorReady=false,keyboardX=0,keyboardY=0;
+  var keyboardPointerId=-2,highlightedValve=null;
 
   function slimeRadius() { return Math.max(20, Math.min(46, brushR * 1.7)); }
 
   function toWorld(e) {
-    var rect = viewport.getBoundingClientRect();
+    var rect = stage.getBoundingClientRect();
     return {
       x: (e.clientX - rect.left) / fitScale,
       y: (e.clientY - rect.top) / fitScale
@@ -11833,15 +12192,24 @@
 
   var inputEl = document.getElementById('toy-input');
 
-  inputEl.addEventListener('pointerdown', function (e) {
-    if (pointerDown) return;
+  function refreshPausedConstruction(){
+    if(!userPaused || !/^(build|draw|erase)$/.test(tool))return;
+    if(pointerDown && (tool==='draw' || tool==='erase')){
+      paintWallsSeg(lastPaintX,lastPaintY,px,py,brushR,tool==='draw');
+      lastPaintX=px;lastPaintY=py;
+    }
+    render();drawMachineOverlay();
+  }
+
+  function beginToolInput(x,y,id) {
     pointerDown = true;
-    pointerId = e.pointerId;
-    try { inputEl.setPointerCapture(e.pointerId); } catch (err) {}
-    var w = toWorld(e);
-    px = lastPaintX = w.x; py = lastPaintY = w.y;
+    pointerId = id;
+    px = lastPaintX = x; py = lastPaintY = y;
     pvx = 0; pvy = 0; lastMoveT = performance.now();
+    pointerControl=false;
     if (tool === 'poke') {
+      pointerControl=toggleValveAt(px,py);
+      if(pointerControl)return;
       // A grabbed slime is already the water's moving boundary. Registering
       // the pointer circle and an explosion wake at the same place made one
       // gesture inject momentum three times. Wake the local water, but let
@@ -11850,49 +12218,123 @@
       else pushWake(px, py, 40, 300);
     } else if (tool === 'slime') {
       slimeGhost = { x: px, y: py };
+    } else if(tool==='build' || tool==='draw' || tool==='erase') {
+      beginBuildGesture(px,py);
     }
+    refreshPausedConstruction();
+  }
+  inputEl.addEventListener('pointerdown', function (e) {
+    if(pointerDown && pointerId===keyboardPointerId)releasePointer({pointerId:keyboardPointerId},true);
+    if (pointerDown) return;
+    hideKeyboardCursor();
+    try { inputEl.setPointerCapture(e.pointerId); } catch (err) {}
+    var w=toWorld(e);beginToolInput(w.x,w.y,e.pointerId);
     e.preventDefault();
   });
 
-  inputEl.addEventListener('pointermove', function (e) {
-    var w = toWorld(e);
+  function moveToolInput(x,y) {
     pointerIn = true;
-    if (pointerDown && e.pointerId === pointerId) {
+    if (pointerDown) {
       var now = performance.now();
       var mdt = Math.max(1, now - lastMoveT) / 1000;
       lastMoveT = now;
-      pvx = pvx * 0.5 + ((w.x - px) / mdt) * 0.5;
-      pvy = pvy * 0.5 + ((w.y - py) / mdt) * 0.5;
+      pvx = pvx * 0.5 + ((x - px) / mdt) * 0.5;
+      pvy = pvy * 0.5 + ((y - py) / mdt) * 0.5;
     }
-    px = w.x; py = w.y;
-    if (grabBody && pointerDown && e.pointerId === pointerId) jelloGrabTick(px, py);
+    px = x; py = y;
+    if(buildGesture && pointerDown)extendBuildGesture(px,py);
+    if (grabBody && pointerDown) jelloGrabTick(px, py);
     if (slimeGhost) { slimeGhost.x = px; slimeGhost.y = py; }
+    refreshPausedConstruction();
+  }
+  inputEl.addEventListener('pointermove', function (e) {
+    if(pointerDown && e.pointerId!==pointerId)return;
+    hideKeyboardCursor();
+    var w=toWorld(e);moveToolInput(w.x,w.y);
     e.preventDefault();
   });
 
-  function releasePointer(e) {
+  function releasePointer(e,cancelled) {
     if (!pointerDown || e.pointerId !== pointerId) return;
     pointerDown = false;
+    pointerControl=false;
     pointerId = -1;
+    if(buildGesture){if(cancelled)cancelBuildGesture();else finishBuildGesture();}
     if (slimeGhost) {
-      spawnSlimeAt(slimeGhost.x, slimeGhost.y, slimeRadius());
+      if(!cancelled)spawnSlimeAt(slimeGhost.x, slimeGhost.y, slimeRadius());
       slimeGhost = null;
     }
     jelloGrabEnd();
     pokeGuest = null;
     pvx = 0; pvy = 0;
+    updateKeyboardHelp();
+    refreshPausedConstruction();
   }
   inputEl.addEventListener('pointerup', releasePointer);
-  inputEl.addEventListener('pointercancel', releasePointer);
+  inputEl.addEventListener('pointercancel', function(e){releasePointer(e,true);});
+  inputEl.addEventListener('lostpointercapture', function(e){releasePointer(e,true);});
   inputEl.addEventListener('pointerleave', function () { pointerIn = false; });
   inputEl.addEventListener('pointerenter', function () { pointerIn = true; });
+
+  function updateKeyboardHelp(){
+    var help=document.getElementById('toy-keyboard-help');
+    if(!help)return;
+    help.hidden=!keyboardCursorVisible;
+    var holding=pointerDown && pointerId===keyboardPointerId;
+    var action=holding ? 'Enter finishes. Escape cancels.' : 'Enter starts.';
+    help.textContent='Arrows move. Shift moves farther. '+action;
+  }
+  function hideKeyboardCursor(){
+    if(!keyboardCursorVisible)return;
+    keyboardCursorVisible=false;inputEl.classList.remove('is-keyboard-input');updateKeyboardHelp();
+  }
+  function positionKeyboardCursor(x,y){
+    var col=Math.max(1,Math.min(gridW-2,Math.round(x/TILE-.5)));
+    var row=Math.max(1,Math.min(gridH-2,Math.round(y/TILE-.5)));
+    keyboardX=(col+.5)*TILE;keyboardY=(row+.5)*TILE;
+  }
+  function showKeyboardCursor(){
+    if(!keyboardCursorReady){positionKeyboardCursor(worldW*.5,worldH*.5);keyboardCursorReady=true;}
+    else positionKeyboardCursor(keyboardX,keyboardY);
+    keyboardCursorVisible=true;inputEl.classList.add('is-keyboard-input');
+    if(!pointerDown){px=keyboardX;py=keyboardY;pointerIn=true;}
+    updateKeyboardHelp();
+  }
+  inputEl.addEventListener('focus',function(){
+    if(inputEl.matches(':focus-visible')){showKeyboardCursor();drawMachineOverlay();}
+  });
+  inputEl.addEventListener('blur',function(){cancelHeldInput();hideKeyboardCursor();drawMachineOverlay();});
+  inputEl.addEventListener('keydown',function(e){
+    if(e.ctrlKey || e.metaKey || e.altKey)return;
+    var arrows={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+    var direction=arrows[e.key];
+    if(direction){
+      e.preventDefault();showKeyboardCursor();
+      var distance=TILE*(e.shiftKey ? 5 : 1);
+      positionKeyboardCursor(keyboardX+direction[0]*distance,keyboardY+direction[1]*distance);
+      moveToolInput(keyboardX,keyboardY);updateKeyboardHelp();drawMachineOverlay();return;
+    }
+    if(e.key==='Escape' && pointerDown && pointerId===keyboardPointerId){
+      e.preventDefault();releasePointer({pointerId:keyboardPointerId},true);drawMachineOverlay();return;
+    }
+    if(e.key!=='Enter' || e.repeat)return;
+    e.preventDefault();showKeyboardCursor();
+    if(pointerDown){
+      if(pointerId===keyboardPointerId)releasePointer({pointerId:keyboardPointerId},false);
+    }else if(!userPaused || /^(build|draw|erase)$/.test(tool)){
+      beginToolInput(keyboardX,keyboardY,keyboardPointerId);
+      // A manual valve is a single real toggle, not a held stirring gesture.
+      if(pointerControl)releasePointer({pointerId:keyboardPointerId},false);
+    }
+    updateKeyboardHelp();drawMachineOverlay();
+  });
 
   var POKE_PTS = 14;
   function updatePokeGuest() {
     // When dragging a slime, its ring is the only physical obstacle. The
     // pointer guest remains useful for stirring water directly in empty
     // space, but overlapping both boundaries caused double projections.
-    if (!(pointerDown && tool === 'poke') || grabBody) { pokeGuest = null; return; }
+    if (!(pointerDown && tool === 'poke') || grabBody || pointerControl) { pokeGuest = null; return; }
     var R = Math.max(16, brushR);
     var vx = Math.max(-700, Math.min(700, pvx));
     var vy = Math.max(-700, Math.min(700, pvy));
@@ -11909,7 +12351,7 @@
 
   function toolTick(dt) {
     updatePokeGuest();
-    if (!pointerDown) return;
+    if (!pointerDown || pointerControl) return;
     if (tool === 'draw' || tool === 'erase') {
       if (px !== lastPaintX || py !== lastPaintY) {
         paintWallsSeg(lastPaintX, lastPaintY, px, py, brushR, tool === 'draw');
@@ -11944,6 +12386,10 @@
   /* ---- Toolbar wiring -------------------------------------------------- */
   var toolButtons = [];
   function setTool(name) {
+    if(pointerDown){
+      var oldPointer=pointerId;releasePointer({pointerId:oldPointer},true);
+      try{inputEl.releasePointerCapture(oldPointer);}catch(error){}
+    }
     tool = name;
     if (slimeGhost) slimeGhost = null;
     jelloGrabEnd();
@@ -11955,6 +12401,8 @@
   }
 
   function applyGravity() {
+    if(airModel && airModel.enabled && machineState && machineState.energyInitial &&
+      machineState.energyGravity!==250*gravMul*presetGravScale)machineState.energyModified=true;
     if (liquidWGPU && liquidWGPU.setSimParam) liquidWGPU.setSimParam('GRAVITY', 250 * gravMul * presetGravScale);
     JELLO_GRAVITY = GRAVITY * gravMul;
   }
@@ -11975,6 +12423,7 @@
 
   function applyWaterFeel() {
     if (!liquidWGPU || !liquidWGPU.setSimParam) return;
+    if(airModel && airModel.enabled)return;
     var t = Math.max(0, Math.min(1, waterFeel));
     // v4.6: one material, two simultaneous energy scales. Global time,
     // pressure, and rendering stay fixed. The relative stage reaches thin
@@ -12182,6 +12631,7 @@
   }
   var presetGeyserT = 0;
   function presetApplyWater(name) {
+    if(airModel && airModel.enabled){presetApplyWaterLook(PRESET_ACTIVE.waterLook);return;}
     // Every switch starts from the boot state, then layers its own pushes,
     // so presets never inherit a previous preset's leftovers. Appearance
     // routes through the look layer: an active look always wins on render.
@@ -12225,6 +12675,7 @@
     presetApplyWaterLook(PRESET_ACTIVE.waterLook);
   }
   function presetTickWater(dt) {
+    if(airModel && airModel.enabled)return;
     var name = PRESET_ACTIVE.water;
     if (name === 'tide') {
       var ph = presetClock * (Math.PI * 2 / 14);
@@ -12475,7 +12926,10 @@
     var chips = document.querySelectorAll('#toy-bar [data-scene]');
     for (var j = 0; j < chips.length; j++) {
       (function (c) {
-        c.addEventListener('click', function () { scene(c.getAttribute('data-scene')); });
+        c.addEventListener('click', function () {
+          var result=scene(c.getAttribute('data-scene'));
+          if(result && typeof result.catch==='function')result.catch(function(error){buildError=error.message;});
+        });
       })(chips[j]);
     }
     var clearBtn = document.getElementById('toy-clear');
@@ -12621,6 +13075,11 @@
   }
 
   function clearWorldAll() {
+    if(pointerDown)releasePointer({pointerId:pointerId},true);
+    cancelBuildGesture();machineBuilder=null;valveSeats=null;manualValves.clear();
+    machineState=null;instrumentSample=null;
+    if(airModel)enableAirModel({enabled:false});
+    if(airModel)airModel.reset();
     clearSmokeOnly();
     walls.fill(0);
     addBorder();
@@ -12629,6 +13088,336 @@
     jelloGrabEnd();
     pokeGuest = null;
     emitters.length = 0;
+  }
+
+  var machineState=null;
+  var machineBuilder=null;
+  var machineRequest=0,machineLoading=false,machineResumePause=false;
+  var startupMachine=null,sharedBuildApplied=false,toyBootReady=false;
+  var machineWaterLook=null;
+  var buildKind='pipe',buildOptions={bore:24,direction:'up',material:'glass',open:true};
+  var buildGesture=null,buildError=sharedBuildError,glassWalls=true,pressureColors=false;
+  var instrumentSample=null,instrumentPending=false,instrumentNextAt=0;
+  var manualValves=new Set();
+
+  function rebuildValveSeats(){
+    if(!machineBuilder){valveSeats=null;return;}
+    var mask=new Uint8Array(walls.length);
+    machineBuilder.getParts().forEach(function(part){
+      var nozzle=part.type==='nozzle';
+      if(!nozzle && ((part.type!=='check' && part.type!=='flap') || part.open))return;
+      var r=part.rect;
+      for(var row=Math.floor(r.y/TILE);row<Math.ceil((r.y+r.height)/TILE);row++)
+        for(var col=Math.floor(r.x/TILE);col<Math.ceil((r.x+r.width)/TILE);col++)
+          if(row>0 && col>0 && row<gridH-1 && col<gridW-1){
+            if(nozzle){
+              var vertical=part.direction==='up' || part.direction==='down';
+              var distance=vertical ? Math.abs((col+.5)*TILE-r.x-r.width*.5) : Math.abs((row+.5)*TILE-r.y-r.height*.5);
+              if(distance<part.bore*.5)continue;
+            }
+            mask[row*gridW+col]=1;
+          }
+    });
+    valveSeats=mask;wallsVersion++;airGeometryVersion=-1;
+  }
+  function ensureBuilder(){
+    if(machineBuilder)return machineBuilder;
+    if(!window.WaterMachinesBuilder)throw new Error('Build tools are unavailable.');
+    machineBuilder=window.WaterMachinesBuilder.create({width:gridW,height:gridH,tile:TILE,walls:walls,
+      onChange:function(){
+        wallsVersion++;airGeometryVersion=-1;rebuildValveSeats();
+        wakeLiquidNear(worldW*.5,worldH*.5,worldW+worldH);
+        wakeJelloNear(worldW*.5,worldH*.5,worldW+worldH);
+      }});
+    return machineBuilder;
+  }
+  function setBuildTool(kind,options){
+    if(['draw','erase','pipe','open-vessel','sealed-vessel','vent','seal','check','flap','nozzle'].indexOf(kind)<0)
+      throw new Error('Unknown build tool.');
+    cancelBuildGesture();buildKind=kind;
+    if(options)Object.keys(buildOptions).forEach(function(key){if(options[key]!==undefined)buildOptions[key]=options[key];});
+    ensureBuilder();setTool(kind==='draw' || kind==='erase' ? kind : 'build');
+    if(kind!=='draw' && kind!=='erase' && (!airModel || !airModel.enabled) && waterState==='on')
+      enableAirModel({}).catch(function(error){buildError=error.message;});
+    return {kind:buildKind,options:Object.assign({},buildOptions)};
+  }
+  function cancelBuildGesture(){
+    if(buildGesture && machineBuilder)machineBuilder.cancel();
+    buildGesture=null;
+  }
+  function beginBuildGesture(x,y){
+    var builder=ensureBuilder();builder.begin(buildKind);
+    var point=builder.snap({x:x,y:y});
+    buildGesture={kind:tool==='draw' || tool==='erase' ? tool : buildKind,start:point,end:point,points:[point]};
+  }
+  function extendBuildGesture(x,y){
+    if(!buildGesture)return;
+    var point=machineBuilder.snap({x:x,y:y}),last=buildGesture.points[buildGesture.points.length-1];
+    buildGesture.end=point;
+    if(point.x!==last.x || point.y!==last.y)buildGesture.points.push(point);
+  }
+  function finishBuildGesture(){
+    if(!buildGesture)return;
+    var gesture=buildGesture;buildGesture=null;
+    try{
+      var a=gesture.start,b=gesture.end,kind=gesture.kind;
+      var r={x:Math.min(a.x,b.x)-TILE*.5,y:Math.min(a.y,b.y)-TILE*.5,
+        width:Math.max(TILE,Math.abs(a.x-b.x)+TILE),height:Math.max(TILE,Math.abs(a.y-b.y)+TILE)};
+      if(kind==='pipe'){
+        if(gesture.points.length>1)machineBuilder.strokePipe(gesture.points.slice(0,256),+buildOptions.bore);
+      }else if(kind==='open-vessel' || kind==='sealed-vessel')machineBuilder.vessel(r,kind==='sealed-vessel');
+      else if(kind==='vent' || kind==='seal')machineBuilder.vent(r,kind==='vent');
+      else if(kind==='check' || kind==='flap' || kind==='nozzle'){
+        var options={rect:r,direction:buildOptions.direction,material:buildOptions.material};
+        if(kind==='nozzle')options.bore=+buildOptions.bore;
+        else{options.open=!!buildOptions.open;options.crackingPressure=250*TILE;options.hysteresis=.15;}
+        var part=machineBuilder.addPart(kind,options);
+        if(kind==='flap')manualValves.add(part.id);
+      }
+      machineBuilder.commit();buildError=null;
+    }catch(error){machineBuilder.cancel();buildError=error.message;}
+  }
+  function buildUndo(redo){
+    cancelBuildGesture();return redo ? ensureBuilder().redo() : ensureBuilder().undo();
+  }
+  function setManualValve(id,open){
+    var builder=ensureBuilder(),part=builder.getParts().find(function(p){return p.id===id;});
+    if(!part || (part.type!=='flap' && part.type!=='check'))throw new Error('Choose a valve to change its opening.');
+    manualValves.add(id);var result=builder.updatePart(id,{open:!!open});
+    if(machineState && machineState.definition.primary.kind==='valve'){
+      var stock=machineState.definition.parts.find(function(p){return p.buildId===id;});
+      if(stock)machineState.definition.action=open ? 'Close valve' : 'Open valve';
+    }
+    return result;
+  }
+  function toggleValveAt(x,y){
+    if(!machineBuilder)return false;
+    var pad=22/fitScale,selected=null,distance=Infinity;
+    machineBuilder.getParts().forEach(function(part){
+      if(part.type!=='flap')return;
+      var r=part.rect,dx=Math.max(r.x-x,0,x-r.x-r.width),dy=Math.max(r.y-y,0,y-r.y-r.height),d=Math.hypot(dx,dy);
+      if(d<=pad && d<distance){selected=part;distance=d;}
+    });
+    if(!selected)return false;
+    setManualValve(selected.id,!selected.open);return true;
+  }
+  function shareBuild(){
+    var url=new URL(window.location.href);url.searchParams.delete('scene');
+    url.searchParams.delete('seed');url.searchParams.delete('smoke');
+    return ensureBuilder().share(url.href);
+  }
+  async function loadBuild(input){
+    var decoded=window.WaterMachinesBuilder.decode(input);
+    if(decoded.width!==gridW || decoded.height!==gridH || decoded.tile!==TILE)
+      throw new Error('Open the shared link to load its original world size.');
+    scene('blank');ensureBuilder().fromShare(input);manualValves.clear();
+    if(waterState==='on')await enableAirModel({resetMaterial:true});
+    buildError=null;return machineBuilder;
+  }
+
+  function instrumentTick(now){
+    if(!airModel || !airModel.enabled || instrumentPending || now<instrumentNextAt)return;
+    var model=airModel,state=machineState;
+    instrumentPending=true;instrumentNextAt=now+150;
+    model.capture().then(function(snapshot){
+      if(model!==airModel || !model.enabled || !snapshot)return;
+      instrumentSample=snapshot;
+      if(state && state===machineState && state.ready)measureMachine(state,snapshot);
+      updatePressureValves(snapshot);
+    }).catch(function(error){buildError=error.message;}).finally(function(){instrumentPending=false;});
+  }
+  function particleInstrumentSample(){
+    return {count:liquidCount,x:liquidX,y:liquidY,vx:liquidVX,vy:liquidVY,
+      density:liquidDensity,
+      time:liquidWGPU ? liquidWGPU.readbackAppliedTime : 0};
+  }
+  function updatePressureValves(snapshot){
+    if(!machineBuilder || !window.WaterMachinesInstruments)return;
+    var I=window.WaterMachinesInstruments;
+    machineBuilder.getParts().forEach(function(part){
+      if(part.type!=='check' || manualValves.has(part.id))return;
+      var r=part.rect,x=r.x+r.width*.5,y=r.y+r.height*.5;
+      var dx=part.direction==='right' ? 1 : part.direction==='left' ? -1 : 0;
+      var dy=part.direction==='down' ? 1 : part.direction==='up' ? -1 : 0;
+      var distance=(dx ? r.width : r.height)*.5+TILE;
+      var before=I.cell(snapshot,x-dx*distance,y-dy*distance),after=I.cell(snapshot,x+dx*distance,y+dy*distance);
+      if(!before || !after || before.kind===0 || after.kind===0)return;
+      var pressure=before.pressure-after.pressure,threshold=part.crackingPressure;
+      var band=Math.max(250*TILE,Math.abs(threshold))*part.hysteresis;
+      var open=part.open ? pressure>threshold-band : pressure>threshold+band;
+      if(open!==part.open)machineBuilder.updatePart(part.id,{open:open});
+    });
+  }
+  function measureMachine(state,snapshot){
+    var I=window.WaterMachinesInstruments;if(!I)return;
+    var definition=state.definition,m=definition.measure;
+    var units=I.scale({width:worldW,density:airModel.settings.density || 1});
+    var particles=particleInstrumentSample(),source=I.vessel(particles,m.source,{tile:TILE,floor:worldH});
+    var levels={source:source.level},water={source:source};
+    ['receiver','basin','bottom'].forEach(function(key){
+      if(m[key]){water[key]=I.vessel(particles,m[key],{tile:TILE,floor:worldH});levels[key]=water[key].level;}
+    });
+    var meter=definition.meters[0],flow=I.section(snapshot,meter),particleFlow=I.particleSection(particles,meter,{thickness:snapshot.cellSize});
+    if(!state.crossings){state.crossings=I.createCrossings(meter);state.jetParticles=new Set();}
+    var crossings=state.crossings.sample(particles);
+    if(definition.name==='heron')crossings.forwardIds.forEach(function(id){state.jetParticles.add(id);});
+    var rises=[];
+    if(m.nozzle)state.jetParticles.forEach(function(id){if(id<liquidCount && liquidY[id]<m.nozzle.y)rises.push(m.nozzle.y-liquidY[id]);});
+    var predicted=I.prediction(definition.name,levels,definition,250*gravMul*presetGravScale);
+    var gasWork=0;
+    (snapshot.pockets || []).forEach(function(pocket){
+      if(pocket.volume>0 && Number.isFinite(pocket.pressure))gasWork+=I.gasWork(pocket.pressure,pocket.volume,airModel.settings.atmospherePressure);
+    });
+    var energy=I.waterEnergy(particles,{floor:worldH,gravity:250*gravMul*presetGravScale,density:airModel.settings.density || 1});
+    var acoustic=I.acousticEnergy(snapshot,airModel.settings.density || 1,airModel.settings.soundSpeed);
+    var materialEnergy=null;
+    if(airModel.settings.constitutiveLaw==='density-linear'){
+      materialEnergy=I.materialEnergy(particles,{density:airModel.settings.density || 1,soundSpeed:airModel.settings.soundSpeed});
+      acoustic=materialEnergy.energy;
+    }
+    var initialEnergy=state.energyInitial || energy;
+    var sampleAge=liquidWGPU.getReadbackAge(),pressureAge=Math.max(0,liquidWGPU.simulationClock-snapshot.simulationTime);
+    var readings={ready:true,caption:definition.caption,action:definition.action,
+      levels:levels,water:water,particleCount:liquidCount,initialParticles:state.initialParticles,
+      clockSeconds:units.seconds(Math.max(0,liquidWGPU.simulationClock-state.startedAt)),
+      simulationSeconds:Math.max(0,liquidWGPU.simulationClock-state.startedAt),
+      pressurePsi:flow && flow.pressure!==null ? units.psi(flow.pressure) : null,
+      speedInchesPerSecond:units.speed(particleFlow.speed),
+      idealSpeedInchesPerSecond:predicted.speed===null ? null : units.speed(predicted.speed),
+      flowCubicInchesPerSecond:units.flow(crossings.areaPerSecond===null ? particleFlow.areaPerSecond : crossings.areaPerSecond),
+      headInches:predicted.head===null ? null : units.inches(predicted.head),
+      jetRiseInches:rises.length ? units.inches(I.quantile(rises,.95)) : 0,
+      idealJetRiseInches:predicted.jetRise===null ? null : units.inches(predicted.jetRise),
+      airWorkFootPounds:units.work(gasWork),
+      gravityWorkFootPounds:units.work(energy.potential),
+      kineticWorkFootPounds:units.work(energy.kinetic),acousticWorkFootPounds:units.work(acoustic),
+      initialWaterWorkFootPounds:units.work(initialEnergy.total),inputWaterWorkFootPounds:units.work(state.energyInput || 0),
+      releasedGravityWorkFootPounds:units.work(initialEnergy.potential-energy.potential),
+      energyResidualFootPounds:units.work(initialEnergy.total+(state.energyInput || 0)-energy.total-acoustic-gasWork),
+      energyBudgetStatus:state.energyModified ? 'User edits changed the energy supply.' :
+        state.pressureCapacityChanges && state.pressureCapacityChanges.length ? 'The pressure limit changed during this run. Phase work remains part of the energy accounting.' :
+        'Water potential, kinetic energy, acoustic compression and available gas work are sampled at different instants. The remainder includes numerical losses and sample error; slime work is unmeasured.',
+      pressureCapacityChanges:(state.pressureCapacityChanges || []).slice(),
+      roomAbsolutePressurePsi:units.psi(airModel.settings.atmospherePressure),
+      minimumGaugePressurePsi:units.psi(airModel.settings.minimumPressure),
+      soundSpeedInchesPerSecond:units.speed(airModel.settings.soundSpeed),
+      sampleAgeMs:units.seconds(Math.max(sampleAge,pressureAge))*1000,
+      mirrorAgeSimulationMs:sampleAge*1000,pressureAgeSimulationMs:pressureAge*1000,
+      pressure:flow ? flow.pressure : null,speed:particleFlow.speed,flow:crossings.areaPerSecond===null ? particleFlow.areaPerSecond : crossings.areaPerSecond,
+      gridSection:flow,particleSection:particleFlow,
+      materialEnergy:materialEnergy,
+      crossings:crossings,prediction:predicted,ledger:snapshot.ledger,phaseLedger:snapshot.phaseLedger,convergence:snapshot.convergence,
+      numericalStatus:I.numericalStatus(snapshot),
+      gravityEarthMultiple:gravMul*presetGravScale,
+      scaleText:'The box is 30 inches wide and 1 inch deep. The clock uses the normal-gravity scale.' +
+        (gravMul*presetGravScale===1 ? ' Normal gravity matches Earth gravity.' : ' Gravity is '+(gravMul*presetGravScale).toFixed(2)+' times Earth gravity.'),
+      error:buildError || airState.error};
+    state.readings=readings;
+  }
+  async function constructMachine(name,options){
+    options=options || {};
+    if(!window.WaterMachinesScenes || !window.WaterMachinesBuilder)throw new Error('Water apparatus definitions are unavailable.');
+    if(waterState!=='on')return Promise.reject(new Error(waterState==='off' ? 'Water machines need WebGPU in this browser.' : 'Wait for the water engine to finish loading.'));
+    var wasPaused=machineLoading ? machineResumePause : userPaused;
+    machineResumePause=wasPaused;machineLoading=true;userPaused=true;syncRunning();
+    var request=++machineRequest;
+    try{
+    clearWorldAll();setGravityUI(1);
+    machineBuilder=null;valveSeats=null;manualValves.clear();instrumentSample=null;
+    var definition=window.WaterMachinesScenes.make(name,{w:worldW,h:worldH,tile:TILE},options);
+    currentScene=name;fitStage();
+    ensureBuilder();
+    machineBuilder.begin('Construct '+definition.title);
+    definition.vessels.forEach(function(v){machineBuilder.vessel(v.rect,v.sealed);});
+    definition.pipes.forEach(function(p){machineBuilder.strokePipe(p.points,p.bore);});
+    (definition.solids || []).forEach(function(r){machineBuilder.vent(r,false);});
+    definition.parts.forEach(function(p){
+      var settings={rect:p.rect};
+      ['open','direction','mass','crackingPressure','hysteresis','bore','material'].forEach(function(key){if(p[key]!==undefined)settings[key]=p[key];});
+      var part=machineBuilder.addPart(p.type==='valve' ? 'flap' : p.type,settings);
+      p.buildId=part.id;
+      if(p.type==='valve')manualValves.add(part.id);
+    });
+    machineBuilder.commit();
+    var randomState=(options.seed || 17)>>>0;
+    function random(){randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;}
+    var pitch=1.25,requested=0,added=0;
+    // Seed the collision footprint, not just its center, in clear space.
+    // A parcel embedded beside a wall can be held at its old position while
+    // gravity keeps increasing its tangential velocity on every step.
+    var seedRadius=liquidWGPU.cellSize*.5*.85+.0625;
+    function seedClear(x,y){
+      for(var row=Math.floor((y-seedRadius)/TILE);row<=Math.floor((y+seedRadius)/TILE);row++){
+        for(var col=Math.floor((x-seedRadius)/TILE);col<=Math.floor((x+seedRadius)/TILE);col++){
+          if(tileAt(row,col)===null && !(valveSeats && valveSeats[row*gridW+col]))continue;
+          var dx=Math.max(col*TILE-x,0,x-(col+1)*TILE);
+          var dy=Math.max(row*TILE-y,0,y-(row+1)*TILE);
+          if(dx*dx+dy*dy<seedRadius*seedRadius)return false;
+        }
+      }
+      return true;
+    }
+    for(var y=TILE+pitch*.5;y<worldH-TILE;y+=pitch)for(var x=TILE+pitch*.5;x<worldW-TILE;x+=pitch){
+      if(tileAt(Math.floor(y/TILE),Math.floor(x/TILE))!==null)continue;
+      if(!definition.initial.some(function(shape){return window.WaterMachinesScenes.contains(shape,x,y);}))continue;
+      var px=x+(random()-.5)*.12,py=y+(random()-.5)*.12;
+      if(!seedClear(px,py))continue;
+      requested++;
+      if(addLiquidParticle('water',px,py,0,0,0)>=0)added++;
+    }
+    if(added!==requested)throw new Error('Apparatus exceeds the particle capacity: '+requested+' requested, '+added+' added.');
+    definition.slimes.forEach(function(s){if(!s.held)spawnSlimeAt(s.x,s.y,s.radius);});
+    var state=machineState={definition:definition,seed:options.seed || 17,initialParticles:added,ready:false,
+      primaryUsed:false,startedAt:null,wallClockStartedAt:null,energyInput:0,inputParticles:0,energyModified:false};
+    setSceneChip(name);setTool('poke');bakeWalls();updateReadout();
+    var model=await enableAirModel(Object.assign({},definition.settings,options.pressure || {},{resetMaterial:true}));
+    if(!model || request!==machineRequest)return null;
+    state.energyInitial=window.WaterMachinesInstruments.waterEnergy(particleInstrumentSample(),
+      {floor:worldH,gravity:250*gravMul*presetGravScale,density:model.settings.density || 1});
+    state.energyGravity=250*gravMul*presetGravScale;
+    if(machineWaterLook===null)machineWaterLook=PRESET_ACTIVE.waterLook;
+    presetSet('waterLook','default');
+    // Rainbow startup reconfigures the shared water canvas. Finish that
+    // before the paused scene's only draw, or it clears the visible water
+    // after construction with no running frame left to paint it again.
+    if(rainbowWater && rainbowWater.readyPromise)await rainbowWater.readyPromise;
+    if(request!==machineRequest)return null;
+    // Submit the initial apparatus while paused, so its first visible frame
+    // cannot show the previous scene's resident water and fixtures.
+    liquidWGPU.update(1/60);render();liquidWGPU.draw();
+    await liquidWGPU.queue.onSubmittedWorkDone();
+    if(request!==machineRequest)return null;
+    if(liquidWGPU.materialStateError)throw new Error(liquidWGPU.materialStateError);
+    state.ready=true;state.startedAt=liquidWGPU.simulationClock;state.wallClockStartedAt=performance.now();
+    return state;
+    }catch(error){
+      if(request===machineRequest){
+        if(machineState)machineState.ready=false;
+        airState.error=error.message;buildError=error.message;
+        wasPaused=true;machineResumePause=true;
+      }
+      throw error;
+    }finally{
+      if(request===machineRequest){machineLoading=false;userPaused=wasPaused;syncRunning();}
+    }
+  }
+
+  function machinePrimary(){
+    if(!machineState || !machineState.ready)return false;
+    var definition=machineState.definition,primary=definition.primary;
+    if(primary.kind==='slime'){
+      if(machineState.primaryUsed)return false;
+      var s=definition.slimes[primary.index];
+      if(!spawnSlimeAt(s.x,s.y,s.radius,true))return false;
+    }else if(primary.kind==='pour'){
+      spawnWaterJet(primary.target.x,primary.target.y,8,0,80,240);
+    }else if(primary.kind==='valve'){
+      var valve=definition.parts.filter(function(p){return p.id===primary.id;})[0];
+      var current=machineBuilder.getParts().find(function(p){return p.id===valve.buildId;});
+      var open=!current.open;setManualValve(valve.buildId,open);
+      definition.action=open ? 'Close valve' : 'Open valve';
+    }
+    machineState.primaryUsed=true;return true;
   }
 
   function setGravityUI(g) { gravMul = g; applyGravity(); syncSliderUI(); }
@@ -12710,6 +13499,19 @@
   }
 
   function scene(name) {
+    if(name==='cup' && (worldW!==cupWorld.w || worldH!==cupWorld.h)){
+      // Engine domains are fixed at boot. Scene selection already replaces
+      // the current apparatus; open its canonical domain before construction.
+      var cupURL=new URL(window.location.href);cupURL.searchParams.set('scene','cup');
+      cupURL.searchParams.delete('build');cupURL.hash='';
+      if(userPaused)cupURL.searchParams.set('paused','1');else cupURL.searchParams.delete('paused');
+      window.location.assign(cupURL.href);return Promise.resolve(null);
+    }
+    if(['siphon','cup','heron'].indexOf(name)>=0)return constructMachine(name,{});
+    machineRequest++;
+    if(machineLoading){machineLoading=false;userPaused=machineResumePause;syncRunning();}
+    if(machineWaterLook!==null){presetSet('waterLook',machineWaterLook);machineWaterLook=null;}
+    machineState=null;
     if (rainbowWater) rainbowWater.reset();
     currentScene = name;
     clearWorldAll();
@@ -12832,7 +13634,7 @@
   var toyFrameNo = 0;
   var fpsEMA = 60;
   var visibleFrac = 1;
-  var userPaused = false;
+  var userPaused = cupSceneRequested && new URL(window.location.href).searchParams.get('paused') === '1';
   var readoutEl = null;
   var readoutTick = 0;
 
@@ -12874,6 +13676,108 @@
     drawSlimeLooks();
     drawCursor();
     drawLiquidToy();
+    drawMachineOverlay();
+  }
+
+  function drawMachineOverlay(){
+    var parts=machineBuilder ? machineBuilder.getParts() : [];
+    if(!machineState && !buildGesture && !pressureColors && !parts.length && !keyboardCursorVisible){
+      if(instrumentsCtx && instrumentsDirty){instrumentsCtx.clearRect(0,0,worldW,worldH);instrumentsDirty=false;}
+      return;
+    }
+    if(!instrumentsCanvas){
+      instrumentsCanvas=document.createElement('canvas');instrumentsCanvas.width=canvas.width;instrumentsCanvas.height=canvas.height;
+      instrumentsCanvas.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:7;';
+      instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
+      instrumentsCtx=instrumentsCanvas.getContext('2d');
+    }
+    var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
+    var palette=getComputedStyle(document.documentElement);
+    var accent=palette.getPropertyValue('--accent').trim(),text=palette.getPropertyValue('--text').trim();
+    if(pressureColors && instrumentSample && window.WaterMachinesInstruments){
+      var snapshot=instrumentSample,dx=snapshot.cellSize,I=window.WaterMachinesInstruments;
+      var kinds=new Uint32Array(snapshot.cells.buffer,snapshot.cells.byteOffset,snapshot.cells.length);
+      var negative=palette.getPropertyValue('--emphasis').trim();
+      var positive=accent;
+      for(var i=0;i<snapshot.width*snapshot.height;i++){
+        var p=snapshot.pressure[i*4];
+        if(kinds[i*8+3]!==1)continue;
+        c.globalAlpha=Math.min(.58,.08+Math.abs(p)/80000*.5);
+        c.fillStyle=p<0 ? negative : positive;c.fillRect(i%snapshot.width*dx,Math.floor(i/snapshot.width)*dx,dx,dx);
+      }
+      c.globalAlpha=1;
+    }
+    c.lineWidth=1;c.strokeStyle=accent;c.fillStyle=text;c.font='14px "Commit Mono", monospace';
+    if(machineState){
+      var definition=machineState.definition;
+      definition.marks.forEach(function(mark){
+        c.save();c.setLineDash([5,5]);c.beginPath();c.moveTo(mark.x,mark.y);c.lineTo(mark.x+mark.width,mark.y);c.stroke();c.restore();
+        if(mark.id==='trigger')c.fillText('Fill line',mark.x+8,mark.y-7);
+      });
+      definition.vessels.forEach(function(v){
+        var label=v.id==='middle' ? 'Source water' : v.id==='bottom' ? 'Receiving water' : v.id==='source' ? 'Higher tank' : v.id==='receiver' ? 'Lower tank' : v.id==='basin' ? 'Basin' : 'Cup';
+        c.fillText(label,v.rect.x+8,v.rect.y-8);
+      });
+    }
+    var labelBoxes=[],stageBounds=stage.getBoundingClientRect(),viewBounds=viewport.getBoundingClientRect();
+    var clipLeft=Math.max(0,viewBounds.left-stageBounds.left),clipRight=Math.min(worldW*fitScale,viewBounds.right-stageBounds.left);
+    var clipTop=Math.max(0,viewBounds.top-stageBounds.top),clipBottom=Math.min(worldH*fitScale,viewBounds.bottom-stageBounds.top);
+    var labelLeft=clipLeft+4,labelRight=clipRight-4,labelTop=clipTop+4,labelBottom=clipBottom-4;
+    parts.sort(function(a,b){return (b.id===highlightedValve ? 1 : 0)-(a.id===highlightedValve ? 1 : 0);});
+    parts.forEach(function(part){
+      if(part.type!=='flap' && part.type!=='check')return;
+      var r=part.rect,x=r.x+r.width*.5,y=r.y+r.height*.5;
+      c.save();c.strokeStyle=accent;c.lineWidth=(part.id===highlightedValve ? 3 : 1.5)/fitScale;
+      c.beginPath();c.arc(x,y,6/fitScale,0,Math.PI*2);c.stroke();
+      if(!part.open){c.beginPath();c.moveTo(x-4/fitScale,y-4/fitScale);c.lineTo(x+4/fitScale,y+4/fitScale);c.stroke();}
+      c.font='11px "Commit Mono", monospace';
+      c.scale(1/fitScale,1/fitScale);
+      var label=part.id+': '+(part.open ? 'Open' : 'Closed');
+      var labelWidth=c.measureText(label).width+8,labelHeight=18;
+      // Keep a visible marker's identity inside the cropped view at any zoom.
+      // Offscreen markers retain their geometry and await a view change.
+      if(x*fitScale<clipLeft || x*fitScale>clipRight || y*fitScale<clipTop || y*fitScale>clipBottom ||
+        labelRight-labelLeft<labelWidth || labelBottom-labelTop<labelHeight){c.restore();return;}
+      var preferredX=(r.x+r.width)*fitScale+10,labelX=Math.max(labelLeft,Math.min(labelRight-labelWidth,preferredX));
+      var preferredY=Math.max(labelTop,Math.min(labelBottom-labelHeight,y*fitScale-24)),labelY=preferredY,foundLabel=false;
+      var positions=[labelX,Math.max(labelLeft,Math.min(labelRight-labelWidth,r.x*fitScale-labelWidth-10))];
+      for(var side=0;side<positions.length && !foundLabel;side++){
+        labelX=positions[side];
+        for(var slot=0;slot<Math.ceil((labelBottom-labelTop)/20)*2+1;slot++){
+          var offset=slot ? Math.ceil(slot*.5)*20*(slot%2 ? -1 : 1) : 0;
+          var candidateY=preferredY+offset;
+          if(candidateY<labelTop || candidateY+labelHeight>labelBottom)continue;
+          var overlap=labelBoxes.some(function(box){return labelX<box.x+box.width+4 && labelX+labelWidth+4>box.x && candidateY<box.y+box.height+2 && candidateY+labelHeight+2>box.y;});
+          if(!overlap){labelY=candidateY;foundLabel=true;break;}
+        }
+      }
+      // Dense builds retain every valve marker. The focused disclosure gets
+      // first choice of readable space; other labels wait rather than overlap.
+      if(!foundLabel){c.restore();return;}
+      labelBoxes.push({x:labelX,y:labelY,width:labelWidth,height:labelHeight});
+      c.lineWidth=1;c.beginPath();c.moveTo(x*fitScale,y*fitScale);c.lineTo(labelX,labelY+labelHeight*.5);c.stroke();
+      c.fillStyle=palette.getPropertyValue('--bg').trim();c.fillRect(labelX,labelY,labelWidth,labelHeight);
+      c.fillStyle=text;c.fillText(label,labelX+4,labelY+13);c.restore();
+    });
+    if(buildGesture){
+      var g=buildGesture;c.save();c.strokeStyle=accent;c.setLineDash([5,4]);c.lineWidth=2;
+      c.beginPath();
+      if(g.kind==='pipe'){
+        for(i=0;i<g.points.length;i++){var point=g.points[i];if(!i)c.moveTo(point.x,point.y);else c.lineTo(point.x,point.y);}
+        c.lineWidth=+buildOptions.bore;
+      }else c.rect(Math.min(g.start.x,g.end.x)-TILE*.5,Math.min(g.start.y,g.end.y)-TILE*.5,
+        Math.max(TILE,Math.abs(g.end.x-g.start.x)+TILE),Math.max(TILE,Math.abs(g.end.y-g.start.y)+TILE));
+      c.globalAlpha=.4;c.stroke();c.restore();
+    }
+    if(keyboardCursorVisible){
+      c.save();c.strokeStyle=accent;c.lineWidth=1.5/fitScale;
+      var cross=10/fitScale,inner=3/fitScale;
+      c.beginPath();c.arc(keyboardX,keyboardY,inner,0,Math.PI*2);
+      c.moveTo(keyboardX-cross,keyboardY);c.lineTo(keyboardX-inner,keyboardY);
+      c.moveTo(keyboardX+inner,keyboardY);c.lineTo(keyboardX+cross,keyboardY);
+      c.moveTo(keyboardX,keyboardY-cross);c.lineTo(keyboardX,keyboardY-inner);
+      c.moveTo(keyboardX,keyboardY+inner);c.lineTo(keyboardX,keyboardY+cross);c.stroke();c.restore();
+    }
   }
 
   function updateReadout() {
@@ -12958,6 +13862,7 @@
       }
     }
     smokeFrame(dt);
+    instrumentTick(tNow);
     render();
 
     readoutTick++;
@@ -12985,13 +13890,13 @@
     if (!pointerDown) return;
     slimeGhost = null;
     try { inputEl.releasePointerCapture(pointerId); } catch (e) {}
-    releasePointer({ pointerId: pointerId });
+    releasePointer({ pointerId: pointerId },true);
   }
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) cancelHeldInput();
     syncRunning();
   });
-  window.addEventListener('blur', cancelHeldInput);
+  window.addEventListener('blur', function(){cancelHeldInput();hideKeyboardCursor();drawMachineOverlay();});
   if (typeof IntersectionObserver !== 'undefined') {
     var io = new IntersectionObserver(function (entries) {
       for (var i = 0; i < entries.length; i++) visibleFrac = entries[i].intersectionRatio;
@@ -13017,6 +13922,13 @@
       pbtn.classList.toggle('is-dead', waterState === 'off');
     }
     if (flowInput) flowInput.disabled = waterState === 'off';
+    if(toyBootReady && waterState!=='booting' && sharedBuildData && !sharedBuildApplied){
+      sharedBuildApplied=true;
+      loadBuild(buildToken).catch(function(error){buildError=error.message;});
+    }else if(toyBootReady && waterState==='on' && startupMachine){
+      var name=startupMachine;startupMachine=null;
+      constructMachine(name,{}).catch(function(error){buildError=error.message;});
+    }
     updateReadout();
   }
 
@@ -13030,8 +13942,9 @@
     var smokeQuery = new URLSearchParams(location.search);
     var smokeName = smokeQuery.get('smoke');
     var initialScene = smokeQuery.get('scene');
+    if(['siphon','cup','heron'].indexOf(initialScene)>=0)startupMachine=initialScene;
     var knownScenes = ['falls', 'zerog', 'chimney', 'spa', 'rig', 'blank'];
-    scene(knownScenes.indexOf(initialScene) >= 0 ? initialScene : window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
+    scene(sharedBuildData || startupMachine ? 'blank' : knownScenes.indexOf(initialScene) >= 0 ? initialScene : window.SmokePresets.byId[smokeName] ? 'rig' : 'falls');
     presetSet('smoke', window.SmokePresets.byId[smokeName] ? smokeName : 'copperhead');
     if (Object.prototype.hasOwnProperty.call(SMOKE_SCALES, smokeQuery.get('scale'))) presetSet('smokeScale', smokeQuery.get('scale'));
     ['mass', 'motion', 'size'].forEach(function (key) {
@@ -13042,6 +13955,7 @@
         blend: 0.92, maxSpeed: 1400, maxPointSpeed: 1600, omega: 3.5
       });
     }
+    toyBootReady=true;onEnginesSettled();
     fitStage();
     bakeWalls();
     updateReadout();
@@ -13142,13 +14056,18 @@
       },
       scene: scene,
       tool: setTool,
+      keyboardState: function(){return {visible:keyboardCursorVisible,holding:pointerDown && pointerId===keyboardPointerId,
+        x:keyboardX,y:keyboardY,tool:tool,grabbing:!!grabBody,building:!!buildGesture,highlightedValve:highlightedValve};},
+      highlightValve: function(id){highlightedValve=id || null;drawMachineOverlay();},
       resize: fitStage,
+      camera: cameraState,
+      setCamera: setCamera,
       pause: function (paused) {
         userPaused = !!paused;
         if (userPaused && pointerDown) {
           slimeGhost = null;
           try { inputEl.releasePointerCapture(pointerId); } catch (e) {}
-          releasePointer({ pointerId: pointerId });
+          releasePointer({ pointerId: pointerId },true);
         }
         syncRunning();
         return userPaused;
@@ -13175,6 +14094,28 @@
         else if (k === 'slimeShape') { if (SLIME_SHAPES[v] || v === 'ball') slimeShape = String(v); }
       },
       liquid: function () { return liquidWGPU; },
+      air: enableAirModel,
+      airMinimumPressure: setAirMinimumPressure,
+      airModel: function () { return airModel; },
+      airStats: function () { return Object.assign({},airState,airModel ? airModel.stats() : {enabled:false}); },
+      machine: constructMachine,
+      machineState: function () { return machineState; },
+      machinePrimary: machinePrimary,
+      builder: function () { return machineBuilder; },
+      buildTool:setBuildTool,
+      buildState:function(){return {kind:buildKind,options:Object.assign({},buildOptions),error:buildError,sharing:!!sharedBuildData};},
+      undo:function(){return buildUndo(false);},redo:function(){return buildUndo(true);},
+      shareBuild:shareBuild,loadBuild:loadBuild,
+      valve:setManualValve,
+      instruments:function(){
+        if(machineState && machineState.readings)return machineState.readings;
+        return {ready:false,caption:machineState ? machineState.definition.caption : '',
+          action:machineState ? machineState.definition.action : '',error:buildError || airState.error,
+          numericalStatus:window.WaterMachinesInstruments.numericalStatus(instrumentSample),
+          scaleText:'The box is 30 inches wide and 1 inch deep. The clock uses the normal-gravity scale.'};
+      },
+      pressureView:function(value){pressureColors=!!value;return pressureColors;},
+      glass:function(value){glassWalls=!!value;wallsBakedVersion=-1;return glassWalls;},
       bodies: function () { return jelloBodies; },
       fling: function (i, vx, vy, omega) {
         var b = jelloBodies[i];

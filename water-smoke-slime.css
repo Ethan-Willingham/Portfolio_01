@@ -27,11 +27,16 @@
 #toy-input { position: absolute; inset: 0; z-index: 8; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 #toy-input:active { cursor: grabbing; }
 #toy-input:focus-visible { outline-offset: -5px; }
+.toy-keyboard-help { margin: 0; color: var(--text-dim); font: 11px/1.4 var(--font-body); }
 .toy-shell[data-active-tool="draw"] #toy-input, .toy-shell[data-active-tool="erase"] #toy-input,
 .toy-shell[data-active-tool="water"] #toy-input, .toy-shell[data-active-tool="smoke"] #toy-input,
 .toy-shell[data-active-tool="slime"] #toy-input { cursor: crosshair; }
 .toy-shell.is-paused #toy-input { pointer-events: none; }
+.toy-shell.is-paused[data-active-tool="build"] #toy-input,
+.toy-shell.is-paused[data-active-tool="draw"] #toy-input,
+.toy-shell.is-paused[data-active-tool="erase"] #toy-input { pointer-events: auto; }
 .toy-shell .toy-resume { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9; padding: 12px 24px; background: var(--bg-raised); border: 1px solid var(--rule); color: var(--text-bright); box-shadow: 0 4px 24px rgb(0 0 0 / .15); }
+.toy-playback .toy-resume { position: static; transform: none; min-width: 72px; min-height: 44px; padding: 8px 12px; box-shadow: none; }
 .toy-fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; background: var(--d-canvas-bg); color: var(--text-dim); text-align: center; z-index: 10; }
 .toy-fallback p { max-width: 28em; }
 .toy-dock { display: flex; align-items: center; gap: 16px; padding: 10px 12px 4px; border-top: 1px solid var(--rule); }
@@ -201,3 +206,84 @@ body.toy-expanded { overflow: hidden; }
   .toy-scenes .toy-chip { padding-inline: 6px; }
   .toy-experiments { grid-template-columns: 1fr; gap: 18px; }
 }
+
+/* Machine presentation: one picker, five tools and contextual disclosures. */
+.toy-scene-picker { position: relative; min-width: 170px; max-width: 280px; flex: 1; }
+.toy-scene-picker > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 7px 12px; border: 1px solid var(--rule); border-radius: 6px; cursor: pointer; list-style: none; font: 12px var(--font-body); color: var(--text); }
+.toy-scene-picker > summary::-webkit-details-marker { display: none; }
+.toy-scene-picker[open] > summary { border-color: var(--accent); }
+.toy-scene-picker .toy-scene-list { position: absolute; z-index: 15; top: calc(100% + 6px); left: 0; display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: max(100%,220px); max-height: min(480px,calc(100dvh - 140px)); overflow-y: auto; overscroll-behavior: contain; padding: 8px; background: var(--bg-raised); border: 1px solid var(--rule-strong); border-radius: 8px; }
+.toy-scene-list p { margin: 8px 8px 3px; color: var(--text-faint); font: 10px var(--font-mono); }
+.toy-scene-picker .toy-scene-list .toy-chip { justify-content: flex-start; min-width: 44px; min-height: 44px; width: 100%; padding: 8px 10px; }
+.toy-dock { gap: 8px; flex-wrap: wrap; }
+.toy-tools { flex: 1; gap: 5px; justify-content: flex-start; }
+.toy-tools .tb { min-width: 48px; min-height: 52px; flex: 0 1 64px; }
+.toy-presets-entry { margin-left: auto; }
+.toy-shell .toy-presets-entry[aria-expanded="true"] { background: var(--d-bg); border-color: var(--accent); color: var(--text-bright); }
+.toy-foot { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 10px; }
+.toy-foot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+.toy-machine-summary { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 12px; align-items: center; width: 100%; }
+.toy-machine-summary p { margin: 0; color: var(--text-dim); font: 12px/1.45 var(--font-body); }
+.toy-shell .toy-primary { min-width: 120px; min-height: 44px; padding: 9px 14px; background: var(--d-bg); color: var(--accent-hover); border: 1px solid var(--accent); }
+.toy-machine-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; font: 11px/1.5 var(--font-mono); }
+.toy-shell #toy-machine-view { min-height: 44px; padding: 8px 12px; border-color: var(--rule); margin-left: auto; }
+.toy-machine-diagnostics { margin: 0; color: var(--text-dim); font: 11px/1.45 var(--font-body); }
+.toy-machine-metrics b { color: var(--text); font-weight: 400; }
+.toy-machine-metrics.is-stale b { color: var(--text-faint); }
+.toy-shell .toy-instruments-button { min-width: 92px; min-height: 44px; padding: 8px; border-color: var(--rule); }
+.toy-panel { bottom: calc(var(--toy-controls-height,104px) + 4px); max-height: min(620px,calc(100dvh - 96px)); }
+.toy-panel .toy-palettes { width: 100%; margin: 0 0 20px; gap: 6px; }
+.toy-panel .toy-palettes .toy-material { flex: 1; padding: 0 8px; }
+.toy-build-tools, .toy-build-actions, .toy-instrument-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.toy-build-valves { margin-top: 14px; }
+.toy-build-valves p { margin: 0 0 8px; color: var(--text-faint); font: 11px var(--font-mono); }
+#toy-build-valve-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.smoke-library-footer > label { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
+.toy-build-tools .toy-chip { min-width: 82px; flex: 1 1 100px; }
+.toy-build-tools .toy-chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-hover); background: var(--d-bg); }
+.toy-build-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; }
+.toy-build-options label { min-width: 0; color: var(--text-dim); font: 12px var(--font-body); }
+.toy-build-options select { display: block; min-width: 44px; width: 100%; min-height: 44px; margin-top: 6px; padding: 7px; background: var(--bg-raised); border: 1px solid var(--rule); border-radius: 6px; color: var(--text); }
+.toy-panel-note { margin: 14px 0 0; color: var(--text-faint); font: 12px/1.5 var(--font-body); }
+.toy-share-link { display: block; margin-top: 14px; color: var(--text-dim); font: 12px var(--font-body); }
+.toy-share-link input { display: block; width: 100%; min-height: 44px; margin-top: 6px; padding: 8px; background: var(--bg); color: var(--text); border: 1px solid var(--rule); border-radius: 5px; font: 11px var(--font-mono); }
+.toy-instrument-values { margin: 14px 0; font: 11px/1.6 var(--font-mono); }
+.toy-instrument-values > div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--rule); }
+.toy-instrument-values dt { color: var(--text-faint); }
+.toy-instrument-values dd { margin: 0; color: var(--text); text-align: right; }
+.toy-pressure-legend, .toy-build-notice { margin: 0; color: var(--text-dim); font: 11px/1.45 var(--font-body); }
+.toy-machine-notes { margin: 20px 0 26px; }
+.toy-machine-notes > div { margin-bottom: 20px; }
+.toy-machine-notes dt { margin-bottom: 5px; color: var(--text); font: 18px/1.4 var(--font-heading); }
+.toy-machine-notes dd { margin: 0; color: var(--text-dim); font: 14px/1.7 var(--font-body); }
+.toy-build-notice { color: var(--accent); }
+.toy-shell[data-active-tool="build"] #toy-input { cursor: crosshair; }
+.toy-details > summary, .toy-method > summary { min-height: 44px; display: flex; align-items: center; }
+.toy-rig-controls .toy-chip, .toy-rig-controls .smoke-now, .toy-rig-controls select, #smoke-family { min-width: 44px; min-height: 44px; }
+@media(max-width:800px) {
+  .toy-tools { flex: 1 1 auto; order: 0; }
+  .toy-settings { order: 2; }
+  .toy-presets-entry { order: 1; }
+}
+@media(max-width:520px) {
+  .toy-scene-picker { min-width: 134px; max-width: none; }
+  .toy-top { gap: 4px; }
+  .toy-tools { flex-basis: 100%; gap: 4px; }
+  .toy-tools .tb { flex: 1; min-width: 44px; min-height: 48px; }
+  .toy-presets-entry { margin-left: 0; flex: 1; }
+  .toy-foot { min-height: 0; padding: 6px 10px 9px; }
+  .toy-panel { bottom: calc(var(--toy-controls-height,140px) + 4px); right: 8px; }
+  .toy-playback .toy-icon { width: 44px; height: 44px; }
+  .toy-machine-summary { grid-template-columns: 1fr; gap: 5px; }
+  .toy-primary { justify-self: start; }
+  .toy-machine-summary p { font-size: 11px; }
+}
+@media(max-height:520px) {
+  .toy-foot { gap: 2px; padding: 6px 14px; }
+  .toy-panel { bottom: 8px; max-height: calc(100dvh - 92px); }
+}
+
+.toy-build-camera { margin-top: 18px; }
+.toy-build-camera p { margin: 0 0 8px; color: var(--text-faint); font: 11px var(--font-mono); }
+.toy-camera-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.toy-camera-actions .toy-chip { min-width: 70px; min-height: 44px; flex: 1 1 70px; padding: 8px; border-color: var(--rule); }

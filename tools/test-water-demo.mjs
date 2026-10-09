@@ -7,8 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dump = '/tmp/water-demo-review';
-const port = 8435, debug = 9435;
+const dump = process.env.DUMP || '/tmp/water-demo-review';
+const port = Number(process.env.PORT || 8435), debug = port + 1000;
 fs.mkdirSync(dump, { recursive: true });
 const profile = fs.mkdtempSync('/tmp/water-demo-browser-');
 const mime = { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png' };
@@ -84,6 +84,7 @@ try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   chrome = spawn(`${process.env.HOME}/.local/bin/agent-chrome-for-testing`, [
     '--headless=new', '--enable-unsafe-webgpu', '--use-angle=metal', '--disable-gpu-sandbox', '--no-first-run',
+    '--disable-gpu-vsync', '--disable-frame-rate-limit',
     `--user-data-dir=${profile}`, `--remote-debugging-port=${debug}`, 'about:blank'
   ], { stdio: 'ignore' });
   let endpoint;

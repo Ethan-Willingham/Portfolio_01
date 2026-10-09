@@ -20,6 +20,7 @@ const port = Number(process.env.PORT || 8296), debugPort = port + 1000;
 const out = process.env.DUMP || '/tmp/sluice-water-collision-gpu';
 const timeoutMs = Number(process.env.TIMEOUT_MS || 180000);
 const benchMode = process.env.BENCH === '1';
+const pointContactMode = process.env.POINT_CONTACT === '1';
 const beforeRef = '3d9c4d6';
 const paths = { before: process.env.BEFORE || null, after: process.env.AFTER || path.join(root,'js/liquid-wgpu.js') };
 const sources = {}, metadata = {};
@@ -61,7 +62,7 @@ assert.equal(shaderContext.window.__waterCollisionAPIs.before.snowShader,
 const snowShaderSHA256=createHash('sha256').update(shaderContext.window.__waterCollisionAPIs.before.snowShader).digest('hex');
 for(const name of ['before','after']) metadata[name].waterShaderSHA256=createHash('sha256').update(shaderContext.window.__waterCollisionAPIs[name].waterShader).digest('hex');
 
-function makeFixtures() {
+function makeFixtures(pointContactMode = false) {
   const materialFlag = type => (type & 3) | ((type & 4) << 4) | 8 | (29 << 8) | (71 << 24);
   const particle = (x, y, options = {}) => ({
     pos: [x, y, options.vx ?? 0, options.vy ?? 0],
@@ -133,7 +134,19 @@ function makeFixtures() {
   add('snow-path-unchanged',[particle(119.7,94,{type:5,flag:65|16|(29<<8)}),particle(110,127.1,{type:5,flag:65|16|(29<<8)})],
     {particles:[particle(119.7,94,{type:5,flag:65|16|(29<<8)}),particle(110,127.1,{type:5,flag:65|16|(29<<8)})],
       snowOnly:true,guests:[box(80,100,120,127.4)],terrain:'floor',exact:true});
-  return scenes;
+  if(pointContactMode){
+    add('machine-thin-water-film',[particle(112,127.1)],
+      {guests:[{...box(80,80,180,127.4),skin:true}],terrain:'floor',machinePointContact:true,maximumCorrection:1});
+    add('machine-edge-crossing-floor',[particle(127.1,127.7)],
+      {guests:[{...polygon([[80,80],[140,80],[130,130],[110,125],[80,125]]),skin:true}],terrain:'floor',machinePointContact:true,maximumCorrection:8});
+    add('machine-floor-slot-contact',[particle(124.9,127.99)],
+      {guests:[{...box(80,80,180,128.2),skin:true}],terrain:'floor-step',machinePointContact:true,beforePointWater:true,maximumCorrection:8});
+    add('machine-wall-slot-contact',[particle(127.99,124.9)],
+      {guests:[{...box(80,80,128.2,180),skin:true}],terrain:'wall-step',machinePointContact:true,beforePointWater:true,maximumCorrection:8});
+    add('machine-eight-pixel-floor-slot',[particle(30.225,31.9975)],
+      {guests:[{...box(20,20,45,32.05),skin:true}],worldTile:8,terrain:'floor-step',machinePointContact:true,beforePointWater:true,maximumCorrection:2});
+  }
+  return pointContactMode ? scenes.filter(scene=>scene.machinePointContact) : scenes;
 }
 async function runGPU() {
   const capacity = 320;
@@ -181,6 +194,7 @@ async function runGPU() {
               target[y * w + x] = current.terrain === 'floor' ? +(r >= 4) :
                 current.terrain === 'wall' ? +(c >= 4) :
                 current.terrain === 'floor-step' ? +(c === 3 && r >= 4) :
+                current.terrain === 'wall-step' ? +(r === 3 && c >= 4) :
                 current.terrain === 'cavity' ? +(c !== 3 || r !== 3) :
                 current.terrain === 'midpoint-pocket' ? +(r >= 4 || c === 1 || c === 9 || c === 3 && r === 2) :
                 current.terrain === 'corner-roof' ? +(c < 0 || r < 0) : 0;
@@ -217,12 +231,20 @@ async function runGPU() {
           if (fixture.bowls) instance.bathBowls.set(fixture.bowls);
           const u = instance.paramsHost, f = instance.paramsHostF;
           u.fill(0); u[0] = instance.uploadedCount; u[1] = 64; u[2] = 64; u[5] = 4096;
-          f[6] = instance.stepDt; f[7] = 0.25; f[8] = 8; f[9] = 32; f[10] = 8;
+          f[6] = instance.stepDt; f[7] = 0.25; f[8] = 8; f[9] = fixture.worldTile || 32; f[10] = 8;
           u[12] = -2; u[13] = -4; u[14] = 12; u[15] = 16; f.set(fixture.region, 16);
           instance.queue.writeBuffer(instance.paramsBuf, 0, u);
           api.uploadTerrainMask(instance);
           api.writeGameParams(instance, fixture.slots ? 5 : 1);
           api.writeSimParams(instance);
+          if(fixture.machinePointContact){
+            const source=api.waterShader,start=source.indexOf('  var moveHit = false;'),end=source.indexOf('  // Preserve the terrain-resolved state.',start);
+            if(start<0||end<=start)throw Error('Native terrain response unavailable');
+            const response=source.slice(start,end),custom=instance.createTerrainCollisionPipeline(response,{waterOnly:true,pointWater:label==='after'||fixture.beforePointWater});
+            const info=await custom.module.getCompilationInfo();
+            if(info.messages.some(m=>m.type==='error'))throw Error(JSON.stringify(info.messages));
+            instance.pressureModel={enabled:true,collisionPipeline:custom.pipeline,collisionFallbackPipeline:custom.fallbackPipeline};
+          }else instance.pressureModel=null;
           async function collisionAndReadback() {
             device.pushErrorScope('validation');
             if (!fixture.snowOnly) instance.queue.writeBuffer(instance.buf.snowFallbackCount, 0, new Uint32Array(4));
@@ -372,9 +394,9 @@ async function runBenchmark() {
   }
 }
 
-const browserProgram = `window.__waterRunBenchmark=(${runBenchmark.toString()});window.__waterMakeFixtures=(${makeFixtures.toString()});window.__waterRunGPU=${benchMode}?__waterRunBenchmark:(${runGPU.toString()});`;
+const browserProgram = `window.__waterRunBenchmark=(${runBenchmark.toString()});window.__waterMakeFixtures=()=>(${makeFixtures.toString()})(${pointContactMode});window.__waterRunGPU=${benchMode}?__waterRunBenchmark:(${runGPU.toString()});`;
 new vm.Script(browserProgram);
-const fixtureSummary=makeFixtures().map(f=>({name:f.name,count:f.particles.length,modes:f.modes,slots:f.slots||[0],snowOnly:f.snowOnly}));
+const fixtureSummary=makeFixtures(pointContactMode).map(f=>({name:f.name,count:f.particles.length,modes:f.modes,slots:f.slots||[0],snowOnly:f.snowOnly}));
 assert(fixtureSummary.every(f=>f.count<=320));
 if(process.env.DRY_RUN==='1') { console.log(JSON.stringify({dryRun:true,benchmark:benchMode,sources:metadata,snowShaderSHA256,fixtures:fixtureSummary,browserLaunched:false},null,2));process.exit(0); }
 fs.mkdirSync(out, { recursive: true });
@@ -420,7 +442,7 @@ async function evaluate(expression) {
   return result.result?.value;
 }
 function compare(result) {
-  const fixtures=new Map(makeFixtures().map(f=>[f.name,f])),cases=[],failures=[];
+  const fixtures=new Map(makeFixtures(pointContactMode).map(f=>[f.name,f])),cases=[],failures=[];
   const float=word=>new Float32Array(new Uint32Array([word]).buffer)[0];
   let edges=0,midpoints=0,beforeRays=0,afterRays=0;
   assert.equal(result.outputs.before.length,result.outputs.after.length);
@@ -433,7 +455,25 @@ function compare(result) {
       if(a[field][i]!==b[field][i])differences++;
       if(field!=='flag') {const av=float(a[field][i]),bv=float(b[field][i]);finite&&=Number.isFinite(av)&&Number.isFinite(bv);maxDifference=Math.max(maxDifference,Math.abs(av-bv));}
     }
-    check('original float words, pressure, flags and repeated dispatch preserved',differences===0,{differences,maxDifference});
+    if(fixture.machinePointContact){
+      const distance=state=>Math.hypot(float(state.pos[0])-fixture.particles[0].pos[0],float(state.pos[1])-fixture.particles[0].pos[1]);
+      const inGuest=(guest,x,y)=>{
+        let inside=false;
+        for(let i=0,j=guest.pts.length-4;i<guest.pts.length;j=i,i+=4){
+          const ax=guest.pts[i],ay=guest.pts[i+1],bx=guest.pts[j],by=guest.pts[j+1];
+          if((ay>y)!==(by>y) && x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+        }
+        return inside;
+      };
+      check('control reproduces a distant guest exit',distance(before)>fixture.maximumCorrection,{distance:distance(before)});
+      check('point contact finds a nearby clear exit',distance(after)<=fixture.maximumCorrection,{distance:distance(after)});
+      const px=float(after.pos[0]),py=float(after.pos[1]),tile=fixture.worldTile||32;
+      const solid=fixture.terrain==='wall-step' ? px>=4*tile&&py>=3*tile&&py<4*tile :
+        py>=4*tile&&(fixture.terrain!=='floor-step'||px>=3*tile&&px<4*tile);
+      check('point stays outside physical solids',!solid,{x:px,y:py});
+      check('point exits every guest',!(fixture.guests||[]).some(g=>inGuest(g,float(after.pos[0]),float(after.pos[1]))));
+      check('settled contact does not repeat a correction',after.pos[0]===after.second.pos[0]&&after.pos[1]===after.second.pos[1]);
+    }else check('original float words, pressure, flags and repeated dispatch preserved',differences===0,{differences,maxDifference});
     check('finite output',finite);
     let guards=true;
     for(const state of [after,after.second])for(const field of ['pos','aux','flag']) {
@@ -442,7 +482,7 @@ function compare(result) {
       for(const i of protectedIndices)for(let axis=0;axis<stride;axis++) guards&&=state[field][i*stride+axis]===after.input[field][i*stride+axis];
     }
     check('sleeping/frozen/off-region/snow and unused tail protected',guards);
-    if(!fixture.snowOnly && !fixture.sequence) {
+    if(!fixture.snowOnly && !fixture.sequence && !fixture.machinePointContact) {
       const a=before.branches,b=after.branches;
       edges+=before.queued?a[0]:a[1];midpoints+=a[2];beforeRays+=a[3];if(!after.queued)afterRays+=b[3];
       if(after.queued) {
@@ -461,7 +501,7 @@ function compare(result) {
     if(fixture.expectPosition)check('fuzzy tie chooses original exit',fixture.expectPosition.every((v,i)=>Math.abs(float(after.pos[i])-v)<.002),after.pos.slice(0,2).map(float));
     cases.push({name:after.name,checks,pass:checks.every(c=>c.pass)});
   }
-  if(!edges||(!metadata.before.queued&&!midpoints))failures.push({name:'Both serial fallback branches must be covered',edges,midpoints});
+  if(!pointContactMode&&(!edges||(!metadata.before.queued&&!midpoints)))failures.push({name:'Both serial fallback branches must be covered',edges,midpoints});
   return {pass:!failures.length&&!result.gpuErrors.length&&!browserErrors.length,cases,failures,
     branchTotals:{edges,midpoints,beforeRays,afterRays:metadata.after.queued?null:afterRays},snowShaderSHA256,gpuErrors:result.gpuErrors,browserErrors,sources:metadata,adapterInfo:result.adapterInfo,
     limitation:'Direct post-G2P collision differential with static snapshots, not a full-frame FPS claim.'};
@@ -469,6 +509,7 @@ function compare(result) {
 try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, '127.0.0.1', resolve); });
   const args = ['--headless=new', '--enable-unsafe-webgpu', '--use-angle=metal', '--no-first-run',
+    '--disable-gpu-vsync', '--disable-frame-rate-limit',
     '--no-default-browser-check', `--user-data-dir=${profile}`, `--remote-debugging-port=${debugPort}`, 'about:blank'];
   chrome = spawn('/Users/ethan/.local/bin/agent-chrome-for-testing', args, { stdio: ['ignore', 'ignore', 'pipe'] });
   let chromeLog = '';
