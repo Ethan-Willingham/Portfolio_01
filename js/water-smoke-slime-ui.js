@@ -190,7 +190,7 @@
         document.getElementById('toy-input').focus({preventScroll:true});
       });
     });
-    bar.querySelectorAll('.toy-build-options select').forEach(function (select) {
+    document.getElementById('toy-panel-build').querySelectorAll('.toy-build-options select').forEach(function (select) {
       select.addEventListener('change', function () {
         if (select.id === 'toy-build-material') {
           glassWalls = select.value === 'glass'; toy.glass(glassWalls);
@@ -249,6 +249,13 @@
       try { toy.machinePrimary(); }
       catch (error) { notice = error.message; }
       updateMeasurements();
+    });
+    document.getElementById('toy-siphon-setup').addEventListener('change', async function () {
+      var setup=this.value;
+      this.disabled=true;
+      try { await toy.machine('siphon',{setup:setup}); }
+      catch(error){notice=error.message;}
+      finally{this.disabled=false;updateMeasurements();}
     });
     document.getElementById('toy-pressure-toggle').addEventListener('click', function () {
       pressureColors = !pressureColors; toy.pressureView(pressureColors); pressed(this, pressureColors); updateMeasurements();
@@ -321,6 +328,11 @@
       document.getElementById('toy-machine-material-notice').hidden = !air.enabled;
       document.getElementById('toy-machine-summary').hidden = !machine;
       document.getElementById('toy-machine-metrics').hidden = !machine;
+      var siphon=state.scene==='siphon';
+      document.getElementById('toy-siphon-options').hidden=!siphon;
+      document.getElementById('toy-siphon-setup-note').hidden=!siphon;
+      var setupSelect=document.getElementById('toy-siphon-setup');
+      if(siphon && liveMachine && liveMachine.ready && !setupSelect.disabled)setupSelect.value=liveMachine.definition.setup;
       document.getElementById('toy-instruments-open').hidden = !contextual;
       if (!contextual && openPanel && openPanel.id === 'toy-panel-instruments') closePanel(false);
       if (machine) {
@@ -406,7 +418,7 @@
         lastScene = state.scene;
         notice = ''; document.getElementById('toy-share-wrap').hidden = true;
       }
-      text('toy-scene-label', (sceneNames[state.scene] || state.scene) + (/^(siphon|heron)$/.test(state.scene) ? ' (in progress)' : ''));
+      text('toy-scene-label', (sceneNames[state.scene] || state.scene) + (state.scene==='heron' ? ' (in progress)' : ''));
       bar.querySelectorAll('[data-tool], [data-scene], [data-preset]').forEach(function (button) {
         button.setAttribute('aria-pressed', String(button.classList.contains('is-on')));
       });
@@ -438,9 +450,14 @@
     }
     pauseButton.addEventListener('click', function () { pause(!toy.stats().paused); });
     resumeButton.addEventListener('click', function () { pause(false); document.getElementById('toy-input').focus({ preventScroll: true }); });
-    document.getElementById('toy-restart').addEventListener('click', function () {
-      toy.scene(toy.stats().scene);
-      pause(false);
+    document.getElementById('toy-restart').addEventListener('click', async function () {
+      this.disabled=true;
+      try {
+        if(toy.stats().scene==='siphon')await toy.machine('siphon',{setup:document.getElementById('toy-siphon-setup').value});
+        else await toy.scene(toy.stats().scene);
+        pause(false);
+      } catch(error){notice=error.message;}
+      finally{this.disabled=false;sync();}
     });
     document.querySelectorAll('[data-try]').forEach(function (button) {
       button.addEventListener('click', function () {

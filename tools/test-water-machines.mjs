@@ -2,7 +2,9 @@
 // Integrated machine measurements through the real toy and its particle solver.
 // DUMP=/absolute/output SEEDS=17 MACHINE=siphon SIM_SECONDS=10 node tools/test-water-machines.mjs
 // CASES may be a JSON array of {name,machine,options,seconds,actions}; actions are
-// {at,type:'primary'}, {at,type:'slime',x,y,radius}, or {at,type:'valve',id,open}.
+// {at,type:'primary'}, {at,type:'slime',x,y,radius}, {at,type:'valve',id,open},
+// {at,type:'pressure-floor',value} for a physical column-separation control,
+// or {at,type:'observe'} for a passive native-buffer checkpoint.
 // Run GPU tests exclusively.
 // Diagnostic output distinguishes observations from complete acceptance.
 import assert from 'node:assert/strict';
@@ -26,6 +28,7 @@ const viewport={width:Number(process.env.WIDTH || 1440),height:Number(process.en
 const frameMode=process.env.FRAME_MODE || 'paced60';
 const pairedMode=process.env.PAIRED_CAPTURE==='1';
 const nativePassage=process.env.NATIVE_PASSAGE==='1';
+const resume=process.env.RESUME==='1';
 const cases=process.env.CASES ? JSON.parse(process.env.CASES) : [{name:'open',machine:process.env.MACHINE || 'siphon',options:{open:true},seconds}];
 assert(seeds.length&&seeds.every(Number.isInteger),'Integer deterministic seeds');
 assert(cases.length&&cases.every(c=>typeof c.name==='string'&&['siphon','cup','heron'].includes(c.machine)),'Known named cases');
@@ -44,9 +47,14 @@ if(fs.existsSync(sourceDirectory ? path.join(sourceDirectory,'liquid-air-mac-wgp
   frozenPaths.push('js/liquid-air-mac-wgpu.js');
 const frozen=new Map(frozenPaths.map(file=>[file,fs.readFileSync(sourceDirectory ? path.join(sourceDirectory,path.basename(file)) : path.join(root,file))]));
 fs.mkdirSync(path.join(output,'source'),{recursive:true});
-for(const [file,data] of frozen)fs.writeFileSync(path.join(output,'source',path.basename(file)),data);
+for(const [file,data] of frozen){
+  const saved=path.join(output,'source',path.basename(file));
+  if(resume && fs.existsSync(saved))assert.equal(hash(fs.readFileSync(saved)),hash(data),'Resume uses the same runtime: '+file);
+  else fs.writeFileSync(saved,data);
+}
 const testSources=new Map(['test-water-machines.mjs','water-machines-paired-observer.mjs','water-machines-native-passage.mjs'].map(file=>[file,fs.readFileSync(path.join(root,'tools',file))]));
-for(const [file,data]of testSources)fs.writeFileSync(path.join(output,'source',file),data);
+const testSourceFolder=resume?'source-resume':'source';fs.mkdirSync(path.join(output,testSourceFolder),{recursive:true});
+for(const [file,data]of testSources)fs.writeFileSync(path.join(output,testSourceFolder,file),data);
 
 function installCadence(hz){
   const native=window.requestAnimationFrame.bind(window),callbacks=new Map(),period=1000/hz;
@@ -461,13 +469,34 @@ async function cleanup(){
 }
 process.once('SIGINT',()=>cleanup().finally(()=>process.exit(130)));process.once('SIGTERM',()=>cleanup().finally(()=>process.exit(143)));
 function command(file,args){try{return execFileSync(file,args,{encoding:'utf8'}).trim();}catch{return null;}}
-const report={schema:'water-machines-integrated-v1',startedUTC:new Date().toISOString(),viewport,seeds,frameMode,cases,
+const report={schema:'water-machines-integrated-v2',startedUTC:new Date().toISOString(),viewport,seeds,frameMode,cases,
   pairedMode,testSourceSHA256:Object.fromEntries([...testSources].map(([file,data])=>[file,hash(data)])),
   environment:{node:process.version,cpu:os.cpus()[0].model,memoryGiB:os.totalmem()/1024**3,model:command('sysctl',['-n','hw.model']),
     os:command('sw_vers',['-productVersion']),power:command('pmset',['-g','batt']),thermal:command('pmset',['-g','therm'])},
   sourceSHA256:Object.fromEntries([...frozen].map(([file,data])=>[file,hash(data)])),runs:[],errors,logs,
   limitation:'Uncapped owned Chrome with an optional RAF gate measures workload throughput, not physical display presentation.'};
-function save(){fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2)+'\n');}
+const completed=new Set();
+if(resume){
+  const previous=JSON.parse(fs.readFileSync(path.join(output,'report.json')));
+  assert.deepEqual(previous.sourceSHA256,report.sourceSHA256,'Resume preserves the frozen runtime');
+  assert.deepEqual(previous.cases,cases);assert.deepEqual(previous.seeds,seeds);assert.equal(previous.frameMode,frameMode);
+  assert.deepEqual(previous.errors,[],'Resume only healthy completed recordings');
+  report.resumedFrom={startedUTC:previous.startedUTC,failure:previous.failure || null,testSourceSHA256:previous.testSourceSHA256,
+    runIds:previous.runs.filter(r=>r.completed).map(r=>r.id)};
+  for(const entry of previous.runs.filter(r=>r.completed)){
+    const run=JSON.parse(fs.readFileSync(path.join(output,entry.runFile)));
+    report.runs.push({id:run.id,machine:run.machine,case:run.case,seed:run.seed,options:run.options,
+      summary:run.summary,finalPressure:{invalidCells:run.finalPressure?.invalidCells}});
+    completed.add(run.id);
+  }
+}
+function save(){
+  // The full per-run files preserve raw diagnostics. Referencing them keeps a
+  // multi-seed catalog below V8's string limit without dropping measurements.
+  const runs=report.runs.map(run=>({id:run.id,machine:run.machine,case:run.case,seed:run.seed,options:run.options,
+    runFile:run.id+'.json',completed:!!run.summary}));
+  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({...report,runs},null,2)+'\n');
+}
 try{
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
   const browserArguments=['--headless=new','--enable-unsafe-webgpu','--use-angle=metal','--disable-gpu-sandbox',
@@ -497,6 +526,7 @@ try{
   let seedScript;
   for(const c of cases)for(const seed of seeds){
     const id=c.machine+'-'+c.name+'-seed-'+seed,duration=Number(c.seconds || seconds);
+    if(completed.has(id))continue;
     if(seedScript)await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:seedScript});
     seedScript=(await send('Page.addScriptToEvaluateOnNewDocument',{source:`(()=>{let state=${seed>>>0};Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};})()`})).identifier;
     const declaredToken=c.world?declaredWorldToken(c.world):null;
@@ -518,7 +548,7 @@ try{
       for(const [key,bytes]of Object.entries(await pullRecords('__machineResidentResult',initialized.recordLengths))){const file=id+'-initialized-'+key+'.bin';fs.writeFileSync(path.join(output,file),bytes);run.initialResident.buffers[key]={file,bytes:bytes.length,sha256:hash(bytes)};}
     }
     report.runs.push(run);save();
-    if(nativePassage&&!pairedMode)await evaluate(`(${installNativePassage.toString()})().then(observer=>{window.__nativePassage=observer;return true;})`);
+    if(nativePassage&&!pairedMode)await evaluate(`(${installNativePassage.toString()})(${JSON.stringify({tailStart:duration-10})}).then(observer=>{window.__nativePassage=observer;return true;})`);
     if(pairedMode){
       await evaluate(`window.__machineNativeObserver=(${installNativePairedObserver.toString()})();window.__machineNativePrevious=null;window.__machineNativeCurrent=null;`);
       const apparatusStartedAt=await evaluate('__toy.machineState().startedAt'),steps=[];let elapsed=0,failed=false;
@@ -582,6 +612,7 @@ try{
         await evaluate('__toy.pause(true)');const actionWallStart=Date.now();
         const beforePressure=await evaluate(`(${pressureDiagnostics.toString()})()`),beforeResident=await evaluate(`(${residentSnapshot.toString()})()`);
         const actionRecord={action,at:elapsed,beforeParticles,beforePressure:{...beforePressure,buffers:{}},beforeResident:{...beforeResident,buffers:{}}};
+        if(nativePassage)actionRecord.beforeNativePassage=await evaluate('__nativePassage.capture()');
         const actionFrame=id+'-action-'+nextAction+'-before.png';await screenshot(actionFrame);actionRecord.beforeScreenshot=actionFrame;run.frames.push({target:action.at,at:elapsed,file:actionFrame});
         if(beforePressure)for(const [key,bytes] of Object.entries(await pullRecords('__machineFinalPressure',beforePressure.recordLengths))){const file=id+'-action-'+nextAction+'-air-'+key+'.bin';fs.writeFileSync(path.join(output,file),bytes);actionRecord.beforePressure.buffers[key]={file,bytes:bytes.length,sha256:hash(bytes)};}
         for(const [key,bytes] of Object.entries(await pullRecords('__machineResidentResult',beforeResident.recordLengths))){const file=id+'-action-'+nextAction+'-'+key+'.bin';fs.writeFileSync(path.join(output,file),bytes);actionRecord.beforeResident.buffers[key]={file,bytes:bytes.length,sha256:hash(bytes)};}
@@ -592,6 +623,11 @@ try{
           assert(result,'The requested slime was created');
         }
         else if(action.type==='valve')result=await evaluate(`__toy.valve(${JSON.stringify(action.id)},${JSON.stringify(!!action.open)})`);
+        else if(action.type==='pressure-floor'){
+          assert(Number.isFinite(action.value),'Finite pressure floor');
+          result=await evaluate(`__toy.airMinimumPressure(${action.value})`);
+        }
+        else if(action.type==='observe')result=true;
         else throw Error('Unknown physical test action '+action.type);
         const afterParticles=await evaluate('__toy.stats().water');Object.assign(actionRecord,{result,afterParticles,observationPauseWallSeconds:(Date.now()-actionWallStart)/1000});run.actions.push(actionRecord);save();
         if(elapsed<duration)await evaluate('__toy.pause(false)');

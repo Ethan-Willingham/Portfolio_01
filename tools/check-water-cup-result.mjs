@@ -17,7 +17,8 @@ const Builder = require(path.join(folder, 'source/water-machines-builder.js'));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const rows = [];
 
-for (const run of report.runs) {
+for (const entry of report.runs) {
+  const run = entry.runFile ? JSON.parse(fs.readFileSync(path.join(folder, entry.runFile))) : entry;
   assert.equal(run.machine, 'cup');
   assert(run.resident && run.nativePassage, 'Resident buffers and native passage observer required');
   const {w, h, tile} = run.initial.world;

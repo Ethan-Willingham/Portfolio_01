@@ -11,6 +11,15 @@ near(scale.volume(960*32),30);
 const def={measure:{outlet:{y:240},nozzle:{y:60}},pipes:[{points:[{y:200}]}]};
 near(I.prediction('heron',{basin:60,bottom:260,source:160},def,250).head,100);
 near(I.prediction('siphon',{source:200},def,250).speed,Math.sqrt(20000));
+near(I.prediction('siphon',{source:200,receiver:220},def,250).head,20);
+near(I.prediction('siphon',{source:200,receiver:260},def,250).head,40);
+near(I.prediction('siphon',{source:250,receiver:220},def,250).speed,0);
+const primer={count:16,x:Array.from({length:16},(_,i)=>10+i%4),y:Array.from({length:16},(_,i)=>10+Math.floor(i/4))};
+const vesselRect={x:0,y:0,width:40,height:40};
+assert.equal(I.vessel(primer,vesselRect).level,12,'A filled pipe column can mimic a surface before exclusion');
+assert.equal(I.vessel(primer,vesselRect,{exclude:()=>true}).level,null,
+  'Excluded tube primer cannot report a receiving free surface');
+assert.equal(I.vessel(primer,vesselRect,{exclude:()=>true}).count,0);
 assert.equal(I.prediction('siphon',{source:null},def,250).speed,null);
 near(I.gasWork(0,100,1000),0);
 assert(I.gasWork(100,100,1000)>0);

@@ -1,12 +1,15 @@
-// Passive GPU observer for the cup. Reads native positions after every update;
+// Passive GPU observer for a cup or siphon. Reads positions after every update;
 // writes only its own history, flags, tile mask and counters.
-export async function installNativePassage() {
+export async function installNativePassage(options={}) {
   const T=window.__toy,L=T.liquid(),D=T.machineState().definition,M=window.__machineMeasurement;
-  if(D.name!=='cup')throw Error('Native passage observer currently describes the cup route');
+  if(!['cup','siphon'].includes(D.name))throw Error('Native passage requires a cup or siphon route');
   const device=L.device,queue=L.queue,count=L.uploadedCount,tile=T.world().tile;
-  const origin=M.sourceOrigin,pipe=D.pipes[0],a=pipe.points[2],b=pipe.points[3],out=origin.outletDefinition;
+  const origin=M.sourceOrigin,pipe=D.pipes[0],meter=D.meters[0],out=origin.outletDefinition;
   const across=Math.ceil(pipe.bore/tile),negative=(Math.floor((across-1)/2)+.5)*tile,positive=pipe.bore-negative;
-  const crest={axis:0,face:(a.x+b.x)/2,sign:Math.sign(b.x-a.x),lo:a.y-negative,hi:a.y+positive};
+  const a=pipe.points[2],b=pipe.points[3];
+  const crest=D.name==='cup' ? {axis:0,face:(a.x+b.x)/2,sign:Math.sign(b.x-a.x),lo:a.y-negative,hi:a.y+positive} :
+    {axis:meter.axis==='x'?0:1,face:meter.axis==='x'?meter.a.x:meter.a.y,
+      sign:meter.positive,lo:meter.axis==='x'?meter.a.y:meter.a.x,hi:meter.axis==='x'?meter.b.y:meter.b.x};
   const cols=Math.ceil(T.world().w/tile),rows=Math.ceil(T.world().h/tile),pipeTiles=new Uint32Array(cols*rows);
   for(const key of origin.pipeInteriorTiles){const [x,y]=key.split(',').map(Number);pipeTiles[y*cols+x]=1;}
   const flags=new Uint32Array(count);for(const id of origin.bulkIds)flags[id]=1;
@@ -14,6 +17,7 @@ export async function installNativePassage() {
     usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC|GPUBufferUsage.COPY_DST});owned.push(v);return v;};
   const history=buffer('history',count*16),marks=buffer('marks',count*4),mask=buffer('pipeTiles',pipeTiles.byteLength),stats=buffer('stats',40),
     largestMoves=buffer('largestMoves',count*16),largestMoveMeta=buffer('largestMoveMeta',count*32);
+  const tail=buffer('tail',16),tailStart=Number.isFinite(options.tailStart) ? options.tailStart : 1e20;
   const stepConfig=device.createBuffer({label:'passage.clock',size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});owned.push(stepConfig);
   queue.writeBuffer(marks,0,flags);queue.writeBuffer(mask,0,pipeTiles);
   const seed=device.createCommandEncoder();seed.copyBufferToBuffer(L.buf.pos,0,history,0,count*16);queue.submit([seed.finish()]);
@@ -27,6 +31,8 @@ export async function installNativePassage() {
 @group(0) @binding(5) var<storage,read_write> largestMoves:array<vec4<f32>>;
 @group(0) @binding(6) var<storage,read_write> largestMoveMeta:array<vec4<f32>>;
 @group(0) @binding(7) var<uniform> stepConfig:vec4<f32>;
+struct Tail {moment:atomic<i32>,weight:atomic<u32>,samples:atomic<u32>,maxSpeed:atomic<u32>};
+@group(0) @binding(8) var<storage,read_write> tail:Tail;
 fn crosses(a:vec2<f32>,b:vec2<f32>,axis:u32,face:f32,sign:f32,lo:f32,hi:f32)->bool {
   let da=(a[axis]-face)*sign;let db=(b[axis]-face)*sign;
   if(da>=0.0 || db<0.0){return false;}
@@ -39,18 +45,35 @@ fn receiver(p:vec2<f32>)->bool {
   if(c.x<0 || c.y<0 || c.x>=${cols} || c.y>=${rows}){return false;}
   return pipeTiles[u32(c.y)*${cols}u+u32(c.x)]==0u;
 }
+fn rimSpill(a:vec2<f32>,b:vec2<f32>,face:f32,sign:f32)->bool {
+  if(!crosses(a,b,0u,face,sign,-10000.0,${f(S.y+tile)})){return false;}
+  let p=mix(a,b,(face-a.x)/(b.x-a.x));let c=vec2<i32>(floor(p/${f(tile)}));
+  if(c.x<0 || c.y<0 || c.x>=${cols} || c.y>=${rows}){return true;}
+  // The siphon legitimately crosses above the source rim inside its tube.
+  return ${D.name==='cup'?'true':'pipeTiles[u32(c.y)*'+cols+'u+u32(c.x)]==0u'};
+}
 @compute @workgroup_size(128)
 fn advance(@builtin(global_invocation_id) id:vec3<u32>){
-  let i=id.x;if(i>=${count}u || (flags[i]&1u)==0u){return;}
+  let i=id.x;if(i>=${count}u){return;}
+  let p=pos[i];
+  // Fresh native velocities, weighted by parcel residence and update time.
+  // The signed mean measures net flow through small equilibrium oscillations.
+  if(stepConfig.x>=${f(tailStart)} && abs(p[${crest.axis}u]-${f(crest.face)})<4.0 &&
+     p[${1-crest.axis}u]>=${f(crest.lo)} && p[${1-crest.axis}u]<=${f(crest.hi)}){
+    let v=p[${crest.axis+2}u]*${f(crest.sign)};
+    atomicAdd(&tail.moment,i32(round(v*stepConfig.y*4096.0)));
+    atomicAdd(&tail.weight,u32(round(stepConfig.y*4096.0)));
+    atomicAdd(&tail.samples,1u);atomicMax(&tail.maxSpeed,bitcast<u32>(abs(v)));
+  }
+  if((flags[i]&1u)==0u){return;}
   let a=previous[i].xy;let b=pos[i].xy;var mark=flags[i];
   atomicMax(&stats[8],bitcast<u32>(length(b-a)));
   let recorded=largestMoves[i];
   if(length(b-a)>length(recorded.zw-recorded.xy)){largestMoves[i]=vec4<f32>(a,b);
     largestMoveMeta[i*2u]=vec4<f32>(previous[i].zw,pos[i].zw);largestMoveMeta[i*2u+1u]=stepConfig;}
-  if(crosses(a,b,0u,${f(crest.face)},${f(crest.sign)},${f(crest.lo)},${f(crest.hi)})){mark=mark|2u;}
+  if(crosses(a,b,${crest.axis}u,${f(crest.face)},${f(crest.sign)},${f(crest.lo)},${f(crest.hi)})){mark=mark|2u;}
   if((mark&2u)!=0u && crosses(a,b,${out.axis==='x'?0:1}u,${f(out.face)},${f(out.positive)},${f(out.alongMin)},${f(out.alongMax)})){mark=mark|4u;}
-  if(crosses(a,b,0u,${f(S.x)},-1.0,-10000.0,${f(S.y+tile)}) ||
-     crosses(a,b,0u,${f(S.x+S.width)},1.0,-10000.0,${f(S.y+tile)})){mark=mark|8u;}
+  if(rimSpill(a,b,${f(S.x)},-1.0) || rimSpill(a,b,${f(S.x+S.width)},1.0)){mark=mark|8u;}
   if((mark&6u)==6u && receiver(b)){mark=mark|16u;}
   flags[i]=mark;previous[i]=pos[i];
 }
@@ -67,11 +90,11 @@ fn finish(@builtin(global_invocation_id) id:vec3<u32>){
   const shader=device.createShaderModule({label:'passage.readOnlyNative',code});
   const info=await shader.getCompilationInfo();const errors=info.messages.filter(m=>m.type==='error');
   if(errors.length)throw Error(errors.map(m=>m.message).join('\n'));
-  const entries=[0,1,2,3,4,5,6,7].map(binding=>({binding,visibility:GPUShaderStage.COMPUTE,
+  const entries=[0,1,2,3,4,5,6,7,8].map(binding=>({binding,visibility:GPUShaderStage.COMPUTE,
     buffer:{type:binding===7?'uniform':binding===0||binding===3?'read-only-storage':'storage'}}));
   const layout=device.createBindGroupLayout({entries}),pl=device.createPipelineLayout({bindGroupLayouts:[layout]});
   const pipelines=Object.fromEntries(['advance','finish'].map(entryPoint=>[entryPoint,device.createComputePipeline({layout:pl,compute:{module:shader,entryPoint}})]));
-  const bg=device.createBindGroup({layout,entries:[L.buf.pos,history,marks,mask,stats,largestMoves,largestMoveMeta,stepConfig].map((buffer,binding)=>({binding,resource:{buffer}}))});
+  const bg=device.createBindGroup({layout,entries:[L.buf.pos,history,marks,mask,stats,largestMoves,largestMoveMeta,stepConfig,tail].map((buffer,binding)=>({binding,resource:{buffer}}))});
   function dispatch(name){const e=device.createCommandEncoder({label:'passage.'+name}),p=e.beginComputePass();
     p.setPipeline(pipelines[name]);p.setBindGroup(0,bg);p.dispatchWorkgroups(Math.ceil(count/128));p.end();queue.submit([e.finish()]);}
   const original=L.update;let updates=0,maxStep=0;
@@ -81,14 +104,16 @@ fn finish(@builtin(global_invocation_id) id:vec3<u32>){
     queue.writeBuffer(stepConfig,0,new Float32Array([L.simulationClock-M.startSimulation,L.simulationClock-before,0,0]));dispatch('advance');}return result;}
   L.update=wrapped;
   return {
-    async capture(){dispatch('finish');const read=device.createBuffer({size:48+count*48,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
-      try{const e=device.createCommandEncoder();e.copyBufferToBuffer(stats,0,read,0,40);e.copyBufferToBuffer(largestMoves,0,read,48,count*16);e.copyBufferToBuffer(largestMoveMeta,0,read,48+count*16,count*32);
+    async capture(){queue.writeBuffer(stats,0,new Uint32Array(8));dispatch('finish');const read=device.createBuffer({size:64+count*48,usage:GPUBufferUsage.MAP_READ|GPUBufferUsage.COPY_DST});
+      try{const e=device.createCommandEncoder();e.copyBufferToBuffer(stats,0,read,0,40);e.copyBufferToBuffer(tail,0,read,48,16);e.copyBufferToBuffer(largestMoves,0,read,64,count*16);e.copyBufferToBuffer(largestMoveMeta,0,read,64+count*16,count*32);
         queue.submit([e.finish()]);await read.mapAsync(GPUMapMode.READ);
-        const bytes=read.getMappedRange(),u=new Uint32Array(bytes,0,10),v=new Float32Array(bytes,0,10),moves=new Float32Array(bytes,48,count*4),meta=new Float32Array(bytes,48+count*16,count*8),largest=[];
+        const bytes=read.getMappedRange(),u=new Uint32Array(bytes,0,10),v=new Float32Array(bytes,0,10),t=new Uint32Array(bytes,48,4),signed=new Int32Array(bytes,48,4),tv=new Float32Array(bytes,48,4),moves=new Float32Array(bytes,64,count*4),meta=new Float32Array(bytes,64+count*16,count*8),largest=[];
         for(const id of origin.bulkIds){const i=id*4,from=[moves[i],moves[i+1]],to=[moves[i+2],moves[i+3]],distance=Math.hypot(to[0]-from[0],to[1]-from[1]);
           if(largest.length<20||distance>largest.at(-1).distance){largest.push({id,distance,from,to,fromVelocity:[meta[id*8],meta[id*8+1]],toVelocity:[meta[id*8+2],meta[id*8+3]],simulationSeconds:meta[id*8+4],updateSeconds:meta[id*8+5]});largest.sort((a,b)=>b.distance-a.distance);largest.length=Math.min(20,largest.length);}}
         return {definition:'Read-only GPU tracking after every native update. Initial pipe primer and rim spills are excluded from delivery. Final receiver excludes the exact pipe interior.',
           excludesRimSpills:true,
+          finalWindow:{startSimulationSeconds:tailStart,signedMeanSpeed:t[1]?signed[0]/t[1]:null,
+            parcelSamples:t[2],maximumParcelSpeed:tv[3],fixedPointScale:4096},
           updates,maximumUpdateSeconds:maxStep,maximumBulkDisplacementBetweenObservations:v[8],largestObservedMoves:largest,initialBulk:u[0],crossedCrest:u[1],exitedAfterCrest:u[2],
           everReceivedAfterPassage:u[3],finalBulkInReceiver:u[4],finalBulkInReceiverAfterPassage:u[5],spilledOverRim:u[6],finalSpilledInReceiver:u[7],crest,outlet:out};
       }finally{read.unmap();read.destroy();}},

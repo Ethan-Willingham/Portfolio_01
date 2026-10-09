@@ -1,0 +1,803 @@
+{
+  "toyVersion": "v5.40",
+  "date": "2026-10-09",
+  "behaviorChecksPassed": true,
+  "settlingSpeedTargetMet": false,
+  "criteria": {
+    "minimumSourceDeliveryFraction": 0.4,
+    "maximumClosedValveDeliveryFraction": 0.005,
+    "minimumRestartedDeliveryFraction": 0.1,
+    "equilibriumLevelTolerance": 16,
+    "equilibriumSpeedTolerance": 1,
+    "equilibriumWindowSeconds": 10,
+    "sourceDeliveryDeadline": 120,
+    "stockSimulationSeconds": 120,
+    "interruptedValveSimulationSeconds": 180,
+    "maximumEquilibriumInventoryChangeFraction": 0.005,
+    "speedWindowAfterOpen": [
+      2,
+      7
+    ],
+    "maximumHeadResponseRelativeError": 0.35
+  },
+  "scope": "Standalone siphon transfer, valve stop/restart, empty and raised controls, pressure-capacity break without automatic reprime, containment, inventory and approximate head response. Interrupted runs verify small net inventory change near equal levels; their final-window velocity target is reported separately and can fail through oscillation. Quiescence, absolute flow speed, pressure and cavitation are not certified.",
+  "method": "Six cases on seeds 17, 42 and 913 in a fixed 1120 by 664 world. A passive GPU observer runs after every native update. Copied native buffers independently verify source identity, receiver inventory, finite state and wall containment. Initial tube primer and rim spills receive no transfer credit. All shorter recordings are preserved; stock flow uses two-minute runs, interrupted valve flow uses three-minute runs with a two-minute native checkpoint. No physics parameters changed between recordings.",
+  "limits": [
+    "Pressure and air-volume diagnostics remain unresolved.",
+    "Measured initial speed is about one quarter of ideal Bernoulli speed; absolute speed is not calibrated.",
+    "One interrupted run misses the final ten-second speed target through backward oscillation. All three interrupted runs change receiver source inventory by less than 0.5% over their final minute. The water is not certified quiescent.",
+    "Small parcel motion, crowding and contact corrections remain. Smooth playback on every device is unverified."
+  ],
+  "physicalSourceSHA256": {
+    "js/water-smoke-slime.js": "16c476dbe840761f4a3a43817079f4466a73beb55ef1efbd4b94ccea39538cdd",
+    "js/liquid-wgpu.js": "bea4ae6ea15e94f74505be3dfab6d4eff3b89b94d8244d413348e911ea692502",
+    "js/liquid-air-wgpu.js": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003",
+    "js/water-machines-scenes.js": "a2daaa636cb17bca5b32d9b1284aba40cf3ea5c6ffb388fe8d0cbec2269af79d",
+    "js/water-machines-instruments.js": "0633f2ebb47aeac97c658f71eb4d85e5af371d463e91cf408fa397eac9f4ac5f",
+    "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+    "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+    "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+    "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+  },
+  "acceptanceReportSHA256": "6343183d7f90ac390b5f9122a287e768607e4f5c65dbae96b50e952fa696f0df",
+  "rows": [
+    {
+      "run": "siphon-canonical-seed-17",
+      "case": "canonical",
+      "seed": 17,
+      "simulationSeconds": 120.15000000002263,
+      "initialParticles": 55753,
+      "initialSourceBulk": 41448,
+      "delivered": 21313,
+      "deliveryFraction": 0.5142105771086662,
+      "deliveryAt120": 21313,
+      "inventory": {
+        "source": 5259,
+        "receiver": 21327,
+        "pipe": 14862,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 14,
+      "initialHead": 280,
+      "windowMeanSpeed": 89.81962787470708,
+      "windowMeanHead": 257.2,
+      "finalLevels": {
+        "source": 500,
+        "receiver": 500
+      },
+      "finalDisplayedSpeed": 1.2340173968323715,
+      "finalNativeWindow": {
+        "startSimulationSeconds": 110,
+        "signedMeanSpeed": 0.9526493682435234,
+        "parcelSamples": 108169,
+        "maximumParcelSpeed": 3.5045180320739746,
+        "fixedPointScale": 4096
+      },
+      "settling": {
+        "speedTargetMet": true,
+        "receiverBulkChange": null,
+        "receiverBulkChangeFraction": null
+      },
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 9.089743614196777
+    },
+    {
+      "run": "siphon-canonical-seed-42",
+      "case": "canonical",
+      "seed": 42,
+      "simulationSeconds": 120.07500000002516,
+      "initialParticles": 55765,
+      "initialSourceBulk": 41457,
+      "delivered": 21033,
+      "deliveryFraction": 0.5073449598379043,
+      "deliveryAt120": 21033,
+      "inventory": {
+        "source": 5530,
+        "receiver": 21055,
+        "pipe": 14872,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 22,
+      "initialHead": 280,
+      "windowMeanSpeed": 90.05465053003444,
+      "windowMeanHead": 256.2,
+      "finalLevels": {
+        "source": 492,
+        "receiver": 500
+      },
+      "finalDisplayedSpeed": 1.0072879180435306,
+      "finalNativeWindow": {
+        "startSimulationSeconds": 110,
+        "signedMeanSpeed": 0.9622398511079613,
+        "parcelSamples": 119875,
+        "maximumParcelSpeed": 4.345691680908203,
+        "fixedPointScale": 4096
+      },
+      "settling": {
+        "speedTargetMet": true,
+        "receiverBulkChange": null,
+        "receiverBulkChangeFraction": null
+      },
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 6.696791648864746
+    },
+    {
+      "run": "siphon-canonical-seed-913",
+      "case": "canonical",
+      "seed": 913,
+      "simulationSeconds": 120.02500000002398,
+      "initialParticles": 55755,
+      "initialSourceBulk": 41450,
+      "delivered": 20835,
+      "deliveryFraction": 0.5026537997587455,
+      "deliveryAt120": 20835,
+      "inventory": {
+        "source": 5379,
+        "receiver": 20855,
+        "pipe": 15216,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 20,
+      "initialHead": 280,
+      "windowMeanSpeed": 89.89243352049114,
+      "windowMeanHead": 255.6,
+      "finalLevels": {
+        "source": 500,
+        "receiver": 500
+      },
+      "finalDisplayedSpeed": -0.04152032732963562,
+      "finalNativeWindow": {
+        "startSimulationSeconds": 110,
+        "signedMeanSpeed": 0.8476991487964728,
+        "parcelSamples": 122209,
+        "maximumParcelSpeed": 38.92897033691406,
+        "fixedPointScale": 4096
+      },
+      "settling": {
+        "speedTargetMet": true,
+        "receiverBulkChange": null,
+        "receiverBulkChangeFraction": null
+      },
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 8.867341041564941
+    },
+    {
+      "run": "siphon-valve-seed-17",
+      "case": "valve",
+      "seed": 17,
+      "simulationSeconds": 180.02500000001166,
+      "initialParticles": 55753,
+      "initialSourceBulk": 41448,
+      "delivered": 21131,
+      "deliveryFraction": 0.5098195329087049,
+      "deliveryAt120": 21021,
+      "inventory": {
+        "source": 5493,
+        "receiver": 21175,
+        "pipe": 14780,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 44,
+      "initialHead": 280,
+      "windowMeanSpeed": 90.71927797162205,
+      "windowMeanHead": 255.6,
+      "finalLevels": {
+        "source": 500,
+        "receiver": 500
+      },
+      "finalDisplayedSpeed": -1.6601081988133422,
+      "finalNativeWindow": {
+        "startSimulationSeconds": 170,
+        "signedMeanSpeed": -1.2253543863619627,
+        "parcelSamples": 106715,
+        "maximumParcelSpeed": 3.0143353939056396,
+        "fixedPointScale": 4096
+      },
+      "settling": {
+        "speedTargetMet": false,
+        "receiverBulkChange": 110,
+        "receiverBulkChangeFraction": 0.002653927813163482
+      },
+      "valve": {
+        "duringClosure": 55,
+        "afterReopen": 17660,
+        "closureSeconds": 9.983333333332766
+      },
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 7.729935646057129
+    },
+    {
+      "run": "siphon-valve-seed-42",
+      "case": "valve",
+      "seed": 42,
+      "simulationSeconds": 180.00833333334492,
+      "initialParticles": 55765,
+      "initialSourceBulk": 41457,
+      "delivered": 21080,
+      "deliveryFraction": 0.5084786646404709,
+      "deliveryAt120": 21048,
+      "inventory": {
+        "source": 5192,
+        "receiver": 21109,
+        "pipe": 15156,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 29,
+      "initialHead": 280,
+      "windowMeanSpeed": 90.4042288076422,
+      "windowMeanHead": 255.8,
+      "finalLevels": {
+        "source": 500,
+        "receiver": 500
+      },
+      "finalDisplayedSpeed": 1.0001812862678312,
+      "finalNativeWindow": {
+        "startSimulationSeconds": 170,
+        "signedMeanSpeed": 0.8479379535528938,
+        "parcelSamples": 124707,
+        "maximumParcelSpeed": 7.956258773803711,
+        "fixedPointScale": 4096
+      },
+      "settling": {
+        "speedTargetMet": true,
+        "receiverBulkChange": 30,
+        "receiverBulkChangeFraction": 0.0007236413633403285
+      },
+      "valve": {
+        "duringClosure": 43,
+        "afterReopen": 17408,
+        "closureSeconds": 10.02499999999943
+      },
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 5.760412693023682
+    },
+    {
+      "run": "siphon-valve-seed-913",
+      "case": "valve",
+      "seed": 913,
+      "simulationSeconds": 180.04166666667822,
+      "initialParticles": 55755,
+      "initialSourceBulk": 41450,
+      "delivered": 21220,
+      "deliveryFraction": 0.5119420989143546,
+      "deliveryAt120": 21250,
+      "inventory": {
+        "source": 5152,
+        "receiver": 21249,
+        "pipe": 15049,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 29,
+      "initialHead": 280,
+      "windowMeanSpeed": 89.53944611747856,
+      "windowMeanHead": 256.63157894736844,
+      "finalLevels": {
+        "source": 500,
+        "receiver": 500
+      },
+      "finalDisplayedSpeed": 0.49799642043690834,
+      "finalNativeWindow": {
+        "startSimulationSeconds": 170,
+        "signedMeanSpeed": 0.38518112958197553,
+        "parcelSamples": 111770,
+        "maximumParcelSpeed": 3.238816499710083,
+        "fixedPointScale": 4096
+      },
+      "settling": {
+        "speedTargetMet": true,
+        "receiverBulkChange": -31,
+        "receiverBulkChangeFraction": -0.0007478890229191797
+      },
+      "valve": {
+        "duringClosure": 48,
+        "afterReopen": 17643,
+        "closureSeconds": 9.95833333333277
+      },
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 9.03983211517334
+    },
+    {
+      "run": "siphon-half-head-seed-17",
+      "case": "half-head",
+      "seed": 17,
+      "simulationSeconds": 60.04166666666411,
+      "initialParticles": 53782,
+      "initialSourceBulk": 41451,
+      "delivered": 1552,
+      "deliveryFraction": 0.03744179875033172,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 37572,
+        "receiver": 1552,
+        "pipe": 2327,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 136,
+      "windowMeanSpeed": 64.80362484950527,
+      "windowMeanHead": 118.10526315789474,
+      "finalLevels": {
+        "source": 332,
+        "receiver": 588
+      },
+      "finalDisplayedSpeed": -2.1071083513864625e-05,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 5.1463623046875
+    },
+    {
+      "run": "siphon-half-head-seed-42",
+      "case": "half-head",
+      "seed": 42,
+      "simulationSeconds": 60.099999999997436,
+      "initialParticles": 53773,
+      "initialSourceBulk": 41438,
+      "delivered": 1479,
+      "deliveryFraction": 0.03569187702109175,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 37763,
+        "receiver": 1479,
+        "pipe": 2196,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 136,
+      "windowMeanSpeed": 64.51782960299032,
+      "windowMeanHead": 118.4,
+      "finalLevels": {
+        "source": 332,
+        "receiver": 588
+      },
+      "finalDisplayedSpeed": -8.173432734110974e-05,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 8.09979248046875
+    },
+    {
+      "run": "siphon-half-head-seed-913",
+      "case": "half-head",
+      "seed": 913,
+      "simulationSeconds": 60.05833333333077,
+      "initialParticles": 53782,
+      "initialSourceBulk": 41448,
+      "delivered": 9286,
+      "deliveryFraction": 0.2240397606639645,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 30115,
+        "receiver": 9286,
+        "pipe": 2047,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 136,
+      "windowMeanSpeed": 66.12997709854938,
+      "windowMeanHead": 118.10526315789474,
+      "finalLevels": {
+        "source": 372,
+        "receiver": 556
+      },
+      "finalDisplayedSpeed": -4.956929166967582e-05,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 7.621745586395264
+    },
+    {
+      "run": "siphon-empty-seed-17",
+      "case": "empty",
+      "seed": 17,
+      "simulationSeconds": 60.02499999999734,
+      "initialParticles": 44043,
+      "initialSourceBulk": 41442,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41425,
+        "receiver": 0,
+        "pipe": 17,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 280,
+      "windowMeanSpeed": 0,
+      "windowMeanHead": 276,
+      "finalLevels": {
+        "source": 324,
+        "receiver": null
+      },
+      "finalDisplayedSpeed": 0,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 0.3919083774089813
+    },
+    {
+      "run": "siphon-empty-seed-42",
+      "case": "empty",
+      "seed": 42,
+      "simulationSeconds": 60.07499999999736,
+      "initialParticles": 44050,
+      "initialSourceBulk": 41449,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41435,
+        "receiver": 0,
+        "pipe": 14,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 280,
+      "windowMeanSpeed": 0,
+      "windowMeanHead": 276,
+      "finalLevels": {
+        "source": 324,
+        "receiver": null
+      },
+      "finalDisplayedSpeed": 0,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 0.3930090069770813
+    },
+    {
+      "run": "siphon-empty-seed-913",
+      "case": "empty",
+      "seed": 913,
+      "simulationSeconds": 60.08333333333067,
+      "initialParticles": 44044,
+      "initialSourceBulk": 41443,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41428,
+        "receiver": 0,
+        "pipe": 15,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 280,
+      "windowMeanSpeed": 0,
+      "windowMeanHead": 276,
+      "finalLevels": {
+        "source": 324,
+        "receiver": null
+      },
+      "finalDisplayedSpeed": 0,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 0.390625
+    },
+    {
+      "run": "siphon-raised-seed-17",
+      "case": "raised",
+      "seed": 17,
+      "simulationSeconds": 60.08333333333082,
+      "initialParticles": 51721,
+      "initialSourceBulk": 41435,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41200,
+        "receiver": 0,
+        "pipe": 235,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": -16,
+      "windowMeanSpeed": -36.49896888962635,
+      "windowMeanHead": -14,
+      "finalLevels": {
+        "source": 284,
+        "receiver": 620
+      },
+      "finalDisplayedSpeed": -2.395763253485041e-05,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 2.8110055923461914
+    },
+    {
+      "run": "siphon-raised-seed-42",
+      "case": "raised",
+      "seed": 42,
+      "simulationSeconds": 60.05833333333077,
+      "initialParticles": 51724,
+      "initialSourceBulk": 41438,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41228,
+        "receiver": 0,
+        "pipe": 210,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": -16,
+      "windowMeanSpeed": -36.988947600988936,
+      "windowMeanHead": -13.4,
+      "finalLevels": {
+        "source": 284,
+        "receiver": 620
+      },
+      "finalDisplayedSpeed": -1.6422932436826694e-05,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 1.8164379596710205
+    },
+    {
+      "run": "siphon-raised-seed-913",
+      "case": "raised",
+      "seed": 913,
+      "simulationSeconds": 60.09999999999745,
+      "initialParticles": 51730,
+      "initialSourceBulk": 41444,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41238,
+        "receiver": 0,
+        "pipe": 206,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": -16,
+      "windowMeanSpeed": -36.40708710682158,
+      "windowMeanHead": -13,
+      "finalLevels": {
+        "source": 284,
+        "receiver": 620
+      },
+      "finalDisplayedSpeed": -1.3533061867158668e-05,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": null,
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 2.6294333934783936
+    },
+    {
+      "run": "siphon-broken-restored-seed-17",
+      "case": "broken-restored",
+      "seed": 17,
+      "simulationSeconds": 90.00833333333898,
+      "initialParticles": 55753,
+      "initialSourceBulk": 41448,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41161,
+        "receiver": 0,
+        "pipe": 287,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 280,
+      "windowMeanSpeed": -6.2353266445944495,
+      "windowMeanHead": 302,
+      "finalLevels": {
+        "source": 276,
+        "receiver": 612
+      },
+      "finalDisplayedSpeed": 0.0087814877089113,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": {
+        "upperLane": {
+          "xMin": 356,
+          "xMax": 708,
+          "yMin": 216,
+          "yMax": 224
+        },
+        "initialUpperLaneParticles": 1692,
+        "beforeRestoreUpperLaneParticles": 0,
+        "finalUpperLaneParticles": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 2.286895751953125
+    },
+    {
+      "run": "siphon-broken-restored-seed-42",
+      "case": "broken-restored",
+      "seed": 42,
+      "simulationSeconds": 90.10000000000548,
+      "initialParticles": 55765,
+      "initialSourceBulk": 41457,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 41278,
+        "receiver": 0,
+        "pipe": 179,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 280,
+      "windowMeanSpeed": -6.652031147643657,
+      "windowMeanHead": 303,
+      "finalLevels": {
+        "source": 284,
+        "receiver": 612
+      },
+      "finalDisplayedSpeed": 0.0030166022658634642,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": {
+        "upperLane": {
+          "xMin": 356,
+          "xMax": 708,
+          "yMin": 216,
+          "yMax": 224
+        },
+        "initialUpperLaneParticles": 1692,
+        "beforeRestoreUpperLaneParticles": 0,
+        "finalUpperLaneParticles": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 1.9380358457565308
+    },
+    {
+      "run": "siphon-broken-restored-seed-913",
+      "case": "broken-restored",
+      "seed": 913,
+      "simulationSeconds": 90.02500000001025,
+      "initialParticles": 55755,
+      "initialSourceBulk": 41450,
+      "delivered": 0,
+      "deliveryFraction": 0,
+      "deliveryAt120": null,
+      "inventory": {
+        "source": 40950,
+        "receiver": 0,
+        "pipe": 500,
+        "other": 0
+      },
+      "uncreditedSourceInReceiver": 0,
+      "initialHead": 280,
+      "windowMeanSpeed": -5.758203950242016,
+      "windowMeanHead": 303,
+      "finalLevels": {
+        "source": 284,
+        "receiver": 612
+      },
+      "finalDisplayedSpeed": 2.932638987355555e-06,
+      "finalNativeWindow": null,
+      "settling": null,
+      "valve": null,
+      "columnBreak": {
+        "upperLane": {
+          "xMin": 356,
+          "xMax": 708,
+          "yMin": 216,
+          "yMax": 224
+        },
+        "initialUpperLaneParticles": 1692,
+        "beforeRestoreUpperLaneParticles": 0,
+        "finalUpperLaneParticles": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "maximumObservedParticleMove": 1.760131597518921
+    }
+  ],
+  "headResponse": [
+    {
+      "seed": 17,
+      "observedRatio": 1.3860278353764464,
+      "idealRatio": 1.4757094429701605,
+      "relativeError": 0.060771859949077744,
+      "fullSpeedToIdeal": 0.25046714599947695,
+      "halfSpeedToIdeal": 0.26667338351457115
+    },
+    {
+      "seed": 42,
+      "observedRatio": 1.3958102912665327,
+      "idealRatio": 1.4710035184700787,
+      "relativeError": 0.05111695944939065,
+      "fullSpeedToIdeal": 0.2516121335432526,
+      "halfSpeedToIdeal": 0.26516664624678027
+    },
+    {
+      "seed": 913,
+      "observedRatio": 1.3593295728279182,
+      "idealRatio": 1.4711122061197957,
+      "relativeError": 0.07598511712897493,
+      "fullSpeedToIdeal": 0.25145351487440193,
+      "halfSpeedToIdeal": 0.2721314553864173
+    }
+  ]
+}

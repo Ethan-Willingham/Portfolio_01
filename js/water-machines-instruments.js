@@ -38,6 +38,7 @@
     for(var i=0;i<particles.count;i++){
       var x=particles.x[i],y=particles.y[i];
       if(x<rect.x+tile || x>=rect.x+rect.width-tile || y<rect.y || y>=rect.y+rect.height-tile)continue;
+      if(options.exclude && options.exclude(x,y))continue;
       n++;energyHeight+=options.floor===undefined ? -y : options.floor-y;
       var col=Math.floor((x-rect.x)/tile),row=Math.floor((y-rect.y)/tile);
       bins[row*cols+col]++;
@@ -191,7 +192,11 @@
   }
   function prediction(name,levels,definition,gravity){
     gravity=Math.max(0,finite(gravity,'gravity'));var m=definition.measure,head=null;
-    if(name==='siphon' && levels.source!==null)head=m.outlet.y-levels.source;
+    if(name==='siphon' && levels.source!==null){
+      // A submerged outlet works against the receiving free surface.
+      var downstream=Number.isFinite(levels.receiver) ? Math.min(m.outlet.y,levels.receiver) : m.outlet.y;
+      head=downstream-levels.source;
+    }
     if(name==='cup' && levels.source!==null)head=definition.pipes[0].points.slice(-1)[0].y-levels.source;
     if(name==='heron' && levels.basin!==null && levels.bottom!==null && levels.source!==null)
       head=levels.bottom-levels.basin+m.nozzle.y-levels.source;

@@ -1,9 +1,88 @@
-# Greedy cup
+# Water machines
 
-Release: toy v5.39, shared water engine v28.178. The greedy cup is the only
-machine in the public scene menu. Siphon and Heron experiments remain parked.
+Release: toy v5.40, shared water engine v28.178. The greedy cup and standalone
+siphon are in the public scene menu. Heron's fountain remains parked.
 
-## Behavior
+## Standalone siphon
+
+Open `archive/water-smoke-slime/water-smoke-slime.html?scene=siphon`. The tube
+starts filled, with a closed valve near its outlet. **Open valve** releases the
+column; water from the upper tank crosses the bend and enters the lower tank.
+Closing the valve holds the column, and reopening resumes delivery. The outlet
+becomes submerged as the lower tank fills. Flow slows as the two free surfaces
+approach the same height.
+
+Instruments includes three initial setups: **Filled tube**, **Empty tube** and
+**Raised outlet**. Changing the setup reconstructs both tanks and the selected
+water inventory, preserving manual pause. Restart repeats that selection. There
+is no in-run water replacement, automatic re-priming or scripted flow rate.
+
+The siphon uses the same 1120 by 664 world and 8-pixel walls as the cup, with a
+24-pixel tube and about 56,000 native particles when primed. Its outlet face is
+at y=600, its crest at y=228 and its source surface initially at y=320. The raised
+outlet face is at y=304. Selecting either released machine from a different
+world reloads its fixed dimensions, preserving pause. The camera fits the whole
+apparatus and controls into the available screen, including short MacBook
+viewports. The pressure transfer, cavity volume, boundary reconstruction and
+32 red/black sweeps are the same opt-in settings used by the cup.
+
+The receiving-level measurement excludes primer still inside the descending
+tube. The predicted head uses the outlet height before submersion, then the
+receiving free surface. Its ideal speed remains sqrt(2gh). The measured speed
+is lower; absolute flow and pressure are not calibrated.
+
+The integrated siphon check uses six cases on seeds 17, 42 and 913: stock flow,
+valve close/reopen, approximately half the initial head, empty tube, raised
+outlet, and a pressure-capacity break followed by capacity restoration. The
+passive GPU observer reads positions after every native update. It credits
+only original source-tank particles observed crossing both the crest and outlet;
+primer, rim spills and unrecorded passage are excluded.
+
+`tools/check-water-siphon-result.mjs` independently checks copied native buffers,
+containment and inventories. Its stock transfer target is at least 40% of the
+original source bulk by 120 simulation seconds, with final levels within two
+wall cells. Stock runs also require net native speed below 1 world pixel per
+simulation second over the final ten seconds. Stock runs last two minutes;
+interrupted valve runs last three minutes and retain a native-buffer transfer
+checkpoint at two minutes. Their receiving inventory must change by less than
+0.5% of original source bulk during that final minute. The same velocity target
+is reported separately for those runs and can fail through backward/forward
+oscillation. Both the original two-minute observations and the longer records
+are preserved. These checks do not certify quiescence.
+The passive observer weights signed parcel velocity by
+residence time in the crest section after every native update. It also records
+the fastest parcel, so residual oscillation remains visible. The displayed
+instrument sample can lag and is not the settling criterion. The
+valve control permits at most 0.5% bulk delivery while closed, including its
+short downstream tail, and requires another 10% after reopening. Empty, raised
+and broken/restored cases require zero source passage. The break uses a -15,000
+pressure floor, restored to -80,000 at 30 simulation seconds without rebuilding
+the water. A fresh filled setup supplies the actual primer needed to run again.
+
+Head response compares the same fixed five-second interval, two to seven
+simulation seconds after opening. Greater head must increase speed, and the
+ratio must be within 35% of the square-root head ratio. This is a directional
+game-physics check, not a calibration of absolute Bernoulli speed. Pressure
+convergence and cavity-volume diagnostics can still fail during otherwise
+working transfer. No physically accurate cavitation limit is claimed.
+
+Private buffers, frozen runtime sources, screenshots and the acceptance report
+are under `research/water-machines/siphon-release-validation/`. The selected
+18-case report and acceptance are in its `acceptance/` subdirectory, with the
+original recordings, fresh settling records and extended valve records retained
+alongside it. All stock runs transfer 50.27% to 51.42% by two minutes. Interrupted
+receiver inventory changes range from -0.075% to 0.265% over the final minute.
+One extended valve run still misses the final ten-second speed target through
+backward oscillation; that result remains explicit in the public JSON.
+Head-response ratios are 5.1% to 7.6% below the ideal square-root ratios, and
+absolute initial speed is about one quarter of the ideal value. Run the integrated
+harness with `FRAME_MODE=native NATIVE_PASSAGE=1`, the six cases above and the
+three seeds, then run the siphon result checker against that output directory.
+The valve case uses primary actions at 10, 25 and 35 seconds and an `observe`
+checkpoint at 120. Public measurements are in
+`assets/images/water-machines/siphon-result-2026-10-09.json`.
+
+## Greedy cup behavior
 
 Open `archive/water-smoke-slime/water-smoke-slime.html?scene=cup` and choose
 **Drop the slime**. One large slime raises the water over the bend. The same

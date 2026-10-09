@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.39'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.40'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -109,12 +109,13 @@
         throw new Error('This build is larger than this playground supports.');
     }catch(error){sharedBuildError=error.message;sharedBuildData=null;}
   }
-  // The stock cup has one physical size. Viewport changes belong to the
-  // camera, so a short browser cannot silently shrink the water and slime.
-  var cupWorld = {w:1120,h:664};
-  var cupSceneRequested = new URL(window.location.href).searchParams.get('scene') === 'cup';
+  // The released machines have one physical size. Viewport changes belong to the
+  // camera, so a short browser cannot silently shrink the apparatus.
+  var machineWorld = {w:1120,h:664};
+  function fixedMachineScene(name){return name==='cup' || name==='siphon';}
+  var fixedMachineRequested = fixedMachineScene(new URL(window.location.href).searchParams.get('scene'));
   var portrait = window.innerHeight > window.innerWidth * 1.15;
-  var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : cupSceneRequested ? cupWorld.w : Math.round(availW);
+  var worldW = sharedBuildData ? sharedBuildData.width*sharedBuildData.tile : fixedMachineRequested ? machineWorld.w : Math.round(availW);
   function stageRoom() {
     var h = window.innerHeight - (viewport.getBoundingClientRect().top + window.scrollY) - 16;
     ['.toy-dock', '.toy-foot'].forEach(function (selector) {
@@ -132,7 +133,7 @@
     ? Math.round(Math.max(320, Math.min(availableHeight, window.innerHeight * 0.58, worldW * 1.30)))
     : Math.round(Math.max(320, Math.min(worldW * 0.60, availableHeight)));
   if(sharedBuildData)worldH=sharedBuildData.height*sharedBuildData.tile;
-  else if(cupSceneRequested)worldH=cupWorld.h;
+  else if(fixedMachineRequested)worldH=machineWorld.h;
 
   stage.style.width = worldW + 'px';
   stage.style.height = worldH + 'px';
@@ -156,8 +157,8 @@
       h = Math.max(1, h);
     }
     // Fit the complete apparatus and its controls into the browser height.
-    // Use the page position so scrolling the article does not resize the cup.
-    var room = currentScene === 'cup' ? Math.max(80, stageRoom()) : displayStageRoom();
+    // Use the page position so scrolling the article does not resize the apparatus.
+    var room = fixedMachineScene(currentScene) ? Math.max(80, stageRoom()) : displayStageRoom();
     baseFitScale = Math.min(w / worldW, (expanded ? h : room) / worldH);
     cameraWidth=w;cameraHeight=expanded ? h : Math.round(worldH*baseFitScale);
     fitScale=baseFitScale*viewZoom;
@@ -1188,7 +1189,7 @@
         getView: function () {
           // A fitted cup should render at its displayed pixel density, rather
           // than shading a full-width Retina target before shrinking it.
-          var waterDpr = dpr * (currentScene === 'cup' ? Math.min(1, fitScale) : 1);
+          var waterDpr = dpr * (fixedMachineScene(currentScene) ? Math.min(1, fitScale) : 1);
           return {
             camX: 0, camY: 0,
             dpr: waterDpr, worldScale: 1,
@@ -13266,7 +13267,16 @@
     var particles=particleInstrumentSample(),source=I.vessel(particles,m.source,{tile:TILE,floor:worldH});
     var levels={source:source.level},water={source:source};
     ['receiver','basin','bottom'].forEach(function(key){
-      if(m[key]){water[key]=I.vessel(particles,m[key],{tile:TILE,floor:worldH});levels[key]=water[key].level;}
+      if(m[key]){
+        var vesselOptions={tile:TILE,floor:worldH};
+        if(definition.name==='siphon' && key==='receiver'){
+          var tube=definition.pipes[0],end=tube.points[tube.points.length-1],across=Math.ceil(tube.bore/TILE),
+            left=(Math.floor(end.x/TILE)-Math.floor((across-1)*.5))*TILE;
+          // Primer inside the descending pipe is not a receiving surface.
+          vesselOptions.exclude=function(x,y){return x>=left && x<left+across*TILE && y<=end.y+TILE*.5;};
+        }
+        water[key]=I.vessel(particles,m[key],vesselOptions);levels[key]=water[key].level;
+      }
     });
     var meter=definition.meters[0],flow=I.section(snapshot,meter),particleFlow=I.particleSection(particles,meter,{thickness:snapshot.cellSize});
     if(!state.crossings){state.crossings=I.createCrossings(meter);state.jetParticles=new Set();}
@@ -13510,10 +13520,10 @@
   }
 
   function scene(name) {
-    if(name==='cup' && (worldW!==cupWorld.w || worldH!==cupWorld.h)){
+    if(fixedMachineScene(name) && (worldW!==machineWorld.w || worldH!==machineWorld.h)){
       // Engine domains are fixed at boot. Scene selection already replaces
       // the current apparatus; open its canonical domain before construction.
-      var cupURL=new URL(window.location.href);cupURL.searchParams.set('scene','cup');
+      var cupURL=new URL(window.location.href);cupURL.searchParams.set('scene',name);
       cupURL.searchParams.delete('build');cupURL.hash='';
       if(userPaused)cupURL.searchParams.set('paused','1');else cupURL.searchParams.delete('paused');
       window.location.assign(cupURL.href);return Promise.resolve(null);
@@ -13645,7 +13655,7 @@
   var toyFrameNo = 0;
   var fpsEMA = 60;
   var visibleFrac = 1;
-  var userPaused = cupSceneRequested && new URL(window.location.href).searchParams.get('paused') === '1';
+  var userPaused = fixedMachineRequested && new URL(window.location.href).searchParams.get('paused') === '1';
   var readoutEl = null;
   var readoutTick = 0;
 

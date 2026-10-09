@@ -44,8 +44,17 @@
     function fill(id,r,level){result.initial.push({kind:'rect',vessel:id,
       rect:{x:r.x+T,y:snap(level),width:r.width-2*T,height:r.y+r.height-T-snap(level)}});}
     if(name==='siphon'){
+      var setup=options.setup || (options.primed===false ? 'empty' : 'filled');
+      if(['filled','empty','raised'].indexOf(setup)<0)throw new Error('Unknown siphon setup.');
+      if(setup==='empty')options=Object.assign({},options,{primed:false});
+      result.setup=setup;
+      // Use the same particle pressure transfer as the released cup. The
+      // native solver still owns every water particle and its motion.
+      Object.assign(result.settings,{particlePressure:true,projectedVelocity:true,directGather:true,
+        collapseEmptyCells:true,geometricGas:true,boundaryReconstruction:true,
+        cellSize:8,soundSpeed:2500,iterations:32,redBlack:true});
       result.title='Siphon';result.action=options.open===true ? 'Close valve' : 'Open valve';
-      result.caption='The filled tube connects a higher tank to a lower one. Open the valve to test whether water keeps crossing the bend.';
+      result.caption=setup==='empty' ? 'Air in the empty tube interrupts the water column. Open the valve, then choose Filled tube in Instruments to compare.' : setup==='raised' ? 'The outlet is above the source water level. Open the valve and compare it with the lower outlet in Instruments.' : 'The filled tube carries water over the bend into the lower tank. Open the valve, or use Instruments to compare an empty tube and a raised outlet.';
       var stockW=Math.min(W,1120),stockH=Math.min(H,672);
       var source=vessel('source',vesselOption('source',rect(stockW*.08,stockH*.40,stockW*.34,stockH*.40)),false);
       var receiver=vessel('receiver',vesselOption('receiver',rect(stockW*.46,stockH*.58,stockW*.48,stockH*.37)),false);
@@ -61,7 +70,8 @@
       var defaultCrest=Math.min(Math.max(stockH*.23,stockH*.80-240),source.y-T*4.5);
       var sourceLevel=snap(option('sourceLevel',stockH*.48)),crest=center(option('crest',defaultCrest));
       var inlet=point(option('inletX',source.x+source.width*.65),source.y+source.height-T*2.5);
-      var outlet=point(option('outletX',receiver.x+receiver.width*.4),option('outletHeight',stockH*.65));
+      var outlet=point(option('outletX',receiver.x+receiver.width*.4),option('outletHeight',
+        setup==='raised' ? sourceLevel-T*2.5 : Math.min(stockH*.90,receiver.y+receiver.height-T*2.5)));
       if(inlet.x-negative-T<source.x+T || inlet.x+positive+T>source.x+source.width-T)
         throw new Error('Siphon inletX must leave its pipe walls inside the source tank.');
       if(outlet.x-negative-T<receiver.x+T || outlet.x+positive+T>receiver.x+receiver.width-T)
@@ -72,7 +82,7 @@
       if(crest<T*3.5 || crest>source.y-positive-T*2)throw new Error('Siphon crest must leave an open air path above the source rim.');
       if(outlet.y<crest+T*6 || outlet.y>receiver.y+receiver.height-T*2.5)throw new Error('Siphon outletHeight must leave a straight valve seat below the crest and clear the receiver floor.');
       var route=[inlet,point(inlet.x,crest),point(outlet.x,crest),outlet];
-      var tube=pipe('siphon',route,bore,true);fill('source',source,sourceLevel);
+      var tube=pipe('siphon',route,bore,options.primed!==false);fill('source',source,sourceLevel);
       var sectionX=center((inlet.x+outlet.x)*.5);
       result.meters.push({id:'crest',a:probe(sectionX,crest-negative),b:probe(sectionX,crest+positive),axis:'x',positive:1});
       result.marks.push({id:'source-level',x:source.x,y:sourceLevel,width:source.width});

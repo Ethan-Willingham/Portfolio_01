@@ -98,6 +98,18 @@ for (const world of worlds) for (const seed of seeds) for (const name of ['sipho
   results.push({ name, world, seed, particles: f.points.length, ...extra });
 }
 const variantWorld = { w: 960, h: 576 }, variants = [];
+for(const setup of ['filled','empty','raised']){
+  const f=fixture('siphon',{w:1120,h:664},17,{setup}),d=f.definition;
+  check(d.setup===setup,'Siphon setup is retained by the definition');
+  check(d.pipes[0].primed===(setup!=='empty'),'Empty setup seeds no tube primer');
+  check(d.initial.some(s=>s.kind==='pipe')===(setup!=='empty'),'Priming uses actual initial water');
+  check((d.measure.outlet.y>d.measure.sourceLevel)===(setup!=='raised'),'Raised setup reverses the head');
+  check(d.settings.particlePressure && d.settings.boundaryReconstruction && d.settings.redBlack,
+    'Siphon opts into the coupled native pressure transfer');
+  if(setup==='empty')check(!f.liquid[f.index(d.pipes[0].points[1].x,d.measure.crest)],'The empty crest remains air');
+  check(d.caption.split(/[.!?]+/).filter(s=>s.trim()).length===2,'Every setup has two caption sentences');
+}
+assert.throws(()=>Scenes.make('siphon',{w:1120,h:664},{setup:'unknown'}));checks++;
 for(const world of worlds)for(const bore of [8,16,24,32]){
   const f=fixture('cup',world,17,{bore}),m=f.definition.measure;
   const start=f.index(m.source.x+12,m.sourceLevel+12),end=f.index(m.receiver.x+12,m.receiver.y+12);
