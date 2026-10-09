@@ -253,6 +253,7 @@
   'use strict';
   var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   var fine = window.matchMedia('(any-pointer: fine)');
+  var touch = window.matchMedia('(hover: none) and (pointer: coarse)');
   var ns = 'http://www.w3.org/2000/svg';
   var waves = [], gesture = null, active = null, suppressClick = false;
   var css = document.createElement('style');
@@ -300,8 +301,9 @@
 
     function feel(soft) {
       tension = Math.pow((count - 1) * (soft ? 0.9 : 3.2), 2);
-      damping = Math.exp(-(soft ? 1.65 : 4.2) * dt);
-      warmthFade = soft ? 0.4 : 0.65;
+      // Touch screens get a smaller, quieter ripple that settles sooner.
+      damping = Math.exp(-(touch.matches ? 5.5 : soft ? 1.65 : 4.2) * dt);
+      warmthFade = touch.matches ? 1.3 : soft ? 0.4 : 0.65;
     }
     function draw() {
       var path = '';
@@ -309,7 +311,7 @@
         path += (i ? 'L' : 'M') + (i / (count - 1) * width).toFixed(2) + ',' + (0.5 + u[i]).toFixed(2);
       }
       ink.setAttribute('d', path); hit.setAttribute('d', path);
-      var heat = Math.max(focused ? 0.22 : 0, warmth);
+      var heat = Math.max(focused ? 0.22 : 0, warmth * (touch.matches ? 0.35 : 1));
       ink.setAttribute('stroke', 'rgb(' + rule.map(function (c, i) {
         return Math.round(c + (accent[i] - c) * heat);
       }).join(',') + ')');
@@ -388,6 +390,7 @@
     }
     function pluck(x, amplitude) {
       if (motion.matches || !width) return;
+      amplitude *= touch.matches ? 0.3 : 1;
       var center = clamp(x / width * (count - 1), 1, count - 2);
       for (var i = 1; i < count - 1; i++) u[i] += amplitude * Math.exp(-Math.pow((i - center) / 3, 2));
       warmth = 1; run();
@@ -395,6 +398,7 @@
     function ripple(x) {
       if (motion.matches || !width) return;
       feel(true);
+      var strength = touch.matches ? 0.3 : 1;
       var center = clamp(x / width * (count - 1), 1, count - 2);
       for (var i = 1; i < count - 1; i++) {
         var distance = (i - center) / 8;
@@ -402,8 +406,8 @@
         // ends. Feed mostly velocity so it swells into view instead of jumping.
         var pulse = (1 - 2 * distance * distance) * Math.exp(-distance * distance);
         pulse *= Math.min(1, i / 4, (count - 1 - i) / 4);
-        u[i] = clamp(u[i] + 4 * pulse, -65, 65);
-        velocity[i] = clamp(velocity[i] + 1000 * pulse, -1400, 1400);
+        u[i] = clamp(u[i] + 4 * strength * pulse, -65, 65);
+        velocity[i] = clamp(velocity[i] + 1000 * strength * pulse, -1400, 1400);
       }
       warmth = 1; run();
     }
