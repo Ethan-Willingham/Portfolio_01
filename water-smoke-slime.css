@@ -222,6 +222,8 @@ body.toy-expanded { overflow: hidden; }
 .toy-shell .toy-presets-entry[aria-expanded="true"] { background: var(--d-bg); border-color: var(--accent); color: var(--text-bright); }
 .toy-foot { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 10px; }
 .toy-foot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+.toy-foot-stats { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+#toy-fps { min-width: 6ch; color: var(--text-dim); font: 11px/1.4 var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 .toy-machine-summary { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 12px; align-items: center; width: 100%; }
 .toy-machine-summary p { margin: 0; color: var(--text-dim); font: 12px/1.45 var(--font-body); }
 .toy-shell .toy-primary { min-width: 120px; min-height: 44px; padding: 9px 14px; background: var(--d-bg); color: var(--accent-hover); border: 1px solid var(--accent); }

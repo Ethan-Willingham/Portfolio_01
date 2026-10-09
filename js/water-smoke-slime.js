@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.37'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.38'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13788,7 +13788,7 @@
     var parts = [];
     if (waterState !== 'off') parts.push(liquidCount.toLocaleString('en-US') + ' water');
     parts.push(jelloBodies.length + (jelloBodies.length === 1 ? ' slime' : ' slimes'));
-    parts.push(Math.round(fpsEMA) + ' fps');
+    parts.push((rafId ? Math.round(fpsEMA) : 0) + ' fps');
     parts.push(backend);
     parts.push(TOY_VERSION);
     readoutEl.textContent = parts.join(' · ');
@@ -13824,8 +13824,9 @@
     var dt = lastT ? (tNow - lastT) / 1000 : 1 / 60;
     lastT = tNow;
     toyFrameNo++;
-    if (dt > 0.05) dt = 0.05;
+    // Measure real frame time before limiting the simulation step.
     if (dt > 0) fpsEMA = fpsEMA * 0.95 + (1 / dt) * 0.05;
+    if (dt > 0.05) dt = 0.05;
 
     toolTick(dt);
     presetTick(dt);
@@ -14021,7 +14022,7 @@
       stats: function () {
         return {
           water: liquidCount, slimes: jelloBodies.length, jelloPoints: jelloCount,
-          fps: Math.round(fpsEMA), waterState: waterState, smoke: smokeActive,
+          fps: rafId ? Math.round(fpsEMA) : 0, waterState: waterState, smoke: smokeActive,
           awake: liquidWGPU ? liquidWGPU.awakeCount : -1,
           scene: currentScene, tool: tool, paused: userPaused,
           waterFeel: Math.round(waterFeel * 100), debugParticles: debugParticles,

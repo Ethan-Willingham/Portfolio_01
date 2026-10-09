@@ -298,6 +298,7 @@
     }
     function updateMeasurements() {
       var state = toy.stats(), machine = /^(siphon|cup|heron)$/.test(state.scene);
+      text('toy-fps', state.fps + ' FPS');
       var sample = toy.instruments ? toy.instruments() : { ready: false };
       var liveMachine = toy.machineState ? toy.machineState() : null;
       var air = toy.airStats ? toy.airStats() : { enabled: false };
