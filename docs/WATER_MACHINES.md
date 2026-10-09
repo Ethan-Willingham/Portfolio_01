@@ -1,7 +1,39 @@
 # Water machines
 
-Release: toy v5.40, shared water engine v28.178. The greedy cup and standalone
-siphon are in the public scene menu. Heron's fountain remains parked.
+Release: toy v5.42, shared water engine v28.178. The greedy cup, standalone
+siphon and Heron's fountain are in the public scene menu, with published behavior
+measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
+
+## Air pressure view
+
+Machine scenes show a faint tint inside sealed gas pockets. Gold means positive
+gauge pressure, rose means negative. Room air and liquid receive no air tint.
+Up to three small labels show psi relative to the room; labels fit wholly inside
+sampled gas and disappear when no readable space remains. Vapor is labeled
+separately. Air pressure beside the head/flow readout and in Instruments controls
+the same overlay. The former Pressure colors control is now named Water pressure
+and retains its water coloring. All overlays are read-only and remain diagnostic.
+
+Pressure images and static apparatus annotations are cached between GPU snapshots,
+and the pressure image uses the displayed resolution. A fresh paused apparatus
+requests its initial snapshot. Both overlay controls redraw while paused. This
+reduces canvas work but does not establish a 60 FPS performance result.
+
+The native gas boundary has opt-in nonlinearGas and vaporClosure experiments,
+both off in the released scenes. The first solves the isothermal gas equation in
+gauge pressure, avoiding room-pressure subtraction. The second allows an empty
+vapor cavity to close at zero volume and raises pressure when further closure
+would make its volume negative. They still require the complete integrated
+acceptance suite before activation. A captured transient negative volume in a
+fountain trial had zero stored gas and was a collapsing vapor cavity. The native
+observer now preserves the first event's amount, volume, flux and phase.
+
+Checks: node tools/test-water-air-view.cjs, node tools/test-water-gas-boundary.cjs,
+node tools/test-water-air-view.mjs, and the existing viewport/ordinary regression
+harnesses. For a GPU before/after comparison, save the prior air module outside
+the checkout and pass REFERENCE=/absolute/path/liquid-air-wgpu.js EQUIVALENCE=1
+when running the browser air-view harness.
+
 
 ## Standalone siphon
 

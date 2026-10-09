@@ -46,7 +46,7 @@ const hash=data=>createHash('sha256').update(data).digest('hex');
 const frozenPaths=['archive/water-smoke-slime/water-smoke-slime.html','water-smoke-slime.css',
   'js/water-smoke-slime.js','js/water-smoke-slime-ui.js','js/liquid-wgpu.js','js/liquid-air-wgpu.js',
   'js/water-machines-scenes.js','js/water-machines-instruments.js','js/water-machines-builder.js','js/water-rainbow.js',
-  'js/liquid-air-model.js'];
+  'js/liquid-air-model.js','js/water-machines-pressure-view.js'];
 const sourceDirectory=process.env.SOURCE_DIR ? path.resolve(process.env.SOURCE_DIR) : null;
 if(fs.existsSync(sourceDirectory ? path.join(sourceDirectory,'liquid-air-mac-wgpu.js') : path.join(root,'js/liquid-air-mac-wgpu.js')))
   frozenPaths.push('js/liquid-air-mac-wgpu.js');

@@ -8,6 +8,22 @@
   'use strict';
 
   var SOLID = 0, LIQUID = 1, AIR = 2;
+  // Scalar oracle for the opt-in gas boundary. Coupling has volume/pressure
+  // units; flux includes the held neighboring-water pressure contribution.
+  function isothermalPressure(o){
+    var atmosphere=positive(o.atmosphere,'atmosphere'),volume=positive(o.volume,'volume');
+    var amount=finite(o.amount,'amount'),k=finite(o.coupling,'coupling'),flux=finite(o.flux,'flux');
+    var minimum=finite(o.minimum,'minimum');
+    if(amount<0 || k<0 || atmosphere+minimum<=0)throw new Error('Invalid gas boundary');
+    if(amount===0)return Math.max(minimum,(flux-volume)/Math.max(k,1e-12));
+    var b=volume-flux+k*atmosphere,c=atmosphere*((volume-amount)-flux),p;
+    if(k<=1e-20)p=-c/Math.max(b,1e-20);
+    else{
+      var d=Math.sqrt(Math.max(0,b*b-4*k*c));
+      p=b>=0 ? -2*c/Math.max(b+d,1e-20) : (d-b)/(2*k);
+    }
+    return Math.max(minimum,p);
+  }
   // CDF of the centered quadratic B-spline used by the native fine grid.
   // Integrating the basis over accessible geometry gives a density control
   // volume, which is distinct from the geometric water/gas phase volume.
@@ -641,7 +657,7 @@
     return out;
   }
 
-  return { SOLID: SOLID, LIQUID: LIQUID, AIR: AIR, quadraticIntegral: quadraticIntegral, kernelControlVolume: kernelControlVolume,
+  return { SOLID: SOLID, LIQUID: LIQUID, AIR: AIR, isothermalPressure:isothermalPressure,quadraticIntegral: quadraticIntegral, kernelControlVolume: kernelControlVolume,
     scatterMAC: scatterMAC, gatherMAC: gatherMAC, representedBasisVolume: representedBasisVolume,
     liquidEOS: liquidEOS, advanceJ: advanceJ, constitutiveCell: constitutiveCell, accessibleAir: accessibleAir,
     labelAir: labelAir, classifyPhase: classifyPhase, remapGas: remapGas,

@@ -27,6 +27,7 @@
     var rejectedLinkError = new URLSearchParams(location.search).has('build') && toy.buildState ? toy.buildState().error : null;
     var dismissedLinkError = null;
     var pressureColors = false;
+    var airPressureColors = toy.airPressureView();
     var glassWalls = true;
     var slowMotion = false;
     var valveSignature = null;
@@ -267,6 +268,11 @@
     document.getElementById('toy-pressure-toggle').addEventListener('click', function () {
       pressureColors = !pressureColors; toy.pressureView(pressureColors); pressed(this, pressureColors); updateMeasurements();
     });
+    ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){
+      document.getElementById(id).addEventListener('click',function(){
+        airPressureColors=toy.airPressureView(!toy.airPressureView());updateMeasurements();
+      });
+    });
     document.getElementById('toy-slow-toggle').addEventListener('click', function () {
       slowMotion = !slowMotion; toy.set('time', slowMotion ? .25 : 1); pressed(this, slowMotion);
     });
@@ -374,10 +380,13 @@
       slowMotion = +document.getElementById('toy-time').value === 25;
       pressed(document.getElementById('toy-slow-toggle'), slowMotion);
       var legend = document.getElementById('toy-pressure-legend');
-      legend.hidden = !pressureColors || !contextual;
+      airPressureColors=toy.airPressureView();
+      ['toy-air-pressure-toggle','toy-air-pressure-compact'].forEach(function(id){pressed(document.getElementById(id),airPressureColors);});
+      legend.hidden = !(pressureColors || airPressureColors) || !contextual;
       if (!legend.hidden) {
         var cap = window.WaterMachinesInstruments && toy.world ? window.WaterMachinesInstruments.scale({ width: toy.world().w }).psi(80000) : null;
-        text('toy-pressure-legend', 'Pressure: rose below room air (0 psi); gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
+        text('toy-pressure-legend', airPressureColors ? 'Air: gold above room pressure, rose below. Labels show gauge psi; room air is 0. Readings are diagnostic.' :
+          'Water: rose below room pressure, gold above. Full color at ' + (Number.isFinite(cap) ? '±' + number(cap, 'psi') : 'the model limit') + '.');
       }
       var builderState = toy.buildState ? toy.buildState() : {};
       var message = builderState.error || sample.error || notice;

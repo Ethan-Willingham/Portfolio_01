@@ -55,6 +55,8 @@ const ALIGNED_TRANSPORT:bool=false;
 const COLLAPSE_EMPTY_CELLS:bool=false;
 const GEOMETRIC_GAS:bool=false;
 const RED_BLACK:bool=false;
+const NONLINEAR_GAS:bool=false;
+const VAPOR_CLOSURE:bool=false;
 const MASS_SCALE:f32=1048576.0;
 
 // Four phase records share one Gas-sized slot in the same storage binding.
@@ -571,6 +573,34 @@ fn gasJacobi(@builtin(global_invocation_id) id:vec3<u32>){
   let rhs=cells[c].rhs+f32(atomicLoad(&gas[c].flux))/fluxScale(c);
   let sum=f32(atomicLoad(&gas[c].neighbors))/neighborScale(c);
   var p=cfg.minimum;if(atomicLoad(&gas[c].vapor)==0u){p=max(cfg.minimum,(rhs+sum)/max(diagonal,1.0e-12));}
+  if(VAPOR_CLOSURE && atomicLoad(&gas[c].vapor)>0u){
+    // Vapor can collapse completely. At positive volume it stays at the
+    // pressure floor; once closed, pressure rises to keep volume nonnegative.
+    let k=f32(atomicLoad(&gas[c].diagonal))/diagonalScale(c);
+    let flux=f32(atomicLoad(&gas[c].flux))/fluxScale(c);
+    let volume=f32(atomicLoad(&gas[c].integratedVolume))/cfg.volumeScale;
+    p=max(cfg.minimum,(flux+sum-volume)/max(k,1.0e-12));
+  }
+  if(NONLINEAR_GAS && atomicLoad(&gas[c].amount)>0){
+    // Isothermal gas: (V - F - S + K*p)*(atmosphere+p)=atmosphere*amount.
+    // Solve in gauge pressure without subtracting two room-sized pressures.
+    // The stable root also avoids the linear compliance approximation for a
+    // pocket compressed substantially in one step.
+    let k=f32(atomicLoad(&gas[c].diagonal))/diagonalScale(c);
+    let amount=f32(atomicLoad(&gas[c].amount))/cfg.volumeScale;
+    let base=f32(atomicLoad(&gas[c].integratedVolume))/cfg.volumeScale;
+    let flux=f32(atomicLoad(&gas[c].flux))/fluxScale(c)+sum;
+    let b=base-flux+k*cfg.atmosphere;
+    let constant=cfg.atmosphere*((base-amount)-flux);
+    var candidate=0.0;
+    if(k<=1.0e-20){candidate=-constant/max(b,1.0e-20);}
+    else{
+      let discriminant=sqrt(max(0.0,b*b-4.0*k*constant));
+      if(b>=0.0){candidate=-2.0*constant/max(b+discriminant,1.0e-20);}
+      else{candidate=(discriminant-b)/(2.0*k);}
+    }
+    p=max(cfg.minimum,candidate);
+  }
   if(RED_BLACK){inputP[c]=vec4<f32>(p,0.0,0.0,0.0);}
   else{outputP[c]=vec4<f32>(p,0.0,0.0,0.0);}
   atomicStore(&gas[c].neighbors,0);
@@ -632,11 +662,24 @@ fn finish(@builtin(global_invocation_id) id:vec3<u32>){
 fn finishGas(@builtin(global_invocation_id) id:vec3<u32>){
   let c=id.x;if(c>=cfg.cells || atomicLoad(&labels[c].current)!=c+1u){return;}
   let p=inputP[c].x;
-  let diagonal=cells[c].diagonal+f32(atomicLoad(&gas[c].diagonal))/diagonalScale(c);
+  var diagonal=cells[c].diagonal+f32(atomicLoad(&gas[c].diagonal))/diagonalScale(c);
   let rhs=cells[c].rhs+f32(atomicLoad(&gas[c].flux))/fluxScale(c);
   let neighbors=f32(atomicLoad(&gas[c].neighbors))/neighborScale(c);
-  let residual=diagonal*p-neighbors-rhs;
-  if(atomicLoad(&gas[c].vapor)==0u){
+  var residual=diagonal*p-neighbors-rhs;
+  if(NONLINEAR_GAS && atomicLoad(&gas[c].amount)>0){
+    let k=f32(atomicLoad(&gas[c].diagonal))/diagonalScale(c);
+    let a=cfg.atmosphere*f32(atomicLoad(&gas[c].amount))/cfg.volumeScale;
+    let absolute=max(cfg.atmosphere+p,1.0e-8);
+    residual=f32(atomicLoad(&gas[c].integratedVolume)-atomicLoad(&gas[c].amount))/cfg.volumeScale
+      -f32(atomicLoad(&gas[c].flux))/fluxScale(c)-neighbors+k*p+(a/cfg.atmosphere)*p/absolute;
+    diagonal=k+a/(absolute*absolute);
+  }
+  if(VAPOR_CLOSURE && atomicLoad(&gas[c].vapor)>0u){
+    diagonal=f32(atomicLoad(&gas[c].diagonal))/diagonalScale(c);
+    residual=f32(atomicLoad(&gas[c].integratedVolume))/cfg.volumeScale
+      -f32(atomicLoad(&gas[c].flux))/fluxScale(c)-neighbors+diagonal*p;
+  }
+  if(atomicLoad(&gas[c].vapor)==0u || VAPOR_CLOSURE){
     let violation=select(abs(residual),max(0.0,-residual),p<=cfg.minimum+0.01);
     atomicMax(&gas[cfg.cells+1u].solvedVolume,bitcast<i32>(violation/max(diagonal,1.0e-20)));
   }
@@ -993,6 +1036,8 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
     }
     var shaderSource=SOURCE;
     if(redBlack)shaderSource=shaderSource.replace('const RED_BLACK:bool=false;', 'const RED_BLACK:bool=true;');
+    if(options.nonlinearGas===true)shaderSource=shaderSource.replace('const NONLINEAR_GAS:bool=false;', 'const NONLINEAR_GAS:bool=true;');
+    if(options.vaporClosure===true)shaderSource=shaderSource.replace('const VAPOR_CLOSURE:bool=false;', 'const VAPOR_CLOSURE:bool=true;');
     if(directTransport)shaderSource=shaderSource.replace('const ALIGNED_TRANSPORT:bool=false;', 'const ALIGNED_TRANSPORT:bool=true;');
     if(collapseEmptyCells)shaderSource=shaderSource.replace('const COLLAPSE_EMPTY_CELLS:bool=false;', 'const COLLAPSE_EMPTY_CELLS:bool=true;');
     if(options.geometricGas===true)shaderSource=shaderSource.replace('const GEOMETRIC_GAS:bool=false;', 'const GEOMETRIC_GAS:bool=true;');
@@ -1039,7 +1084,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
       width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,redBlack:redBlack,
       settings:{density:floats[5],soundSpeed:floats[6],atmospherePressure:floats[7],minimumPressure:floats[8],threshold:floats[9],
         volumeScale:volumeScale,diagonalScale:floats[11],fluxScale:floats[12],neighborScale:floats[13],pressureTolerance:floats[14],
-        particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true},
+        particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true,nonlinearGas:options.nonlinearGas===true,vaporClosure:options.vaporClosure===true},
       buffers:{geometry:geometry,cells:fields,labels:labels,history:history,gas:gas,pressure:pressureA,phase:gas,mac:mac ? mac.buffer : null},phaseOffset:phaseOffset,
       enabled:false,particlePressure:!mac && options.particlePressure === true,
       frameGeometry:directTransport,
@@ -1124,8 +1169,10 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
         // pressure/update/boundary pass. Preserve their order while avoiding
         // hundreds of pass begin/end pairs per fixed step.
         var pass=encoder.beginComputePass({label:'liquid.air.step'});
+        var boundParity=-1;
         function dispatch(name, parity, n) {
-          pass.setPipeline(pipes[name]);pass.setBindGroup(0,groups[parity || 0]);
+          parity=parity || 0;pass.setPipeline(pipes[name]);
+          if(boundParity!==parity){pass.setBindGroup(0,groups[parity]);boundParity=parity;}
           pass.dispatchWorkgroups(Math.ceil((n || count)/128));
         }
         dispatch('clearDiagnostics',0,1);dispatch('prepare');
@@ -1225,8 +1272,13 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
             var ds=Math.min(model.settings.diagonalScale,1e9/Math.max(faceCount*dt*dt/model.settings.density,1e-20));
             var diagonal=snapshot.cells[c*8+5]+snapshot.gas[c*16+4]/ds;
             var r=snapshot.pressure[c*4+3],p=snapshot.pressure[c*4],vapor=snapshot.historyInts[c*8+6]===1;
+            if(model.settings.nonlinearGas && !vapor){
+              var absolute=model.settings.atmospherePressure+p;
+              diagonal=snapshot.gas[c*16+4]/ds+model.settings.atmospherePressure*snapshot.historyInts[c*8+2]/volumeScale/(absolute*absolute);
+            }
             var active=p<=model.settings.minimumPressure+0.01,violation=active?Math.max(0,-r):Math.abs(r);
-            if(!vapor){gasResidual=Math.max(gasResidual,violation);gasError=Math.max(gasError,violation/Math.max(diagonal,1e-20));}
+            if(vapor && model.settings.vaporClosure)diagonal=snapshot.gas[c*16+4]/ds;
+            if(!vapor || model.settings.vaporClosure){gasResidual=Math.max(gasResidual,violation);gasError=Math.max(gasError,violation/Math.max(diagonal,1e-20));}
             if(active && !vapor)gasFloorVolume+=Math.max(0,r);
             snapshot.pockets.push({root:c,pressure:p,amount:snapshot.historyInts[c*8+2]/volumeScale,
               volume:snapshot.historyInts[c*8+3]/volumeScale,geometryVolume:snapshot.history[c*8+4],

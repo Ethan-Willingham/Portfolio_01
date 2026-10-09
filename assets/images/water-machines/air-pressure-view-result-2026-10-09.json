@@ -1,0 +1,1053 @@
+{
+  "date": "2026-10-09",
+  "toyVersion": "v5.42",
+  "overlayChecksPassed": true,
+  "viewportChecksPassed": true,
+  "defaultNativeComparisonsPassed": true,
+  "performanceCertified": false,
+  "overlay": {
+    "defaultEnabled": true,
+    "airOnly": true,
+    "roomClear": true,
+    "maximumLabels": 3,
+    "units": "psi relative to room air",
+    "status": "diagnostic",
+    "cachedBetweenSamples": true
+  },
+  "presentation": {
+    "viewport": {
+      "width": 1512,
+      "height": 820,
+      "deviceScaleFactor": 2
+    },
+    "measurement": "Six seconds of native RAF observation after four seconds of warmup in an owned headless Chrome for Testing Metal session. This is a short browser check, not cross-device or steady 60 FPS certification.",
+    "rows": [
+      {
+        "scene": "heron",
+        "footerFPS": {
+          "min": 59,
+          "median": 60,
+          "max": 60,
+          "samples": 360
+        },
+        "rafIntervalP95Ms": 16.799999999999272,
+        "labels": [
+          {
+            "x": 540,
+            "y": 492,
+            "root": 1832,
+            "area": 108480,
+            "text": "+0.28 psi"
+          },
+          {
+            "x": 188,
+            "y": 228,
+            "root": 1832,
+            "area": 38976,
+            "text": "+0.28 psi"
+          }
+        ]
+      },
+      {
+        "scene": "siphon",
+        "footerFPS": {
+          "min": 59,
+          "median": 60,
+          "max": 60,
+          "samples": 361
+        },
+        "rafIntervalP95Ms": 16.799999999999272,
+        "labels": []
+      },
+      {
+        "scene": "cup",
+        "footerFPS": {
+          "min": 41,
+          "median": 56,
+          "max": 60,
+          "samples": 306
+        },
+        "rafIntervalP95Ms": 33.29999999999927,
+        "labels": []
+      }
+    ]
+  },
+  "defaultNativeComparison": {
+    "method": "SHA256 digests of native particle, affine, auxiliary, flags, pressure, cells, labels, gas, history and phase buffers at frames 1, 5 and 20 after deterministic construction. Compare released v5.41 air module with v5.42 module, with nonlinearGas and vaporClosure disabled. Paused native updates run in the real shared water engine.",
+    "seeds": [
+      17,
+      42,
+      913
+    ],
+    "rows": [
+      {
+        "scene": "heron",
+        "seed": 17,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "5d64542062ef3774ddbf9026204c6e85a187240c3811a5e771c4fd78fa9f7e62",
+                  "affine": "cf619d9161920d0558b6429d7289212c8e37a70f0273d2a9a4e05a2de2e867a2",
+                  "aux": "3c3e7d0ce98b253ab933c00823de0f692066a83945dfe3cc9dbb6f71b18f6743",
+                  "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821",
+                  "cells": "8be01199c2ca5afdfa21c73938f9418320627b7d8acaf501fed437cd0a487dbe",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "2e5cbcec3891c837ec8bc5de9bd96932299b8bdf94ae6e6c6f972bdd61d12b1f",
+                  "pressure": "6410ed062f9214466c4e640e38df325e399625b14f4fe0fdb4aacae5f95c47fe",
+                  "gas": "1e6e9ce09fbd5ffbc2462753fd319464d649e1c3650282cb0136e6c61ee30017",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "7e2dec377cdbf204c64734d9cc389333f7a5390476c6ff85d93fd2e244006db9",
+                  "affine": "e01a35fe3c6d02850fb03b744961d0ab697bc09995100d066ef287143adbac77",
+                  "aux": "66466d175520fe67af6c4624e40af6ccb0bd0e16bff18bc6768e1598efb84e34",
+                  "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821",
+                  "cells": "75276752f2a4aa70dfb0f61c1accdbe3243874ee8b403e058f95d22cc988b0bf",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "bd156079d9160c282ea66a20e9ed58afdaa4f10ab95e67d4dbaeb39c8ce951ec",
+                  "pressure": "fe82cbc82d1c48fa656cc37e66e4ce49cc8a31a8f808b7956bf323ff68ce298e",
+                  "gas": "8d133c598a1a4f0f4bab8f38966107cba771d610214b703b46372feb7c090e51",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "2c68d63d965c9b051e1fca4ef465b4d96022e7de1f8b7c30cf81e1cdec36ff1e",
+                  "affine": "4b9a3c3a4cd53cea7554e4acab5e26e8be502e3db57414b7f1ada16fa29666d1",
+                  "aux": "f8b986640e701a421ba3b7dd8c6f1a06072621d8057c217e121fab88cdd4ae68",
+                  "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821",
+                  "cells": "c4b366f4771e5a39f9130590e4e2a5c04f0108e48df967414fc29c0b22f142bb",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "b650d495a3202eb42b9aed3bd538a4a84a26eb3b52c9da0bf0073cdda0a6a644",
+                  "pressure": "6949585c68773acc5897258e1483c12eee5978e65e2bb1f7b0852d4ccbeee6de",
+                  "gas": "221bf6b58bbb15cc33f2998b8a28bbdd11079d869f50957590ced9a8df7951d1",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "5d64542062ef3774ddbf9026204c6e85a187240c3811a5e771c4fd78fa9f7e62",
+                  "affine": "cf619d9161920d0558b6429d7289212c8e37a70f0273d2a9a4e05a2de2e867a2",
+                  "aux": "3c3e7d0ce98b253ab933c00823de0f692066a83945dfe3cc9dbb6f71b18f6743",
+                  "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821",
+                  "cells": "8be01199c2ca5afdfa21c73938f9418320627b7d8acaf501fed437cd0a487dbe",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "2e5cbcec3891c837ec8bc5de9bd96932299b8bdf94ae6e6c6f972bdd61d12b1f",
+                  "pressure": "6410ed062f9214466c4e640e38df325e399625b14f4fe0fdb4aacae5f95c47fe",
+                  "gas": "1e6e9ce09fbd5ffbc2462753fd319464d649e1c3650282cb0136e6c61ee30017",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "7e2dec377cdbf204c64734d9cc389333f7a5390476c6ff85d93fd2e244006db9",
+                  "affine": "e01a35fe3c6d02850fb03b744961d0ab697bc09995100d066ef287143adbac77",
+                  "aux": "66466d175520fe67af6c4624e40af6ccb0bd0e16bff18bc6768e1598efb84e34",
+                  "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821",
+                  "cells": "75276752f2a4aa70dfb0f61c1accdbe3243874ee8b403e058f95d22cc988b0bf",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "bd156079d9160c282ea66a20e9ed58afdaa4f10ab95e67d4dbaeb39c8ce951ec",
+                  "pressure": "fe82cbc82d1c48fa656cc37e66e4ce49cc8a31a8f808b7956bf323ff68ce298e",
+                  "gas": "8d133c598a1a4f0f4bab8f38966107cba771d610214b703b46372feb7c090e51",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "2c68d63d965c9b051e1fca4ef465b4d96022e7de1f8b7c30cf81e1cdec36ff1e",
+                  "affine": "4b9a3c3a4cd53cea7554e4acab5e26e8be502e3db57414b7f1ada16fa29666d1",
+                  "aux": "f8b986640e701a421ba3b7dd8c6f1a06072621d8057c217e121fab88cdd4ae68",
+                  "flag": "1e55d2ac2c6d3f0439ee52d96bcb359496abcc2a621c16dccc7be62899a8a821",
+                  "cells": "c4b366f4771e5a39f9130590e4e2a5c04f0108e48df967414fc29c0b22f142bb",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "b650d495a3202eb42b9aed3bd538a4a84a26eb3b52c9da0bf0073cdda0a6a644",
+                  "pressure": "6949585c68773acc5897258e1483c12eee5978e65e2bb1f7b0852d4ccbeee6de",
+                  "gas": "221bf6b58bbb15cc33f2998b8a28bbdd11079d869f50957590ced9a8df7951d1",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "heron",
+        "seed": 42,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "47341ba1e359b92d009e635c2a9ef64beb59b9a82954284ea24018c47ed5f1a9",
+                  "affine": "0c351088ccba635fb8e6537a9d63f4ab0ee671383231d149e8072e38d4f4c634",
+                  "aux": "e76ecd407813a1233f828892d24341849b1f01ffaa4fd26fb38a78e16e99c33f",
+                  "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724",
+                  "cells": "d54e58d19ae714ae5a426f50a831a22cb371fa5c1db0408fe69ef4f8b9045d39",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "b59c864510285070918d41aeb84c782ea5569bcec1983636dd8b7a09988a17fa",
+                  "pressure": "dd634141d7acfaff18cb83aad1e68b2d3e3c7a67f824c5d3abd189048c20f0e4",
+                  "gas": "c257e016fcd4981214ab364526ef4544bff42a749a8804f274d968af193facfc",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "9e13e982060c1e83430bf7e5e36e4280e30d3bc7ec91037897a9d9295cf4799d",
+                  "affine": "bdfb75cf9766c116ee82123029e18463e769671f15660f9cf118b32a0b017e7f",
+                  "aux": "b9db390319c0dd9ab38b8ec185a6a90fadc5a411a44c63d1d31fd874a37f551b",
+                  "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724",
+                  "cells": "12012578c85c12296df92b1f66110b305c8a83809f80c33a85a4017bd1d4c49b",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "2a6b290f56ef918bd5ec69f312e600825bfa8123e599e8cbd1f4ba39ea131f61",
+                  "pressure": "33ca955083300c10ce7d20f1eef6af1242e71c9ce69bd21bfe877519aa0893b6",
+                  "gas": "ebd7ab763579c1e7b58afa1becd5da650fb5634264df803797bfacd592deed29",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "782cb3290a8b90d2b55ade9572a83ebb01786507f30ca3059a4dd22dbbf13e7d",
+                  "affine": "0daef5a06fdc4fdb1071027f7bc051628b6c1da1ae7a7d8d5024f71d6f95bc52",
+                  "aux": "c5d42100a513b285cd8c2e8a20fcfb8ba8709c70df6ba7ed88636d3235ef2f85",
+                  "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724",
+                  "cells": "264f7e5fc78a8c2a964bc32967de857cc17bcb7d6373c9714b6d4a98b0e28637",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "b44dd1f37dcd473cff38436fc38f4a1ace7b3d566d4bf036703748f222fab53a",
+                  "pressure": "a75abc1a5900e19f3884c996890af14f38e41c8523662b5b7cf1d1afd694db9a",
+                  "gas": "f78a629e37d30797659bec1f7a52f04222f82b1c266707ef515b3c00d86b2e0a",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "47341ba1e359b92d009e635c2a9ef64beb59b9a82954284ea24018c47ed5f1a9",
+                  "affine": "0c351088ccba635fb8e6537a9d63f4ab0ee671383231d149e8072e38d4f4c634",
+                  "aux": "e76ecd407813a1233f828892d24341849b1f01ffaa4fd26fb38a78e16e99c33f",
+                  "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724",
+                  "cells": "d54e58d19ae714ae5a426f50a831a22cb371fa5c1db0408fe69ef4f8b9045d39",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "b59c864510285070918d41aeb84c782ea5569bcec1983636dd8b7a09988a17fa",
+                  "pressure": "dd634141d7acfaff18cb83aad1e68b2d3e3c7a67f824c5d3abd189048c20f0e4",
+                  "gas": "c257e016fcd4981214ab364526ef4544bff42a749a8804f274d968af193facfc",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "9e13e982060c1e83430bf7e5e36e4280e30d3bc7ec91037897a9d9295cf4799d",
+                  "affine": "bdfb75cf9766c116ee82123029e18463e769671f15660f9cf118b32a0b017e7f",
+                  "aux": "b9db390319c0dd9ab38b8ec185a6a90fadc5a411a44c63d1d31fd874a37f551b",
+                  "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724",
+                  "cells": "12012578c85c12296df92b1f66110b305c8a83809f80c33a85a4017bd1d4c49b",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "2a6b290f56ef918bd5ec69f312e600825bfa8123e599e8cbd1f4ba39ea131f61",
+                  "pressure": "33ca955083300c10ce7d20f1eef6af1242e71c9ce69bd21bfe877519aa0893b6",
+                  "gas": "ebd7ab763579c1e7b58afa1becd5da650fb5634264df803797bfacd592deed29",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "782cb3290a8b90d2b55ade9572a83ebb01786507f30ca3059a4dd22dbbf13e7d",
+                  "affine": "0daef5a06fdc4fdb1071027f7bc051628b6c1da1ae7a7d8d5024f71d6f95bc52",
+                  "aux": "c5d42100a513b285cd8c2e8a20fcfb8ba8709c70df6ba7ed88636d3235ef2f85",
+                  "flag": "1b8b6af210822a4f44dc0236cacf25352815669712af322cb0a65a1159b7c724",
+                  "cells": "264f7e5fc78a8c2a964bc32967de857cc17bcb7d6373c9714b6d4a98b0e28637",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "b44dd1f37dcd473cff38436fc38f4a1ace7b3d566d4bf036703748f222fab53a",
+                  "pressure": "a75abc1a5900e19f3884c996890af14f38e41c8523662b5b7cf1d1afd694db9a",
+                  "gas": "f78a629e37d30797659bec1f7a52f04222f82b1c266707ef515b3c00d86b2e0a",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "heron",
+        "seed": 913,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "8328fe694a87f6b4cf7e587758ff3b674d8df3d9bf01fa43e1b5da2546a2ba2b",
+                  "affine": "3e81ae187cccd45a125334f10b73f2a7e3b55876ff1ad61f0d135e4f0f9ed941",
+                  "aux": "7213a1c028445e20af4a3d181dd1abaa896e209aa3f0026b8a7bc8e2c8ef0f60",
+                  "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1",
+                  "cells": "c3b2fb43172c536b88df1d701692145ee3691f41f35a16f09f36446bc3f59a4d",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "2ca1125f8ead181b416883ad135db822bf9fec3bc3c6ce57c073455f54fb1b10",
+                  "pressure": "5b58a2566ca8f261309c0d96a443e611d700bbb4eb7a4151f317024a9abcad93",
+                  "gas": "e444f761a2d1bf8d2dcdee7cff80c72824fc0a5d15acbfcad98c44d9f56f1fd3",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "c59c436927d263685e99b6e75e5779deb428b16542f08b3425e00061eeaf58e9",
+                  "affine": "2d9d3841797b60cb151485c9c363979711565154e3b74043c154c7d75bf8bb06",
+                  "aux": "b4682765eacde5e00c8744024f954acc010d46c012f4ecbd16328b1f0edd0e1f",
+                  "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1",
+                  "cells": "20f01651075cd797cea9d63248ff66624aa17d8639c24ddd0637d4f725d6482c",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "09fd094fd9a0f1555035a62671dad0b8cb1d7bc2a344dbc207935706991d61ae",
+                  "pressure": "55dcaee8cb0239da0976661c9ed0e7738e8bbca32a92ae9d3c16461566453f21",
+                  "gas": "117211f6f3196310db5d1c8f5ed07108592121a693346bb21340af9f34b7ce37",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "6f165200ea41832fc0e48353abe9a6929106435bacf0924bf62c103170a3da2f",
+                  "affine": "c6fda881dc45cc1cc55427c737036aa4d96149f21334ce745340b25cacc4b2b1",
+                  "aux": "55f93bcf239f9e51c363dc6bbd0c180e672407634c3222beded843ace61689e3",
+                  "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1",
+                  "cells": "34adcd7fdbcf4598b08b56e57cfdc375742ff635f9caf2df19b3013743c96609",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "0eee2bc7428ea6896753a187927d23cda2f7fc351fb44ec0066d04cba4114026",
+                  "pressure": "5a79c7b363de7d03feb5fe3577680977e713c5621be2607e3a5100dca927fcd5",
+                  "gas": "72f08cee0845ed4eba00e08afee508e2af28331f3c2b46402279cf7cb57d3bd7",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "8328fe694a87f6b4cf7e587758ff3b674d8df3d9bf01fa43e1b5da2546a2ba2b",
+                  "affine": "3e81ae187cccd45a125334f10b73f2a7e3b55876ff1ad61f0d135e4f0f9ed941",
+                  "aux": "7213a1c028445e20af4a3d181dd1abaa896e209aa3f0026b8a7bc8e2c8ef0f60",
+                  "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1",
+                  "cells": "c3b2fb43172c536b88df1d701692145ee3691f41f35a16f09f36446bc3f59a4d",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "2ca1125f8ead181b416883ad135db822bf9fec3bc3c6ce57c073455f54fb1b10",
+                  "pressure": "5b58a2566ca8f261309c0d96a443e611d700bbb4eb7a4151f317024a9abcad93",
+                  "gas": "e444f761a2d1bf8d2dcdee7cff80c72824fc0a5d15acbfcad98c44d9f56f1fd3",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "c59c436927d263685e99b6e75e5779deb428b16542f08b3425e00061eeaf58e9",
+                  "affine": "2d9d3841797b60cb151485c9c363979711565154e3b74043c154c7d75bf8bb06",
+                  "aux": "b4682765eacde5e00c8744024f954acc010d46c012f4ecbd16328b1f0edd0e1f",
+                  "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1",
+                  "cells": "20f01651075cd797cea9d63248ff66624aa17d8639c24ddd0637d4f725d6482c",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "09fd094fd9a0f1555035a62671dad0b8cb1d7bc2a344dbc207935706991d61ae",
+                  "pressure": "55dcaee8cb0239da0976661c9ed0e7738e8bbca32a92ae9d3c16461566453f21",
+                  "gas": "117211f6f3196310db5d1c8f5ed07108592121a693346bb21340af9f34b7ce37",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "6f165200ea41832fc0e48353abe9a6929106435bacf0924bf62c103170a3da2f",
+                  "affine": "c6fda881dc45cc1cc55427c737036aa4d96149f21334ce745340b25cacc4b2b1",
+                  "aux": "55f93bcf239f9e51c363dc6bbd0c180e672407634c3222beded843ace61689e3",
+                  "flag": "a2a627d0864b0cf94b7e520a477fe9f585ebe2144f2b540ce7bff5d8c07998b1",
+                  "cells": "34adcd7fdbcf4598b08b56e57cfdc375742ff635f9caf2df19b3013743c96609",
+                  "labels": "86bc04f116367c96cdc99f81348974a3511d9addbdf5cdb93fd2221febeaf0bc",
+                  "history": "0eee2bc7428ea6896753a187927d23cda2f7fc351fb44ec0066d04cba4114026",
+                  "pressure": "5a79c7b363de7d03feb5fe3577680977e713c5621be2607e3a5100dca927fcd5",
+                  "gas": "72f08cee0845ed4eba00e08afee508e2af28331f3c2b46402279cf7cb57d3bd7",
+                  "phase": "2311ae3bd77293594f6c56f9bd02f670b74c11205340e50cab8d57033baf6c19"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "siphon",
+        "seed": 17,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "c335f25e6559b15fd4faa00f730af7ea76678fe4be44b8267138fba2eb55f54d",
+                  "affine": "5ab619058ee274f6ded065df84166492d26e968c1f956a73899b3bff204afa71",
+                  "aux": "e77f0da98bbb386280c8f387fcb3fc1f4d2c4e87feb2b07d8434acbd3c41f3de",
+                  "flag": "d0daeb5a956dc32d9d104d6bdbbc2a3ed8c4605661387fbba5e197676556d8e4",
+                  "cells": "b44096561c4197360feb301269124691558cc58fdfee83c24cb6cac0889c1011",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "6aef091b9cd17f1560e24067b3add2e66f4c6e2ea5b7d14e340e276e22351ff0",
+                  "pressure": "29f8c27709ba5fe0f2bc0139b583152e96c4371777dc6afc5ce4f44014955a94",
+                  "gas": "2e9caafd9e45857a08339869871abacb38967eab94282fa735706055805aa98b",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "785725ee013e512d5585ebd145024f1ed187fdbf393d4f52f86d9d801a0c4924",
+                  "affine": "8ee73c6c3498f1fea6cb2e82dcea19208ce3f2ac6b0a55fd221918b2229224c5",
+                  "aux": "647dc216864fcac4e3bcf8df94654196af407d024486db424076413ad900fc9c",
+                  "flag": "d0daeb5a956dc32d9d104d6bdbbc2a3ed8c4605661387fbba5e197676556d8e4",
+                  "cells": "2f4a8223ab06fd24fa7f03108a4aaae841195cc5e2af8f5e406c2399d2191383",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "943a593052ba38fbcf891479de90e8bbb3f37acfc08e9366e304175f015bd478",
+                  "pressure": "5725856bee80213dd2449c32ac048c46980bbfeda59071fb46a6f47e2bed6330",
+                  "gas": "6661d73accdad4fd612e2445b51e2f2db299ca020ec7e36dc6dff65bc068cc1e",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "3d2563de40835b805b0dcb4a789efd0fb69c819ffe9f10f3c9ad7c495b4f4bc0",
+                  "affine": "e388f71827495600131df54ba996b4305d7078cbe801ba0d532304b91abdf4ab",
+                  "aux": "81600b2e731750c4f2f17882263c5e8d781a8821f62e312a8907c1b5e705f3e4",
+                  "flag": "d0daeb5a956dc32d9d104d6bdbbc2a3ed8c4605661387fbba5e197676556d8e4",
+                  "cells": "3c1fb838b5adf87ba888ff53d71cc53354704da41d1a2db132bc1e43540ee637",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "608055651be6cf87b8d32a0e1e95d11b16322117d41a726c0ee5d72d8381e6e8",
+                  "pressure": "565b861f726ba0a91082a06d9828e130553d0d686d27ffa9e802933bc3324791",
+                  "gas": "8182691d7afdaddd790209e6a37ba99b38ca6e5f4c73d865f6bdd9d9e3c3cef9",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "c335f25e6559b15fd4faa00f730af7ea76678fe4be44b8267138fba2eb55f54d",
+                  "affine": "5ab619058ee274f6ded065df84166492d26e968c1f956a73899b3bff204afa71",
+                  "aux": "e77f0da98bbb386280c8f387fcb3fc1f4d2c4e87feb2b07d8434acbd3c41f3de",
+                  "flag": "d0daeb5a956dc32d9d104d6bdbbc2a3ed8c4605661387fbba5e197676556d8e4",
+                  "cells": "b44096561c4197360feb301269124691558cc58fdfee83c24cb6cac0889c1011",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "6aef091b9cd17f1560e24067b3add2e66f4c6e2ea5b7d14e340e276e22351ff0",
+                  "pressure": "29f8c27709ba5fe0f2bc0139b583152e96c4371777dc6afc5ce4f44014955a94",
+                  "gas": "2e9caafd9e45857a08339869871abacb38967eab94282fa735706055805aa98b",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "785725ee013e512d5585ebd145024f1ed187fdbf393d4f52f86d9d801a0c4924",
+                  "affine": "8ee73c6c3498f1fea6cb2e82dcea19208ce3f2ac6b0a55fd221918b2229224c5",
+                  "aux": "647dc216864fcac4e3bcf8df94654196af407d024486db424076413ad900fc9c",
+                  "flag": "d0daeb5a956dc32d9d104d6bdbbc2a3ed8c4605661387fbba5e197676556d8e4",
+                  "cells": "2f4a8223ab06fd24fa7f03108a4aaae841195cc5e2af8f5e406c2399d2191383",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "943a593052ba38fbcf891479de90e8bbb3f37acfc08e9366e304175f015bd478",
+                  "pressure": "5725856bee80213dd2449c32ac048c46980bbfeda59071fb46a6f47e2bed6330",
+                  "gas": "6661d73accdad4fd612e2445b51e2f2db299ca020ec7e36dc6dff65bc068cc1e",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "3d2563de40835b805b0dcb4a789efd0fb69c819ffe9f10f3c9ad7c495b4f4bc0",
+                  "affine": "e388f71827495600131df54ba996b4305d7078cbe801ba0d532304b91abdf4ab",
+                  "aux": "81600b2e731750c4f2f17882263c5e8d781a8821f62e312a8907c1b5e705f3e4",
+                  "flag": "d0daeb5a956dc32d9d104d6bdbbc2a3ed8c4605661387fbba5e197676556d8e4",
+                  "cells": "3c1fb838b5adf87ba888ff53d71cc53354704da41d1a2db132bc1e43540ee637",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "608055651be6cf87b8d32a0e1e95d11b16322117d41a726c0ee5d72d8381e6e8",
+                  "pressure": "565b861f726ba0a91082a06d9828e130553d0d686d27ffa9e802933bc3324791",
+                  "gas": "8182691d7afdaddd790209e6a37ba99b38ca6e5f4c73d865f6bdd9d9e3c3cef9",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "siphon",
+        "seed": 42,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "162a45c66b09d1f957c0ffd03b95c59c0fc508fdf74d7f14e1f7b201845dbbad",
+                  "affine": "977945c0644befd3a2297ad97c6043dab99f88ceb105179d203e559d05b8f477",
+                  "aux": "224de38abeb22b78e131a932f32f726846fc6fd4c75577b6ce6d36b67a0419ae",
+                  "flag": "786c213508b279cac6dbfb93b3a06ce6ccdd17efec291f9fc2618068dfead4a3",
+                  "cells": "0cde538b81011696c3e722be088fa628b4871e70804d23b9d17b0f598374668f",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "da4a13eae5419f253ac5eadcf4504f48ac111e61bf9a9bc05d33e96cc4d5caf4",
+                  "pressure": "911d0285117a7373b4853ea4f00df28b1abe36c111a347eba7cbfe700aeb3ea7",
+                  "gas": "cfbda3a5d962315fb5a721fcee9dd9b20f99ae8523eeccaec51aeaef9727afac",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "0d3370ba0f663c5a5dcec9b769785f916544675f8c6fd58824d2bf14626ac078",
+                  "affine": "224408ed06b6e44171561a2ea6b6bedf4088b2ef0d98a8c383956679344cf33c",
+                  "aux": "dff99d68acb80980a66807464533a86933d9fcea4e25277788f96503f57f51b6",
+                  "flag": "786c213508b279cac6dbfb93b3a06ce6ccdd17efec291f9fc2618068dfead4a3",
+                  "cells": "383530db7bcff333e05f5d8de8db6008cdcea504c9c2e676c809f3147d43dc90",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "9ca585af98cf70db44928d52946674aaeaadb9c3201abbc490ca35d9a3849d38",
+                  "pressure": "4a291069faa30dea6dcae96c3fdc9b11c3080e40f61bd255cbefa64f03cd4612",
+                  "gas": "093262c26e9208a1689e9bbfdfb0c4e8172e73ce60d467404d97fc741d8cdf84",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "03ae43730074f9c5cb3dd182d752092dc2ed81062b4589cb16bad3725c274b37",
+                  "affine": "876e9ac10f09637bfdfbddd20c3cc43a441a87314d55cd8e5ef0b211a57bb3bc",
+                  "aux": "2f99f1813393f28b2a9b89996f618081bd5a5d390dcda8d9d3a1da3f260e5fe1",
+                  "flag": "786c213508b279cac6dbfb93b3a06ce6ccdd17efec291f9fc2618068dfead4a3",
+                  "cells": "5a761c62d28789ca05ddb23890aca7ad2ff815ad0e68db57b380d3a5471d204f",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "03017ff211f5fe57588bcf035d7b0e8ced2ec647c0811c51d1a7b2606a424552",
+                  "pressure": "41971ce69e9e143d8dc1928b0ace632dc6b6d490656d7720858fffb24357fb0e",
+                  "gas": "d2492290322bd95b5e1a040e3a494715cedd29536ec36a039e236a6691944e15",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "162a45c66b09d1f957c0ffd03b95c59c0fc508fdf74d7f14e1f7b201845dbbad",
+                  "affine": "977945c0644befd3a2297ad97c6043dab99f88ceb105179d203e559d05b8f477",
+                  "aux": "224de38abeb22b78e131a932f32f726846fc6fd4c75577b6ce6d36b67a0419ae",
+                  "flag": "786c213508b279cac6dbfb93b3a06ce6ccdd17efec291f9fc2618068dfead4a3",
+                  "cells": "0cde538b81011696c3e722be088fa628b4871e70804d23b9d17b0f598374668f",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "da4a13eae5419f253ac5eadcf4504f48ac111e61bf9a9bc05d33e96cc4d5caf4",
+                  "pressure": "911d0285117a7373b4853ea4f00df28b1abe36c111a347eba7cbfe700aeb3ea7",
+                  "gas": "cfbda3a5d962315fb5a721fcee9dd9b20f99ae8523eeccaec51aeaef9727afac",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "0d3370ba0f663c5a5dcec9b769785f916544675f8c6fd58824d2bf14626ac078",
+                  "affine": "224408ed06b6e44171561a2ea6b6bedf4088b2ef0d98a8c383956679344cf33c",
+                  "aux": "dff99d68acb80980a66807464533a86933d9fcea4e25277788f96503f57f51b6",
+                  "flag": "786c213508b279cac6dbfb93b3a06ce6ccdd17efec291f9fc2618068dfead4a3",
+                  "cells": "383530db7bcff333e05f5d8de8db6008cdcea504c9c2e676c809f3147d43dc90",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "9ca585af98cf70db44928d52946674aaeaadb9c3201abbc490ca35d9a3849d38",
+                  "pressure": "4a291069faa30dea6dcae96c3fdc9b11c3080e40f61bd255cbefa64f03cd4612",
+                  "gas": "093262c26e9208a1689e9bbfdfb0c4e8172e73ce60d467404d97fc741d8cdf84",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "03ae43730074f9c5cb3dd182d752092dc2ed81062b4589cb16bad3725c274b37",
+                  "affine": "876e9ac10f09637bfdfbddd20c3cc43a441a87314d55cd8e5ef0b211a57bb3bc",
+                  "aux": "2f99f1813393f28b2a9b89996f618081bd5a5d390dcda8d9d3a1da3f260e5fe1",
+                  "flag": "786c213508b279cac6dbfb93b3a06ce6ccdd17efec291f9fc2618068dfead4a3",
+                  "cells": "5a761c62d28789ca05ddb23890aca7ad2ff815ad0e68db57b380d3a5471d204f",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "03017ff211f5fe57588bcf035d7b0e8ced2ec647c0811c51d1a7b2606a424552",
+                  "pressure": "41971ce69e9e143d8dc1928b0ace632dc6b6d490656d7720858fffb24357fb0e",
+                  "gas": "d2492290322bd95b5e1a040e3a494715cedd29536ec36a039e236a6691944e15",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "siphon",
+        "seed": 913,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "9259e1322ffbb6614c58485674be6f83c1795fd79d0ed404da2d86fc0ae572ec",
+                  "affine": "0cfd9fefbd67e8ca269a8311185a49ea546fd6707e196a182c61ee2db7a26745",
+                  "aux": "4adfe2475b32509056f44eaced9dc8ee47dbd272f8712c578c62d2104fc52d71",
+                  "flag": "72523f4f89e48a7ff74a47bff255d319580084c4b106a63031dd111560ae5b61",
+                  "cells": "9046a0c66d2c25981b914bfa926f1e11bd3d86738fc221a0ed389b5a7f71b4cc",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "99626df73fd5880618314a2d2dd73c764779521bdffa8e03f48fdc872d3137e2",
+                  "pressure": "3656e13eab4898d59e3f2c7c5eb3f54105a4a7b9caeea5e8514fd8dc2398c3bf",
+                  "gas": "6ea5c89e0038c804639f18f7dd35b6a3a61bfacbb2f3263dff797d199f4d25dc",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "70befacf2f0ef95e38f76179e3175ec5fe58973312f97c02b132456174149f41",
+                  "affine": "459a066409c38ff596822801bd49945ff96b7b3672185d969c169e9ed66eaec8",
+                  "aux": "8f66abbad798458624254be86b7abe8dbaf20a18f1decef3a7ed1c3b5cea45ba",
+                  "flag": "72523f4f89e48a7ff74a47bff255d319580084c4b106a63031dd111560ae5b61",
+                  "cells": "91f1d923170ad690744c8e9ecd554923890947180256cb6d1daeac7980b8f7cc",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "75d68e1d19f85ec859d40a0c8aa0b02c1255b51782a5357dc1e42adf530a0acf",
+                  "pressure": "a5625917f20b417a73089e78b35a5354ee62e7e3da87199167d0ef1a04ad9cb1",
+                  "gas": "7678bfff89df1a06af606cbd71c0bc7aaee3e5c87cc452d812031f414453ce5f",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "a48c07dc7312fffea2f84f8e7c4e9ee671edba9ef358ba310b0714ef72a14203",
+                  "affine": "d089be64d041392c2eaa964eda6f7996881f674c900cfc212d716a2b137ac6da",
+                  "aux": "f05d6b3ffaa07234ade707809bdf1db56235b089f6ed107bda1324998d0a64c6",
+                  "flag": "72523f4f89e48a7ff74a47bff255d319580084c4b106a63031dd111560ae5b61",
+                  "cells": "c99f65b1c22cfe9b50a971119ced9219f1fccd3792c746bb9f9078313de2e237",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "7f7a35c1c78987bde62786eb3c8020781f358a6826a5034a752e121175c3f21e",
+                  "pressure": "67be31b5bd7148b1b1cced31b8aac661c2edb9f2f18f73af3d4068f9ce48b2e2",
+                  "gas": "7561329d09ddbe0fce0b8bdaed264c91043938dd1dba698eb6099dd81dcd3739",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "9259e1322ffbb6614c58485674be6f83c1795fd79d0ed404da2d86fc0ae572ec",
+                  "affine": "0cfd9fefbd67e8ca269a8311185a49ea546fd6707e196a182c61ee2db7a26745",
+                  "aux": "4adfe2475b32509056f44eaced9dc8ee47dbd272f8712c578c62d2104fc52d71",
+                  "flag": "72523f4f89e48a7ff74a47bff255d319580084c4b106a63031dd111560ae5b61",
+                  "cells": "9046a0c66d2c25981b914bfa926f1e11bd3d86738fc221a0ed389b5a7f71b4cc",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "99626df73fd5880618314a2d2dd73c764779521bdffa8e03f48fdc872d3137e2",
+                  "pressure": "3656e13eab4898d59e3f2c7c5eb3f54105a4a7b9caeea5e8514fd8dc2398c3bf",
+                  "gas": "6ea5c89e0038c804639f18f7dd35b6a3a61bfacbb2f3263dff797d199f4d25dc",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "70befacf2f0ef95e38f76179e3175ec5fe58973312f97c02b132456174149f41",
+                  "affine": "459a066409c38ff596822801bd49945ff96b7b3672185d969c169e9ed66eaec8",
+                  "aux": "8f66abbad798458624254be86b7abe8dbaf20a18f1decef3a7ed1c3b5cea45ba",
+                  "flag": "72523f4f89e48a7ff74a47bff255d319580084c4b106a63031dd111560ae5b61",
+                  "cells": "91f1d923170ad690744c8e9ecd554923890947180256cb6d1daeac7980b8f7cc",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "75d68e1d19f85ec859d40a0c8aa0b02c1255b51782a5357dc1e42adf530a0acf",
+                  "pressure": "a5625917f20b417a73089e78b35a5354ee62e7e3da87199167d0ef1a04ad9cb1",
+                  "gas": "7678bfff89df1a06af606cbd71c0bc7aaee3e5c87cc452d812031f414453ce5f",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "a48c07dc7312fffea2f84f8e7c4e9ee671edba9ef358ba310b0714ef72a14203",
+                  "affine": "d089be64d041392c2eaa964eda6f7996881f674c900cfc212d716a2b137ac6da",
+                  "aux": "f05d6b3ffaa07234ade707809bdf1db56235b089f6ed107bda1324998d0a64c6",
+                  "flag": "72523f4f89e48a7ff74a47bff255d319580084c4b106a63031dd111560ae5b61",
+                  "cells": "c99f65b1c22cfe9b50a971119ced9219f1fccd3792c746bb9f9078313de2e237",
+                  "labels": "775aeadf9412147f07f60c552db4f310bd2fc3cf03dd38dcc2432b3e260ae8d3",
+                  "history": "7f7a35c1c78987bde62786eb3c8020781f358a6826a5034a752e121175c3f21e",
+                  "pressure": "67be31b5bd7148b1b1cced31b8aac661c2edb9f2f18f73af3d4068f9ce48b2e2",
+                  "gas": "7561329d09ddbe0fce0b8bdaed264c91043938dd1dba698eb6099dd81dcd3739",
+                  "phase": "84c27286e942f706813d50919c82afe2dd911dbb8f2113a8a6de9ad94b19ba95"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "cup",
+        "seed": 17,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "916180e0723d1394a36fd2fae61bbcc48144323b9d1992e8fd27ec959f329d1a",
+                  "affine": "7daa0cb5daee42876e72412b01a58ef00ff0c2dc6161273b713c3ff0d2995349",
+                  "aux": "a14dad9938c42bc48d34cf6fe2c99914190855effea8494f59ac7156adfa5efb",
+                  "flag": "ba755925a4d1c65140a24f5070160820b0b2d1d42ca876c9999f74787d6b0678",
+                  "cells": "26f37a6e37c316f3f58e29486cb8ce74c7d3a1ab0b19eef7eae5d91b90e700e6",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "d84ab99be318cd198a8200d72cba73a7d53a9a7e3d81afe2e1cc35de1a2d2820",
+                  "pressure": "ec510419adb54cbca4a745aba9bd2ea7e866e46e989c9399fe5f6c83641cc2d5",
+                  "gas": "52e93813f3e7010f45dcb9f5257cab11ff53e97fe3893b4b83f258ebf836fd42",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "2bed56bd1cd725f74192d7ecd1515c5217d078a63bbcc08938852bad62874280",
+                  "affine": "e04f44b3502bf6cb6d029091a0d4e51c072eacb3c97946e64fc76cd23f402437",
+                  "aux": "5b37721cad23086d4c45f44a6e68938befd42c7da39b4f8f86d98508fe284022",
+                  "flag": "ba755925a4d1c65140a24f5070160820b0b2d1d42ca876c9999f74787d6b0678",
+                  "cells": "9e83feb2fbf02d31ab695302cdd495246f4eb8e9a1a75d918342e1693bcd7ddf",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "b4e21987ff4dccd1593a18fd79e00c10223fe929d3480ece3fd277354ee0a23c",
+                  "pressure": "1a4db086d3129e357c4854c21947f5bc6d0b333358ed007305ef2e6bfa7d3f78",
+                  "gas": "8faf1cb9b69565130db24d50fbb620eb277fca56373a65e067485a1a74e02364",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "430f76b6d192470358734143e1c5d83581099bf7962f11b0189a51f0a8b065d0",
+                  "affine": "1f704d6e5631e0fa7f42389d2051e87b6d0f658774076069f1ac67500d0066d3",
+                  "aux": "01c17d7bba24c5a1c93ad9b4c4048f8c0d8216241adbaf050b7260039daf5f7c",
+                  "flag": "ba755925a4d1c65140a24f5070160820b0b2d1d42ca876c9999f74787d6b0678",
+                  "cells": "491237844893b05b00f8e8dbb03e070278518036980f62f8cb74cde02365bec0",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "be3f10c36d87a0466182fa09134a7973ccf919820407be05ea2d4f99aa9ef717",
+                  "pressure": "18c4eaefec284a37d267031f48e3ffea2d161e6d2eb7837b3485f6ef558b3109",
+                  "gas": "3008581b9988607d171dabbd412046f7a356b66e79146b3d18e558a14945f86e",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "916180e0723d1394a36fd2fae61bbcc48144323b9d1992e8fd27ec959f329d1a",
+                  "affine": "7daa0cb5daee42876e72412b01a58ef00ff0c2dc6161273b713c3ff0d2995349",
+                  "aux": "a14dad9938c42bc48d34cf6fe2c99914190855effea8494f59ac7156adfa5efb",
+                  "flag": "ba755925a4d1c65140a24f5070160820b0b2d1d42ca876c9999f74787d6b0678",
+                  "cells": "26f37a6e37c316f3f58e29486cb8ce74c7d3a1ab0b19eef7eae5d91b90e700e6",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "d84ab99be318cd198a8200d72cba73a7d53a9a7e3d81afe2e1cc35de1a2d2820",
+                  "pressure": "ec510419adb54cbca4a745aba9bd2ea7e866e46e989c9399fe5f6c83641cc2d5",
+                  "gas": "52e93813f3e7010f45dcb9f5257cab11ff53e97fe3893b4b83f258ebf836fd42",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "2bed56bd1cd725f74192d7ecd1515c5217d078a63bbcc08938852bad62874280",
+                  "affine": "e04f44b3502bf6cb6d029091a0d4e51c072eacb3c97946e64fc76cd23f402437",
+                  "aux": "5b37721cad23086d4c45f44a6e68938befd42c7da39b4f8f86d98508fe284022",
+                  "flag": "ba755925a4d1c65140a24f5070160820b0b2d1d42ca876c9999f74787d6b0678",
+                  "cells": "9e83feb2fbf02d31ab695302cdd495246f4eb8e9a1a75d918342e1693bcd7ddf",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "b4e21987ff4dccd1593a18fd79e00c10223fe929d3480ece3fd277354ee0a23c",
+                  "pressure": "1a4db086d3129e357c4854c21947f5bc6d0b333358ed007305ef2e6bfa7d3f78",
+                  "gas": "8faf1cb9b69565130db24d50fbb620eb277fca56373a65e067485a1a74e02364",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "430f76b6d192470358734143e1c5d83581099bf7962f11b0189a51f0a8b065d0",
+                  "affine": "1f704d6e5631e0fa7f42389d2051e87b6d0f658774076069f1ac67500d0066d3",
+                  "aux": "01c17d7bba24c5a1c93ad9b4c4048f8c0d8216241adbaf050b7260039daf5f7c",
+                  "flag": "ba755925a4d1c65140a24f5070160820b0b2d1d42ca876c9999f74787d6b0678",
+                  "cells": "491237844893b05b00f8e8dbb03e070278518036980f62f8cb74cde02365bec0",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "be3f10c36d87a0466182fa09134a7973ccf919820407be05ea2d4f99aa9ef717",
+                  "pressure": "18c4eaefec284a37d267031f48e3ffea2d161e6d2eb7837b3485f6ef558b3109",
+                  "gas": "3008581b9988607d171dabbd412046f7a356b66e79146b3d18e558a14945f86e",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "cup",
+        "seed": 42,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "b7a96b2a8661ad175da349396809adb73ad55310dbf35c89b876bc007ef16cd2",
+                  "affine": "6cf3f11d5358b2baa797d6d31addf49d583512aadc4391b744528cd874a043af",
+                  "aux": "6a74fc767c495ad1b66cfdbc4acf3dc5eff04e14448e1e7645ccab3182a802eb",
+                  "flag": "4155d7ecd12db30e94f78b96bfc22d21a80563d29cf61e214a358e3f297ab559",
+                  "cells": "0870c5734641f3c375d8aa6f8778ed46a2b7253a77ee4429e5ef1a5f74b8a2d3",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "d99c0f61b289d7b129c44e0aa44e1a52bb51541ce3d2f26c3fe83af500355659",
+                  "pressure": "d14228ef5fe483027ac71339056165510d32ae6f8d8c43cc6b46fc2e8c419ef5",
+                  "gas": "9cf7cf9d418ae5be00eeae145e1a7e1f5e54b0b0ffbdfbe4486682eedc996b74",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "82e30d6a7eeaae7ff719c51928320ffa9408eb7073cf17b87a8a491e0359801c",
+                  "affine": "beda43d51137013bab0d118e4cdbb5849a93350b8c35e6f6078adf9ae1a60ec6",
+                  "aux": "8c257a925deb6049608fb60a68519fae8bafe88f4d169363c0d2a22a4a47541b",
+                  "flag": "4155d7ecd12db30e94f78b96bfc22d21a80563d29cf61e214a358e3f297ab559",
+                  "cells": "08644409a44e2dd3e5c3f8a9a93022af6247d04ff87649e6eee4161e66d336ad",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "8ddf77175f050227e001aecbc53412508ae25543c1d629f87078fde545c5313e",
+                  "pressure": "ebf999a2bde49dad58c46bb1bfe330ede795be45be352ed835b4e01999c9371e",
+                  "gas": "e8df94166110a5bb3543197ef7c882deda77a9dca066d7fade344952ad060e9d",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "86b87e8d16a0b7010ae6ace5784b2a6ec85ab61f793938c3ff77c40a2d38a25b",
+                  "affine": "564b0ffef4261bc35226a8481f5ddb9c8c8a44ceb57af8d6d91544cf81ce84df",
+                  "aux": "ecb9354762f66102afd6878d35fddad6e94d3d18c62d1d2f7c0872c12ecd3c0e",
+                  "flag": "4155d7ecd12db30e94f78b96bfc22d21a80563d29cf61e214a358e3f297ab559",
+                  "cells": "43ed6737379a4914ddaf1d987a2afa3c57f0eb7a61ec3cc13bfd6b70ceaebe60",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "be7ec767d1959a6492e223b34c267c757e7165becb66fdc1347accec216a5ec2",
+                  "pressure": "499a4c67586647bb8cb653f80ff976cef57821199da48d16d010de1b3a488a56",
+                  "gas": "481ae74556aa25f8880e8a3fc9505a39c038b74d09d446923309b2f4a8f0c8e8",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "b7a96b2a8661ad175da349396809adb73ad55310dbf35c89b876bc007ef16cd2",
+                  "affine": "6cf3f11d5358b2baa797d6d31addf49d583512aadc4391b744528cd874a043af",
+                  "aux": "6a74fc767c495ad1b66cfdbc4acf3dc5eff04e14448e1e7645ccab3182a802eb",
+                  "flag": "4155d7ecd12db30e94f78b96bfc22d21a80563d29cf61e214a358e3f297ab559",
+                  "cells": "0870c5734641f3c375d8aa6f8778ed46a2b7253a77ee4429e5ef1a5f74b8a2d3",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "d99c0f61b289d7b129c44e0aa44e1a52bb51541ce3d2f26c3fe83af500355659",
+                  "pressure": "d14228ef5fe483027ac71339056165510d32ae6f8d8c43cc6b46fc2e8c419ef5",
+                  "gas": "9cf7cf9d418ae5be00eeae145e1a7e1f5e54b0b0ffbdfbe4486682eedc996b74",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "82e30d6a7eeaae7ff719c51928320ffa9408eb7073cf17b87a8a491e0359801c",
+                  "affine": "beda43d51137013bab0d118e4cdbb5849a93350b8c35e6f6078adf9ae1a60ec6",
+                  "aux": "8c257a925deb6049608fb60a68519fae8bafe88f4d169363c0d2a22a4a47541b",
+                  "flag": "4155d7ecd12db30e94f78b96bfc22d21a80563d29cf61e214a358e3f297ab559",
+                  "cells": "08644409a44e2dd3e5c3f8a9a93022af6247d04ff87649e6eee4161e66d336ad",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "8ddf77175f050227e001aecbc53412508ae25543c1d629f87078fde545c5313e",
+                  "pressure": "ebf999a2bde49dad58c46bb1bfe330ede795be45be352ed835b4e01999c9371e",
+                  "gas": "e8df94166110a5bb3543197ef7c882deda77a9dca066d7fade344952ad060e9d",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "86b87e8d16a0b7010ae6ace5784b2a6ec85ab61f793938c3ff77c40a2d38a25b",
+                  "affine": "564b0ffef4261bc35226a8481f5ddb9c8c8a44ceb57af8d6d91544cf81ce84df",
+                  "aux": "ecb9354762f66102afd6878d35fddad6e94d3d18c62d1d2f7c0872c12ecd3c0e",
+                  "flag": "4155d7ecd12db30e94f78b96bfc22d21a80563d29cf61e214a358e3f297ab559",
+                  "cells": "43ed6737379a4914ddaf1d987a2afa3c57f0eb7a61ec3cc13bfd6b70ceaebe60",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "be7ec767d1959a6492e223b34c267c757e7165becb66fdc1347accec216a5ec2",
+                  "pressure": "499a4c67586647bb8cb653f80ff976cef57821199da48d16d010de1b3a488a56",
+                  "gas": "481ae74556aa25f8880e8a3fc9505a39c038b74d09d446923309b2f4a8f0c8e8",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "scene": "cup",
+        "seed": 913,
+        "captures": [
+          {
+            "updated": false,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "2ffccbd0a8099c63b966b71470197ef0c515228fc8898b02e94b1f27828a38eb",
+                  "affine": "da8acfcd4dd1b7bbab9e97620b46b03718e5ce808a1c8ebd13f3f716512e6e49",
+                  "aux": "0184d6b6b224672eaf6e56dd724c21440080a5a13feacab4e388228343432307",
+                  "flag": "31d9db87c587be9d038c49253500313c4216a3a2cc728039e810fa4cd9e22b26",
+                  "cells": "a07ac63d377cc0acd589b52611979ecb62f0d38c66912e88d53e552286076fbd",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "58735ef74d32f786b374fecc00e856a3f9183d8cfc5a9d15576633e2b0958c9a",
+                  "pressure": "70e6368b20e734abff9a274763c8afb365bbc5118f9b888999091a99c5352ceb",
+                  "gas": "ff85b3a312f115d60c5a112558af75193eec7bba42cc4e930b169f7593f1c588",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "b2c909056d0c0863fb126d4e71a718ca80a7d90411a6de40f0fc021ef6daf724",
+                  "affine": "0245e61506ca30bdc56cb7edec54d85f046d6beedabe7a9d6a5d39872689215f",
+                  "aux": "e06c3fc16eb2eec5d5cab0120bb822848aa0d1d5b4bf9dd9b157b5182d479f67",
+                  "flag": "31d9db87c587be9d038c49253500313c4216a3a2cc728039e810fa4cd9e22b26",
+                  "cells": "fb19bd2989f051e697f45d0ffbd7c293013ba895aa9774c35bee0d14e479399f",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "f32e071850335947124d1c11759459864659209fe372c745354a5e3ab251ec01",
+                  "pressure": "b55f14929ad6ce3692f86859330fe1787d679e25d11f1c3aab956a25cd4fbdef",
+                  "gas": "73da13e1bf339d6c52ad20676e14abf5b1c845b55761f14b58cfcb9c504b658c",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "c8c270a41293b6e7cf6460462f908eaa48509c05de8501a4b4e26f0465326a86",
+                  "affine": "adf7ce25f3929263ce9f18e3651a0344c3b3f440c1f9136aba99ec9abbb43795",
+                  "aux": "a2d3652b02170ced33bbc43faef2f962263563a0b588ccf583f9af24a15b330e",
+                  "flag": "31d9db87c587be9d038c49253500313c4216a3a2cc728039e810fa4cd9e22b26",
+                  "cells": "c41e35f91de0babdbebab772e0027c9eaeffb5ac491d4eb1b3770cc9233394f1",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "7c820dd2e87364fa400eed5ca96fbbac54e2ae2fe12814a30ab2d39d3c1e774a",
+                  "pressure": "f4dabb6c6df9dc1e6847b0d3291ee93d761932fdef0fd04bf36aa4507c25057e",
+                  "gas": "c912df6f95120c2af038808a65fb0b926012b99f3a4e617cf8df970b658d9a83",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              }
+            ]
+          },
+          {
+            "updated": true,
+            "steps": [
+              {
+                "frame": 1,
+                "hashes": {
+                  "pos": "2ffccbd0a8099c63b966b71470197ef0c515228fc8898b02e94b1f27828a38eb",
+                  "affine": "da8acfcd4dd1b7bbab9e97620b46b03718e5ce808a1c8ebd13f3f716512e6e49",
+                  "aux": "0184d6b6b224672eaf6e56dd724c21440080a5a13feacab4e388228343432307",
+                  "flag": "31d9db87c587be9d038c49253500313c4216a3a2cc728039e810fa4cd9e22b26",
+                  "cells": "a07ac63d377cc0acd589b52611979ecb62f0d38c66912e88d53e552286076fbd",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "58735ef74d32f786b374fecc00e856a3f9183d8cfc5a9d15576633e2b0958c9a",
+                  "pressure": "70e6368b20e734abff9a274763c8afb365bbc5118f9b888999091a99c5352ceb",
+                  "gas": "ff85b3a312f115d60c5a112558af75193eec7bba42cc4e930b169f7593f1c588",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 5,
+                "hashes": {
+                  "pos": "b2c909056d0c0863fb126d4e71a718ca80a7d90411a6de40f0fc021ef6daf724",
+                  "affine": "0245e61506ca30bdc56cb7edec54d85f046d6beedabe7a9d6a5d39872689215f",
+                  "aux": "e06c3fc16eb2eec5d5cab0120bb822848aa0d1d5b4bf9dd9b157b5182d479f67",
+                  "flag": "31d9db87c587be9d038c49253500313c4216a3a2cc728039e810fa4cd9e22b26",
+                  "cells": "fb19bd2989f051e697f45d0ffbd7c293013ba895aa9774c35bee0d14e479399f",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "f32e071850335947124d1c11759459864659209fe372c745354a5e3ab251ec01",
+                  "pressure": "b55f14929ad6ce3692f86859330fe1787d679e25d11f1c3aab956a25cd4fbdef",
+                  "gas": "73da13e1bf339d6c52ad20676e14abf5b1c845b55761f14b58cfcb9c504b658c",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              },
+              {
+                "frame": 20,
+                "hashes": {
+                  "pos": "c8c270a41293b6e7cf6460462f908eaa48509c05de8501a4b4e26f0465326a86",
+                  "affine": "adf7ce25f3929263ce9f18e3651a0344c3b3f440c1f9136aba99ec9abbb43795",
+                  "aux": "a2d3652b02170ced33bbc43faef2f962263563a0b588ccf583f9af24a15b330e",
+                  "flag": "31d9db87c587be9d038c49253500313c4216a3a2cc728039e810fa4cd9e22b26",
+                  "cells": "c41e35f91de0babdbebab772e0027c9eaeffb5ac491d4eb1b3770cc9233394f1",
+                  "labels": "cce09407467221565986bc8c729bca04d9affc457431dc1a5c83d57f62f7d730",
+                  "history": "7c820dd2e87364fa400eed5ca96fbbac54e2ae2fe12814a30ab2d39d3c1e774a",
+                  "pressure": "f4dabb6c6df9dc1e6847b0d3291ee93d761932fdef0fd04bf36aa4507c25057e",
+                  "gas": "c912df6f95120c2af038808a65fb0b926012b99f3a4e617cf8df970b658d9a83",
+                  "phase": "a073221bf91d7082133ca923d63b403d1fdf7395997ae5f0b80d89b7d47092fa"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "referenceAirSHA256": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003"
+  },
+  "sourceSHA256": {
+    "js/water-smoke-slime.js": "c8f5dc1b13e8571750542fe7764ddc2c120bdc573f4b5c9da6ae819d7478532b",
+    "js/water-smoke-slime-ui.js": "794ca8168b6cb8290ebe34855a05dccb26987ae6a6195b9a8525db55c56d11c1",
+    "js/water-machines-pressure-view.js": "90e3d911f3ebabb6a8229abc113018ba89c997bde32c0a4fbc9281bb51664d59",
+    "js/liquid-air-wgpu.js": "a9822b447ff09a9acfd4373f762e5f3586efbcc4c02bbcb46b5e070f55224ebb",
+    "js/liquid-air-model.js": "e0a06a9d1dd1e8023de01d4801a1d6ed27eef2da77aaeff23dc7236f2b10eece",
+    "water-smoke-slime.css": "8a788322d614cf087b455bf32b1390ef4514a3cfdb9cfb7c5a257887bcae0e58"
+  },
+  "limits": [
+    "Air pressures remain diagnostic, including pocket geometry and pressure-convergence errors.",
+    "The cup still dips below 60 FPS. Phone performance is unverified.",
+    "The nonlinear gas and vapor-closure options remain off in the released scenes pending further integrated testing."
+  ]
+}

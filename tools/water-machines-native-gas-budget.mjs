@@ -19,6 +19,13 @@ fn observe(){
   sums[7]=max(sums[7],u32(error));sums[8]=max(sums[8],gas[${offset+13}u]);
   sums[9]=max(sums[9],gas[${offset+14}u]);sums[10]=max(sums[10],gas[${offset+15}u]);
   sums[14]=amount;
+  if(gas[${offset+15}u]>0u && sums[15]==0u){
+    for(var c=0u;c<${model.width*model.height}u;c=c+1u){let at=c*16u;
+      if(gas[at]>0u && bitcast<i32>(gas[at+8u])+bitcast<i32>(gas[at+15u])<=0){
+        sums[15]=1u;sums[16]=c;sums[17]=gas[at+2u];sums[18]=gas[at+8u];sums[19]=gas[at+15u];sums[20]=gas[at+9u];sums[21]=gas[at];sums[22]=sums[0];break;
+      }
+    }
+  }
 }`});
   const info=await shader.getCompilationInfo(),errors=info.messages.filter(m=>m.type==='error');
   if(errors.length)throw Error(errors.map(m=>m.message).join('\n'));
@@ -38,7 +45,7 @@ fn observe(){
         return {definition:'Read-only accumulation of the native gas ledger after every pressure encode, including native substeps. Amount units are gas volume at room pressure. Captured, vented and unassigned amounts use exact unsigned 64-bit fixed-point sums. This accounts for model gas and does not validate the modeled water/air boundary.',
           pressureSteps:words[0],volumeScale:scale,initialAmount:initial,finalAmount:final,capturedAmount:captured,ventedAmount:vented,unassignedAmount:unassigned,
           closureError:initial+captured-vented-unassigned-final,maximumStepBalanceError:words[7]/scale,
-          maximumConnectivityErrors:words[8],maximumOverflowErrors:words[9],maximumNonpositiveVolumes:words[10],rawWords:words};
+          maximumConnectivityErrors:words[8],maximumOverflowErrors:words[9],maximumNonpositiveVolumes:words[10],firstNonpositive:words[15]?{root:words[16],amount:words[17]/scale,integrated:words[18]/scale,delta:new Int32Array(new Uint32Array([words[19]]).buffer)[0]/scale,vapor:words[20],geometry:words[21]/scale,step:words[22]}:null,rawWords:words};
       }finally{read.unmap();read.destroy();}},
     async close(){if(model.encode===wrapped)model.encode=original;await queue.onSubmittedWorkDone();budget.destroy();}
   };

@@ -228,6 +228,8 @@ body.toy-expanded { overflow: hidden; }
 .toy-machine-summary p { margin: 0; color: var(--text-dim); font: 12px/1.45 var(--font-body); }
 .toy-shell .toy-primary { min-width: 120px; min-height: 44px; padding: 9px 14px; background: var(--d-bg); color: var(--accent-hover); border: 1px solid var(--accent); }
 .toy-machine-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; font: 11px/1.5 var(--font-mono); }
+.toy-shell #toy-air-pressure-compact { min-height: 44px; padding: 8px 12px; border-color: var(--rule); }
+.toy-shell #toy-air-pressure-compact[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--bg-raised); }
 .toy-shell #toy-machine-view { min-height: 44px; padding: 8px 12px; border-color: var(--rule); margin-left: auto; }
 .toy-machine-diagnostics { margin: 0; color: var(--text-dim); font: 11px/1.45 var(--font-body); }
 .toy-machine-metrics b { color: var(--text); font-weight: 400; }

@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.41'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.42'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -13108,7 +13108,9 @@
   var startupMachine=null,sharedBuildApplied=false,toyBootReady=false;
   var machineWaterLook=null;
   var buildKind='pipe',buildOptions={bore:24,direction:'up',material:'glass',open:true};
-  var buildGesture=null,buildError=sharedBuildError,glassWalls=true,pressureColors=false;
+  var buildGesture=null,buildError=sharedBuildError,glassWalls=true,pressureColors=false,airPressureColors=true;
+  var pressureViewCanvas=null,pressureViewCache=null;
+  var machineOverlayCache=null;
   var instrumentSample=null,instrumentPending=false,instrumentNextAt=0;
   var manualValves=new Set();
 
@@ -13236,7 +13238,9 @@
       instrumentSample=snapshot;
       if(state && state===machineState && state.ready)measureMachine(state,snapshot);
       updatePressureValves(snapshot);
-    }).catch(function(error){buildError=error.message;}).finally(function(){instrumentPending=false;});
+      if(!rafId)drawMachineOverlay();
+    }).catch(function(error){if(model===airModel)buildError=error.message;})
+      .finally(function(){if(model===airModel)instrumentPending=false;});
   }
   function particleInstrumentSample(){
     return {count:liquidCount,x:liquidX,y:liquidY,vx:liquidVX,vy:liquidVY,
@@ -13363,7 +13367,7 @@
     var request=++machineRequest;
     try{
     clearWorldAll();setGravityUI(1);
-    machineBuilder=null;valveSeats=null;manualValves.clear();instrumentSample=null;
+    machineBuilder=null;valveSeats=null;manualValves.clear();instrumentSample=null;instrumentPending=false;instrumentNextAt=0;
     var definition=window.WaterMachinesScenes.make(name,{w:worldW,h:worldH,tile:TILE},options);
     currentScene=name;fitStage();
     ensureBuilder();
@@ -13434,6 +13438,7 @@
     if(request!==machineRequest)return null;
     if(liquidWGPU.materialStateError)throw new Error(liquidWGPU.materialStateError);
     state.ready=true;state.startedAt=liquidWGPU.simulationClock;state.wallClockStartedAt=performance.now();
+    instrumentTick(performance.now());
     return state;
     }catch(error){
       if(request===machineRequest){
@@ -13726,8 +13731,9 @@
 
   function drawMachineOverlay(){
     var parts=machineBuilder ? machineBuilder.getParts() : [];
-    if(!machineState && !buildGesture && !pressureColors && !parts.length && !keyboardCursorVisible){
+    if(!machineState && !buildGesture && !pressureColors && !(airPressureColors && airModel && airModel.enabled) && !parts.length && !keyboardCursorVisible){
       if(instrumentsCtx && instrumentsDirty){instrumentsCtx.clearRect(0,0,worldW,worldH);instrumentsDirty=false;}
+      machineOverlayCache=null;
       return;
     }
     if(!instrumentsCanvas){
@@ -13736,21 +13742,51 @@
       instrumentsCanvas.setAttribute('aria-hidden','true');stage.appendChild(instrumentsCanvas);
       instrumentsCtx=instrumentsCanvas.getContext('2d');
     }
+    var overlayKey=[wallsVersion,pressureColors,airPressureColors,fitScale,viewPanX,viewPanY,cameraWidth,cameraHeight,currentScene,highlightedValve].join(':');
+    if(!buildGesture && !keyboardCursorVisible && machineOverlayCache && machineOverlayCache.key===overlayKey && machineOverlayCache.sample===instrumentSample)return;
+    machineOverlayCache=!buildGesture && !keyboardCursorVisible ? {key:overlayKey,sample:instrumentSample} : null;
     var c=instrumentsCtx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,worldW,worldH);instrumentsDirty=true;
     var palette=getComputedStyle(document.documentElement);
     var accent=palette.getPropertyValue('--accent').trim(),text=palette.getPropertyValue('--text').trim();
-    if(pressureColors && instrumentSample && window.WaterMachinesInstruments){
-      var snapshot=instrumentSample,dx=snapshot.cellSize,I=window.WaterMachinesInstruments;
-      var kinds=new Uint32Array(snapshot.cells.buffer,snapshot.cells.byteOffset,snapshot.cells.length);
-      var negative=palette.getPropertyValue('--emphasis').trim();
-      var positive=accent;
-      for(var i=0;i<snapshot.width*snapshot.height;i++){
-        var p=snapshot.pressure[i*4];
-        if(kinds[i*8+3]!==1)continue;
-        c.globalAlpha=Math.min(.58,.08+Math.abs(p)/80000*.5);
-        c.fillStyle=p<0 ? negative : positive;c.fillRect(i%snapshot.width*dx,Math.floor(i/snapshot.width)*dx,dx,dx);
+    if(instrumentSample && airModel && airModel.enabled && window.WaterMachinesInstruments && (pressureColors || airPressureColors)){
+      // Paint only on a new readback or view change. Playback composites one
+      // cached image, instead of walking the pressure grid every frame.
+      var key=[pressureColors,airPressureColors,dpr,fitScale,worldW,worldH,accent,text].join(':');
+      if(!pressureViewCache || pressureViewCache.snapshot!==instrumentSample || pressureViewCache.key!==key){
+        if(!pressureViewCanvas)pressureViewCanvas=document.createElement('canvas');
+        var pressureDpr=dpr*Math.min(1,fitScale),pw=Math.round(worldW*pressureDpr),ph=Math.round(worldH*pressureDpr);
+        if(pressureViewCanvas.width!==pw || pressureViewCanvas.height!==ph){pressureViewCanvas.width=pw;pressureViewCanvas.height=ph;}
+        var pc=pressureViewCanvas.getContext('2d');pc.setTransform(pw/worldW,0,0,ph/worldH,0,0);pc.clearRect(0,0,worldW,worldH);
+        var snapshot=instrumentSample,dx=snapshot.cellSize,I=window.WaterMachinesInstruments;
+        var kinds=new Uint32Array(snapshot.cells.buffer,snapshot.cells.byteOffset,snapshot.cells.length);
+        var negative=palette.getPropertyValue('--emphasis').trim(),units=I.scale({width:worldW,density:airModel.settings.density});
+        if(pressureColors)for(var i=0;i<snapshot.width*snapshot.height;i++){
+          var p=snapshot.pressure[i*4];if(kinds[i*8+3]!==1 || !Number.isFinite(p))continue;
+          pc.globalAlpha=Math.min(.58,.08+Math.abs(p)/80000*.5);
+          pc.fillStyle=p<0 ? negative : accent;pc.fillRect(i%snapshot.width*dx,Math.floor(i/snapshot.width)*dx,dx,dx);
+        }
+        var airView=null;
+        if(airPressureColors && window.WaterMachinesPressureView){
+          var V=window.WaterMachinesPressureView;
+          airView=V.analyze(snapshot,{vessels:machineState ? machineState.definition.vessels : [],labelWidth:100/fitScale,labelHeight:24/fitScale});
+          airView.runs.forEach(function(run){
+            var pocket=airView.pockets.get(run.root),psi=units.psi(pocket.pressure);
+            pc.globalAlpha=.025+.115*Math.min(1,Math.abs(psi)/.35);
+            pc.fillStyle=psi<0 ? negative : accent;pc.fillRect(run.x,run.y,run.width,run.height);
+          });
+          pc.globalAlpha=1;pc.textAlign='center';pc.textBaseline='middle';pc.font=(11/fitScale)+'px "Commit Mono", monospace';
+          airView.labels.forEach(function(label){
+            var pocket=airView.pockets.get(label.root),psi=units.psi(pocket.pressure);
+            label.text=V.pressureText(psi,pocket.vapor);
+            var width=pc.measureText(label.text).width+14/fitScale,height=22/fitScale;
+            pc.globalAlpha=.9;pc.fillStyle=palette.getPropertyValue('--bg-raised').trim();
+            pc.fillRect(label.x-width*.5,label.y-height*.5,width,height);
+            pc.globalAlpha=1;pc.fillStyle=text;pc.fillText(label.text,label.x,label.y);
+          });
+        }
+        pc.globalAlpha=1;pressureViewCache={snapshot:snapshot,key:key,air:airView};
       }
-      c.globalAlpha=1;
+      c.drawImage(pressureViewCanvas,0,0,worldW,worldH);
     }
     c.lineWidth=1;c.strokeStyle=accent;c.fillStyle=text;c.font='14px "Commit Mono", monospace';
     if(machineState){
@@ -14162,7 +14198,9 @@
           numericalStatus:window.WaterMachinesInstruments.numericalStatus(instrumentSample),
           scaleText:'The box is 30 inches wide and 1 inch deep. The clock uses the normal-gravity scale.'};
       },
-      pressureView:function(value){pressureColors=!!value;return pressureColors;},
+      pressureView:function(value){pressureColors=!!value;if(!rafId)drawMachineOverlay();return pressureColors;},
+      airPressureView:function(value){if(value!==undefined){airPressureColors=!!value;if(!rafId)drawMachineOverlay();}return airPressureColors;},
+      pressureViewState:function(){return {air:airPressureColors,water:pressureColors,labels:pressureViewCache && pressureViewCache.air ? pressureViewCache.air.labels : []};},
       glass:function(value){glassWalls=!!value;wallsBakedVersion=-1;return glassWalls;},
       bodies: function () { return jelloBodies; },
       fling: function (i, vx, vy, omega) {
