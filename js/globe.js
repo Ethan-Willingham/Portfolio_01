@@ -79,7 +79,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v53');
+  text(byId('globe-version'),'v54');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -242,8 +242,8 @@
   });
   var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
   replayMemo=timeline.memoryCache((mobile?160:352)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-53',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-53',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-54',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-54',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -666,8 +666,8 @@
   }
   async function refreshPhoto() {
     if(tilt!==undefined)return;
-    var key=String(Math.floor(instant.getTime()/(hourlyClouds()?cloudCatalog.step:3600000))),offline=navigator.onLine===false;
-    if(requestedDay===key&&(fetchingPhoto||Date.now()-photoChecked<60000))return;
+    var checkedAt=Date.now(),minute=Math.floor(checkedAt/60000),key=String(Math.floor(instant.getTime()/(hourlyClouds()?cloudCatalog.step:3600000))),offline=navigator.onLine===false;
+    if(requestedDay===key&&(fetchingPhoto||minute===Math.floor(photoChecked/60000)))return;
     if(cloudController)cloudController.abort();
     if(detailController){detailController.abort();detailController=null;}
     cloudController=new AbortController();var signal=cloudController.signal,generation=++photoGeneration;
@@ -675,8 +675,8 @@
     try {
       if(instant-Date.now()>5*60000){photo=null;return;}
       if(!sharedManifest)try{sharedManifest=shared.validate(JSON.parse(localStorage.getItem('globe-shared-clouds')));}catch(_){}
-      if(!offline&&Date.now()-sharedChecked>60000){
-        try{var candidate=await shared.fetchManifest({timeout:6000,signal:signal});if(candidate.version===3&&candidate.processing>=clouds.PROCESSING&&(!sharedManifest||candidate.processing>sharedManifest.processing||candidate.frames[candidate.frames.length-1].time>=sharedManifest.frames[sharedManifest.frames.length-1].time))sharedManifest=candidate;try{localStorage.setItem('globe-shared-clouds',JSON.stringify(sharedManifest));}catch(_){} }catch(error){if(error.name==='AbortError')return;}sharedChecked=Date.now();
+      if(!offline&&minute>Math.floor(sharedChecked/60000)){
+        try{var candidate=await shared.fetchManifest({timeout:6000,signal:signal});if(candidate.version===3&&candidate.processing>=clouds.PROCESSING&&(!sharedManifest||candidate.processing>sharedManifest.processing||candidate.frames[candidate.frames.length-1].time>=sharedManifest.frames[sharedManifest.frames.length-1].time))sharedManifest=candidate;try{localStorage.setItem('globe-shared-clouds',JSON.stringify(sharedManifest));}catch(_){} }catch(error){if(error.name==='AbortError')return;}sharedChecked=checkedAt;
       }
       if(!sharedManifest||sharedManifest.version!==3||sharedManifest.processing<clouds.PROCESSING)throw new Error('Measured cloud archive unavailable');
       cloudCatalog=sharedManifest.catalog;
@@ -709,11 +709,12 @@
     }finally{
       clearTimeout(deadline);
       if(generation===photoGeneration){
-        // Holding the last frame avoids a blank layer while decoding. Once a
-        // request settles, failed selections must still become a real gap.
+        // A failed replacement must not erase the last measured frame. Keep
+        // its real observation times visible and retry on the next minute.
         var selected=cloudStamp();
-        if(photo&&photo.time&&(!selected||photo.time!==selected.toISOString()))photo=null;
-        fetchingPhoto=false;replayPendingCloud=false;photoChecked=Date.now();updateAstronomy();updateLabels();announce();
+        if(!selected)photo=null;
+        replayPendingCloud=!!(selected&&(!photo||photo.time!==selected.toISOString()));
+        fetchingPhoto=false;photoChecked=checkedAt;updateAstronomy();updateLabels();announce();
       }
     }
   }
