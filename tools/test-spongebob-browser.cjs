@@ -73,6 +73,23 @@ async function noOverflow(page) {
     assert.equal(await page.locator('.sb-character').count(), ids.length);
     assert.equal(await page.locator('.sb-source-link').count(), ids.length, 'each image has a source');
     assert.equal(await page.locator('#sb-selected-count').textContent(), '10');
+    const photo = catalog.characters.find(character => character.fallbackImage);
+    assert.ok(photo, 'photographic portraits include a fallback');
+    await page.locator('#sb-search').fill(photo.name);
+    const photoCard = page.locator('.sb-character[data-id="' + photo.id + '"]');
+    await photoCard.scrollIntoViewIfNeeded();
+    await page.waitForFunction(id => {
+      const img = document.querySelector('.sb-character[data-id="' + id + '"] img');
+      return img.complete && img.naturalWidth > 0 && img.currentSrc.endsWith('.webp');
+    }, photo.id);
+    assert.equal(await photoCard.locator('source').getAttribute('srcset'), photo.image);
+    assert.equal(await photoCard.locator('img').getAttribute('src'), photo.fallbackImage);
+    await photoCard.locator('source').evaluate(element => element.remove());
+    await page.waitForFunction(id => {
+      const img = document.querySelector('.sb-character[data-id="' + id + '"] img');
+      return img.complete && img.naturalWidth > 0 && img.currentSrc.endsWith('.png');
+    }, photo.id);
+    await page.locator('#sb-search').fill('');
     const bob = page.locator('.sb-character[data-id="spongebob-squarepants"] input');
     await bob.focus();
     assert.equal(await bob.evaluate(input => getComputedStyle(input.closest('article')).outlineWidth), '2px', 'keyboard focus is visible');

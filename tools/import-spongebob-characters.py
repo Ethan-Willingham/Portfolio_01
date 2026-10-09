@@ -229,6 +229,10 @@ def download(page, force=False):
         im.verify()
     with Image.open(output) as im:
         item.update(width=im.width, height=im.height)
+        fallback = output.with_suffix(".png")
+        if fallback.exists():
+            im.save(fallback, "PNG", optimize=True)
+            item["fallbackImage"] = fallback.relative_to(ROOT).as_posix()
     return item
 
 

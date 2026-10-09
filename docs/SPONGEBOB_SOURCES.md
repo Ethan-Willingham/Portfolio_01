@@ -35,8 +35,14 @@ Use a fresh `--cache-dir` to discover newly added wiki pages; use `--force` to
 replace existing local images with current source copies.
 
 All 1,021 delivered WebP files were decoded successfully. The main cast and a
-64-image sample across the catalog were visually inspected. The complete image
-directory is about 33 MiB.
+64-image sample across the catalog were visually inspected. The WebP images
+total about 33 MiB.
+
+The 53 clearly photographic portraits also have lossless PNG fallback siblings.
+These include live-action performers, animal photographs and photographed props.
+Each record names its fallback with `fallbackImage`; both formats retain the
+same image content. The PNG fallbacks total about 14 MiB. Illustrated and
+animated portraits keep their WebP files.
 
 ## Data shape
 
@@ -47,6 +53,7 @@ The manifest contains `version`, `generatedAt`, `sourceName`, `sourceUrl`,
 - `name`: display name.
 - `group`: Main cast, Recurring, Villains, Movies, Spinoffs, Family, or Minor characters.
 - `image`: site-relative path to the local WebP.
+- `fallbackImage`, when present: matching PNG for a photographic image.
 - `width` and `height`: actual dimensions of the delivered image.
 - `sourcePage`: wiki character article.
 - `sourceImage`: original source image URL.

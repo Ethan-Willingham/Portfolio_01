@@ -192,7 +192,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/French_Narrator",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/34/You%27re_Going_to_Pay...Phone_142.png/revision/latest?cb=20230414092240",
       "width": 640,
-      "height": 360
+      "height": 360,
+      "fallbackImage": "assets/spongebob/characters/french-narrator.png"
     },
     {
       "id": "grandma-squarepants",
@@ -342,7 +343,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Nosferatu",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/6b/Noseferatu.jpg/revision/latest?cb=20220806062034",
       "width": 280,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/nosferatu.png"
     },
     {
       "id": "old-man-jenkins",
@@ -382,7 +384,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Painty_the_Pirate",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c5/SpongeBob_Intro_2016_%281%29.png/revision/latest?cb=20160713155754",
       "width": 640,
-      "height": 360
+      "height": 360,
+      "fallbackImage": "assets/spongebob/characters/painty-the-pirate.png"
     },
     {
       "id": "patchy-the-pirate",
@@ -392,7 +395,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Patchy_the_Pirate",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2a/SpongeBob-Patchy-the-Pirate-promo-pose.jpg/revision/latest?cb=20220321155202",
       "width": 416,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/patchy-the-pirate.png"
     },
     {
       "id": "perch-perkins",
@@ -432,7 +436,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Realistic_Fish_Head",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c2/Realistic_Fish_Head.png/revision/latest?cb=20241001062749",
       "width": 640,
-      "height": 368
+      "height": 368,
+      "fallbackImage": "assets/spongebob/characters/realistic-fish-head.png"
     },
     {
       "id": "reg",
@@ -552,7 +557,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Burger_Beard",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/84/Burger_Beard_the_Pirate.png/revision/latest?cb=20251026114615",
       "width": 450,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/burger-beard.png"
     },
     {
       "id": "cyclops",
@@ -562,7 +568,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Cyclops",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/02/The_Cyclops.png/revision/latest?cb=20230329213541",
       "width": 484,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/cyclops.png"
     },
     {
       "id": "dennis",
@@ -872,7 +879,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Alexander_Clam_Bell",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0e/The_SpongeBob_SquarePants_Movie_585.png/revision/latest?cb=20190223044107",
       "width": 640,
-      "height": 360
+      "height": 360,
+      "fallbackImage": "assets/spongebob/characters/alexander-clam-bell.png"
     },
     {
       "id": "barb",
@@ -902,7 +910,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Captain_Bart_the_Pirate",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/39/Captain_Bart.jpg/revision/latest?cb=20200521004845",
       "width": 346,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/captain-bart-the-pirate.png"
     },
     {
       "id": "captain-booty-beard",
@@ -922,7 +931,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Cuda",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/17/CudaXD.png/revision/latest?cb=20240804133709",
       "width": 391,
-      "height": 419
+      "height": 419,
+      "fallbackImage": "assets/spongebob/characters/cuda.png"
     },
     {
       "id": "david-hasselhoff",
@@ -932,7 +942,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/David_Hasselhoff",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ed/14.jpg/revision/latest?cb=20190410165751",
       "width": 427,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/david-hasselhoff.png"
     },
     {
       "id": "el-diablo",
@@ -942,7 +953,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/El_Diablo_%28character%29",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/92/El_Diablo_SOTR.png/revision/latest?cb=20201105181359",
       "width": 640,
-      "height": 539
+      "height": 539,
+      "fallbackImage": "assets/spongebob/characters/el-diablo.png"
     },
     {
       "id": "fishy",
@@ -1002,7 +1014,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Kyle_%28Saving_Bikini_Bottom%3A_The_Sandy_Cheeks_Movie%29",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/ad/Kyle.png/revision/latest?cb=20240806051058",
       "width": 431,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/kyle-saving-bikini-bottom-the-sandy-cheeks-movie.png"
     },
     {
       "id": "lloyd-attendant-2",
@@ -1052,7 +1065,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/P%21nk",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ef/P%21nk.jpg/revision/latest?cb=20151126014152",
       "width": 220,
-      "height": 318
+      "height": 318,
+      "fallbackImage": "assets/spongebob/characters/p-nk.png"
     },
     {
       "id": "phoebe",
@@ -1062,7 +1076,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Phoebe",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/35/Phoebe.png/revision/latest?cb=20240806051519",
       "width": 488,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/phoebe.png"
     },
     {
       "id": "princess-mindy",
@@ -1092,7 +1107,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Sage",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/11/The_SpongeBob_Movie_Sponge_on_the_Run_408.png/revision/latest?cb=20210105113833",
       "width": 640,
-      "height": 346
+      "height": 346,
+      "fallbackImage": "assets/spongebob/characters/sage.png"
     },
     {
       "id": "saul-hudson",
@@ -1102,7 +1118,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Saul_Hudson",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/8f/SlashSmall.png/revision/latest?cb=20141101064025",
       "width": 640,
-      "height": 515
+      "height": 515,
+      "fallbackImage": "assets/spongebob/characters/saul-hudson.png"
     },
     {
       "id": "sparky-saving-bikini-bottom-the-sandy-cheeks-movie",
@@ -1132,7 +1149,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Sue_Nahmee",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2f/Sue_Nahmee.png/revision/latest?cb=20240802093733",
       "width": 590,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/sue-nahmee.png"
     },
     {
       "id": "the-gambler",
@@ -1142,7 +1160,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/The_Gambler",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ea/The_SpongeBob_Movie_Sponge_on_the_Run_437.png/revision/latest?cb=20210105101423",
       "width": 640,
-      "height": 346
+      "height": 346,
+      "fallbackImage": "assets/spongebob/characters/the-gambler.png"
     },
     {
       "id": "tiffany-haddock",
@@ -1222,7 +1241,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Cousin_Marvin",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/35/Plankton._A_Thank_You_Would_Be_Nice._39.png/revision/latest?cb=20150610020154",
       "width": 640,
-      "height": 360
+      "height": 360,
+      "fallbackImage": "assets/spongebob/characters/cousin-marvin.png"
     },
     {
       "id": "ed-star",
@@ -1782,7 +1802,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Rosie_Cheeks_%28Pest_of_the_West%29",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/cf/Pest_of_the_West_032.png/revision/latest?cb=20220729214105",
       "width": 640,
-      "height": 485
+      "height": 485,
+      "fallbackImage": "assets/spongebob/characters/rosie-cheeks-pest-of-the-west.png"
     },
     {
       "id": "rosie-cheeks-saving-bikini-bottom-the-sandy-cheeks-movie",
@@ -2412,7 +2433,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Beanie_McBean",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/89/Beanie_McBean.png/revision/latest?cb=20190701215347",
       "width": 640,
-      "height": 452
+      "height": 452,
+      "fallbackImage": "assets/spongebob/characters/beanie-mcbean.png"
     },
     {
       "id": "beard",
@@ -2472,7 +2494,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Ben_Gums",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5a/Ben_Gums.png/revision/latest?cb=20260831143639",
       "width": 640,
-      "height": 451
+      "height": 451,
+      "fallbackImage": "assets/spongebob/characters/ben-gums.png"
     },
     {
       "id": "benjamin-b-nana",
@@ -3142,7 +3165,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Carlos_Bustamante",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/de/Carlos_Bustamante.jpg/revision/latest?cb=20220110000903",
       "width": 640,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/carlos-bustamante.png"
     },
     {
       "id": "carlos-eel",
@@ -3192,7 +3216,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Cavey",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/73/Ugh_221.png/revision/latest?cb=20200811172859",
       "width": 640,
-      "height": 487
+      "height": 487,
+      "fallbackImage": "assets/spongebob/characters/cavey.png"
     },
     {
       "id": "chance",
@@ -3332,7 +3357,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Chip_I",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/9f/Annotation_2019-08-10_124831.png/revision/latest?cb=20190810164948",
       "width": 405,
-      "height": 315
+      "height": 315,
+      "fallbackImage": "assets/spongebob/characters/chip-i.png"
     },
     {
       "id": "chomp-bot",
@@ -3742,7 +3768,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Davy_Jones",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/3e/Davy_Jones.png/revision/latest?cb=20141111092231",
       "width": 640,
-      "height": 480
+      "height": 480,
+      "fallbackImage": "assets/spongebob/characters/davy-jones.png"
     },
     {
       "id": "dead-eye-plankton",
@@ -3852,7 +3879,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Don",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/97/Sun_Bleached_084.png/revision/latest?cb=20211108024306",
       "width": 640,
-      "height": 480
+      "height": 480,
+      "fallbackImage": "assets/spongebob/characters/don.png"
     },
     {
       "id": "don-grouper",
@@ -3872,7 +3900,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Don_Snapper",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b7/Fish_Food_Rescue_The_Krusty_Krab_001.png/revision/latest?cb=20150705224650",
       "width": 640,
-      "height": 360
+      "height": 360,
+      "fallbackImage": "assets/spongebob/characters/don-snapper.png"
     },
     {
       "id": "donna",
@@ -4322,7 +4351,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Felicia",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/34/Felicia.jpeg/revision/latest?cb=20180804225712",
       "width": 292,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/felicia.png"
     },
     {
       "id": "felix",
@@ -4492,7 +4522,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Flipper",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/08/PrettyPatty.png/revision/latest?cb=20170225233450",
       "width": 492,
-      "height": 611
+      "height": 611,
+      "fallbackImage": "assets/spongebob/characters/flipper.png"
     },
     {
       "id": "floorboard-harry",
@@ -4652,7 +4683,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/French_Canadian_Narrator",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/37/French_Canadian_Narrator.png/revision/latest?cb=20251011014346",
       "width": 555,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/french-canadian-narrator.png"
     },
     {
       "id": "fully-automated-nutcracker",
@@ -4712,7 +4744,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/George",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f8/I_Had_an_Accident_26.jpg/revision/latest?cb=20191113005705",
       "width": 640,
-      "height": 480
+      "height": 480,
+      "fallbackImage": "assets/spongebob/characters/george.png"
     },
     {
       "id": "geppetto",
@@ -4892,7 +4925,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Gorilla",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/87/GorillaMan_GorillaSuitDay.jpg/revision/latest?cb=20250919223340",
       "width": 625,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/gorilla.png"
     },
     {
       "id": "gramma",
@@ -5122,7 +5156,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Hans",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/aa/SB_Patchy_Hand.png/revision/latest?cb=20240107062543",
       "width": 640,
-      "height": 273
+      "height": 273,
+      "fallbackImage": "assets/spongebob/characters/hans.png"
     },
     {
       "id": "harry-the-health-hazard",
@@ -5422,7 +5457,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Jagger",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/99/The_Krabby_Patty_Chronicles-_Flipper_meets_Jagger_%28017%29.png/revision/latest?cb=20171029171156",
       "width": 640,
-      "height": 363
+      "height": 363,
+      "fallbackImage": "assets/spongebob/characters/jagger.png"
     },
     {
       "id": "janet",
@@ -5572,7 +5608,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/JimBob",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/91/JimBob-at-The-Trusty-Slab-Tom-Kenny-SpongeBobs-Big-Birthday-Blowout-Special-SpongeBob-SquarePants-Nickelodeon-Nick-SBSP-Press_3.jpg/revision/latest?cb=20190717194801",
       "width": 451,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/jimbob.png"
     },
     {
       "id": "jimmy-blobfish",
@@ -6125,7 +6162,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Longbeard",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/56/Longbeard.jpg/revision/latest?cb=20150503123434",
       "width": 313,
-      "height": 437
+      "height": 437,
+      "fallbackImage": "assets/spongebob/characters/longbeard.png"
     },
     {
       "id": "lonnie",
@@ -6575,7 +6613,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Minnie_Mermaid",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4f/Minnie_Mermaid.png/revision/latest?cb=20150102032022",
       "width": 640,
-      "height": 487
+      "height": 487,
+      "fallbackImage": "assets/spongebob/characters/minnie-mermaid.png"
     },
     {
       "id": "miss-marigold",
@@ -6755,7 +6794,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Mr._Charleston",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/ac/Mr_Lawance_as_Charleston_at_The_Trusty_Slab.jpeg/revision/latest?cb=20190522204332",
       "width": 421,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/mr-charleston.png"
     },
     {
       "id": "mr-claws",
@@ -6865,7 +6905,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Mr._Manward",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/33/Rodger_Bumpass_as_Manward_at_The_Trusty_Slab.jpeg/revision/latest?cb=20190522203906",
       "width": 426,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/mr-manward.png"
     },
     {
       "id": "mr-mayor",
@@ -6905,7 +6946,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Mr._Pirateson",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/87/Mr._Pirateson-10.png/revision/latest?cb=20141111100926",
       "width": 640,
-      "height": 488
+      "height": 488,
+      "fallbackImage": "assets/spongebob/characters/mr-pirateson.png"
     },
     {
       "id": "mr-poecilia",
@@ -6945,7 +6987,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Mr._Puff_%28Krusty_Love%29",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/7d/Krusty_Love_030.png/revision/latest?cb=20200706104403",
       "width": 640,
-      "height": 480
+      "height": 480,
+      "fallbackImage": "assets/spongebob/characters/mr-puff-krusty-love.png"
     },
     {
       "id": "mr-ranger",
@@ -6995,7 +7038,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Mr._Slabs",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/aa/Clancy_Brown_as_Mr_Slabs_at_The_Trusty_Slab.jpeg/revision/latest?cb=20190522204124",
       "width": 426,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/mr-slabs.png"
     },
     {
       "id": "mr-steinman",
@@ -7085,7 +7129,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Mrs._Johnson",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/72/The_Sponge_Who_Could_Fly_054.png/revision/latest?cb=20191116013307",
       "width": 640,
-      "height": 486
+      "height": 486,
+      "fallbackImage": "assets/spongebob/characters/mrs-johnson.png"
     },
     {
       "id": "mrs-poecilia",
@@ -7858,7 +7903,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Pearl_Slabs",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/39/Live-action-Pearl-1.png/revision/latest?cb=20190714052046",
       "width": 215,
-      "height": 612
+      "height": 612,
+      "fallbackImage": "assets/spongebob/characters/pearl-slabs.png"
     },
     {
       "id": "pedro",
@@ -8478,7 +8524,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Robin_Williams",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a0/Robin_Williams_Pic.jpg/revision/latest?cb=20200310212456",
       "width": 480,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/robin-williams.png"
     },
     {
       "id": "robot-mantis",
@@ -8778,7 +8825,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Santa_Claus",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a1/Christmas_Who_358.png/revision/latest?cb=20190730121434",
       "width": 640,
-      "height": 480
+      "height": 480,
+      "fallbackImage": "assets/spongebob/characters/santa-claus.png"
     },
     {
       "id": "sardina-sardina",
@@ -9558,7 +9606,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Surface_World_Pizza_chef",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a8/Surface_World_Pizza_chef.png/revision/latest?cb=20231123051826",
       "width": 560,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/surface-world-pizza-chef.png"
     },
     {
       "id": "suzie-groove",
@@ -9732,7 +9781,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/The_Foot",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e0/Captain_Pipsqueak_145.png/revision/latest?cb=20220723211203",
       "width": 640,
-      "height": 360
+      "height": 360,
+      "fallbackImage": "assets/spongebob/characters/the-foot.png"
     },
     {
       "id": "the-great-wumbozi",
@@ -9762,7 +9812,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/The_Guy_on_the_Penny",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/6e/Dat_Boi_on_the_Penny.PNG/revision/latest?cb=20171025231518",
       "width": 640,
-      "height": 359
+      "height": 359,
+      "fallbackImage": "assets/spongebob/characters/the-guy-on-the-penny.png"
     },
     {
       "id": "the-huntsman",
@@ -10052,7 +10103,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Volcano_Sauce_drop",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c2/Karate_Choppers_065.png/revision/latest?cb=20230329033205",
       "width": 640,
-      "height": 481
+      "height": 481,
+      "fallbackImage": "assets/spongebob/characters/volcano-sauce-drop.png"
     },
     {
       "id": "wally",
@@ -10142,7 +10194,8 @@
       "sourcePage": "https://spongebob.fandom.com/wiki/Will_Ferrell",
       "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/25/Will_Ferrell.jpg/revision/latest?cb=20200310214727",
       "width": 480,
-      "height": 640
+      "height": 640,
+      "fallbackImage": "assets/spongebob/characters/will-ferrell.png"
     },
     {
       "id": "willybob",

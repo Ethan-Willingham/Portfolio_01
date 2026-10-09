@@ -28,8 +28,14 @@
   function picture(character, className, eager) {
     const wrapper = document.createElement('picture');
     wrapper.className = className || '';
+    if (character.fallbackImage) {
+      const source = document.createElement('source');
+      source.type = 'image/webp';
+      source.srcset = character.image;
+      wrapper.append(source);
+    }
     const image = document.createElement('img');
-    image.src = character.image;
+    image.src = character.fallbackImage || character.image;
     image.alt = character.name;
     image.width = character.width || 300;
     image.height = character.height || 300;
