@@ -132,13 +132,18 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> The old water drawing turned small density gaps into thin strands. Giving equal water particles the same interior size removes most of those streaks in a frozen comparison. Their positions and velocities stay identical. <a href="/assets/images/water-machines/cup-contact-2026-10-08.json">Test measurements.</a></p>
-        <p>There was also a collision fault: water pinched between a slime and a wall could be pushed to a distant edge of the slime. The latest repair cuts the largest recorded shift by more than half in a longer run. Short shifts still occur beside the shelf, so contact remains unfinished.</p>
+        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> One slime now starts a sustained drain. Across three tests with different starting particle positions, 95.6%, 96.3% and 97.6% of the water above the intake reaches the lower tank within three simulation minutes. All particles are conserved. <a href="/assets/images/water-machines/cup-transfer-result-2026-10-09.json">Measurements and limits.</a></p>
+        <p>The pipe walls exposed a fault in how pressure changes particle motion. Water could still move toward a closed wall, crowd against it and leave gaps in the column. The repaired transfer keeps that motion parallel to the wall. Air pressure also uses the measured size of each cavity, correcting a volume estimate that had drifted away from the actual gap.</p>
         <figure class="u-figure">
-          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-long-result-2026-10-08.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-long-result-2026-10-08.png" width="911" height="540" loading="lazy" alt="The slime rests on the shelf above shallow water in the cup. Most water has reached the lower tank, but a substantial column remains in the rising tube."></picture>
-          <figcaption class="u-figure-cap">After one slime drop and 1,000 simulation seconds. The receiver holds 92.7% of the initially drainable source water; all 66,687 particles are conserved.</figcaption>
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-transfer-flow-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-transfer-flow-2026-10-09.png" width="911" height="540" loading="lazy" alt="A large slime displaces water in the cup. A continuous water column crosses the bend and descends through the stem into the lower tank."></picture>
+          <figcaption class="u-figure-cap">Fifteen simulation seconds after the drop. The same water particles travel through the tube.</figcaption>
         </figure>
-        <p>The straight stem starts without the old outlet bend, but air remains in the rising tube and drainage slows to an occasional discharge. Delivery reaches 92.7%, below the 95% target. The air-pressure checks still fail during parts of the run, and the cup has not passed the complete-drain test on three seeds. <a href="/assets/images/water-machines/cup-long-result-2026-10-08.json">Long-run measurements.</a></p>
+        <figure class="u-figure">
+          <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-transfer-result-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-transfer-result-2026-10-09.png" width="911" height="540" loading="lazy" alt="The cup has drained to a shallow layer beneath the slime shelf. The tube is mostly empty and the lower tank holds the transferred water."></picture>
+          <figcaption class="u-figure-cap">At three simulation minutes, this run has delivered 95.6% of its initially drainable water. Water below the intake remains in the cup.</figcaption>
+        </figure>
+        <p>All three cups hold before the drop. Lowering the fill or raising the bend prevents drainage after the same drop, in three tests each. The counts exclude the water that starts inside the tube and require passage through both the bend and the outlet. The larger development preview also keeps the same physical dimensions when the browser is resized.</p>
+        <p>Pressure and air-volume checks still fail during these runs. Small contact jumps and local crowding remain, and smooth playback on every device is unverified. The cup has passed the three-seed delivery target; the pressure model is still diagnostic.</p>
         <details class="toy-method"><summary>See the water drawing comparison</summary>
           <p>These two frames use the same frozen particles from the earlier outlet-bend trial. The remaining large gaps are real empty space; changing the drawing does not move water into them.</p>
           <figure class="u-figure">
@@ -150,7 +155,7 @@
             <figcaption class="u-figure-cap">Revised drawing: equal interior size, with isolated drops still drawn small.</figcaption>
           </figure>
         </details>
-        <p>The playable public toy is unchanged while these development tests continue. The greedy cup is the only active machine; the others remain parked. <a href="/assets/images/water-machines/cup-drain-2026-10-08.json">Earlier partial-drain measurements.</a></p>
+        <p>The playable public toy is unchanged while the development version is being checked. The greedy cup is the only active machine; the others remain parked. The <a href="/assets/images/water-machines/cup-long-result-2026-10-08.json">previous long run</a> reached 92.7% after 1,000 simulation seconds.</p>
       </section>
       <div class="toy-experiments" aria-label="Things to try">
         <button data-try="slime"><span>Stretch the gel</span>Grab near an edge and pull. The rest follows through its springs.</button>

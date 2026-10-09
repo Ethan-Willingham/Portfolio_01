@@ -1,0 +1,1003 @@
+{
+  "schema": "greedy-cup-transfer-progress-v1",
+  "generatedUTC": "2026-10-09T03:01:09.044416+00:00",
+  "status": "Three-seed delivery target passes. Pressure and phase calibration remain incomplete. Public playable toy is unchanged.",
+  "configuration": {
+    "physicalWorldPixels": [
+      1120,
+      664
+    ],
+    "wallTilePixels": 8,
+    "risingBorePixels": 16,
+    "descendingBorePixels": 8,
+    "pressureIterations": 128,
+    "slimeDropSimulationSeconds": 15,
+    "primaryRunSimulationSeconds": 180,
+    "controlRunSimulationSeconds": 70
+  },
+  "measurement": "Delivery is the final native-particle inventory of original bulk source particles that crossed both the crest and outlet and reached the receiver. Divide by the initial bulk inventory above the tile-aligned intake roof. Initial tube water, rim spills and particles retained in the tube do not count. Each particle retains its identity; no water is added or relocated.",
+  "mainValidation": {
+    "evidenceFolder": "cup-focus-v533-validation-resumed",
+    "sourceSHA256": {
+      "archive/water-smoke-slime/water-smoke-slime.html": "d8014e991847228e4302c578c41e602b0c0807dd8797f7132f90fb9b94b9e117",
+      "water-smoke-slime.css": "bd57015e985761fafb0ed237ef75b2da78614799b24463689d002d7460f6103c",
+      "js/water-smoke-slime.js": "0ef2a52a303cf01b25c579366fef0e2463ab3e8facc79f416a3b27491223dcbf",
+      "js/water-smoke-slime-ui.js": "de179c231d91caf516a425a0e282a2a9377947bd8aab15431fca83e2d9c91c71",
+      "js/liquid-wgpu.js": "648bb998e5ad3dbc090eb14c999518a60582ed6e5222d389803a833db213cc42",
+      "js/liquid-air-wgpu.js": "de107cf2a36f01f721861485861910239a8ce0103f9d004a85b37cd4eadad655",
+      "js/water-machines-scenes.js": "8ddbe18d87f28d8bd983c1406e41334ae9f8ad5d3e7d115794b0680fb989d0ad",
+      "js/water-machines-instruments.js": "891e4c7714090aff8e2f7ab8d4b6b2adcce609a0b87dc1cf09093c28e06fe93e",
+      "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+      "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+      "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+      "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+    },
+    "testSourceSHA256": {
+      "test-water-machines.mjs": "0903cb211ecc20aafbc287b31169d17b815dd07d5ffd56f8342547c977ed4713",
+      "water-machines-paired-observer.mjs": "f34b045729b117dd2b69ef8f89f841e1a121afac47e0accc6d35295bac138fe4",
+      "water-machines-native-passage.mjs": "2dd45ae7ff0e8bc6d2e1f5971774aebb1d6bdcd52d577c67cdfa50d8e3675c6b"
+    },
+    "reportSHA256": "7f09dc0417d75bd7ca58af50328d5514074ca4d3c41ebe4b802a578d1eb08138",
+    "errors": [],
+    "runs": [
+      {
+        "case": "canonical",
+        "options": {},
+        "run": "cup-canonical-seed-17",
+        "seed": 17,
+        "simulationSeconds": 180.04999999999328,
+        "initialTotalParticles": 69307,
+        "initialBulkParticles": 67261,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 59630,
+        "deliveredThroughCrestAndOutlet": 56995,
+        "deliveryPercent": 95.58108334730841,
+        "finalOriginalBulkInventory": {
+          "cup": 9575,
+          "pipe": 688,
+          "receiver": 56998,
+          "other": 0,
+          "cupAboveIntakeRoof": 1875
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 11.188867568969727,
+        "meetsDeliveryTarget": true,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 114.34765625,
+          "maximumAbsoluteGeometryVolumeDrift": 139.8203125,
+          "maximumWaterPressureError": 12.747113787790871,
+          "maximumGasPressureError": 0.40818735955142116,
+          "maximumNonpositiveGasVolumes": 2,
+          "maximumUnresolvedVoidVolume": 255.94140625,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "canonical",
+        "options": {},
+        "run": "cup-canonical-seed-42",
+        "seed": 42,
+        "simulationSeconds": 180.0916666666703,
+        "initialTotalParticles": 69290,
+        "initialBulkParticles": 67244,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 59613,
+        "deliveredThroughCrestAndOutlet": 57409,
+        "deliveryPercent": 96.30281985472968,
+        "finalOriginalBulkInventory": {
+          "cup": 9222,
+          "pipe": 597,
+          "receiver": 57425,
+          "other": 0,
+          "cupAboveIntakeRoof": 1812
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 10.868887901306152,
+        "meetsDeliveryTarget": true,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 98.83203125,
+          "maximumAbsoluteGeometryVolumeDrift": 182.84765625,
+          "maximumWaterPressureError": 11.403978713438958,
+          "maximumGasPressureError": 0.029277453478801476,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 370.359375,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "canonical",
+        "options": {},
+        "run": "cup-canonical-seed-913",
+        "seed": 913,
+        "simulationSeconds": 180.0083333333355,
+        "initialTotalParticles": 69316,
+        "initialBulkParticles": 67270,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 59639,
+        "deliveredThroughCrestAndOutlet": 58184,
+        "deliveryPercent": 97.56032126628548,
+        "finalOriginalBulkInventory": {
+          "cup": 8403,
+          "pipe": 676,
+          "receiver": 58186,
+          "other": 5,
+          "cupAboveIntakeRoof": 861
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 10.650468826293945,
+        "meetsDeliveryTarget": true,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 38.39453125,
+          "maximumAbsoluteGeometryVolumeDrift": 95.1328125,
+          "maximumWaterPressureError": 7.202903765072748,
+          "maximumGasPressureError": 0.031147842592466675,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 303.09375,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "lower-fill",
+        "options": {
+          "level": 288
+        },
+        "run": "cup-lower-fill-seed-17",
+        "seed": 17,
+        "simulationSeconds": 70.04999999999866,
+        "initialTotalParticles": 36074,
+        "initialBulkParticles": 34875,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 27244,
+        "deliveredThroughCrestAndOutlet": 0,
+        "deliveryPercent": 0.0,
+        "finalOriginalBulkInventory": {
+          "cup": 34696,
+          "pipe": 179,
+          "receiver": 0,
+          "other": 0,
+          "cupAboveIntakeRoof": 26435
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 14.869026184082031,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 0,
+          "maximumAbsoluteGeometryVolumeDrift": 211.8359375,
+          "maximumWaterPressureError": 28.5653925622015,
+          "maximumGasPressureError": 0.020642760886490422,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 394.2890625,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "lower-fill",
+        "options": {
+          "level": 288
+        },
+        "run": "cup-lower-fill-seed-42",
+        "seed": 42,
+        "simulationSeconds": 70.09166666666539,
+        "initialTotalParticles": 36073,
+        "initialBulkParticles": 34874,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 27243,
+        "deliveredThroughCrestAndOutlet": 0,
+        "deliveryPercent": 0.0,
+        "finalOriginalBulkInventory": {
+          "cup": 34464,
+          "pipe": 410,
+          "receiver": 0,
+          "other": 0,
+          "cupAboveIntakeRoof": 26071
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 14.842506408691406,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 0,
+          "maximumAbsoluteGeometryVolumeDrift": 277.19921875,
+          "maximumWaterPressureError": 11.723812527131727,
+          "maximumGasPressureError": 0.04502328419459273,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 461.93359375,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "lower-fill",
+        "options": {
+          "level": 288
+        },
+        "run": "cup-lower-fill-seed-913",
+        "seed": 913,
+        "simulationSeconds": 70.04999999999876,
+        "initialTotalParticles": 36090,
+        "initialBulkParticles": 34891,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 27260,
+        "deliveredThroughCrestAndOutlet": 0,
+        "deliveryPercent": 0.0,
+        "finalOriginalBulkInventory": {
+          "cup": 34571,
+          "pipe": 320,
+          "receiver": 0,
+          "other": 0,
+          "cupAboveIntakeRoof": 26096
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 14.173638343811035,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 0,
+          "maximumAbsoluteGeometryVolumeDrift": 296.109375,
+          "maximumWaterPressureError": 7.273702190817177,
+          "maximumGasPressureError": 0.03525640678802465,
+          "maximumNonpositiveGasVolumes": 0,
+          "maximumUnresolvedVoidVolume": 319.6875,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "higher-bend",
+        "options": {
+          "crest": 284,
+          "level": 192
+        },
+        "run": "cup-higher-bend-seed-17",
+        "seed": 17,
+        "simulationSeconds": 70.04999999999893,
+        "initialTotalParticles": 69633,
+        "initialBulkParticles": 68482,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 60851,
+        "deliveredThroughCrestAndOutlet": 57791,
+        "deliveryPercent": 94.97132339649306,
+        "finalOriginalBulkInventory": {
+          "cup": 8437,
+          "pipe": 2254,
+          "receiver": 57791,
+          "other": 0,
+          "cupAboveIntakeRoof": 2606
+        },
+        "holdBulkOutsideCupAndPipe": 10467,
+        "holdLossPercent": 15.284308285388862,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 14.186305046081543,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 70.359375,
+          "maximumAbsoluteGeometryVolumeDrift": 361.59375,
+          "maximumWaterPressureError": 6.649740787400233,
+          "maximumGasPressureError": 0.22357198760778707,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 396.859375,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "higher-bend",
+        "options": {
+          "crest": 284,
+          "level": 192
+        },
+        "run": "cup-higher-bend-seed-42",
+        "seed": 42,
+        "simulationSeconds": 70.04999999999893,
+        "initialTotalParticles": 69640,
+        "initialBulkParticles": 68488,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 60857,
+        "deliveredThroughCrestAndOutlet": 57970,
+        "deliveryPercent": 95.25609215045105,
+        "finalOriginalBulkInventory": {
+          "cup": 8412,
+          "pipe": 2106,
+          "receiver": 57970,
+          "other": 0,
+          "cupAboveIntakeRoof": 2827
+        },
+        "holdBulkOutsideCupAndPipe": 10383,
+        "holdLossPercent": 15.160320056068215,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 12.156745910644531,
+        "meetsDeliveryTarget": true,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 55.51953125,
+          "maximumAbsoluteGeometryVolumeDrift": 342.9296875,
+          "maximumWaterPressureError": 7.479561692535938,
+          "maximumGasPressureError": 0.04859200321751639,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 401.01953125,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "higher-bend",
+        "options": {
+          "crest": 284,
+          "level": 192
+        },
+        "run": "cup-higher-bend-seed-913",
+        "seed": 913,
+        "simulationSeconds": 70.11666666666547,
+        "initialTotalParticles": 69640,
+        "initialBulkParticles": 68488,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 60857,
+        "deliveredThroughCrestAndOutlet": 57409,
+        "deliveryPercent": 94.33425900060797,
+        "finalOriginalBulkInventory": {
+          "cup": 8423,
+          "pipe": 2656,
+          "receiver": 57409,
+          "other": 0,
+          "cupAboveIntakeRoof": 2649
+        },
+        "holdBulkOutsideCupAndPipe": 10395,
+        "holdLossPercent": 15.1778413736713,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 13.169041633605957,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 70.40625,
+          "maximumAbsoluteGeometryVolumeDrift": 204.2578125,
+          "maximumWaterPressureError": 8.271622203880757,
+          "maximumGasPressureError": 0.04089623892612327,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 288.828125,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      }
+    ]
+  },
+  "raisedBendControl": {
+    "evidenceFolder": "cup-focus-v535-raised-bend",
+    "sourceSHA256": {
+      "archive/water-smoke-slime/water-smoke-slime.html": "1104562219e0524e7667c4dcc7b323202331c388afb88d0c7da64245be611260",
+      "water-smoke-slime.css": "bd57015e985761fafb0ed237ef75b2da78614799b24463689d002d7460f6103c",
+      "js/water-smoke-slime.js": "422e3ad443b1a25be9111d7bf9f0ccca22e02794a741cccbacc0a75ecfbb501f",
+      "js/water-smoke-slime-ui.js": "de179c231d91caf516a425a0e282a2a9377947bd8aab15431fca83e2d9c91c71",
+      "js/liquid-wgpu.js": "648bb998e5ad3dbc090eb14c999518a60582ed6e5222d389803a833db213cc42",
+      "js/liquid-air-wgpu.js": "de107cf2a36f01f721861485861910239a8ce0103f9d004a85b37cd4eadad655",
+      "js/water-machines-scenes.js": "eb964ce49fa47e0dbe0db47b0b66578a15ddbbd0bac8f170f643a481feef0126",
+      "js/water-machines-instruments.js": "891e4c7714090aff8e2f7ab8d4b6b2adcce609a0b87dc1cf09093c28e06fe93e",
+      "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+      "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+      "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+      "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+    },
+    "testSourceSHA256": {
+      "test-water-machines.mjs": "0903cb211ecc20aafbc287b31169d17b815dd07d5ffd56f8342547c977ed4713",
+      "water-machines-paired-observer.mjs": "f34b045729b117dd2b69ef8f89f841e1a121afac47e0accc6d35295bac138fe4",
+      "water-machines-native-passage.mjs": "2dd45ae7ff0e8bc6d2e1f5971774aebb1d6bdcd52d577c67cdfa50d8e3675c6b"
+    },
+    "reportSHA256": "d69fd8650629da98852905400aa3607c81443476c1e496cb9c4805c8a054ea24",
+    "errors": [],
+    "runs": [
+      {
+        "case": "raised-bend",
+        "options": {
+          "crest": 84,
+          "level": 192
+        },
+        "run": "cup-raised-bend-seed-17",
+        "seed": 17,
+        "simulationSeconds": 70.11666666666564,
+        "initialTotalParticles": 69307,
+        "initialBulkParticles": 67261,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 59630,
+        "deliveredThroughCrestAndOutlet": 0,
+        "deliveryPercent": 0.0,
+        "finalOriginalBulkInventory": {
+          "cup": 66826,
+          "pipe": 435,
+          "receiver": 0,
+          "other": 0,
+          "cupAboveIntakeRoof": 59489
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 8.530527114868164,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 0,
+          "maximumAbsoluteGeometryVolumeDrift": 35.15234375,
+          "maximumWaterPressureError": 5.441449704075068,
+          "maximumGasPressureError": 0.037180669967353315,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 127.48046875,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "raised-bend",
+        "options": {
+          "crest": 84,
+          "level": 192
+        },
+        "run": "cup-raised-bend-seed-42",
+        "seed": 42,
+        "simulationSeconds": 70.10833333333215,
+        "initialTotalParticles": 69290,
+        "initialBulkParticles": 67244,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 59613,
+        "deliveredThroughCrestAndOutlet": 0,
+        "deliveryPercent": 0.0,
+        "finalOriginalBulkInventory": {
+          "cup": 66691,
+          "pipe": 369,
+          "receiver": 0,
+          "other": 184,
+          "cupAboveIntakeRoof": 59372
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 8.222657203674316,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 0,
+          "maximumAbsoluteGeometryVolumeDrift": 120.234375,
+          "maximumWaterPressureError": 7.320365417657428,
+          "maximumGasPressureError": 0.05876605461827095,
+          "maximumNonpositiveGasVolumes": 1,
+          "maximumUnresolvedVoidVolume": 222.15625,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      },
+      {
+        "case": "raised-bend",
+        "options": {
+          "crest": 84,
+          "level": 192
+        },
+        "run": "cup-raised-bend-seed-913",
+        "seed": 913,
+        "simulationSeconds": 70.10833333333221,
+        "initialTotalParticles": 69316,
+        "initialBulkParticles": 67270,
+        "intakeRoofWorldY": 376,
+        "initialDrainableBulkParticles": 59639,
+        "deliveredThroughCrestAndOutlet": 0,
+        "deliveryPercent": 0.0,
+        "finalOriginalBulkInventory": {
+          "cup": 66685,
+          "pipe": 495,
+          "receiver": 0,
+          "other": 90,
+          "cupAboveIntakeRoof": 59463
+        },
+        "holdBulkOutsideCupAndPipe": 0,
+        "holdLossPercent": 0.0,
+        "countConserved": true,
+        "allResidentFinite": true,
+        "rimSpills": 0,
+        "maximumParticleMove": 9.148455619812012,
+        "meetsDeliveryTarget": false,
+        "definition": "Drainable volume is initial bulk water above the actual tile-aligned intake roof. The numerator counts original bulk particles resident in the receiver after observed crest and outlet passage. Initial tube primer, rim spills and water retained in the tube are excluded. This delivery check does not certify motion, pressure accuracy or three-seed acceptance.",
+        "insidePhysicalWallCount": 0,
+        "pressureAndPhaseDiagnostics": {
+          "maximumUnassignedGasAmount": 0,
+          "maximumAbsoluteGeometryVolumeDrift": 143.890625,
+          "maximumWaterPressureError": 5.61856825546385,
+          "maximumGasPressureError": 0.022795471771243928,
+          "maximumNonpositiveGasVolumes": 2,
+          "maximumUnresolvedVoidVolume": 167.78515625,
+          "cavitationResolvedInEveryReading": false,
+          "phaseResolvedInEveryReading": false
+        }
+      }
+    ]
+  },
+  "testCorrection": "The frozen main batch labels its y=284 crest case higher-bend. Screen y increases downward, so this lowers the bend and starts above it. Preserve that case as an overfilled positive control. The separate raised-bend batch uses y=84 and initial level y=192.",
+  "endpointNativeDensity": [
+    {
+      "case": "cup-canonical-seed-17",
+      "count": 69307,
+      "densityRatioQuantiles": {
+        "0.01": 0.5125464828067278,
+        "0.5": 0.991812490213648,
+        "0.95": 1.0769275563693639,
+        "0.99": 1.1782618347228448,
+        "1": 1.8740546331081733
+      },
+      "overdenseParticleFraction": 0.0008512848630008512,
+      "rmsSpeed": 9.120739502467394,
+      "maximumSpeed": 54.90969864334399,
+      "method": "Independent Float64 quadratic B-spline P2G mass and density gather from final native particle positions; no renderer or stored aux density used."
+    },
+    {
+      "case": "cup-canonical-seed-42",
+      "count": 69290,
+      "densityRatioQuantiles": {
+        "0.01": 0.5429880209534629,
+        "0.5": 0.9809144448178396,
+        "0.95": 1.0622358984817042,
+        "0.99": 1.1633629645948247,
+        "1": 3.651499113446336
+      },
+      "overdenseParticleFraction": 0.005513061047770241,
+      "rmsSpeed": 9.660136016093348,
+      "maximumSpeed": 49.16793137801573,
+      "method": "Independent Float64 quadratic B-spline P2G mass and density gather from final native particle positions; no renderer or stored aux density used."
+    },
+    {
+      "case": "cup-canonical-seed-913",
+      "count": 69316,
+      "densityRatioQuantiles": {
+        "0.01": 0.5511561227184155,
+        "0.5": 0.9876826908673753,
+        "0.95": 1.0593950913534058,
+        "0.99": 1.1000475406920942,
+        "1": 1.8589916949195258
+      },
+      "overdenseParticleFraction": 0.0003606670898493854,
+      "rmsSpeed": 9.404243503998504,
+      "maximumSpeed": 33.884759900583106,
+      "method": "Independent Float64 quadratic B-spline P2G mass and density gather from final native particle positions; no renderer or stored aux density used."
+    }
+  ],
+  "boundaryFixture": {
+    "sourceSHA256": {
+      "before": "c3c2f5899eee2f24b8ea5eccdbd029ba9ea9168c0540a43884321978f46ae648",
+      "after": "c3c2f5899eee2f24b8ea5eccdbd029ba9ea9168c0540a43884321978f46ae648"
+    },
+    "results": [
+      {
+        "name": "before",
+        "mask": 0,
+        "wallSpeed": 0,
+        "wallError": 0,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 1,
+        "wallSpeed": 0,
+        "wallError": 31.99999237060547,
+        "derivativeError": 2.284844716385348e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 2,
+        "wallSpeed": 0,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.5546878178937518e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 3,
+        "wallSpeed": 0,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 4,
+        "wallSpeed": 0,
+        "wallError": 19.99999237060547,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "before",
+        "mask": 8,
+        "wallSpeed": 0,
+        "wallError": 19.999998092651367,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "before",
+        "mask": 12,
+        "wallSpeed": 0,
+        "wallError": 19.999996185302734,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "before",
+        "mask": 15,
+        "wallSpeed": 0,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 0
+      },
+      {
+        "name": "before",
+        "mask": 0,
+        "wallSpeed": 5,
+        "wallError": 0,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 1,
+        "wallSpeed": 5,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.969436804458158e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 2,
+        "wallSpeed": 5,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.4727314313206508e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 3,
+        "wallSpeed": 5,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "before",
+        "mask": 4,
+        "wallSpeed": 5,
+        "wallError": 19.9999942779541,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "before",
+        "mask": 8,
+        "wallSpeed": 5,
+        "wallError": 19.999996185302734,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "before",
+        "mask": 12,
+        "wallSpeed": 5,
+        "wallError": 19.999996185302734,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "before",
+        "mask": 15,
+        "wallSpeed": 5,
+        "wallError": 31.99999237060547,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 0
+      },
+      {
+        "name": "after",
+        "mask": 0,
+        "wallSpeed": 0,
+        "wallError": 0,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 1,
+        "wallSpeed": 0,
+        "wallError": 2.9802313292748295e-06,
+        "derivativeError": 1.6142924626622035e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 2,
+        "wallSpeed": 0,
+        "wallError": 4.649161382985767e-06,
+        "derivativeError": 1.4801820119245135e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 3,
+        "wallSpeed": 0,
+        "wallError": 1.525878360553179e-05,
+        "derivativeError": 1.1064112186431885e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 4,
+        "wallSpeed": 0,
+        "wallError": 8.344645721081179e-07,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "after",
+        "mask": 8,
+        "wallSpeed": 0,
+        "wallError": 3.93390610042843e-06,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "after",
+        "mask": 12,
+        "wallSpeed": 0,
+        "wallError": 9.536740435578395e-06,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "after",
+        "mask": 15,
+        "wallSpeed": 0,
+        "wallError": 1.525878360553179e-05,
+        "derivativeError": 1.1064112186431885e-06,
+        "tangentError": 0
+      },
+      {
+        "name": "after",
+        "mask": 0,
+        "wallSpeed": 5,
+        "wallError": 0,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 1,
+        "wallSpeed": 5,
+        "wallError": 3.337860107421875e-06,
+        "derivativeError": 1.2988845507350133e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 2,
+        "wallSpeed": 5,
+        "wallError": 3.814697265625e-06,
+        "derivativeError": 1.7993152141571045e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 3,
+        "wallSpeed": 5,
+        "wallError": 1.52587890625e-05,
+        "derivativeError": 1.125037670135498e-06,
+        "tangentError": 1.185302728856641e-06
+      },
+      {
+        "name": "after",
+        "mask": 4,
+        "wallSpeed": 5,
+        "wallError": 1.430511474609375e-06,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "after",
+        "mask": 8,
+        "wallSpeed": 5,
+        "wallError": 3.337860107421875e-06,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "after",
+        "mask": 12,
+        "wallSpeed": 5,
+        "wallError": 9.5367431640625e-06,
+        "derivativeError": 1.5224019686427281e-06,
+        "tangentError": 8.146972660938445e-07
+      },
+      {
+        "name": "after",
+        "mask": 15,
+        "wallSpeed": 5,
+        "wallError": 1.52587890625e-05,
+        "derivativeError": 1.125037670135498e-06,
+        "tangentError": 0
+      }
+    ],
+    "errors": []
+  },
+  "previewChecks": {
+    "version": "v5.36",
+    "pass": true,
+    "views": [
+      {
+        "name": "desktop",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "paused": true,
+        "count": 69307,
+        "geometrySHA256": "98bf7e5e526539781ad4901295c3c53c8022063812ddbdcee60e675b822e4719",
+        "blueWaterPixels": 106315
+      },
+      {
+        "name": "short-desktop",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "paused": true,
+        "count": 69307,
+        "geometrySHA256": "98bf7e5e526539781ad4901295c3c53c8022063812ddbdcee60e675b822e4719",
+        "blueWaterPixels": 69695
+      },
+      {
+        "name": "landscape",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "paused": true,
+        "count": 69307,
+        "geometrySHA256": "98bf7e5e526539781ad4901295c3c53c8022063812ddbdcee60e675b822e4719",
+        "blueWaterPixels": 49138
+      },
+      {
+        "name": "scene-selection",
+        "world": {
+          "w": 1120,
+          "h": 664,
+          "tile": 8,
+          "cols": 140,
+          "rows": 83
+        },
+        "paused": true,
+        "count": 69307,
+        "geometrySHA256": "98bf7e5e526539781ad4901295c3c53c8022063812ddbdcee60e675b822e4719",
+        "blueWaterPixels": 69695
+      }
+    ],
+    "ordinaryToyRegression": "Passed desktop, mobile in both orientations, tablet and GPU-unavailable checks in v5.35. The v5.36 change only awaits renderer startup inside machine construction.",
+    "pausedStartRepair": "The screenshot assertion failed before awaiting rainbow renderer initialization and passed after it. That initialization reconfigures the shared canvas; the paused machine now draws after it completes."
+  },
+  "featureOffGPU": {
+    "pass": true,
+    "sourceSHA256": {
+      "before": "663e07bde721bc3d8984f00deb00a85b2d60150083209ca5f20ec2a7f755d2dd",
+      "after": "648bb998e5ad3dbc090eb14c999518a60582ed6e5222d389803a833db213cc42"
+    },
+    "fixtures": 6,
+    "nativeBufferCaptures": 18,
+    "renderCaptures": 6,
+    "defaultBoots": [
+      {
+        "kind": "toy",
+        "state": {
+          "version": "v5.36",
+          "water": "on",
+          "air": {
+            "ready": false,
+            "error": null,
+            "enabled": false
+          },
+          "model": false
+        },
+        "airBuffers": 0,
+        "airPasses": 0,
+        "airPipelines": 0
+      },
+      {
+        "kind": "game",
+        "state": {
+          "version": "v28.179",
+          "water": true,
+          "model": false
+        },
+        "airBuffers": 0,
+        "airPasses": 0,
+        "airPipelines": 0
+      }
+    ],
+    "errors": []
+  },
+  "screenshots": [
+    {
+      "file": "cup-transfer-flow-2026-10-09.png",
+      "seed": 17,
+      "simulationSeconds": 30.091666666666598,
+      "sha256": "d4d5ac69bec7f8356dadee255fbbe9d77ac4f95b2e92e7d082940351004ead12",
+      "processing": "Unmodified simulation frame. WebP is a display derivative."
+    },
+    {
+      "file": "cup-transfer-result-2026-10-09.png",
+      "seed": 17,
+      "simulationSeconds": 180.00833333332662,
+      "sha256": "1dd1cba7ecedb664b917441cb51aab574be65584998246b15262bcf74098b6b2",
+      "processing": "Unmodified simulation frame. WebP is a display derivative."
+    }
+  ],
+  "limits": [
+    "Passing delivery does not establish calibrated pressure, exact gas-volume conservation, smooth guest contact or real-world timing.",
+    "Pressure and phase diagnostics fail during these runs. Their maxima are retained above.",
+    "Small local density outliers and guest-contact position corrections remain.",
+    "The passive measurement harness does not certify a presentation frame rate.",
+    "Stock cup physics is unchanged between v5.33 and v5.36. Later host changes enlarge the display, preserve manual pause on cup selection, permit the explicit raised-bend control and wait for renderer startup before the initial paused draw."
+  ]
+}
