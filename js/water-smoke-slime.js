@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.47'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.48'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -1083,6 +1083,7 @@
   }
 
   function applyAirPhysics() {
+    liquidWGPU.setSimParam('RETAIN_SUBQUANTUM_REMAINDER',1);
     presetGravScale=1;presetWaterTimeScale=1;
     applyGravity();applyTimescale();
     ['CALM','CALM_LOCAL','QUIET_VISC','QUIET_DRAG','GRID_VISC','TURB_VISC','FLOOR_REACH','REACH_VY'].forEach(function(key){liquidWGPU.setSimParam(key,0);});
@@ -1106,6 +1107,7 @@
       wallsBakedVersion=-1;
       airState.ready=false;
       if(liquidWGPU){
+        liquidWGPU.setSimParam('RETAIN_SUBQUANTUM_REMAINDER',0);
         liquidWGPU.setPressureModel(null);
         liquidWGPU.setRenderParam('VOLUME_SPLATS',0);
         delete liquidWGPU.liquid.peekOps;

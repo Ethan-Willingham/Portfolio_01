@@ -1,6 +1,6 @@
 # Water machines
 
-Release: toy v5.47, shared water engine v28.178. The greedy cup, standalone
+Release: toy v5.48, shared water engine v28.179. The greedy cup, standalone
 siphon and Heron's fountain are in the public scene menu, with published behavior
 measurements. Full quantitative physical acceptance and steady 60 FPS remain unverified.
 
@@ -233,8 +233,43 @@ deferred time across input/parameter changes, low-timescale remainder loss, and
 paused foreign draws block release. Whole-frame admission preserves the existing
 call order but does not prove matching displayed GPU water and CPU slime poses.
 The public trial JSON preserves clock frontiers, time accounting, raw prefix
-samples, source/report hashes and CPU pressure limits. Shared native v28.178 and
-the published simulation are unchanged by these trials.
+samples, source/report hashes and CPU pressure limits. Those trials changed no published simulation. The later v5.48 release adds
+only the independently checked low-speed timing fix described below.
+
+Released v5.48 / native v28.179 fixes the machine slow-motion freeze without
+activating a scheduler. `RETAIN_SUBQUANTUM_REMAINDER` is an explicit per-instance
+flag, default off. It raises the fixed accumulator cap to at least one native
+1/120-second quantum. The toy enables it with its air model and removes both
+flag and timing audit on ordinary return. The accumulator remains module-shared;
+`getTimingState()` declares this scope and returns a copied audit.
+
+Actual original-host hardware comparisons reproduce zero native advancement at
+5% speed in cup, siphon and Heron. With the flag, submitted rates are .0791,
+.0729 and .0708 simulated seconds per wall second in four-second samples. The
+nominal rate is .0775; retained remainders, ignored tiny host calls and lagged
+mirrors prevent treating these short measurements as exact playback rates.
+Three actual host lifecycle tests pass slow movement, normal resumption and
+flag/audit removal on ordinary return, with no uncaptured GPU errors.
+
+Default-off GPU comparisons pass six dense/sparse fixtures on three seeds,
+eighteen resident checkpoints and exact render pixels. With the flag enabled,
+normal timescales .5, .775 and 1.55 pass the same comparison: eighteen fixture
+instances, fifty-four resident checkpoints and eighteen render captures. GPU
+resources, passes, pipelines and all 69 native WGSL literals are unchanged.
+Smoke matches byte-for-byte at 49 checkpoints. The rebuilt v28.179 game and
+v5.48 toy pass their release boot and engine-sync checks. The rebuilt game also
+passes the smoke-coupling browser checks; the fountain preview passes both air
+overlay controls with no JavaScript errors.
+
+Private v3 latest-position scheduling passes CPU policy and six actual
+interaction cases, but its full canonical cup seed17 delivers 94.46587288% of
+initially drainable water at 180.033 submitted seconds. The existing target is
+95%. All 69,307 particles remain finite and conserved, with zero hold loss, rim
+spills or final centers inside walls. The single-case audit retains all numeric
+criteria and explicitly omits matrix completeness; it is not the nine-case
+acceptance. The scheduler is not released. Sustained 60 FPS, phone performance,
+full pressure/gas and energy acceptance remain unfinished. Evidence:
+assets/images/water-machines/slow-motion-and-drag-trial-2026-10-09.json.
 
 Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
 REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw

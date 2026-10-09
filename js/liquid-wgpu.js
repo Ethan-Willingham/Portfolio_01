@@ -11981,8 +11981,12 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
     // dt clamp — mirror updateLiquids: ignore non-finite / tiny dt, clamp
     // to 0.05 s. Done first so a degenerate dt never reaches oil suction
     // (its pull is dt-scaled) or the uniform.
-    if (!isFinite(dt) || dt <= 0.0005) return;
-    if (dt > 0.05) dt = 0.05;
+    var timingAudit=instance.interactiveTimingAudit;
+    if(timingAudit)timingAudit.calls++;
+    if (!isFinite(dt) || dt <= 0.0005) {if(timingAudit)timingAudit.ignoredCalls++;return;}
+    if(timingAudit)timingAudit.inputHostSeconds+=dt;
+    if (dt > 0.05) {if(timingAudit)timingAudit.clampedHostSeconds+=dt-0.05;dt = 0.05;}
+    if(timingAudit)timingAudit.acceptedHostSeconds+=dt;
     // v24.10 — substep the sim like saharan's Water demo. Equilibrium column
     // compression scales as stepDt², so advancing the chain in N small
     // sub-steps (dt/N each) lets a DEEP pool settle at ~rest density instead
@@ -12001,13 +12005,15 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
       subSteps = Math.floor(liquidStepAcc / LIQUID_SUBSTEP_DT);
       if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
       liquidStepAcc -= subSteps * LIQUID_SUBSTEP_DT;
-      if (liquidStepAcc > LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE) liquidStepAcc = LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE;
+      var remainderCap=LIQUID_SUBSTEP_DT * 2 * LIQUID_TIMESCALE;
+      if(instance.retainSubquantumRemainder)remainderCap=Math.max(remainderCap,LIQUID_SUBSTEP_DT);
+      if (liquidStepAcc > remainderCap) {if(timingAudit)timingAudit.fixedOverflowSimulationSeconds+=liquidStepAcc-remainderCap;liquidStepAcc = remainderCap;}
       if (subSteps <= 0) return;        // banked — nothing to advance this frame
       instance.stepDt = LIQUID_SUBSTEP_DT;   // computeGridBounds pushes this into the uniform
     } else {
       subSteps = Math.ceil(dt * LIQUID_TIMESCALE / LIQUID_SUBSTEP_DT);
       if (subSteps < 1) subSteps = 1;
-      if (subSteps > LIQUID_MAX_SUBSTEPS) subSteps = LIQUID_MAX_SUBSTEPS;
+      if (subSteps > LIQUID_MAX_SUBSTEPS) {if(timingAudit)timingAudit.variableSubstepCapCalls++;subSteps = LIQUID_MAX_SUBSTEPS;}
       instance.stepDt = dt * LIQUID_TIMESCALE / subSteps;   // computeGridBounds pushes this into the uniform
     }
 
@@ -12814,6 +12820,11 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
         if (!instance.bathThermal) instance.bathThermal = new Float32Array(296);
         instance.bathThermal.set(data);
       },
+      getTimingState: function () {
+        return {fixedStep:LIQUID_FIXED_STEP,accumulator:liquidStepAcc,substepDt:LIQUID_SUBSTEP_DT,maxSubsteps:LIQUID_MAX_SUBSTEPS,
+          timeScale:LIQUID_TIMESCALE,gravity:LIQUID_MATS && LIQUID_MATS[0] ? LIQUID_MATS[0].gravity : LIQUID_GRAVITY,moduleSharedAccumulator:true,retainSubquantumRemainder:!!instance.retainSubquantumRemainder,
+          audit:instance.interactiveTimingAudit ? Object.assign({},instance.interactiveTimingAudit) : null};
+      },
       getSimParam: function (name) {
         if(name==='GRAVITY')return LIQUID_MATS && LIQUID_MATS[0] ? LIQUID_MATS[0].gravity : LIQUID_GRAVITY;
         if(name==='TIMESCALE')return LIQUID_TIMESCALE;
@@ -12827,6 +12838,10 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
           var v = +value;
           if (!isFinite(v)) return;
           switch (name) {
+            case 'RETAIN_SUBQUANTUM_REMAINDER':
+              if(v){instance.retainSubquantumRemainder=true;if(!instance.interactiveTimingAudit)instance.interactiveTimingAudit={calls:0,ignoredCalls:0,inputHostSeconds:0,acceptedHostSeconds:0,clampedHostSeconds:0,fixedOverflowSimulationSeconds:0,variableSubstepCapCalls:0,parameterResetSimulationSeconds:0};}
+              else{delete instance.retainSubquantumRemainder;delete instance.interactiveTimingAudit;}
+              break;
             // grav / pressure
             // v24.169 — also update the LIQUID_MATS row so the change reaches
             // the GPU: writeSimParams() sources MATS[0].gravity each frame, so
@@ -12898,10 +12913,10 @@ fn gather(@builtin(global_invocation_id) id:vec3u){
             case 'CALM':                 LIQUID_CALM = v < 0 ? 0 : (v > 1 ? 1 : v); break;
             // v24.124 — fixed-quantum substepping toggle (runFrame host
             // partitioning, not a SimParams lane); reset the bank on flip
-            case 'FIXED_STEP':           LIQUID_FIXED_STEP = v ? 1 : 0; liquidStepAcc = 0; break;
+            case 'FIXED_STEP':           LIQUID_FIXED_STEP = v ? 1 : 0; if(instance.interactiveTimingAudit)instance.interactiveTimingAudit.parameterResetSimulationSeconds+=liquidStepAcc; liquidStepAcc = 0; break;
             // v25.29 — sim playback rate (runFrame host partitioning, not a
             // SimParams lane); reset the bank so the flip is clean
-            case 'TIMESCALE':            LIQUID_TIMESCALE = (v > 0 && isFinite(v)) ? v : 1; liquidStepAcc = 0; break;
+            case 'TIMESCALE':            LIQUID_TIMESCALE = (v > 0 && isFinite(v)) ? v : 1; if(instance.interactiveTimingAudit)instance.interactiveTimingAudit.parameterResetSimulationSeconds+=liquidStepAcc; liquidStepAcc = 0; break;
             // v24.120 debug kit — bit 1 no-sleep, bit 2 no-brake (coll.w)
             case 'DBG_FLAGS':            LIQUID_DBG_FLAGS = v & 3; break;
             // v24.120 debug kit — CPU-mirror refresh cadence in frames (not
