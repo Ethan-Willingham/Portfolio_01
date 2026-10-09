@@ -77,7 +77,7 @@ async function snapshot(page){await settle(page);return page.evaluate(()=>({stat
    const page=await context.newPage();page.on('pageerror',error=>evidence.errors.push(error.message));page.on('console',message=>{if(message.type()==='error')evidence.errors.push(message.text());});
    await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html');
    await page.waitForFunction(()=>window.__sunAudit&&!__sunAudit.state().loading,null,{timeout:30000});
-   await page.evaluate(()=>__sunAudit.freeze());await page.locator('#globe-sun').click();await page.waitForTimeout(700);
+   await page.evaluate(()=>{__sunAudit.freeze();__sunAudit.restore();});await page.waitForTimeout(700);
    if(!interiorOnly){
    for(const width of [1440,375]){
      await page.setViewportSize({width,height:1000});await page.waitForTimeout(250);

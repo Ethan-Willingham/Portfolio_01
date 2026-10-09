@@ -13,7 +13,7 @@
   // The same numeric operations run in both paths. Browsers without worker
   // image decoding get short time slices instead of one multi-second task.
   async function run(steps){var part,started=performance.now();do{part=steps.next();if(onMain&&!part.done&&performance.now()-started>=6){await pause();started=performance.now();}}while(!part.done);return part.value;}
-  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261009-51','globe-clouds.js?v=20261009-51');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
+  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261009-52','globe-clouds.js?v=20261009-52');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
   function smooth(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
   function pack(visible,infrared,natural,out,start,end){
     for(var i=start||0,last=end===undefined?visible.length:end;i<last;i+=4){

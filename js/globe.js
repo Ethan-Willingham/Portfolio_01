@@ -10,6 +10,7 @@
   var cloudDescription = '', clock = byId('globe-clock'), dataLine = byId('globe-data');
   var explore = byId('globe-explore');
   var hourInput = byId('globe-hour'), returnButton = byId('globe-return');
+  var moonButton = byId('globe-moon');
   var pinPanel = byId('globe-pin'), summary = byId('globe-summary');
   var DEG = Math.PI / 180, DAY = 86400000;
   // Progress counts completed work, including decoded clouds. It is not a
@@ -43,6 +44,7 @@
   function finishLoading() {
     if(!loading||fetchingPhoto||replayBusy||Object.keys(loadWeights).some(function(key){return !loaded[key];})||photo&&photoMix<1)return;
     stopLoadingFeedback();loading=false;explore.querySelectorAll('input,button').forEach(function(control){control.disabled=false;});returnButton.disabled=false;container.classList.remove('is-loading');container.classList.add('is-ready');container.setAttribute('aria-busy','false');warmDayTimeline();
+    if(moonButton)moonButton.disabled=false;
   }
   var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   var dateFormatter = new Intl.DateTimeFormat(undefined, {month:'short',day:'numeric',timeZone:'UTC'});
@@ -77,7 +79,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v51');
+  text(byId('globe-version'),'v52');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -203,6 +205,7 @@
     text(loadingDetail,message);loadingElapsed.hidden=true;
     explore.querySelectorAll('input,button').forEach(function(control){control.disabled=true;});returnButton.disabled=true;container.setAttribute('aria-busy','false');loadingProgress.hidden=true;
     byId('globe-fullscreen').hidden = true; byId('globe-fullscreen').disabled = true;
+    if(moonButton){moonButton.hidden=true;moonButton.disabled=true;}
     container.removeAttribute('tabindex');container.setAttribute('aria-label','Earth globe unavailable');
     container.removeAttribute('aria-describedby');container.querySelector('.globe-info').remove();
     text(byId('globe-keyboard'),'The interactive globe is unavailable. Source links are below.');
@@ -236,8 +239,8 @@
   });
   var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
   replayMemo=timeline.memoryCache((mobile?104:224)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-51',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-51',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-52',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-52',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -297,8 +300,20 @@
   replayBakeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),replayBakeMaterial));
   var replayBakes=[0,1].map(function(){var target=new THREE.WebGLRenderTarget(replayWidth,replayWidth/2,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false,stencilBuffer:false});target.texture.wrapS=THREE.RepeatWrapping;return target;});
   var earth = new THREE.Mesh(new THREE.SphereGeometry(1,128,96),earthMaterial); scene.add(earth);
-  var moonMaterial = new THREE.ShaderMaterial({side:THREE.DoubleSide,uniforms:{moonMap:{value:moonTexture},sunDir:moonSunUniform},vertexShader:vertex,fragmentShader:'uniform sampler2D moonMap; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vNormal; void main(){ float light=max(0.0,dot(normalize(vNormal),sunDir)); gl_FragColor=vec4(texture2D(moonMap,vUv).rgb*(.025+light*.98),1.0); }'});
-  var moon = new THREE.Mesh(new THREE.SphereGeometry(.273,64,48),moonMaterial); scene.add(moon);
+  // Lunar soil scatters differently from a matte Lambert sphere. Lambert
+  // lighting made thin crescents almost black precisely at their visible limb.
+  // A normalized Lommel-Seeliger disk law preserves the unlit hemisphere while
+  // keeping the illuminated limb discernible in this expanded display range.
+  var moonMaterial = new THREE.ShaderMaterial({side:THREE.DoubleSide,uniforms:{moonMap:{value:moonTexture},sunDir:moonSunUniform},vertexShader:vertex,fragmentShader:[
+    'uniform sampler2D moonMap; uniform vec3 sunDir; varying vec2 vUv; varying vec3 vNormal; varying vec3 vWorld;',
+    'void main(){vec3 n=normalize(vNormal);float incidence=max(0.0,dot(n,sunDir));float emission=max(0.0,dot(n,normalize(cameraPosition-vWorld)));',
+    'float light=min(1.0,2.0*incidence/max(.0001,incidence+emission));',
+    // The JPEG is display encoded. Apply light in linear space, then encode
+    // it once for the canvas. Multiplying encoded bytes crushed dim details.
+    'vec3 albedo=pow(texture2D(moonMap,vUv).rgb,vec3(2.2));',
+    'gl_FragColor=vec4(pow(albedo*(.005+.995*light),vec3(1.0/2.2)),1.0);}'
+  ].join('\n')});
+  var moon = new THREE.Mesh(new THREE.SphereGeometry(.273,128,96),moonMaterial); scene.add(moon);
   var atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.015,128,64),new THREE.ShaderMaterial({uniforms:{sunDir:sunUniform},vertexShader:vertex,fragmentShader:'uniform vec3 sunDir; varying vec3 vNormal,vWorld; void main(){ vec3 eye=normalize(cameraPosition-vWorld); float rim=pow(1.0-abs(dot(normalize(vNormal),eye)),3.5); float day=smoothstep(-.25,.3,dot(normalize(vNormal),sunDir)); gl_FragColor=vec4(.28,.46,.59,rim*(.08+.3*day)); }',transparent:true,depthWrite:false,side:THREE.BackSide,blending:THREE.AdditiveBlending})); scene.add(atmosphere);
   // Catalog directions are centered on the camera to keep distant stars at
   // infinity. Magnitude controls integrated point brightness and point size.
@@ -416,6 +431,17 @@
     var observer=direction.clone().applyAxisAngle(axis,145*DEG);
     targetTheta=nearestOrbitAngle(Math.atan2(observer.x,observer.z),theta);targetPhi=nearestOrbitAngle(Math.acos(observer.y),phi);targetRadius=4;sunFraming=true;autoSpin=false;
   }
+  function frameMoon() {
+    viewGeneration++;updateAstronomy();
+    var direction=moon.position.clone().normalize(),up=new THREE.Vector3(0,1,0);
+    var axis=up.addScaledVector(direction,-up.dot(direction)).normalize();
+    // Keep both bodies inside the narrowest horizontal field and separate
+    // their limbs. Only the observer moves; lunar position and time stay put.
+    var observer=direction.applyAxisAngle(axis,145*DEG);
+    targetTheta=nearestOrbitAngle(Math.atan2(observer.x,observer.z),theta);targetPhi=nearestOrbitAngle(Math.acos(observer.y),phi);targetRadius=4;sunFraming=false;autoSpin=false;
+    container.focus({preventScroll:true});
+  }
+  if(moonButton)moonButton.addEventListener('click',frameMoon);
   function validLocation(point) {
     return point&&Number.isFinite(point.lat)&&Math.abs(point.lat)<=90&&Number.isFinite(point.lon)&&Math.abs(point.lon)<=180;
   }

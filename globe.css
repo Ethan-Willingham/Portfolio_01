@@ -36,6 +36,8 @@
 .globe-view-controls { position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); z-index: 5; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; pointer-events: none; }
 .globe-version { position: absolute; top: 0; left: 0; color: var(--text-dim); font: .6rem/1.4 var(--font-mono); }
 .globe-fs-btn { position: static; flex: 0 0 auto; pointer-events: auto; background: color-mix(in srgb, var(--globe-space) 82%, transparent); }
+.globe-moon-btn { pointer-events: auto; background: color-mix(in srgb, var(--globe-space) 82%, transparent); }
+.globe-moon-btn[hidden] { display: none; }
 .globe-fs-btn { display: grid; place-content: center; width: 44px; height: 44px; padding: 0; }
 .globe-fs-btn svg { width: 18px; height: 18px; }
 .fs-icon-close { display: none; }
