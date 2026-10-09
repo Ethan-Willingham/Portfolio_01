@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#303931">
+  <title>SpongeBob character picker</title>
+  <meta name="description" content="Browse a sourced picture catalog of SpongeBob characters. Choose a lineup, save it, and send that cast into a who-would-win vote.">
+  <link rel="canonical" href="https://ethanwillingham.com/spongebob-picker.html">
+  <meta property="og:title" content="SpongeBob character picker">
+  <meta property="og:description" content="Choose the cast for a Bikini Bottom fight vote, from the regulars to the deep cuts.">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Ethan Willingham">
+  <meta property="og:url" content="https://ethanwillingham.com/spongebob-picker.html">
+  <meta property="og:image" content="https://ethanwillingham.com/assets/spongebob/characters/spongebob-squarepants.webp">
+  <meta property="og:image:width" content="640">
+  <meta property="og:image:height" content="631">
+  <meta property="og:image:alt" content="SpongeBob SquarePants">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:image" content="https://ethanwillingham.com/assets/spongebob/characters/spongebob-squarepants.webp">
+  <link rel="preload" href="assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="spongebob.css?v=1">
+</head>
+<body class="sb-page">
+  <div class="site-wrapper sb-wrapper">
+    <nav class="sb-topnav" aria-label="Site navigation"><a href="archive.html">In progress</a><a href="spongebob-fight.html">Who would win?</a></nav>
+    <header class="post-header u-hero sb-hero">
+      <p class="u-eyebrow">In progress / Cast the vote</p>
+      <h1 class="u-title">SpongeBob character picker</h1>
+      <p class="u-dek">The regulars, the villains, and the fish you almost forgot.</p>
+      <p class="sb-intro">Choose the characters for the fight post, then try your lineup or share it.</p>
+    </header>
+    <main class="post-body">
+      <section aria-label="Choose characters" class="sb-picker" id="sb-picker" aria-busy="true">
+        <div class="sb-selection-bar">
+          <div><p class="sb-kicker">Your lineup</p><p class="sb-count"><strong id="sb-selected-count">0</strong> selected <span class="sb-muted" id="sb-pair-count">/ choose at least 2</span></p></div>
+          <div class="sb-selection-actions"><a class="sb-review-link" href="#sb-lineup">Review lineup</a><a class="sb-button sb-primary" id="sb-play" href="spongebob-fight.html" aria-disabled="true">Try this lineup</a></div>
+        </div>
+        <div class="sb-filters" id="sb-filters" hidden>
+          <div class="sb-search"><label for="sb-search">Find a character</label><input id="sb-search" type="search" placeholder="SpongeBob, Mermaid Man, the Hash-Slinging Slasher..." autocomplete="off"></div>
+          <div class="sb-group"><label for="sb-group">Browse</label><select id="sb-group"><option value="">All characters</option></select></div>
+          <label class="sb-selected-toggle"><input id="sb-only-selected" type="checkbox"><span>Selected only</span></label>
+        </div>
+        <div class="sb-list-tools" id="sb-list-tools" hidden><p id="sb-showing" role="status" aria-live="polite"></p><div><button class="sb-text-button" id="sb-select-visible" type="button">Select visible</button><button class="sb-text-button" id="sb-clear" type="button">Clear selection</button></div></div>
+        <div id="sb-load-state" class="sb-empty" role="status"><p>Gathering the cast...</p><button class="sb-button" id="sb-load-retry" type="button" hidden>Try again</button></div>
+        <div class="sb-character-grid" id="sb-character-grid"></div>
+        <div id="sb-no-results" class="sb-empty" hidden><p>No characters match these filters.</p><button class="sb-button" id="sb-reset-filters" type="button">Show all characters</button></div>
+        <section class="sb-lineup" id="sb-lineup" hidden aria-labelledby="sb-lineup-title">
+          <div class="sb-section-heading"><div><p class="sb-kicker">Keep this cast</p><h2 id="sb-lineup-title">Your chosen characters</h2></div><button class="sb-button" id="sb-defaults" type="button">Use public lineup</button></div>
+          <p class="sb-note" id="sb-storage-note">Your selection is saved in this browser.</p>
+          <ul class="sb-chosen-list" id="sb-chosen-list" aria-label="Selected characters"></ul>
+          <div class="sb-export-actions"><button class="sb-button" id="sb-copy-link" type="button" disabled>Copy fight link</button><button class="sb-button" id="sb-download" type="button" disabled>Download lineup</button></div>
+          <p class="sb-feedback" id="sb-export-status" role="status" aria-live="polite"></p>
+          <div class="sb-copy-fallback" id="sb-copy-fallback" hidden><label for="sb-share-url">Copy this link</label><input id="sb-share-url" readonly type="url"></div>
+          <details class="sb-details"><summary>How does this become the public lineup?</summary><p>The public fight post uses a saved lineup. Download your choices and give that file to the person updating the site. Your browser selection does not change the public cast. A fight link carries your chosen characters, so someone else can vote on the same set.</p></details>
+        </section>
+      </section>
+      <details class="sb-details sb-sources"><summary>Where the pictures came from</summary><p id="sb-source-note">Character pictures and names are sourced from <a href="https://spongebob.fandom.com/wiki/Category:Characters" target="_blank" rel="noopener noreferrer">Encyclopedia SpongeBobia</a>. Each card links to its source page. This is a fan project. SpongeBob SquarePants and its characters belong to their respective rights holders.</p></details>
+      <noscript><p>This picker needs JavaScript to load the character catalog and remember your choices.</p></noscript>
+    </main>
+    <footer class="site-footer"><div class="site-footer-inner"><a href="/">&copy; 2026 Ethan Willingham</a><a href="archive.html">In progress</a></div></footer>
+  </div>
+  <script src="js/main.js"></script>
+  <script src="js/spongebob-shared.js?v=1"></script>
+  <script src="js/spongebob-picker.js?v=1"></script>
+</body>
+</html>

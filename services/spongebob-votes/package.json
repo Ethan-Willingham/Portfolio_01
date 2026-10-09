@@ -1,0 +1,11 @@
+{
+  "name": "spongebob-matchup-votes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "validate": "node scripts/validate-artifact.mjs",
+    "test": "node --test tests/votes.test.mjs",
+    "sync-roster": "node scripts/sync-roster.mjs"
+  }
+}
