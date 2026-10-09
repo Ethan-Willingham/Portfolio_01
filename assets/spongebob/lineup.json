@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 4,
   "title": "Selected SpongeBob characters",
   "updatedAt": "2026-10-09",
   "characterIds": [
@@ -22,5 +22,17 @@
     "patar",
     "spongegar",
     "tom-prison-guard-1"
+  ],
+  "retainedCharacters": [
+    {
+      "id": "bare-knuckles-the-sea-bear",
+      "name": "Bare-Knuckles the Sea Bear",
+      "group": "Minor characters",
+      "image": "assets/spongebob/selected-cast/bare-knuckles-the-sea-bear.webp",
+      "sourcePage": "https://spongebob.fandom.com/wiki/Bare-Knuckles_the_Sea_Bear",
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/01/Screenshot_2023-07-20_at_00-30-12_Stuntin%27_070.webp_%28WEBP_Image_1920_%C3%97_1080_pixels%29_%E2%80%94_Scaled_%2865%25%29.png/revision/latest?cb=20240731212913",
+      "width": 607,
+      "height": 640
+    }
   ]
 }

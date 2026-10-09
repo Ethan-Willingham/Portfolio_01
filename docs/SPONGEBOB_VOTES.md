@@ -1,10 +1,10 @@
 # SpongeBob shared votes
 
-The fight post uses `js/spongebob-votes.js`. It calls a separate Sites Worker backed by persistent Cloudflare D1. GitHub Pages serves the blog and images as usual.
+The standalone fight comparer uses `js/spongebob-votes.js`. It calls a separate Sites Worker backed by persistent Cloudflare D1. GitHub Pages serves the picker, comparer and images.
 
 Service URL: `https://spongebob-votes-ethan.snugbay4.chatgpt.site`.
 
-Published and verified on October 9, 2026, with the final 1,021-character allowlist. The live health check confirmed the database binding, and valid matchup reads confirmed an empty starting database and the portfolio's CORS access. No test votes were inserted into production.
+Version 3 was published on October 9, 2026, with 1,371 allowed IDs: the 1,370-character original-TV catalog and the separately preserved Bare-Knuckles selection. The health check confirmed the database binding and allowlist size. Updating the catalog preserves recorded votes. No test votes were inserted into production.
 
 Sites project: `appgprj_6ac94fd85c608191bac6cf13f1a46571`. Its source files are in `services/spongebob-votes/`. The manifest declares the logical `DB` binding; Sites provisions the database and applies the tracked SQL migration during publication.
 
@@ -38,7 +38,9 @@ Only registered character IDs are accepted. JSON request size is limited to 2 Ki
 
 ## Updating and testing
 
-When the researched character catalog changes, run `node services/spongebob-votes/scripts/sync-roster.mjs` from the portfolio root and publish a new backend version. The tracked `roster.json` contains only character IDs, so the Sites source repository can build independently of the portfolio's image files.
+When the researched character catalog or retained public cast changes, run `node services/spongebob-votes/scripts/sync-roster.mjs` from the portfolio root and publish a new backend version. It includes catalog IDs and `lineup.retainedCharacters`. The tracked `roster.json` contains only character IDs, so the Sites source repository can build independently of the portfolio's image files.
+
+The picker pairing editor saves ordered disjoint pairs. A shared fight link carries both the selected cast and its `matchups` JSON in the URL fragment; downloaded lineup files contain the same `matchups` array. The comparer preserves these pairs and their left/right order. Each character can appear only once in a round, and a skipped pair consumes both characters. A cast without configured matchups is shuffled into disjoint pairs, with one character sitting out when its size is odd. The owner's preserved 19-character public cast therefore produces nine matchups until specific pairs are configured.
 
 Run from `services/spongebob-votes/`:
 

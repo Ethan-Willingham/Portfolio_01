@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Refresh the sourced SpongeBob roster and its locally stored portraits.
+"""Refresh the original SpongeBob SquarePants TV roster and local portraits.
 
 Run with Python 3 and Pillow installed. The wiki's character category is the
 discovery index. Only individual named characters and recognizable creatures
 are retained; numbered incidental lists, crowds and alternate poses are omitted.
 Downloads are resized for the picker and encoded as WebP, with transparency
-preserved. No wiki article prose is copied.
+preserved. An actual original-series episode is recorded for every character.
+Movie, spinoff, game and book appearances alone do not qualify. No wiki article
+prose is copied.
 """
 
 import argparse
@@ -50,6 +52,8 @@ NAMED_INCIDENTALS = {
     "Incidental 116": ("dr-gill-gilliam", "Dr. Gill Gilliam"),
 }
 SEARCH_ALIASES = {
+    "Fred": ["My leg", "My leg guy", "Fred the Fish", "Incidental 1"],
+    "Tom (Inc 6)": ["Chocolate guy", "Chocolate man", "Incidental 6"],
     "Suzy": ["Debbie Rechid", "Nancy Suzy Fish"],
     "Judy": ["Shubie"],
     "Officer Murphy": ["Officer John"],
@@ -57,6 +61,75 @@ SEARCH_ALIASES = {
     "Sheldon J. Plankton": ["Sheldon J. Plankton"],
     "Karen Plankton": ["Karen Plankton"],
 }
+NAMED_INCIDENTALS.update({
+    "Incidental 4": ("incidental-4", "Steven"),
+    "Incidental 5": ("incidental-5", "John"),
+    "Incidental 8": ("incidental-8", "Tina"),
+    "Incidental 14": ("incidental-14", "Evelyn"),
+    "Incidental 22": ("incidental-22", "Carol (waitress)"),
+    "Incidental 23": ("incidental-23", "Charlie (fish)"),
+    "Incidental 24": ("incidental-24", "Frank (muscle fish)"),
+    "Incidental 26": ("incidental-26", "Joe (zookeeper)"),
+    "Incidental 27": ("incidental-27", "Jimmy"),
+    "Incidental 30": ("incidental-30", "Meep Meep"),
+    "Incidental 36": ("incidental-36", "Harold (purple fish)"),
+    "Incidental 37A": ("incidental-37a", "Tuck Tucker"),
+    "Incidental 42": ("incidental-42", "Frank (tall fish)"),
+    "Incidental 47": ("incidental-47", "Sadie"),
+    "Incidental 48": ("incidental-48", "Rochelle"),
+    "Incidental 49": ("incidental-49", "Nurse Rechid"),
+    "Incidental 49A": ("incidental-49a", "Janice"),
+    "Incidental 63": ("incidental-63", "Martha"),
+    "Incidental 64": ("incidental-64", "Bruiser"),
+    "Incidental 65": ("incidental-65", "Billy (green fish)"),
+    "Incidental 73": ("incidental-73", "Harris"),
+    "Incidental 81": ("incidental-81", "Scaley"),
+    "Incidental 81A": ("incidental-81a", "Dusty"),
+    "Incidental 82": ("incidental-82", "Mabel (elderly fish)"),
+    "Incidental 84": ("incidental-84", "Mabel (other elderly fish)"),
+    "Incidental 91": ("incidental-91", "Old Man Jenkins (seahorse rider)"),
+    "Incidental 92": ("incidental-92", "Gonzalez"),
+    "Incidental 92A": ("incidental-92a", "Dennis (farmer)"),
+    "Incidental 93": ("incidental-93", "Miss Shell"),
+    "Incidental 104": ("incidental-104", "Gale"),
+    "Incidental 105": ("incidental-105", "Frank (yellow fish)"),
+    "Incidental 107B": ("incidental-107b", "Buxton"),
+    "Incidental 108": ("incidental-108", "Dale"),
+    "Incidental 114": ("incidental-114", "Lenny"),
+    "Incidental 115": ("incidental-115", "Mabel"),
+    "Incidental 118": ("incidental-118", "Officer Slugfish"),
+    "Incidental 124": ("incidental-124", "Prudence"),
+    "Incidental 127": ("incidental-127", "Nathaniel"),
+    "Incidental 151": ("incidental-151", "Tyler"),
+    "Incidental 152": ("incidental-152", "Billy"),
+    "Incidental 153": ("incidental-153", "Susie"),
+    "Incidental 155": ("incidental-155", "Frank (orange fish)"),
+    "Incidental 158": ("incidental-158", "Billy (beanie kid)"),
+    "Incidental 205": ("incidental-205", "Pbblutt Plaaart"),
+    "Incidental 211": ("incidental-211", "Bert (Rock Bottom fish)"),
+    "Incidental 220": ("incidental-220", "Pbbfit Pbbfit"),
+    "Incidental 222": ("incidental-222", "Frank (Rock Bottom fish)"),
+})
+SEARCH_ALIASES.update({
+    "Incidental 8": ["Fran", "Clementine"],
+    "Incidental 14": ["Annette"],
+    "Incidental 24": ["Tibor", "Wayne", "Frank"],
+    "Incidental 42": ["Dave", "Percy", "Frank"],
+    "Incidental 105": ["Frank"],
+    "Incidental 155": ["Frank"],
+    "Incidental 222": ["Frank"],
+    "Incidental 27": ["Gus"],
+    "Incidental 37A": ["Guybesideu3"],
+    "Incidental 63": ["Mrs. Smith", "Doris"],
+    "Incidental 64": ["Thadeus"],
+    "Incidental 82": ["Old Man Old Lady"],
+    "Incidental 104": ["Jennifer"],
+    "Incidental 115": ["Tammy", "Jill", "Monica"],
+    "Incidental 116": ["Gill Gilliam", "Dr. Fishberg"],
+    "Incidental 118": ["Johnson"],
+    "Incidental 151": ["Billy", "Timmy"],
+    "Incidental 153": ["Sissy"],
+})
 SAME_CHARACTER_FORMS = {
     "Abominable Starfish", "Abrasive Sponge", "Captain Magma", "Dirty Dan",
     "Elastic Waistband", "Miss Appear", "The Quickster (character)",
@@ -65,6 +138,21 @@ SAME_CHARACTER_FORMS = {
     "Squid Doodle", "Not SpongeBob", "Supersized Patty", "Prisoner A",
     "Prisoner B", "Prisoner D",
 }
+PHOTO_FALLBACKS = set("""
+artist beanie-mcbean ben-gums bullfrog can carol-spongebob-s-big-birthday-blowout
+cavey chip-i country-squirrel cyclops dancing-anemone david-hasselhoff davy-jones
+desert-sandwich dog-walker don fisherman french-canadian-narrator french-narrator
+george giant-man giraffe gorilla gorilla-boss guy-in-shower hans jerry jimbob
+live-action-broccoli live-action-cow live-action-dolphins live-action-whale
+longbeard minnie-mermaid moon mr-charleston mr-manward mr-pirateson
+mr-puff-krusty-love mr-slabs mrs-johnson muscle-guy nosferatu old-coot old-sailor
+p-nk painty-the-pirate patchy-the-pirate patrick-live-action pearl-slabs pie-dragon
+rat real-life-drummer realistic-fish-head robin-williams rosie-cheeks-pest-of-the-west
+santa-claus seagull security-guard-truth-or-square storyboard-artist
+subliminal-message-girl surface-world-pizza-chef the-chief the-foot
+the-guy-on-the-penny tyrannosaurus-rex volcano-sauce-drop vulture will-ferrell
+woman-customer x-29488
+""".split())
 
 # One-word names cannot be distinguished from job titles by capitalization.
 # These are individual wiki character entries rather than crowds or species lists.
@@ -140,19 +228,108 @@ def discover(cache):
     return pages
 
 
-def is_candidate(title):
+def category_pages(category, cache):
+    if cache.exists():
+        return json.loads(cache.read_text())
+    pages, params = [], {"action": "query", "list": "categorymembers", "cmtitle": "Category:" + category, "cmnamespace": 0, "cmlimit": 500}
+    while True:
+        data = api(params)
+        pages.extend(data["query"]["categorymembers"])
+        if "continue" not in data:
+            break
+        params.update(data["continue"])
+    cache.write_text(json.dumps(pages))
+    return pages
+
+
+def revision_texts(pages, cache_dir, prefix):
+    texts = {}
+    for offset in range(0, len(pages), 50):
+        cache = cache_dir / f"{prefix}-{offset}.json"
+        batch = pages[offset:offset + 50]
+        data = json.loads(cache.read_text()) if cache.exists() else None
+        if data is None or set(data["query"]["pages"]) != {str(p["pageid"]) for p in batch}:
+            data = api({"action": "query", "prop": "revisions", "pageids": "|".join(str(p["pageid"]) for p in batch), "rvprop": "content", "rvslots": "main"})
+            cache.write_text(json.dumps(data))
+        for page in data["query"]["pages"].values():
+            texts[page["title"]] = page.get("revisions", [{}])[0].get("slots", {}).get("main", {}).get("*", "")
+    return texts
+
+
+def wiki_links(text):
+    return [link.split("|")[0].split("#")[0].strip().replace("_", " ") for link in re.findall(r"\[\[([^\]]+)\]\]", text)]
+
+
+def episode_character_index(episode_texts):
+    appearances = {}
+    for episode, text in episode_texts.items():
+        header = re.search(r"^==+\s*Characters\s*==+\s*", text, re.M | re.I)
+        if not header:
+            continue
+        section = text[header.end():].split("\n==")[0]
+        for line in section.splitlines():
+            if not line.lstrip().startswith("*") or re.search(r"\b(?:mentioned|cut|deleted|unused)\b", line, re.I):
+                continue
+            for title in wiki_links(line):
+                appearances.setdefault(title, episode)
+    return appearances
+
+
+def series_evidence(title, text, episodes, episode_index):
+    # Only actual character appearance parameters count. Family references,
+    # voice credits, related-page templates and trivia do not establish scope.
+    for prop in ("first-appearance", "appearance", "appearances"):
+        match = re.search(r"\|\s*" + prop + r"\s*=\s*(.*?)(?=\|\s*[a-zA-Z][\w-]*\s*=|\n\}\})", text, re.S)
+        if match:
+            for part in re.split(r"<br\s*/?>|\n", match[1], flags=re.I):
+                if re.search(r"\b(?:mentioned|deleted|unused)\b", part, re.I):
+                    continue
+                for episode in wiki_links(part):
+                    if episode in episodes:
+                        return episode, "character appearance infobox"
+    if title in episode_index:
+        return episode_index[title], "original episode character list"
+    for heading in re.finditer(r"^(={2,3})\s*(?:Role in (?:series|SpongeBob SquarePants)|SpongeBob SquarePants|Role in episodes?)\s*\1\s*$", text, re.M | re.I):
+        after = text[heading.end():]
+        end = re.search(r"^={2," + str(len(heading[1])) + r"}[^=]", after, re.M)
+        section = after[:end.start()] if end else after
+        for episode in wiki_links(section):
+            if episode in episodes:
+                return episode, "original-series role section"
+    return None
+
+
+def is_candidate(title, text=""):
+    # A species page can provide a recognizable single creature design, while
+    # clubs, bands and crowds do not represent an individual fight choice.
+    individual_group_designs = ARCHETYPES | {
+        "Amoeba", "Bubble giraffe", "Fangtooth fish", "Flea", "Jellyfish",
+        "Jelly bee", "Invisible fish", "Jumbo Shrimp", "Roxy", "Seagull",
+        "Sea urchin", "Sea bunny", "Sea anemone", "Sea gorilla",
+        "Spotted glistening meadow worm", "Robot (House Sittin' for Sandy)",
+    }
+    if "[[Category:Groups]]" in text and title not in individual_group_designs:
+        return False
     if title in SAME_CHARACTER_FORMS:
         return False
     if title in NAMED_INCIDENTALS or title in ARCHETYPES:
         return True
-    if EXCLUDE.search(title):
+    # Parentheses often contain an episode title, whose possessives should not
+    # accidentally hide a character such as Frank (Neptune's advisor).
+    base = title.split(" (")[0]
+    if re.search(r"^(?:Unknown\b|Doctor\s*\d|Ghost\s*\d|Fish\s*\d|Squid\s*\d|Snail\s*\d|Plankton\s*\d|PKTN\s*\d|Planktons row|Lodge member\s*\d|Machine\s*\d|Navy inc|Senior\s*\d|Viking\s*\d|SecurityGuardGW\s*\d)", base, re.I):
+        return False
+    if re.search(r"\b(?:snails|worms|robbers|buddies|carolers|dwellers|chimpanzees|scallops|cockroaches|cyclists|monsters|elves|tikis|executioners|firefighters|fishermen|germs|flies|sycophants|chorus|couple|hobos|puppies|jelliens|spotters|knights|lampreys|girls|miners|kids|peanut worms|pirates|glove guards|monks|trees|baboons|chimps|whelks|ninjas|cows|smellies|babies|racers|aliens|inspectors|goons)\b", base, re.I):
+        return False
+    if base in {"Anchovies", "Nematodes", "Jellyspotters", "Scallops and clams", "Faux-chovies", "Fused-together characters", "GrandPat sycophants", "Pre-fab homes", "Slappy heads", "Human football players"}:
+        return False
+    if EXCLUDE.search(base) or re.search(r"(?:^|\s)(?:Teen|BunnyBunnsKids|BusinessFish|Inmate FP|Jellyfish geek|Puffy Fluff|New Fancy|Prisoner)\s*[A-Z]*\d|\bincidentals\b", title, re.I):
         return False
     if title in MAIN or title in RECURRING or title in VILLAINS or title in MOVIES or title in SPINOFFS:
         return True
     if title in SINGLE_NAMES:
         return True
-    base = title.split(" (")[0]
-    return any(word[:1].isupper() for word in base.split()[1:])
+    return True
 
 
 def slug(title):
@@ -174,24 +351,17 @@ def describe(page):
         group = "Recurring"
     elif title in VILLAINS:
         group = "Villains"
-    elif title in MOVIES:
-        group = "Movies"
-    elif title in SPINOFFS:
-        group = "Spinoffs"
     elif re.search(r"\b(?:SquarePants|Cheeks|Star|Krabs|Tentacles|Plankton|Dartfish)\b", title) and not re.search(r"\b(?:Captain|Dead Eye|Dr\.|Mr\.|Mermalair)\b", title):
         group = "Family"
     else:
-        categories = [category["title"] for category in page.get("categories", [])]
-        if "Category:Movie characters" in categories:
-            group = "Movies"
-        elif "Category:The Patrick Star Show main characters" in categories or "Category:Kamp Koral main characters" in categories:
-            group = "Spinoffs"
-        else:
-            group = "Minor characters"
+        group = "Minor characters"
     item = {"id": id_, "name": name.replace("\u2014", ", "), "group": group,
             "image": f"assets/spongebob/characters/{id_}.webp",
             "sourcePage": "https://spongebob.fandom.com/wiki/" + quote(title.replace(" ", "_")),
-            "sourceImage": page["original"]["source"]}
+            "sourceImage": page["original"]["source"],
+            "seriesEpisode": page["seriesEpisode"].replace("\u2665", "Heart"),
+            "seriesSource": "https://spongebob.fandom.com/wiki/" + quote(page["seriesEpisode"].replace(" ", "_")),
+            "seriesEvidence": page["seriesEvidence"]}
     if title in SEARCH_ALIASES:
         item["aliases"] = SEARCH_ALIASES[title]
     return item
@@ -230,17 +400,18 @@ def download(page, force=False):
     with Image.open(output) as im:
         item.update(width=im.width, height=im.height)
         fallback = output.with_suffix(".png")
-        if fallback.exists():
+        if fallback.exists() or item["id"] in PHOTO_FALLBACKS:
             im.save(fallback, "PNG", optimize=True)
             item["fallbackImage"] = fallback.relative_to(ROOT).as_posix()
     return item
 
 
 def write_roster(items, discovered):
-    order = {name: i for i, name in enumerate(["Main cast", "Recurring", "Villains", "Movies", "Spinoffs", "Family", "Minor characters"])}
+    order = {name: i for i, name in enumerate(["Main cast", "Recurring", "Villains", "Family", "Minor characters"])}
     main_order = {info[0]: i for i, info in enumerate(MAIN.values())}
     items.sort(key=lambda x: (order[x["group"]], main_order.get(x["id"], 999), x["name"].casefold()))
-    data = {"version": 1, "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    data = {"version": 2, "scope": "original-series", "scopeName": "SpongeBob SquarePants TV series",
+            "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "sourceName": "Encyclopedia SpongeBobia", "sourceUrl": SOURCE,
             "discoveredCharacterPages": discovered, "characters": items}
     pending = DEST / "characters.json.tmp"
@@ -253,13 +424,24 @@ def main():
     parser.add_argument("--cache-dir", type=Path, default=Path("/tmp/spongebob-import-cache"))
     parser.add_argument("--force", action="store_true", help="redownload existing portraits")
     parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--audit-cache-dir", type=Path, default=Path("/tmp/spongebob-original-audit"))
     args = parser.parse_args()
     args.cache_dir.mkdir(parents=True, exist_ok=True)
+    args.audit_cache_dir.mkdir(parents=True, exist_ok=True)
     (DEST / "characters").mkdir(parents=True, exist_ok=True)
     all_pages = discover(args.cache_dir / "characters-category.json")
-    selected = [page for page in all_pages if is_candidate(page["title"])]
+    episode_pages = category_pages("Episodes", args.audit_cache_dir / "episodes.json")
+    source_texts = revision_texts(all_pages, args.audit_cache_dir, "revisions")
+    episode_texts = revision_texts(episode_pages, args.audit_cache_dir, "episode-revisions")
+    # Regular original-series episodes use this template. Livestreams, clip
+    # compilations and separate short-form programs do not establish inclusion.
+    episode_texts = {title: text for title, text in episode_texts.items() if re.search(r"\{\{Episode\s*(?:\n|\|)", text)}
+    episodes = set(episode_texts)
+    episode_index = episode_character_index(episode_texts)
+    evidence = {page["title"]: series_evidence(page["title"], source_texts[page["title"]], episodes, episode_index) for page in all_pages}
+    selected = [page for page in all_pages if is_candidate(page["title"], source_texts[page["title"]]) and evidence[page["title"]]]
     selected.sort(key=lambda p: (p["title"] not in MAIN, p["title"].casefold()))
-    print(f"Selected {len(selected)} individual character pages from {len(all_pages)} indexed entries", flush=True)
+    print(f"Selected {len(selected)} original-TV character pages from {len(all_pages)} indexed entries and {len(episodes)} episode sources", flush=True)
     image_pages = []
     for offset in range(0, len(selected), 50):
         batch = selected[offset:offset + 50]
@@ -275,6 +457,7 @@ def main():
             cache.write_text(json.dumps(data))
             time.sleep(.15)
         for page in data["query"]["pages"].values():
+            page["seriesEpisode"], page["seriesEvidence"] = evidence[page["title"]]
             if page.get("original") and page.get("pageimage") != "TBA.png":
                 image_pages.append(page)
             elif not page.get("original"):
@@ -305,8 +488,9 @@ def main():
         raise RuntimeError("Duplicate character ID found")
     write_roster(items, len(all_pages))
     final_files = {Path(item["image"]).name for item in items}
-    for stale in (DEST / "characters").glob("*.webp"):
-        if stale.name not in final_files:
+    final_files.update(Path(item["fallbackImage"]).name for item in items if item.get("fallbackImage"))
+    for stale in (DEST / "characters").iterdir():
+        if stale.suffix in {".webp", ".png", ".jpg", ".jpeg"} and stale.name not in final_files:
             stale.unlink()
     (args.cache_dir / "failures.json").write_text(json.dumps(failures, indent=2))
     print(f"Complete: {len(items)} verified images; {len(failures)} failures", flush=True)

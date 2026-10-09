@@ -3,7 +3,7 @@
   const SELECTION_KEY = 'spongebob-character-selection-v1';
   let catalogPromise;
   async function fetchJSON(path) {
-    const response = await fetch(path + '?v=1', { cache: 'no-cache' });
+    const response = await fetch(path + '?v=2', { cache: 'no-cache' });
     if (!response.ok) throw new Error('The character catalog could not be loaded.');
     return response.json();
   }
@@ -21,7 +21,13 @@
         byId.set(character.id, character);
         return true;
       });
-      return { catalog, characters, byId, lineup, defaultIds: cleanIds(lineup.characterIds, byId) };
+      // Keep the owner's chosen cast usable when its members fall outside a new catalog scope.
+      const retainedCharacters = (Array.isArray(lineup.retainedCharacters) ? lineup.retainedCharacters : []).filter(character => {
+        if (!character || typeof character.id !== 'string' || !/^[a-z0-9-]+$/.test(character.id) || !character.name || byId.has(character.id)) return false;
+        byId.set(character.id, character);
+        return true;
+      });
+      return { catalog, characters, retainedCharacters, byId, lineup, defaultIds: cleanIds(lineup.characterIds, byId) };
     }).catch(error => { catalogPromise = null; throw error; });
     return catalogPromise;
   }
@@ -65,9 +71,22 @@
     try { localStorage.setItem(SELECTION_KEY, JSON.stringify(ids)); return true; }
     catch (_) { return false; }
   }
-  function fightURL(ids) {
+  function cleanMatchups(pairs, ids, byId) {
+    if (!Array.isArray(pairs) || !pairs.length) return null;
+    const allowed = new Set(cleanIds(ids, byId)), used = new Set();
+    const result = [];
+    for (const pair of pairs) {
+      if (!Array.isArray(pair) || pair.length !== 2 || pair[0] === pair[1] || pair.some(id => !allowed.has(id) || used.has(id))) return null;
+      pair.forEach(id => used.add(id));
+      result.push([...pair]);
+    }
+    return result;
+  }
+  function fightURL(ids, matchups) {
     const url = new URL('spongebob-fight.html', location.href);
-    url.hash = new URLSearchParams({ roster: ids.join(',') }).toString();
+    const hash = new URLSearchParams({ roster: ids.join(',') });
+    if (Array.isArray(matchups) && matchups.length) hash.set('matchups', JSON.stringify(matchups));
+    url.hash = hash.toString();
     return url.href;
   }
   function sharedRoster(byId) {
@@ -77,6 +96,13 @@
     if (value === null) return null;
     return cleanIds(value.split(','), byId);
   }
+  function sharedMatchups(byId, ids) {
+    const query = new URLSearchParams(location.search), hash = new URLSearchParams(location.hash.slice(1));
+    const value = hash.get('matchups') ?? query.get('matchups');
+    if (value === null) return null;
+    try { return cleanMatchups(JSON.parse(value), ids, byId) || []; }
+    catch (_) { return []; }
+  }
   function pairKey(pair) { return [...pair].sort().join('|'); }
-  window.SpongeBob = { load, cleanIds, picture, readSelection, saveSelection, fightURL, sharedRoster, pairKey };
+  window.SpongeBob = { load, cleanIds, cleanMatchups, picture, readSelection, saveSelection, fightURL, sharedRoster, sharedMatchups, pairKey };
 })();

@@ -8,10 +8,17 @@ const { DatabaseSync } = require('node:sqlite');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/characters.json')));
-const publicIds = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/lineup.json'))).characterIds;
+const publicLineup = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/lineup.json')));
+const publicIds = publicLineup.characterIds;
 const ids = catalog.characters.map(character => character.id);
+const voteIds = [...new Set([...ids, ...(publicLineup.retainedCharacters || []).map(character => character.id)])];
+assert.equal(catalog.scope, 'original-series', 'catalog is scoped to the original TV series');
+assert.ok(catalog.characters.every(character => character.seriesEpisode && character.seriesSource?.startsWith('https://spongebob.fandom.com/wiki/')), 'every character has TV-episode evidence');
+assert.equal(ids.includes('bare-knuckles-the-sea-bear'), false, 'spinoff-only characters are excluded');
+assert.equal(publicIds.length, 19, 'all 19 owner-selected characters are preserved');
+assert.ok(publicIds.every(id => voteIds.includes(id)), 'the public cast is available even outside the new picker scope');
 const source = fs.readFileSync(path.join(root, 'services/spongebob-votes/worker/index.js'), 'utf8')
-  .replace('/* SITES_ROSTER_IDS */ []', JSON.stringify(ids));
+  .replace('/* SITES_ROSTER_IDS */ []', JSON.stringify(voteIds));
 const sqlite = new DatabaseSync(':memory:');
 sqlite.exec(fs.readFileSync(path.join(root, 'services/spongebob-votes/drizzle/0000_matchup_votes.sql'), 'utf8'));
 const DB = {
@@ -64,6 +71,13 @@ async function voteFor(page, name) { await page.getByRole('button', { name: 'Cho
 async function noOverflow(page) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, 'no horizontal overflow');
 }
+async function noMatchupOverlap(page) {
+  assert.equal(await page.evaluate(() => {
+    const cards = ['sb-fighter-left', 'sb-fighter-right'].map(id => document.getElementById(id).getBoundingClientRect());
+    const controls = ['sb-vote-state', 'sb-round-actions'].map(id => document.getElementById(id)).filter(element => !element.hidden).map(element => element.getBoundingClientRect());
+    return cards.every(card => controls.every(control => card.right <= control.left || card.left >= control.right || card.bottom <= control.top + 1));
+  }), true, 'character cards do not overlap feedback or controls');
+}
 (async () => {
   try {
     worker = (await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))).default;
@@ -74,6 +88,9 @@ async function noOverflow(page) {
     assert.equal(await page.locator('.sb-character').count(), ids.length);
     assert.equal(await page.locator('.sb-source-link').count(), ids.length, 'each image has a source');
     assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length));
+    assert.equal(await page.getByRole('button', { name: 'Remove Bare-Knuckles the Sea Bear from lineup', exact: true }).isVisible(), true, 'the saved cast keeps its selected spinoff character');
+    await page.locator('#sb-search').fill('My leg');
+    assert.equal(await page.locator('.sb-character[data-id="fred"]').isVisible(), true, 'Fred can be found by his catchphrase');
     const photo = catalog.characters.find(character => character.fallbackImage);
     assert.ok(photo, 'photographic portraits include a fallback');
     await page.locator('#sb-search').fill(photo.name);
@@ -121,8 +138,13 @@ async function noOverflow(page) {
     assert.ok(share.includes('#roster='));
     await noOverflow(page);
     await page.goto(share); await fightReady(page);
+    assert.equal(await page.locator('.post-header, .post-body, .site-wrapper, .site-footer').count(), 0, 'comparer has its own app shell');
+    assert.equal(await page.locator('link[href="style.css"], script[src="js/main.js"]').count(), 0, 'comparer does not load blog presentation');
+    const attribution = page.getByRole('link', { name: '© 2026 Ethan Willingham', exact: true });
+    assert.equal(await attribution.getAttribute('href'), '/', 'only footer attribution links home');
     assert.equal(await page.locator('#sb-roster-label').textContent(), '2 characters / Shared lineup');
     await voteFor(page, 'Patrick Star');
+    await noMatchupOverlap(page);
     assert.match(await page.locator('#sb-vote-total').textContent(), /^1 vote/);
     assert.match(await page.locator('#sb-vote-status').textContent(), /100%/);
     const second = await context();
@@ -148,12 +170,14 @@ async function noOverflow(page) {
     failure = null; await third.page.locator('#sb-vote-retry').click(); await third.page.locator('#sb-next').waitFor({ state: 'visible' });
     assert.match(await third.page.locator('#sb-vote-total').textContent(), /^3 votes/, 'retry confirms exactly one saved vote');
     assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM matchup_votes').get().n, 3);
-    await page.goto(base + '/spongebob-fight.html#roster=spongebob-squarepants,patrick-star,sandy-cheeks');
+    await page.goto(base + '/spongebob-fight.html#roster=spongebob-squarepants,patrick-star,sandy-cheeks,squidward-tentacles');
     const seen = new Set();
-    for (let index = 0; index < 3; index++) {
+    for (let index = 0; index < 2; index++) {
       await fightReady(page);
-      const pair = (await page.locator('.sb-fighter-name').allTextContents()).sort().join('|');
-      assert.equal(seen.has(pair), false, 'unordered pairs never repeat'); seen.add(pair);
+      assert.match(await page.locator('#sb-progress').textContent(), /of 2$/i, 'four characters make two matchups');
+      for (const name of await page.locator('.sb-fighter-name').allTextContents()) {
+        assert.equal(seen.has(name), false, 'each character appears only once per round'); seen.add(name);
+      }
       if (await page.locator('#sb-next').isVisible()) await page.locator('#sb-next').click(); else await page.locator('#sb-skip').click();
     }
     assert.equal(await page.locator('#sb-complete').isVisible(), true);
@@ -173,15 +197,71 @@ async function noOverflow(page) {
     await mobile.page.screenshot({ path: '/tmp/spongebob-picker-mobile-cards.png', fullPage: false });
     await mobile.page.locator('.sb-review-link').click();
     assert.ok(await mobile.page.locator('#sb-download').isVisible(), 'review jump reaches export');
+    const retainedCast = await context();
+    await retainedCast.page.goto(base + '/spongebob-fight.html#roster=bare-knuckles-the-sea-bear,fred');
+    await fightReady(retainedCast.page);
+    assert.ok((await retainedCast.page.locator('.sb-fighter-name').allTextContents()).includes('Bare-Knuckles the Sea Bear'), 'retained cast members still work in matchups');
+    await retainedCast.context.close();
+    const manual = await context({ width: 375, height: 812 });
+    await manual.page.goto(base + '/spongebob-picker.html');
+    await manual.page.locator('#sb-filters').waitFor({ state: 'visible' });
+    await manual.page.locator('#sb-clear').click();
+    await manual.page.locator('#sb-group').selectOption('Main cast');
+    for (const id of ['spongebob-squarepants', 'patrick-star', 'sandy-cheeks', 'squidward-tentacles']) {
+      await manual.page.locator('.sb-character[data-id="' + id + '"] input').check();
+    }
+    const chosenPairs = [['spongebob-squarepants', 'patrick-star'], ['sandy-cheeks', 'squidward-tentacles']];
+    for (const pair of chosenPairs) {
+      await manual.page.locator('#sb-pair-left').selectOption(pair[0]);
+      await manual.page.locator('#sb-pair-right').selectOption(pair[1]);
+      await manual.page.locator('#sb-pair-add').click();
+    }
+    assert.equal(await manual.page.locator('#sb-paired-list > li').count(), 2, 'manual pairs can be chosen from the selected cast');
+    assert.equal(await manual.page.locator('#sb-pair-add').isDisabled(), true, 'used characters cannot be paired again');
+    await manual.page.reload(); await manual.page.locator('#sb-filters').waitFor({ state: 'visible' });
+    assert.deepEqual(await manual.page.evaluate(() => SpongeBobMatchups.getPairs()), chosenPairs, 'chosen pairs survive reload in order');
+    const manualDownloadEvent = manual.page.waitForEvent('download'); await manual.page.locator('#sb-download-matchups').click();
+    const manualDownload = await manualDownloadEvent;
+    assert.deepEqual(JSON.parse(fs.readFileSync(await manualDownload.path(), 'utf8')).matchups, chosenPairs, 'download preserves exact matchups');
+    await manual.page.locator('#sb-copy-matchups').click();
+    const manualShare = await manual.page.evaluate(() => navigator.clipboard.readText());
+    assert.deepEqual(JSON.parse(new URLSearchParams(new URL(manualShare).hash.slice(1)).get('matchups')), chosenPairs, 'share link includes ordered matchups');
+    await noOverflow(manual.page);
+    await manual.page.locator('#sb-pairing').scrollIntoViewIfNeeded();
+    await manual.page.screenshot({ path: '/tmp/spongebob-pairing-mobile.png', fullPage: false });
+    await manual.page.goto(manualShare);
+    for (const names of [['SpongeBob SquarePants', 'Patrick Star'], ['Sandy Cheeks', 'Squidward Tentacles']]) {
+      await fightReady(manual.page);
+      assert.deepEqual(await manual.page.locator('.sb-fighter-name').allTextContents(), names, 'fight uses chosen pair order and sides');
+      await manual.page.locator('#sb-skip').click();
+    }
+    assert.equal(await manual.page.locator('#sb-complete').isVisible(), true, 'manual round ends after its configured pairs');
+    const invalidShare = new URL(manualShare);
+    invalidShare.hash = new URLSearchParams({ roster: 'spongebob-squarepants,patrick-star,sandy-cheeks', matchups: JSON.stringify([['spongebob-squarepants','patrick-star'],['spongebob-squarepants','sandy-cheeks']]) }).toString();
+    await manual.page.goto(invalidShare.href); await manual.page.locator('#sb-load-retry').waitFor({ state: 'visible' });
+    assert.match(await manual.page.locator('#sb-load-state').textContent(), /Each character can appear only once/);
+    await manual.context.close();
     await mobile.page.goto(share); await fightReady(mobile.page); await noOverflow(mobile.page);
     const pictures = await mobile.page.locator('.sb-fighter-image img').evaluateAll(images => Promise.all(images.map(image => image.decode().then(() => image.naturalWidth > 0))));
     assert.ok(pictures.every(Boolean), 'both character portraits load');
     assert.ok(await mobile.page.locator('#sb-name-right').evaluate(name => name.getBoundingClientRect().bottom <= innerHeight), 'both character names are visible on the first mobile screen');
+    assert.ok(await mobile.page.locator('#sb-fighter-right').evaluate(card => card.getBoundingClientRect().width >= 44 && card.getBoundingClientRect().height >= 44), 'vote targets are touch-sized');
     await mobile.page.screenshot({ path: '/tmp/spongebob-fight-mobile.png', fullPage: true });
+    await noMatchupOverlap(mobile.page);
     await first.page.goto(share); await fightReady(first.page);
+    await noMatchupOverlap(first.page);
     await first.page.screenshot({ path: '/tmp/spongebob-fight-desktop.png', fullPage: true });
+    for (const viewport of [{ width: 320, height: 568 }, { width: 812, height: 375 }]) {
+      const compact = await context(viewport);
+      await compact.page.goto(base + '/spongebob-fight.html#roster=tattletale-strangler,tom-prison-guard-1');
+      await fightReady(compact.page); await noOverflow(compact.page); await noMatchupOverlap(compact.page);
+      await voteFor(compact.page, 'Tom (Prison guard 1)');
+      await noOverflow(compact.page); await noMatchupOverlap(compact.page);
+      await compact.page.screenshot({ path: '/tmp/spongebob-fight-' + viewport.width + '.png', fullPage: true });
+      await compact.context.close();
+    }
     assert.deepEqual(errors, [], 'no browser script errors');
-    console.log('PASS: ' + ids.length + ' sourced cards, persistence, keyboard, export/share, two-browser real percentages, reversed duplicates, lost-response retry, unique rounds, invalid roster, 375px layout.');
+    console.log('PASS: ' + ids.length + ' original-TV cards, catchphrase search, persistence, keyboard, export/share, real shared percentages, reversed duplicates, lost-response retry, one appearance per character, standalone comparer, desktop/mobile/landscape layouts.');
   } finally {
     await browser?.close(); await new Promise(resolve => server.close(resolve)); sqlite.close();
   }

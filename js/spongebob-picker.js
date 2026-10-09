@@ -3,17 +3,19 @@
   const shared = window.SpongeBob;
   const $ = id => document.getElementById(id);
   let data, selected = new Set(), cards = new Map(), visibleIds = [];
-  function chosenIds() { return data.characters.filter(character => selected.has(character.id)).map(character => character.id); }
+  function chosenIds() { return [...data.characters, ...data.retainedCharacters].filter(character => selected.has(character.id)).map(character => character.id); }
+  function chosenMatchups() { return window.SpongeBobMatchups?.getPairs() || []; }
+  function updateFightLink() { $('sb-play').href = shared.fightURL(chosenIds(), chosenMatchups()); }
   function updateSelection(save) {
     const ids = chosenIds();
     if (save) $('sb-storage-note').textContent = shared.saveSelection(ids)
       ? 'Your selection is saved in this browser.'
       : 'Browser storage is unavailable. Download your lineup or copy its link to keep these choices.';
     $('sb-selected-count').textContent = ids.length;
-    const pairs = ids.length * (ids.length - 1) / 2;
-    $('sb-pair-count').textContent = ids.length < 2 ? '/ choose at least 2' : '/ ' + pairs.toLocaleString() + ' possible pairs';
+    const pairs = Math.floor(ids.length / 2);
+    $('sb-pair-count').textContent = ids.length < 2 ? '/ choose at least 2' : '/ up to ' + pairs.toLocaleString() + (pairs === 1 ? ' matchup' : ' matchups') + (ids.length % 2 ? ', 1 sits out' : '');
     $('sb-play').setAttribute('aria-disabled', String(ids.length < 2));
-    $('sb-play').href = shared.fightURL(ids);
+    $('sb-play').href = shared.fightURL(ids, chosenMatchups());
     $('sb-copy-link').disabled = ids.length < 2;
     $('sb-download').disabled = ids.length < 2;
     $('sb-copy-fallback').hidden = true;
@@ -39,6 +41,8 @@
       item.textContent = 'No characters selected yet. Choose at least two to make a fight lineup.'; list.append(item);
     }
     $('sb-chosen-list').replaceChildren(list);
+    window.dispatchEvent(new CustomEvent('spongebob-selection-change', { detail: { data, ids } }));
+    updateFightLink();
   }
   function applyFilters() {
     const search = $('sb-search').value.trim().toLocaleLowerCase();
@@ -73,6 +77,11 @@
       const name = document.createElement('span'); name.className = 'sb-character-name'; name.textContent = character.name;
       const group = document.createElement('span'); group.className = 'sb-character-group'; group.textContent = character.group || 'Other characters';
       label.append(name, group); card.append(label);
+      if (typeof character.seriesEpisode === 'string') {
+        const episode = document.createElement('span'); episode.className = 'sb-character-episode';
+        episode.textContent = 'TV: ' + character.seriesEpisode;
+        card.append(episode);
+      }
       if (typeof character.sourcePage === 'string' && /^https?:\/\//.test(character.sourcePage)) {
         const source = document.createElement('a'); source.className = 'sb-source-link'; source.href = character.sourcePage;
         source.textContent = 'Character source'; source.target = '_blank'; source.rel = 'noopener noreferrer';
@@ -111,7 +120,7 @@
   $('sb-defaults').addEventListener('click', () => { selected = new Set(data.defaultIds); updateSelection(true); applyFilters(); });
   $('sb-play').addEventListener('click', event => { if (selected.size < 2) event.preventDefault(); });
   $('sb-copy-link').addEventListener('click', async () => {
-    const url = shared.fightURL(chosenIds());
+    const url = shared.fightURL(chosenIds(), chosenMatchups());
     try { await navigator.clipboard.writeText(url); $('sb-export-status').textContent = 'Fight link copied. It includes your chosen characters.'; }
     catch (_) {
       $('sb-copy-fallback').hidden = false; $('sb-share-url').value = url; $('sb-share-url').focus(); $('sb-share-url').select();
@@ -120,6 +129,10 @@
   });
   $('sb-download').addEventListener('click', () => {
     const lineup = { version: 1, title: 'Chosen SpongeBob lineup', updatedAt: new Date().toISOString().slice(0, 10), characterIds: chosenIds() };
+    const matchups = chosenMatchups();
+    if (matchups.length) lineup.matchups = matchups;
+    const retained = data.retainedCharacters.filter(character => selected.has(character.id));
+    if (retained.length) lineup.retainedCharacters = retained;
     const blobURL = URL.createObjectURL(new Blob([JSON.stringify(lineup, null, 2) + '\n'], { type: 'application/json' }));
     const anchor = document.createElement('a'); anchor.href = blobURL; anchor.download = 'spongebob-lineup.json';
     document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(blobURL), 1000);
@@ -128,5 +141,6 @@
   window.addEventListener('storage', event => {
     if (data && event.key === 'spongebob-character-selection-v1') { selected = new Set(shared.readSelection(data.defaultIds, data.byId)); updateSelection(false); applyFilters(); }
   });
+  window.addEventListener('spongebob-matchups-change', updateFightLink);
   load();
 })();
