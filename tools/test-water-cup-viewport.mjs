@@ -39,19 +39,29 @@ try{
   }
   async function inspect(name){
     await evaluate('__toy.pause(true);document.getElementById("toy").scrollIntoView({block:"start",behavior:"instant"})');
+    await evaluate('__toy.liquid().queue.onSubmittedWorkDone()');await sleep(200);
     const state=await evaluate('(()=>{const v=document.getElementById("toy-viewport").getBoundingClientRect(),s=document.getElementById("toy-stage").getBoundingClientRect();return {version:__toy.version,world:__toy.world(),paused:__toy.stats().paused,count:__toy.stats().water,definition:__toy.machineState().definition,walls:Array.from(__toy.builder().walls),viewport:{width:v.width,height:v.height},stage:{width:s.width,height:s.height},ready:__toy.airStats().ready,href:location.href};})()');
     assert.deepEqual(state.world,{w:1120,h:664,tile:8,cols:140,rows:83});assert(state.paused);assert(state.ready);
-    assert(Math.abs(state.stage.width-state.viewport.width)<2,'Cup uses the available page width');
+    assert(state.stage.width<=state.viewport.width+1 && state.stage.height<=state.viewport.height+1,
+      'The fitted cup remains inside the player');
     const geometrySHA256=hash(JSON.stringify({world:state.world,definition:state.definition,walls:state.walls}));
     if(rows.length)assert.equal(geometrySHA256,rows[0].geometrySHA256,'Viewport does not change physical geometry');
     const frame=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(frame.data,'base64'));
     const blueWaterPixels=await evaluate(`(async()=>{const bytes=Uint8Array.from(atob(${JSON.stringify(frame.data)}),c=>c.charCodeAt(0));const bitmap=await createImageBitmap(new Blob([bytes],{type:'image/png'}));const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;let blue=0;for(let i=0;i<pixels.length;i+=4)if(pixels[i+2]>40&&pixels[i+2]>pixels[i]*1.35&&pixels[i+2]>pixels[i+1]*1.15)blue++;bitmap.close();return blue;})()`);
-    assert(blueWaterPixels>10000,'The paused cup visibly contains water in the actual page screenshot');
+    assert(blueWaterPixels>Math.min(10000,state.stage.width*state.stage.height*.12),
+      'The paused cup visibly contains water at its fitted display size: '+JSON.stringify({name,blueWaterPixels,stage:state.stage}));
     const {walls,definition,...compact}=state;rows.push({name,...compact,geometrySHA256,blueWaterPixels});
   }
-  for(const [name,width,height,mobile]of [['desktop',1440,1000,false],['short-desktop',980,700,false],['landscape',844,390,true]]){
+  for(const [name,width,height,mobile]of [['desktop',1440,1000,false],['macbook',1512,820,false],
+    ['macbook-short',1512,700,false],['short-desktop',980,700,false],['landscape',844,390,true]]){
     await send('Emulation.setDeviceMetricsOverride',{width,height,mobile,deviceScaleFactor:1});
-    await send('Page.navigate',{url:url+'?scene=cup&paused=1'});await ready(true);await inspect(name);
+    await send('Page.navigate',{url:url+'?scene=cup&paused=1'});await ready(true);
+    if(!mobile){
+      await evaluate('window.scrollTo(0,0);__toy.resize()');
+      const layout=await evaluate('({bottom:document.getElementById("toy").getBoundingClientRect().bottom,height:innerHeight})');
+      assert(layout.bottom<=layout.height,'The entire cup and its controls fit without scrolling: '+name);
+    }
+    await inspect(name);
   }
   await send('Emulation.setDeviceMetricsOverride',{width:980,height:700,mobile:false,deviceScaleFactor:1});
   await send('Page.navigate',{url:url+'?scene=falls'});await ready(false);

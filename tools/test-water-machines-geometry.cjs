@@ -66,4 +66,37 @@ assert.equal(tileCalls,1,'Guest motion must not resend static tile data.');
 context.jelloBodies=[];valveSeats[4*10+4]=0;context.wallsVersion++;vm.runInContext('airGeometryTick();',context);
 assert.equal(tileCalls,2,'Opening a valve invalidates the static basis mask.');
 assert.equal(lastTiles[4*10+4],0);near(last.solid[at(37.5,37.5)],0);symmetric();
+// Check cached scanlines against an independent point-by-point polygon
+// rasterizer, including concave outlines, partial walls and overlapping guests.
+const staticSolid=last.solid.slice();
+function pointInside(b,x,y){
+  let hit=false;
+  for(let i=0,j=b.ringN-1;i<b.ringN;j=i++){
+    const a=b.ring[i],c=b.ring[j];
+    if((b.py[a]>y)!==(b.py[c]>y) && x<(b.px[c]-b.px[a])*(y-b.py[a])/(b.py[c]-b.py[a])+b.px[a])hit=!hit;
+  }
+  return hit;
+}
+for(let pose=0;pose<32;pose++){
+  context.jelloBodies=[0,1].map(offset=>{
+    const px=[],py=[],n=17,cx=31+offset*9+Math.sin(pose)*7,cy=35+Math.cos(pose)*6;
+    for(let k=0;k<n;k++){const angle=k*2*Math.PI/n+pose*.13,radius=k%2 ? 16 : 8;
+      px.push(cx+Math.cos(angle)*radius);py.push(cy+Math.sin(angle)*radius);}
+    return {ringN:n,ring:Array.from({length:n},(_,i)=>i),px,py,ox:px.slice(),oy:py.slice(),
+      bboxL:Math.min(...px),bboxR:Math.max(...px),bboxT:Math.min(...py),bboxB:Math.max(...py)};
+  });
+  vm.runInContext('airGeometryTick();',context);
+  for(let row=0;row<height;row++)for(let col=0;col<width;col++){
+    let blocked=0;
+    for(let sy=0;sy<8;sy++)for(let sx=0;sx<8;sx++){
+      const x=(col+(sx+.5)/8)*dx,y=(row+(sy+.5)/8)*dx;
+      if(context.tileAt(Math.floor(y/tile),Math.floor(x/tile))===null && context.jelloBodies.some(b=>pointInside(b,x,y)))blocked++;
+    }
+    const cell=row*width+col;
+    near(last.solid[cell],Math.min(1,staticSolid[cell]+blocked/64));
+    near(last.vx[cell],blocked ? 2 : 0);near(last.vy[cell],blocked ? 3 : 0);
+  }
+  symmetric();
+}
 console.log('PASS exact partial-wall area, open-face symmetry, cached static geometry, moving guest union/removal, and shared wall/valve basis invalidation.');
+console.log('PASS 32 moving concave/overlapping guest poses against independent 8 by 8 point sampling.');

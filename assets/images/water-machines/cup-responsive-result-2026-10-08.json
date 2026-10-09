@@ -1,0 +1,430 @@
+{
+  "version": "v5.39",
+  "updated": "2026-10-08",
+  "scope": "Greedy cup delivery, hold controls, containment and particle inventory. Pressure calibration and contact smoothness are not certified.",
+  "pass": true,
+  "invariantsPassed": true,
+  "deliveryTargetMet": true,
+  "rows": [
+    {
+      "run": "cup-canonical-seed-17",
+      "case": "canonical",
+      "seed": 17,
+      "simulationSeconds": 180.02500000000208,
+      "initialParticles": 69307,
+      "initialBulkParticles": 67261,
+      "initiallyDrainable": 59630,
+      "delivered": 57479,
+      "deliveryPercent": 96.3927553245011,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 9058,
+        "pipe": 678,
+        "receiver": 57516,
+        "other": 9
+      },
+      "insideWallCount": 0,
+      "rimSpills": 5,
+      "rimSpillsInReceiver": 5,
+      "reportedPassageCount": 57484,
+      "conservativeRimExclusion": 5,
+      "deliveryCountIsLowerBound": true,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": true,
+      "maximumObservedParticleMove": 10.88955020904541
+    },
+    {
+      "run": "cup-canonical-seed-42",
+      "case": "canonical",
+      "seed": 42,
+      "simulationSeconds": 180.14999999999893,
+      "initialParticles": 69290,
+      "initialBulkParticles": 67244,
+      "initiallyDrainable": 59613,
+      "delivered": 59243,
+      "deliveryPercent": 99.37933001191016,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 7370,
+        "pipe": 631,
+        "receiver": 59243,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 59243,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": true,
+      "maximumObservedParticleMove": 13.157038688659668
+    },
+    {
+      "run": "cup-canonical-seed-913",
+      "case": "canonical",
+      "seed": 913,
+      "simulationSeconds": 180.14166666666858,
+      "initialParticles": 69316,
+      "initialBulkParticles": 67270,
+      "initiallyDrainable": 59639,
+      "delivered": 59482,
+      "deliveryPercent": 99.73674944247891,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 7082,
+        "pipe": 664,
+        "receiver": 59524,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 59482,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": true,
+      "maximumObservedParticleMove": 10.377091407775879
+    },
+    {
+      "run": "cup-lower-fill-seed-17",
+      "case": "lower-fill",
+      "seed": 17,
+      "simulationSeconds": 70.0166666666665,
+      "initialParticles": 36074,
+      "initialBulkParticles": 34875,
+      "initiallyDrainable": 27244,
+      "delivered": 0,
+      "deliveryPercent": 0,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 34555,
+        "pipe": 320,
+        "receiver": 0,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 0,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": null,
+      "maximumObservedParticleMove": 8.599089622497559
+    },
+    {
+      "run": "cup-lower-fill-seed-42",
+      "case": "lower-fill",
+      "seed": 42,
+      "simulationSeconds": 70.0583333333337,
+      "initialParticles": 36073,
+      "initialBulkParticles": 34874,
+      "initiallyDrainable": 27243,
+      "delivered": 0,
+      "deliveryPercent": 0,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 34585,
+        "pipe": 289,
+        "receiver": 0,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 0,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": null,
+      "maximumObservedParticleMove": 9.55088996887207
+    },
+    {
+      "run": "cup-lower-fill-seed-913",
+      "case": "lower-fill",
+      "seed": 913,
+      "simulationSeconds": 70.09166666666664,
+      "initialParticles": 36090,
+      "initialBulkParticles": 34891,
+      "initiallyDrainable": 27260,
+      "delivered": 0,
+      "deliveryPercent": 0,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 34449,
+        "pipe": 442,
+        "receiver": 0,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 0,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": null,
+      "maximumObservedParticleMove": 41.22584915161133
+    },
+    {
+      "run": "cup-raised-bend-seed-17",
+      "case": "raised-bend",
+      "seed": 17,
+      "simulationSeconds": 70.10833333333113,
+      "initialParticles": 69307,
+      "initialBulkParticles": 67261,
+      "initiallyDrainable": 59630,
+      "delivered": 0,
+      "deliveryPercent": 0,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 66782,
+        "pipe": 479,
+        "receiver": 0,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 0,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": null,
+      "maximumObservedParticleMove": 6.949740409851074
+    },
+    {
+      "run": "cup-raised-bend-seed-42",
+      "case": "raised-bend",
+      "seed": 42,
+      "simulationSeconds": 70.09166666666455,
+      "initialParticles": 69290,
+      "initialBulkParticles": 67244,
+      "initiallyDrainable": 59613,
+      "delivered": 0,
+      "deliveryPercent": 0,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 66941,
+        "pipe": 303,
+        "receiver": 0,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 0,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": null,
+      "maximumObservedParticleMove": 5.59283971786499
+    },
+    {
+      "run": "cup-raised-bend-seed-913",
+      "case": "raised-bend",
+      "seed": 913,
+      "simulationSeconds": 70.04166666666453,
+      "initialParticles": 69316,
+      "initialBulkParticles": 67270,
+      "initiallyDrainable": 59639,
+      "delivered": 0,
+      "deliveryPercent": 0,
+      "holdLossPercent": 0,
+      "inventory": {
+        "cup": 66852,
+        "pipe": 418,
+        "receiver": 0,
+        "other": 0
+      },
+      "insideWallCount": 0,
+      "rimSpills": 0,
+      "rimSpillsInReceiver": 0,
+      "reportedPassageCount": 0,
+      "conservativeRimExclusion": 0,
+      "deliveryCountIsLowerBound": false,
+      "countConserved": true,
+      "allResidentFinite": true,
+      "deliveryTargetMet": null,
+      "maximumObservedParticleMove": 8.784552574157715
+    }
+  ],
+  "sourceSHA256": {
+    "archive/water-smoke-slime/water-smoke-slime.html": "7f44cbc3d0f555cbfc68c28ca64c7b7fc95626182d0c3c778a58af12d0a1c9d6",
+    "water-smoke-slime.css": "3e13e0a2a26955e16bf578925aaffece22221a71fd89583693849a8c183b6529",
+    "js/water-smoke-slime.js": "e160b2357d8018a8a6c50d6d1b23693ee7ad8c6656a4d7c63b2326641bbab079",
+    "js/water-smoke-slime-ui.js": "c73c5425935db49dcfd56814516502bfd375883e77b60839cdf9d0887daa2a71",
+    "js/liquid-wgpu.js": "bea4ae6ea15e94f74505be3dfab6d4eff3b89b94d8244d413348e911ea692502",
+    "js/liquid-air-wgpu.js": "cb46e9d244d55381933a4d417ecf4ef74c2857fc99e410155db87b1c6d597003",
+    "js/water-machines-scenes.js": "0c001a9f96b0d71baec15be1ede3e082ff12392a3b75550cc26a7f4e5df38717",
+    "js/water-machines-instruments.js": "891e4c7714090aff8e2f7ab8d4b6b2adcce609a0b87dc1cf09093c28e06fe93e",
+    "js/water-machines-builder.js": "1bdb0b4fc9e68a38b047c123e96ab264748b6505915ef2ca55ce8259d399e23b",
+    "js/water-rainbow.js": "007ce95402738e04452bc287b781e590afef574dd4938fa2ba2516f28357c120",
+    "js/liquid-air-model.js": "46c0a9bc4a615cac208bfa57309283381756939949ce1fa2adee25144b4fc272",
+    "js/liquid-air-mac-wgpu.js": "0f684e1f77ce696cf50c33713d71f963267dbb2c4402661dbbbad8ac4f57a14e"
+  },
+  "rawReportSHA256": "26d743f88497cbcd1c14986e2a6e0730efffb65ef1b61c92610d80cde9525311",
+  "handling": {
+    "pass": true,
+    "layout": {
+      "bottom": 805.125,
+      "height": 820,
+      "dpr": 2,
+      "world": {
+        "w": 1120,
+        "h": 664,
+        "tile": 8,
+        "cols": 140,
+        "rows": 83
+      }
+    },
+    "spawned": {
+      "points": 91,
+      "springs": 264,
+      "ring": 30,
+      "radius": 84,
+      "radialRatio": 1.1362594625766713
+    },
+    "held": {
+      "grab": {
+        "active": true,
+        "mode": "spring-grip",
+        "targetX": 648.4643604552896,
+        "targetY": 78.23292659739582,
+        "patchX": 648.3475035236453,
+        "patchY": 82.12661333999614,
+        "gap": 3.895439897107236
+      },
+      "cx": 647.2611649141578,
+      "cy": 87.0112253781076,
+      "rejections": 0,
+      "finite": true
+    },
+    "simulationRate": 1.5328351619011469,
+    "frameMs": {
+      "count": 704,
+      "mean": 18.359374999999996,
+      "median": 16.699999999999818,
+      "p95": 33.29999999999927
+    },
+    "pressureBounds": {
+      "rows": [
+        {
+          "count": 1,
+          "expected": 12345.625,
+          "actual": 12345.625
+        },
+        {
+          "count": 127,
+          "expected": 12345.625,
+          "actual": 12345.625
+        },
+        {
+          "count": 128,
+          "expected": 12345.625,
+          "actual": 12345.625
+        },
+        {
+          "count": 129,
+          "expected": 12345.625,
+          "actual": 12345.625
+        },
+        {
+          "count": 11620,
+          "expected": 12345.625,
+          "actual": 12345.625
+        }
+      ],
+      "error": null
+    }
+  },
+  "playbackComparison": {
+    "scope": "Actual presentation, giant slime dropped, Retina 1512x820 viewport, 8-second sample after warm-up, baseline v5.38 and current in one owned browser. Hardware-specific timing.",
+    "rows": [
+      {
+        "mode": "baseline",
+        "version": "v5.38",
+        "wall": 11371.299999952316,
+        "clock": 15.191666666666583,
+        "fps": 31,
+        "frameMs": {
+          "count": 239,
+          "mean": 31.310878661087866,
+          "median": 33.30000000000018,
+          "p95": 41.69999999999982
+        },
+        "points": 397,
+        "water": 69307,
+        "error": null,
+        "finite": true,
+        "simulationRate": 1.3276437291521292
+      },
+      {
+        "mode": "current",
+        "version": "v5.39",
+        "wall": 11348.299999952316,
+        "clock": 16.59166666666669,
+        "fps": 34,
+        "frameMs": {
+          "count": 364,
+          "mean": 21.19945054945055,
+          "median": 16.699999999999818,
+          "p95": 33.400000000001455
+        },
+        "points": 91,
+        "water": 69307,
+        "error": null,
+        "finite": true,
+        "simulationRate": 1.4827217106365365
+      },
+      {
+        "mode": "baseline-repeat",
+        "version": "v5.38",
+        "wall": 11245.799999952316,
+        "clock": 15.624999999999911,
+        "fps": 33,
+        "frameMs": {
+          "count": 249,
+          "mean": 30.1871485943775,
+          "median": 33.29999999999927,
+          "p95": 41.69999999999982
+        },
+        "points": 397,
+        "water": 69307,
+        "error": null,
+        "finite": true,
+        "simulationRate": 1.3775911834123118
+      }
+    ],
+    "errors": []
+  },
+  "viewport": {
+    "pass": true,
+    "sizes": [
+      "desktop",
+      "macbook",
+      "macbook-short",
+      "short-desktop",
+      "landscape",
+      "scene-selection",
+      "return-to-cup"
+    ],
+    "physicalGeometrySHA256": "26bac6d8e45300e046d667830333a9bb9dff48a48462968b763746f3cb7b9956"
+  },
+  "limits": [
+    "Pressure calibration, gas-volume accounting and splash-free contact are not certified.",
+    "Five rim spills occurred in seed 17. All five rim spills in the receiver are conservatively subtracted from the old observer passage count. This delivery percentage is a lower bound.",
+    "Playback timing is hardware-specific and measured separately from the native-buffer physics observer.",
+    "The screen-fit checks cover MacBook browser viewports of 1512 by 820 and 1512 by 700, not every display setting."
+  ]
+}

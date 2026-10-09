@@ -82,7 +82,7 @@
 (function () {
   'use strict';
 
-  var TOY_VERSION = 'v5.38'; // shown in the corner readout; bump with the
+  var TOY_VERSION = 'v5.39'; // shown in the corner readout; bump with the
                               // ?v= stamp on this file's script tag so a
                               // stale cache is visible at a glance
 
@@ -120,7 +120,7 @@
     ['.toy-dock', '.toy-foot'].forEach(function (selector) {
       h -= document.querySelector(selector).getBoundingClientRect().height;
     });
-    return Math.max(320, h);
+    return Math.max(80, h);
   }
   function displayStageRoom(){
     var h=window.innerHeight-Math.max(0,viewport.getBoundingClientRect().top)-16;
@@ -155,11 +155,10 @@
       });
       h = Math.max(1, h);
     }
-    // Give the stock cup the available page width. The article may scroll;
-    // fitting it between the heading and tool dock made the model tiny.
-    // Expanded view still fits the complete apparatus inside the player.
-    baseFitScale = !expanded && currentScene==='cup' ? w / worldW
-      : Math.min(w / worldW, (expanded ? h : displayStageRoom()) / worldH);
+    // Fit the complete apparatus and its controls into the browser height.
+    // Use the page position so scrolling the article does not resize the cup.
+    var room = currentScene === 'cup' ? Math.max(80, stageRoom()) : displayStageRoom();
+    baseFitScale = Math.min(w / worldW, (expanded ? h : room) / worldH);
     cameraWidth=w;cameraHeight=expanded ? h : Math.round(worldH*baseFitScale);
     fitScale=baseFitScale*viewZoom;
     cameraMaxPanX=Math.max(0,(worldW*fitScale-cameraWidth)*.5);
@@ -1002,14 +1001,23 @@
     if(!hasBodies){airModel.geometry(base.solid,base.room,base.zero,base.zero,base.faces);airGeometryVersion=wallsVersion;airHadBodies=false;return;}
     var solid=base.solid.slice(),room=base.room.slice(),vx=new Float32Array(count),vy=new Float32Array(count),
       u=base.u.slice(),v=base.v.slice(),faces=base.faces.slice(),bodies=[],cells=new Set(),uf=new Set(),vf=new Set();
+    var scanlines=new WeakMap();
     function inside(b,x,y){
       if(x<b.bboxL || x>b.bboxR || y<b.bboxT || y>b.bboxB)return false;
-      var hit=false;
-      for(var p=0;p<b.ringN;p++){
-        var a=b.ring[p],z=b.ring[(p+b.ringN-1)%b.ringN];
-        if((b.py[a]>y)!==(b.py[z]>y) && x<(b.px[z]-b.px[a])*(y-b.py[a])/(b.py[z]-b.py[a])+b.px[a])hit=!hit;
+      var rows=scanlines.get(b);
+      if(!rows){rows=new Map();scanlines.set(b,rows);}
+      var cuts=rows.get(y);
+      if(!cuts){
+        cuts=[];
+        for(var p=0;p<b.ringN;p++){
+          var a=b.ring[p],z=b.ring[(p+b.ringN-1)%b.ringN];
+          if((b.py[a]>y)!==(b.py[z]>y))cuts.push((b.px[z]-b.px[a])*(y-b.py[a])/(b.py[z]-b.py[a])+b.px[a]);
+        }
+        cuts.sort(function(a,b){return a-b;});rows.set(y,cuts);
       }
-      return hit;
+      var low=0,high=cuts.length;
+      while(low<high){var mid=(low+high)>>>1;if(cuts[mid]<=x)low=mid+1;else high=mid;}
+      return (cuts.length-low)%2===1;
     }
     var geometryBodies=jelloBodies;
     if(materialGuests){
@@ -1178,10 +1186,13 @@
         },
         world: { COLS: COLS, TILE: TILE, TOTAL_ROWS: TOTAL_ROWS },
         getView: function () {
+          // A fitted cup should render at its displayed pixel density, rather
+          // than shading a full-width Retina target before shrinking it.
+          var waterDpr = dpr * (currentScene === 'cup' ? Math.min(1, fitScale) : 1);
           return {
             camX: 0, camY: 0,
-            dpr: dpr, worldScale: 1,
-            canvasW: canvas.width, canvasH: canvas.height,
+            dpr: waterDpr, worldScale: 1,
+            canvasW: Math.round(worldW * waterDpr), canvasH: Math.round(worldH * waterDpr),
             viewW: worldW, viewH: worldH,
             regionMinX: -TILE * 2, regionMinY: -TILE * 8,
             regionMaxX: worldW + TILE * 2, regionMaxY: worldH + TILE * 2
@@ -10114,7 +10125,7 @@
     b._toyHue = b.hue;
     b.surfaceSlime = { radius: r, hue: b.hue, seed: seed, drive: false, motorBlend: 0 };
     // Match the game's passive rest material, including its small irregularities.
-    if (slimeShape === 'ball') {
+    if (machineSize === true || slimeShape === 'ball') {
       for (var p = 0; p < b.n; p++) {
         var x = b.rx[p] - b.cx, y = b.ry[p] - b.cy, angle = Math.atan2(y, x);
         var radial = 0.94 * (1 + 0.045 * Math.sin(angle * 3 + seed * 6.28) +
@@ -11662,9 +11673,9 @@
   var JELLO_DISC_PITCH = 8;   // the game's disc ring pitch (TILE 32 / (NPT 3 + 1))
 
   // Byte-for-byte the engine's jelloBuildDisc except `a` (marked below).
-  function jelloBuildDisc(ccx, ccy, radius, jellyType) {
+  function jelloBuildDisc(ccx, ccy, radius, jellyType, pitch) {
     if (jelloBodies.length >= JELLO_MAX_BODIES) return null;
-    var a = JELLO_DISC_PITCH;            // toy: fixed pitch (was TILE / (JELLO_NPT + 1))
+    var a = pitch || JELLO_DISC_PITCH;    // toy: fixed pitch (was TILE / (JELLO_NPT + 1))
     var M = Math.round(radius / a);
     if (M < 2) M = 2;
     while (M > 2 && jelloCount + 1 + 3 * M * (M + 1) > JELLO_MAX_POINTS) M--;
@@ -11788,8 +11799,8 @@
     wy = Math.max(r + TILE * 2, Math.min(worldH - r - TILE * 2, wy));
     if (tileAt(Math.floor(wy / TILE), Math.floor(wx / TILE)) !== null) return null;
     var key = JELLO_TYPE_KEYS[slimeHueCycle++ % JELLO_TYPE_KEYS.length];
-    var mask = SLIME_SHAPES[slimeShape];
-    if (!mask) return jelloBuildDisc(wx, wy, r, key);
+    var mask = machineSize === true ? null : SLIME_SHAPES[slimeShape];
+    if (!mask) return jelloBuildDisc(wx, wy, r, key, machineSize === true ? 16 : undefined);
     var rows = mask.length, cols = mask[0].length;
     var r0 = Math.round(wy / TILE - rows / 2), c0 = Math.round(wx / TILE - cols / 2);
     var cells = [];
@@ -13979,9 +13990,10 @@
         var d = Math.hypot(b.px[k] - wx, b.py[k] - wy);
         if (d < distance) { distance = d; nearest = k; }
       }
+      var patch = b.surfaceSlime && b.surfaceSlime.radius > 46 ? b.surfaceSlime.radius * .7 : 16;
       var weights = new Float64Array(b.n), total = 0, x = 0, y = 0;
       for (k = 0; k < b.n; k++) {
-        weights[k] = Math.exp(-Math.pow(Math.hypot(b.rx[k] - b.rx[nearest], b.ry[k] - b.ry[nearest]) / 16, 2));
+        weights[k] = Math.exp(-Math.pow(Math.hypot(b.rx[k] - b.rx[nearest], b.ry[k] - b.ry[nearest]) / patch, 2));
         total += weights[k];
       }
       for (k = 0; k < b.n; k++) { weights[k] /= total; x += b.px[k] * weights[k]; y += b.py[k] * weights[k]; }

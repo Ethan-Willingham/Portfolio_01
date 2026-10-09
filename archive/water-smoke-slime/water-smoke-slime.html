@@ -24,7 +24,7 @@
   <link rel="preload" href="/assets/fonts/century_supra_a_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/assets/fonts/commit_mono_regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.38">
+  <link rel="stylesheet" href="/water-smoke-slime.css?v=v5.39">
 </head>
 <body class="physics-page">
   <div class="site-wrapper toy-page">
@@ -194,18 +194,19 @@
     <main class="post-body toy-prose" id="how-it-works">
       <section id="water-machines-progress" aria-labelledby="water-machines-progress-title">
         <h2 id="water-machines-progress-title">Water machines: progress</h2>
-        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> The greedy cup is playable. <a href="?scene=cup#toy">Open the cup</a> and choose Drop the slime to start the drain. Across three tests with different starting particle positions, 97.4%, 98.7% and 93.3% of the water above the intake reaches the lower tank within three simulation minutes. All particles are conserved. <a href="/assets/images/water-machines/cup-release-result-2026-10-09.json">Measurements and limits.</a></p>
+        <p><time datetime="2026-10-08">Updated October 8, 2026.</time> The cup now fits with its controls on a 14-inch MacBook screen. The giant slime starts as a ball and follows a drag with Grab. A smaller slime mesh and fewer pressure passes reduce the work per frame; water also draws at the size displayed on screen. The footer shows live FPS. <a href="?scene=cup#toy">Open the cup</a> and choose Drop the slime to start the drain.</p>
+        <p>Average frame time fell from about 31 to 21 milliseconds in a Retina browser comparison. Across three tests with different starting particle positions, the current version delivers 96.4%, 99.4% and 99.7% of the water above the intake to the lower tank within three simulation minutes. All particles are conserved. <a href="/assets/images/water-machines/cup-responsive-result-2026-10-08.json">Current measurements and limits.</a></p>
         <p>The pipe walls exposed a fault in how pressure changes particle motion. Water could still move toward a closed wall, crowd against it and leave gaps in the column. The repaired transfer keeps that motion parallel to the wall. Air pressure also uses the measured size of each cavity, correcting a volume estimate that had drifted away from the actual gap.</p>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-release-flow-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-release-flow-2026-10-09.png" width="1118" height="662" loading="lazy" alt="A large slime displaces water in the cup. A continuous water column crosses the bend and descends through the stem into the lower tank."></picture>
-          <figcaption class="u-figure-cap">Fifteen simulation seconds after the drop. The same water particles travel through the tube.</figcaption>
+          <figcaption class="u-figure-cap">The previous version, fifteen simulation seconds after the drop. The same water particles travel through the tube.</figcaption>
         </figure>
         <figure class="u-figure">
           <picture><source type="image/webp" srcset="/assets/images/water-machines/cup-release-result-2026-10-09.webp"><img class="u-figure-img" src="/assets/images/water-machines/cup-release-result-2026-10-09.png" width="1118" height="662" loading="lazy" alt="The cup has drained to a shallow layer beneath the slime shelf. The tube is mostly empty and the lower tank holds the transferred water."></picture>
-          <figcaption class="u-figure-cap">At three simulation minutes, this run has delivered 97.4% of its initially drainable water. Water below the intake remains in the cup.</figcaption>
+          <figcaption class="u-figure-cap">The previous version at three simulation minutes, after delivering 97.4% of its initially drainable water. Water below the intake remains in the cup. <a href="/assets/images/water-machines/cup-release-result-2026-10-09.json">Previous measurements.</a></figcaption>
         </figure>
         <p>All three cups hold before the drop. Lowering the fill or raising the bend prevents drainage after the same drop, in three tests each. The counts exclude the water that starts inside the tube and require passage through both the bend and the outlet. The cup keeps the same physical dimensions when the browser is resized.</p>
-        <p>Pressure and air-volume checks still fail during these runs. Contact corrections and local crowding remain, and smooth playback on every device is unverified. Two of the three release checks exceed the 95% delivery target. The third stops at 93.3%, leaving more water in the cup. The pressure model is still diagnostic.</p>
+        <p>Pressure and air-volume checks still fail during these runs. Five particles splashed over the rim in one run and are excluded from its delivery count. Contact corrections and local crowding remain, and smooth playback on every device is unverified. All three current runs exceed the 95% delivery target. The pressure model is still diagnostic.</p>
         <details class="toy-method"><summary>See the water drawing comparison</summary>
           <p>These two frames use the same frozen particles from the earlier outlet-bend trial. The remaining large gaps are real empty space; changing the drawing does not move water into them.</p>
           <figure class="u-figure">
@@ -254,12 +255,12 @@
   <script src="/js/water-rainbow.js?v=1"></script>
   <script src="/js/liquid-air-model.js?v=v5.37"></script>
   <script src="/js/liquid-air-mac-wgpu.js?v=v5.37"></script>
-  <script src="/js/liquid-air-wgpu.js?v=v5.37"></script>
+  <script src="/js/liquid-air-wgpu.js?v=v5.39"></script>
   <script src="/js/water-machines-builder.js?v=v5.37"></script>
-  <script src="/js/water-machines-scenes.js?v=v5.37"></script>
+  <script src="/js/water-machines-scenes.js?v=v5.39"></script>
   <script src="/js/water-machines-instruments.js?v=v5.37"></script>
-  <script src="/js/water-smoke-slime.js?v=v5.38"></script>
-  <script src="/js/water-smoke-slime-ui.js?v=v5.38"></script>
+  <script src="/js/water-smoke-slime.js?v=v5.39"></script>
+  <script src="/js/water-smoke-slime-ui.js?v=v5.39"></script>
   <script src="/js/smoke-presets-ui.js?v=4"></script>
 </body>
 </html>

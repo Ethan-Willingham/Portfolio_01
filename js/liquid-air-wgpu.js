@@ -54,6 +54,7 @@ const NONE:u32=0xffffffffu;
 const ALIGNED_TRANSPORT:bool=false;
 const COLLAPSE_EMPTY_CELLS:bool=false;
 const GEOMETRIC_GAS:bool=false;
+const RED_BLACK:bool=false;
 const MASS_SCALE:f32=1048576.0;
 
 // Four phase records share one Gas-sized slot in the same storage binding.
@@ -518,10 +519,16 @@ fn gasWallFlux(@builtin(global_invocation_id) id:vec3<u32>){
 }
 @compute @workgroup_size(1)
 fn clearPressureBound(){atomicStore(&gas[cfg.cells+1u].overlap,0);}
+var<workgroup> pressureBounds:array<i32,128>;
 @compute @workgroup_size(128)
-fn measurePressure(@builtin(global_invocation_id) id:vec3<u32>){
-  let c=id.x;if(c>=cfg.cells){return;}
-  atomicMax(&gas[cfg.cells+1u].overlap,bitcast<i32>(abs(inputP[c].x)));
+fn measurePressure(@builtin(global_invocation_id) id:vec3<u32>,@builtin(local_invocation_id) local:vec3<u32>){
+  var bound=0;if(id.x<cfg.cells){bound=bitcast<i32>(abs(inputP[id.x].x));}
+  pressureBounds[local.x]=bound;workgroupBarrier();
+  for(var stride=64u;stride>0u;stride=stride/2u){
+    if(local.x<stride){pressureBounds[local.x]=max(pressureBounds[local.x],pressureBounds[local.x+stride]);}
+    workgroupBarrier();
+  }
+  if(local.x==0u){atomicMax(&gas[cfg.cells+1u].overlap,pressureBounds[0]);}
 }
 @compute @workgroup_size(128)
 fn waterJacobi(@builtin(global_invocation_id) id:vec3<u32>){
@@ -538,6 +545,25 @@ fn waterJacobi(@builtin(global_invocation_id) id:vec3<u32>){
   let p=max(cfg.minimum,(cells[c].rhs+sum)/max(cells[c].diagonal,1.0e-12));
   outputP[c]=vec4<f32>(p,0.0,0.0,0.0);
 }
+// The four-face water stencil is bipartite. A color reads only the other
+// color, whose values stay fixed throughout this dispatch. Gas is held
+// fixed until both colors finish, so there are no simultaneous read/writes.
+fn waterColor(c:u32,color:u32){
+  if(c>=cfg.cells || cells[c].kind!=1u || (c%cfg.width+c/cfg.width)%2u!=color){return;}
+  let old=inputP[c].x;var sum=0.0;
+  for(var d=0u;d<4u;d=d+1u){
+    let n=neighbor(c,d);let w=grid.dt*grid.dt*conductance(c,n,d);
+    sum=sum+w*pressure(n);
+    if(n!=NONE && cells[n].kind==2u){let r=atomicLoad(&labels[n].current);
+      if(r>0u && r!=NONE){atomicAdd(&gas[r-1u].neighbors,fixed(w*old,neighborScale(r-1u)));}
+    }
+  }
+  inputP[c]=vec4<f32>(max(cfg.minimum,(cells[c].rhs+sum)/max(cells[c].diagonal,1.0e-12)),0.0,0.0,0.0);
+}
+@compute @workgroup_size(128)
+fn waterRed(@builtin(global_invocation_id) id:vec3<u32>){waterColor(id.x,0u);}
+@compute @workgroup_size(128)
+fn waterBlack(@builtin(global_invocation_id) id:vec3<u32>){waterColor(id.x,1u);}
 @compute @workgroup_size(128)
 fn gasJacobi(@builtin(global_invocation_id) id:vec3<u32>){
   let c=id.x;if(c>=cfg.cells || atomicLoad(&labels[c].current)!=c+1u){return;}
@@ -545,7 +571,8 @@ fn gasJacobi(@builtin(global_invocation_id) id:vec3<u32>){
   let rhs=cells[c].rhs+f32(atomicLoad(&gas[c].flux))/fluxScale(c);
   let sum=f32(atomicLoad(&gas[c].neighbors))/neighborScale(c);
   var p=cfg.minimum;if(atomicLoad(&gas[c].vapor)==0u){p=max(cfg.minimum,(rhs+sum)/max(diagonal,1.0e-12));}
-  outputP[c]=vec4<f32>(p,0.0,0.0,0.0);
+  if(RED_BLACK){inputP[c]=vec4<f32>(p,0.0,0.0,0.0);}
+  else{outputP[c]=vec4<f32>(p,0.0,0.0,0.0);}
   atomicStore(&gas[c].neighbors,0);
 }
 fn projectedFace(c:u32,n:u32,d:u32)->f32 {
@@ -927,6 +954,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
     var count = width * height;
     if (!(count > 0 && count < 500000)) throw new Error('Air pressure domain is outside its size limit.');
     var iterations = Math.max(4, Math.min(512, options.iterations || 64));
+    var redBlack = options.redBlack === true;
     if (iterations % 2) iterations++;
     var buffers = [];
     function storage(label, size) {
@@ -964,6 +992,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
       buffers.push(mac.buffer,mac.terrainBuffer);
     }
     var shaderSource=SOURCE;
+    if(redBlack)shaderSource=shaderSource.replace('const RED_BLACK:bool=false;', 'const RED_BLACK:bool=true;');
     if(directTransport)shaderSource=shaderSource.replace('const ALIGNED_TRANSPORT:bool=false;', 'const ALIGNED_TRANSPORT:bool=true;');
     if(collapseEmptyCells)shaderSource=shaderSource.replace('const COLLAPSE_EMPTY_CELLS:bool=false;', 'const COLLAPSE_EMPTY_CELLS:bool=true;');
     if(options.geometricGas===true)shaderSource=shaderSource.replace('const GEOMETRIC_GAS:bool=false;', 'const GEOMETRIC_GAS:bool=true;');
@@ -985,6 +1014,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
       'measurePressure','waterJacobi','gasJacobi','finish','finishGas','certifyExpansion','finishDiagnostics','applyVelocity'];
     if(directTransport)names.push('publishTransport');
     if(mac)names.push('macDensities');
+    if(redBlack)names.push('waterRed','waterBlack');
     var pipes = {};
     names.forEach(function (name) { pipes[name] = device.createComputePipeline({label:'liquid.air.'+name,
       layout:pipelineLayout,compute:{module:shader,entryPoint:name}}); });
@@ -1006,7 +1036,7 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
     var geometryHost = new Float32Array(count * 8);
     var enabled = false, steps = 0, pending = false, snapshot = null, destroyed = false;
     var model = {
-      width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,
+      width:width,height:height,cellSize:dx,iterations:iterations,geometryStride:8,redBlack:redBlack,
       settings:{density:floats[5],soundSpeed:floats[6],atmospherePressure:floats[7],minimumPressure:floats[8],threshold:floats[9],
         volumeScale:volumeScale,diagonalScale:floats[11],fluxScale:floats[12],neighborScale:floats[13],pressureTolerance:floats[14],
         particlePressure:!mac && options.particlePressure === true,projectedVelocity:floats[15]>0,directGather:!!directGather,collapseEmptyCells:collapseEmptyCells,geometricGas:options.geometricGas===true,boundaryReconstruction:options.boundaryReconstruction===true},
@@ -1107,8 +1137,11 @@ fn transportAffine(p:vec2<f32>,fallback:vec2<f32>,native:vec4<f32>,dt:f32)->vec4
         dispatch('collectVolumes');dispatch('remapAmounts');dispatch('balanceAmounts');
         dispatch('initializeGas');dispatch('countInterfaces');dispatch('gasWallFlux');dispatch('initializeWater');
         for (var i=0;i<iterations;i++) {
-          dispatch('clearPressureBound',0,1);dispatch('measurePressure',i%2);
-          dispatch('waterJacobi',i%2);dispatch('gasJacobi',i%2);
+          var parity=redBlack ? 0 : i%2;
+          dispatch('clearPressureBound',0,1);dispatch('measurePressure',parity);
+          if(redBlack){dispatch('waterRed');dispatch('waterBlack');}
+          else dispatch('waterJacobi',parity);
+          dispatch('gasJacobi',parity);
         }
         dispatch('clearPressureBound',0,1);dispatch('measurePressure');
         dispatch('finish');dispatch('finishGas');dispatch('certifyExpansion');dispatch('finishDiagnostics',0,1);

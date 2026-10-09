@@ -57,7 +57,11 @@ for (const run of report.runs) {
   const holdLossPercent = (outside(held) - outside(initial)) / ids.length * 100;
   assert(holdLossPercent < 1, 'Cup holds before the drop');
   assert.equal(run.nativePassage.finalBulkInReceiver, inventory.receiver, 'GPU observer agrees with copied positions');
-  assert.equal(run.nativePassage.spilledOverRim, 0, 'No rim spill counts as delivery');
+  // Older observers recorded passage and rim flags separately. Subtracting
+  // every rim spill in the receiver is a conservative exclusion, even if
+  // some already failed the passage criterion. New observers exclude exactly.
+  const conservativeRimExclusion=run.nativePassage.excludesRimSpills ? 0 : run.nativePassage.finalSpilledInReceiver;
+  assert(Number.isInteger(conservativeRimExclusion) && conservativeRimExclusion>=0);
 
   const cols = Math.ceil(w / tile), gridRows = Math.ceil(h / tile);
   const walls = new Uint8Array(cols * gridRows);
@@ -75,7 +79,9 @@ for (const run of report.runs) {
     if (walls[Math.floor(y / tile) * cols + Math.floor(x / tile)]) insideWallCount++;
   }
   assert.equal(insideWallCount, 0, 'No final particle centers inside walls');
-  const delivered = run.nativePassage.finalBulkInReceiverAfterPassage;
+  const reportedPassageCount=run.nativePassage.finalBulkInReceiverAfterPassage;
+  const delivered=reportedPassageCount-conservativeRimExclusion;
+  assert(delivered>=0 && delivered<=inventory.receiver, 'Delivery excludes every recorded rim spill');
   const deliveryPercent = delivered / drainable * 100;
   if (run.case === 'canonical') {
     assert.deepEqual(run.options, {}, 'Stock cup settings');
@@ -89,7 +95,9 @@ for (const run of report.runs) {
   }
   rows.push({run:run.id, case:run.case, seed:run.seed, simulationSeconds:run.finalSimulationSeconds,
     initialParticles:initial.length, initialBulkParticles:ids.length, initiallyDrainable:drainable,
-    delivered, deliveryPercent, holdLossPercent, inventory, insideWallCount, rimSpills:0,
+    delivered, deliveryPercent, holdLossPercent, inventory, insideWallCount,
+    rimSpills:run.nativePassage.spilledOverRim, rimSpillsInReceiver:run.nativePassage.finalSpilledInReceiver,
+    reportedPassageCount, conservativeRimExclusion, deliveryCountIsLowerBound:conservativeRimExclusion>0,
     countConserved:true, allResidentFinite:true,
     deliveryTargetMet:run.case === 'canonical' ? deliveryPercent >= 95 : null,
     maximumObservedParticleMove:run.nativePassage.maximumBulkDisplacementBetweenObservations});

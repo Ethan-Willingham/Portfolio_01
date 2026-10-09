@@ -90,7 +90,8 @@
       result.settings.boundaryReconstruction=true;
       result.settings.cellSize=8;
       result.settings.soundSpeed=2500;
-      result.settings.iterations=128;
+      result.settings.iterations=32;
+      result.settings.redBlack=true;
       result.title='Greedy cup';result.action='Drop the slime';
       result.caption='Below the line, the cup holds its water. Drop a slime in and its displaced water can start the drain.';
       var cupWidth=snap(Math.min(568,W*.60)),cupTop=snap(Math.min(144,H*.22));

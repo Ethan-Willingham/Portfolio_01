@@ -61,7 +61,7 @@ fn finish(@builtin(global_invocation_id) id:vec3<u32>){
   if((mark&2u)!=0u){atomicAdd(&stats[1],1u);}
   if((mark&4u)!=0u){atomicAdd(&stats[2],1u);}
   if((mark&16u)!=0u){atomicAdd(&stats[3],1u);}
-  if(arrived){atomicAdd(&stats[4],1u);if((mark&6u)==6u){atomicAdd(&stats[5],1u);}}
+  if(arrived){atomicAdd(&stats[4],1u);if((mark&14u)==6u){atomicAdd(&stats[5],1u);}}
   if((mark&8u)!=0u){atomicAdd(&stats[6],1u);if(arrived){atomicAdd(&stats[7],1u);}}
 }`;
   const shader=device.createShaderModule({label:'passage.readOnlyNative',code});
@@ -87,7 +87,8 @@ fn finish(@builtin(global_invocation_id) id:vec3<u32>){
         const bytes=read.getMappedRange(),u=new Uint32Array(bytes,0,10),v=new Float32Array(bytes,0,10),moves=new Float32Array(bytes,48,count*4),meta=new Float32Array(bytes,48+count*16,count*8),largest=[];
         for(const id of origin.bulkIds){const i=id*4,from=[moves[i],moves[i+1]],to=[moves[i+2],moves[i+3]],distance=Math.hypot(to[0]-from[0],to[1]-from[1]);
           if(largest.length<20||distance>largest.at(-1).distance){largest.push({id,distance,from,to,fromVelocity:[meta[id*8],meta[id*8+1]],toVelocity:[meta[id*8+2],meta[id*8+3]],simulationSeconds:meta[id*8+4],updateSeconds:meta[id*8+5]});largest.sort((a,b)=>b.distance-a.distance);largest.length=Math.min(20,largest.length);}}
-        return {definition:'Read-only GPU tracking after every native update. Initial pipe primer is excluded. Final receiver excludes the exact pipe interior.',
+        return {definition:'Read-only GPU tracking after every native update. Initial pipe primer and rim spills are excluded from delivery. Final receiver excludes the exact pipe interior.',
+          excludesRimSpills:true,
           updates,maximumUpdateSeconds:maxStep,maximumBulkDisplacementBetweenObservations:v[8],largestObservedMoves:largest,initialBulk:u[0],crossedCrest:u[1],exitedAfterCrest:u[2],
           everReceivedAfterPassage:u[3],finalBulkInReceiver:u[4],finalBulkInReceiverAfterPassage:u[5],spilledOverRim:u[6],finalSpilledInReceiver:u[7],crest,outlet:out};
       }finally{read.unmap();read.destroy();}},
