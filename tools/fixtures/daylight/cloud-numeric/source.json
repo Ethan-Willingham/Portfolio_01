@@ -1,0 +1,59 @@
+{
+  "url": "https://noaa-goes19.s3.amazonaws.com/ABI-L2-CMIPF/2026/282/12/OR_ABI-L2-CMIPF-M6C13_G19_s20262821210214_e20262821219534_c20262821220000.nc",
+  "nativeSha256": "e2dd6a1d2910596fda0a1c7f070ddbd7445dbcc6da43b023d3afbec9c54d48e2",
+  "crop": {
+    "left": 1871,
+    "top": 1038,
+    "width": 619,
+    "height": 469
+  },
+  "file": "goes19-gulf-20261009T1210.nc",
+  "sha256": "65f4fdaa6ef0c43c53bbfa5ce7bf48a10d49db9d639e79b2ce756294fbb98aac",
+  "composite": {
+    "file": "infrared.webp",
+    "sha256": "4c8b20a8f68810a2ee08ecec9d0d8b8e577f54619f0f8859e00d9eb04c22245b",
+    "time": "2026-10-09T12:20:00.000Z",
+    "observations": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+        "id": "goes18",
+        "method": "ABI-L2-CMI-C13",
+        "start": "2026-10-09T12:10:22.200Z",
+        "end": "2026-10-09T12:19:54.200Z",
+        "url": "https://noaa-goes18.s3.amazonaws.com/ABI-L2-CMIPF/2026/282/12/OR_ABI-L2-CMIPF-M6C13_G18_s20262821210222_e20262821219542_c20262821220025.nc"
+      },
+      {
+        "id": "goes19",
+        "method": "ABI-L2-CMI-C13",
+        "start": "2026-10-09T12:10:21.400Z",
+        "end": "2026-10-09T12:19:53.400Z",
+        "url": "https://noaa-goes19.s3.amazonaws.com/ABI-L2-CMIPF/2026/282/12/OR_ABI-L2-CMIPF-M6C13_G19_s20262821210214_e20262821219534_c20262821220000.nc"
+      },
+      {
+        "id": "himawari9",
+        "method": "AHI-HSD-B13",
+        "start": "2026-10-09T12:10:00.000Z",
+        "end": "2026-10-09T12:20:00.000Z",
+        "url": "https://noaa-himawari9.s3.amazonaws.com/AHI-L1b-FLDK/2026/10/09/1210/"
+      },
+      {
+        "id": "meteosat-iodc",
+        "method": "msg_iodc:ir108",
+        "start": "2026-10-09T12:00:00.000Z",
+        "end": "2026-10-09T12:15:00.000Z",
+        "url": "https://view.eumetsat.int/geoserver/wms?service=WMS&request=GetMap&version=1.3.0&layers=msg_iodc%3Air108&styles=&format=image%2Fpng&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T12%3A00%3A00.000Z"
+      },
+      {
+        "id": "meteosat-mtg",
+        "method": "mtg_fd:ir105_hrfi",
+        "start": "2026-10-09T12:10:00.000Z",
+        "end": "2026-10-09T12:20:00.000Z",
+        "url": "https://view.eumetsat.int/geoserver/wms?service=WMS&request=GetMap&version=1.3.0&layers=mtg_fd%3Air105_hrfi&styles=&format=image%2Fpng&crs=EPSG%3A4326&bbox=-90%2C-180%2C90%2C180&width=2048&height=1024&transparent=true&time=2026-10-09T12%3A10%3A00.000Z"
+      }
+    ]
+  }
+}

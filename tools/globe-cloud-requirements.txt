@@ -1,0 +1,7 @@
+# Recorder only. No browser runtime dependencies.
+numpy==2.5.3
+Pillow==12.3.0
+h5py==3.16.0
+pyproj==3.8.0
+scipy==1.18.1
+satpy==0.60.0

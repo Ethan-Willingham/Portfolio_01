@@ -7,19 +7,24 @@
  'use strict';
  var BASE='https://raw.githubusercontent.com/Ethan-Willingham/Portfolio_01/globe-clouds/',CACHE='daylight-globe-shared-v1';
  function validate(value){
-  if(!value||![1,2].includes(value.version)||value.width!==2048||!Array.isArray(value.frames)||!value.frames.length||value.frames.length>(value.version===2?108:30))throw new Error('Invalid shared cloud archive');
+  if(!value||![1,2,3].includes(value.version)||value.width!==2048||!Array.isArray(value.frames)||!value.frames.length||value.frames.length>(value.version===3?164:value.version===2?108:30))throw new Error('Invalid shared cloud archive');
   var generated=new Date(value.generatedAt),processing=value.processing===undefined?0:value.processing;if(!Number.isFinite(+generated)||!Number.isInteger(processing)||processing<0||processing>100)throw new Error('Invalid archive clock or processing revision');
   var catalog=clouds.validate(value.catalog),last=-Infinity;
   var frames=value.frames.map(function(frame){
-   var time=new Date(frame.time);if(!Number.isFinite(+time)||time.toISOString()!==frame.time||+time%(value.version===2?clouds.STEP:3600000)||+time<=last||time>generated||!clouds.published(catalog,+time)||typeof frame.natural!=='boolean')throw new Error('Invalid archived cloud time');last=+time;
+   var time=new Date(frame.time);if(!Number.isFinite(+time)||time.toISOString()!==frame.time||+time%(value.version===3?600000:value.version===2?clouds.STEP:3600000)||+time<=last||time>generated||!clouds.published(catalog,+time)||typeof frame.natural!=='boolean')throw new Error('Invalid archived cloud time');last=+time;
    var observed=frame.sourceTimes||clouds.GROUPS.map(function(g,i){var t=clouds.productTime(catalog.products[i],+time);return (!frame.sources||frame.sources[i])&&t&&+t===+time?frame.time:null;});
-   if(!Array.isArray(observed)||observed.length!==10||value.version===2&&!frame.sourceTimes)throw new Error('Missing satellite observation clocks');
+   if(!Array.isArray(observed)||observed.length!==10||value.version>=2&&!frame.sourceTimes)throw new Error('Missing satellite observation clocks');
    if(processing>=15&&(frame.natural||observed.slice(0,5).some(function(t){return t!==null;})))throw new Error('Infrared archive contains colour observations');
-   observed.forEach(function(t,i){if(t===null){if(clouds.GROUPS[i].kind==='infrared')throw new Error('Missing infrared observation');return;}var d=new Date(t),product=catalog.products[i];if(!Number.isFinite(+d)||d.toISOString()!==t||d>time||!product.periods.some(function(p){return d>=new Date(p.start)&&d<=new Date(p.end)&&(+d-Date.parse(p.start))%p.step===0&&time-d<(clouds.GROUPS[i].kind==='visible'?1800001:p.step);}))throw new Error('Invalid satellite observation clock');});
-   var out={time:time,natural:frame.natural,sourceTimes:observed};
+   if(value.version===3){
+    if(processing<16||!catalog.numeric||!Array.isArray(frame.observations)||frame.observations.length!==10||observed.filter(Boolean).length<3)throw new Error('Missing measured cloud provenance');
+    var ids=['goes18','goes19','himawari9','meteosat-iodc','meteosat-mtg'],methods=['ABI-L2-CMI-C13','ABI-L2-CMI-C13','AHI-HSD-B13','msg_iodc:ir108','mtg_fd:ir105_hrfi'];
+    observed.forEach(function(t,i){var o=frame.observations[i];if(t===null){if(o!==null)throw new Error('Observation without pixels');return;}var d=new Date(t),end=o&&new Date(o.end);if(i<5||!o||o.id!==ids[i-5]||o.method!==methods[i-5]||o.start!==t||!Number.isFinite(+d)||d.toISOString()!==t||!Number.isFinite(+end)||end.toISOString()!==o.end||end<d||end>time||time-d>90*60000)throw new Error('Invalid measured satellite clock');});
+   }else observed.forEach(function(t,i){if(t===null){if(clouds.GROUPS[i].kind==='infrared')throw new Error('Missing infrared observation');return;}var d=new Date(t),product=catalog.products[i];if(!Number.isFinite(+d)||d.toISOString()!==t||d>time||!product.periods.some(function(p){return d>=new Date(p.start)&&d<=new Date(p.end)&&(+d-Date.parse(p.start))%p.step===0&&time-d<(clouds.GROUPS[i].kind==='visible'?1800001:p.step);}))throw new Error('Invalid satellite observation clock');});
+   var out={time:time,natural:frame.natural,sourceTimes:observed};if(value.version===3)out.observations=frame.observations;
    if(frame.repairCheckedAt!==undefined){var repaired=new Date(frame.repairCheckedAt);if(!Number.isFinite(+repaired)||repaired.toISOString()!==frame.repairCheckedAt||repaired<time||repaired>generated)throw new Error('Invalid cloud repair clock');out.repairCheckedAt=frame.repairCheckedAt;}
    ['visible','infrared'].forEach(function(kind){var asset=frame[kind];if(!asset||!Number.isInteger(asset.bytes)||asset.bytes<40||asset.bytes>8000000||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.file!==frame.time.replace(/[-:]/g,'').slice(0,13)+'-'+kind+'-'+asset.sha256.slice(0,16)+'.webp')throw new Error('Invalid cloud asset');out[kind]={file:asset.file,bytes:asset.bytes,sha256:asset.sha256};});return out;
   });
+  if(value.version===3&&(catalog.times.length!==frames.length||frames.some(function(f,i){return f.time.toISOString()!==catalog.times[i];})))throw new Error('Cloud catalog does not match prepared frames');
   return {version:value.version,processing:processing,width:value.width,generatedAt:generated,catalog:catalog,frames:frames};
  }
  function dimensions(bytes){
@@ -40,19 +45,19 @@
   var hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(function(v){return v.toString(16).padStart(2,'0');}).join('');if(hash!==asset.sha256)throw new Error('Cloud checksum mismatch');
   return new Blob([bytes],{type:'image/webp'});
  }
- async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v=2-'+clouds.PROCESSING+'-repair1-'+Math.floor(Date.now()/300000),Object.assign({allowText:true},options)));}
- // Prepared history must never cap newer observations published by providers.
+ async function fetchManifest(options){return validate(await data.fetchJSON(BASE+'manifest.json?v=3-'+clouds.PROCESSING+'-'+Math.floor(Date.now()/60000),Object.assign({allowText:true},options)));}
+ // Only measured, prepared frames can enter this view. Palette maps are not a fallback.
  function frameAt(manifest,catalog,instant,now){
   var clock=+new Date(now),time=+new Date(instant);if(time>clock+300000)return null;
-  var best=catalog&&clouds.frameAt(catalog,instant,now);
+  var best=catalog&&catalog.numeric?clouds.frameAt(catalog,instant,now):null;
   if(manifest&&manifest.processing>=clouds.PROCESSING)manifest.frames.forEach(function(f){if(f.time<=time&&time-f.time<5*3600000&&(!best||f.time>best))best=new Date(f.time);});
   return best;
  }
  function replayFrames(manifest,published,bounds){
-  if(!manifest||manifest.processing<clouds.PROCESSING)return published;
+  if(!manifest||manifest.processing<clouds.PROCESSING)return [];
   var last=manifest.frames[manifest.frames.length-1].time,times=new Set();
-  manifest.frames.forEach(function(f){if(f.time>=Math.floor(+bounds.start/clouds.STEP)*clouds.STEP&&f.time<=bounds.end)times.add(+f.time);});
-  published.forEach(function(t){if(t>last)times.add(+t);});
+  manifest.frames.forEach(function(f){if(f.time>=Math.floor(+bounds.start/manifest.catalog.step)*manifest.catalog.step&&f.time<=bounds.end)times.add(+f.time);});
+  if(manifest.version!==3)published.forEach(function(t){if(t>last)times.add(+t);});
   return Array.from(times).sort(function(a,b){return a-b;}).map(function(t){return new Date(t);});
  }
  async function fetchFrame(manifest,time,options){
@@ -60,8 +65,8 @@
   var cache=null;if(typeof caches!=='undefined')try{cache=await caches.open(CACHE);}catch(_){}
   var blobs=await Promise.all(['visible','infrared'].map(async function(kind){var asset=frame[kind],url=BASE+asset.file;if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,asset,manifest.width);}catch(_){await cache.delete(url);}}
    if(options.cacheOnly)throw new Error('Cloud hour not cached');return data.request(url,options,async function(response){var copy=cache?response.clone():null,blob=await imageBlob(response,asset,manifest.width);if(cache)try{await cache.put(url,copy);}catch(_){}return blob;});}));
-  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-128)).map(function(k){return cache.delete(k);}));}catch(_){}
-  return {time:new Date(time),width:manifest.width,dense:true,shared:true,natural:frame.natural,sourceTimes:frame.sourceTimes,blobs:blobs};
+  if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-160)).map(function(k){return cache.delete(k);}));}catch(_){}
+  return {time:new Date(time),width:manifest.width,dense:true,shared:true,numeric:manifest.version===3,natural:frame.natural,sourceTimes:frame.sourceTimes,observations:frame.observations,blobs:blobs};
  }
  return {BASE:BASE,validate:validate,dimensions:dimensions,imageBlob:imageBlob,fetchManifest:fetchManifest,fetchFrame:fetchFrame,frameAt:frameAt,replayFrames:replayFrames};
 }));

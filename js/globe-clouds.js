@@ -31,6 +31,12 @@
  }
  function parseCatalog(nasa,eum){var products=[];GROUPS.forEach(function(g){g.layers.forEach(function(layer){products.push({layer:layer,source:g.source,periods:periods(g.source===NASA?nasa:eum,layer)});});});var catalog=validate({version:1,products:products,checkedAt:new Date().toISOString()});try{catalog.legacy=data.parseCloudCatalog(eum);}catch(_){}return catalog;}
  function validate(value){
+  if(value&&value.version===2){
+   var checked=timestamp(value.checkedAt),last=-Infinity;
+   if(!Array.isArray(value.times)||!value.times.length||value.times.length>164)throw new Error('Invalid measured cloud catalog');
+   var times=value.times.map(function(t){var d=timestamp(t);if(+d%600000||+d<=last||d>checked)throw new Error('Invalid measured cloud clock');last=+d;return d.toISOString();});
+   return {version:2,numeric:true,dense:true,step:600000,checkedAt:checked.toISOString(),times:times,start:new Date(times[0]),end:new Date(times[times.length-1])};
+  }
   if(!value||value.version!==1||!Array.isArray(value.products)||value.products.length!==10)throw new Error('Invalid hourly catalog');
   var checked=timestamp(value.checkedAt),expected=[];GROUPS.forEach(function(g){g.layers.forEach(function(l){expected.push([g.source,l]);});});
   var starts=[],ends=[],products=value.products.map(function(p,i){if(!p||p.source!==expected[i][0]||p.layer!==expected[i][1]||!Array.isArray(p.periods)||!p.periods.length||p.periods.length>4000)throw new Error('Invalid hourly product');
@@ -42,9 +48,9 @@
  // Keep the established ten-slot catalog format. Only infrared observations
  // supply the cloud field, so display-colour clocks and images stay absent.
  function sourceTimes(catalog,time){return catalog.products.map(function(p,i){return GROUPS[i].kind==='infrared'?productTime(p,+timestamp(time)):null;});}
- function published(catalog,time){return catalog.products.every(function(p,i){return GROUPS[i].kind==='visible'||!!productTime(p,time);});}
- function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;var limit=Math.floor(Math.min(t,+catalog.end)/STEP)*STEP;for(var k=0;k<24&&limit>=catalog.start;k++,limit-=STEP)if(published(catalog,limit))return new Date(limit);return null;}
- function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/STEP)*STEP);t<end&&t<=catalog.end&&t<=clock;t+=STEP)if(published(catalog,t))out.push(new Date(t));return out;}
+ function published(catalog,time){if(catalog.numeric)return catalog.times.includes(new Date(time).toISOString());return catalog.products.every(function(p,i){return GROUPS[i].kind==='visible'||!!productTime(p,time);});}
+ function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;if(catalog.numeric){var candidates=catalog.times.filter(function(s){var d=Date.parse(s);return d<=t&&t-d<5*3600000;});return candidates.length?new Date(candidates[candidates.length-1]):null;}var limit=Math.floor(Math.min(t,+catalog.end)/STEP)*STEP;for(var k=0;k<24&&limit>=catalog.start;k++,limit-=STEP)if(published(catalog,limit))return new Date(limit);return null;}
+ function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];if(catalog.numeric)return catalog.times.map(function(t){return new Date(t);}).filter(function(t){return t>=start&&t<end&&t<=clock;});for(var t=Math.max(+catalog.start,Math.floor(start/STEP)*STEP);t<end&&t<=catalog.end&&t<=clock;t+=STEP)if(published(catalog,t))out.push(new Date(t));return out;}
  async function fetchCatalog(options){
   var query='?service=WMS&version=1.3.0&request=GetCapabilities',fresh=query+'&fresh='+Math.floor(Date.now()/60000);
   var xml=await Promise.allSettled([data.fetchText(NASA+query,options),data.fetchText(NASA+fresh,options),data.fetchText(EUM+query,options),data.fetchText(EUM+fresh,options)]);
@@ -174,5 +180,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:15,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:16,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,composite:composite,compositeSteps:compositeSteps};
 }));

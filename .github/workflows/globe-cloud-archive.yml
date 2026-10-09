@@ -4,9 +4,16 @@ on:
   schedule:
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
+    inputs:
+      capture_minutes:
+        description: Minutes before handing off to the next recorder
+        type: choice
+        default: '50'
+        options: ['5', '50']
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: globe-cloud-archive
@@ -16,7 +23,7 @@ jobs:
   capture:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,21 +32,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare cloud image encoder
-        run: npm install --prefix "$RUNNER_TEMP/globe-runtime" --no-save --package-lock=false sharp@0.35.4
-      - name: Capture cloud images independently of aurora
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: tools/globe-cloud-requirements.txt
+      - name: Prepare satellite readers and image encoder
+        id: runtime
+        run: |
+          python -m pip install -r tools/globe-cloud-requirements.txt
+          npm install --prefix "$RUNNER_TEMP/globe-runtime" --no-save --package-lock=false sharp@0.35.4
+      - name: Capture measured clouds and refill replay history
         env:
           NODE_PATH: ${{ runner.temp }}/globe-runtime/node_modules
+          GLOBE_SOURCE_CACHE: ${{ runner.temp }}/globe-source-cache
+          CAPTURE_MINUTES: ${{ inputs.capture_minutes || '50' }}
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          case "$CAPTURE_MINUTES" in 5|50) ;; *) exit 1 ;; esac
           successful=0
-          for sample in {1..12}; do
+          until_time=$((SECONDS + CAPTURE_MINUTES * 60))
+          while [ "$SECONDS" -lt "$until_time" ]; do
+            started=$SECONDS
             if node tools/archive-globe-clouds.cjs; then
               successful=$((successful + 1))
             else
-              echo 'Cloud capture incomplete; retaining valid archived frames.'
+              echo 'Cloud capture failed; retaining verified observations.'
             fi
-            if [ "$sample" -lt 12 ]; then sleep 300; fi
+            delay=$((120 - SECONDS + started))
+            if [ "$delay" -gt 0 ]; then sleep "$delay"; fi
           done
           if [ "$successful" -eq 0 ]; then exit 1; fi
+      # Cron deliveries can be delayed by hours. Queue a successor explicitly;
+      # concurrency allows one recorder and one waiting run, never two writers.
+      # A manual cancellation intentionally stops this handoff. Cron is fallback.
+      - name: Queue the next recorder
+        if: ${{ !cancelled() && steps.runtime.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run globe-cloud-archive.yml --ref main
