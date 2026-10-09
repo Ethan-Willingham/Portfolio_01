@@ -8,9 +8,9 @@ which listed 2,856 character pages at import time.
 
 Every catalog entry records a specific original-series episode, its episode
 article, the character article and the original image URL. The picker shows
-the episode and links to the character article. The image is that article's portrait,
-which can be stock art, a model sheet, a screenshot, a game render or a
-live-action photograph. The portrait's format does not determine whether the
+the episode and links to the character article. Images come from article
+portraits or researched clean alternatives, including stock art, episode
+frames, game renders and live-action photographs. The portrait's format does not determine whether the
 character belongs to the TV series. Article prose is not reproduced. SpongeBob
 characters and artwork belong to their respective rights holders, including
 Nickelodeon and Paramount; the wiki's text license does not establish a license
@@ -60,7 +60,7 @@ The owner's selected fight lineup is maintained separately in
 available for that lineup through `retainedCharacters` and
 `assets/spongebob/selected-cast/`. Bare-Knuckles is not included in this
 original-series catalog because its sourced appearance is in The Patrick Star
-Show. The remaining 18 selected characters have original-series episode
+Show. The remaining 33 selected characters have original-series episode
 evidence in the catalog.
 
 ## Familiar names and search
@@ -79,6 +79,28 @@ numbered source articles.
 Some familiar names are wiki redirects. Suzy can also be found as Debbie Rechid
 or Nancy Suzy Fish, Judy as Shubie, and Officer Murphy as Officer John.
 
+## Clean portraits
+
+The full 1,370-character catalog and the retained Bare-Knuckles portrait were
+reviewed for production guide lines, arrows and model-sheet annotations. The
+95 identified portraits were replaced with clean sourced alternatives, covering
+60 entries in the new-character picker and 35 entries in the existing lookup.
+All replacement portraits were visually reviewed. The replacements use actual
+artwork or episode frames. No generated art, redrawing or removal of drawn
+guide lines was used.
+
+Some episode frames are cropped to focus on the intended character. These crop
+boxes use original source-image pixels, before the image is resized. Actual
+show content, such as the names on Patrick's family tree and a seahorse's reins,
+remains visible where appropriate.
+
+`assets/spongebob/portrait-overrides.json` preserves the old image URL, clean
+image URL, wiki File page, reason and any crop coordinates for every replacement.
+The importer applies these overrides before downloading, so refreshing the
+catalog keeps the clean portraits. Replacement files use versioned
+`-clean-v1.webp` names to bypass previously cached annotated images. The character
+IDs and selection history remain the same.
+
 ## Refreshing the roster
 
 Run `tools/import-spongebob-characters.py` with Python 3 and Pillow. The importer
@@ -91,10 +113,11 @@ responses live in `/tmp/spongebob-original-audit`.
 Use fresh `--cache-dir` and `--audit-cache-dir` directories to refresh discovery
 and source evidence. Use `--force` to replace existing portraits with current
 source copies. The importer validates IDs and images before atomically replacing
-the manifest, then removes unused local catalog images.
+the manifest, then removes unused local catalog images. Portrait overrides stay
+active during a forced refresh as well.
 
 All 1,370 delivered WebP files decoded successfully. The main cast and portrait
-contact sheets were visually inspected. The WebP files total about 43 MiB.
+contact sheets were visually inspected. The WebP files total about 44 MiB.
 There are 71 PNG fallback siblings, covering photographic portraits and retained
 fallbacks from the previous catalog. Their pixels match the decoded WebP exactly,
 and they total about 19 MiB. Each record names its fallback with `fallbackImage`.
@@ -114,6 +137,8 @@ The manifest contains `version` (3), `scope` (`original-series`), `scopeName`,
 - `width` and `height`: actual dimensions of the delivered image.
 - `sourcePage`: wiki character article.
 - `sourceImage`: original source image URL.
+- `imageSourcePage`, when present: wiki File page for a clean replacement.
+- `imageNote`, when present: the reason for the clean replacement.
 - `seriesEpisode`: a verified original-series episode title.
 - `seriesSource`: the corresponding episode article.
 - `seriesEvidence`: the source method establishing the appearance.

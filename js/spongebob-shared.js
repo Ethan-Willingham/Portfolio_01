@@ -3,7 +3,7 @@
   const SELECTION_KEY = 'spongebob-character-selection-v1';
   let catalogPromise;
   async function fetchJSON(path) {
-    const response = await fetch(path + '?v=2', { cache: 'no-cache' });
+    const response = await fetch(path + '?v=3', { cache: 'no-cache' });
     if (!response.ok) throw new Error('The character catalog could not be loaded.');
     return response.json();
   }

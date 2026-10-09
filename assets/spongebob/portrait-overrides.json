@@ -1,0 +1,1109 @@
+{
+  "version": 1,
+  "characters": {
+    "incidental-158": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/dd/Skill_Crane_160.png/revision/latest?cb=20200827152759",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Skill_Crane_160.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a1/Incidental_158_Character_Model.jpg/revision/latest?cb=20240201163800",
+      "crop": [
+        0,
+        162,
+        866,
+        1080
+      ],
+      "image": "assets/spongebob/characters/incidental-158-clean-v1.webp"
+    },
+    "incidental-81a": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/19/Dusty_81A.png/revision/latest?cb=20250417042536",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Dusty_81A.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a6/Inc_81A.jpg/revision/latest?cb=20240207015748",
+      "image": "assets/spongebob/characters/incidental-81a-clean-v1.webp"
+    },
+    "incidental-105": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/24/Bucket_Sweet_Bucket_200.png/revision/latest?cb=20191112025850",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Bucket_Sweet_Bucket_200.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/67/SB_s01_e016A_CHAR_generic_4.png/revision/latest?cb=20240129002443",
+      "image": "assets/spongebob/characters/incidental-105-clean-v1.webp"
+    },
+    "incidental-82": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/37/Face_Freeze%21_044.png/revision/latest?cb=20230107032724",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Face_Freeze!_044.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/dc/New_82.jpg/revision/latest?cb=20221012183345",
+      "image": "assets/spongebob/characters/incidental-82-clean-v1.webp"
+    },
+    "incidental-93": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/ce/Squid_on_Strike_124.png/revision/latest?cb=20191214204744",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squid_on_Strike_124.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5c/New_93.jpg/revision/latest?cb=20260816220505",
+      "crop": [
+        668,
+        43,
+        1322,
+        1037
+      ],
+      "image": "assets/spongebob/characters/incidental-93-clean-v1.webp"
+    },
+    "incidental-118": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/73/Hall_Monitor_135.png/revision/latest?cb=20221104231749",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Hall_Monitor_135.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/06/INC_118_new_model_pose.jpg/revision/latest?cb=20240225191746",
+      "crop": [
+        286,
+        32,
+        1285,
+        1080
+      ],
+      "image": "assets/spongebob/characters/incidental-118-clean-v1.webp"
+    },
+    "incidental-91": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/1a/Call_the_Cops_076.png/revision/latest?cb=20180927222502",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Call_the_Cops_076.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/11/Incidental_91_Character_Model.jpg/revision/latest?cb=20240131184629",
+      "crop": [
+        883,
+        76,
+        1843,
+        1048
+      ],
+      "image": "assets/spongebob/characters/incidental-91-clean-v1.webp"
+    },
+    "incidental-205": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0f/Rock_Bottom_Games_020.png/revision/latest?cb=20260831025748",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Rock_Bottom_Games_020.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4c/Incidental_205.jpg/revision/latest?cb=20240121174808",
+      "image": "assets/spongebob/characters/incidental-205-clean-v1.webp"
+    },
+    "incidental-8": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f3/Hall_Monitor_018.png/revision/latest?cb=20221104230357",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Hall_Monitor_018.png",
+      "reason": "Clean original episode frame without production guide lines or annotations",
+      "crop": [
+        428,
+        0,
+        1428,
+        1080
+      ],
+      "image": "assets/spongebob/characters/incidental-8-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b7/New_Inc_8.png/revision/latest?cb=20240714053003"
+    },
+    "bank-robber": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/68/Identity_thief_model_pose.png/revision/latest?cb=20201028135712",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Identity_thief_model_pose.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5b/Identity_thief_%28black_pants%29.png/revision/latest?cb=20221019051011",
+      "image": "assets/spongebob/characters/bank-robber-clean-v1.webp"
+    },
+    "blacksmith": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c3/Dunces_and_Dragons_210.png/revision/latest?cb=20200823175443",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Dunces_and_Dragons_210.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4f/Blacksmith_character_model.png/revision/latest?cb=20240226061550",
+      "image": "assets/spongebob/characters/blacksmith-clean-v1.webp"
+    },
+    "bruiser-shark": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ea/Salty_Sponge_174.png/revision/latest?cb=20230128053508",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Salty_Sponge_174.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/cd/Blue-Eyes_Bruiser_Shark_Model_Pose.png/revision/latest?cb=20230129002640",
+      "crop": [
+        576,
+        11,
+        1920,
+        1080
+      ],
+      "image": "assets/spongebob/characters/bruiser-shark-clean-v1.webp"
+    },
+    "bubble-hippo": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/3b/Bubble_Hippo_Model_Pose.png/revision/latest?cb=20230105230725",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Bubble_Hippo_Model_Pose.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0c/Bubble_model_cs.png/revision/latest?cb=20250510045138",
+      "image": "assets/spongebob/characters/bubble-hippo-clean-v1.webp"
+    },
+    "business-man": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5e/Can_You_Spare_a_Dime_069.png/revision/latest?cb=20191123012405",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Can_You_Spare_a_Dime_069.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e7/Purple_executive.png/revision/latest?cb=20240128010901",
+      "crop": [
+        892,
+        54,
+        1359,
+        1080
+      ],
+      "image": "assets/spongebob/characters/business-man-clean-v1.webp"
+    },
+    "cafeteria-lady-1": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/70/Orange_cafeteria_worker_model_pose.jpg/revision/latest?cb=20210217121555",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Orange_cafeteria_worker_model_pose.jpg",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/71/Cafeteria_lady_1_model_pose.png/revision/latest?cb=20220808185343",
+      "image": "assets/spongebob/characters/cafeteria-lady-1-clean-v1.webp"
+    },
+    "cafeteria-lady-2": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/80/Purple_cafeteria_worker.png/revision/latest?cb=20210217121633",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Purple_cafeteria_worker.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/3d/Cafeteria_lady_2_model_pose.png/revision/latest?cb=20220808185413",
+      "image": "assets/spongebob/characters/cafeteria-lady-2-clean-v1.webp"
+    },
+    "chef": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/01/Ripped_Pants_104.png/revision/latest?cb=20260719061956",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Ripped_Pants_104.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ea/Snack_Bar_chef_model.png/revision/latest?cb=20230317064914",
+      "image": "assets/spongebob/characters/chef-clean-v1.webp"
+    },
+    "clarinet-player-3": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/28/Patty_Hype_030.png/revision/latest?cb=20191126034252",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Patty_Hype_030.png",
+      "reason": "Clean original episode frame without production guide lines or annotations",
+      "crop": [
+        370,
+        65,
+        726,
+        767
+      ],
+      "image": "assets/spongebob/characters/clarinet-player-3-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/7b/Band_member_type_5.png/revision/latest?cb=20240322223029"
+    },
+    "dj": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/fe/Krab_Borg_052.png/revision/latest?cb=20200726130931",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Krab_Borg_052.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/79/RadioDJ.jpg/revision/latest?cb=20240129064229",
+      "crop": [
+        0,
+        140,
+        926,
+        1080
+      ],
+      "image": "assets/spongebob/characters/dj-clean-v1.webp"
+    },
+    "drummer-squidness-protection": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/12/Squidness_Protection_049.png/revision/latest?cb=20241231015054",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidness_Protection_049.png",
+      "reason": "Clean original episode frame without production guide lines or annotations",
+      "crop": [
+        230,
+        410,
+        461,
+        821
+      ],
+      "image": "assets/spongebob/characters/drummer-squidness-protection-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/48/Drummerprehibernation.png/revision/latest?cb=20260331125245"
+    },
+    "drummer-2": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/ae/Lav_drum_2.jpg/revision/latest?cb=20240812071015",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Lav_drum_2.jpg",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/ce/Band_member_type_7.png/revision/latest?cb=20240322223119",
+      "image": "assets/spongebob/characters/drummer-2-clean-v1.webp"
+    },
+    "female-skier": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/00/Prehibernation_Week_040.png/revision/latest?cb=20200803175511",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Prehibernation_Week_040.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/bf/Female_Sky.png/revision/latest?cb=20240201164002",
+      "crop": [
+        667,
+        32,
+        1349,
+        1058
+      ],
+      "image": "assets/spongebob/characters/female-skier-clean-v1.webp"
+    },
+    "flute-player-6": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/32/Red_flute_6.jpg/revision/latest?cb=20250723154428",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Red_flute_6.jpg",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f8/Band_member_type_3.png/revision/latest?cb=20240322222918",
+      "image": "assets/spongebob/characters/flute-player-6-clean-v1.webp"
+    },
+    "gaptooth-thug": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/df/What_Ever_Happened_to_SpongeBob_162.png/revision/latest?cb=20191117032921",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:What_Ever_Happened_to_SpongeBob_162.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f0/Gray_Pirate_12.jpg/revision/latest?cb=20240206214446",
+      "image": "assets/spongebob/characters/gaptooth-thug-clean-v1.webp"
+    },
+    "greaser-fish": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b2/Smoothe_Jazz_at_Bikini_Bottom_142.png/revision/latest?cb=20220511112450",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Smoothe_Jazz_at_Bikini_Bottom_142.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5e/Greaser_fish_model_pose.png/revision/latest?cb=20220808010330",
+      "crop": [
+        0,
+        0,
+        926,
+        1080
+      ],
+      "image": "assets/spongebob/characters/greaser-fish-clean-v1.webp"
+    },
+    "groundskeeper": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/33/Squidville_121.png/revision/latest?cb=20230209220915",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidville_121.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/80/Groundskeeper.png/revision/latest?cb=20250728083315",
+      "crop": [
+        399,
+        76,
+        968,
+        1058
+      ],
+      "image": "assets/spongebob/characters/groundskeeper-clean-v1.webp"
+    },
+    "head-enhanced-fish": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/6b/Imitation_Krabs_055.png/revision/latest?cb=20260728110331",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Imitation_Krabs_055.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/56/Unenhanced_fish.png/revision/latest?cb=20240316072507",
+      "image": "assets/spongebob/characters/head-enhanced-fish-clean-v1.webp"
+    },
+    "heart-man": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c2/Valentine%27s_Day_153.png/revision/latest?cb=20231018221950",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Valentine%27s_Day_153.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/91/Heart_Man_Model_Pose.png/revision/latest?cb=20240121040812",
+      "crop": [
+        673,
+        0,
+        1432,
+        1080
+      ],
+      "image": "assets/spongebob/characters/heart-man-clean-v1.webp"
+    },
+    "hot-rod-chick": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/32/Mid-Life_Crustacean_106.png/revision/latest?cb=20191221173215",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Mid-Life_Crustacean_106.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/41/Mind_the_Gap_061~4.png/revision/latest?cb=20240130021600",
+      "crop": [
+        734,
+        131,
+        1138,
+        1005
+      ],
+      "image": "assets/spongebob/characters/hot-rod-chick-clean-v1.webp"
+    },
+    "hot-rod-dude": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/46/Mid-Life_Crustacean_107.png/revision/latest?cb=20191221173218",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Mid-Life_Crustacean_107.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4d/HRF.PNG/revision/latest?cb=20240130032719",
+      "crop": [
+        1008,
+        87,
+        1440,
+        983
+      ],
+      "image": "assets/spongebob/characters/hot-rod-dude-clean-v1.webp"
+    },
+    "giant-trevally": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/ff/Salty_Sponge_122.png/revision/latest?cb=20230128053126",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Salty_Sponge_122.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/64/Giant_trevally.jpg/revision/latest?cb=20230130182547",
+      "crop": [
+        422,
+        0,
+        1920,
+        1080
+      ],
+      "image": "assets/spongebob/characters/giant-trevally-clean-v1.webp"
+    },
+    "old-man-jenkins-inc-80": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f9/Mermaid_Man_and_Barnacle_Boy_126.png/revision/latest?cb=20191126235621",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Mermaid_Man_and_Barnacle_Boy_126.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/df/Incidental_80_Character_Model.jpg/revision/latest?cb=20240131184304",
+      "crop": [
+        922,
+        72,
+        1843,
+        1428
+      ],
+      "image": "assets/spongebob/characters/old-man-jenkins-inc-80-clean-v1.webp"
+    },
+    "margie-star": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/51/I%27m_with_Stupid_190.png/revision/latest?cb=20191020223949",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:I%27m_with_Stupid_190.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/08/Margie_model_pose.jpg/revision/latest?cb=20220805200209",
+      "crop": [
+        185,
+        0,
+        883,
+        1080
+      ],
+      "image": "assets/spongebob/characters/margie-star-clean-v1.webp"
+    },
+    "baby-squid-burger": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/24/Just_One_Bite_153.png/revision/latest?cb=20200106172108",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Just_One_Bite_153.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/12/Baby_Squid_Burger.png/revision/latest?cb=20220808041948",
+      "crop": [
+        242,
+        486,
+        626,
+        1080
+      ],
+      "image": "assets/spongebob/characters/baby-squid-burger-clean-v1.webp"
+    },
+    "bad-crab": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/48/Life_of_Crime_002.png/revision/latest?cb=20200803190606",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Life_of_Crime_002.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e0/BadCrab.png/revision/latest?cb=20251103225826",
+      "image": "assets/spongebob/characters/bad-crab-clean-v1.webp"
+    },
+    "barry-cuda-salty-sponge": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e1/Salty_Sponge_155.png/revision/latest?cb=20230128053344",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Salty_Sponge_155.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e3/Mean_biker_leader_Barry_Cuda.jpg/revision/latest?cb=20230129155447",
+      "crop": [
+        0,
+        11,
+        1306,
+        1080
+      ],
+      "image": "assets/spongebob/characters/barry-cuda-salty-sponge-clean-v1.webp"
+    },
+    "billy-inc-103": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/68/Formal_103.jpg/revision/latest?cb=20260629021129",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Formal_103.jpg",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/33/SB_s01_e016A_CHAR_sc140_f.png/revision/latest?cb=20240127094531",
+      "image": "assets/spongebob/characters/billy-inc-103-clean-v1.webp"
+    },
+    "birdie": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/ad/Wormy_004.png/revision/latest?cb=20230309052043",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Wormy_004.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/09/Bird_model.png/revision/latest?cb=20240321092839",
+      "crop": [
+        835,
+        54,
+        1411,
+        1080
+      ],
+      "image": "assets/spongebob/characters/birdie-clean-v1.webp"
+    },
+    "clam-head-candy-cad": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/64/Mermaid_Man_and_Barnacle_Boy_008.png/revision/latest?cb=20191126234909",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Mermaid_Man_and_Barnacle_Boy_008.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/7f/Clam_Head_Candy_Cad.PNG/revision/latest?cb=20240121190003",
+      "crop": [
+        960,
+        0,
+        1920,
+        1442
+      ],
+      "image": "assets/spongebob/characters/clam-head-candy-cad-clean-v1.webp"
+    },
+    "clem": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0b/Plankton%27s_Army_127.png/revision/latest?cb=20191116052742",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Plankton%27s_Army_127.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/84/Clem.PNG/revision/latest?cb=20240126014018",
+      "crop": [
+        611,
+        0,
+        1351,
+        1080
+      ],
+      "image": "assets/spongebob/characters/clem-clean-v1.webp"
+    },
+    "donna": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a4/Doing_Time_104.png/revision/latest?cb=20260406003816",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Doing_Time_104.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4c/Donna_Model.jpeg/revision/latest?cb=20240128041041",
+      "image": "assets/spongebob/characters/donna-clean-v1.webp"
+    },
+    "fifi-gary-in-love": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/ac/Gary_in_Love_117.png/revision/latest?cb=20220129192453",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Gary_in_Love_117.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/7c/Sb828sc140_poodle_worm.jpg/revision/latest?cb=20250702212847",
+      "crop": [
+        14,
+        22,
+        400,
+        1080
+      ],
+      "image": "assets/spongebob/characters/fifi-gary-in-love-clean-v1.webp"
+    },
+    "rubber-bandy": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/6d/Super_Sitters_051.png/revision/latest?cb=20220413131356",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Super_Sitters_051.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5d/FwSufaGaMAAK8Oi.jpeg/revision/latest?cb=20230518223400",
+      "image": "assets/spongebob/characters/rubber-bandy-clean-v1.webp"
+    },
+    "sardina-sardina": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/6a/Potato_Puff_147.png/revision/latest?cb=20220423153351",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Potato_Puff_147.png",
+      "reason": "Clean sourced alternative without production guide lines or annotations",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f0/Sardinia_model.jpg/revision/latest?cb=20220624022847",
+      "image": "assets/spongebob/characters/sardina-sardina-clean-v1.webp"
+    },
+    "jeke": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/cc/In_the_Mood_to_Feud_157.png/revision/latest?cb=20240716221612",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:In_the_Mood_to_Feud_157.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        435,
+        498,
+        873,
+        999
+      ],
+      "image": "assets/spongebob/characters/jeke-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4b/Jeke_plankton.png/revision/latest?cb=20240126020329"
+    },
+    "johnson": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/95/No_Weenies_Allowed_079.png/revision/latest?cb=20200806151911",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:No_Weenies_Allowed_079.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        754,
+        78,
+        1269,
+        1012
+      ],
+      "image": "assets/spongebob/characters/johnson-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ef/Weenie_2_model_pose.png/revision/latest?cb=20230317065210"
+    },
+    "julio": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/58/In_the_Mood_to_Feud_140.png/revision/latest?cb=20240716221518",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:In_the_Mood_to_Feud_140.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        1263,
+        495,
+        1584,
+        960
+      ],
+      "image": "assets/spongebob/characters/julio-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0c/Julio.png/revision/latest?cb=20240126015250"
+    },
+    "larry-the-snail": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/da/Dumped_135.png/revision/latest?cb=20211021233008",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Dumped_135.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        166,
+        252,
+        886,
+        878
+      ],
+      "image": "assets/spongebob/characters/larry-the-snail-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b5/LarrydaSnail.png/revision/latest?cb=20230223175524"
+    },
+    "marty": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/57/I%27m_with_Stupid_138.png/revision/latest?cb=20191020223415",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:I%27m_with_Stupid_138.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        0,
+        122,
+        779,
+        1079
+      ],
+      "image": "assets/spongebob/characters/marty-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/d1/Marty_model_pose.jpg/revision/latest?cb=20230317065040"
+    },
+    "nautilus": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/10/SB-129_108.png/revision/latest?cb=20260720114721",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:SB-129_108.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        729,
+        79,
+        1440,
+        718
+      ],
+      "image": "assets/spongebob/characters/nautilus-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/8b/Ammonite.png/revision/latest?cb=20250722174223"
+    },
+    "orville": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/10/Squidville_171.png/revision/latest?cb=20230209221143",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidville_171.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        369,
+        73,
+        808,
+        1079
+      ],
+      "image": "assets/spongebob/characters/orville-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/27/Squid_guard_2_model_pose.png/revision/latest?cb=20230317065746"
+    },
+    "p-1000": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/1f/PL-1413_108.png/revision/latest?cb=20240716225910",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:PL-1413_108.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        318,
+        9,
+        915,
+        990
+      ],
+      "image": "assets/spongebob/characters/p-1000-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/8f/P-1000.png/revision/latest?cb=20240716201359"
+    },
+    "rainchild": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/58/In_the_Mood_to_Feud_140.png/revision/latest?cb=20240716221518",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:In_the_Mood_to_Feud_140.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        117,
+        678,
+        387,
+        1005
+      ],
+      "image": "assets/spongebob/characters/rainchild-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0f/Plankton_cousin_type_17.png/revision/latest?cb=20240126014403"
+    },
+    "rufus": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/cc/In_the_Mood_to_Feud_157.png/revision/latest?cb=20240716221612",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:In_the_Mood_to_Feud_157.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        1146,
+        255,
+        1452,
+        795
+      ],
+      "image": "assets/spongebob/characters/rufus-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/82/Plankton_cousin_type_14.png/revision/latest?cb=20240126014208"
+    },
+    "sea-bear": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/ba/The_Camping_Episode_174.png/revision/latest?cb=20200926024700",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:The_Camping_Episode_174.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        681,
+        13,
+        1380,
+        794
+      ],
+      "image": "assets/spongebob/characters/sea-bear-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/da/Sea_bear_model.png/revision/latest?cb=20260205003544"
+    },
+    "squidette": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2b/Squidville_145.png/revision/latest?cb=20230209221027",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidville_145.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        623,
+        247,
+        1021,
+        890
+      ],
+      "image": "assets/spongebob/characters/squidette-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e8/Tentacle_Acres_resident_type_5.png/revision/latest?cb=20240322223323"
+    },
+    "ted": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/34/Missing_Identity_008.png/revision/latest?cb=20191230203727",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Missing_Identity_008.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        722,
+        234,
+        1262,
+        1091
+      ],
+      "image": "assets/spongebob/characters/ted-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b6/Diner_Fish.png/revision/latest?cb=20221019050058"
+    },
+    "zeke-junior": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/14/Plankton%27s_Army_104.png/revision/latest?cb=20191116052637",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Plankton%27s_Army_104.png",
+      "reason": "clean episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        924,
+        487,
+        1075,
+        731
+      ],
+      "image": "assets/spongebob/characters/zeke-junior-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/24/Joe_plankton.png/revision/latest?cb=20240126015814"
+    },
+    "doug": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2a/Plankton%27s_Army_103.png/revision/latest?cb=20191116052632",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Plankton%27s_Army_103.png",
+      "reason": "clean original-series episode frame without model-sheet guide lines or arrows",
+      "crop": [
+        771,
+        218,
+        940,
+        667
+      ],
+      "image": "assets/spongebob/characters/doug-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/aa/Doug_plankton.png/revision/latest?cb=20240126020203"
+    },
+    "billy-fishkin": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/d4/The_Chaperone_156.png/revision/latest?cb=20200112201504",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:The_Chaperone_156.png",
+      "reason": "Clean full-body gray-brown Billy Fishkin episode frame from The Chaperone, cropped to the left dancing anchovy.",
+      "crop": [
+        215,
+        135,
+        735,
+        995
+      ],
+      "image": "assets/spongebob/characters/billy-fishkin-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5d/Teen_4.jpg/revision/latest?cb=20220830051820"
+    },
+    "conductor-1": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f4/SpongeBob%27s_Last_Stand_242.png/revision/latest?cb=20191029003922",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:SpongeBob%27s_Last_Stand_242.png",
+      "reason": "Clean front-facing Conductor 1 episode frame from SpongeBob's Last Stand, cropped to the teal conductor in the red band uniform.",
+      "crop": [
+        310,
+        85,
+        760,
+        1080
+      ],
+      "image": "assets/spongebob/characters/conductor-1-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/56/Band_member_type_1.png/revision/latest?cb=20240322222800"
+    },
+    "customer": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2b/Customer_and_Incidental_6.png/revision/latest?cb=20240517035117",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Customer_and_Incidental_6.png",
+      "reason": "Clean Customer drawing, cropped to the orange customer on the left; removes the separate Incidental 6 pose.",
+      "crop": [
+        0,
+        0,
+        825,
+        816
+      ],
+      "image": "assets/spongebob/characters/customer-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/44/Customer_model_pose.png/revision/latest?cb=20230222130226"
+    },
+    "herb-star": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/51/I%27m_with_Stupid_190.png/revision/latest?cb=20191020223949",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:I%27m_with_Stupid_190.png",
+      "reason": "Clean Herb Star episode frame from I'm with Stupid, cropped to Herb on the right.",
+      "crop": [
+        725,
+        105,
+        1170,
+        910
+      ],
+      "image": "assets/spongebob/characters/herb-star-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ea/Herb_model_pose.jpg/revision/latest?cb=20220805200119"
+    },
+    "janet": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b5/I%27m_with_Stupid_167.png/revision/latest?cb=20191020223722",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:I%27m_with_Stupid_167.png",
+      "reason": "Clean solo full-body Janet episode frame from I'm with Stupid.",
+      "crop": [
+        430,
+        135,
+        990,
+        865
+      ],
+      "image": "assets/spongebob/characters/janet-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/58/Janet_model_pose.jpg/revision/latest?cb=20230317065121"
+    },
+    "lemont": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/91/Krabby_Land_145.png/revision/latest?cb=20191122200837",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Krabby_Land_145.png",
+      "reason": "Clean full-body gray LeMont episode frame from Krabby Land, cropped to the right brute.",
+      "crop": [
+        750,
+        340,
+        1350,
+        960
+      ],
+      "image": "assets/spongebob/characters/lemont-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/dc/The_Tough_Gray_Fish.png/revision/latest?cb=20240129070717"
+    },
+    "tom-prison-guard-1": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e5/BBPrisonGard_olive-green.jpeg/revision/latest?cb=20230418141758",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:BBPrisonGard_olive-green.jpeg",
+      "reason": "Clean isolated full-body Tom episode frame in his original olive-green prison guard design.",
+      "image": "assets/spongebob/characters/tom-prison-guard-1-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2d/Guard_old_colors.jpg/revision/latest?cb=20240128063011"
+    },
+    "dwayne-the-puck-orca": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e9/Potato_Puff_080.png/revision/latest?cb=20220423152957",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Potato_Puff_080.png",
+      "reason": "Clean original episode frame without production guide lines or annotations",
+      "crop": [
+        691,
+        0,
+        1920,
+        1080
+      ],
+      "image": "assets/spongebob/characters/dwayne-the-puck-orca-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e0/Dwayne_%22The_Puck%22_Orca_model_sheet.jpg/revision/latest?cb=20240811184429"
+    },
+    "mrs-sally-spitoon": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a0/Salty_Sponge_084.png/revision/latest?cb=20230128052849",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Salty_Sponge_084.png",
+      "reason": "Clean original episode frame without production guide lines or annotations",
+      "crop": [
+        0,
+        0,
+        1632,
+        1080
+      ],
+      "image": "assets/spongebob/characters/mrs-sally-spitoon-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b2/Sally_Spitoon_Model_Pose.png/revision/latest?cb=20230129012356"
+    },
+    "kid-krabby-land": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/54/Krabby_Land_025.png/revision/latest?cb=20191122200116",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Krabby_Land_025.png",
+      "reason": "Clean full-body Kid (Krabby Land) episode frame from Krabby Land.",
+      "crop": [
+        415,
+        235,
+        965,
+        905
+      ],
+      "image": "assets/spongebob/characters/kid-krabby-land-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b5/Blue_kid_fish.png/revision/latest?cb=20250922154543"
+    },
+    "kid-playing-in-sand": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b0/Prehibernation_Week_051.png/revision/latest?cb=20200803175702",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Prehibernation_Week_051.png",
+      "reason": "Clean purple kid episode frame from Prehibernation Week, cropped to the girl with earmuffs at the right of the snowman.",
+      "crop": [
+        805,
+        450,
+        1105,
+        835
+      ],
+      "image": "assets/spongebob/characters/kid-playing-in-sand-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e7/Unknown_Inc_12.jpg/revision/latest?cb=20240201165907"
+    },
+    "little-girl": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f2/Dirty_Bubble_Returns_140.png/revision/latest?cb=20191122223631",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Dirty_Bubble_Returns_140.png",
+      "reason": "Clean Little girl episode frame from Dirty Bubble Returns, cropped to the yellow-haired child on the left.",
+      "crop": [
+        335,
+        385,
+        855,
+        835
+      ],
+      "image": "assets/spongebob/characters/little-girl-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/7/71/Screen_Shot_2022-06-07_at_1.29.35_PM.png/revision/latest?cb=20250723133618"
+    },
+    "mayor": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/8/81/Safe_Deposit_Krabs_004.png/revision/latest?cb=20190103233839",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Safe_Deposit_Krabs_004.png",
+      "reason": "Clean Mayor close-up episode frame from Safe Deposit Krabs.",
+      "crop": [
+        465,
+        45,
+        1420,
+        1080
+      ],
+      "image": "assets/spongebob/characters/mayor-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4a/Mayor_fish.png/revision/latest?cb=20260114163339"
+    },
+    "mechanical-bull": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b0/Salty_Sponge_116.png/revision/latest?cb=20230128053102",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Salty_Sponge_116.png",
+      "reason": "Clean mechanical bull episode frame from Salty Sponge, cropped to the bull in the foreground.",
+      "crop": [
+        0,
+        85,
+        790,
+        1000
+      ],
+      "image": "assets/spongebob/characters/mechanical-bull-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/01/FnmMgwyagAACy5W.jpeg/revision/latest?cb=20230129001906"
+    },
+    "mohawk-brute-1": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/91/Krabby_Land_145.png/revision/latest?cb=20191122200837",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Krabby_Land_145.png",
+      "reason": "Clean full-body brown Mohawk brute 1 episode frame from Krabby Land, cropped to the left brute.",
+      "crop": [
+        65,
+        270,
+        595,
+        945
+      ],
+      "image": "assets/spongebob/characters/mohawk-brute-1-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f4/Big-Mac_the_Bartender.png/revision/latest?cb=20240129070526"
+    },
+    "mom-octopus": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/32/Ride_Patrick_Ride_116.png/revision/latest?cb=20230620052704",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Ride_Patrick_Ride_116.png",
+      "reason": "Clean Mom Octopus episode frame from Ride Patrick Ride, cropped to the adult octopus with her book.",
+      "crop": [
+        1000,
+        150,
+        1600,
+        790
+      ],
+      "image": "assets/spongebob/characters/mom-octopus-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c7/Mom_Octopus.png/revision/latest?cb=20250806113320"
+    },
+    "nerd-1": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/37/Mermaid_Man_%26_Barnacle_Boy_VI_The_Motion_Picture_022.png/revision/latest?cb=20191210125629",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Mermaid_Man_%26_Barnacle_Boy_VI_The_Motion_Picture_022.png",
+      "reason": "Clean Nerd 1 episode frame at the podium from Mermaid Man and Barnacle Boy VI: The Motion Picture.",
+      "crop": [
+        260,
+        145,
+        990,
+        1080
+      ],
+      "image": "assets/spongebob/characters/nerd-1-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f5/Weenie_1_model_pose.png/revision/latest?cb=20230317065247"
+    },
+    "octopus-vendor": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/3c/Home_Away_from_Home_081.png/revision/latest?cb=20260622075115",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Home_Away_from_Home_081.png",
+      "reason": "Clean full-body Octopus vendor episode frame from Home Away from Home, cropped to the octopus on the left.",
+      "crop": [
+        130,
+        235,
+        620,
+        980
+      ],
+      "image": "assets/spongebob/characters/octopus-vendor-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/c/c8/Octopus_vendor.png/revision/latest?cb=20250723133446"
+    },
+    "old-fisherman": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a5/Sandy%2C_SpongeBob%2C_and_the_Worm_046.png/revision/latest?cb=20200924020654",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Sandy,_SpongeBob,_and_the_Worm_046.png",
+      "reason": "Clean full-body old fisherman episode frame from Sandy, SpongeBob, and the Worm. Background net ropes are genuine scene content.",
+      "crop": [
+        175,
+        175,
+        970,
+        1025
+      ],
+      "image": "assets/spongebob/characters/old-fisherman-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/93/Unnamed_sailor.png/revision/latest?cb=20240406004419"
+    },
+    "parakeet": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a5/Sleepy_Time_117.png/revision/latest?cb=20230519041056",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Sleepy_Time_117.png",
+      "reason": "Clean parakeet episode frame from Sleepy Time, cropped to the bird sitting on SpongeBob's finger.",
+      "crop": [
+        230,
+        410,
+        565,
+        1035
+      ],
+      "image": "assets/spongebob/characters/parakeet-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/1a/Parakeet.jpeg/revision/latest?cb=20240122184658"
+    },
+    "pattron-sb-129": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/d0/SB-129_095.png/revision/latest?cb=20260720114525",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:SB-129_095.png",
+      "reason": "Clean full-body two-headed Pattron episode frame from SB-129.",
+      "crop": [
+        385,
+        140,
+        1045,
+        1035
+      ],
+      "image": "assets/spongebob/characters/pattron-sb-129-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0f/PatTron_model_pose.jpg/revision/latest?cb=20230519104436"
+    },
+    "prison-guard-2": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/17/2018-06-12_17.27.32_%282%29.jpg/revision/latest?cb=20210108001827",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:2018-06-12_17.27.32_(2).jpg",
+      "reason": "Clean isolated full-body Prison guard 2 screenshot in his original uniform.",
+      "image": "assets/spongebob/characters/prison-guard-2-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ec/Prison_Guard_2_model.png/revision/latest?cb=20220527223735"
+    },
+    "royal-fish": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/df/King_in_squidward%27s_dream_CEL.jpg/revision/latest?cb=20190428030349",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:King_in_squidward%27s_dream_CEL.jpg",
+      "reason": "Clean Royal fish production cel depicting the original Sleepy Time character, without guide lines or measurements.",
+      "crop": [
+        325,
+        235,
+        725,
+        665
+      ],
+      "image": "assets/spongebob/characters/royal-fish-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/af/The_king.jpg/revision/latest?cb=20240122185610"
+    },
+    "sand-creature": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/b/b1/Green_soil_in_Employee_of_the_Month_video_game.png/revision/latest?cb=20140726222331",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Green_soil_in_Employee_of_the_Month_video_game.png",
+      "reason": "Clean sand creature image from the Employee of the Month game, cropped to the green creature in the center.",
+      "crop": [
+        430,
+        235,
+        850,
+        570
+      ],
+      "image": "assets/spongebob/characters/sand-creature-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/a/a0/Soil_Model.jpeg/revision/latest?cb=20240121191806"
+    },
+    "sax-player-5": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/28/Patty_Hype_030.png/revision/latest?cb=20191126034252",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Patty_Hype_030.png",
+      "reason": "Clean Sax player 5 episode frame from Patty Hype, cropped to the gray-purple saxophonist at the lower right of the band.",
+      "crop": [
+        840,
+        350,
+        1100,
+        830
+      ],
+      "image": "assets/spongebob/characters/sax-player-5-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/09/Band_member_type_8.png/revision/latest?cb=20240322223144"
+    },
+    "scout": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/67/Mid-Life_Crustacean_028.png/revision/latest?cb=20191221173318",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Mid-Life_Crustacean_028.png",
+      "reason": "Clean full-body Scout episode frame from Mid-Life Crustacean.",
+      "crop": [
+        615,
+        355,
+        1225,
+        985
+      ],
+      "image": "assets/spongebob/characters/scout-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/e9/Boy_Scout.png/revision/latest?cb=20250805092815"
+    },
+    "ski-fish": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ef/Giant_Squidward_144.png/revision/latest?cb=20200108233932",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Giant_Squidward_144.png",
+      "reason": "Clean full-body Ski fish episode frame from Giant Squidward. Ski poles are genuine scene content.",
+      "crop": [
+        170,
+        115,
+        985,
+        990
+      ],
+      "image": "assets/spongebob/characters/ski-fish-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/1f/Kid_-1.jpg/revision/latest?cb=20240201164736"
+    },
+    "slightly-crazed-moray-eel": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/6/6f/Squidward%27s_Tough_Break_016.png/revision/latest?cb=20260201221042",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidward%27s_Tough_Break_016.png",
+      "reason": "Clean slightly crazed moray eel close-up episode frame from Squidward's Tough Break, cropped to the yellow eel on the left.",
+      "crop": [
+        0,
+        95,
+        1080,
+        965
+      ],
+      "image": "assets/spongebob/characters/slightly-crazed-moray-eel-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2e/Slightly_crazed_moray_eel_tough_lady.jpg/revision/latest?cb=20230130180954"
+    },
+    "spokesman": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/eb/Squidville_049.png/revision/latest?cb=20230209220531",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidville_049.png",
+      "reason": "Clean Spokesman episode frame from Squidville, cropped to the character inside the television.",
+      "crop": [
+        650,
+        320,
+        1030,
+        800
+      ],
+      "image": "assets/spongebob/characters/spokesman-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/e/ef/Spokesman.png/revision/latest?cb=20250728084518"
+    },
+    "squid-guard-1": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/10/Squidville_171.png/revision/latest?cb=20230209221143",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Squidville_171.png",
+      "reason": "Clean original episode frame of the seated right guard without production guide lines or annotations",
+      "crop": [
+        801,
+        256,
+        1418,
+        1079
+      ],
+      "image": "assets/spongebob/characters/squid-guard-1-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/2/2a/Squid_guard_1_model_pose.png/revision/latest?cb=20230317065828"
+    },
+    "starfish-thug": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/d/d3/Krusty_Krushers_007.png/revision/latest?cb=20230428214240",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Krusty_Krushers_007.png",
+      "reason": "Clean full-body Starfish thug episode frame from Krusty Krushers, cropped to the brown starfish in teal shorts.",
+      "crop": [
+        980,
+        360,
+        1330,
+        855
+      ],
+      "image": "assets/spongebob/characters/starfish-thug-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/58/Muscular_starfish_hq.jpg/revision/latest?cb=20240131193957"
+    },
+    "trombone-player-7": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5a/Get_Off_My_Lawnie_176.png/revision/latest?cb=20230714023500",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Get_Off_My_Lawnie_176.png",
+      "reason": "Clean Trombone player 7 episode frame from Get Off My Lawnie, cropped to the purple musician on the right.",
+      "crop": [
+        1450,
+        210,
+        1920,
+        1020
+      ],
+      "image": "assets/spongebob/characters/trombone-player-7-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/4/4b/Band_member_type_4.png/revision/latest?cb=20240322222951"
+    },
+    "trumpet-player-8": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/5a/Get_Off_My_Lawnie_176.png/revision/latest?cb=20230714023500",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Get_Off_My_Lawnie_176.png",
+      "reason": "Clean Trumpet player 8 episode frame from Get Off My Lawnie, cropped to the gray musician playing trumpet behind the saxophonist.",
+      "crop": [
+        960,
+        0,
+        1580,
+        655
+      ],
+      "image": "assets/spongebob/characters/trumpet-player-8-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/55/Band_member_type_6.png/revision/latest?cb=20240322223055"
+    },
+    "tuba-player-4": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/f/f7/Red_tub_4.jpg/revision/latest?cb=20250723154348",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Red_tub_4.jpg",
+      "reason": "Clean Tuba player 4 episode screenshot in the red marching band uniform.",
+      "image": "assets/spongebob/characters/tuba-player-4-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/5/50/Band_member_type_2.png/revision/latest?cb=20240322222832"
+    },
+    "waitress": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/3/3e/Missing_Identity_007.png/revision/latest?cb=20191230203723",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Missing_Identity_007.png",
+      "reason": "Clean Waitress episode frame from Missing Identity, cropped to the orange waitress with red hair on the left.",
+      "crop": [
+        85,
+        45,
+        725,
+        815
+      ],
+      "image": "assets/spongebob/characters/waitress-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/0/0d/Waitress_model_pose.png/revision/latest?cb=20221019045749"
+    },
+    "worm-rock-a-bye-bivalve": {
+      "sourceImage": "https://static.wikia.nocookie.net/spongebob/images/1/12/Rock-a-Bye_Bivalve_050.png/revision/latest?cb=20200807005212",
+      "imageSourcePage": "https://spongebob.fandom.com/wiki/File:Rock-a-Bye_Bivalve_050.png",
+      "reason": "Clean worm and apple episode frame from Rock-a-Bye Bivalve.",
+      "crop": [
+        405,
+        55,
+        1200,
+        970
+      ],
+      "image": "assets/spongebob/characters/worm-rock-a-bye-bivalve-clean-v1.webp",
+      "previousSourceImage": "https://static.wikia.nocookie.net/spongebob/images/9/92/Worm_%28Rock-a-Bye_Bivalve%29.png/revision/latest?cb=20250722180543"
+    }
+  },
+  "updatedAt": "2026-10-09T22:33:13+00:00"
+}

@@ -40,7 +40,7 @@ Only registered character IDs are accepted. JSON request size is limited to 2 Ki
 
 When the researched character catalog or retained public cast changes, run `node services/spongebob-votes/scripts/sync-roster.mjs` from the portfolio root and publish a new backend version. It includes catalog IDs and `lineup.retainedCharacters`. The tracked `roster.json` contains only character IDs, so the Sites source repository can build independently of the portfolio's image files.
 
-The picker pairing editor saves ordered disjoint pairs. A shared fight link carries both the selected cast and its `matchups` JSON in the URL fragment; downloaded lineup files contain the same `matchups` array. The comparer preserves these pairs and their left/right order. Each character can appear only once in a round, and a skipped pair consumes both characters. A cast without configured matchups is shuffled into disjoint pairs, with one character sitting out when its size is odd. The owner's preserved 19-character public cast therefore produces nine matchups until specific pairs are configured.
+The picker pairing editor saves ordered disjoint pairs. A shared fight link carries both the selected cast and its `matchups` JSON in the URL fragment; downloaded lineup files contain the same `matchups` array. The comparer preserves these pairs and their left/right order. Each character can appear only once in a round, and a skipped pair consumes both characters. A cast without configured matchups is shuffled into disjoint pairs, with one character sitting out when its size is odd. The owner's 34-character public cast therefore produces 17 matchups until specific pairs are configured.
 
 Run from `services/spongebob-votes/`:
 

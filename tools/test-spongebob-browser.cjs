@@ -10,12 +10,24 @@ const root = path.resolve(__dirname, '..');
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/characters.json')));
 const publicLineup = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/lineup.json')));
 const publicIds = publicLineup.characterIds;
+const originalSelectedIds = [
+  'bubble-buddy', 'alaskan-bull-worm', 'man-ray', 'tattletale-strangler', 'herb-star', 'baby-prunes',
+  'bare-knuckles-the-sea-bear', 'billy-fishkin', 'bubbleman', 'drifter', 'iron-eye', 'janet',
+  'larry-luciano', 'lemont', 'lou', 'officer-nancy', 'patar', 'spongegar', 'tom-prison-guard-1'
+];
+const newlySelectedIds = [
+  'incidental-211', 'incidental-152', 'incidental-22', 'incidental-24', 'incidental-222', 'incidental-42',
+  'incidental-104', 'incidental-49a', 'incidental-30', 'conductor-1', 'customer', 'mermaid-man-man-ray-timeline', 'nurse'
+];
 const ids = catalog.characters.map(character => character.id);
 const byId = new Map(catalog.characters.map(character => [character.id, character]));
+const castById = new Map([...catalog.characters, ...(publicLineup.retainedCharacters || [])].map(character => [character.id, character]));
 const firstCatalogIds = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/first-catalog-ids.json')));
 const firstCatalogSet = new Set(firstCatalogIds);
 const pickerIds = catalog.pickerCharacterIds;
 const pickerSet = new Set(pickerIds);
+const portraitOverrides = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/portrait-overrides.json'))).characters;
+const refreshedPortraitIds = Object.keys(portraitOverrides);
 const voteIds = [...new Set([...ids, ...(publicLineup.retainedCharacters || []).map(character => character.id)])];
 assert.equal(firstCatalogIds.length, 1021, 'the original picker catalog is recorded');
 assert.equal(firstCatalogSet.size, 1021, 'the original picker IDs are unique');
@@ -25,8 +37,21 @@ assert.ok(pickerIds.every(id => byId.has(id) && !firstCatalogSet.has(id)), 'the 
 assert.equal(catalog.scope, 'original-series', 'catalog is scoped to the original TV series');
 assert.ok(catalog.characters.every(character => character.seriesEpisode && character.seriesSource?.startsWith('https://spongebob.fandom.com/wiki/')), 'every character has TV-episode evidence');
 assert.equal(ids.includes('bare-knuckles-the-sea-bear'), false, 'spinoff-only characters are excluded');
-assert.equal(publicIds.length, 19, 'all 19 owner-selected characters are preserved');
+assert.equal(publicIds.length, 34, 'the public cast includes the screenshot selection, Karen, and Kevin');
+assert.equal(new Set(publicIds).size, 34, 'the public cast has no repeated IDs');
+assert.ok(originalSelectedIds.every(id => publicIds.includes(id)), 'all original 19 owner-selected characters are preserved');
+assert.ok([...newlySelectedIds, 'karen', 'kevin-c-cucumber'].every(id => publicIds.includes(id)), 'all 13 new screenshot selections plus Karen and Kevin are included');
 assert.ok(publicIds.every(id => voteIds.includes(id)), 'the public cast is available even outside the new picker scope');
+assert.ok(refreshedPortraitIds.length > 0, 'the portrait refresh includes sourced replacements');
+for (const id of refreshedPortraitIds) {
+  const override = portraitOverrides[id], character = castById.get(id);
+  assert.ok(character, 'each portrait replacement has a valid character ID');
+  assert.equal(character.image, override.image, 'the catalog uses the refreshed portrait asset');
+  assert.equal(character.sourceImage, override.sourceImage, 'the replacement keeps its image-source attribution');
+  const portrait = fs.readFileSync(path.join(root, override.image));
+  assert.equal(portrait.subarray(0, 4).toString(), 'RIFF', 'refreshed portraits are real WebP files');
+  assert.equal(portrait.subarray(8, 12).toString(), 'WEBP', 'refreshed portraits are real WebP files');
+}
 const source = fs.readFileSync(path.join(root, 'services/spongebob-votes/worker/index.js'), 'utf8')
   .replace('/* SITES_ROSTER_IDS */ []', JSON.stringify(voteIds));
 const sqlite = new DatabaseSync(':memory:');
@@ -99,9 +124,23 @@ async function noMatchupOverlap(page) {
     assert.deepEqual((await page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), pickerIds.slice().sort(), 'the rendered grid contains exactly the new picker IDs');
     assert.equal(await page.locator('.sb-source-link').count(), pickerIds.length, 'each new image has a source');
     assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length));
-    assert.equal(await page.locator('#sb-chosen-list button').count(), 19, 'all owner-selected characters remain in the chosen cast');
-    assert.deepEqual((await page.locator('#sb-pair-left option').evaluateAll(options => options.map(option => option.value).filter(Boolean))).sort(), publicIds.slice().sort(), 'the matchup chooser retains all 19 selected characters');
+    assert.equal(await page.locator('#sb-chosen-list button').count(), 34, 'all owner-selected characters remain in the chosen cast');
+    assert.deepEqual((await page.locator('#sb-pair-left option').evaluateAll(options => options.map(option => option.value).filter(Boolean))).sort(), publicIds.slice().sort(), 'the matchup chooser includes all 34 selected characters');
     assert.equal(await page.getByRole('button', { name: 'Remove Bare-Knuckles the Sea Bear from lineup', exact: true }).isVisible(), true, 'the saved cast keeps its selected spinoff character');
+    const decodedPortraits = await page.evaluate(async refreshedIds => {
+      const data = await SpongeBob.load();
+      return Promise.all(refreshedIds.map(async id => {
+        const character = data.byId.get(id), picture = SpongeBob.picture(character, '', true), image = picture.querySelector('img');
+        await image.decode();
+        return { id, image: character.image, currentSrc: image.currentSrc, sourceImage: character.sourceImage, width: image.naturalWidth, height: image.naturalHeight };
+      }));
+    }, refreshedPortraitIds);
+    for (const portrait of decodedPortraits) {
+      assert.equal(portrait.image, portraitOverrides[portrait.id].image, 'the loaded picker data uses each refreshed portrait');
+      assert.ok(portrait.currentSrc.endsWith(portrait.image), 'the browser loads the replacement asset itself');
+      assert.equal(portrait.sourceImage, portraitOverrides[portrait.id].sourceImage, 'loaded portrait provenance matches the source manifest');
+      assert.ok(portrait.width > 0 && portrait.height > 0, 'each refreshed portrait decodes in the browser');
+    }
     for (const query of ['My leg', 'Fred', 'SpongeBob SquarePants']) {
       await page.locator('#sb-search').fill(query);
       const renderedIds = await page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id));
@@ -207,6 +246,22 @@ async function noMatchupOverlap(page) {
       if (await page.locator('#sb-next').isVisible()) await page.locator('#sb-next').click(); else await page.locator('#sb-skip').click();
     }
     assert.equal(await page.locator('#sb-complete').isVisible(), true);
+    const fullPublicRound = await context();
+    await fullPublicRound.page.goto(base + '/spongebob-fight.html');
+    const publicSeen = new Set();
+    for (let index = 0; index < 17; index++) {
+      await fightReady(fullPublicRound.page);
+      assert.match(await fullPublicRound.page.locator('#sb-progress').textContent(), /of 17$/i, 'the 34-character public cast makes 17 matchups');
+      for (const name of await fullPublicRound.page.locator('.sb-fighter-name').allTextContents()) {
+        assert.equal(publicSeen.has(name), false, 'each public cast member appears only once in the default round');
+        publicSeen.add(name);
+      }
+      if (await fullPublicRound.page.locator('#sb-next').isVisible()) await fullPublicRound.page.locator('#sb-next').click();
+      else await fullPublicRound.page.locator('#sb-skip').click();
+    }
+    assert.deepEqual([...publicSeen].sort(), publicIds.map(id => castById.get(id).name).sort(), 'the default round reaches every public cast member exactly once');
+    assert.equal(await fullPublicRound.page.locator('#sb-complete').isVisible(), true, 'the default public round ends after 17 disjoint matchups');
+    await fullPublicRound.context.close();
     await page.goto(base + '/spongebob-fight.html#roster=made-up'); await page.locator('#sb-load-retry').waitFor({ state: 'visible' });
     assert.match(await page.locator('#sb-load-state').textContent(), /at least two valid characters/);
     const missingAPI = await context();
@@ -217,7 +272,7 @@ async function noMatchupOverlap(page) {
     const mobile = await context({ width: 375, height: 812 });
     await mobile.page.goto(base + '/spongebob-picker.html'); await mobile.page.locator('#sb-filters').waitFor({ state: 'visible' });
     assert.equal(await mobile.page.locator('.sb-character').count(), 654, 'mobile also renders only the newly added cards');
-    assert.equal(await mobile.page.locator('#sb-chosen-list button').count(), 19, 'mobile preserves the original chosen cast');
+    assert.equal(await mobile.page.locator('#sb-chosen-list button').count(), 34, 'mobile preserves the expanded chosen cast');
     assert.equal(await mobile.page.evaluate(() => getComputedStyle(document.body).paddingLeft), '20px', 'site mobile gutter');
     await noOverflow(mobile.page);
     await mobile.page.screenshot({ path: '/tmp/spongebob-picker-mobile.png', fullPage: false });
@@ -290,7 +345,7 @@ async function noMatchupOverlap(page) {
       await compact.context.close();
     }
     assert.deepEqual(errors, [], 'no browser script errors');
-    console.log('PASS: ' + pickerIds.length + ' new-only cards disjoint from the original 1021, retained 19-character cast and pair chooser, new alias search, persistence, keyboard, export/share, ordered new-character matchups, real shared percentages for the internal cast, reversed duplicates, lost-response retry, one appearance per character, standalone comparer, desktop/mobile/landscape layouts.');
+    console.log('PASS: ' + pickerIds.length + ' new-only cards disjoint from the original 1021, expanded 34-character cast preserving the original 19, 17 disjoint default matchups, new alias search, persistence, keyboard, export/share, ordered new-character matchups, real shared percentages for the internal cast, reversed duplicates, lost-response retry, one appearance per character, standalone comparer, desktop/mobile/landscape layouts.');
   } finally {
     await browser?.close(); await new Promise(resolve => server.close(resolve)); sqlite.close();
   }

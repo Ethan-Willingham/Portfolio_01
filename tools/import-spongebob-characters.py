@@ -29,6 +29,9 @@ DEST = ROOT / "assets/spongebob"
 API = "https://spongebob.fandom.com/api.php"
 SOURCE = "https://spongebob.fandom.com/wiki/Category:Characters"
 HEADERS = {"User-Agent": "Mozilla/5.0 (SpongeBob character research; image attribution retained)"}
+OVERRIDES_FILE = DEST / "portrait-overrides.json"
+PORTRAIT_OVERRIDES = (json.loads(OVERRIDES_FILE.read_text()).get("characters", {})
+                      if OVERRIDES_FILE.exists() else {})
 
 MAIN = {
     "SpongeBob SquarePants (character)": ("spongebob-squarepants", "SpongeBob SquarePants"),
@@ -364,6 +367,11 @@ def describe(page):
             "seriesEvidence": page["seriesEvidence"]}
     if title in SEARCH_ALIASES:
         item["aliases"] = SEARCH_ALIASES[title]
+    override = PORTRAIT_OVERRIDES.get(id_)
+    if override:
+        item.update(image=override["image"], sourceImage=override["sourceImage"],
+                    imageSourcePage=override["imageSourcePage"],
+                    imageNote=override["reason"])
     return item
 
 
@@ -386,11 +394,20 @@ def download(page, force=False):
     output = ROOT / item["image"]
     if not output.exists() or force:
         url = item["sourceImage"]
+        override = PORTRAIT_OVERRIDES.get(item["id"], {})
         # Ask the source CDN for a bounded copy before encoding the local WebP.
-        url = url.replace("/revision/latest?", "/revision/latest/scale-to-width-down/640?")
+        # A source-frame crop is measured in original image pixels, so it must
+        # be applied before scaling. Cropping never removes or paints guides.
+        if not override.get("crop"):
+            url = url.replace("/revision/latest?", "/revision/latest/scale-to-width-down/640?")
         raw = request(url)
         with Image.open(io.BytesIO(raw)) as im:
             im.load()
+            if override.get("crop"):
+                left, top, right, bottom = override["crop"]
+                if not (0 <= left < right <= im.width and 0 <= top < bottom <= im.height):
+                    raise ValueError("Portrait crop outside source bounds: " + item["id"])
+                im = im.crop((left, top, right, bottom))
             im.thumbnail((640, 640), Image.Resampling.LANCZOS)
             if im.mode not in ("RGB", "RGBA"):
                 im = im.convert("RGBA" if "transparency" in im.info else "RGB")
