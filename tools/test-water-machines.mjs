@@ -564,6 +564,8 @@ try{
     if(c.nativeParams)await evaluate(`Object.entries(${JSON.stringify(c.nativeParams)}).forEach(([key,value])=>__toy.liquid().setSimParam(key,value))`);
     if(c.nativeParams?.DECLUMP_JACOBI!==undefined)
       assert.equal(await evaluate('__toy.liquid().getSimParam("DECLUMP_JACOBI")'),c.nativeParams.DECLUMP_JACOBI,'Requested native snapshot mode is supported and active');
+    if(c.nativeParams?.DECLUMP_JACOBI && await evaluate('typeof __toy.liquid().prepareDeclumpJacobi === "function"'))
+      assert.equal(await evaluate('__toy.liquid().prepareDeclumpJacobi()'),true,'Native snapshot pipelines are validated before apparatus construction');
     await evaluate(`__toy.machine(${JSON.stringify(c.machine)},${JSON.stringify({...c.options,seed})})`);
     await evaluate('__toy.pause(true)');
     await sleep(50);

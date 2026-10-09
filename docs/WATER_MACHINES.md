@@ -71,8 +71,37 @@ Default-off CPU command comparisons pass 96 frame pairs and 76 legacy shaders.
 The actual GPU differential passes eighteen captures, including native words,
 rendered pixels and resource/command comparisons. Default toy and game boots
 load the exact private candidate with no optional resources or runtime errors.
-The full cup matrix and presentation performance are the next gates. Pressure,
-phase/gas conservation and energy calibration remain open.
+The complete rank-candidate cup matrix passes all nine delivery, hold, finite,
+inventory and final-containment cases. Canonical delivery is 100.5081%, 100.4026%
+and 96.8008% of the initially estimated drainable amount, with no rim spills.
+This volume-equivalent denominator excludes estimated water below the intake;
+more than 100% means some of that estimated dead volume also drains. Fluid mixing
+does not require the initially high particle IDs themselves to leave the cup.
+The total particle inventory stays conserved.
+
+A second private revision replaces unbounded per-bucket ranking with 1,024-pair
+workgroup bitonic sorting and binary-search parallel merging. Keys are native
+segment start and particle ID, preserving sparse scan order. Worst-case merge
+work is O(n log^2 n), with fixed local network size. Its ordering oracle passes
+104 real GPU dense/sparse cases, including negative/nonzero origins, exact cull
+edges, stale tail IDs, changing counts and merge parity, up to 40,000 particles.
+An independent CPU network oracle passes 90 cases. The strengthened 28-case
+recovery oracle checks leading-edge terrain clearance, unique release of exact
+coincidences and at least 25% reduction of sub-half-spacing pairs. Optional
+preparation publishes only after asynchronous pipelines and bind groups validate;
+eleven injected failure/lifecycle cases pass. Call prepareDeclumpJacobi() and
+check its result before an accepted trial: DECLUMP_JACOBI reports the request,
+and the native legacy pass remains active while preparation is pending or failed.
+Disabling the request does not enable it again when compilation finishes.
+
+The scalable candidate matches the rank candidate's native, pressure, gas, phase
+and geometry hashes on three seeds at updates 1, 5 and 20 with prescribed immersed
+guest motion. Exact-source default-off comparisons pass 96 CPU frame pairs,
+76 legacy shaders and eighteen real GPU captures, plus default toy/game boots.
+Four paired twelve-second Retina samples average 52.7, 45.4, 53.0 and 46.7 FPS
+for rank, merge, merge and rank. They establish no reliable speedup or sustained
+60 FPS. The full scalable-candidate cup matrix is running. Pressure, phase/gas
+conservation, energy calibration and final natural-slime handling remain open.
 
 Run the repeat recorder with CURRENT_NATIVE=/absolute/private/native.js,
 REPEAT_NATIVE=1, DECLUMP_JACOBI=1, FRAMES=4 and EXPECT_REPEAT=1. Audit its raw
@@ -81,6 +110,12 @@ DECLUMP_ISOLATED=1 runs tools/water-declump-isolated.mjs through the same owned
 browser harness. The integrated machine recorder accepts per-case nativeParams
 and freezes private CURRENT_NATIVE source bytes before recording. The public
 experimental evidence is assets/images/water-machines/native-overlap-trial-2026-10-09.json.
+The follow-up is assets/images/water-machines/native-overlap-scalability-trial-2026-10-09.json.
+DECLUMP_SORT_NATIVE=1 runs tools/water-declump-sort-oracle.mjs against actual native
+builders. AFTER=/absolute/private/native.js runs tools/test-water-declump-preparation.mjs.
+NATIVE_REFERENCE=/absolute/prior/native.js, CURRENT_NATIVE=/absolute/private/native.js
+and NATIVE_JACOBI=1 support deterministic EQUIVALENCE comparisons and paired
+HOST_BENCH presentation samples in tools/test-water-air-view.mjs.
 
 
 ## Standalone siphon

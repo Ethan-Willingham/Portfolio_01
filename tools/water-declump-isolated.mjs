@@ -5,6 +5,7 @@ export async function checkIsolatedDeclump(){
   const check=(value,message)=>{if(!value)throw new Error(message);};
   check(window.__ownedNativeAPI,'Test-only native export exists');
   L.setSimParam('DECLUMP_JACOBI',1);check(L.getSimParam('DECLUMP_JACOBI')===1,'Snapshot mode supported');
+  if(typeof L.prepareDeclumpJacobi==='function')check(await L.prepareDeclumpJacobi(),'Snapshot pipelines validated and ready');
   device.pushErrorScope('validation');
   const fixtures=[
     {name:'compressed-cloud',count:129,density:7,pitch:.27},
@@ -26,6 +27,8 @@ export async function checkIsolatedDeclump(){
   };
   const equal=(a,b)=>a.byteLength===b.byteLength&&new Uint8Array(a).every((v,i)=>v===new Uint8Array(b)[i]);
   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+  const closePairs=(points,count)=>{let pairs=0;for(let i=0;i<count;i++)for(let j=i+1;j<count;j++){
+    const dx=points[i*4]-points[j*4],dy=points[i*4+1]-points[j*4+1];if(dx*dx+dy*dy<.55*.55)pairs++;}return pairs;};
   for(const fixture of fixtures){
     let reference=null;
     for(const mode of ['standalone','shared-encoder'])for(const reverse of [false,true]){
@@ -57,6 +60,7 @@ export async function checkIsolatedDeclump(){
       }
       L.queue.writeBuffer(L.buf.terrainMask,0,terrain);
       let points=new Float32Array(original),maximumMove=0,canonicalChecks=0;
+      const closePairsBefore=closePairs(points,fixture.count),radius=cell*.5*.85;
       for(let iteration=0;iteration<8;iteration++){
         const buckets=Array.from({length:cells},()=>[]),of=new Uint32Array(count);
         for(let i=0;i<count;i++){
@@ -90,10 +94,13 @@ export async function checkIsolatedDeclump(){
           else{const delta=Math.abs(next[index]-points[index]);check(delta<=cell+1e-5,'Per-axis displacement cap');maximumMove=Math.max(maximumMove,delta);}
         }
         for(let i=0;i<count;i++){
-          check(!(fixture.terrain==='wall'||fixture.terrain==='corner')||next[i*4]<128,'Outside wall');
-          check(!(fixture.terrain==='floor'||fixture.terrain==='corner')||next[i*4+1]<128,'Above floor');
+          check(!(fixture.terrain==='wall'||fixture.terrain==='corner')||next[i*4]+radius<128,'Leading edge outside wall');
+          check(!(fixture.terrain==='floor'||fixture.terrain==='corner')||next[i*4+1]+radius<128,'Leading edge above floor');
         }
-        check(equal(await read(L.buf.declumpCanonical,count*4),expected.buffer),'Canonical IDs exactly match independent ascending-ID oracle');
+        const canonical=L.declumpCanonicalPairs
+          ?new Uint32Array(await read(L.declumpCanonicalPairs,count*8)).filter((_,i)=>i%2===1).buffer
+          :await read(L.buf.declumpCanonical,count*4);
+        check(equal(canonical,expected.buffer),'Canonical IDs exactly match independent ascending-ID oracle');
         canonicalChecks++;points=next;
       }
       check(equal(await read(L.buf.aux,aux.byteLength),aux.buffer),'Auxiliary state unchanged');
@@ -104,10 +111,12 @@ export async function checkIsolatedDeclump(){
       for(let i=0;i<fixture.count;i++){
         const key=points[i*4]+','+points[i*4+1],n=(stacks.get(key)||0)+1;stacks.set(key,n);largestStack=Math.max(largestStack,n);
       }
-      if(fixture.pitch===0)check(largestStack<fixture.count,'Coincident knot releases');
+      const closePairsAfter=closePairs(points,fixture.count);
+      if(fixture.pitch===0)check(largestStack===1,'Every coincident particle separates');
+      if(!fixture.unchanged)check(closePairsAfter<closePairsBefore*.75,'Recovery reduces sub-half-spacing pairs by at least one quarter');
       if(reference)check(equal(points.buffer,reference),'Permutation and encoder mode give identical output');
       else reference=points.buffer.slice(0);
-      rows.push({fixture:fixture.name,count,mode,reverse,iterations:8,canonicalChecks,maximumMove,largestStack,sha256:await digest(points.buffer)});
+      rows.push({fixture:fixture.name,count,mode,reverse,iterations:8,canonicalChecks,maximumMove,largestStack,closePairsBefore,closePairsAfter,sha256:await digest(points.buffer)});
     }
   }
   const validation=await device.popErrorScope();check(!validation,validation?.message);

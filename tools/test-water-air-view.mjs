@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {checkIsolatedDeclump} from './water-declump-isolated.mjs';
+import {checkNativeDeclumpOrdering} from './water-declump-sort-oracle.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dump = process.env.DUMP || '/tmp/water-air-review';
@@ -22,10 +23,11 @@ const server = createServer((request, response) => {
     let data = fs.readFileSync(file);
     if(file===path.join(root,'js/liquid-wgpu.js')){
       if(process.env.CURRENT_NATIVE)data=fs.readFileSync(process.env.CURRENT_NATIVE);
+      if(globalThis.nativeReference && process.env.NATIVE_REFERENCE)data=fs.readFileSync(process.env.NATIVE_REFERENCE);
       const nativeSHA=sha(data);
-      if(process.env.DECLUMP_ISOLATED)data=data.toString().replace(
+      if(process.env.DECLUMP_ISOLATED || process.env.DECLUMP_SORT_NATIVE)data=data.toString().replace(
         '  window.LiquidWGPU = { create: create, stage: STAGE, last: null };',
-        '  window.__ownedNativeAPI={runDeclump:runDeclump};\n  window.LiquidWGPU = { create: create, stage: STAGE, last: null };');
+        '  window.__ownedNativeAPI={runDeclump:runDeclump,buildGrid:buildGrid};\n  window.LiquidWGPU = { create: create, stage: STAGE, last: null };');
       data=Buffer.concat([Buffer.from(data),Buffer.from('\nwindow.__ownedNativeSHA='+JSON.stringify(nativeSHA)+';\n')]);
     }
     if(file===path.join(root,'js/liquid-air-wgpu.js')){
@@ -104,7 +106,7 @@ async function navigate(width, height, query = '', mobile = false) {
   const loaded=await evaluate('({host:window.__ownedHostSHA,air:window.__ownedAirSHA,native:window.__ownedNativeSHA})');
   assert.equal(loaded.host,sha(fs.readFileSync(globalThis.hostReference?process.env.HOST_REFERENCE:process.env.CURRENT_HOST || path.join(root,'js/water-smoke-slime.js'))),'Loaded selected host bytes');
   assert.equal(loaded.air,sha(fs.readFileSync(globalThis.airReference?process.env.REFERENCE:path.join(root,'js/liquid-air-wgpu.js'))),'Loaded selected air module bytes');
-  assert.equal(loaded.native,sha(fs.readFileSync(process.env.CURRENT_NATIVE || path.join(root,'js/liquid-wgpu.js'))),'Loaded selected native engine bytes');
+  assert.equal(loaded.native,sha(fs.readFileSync(globalThis.nativeReference?process.env.NATIVE_REFERENCE:process.env.CURRENT_NATIVE || path.join(root,'js/liquid-wgpu.js'))),'Loaded selected native engine bytes');
   console.log('BOOT', width, height, JSON.stringify(await evaluate('__toy.stats()')));
 }
 try {
@@ -118,8 +120,15 @@ try {
   socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);clearTimeout(p?.timer);m.error?p?.reject(m.error):p?.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);});
   await send('Runtime.enable');await send('Page.enable');
   const rows=[];let reportExtras={};
-  if(process.env.EQUIVALENCE || process.env.BENCH_COMPARE)assert(process.env.REFERENCE || process.env.HOST_REFERENCE,'Comparison requires a saved prior air module or host');
+  if(process.env.EQUIVALENCE || process.env.BENCH_COMPARE)assert(process.env.REFERENCE || process.env.HOST_REFERENCE || process.env.NATIVE_REFERENCE,'Comparison requires saved prior source');
   if(process.env.HOST_BENCH)assert(process.env.HOST_REFERENCE,'HOST_BENCH requires the saved prior host');
+  async function prepareSelectedNative(){
+    if(!process.env.NATIVE_JACOBI)return;
+    await evaluate('__toy.liquid().setSimParam("DECLUMP_JACOBI",1)');
+    assert.equal(await evaluate('__toy.liquid().getSimParam("DECLUMP_JACOBI")'),1,'Requested native candidate supported');
+    if(await evaluate('typeof __toy.liquid().prepareDeclumpJacobi === "function"'))
+      assert.equal(await evaluate('__toy.liquid().prepareDeclumpJacobi()'),true,'Selected native candidate validated and ready');
+  }
   async function nativeHashes(){return evaluate(`(async()=>{
     const L=__toy.liquid(),M=__toy.airModel(),D=L.device,n=L.uploadedCount,count=M.width*M.height;
     const sources=[['pos',L.buf.pos,n*16],['affine',L.buf.affine,n*16],['aux',L.buf.aux,n*16],['flag',L.buf.flag,n*4],
@@ -168,7 +177,13 @@ try {
     fs.writeFileSync(path.join(folder,'state.json'),JSON.stringify(capture.state,null,2)+'\n');
     return {folder:id,hashes,state:capture.state};
   }
-  if(process.env.DECLUMP_ISOLATED){
+  if(process.env.DECLUMP_SORT_NATIVE){
+    await navigate(1512,820,'?scene=cup&paused=1#toy');
+    const result=await evaluate(`(${checkNativeDeclumpOrdering.toString()})()`);
+    result.loadedSources=await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA,native:__ownedNativeSHA})');
+    result.errors=errors;assert.deepEqual(errors,[]);reportExtras=result;
+    console.log('NATIVE ORDERING',JSON.stringify({pass:result.pass,cases:result.rows.length}));
+  }else if(process.env.DECLUMP_ISOLATED){
     await navigate(1512,820,'?scene=cup&paused=1#toy');await evaluate('__toy.pause(true)');
     const result=await evaluate(`(${checkIsolatedDeclump.toString()})()`);
     result.loaded=await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA,native:__ownedNativeSHA})');
@@ -193,6 +208,8 @@ try {
         if(process.env.DECLUMP_JACOBI){
           await evaluate('__toy.liquid().setSimParam("DECLUMP_JACOBI",1)');
           assert.equal(await evaluate('__toy.liquid().getSimParam("DECLUMP_JACOBI")'),1,'Native snapshot mode is active');
+          if(await evaluate('typeof __toy.liquid().prepareDeclumpJacobi === "function"'))
+            assert.equal(await evaluate('__toy.liquid().prepareDeclumpJacobi()'),true,'Requested native pipelines are validated and ready');
           await evaluate('__toy.liquid().device.pushErrorScope("validation")');
         }
         const steps=[{frame:0,capture:await recordNative(`seed-${seed}-repeat-${repeat}-frame-0`)}];
@@ -225,7 +242,9 @@ try {
     for(const updated of [false,true,true,false]){
       globalThis.hostReference=!updated;
       globalThis.airReference=!!process.env.REFERENCE && !updated;
+      globalThis.nativeReference=!!process.env.NATIVE_REFERENCE && !updated;
       await navigate(1512,820,'?scene=cup&paused=1#toy');
+      await prepareSelectedNative();
       await evaluate('__toy.machine("cup",{seed:17}).then(()=>true)');
       assert(await evaluate('__toy.machineState()?.ready && __toy.airModel()?.enabled'),'Real cup pressure model ready');
       await evaluate('document.getElementById("toy").scrollIntoView();__toy.machinePrimary();__toy.pause(false)');
@@ -242,7 +261,7 @@ try {
       const frames=await evaluate(`new Promise(resolve=>{const times=[],rates=[];let last=null;const start=performance.now();function tick(t){if(last!==null)times.push(t-last);last=t;rates.push(__toy.stats().fps);if(t-start<${sampleMs})requestAnimationFrame(tick);else resolve({times,rates,sim:__toy.instruments().simulationSeconds,profile:__geometryProfile});}requestAnimationFrame(tick);})`);
       await evaluate('__toy.pause(true)');
       const bodies=await inside('jelloBodies.map(b=>({points:b.n,ringPoints:b.ringN,center:{x:b.cx,y:b.cy}}))');
-      rows.push({scene:'cup',updated,warmupMs,sampleMs,bodies,frames,loaded:await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA})')});
+      rows.push({scene:'cup',updated,warmupMs,sampleMs,bodies,frames,loaded:await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA,native:__ownedNativeSHA})')});
       const summary=Object.fromEntries(Object.entries(frames.profile).map(([name,samples])=>{const s=samples.slice().sort((a,b)=>a-b);return [name,{samples:s.length,medianMs:s[Math.floor(s.length*.5)],p95Ms:s[Math.floor(s.length*.95)]}];}));
       console.log('CUP HOST PROFILE',updated,JSON.stringify(summary));
     }
@@ -252,7 +271,9 @@ try {
       for(const updated of [false,true,true,false]){
         globalThis.airReference=!!process.env.REFERENCE && !updated;
         globalThis.hostReference=!!process.env.HOST_REFERENCE && !updated;
+        globalThis.nativeReference=!!process.env.NATIVE_REFERENCE && !updated;
         await navigate(1512,820,`?scene=${scene}&paused=1#toy`);
+        await prepareSelectedNative();
         await evaluate(`__toy.pause(true);__toy.machine('${scene}',{seed:17,pressure:{}}).then(()=>true)`);
         await evaluate('__toy.liquid().bench(20,1/60)');
         const bench=await evaluate('__toy.liquid().bench(120,1/60)');rows.push({scene,updated,bench});console.log('PAIRED BENCH',scene,updated,JSON.stringify(bench));
@@ -265,7 +286,9 @@ try {
       for(const updated of [false,true]){
         globalThis.airReference=!!process.env.REFERENCE && !updated;
         globalThis.hostReference=!!process.env.HOST_REFERENCE && !updated;
+        globalThis.nativeReference=!!process.env.NATIVE_REFERENCE && !updated;
         await navigate(1512,820,`?scene=${scene}&paused=1#toy`);
+        await prepareSelectedNative();
         await evaluate(`__toy.pause(true);__toy.machine('${scene}',{seed:${seed},pressure:{}}).then(()=>true)`);
         assert(await evaluate('__toy.airModel().enabled'),'Air model active');
         if(process.env.EQUIVALENCE_GEOMETRY && scene==='cup'){
@@ -283,7 +306,7 @@ try {
           await evaluate('__toy.liquid().update(1/60);__toy.liquid().queue.onSubmittedWorkDone()');
           if([1,5,20].includes(frame))steps.push({frame,hashes:await nativeHashes()});
         }
-        captures.push({updated,steps,loaded:await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA})')});
+        captures.push({updated,steps,loaded:await evaluate('({host:__ownedHostSHA,air:__ownedAirSHA,native:__ownedNativeSHA})')});
       }
       if(process.env.GEOMETRY_ONLY){
         assert(process.env.EQUIVALENCE_GEOMETRY,'GEOMETRY_ONLY uses prescribed moving guest poses');
