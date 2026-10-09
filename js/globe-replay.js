@@ -13,7 +13,7 @@
   // The same numeric operations run in both paths. Browsers without worker
   // image decoding get short time slices instead of one multi-second task.
   async function run(steps){var part,started=performance.now();do{part=steps.next();if(onMain&&!part.done&&performance.now()-started>=6){await pause();started=performance.now();}}while(!part.done);return part.value;}
-  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-math.js?v=20261004-9','globe-data.js?v=20261009-50','globe-clouds.js?v=20261009-50');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
+  function modules(){if(!globalThis.GlobeClouds&&typeof importScripts==='function')importScripts('globe-data.js?v=20261009-51','globe-clouds.js?v=20261009-51');return {clouds:globalThis.GlobeClouds,data:globalThis.GlobeData};}
   function smooth(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
   function pack(visible,infrared,natural,out,start,end){
     for(var i=start||0,last=end===undefined?visible.length:end;i<last;i+=4){
@@ -36,10 +36,12 @@
       return pixels;
     }finally{bitmap.close();if(canvas)canvas.width=canvas.height=1;}
   }
-  async function sources(blobs,nativeWidth,width,sourceTimes){
+  async function sources(blobs,nativeWidth,width){
     var api=modules(),clouds=api.clouds,data=api.data,images=[];
     for(var index=0;index<10;index++){
-      var source=blobs[index]?await read(blobs[index],nativeWidth):null;
+      // Old cached source bundles may still contain colour maps. Do not decode
+      // or merge them into the infrared field.
+      var source=index>=5&&blobs[index]?await read(blobs[index],nativeWidth):null;
       if(source&&blobs[index].type==='image/jpeg')await run((function*(){for(var blank=0;blank<source.length;blank+=4){if(blank%(nativeWidth*16)===0)yield;if(Math.max(source[blank],source[blank+1],source[blank+2])<8)source[blank+3]=0;}})());
       images.push(source);if(onMain)await pause();
     }
@@ -48,13 +50,13 @@
       if(clouds.GROUPS[group].source===clouds.NASA&&clouds.GROUPS[group].kind==='infrared')await run(clouds.normalizeThermalSteps(images[group],nativeWidth));
       images[group]=reduce(images[group],nativeWidth,width);images[group]=await run(data.featherCoverageSteps(images[group],width));
     }
-    await run(clouds.retainVisibleCloudsSteps(images,width,sourceTimes));
     var visible=await run(clouds.compositeSteps(images,width,'visible')),infrared=await run(clouds.compositeSteps(images,width,'infrared'));
     return [visible,infrared];
   }
   async function coverage(pixels,width){return run((function*(){var valid=0;for(var at=3;at<pixels.length;at+=4){if((at-3)%(width*16)===0)yield;if(pixels[at]>200)valid++;}return valid/(pixels.length/4);})());}
   async function prepareFull(blobs,width,natural,shared,sourceTimes){
-    var maps=blobs.length===10?await sources(blobs,width,width,sourceTimes):[await read(blobs[0],width),await read(blobs[1],width)];
+    if(blobs.length===10)natural=false;
+    var maps=blobs.length===10?await sources(blobs,width,width):[await read(blobs[0],width),await read(blobs[1],width)];
     var fraction=await coverage(maps[1],width);if(fraction<.15)throw new Error('Satellite image has no useful coverage');
     if(!shared&&blobs.length!==10){var api=modules();maps[0]=await run(api.data.featherCoverageSteps(maps[0],width));maps[1]=await run(api.data.featherCoverageSteps(maps[1],width));}
     var images=[],canvas;
@@ -79,9 +81,10 @@
   async function prepare(blobs,width,natural,sourceWidth,sourceTimes){
     var visible,infrared;
     if(blobs.length===10){
+      natural=false;
       // Decode the original temperature codes before resizing. Interpolating
       // palette RGB first invents colors with unrelated thermal meanings.
-      var maps=await sources(blobs,sourceWidth||width,width,sourceTimes);visible=maps[0];infrared=maps[1];
+      var maps=await sources(blobs,sourceWidth||width,width);visible=maps[0];infrared=maps[1];
     }else{visible=await read(blobs[0],width);infrared=await read(blobs[1],width);}
     var pixels=new Uint8Array(visible.length),valid=0;
     // The fallback yields between short row batches when workers are blocked.

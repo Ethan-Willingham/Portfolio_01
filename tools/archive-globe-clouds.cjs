@@ -5,14 +5,11 @@ const data=require('../js/globe-data.js'),clouds=require('../js/globe-clouds.js'
 const BRANCH='globe-clouds',REF='refs/heads/'+BRANCH,WIDTH=2048,HOUR=3600000,STEP=clouds.STEP;
 const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 function usableSources(blobs){return blobs.length===clouds.GROUPS.length&&blobs.every((blob,i)=>blob||clouds.GROUPS[i].kind==='visible');}
-function needsRepair(frame,catalog){const times=clouds.sourceTimes(catalog,frame.time);return frame.sourceTimes.slice(0,5).some((t,i)=>!t&&times[i]);}
-function improvesSources(next,old){return next.sourceTimes.every((t,i)=>!old.sourceTimes[i]||t)&&next.sourceTimes.filter(Boolean).length>old.sourceTimes.filter(Boolean).length;}
 function git(args,options={}){return execFileSync('git',args,{maxBuffer:32000000,...options});}
 async function renderFrame(time,options={}){
- const sharp=options.sharp||require('sharp'),result=await clouds.fetchFrame(time,WIDTH,{timeout:25000,retries:2,cacheStorage:null,fetch:options.fetch,signal:options.signal,catalog:options.catalog,inspectColour:async function(blob){var pixels=await sharp(Buffer.from(await blob.arrayBuffer())).resize(256,128).ensureAlpha().raw().toBuffer();return clouds.validColourImage(pixels,256);}});
- // Infrared clocks determine complete weather coverage. A slower visible
- // channel falls back to the same dated infrared over reference terrain.
- if(!usableSources(result.blobs,time))throw new Error('Incomplete satellite hour');
+ const sharp=options.sharp||require('sharp'),result=await clouds.fetchFrame(time,WIDTH,{timeout:25000,retries:2,cacheStorage:null,fetch:options.fetch,signal:options.signal,catalog:options.catalog});
+ // Every infrared source must be present before publishing a global frame.
+ if(!usableSources(result.blobs))throw new Error('Incomplete satellite hour');
  const pixels=[];
  for(let i=0;i<result.blobs.length;i++){
   if(!result.blobs[i]){pixels.push(null);continue;}
@@ -22,8 +19,7 @@ async function renderFrame(time,options={}){
  }
  clouds.maskScanArtifacts(pixels,WIDTH);
  for(let i=0;i<pixels.length;i++)if(pixels[i]){if(clouds.GROUPS[i].source===clouds.NASA&&clouds.GROUPS[i].kind==='infrared')clouds.normalizeThermal(pixels[i],WIDTH);pixels[i]=data.featherCoverage(pixels[i],WIDTH);}
- clouds.retainVisibleClouds(pixels,WIDTH,result.sourceTimes);
- const frame={time:time.toISOString(),natural:result.blobs.slice(0,5).some(Boolean),sources:result.blobs.map(Boolean),sourceTimes:result.sourceTimes},files=new Map();
+ const frame={time:time.toISOString(),natural:false,sources:result.blobs.map(Boolean),sourceTimes:result.sourceTimes},files=new Map();
  for(const kind of ['visible','infrared']){
   const rgba=clouds.composite(pixels,WIDTH,kind);let covered=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i]>200)covered++;
   if(kind==='infrared'&&covered/(rgba.length/4)<.15)throw new Error('Insufficient satellite coverage');
@@ -56,21 +52,10 @@ async function collect(previous,options={}){
  const retained=new Map(frames.map(f=>[f.time,f])),existing=new Set(retained.keys()),queue=[];
  for(let t=Math.max(lower,+catalog.start);t<=catalog.end&&t<=now;t+=STEP)if(clouds.published(catalog,t)&&!existing.has(new Date(t).toISOString()))queue.push(new Date(t));
  queue.sort((a,b)=>b-a);
- // Capture new weather first. Retry a bounded set of incomplete colour pairs,
- // oldest attempt first, so a persistent failure cannot starve other repairs.
- const repairLimit=options.repairLimit===undefined?6:Math.max(0,Math.min(108,Math.floor(options.repairLimit)));
- const repairs=frames.filter(f=>needsRepair(f,catalog)&&(!f.repairCheckedAt||now-new Date(f.repairCheckedAt)>=15*60000));
- repairs.sort((a,b)=>(Date.parse(a.repairCheckedAt)||0)-(Date.parse(b.repairCheckedAt)||0)||Date.parse(b.time)-Date.parse(a.time));
- queue.push(...repairs.slice(0,repairLimit).map(f=>new Date(f.time)));
- async function worker(){while(queue.length){const time=queue.shift(),key=time.toISOString(),prior=retained.get(key),controller=new AbortController();let deadline;
-  if(prior)prior.repairCheckedAt=now.toISOString();
+ async function worker(){while(queue.length){const time=queue.shift(),key=time.toISOString(),controller=new AbortController();let deadline;
   try{const result=await Promise.race([(options.render||renderFrame)(time,{...options,catalog,signal:controller.signal}),new Promise((_,reject)=>{deadline=setTimeout(()=>{controller.abort();reject(new Error('Cloud frame preparation timed out'));},options.frameTimeout||45000);})]);
-   // A repair must recover missing observations without losing any existing
-   // channel. Failed or poorer attempts preserve the entire valid old pair.
-   if(prior&&!improvesSources(result.frame,prior))continue;
-   if(needsRepair(result.frame,catalog))result.frame.repairCheckedAt=now.toISOString();
    retained.set(key,result.frame);for(const [file,bytes]of result.files)files.set(file,bytes);
-   if(options.progress)options.progress({time:key,repair:!!prior,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0)});
+   if(options.progress)options.progress({time:key,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0)});
   }catch(error){errors.push({time:key,error:error.message});}finally{clearTimeout(deadline);}
  }}
  await Promise.all([worker(),worker(),worker()]);
@@ -122,17 +107,11 @@ function publish(snapshot,old){
 async function main(){
  let fallbackCatalog;try{fallbackCatalog=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../assets/data/globe-hourly-catalog.json'),'utf8'));}catch(_){}
  const {old,previous}=readPrevious(),progress=value=>console.log(JSON.stringify(value));
- let result=await collect(previous,{fallbackCatalog,repairLimit:0,progress});
+ const result=await collect(previous,{fallbackCatalog,progress});
  result.errors.forEach(error=>console.error(JSON.stringify(error)));
- let commit=result.changed?publish(result,old):old;
- console.log(JSON.stringify({phase:'new weather',frames:result.manifest.frames.length,last:result.manifest.frames.at(-1).time,changed:result.changed,commit}));
- const failed=result.errors.length;
- // Publish fresh clouds before slower repairs to older colour companions.
- result=await collect(result,{catalog:result.manifest.catalog,progress});
- result.errors.forEach(error=>console.error(JSON.stringify(error)));
- if(result.changed)commit=publish(result,commit);
- console.log(JSON.stringify({phase:'colour repairs',frames:result.manifest.frames.length,last:result.manifest.frames.at(-1).time,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0),changed:result.changed,commit}));
- if(failed||result.errors.length)process.exitCode=1;
+ const commit=result.changed?publish(result,old):old;
+ console.log(JSON.stringify({phase:'infrared weather',frames:result.manifest.frames.length,last:result.manifest.frames.at(-1).time,bytes:[...result.files.values()].reduce((n,b)=>n+b.length,0),changed:result.changed,commit}));
+ if(result.errors.length)process.exitCode=1;
 }
-module.exports={BRANCH,REF,usableSources,needsRepair,improvesSources,renderFrame,collect,readPrevious,pushSnapshot,publish};
+module.exports={BRANCH,REF,usableSources,renderFrame,collect,readPrevious,pushSnapshot,publish};
 if(require.main===module)main().catch(error=>{console.error(error.message);process.exitCode=1;});

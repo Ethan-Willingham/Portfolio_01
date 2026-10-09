@@ -2,9 +2,9 @@
    explicitly published time. See docs/DAYLIGHT_GLOBE.md for display limits. */
 (function(root,factory){
  'use strict';
- if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'),require('./globe-math.js'));
- else root.GlobeClouds=factory(root.GlobeData,root.GlobeMath);
-}(typeof globalThis!=='undefined'?globalThis:this,function(data,math){
+ if(typeof module==='object'&&module.exports)module.exports=factory(require('./globe-data.js'));
+ else root.GlobeClouds=factory(root.GlobeData);
+}(typeof globalThis!=='undefined'?globalThis:this,function(data){
  'use strict';
  var STEP=900000, NASA='https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', EUM=data.CLOUD_SERVICE, CACHE='daylight-globe-hourly-v1';
  var GROUPS=[
@@ -39,9 +39,9 @@
   if(end<start)throw new Error('No common satellite coverage');var catalog={version:1,products:products,checkedAt:checked.toISOString(),start:start,end:end,step:STEP,dense:true};if(value.legacy)catalog.legacy=data.parseCloudSnapshot({version:1,source:EUM,layers:data.CLOUD_LAYERS,start:value.legacy.start,end:value.legacy.end,step:value.legacy.step,checkedAt:checked.toISOString()});return catalog;
  }
  function productTime(product,time,maxAge){var best=null;product.periods.forEach(function(v){var start=Date.parse(v.start),end=Date.parse(v.end),candidate=start+Math.floor((Math.min(time,end)-start)/v.step)*v.step;if(candidate>=start&&candidate<=time&&time-candidate<(maxAge||v.step)&&(!best||candidate>+best))best=new Date(candidate);});return best;}
- // Visible publication can trail infrared by one or two scans. Keep its real
- // clock, with a bounded 30-minute age; infrared still requires native cadence.
- function sourceTimes(catalog,time){return catalog.products.map(function(p,i){return productTime(p,+timestamp(time),GROUPS[i].kind==='visible'?1800000:undefined);});}
+ // Keep the established ten-slot catalog format. Only infrared observations
+ // supply the cloud field, so display-colour clocks and images stay absent.
+ function sourceTimes(catalog,time){return catalog.products.map(function(p,i){return GROUPS[i].kind==='infrared'?productTime(p,+timestamp(time)):null;});}
  function published(catalog,time){return catalog.products.every(function(p,i){return GROUPS[i].kind==='visible'||!!productTime(p,time);});}
  function frameAt(catalog,instant,now){var t=+timestamp(instant),clock=+timestamp(now===undefined?new Date():now);if(t>clock+300000||catalog.end-clock>300000)return null;var limit=Math.floor(Math.min(t,+catalog.end)/STEP)*STEP;for(var k=0;k<24&&limit>=catalog.start;k++,limit-=STEP)if(published(catalog,limit))return new Date(limit);return null;}
  function frames(catalog,instant,now){var d=timestamp(instant),start=+new Date(d.getFullYear(),d.getMonth(),d.getDate()),end=+new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),clock=+timestamp(now),out=[];for(var t=Math.max(+catalog.start,Math.floor(start/STEP)*STEP);t<end&&t<=catalog.end&&t<=clock;t+=STEP)if(published(catalog,t))out.push(new Date(t));return out;}
@@ -53,30 +53,18 @@
  }
  // Infrared RGB is a temperature code. Lossy compression changes those codes
  // and can turn warm pixels into isolated bright clouds during inversion.
- // Himawari red-visible also needs PNG alpha: black ocean is valid observation,
- // so a JPEG black-fill mask would erase small clouds during edge feathering.
- function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:g.source===NASA&&(g.kind==='infrared'||i===2)?'image/png':'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
+ // Display-colour products contain their own moving sunrise and sunset blends
+ // and cannot supply illumination-independent cloud coverage.
+ function urls(time,width,catalog){if(!Number.isInteger(width)||width<2||width>4096||width%2)throw new Error('Invalid satellite image dimensions');var times=catalog?sourceTimes(catalog,time):GROUPS.map(function(g,i){var cadence=i===3||i===8?900000:600000;return new Date(Math.floor(+timestamp(time)/cadence)*cadence);});return GROUPS.map(function(g,i){if(g.kind!=='infrared'||!times[i])return null;var p=new URLSearchParams({service:'WMS',request:'GetMap',version:'1.3.0',layers:g.layers.join(','),styles:'',format:g.source===NASA?'image/png':'image/jpeg',bgcolor:'0x000000',crs:'EPSG:4326',bbox:'-90,-180,90,180',width:String(width),height:String(width/2),transparent:'true',time:g.source===NASA?times[i].toISOString().replace(/\.000Z$/,'Z'):times[i].toISOString()});return g.source+'?'+p;});}
  async function imageBlob(response,width){
   var mime=(response.headers.get('content-type')||'').split(';')[0].trim();if(mime==='image/png')return data.imageBlob(response,width);if(mime!=='image/jpeg')throw new Error('Invalid hourly image type');
   var blob=await response.blob(),bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());if(bytes.length<12||bytes[0]!==255||bytes[1]!==216)throw new Error('Invalid satellite JPEG');
   for(var i=2;i<bytes.length;){if(bytes[i++]!==255)throw new Error('Invalid JPEG marker');while(bytes[i]===255)i++;var marker=bytes[i++];if(marker===217||marker===218)break;var length=bytes[i]*256+bytes[i+1];if(length<2||i+length>bytes.length)break;if([192,193,194].includes(marker)){var h=bytes[i+3]*256+bytes[i+4],w=bytes[i+5]*256+bytes[i+6];if(w!==width||h!==width/2)throw new Error('Invalid satellite JPEG dimensions');return blob;}i+=length;}
   throw new Error('Missing satellite JPEG dimensions');
  }
- function* validColourImageSteps(pixels,width){
-  var height=pixels.length/4/width,clipped=0;
-  for(var y=Math.ceil(height/6);y<height*5/6;y++){if(y%4===0)yield;for(var x=0;x<width;x++){var at=(y*width+x)*4;if(pixels[at+3]>=200&&Math.min(pixels[at],pixels[at+1],pixels[at+2])>=248)clipped++;}}
-  return clipped<=width*height*.025;
- }
- function validColourImage(pixels,width){return drain(validColourImageSteps(pixels,width));}
- async function inspectColour(blob){
-  if(typeof createImageBitmap!=='function')return true;
-  var bitmap=await createImageBitmap(blob,{resizeWidth:256,resizeHeight:128,resizeQuality:'high'}),canvas=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(256,128):document.createElement('canvas');
-  try{canvas.width=256;canvas.height=128;var ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0,256,128);return validColourImage(ctx.getImageData(0,0,256,128).data,256);}
-  finally{bitmap.close();canvas.width=canvas.height=1;}
- }
  async function fetchFrame(time,width,options){options=options||{};var cache=null,store=options.cacheStorage===undefined?(typeof caches!=='undefined'?caches:null):options.cacheStorage;if(store)try{cache=await store.open(CACHE);}catch(_){}
   var retries=Number.isFinite(options.retries)?Math.max(0,Math.min(2,Math.floor(options.retries))):1,links=urls(time,width,options.catalog),images=await Promise.allSettled(links.map(async function(url){
-   if(!url)throw new Error('Satellite channel not published');
+   if(!url)return null;
    if(cache){var hit=await cache.match(url);if(hit)try{return await imageBlob(hit,width);}catch(_){await cache.delete(url);}}
    if(options.cacheOnly)throw new Error('Satellite image not cached');
    for(var attempt=0;attempt<=retries;attempt++)try{
@@ -85,30 +73,11 @@
     return await data.request(url+(attempt?'&retry='+Date.now()+'-'+attempt:''),options,async function(r){var copy=cache?r.clone():null,b=await imageBlob(r,width);if(cache)try{await cache.put(url,copy);}catch(_){}return b;});
    }catch(error){if(error.name==='AbortError'||options.signal&&options.signal.aborted||attempt===retries)throw error;}
   }));
-  // A provider can publish a complete JPEG whose pixels are damaged. Try the
-  // nearest earlier published colour scan, bounded to 30 minutes, rather than
-  // treating its white fill as weather. Infrared keeps the selected clock.
-  for(var index=0;index<2;index++)if(images[index].status==='fulfilled'){
-   var inspect=options.inspectColour||inspectColour,blob=images[index].value;
-   if(await inspect(blob))continue;
-   if(cache)await cache.delete(links[index]);images[index]={status:'rejected',reason:new Error('Damaged satellite colour scan')};
-   var original=new URL(links[index]),stamp=Date.parse(original.searchParams.get('time'));
-   for(var previous=stamp-600000;+timestamp(time)-previous<=1800000;previous-=600000){
-    if(options.signal&&options.signal.aborted)break;
-    if(options.catalog&&!options.catalog.products[index].periods.some(function(p){return previous>=Date.parse(p.start)&&previous<=Date.parse(p.end)&&(previous-Date.parse(p.start))%p.step===0;}))continue;
-    var older=new URL(original);older.searchParams.set('time',new Date(previous).toISOString().replace(/\.000Z$/,'Z'));var link=older.href;
-    try{
-     var hit=cache&&await cache.match(link),candidate=hit?await imageBlob(hit,width):options.cacheOnly?null:await data.request(link,options,async function(response){var copy=cache?response.clone():null,value=await imageBlob(response,width);if(await inspect(value)){if(cache)try{await cache.put(link,copy);}catch(_){}return value;}return null;});
-     if(candidate&&await inspect(candidate)){images[index]={status:'fulfilled',value:candidate};links[index]=link;break;}
-     if(cache)await cache.delete(link);
-    }catch(error){if(error.name==='AbortError')throw error;}
-   }
-  }
   if(options.signal&&options.signal.aborted){var e=new Error('Hourly request aborted');e.name='AbortError';throw e;}
   // Require both providers, while allowing an individual Meteosat feed to fail.
-  if(images.slice(5,8).some(function(r){return r.status!=='fulfilled';})||images[8].status!=='fulfilled'&&images[9].status!=='fulfilled')throw new Error('Hourly infrared coverage unavailable');
+  if(images.slice(5,8).some(function(r){return r.status!=='fulfilled'||!r.value;})||(images[8].status!=='fulfilled'||!images[8].value)&&(images[9].status!=='fulfilled'||!images[9].value))throw new Error('Hourly infrared coverage unavailable');
   if(cache)try{var keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-640)).map(function(k){return cache.delete(k);}));}catch(_){}
-  return {time:timestamp(time),width:width,dense:true,urls:links,sourceTimes:links.map(function(u,i){return u&&images[i].status==='fulfilled'?new Date(new URL(u).searchParams.get('time')).toISOString():null;}),blobs:images.map(function(r){return r.status==='fulfilled'?r.value:null;})};
+  return {time:timestamp(time),width:width,dense:true,natural:false,urls:links,sourceTimes:links.map(function(u,i){return u&&images[i].status==='fulfilled'&&images[i].value?new Date(new URL(u).searchParams.get('time')).toISOString():null;}),blobs:images.map(function(r){return r.status==='fulfilled'?r.value:null;})};
  }
  async function discard(time,width,catalog){if(typeof caches==='undefined')return;try{var c=await caches.open(CACHE);await Promise.all(urls(time,width,catalog).filter(Boolean).map(function(u){return c.delete(u);}));}catch(_){} }
  // NASA's published colour table is a display palette, with some repeated grey
@@ -164,28 +133,17 @@
  }
  function drain(steps){var part;do{part=steps.next();}while(!part.done);return part.value;}
  function normalizeThermal(pixels,width){return drain(normalizeThermalSteps(pixels,width));}
- // Missing scans can be opaque white in infrared or saturated cyan in
- // GeoColor. The two products can have different damaged rows. Reject each
- // channel independently so valid colour still covers a missing thermal scan.
- // A broad nonpolar band can extend into the polar rows; an isolated polar
- // white row remains untouched. This display check is not a quality flag.
+ // Missing infrared scans can be opaque white. Reject broad nonpolar scan
+ // bands while retaining isolated polar rows and the original temperature
+ // values everywhere else. This display check is not a quality flag.
  function* maskScanArtifactsSteps(sources,width){
   var height=width/2;
-  // Some GeoColor scans contain a nearly flat white partial disk, with a
-  // straight scan edge. It is valid image data but not a cloud observation.
-  // Reject that colour scan as a whole; other satellites and its independent
-  // infrared observation still supply the field. Ordinary cloud highlights
-  // occupy far fewer fully clipped pixels outside the polar snow cover.
-  for(var pair=0;pair<2;pair++){
-   var colour=sources[pair];if(!colour)continue;var valid=yield* validColourImageSteps(colour,width);
-   if(!valid){for(var at=3;at<colour.length;at+=4){if((at-3)%(width*16)===0)yield;colour[at]=0;}}
-  }
-  for(var pair=0;pair<3;pair++)for(var channel=0;channel<2;channel++){var pixels=sources[pair+(channel?5:0)];if(!pixels)continue;var badRows=new Uint8Array(height),candidates=new Uint8Array(height);
+  for(var pair=5;pair<8;pair++){var pixels=sources[pair];if(!pixels)continue;var badRows=new Uint8Array(height),candidates=new Uint8Array(height);
    for(var y=0;y<height;y++){if(y%4===0)yield;var lat=90-(y+.5)*180/height,covered=0,saturated=0;
     for(var x=0;x<width;x++){var at=(y*width+x)*4;if(pixels[at+3]<200)continue;covered++;
-     if(channel?Math.min(pixels[at],pixels[at+1],pixels[at+2])>=248:pixels[at+1]-pixels[at]>=60&&pixels[at+1]>=160&&pixels[at+2]>=220)saturated++;
+     if(Math.min(pixels[at],pixels[at+1],pixels[at+2])>=248)saturated++;
     }
-    if(covered<8||saturated<covered*(channel?.85:.5))continue;candidates[y]=1;
+    if(covered<8||saturated<covered*.85)continue;candidates[y]=1;
     if(Math.abs(lat)<=60&&saturated>=width*.18)badRows[y]=1;
    }
    for(var row=1;row<height;row++)if(badRows[row-1]&&candidates[row])badRows[row]=1;
@@ -196,75 +154,6 @@
   }return sources;
  }
  function maskScanArtifacts(sources,width){return drain(maskScanArtifactsSteps(sources,width));}
- // Warm low clouds can be bright in visible imagery and dark in infrared.
- // Combine those observations per satellite before the footprint blend. Doing
- // this after compositing would expose the edge of the visible mosaic.
- function smoothCloud(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x);}
- function geoColorCloud(r,g,b,mu,observed,thermal){
-  // GeoColor already blends its day and night layers at source time, well
-  // before the geometric horizon. Decode its grey daytime and blue low-cloud
-  // signals before applying the globe's separate selected-time lighting.
-  // CIRA's published display model: Miller et al. (2020), Eqs. 5, 12 and 13.
-  var day=Math.pow(Math.max(0,Math.min(1,(mu-.1)/.2)),1.5),night=1-day;
-  var blue=Math.max(0,Math.min((g-r)/.20,(b-g)/.23));
-  var rr=r-.55*blue,gg=g-.75*blue,bb=b-.98*blue,bright=Math.max(rr,gg,bb);
-  var neutral=1-smoothCloud(.10,.35,(bright-Math.min(rr,gg,bb))/Math.max(.05,bright));
-  // Grey nighttime clouds already contain a neutral infrared signal. Give it
-  // a bounded exposure throughout the blend, rather than dividing it by a
-  // disappearing daytime weight and then cutting off the saturated result.
-  var cold=thermal===undefined?1:smoothCloud(.18,.30,thermal);
-  // A blue background remains visible through translucent high clouds.
-  // Subtracting the low-cloud blue signal from that mixture removes real
-  // grey clouds along a second source-time boundary. Infrared constrains this
-  // recovery; use the neutral foreground already present in all three bands.
-  var greyCloud=smoothCloud(.22,.85,(Math.min(r,g,b)-.06*night)/(day+.5*night))*cold;
-  var daylight=(Math.min(rr,gg,bb)-.06*night)/Math.max(.05,day);
-  // A bounded inversion avoids amplifying near-black pixels when the daytime
-  // signal has ended. Neutrality and blue brightness checks limit contributions
-  // from coloured terrain, dim ocean backgrounds and embedded city lights.
-  // Only warm low clouds need the stronger daytime recovery. Colder grey
-  // clouds use the continuous exposure above on both sides of source twilight.
-  var warm=1-cold;
-  var dayCloud=smoothCloud(.22,.85,daylight)*neutral*smoothCloud(.025,.075,day)*warm;
-  var lowCloud=smoothCloud(.06,.20,blue/Math.max(.05,night))*smoothCloud(.22,.36,b/Math.max(.05,night))*smoothCloud(.5,.8,night);
-  return Math.max(observed,greyCloud,dayCloud,lowCloud);
- }
- var solarWidth=0,solarCos=[],solarSin=[];
- function* retainVisibleCloudsSteps(sources,width,sourceTimes){
-  if(sourceTimes&&solarWidth!==width){solarWidth=width;solarCos=new Float32Array(width);solarSin=new Float32Array(width);for(var x=0;x<width;x++){var lon=((x+.5)*360/width-180)*Math.PI/180;solarCos[x]=Math.cos(lon);solarSin[x]=Math.sin(lon);}}
-  // A yielding full decode and compact fallback can run at different widths.
-  // Keep each iterator's own references when the shared cache changes width.
-  var lonCos=solarCos,lonSin=solarSin;
-  for(var pair=0;pair<5;pair++){var visible=sources[pair],infrared=sources[pair+5];if(!visible||!infrared)continue;
-   // MSG natural colour boosts the surface near sunrise. Its moving black
-   // daylight mask and bright land/ocean are not cloud measurements: adding
-   // them created an entire false cloud bank over India within one hour.
-   // Keep this satellite's continuous infrared field at every solar angle.
-   // A source-time sunlight mask would only introduce another moving edge.
-   if(pair===3)continue;
-   var sun=pair<2&&sourceTimes&&sourceTimes[pair]&&math?math.solar(new Date(sourceTimes[pair])).vector:null,lastRow=-1,sinLat=0,cosLat=0;
-   for(var at=0;at<infrared.length;at+=4){if(at%(width*16)===0)yield;if(!visible[at+3])continue;
-    var r=visible[at]/255,g=visible[at+1]/255,b=visible[at+2]/255,rawR=r,rawG=g,rawB=b;
-    var ice=smoothCloud(.04,.16,Math.min(g,b)-r)*smoothCloud(.18,.36,Math.min(g,b))*(1-smoothCloud(.12,.32,Math.abs(g-b))),bright=Math.max(g,b);
-    r+=(bright-r)*ice;g+=(bright-g)*ice;b+=(bright-b)*ice;var observed=Math.min(r,g,b);
-    // Both display curves use smoothstep. Mapping their input ranges retains
-    // the visible opacity in the shared thermal field without clipping cores.
-    var value=.28+.72*Math.max(0,Math.min(1,(observed-.22)/.63)),ia=infrared[at+3]/255,va=visible[at+3]/255,alpha=Math.max(ia,va);
-    var visibleOpacity=smoothCloud(.22,.85,observed);
-    if(sun){var index=at/4,row=Math.floor(index/width),x=index%width;if(row!==lastRow){lastRow=row;var lat=(90-(row+.5)*360/width)*Math.PI/180;sinLat=Math.sin(lat);cosLat=Math.cos(lat);}var mu=cosLat*(sun.x*lonCos[x]-sun.z*lonSin[x])+sun.y*sinLat;
-     var corrected=geoColorCloud(rawR,rawG,rawB,mu,visibleOpacity,ia?infrared[at]/255:undefined);
-     if(corrected>visibleOpacity){visibleOpacity=corrected;value=.28+.72*(.5-Math.sin(Math.asin(1-2*corrected)/3));}
-    }
-    var irCloud=smoothCloud(.28,1,infrared[at]/255)*ia,visCloud=visibleOpacity*va,cover=Math.max(irCloud,visCloud);
-    if(!cover)value=ia?infrared[at]:0;
-    else if(!ia||visCloud>=irCloud&&alpha===va)value*=255;
-    else if(alpha===ia&&irCloud>=visCloud)value=infrared[at];
-    else value=255*(.28+.72*(.5-Math.sin(Math.asin(1-2*cover/alpha)/3)));
-    infrared[at]=infrared[at+1]=infrared[at+2]=Math.round(value);infrared[at+3]=Math.round(alpha*255);
-   }
-  }return sources;
- }
- function retainVisibleClouds(sources,width,sourceTimes){return drain(retainVisibleCloudsSteps(sources,width,sourceTimes));}
  // Prefer the satellite looking more directly down on a location. Separate
  // Meteosat requests avoid its server mosaic's abrupt, stretched limb borders.
  // Viewing angle selects between overlapping observations; it must not also
@@ -275,9 +164,9 @@
  var blendWidth=0,blendLongitude=[];
  function* compositeSteps(sources,width,kind){
   if(blendWidth!==width){blendWidth=width;blendLongitude=GROUPS.map(function(g){var v=new Float32Array(width);for(var x=0;x<width;x++){var lon=(x+.5)*360/width-180,best=-1;g.longitudes.forEach(function(s){best=Math.max(best,Math.cos((lon-s)*Math.PI/180));});v[x]=best;}return v;});}
-  // The visible fallback must obey the same MSG exclusion as the combined
-  // field, including where infrared coverage ends or is partially feathered.
-  var longitude=blendLongitude,height=width/2,out=new Uint8ClampedArray(width*height*4),indices=[];GROUPS.forEach(function(g,i){if(g.kind===kind&&sources[i]&&(kind!=='visible'||i!==3))indices.push(i);});
+  // A transparent companion preserves the existing paired archive format.
+  // Visible imagery never supplies missing infrared coverage.
+  var longitude=blendLongitude,height=width/2,out=new Uint8ClampedArray(width*height*4),indices=[];if(kind!=='infrared')return out;GROUPS.forEach(function(g,i){if(g.kind==='infrared'&&sources[i])indices.push(i);});
   for(var y=0;y<height;y++){if(y%4===0)yield;var latitude=Math.cos(((y+.5)*180/height-90)*Math.PI/180);for(var x=0;x<width;x++){
    var at=(y*width+x)*4,total=0,r=0,g=0,b=0,alpha=0;
    for(var j=0;j<indices.length;j++){var i=indices[j],p=sources[i],a=p[at+3]/255;if(!a)continue;var view=latitude*longitude[i][x],q=Math.max(0,view-.15);q*=q;var w=q*q*a;if(!w)continue;total+=w;r+=p[at]*w;g+=p[at+1]*w;b+=p[at+2]*w;alpha=Math.max(alpha,a);}
@@ -285,5 +174,5 @@
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:14,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,validColourImage:validColourImage,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:15,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,composite:composite,compositeSteps:compositeSteps};
 }));
