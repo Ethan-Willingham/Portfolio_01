@@ -1,6 +1,7 @@
 # SpongeBob original-series character roster
 
-The character picker contains 1,370 locally stored portraits from the original
+The picker displays only the 654 characters missed in the first catalog. Its
+underlying lookup retains 1,370 locally stored portraits from the original
 SpongeBob SquarePants TV series, researched on October 9, 2026. The discovery
 index was the [Characters category on Encyclopedia SpongeBobia](https://spongebob.fandom.com/wiki/Category:Characters),
 which listed 2,856 character pages at import time.
@@ -45,6 +46,14 @@ The prior franchise catalog had 1,021 entries. This audit retained 716 stable
 IDs, added 654 original-series entries and removed 305 entries that did not
 qualify under this scope or represented alternate forms. Unused portrait and
 fallback files were removed.
+
+The original 1,021 IDs are frozen in `assets/spongebob/first-catalog-ids.json`.
+`pickerCharacterIds` contains only current TV characters absent from that first
+set. The picker builds cards, search results and browsing groups from those IDs,
+so none of the previously shown characters can reappear in the grid. The full
+lookup remains available to saved selections, chosen matchups and shared fight
+links. Refreshing the import recomputes the new-character list against the same
+frozen baseline.
 
 The owner's selected fight lineup is maintained separately in
 `assets/spongebob/lineup.json`. Its saved Bare-Knuckles the Sea Bear entry remains
@@ -92,9 +101,10 @@ and they total about 19 MiB. Each record names its fallback with `fallbackImage`
 
 ## Data shape
 
-The manifest contains `version` (2), `scope` (`original-series`), `scopeName`,
+The manifest contains `version` (3), `scope` (`original-series`), `scopeName`,
 `generatedAt`, `sourceName`, `sourceUrl`, `discoveredCharacterPages` and a
-`characters` array. Each character has:
+`characters` array. `pickerScope` is `newly-found-original-series`, and
+`pickerCharacterIds` lists the 654 entries displayed in the picker. Each character has:
 
 - `id`: stable selector and voting identifier.
 - `name`: display name.

@@ -11,7 +11,17 @@ const catalog = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/cha
 const publicLineup = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/lineup.json')));
 const publicIds = publicLineup.characterIds;
 const ids = catalog.characters.map(character => character.id);
+const byId = new Map(catalog.characters.map(character => [character.id, character]));
+const firstCatalogIds = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/first-catalog-ids.json')));
+const firstCatalogSet = new Set(firstCatalogIds);
+const pickerIds = catalog.pickerCharacterIds;
+const pickerSet = new Set(pickerIds);
 const voteIds = [...new Set([...ids, ...(publicLineup.retainedCharacters || []).map(character => character.id)])];
+assert.equal(firstCatalogIds.length, 1021, 'the original picker catalog is recorded');
+assert.equal(firstCatalogSet.size, 1021, 'the original picker IDs are unique');
+assert.equal(pickerIds.length, 654, 'the picker contains the 654 newly added characters');
+assert.equal(pickerSet.size, 654, 'the new picker IDs are unique');
+assert.ok(pickerIds.every(id => byId.has(id) && !firstCatalogSet.has(id)), 'the picker includes only new characters from the internal catalog');
 assert.equal(catalog.scope, 'original-series', 'catalog is scoped to the original TV series');
 assert.ok(catalog.characters.every(character => character.seriesEpisode && character.seriesSource?.startsWith('https://spongebob.fandom.com/wiki/')), 'every character has TV-episode evidence');
 assert.equal(ids.includes('bare-knuckles-the-sea-bear'), false, 'spinoff-only characters are excluded');
@@ -85,13 +95,20 @@ async function noMatchupOverlap(page) {
     browser = await chromium.launch({ headless: true, executablePath: process.env.SPONGEBOB_BROWSER || '/Users/ethan/.local/bin/agent-chrome-for-testing' });
     const first = await context(); const page = first.page;
     await page.goto(base + '/spongebob-picker.html'); await page.locator('#sb-filters').waitFor({ state: 'visible' });
-    assert.equal(await page.locator('.sb-character').count(), ids.length);
-    assert.equal(await page.locator('.sb-source-link').count(), ids.length, 'each image has a source');
+    assert.equal(await page.locator('.sb-character').count(), pickerIds.length);
+    assert.deepEqual((await page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id))).sort(), pickerIds.slice().sort(), 'the rendered grid contains exactly the new picker IDs');
+    assert.equal(await page.locator('.sb-source-link').count(), pickerIds.length, 'each new image has a source');
     assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length));
+    assert.equal(await page.locator('#sb-chosen-list button').count(), 19, 'all owner-selected characters remain in the chosen cast');
+    assert.deepEqual((await page.locator('#sb-pair-left option').evaluateAll(options => options.map(option => option.value).filter(Boolean))).sort(), publicIds.slice().sort(), 'the matchup chooser retains all 19 selected characters');
     assert.equal(await page.getByRole('button', { name: 'Remove Bare-Knuckles the Sea Bear from lineup', exact: true }).isVisible(), true, 'the saved cast keeps its selected spinoff character');
-    await page.locator('#sb-search').fill('My leg');
-    assert.equal(await page.locator('.sb-character[data-id="fred"]').isVisible(), true, 'Fred can be found by his catchphrase');
-    const photo = catalog.characters.find(character => character.fallbackImage);
+    for (const query of ['My leg', 'Fred', 'SpongeBob SquarePants']) {
+      await page.locator('#sb-search').fill(query);
+      const renderedIds = await page.locator('.sb-character').evaluateAll(cards => cards.map(card => card.dataset.id));
+      assert.ok(renderedIds.every(id => !firstCatalogSet.has(id)), 'search never reintroduces the original 1021 characters');
+      assert.equal(await page.locator('.sb-character[data-id="fred"], .sb-character[data-id="spongebob-squarepants"]').count(), 0, 'Fred and SpongeBob stay outside the grid even when searched');
+    }
+    const photo = catalog.characters.find(character => pickerSet.has(character.id) && character.fallbackImage);
     assert.ok(photo, 'photographic portraits include a fallback');
     await page.locator('#sb-search').fill(photo.name);
     const photoCard = page.locator('.sb-character[data-id="' + photo.id + '"]');
@@ -108,35 +125,44 @@ async function noMatchupOverlap(page) {
       return img.complete && img.naturalWidth > 0 && img.currentSrc.endsWith('.png');
     }, photo.id);
     await page.locator('#sb-search').fill('');
-    const selectedBox = page.locator('.sb-character[data-id="' + publicIds[0] + '"] input');
-    await selectedBox.focus();
-    assert.equal(await selectedBox.evaluate(input => getComputedStyle(input.closest('article')).outlineWidth), '2px', 'keyboard focus is visible');
+    const keyboardId = pickerIds.find(id => !publicIds.includes(id));
+    const newBox = page.locator('.sb-character[data-id="' + keyboardId + '"] input');
+    assert.equal(await newBox.isChecked(), false, 'new characters start unselected');
+    await newBox.focus();
+    assert.equal(await newBox.evaluate(input => getComputedStyle(input.closest('article')).outlineWidth), '2px', 'keyboard focus is visible');
     await page.keyboard.press('Space');
-    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length - 1), 'keyboard toggles selection');
+    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length + 1), 'keyboard adds a new character to the retained cast');
     await page.reload(); await page.locator('#sb-filters').waitFor({ state: 'visible' });
-    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length - 1), 'selection survives reload');
+    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length + 1), 'selection survives reload');
+    assert.equal(await page.locator('.sb-character[data-id="' + keyboardId + '"] input').isChecked(), true, 'the newly selected character remains checked');
     await page.locator('#sb-clear').click(); await page.locator('#sb-only-selected').check();
     assert.equal(await page.locator('#sb-no-results').isVisible(), true, 'empty selected view works');
     await page.locator('#sb-reset-filters').click();
-    const aliasCharacter = catalog.characters.find(character => character.aliases?.includes('Debbie Rechid'));
-    assert.ok(aliasCharacter, 'catalog preserves familiar alternate names');
-    await page.locator('#sb-search').fill('Debbie Rechid');
+    const aliasCharacter = byId.get('incidental-8');
+    assert.ok(pickerSet.has(aliasCharacter.id) && aliasCharacter.aliases?.includes('Fran'), 'the new catalog preserves Tina\'s familiar alternate name');
+    await page.locator('#sb-search').fill('Fran');
     assert.equal(await page.locator('.sb-character[data-id="' + aliasCharacter.id + '"]').isVisible(), true, 'search finds a renamed character by its alias');
     await page.locator('#sb-search').fill('');
-    await page.locator('#sb-group').selectOption('Main cast');
-    await page.locator('#sb-search').fill('SpongeBob SquarePants'); await page.locator('#sb-select-visible').click();
-    await page.locator('#sb-search').fill('Patrick Star'); await page.locator('#sb-select-visible').click();
+    const exportIds = ['incidental-24', 'incidental-42'];
+    assert.ok(exportIds.every(id => pickerSet.has(id)), 'new Frank variants are in the picker');
+    const exportOrder = ids.filter(id => exportIds.includes(id));
+    for (const id of exportIds) {
+      await page.locator('#sb-search').fill(byId.get(id).name);
+      await page.locator('.sb-character[data-id="' + id + '"] input').check();
+    }
     await page.locator('#sb-search').fill(''); await page.locator('#sb-only-selected').check();
     assert.equal(await page.locator('.sb-character:not([hidden])').count(), 2);
     await page.locator('.sb-review-link').click();
     const downloadEvent = page.waitForEvent('download'); await page.locator('#sb-download').click();
     const download = await downloadEvent;
     const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
-    assert.deepEqual(exported.characterIds, ['spongebob-squarepants', 'patrick-star']);
+    assert.deepEqual(exported.characterIds, exportOrder, 'picker export uses the two new selected characters in catalog order');
     await page.locator('#sb-copy-link').click();
-    const share = await page.evaluate(() => navigator.clipboard.readText());
-    assert.ok(share.includes('#roster='));
+    const pickerShare = await page.evaluate(() => navigator.clipboard.readText());
+    assert.ok(pickerShare.includes('#roster='));
+    assert.deepEqual(new URLSearchParams(new URL(pickerShare).hash.slice(1)).get('roster').split(','), exportOrder, 'picker share carries the new selected cast');
     await noOverflow(page);
+    const share = await page.evaluate(() => SpongeBob.fightURL(['spongebob-squarepants', 'patrick-star']));
     await page.goto(share); await fightReady(page);
     assert.equal(await page.locator('.post-header, .post-body, .site-wrapper, .site-footer').count(), 0, 'comparer has its own app shell');
     assert.equal(await page.locator('link[href="style.css"], script[src="js/main.js"]').count(), 0, 'comparer does not load blog presentation');
@@ -190,6 +216,8 @@ async function noMatchupOverlap(page) {
     assert.equal(await missingAPI.page.locator('#sb-matchup').isVisible(), false, 'missing API has no fabricated result');
     const mobile = await context({ width: 375, height: 812 });
     await mobile.page.goto(base + '/spongebob-picker.html'); await mobile.page.locator('#sb-filters').waitFor({ state: 'visible' });
+    assert.equal(await mobile.page.locator('.sb-character').count(), 654, 'mobile also renders only the newly added cards');
+    assert.equal(await mobile.page.locator('#sb-chosen-list button').count(), 19, 'mobile preserves the original chosen cast');
     assert.equal(await mobile.page.evaluate(() => getComputedStyle(document.body).paddingLeft), '20px', 'site mobile gutter');
     await noOverflow(mobile.page);
     await mobile.page.screenshot({ path: '/tmp/spongebob-picker-mobile.png', fullPage: false });
@@ -206,11 +234,12 @@ async function noMatchupOverlap(page) {
     await manual.page.goto(base + '/spongebob-picker.html');
     await manual.page.locator('#sb-filters').waitFor({ state: 'visible' });
     await manual.page.locator('#sb-clear').click();
-    await manual.page.locator('#sb-group').selectOption('Main cast');
-    for (const id of ['spongebob-squarepants', 'patrick-star', 'sandy-cheeks', 'squidward-tentacles']) {
+    const manualIds = ['incidental-24', 'incidental-42', 'incidental-105', 'incidental-155'];
+    assert.ok(manualIds.every(id => pickerSet.has(id)), 'the manual editor test uses new picker characters');
+    for (const id of manualIds) {
       await manual.page.locator('.sb-character[data-id="' + id + '"] input').check();
     }
-    const chosenPairs = [['spongebob-squarepants', 'patrick-star'], ['sandy-cheeks', 'squidward-tentacles']];
+    const chosenPairs = [[manualIds[0], manualIds[1]], [manualIds[2], manualIds[3]]];
     for (const pair of chosenPairs) {
       await manual.page.locator('#sb-pair-left').selectOption(pair[0]);
       await manual.page.locator('#sb-pair-right').selectOption(pair[1]);
@@ -230,7 +259,7 @@ async function noMatchupOverlap(page) {
     await manual.page.locator('#sb-pairing').scrollIntoViewIfNeeded();
     await manual.page.screenshot({ path: '/tmp/spongebob-pairing-mobile.png', fullPage: false });
     await manual.page.goto(manualShare);
-    for (const names of [['SpongeBob SquarePants', 'Patrick Star'], ['Sandy Cheeks', 'Squidward Tentacles']]) {
+    for (const names of chosenPairs.map(pair => pair.map(id => byId.get(id).name))) {
       await fightReady(manual.page);
       assert.deepEqual(await manual.page.locator('.sb-fighter-name').allTextContents(), names, 'fight uses chosen pair order and sides');
       await manual.page.locator('#sb-skip').click();
@@ -261,7 +290,7 @@ async function noMatchupOverlap(page) {
       await compact.context.close();
     }
     assert.deepEqual(errors, [], 'no browser script errors');
-    console.log('PASS: ' + ids.length + ' original-TV cards, catchphrase search, persistence, keyboard, export/share, real shared percentages, reversed duplicates, lost-response retry, one appearance per character, standalone comparer, desktop/mobile/landscape layouts.');
+    console.log('PASS: ' + pickerIds.length + ' new-only cards disjoint from the original 1021, retained 19-character cast and pair chooser, new alias search, persistence, keyboard, export/share, ordered new-character matchups, real shared percentages for the internal cast, reversed duplicates, lost-response retry, one appearance per character, standalone comparer, desktop/mobile/landscape layouts.');
   } finally {
     await browser?.close(); await new Promise(resolve => server.close(resolve)); sqlite.close();
   }

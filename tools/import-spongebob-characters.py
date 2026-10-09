@@ -410,10 +410,13 @@ def write_roster(items, discovered):
     order = {name: i for i, name in enumerate(["Main cast", "Recurring", "Villains", "Family", "Minor characters"])}
     main_order = {info[0]: i for i, info in enumerate(MAIN.values())}
     items.sort(key=lambda x: (order[x["group"]], main_order.get(x["id"], 999), x["name"].casefold()))
-    data = {"version": 2, "scope": "original-series", "scopeName": "SpongeBob SquarePants TV series",
+    first_ids = set(json.loads((DEST / "first-catalog-ids.json").read_text()))
+    data = {"version": 3, "scope": "original-series", "scopeName": "SpongeBob SquarePants TV series",
             "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "sourceName": "Encyclopedia SpongeBobia", "sourceUrl": SOURCE,
-            "discoveredCharacterPages": discovered, "characters": items}
+            "discoveredCharacterPages": discovered, "characters": items,
+            "pickerScope": "newly-found-original-series",
+            "pickerCharacterIds": [item["id"] for item in items if item["id"] not in first_ids]}
     pending = DEST / "characters.json.tmp"
     pending.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     pending.replace(DEST / "characters.json")

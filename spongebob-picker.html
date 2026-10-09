@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#303931">
   <title>SpongeBob character picker</title>
-  <meta name="description" content="Browse characters from the original SpongeBob SquarePants TV series. Choose a lineup, save it, and send that cast into a who-would-win vote.">
+  <meta name="description" content="Browse newly found SpongeBob TV-series characters missed in the first catalog. Add them to your saved cast and choose the fight matchups.">
   <link rel="canonical" href="https://ethanwillingham.com/spongebob-picker.html">
   <meta property="og:title" content="SpongeBob character picker">
   <meta property="og:description" content="Choose the cast for a Bikini Bottom fight vote, from the regulars to the deep cuts.">
@@ -29,8 +29,8 @@
     <header class="post-header u-hero sb-hero">
       <p class="u-eyebrow">In progress / Cast the vote</p>
       <h1 class="u-title">SpongeBob character picker</h1>
-      <p class="u-dek">The original TV series, from the regulars to the fish you almost forgot.</p>
-      <p class="sb-intro">Your chosen 19-character public cast is kept. Browse the new TV-series catalog to make another lineup. Search names or nicknames, like Fred or “My leg.”</p>
+      <p class="u-dek">Only the characters missed the first time.</p>
+      <p class="sb-intro">Browse 654 newly found TV-series characters. The first catalog's characters are removed from this list. Your chosen 19 remain in the saved cast below, ready for you to set their matchups.</p>
     </header>
     <main class="post-body">
       <section aria-label="Choose characters" class="sb-picker" id="sb-picker" aria-busy="true">
@@ -39,14 +39,14 @@
           <div class="sb-selection-actions"><a class="sb-review-link" href="#sb-lineup">Review lineup</a><a class="sb-button sb-primary" id="sb-play" href="spongebob-fight.html" aria-disabled="true">Try this lineup</a></div>
         </div>
         <div class="sb-filters" id="sb-filters" hidden>
-          <div class="sb-search"><label for="sb-search">Find a character</label><input id="sb-search" type="search" placeholder="Fred, My leg, Mermaid Man..." autocomplete="off"></div>
+          <div class="sb-search"><label for="sb-search">Find a new character</label><input id="sb-search" type="search" placeholder="Frank, Tina, Dragon Jellyfish..." autocomplete="off"></div>
           <div class="sb-group"><label for="sb-group">Browse</label><select id="sb-group"><option value="">All characters</option></select></div>
-          <label class="sb-selected-toggle"><input id="sb-only-selected" type="checkbox"><span>Selected only</span></label>
+          <label class="sb-selected-toggle"><input id="sb-only-selected" type="checkbox"><span>Selected new characters</span></label>
         </div>
         <div class="sb-list-tools" id="sb-list-tools" hidden><p id="sb-showing" role="status" aria-live="polite"></p><div><button class="sb-text-button" id="sb-select-visible" type="button">Select visible</button><button class="sb-text-button" id="sb-clear" type="button">Clear selection</button></div></div>
         <div id="sb-load-state" class="sb-empty" role="status"><p>Gathering the cast...</p><button class="sb-button" id="sb-load-retry" type="button" hidden>Try again</button></div>
         <div class="sb-character-grid" id="sb-character-grid"></div>
-        <div id="sb-no-results" class="sb-empty" hidden><p>No characters match these filters.</p><button class="sb-button" id="sb-reset-filters" type="button">Show all characters</button></div>
+        <div id="sb-no-results" class="sb-empty" hidden><p>No newly found characters match these filters.</p><button class="sb-button" id="sb-reset-filters" type="button">Show all new characters</button></div>
         <section class="sb-lineup" id="sb-lineup" hidden aria-labelledby="sb-lineup-title">
           <div class="sb-section-heading"><div><p class="sb-kicker">Keep this cast</p><h2 id="sb-lineup-title">Your chosen characters</h2></div><button class="sb-button" id="sb-defaults" type="button">Use public lineup</button></div>
           <p class="sb-note" id="sb-storage-note">Your selection is saved in this browser.</p>
@@ -84,6 +84,6 @@
   <script src="js/main.js"></script>
   <script src="js/spongebob-shared.js?v=4"></script>
   <script src="js/spongebob-matchups.js?v=1"></script>
-  <script src="js/spongebob-picker.js?v=3"></script>
+  <script src="js/spongebob-picker.js?v=4"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
   'use strict';
   const shared = window.SpongeBob;
   const $ = id => document.getElementById(id);
-  let data, selected = new Set(), cards = new Map(), visibleIds = [];
+  let data, pickerCharacters = [], selected = new Set(), cards = new Map(), visibleIds = [];
   function chosenIds() { return [...data.characters, ...data.retainedCharacters].filter(character => selected.has(character.id)).map(character => character.id); }
   function chosenMatchups() { return window.SpongeBobMatchups?.getPairs() || []; }
   function updateFightLink() { $('sb-play').href = shared.fightURL(chosenIds(), chosenMatchups()); }
@@ -48,13 +48,13 @@
     const search = $('sb-search').value.trim().toLocaleLowerCase();
     const group = $('sb-group').value;
     const selectedOnly = $('sb-only-selected').checked;
-    visibleIds = data.characters.filter(character => {
+    visibleIds = pickerCharacters.filter(character => {
       const names = [character.name, ...(Array.isArray(character.aliases) ? character.aliases : [])].join(' ').toLocaleLowerCase();
       const matches = (!search || names.includes(search)) && (!group || (character.group || 'Other characters') === group) && (!selectedOnly || selected.has(character.id));
       cards.get(character.id).hidden = !matches;
       return matches;
     }).map(character => character.id);
-    $('sb-showing').textContent = 'Showing ' + visibleIds.length.toLocaleString() + ' of ' + data.characters.length.toLocaleString() + ' characters';
+    $('sb-showing').textContent = 'Showing ' + visibleIds.length.toLocaleString() + ' of ' + pickerCharacters.length.toLocaleString() + ' newly found characters';
     $('sb-no-results').hidden = visibleIds.length > 0;
     $('sb-select-visible').disabled = visibleIds.length === 0;
   }
@@ -62,7 +62,7 @@
     cards = new Map();
     const fragment = document.createDocumentFragment();
     const groupCounts = new Map();
-    data.characters.forEach((character, index) => {
+    pickerCharacters.forEach((character, index) => {
       groupCounts.set(character.group || 'Other characters', (groupCounts.get(character.group || 'Other characters') || 0) + 1);
       const card = document.createElement('article'); card.className = 'sb-character'; card.dataset.id = character.id;
       const label = document.createElement('label');
@@ -90,7 +90,7 @@
       fragment.append(card); cards.set(character.id, card);
     });
     $('sb-character-grid').replaceChildren(fragment);
-    $('sb-group').replaceChildren(new Option('All characters (' + data.characters.length + ')', ''));
+    $('sb-group').replaceChildren(new Option('All new characters (' + pickerCharacters.length + ')', ''));
     groupCounts.forEach((count, group) => $('sb-group').append(new Option(group + ' (' + count + ')', group)));
   }
   async function load() {
@@ -99,6 +99,10 @@
     $('sb-load-state').querySelector('p').textContent = 'Gathering the cast...';
     try {
       data = await shared.load();
+      if (!Array.isArray(data.catalog.pickerCharacterIds)) throw new Error('The new-character list could not be loaded.');
+      const pickerIds = new Set(data.catalog.pickerCharacterIds);
+      pickerCharacters = data.characters.filter(character => pickerIds.has(character.id));
+      if (!pickerCharacters.length) throw new Error('The new-character list is empty.');
       selected = new Set(shared.readSelection(data.defaultIds, data.byId));
       buildCards(); updateSelection(true); applyFilters();
       ['sb-filters', 'sb-list-tools', 'sb-lineup'].forEach(id => { $(id).hidden = false; });
