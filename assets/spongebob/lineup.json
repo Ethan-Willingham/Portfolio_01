@@ -1,17 +1,26 @@
 {
-  "version": 1,
-  "title": "Bikini Bottom regulars",
+  "version": 2,
+  "title": "Selected SpongeBob characters",
   "updatedAt": "2026-10-09",
   "characterIds": [
-    "spongebob-squarepants",
-    "patrick-star",
-    "squidward-tentacles",
-    "mr-krabs",
-    "sandy-cheeks",
-    "gary-the-snail",
-    "plankton",
-    "karen",
-    "pearl-krabs",
-    "mrs-puff"
+    "bubble-buddy",
+    "alaskan-bull-worm",
+    "man-ray",
+    "tattletale-strangler",
+    "herb-star",
+    "baby-prunes",
+    "bare-knuckles-the-sea-bear",
+    "billy-fishkin",
+    "bubbleman",
+    "drifter",
+    "iron-eye",
+    "janet",
+    "larry-luciano",
+    "lemont",
+    "lou",
+    "officer-nancy",
+    "patar",
+    "spongegar",
+    "tom-prison-guard-1"
   ]
 }

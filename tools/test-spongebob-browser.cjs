@@ -8,6 +8,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/characters.json')));
+const publicIds = JSON.parse(fs.readFileSync(path.join(root, 'assets/spongebob/lineup.json'))).characterIds;
 const ids = catalog.characters.map(character => character.id);
 const source = fs.readFileSync(path.join(root, 'services/spongebob-votes/worker/index.js'), 'utf8')
   .replace('/* SITES_ROSTER_IDS */ []', JSON.stringify(ids));
@@ -72,7 +73,7 @@ async function noOverflow(page) {
     await page.goto(base + '/spongebob-picker.html'); await page.locator('#sb-filters').waitFor({ state: 'visible' });
     assert.equal(await page.locator('.sb-character').count(), ids.length);
     assert.equal(await page.locator('.sb-source-link').count(), ids.length, 'each image has a source');
-    assert.equal(await page.locator('#sb-selected-count').textContent(), '10');
+    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length));
     const photo = catalog.characters.find(character => character.fallbackImage);
     assert.ok(photo, 'photographic portraits include a fallback');
     await page.locator('#sb-search').fill(photo.name);
@@ -90,13 +91,13 @@ async function noOverflow(page) {
       return img.complete && img.naturalWidth > 0 && img.currentSrc.endsWith('.png');
     }, photo.id);
     await page.locator('#sb-search').fill('');
-    const bob = page.locator('.sb-character[data-id="spongebob-squarepants"] input');
-    await bob.focus();
-    assert.equal(await bob.evaluate(input => getComputedStyle(input.closest('article')).outlineWidth), '2px', 'keyboard focus is visible');
+    const selectedBox = page.locator('.sb-character[data-id="' + publicIds[0] + '"] input');
+    await selectedBox.focus();
+    assert.equal(await selectedBox.evaluate(input => getComputedStyle(input.closest('article')).outlineWidth), '2px', 'keyboard focus is visible');
     await page.keyboard.press('Space');
-    assert.equal(await page.locator('#sb-selected-count').textContent(), '9', 'keyboard toggles selection');
+    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length - 1), 'keyboard toggles selection');
     await page.reload(); await page.locator('#sb-filters').waitFor({ state: 'visible' });
-    assert.equal(await page.locator('#sb-selected-count').textContent(), '9', 'selection survives reload');
+    assert.equal(await page.locator('#sb-selected-count').textContent(), String(publicIds.length - 1), 'selection survives reload');
     await page.locator('#sb-clear').click(); await page.locator('#sb-only-selected').check();
     assert.equal(await page.locator('#sb-no-results').isVisible(), true, 'empty selected view works');
     await page.locator('#sb-reset-filters').click();
