@@ -267,6 +267,10 @@
  function retainVisibleClouds(sources,width,sourceTimes){return drain(retainVisibleCloudsSteps(sources,width,sourceTimes));}
  // Prefer the satellite looking more directly down on a location. Separate
  // Meteosat requests avoid its server mosaic's abrupt, stretched limb borders.
+ // Viewing angle selects between overlapping observations; it must not also
+ // erase observed high-latitude clouds. Each source already has its true
+ // missing-data alpha feathered inward. Another geometric opacity fade made
+ // a false clear ring several degrees inside that measured coverage edge.
  // This is a display blend of observed pixels, not a meteorological retrieval.
  var blendWidth=0,blendLongitude=[];
  function* compositeSteps(sources,width,kind){
@@ -275,11 +279,11 @@
   // field, including where infrared coverage ends or is partially feathered.
   var longitude=blendLongitude,height=width/2,out=new Uint8ClampedArray(width*height*4),indices=[];GROUPS.forEach(function(g,i){if(g.kind===kind&&sources[i]&&(kind!=='visible'||i!==3))indices.push(i);});
   for(var y=0;y<height;y++){if(y%4===0)yield;var latitude=Math.cos(((y+.5)*180/height-90)*Math.PI/180);for(var x=0;x<width;x++){
-   var at=(y*width+x)*4,total=0,r=0,g=0,b=0,alpha=0,bestView=0;
-   for(var j=0;j<indices.length;j++){var i=indices[j],p=sources[i],a=p[at+3]/255;if(!a)continue;var view=latitude*longitude[i][x],q=Math.max(0,view-.15);q*=q;var w=q*q*a;if(!w)continue;total+=w;r+=p[at]*w;g+=p[at+1]*w;b+=p[at+2]*w;alpha=Math.max(alpha,a);bestView=Math.max(bestView,view);}
-   if(total){var edge=Math.max(0,Math.min(1,(bestView-.15)/.15));out[at]=r/total;out[at+1]=g/total;out[at+2]=b/total;out[at+3]=255*alpha*edge*edge*(3-2*edge);}
+   var at=(y*width+x)*4,total=0,r=0,g=0,b=0,alpha=0;
+   for(var j=0;j<indices.length;j++){var i=indices[j],p=sources[i],a=p[at+3]/255;if(!a)continue;var view=latitude*longitude[i][x],q=Math.max(0,view-.15);q*=q;var w=q*q*a;if(!w)continue;total+=w;r+=p[at]*w;g+=p[at+1]*w;b+=p[at+2]*w;alpha=Math.max(alpha,a);}
+   if(total){out[at]=r/total;out[at+1]=g/total;out[at+2]=b/total;out[at+3]=255*alpha;}
   }}return out;
  }
  function composite(sources,width,kind){return drain(compositeSteps(sources,width,kind));}
- return {STEP:STEP,PROCESSING:13,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,validColourImage:validColourImage,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
+ return {STEP:STEP,PROCESSING:14,GROUPS:GROUPS,NASA:NASA,CACHE:CACHE,validColourImage:validColourImage,parseCatalog:parseCatalog,validate:validate,productTime:productTime,sourceTimes:sourceTimes,published:published,frameAt:frameAt,frames:frames,fetchCatalog:fetchCatalog,urls:urls,imageBlob:imageBlob,fetchFrame:fetchFrame,discard:discard,normalizeThermal:normalizeThermal,normalizeThermalSteps:normalizeThermalSteps,maskScanArtifacts:maskScanArtifacts,maskScanArtifactsSteps:maskScanArtifactsSteps,geoColorCloud:geoColorCloud,retainVisibleClouds:retainVisibleClouds,retainVisibleCloudsSteps:retainVisibleCloudsSteps,composite:composite,compositeSteps:compositeSteps};
 }));

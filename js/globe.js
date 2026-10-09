@@ -77,7 +77,7 @@
   var css = getComputedStyle(document.documentElement);
   function cssColor(name) { return new THREE.Color(css.getPropertyValue(name).trim()); }
   function text(el, value) { if (el && el.textContent !== value) el.textContent = value; }
-  text(byId('globe-version'),'v49');
+  text(byId('globe-version'),'v50');
   function formatDay(day) { var date=new Date(day+'T12:00:00Z');return dateFormatter.format(date)+(date.getUTCFullYear()===new Date().getUTCFullYear()?'':', '+date.getUTCFullYear())+' (UTC)'; }
   function completedDay(now) { return new Date(Math.floor(now.getTime() / DAY) * DAY - DAY).toISOString().slice(0,10); }
   function expireLivePhoto() {
@@ -115,12 +115,17 @@
     if(photo&&photo.sourceTimes){var observations=photo.sourceTimes.filter(Boolean).map(Date.parse),first=Math.min.apply(null,observations),last=Math.max.apply(null,observations);if(first!==last)parts.push('Observed '+forecastFormatter.format(new Date(first))+' to '+timeFormatter.format(new Date(last)));}
     if(fresh){parts.push((live?'Aurora forecast ':'Archived aurora forecast ')+forecastFormatter.format(forecast.forecast));parts.push('measurements from '+forecastFormatter.format(forecast.observation));}
     else parts.push(hypothetical?'Aurora hidden for hypothetical tilt.':!live?'No saved aurora forecast near this time.':fetchingWeather&&!weatherChecked?'Checking aurora forecast.':'Aurora forecast unavailable.');
-    var auroraGap=!live&&!hypothetical&&data.auroraReplayGap(allAuroraFrames(),instant),auroraNote=byId('globe-aurora-status'),auroraMessage='';
-    if(auroraGap){
+    var auroraGap=!live&&!hypothetical&&data.auroraReplayGap(allAuroraFrames(),instant),auroraNote=byId('globe-aurora-status'),auroraMessage,auroraDetail='';
+    if(hypothetical)auroraMessage='Aurora hidden for hypothetical tilt.';
+    else if(!fresh)auroraMessage=live?(fetchingWeather?'Checking aurora forecast.':'Aurora forecast unavailable.'):(replayPendingAurora||archiveBusy?'Loading aurora history.':'Aurora history unavailable.');
+    else if(auroraGap){
       auroraMessage=auroraGap.to?'Aurora: capture gap, '+timeFormatter.format(auroraGap.from)+' to '+timeFormatter.format(auroraGap.to)+'.':'Aurora: last saved measurements '+timeFormatter.format(auroraGap.from)+'.';
-      parts.push(auroraGap.to?'No saved aurora measurements between '+forecastFormatter.format(auroraGap.from)+' and '+forecastFormatter.format(auroraGap.to):'Holding an older recorded aurora forecast.');
-    }else if(!live&&!hypothetical&&!fresh)auroraMessage=replayPendingAurora?'Loading aurora history.':'Aurora history unavailable.';
-    if(auroraNote){text(auroraNote,auroraMessage);auroraNote.hidden=!auroraMessage;auroraNote.title=auroraGap?parts[parts.length-1]:'';}
+      auroraDetail=auroraGap.to?'No saved aurora measurements between '+forecastFormatter.format(auroraGap.from)+' and '+forecastFormatter.format(auroraGap.to):'Holding an older recorded aurora forecast.';parts.push(auroraDetail);
+    }else{
+      auroraMessage='Aurora measurements: '+timeFormatter.format(forecast.observation)+'.';
+      auroraDetail=(live?'NOAA forecast':'Saved NOAA forecast')+' for '+forecastFormatter.format(forecast.forecast)+', using measurements from '+forecastFormatter.format(forecast.observation)+'.';
+    }
+    if(auroraNote){text(auroraNote,auroraMessage);auroraNote.hidden=false;auroraNote.title=auroraDetail;}
     var kpAge=kp?new Date()-kp.time:Infinity;
     if(live&&kpAge>=-5*60000&&kpAge<9*3600000)parts.push('Magnetic activity: Kp '+kp.kp.toFixed(2)+' at '+forecastFormatter.format(kp.time));
     if(wrapper.dataset.stars==='unavailable')parts.push('Star catalog unavailable.');
@@ -231,8 +236,8 @@
   });
   var replayWidth=Math.min(textureWidth,mobile?(renderer.capabilities.isWebGL2?1024:512):(renderer.capabilities.isWebGL2?1536:1024));
   replayMemo=timeline.memoryCache((mobile?104:224)*1024*1024,{dispose:function(record){var texture=replayTextures.get(record.photo.time);if(texture&&record!==replayTarget){texture.dispose();replayTextures.delete(record.photo.time);}}});
-  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-49',document.baseURI).href);
-  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-49',document.baseURI).href);
+  replayPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-50',document.baseURI).href);
+  detailPreparing=replay.preparer(new URL('js/globe-replay.js?v=20261009-50',document.baseURI).href);
   var sunUniform = {value:new THREE.Vector3(1,0,0)};
   var moonSunUniform = {value:new THREE.Vector3(1,0,0)}, lunarState = null, moonDisplayDistance = 5.5;
   function solidTexture(r,g,b) {
@@ -871,10 +876,11 @@
     appearance.forEach(function(part){
       var emission=auroraEmission.get(part.value);
       if(!emission){
-        // Cache only the display bytes; the original NOAA float grid remains
-        // available for pins. This adds at most one byte per cached cell.
+        // Preserve low probabilities too: a 10 percent gate erased most of
+        // a weak forecast and exaggerated changes between recorded grids.
+        // Screen brightness is illustrative; pins retain the original values.
         emission=new Uint8Array(part.value.grid.length);
-        for(var i=0;i<emission.length;i++){var p=part.value.grid[i],x=Math.max(0,Math.min(1,(p-10)/12));emission[i]=Math.round(p*x*x*(3-2*x)*255/100);}
+        for(var i=0;i<emission.length;i++)emission[i]=Math.round(part.value.grid[i]*255/100);
         auroraEmission.set(part.value,emission);
       }
       for(var j=0;j<emission.length;j++)auroraDisplayGrid[j]+=emission[j]*part.weight;

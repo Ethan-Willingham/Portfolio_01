@@ -112,7 +112,7 @@ async function matrix(browser,isReal){
   await page.goto('http://127.0.0.1:'+server.address().port+'/daylight-globe.html',{waitUntil:'domcontentloaded'});await ready(page);
   const s=await state(page),initial=await layout(page);await capture(page,name+'-opening');
   check(name+' time slider, Live and fullscreen are present without disclosure',initial.controls.every(c=>c.displayed&&c.horizontal)&&!initial.overflow,initial);
-  check(name+' source detail stays closed and default controls stay concise',initial.sourceClosed&&initial.panelWords<=35,{words:initial.panelWords,text:initial.text});
+  check(name+' source detail stays closed and default controls stay concise',initial.sourceClosed&&initial.panelWords<=45,{words:initial.panelWords,text:initial.text});
   check(name+' exactly 5070 catalog stars are installed',s.starCount===5070&&s.pointCount===5070);
   const stars=await page.evaluate(()=>__globePresentation.pixelVisibility('stars'));
   check(name+' opening centers Earth while location permission is unavailable',!s.sunFraming);

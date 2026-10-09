@@ -165,7 +165,9 @@ async function gpuChecks(browser){const {context,page,requests}=await setup(brow
  await page.evaluate(()=>__globeQuality.capForecast(28));const weak=await page.evaluate(p=>__globeQuality.glow(p.lat,p.lon),point),weakGain=weak.energy;
  check('a weak 28 percent forecast still shows raised curtains below the strong forecast',weak.pixels>100&&weak.raised>20&&weakGain<=gain,{weak,gain});
  await page.evaluate(()=>__globeQuality.capForecast(9));const below=await page.evaluate(p=>__globeQuality.glow(p.lat,p.lon),point);
- check('screen exposure does not reveal probabilities below the ten percent threshold',below.energy===0,below);await page.evaluate(()=>__globeQuality.restoreForecast());
+ check('low positive probabilities retain fainter curtains without a display cutoff',below.energy>0&&below.energy<weakGain,below);
+ await page.evaluate(()=>__globeQuality.capForecast(0));const absent=await page.evaluate(p=>__globeQuality.glow(p.lat,p.lon),point);
+ check('zero probability remains absent at the same screen exposure',absent.energy===0,absent);await page.evaluate(()=>__globeQuality.restoreForecast());
  await page.evaluate(p=>__globeQuality.litForecast(p.lat,p.lon,true),point);const darkProbe=await page.evaluate(p=>__globeQuality.glow(p.lat,p.lon),point);
  await page.evaluate(p=>__globeQuality.litForecast(p.lat,p.lon,false),point);const dayProbe=await page.evaluate(p=>__globeQuality.glow(p.lat,p.lon),point);
  check('the same active curtains disappear when their forecast cells move into daylight',darkProbe.energy>1000&&dayProbe.energy===0,{darkProbe,dayProbe});await page.evaluate(()=>__globeQuality.restoreForecast());
